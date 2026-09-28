@@ -16,6 +16,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 import OSLog
 
 /// The spawned half of one build's reference set.

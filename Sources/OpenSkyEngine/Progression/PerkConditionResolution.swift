@@ -15,6 +15,7 @@
 // Documented in docs/engine/perks.md and docs/engine/condition-functions.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

@@ -27,6 +27,7 @@
 // Documented in docs/engine/ragdoll.md and docs/engine/runtime-state.md.
 
 import OpenSkyFormatsCore
+import OpenSkyWorldState
 import simd
 
 /// One actor's death, and where its corpse ended up.

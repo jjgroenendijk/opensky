@@ -17,6 +17,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// A live transfer session between one container and the player.
 @MainActor

@@ -10,6 +10,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 import simd
 
 /// One saved spawned object, before it is merged back into its delta.

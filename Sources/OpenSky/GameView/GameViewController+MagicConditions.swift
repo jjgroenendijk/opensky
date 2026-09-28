@@ -16,6 +16,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 extension GameViewController {
     /// Known spells, active effects and cast state for every actor this session

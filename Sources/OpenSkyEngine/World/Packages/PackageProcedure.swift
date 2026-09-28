@@ -2,6 +2,7 @@
 // commands feed the existing MoveToPointControl/NPC mover; animation commands
 // are explicit seams for the sleep/eat loop clips.
 
+import OpenSkyConditions
 import simd
 
 nonisolated public enum PackageLoopClip: String, Equatable, Sendable {

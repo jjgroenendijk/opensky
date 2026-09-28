@@ -15,6 +15,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyShaderTypes
+import OpenSkyWorldState
 import simd
 
 nonisolated public final class WeatherSystem {

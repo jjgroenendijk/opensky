@@ -37,6 +37,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// Failures the dialogue layer reports.
 ///

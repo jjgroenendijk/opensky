@@ -19,6 +19,11 @@ import OpenSkyGameData
 nonisolated public struct WorldStateSnapshotEntry: Equatable, Sendable {
     public let key: ReferenceKey
     public let delta: ReferenceStateDelta
+
+    public init(key: ReferenceKey, delta: ReferenceStateDelta) {
+        self.key = key
+        self.delta = delta
+    }
 }
 
 /// One global variable whose runtime value deviates from its plugin default
@@ -28,6 +33,11 @@ nonisolated public struct WorldStateGlobalSnapshotEntry: Equatable, Sendable {
     /// The GLOB record's session-stable key.
     public let key: ReferenceKey
     public let value: GlobalValue
+
+    public init(key: ReferenceKey, value: GlobalValue) {
+        self.key = key
+        self.value = value
+    }
 }
 
 /// Immutable, order-independent view of every runtime deviation in a store.

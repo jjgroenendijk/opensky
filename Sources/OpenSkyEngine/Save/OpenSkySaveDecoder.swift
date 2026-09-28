@@ -11,6 +11,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated public enum OpenSkySaveDecoder: Sendable {
     public static func decode(_ data: Data) throws -> OpenSkySaveFile {

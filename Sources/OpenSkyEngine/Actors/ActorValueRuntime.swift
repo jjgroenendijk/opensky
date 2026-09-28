@@ -24,6 +24,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// Reads and mutates actor values on top of a `WorldStateStore`.
 @MainActor

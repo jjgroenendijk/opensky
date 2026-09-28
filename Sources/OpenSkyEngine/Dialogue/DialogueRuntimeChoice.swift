@@ -30,6 +30,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyWorldState
 
 /// Where a chosen response's result scripts go.
 ///

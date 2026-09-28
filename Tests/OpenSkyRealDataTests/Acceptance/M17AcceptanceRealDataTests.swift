@@ -31,11 +31,13 @@
 // Run: make realtest T='M17AcceptanceRealDataTests'
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyWorldState
 import Testing
 
 struct M17AcceptanceRealDataTests {

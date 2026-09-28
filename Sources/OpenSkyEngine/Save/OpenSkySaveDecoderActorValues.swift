@@ -16,6 +16,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// One actor's saved current values, before they are merged back into the
 /// delta.

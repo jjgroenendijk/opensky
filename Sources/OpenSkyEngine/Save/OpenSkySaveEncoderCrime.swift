@@ -15,6 +15,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's ledger paired with the snapshot entry it came from.

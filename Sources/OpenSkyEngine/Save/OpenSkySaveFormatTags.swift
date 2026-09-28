@@ -11,6 +11,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// On-disk tag of a component slot inside `RDLT`.
 ///

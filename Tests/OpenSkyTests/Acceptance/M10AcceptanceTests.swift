@@ -25,6 +25,7 @@ import AppKit
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyEngine
+@testable import OpenSkyWorldState
 import Testing
 
 struct M10AcceptanceTests {

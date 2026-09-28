@@ -27,6 +27,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorldState
 import simd
 
 /// Dialogue-camera state the controller owns. Extensions cannot add stored

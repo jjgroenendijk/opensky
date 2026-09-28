@@ -3,6 +3,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 import simd
 
 extension NPCMover {

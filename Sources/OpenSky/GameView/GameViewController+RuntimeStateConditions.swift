@@ -23,8 +23,10 @@
 
 import AppKit
 import OpenSkyAudio
+import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 extension GameViewController {
     var runtimeStateConditionSources: [String] {

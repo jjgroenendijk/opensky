@@ -6,6 +6,7 @@
 // names function indices and counts, never records.
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 
 extension ConditionCoverage {

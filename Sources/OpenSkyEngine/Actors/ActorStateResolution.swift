@@ -25,6 +25,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/combat.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
 /// One actor's state as a condition sees it.

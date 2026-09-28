@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One recorded response of one INFO.
 nonisolated public struct VoiceLine: Equatable, Sendable {

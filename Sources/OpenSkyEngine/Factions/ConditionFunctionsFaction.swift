@@ -52,6 +52,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/hostility.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {

@@ -1,6 +1,7 @@
 // Deterministic Utility natives selected by vanilla call frequency.
 
 import Foundation
+import OpenSkyConditions
 
 nonisolated extension PapyrusNativeFunctions {
     public static func installUtility(into registry: inout PapyrusNativeRegistry) {

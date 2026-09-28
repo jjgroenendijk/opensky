@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated public enum ConditionFunctions: Sendable {
     /// The functions the core answers from state it owns: time, reference

@@ -22,6 +22,7 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+@testable import OpenSkyWorldState
 import PhysicsTesting
 import simd
 

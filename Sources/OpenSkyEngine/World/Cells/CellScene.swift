@@ -9,6 +9,7 @@ import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyShaderTypes
+import OpenSkyWorldState
 import simd
 
 /// The library cache keys one cell touched: its mesh + texture working set.

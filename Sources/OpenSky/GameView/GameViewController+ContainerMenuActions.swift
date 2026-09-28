@@ -12,6 +12,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyWorldState
 
 extension GameViewController: ContainerMenuControlProviding {
     var containerMenuIsOpen: Bool {

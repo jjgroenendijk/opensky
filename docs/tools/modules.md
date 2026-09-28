@@ -93,6 +93,9 @@ OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkySh
   ^
 OpenSkyRendering          Metal renderer, scenes, cameras, terrain meshes, weather values
 OpenSkyAudio              audio graph, decoders, sound and music record stores
+OpenSkyWorldState         runtime state store, open component set, game clock, globals
+  ^
+OpenSkyConditions         condition evaluator, function registry, core functions
   ^
 OpenSkyEngine             the rest of the engine, until it is split
   ^
@@ -122,6 +125,11 @@ A lower module never imports a higher one. Three patterns keep it that way:
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
   to move the camera and run the world. The engine's `GameSession` is that driver.
+- A lower module that stores something for every feature keeps an open set instead of a closed
+  enum. `OpenSkyWorldState` stores any `WorldStateComponent`, and each feature declares its own
+  `WorldStateComponentKind`. `ConditionContext` stores any `ConditionResolution` by type, and each
+  feature adds an accessor such as `context.magic`. The code that names every feature, such as
+  the `.standard` condition registry, lives above all of them.
 
 ## Access and imports
 

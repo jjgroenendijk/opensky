@@ -43,6 +43,7 @@
 // Documented in docs/engine/combat-behavior.md.
 
 import Foundation
+import OpenSkyConditions
 import simd
 
 /// The decision layer for one actor in one fight.

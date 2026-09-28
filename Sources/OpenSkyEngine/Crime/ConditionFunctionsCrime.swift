@@ -25,6 +25,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 

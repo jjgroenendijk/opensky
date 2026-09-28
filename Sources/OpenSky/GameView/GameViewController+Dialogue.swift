@@ -15,10 +15,12 @@
 // See docs/engine/dialogue-menu.md.
 
 import AppKit
+import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 import simd
 
 struct DialogueBridgeState {

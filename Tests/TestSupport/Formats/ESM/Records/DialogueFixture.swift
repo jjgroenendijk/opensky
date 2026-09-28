@@ -6,6 +6,7 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 
 enum DialogueFixture {
     static func parse(_ bytes: Data) throws -> ESMRecord {

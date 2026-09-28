@@ -34,6 +34,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One owner's enchanted-item bookkeeping: charge left per weapon, and the
 /// constant effects each worn item established.

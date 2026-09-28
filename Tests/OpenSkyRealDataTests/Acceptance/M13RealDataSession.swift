@@ -10,9 +10,11 @@
 // directory the test removes.
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyWorldState
 
 /// One headless engine over the user's install: the plugin's quests, the
 /// Papyrus world runtime with the install's own scripts behind it, and the

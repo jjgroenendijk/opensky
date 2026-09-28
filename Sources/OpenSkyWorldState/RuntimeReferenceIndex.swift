@@ -41,6 +41,18 @@ nonisolated public struct RuntimeReferenceEntry: Sendable {
         guard case let .actor(actor) = record else { return nil }
         return actor
     }
+
+    public init(
+        key: ReferenceKey,
+        formID: FormID,
+        isPersistent: Bool,
+        record: RuntimeReferenceRecord
+    ) {
+        self.key = key
+        self.formID = formID
+        self.isPersistent = isPersistent
+        self.record = record
+    }
 }
 
 /// Immutable per-cell lookup over `RuntimeReferenceEntry`, keyed both by

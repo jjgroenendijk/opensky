@@ -25,6 +25,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// One inventory owner: its identity, which plugin record its baseline comes
 /// from, and the cell its mutations are attributed to.

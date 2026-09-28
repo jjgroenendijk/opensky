@@ -15,6 +15,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One actor's violent gold per faction, before it splits the `CRIM` totals.
 nonisolated public struct SaveViolentCrimeGoldEntry: Equatable, Sendable {

@@ -35,6 +35,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// What reporting one crime did, and why.
 nonisolated public struct CrimeOutcome: Equatable, Sendable {

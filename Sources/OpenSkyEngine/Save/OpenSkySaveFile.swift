@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
     /// Layout version the file declared.

@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorldState
 
 nonisolated public struct CellProviderIndexes {
     /// The four load-order magic stores, decoded off one shared `RecordIndex`

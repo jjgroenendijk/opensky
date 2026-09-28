@@ -10,6 +10,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 import OSLog
 
 /// A decoded REFR plus the children group it was stored in.

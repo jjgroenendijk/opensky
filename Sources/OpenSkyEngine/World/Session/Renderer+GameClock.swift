@@ -8,6 +8,7 @@
 // read in `draw(in:)`, which MTKView also runs on the main thread.
 
 import OpenSkyRendering
+import OpenSkyWorldState
 import QuartzCore
 
 /// The renderer's game-time state, grouped so `Renderer` carries one stored

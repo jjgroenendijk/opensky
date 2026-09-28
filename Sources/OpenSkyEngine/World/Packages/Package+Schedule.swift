@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension Package.Schedule {
     public func matches(_ clock: GameClock) -> Bool {

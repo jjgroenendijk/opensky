@@ -19,6 +19,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One membership: the faction and the rank the actor holds in it.
 ///

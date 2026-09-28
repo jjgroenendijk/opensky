@@ -1,6 +1,7 @@
 // Deterministic fixed-step scheduling for latent native continuations.
 
 import Foundation
+import OpenSkyWorldState
 
 nonisolated public final class PapyrusScheduler {
     private struct Entry {

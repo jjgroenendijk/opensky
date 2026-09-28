@@ -17,6 +17,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// One actor's saved memberships, before they are merged back into the delta.
 nonisolated public struct SaveFactionEntry: Equatable, Sendable {

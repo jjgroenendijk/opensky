@@ -29,6 +29,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension PapyrusNativeFunctions {
     public static func installObjectReference(into registry: inout PapyrusNativeRegistry) {

@@ -4,6 +4,7 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyWorldState
 import simd
 
 public struct NPCMovementWorld {

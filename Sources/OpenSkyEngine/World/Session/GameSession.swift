@@ -8,6 +8,7 @@
 
 import OpenSkyAudio
 import OpenSkyRendering
+import OpenSkyWorldState
 import simd
 
 public final class GameSession: RenderFrameDriver {

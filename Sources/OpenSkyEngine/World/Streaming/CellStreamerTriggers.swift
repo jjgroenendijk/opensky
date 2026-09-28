@@ -13,6 +13,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyWorldState
 import simd
 
 /// The authoritative player capsule pose for one frame.

@@ -100,6 +100,8 @@ Sources/
   OpenSkyPhysics/       package module: collision worlds, dynamic bodies, ragdolls
   OpenSkyRendering/     package module: Metal renderer, scenes, cameras, terrain meshes
   OpenSkyAudio/         package module: audio graph, decoders, sound and music stores
+  OpenSkyWorldState/    package module: runtime state store, components, clock, globals
+  OpenSkyConditions/    package module: condition evaluator and function registry
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
@@ -110,6 +112,7 @@ Tests/
   OpenSkyPhysicsTests/  package test target: synthetic suites for OpenSkyPhysics
   OpenSkyRenderingTests/ package test target: synthetic suites for OpenSkyRendering
   OpenSkyAudioTests/    package test target: synthetic suites for OpenSkyAudio
+  OpenSkyWorldStateTests/ package test target: synthetic suites for OpenSkyWorldState
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module

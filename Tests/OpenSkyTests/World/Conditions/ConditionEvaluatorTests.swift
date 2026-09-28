@@ -8,9 +8,11 @@
 
 @testable import FormatsCoreTesting
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorldState
 import Testing
 
 struct ConditionEvaluatorTests {

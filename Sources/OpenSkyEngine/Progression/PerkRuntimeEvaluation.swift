@@ -36,6 +36,7 @@
 // Documented in docs/engine/perks.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import os

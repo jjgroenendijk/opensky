@@ -30,6 +30,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// Faction state the controller owns. Extensions cannot add stored properties,
 /// so it lives as one value on `GameViewController`.

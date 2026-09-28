@@ -10,6 +10,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorldState
 import simd
 
 extension GameViewController: WeatherControlProviding {

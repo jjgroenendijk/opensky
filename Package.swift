@@ -260,12 +260,31 @@ targets += foundation(
     ]
 )
 
+targets += foundation(
+    "OpenSkyWorldState",
+    dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData"],
+    tests: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",
+        "FormatsCoreTesting", "FormatsESMTesting"
+    ]
+)
+targets += foundation(
+    "OpenSkyConditions",
+    dependencies: [
+        "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM",
+        "OpenSkyGameData",
+        "OpenSkyWorldState"
+    ]
+)
+
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
     "OpenSkyEngine",
     dependencies: ["OpenSkyFormatsCore"] + formatFamilies.map { "OpenSkyFormats\($0)" } + [
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyDiagnostics", "OpenSkyPhysics",
-        "OpenSkyRendering", "OpenSkyAudio", "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyConditions",
+        "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

@@ -10,6 +10,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 nonisolated public enum OpenSkySaveEncoder: Sendable {
     /// Serializes a snapshot, its load-order fingerprint and header metadata.

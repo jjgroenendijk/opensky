@@ -26,6 +26,7 @@
 // Documented in docs/engine/dialogue.md and docs/engine/condition-functions.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
 nonisolated public struct DialogueResolution: Sendable {

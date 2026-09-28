@@ -14,6 +14,7 @@ import MetalKit
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorldState
 import Testing
 
 struct InventoryMenuAcceptanceRealDataTests {

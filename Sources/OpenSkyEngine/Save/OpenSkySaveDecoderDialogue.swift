@@ -11,6 +11,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One INFO's saved said-state, before it is merged back into its delta.
 nonisolated public struct SaveDialogueEntry: Equatable, Sendable {

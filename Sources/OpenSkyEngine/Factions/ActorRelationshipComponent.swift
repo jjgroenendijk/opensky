@@ -38,6 +38,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One override: the other actor, and the rank the pair holds.
 ///

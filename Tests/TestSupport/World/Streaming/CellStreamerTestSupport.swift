@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorldState
 
 /// Test build runner: the test stages completions and controls their order,
 /// standing in for the serial DispatchQueue without any async timing.

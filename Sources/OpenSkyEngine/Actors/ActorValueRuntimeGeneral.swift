@@ -31,6 +31,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 extension ActorValueRuntime {
     // MARK: - Reading

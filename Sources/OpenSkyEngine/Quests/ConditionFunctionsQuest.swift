@@ -21,6 +21,7 @@
 // cited at each registration.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 

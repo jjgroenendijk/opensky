@@ -8,6 +8,7 @@
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyWorldState
 import Testing
 
 @MainActor

@@ -35,7 +35,9 @@
 // one of those is a real answer.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension ConditionFunctions {
     public static func installDetection(_ registry: inout ConditionFunctionRegistry) {

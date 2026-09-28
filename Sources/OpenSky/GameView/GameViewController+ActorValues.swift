@@ -16,6 +16,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyWorldState
 import OSLog
 
 /// Actor-value state the controller owns. Extensions cannot add stored

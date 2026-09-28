@@ -13,6 +13,7 @@
 // "Legal & IP boundary").
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import Testing

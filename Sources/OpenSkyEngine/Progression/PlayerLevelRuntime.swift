@@ -37,6 +37,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// What one award of character experience did.
 nonisolated public struct PlayerLevelUpReport: Equatable, Sendable {

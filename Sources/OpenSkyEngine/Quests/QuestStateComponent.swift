@@ -57,6 +57,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// Display state of one quest objective, addressed by its QOBJ index.
 ///

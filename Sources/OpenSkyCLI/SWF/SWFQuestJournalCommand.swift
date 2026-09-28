@@ -21,6 +21,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyWorldState
 
 enum SWFQuestJournalCommand {
     /// `MGRArniel01`, the M13 target quest: the cheapest journal-visible quest

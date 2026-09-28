@@ -9,8 +9,10 @@
 // the install.
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorldState
 import Testing
 
 @MainActor

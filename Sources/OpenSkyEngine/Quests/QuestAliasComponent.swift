@@ -27,6 +27,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One filled reference alias: the ALST alias ID and the world reference it
 /// resolved to.

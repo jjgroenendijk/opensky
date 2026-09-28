@@ -17,6 +17,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorldState
 
 final class RuntimeStateTimeSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

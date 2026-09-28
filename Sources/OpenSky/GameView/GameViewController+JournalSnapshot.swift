@@ -10,6 +10,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+import OpenSkyGameData
 import OpenSkyRendering
 
 extension GameViewController {

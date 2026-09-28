@@ -12,6 +12,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// What the panel has selected. Nil selections fall back to the first option
 /// the snapshot offers, which is what the popups show.

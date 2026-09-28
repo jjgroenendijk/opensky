@@ -11,6 +11,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// The `DLGS` chunk: every snapshot entry carrying a dialogue component
