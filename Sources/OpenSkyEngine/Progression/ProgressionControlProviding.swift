@@ -13,6 +13,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One of the eighteen skills, as the panel spells it.
 nonisolated public struct SkillProgressReadout: Equatable, Sendable {

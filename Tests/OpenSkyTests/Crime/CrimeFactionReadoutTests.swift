@@ -3,6 +3,7 @@
 // line judges the window at the game hour.
 
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 import Testing
 

@@ -24,6 +24,7 @@
 // Documented in docs/engine/melee-combat.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyFormatsESM
 import simd

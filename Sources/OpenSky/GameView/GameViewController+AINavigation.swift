@@ -17,6 +17,7 @@
 // person aims across a city.
 
 import AppKit
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyRendering

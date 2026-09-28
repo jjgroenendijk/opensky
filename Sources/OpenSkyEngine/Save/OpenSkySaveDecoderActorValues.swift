@@ -14,6 +14,7 @@
 // nonsensical value is not a reason to fail a whole save.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

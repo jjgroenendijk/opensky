@@ -15,6 +15,7 @@
 // See docs/engine/dialogue-menu.md.
 
 import AppKit
+import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsCore

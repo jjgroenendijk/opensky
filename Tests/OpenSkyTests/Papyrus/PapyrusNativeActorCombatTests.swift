@@ -7,6 +7,7 @@
 // over a recording world. Split into its own file only because the strict lint
 // type cap is smaller than the family is.
 
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

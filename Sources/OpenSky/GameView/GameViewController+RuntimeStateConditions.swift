@@ -22,10 +22,13 @@
 // same answer. That is what makes this surface usable as verification evidence.
 
 import AppKit
+import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyAudio
 import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 extension GameViewController {

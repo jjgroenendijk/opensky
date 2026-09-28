@@ -5,6 +5,7 @@
 // them, which is the one bit that decides whether a death waits for the graph's
 // hand-off or falls back to an immediate one.
 
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

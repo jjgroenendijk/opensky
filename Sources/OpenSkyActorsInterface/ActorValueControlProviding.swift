@@ -16,6 +16,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One actor's values as a panel spells them.
 nonisolated public struct ActorValueReadout: Equatable, Sendable {

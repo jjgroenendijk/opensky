@@ -15,6 +15,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 import Testing

@@ -2,6 +2,7 @@
 // registry with every feature's functions. It lives above the features because
 // it names all of them; the condition core names none.
 
+import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface

@@ -6,6 +6,7 @@
 // assert on the sentence a user reads without standing up a window.
 
 import Foundation
+import OpenSkyActorsInterface
 
 nonisolated public enum MeleeCombatReadout: Sendable {
     /// The state line: where the weapon is, where the swing is, and whether

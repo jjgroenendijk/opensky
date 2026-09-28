@@ -30,6 +30,7 @@
 //
 // Documented in docs/engine/ragdoll.md.
 
+import OpenSkyActorsInterface
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData

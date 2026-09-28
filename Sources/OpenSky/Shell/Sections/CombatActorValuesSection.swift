@@ -17,8 +17,10 @@
 // the selected actor rather than on everything.
 
 import AppKit
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 final class CombatActorValuesSection: PanelSectionViewController {
     weak var provider: (any ActorValueControlProviding)? {

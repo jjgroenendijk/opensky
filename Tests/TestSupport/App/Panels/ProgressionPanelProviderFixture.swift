@@ -8,6 +8,7 @@
 import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 
 nonisolated func makeProgressionSnapshot(
     isAvailable: Bool = true,

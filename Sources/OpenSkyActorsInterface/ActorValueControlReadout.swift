@@ -8,6 +8,7 @@
 // Documented in docs/engine/actor-value-store.md.
 
 import Foundation
+import OpenSkyGameData
 
 nonisolated public enum ActorValueControlReadout: Sendable {
     /// One actor's three bars, current over maximum.

@@ -7,8 +7,8 @@
 // it and no self-consistent test would notice.
 
 import Foundation
-import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 import Testing
 
 struct ActorValueIdentityTests {

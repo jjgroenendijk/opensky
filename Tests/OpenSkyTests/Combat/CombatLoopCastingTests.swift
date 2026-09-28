@@ -9,8 +9,10 @@
 // actors anywhere in it.
 
 import Foundation
+@testable import OpenSkyActors
 import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 import Testing
 
 @MainActor

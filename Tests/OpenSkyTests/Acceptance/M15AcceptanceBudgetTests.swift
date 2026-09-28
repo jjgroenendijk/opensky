@@ -19,6 +19,7 @@
 // timings against the real install come from `openskycli bench --fly-path`.
 
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore

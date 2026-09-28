@@ -37,6 +37,7 @@
 // Documented in docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

@@ -46,6 +46,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One actor's authored spell list, kept split so an inspector can say which
 /// half a spell came from.

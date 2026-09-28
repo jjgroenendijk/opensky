@@ -8,6 +8,8 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
+import OpenSkyActorsInterface
+import OpenSkyGameData
 
 extension ActiveEffectRuntime {
     // MARK: - Ticking

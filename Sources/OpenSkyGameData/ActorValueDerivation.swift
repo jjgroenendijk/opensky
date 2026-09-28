@@ -40,7 +40,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// The two game settings the per-level derivation reads, resolved once.
 ///

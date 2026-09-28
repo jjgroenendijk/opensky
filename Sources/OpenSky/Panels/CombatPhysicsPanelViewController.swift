@@ -13,6 +13,7 @@
 // what the physics is carrying while all of it runs.
 
 import AppKit
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyPhysics
 

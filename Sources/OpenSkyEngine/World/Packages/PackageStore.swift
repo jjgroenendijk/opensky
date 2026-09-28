@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated public enum PackageResolveError: Error, Equatable {
     case missingPackage(FormID)

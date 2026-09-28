@@ -11,6 +11,7 @@
 // own file, shared with the delivery and panel suites.
 
 import Foundation
+@testable import OpenSkyActors
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

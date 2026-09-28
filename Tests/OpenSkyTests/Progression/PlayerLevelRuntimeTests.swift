@@ -6,8 +6,11 @@
 // threshold and a stored component, not where the settings came from.
 
 import Foundation
+@testable import OpenSkyActors
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 @testable import OpenSkyWorldState
 import Testing
 

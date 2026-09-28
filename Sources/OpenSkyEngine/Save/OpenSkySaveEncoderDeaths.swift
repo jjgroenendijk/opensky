@@ -14,6 +14,7 @@
 // mid-flight pose would put the body back in the air on reload.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsCore
 import OpenSkyWorldState
 

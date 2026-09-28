@@ -8,6 +8,7 @@
 // that answered these from literals would be testing two runtimes over a
 // diorama rather than a chain.
 
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyConditions
 @testable import OpenSkyEngine

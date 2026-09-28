@@ -34,6 +34,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
+import OpenSkyGameData
 import OpenSkyWorldState
 
 /// The player's level, banked character experience and perk-point pool.

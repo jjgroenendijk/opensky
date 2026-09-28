@@ -40,6 +40,7 @@
 // Documented in docs/engine/skill-advancement.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -88,7 +89,7 @@ nonisolated public struct SkillUseParameterSource: Sendable {
 public struct SkillAdvancementRuntime {
     /// The read and write surface for both the skill and the slot holding its
     /// accumulated experience.
-    public let values: ActorValueRuntime
+    public let values: any ActorValueAccess
     /// Per-skill `AVSK` parameters.
     public let parameters: SkillUseParameterSource
     /// The two resolved game settings.
@@ -112,7 +113,7 @@ public struct SkillAdvancementRuntime {
     }
 
     public init(
-        values: ActorValueRuntime,
+        values: any ActorValueAccess,
         parameters: SkillUseParameterSource = .none,
         settings: SkillAdvancementSettings = .documentedDefaults
     ) {

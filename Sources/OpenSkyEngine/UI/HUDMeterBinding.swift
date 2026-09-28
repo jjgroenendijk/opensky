@@ -18,6 +18,8 @@
 // Documented in docs/engine/actor-value-store.md.
 
 import Foundation
+import OpenSkyActorsInterface
+import OpenSkyGameData
 
 nonisolated public struct HUDMeterBinding: Sendable {
     /// What was last handed to the movie. Starts at the value
@@ -63,7 +65,7 @@ nonisolated public struct HUDMeterBinding: Sendable {
 }
 
 @MainActor
-extension ActorValueRuntime {
+extension ActorValueAccess {
     /// `holder`'s current values as HUD meters.
     public func hudMeters(for holder: ActorValueHolder) -> HUDMeterValues {
         // The effective maximums, not the derived ones: since item 20.3 a base

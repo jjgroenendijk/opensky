@@ -10,6 +10,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 enum ActorCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

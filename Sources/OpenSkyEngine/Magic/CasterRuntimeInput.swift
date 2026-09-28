@@ -23,6 +23,7 @@
 // Documented in docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyGameData
 
 /// One frame of cast intent, filled from the same drained camera input
 /// `MeleeIntent` and `ArcheryIntent` are.

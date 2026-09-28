@@ -14,6 +14,7 @@
 // accident.
 
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

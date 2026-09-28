@@ -38,6 +38,7 @@
 // Documented in docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
@@ -132,7 +133,7 @@ public final class CasterRuntime {
     public static let maximumApplicationsPerAdvance = ActiveEffectRuntime.maximumStepsPerAdvance
 
     public let spellbook: SpellbookRuntime
-    public let values: ActorValueRuntime
+    public let values: any ActorValueAccess
     /// What the loop did and declined to do. Not `private(set)`: the ability
     /// half lives in `CasterRuntimeAbilities.swift` and a file-private setter
     /// would put it out of reach there, the same reason
@@ -169,7 +170,7 @@ public final class CasterRuntime {
 
     public init(
         spellbook: SpellbookRuntime,
-        values: ActorValueRuntime,
+        values: any ActorValueAccess,
         world: (any CasterWorld)? = nil
     ) {
         self.spellbook = spellbook

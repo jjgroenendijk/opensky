@@ -12,6 +12,7 @@
 // hostile. A pass that ran first would describe the previous frame's world.
 
 import AppKit
+import OpenSkyActorsInterface
 import OpenSkyDiagnostics
 import OpenSkyEngine
 import OpenSkyFormatsESM

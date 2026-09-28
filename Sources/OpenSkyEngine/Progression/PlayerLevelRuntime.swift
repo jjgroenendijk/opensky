@@ -36,7 +36,9 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 /// What one award of character experience did.
@@ -82,12 +84,12 @@ public typealias PlayerProgressResult = Result<PlayerProgressState, PlayerProgre
 public struct PlayerLevelRuntime {
     /// The read and write surface for the attribute pick and the carry-weight
     /// bonus that rides with a stamina pick.
-    public let values: ActorValueRuntime
+    public let values: any ActorValueAccess
     /// The resolved level curve and level-up rewards.
     public var settings: CharacterLevelSettings
 
     public init(
-        values: ActorValueRuntime,
+        values: any ActorValueAccess,
         settings: CharacterLevelSettings = .documentedDefaults
     ) {
         self.values = values

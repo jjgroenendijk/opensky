@@ -12,9 +12,12 @@
 // 15.4 promoted the queue to allow.
 
 import AppKit
+import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState

@@ -10,6 +10,7 @@
 // second implementation of it.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

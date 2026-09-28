@@ -4,6 +4,7 @@
 // whenever a component kind is added: both assert against `allKinds`, so a new
 // kind fails here until it is storable, readable and resettable.
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

@@ -27,7 +27,9 @@
 // Documented in docs/engine/papyrus-actor-natives.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Which of the three base-and-modifier writes a script asked for (issue #496,
 /// roadmap item 20.3).

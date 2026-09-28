@@ -23,6 +23,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState

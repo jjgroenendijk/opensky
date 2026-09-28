@@ -36,6 +36,7 @@
 import Foundation
 import Metal
 import MetalKit
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics

@@ -27,6 +27,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 /// One actor's current primary values, plus whatever it has stored for the

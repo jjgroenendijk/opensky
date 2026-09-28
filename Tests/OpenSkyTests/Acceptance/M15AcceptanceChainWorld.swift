@@ -15,6 +15,8 @@
 // resolving a SNDR here would need the install, which the headless half of the
 // gate does not have.
 
+@testable import OpenSkyActors
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
