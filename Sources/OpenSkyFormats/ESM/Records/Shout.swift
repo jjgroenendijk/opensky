@@ -22,31 +22,31 @@
 
 import Foundation
 
-nonisolated package struct Shout: Equatable {
+nonisolated public struct Shout: Equatable, Sendable {
     /// One SNAM entry: 12 bytes, word FormID, spell FormID, recovery time.
     /// Both links are nil when the entry is the all-zero placeholder a
     /// non-shout power stores.
-    package struct Word: Equatable {
-        package let word: FormID?
-        package let spell: FormID?
-        package let recoveryTime: Float
+    public struct Word: Equatable, Sendable {
+        public let word: FormID?
+        public let spell: FormID?
+        public let recoveryTime: Float
     }
 
     /// SNAM is a fixed 12-byte struct (UESP; xEdit `wbStruct(SNAM, ...)`).
-    package static let wordEntrySize = 12
+    public static let wordEntrySize = 12
 
-    package let formID: FormID
-    package let editorID: String?
-    package let name: LString?
+    public let formID: FormID
+    public let editorID: String?
+    public let name: LString?
     /// MDOB — the STAT shown in the menu for this shout.
-    package let menuDisplayObject: FormID?
-    package let description: LString?
+    public let menuDisplayObject: FormID?
+    public let description: LString?
     /// The SNAM run in record order; the order is the unlock order in the
     /// original engine, so it is preserved rather than sorted.
-    package let words: [Word]
-    package let skipped: ReferenceRecordTally
+    public let words: [Word]
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "SHOU" else {
             throw ESMError.malformed("expected SHOU record, got \(record.type)")
         }

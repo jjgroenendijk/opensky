@@ -10,6 +10,7 @@
 // published layouts (AGENTS.md "Legal & IP boundary"), and nothing here needs a
 // Metal device or an install.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

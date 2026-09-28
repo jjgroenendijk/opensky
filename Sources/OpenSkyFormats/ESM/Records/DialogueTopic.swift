@@ -9,8 +9,8 @@
 
 import Foundation
 
-nonisolated package struct DialogueTopic {
-    package enum Category: Equatable {
+nonisolated public struct DialogueTopic: Sendable {
+    public enum Category: Equatable, Sendable {
         case player
         case favor
         case scene
@@ -21,7 +21,7 @@ nonisolated package struct DialogueTopic {
         case miscellaneous
         case unknown(UInt8)
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .player
             case 1: self = .favor
@@ -36,24 +36,24 @@ nonisolated package struct DialogueTopic {
         }
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// FULL, the player's topic text.
-    package let name: LString?
-    package let priority: Float
-    package let owningBranch: FormID?
-    package let owningQuest: FormID?
-    package let doAllBeforeRepeating: Bool
-    package let category: Category
+    public let name: LString?
+    public let priority: Float
+    public let owningBranch: FormID?
+    public let owningQuest: FormID?
+    public let doAllBeforeRepeating: Bool
+    public let category: Category
     /// DATA's uint16 subtype. Kept for old records; `subtype` is reliable.
-    package let legacySubtype: UInt16
+    public let legacySubtype: UInt16
     /// SNAM, the authoritative four-character subtype such as HELO or CUST.
-    package let subtype: FourCC?
+    public let subtype: FourCC?
     /// TIFC, an allocation hint only. The store trusts the group contents.
-    package let declaredInfoCount: Int?
-    package let skipped: DialogueTally
+    public let declaredInfoCount: Int?
+    public let skipped: DialogueTally
 
-    package init(record: ESMRecord, localized: Bool = false) throws {
+    public init(record: ESMRecord, localized: Bool = false) throws {
         guard record.type == "DIAL" else {
             throw ESMError.malformed("expected DIAL record, got \(record.type)")
         }
@@ -77,21 +77,21 @@ nonisolated package struct DialogueTopic {
 }
 
 nonisolated extension DialogueTopic {
-    package struct Contents {
-        package let localized: Bool
-        package var editorID: String?
-        package var name: LString?
-        package var priority: Float = 0
-        package var owningBranch: FormID?
-        package var owningQuest: FormID?
-        package var doAllBeforeRepeating = false
-        package var category = Category.player
-        package var legacySubtype: UInt16 = 0
-        package var subtype: FourCC?
-        package var declaredInfoCount: Int?
-        package var tally = DialogueTally()
+    public struct Contents: Sendable {
+        public let localized: Bool
+        public var editorID: String?
+        public var name: LString?
+        public var priority: Float = 0
+        public var owningBranch: FormID?
+        public var owningQuest: FormID?
+        public var doAllBeforeRepeating = false
+        public var category = Category.player
+        public var legacySubtype: UInt16 = 0
+        public var subtype: FourCC?
+        public var declaredInfoCount: Int?
+        public var tally = DialogueTally()
 
-        package mutating func decode(field: ESMField) {
+        public mutating func decode(field: ESMField) {
             do {
                 if try decodeKnown(field: field) {
                     return

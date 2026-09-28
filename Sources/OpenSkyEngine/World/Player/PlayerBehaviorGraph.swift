@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated enum PlayerBehaviorGraphError: LocalizedError, Equatable {
     case missing(String)

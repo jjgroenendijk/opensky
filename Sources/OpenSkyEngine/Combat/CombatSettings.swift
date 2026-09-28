@@ -38,6 +38,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated struct CombatSettings: Equatable {
     /// `fCombatDistance` — the base melee reach in world units, which WEAP

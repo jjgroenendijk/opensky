@@ -1,6 +1,7 @@
 // Unit tests for BinaryWriter byte ordering, string encoding, and round-trip
 // through BinaryReader.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

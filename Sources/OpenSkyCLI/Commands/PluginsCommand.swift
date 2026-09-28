@@ -5,6 +5,7 @@
 // of it.
 
 import Foundation
+import OpenSkyGameData
 
 enum PluginsCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

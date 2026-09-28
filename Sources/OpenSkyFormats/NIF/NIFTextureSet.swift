@@ -11,20 +11,20 @@
 
 import Foundation
 
-nonisolated package struct NIFShaderTextureSet {
+nonisolated public struct NIFShaderTextureSet: Sendable {
     /// Raw path strings in slot order, exactly as stored (lossy cp1252-style
     /// decode, same rationale as header strings).
-    package let paths: [String]
+    public let paths: [String]
 
-    package var diffusePath: String? {
+    public var diffusePath: String? {
         !paths.isEmpty ? Self.vfsKey(for: paths[0]) : nil
     }
 
-    package var normalPath: String? {
+    public var normalPath: String? {
         paths.count > 1 ? Self.vfsKey(for: paths[1]) : nil
     }
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         _ = header // layout is stream-independent at 20.2.0.7
         var reader = BinaryReader(data)
         let count = try Int(reader.readUInt32())
@@ -50,7 +50,7 @@ nonisolated package struct NIFShaderTextureSet {
     /// resolver): vanilla meshes ship exporter-absolute paths like
     /// `textures/skyrimhd/build/pc/data/textures/clutter/…/carrot.dds`, and
     /// the game still finds `textures/clutter/…/carrot.dds`.
-    package static func vfsKey(for raw: String) -> String? {
+    public static func vfsKey(for raw: String) -> String? {
         var path = raw.lowercased()
             .replacingOccurrences(of: "\\", with: "/")
             .trimmingCharacters(in: .whitespaces)

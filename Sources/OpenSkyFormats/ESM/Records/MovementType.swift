@@ -22,26 +22,26 @@
 
 import Foundation
 
-nonisolated package struct MovementType: Equatable {
+nonisolated public struct MovementType: Equatable, Sendable {
     /// The SPED struct: eight directional speeds in units per second followed
     /// by three rotation speeds in radians per second. Every slot is kept even
     /// where the bridge reads only the forward pair, because dropping fields at
     /// decode time is how a later consumer ends up re-parsing the record.
-    package struct Speeds: Equatable {
-        package let leftWalk: Float
-        package let leftRun: Float
-        package let rightWalk: Float
-        package let rightRun: Float
-        package let forwardWalk: Float
-        package let forwardRun: Float
-        package let backWalk: Float
-        package let backRun: Float
-        package let rotateInPlaceWalk: Float
-        package let rotateInPlaceRun: Float
-        package let rotateWhileMovingRun: Float
+    public struct Speeds: Equatable, Sendable {
+        public let leftWalk: Float
+        public let leftRun: Float
+        public let rightWalk: Float
+        public let rightRun: Float
+        public let forwardWalk: Float
+        public let forwardRun: Float
+        public let backWalk: Float
+        public let backRun: Float
+        public let rotateInPlaceWalk: Float
+        public let rotateInPlaceRun: Float
+        public let rotateWhileMovingRun: Float
 
         /// The 11 floats in file order, for round-trip tests and reporting.
-        package var values: [Float] {
+        public var values: [Float] {
             [
                 leftWalk, leftRun, rightWalk, rightRun,
                 forwardWalk, forwardRun, backWalk, backRun,
@@ -49,12 +49,12 @@ nonisolated package struct MovementType: Equatable {
             ]
         }
 
-        package static let floatCount = 11
+        public static let floatCount = 11
 
         /// Decodes SPED, or nil when the field is short. A truncated struct is
         /// dropped whole rather than zero-padded: a half-read speed would read
         /// as a legitimate "this actor cannot move".
-        package init?(field data: Data) {
+        public init?(field data: Data) {
             var reader = BinaryReader(data)
             var floats: [Float] = []
             floats.reserveCapacity(Self.floatCount)
@@ -66,7 +66,7 @@ nonisolated package struct MovementType: Equatable {
         }
 
         /// Builds from 11 file-order floats; nil for any other count.
-        package init?(values: [Float]) {
+        public init?(values: [Float]) {
             guard values.count == Self.floatCount else { return nil }
             leftWalk = values[0]
             leftRun = values[1]
@@ -82,15 +82,15 @@ nonisolated package struct MovementType: Equatable {
         }
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// MNAM — the name the behavior graph and the Creation Kit show. Distinct
     /// from EDID in vanilla (`NPC_Sneaking_MT` is named `NPCSneaking`).
-    package let name: String?
+    public let name: String?
     /// SPED. Nil when the record carries none or carries a truncated one.
-    package let speeds: Speeds?
+    public let speeds: Speeds?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "MOVT" else {
             throw ESMError.malformed("expected MOVT record, got \(record.type)")
         }
@@ -121,7 +121,7 @@ nonisolated package struct MovementType: Equatable {
 
     /// Synthetic movement type, for tests and for defaults assembled without a
     /// plugin.
-    package init(formID: FormID, editorID: String?, name: String? = nil, speeds: Speeds?) {
+    public init(formID: FormID, editorID: String?, name: String? = nil, speeds: Speeds?) {
         self.formID = formID
         self.editorID = editorID
         self.name = name
@@ -136,38 +136,38 @@ nonisolated package struct MovementType: Equatable {
 /// Editor-ID lookup is case-insensitive for the same reason the global index
 /// is: the names travel through data files and console commands, where Skyrim
 /// has never cared about case.
-nonisolated package struct MovementTypeStore: Equatable {
-    package private(set) var types: [String: MovementType] = [:]
+nonisolated public struct MovementTypeStore: Equatable, Sendable {
+    public private(set) var types: [String: MovementType] = [:]
 
-    package static let empty = MovementTypeStore(types: [:])
+    public static let empty = MovementTypeStore(types: [:])
 
     private init(types: [String: MovementType]) {
         self.types = types
     }
 
-    package init(plugins: [(name: String, file: ESMFile)]) {
+    public init(plugins: [(name: String, file: ESMFile)]) {
         for plugin in plugins {
             add(file: plugin.file)
         }
     }
 
-    package func type(editorID: String) -> MovementType? {
+    public func type(editorID: String) -> MovementType? {
         types[editorID.lowercased()]
     }
 
     /// The forward speeds of one movement type, or nil when the record or its
     /// SPED is missing.
-    package func forwardSpeeds(editorID: String) -> (walk: Float, run: Float)? {
+    public func forwardSpeeds(editorID: String) -> (walk: Float, run: Float)? {
         guard let speeds = type(editorID: editorID)?.speeds else { return nil }
         return (speeds.forwardWalk, speeds.forwardRun)
     }
 
     /// Editor IDs of the four gaits the player uses, as vanilla names them.
-    package enum PlayerGait {
-        package static let normal = "NPC_Default_MT"
-        package static let sneaking = "NPC_Sneaking_MT"
-        package static let sprinting = "NPC_Sprinting_MT"
-        package static let swimming = "NPC_Swimming_MT"
+    public enum PlayerGait: Sendable {
+        public static let normal = "NPC_Default_MT"
+        public static let sneaking = "NPC_Sneaking_MT"
+        public static let sprinting = "NPC_Sprinting_MT"
+        public static let swimming = "NPC_Swimming_MT"
     }
 
     private mutating func add(file: ESMFile) {

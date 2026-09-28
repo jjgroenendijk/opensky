@@ -1,6 +1,7 @@
 // MATT decoding and the two lookups into it (issue #358): a NIF's Havok
 // material value, and an LTEX's MNAM. Synthetic records only.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

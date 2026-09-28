@@ -1,5 +1,6 @@
 // M11.1 headless acceptance: native dispatch, latency, fallback, determinism.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

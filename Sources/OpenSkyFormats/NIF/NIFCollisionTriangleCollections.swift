@@ -10,16 +10,16 @@
 import Foundation
 import simd
 
-nonisolated package enum NIFCollisionTriangleCollections {
-    package struct Soup {
-        package let vertices: [SIMD3<Float>]
-        package let indices: [UInt32]
+nonisolated public enum NIFCollisionTriangleCollections: Sendable {
+    public struct Soup: Sendable {
+        public let vertices: [SIMD3<Float>]
+        public let indices: [UInt32]
         /// `SkyrimHavokMaterial` for this soup's surface (issue #358), from the
         /// sub-shape the triangles belong to. Nil when the block declares no
         /// sub-shapes to take it from.
-        package let material: UInt32?
+        public let material: UInt32?
 
-        package init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
+        public init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
             self.vertices = vertices
             self.indices = indices
             self.material = material
@@ -36,7 +36,7 @@ nonisolated package enum NIFCollisionTriangleCollections {
     /// each sub-shape names its own material. The soups this returns are that
     /// partition: one per sub-shape that any triangle actually falls in, in
     /// sub-shape order, sharing the block's single vertex array.
-    package static func decodePacked(data: Data, scale: SIMD3<Float>) throws -> [Soup] {
+    public static func decodePacked(data: Data, scale: SIMD3<Float>) throws -> [Soup] {
         var reader = BinaryReader(data)
         let triangleCount = try checkedCount(
             reader: &reader,
@@ -143,7 +143,7 @@ nonisolated package enum NIFCollisionTriangleCollections {
         }
     }
 
-    package static func appendValidated(
+    public static func appendValidated(
         _ triangle: [UInt16],
         vertexCount: Int,
         into output: inout [UInt32]
@@ -154,7 +154,7 @@ nonisolated package enum NIFCollisionTriangleCollections {
         output.append(contentsOf: triangle.map(UInt32.init))
     }
 
-    package static func skip(
+    public static func skip(
         reader: inout BinaryReader,
         count: Int,
         stride: Int,
@@ -166,7 +166,7 @@ nonisolated package enum NIFCollisionTriangleCollections {
         reader.skip(count * stride)
     }
 
-    package static func checkedCount(
+    public static func checkedCount(
         reader: inout BinaryReader,
         stride: Int,
         label: String

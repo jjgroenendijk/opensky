@@ -28,7 +28,7 @@ import Foundation
 /// rather than paraphrasing: "Aggressive: will attack Enemies on sight. Very
 /// Aggressive: will attack Enemies and Neutrals on sight. Frenzied: will attack
 /// anyone on sight."
-nonisolated package enum ActorAggression: Equatable, Sendable, CustomStringConvertible {
+nonisolated public enum ActorAggression: Equatable, Sendable, CustomStringConvertible {
     case unaggressive
     case aggressive
     case veryAggressive
@@ -38,7 +38,7 @@ nonisolated package enum ActorAggression: Equatable, Sendable, CustomStringConve
     /// clamping would silently turn it into a real setting.
     case unknown(raw: UInt8)
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         switch rawValue {
         case 0: self = .unaggressive
         case 1: self = .aggressive
@@ -48,7 +48,7 @@ nonisolated package enum ActorAggression: Equatable, Sendable, CustomStringConve
         }
     }
 
-    package var rawValue: UInt8 {
+    public var rawValue: UInt8 {
         switch self {
         case .unaggressive: 0
         case .aggressive: 1
@@ -58,7 +58,7 @@ nonisolated package enum ActorAggression: Equatable, Sendable, CustomStringConve
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .unaggressive: "unaggressive"
         case .aggressive: "aggressive"
@@ -75,7 +75,7 @@ nonisolated package enum ActorAggression: Equatable, Sendable, CustomStringConve
 /// "Cowardly actors NEVER engage in combat" is about *engaging*, not about
 /// regard, and this engine's two-case `ActorHostility` records regard alone.
 /// Whoever wires fleeing reads it from here rather than re-decoding the byte.
-nonisolated package enum ActorConfidence: Equatable, Sendable, CustomStringConvertible {
+nonisolated public enum ActorConfidence: Equatable, Sendable, CustomStringConvertible {
     case cowardly
     case cautious
     case average
@@ -83,7 +83,7 @@ nonisolated package enum ActorConfidence: Equatable, Sendable, CustomStringConve
     case foolhardy
     case unknown(raw: UInt8)
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         switch rawValue {
         case 0: self = .cowardly
         case 1: self = .cautious
@@ -94,7 +94,7 @@ nonisolated package enum ActorConfidence: Equatable, Sendable, CustomStringConve
         }
     }
 
-    package var rawValue: UInt8 {
+    public var rawValue: UInt8 {
         switch self {
         case .cowardly: 0
         case .cautious: 1
@@ -105,7 +105,7 @@ nonisolated package enum ActorConfidence: Equatable, Sendable, CustomStringConve
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .cowardly: "cowardly"
         case .cautious: "cautious"
@@ -118,13 +118,13 @@ nonisolated package enum ActorConfidence: Equatable, Sendable, CustomStringConve
 }
 
 /// AIDT offset 5. Whom the actor joins a fight for.
-nonisolated package enum ActorAssistance: Equatable, Sendable, CustomStringConvertible {
+nonisolated public enum ActorAssistance: Equatable, Sendable, CustomStringConvertible {
     case helpsNobody
     case helpsAllies
     case helpsFriendsAndAllies
     case unknown(raw: UInt8)
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         switch rawValue {
         case 0: self = .helpsNobody
         case 1: self = .helpsAllies
@@ -133,7 +133,7 @@ nonisolated package enum ActorAssistance: Equatable, Sendable, CustomStringConve
         }
     }
 
-    package var rawValue: UInt8 {
+    public var rawValue: UInt8 {
         switch self {
         case .helpsNobody: 0
         case .helpsAllies: 1
@@ -142,7 +142,7 @@ nonisolated package enum ActorAssistance: Equatable, Sendable, CustomStringConve
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .helpsNobody: "helps nobody"
         case .helpsAllies: "helps allies"
@@ -154,14 +154,14 @@ nonisolated package enum ActorAssistance: Equatable, Sendable, CustomStringConve
 
 /// AIDT offset 3. Which crimes the actor will commit on the player's orders.
 /// Decoded for completeness and for the crime work of issues #504 and #505.
-nonisolated package enum ActorMorality: Equatable, Sendable, CustomStringConvertible {
+nonisolated public enum ActorMorality: Equatable, Sendable, CustomStringConvertible {
     case anyCrime
     case violenceAgainstEnemies
     case propertyCrimeOnly
     case noCrime
     case unknown(raw: UInt8)
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         switch rawValue {
         case 0: self = .anyCrime
         case 1: self = .violenceAgainstEnemies
@@ -171,7 +171,7 @@ nonisolated package enum ActorMorality: Equatable, Sendable, CustomStringConvert
         }
     }
 
-    package var rawValue: UInt8 {
+    public var rawValue: UInt8 {
         switch self {
         case .anyCrime: 0
         case .violenceAgainstEnemies: 1
@@ -181,7 +181,7 @@ nonisolated package enum ActorMorality: Equatable, Sendable, CustomStringConvert
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .anyCrime: "any crime"
         case .violenceAgainstEnemies: "violence against enemies"
@@ -198,38 +198,38 @@ nonisolated package enum ActorMorality: Equatable, Sendable, CustomStringConvert
 /// FACT structs beside it follow: a plugin that writes a shorter AIDT keeps the
 /// bytes it did author and loses only the aggro radii, instead of failing the
 /// record. Every field past offset 7 is optional for that reason.
-nonisolated package struct ActorAIData: Equatable, Sendable {
+nonisolated public struct ActorAIData: Equatable, Sendable {
     /// Offsets 0...5 plus the two flag bytes. A record shorter than this has no
     /// readable AI data at all.
-    package static let requiredByteCount = 8
-    package static let byteCount = 20
+    public static let requiredByteCount = 8
+    public static let byteCount = 20
 
-    package let aggression: ActorAggression
-    package let confidence: ActorConfidence
+    public let aggression: ActorAggression
+    public let confidence: ActorConfidence
     /// Offset 2. How often a sandboxing actor moves, 0...100. Not an AI
     /// attribute the derivation reads.
-    package let energy: UInt8
-    package let morality: ActorMorality
+    public let energy: UInt8
+    public let morality: ActorMorality
     /// Offset 4. The Creation Kit wiki calls Mood "Not used", so it is kept
     /// verbatim and never interpreted.
-    package let mood: UInt8
-    package let assistance: ActorAssistance
+    public let mood: UInt8
+    public let assistance: ActorAssistance
     /// Offset 6 bit 0, which the Creation Kit calls "Aggro Radius Behavior" and
     /// which is what enables the three distances below.
-    package let usesAggroRadiusBehavior: Bool
+    public let usesAggroRadiusBehavior: Bool
     /// Offset 7. xEdit names it "Unused" and UESP observes junk in it, so it is
     /// kept verbatim rather than read as anything.
-    package let unknown: UInt8
-    package let warnDistance: UInt32?
-    package let warnOrAttackDistance: UInt32?
-    package let attackDistance: UInt32?
+    public let unknown: UInt8
+    public let warnDistance: UInt32?
+    public let warnOrAttackDistance: UInt32?
+    public let attackDistance: UInt32?
 
     /// The value an actor whose record authors no AIDT reads as.
     ///
     /// Unaggressive rather than aggressive: a record with no AI data has said
     /// nothing about starting fights, and inventing a willingness to attack out
     /// of an absent field is exactly the guess this engine refuses to make.
-    package static let absent = ActorAIData(
+    public static let absent = ActorAIData(
         aggression: .unaggressive,
         confidence: .average,
         energy: 0,
@@ -243,7 +243,7 @@ nonisolated package struct ActorAIData: Equatable, Sendable {
         attackDistance: nil
     )
 
-    package init(
+    public init(
         aggression: ActorAggression,
         confidence: ActorConfidence,
         energy: UInt8,
@@ -269,7 +269,7 @@ nonisolated package struct ActorAIData: Equatable, Sendable {
         self.attackDistance = attackDistance
     }
 
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count >= Self.requiredByteCount else {
             throw ESMError.malformed(
                 "NPC_ AIDT has \(field.data.count) bytes,"

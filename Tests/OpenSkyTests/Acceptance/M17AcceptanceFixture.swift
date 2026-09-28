@@ -26,6 +26,7 @@
 // The plugin is keyed under `PapyrusWorldFixture.pluginName` so an INFO's
 // `ReferenceKey` matches the Papyrus instance key its result script runs under.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

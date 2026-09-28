@@ -9,9 +9,11 @@
 // `CharacterLevelingRealDataTests` is what checks the install still authors the
 // two settings this suite assumes.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct CharacterLevelingTests {

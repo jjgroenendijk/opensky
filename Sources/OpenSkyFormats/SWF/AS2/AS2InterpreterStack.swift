@@ -8,7 +8,7 @@
 import Foundation
 
 nonisolated extension AS2Interpreter {
-    package func stackOp(_ record: SWFActionRecord, frame: AS2Frame) throws(AS2Fault) -> AS2Flow? {
+    public func stackOp(_ record: SWFActionRecord, frame: AS2Frame) throws(AS2Fault) -> AS2Flow? {
         switch record.code {
         case AS2Opcode.push:
             guard case let .push(values) = record.operands else {
@@ -48,7 +48,7 @@ nonisolated extension AS2Interpreter {
     /// Turns one parsed `ActionPush` literal into a runtime value. Register and
     /// constant-pool references resolve against the frame, so the same record
     /// pushed inside two different functions reads two different values.
-    package func resolve(_ value: SWFActionValue, frame: AS2Frame) -> AS2Value {
+    public func resolve(_ value: SWFActionValue, frame: AS2Frame) -> AS2Value {
         switch value {
         case let .string(text): .string(text)
         case let .float(number): .number(Double(number))

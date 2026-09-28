@@ -44,6 +44,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// The four game settings character leveling reads, resolved once.
 ///

@@ -14,69 +14,68 @@
 // Layout documented in docs/formats/nif.md.
 
 import Foundation
-import OpenSkyShaderTypes
 import simd
 
-nonisolated package struct NIFTriShape {
+nonisolated public struct NIFTriShape: Sendable {
     /// nif.xml VertexAttribute bits, stored at bits 44+ of BSVertexDesc.
-    package struct VertexAttributes: OptionSet {
-        package let rawValue: UInt16
+    public struct VertexAttributes: OptionSet, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
-        package static let vertex = Self(rawValue: 1 << 0)
-        package static let uvs = Self(rawValue: 1 << 1)
-        package static let uvs2 = Self(rawValue: 1 << 2)
-        package static let normals = Self(rawValue: 1 << 3)
-        package static let tangents = Self(rawValue: 1 << 4)
-        package static let vertexColors = Self(rawValue: 1 << 5)
-        package static let skinned = Self(rawValue: 1 << 6)
-        package static let landData = Self(rawValue: 1 << 7)
-        package static let eyeData = Self(rawValue: 1 << 8)
-        package static let instance = Self(rawValue: 1 << 9)
+        public static let vertex = Self(rawValue: 1 << 0)
+        public static let uvs = Self(rawValue: 1 << 1)
+        public static let uvs2 = Self(rawValue: 1 << 2)
+        public static let normals = Self(rawValue: 1 << 3)
+        public static let tangents = Self(rawValue: 1 << 4)
+        public static let vertexColors = Self(rawValue: 1 << 5)
+        public static let skinned = Self(rawValue: 1 << 6)
+        public static let landData = Self(rawValue: 1 << 7)
+        public static let eyeData = Self(rawValue: 1 << 8)
+        public static let instance = Self(rawValue: 1 << 9)
         /// Ignored by the SSE record layout: positions are always full floats.
-        package static let fullPrecision = Self(rawValue: 1 << 10)
+        public static let fullPrecision = Self(rawValue: 1 << 10)
     }
 
-    package let object: NIFObjectPrefix
+    public let object: NIFObjectPrefix
     /// nif.xml NiBound: precomputed culling sphere in shape-local space.
-    package let boundingSphereCenter: SIMD3<Float>
-    package let boundingSphereRadius: Float
+    public let boundingSphereCenter: SIMD3<Float>
+    public let boundingSphereRadius: Float
     /// -1 = static geometry; >= 0 links a skin instance.
-    package let skinRef: Int32
-    package let shaderPropertyRef: Int32
-    package let alphaPropertyRef: Int32
-    package let attributes: VertexAttributes
+    public let skinRef: Int32
+    public let shaderPropertyRef: Int32
+    public let alphaPropertyRef: Int32
+    public let attributes: VertexAttributes
     /// Header count retained even when Data Size is zero; BSDynamicTriShape
     /// validates its appended Vector4 array against this value.
-    package let vertexCount: Int
-    package let positions: [SIMD3<Float>]
-    package let uvs: [SIMD2<Float>]
-    package let normals: [SIMD3<Float>]
-    package let tangents: [SIMD3<Float>]
+    public let vertexCount: Int
+    public let positions: [SIMD3<Float>]
+    public let uvs: [SIMD2<Float>]
+    public let normals: [SIMD3<Float>]
+    public let tangents: [SIMD3<Float>]
     /// Assembled from the split storage (X beside position, Y beside normal,
     /// Z beside tangent); present only when all three attributes are.
-    package let bitangents: [SIMD3<Float>]
+    public let bitangents: [SIMD3<Float>]
     /// RGBA in [0, 1].
-    package let colors: [SIMD4<Float>]
+    public let colors: [SIMD4<Float>]
     /// Four linear-blend weights per vertex when the skinned flag is set.
-    package let boneWeights: [SIMD4<Float>]
+    public let boneWeights: [SIMD4<Float>]
     /// Partition-local bone palette indices; the skin resolver remaps these
     /// to NiSkinInstance bone indices before they reach engine geometry.
-    package let boneIndices: [SIMD4<UInt16>]
+    public let boneIndices: [SIMD4<UInt16>]
     /// Flat triangle list, three indices each, all < positions.count.
-    package let indices: [UInt16]
+    public let indices: [UInt16]
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         try self.init(reader: &reader, header: header)
     }
 
     /// Shared BSTriShape prefix reader. BSSubIndexTriShape appends segment
     /// records after this payload, so its decoder continues from same cursor.
-    package init(reader: inout BinaryReader, header: NIFHeader) throws {
+    public init(reader: inout BinaryReader, header: NIFHeader) throws {
         try Self.validateStream(header)
         object = try NIFObjectPrefix(reader: &reader, header: header)
 
@@ -171,18 +170,18 @@ nonisolated package struct NIFTriShape {
         return (arrays, indices)
     }
 
-    package struct VertexArrays {
-        package var positions: [SIMD3<Float>] = []
-        package var uvs: [SIMD2<Float>] = []
-        package var normals: [SIMD3<Float>] = []
-        package var tangents: [SIMD3<Float>] = []
-        package var bitangents: [SIMD3<Float>] = []
-        package var colors: [SIMD4<Float>] = []
-        package var boneWeights: [SIMD4<Float>] = []
-        package var boneIndices: [SIMD4<UInt16>] = []
+    public struct VertexArrays: Sendable {
+        public var positions: [SIMD3<Float>] = []
+        public var uvs: [SIMD2<Float>] = []
+        public var normals: [SIMD3<Float>] = []
+        public var tangents: [SIMD3<Float>] = []
+        public var bitangents: [SIMD3<Float>] = []
+        public var colors: [SIMD4<Float>] = []
+        public var boneWeights: [SIMD4<Float>] = []
+        public var boneIndices: [SIMD4<UInt16>] = []
     }
 
-    package static func readVertexRecords(
+    public static func readVertexRecords(
         _ reader: inout BinaryReader,
         attributes: VertexAttributes,
         count: Int
@@ -265,7 +264,7 @@ nonisolated package struct NIFTriShape {
     /// Per-vertex byte stride the attribute flags imply (BSVertexDataSSE
     /// field conditions; position block is 16 bytes with either bitangent X
     /// or unused W as its fourth component).
-    package static func stride(for attributes: VertexAttributes) -> Int {
+    public static func stride(for attributes: VertexAttributes) -> Int {
         var stride = 0
         if attributes.contains(.vertex) {
             stride += 16
@@ -328,7 +327,7 @@ nonisolated extension NIFTriShape {
 
     /// BSDynamicTriShape keeps its current positions in an appended Vector4
     /// array. All other vertex attributes remain in inherited BSTriShape.
-    package init(replacingPositions positions: [SIMD3<Float>], in source: NIFTriShape) {
+    public init(replacingPositions positions: [SIMD3<Float>], in source: NIFTriShape) {
         object = source.object
         boundingSphereCenter = source.boundingSphereCenter
         boundingSphereRadius = source.boundingSphereRadius

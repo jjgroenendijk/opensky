@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated private struct FaceMorphAssociationState {
     var bindings: [ObjectIdentifier: FaceMorphBuffer] = [:]

@@ -9,28 +9,28 @@
 
 import Foundation
 
-nonisolated package struct SWFMovieDecoder {
-    package let version: UInt8
-    package let jpegTables: Data?
-    package var characters: [UInt16: SWFCharacter] = [:]
-    package var importedNames: [UInt16: String] = [:]
+nonisolated public struct SWFMovieDecoder: Sendable {
+    public let version: UInt8
+    public let jpegTables: Data?
+    public var characters: [UInt16: SWFCharacter] = [:]
+    public var importedNames: [UInt16: String] = [:]
     /// Every ImportAssets/ImportAssets2 tag with its source movie URL, in tag
     /// order. `importedNames` loses the URL, and resolving a non-font import
     /// needs it.
-    package var imports: [SWFImportedAssets] = []
-    package var exportedNames: [String: UInt16] = [:]
-    package var initActions: [SWFDoInitAction] = []
-    package var timeline: SWFTimelineDecoder
+    public var imports: [SWFImportedAssets] = []
+    public var exportedNames: [String: UInt16] = [:]
+    public var initActions: [SWFDoInitAction] = []
+    public var timeline: SWFTimelineDecoder
     /// Display-list and action counters summed over every sprite.
-    package var spriteTally = SWFMovieTally()
+    public var spriteTally = SWFMovieTally()
 
-    package init(version: UInt8, jpegTables: Data?) {
+    public init(version: UInt8, jpegTables: Data?) {
         self.version = version
         self.jpegTables = jpegTables
         timeline = SWFTimelineDecoder(version: version)
     }
 
-    package mutating func run(tags: [SWFTag]) throws {
+    public mutating func run(tags: [SWFTag]) throws {
         for tag in tags {
             try decodeDefinition(tag)
             timeline.accept(tag)

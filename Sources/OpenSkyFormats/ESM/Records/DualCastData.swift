@@ -16,42 +16,42 @@
 
 import Foundation
 
-nonisolated package struct DualCastData: Equatable {
+nonisolated public struct DualCastData: Equatable, Sendable {
     /// DATA's uint32 inherit-scale flags, in the xEdit bit order.
-    package struct InheritScale: OptionSet, Equatable {
-        package let rawValue: UInt32
+    public struct InheritScale: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let hitEffectArt = InheritScale(rawValue: 0x01)
-        package static let projectile = InheritScale(rawValue: 0x02)
-        package static let explosion = InheritScale(rawValue: 0x04)
+        public static let hitEffectArt = InheritScale(rawValue: 0x01)
+        public static let projectile = InheritScale(rawValue: 0x02)
+        public static let explosion = InheritScale(rawValue: 0x04)
     }
 
     /// The five links plus the flag word, in DATA order.
-    package struct Art: Equatable {
-        package let projectile: FormID?
-        package let explosion: FormID?
-        package let effectShader: FormID?
-        package let hitEffectArt: FormID?
-        package let impactDataSet: FormID?
-        package let inheritScale: InheritScale
+    public struct Art: Equatable, Sendable {
+        public let projectile: FormID?
+        public let explosion: FormID?
+        public let effectShader: FormID?
+        public let hitEffectArt: FormID?
+        public let impactDataSet: FormID?
+        public let inheritScale: InheritScale
     }
 
     /// DATA is a fixed 24-byte struct: five FormIDs then a uint32 flag word.
-    package static let dataSize = 24
+    public static let dataSize = 24
 
-    package let formID: FormID
-    package let editorID: String?
-    package let bounds: ObjectBounds?
+    public let formID: FormID
+    public let editorID: String?
+    public let bounds: ObjectBounds?
     /// DATA. Nil when the field is absent or too short, so a malformed art
     /// block does not discard the record's identity.
-    package let art: Art?
-    package let skipped: ReferenceRecordTally
+    public let art: Art?
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "DUAL" else {
             throw ESMError.malformed("expected DUAL record, got \(record.type)")
         }

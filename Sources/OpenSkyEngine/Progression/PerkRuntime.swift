@@ -27,6 +27,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// What one seeding pass did.
 nonisolated struct PerkSeedReport: Equatable, Sendable {

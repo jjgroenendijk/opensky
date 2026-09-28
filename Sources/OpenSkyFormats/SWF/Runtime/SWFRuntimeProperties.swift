@@ -18,9 +18,9 @@ import Foundation
 
 nonisolated extension SWFMovieRuntime {
     /// Twips per pixel (SWF spec chapter 1: a twip is 1/20 of a pixel).
-    package static let twipsPerPixel: Float = 20
+    public static let twipsPerPixel: Float = 20
 
-    package func displayProperty(
+    public func displayProperty(
         _ property: AS2DisplayProperty,
         of node: SWFDisplayObject
     ) -> AS2Value {
@@ -79,7 +79,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     @discardableResult
-    package func setDisplayProperty(
+    public func setDisplayProperty(
         _ property: AS2DisplayProperty,
         of node: SWFDisplayObject,
         to value: AS2Value
@@ -137,20 +137,20 @@ nonisolated extension SWFMovieRuntime {
     // MARK: - Matrix decomposition
 
     /// Length of the matrix's x basis vector, signed by `ScaleX`.
-    package static func horizontalScale(_ matrix: SWFMatrix) -> Float {
+    public static func horizontalScale(_ matrix: SWFMatrix) -> Float {
         let length = (matrix.scaleX * matrix.scaleX + matrix.rotateSkew0 * matrix.rotateSkew0)
             .squareRoot()
         return matrix.scaleX < 0 ? -length : length
     }
 
     /// Length of the matrix's y basis vector, signed by `ScaleY`.
-    package static func verticalScale(_ matrix: SWFMatrix) -> Float {
+    public static func verticalScale(_ matrix: SWFMatrix) -> Float {
         let length = (matrix.rotateSkew1 * matrix.rotateSkew1 + matrix.scaleY * matrix.scaleY)
             .squareRoot()
         return matrix.scaleY < 0 ? -length : length
     }
 
-    package static func rotationDegrees(_ matrix: SWFMatrix) -> Float {
+    public static func rotationDegrees(_ matrix: SWFMatrix) -> Float {
         guard matrix.scaleX != 0 || matrix.rotateSkew0 != 0 else {
             return 0
         }
@@ -204,7 +204,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// Pixels to twips, clamped into the `Int32` translation domain so a NaN or
     /// an astronomical assignment cannot trap.
-    package static func twips(_ pixels: Double) -> Int32 {
+    public static func twips(_ pixels: Double) -> Int32 {
         guard pixels.isFinite else {
             return 0
         }

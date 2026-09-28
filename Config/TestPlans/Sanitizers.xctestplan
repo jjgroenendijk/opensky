@@ -27,9 +27,14 @@
           "name" : "OpenSky"
         },
         {
-          "containerPath" : "container:OpenSky.xcodeproj",
-          "identifier" : "5AF000013000109300170010",
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormats",
           "name" : "OpenSkyFormats"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyGameData",
+          "name" : "OpenSkyGameData"
         }
       ]
     }
@@ -39,16 +44,24 @@
       "parallelizable" : true,
       "target" : {
         "containerPath" : "container:OpenSky.xcodeproj",
-        "identifier" : "5AF000013000109300170020",
+        "identifier" : "5A3BAE183000109300177F95",
+        "name" : "OpenSkyTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsTests",
         "name" : "OpenSkyFormatsTests"
       }
     },
     {
       "parallelizable" : true,
       "target" : {
-        "containerPath" : "container:OpenSky.xcodeproj",
-        "identifier" : "5A3BAE183000109300177F95",
-        "name" : "OpenSkyTests"
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyGameDataTests",
+        "name" : "OpenSkyGameDataTests"
       }
     }
   ],

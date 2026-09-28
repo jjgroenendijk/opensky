@@ -10,7 +10,7 @@
 
 import Foundation
 
-nonisolated package enum DDSError: Error, Equatable {
+nonisolated public enum DDSError: Error, Equatable, Sendable {
     /// Input violates the documented layout.
     case malformed(String)
     /// Valid DDS, but a variant OpenSky does not read (cubemap, volume,
@@ -20,7 +20,7 @@ nonisolated package enum DDSError: Error, Equatable {
 
 /// Texture formats OpenSky reads. Raw values match the closest DXGI_FORMAT
 /// UNORM code (dxgiformat.h) so probes print recognizable numbers.
-nonisolated package enum DDSPixelFormat: UInt32 {
+nonisolated public enum DDSPixelFormat: UInt32, Sendable {
     case bc1 = 71 // DXGI_FORMAT_BC1_UNORM, FourCC "DXT1"
     case bc2 = 74 // DXGI_FORMAT_BC2_UNORM, FourCC "DXT3"
     case bc3 = 77 // DXGI_FORMAT_BC3_UNORM, FourCC "DXT5"
@@ -31,7 +31,7 @@ nonisolated package enum DDSPixelFormat: UInt32 {
     case xrgb8888 = 88 // DXGI_FORMAT_B8G8R8X8_UNORM, legacy DDPF_RGB header
     case bc7 = 98 // DXGI_FORMAT_BC7_UNORM, DX10 header only
 
-    package var isBlockCompressed: Bool {
+    public var isBlockCompressed: Bool {
         switch self {
         case .rgba8888, .bgra8888, .xrgb8888: false
         default: true
@@ -39,12 +39,12 @@ nonisolated package enum DDSPixelFormat: UInt32 {
     }
 
     /// Texel width/height represented by one payload block.
-    package var blockDimension: Int {
+    public var blockDimension: Int {
         isBlockCompressed ? 4 : 1
     }
 
     /// Bytes per block: 4x4 for BCn, 1x1 for 32-bit RGB.
-    package var bytesPerBlock: Int {
+    public var bytesPerBlock: Int {
         switch self {
         case .bc1, .bc4: 8
         case .bc2, .bc3, .bc5, .bc7: 16
@@ -54,7 +54,7 @@ nonisolated package enum DDSPixelFormat: UInt32 {
 }
 
 /// Parsed 2D texture: dimensions, format, and a byte range per mip level.
-nonisolated package struct DDSFile {
+nonisolated public struct DDSFile: Sendable {
     private enum Layout {
         static let magic: FourCC = "DDS "
         static let headerSize: UInt32 = 124
@@ -108,19 +108,19 @@ nonisolated package struct DDSFile {
         let pixelFormat: PixelFormatHeader
     }
 
-    package let width: Int
-    package let height: Int
-    package let mipCount: Int
-    package let format: DDSPixelFormat
+    public let width: Int
+    public let height: Int
+    public let mipCount: Int
+    public let format: DDSPixelFormat
     /// DX10 header carried an `_SRGB` DXGI format. Advisory: the renderer
     /// picks color space per usage (diffuse sRGB, normal/data linear).
-    package let declaresSRGB: Bool
+    public let declaresSRGB: Bool
 
     private let data: Data
     /// Byte range of each mip level within `data`, largest level first.
     private let mipRanges: [Range<Int>]
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         self.data = data
         var reader = BinaryReader(data)
         let header = try Self.readHeader(reader: &reader)
@@ -358,16 +358,16 @@ nonisolated extension DDSFile {
 }
 
 nonisolated extension DDSFile {
-    package func width(level: Int) -> Int {
+    public func width(level: Int) -> Int {
         max(1, width >> level)
     }
 
-    package func height(level: Int) -> Int {
+    public func height(level: Int) -> Int {
         max(1, height >> level)
     }
 
     /// Payload bytes of one mip level.
-    package func mipData(level: Int) -> Data {
+    public func mipData(level: Int) -> Data {
         data.subdata(
             in: (data.startIndex + mipRanges[level].lowerBound)
                 ..< (data.startIndex + mipRanges[level].upperBound)
@@ -375,7 +375,7 @@ nonisolated extension DDSFile {
     }
 
     /// Bytes per row — `MTLTexture.replace` stride.
-    package func bytesPerRow(level: Int) -> Int {
+    public func bytesPerRow(level: Int) -> Int {
         let blockDimension = format.blockDimension
         return (width(level: level) + blockDimension - 1) / blockDimension
             * format.bytesPerBlock

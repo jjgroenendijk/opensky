@@ -18,18 +18,18 @@ import Foundation
 
 /// The back-pointer stored in `AS2Object.hostPayload`. Weak, because the
 /// display object owns its `AS2Object` and a strong pair would never be freed.
-nonisolated package final class SWFDisplayHandle {
-    package weak var target: SWFDisplayObject?
+nonisolated public final class SWFDisplayHandle {
+    public weak var target: SWFDisplayObject?
 
-    package init(_ target: SWFDisplayObject) {
+    public init(_ target: SWFDisplayObject) {
         self.target = target
     }
 }
 
 /// One node of the runtime display list.
-nonisolated package final class SWFDisplayObject {
+nonisolated public final class SWFDisplayObject {
     /// What the node draws. A clip draws nothing itself; its children do.
-    package enum Content: Equatable {
+    public enum Content: Equatable, Sendable {
         /// A sprite instance, or the root when the id is nil.
         case clip(UInt16?)
         case shape(UInt16)
@@ -37,45 +37,45 @@ nonisolated package final class SWFDisplayObject {
         case editText(UInt16)
     }
 
-    package let content: Content
+    public let content: Content
     /// The ActionScript face of this node. Its `hostPayload` is a
     /// `SWFDisplayHandle` pointing back here and its `typeOverride` is
     /// `"movieclip"` for clips.
-    package let object: AS2Object
+    public let object: AS2Object
 
-    package weak var parent: SWFDisplayObject?
-    package var depth: UInt16
+    public weak var parent: SWFDisplayObject?
+    public var depth: UInt16
     /// PlaceObject2 `Name` — the instance name ActionScript addresses.
-    package var name: String?
-    package var matrix = SWFMatrix.identity
-    package var colorTransform = SWFColorTransform.identity
+    public var name: String?
+    public var matrix = SWFMatrix.identity
+    public var colorTransform = SWFColorTransform.identity
     /// PlaceObject `ClipDepth`: this node masks depths (depth, clipDepth].
-    package var clipDepth: UInt16?
-    package var ratio: UInt16?
-    package var isVisible = true
+    public var clipDepth: UInt16?
+    public var ratio: UInt16?
+    public var isVisible = true
     /// Runtime text for an edit-text node, overriding the character's
     /// `InitialText`.
-    package var textOverride: String?
+    public var textOverride: String?
     /// CLIPACTIONS handlers the placement attached, if any. Parsed since
     /// milestone 8.3.1 and dispatched since phase 3.
-    package var clipActions: SWFClipActions?
+    public var clipActions: SWFClipActions?
 
     /// The sprite's frames; nil for a leaf.
-    package let timeline: SWFTimeline?
+    public let timeline: SWFTimeline?
     /// Declared frame count, at least 1 for a clip and 0 for a leaf.
-    package let frameCount: Int
+    public let frameCount: Int
     /// Zero-based playhead. -1 until the first frame executes.
-    package var currentFrame = -1
-    package var isPlaying = true
+    public var currentFrame = -1
+    public var isPlaying = true
 
     private var byDepth: [UInt16: SWFDisplayObject] = [:]
     private var sortedChildren: [SWFDisplayObject]?
 
     /// Guard against a malformed tree built by bytecode: no node may sit deeper
     /// than this below the root.
-    package static let maximumTreeDepth = 32
+    public static let maximumTreeDepth = 32
 
-    package init(
+    public init(
         content: Content,
         depth: UInt16 = 0,
         timeline: SWFTimeline? = nil,
@@ -94,21 +94,21 @@ nonisolated package final class SWFDisplayObject {
 
     /// The display object an ActionScript value refers to, or nil when the
     /// value is not a display object.
-    package static func resolve(_ object: AS2Object?) -> SWFDisplayObject? {
+    public static func resolve(_ object: AS2Object?) -> SWFDisplayObject? {
         guard let handle = object?.hostPayload as? SWFDisplayHandle else {
             return nil
         }
         return handle.target
     }
 
-    package var characterId: UInt16? {
+    public var characterId: UInt16? {
         switch content {
         case let .clip(id): id
         case let .shape(id), let .staticText(id), let .editText(id): id
         }
     }
 
-    package var isClip: Bool {
+    public var isClip: Bool {
         if case .clip = content {
             return true
         }
@@ -116,7 +116,7 @@ nonisolated package final class SWFDisplayObject {
     }
 
     /// Children in depth-ascending order — the paint order.
-    package var children: [SWFDisplayObject] {
+    public var children: [SWFDisplayObject] {
         if let sortedChildren {
             return sortedChildren
         }
@@ -125,22 +125,22 @@ nonisolated package final class SWFDisplayObject {
         return sorted
     }
 
-    package var childCount: Int {
+    public var childCount: Int {
         byDepth.count
     }
 
-    package func child(atDepth depth: UInt16) -> SWFDisplayObject? {
+    public func child(atDepth depth: UInt16) -> SWFDisplayObject? {
         byDepth[depth]
     }
 
     /// Instance-name lookup. Ties break on the lowest depth so the result is
     /// stable when a movie reuses a name.
-    package func child(named name: String) -> SWFDisplayObject? {
+    public func child(named name: String) -> SWFDisplayObject? {
         children.first { $0.name == name }
     }
 
     /// Places `child` at `depth`, replacing whatever occupied it.
-    package func addChild(_ child: SWFDisplayObject, atDepth depth: UInt16) {
+    public func addChild(_ child: SWFDisplayObject, atDepth depth: UInt16) {
         if let previous = byDepth[depth] {
             previous.parent = nil
             unbindName(of: previous)
@@ -153,7 +153,7 @@ nonisolated package final class SWFDisplayObject {
     }
 
     @discardableResult
-    package func removeChild(atDepth depth: UInt16) -> SWFDisplayObject? {
+    public func removeChild(atDepth depth: UInt16) -> SWFDisplayObject? {
         guard let removed = byDepth.removeValue(forKey: depth) else {
             return nil
         }
@@ -163,7 +163,7 @@ nonisolated package final class SWFDisplayObject {
         return removed
     }
 
-    package func removeAllChildren() {
+    public func removeAllChildren() {
         for child in byDepth.values {
             child.parent = nil
             unbindName(of: child)
@@ -176,7 +176,7 @@ nonisolated package final class SWFDisplayObject {
     /// makes both `panel._x` and a bare `panel` resolve from a frame action.
     /// Hidden from enumeration, matching how Flash reports a timeline's own
     /// variables.
-    package func bindName(of child: SWFDisplayObject) {
+    public func bindName(of child: SWFDisplayObject) {
         guard let name = child.name, !name.isEmpty else {
             return
         }
@@ -194,7 +194,7 @@ nonisolated package final class SWFDisplayObject {
     }
 
     /// Moves an existing child to a new depth, swapping with any occupant.
-    package func swapChild(_ child: SWFDisplayObject, toDepth depth: UInt16) {
+    public func swapChild(_ child: SWFDisplayObject, toDepth depth: UInt16) {
         guard child.parent === self, child.depth != depth else {
             return
         }
@@ -212,7 +212,7 @@ nonisolated package final class SWFDisplayObject {
 
     /// Total nodes in this subtree, including self. Bounded by the tree-depth
     /// guard so a cycle cannot hang the walk.
-    package func nodeCount(remainingDepth: Int = SWFDisplayObject.maximumTreeDepth) -> Int {
+    public func nodeCount(remainingDepth: Int = SWFDisplayObject.maximumTreeDepth) -> Int {
         guard remainingDepth > 0 else {
             return 1
         }
@@ -220,7 +220,7 @@ nonisolated package final class SWFDisplayObject {
     }
 
     /// The topmost ancestor — `_root` for anything in one movie's tree.
-    package var rootObject: SWFDisplayObject {
+    public var rootObject: SWFDisplayObject {
         var current = self
         var steps = 0
         while let parent = current.parent, steps < SWFDisplayObject.maximumTreeDepth {
@@ -232,7 +232,7 @@ nonisolated package final class SWFDisplayObject {
 
     /// `ActionTargetPath` (0x45) and the `_target` property: the slash path from
     /// the root, which is `"/"` for the root itself.
-    package var targetPath: String {
+    public var targetPath: String {
         var components: [String] = []
         var current: SWFDisplayObject? = self
         var steps = 0

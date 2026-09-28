@@ -16,6 +16,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Every actor's owned perks plus the store their FormID parameters resolve
 /// against.

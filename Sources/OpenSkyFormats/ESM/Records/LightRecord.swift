@@ -8,7 +8,7 @@
 import Foundation
 import simd
 
-nonisolated package struct LightRecord {
+nonisolated public struct LightRecord: Sendable {
     private struct DecodedData {
         let time: Int32
         let radius: UInt32
@@ -17,47 +17,47 @@ nonisolated package struct LightRecord {
         let falloff: Float
     }
 
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let dynamic = Flags(rawValue: 0x0001)
-        package static let canBeCarried = Flags(rawValue: 0x0002)
-        package static let negative = Flags(rawValue: 0x0004)
-        package static let flicker = Flags(rawValue: 0x0008)
-        package static let offByDefault = Flags(rawValue: 0x0020)
-        package static let flickerSlow = Flags(rawValue: 0x0040)
-        package static let pulse = Flags(rawValue: 0x0080)
-        package static let pulseSlow = Flags(rawValue: 0x0100)
-        package static let spotLight = Flags(rawValue: 0x0200)
-        package static let shadowSpotlight = Flags(rawValue: 0x0400)
-        package static let shadowHemisphere = Flags(rawValue: 0x0800)
-        package static let shadowOmnidirectional = Flags(rawValue: 0x1000)
-        package static let portalStrict = Flags(rawValue: 0x2000)
-        package static let inverseSquare = Flags(rawValue: 0x4000)
-        package static let linear = Flags(rawValue: 0x8000)
+        public static let dynamic = Flags(rawValue: 0x0001)
+        public static let canBeCarried = Flags(rawValue: 0x0002)
+        public static let negative = Flags(rawValue: 0x0004)
+        public static let flicker = Flags(rawValue: 0x0008)
+        public static let offByDefault = Flags(rawValue: 0x0020)
+        public static let flickerSlow = Flags(rawValue: 0x0040)
+        public static let pulse = Flags(rawValue: 0x0080)
+        public static let pulseSlow = Flags(rawValue: 0x0100)
+        public static let spotLight = Flags(rawValue: 0x0200)
+        public static let shadowSpotlight = Flags(rawValue: 0x0400)
+        public static let shadowHemisphere = Flags(rawValue: 0x0800)
+        public static let shadowOmnidirectional = Flags(rawValue: 0x1000)
+        public static let portalStrict = Flags(rawValue: 0x2000)
+        public static let inverseSquare = Flags(rawValue: 0x4000)
+        public static let linear = Flags(rawValue: 0x8000)
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let time: Int32
-    package let radius: UInt32
-    package let color: SIMD3<Float>
-    package let flags: Flags
-    package let falloffExponent: Float
-    package let fade: Float
+    public let formID: FormID
+    public let editorID: String?
+    public let time: Int32
+    public let radius: UInt32
+    public let color: SIMD3<Float>
+    public let flags: Flags
+    public let falloffExponent: Float
+    public let fade: Float
 
-    package var isSupportedPointLight: Bool {
+    public var isSupportedPointLight: Bool {
         !flags.contains(.negative)
             && !flags.contains(.spotLight)
             && !flags.contains(.shadowSpotlight)
             && !flags.contains(.offByDefault)
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "LIGH" else {
             throw ESMError.malformed("expected LIGH record, got \(record.type)")
         }

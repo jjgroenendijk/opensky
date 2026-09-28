@@ -2,6 +2,7 @@
 // Every byte here is assembled in code from the published record layouts —
 // never extracted game files (AGENTS.md "Legal & IP boundary").
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

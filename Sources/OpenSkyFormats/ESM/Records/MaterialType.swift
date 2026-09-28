@@ -20,28 +20,28 @@
 
 import Foundation
 
-nonisolated package struct MaterialType: Equatable, Sendable {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct MaterialType: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// MNAM — the Creation Kit material name. This is the string a NIF's Havok
     /// material value is the hash of, so a record without one can never be
     /// reached from a collision mesh.
-    package let materialName: String?
+    public let materialName: String?
     /// PNAM — the material this one inherits from, or nil at the root of a
     /// chain. Vanilla uses it to say that stairs-of-stone are stone.
-    package let parent: FormID?
+    public let parent: FormID?
     /// HNAM — the impact data set to play on this material when the thing that
     /// struck it names none of its own. Footsteps do not read it: a footstep
     /// always carries its own IPDS through `FSTP.DATA`.
-    package let impactDataSet: FormID?
+    public let impactDataSet: FormID?
 
     /// The value a NIF collision shape stores to point at this record, or nil
     /// when the record carries no name to hash.
-    package var havokMaterial: UInt32? {
+    public var havokMaterial: UInt32? {
         materialName.map(HavokMaterialHash.value(ofMaterialName:))
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "MATT" else {
             throw ESMError.malformed("expected MATT record, got \(record.type)")
         }
@@ -76,7 +76,7 @@ nonisolated package struct MaterialType: Equatable, Sendable {
     }
 
     /// Test seam: a material built from decoded values rather than a record.
-    package init(
+    public init(
         formID: FormID,
         editorID: String? = nil,
         materialName: String?,

@@ -12,34 +12,34 @@ import Foundation
 /// One class-name table entry: type signature hash + name. `nameOffset` is
 /// the section-local offset of the name string (entry start + 5) — the
 /// offset virtual fixups and the header contents pointer reference.
-nonisolated package struct HKXClassName: Equatable {
-    package let signature: UInt32
-    package let name: String
-    package let nameOffset: Int
+nonisolated public struct HKXClassName: Equatable, Sendable {
+    public let signature: UInt32
+    public let name: String
+    public let nameOffset: Int
 }
 
 /// Object registration resolved against the class-name table: instance at
 /// `dataOffset` inside section `sectionIndex`. `className` is nil when the
 /// fixup references an offset the class-name table does not define
 /// (malformed input stays inspectable, never traps).
-nonisolated package struct HKXObjectRef: Equatable {
-    package let sectionIndex: Int
-    package let dataOffset: Int
-    package let signature: UInt32?
-    package let className: String?
+nonisolated public struct HKXObjectRef: Equatable, Sendable {
+    public let sectionIndex: Int
+    public let dataOffset: Int
+    public let signature: UInt32?
+    public let className: String?
 }
 
 /// Parsed packfile container. Section payloads stay in `data`; use
 /// `sectionData(at:)` to slice one for object-level decoding (6.2+).
-nonisolated package struct HKXFile {
-    package let data: Data
-    package let header: HKXHeader
-    package let sections: [HKXSection]
+nonisolated public struct HKXFile: Sendable {
+    public let data: Data
+    public let header: HKXHeader
+    public let sections: [HKXSection]
     /// Class-name entries of the header's contents class-name section
     /// (SSE: section 0, `__classnames__`).
-    package let classNames: [HKXClassName]
+    public let classNames: [HKXClassName]
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         self.data = data
         var reader = BinaryReader(data)
         header = try HKXHeader(reader: &reader)
@@ -62,7 +62,7 @@ nonisolated package struct HKXFile {
     }
 
     /// Raw payload of one section (object data only, fixup tables excluded).
-    package func sectionData(at index: Int) throws -> Data {
+    public func sectionData(at index: Int) throws -> Data {
         guard sections.indices.contains(index) else {
             throw HKXError.sectionIndexInvalid(index)
         }
@@ -72,18 +72,18 @@ nonisolated package struct HKXFile {
     }
 
     /// Class name at a section-local name-string offset (fixup target).
-    package func className(atOffset offset: Int) -> HKXClassName? {
+    public func className(atOffset offset: Int) -> HKXClassName? {
         classNames.first { $0.nameOffset == offset }
     }
 
     /// Class name of the top-level object (SSE: "hkRootLevelContainer").
-    package var rootClassName: HKXClassName? {
+    public var rootClassName: HKXClassName? {
         className(atOffset: header.contentsClassNameOffset)
     }
 
     /// Object inventory: every virtual fixup across all sections resolved
     /// against the class-name table, in file order.
-    package var objects: [HKXObjectRef] {
+    public var objects: [HKXObjectRef] {
         var refs: [HKXObjectRef] = []
         for (index, section) in sections.enumerated() {
             for fixup in section.virtualFixups {

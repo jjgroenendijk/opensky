@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension GameViewController: MagicEffectControlProviding {
     var magicEffectControlSnapshot: MagicEffectControlSnapshot {

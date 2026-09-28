@@ -13,35 +13,35 @@ import Foundation
 import simd
 
 /// One particle system collected from the scene graph, in model space.
-nonisolated package struct ParticleSystemDefinition: Equatable {
+nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
     /// NiObjectNET name; nil when unnamed or the string index is junk.
-    package let name: String?
+    public let name: String?
     /// Accumulated parent transform times the system's own local transform.
-    package let worldTransform: float4x4
+    public let worldTransform: float4x4
     /// nif.xml World Space: true = particles birth into world space, false =
     /// object space. Governs how playback (7.3.2) treats worldTransform.
-    package let worldSpace: Bool
+    public let worldSpace: Bool
     /// NiPSysData "BS Max Vertices" — max simultaneous particles (capacity).
     /// 0 when the data block ref is absent.
-    package let maxParticles: Int
-    package let emitters: [ParticleEmitter]
-    package let modifiers: [ParticleModifier]
+    public let maxParticles: Int
+    public let emitters: [ParticleEmitter]
+    public let modifiers: [ParticleModifier]
     /// NiPSysData subtexture atlas offsets (UV quads), empty when unused.
-    package let subtextureOffsets: [SIMD4<Float>]
+    public let subtextureOffsets: [SIMD4<Float>]
     /// BSShaderProperty block index; -1 = none. Kept raw so callers can spot
     /// systems whose shader is not a BSEffectShaderProperty.
-    package let shaderPropertyRef: Int32
+    public let shaderPropertyRef: Int32
     /// NiAlphaProperty block index; -1 = none.
-    package let alphaPropertyRef: Int32
+    public let alphaPropertyRef: Int32
     /// Resolved shader material when `shaderPropertyRef` points at a
     /// BSEffectShaderProperty; nil for none or other shader types
     /// (BSLightingShaderProperty on a particle shape is legitimate content).
-    package let effectShader: NIFEffectShaderProperty?
+    public let effectShader: NIFEffectShaderProperty?
     /// Resolved blend/test state when `alphaPropertyRef` points at a
     /// NiAlphaProperty.
-    package let alphaProperty: NIFAlphaProperty?
+    public let alphaProperty: NIFAlphaProperty?
 
-    package init(
+    public init(
         name: String?,
         worldTransform: float4x4,
         worldSpace: Bool,
@@ -69,26 +69,26 @@ nonisolated package struct ParticleSystemDefinition: Equatable {
 }
 
 /// A NiPSysEmitter leaf: shared birth parameters plus the emission volume.
-nonisolated package struct ParticleEmitter: Equatable {
-    package let name: String?
+nonisolated public struct ParticleEmitter: Equatable, Sendable {
+    public let name: String?
     /// nif.xml NiPSysModifierOrder — position in the modifier chain.
-    package let order: UInt32
-    package let active: Bool
-    package let speed: Float
-    package let speedVariation: Float
-    package let declination: Float
-    package let declinationVariation: Float
-    package let planarAngle: Float
-    package let planarAngleVariation: Float
+    public let order: UInt32
+    public let active: Bool
+    public let speed: Float
+    public let speedVariation: Float
+    public let declination: Float
+    public let declinationVariation: Float
+    public let planarAngle: Float
+    public let planarAngleVariation: Float
     /// RGBA birth color in [0, 1].
-    package let initialColor: SIMD4<Float>
-    package let initialRadius: Float
-    package let radiusVariation: Float
-    package let lifeSpan: Float
-    package let lifeSpanVariation: Float
-    package let shape: Shape
+    public let initialColor: SIMD4<Float>
+    public let initialRadius: Float
+    public let radiusVariation: Float
+    public let lifeSpan: Float
+    public let lifeSpanVariation: Float
+    public let shape: Shape
 
-    package init(
+    public init(
         name: String?,
         order: UInt32,
         active: Bool,
@@ -123,7 +123,7 @@ nonisolated package struct ParticleEmitter: Equatable {
     }
 
     /// Emission volume + its type-specific parameters.
-    package enum Shape: Equatable {
+    public enum Shape: Equatable, Sendable {
         case box(width: Float, height: Float, depth: Float)
         case cylinder(radius: Float, height: Float)
         case sphere(radius: Float)
@@ -134,13 +134,13 @@ nonisolated package struct ParticleEmitter: Equatable {
 }
 
 /// A non-emitter NiPSysModifier leaf: shared identity plus the concrete kind.
-nonisolated package struct ParticleModifier: Equatable {
-    package let name: String?
-    package let order: UInt32
-    package let active: Bool
-    package let kind: Kind
+nonisolated public struct ParticleModifier: Equatable, Sendable {
+    public let name: String?
+    public let order: UInt32
+    public let active: Bool
+    public let kind: Kind
 
-    package init(name: String?, order: UInt32, active: Bool, kind: Kind) {
+    public init(name: String?, order: UInt32, active: Bool, kind: Kind) {
         self.name = name
         self.order = order
         self.active = active
@@ -149,7 +149,7 @@ nonisolated package struct ParticleModifier: Equatable {
 
     /// Concrete modifier type. Unknown/unsupported types are carried by name
     /// so the caller can note + skip them without the decode throwing.
-    package enum Kind: Equatable {
+    public enum Kind: Equatable, Sendable {
         case ageDeath
         case spawn
         case gravity(axis: SIMD3<Float>, strength: Float)

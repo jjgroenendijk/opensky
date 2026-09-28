@@ -14,6 +14,7 @@
 // Every movie is synthetic and built in code — never an extracted game file
 // (AGENTS.md "Legal & IP boundary").
 
+import FormatsTestSupport
 import Foundation
 import Metal
 import MetalKit

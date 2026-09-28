@@ -24,33 +24,33 @@
 
 import Foundation
 
-nonisolated package struct Ammunition {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+nonisolated public struct Ammunition: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let ignoresNormalWeaponResistance = Flags(rawValue: 0x0000_0001)
-        package static let nonPlayable = Flags(rawValue: 0x0000_0002)
+        public static let ignoresNormalWeaponResistance = Flags(rawValue: 0x0000_0001)
+        public static let nonPlayable = Flags(rawValue: 0x0000_0002)
         /// Set on arrows, clear on crossbow bolts.
-        package static let nonBolt = Flags(rawValue: 0x0000_0004)
+        public static let nonBolt = Flags(rawValue: 0x0000_0004)
     }
 
-    package let formID: FormID
-    package let fields: InventoryItemFields
+    public let formID: FormID
+    public let fields: InventoryItemFields
     /// DESC — flavour text; blank on vanilla arrows.
-    package let description: LString?
+    public let description: LString?
     /// DATA gold value and weight (weight 0 on a classic 16-byte payload).
-    package let itemValue: ItemValue
+    public let itemValue: ItemValue
     /// DATA — the PROJ this ammunition launches; nil when unset.
-    package let projectile: FormID?
+    public let projectile: FormID?
     /// DATA base damage.
-    package let damage: Float
-    package let flags: Flags
+    public let damage: Float
+    public let flags: Flags
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "AMMO" else {
             throw ESMError.malformed("expected AMMO record, got \(record.type)")
         }

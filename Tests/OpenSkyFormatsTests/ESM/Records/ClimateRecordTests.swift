@@ -1,6 +1,7 @@
 // CLMT decoder coverage over synthetic field bytes only. Layout source:
 // UESP "Skyrim Mod:Mod File Format/CLMT"; see docs/formats/records.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

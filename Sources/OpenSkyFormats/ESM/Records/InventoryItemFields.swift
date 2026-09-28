@@ -26,15 +26,15 @@ import Foundation
 /// The 8-byte DATA struct shared by MISC, INGR, KEYM and ARMO: gold value then
 /// weight. xEdit types the value int32 (MISC, INGR) or uint32 (ARMO, AMMO);
 /// int32 is the wider of the two on disk, so it is what the engine carries.
-nonisolated package struct ItemValue: Equatable {
+nonisolated public struct ItemValue: Equatable, Sendable {
     /// Gold value before enchantment adjustments.
-    package let value: Int32
+    public let value: Int32
     /// Carry weight.
-    package let weight: Float
+    public let weight: Float
 
-    package static let zero = ItemValue(value: 0, weight: 0)
+    public static let zero = ItemValue(value: 0, weight: 0)
 
-    package init(value: Int32, weight: Float) {
+    public init(value: Int32, weight: Float) {
         self.value = value
         self.weight = weight
     }
@@ -42,7 +42,7 @@ nonisolated package struct ItemValue: Equatable {
     /// Decodes an 8-byte value+weight DATA. Shorter payloads throw: a wrong
     /// gold value or weight is worse than a skipped record, and every vanilla
     /// record writes the full struct.
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count >= 8 else {
             throw ESMError.malformed(
                 "\(field.type) has \(field.data.count) bytes, expected 8 (value + weight)"
@@ -57,30 +57,30 @@ nonisolated package struct ItemValue: Equatable {
 /// Mutable accumulator for the shared carryable-item fields. Records call
 /// `decode(field:localized:)` first and handle only what it declines, which
 /// keeps each record's own switch inside the strict-lint complexity cap.
-nonisolated package struct InventoryItemFields {
-    package var editorID: String?
+nonisolated public struct InventoryItemFields: Sendable {
+    public var editorID: String?
     /// FULL — display name; localized plugins store a string-table ID.
-    package var name: LString?
+    public var name: LString?
     /// MODL — ground/world model path relative to Data/.
-    package var modelPath: String?
-    package var bounds: ObjectBounds?
-    package var keywords = KeywordList()
+    public var modelPath: String?
+    public var bounds: ObjectBounds?
+    public var keywords = KeywordList()
     /// ICON — inventory image path relative to Data/.
-    package var iconPath: String?
+    public var iconPath: String?
     /// MICO — message-menu image path relative to Data/.
-    package var messageIconPath: String?
+    public var messageIconPath: String?
     /// YNAM — SNDR played on pickup.
-    package var pickupSound: FormID?
+    public var pickupSound: FormID?
     /// ZNAM — SNDR played on drop.
-    package var dropSound: FormID?
+    public var dropSound: FormID?
 
-    package init() {}
+    public init() {}
 
     /// Decodes `field` when it is one of the shared subrecords and reports
     /// whether it was consumed. DATA is deliberately *not* handled here: its
     /// layout is type-specific (8 bytes on MISC/INGR, 4 on ALCH, 10 on WEAP,
     /// 16 on BOOK, 16 or 20 on AMMO), so each record owns that case.
-    package mutating func decode(field: ESMField, localized: Bool) throws -> Bool {
+    public mutating func decode(field: ESMField, localized: Bool) throws -> Bool {
         if try keywords.decode(field: field) {
             return true
         }
@@ -110,7 +110,7 @@ nonisolated package struct InventoryItemFields {
 
     /// Reads a 4-byte FormID link, mapping the null sentinel and any
     /// unexpected payload length onto nil.
-    package static func optionalFormID(_ field: ESMField) throws -> FormID? {
+    public static func optionalFormID(_ field: ESMField) throws -> FormID? {
         guard field.data.count >= 4 else { return nil }
         var reader = BinaryReader(field.data)
         let formID = try FormID(reader.readUInt32())

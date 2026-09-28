@@ -14,33 +14,33 @@
 import Foundation
 
 /// Decoded `BSDirectAtModifier`, size 224.
-nonisolated package struct BSDirectAtModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let directAtTarget: Bool
+nonisolated public struct BSDirectAtModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let directAtTarget: Bool
     /// The bone whose forward axis is aimed.
-    package let sourceBoneIndex: Int
+    public let sourceBoneIndex: Int
     /// First and last bone of the chain the rotation is spread across.
-    package let startBoneIndex: Int
-    package let endBoneIndex: Int
-    package let limitHeadingDegrees: Float
-    package let limitPitchDegrees: Float
-    package let offsetHeadingDegrees: Float
-    package let offsetPitchDegrees: Float
+    public let startBoneIndex: Int
+    public let endBoneIndex: Int
+    public let limitHeadingDegrees: Float
+    public let limitPitchDegrees: Float
+    public let offsetHeadingDegrees: Float
+    public let offsetPitchDegrees: Float
     /// Response rates when the modifier engages and when it releases.
-    package let onGain: Float
-    package let offGain: Float
-    package let targetLocation: SIMD4<Float>
-    package let userInfo: UInt32
-    package let directAtCamera: Bool
-    package let directAtCameraX: Float
-    package let directAtCameraY: Float
-    package let directAtCameraZ: Float
-    package let active: Bool
-    package let currentHeadingOffset: Float
-    package let currentPitchOffset: Float
-    package let unresolved: [HKXUnresolvedReference]
+    public let onGain: Float
+    public let offGain: Float
+    public let targetLocation: SIMD4<Float>
+    public let userInfo: UInt32
+    public let directAtCamera: Bool
+    public let directAtCameraX: Float
+    public let directAtCameraY: Float
+    public let directAtCameraZ: Float
+    public let active: Bool
+    public let currentHeadingOffset: Float
+    public let currentPitchOffset: Float
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSDirectAtModifier"
+    public static let className = "BSDirectAtModifier"
 
     private static let directAtTargetField = HKXField(0x50, "m_directAtTarget")
     private static let sourceBoneField = HKXField(0x52, "m_sourceBoneIndex")
@@ -62,7 +62,7 @@ nonisolated package struct BSDirectAtModifier: HKBClass, Equatable {
     private static let currentHeadingField = HKXField(0x98, "m_currentHeadingOffset")
     private static let currentPitchField = HKXField(0x9C, "m_currentPitchOffset")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSDirectAtModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -92,33 +92,33 @@ nonisolated package struct BSDirectAtModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "bones \(startBoneIndex)-\(endBoneIndex), limits "
             + "\(limitHeadingDegrees)/\(limitPitchDegrees) deg, camera \(directAtCamera)"
     }
 }
 
 /// One entry of `BSLookAtModifier::m_bones` or `m_eyeBones`, 64 bytes.
-nonisolated package struct BSLookAtBoneData: Equatable {
-    package let index: Int
+nonisolated public struct BSLookAtBoneData: Equatable, Sendable {
+    public let index: Int
     /// The bone's forward axis in its own local space.
-    package let forwardAxisLS: SIMD4<Float>
-    package let limitAngleDegrees: Float
-    package let onGain: Float
-    package let offGain: Float
-    package let enabled: Bool
+    public let forwardAxisLS: SIMD4<Float>
+    public let limitAngleDegrees: Float
+    public let onGain: Float
+    public let offGain: Float
+    public let enabled: Bool
 
-    package static let stride = 64
+    public static let stride = 64
 
-    package static func decode(
+    public static func decode(
         _ element: inout HKXObjectCursor,
         member: String,
         index: Int
@@ -138,29 +138,29 @@ nonisolated package struct BSLookAtBoneData: Equatable {
 }
 
 /// Decoded `BSLookAtModifier`, size 224.
-nonisolated package struct BSLookAtModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let lookAtTarget: Bool
-    package let bones: [BSLookAtBoneData]
-    package let eyeBones: [BSLookAtBoneData]
-    package let limitAngleDegrees: Float
-    package let limitAngleThresholdDegrees: Float
-    package let continueLookOutsideOfLimit: Bool
-    package let onGain: Float
-    package let offGain: Float
+nonisolated public struct BSLookAtModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let lookAtTarget: Bool
+    public let bones: [BSLookAtBoneData]
+    public let eyeBones: [BSLookAtBoneData]
+    public let limitAngleDegrees: Float
+    public let limitAngleThresholdDegrees: Float
+    public let continueLookOutsideOfLimit: Bool
+    public let onGain: Float
+    public let offGain: Float
     /// When true each bone's own gains override the modifier-wide ones.
-    package let useBoneGains: Bool
-    package let targetLocation: SIMD4<Float>
-    package let targetOutsideLimits: Bool
+    public let useBoneGains: Bool
+    public let targetLocation: SIMD4<Float>
+    public let targetOutsideLimits: Bool
     /// Raised when the target leaves the permitted cone.
-    package let targetOutOfLimitEvent: HKBEventProperty
-    package let lookAtCamera: Bool
-    package let lookAtCameraX: Float
-    package let lookAtCameraY: Float
-    package let lookAtCameraZ: Float
-    package let unresolved: [HKXUnresolvedReference]
+    public let targetOutOfLimitEvent: HKBEventProperty
+    public let lookAtCamera: Bool
+    public let lookAtCameraX: Float
+    public let lookAtCameraY: Float
+    public let lookAtCameraZ: Float
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSLookAtModifier"
+    public static let className = "BSLookAtModifier"
 
     private static let lookAtTargetField = HKXField(0x50, "m_lookAtTarget")
     private static let bonesField = HKXField(0x58, "m_bones")
@@ -183,7 +183,7 @@ nonisolated package struct BSLookAtModifier: HKBClass, Equatable {
     private static let cameraYField = HKXField(0xC0, "m_lookAtCameraY")
     private static let cameraZField = HKXField(0xC4, "m_lookAtCameraZ")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSLookAtModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -239,16 +239,16 @@ nonisolated package struct BSLookAtModifier: HKBClass, Equatable {
         return entries
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
             + targetOutOfLimitEvent.references(named: "m_targetOutOfLimitEvent")
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(bones.count) bones, \(eyeBones.count) eye bones, "
             + "limit \(limitAngleDegrees) deg"
     }

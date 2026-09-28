@@ -4,7 +4,7 @@
 
 import Foundation
 
-nonisolated package enum MagicEffectCastingType: Equatable, CustomStringConvertible {
+nonisolated public enum MagicEffectCastingType: Equatable, CustomStringConvertible, Sendable {
     case constantEffect
     case fireAndForget
     case concentration
@@ -14,7 +14,7 @@ nonisolated package enum MagicEffectCastingType: Equatable, CustomStringConverti
     case scroll
     case unknown(raw: UInt32)
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self = switch rawValue {
         case 0: .constantEffect
         case 1: .fireAndForget
@@ -24,7 +24,7 @@ nonisolated package enum MagicEffectCastingType: Equatable, CustomStringConverti
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .constantEffect: "constant effect"
         case .fireAndForget: "fire and forget"
@@ -35,7 +35,7 @@ nonisolated package enum MagicEffectCastingType: Equatable, CustomStringConverti
     }
 }
 
-nonisolated package enum MagicEffectDelivery: Equatable, CustomStringConvertible {
+nonisolated public enum MagicEffectDelivery: Equatable, CustomStringConvertible, Sendable {
     case selfTarget
     case touch
     case aimed
@@ -43,7 +43,7 @@ nonisolated package enum MagicEffectDelivery: Equatable, CustomStringConvertible
     case targetLocation
     case unknown(raw: UInt32)
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self = switch rawValue {
         case 0: .selfTarget
         case 1: .touch
@@ -54,7 +54,7 @@ nonisolated package enum MagicEffectDelivery: Equatable, CustomStringConvertible
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .selfTarget: "self"
         case .touch: "touch"
@@ -66,7 +66,7 @@ nonisolated package enum MagicEffectDelivery: Equatable, CustomStringConvertible
     }
 }
 
-nonisolated package enum MagicEffectArchetype: Hashable, CustomStringConvertible {
+nonisolated public enum MagicEffectArchetype: Hashable, CustomStringConvertible, Sendable {
     case valueModifier
     case script
     case dispel
@@ -116,11 +116,11 @@ nonisolated package enum MagicEffectArchetype: Hashable, CustomStringConvertible
     case vampireLord
     case unknown(raw: UInt32)
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self = Self.known[rawValue] ?? .unknown(raw: rawValue)
     }
 
-    package var description: String {
+    public var description: String {
         guard case let .unknown(raw) = self else {
             return Self.names[Self.rawValues[self] ?? UInt32.max] ?? "unknown"
         }

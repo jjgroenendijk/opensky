@@ -16,32 +16,32 @@
 import Foundation
 
 /// Decoded `hkbClipGenerator`, size 272. Derives `hkbGenerator` -> `hkbNode`.
-nonisolated package struct HKBClipGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
+nonisolated public struct HKBClipGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
     /// The clip this generator plays, named as the character file spells it.
-    package let animationName: String?
+    public let animationName: String?
     /// `hkbClipTriggerArray` of events raised at points inside the clip.
-    package let triggers: HKXPointerTarget?
-    package let cropStartAmountLocalTime: Float
-    package let cropEndAmountLocalTime: Float
-    package let startTime: Float
-    package let playbackSpeed: Float
+    public let triggers: HKXPointerTarget?
+    public let cropStartAmountLocalTime: Float
+    public let cropEndAmountLocalTime: Float
+    public let startTime: Float
+    public let playbackSpeed: Float
     /// When positive, the clip is time-scaled to exactly this many seconds.
-    package let enforcedDuration: Float
+    public let enforcedDuration: Float
     /// Playback position when `m_mode` is the user-controlled one, as a
     /// fraction of the clip.
-    package let userControlledTimeFraction: Float
+    public let userControlledTimeFraction: Float
     /// Index into the character file's animation list; -1 when unbound.
-    package let animationBindingIndex: Int
+    public let animationBindingIndex: Int
     /// `hkbClipGenerator::PlaybackMode`: 0 single play, 1 loop, 2 user
     /// controlled, 3 ping pong, 4 count.
-    package let mode: Int
+    public let mode: Int
     /// `hkbClipGenerator::ClipFlags`, a bit set (1 continue motion at end,
     /// 2 sync half cycle in ping pong, 4 mirror, 8 force density).
-    package let flags: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let flags: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbClipGenerator"
+    public static let className = "hkbClipGenerator"
 
     private static let animationNameField = HKXField(0x48, "m_animationName")
     private static let triggersField = HKXField(0x50, "m_triggers")
@@ -57,7 +57,7 @@ nonisolated package struct HKBClipGenerator: HKBClass, Equatable {
     private static let modeField = HKXField(0x72, "m_mode")
     private static let flagsField = HKXField(0x73, "m_flags")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBClipGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -79,15 +79,15 @@ nonisolated package struct HKBClipGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references + HKBReference.optional("m_triggers", triggers)
     }
 
-    package var summary: String {
+    public var summary: String {
         "clip \"\(animationName ?? "<none>")\", binding \(animationBindingIndex), "
             + "mode \(mode), speed \(playbackSpeed)"
     }
@@ -95,20 +95,20 @@ nonisolated package struct HKBClipGenerator: HKBClass, Equatable {
 
 /// One entry of `hkbClipTriggerArray::m_triggers`, 32 bytes: an event raised
 /// when playback passes a point in the clip.
-nonisolated package struct HKBClipTrigger: Equatable {
-    package let localTime: Float
-    package let event: HKBEventProperty
+nonisolated public struct HKBClipTrigger: Equatable, Sendable {
+    public let localTime: Float
+    public let event: HKBEventProperty
     /// When true `m_localTime` is measured back from the end of the clip.
-    package let relativeToEndOfClip: Bool
+    public let relativeToEndOfClip: Bool
     /// When true the trigger fires once rather than on every loop.
-    package let acyclic: Bool
+    public let acyclic: Bool
     /// True when the trigger came from an animation annotation track rather
     /// than from authored behavior data.
-    package let isAnnotation: Bool
+    public let isAnnotation: Bool
 
-    package static let stride = 32
+    public static let stride = 32
 
-    package static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBClipTrigger {
+    public static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBClipTrigger {
         let member = "m_triggers[\(index)]"
         return HKBClipTrigger(
             localTime: element
@@ -124,15 +124,15 @@ nonisolated package struct HKBClipTrigger: Equatable {
 }
 
 /// Decoded `hkbClipTriggerArray`, size 32.
-nonisolated package struct HKBClipTriggerArray: HKBClass, Equatable {
-    package let triggers: [HKBClipTrigger]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBClipTriggerArray: HKBClass, Equatable, Sendable {
+    public let triggers: [HKBClipTrigger]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbClipTriggerArray"
+    public static let className = "hkbClipTriggerArray"
 
     private static let triggersField = HKXField(0x10, "m_triggers")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBClipTriggerArray?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -155,13 +155,13 @@ nonisolated package struct HKBClipTriggerArray: HKBClass, Equatable {
         return HKBClipTriggerArray(triggers: triggers, unresolved: cursor.unresolved)
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         triggers.enumerated().flatMap { index, trigger in
             trigger.event.references(named: "m_triggers[\(index)].m_event")
         }
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(triggers.count) clip triggers"
     }
 }

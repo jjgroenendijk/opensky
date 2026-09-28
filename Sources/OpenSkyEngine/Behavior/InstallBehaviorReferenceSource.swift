@@ -16,6 +16,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated final class InstallBehaviorReferenceSource: BehaviorReferenceSource {
     private let fileSystem: VirtualFileSystem

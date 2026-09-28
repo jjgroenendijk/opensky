@@ -1,6 +1,8 @@
+import FormatsTestSupport
 import Foundation
 import Metal
 @testable import OpenSky
+@testable import OpenSkyGameData
 import Testing
 
 struct CellProviderIndexesTests {

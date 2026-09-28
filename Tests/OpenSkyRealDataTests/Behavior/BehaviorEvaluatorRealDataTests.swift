@@ -15,6 +15,7 @@
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 /// One graph's run: where it came from and what stepping it produced.

@@ -25,6 +25,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated extension DialogueMenuModel {
     /// What one topic row reads, in the order the records decide it.

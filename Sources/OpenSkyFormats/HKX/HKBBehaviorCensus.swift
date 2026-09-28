@@ -13,7 +13,7 @@
 import Foundation
 
 /// What one packfile is, decided from the classes its root container names.
-nonisolated package enum HKBFileRole: String, Equatable, Sendable {
+nonisolated public enum HKBFileRole: String, Equatable, Sendable {
     /// Root of one behavior set: names the behavior, character, and animation
     /// directories (`defaultmale.hkx`, `firstperson.hkx`).
     case project
@@ -31,50 +31,50 @@ nonisolated package enum HKBFileRole: String, Equatable, Sendable {
 
 /// One declared graph variable: its name, its declared type, and the raw byte
 /// behind the type so an unrecognised value stays reportable.
-nonisolated package struct HKBCensusVariable: Equatable {
-    package let name: String?
-    package let type: HKBVariableType?
-    package let rawType: Int
+nonisolated public struct HKBCensusVariable: Equatable, Sendable {
+    public let name: String?
+    public let type: HKBVariableType?
+    public let rawType: Int
 }
 
 /// Everything the census reports about one packfile. Counts, names, and paths
 /// only — no sample data, no geometry, nothing that could carry game content
 /// into the repository.
-nonisolated package struct HKBBehaviorCensus: Equatable {
-    package let role: HKBFileRole
+nonisolated public struct HKBBehaviorCensus: Equatable, Sendable {
+    public let role: HKBFileRole
     /// Class names of the root container's named variants, in file order.
-    package let rootVariantClassNames: [String]
-    package let objectCount: Int
+    public let rootVariantClassNames: [String]
+    public let objectCount: Int
     /// Class-name signature of the file: how many objects of each class.
-    package let classCounts: [String: Int]
+    public let classCounts: [String: Int]
     /// `hkbBehaviorGraph::m_name`, for a behavior file.
-    package let graphName: String?
+    public let graphName: String?
     /// Class name of the graph's root generator — the first node class item
     /// 14.2 must decode for this file.
-    package let rootGeneratorClassName: String?
-    package let variables: [HKBCensusVariable]
-    package let eventNames: [String?]
-    package let characterPropertyNames: [String?]
+    public let rootGeneratorClassName: String?
+    public let variables: [HKBCensusVariable]
+    public let eventNames: [String?]
+    public let characterPropertyNames: [String?]
     /// Behavior files this project or character references by name.
-    package let referencedBehaviorFiles: [String]
+    public let referencedBehaviorFiles: [String]
     /// Character files a project references by name.
-    package let referencedCharacterFiles: [String]
+    public let referencedCharacterFiles: [String]
     /// Animation clips or clip directories this project or character
     /// references by name.
-    package let referencedAnimationFiles: [String]
+    public let referencedAnimationFiles: [String]
     /// The animation, behavior, and character directories a project file
     /// declares, in that order; empty for every other role. Every vanilla
     /// project file leaves all three as empty strings and names its character
     /// file instead, so paths are relative to the project file's own folder.
-    package let contentPaths: [String]
-    package let unresolved: [HKXUnresolvedReference]
+    public let contentPaths: [String]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package var variableNames: [String] {
+    public var variableNames: [String] {
         variables.compactMap(\.name)
     }
 
     /// Class names in report order: most frequent first, ties alphabetical.
-    package var classCountsByFrequency: [(name: String, count: Int)] {
+    public var classCountsByFrequency: [(name: String, count: Int)] {
         classCounts
             .map { (name: $0.key, count: $0.value) }
             .sorted { ($0.count, $1.name) > ($1.count, $0.name) }
@@ -84,7 +84,7 @@ nonisolated package struct HKBBehaviorCensus: Equatable {
     /// whose root container is missing or whose fields do not resolve comes
     /// back with `role == .unknown` and its misses listed, because the sweep's
     /// job is to report such a file, not to fail on it.
-    package static func census(of file: HKXFile) throws -> HKBBehaviorCensus {
+    public static func census(of file: HKXFile) throws -> HKBBehaviorCensus {
         let graph = try HKXObjectGraph(file: file)
         let objects = file.objects
         var counts: [String: Int] = [:]

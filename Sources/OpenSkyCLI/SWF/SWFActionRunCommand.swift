@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum SWFActionRunCommand {
     private static let defaultTicks = 10

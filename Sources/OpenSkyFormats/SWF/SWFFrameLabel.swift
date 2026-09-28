@@ -14,16 +14,16 @@
 import Foundation
 
 /// A decoded FrameLabel (43) tag.
-nonisolated package struct SWFFrameLabel: Equatable {
-    package static let tagCode: UInt16 = 43
+nonisolated public struct SWFFrameLabel: Equatable, Sendable {
+    public static let tagCode: UInt16 = 43
 
     /// The label as authored. Empty when the tag carried no name.
-    package let name: String
+    public let name: String
     /// `NamedAnchor` was present and set — an anchor a browser can seek to.
     /// Recorded for completeness; OpenSky does not navigate to anchors.
-    package let isNamedAnchor: Bool
+    public let isNamedAnchor: Bool
 
-    package static func parse(tag: SWFTag) throws -> SWFFrameLabel {
+    public static func parse(tag: SWFTag) throws -> SWFFrameLabel {
         guard tag.code == tagCode else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }

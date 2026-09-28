@@ -17,43 +17,43 @@ import Foundation
 /// XNAM and YNAM place the box on the integer grid; HNAM and VNAM offset it
 /// within that cell, which is what lets the vanilla trees draw boxes that do
 /// not line up on a strict lattice.
-nonisolated package struct PerkGridPosition: Equatable {
-    package let column: UInt32
-    package let row: UInt32
-    package let horizontal: Float
-    package let vertical: Float
+nonisolated public struct PerkGridPosition: Equatable, Sendable {
+    public let column: UInt32
+    public let row: UInt32
+    public let horizontal: Float
+    public let vertical: Float
 }
 
 /// One box in a skill's perk tree.
 ///
 /// The `perk` link stays a raw plugin-relative `FormID` here: resolving it to
 /// a PERK record needs a load order and a PERK decoder, which is issue 20.2.
-nonisolated package struct PerkTreeNode: Equatable {
+nonisolated public struct PerkTreeNode: Equatable, Sendable {
     /// PNAM, the PERK this box grants, or nil for the NULL link the first node
     /// of a tree carries.
-    package let perk: FormID?
+    public let perk: FormID?
     /// FNAM verbatim. xEdit types it as a boolean ("Parent Required") while
     /// UESP records that the first node of a tree usually carries a very large
     /// value, so the raw word is kept and the boolean is derived from it rather
     /// than the other way round.
-    package let parentRequiredRaw: UInt32
-    package let position: PerkGridPosition
+    public let parentRequiredRaw: UInt32
+    public let position: PerkGridPosition
     /// SNAM, the AVIF this node belongs to — normally the record carrying it.
-    package let associatedSkill: FormID?
+    public let associatedSkill: FormID?
     /// Every CNAM in the node: the INAM of a box this one draws a line to.
     /// Zero, one or many, per the spec's repeated-field array.
-    package let connections: [UInt32]
+    public let connections: [UInt32]
     /// INAM, this box's identity inside the tree. Unique but not sequential,
     /// which is why connections address it instead of an array position.
-    package let index: UInt32
+    public let index: UInt32
 
-    package var parentRequired: Bool {
+    public var parentRequired: Bool {
         parentRequiredRaw != 0
     }
 
     /// The tree's entry node: no perk and index 0, the pair xEdit tests for
     /// when it hides the FNAM value.
-    package var isRoot: Bool {
+    public var isRoot: Bool {
         perk == nil && index == 0
     }
 }
@@ -63,27 +63,27 @@ nonisolated package struct PerkTreeNode: Equatable {
 ///
 /// Every field is optional while collecting: a record that omits one is a mod
 /// quirk to be tallied, not a parse that should throw away the whole record.
-nonisolated package struct PerkTreeNodeBuilder {
-    package var perk: FormID?
-    package var parentRequiredRaw: UInt32?
-    package var column: UInt32?
-    package var row: UInt32?
-    package var horizontal: Float?
-    package var vertical: Float?
-    package var associatedSkill: FormID?
-    package var connections: [UInt32] = []
-    package var index: UInt32?
+nonisolated public struct PerkTreeNodeBuilder: Sendable {
+    public var perk: FormID?
+    public var parentRequiredRaw: UInt32?
+    public var column: UInt32?
+    public var row: UInt32?
+    public var horizontal: Float?
+    public var vertical: Float?
+    public var associatedSkill: FormID?
+    public var connections: [UInt32] = []
+    public var index: UInt32?
 
     /// Whether every field xEdit marks required was present. A false answer is
     /// reported through the record's tally; the node is still built.
-    package var isComplete: Bool {
+    public var isComplete: Bool {
         parentRequiredRaw != nil && column != nil && row != nil
             && horizontal != nil && vertical != nil && index != nil
     }
 
     /// The node as decoded, with a missing numeric field standing in as zero
     /// so a quirky record still contributes a placed box.
-    package func build() -> PerkTreeNode {
+    public func build() -> PerkTreeNode {
         PerkTreeNode(
             perk: perk,
             parentRequiredRaw: parentRequiredRaw ?? 0,
@@ -102,7 +102,7 @@ nonisolated package struct PerkTreeNodeBuilder {
     /// Consumes one field of the node run. Returns false for a field type that
     /// is not part of a node, which is what tells the record decoder the run
     /// has ended.
-    package mutating func decode(_ field: ESMField) throws -> Bool {
+    public mutating func decode(_ field: ESMField) throws -> Bool {
         switch field.type {
         case "PNAM": perk = try ActorValueInformationFieldReader.link(field)
         case "FNAM": parentRequiredRaw = try ActorValueInformationFieldReader.word(field)
@@ -121,23 +121,23 @@ nonisolated package struct PerkTreeNodeBuilder {
 
 /// The four fixed-width reads AVIF fields need, each checking its own length so
 /// a truncated field throws instead of reading past the end.
-nonisolated package enum ActorValueInformationFieldReader {
-    package static func word(_ field: ESMField) throws -> UInt32 {
+nonisolated public enum ActorValueInformationFieldReader: Sendable {
+    public static func word(_ field: ESMField) throws -> UInt32 {
         var reader = try BinaryReader(sized(field, bytes: 4))
         return try reader.readUInt32()
     }
 
-    package static func float(_ field: ESMField) throws -> Float {
+    public static func float(_ field: ESMField) throws -> Float {
         var reader = try BinaryReader(sized(field, bytes: 4))
         return try reader.readFloat32()
     }
 
-    package static func link(_ field: ESMField) throws -> FormID? {
+    public static func link(_ field: ESMField) throws -> FormID? {
         let id = try FormID(word(field))
         return id.isNull ? nil : id
     }
 
-    package static func zstring(_ field: ESMField) throws -> String {
+    public static func zstring(_ field: ESMField) throws -> String {
         var reader = BinaryReader(field.data)
         return try reader.readZString()
     }

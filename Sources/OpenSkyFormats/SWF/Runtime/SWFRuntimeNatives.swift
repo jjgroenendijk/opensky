@@ -18,14 +18,14 @@
 import Foundation
 import simd
 
-nonisolated package enum SWFRuntimeNatives {
+nonisolated public enum SWFRuntimeNatives: Sendable {
     /// The prototypes a `SWFMovieRuntime` needs back after installation.
-    package struct Installed {
-        package let movieClipPrototype: AS2Object
-        package let textFieldPrototype: AS2Object
+    public struct Installed {
+        public let movieClipPrototype: AS2Object
+        public let textFieldPrototype: AS2Object
     }
 
-    package static func install(into runtime: AS2Runtime, movie: SWFMovie) -> Installed {
+    public static func install(into runtime: AS2Runtime, movie: SWFMovie) -> Installed {
         let movieClipPrototype = AS2Object(prototype: runtime.objectPrototype)
         installMovieClip(runtime, prototype: movieClipPrototype)
         let textFieldPrototype = AS2Object(prototype: runtime.objectPrototype)
@@ -45,19 +45,19 @@ nonisolated package enum SWFRuntimeNatives {
     }
 
     /// The movie runtime behind a call, or nil when the host is not ours.
-    package static func movieRuntime(_ context: AS2CallContext) -> SWFMovieRuntime? {
+    public static func movieRuntime(_ context: AS2CallContext) -> SWFMovieRuntime? {
         (context.runtime.host as? SWFRuntimeHost)?.owner
     }
 
     /// The display object a method was called on.
-    package static func node(_ context: AS2CallContext) -> SWFDisplayObject? {
+    public static func node(_ context: AS2CallContext) -> SWFDisplayObject? {
         SWFDisplayObject.resolve(context.thisObject)
     }
 
     /// A listener list recorded on a built-in. Nothing dispatches to it yet —
     /// event routing is phase 3 — but recording keeps `addListener` off the
     /// missing-API tally and leaves the list where the dispatcher will find it.
-    package static func installListenerList(_ runtime: AS2Runtime, on object: AS2Object) {
+    public static func installListenerList(_ runtime: AS2Runtime, on object: AS2Object) {
         let listeners = runtime.makeArray()
         object.define(.object(listeners), for: "_listeners", flags: .dontEnumerate)
         AS2Natives.method(runtime, on: object, name: "addListener") { context in
@@ -262,7 +262,7 @@ nonisolated package enum SWFRuntimeNatives {
     }
 
     /// A depth argument clamped into the SWF `UI16` depth domain.
-    package static func depthValue(_ number: Double) -> UInt16 {
+    public static func depthValue(_ number: Double) -> UInt16 {
         guard number.isFinite else {
             return 0
         }

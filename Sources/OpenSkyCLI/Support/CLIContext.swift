@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 struct CLIContext {
     let root: GameDataRoot

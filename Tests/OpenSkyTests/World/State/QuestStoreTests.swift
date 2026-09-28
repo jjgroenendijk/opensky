@@ -1,6 +1,7 @@
 // QuestStore: the immutable QUST index, built from a synthetic plugin.
 // See docs/formats/quest-records.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

@@ -17,22 +17,22 @@
 import Foundation
 import simd
 
-nonisolated package struct NIFParticleData {
+nonisolated public struct NIFParticleData: Sendable {
     /// nif.xml "BS Max Vertices": max simultaneous particles (capacity).
-    package let maxParticles: Int
-    package let hasRadii: Bool
-    package let hasSizes: Bool
-    package let hasRotations: Bool
-    package let hasRotationAngles: Bool
-    package let hasRotationAxes: Bool
-    package let hasRotationSpeeds: Bool
-    package let hasTextureIndices: Bool
+    public let maxParticles: Int
+    public let hasRadii: Bool
+    public let hasSizes: Bool
+    public let hasRotations: Bool
+    public let hasRotationAngles: Bool
+    public let hasRotationAxes: Bool
+    public let hasRotationSpeeds: Bool
+    public let hasTextureIndices: Bool
     /// UV atlas quads for BSPSysSubTexModifier; empty when unused.
-    package let subtextureOffsets: [SIMD4<Float>]
+    public let subtextureOffsets: [SIMD4<Float>]
     /// BSStripPSysData "Max Point Count"; nil for a plain NiPSysData.
-    package let maxPointCount: Int?
+    public let maxPointCount: Int?
 
-    package init(data: Data, header: NIFHeader, isStrip: Bool = false) throws {
+    public init(data: Data, header: NIFHeader, isStrip: Bool = false) throws {
         var reader = BinaryReader(data)
         let streamVersion = header.bsStream?.version ?? 0
         // BS202 = file version 20.2.0.7 with a Bethesda stream; both Skyrim

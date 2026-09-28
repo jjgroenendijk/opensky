@@ -9,20 +9,20 @@
 
 import Foundation
 
-nonisolated package struct LandTexture {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct LandTexture: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// TNAM — the TXST texture set this landscape texture draws from.
-    package let textureSet: FormID?
+    public let textureSet: FormID?
     /// MNAM — the MATT material type ground painted with this texture is made
     /// of (issue #358). This is the terrain half of the footstep material
     /// chain: exterior ground is LAND rather than a collision mesh, so it names
     /// its material here instead of through a Havok material value.
-    package let materialType: FormID?
+    public let materialType: FormID?
     /// Repeated GNAM fields — GRAS records eligible where this LTEX contributes.
-    package let grasses: [FormID]
+    public let grasses: [FormID]
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "LTEX" else {
             throw ESMError.malformed("expected LTEX record, got \(record.type)")
         }

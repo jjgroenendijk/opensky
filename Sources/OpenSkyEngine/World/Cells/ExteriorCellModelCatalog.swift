@@ -7,6 +7,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated struct ExteriorCellModelCatalog {
     let file: ESMFile

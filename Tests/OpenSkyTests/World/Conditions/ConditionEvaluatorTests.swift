@@ -6,6 +6,7 @@
 // cited in the ConditionEvaluator.swift header (UESP "CTDA Field", Creation Kit
 // wiki "Conditions").
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

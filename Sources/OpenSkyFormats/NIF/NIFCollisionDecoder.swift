@@ -11,20 +11,20 @@ import Foundation
 import simd
 
 nonisolated extension NIFFile {
-    package func collisionModel() -> NIFCollisionModel {
+    public func collisionModel() -> NIFCollisionModel {
         var decoder = NIFCollisionDecoder(file: self)
         return decoder.decode()
     }
 }
 
-nonisolated package struct NIFCollisionDecoder {
-    package static let maxShapeDepth = 64
+nonisolated public struct NIFCollisionDecoder: Sendable {
+    public static let maxShapeDepth = 64
 
-    package let file: NIFFile
-    package var unsupported: [String: Int] = [:]
-    package var failures: [NIFCollisionFailure] = []
+    public let file: NIFFile
+    public var unsupported: [String: Int] = [:]
+    public var failures: [NIFCollisionFailure] = []
 
-    package mutating func decode() -> NIFCollisionModel {
+    public mutating func decode() -> NIFCollisionModel {
         let scene = sceneTargets()
         var bodies: [NIFCollisionBody] = []
         let roots = file.blocks.enumerated().compactMap { index, block in
@@ -209,7 +209,7 @@ nonisolated package struct NIFCollisionDecoder {
         return refs
     }
 
-    package func resolvedBlock(_ ref: Int32) throws -> (Int, NIFFile.Block)? {
+    public func resolvedBlock(_ ref: Int32) throws -> (Int, NIFFile.Block)? {
         guard ref >= 0 else { return nil }
         let index = Int(ref)
         guard index < file.blocks.count else {
@@ -231,9 +231,9 @@ nonisolated package struct NIFCollisionDecoder {
 
 /// What scene traversal knows about every block a collision object can target:
 /// where it is, and what it is called.
-nonisolated package struct SceneTargets {
-    package let transforms: [Int: float4x4]
-    package let names: [Int: String]
+nonisolated public struct SceneTargets: Sendable {
+    public let transforms: [Int: float4x4]
+    public let names: [Int: String]
 }
 
 nonisolated private struct CollisionTargetTransformVisitor {

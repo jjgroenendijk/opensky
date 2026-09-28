@@ -17,16 +17,16 @@
 import Foundation
 
 /// Decoded `hkbModifierList`, size 96: runs a list of modifiers in order.
-nonisolated package struct HKBModifierList: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let modifiers: [HKXPointerTarget?]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBModifierList: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let modifiers: [HKXPointerTarget?]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbModifierList"
+    public static let className = "hkbModifierList"
 
     private static let modifiersField = HKXField(0x50, "m_modifiers")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBModifierList?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -38,15 +38,15 @@ nonisolated package struct HKBModifierList: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + HKBReference.each("m_modifiers", modifiers)
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(modifiers.count) modifiers, enable \(modifier.enable)"
     }
 }
@@ -54,23 +54,23 @@ nonisolated package struct HKBModifierList: HKBClass, Equatable {
 /// Decoded `hkbEventDrivenModifier`, size 104. Derives `hkbModifierWrapper`,
 /// which contributes the wrapped `m_modifier` pointer at 0x50, so this class's
 /// own members start at 0x58.
-nonisolated package struct HKBEventDrivenModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
+nonisolated public struct HKBEventDrivenModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
     /// The wrapped modifier, run only while this one is active.
-    package let wrapped: HKXPointerTarget?
-    package let activateEventId: Int
-    package let deactivateEventId: Int
-    package let activeByDefault: Bool
-    package let unresolved: [HKXUnresolvedReference]
+    public let wrapped: HKXPointerTarget?
+    public let activateEventId: Int
+    public let deactivateEventId: Int
+    public let activeByDefault: Bool
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbEventDrivenModifier"
+    public static let className = "hkbEventDrivenModifier"
 
     private static let wrappedField = HKXField(0x50, "m_modifier")
     private static let activateField = HKXField(0x58, "m_activateEventId")
     private static let deactivateField = HKXField(0x5C, "m_deactivateEventId")
     private static let activeByDefaultField = HKXField(0x60, "m_activeByDefault")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBEventDrivenModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -85,32 +85,32 @@ nonisolated package struct HKBEventDrivenModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + HKBReference.optional("m_modifier", wrapped)
     }
 
-    package var summary: String {
+    public var summary: String {
         "activate on event \(activateEventId), deactivate on \(deactivateEventId)"
     }
 }
 
 /// Decoded `hkbEvaluateExpressionModifier`, size 112: evaluates a list of
 /// expressions each frame and assigns their results to variables or events.
-nonisolated package struct HKBEvaluateExpressionModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
+nonisolated public struct HKBEvaluateExpressionModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
     /// `hkbExpressionDataArray` holding the expressions.
-    package let expressions: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+    public let expressions: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbEvaluateExpressionModifier"
+    public static let className = "hkbEvaluateExpressionModifier"
 
     private static let expressionsField = HKXField(0x50, "m_expressions")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBEvaluateExpressionModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -122,39 +122,39 @@ nonisolated package struct HKBEvaluateExpressionModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + HKBReference.optional("m_expressions", expressions)
     }
 
-    package var summary: String {
+    public var summary: String {
         "expressions \(expressions != nil ? "set" : "none"), enable \(modifier.enable)"
     }
 }
 
 /// Decoded `hkbEventsFromRangeModifier`, size 112: raises events depending on
 /// which band of a numeric range an input value falls into.
-nonisolated package struct HKBEventsFromRangeModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
+nonisolated public struct HKBEventsFromRangeModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
     /// The value tested; normally bound to a graph variable.
-    package let inputValue: Float
+    public let inputValue: Float
     /// Lower edge of the first band; each `hkbEventRangeData` supplies an
     /// upper edge and the bands chain from there.
-    package let lowerBound: Float
+    public let lowerBound: Float
     /// `hkbEventRangeDataArray` of bands.
-    package let eventRanges: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+    public let eventRanges: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbEventsFromRangeModifier"
+    public static let className = "hkbEventsFromRangeModifier"
 
     private static let inputValueField = HKXField(0x50, "m_inputValue")
     private static let lowerBoundField = HKXField(0x54, "m_lowerBound")
     private static let eventRangesField = HKXField(0x58, "m_eventRanges")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBEventsFromRangeModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -168,33 +168,33 @@ nonisolated package struct HKBEventsFromRangeModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + HKBReference.optional("m_eventRanges", eventRanges)
     }
 
-    package var summary: String {
+    public var summary: String {
         "input \(inputValue), lower bound \(lowerBound)"
     }
 }
 
 /// Decoded `hkbTimerModifier`, size 112: raises one event once its alarm time
 /// has elapsed since activation.
-nonisolated package struct HKBTimerModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let alarmTimeSeconds: Float
-    package let alarmEvent: HKBEventProperty
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBTimerModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let alarmTimeSeconds: Float
+    public let alarmEvent: HKBEventProperty
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbTimerModifier"
+    public static let className = "hkbTimerModifier"
 
     private static let alarmTimeField = HKXField(0x50, "m_alarmTimeSeconds")
     private static let alarmEventOffset = 0x58
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBTimerModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -210,39 +210,39 @@ nonisolated package struct HKBTimerModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + alarmEvent.references(named: "m_alarmEvent")
     }
 
-    package var summary: String {
+    public var summary: String {
         "alarm \(alarmTimeSeconds)s raises event \(alarmEvent.id)"
     }
 }
 
 /// Decoded `hkbDampingModifier`, size 192: a PID filter that smooths a scalar
 /// or a vector, so a variable a binding writes each frame does not jump.
-nonisolated package struct HKBDampingModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let proportionalGain: Float
-    package let integralGain: Float
-    package let derivativeGain: Float
-    package let enableScalarDamping: Bool
-    package let enableVectorDamping: Bool
-    package let rawValue: Float
-    package let dampedValue: Float
-    package let rawVector: SIMD4<Float>
-    package let dampedVector: SIMD4<Float>
-    package let vectorErrorSum: SIMD4<Float>
-    package let vectorPreviousError: SIMD4<Float>
-    package let errorSum: Float
-    package let previousError: Float
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBDampingModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let proportionalGain: Float
+    public let integralGain: Float
+    public let derivativeGain: Float
+    public let enableScalarDamping: Bool
+    public let enableVectorDamping: Bool
+    public let rawValue: Float
+    public let dampedValue: Float
+    public let rawVector: SIMD4<Float>
+    public let dampedVector: SIMD4<Float>
+    public let vectorErrorSum: SIMD4<Float>
+    public let vectorPreviousError: SIMD4<Float>
+    public let errorSum: Float
+    public let previousError: Float
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbDampingModifier"
+    public static let className = "hkbDampingModifier"
 
     // Havok spells these m_kP, m_kI, and m_kD; the Swift names are spelled out
     // because a two-letter member trips the identifier-name lint rule.
@@ -260,7 +260,7 @@ nonisolated package struct HKBDampingModifier: HKBClass, Equatable {
     private static let errorSumField = HKXField(0xB0, "m_errorSum")
     private static let previousErrorField = HKXField(0xB4, "m_previousError")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBDampingModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -284,15 +284,15 @@ nonisolated package struct HKBDampingModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "gains \(proportionalGain)/\(integralGain)/\(derivativeGain), "
             + "scalar \(enableScalarDamping), vector \(enableVectorDamping)"
     }

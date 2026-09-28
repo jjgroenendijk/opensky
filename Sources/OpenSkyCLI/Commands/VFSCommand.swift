@@ -5,6 +5,7 @@
 // data, their disk — nothing lands in the repo (AGENTS.md Legal & IP).
 
 import Foundation
+import OpenSkyGameData
 
 enum VFSCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

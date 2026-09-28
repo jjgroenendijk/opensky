@@ -1,6 +1,7 @@
 // Unit tests for the fontconfig.txt parser and the fontlib resolver. Config
 // text is invented; fontlib movies are built with the synthetic SWF fixtures.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

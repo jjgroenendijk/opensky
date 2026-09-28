@@ -6,18 +6,18 @@
 
 import Foundation
 
-nonisolated package struct LipVisemeMappingEntry: Equatable {
-    package let slot: Int
-    package let target: String
+nonisolated public struct LipVisemeMappingEntry: Equatable, Sendable {
+    public let slot: Int
+    public let target: String
 }
 
-nonisolated package struct LipMappedSample: Equatable {
-    package let weights: [String: Float]
-    package let unmappedActiveSlots: [Int]
+nonisolated public struct LipMappedSample: Equatable, Sendable {
+    public let weights: [String: Float]
+    public let unmappedActiveSlots: [Int]
 }
 
-nonisolated package enum LipVisemeMapping {
-    package static let entries: [LipVisemeMappingEntry] = [
+nonisolated public enum LipVisemeMapping: Sendable {
+    public static let entries: [LipVisemeMappingEntry] = [
         .init(slot: 0, target: "Aah"),
         .init(slot: 2, target: "BigAah"),
         .init(slot: 4, target: "BMP"),
@@ -36,9 +36,9 @@ nonisolated package enum LipVisemeMapping {
         .init(slot: 30, target: "W")
     ]
 
-    package static let mappedSlots = Set(entries.map(\.slot))
+    public static let mappedSlots = Set(entries.map(\.slot))
 
-    package static func map(_ sample: LIPSample, availableTargets: Set<String>) -> LipMappedSample {
+    public static func map(_ sample: LIPSample, availableTargets: Set<String>) -> LipMappedSample {
         var weights: [String: Float] = [:]
         var consumedSlots = Set<Int>()
         for entry in entries where availableTargets.contains(entry.target) {

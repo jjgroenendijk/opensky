@@ -7,6 +7,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated enum MusicResolveError: Error, Equatable {
     case musicTypeNotFound(FormID)

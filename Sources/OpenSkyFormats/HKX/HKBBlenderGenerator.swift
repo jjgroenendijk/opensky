@@ -17,22 +17,22 @@ import Foundation
 
 /// The members `hkbBlenderGenerator` declares, shared with the subclass
 /// `hkbPoseMatchingGenerator` so both read one layout rather than two copies.
-nonisolated package struct HKBBlenderFields: Equatable {
+nonisolated public struct HKBBlenderFields: Equatable, Sendable {
     /// Below this weight a child is dropped in favour of the reference pose.
-    package let referencePoseWeightThreshold: Float
+    public let referencePoseWeightThreshold: Float
     /// The value children are weighted against; normally variable-bound.
-    package let blendParameter: Float
-    package let minCyclicBlendParameter: Float
-    package let maxCyclicBlendParameter: Float
+    public let blendParameter: Float
+    public let minCyclicBlendParameter: Float
+    public let maxCyclicBlendParameter: Float
     /// Child whose clip time the others follow, or -1 for no sync.
-    package let indexOfSyncMasterChild: Int
+    public let indexOfSyncMasterChild: Int
     /// `hkbBlenderGenerator::BlenderFlags`: bit 0 sync cycles, bit 1 smooth
     /// generator weights, bit 2 parametric blend, bit 3 velocity sync.
-    package let flags: Int
+    public let flags: Int
     /// When true the last child is subtracted from the blend rather than added.
-    package let subtractLastChild: Bool
+    public let subtractLastChild: Bool
     /// `hkbBlenderGeneratorChild` objects, index-preserving.
-    package let children: [HKXPointerTarget?]
+    public let children: [HKXPointerTarget?]
 
     private static let thresholdField = HKXField(
         0x48, "m_referencePoseWeightThreshold"
@@ -45,7 +45,7 @@ nonisolated package struct HKBBlenderFields: Equatable {
     private static let subtractLastChildField = HKXField(0x5C, "m_subtractLastChild")
     private static let childrenField = HKXField(0x60, "m_children")
 
-    package static func decode(_ cursor: inout HKXObjectCursor) -> HKBBlenderFields {
+    public static func decode(_ cursor: inout HKXObjectCursor) -> HKBBlenderFields {
         HKBBlenderFields(
             referencePoseWeightThreshold: cursor.float32(at: thresholdField) ?? 0,
             blendParameter: cursor.float32(at: blendParameterField) ?? 0,
@@ -58,24 +58,24 @@ nonisolated package struct HKBBlenderFields: Equatable {
         )
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         HKBReference.each("m_children", children)
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(children.count) children, blend parameter \(blendParameter), flags \(flags)"
     }
 }
 
 /// Decoded `hkbBlenderGenerator`, size 160.
-nonisolated package struct HKBBlenderGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
-    package let blender: HKBBlenderFields
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBBlenderGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
+    public let blender: HKBBlenderFields
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBlenderGenerator"
+    public static let className = "hkbBlenderGenerator"
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBlenderGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -87,35 +87,35 @@ nonisolated package struct HKBBlenderGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references + blender.references
     }
 
-    package var summary: String {
+    public var summary: String {
         blender.summary
     }
 }
 
 /// Decoded `hkbBlenderGeneratorChild`, size 80. Derives `hkbBindable`, so it
 /// has no name of its own — a child is identified by its index in the parent.
-nonisolated package struct HKBBlenderGeneratorChild: HKBClass, Equatable {
-    package let variableBindingSet: HKXPointerTarget?
-    package let generator: HKXPointerTarget?
+nonisolated public struct HKBBlenderGeneratorChild: HKBClass, Equatable, Sendable {
+    public let variableBindingSet: HKXPointerTarget?
+    public let generator: HKXPointerTarget?
     /// Optional per-bone mask restricting where this child contributes.
-    package let boneWeights: HKXPointerTarget?
+    public let boneWeights: HKXPointerTarget?
     /// This child's share of the blend, or its position along the parent's
     /// blend parameter when the parent is a parametric blender.
-    package let weight: Float
+    public let weight: Float
     /// Separate weight for the root (world-from-model) transform, so a child
     /// can drive motion without driving the pose.
-    package let worldFromModelWeight: Float
-    package let unresolved: [HKXUnresolvedReference]
+    public let worldFromModelWeight: Float
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBlenderGeneratorChild"
+    public static let className = "hkbBlenderGeneratorChild"
 
     private static let variableBindingSetField = HKXField(0x10, "m_variableBindingSet")
     private static let generatorField = HKXField(0x30, "m_generator")
@@ -125,7 +125,7 @@ nonisolated package struct HKBBlenderGeneratorChild: HKBClass, Equatable {
         0x44, "m_worldFromModelWeight"
     )
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBlenderGeneratorChild?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -139,13 +139,13 @@ nonisolated package struct HKBBlenderGeneratorChild: HKBClass, Equatable {
         )
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         HKBReference.optional("m_variableBindingSet", variableBindingSet)
             + HKBReference.optional("m_generator", generator)
             + HKBReference.optional("m_boneWeights", boneWeights)
     }
 
-    package var summary: String {
+    public var summary: String {
         "weight \(weight), world-from-model weight \(worldFromModelWeight)"
     }
 }
@@ -153,25 +153,25 @@ nonisolated package struct HKBBlenderGeneratorChild: HKBClass, Equatable {
 /// Decoded `hkbPoseMatchingGenerator`, size 240. Derives `hkbBlenderGenerator`,
 /// so the blender members come first and its own start at 0xA0. Used where a
 /// switch between children must land on a matching pose rather than cut.
-nonisolated package struct HKBPoseMatchingGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
-    package let blender: HKBBlenderFields
-    package let worldFromModelRotation: SIMD4<Float>
-    package let blendSpeed: Float
-    package let minSpeedToSwitch: Float
-    package let minSwitchTimeNoError: Float
-    package let minSwitchTimeFullError: Float
-    package let startPlayingEventId: Int
-    package let startMatchingEventId: Int
-    package let rootBoneIndex: Int
-    package let otherBoneIndex: Int
-    package let anotherBoneIndex: Int
-    package let pelvisIndex: Int
+nonisolated public struct HKBPoseMatchingGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
+    public let blender: HKBBlenderFields
+    public let worldFromModelRotation: SIMD4<Float>
+    public let blendSpeed: Float
+    public let minSpeedToSwitch: Float
+    public let minSwitchTimeNoError: Float
+    public let minSwitchTimeFullError: Float
+    public let startPlayingEventId: Int
+    public let startMatchingEventId: Int
+    public let rootBoneIndex: Int
+    public let otherBoneIndex: Int
+    public let anotherBoneIndex: Int
+    public let pelvisIndex: Int
     /// `hkbPoseMatchingGenerator::Mode`: 0 match, 1 play, 2 count.
-    package let mode: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let mode: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbPoseMatchingGenerator"
+    public static let className = "hkbPoseMatchingGenerator"
 
     private static let rotationField = HKXField(0xA0, "m_worldFromModelRotation")
     private static let blendSpeedField = HKXField(0xB0, "m_blendSpeed")
@@ -186,7 +186,7 @@ nonisolated package struct HKBPoseMatchingGenerator: HKBClass, Equatable {
     private static let pelvisField = HKXField(0xCE, "m_pelvisIndex")
     private static let modeField = HKXField(0xD0, "m_mode")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBPoseMatchingGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -211,15 +211,15 @@ nonisolated package struct HKBPoseMatchingGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references + blender.references
     }
 
-    package var summary: String {
+    public var summary: String {
         blender.summary + ", pose matching mode \(mode), pelvis bone \(pelvisIndex)"
     }
 }

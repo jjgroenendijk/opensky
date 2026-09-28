@@ -5,10 +5,10 @@
 
 import Foundation
 
-enum EquipSlotFixture {
+public enum EquipSlotFixture: Sendable {
     /// One EQUP's fields: an editor ID, an optional packed PNAM parent array,
     /// and the uint32 DATA "use all parents" boolean.
-    static func fields(
+    public static func fields(
         editorID: String,
         parents: [UInt32],
         usesAllParents: Bool
@@ -27,7 +27,7 @@ enum EquipSlotFixture {
         return fields
     }
 
-    static func record(
+    public static func record(
         formID: UInt32,
         editorID: String,
         parents: [UInt32] = [],

@@ -12,13 +12,13 @@ import Foundation
 nonisolated extension AS2Coercion {
     /// The exclusive bound below which an integral number prints in positional
     /// notation rather than exponential (ECMA-262 9.8.1 step 6).
-    package static let positionalLimit = 1e21
+    public static let positionalLimit = 1e21
 
     /// ECMA-262 9.8.1. Integral magnitudes below 1e21 print without a decimal
     /// point; everything else uses Swift's shortest round-trip form with the
     /// exponent normalized to the ECMAScript spelling (`1e+22`, `1.5e-7`), so
     /// no zero-padded exponent leaks into a menu string.
-    package static func numberToString(_ value: Double) -> String {
+    public static func numberToString(_ value: Double) -> String {
         if value.isNaN {
             return "NaN"
         }
@@ -56,7 +56,7 @@ nonisolated extension AS2Coercion {
     /// `0x`-prefixed hexadecimal, the one numeric literal ActionScript accepts
     /// beyond the ECMAScript decimal grammar. Returns nil when `text` is not a
     /// hexadecimal literal at all.
-    package static func hexadecimalValue(_ text: Substring) -> Double? {
+    public static func hexadecimalValue(_ text: Substring) -> Double? {
         guard text.hasPrefix("0x") || text.hasPrefix("0X") else {
             return nil
         }
@@ -74,7 +74,7 @@ nonisolated extension AS2Coercion {
     /// has already consumed. Written as an explicit scan because
     /// `Double(String)` additionally accepts `inf`, `nan`, and hexadecimal
     /// floating point, none of which are ActionScript numbers.
-    package static func isDecimalLiteral(_ text: Substring) -> Bool {
+    public static func isDecimalLiteral(_ text: Substring) -> Bool {
         var index = text.startIndex
         let digits = scanDigits(text, from: &index)
         var fractionDigits = 0
@@ -107,13 +107,13 @@ nonisolated extension AS2Coercion {
     }
 
     /// ECMA-262 9.5.
-    package static func toInt32(_ value: Double) -> Int32 {
+    public static func toInt32(_ value: Double) -> Int32 {
         let wrapped = wrappedTo32Bits(value)
         return Int32(truncatingIfNeeded: Int64(wrapped))
     }
 
     /// ECMA-262 9.6.
-    package static func toUInt32(_ value: Double) -> UInt32 {
+    public static func toUInt32(_ value: Double) -> UInt32 {
         UInt32(truncatingIfNeeded: Int64(wrappedTo32Bits(value)))
     }
 

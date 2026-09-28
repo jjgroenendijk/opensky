@@ -9,33 +9,33 @@
 
 import Foundation
 
-nonisolated package struct CollisionLayer: Equatable {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+nonisolated public struct CollisionLayer: Equatable, Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let triggerVolume = Flags(rawValue: 0x01)
-        package static let sensor = Flags(rawValue: 0x02)
-        package static let navmeshObstacle = Flags(rawValue: 0x04)
+        public static let triggerVolume = Flags(rawValue: 0x01)
+        public static let sensor = Flags(rawValue: 0x02)
+        public static let navmeshObstacle = Flags(rawValue: 0x04)
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let recordDescription: LString?
-    package let index: UInt32?
-    package let debugColor: ReferenceRecordColor?
-    package let flags: Flags
-    package let name: String?
-    package let interactablesCount: UInt32?
+    public let formID: FormID
+    public let editorID: String?
+    public let recordDescription: LString?
+    public let index: UInt32?
+    public let debugColor: ReferenceRecordColor?
+    public let flags: Flags
+    public let name: String?
+    public let interactablesCount: UInt32?
     /// CNAM links. Resolution is plugin-relative and therefore belongs to
     /// `CollisionLayerStore`, which exposes `ResolvedFormID` values.
-    package let collidesWith: [FormID]
-    package let skipped: ReferenceRecordTally
+    public let collidesWith: [FormID]
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "COLL" else {
             throw ESMError.malformed("expected COLL record, got \(record.type)")
         }

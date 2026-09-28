@@ -11,10 +11,10 @@
 
 import Foundation
 
-nonisolated package struct DefaultObjectTag: Hashable, Sendable, CustomStringConvertible {
-    package let code: FourCC
+nonisolated public struct DefaultObjectTag: Hashable, Sendable, CustomStringConvertible {
+    public let code: FourCC
 
-    package init?(name: String) {
+    public init?(name: String) {
         let bytes = Array(name.utf8)
         guard bytes.count == 4 else { return nil }
         code = FourCC(
@@ -25,39 +25,39 @@ nonisolated package struct DefaultObjectTag: Hashable, Sendable, CustomStringCon
         )
     }
 
-    package init(code: FourCC) {
+    public init(code: FourCC) {
         self.code = code
     }
 
-    package var description: String {
+    public var description: String {
         code.description
     }
 
-    package var meaning: String? {
+    public var meaning: String? {
         Self.knownMeanings[code]
     }
 
-    package var isKnown: Bool {
+    public var isKnown: Bool {
         meaning != nil
     }
 }
 
-nonisolated package struct DefaultObjectEntry: Equatable, Sendable {
-    package let tag: DefaultObjectTag
+nonisolated public struct DefaultObjectEntry: Equatable, Sendable {
+    public let tag: DefaultObjectTag
     /// A declared null is retained as an entry so an override can clear a
     /// lower-priority default without becoming indistinguishable from absence.
-    package let object: FormID?
+    public let object: FormID?
 }
 
-nonisolated package struct DefaultObjects: Equatable {
-    package let formID: FormID
+nonisolated public struct DefaultObjects: Equatable, Sendable {
+    public let formID: FormID
     /// xEdit supplies this internal default for records that omit EDID, as all
     /// five vanilla masters do.
-    package let editorID: String
-    package let entries: [DefaultObjectEntry]
-    package let skipped: ReferenceRecordTally
+    public let editorID: String
+    public let entries: [DefaultObjectEntry]
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "DOBJ" else {
             throw ESMError.malformed("expected DOBJ record, got \(record.type)")
         }
@@ -82,7 +82,7 @@ nonisolated package struct DefaultObjects: Equatable {
         skipped = tally
     }
 
-    package func entry(tag name: String) -> DefaultObjectEntry? {
+    public func entry(tag name: String) -> DefaultObjectEntry? {
         guard let tag = DefaultObjectTag(name: name) else { return nil }
         return entries.last { $0.tag == tag }
     }

@@ -2,6 +2,7 @@
 // code, never extracted from game data (AGENTS.md "Legal & IP boundary").
 // Layout: UESP "Skyrim Mod:Mod File Format/GLOB".
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

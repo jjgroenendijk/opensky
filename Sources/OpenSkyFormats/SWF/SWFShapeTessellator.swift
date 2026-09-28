@@ -19,30 +19,30 @@ import simd
 
 /// Triangle mesh for one shape, in twips. Three consecutive `vertices`
 /// entries form one triangle; `runs` groups consecutive triangles by fill.
-nonisolated package struct SWFShapeMesh: Equatable {
-    package struct FillRun: Equatable {
+nonisolated public struct SWFShapeMesh: Equatable, Sendable {
+    public struct FillRun: Equatable, Sendable {
         /// 1-based index into `SWFShapeDefinition.fillStyles`, matching the
         /// segment convention (0 is never emitted — unfilled edges produce no
         /// triangles).
-        package let fillStyleIndex: Int
+        public let fillStyleIndex: Int
         /// Triangle indices (not vertex indices) covered by this fill.
-        package let triangleRange: Range<Int>
+        public let triangleRange: Range<Int>
     }
 
-    package let vertices: [SIMD2<Float>]
-    package let runs: [FillRun]
+    public let vertices: [SIMD2<Float>]
+    public let runs: [FillRun]
 
-    package var triangleCount: Int {
+    public var triangleCount: Int {
         vertices.count / 3
     }
 }
 
-nonisolated package enum SWFShapeTessellator {
+nonisolated public enum SWFShapeTessellator: Sendable {
     /// Flattening tolerance in twips (1/20 px): the maximum distance a
     /// flattened chord may deviate from the true quadratic curve.
-    package static let curveToleranceTwips = 1.0
+    public static let curveToleranceTwips = 1.0
 
-    package static func tessellate(_ shape: SWFShapeDefinition) -> SWFShapeMesh {
+    public static func tessellate(_ shape: SWFShapeDefinition) -> SWFShapeMesh {
         var usedFills: Set<Int> = []
         for segment in shape.segments {
             if segment.fillStyle0 > 0 {
@@ -234,18 +234,18 @@ nonisolated package enum SWFShapeTessellator {
 /// Per-character tessellation cache. SWF character ids are unique in a
 /// movie's dictionary, so the character id is the cache key; the mesh is
 /// computed once and reused by every placement (consumed by 8.2.4).
-nonisolated package final class SWFShapeCache {
+nonisolated public final class SWFShapeCache {
     private var meshes: [UInt16: SWFShapeMesh] = [:]
 
-    package init() {}
+    public init() {}
 
-    package var count: Int {
+    public var count: Int {
         meshes.count
     }
 
     /// Returns the cached mesh for the shape's character id, tessellating on
     /// first use.
-    package func mesh(for shape: SWFShapeDefinition) -> SWFShapeMesh {
+    public func mesh(for shape: SWFShapeDefinition) -> SWFShapeMesh {
         if let cached = meshes[shape.characterId] {
             return cached
         }
@@ -254,7 +254,7 @@ nonisolated package final class SWFShapeCache {
         return mesh
     }
 
-    package func cachedMesh(forCharacterId characterId: UInt16) -> SWFShapeMesh? {
+    public func cachedMesh(forCharacterId characterId: UInt16) -> SWFShapeMesh? {
         meshes[characterId]
     }
 }

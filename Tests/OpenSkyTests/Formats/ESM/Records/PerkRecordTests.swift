@@ -2,6 +2,7 @@
 // grouping, the EPFD unions, and the malformed shapes a mod can author.
 // Fixtures are built in code and contain no bytes from the game install.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

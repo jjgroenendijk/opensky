@@ -31,59 +31,59 @@
 
 import Foundation
 
-nonisolated package struct Container {
+nonisolated public struct Container: Sendable {
     /// One CNTO entry with the COED extra data that followed it, if any.
-    package struct Entry: Equatable {
+    public struct Entry: Equatable, Sendable {
         /// The item placed in the container. xEdit constrains it to the
         /// carryable families plus LVLI, so a leveled list is legal here and
         /// the inventory runtime expands it (#176).
-        package let item: FormID
+        public let item: FormID
         /// Stack count. Signed on disk; vanilla never writes a negative.
-        package let count: Int32
+        public let count: Int32
         /// COED owner — an NPC_ or FACT. Nil when the entry is unowned.
-        package let owner: FormID?
+        public let owner: FormID?
         /// COED union word: a GLOB FormID for an NPC_ owner, a required
         /// faction rank for a FACT owner. Raw because the decoder cannot tell
         /// which without resolving `owner`'s record type.
-        package let ownerCondition: UInt32?
+        public let ownerCondition: UInt32?
         /// COED item condition (health fraction).
-        package let condition: Float?
+        public let condition: Float?
     }
 
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt8
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
         /// Play the open/close sounds even though the model has an animation.
-        package static let allowSoundsWhenAnimation = Flags(rawValue: 0x01)
-        package static let respawns = Flags(rawValue: 0x02)
-        package static let showOwner = Flags(rawValue: 0x04)
+        public static let allowSoundsWhenAnimation = Flags(rawValue: 0x01)
+        public static let respawns = Flags(rawValue: 0x02)
+        public static let showOwner = Flags(rawValue: 0x04)
     }
 
     /// The shared MSTT/TREE/FURN/ACTI/CONT/DOOR decode — name, model, sounds.
-    package let base: ModelBase
+    public let base: ModelBase
     /// CNTO entries in file order.
-    package let entries: [Entry]
+    public let entries: [Entry]
     /// COCT as written; nil when absent. Diagnostics only.
-    package let declaredEntryCount: UInt32?
+    public let declaredEntryCount: UInt32?
     /// DATA flags byte. The float that follows it in the struct is documented
     /// as a misaligned weight and is always 0, so it is not decoded.
-    package let flags: Flags
+    public let flags: Flags
 
-    package var formID: FormID {
+    public var formID: FormID {
         base.formID
     }
 
     /// True when COCT is present and disagrees with the CNTO fields decoded.
-    package var entryCountMismatch: Bool {
+    public var entryCountMismatch: Bool {
         guard let declaredEntryCount else { return false }
         return Int(declaredEntryCount) != entries.count
     }
 
-    package init(record: ESMRecord, localized: Bool = false) throws {
+    public init(record: ESMRecord, localized: Bool = false) throws {
         guard record.type == "CONT" else {
             throw ESMError.malformed("expected CONT record, got \(record.type)")
         }

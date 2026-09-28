@@ -31,6 +31,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Resolves the responsible crime faction for a place.
 ///

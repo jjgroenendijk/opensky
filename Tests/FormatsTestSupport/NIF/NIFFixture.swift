@@ -8,18 +8,18 @@ import Foundation
 @testable import OpenSkyFormats
 import simd
 
-enum NIFFixture {
-    static let versionLine = "Gamebryo File Format, Version 20.2.0.7"
-    static let version: UInt32 = 0x1402_0007
+public enum NIFFixture: Sendable {
+    public static let versionLine = "Gamebryo File Format, Version 20.2.0.7"
+    public static let version: UInt32 = 0x1402_0007
 
     /// One block as fed to `header(blocks:)`: type name + raw payload bytes.
-    struct Block {
-        let type: String
-        let data: Data
+    public struct Block: Sendable {
+        public let type: String
+        public let data: Data
         /// Set to test the PhysX flag bit on the block type index.
-        var physXFlag = false
+        public var physXFlag = false
 
-        init(_ type: String, _ data: Data, physXFlag: Bool = false) {
+        public init(_ type: String, _ data: Data, physXFlag: Bool = false) {
             self.type = type
             self.data = data
             self.physXFlag = physXFlag
@@ -27,12 +27,12 @@ enum NIFFixture {
     }
 
     /// uint32 length + bytes, no terminator (nif.xml SizedString).
-    static func sizedString(_ string: String) -> Data {
+    public static func sizedString(_ string: String) -> Data {
         sizedString(raw: Data(string.utf8))
     }
 
     /// SizedString from raw bytes — for garbage-byte decode tests.
-    static func sizedString(raw bytes: Data) -> Data {
+    public static func sizedString(raw bytes: Data) -> Data {
         var out = Data()
         out.appendUInt32(UInt32(bytes.count))
         out.append(bytes)
@@ -40,7 +40,7 @@ enum NIFFixture {
     }
 
     /// byte length including a trailing null (nif.xml ExportString).
-    static func exportString(_ string: String) -> Data {
+    public static func exportString(_ string: String) -> Data {
         var out = Data([UInt8(string.utf8.count + 1)])
         out.append(Data(string.utf8))
         out.append(0)
@@ -49,7 +49,7 @@ enum NIFFixture {
 
     /// Header bytes. Block type table is derived from `blocks` in first-seen
     /// order. `userVersion` >= 3 emits a BSStreamHeader.
-    static func header(
+    public static func header(
         versionLine: String = versionLine,
         version: UInt32 = version,
         endian: UInt8 = 1,
@@ -104,7 +104,7 @@ enum NIFFixture {
     /// nine floats in file order m11 m21 m31 | m12 m22 m32 | m13 m23 m33
     /// (nif.xml Matrix33). NIF multiplies row vectors, so each group of three
     /// is one *row* of the engine-convention rotation the decoder produces.
-    static func avObjectPrefix(
+    public static func avObjectPrefix(
         nameIndex: UInt32 = 0xFFFF_FFFF,
         extraDataRefs: [Int32] = [],
         controllerRef: Int32 = -1,
@@ -136,7 +136,7 @@ enum NIFFixture {
 
 extension NIFFixture {
     /// NiNode payload: AV-object prefix, children refs, effects refs.
-    static func niNode(
+    public static func niNode(
         prefix: Data = avObjectPrefix(),
         children: [Int32] = [],
         effects: [Int32] = []
@@ -155,7 +155,7 @@ extension NIFFixture {
 
     /// nif.xml NiTransform: Matrix33, translation, scale. Row-vector rotation,
     /// same as `avObjectPrefix`.
-    static func niTransform(
+    public static func niTransform(
         translation: SIMD3<Float> = .zero,
         rotationRows: [Float] = [1, 0, 0, 0, 1, 0, 0, 0, 1],
         scale: Float = 1
@@ -171,7 +171,7 @@ extension NIFFixture {
         return out
     }
 
-    static func skinInstance(
+    public static func skinInstance(
         dataRef: Int32,
         partitionRef: Int32,
         skeletonRootRef: Int32,
@@ -194,7 +194,7 @@ extension NIFFixture {
         return out
     }
 
-    static func skinData(
+    public static func skinData(
         rootParentToSkin: Data = niTransform(),
         boneTransforms: [Data],
         vertexWeights: [[(vertex: UInt16, weight: Float)]]
@@ -216,7 +216,7 @@ extension NIFFixture {
     }
 
     /// One vertex|uvs|skinned BSVertexDataSSE record (32 bytes).
-    static func skinnedVertex(
+    public static func skinnedVertex(
         position: SIMD3<Float>,
         uv: SIMD2<Float> = .zero,
         weights: SIMD4<Float> = SIMD4(1, 0, 0, 0),
@@ -241,7 +241,7 @@ extension NIFFixture {
     /// BSVertexDataSSE record without the vertex lane. FaceGen dynamic
     /// shapes put positions in their Vector4 tail, while NiSkinPartition
     /// retains UV/normal/influence lanes under attributes 0x4A.
-    static func dynamicSkinAttributesVertex(
+    public static func dynamicSkinAttributesVertex(
         uv: SIMD2<Float>,
         weights: SIMD4<Float> = SIMD4(1, 0, 0, 0),
         boneIndices: SIMD4<UInt8> = .zero
@@ -262,7 +262,7 @@ extension NIFFixture {
     /// SSE NiSkinPartition with one unstripped hardware partition. `triangles`
     /// are both local faces + global triangle-copy indices because this
     /// fixture uses an identity vertex map.
-    static func skinPartition(
+    public static func skinPartition(
         vertexRecords: [Data],
         topLevelVertexRecords: [Data]? = nil,
         triangles: [UInt16],
@@ -326,7 +326,7 @@ extension NIFFixture {
     /// BSTriShape payload (SSE stream layout). `vertexRecords` are raw
     /// per-vertex bytes so tests state the interleaved layout explicitly;
     /// the BSVertexDesc is assembled from `attributes` + `strideDwords`.
-    static func bsTriShape(
+    public static func bsTriShape(
         prefix: Data = avObjectPrefix(),
         center: SIMD3<Float> = .zero,
         radius: Float = 0,
@@ -367,7 +367,7 @@ extension NIFFixture {
     }
 
     /// BSDynamicTriShape appends byte size + one float4 per inherited vertex.
-    static func bsDynamicTriShape(
+    public static func bsDynamicTriShape(
         inherited: Data,
         positions: [SIMD3<Float>],
         byteCountOverride: Int? = nil
@@ -384,7 +384,7 @@ extension NIFFixture {
     }
 
     /// NiObjectNET-only prefix (property blocks): name, extra refs, controller.
-    static func objectNETPrefix(
+    public static func objectNETPrefix(
         nameIndex: UInt32 = 0xFFFF_FFFF,
         extraDataRefs: [Int32] = [],
         controllerRef: Int32 = -1
@@ -402,7 +402,7 @@ extension NIFFixture {
     /// BSLightingShaderProperty payload, Skyrim stream layout. `tail` stands
     /// in for lighting effects + the shader-type-conditional fields the
     /// decoder never reads.
-    static func bsLightingShaderProperty(
+    public static func bsLightingShaderProperty(
         shaderType: UInt32 = 0,
         nameIndex: UInt32 = 0xFFFF_FFFF,
         shaderFlags1: UInt32 = 0x8240_0301,
@@ -447,7 +447,7 @@ extension NIFFixture {
     }
 
     /// BSShaderTextureSet payload: uint32 count + SizedString paths.
-    static func bsShaderTextureSet(paths: [String]) -> Data {
+    public static func bsShaderTextureSet(paths: [String]) -> Data {
         var out = Data()
         out.appendUInt32(UInt32(paths.count))
         for path in paths {
@@ -457,7 +457,7 @@ extension NIFFixture {
     }
 
     /// NiAlphaProperty payload: NiObjectNET prefix + flags + threshold.
-    static func niAlphaProperty(
+    public static func niAlphaProperty(
         nameIndex: UInt32 = 0xFFFF_FFFF,
         flags: UInt16,
         threshold: UInt8
@@ -469,7 +469,7 @@ extension NIFFixture {
     }
 
     /// Full file: header, block payloads back to back, footer roots.
-    static func file(
+    public static func file(
         blocks: [Block],
         strings: [String] = [],
         groups: [UInt32] = [],

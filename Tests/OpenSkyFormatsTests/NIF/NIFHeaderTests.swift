@@ -1,5 +1,6 @@
 // NIF header decode tests over synthetic in-code files (NIFFixture).
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

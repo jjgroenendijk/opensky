@@ -6,6 +6,7 @@
 // past the frame edge, and resolve stays byte-deterministic. No Metal device.
 
 @testable import OpenSky
+@testable import OpenSkyGameData
 import OpenSkyShaderTypes
 import simd
 import Testing

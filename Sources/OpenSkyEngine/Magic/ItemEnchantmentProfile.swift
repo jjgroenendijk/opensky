@@ -41,6 +41,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// One enchanted item's enchantment, resolved.
 nonisolated struct ItemEnchantmentProfile: Equatable, Sendable {

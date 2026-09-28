@@ -7,6 +7,7 @@
 // split-for-size shape; the wiring here is independent of scene composition.
 
 import OpenSkyFormats
+import OpenSkyGameData
 import OSLog
 
 extension GameViewController {

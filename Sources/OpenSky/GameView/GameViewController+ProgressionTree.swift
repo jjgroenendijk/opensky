@@ -17,6 +17,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension GameViewController {
     /// The AVIF record describing a vanilla actor value, when the session has

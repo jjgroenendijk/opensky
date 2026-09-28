@@ -1,5 +1,6 @@
 // Synthetic KYWD/AACT decoder coverage. No game-derived bytes.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

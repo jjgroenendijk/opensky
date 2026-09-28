@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
     /// Decoded view for CONT, MISC, BOOK, ALCH, INGR, WEAP, AMMO, ARMO and

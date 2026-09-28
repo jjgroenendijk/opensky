@@ -3,9 +3,11 @@
 // both ways of the list's negation. Synthetic records only, laid out from
 // docs/formats/factions.md and docs/formats/records.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct VendorRulesTests {

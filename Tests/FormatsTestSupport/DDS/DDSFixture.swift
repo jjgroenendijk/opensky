@@ -6,19 +6,33 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum DDSFixture {
+public enum DDSFixture: Sendable {
     /// Optional DDS_HEADER_DXT10 fields (FourCC "DX10").
-    struct DX10 {
-        var dxgiFormat: UInt32
-        var resourceDimension: UInt32 = 3 // D3D10_RESOURCE_DIMENSION_TEXTURE2D
-        var miscFlag: UInt32 = 0
-        var arraySize: UInt32 = 1
-        var miscFlags2: UInt32 = 0
+    public struct DX10: Sendable {
+        public var dxgiFormat: UInt32
+        public var resourceDimension: UInt32 = 3 // D3D10_RESOURCE_DIMENSION_TEXTURE2D
+        public var miscFlag: UInt32 = 0
+        public var arraySize: UInt32 = 1
+        public var miscFlags2: UInt32 = 0
+
+        public init(
+            dxgiFormat: UInt32,
+            resourceDimension: UInt32 = 3,
+            miscFlag: UInt32 = 0,
+            arraySize: UInt32 = 1,
+            miscFlags2: UInt32 = 0
+        ) {
+            self.dxgiFormat = dxgiFormat
+            self.resourceDimension = resourceDimension
+            self.miscFlag = miscFlag
+            self.arraySize = arraySize
+            self.miscFlags2 = miscFlags2
+        }
     }
 
     /// Bytes of one tightly packed BCn mip chain, each byte = its mip level,
     /// so tests can assert slicing by content.
-    static func mipChain(width: Int, height: Int, mipCount: Int, blockBytes: Int) -> Data {
+    public static func mipChain(width: Int, height: Int, mipCount: Int, blockBytes: Int) -> Data {
         var out = Data()
         for level in 0 ..< mipCount {
             let blocksWide = (max(1, width >> level) + 3) / 4
@@ -32,7 +46,7 @@ enum DDSFixture {
     }
 
     /// Full file: magic + DDS_HEADER (+ DXT10 when given) + payload.
-    static func file(
+    public static func file(
         magic: String = "DDS ",
         headerSize: UInt32 = 124,
         flags: UInt32 = 0x1007, // CAPS | HEIGHT | WIDTH | PIXELFORMAT
@@ -85,7 +99,7 @@ enum DDSFixture {
     }
 
     /// Well-formed file for `format` with a content-tagged full payload.
-    static func file(
+    public static func file(
         format: DDSPixelFormat,
         width: Int,
         height: Int,
@@ -130,7 +144,7 @@ enum DDSFixture {
     }
 
     /// Legacy DDPF_RGB xRGB8888 file. Mip payload bytes are tagged by level.
-    static func xrgb8888File(
+    public static func xrgb8888File(
         width: Int,
         height: Int,
         mipCount: Int,
@@ -171,7 +185,7 @@ enum DDSFixture {
     }
 
     /// Legacy DDPF_RGB + DDPF_ALPHAPIXELS RGBA8888 file.
-    static func rgba8888File(
+    public static func rgba8888File(
         width: Int,
         height: Int,
         mipCount: Int,
@@ -191,7 +205,7 @@ enum DDSFixture {
     }
 
     /// Legacy DDPF_RGB + DDPF_ALPHAPIXELS BGRA8888 tree-atlas file.
-    static func bgra8888File(
+    public static func bgra8888File(
         width: Int,
         height: Int,
         mipCount: Int,

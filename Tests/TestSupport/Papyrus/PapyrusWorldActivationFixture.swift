@@ -8,6 +8,7 @@
 // because the two halves are no longer one file. See
 // Tests/TestSupport/AGENTS.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

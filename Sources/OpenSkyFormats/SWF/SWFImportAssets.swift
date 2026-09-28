@@ -17,21 +17,21 @@ import Foundation
 
 /// One imported character: the id the importing movie uses, plus the export
 /// name it has in the source movie.
-nonisolated package struct SWFImportedAsset: Equatable {
-    package let characterId: UInt16
-    package let name: String
+nonisolated public struct SWFImportedAsset: Equatable, Sendable {
+    public let characterId: UInt16
+    public let name: String
 }
 
 /// One ImportAssets/ImportAssets2 tag: the source movie URL plus its assets.
-nonisolated package struct SWFImportedAssets: Equatable {
-    package static let importAssetsCode: UInt16 = 57
-    package static let importAssets2Code: UInt16 = 71
-    package static let tagCodes: Set<UInt16> = [importAssetsCode, importAssets2Code]
+nonisolated public struct SWFImportedAssets: Equatable, Sendable {
+    public static let importAssetsCode: UInt16 = 57
+    public static let importAssets2Code: UInt16 = 71
+    public static let tagCodes: Set<UInt16> = [importAssetsCode, importAssets2Code]
 
-    package let url: String
-    package let assets: [SWFImportedAsset]
+    public let url: String
+    public let assets: [SWFImportedAsset]
 
-    package static func parse(tag: SWFTag) throws -> SWFImportedAssets {
+    public static func parse(tag: SWFTag) throws -> SWFImportedAssets {
         guard tagCodes.contains(tag.code) else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }

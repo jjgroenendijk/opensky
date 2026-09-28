@@ -8,6 +8,7 @@
 // the rows, `iSelectedIndex` holds the selection with -1 for none, and
 // `InvalidateData()` and `ClearList()` are methods on the list.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

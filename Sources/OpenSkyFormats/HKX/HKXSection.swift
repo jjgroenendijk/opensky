@@ -9,26 +9,26 @@ import Foundation
 /// `dataStart`. Observed region order inside a section:
 /// [object data | local fixups | global fixups | virtual fixups | end];
 /// exports == imports == end on every SSE file probed (no export tables).
-nonisolated package struct HKXSectionHeader {
-    package let name: String
-    package let dataStart: Int
-    package let localFixupsOffset: Int
-    package let globalFixupsOffset: Int
-    package let virtualFixupsOffset: Int
-    package let exportsOffset: Int
-    package let importsOffset: Int
-    package let endOffset: Int
+nonisolated public struct HKXSectionHeader: Sendable {
+    public let name: String
+    public let dataStart: Int
+    public let localFixupsOffset: Int
+    public let globalFixupsOffset: Int
+    public let virtualFixupsOffset: Int
+    public let exportsOffset: Int
+    public let importsOffset: Int
+    public let endOffset: Int
 
     /// Object data occupies the section start up to the first fixup table.
-    package var dataSize: Int {
+    public var dataSize: Int {
         localFixupsOffset
     }
 
-    package var dataEnd: Int {
+    public var dataEnd: Int {
         dataStart + endOffset
     }
 
-    package init(reader: inout BinaryReader) throws {
+    public init(reader: inout BinaryReader) throws {
         let nameFieldOffset = reader.offset
         let nameField = try reader.read(count: 19)
         guard let name = String(bytes: nameField.prefix { $0 != 0 }, encoding: .ascii) else {
@@ -45,7 +45,7 @@ nonisolated package struct HKXSectionHeader {
         endOffset = try Int(reader.readUInt32())
     }
 
-    package func validate(fileSize: Int) throws {
+    public func validate(fileSize: Int) throws {
         let offsets = [
             localFixupsOffset, globalFixupsOffset, virtualFixupsOffset,
             exportsOffset, importsOffset, endOffset
@@ -67,41 +67,41 @@ nonisolated package struct HKXSectionHeader {
 
 /// Pointer patch within one section: pointer at `fromOffset` targets
 /// `toOffset` (both section-local).
-nonisolated package struct HKXLocalFixup: Equatable {
-    package let fromOffset: Int
-    package let toOffset: Int
+nonisolated public struct HKXLocalFixup: Equatable, Sendable {
+    public let fromOffset: Int
+    public let toOffset: Int
 }
 
 /// Pointer patch across sections: pointer at `fromOffset` targets
 /// `toOffset` inside section `sectionIndex`.
-nonisolated package struct HKXGlobalFixup: Equatable {
-    package let fromOffset: Int
-    package let sectionIndex: Int
-    package let toOffset: Int
+nonisolated public struct HKXGlobalFixup: Equatable, Sendable {
+    public let fromOffset: Int
+    public let sectionIndex: Int
+    public let toOffset: Int
 }
 
 /// Object registration: instance at `dataOffset` (section-local) has the
 /// class named at `classNameOffset` inside section `classNameSectionIndex`.
 /// The packfile's object inventory.
-nonisolated package struct HKXVirtualFixup: Equatable {
-    package let dataOffset: Int
-    package let classNameSectionIndex: Int
-    package let classNameOffset: Int
+nonisolated public struct HKXVirtualFixup: Equatable, Sendable {
+    public let dataOffset: Int
+    public let classNameSectionIndex: Int
+    public let classNameOffset: Int
 }
 
 /// One parsed section: header + decoded fixup tables.
-nonisolated package struct HKXSection {
+nonisolated public struct HKXSection: Sendable {
     /// Fixup regions are 16-byte aligned; unused tail slots are filled with
     /// 0xFFFFFFFF. A sentinel first word therefore ends the table (observed:
     /// idle files pad the 5-entry virtual table to 64 bytes).
     private static let padSentinel: UInt32 = 0xFFFF_FFFF
 
-    package let header: HKXSectionHeader
-    package let localFixups: [HKXLocalFixup]
-    package let globalFixups: [HKXGlobalFixup]
-    package let virtualFixups: [HKXVirtualFixup]
+    public let header: HKXSectionHeader
+    public let localFixups: [HKXLocalFixup]
+    public let globalFixups: [HKXGlobalFixup]
+    public let virtualFixups: [HKXVirtualFixup]
 
-    package init(header: HKXSectionHeader, fileData: Data) throws {
+    public init(header: HKXSectionHeader, fileData: Data) throws {
         try header.validate(fileSize: fileData.count)
         self.header = header
         localFixups = try Self.readTable(

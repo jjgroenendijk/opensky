@@ -14,6 +14,7 @@
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 /// One file's census plus where it came from, so the report is greppable by

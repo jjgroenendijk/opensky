@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 nonisolated enum SkeletonPoseError: Error, Equatable {

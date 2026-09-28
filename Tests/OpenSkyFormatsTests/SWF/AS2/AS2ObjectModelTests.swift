@@ -1,6 +1,7 @@
 // Object literals, prototypes, and the class-relationship opcodes (milestone
 // 8.3.2) — the shape of vanilla `DoInitAction` class-registration code.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

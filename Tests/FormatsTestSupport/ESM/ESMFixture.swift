@@ -5,8 +5,8 @@
 import Compression
 import Foundation
 
-enum ESMFixture {
-    static func field(_ type: String, _ data: Data) -> Data {
+public enum ESMFixture: Sendable {
+    public static func field(_ type: String, _ data: Data) -> Data {
         var out = Data(type.utf8)
         out.appendUInt16(UInt16(data.count))
         out.append(data)
@@ -15,7 +15,7 @@ enum ESMFixture {
 
     /// XXXX size-extension pair: uint32 real size, then `type` with stored
     /// size 0 and `data.count` payload bytes.
-    static func longField(_ type: String, _ data: Data) -> Data {
+    public static func longField(_ type: String, _ data: Data) -> Data {
         var out = Data("XXXX".utf8)
         out.appendUInt16(4)
         out.appendUInt32(UInt32(data.count))
@@ -25,7 +25,7 @@ enum ESMFixture {
         return out
     }
 
-    static func record(
+    public static func record(
         _ type: String,
         formID: UInt32 = 0,
         flags: UInt32 = 0,
@@ -45,14 +45,18 @@ enum ESMFixture {
     }
 
     /// Record with flag 0x40000: uint32 decompressedSize + zlib stream.
-    static func compressedRecord(_ type: String, formID: UInt32 = 0, fieldData: Data) -> Data {
+    public static func compressedRecord(
+        _ type: String,
+        formID: UInt32 = 0,
+        fieldData: Data
+    ) -> Data {
         var data = Data()
         data.appendUInt32(UInt32(fieldData.count))
         data.append(zlibStream(fieldData))
         return record(type, formID: formID, flags: 0x0004_0000, data: data)
     }
 
-    static func group(label: Data, groupType: Int32, contents: Data) -> Data {
+    public static func group(label: Data, groupType: Int32, contents: Data) -> Data {
         var out = Data("GRUP".utf8)
         out.appendUInt32(UInt32(24 + contents.count)) // size includes header
         out.append(label)
@@ -64,19 +68,19 @@ enum ESMFixture {
         return out
     }
 
-    static func topGroup(_ recordType: String, contents: Data) -> Data {
+    public static func topGroup(_ recordType: String, contents: Data) -> Data {
         group(label: Data(recordType.utf8), groupType: 0, contents: contents)
     }
 
     /// Children group (world/cell/topic) labeled with the parent FormID.
-    static func childGroup(parent: UInt32, groupType: Int32, contents: Data) -> Data {
+    public static func childGroup(parent: UInt32, groupType: Int32, contents: Data) -> Data {
         var label = Data()
         label.appendUInt32(parent)
         return group(label: label, groupType: groupType, contents: contents)
     }
 
     /// Exterior cell (sub-)block: label is int16 Y then int16 X (reversed).
-    static func exteriorBlock(x: Int16, y: Int16, groupType: Int32, contents: Data) -> Data {
+    public static func exteriorBlock(x: Int16, y: Int16, groupType: Int32, contents: Data) -> Data {
         var label = Data()
         label.appendUInt16(UInt16(bitPattern: y))
         label.appendUInt16(UInt16(bitPattern: x))
@@ -85,7 +89,7 @@ enum ESMFixture {
 
     /// TES4 header record: HEDR (version 1.71) plus optional author,
     /// description, and MAST/DATA master pairs.
-    static func tes4(
+    public static func tes4(
         flags: UInt32 = 1,
         author: String? = nil,
         description: String? = nil,
@@ -113,12 +117,12 @@ enum ESMFixture {
     }
 
     /// Null-terminated windows-1252 string (ASCII subset used in fixtures).
-    static func zstring(_ string: String) -> Data {
+    public static func zstring(_ string: String) -> Data {
         Data(string.utf8) + Data([0])
     }
 
     /// Full 92-byte CELL XCLL / LGTM DATA lighting payload.
-    static func cellLightingData(inherits: UInt32) -> Data {
+    public static func cellLightingData(inherits: UInt32) -> Data {
         var data = Data()
         appendRGBX(10, 20, 30, to: &data)
         appendRGBX(40, 50, 60, to: &data)
@@ -144,7 +148,7 @@ enum ESMFixture {
     }
 
     /// Full RFC 1950 zlib stream: 2-byte header, deflate payload, adler32.
-    static func zlibStream(_ payload: Data) -> Data {
+    public static func zlibStream(_ payload: Data) -> Data {
         let capacity = payload.count + 256
         var deflate = Data(count: capacity)
         let written = deflate.withUnsafeMutableBytes { destination in

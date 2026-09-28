@@ -10,6 +10,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 import OSLog
 import simd
 

@@ -21,6 +21,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 extension PapyrusWorldStateBridge {

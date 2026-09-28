@@ -9,13 +9,13 @@
 
 import Foundation
 
-nonisolated package enum LString: Equatable {
+nonisolated public enum LString: Equatable, Sendable {
     case inline(String)
     /// ID into the owning plugin's string tables; which table (.strings /
     /// .dlstrings / .ilstrings) depends on the field, not the ID.
     case tableID(UInt32)
 
-    package init(field: ESMField, localized: Bool) throws {
+    public init(field: ESMField, localized: Bool) throws {
         if localized {
             var reader = BinaryReader(field.data)
             self = try .tableID(reader.readUInt32())

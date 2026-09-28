@@ -9,7 +9,7 @@
 
 import Foundation
 
-nonisolated package enum StringTableError: Error, Equatable {
+nonisolated public enum StringTableError: Error, Equatable, Sendable {
     case malformed(String)
     /// Directory or entry points outside the data block.
     case entryOutOfRange(id: UInt32)
@@ -17,9 +17,9 @@ nonisolated package enum StringTableError: Error, Equatable {
 
 /// One parsed table. Directory is decoded eagerly (small); string bytes are
 /// located and decoded per lookup, so a table over a mapped file stays cheap.
-nonisolated package struct StringTable {
+nonisolated public struct StringTable: Sendable {
     /// Entry framing differs by file extension; the header is identical.
-    nonisolated package enum Kind {
+    nonisolated public enum Kind: Sendable {
         /// Bare zstring entries (most UI text).
         case strings
         /// uint32 byte length (terminator included) + zstring. Book text,
@@ -27,7 +27,7 @@ nonisolated package struct StringTable {
         case dlstrings
         case ilstrings
 
-        package init?(fileExtension: String) {
+        public init?(fileExtension: String) {
             switch fileExtension.lowercased() {
             case "strings": self = .strings
             case "dlstrings": self = .dlstrings
@@ -36,30 +36,30 @@ nonisolated package struct StringTable {
             }
         }
 
-        package var isLengthPrefixed: Bool {
+        public var isLengthPrefixed: Bool {
             self != .strings
         }
     }
 
-    package let kind: Kind
+    public let kind: Kind
     private let dataBlock: Data
     /// String ID -> byte offset into `dataBlock`. Duplicate IDs keep the
     /// first occurrence (mirrors first-wins lookup in xEdit).
     private let offsets: [UInt32: UInt32]
 
-    package var count: Int {
+    public var count: Int {
         offsets.count
     }
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         offsets.isEmpty
     }
 
-    package var ids: [UInt32] {
+    public var ids: [UInt32] {
         Array(offsets.keys)
     }
 
-    package init(data: Data, kind: Kind) throws {
+    public init(data: Data, kind: Kind) throws {
         self.kind = kind
         var reader = BinaryReader(data)
         guard
@@ -100,7 +100,7 @@ nonisolated package struct StringTable {
 
     /// Looks up one string by ID. Unknown ID -> nil; entry that cannot be
     /// framed -> throws. Decoding itself never fails (`GameText`).
-    package func string(id: UInt32) throws -> String? {
+    public func string(id: UInt32) throws -> String? {
         guard let offset = offsets[id] else { return nil }
         var reader = BinaryReader(dataBlock, offset: Int(offset))
 

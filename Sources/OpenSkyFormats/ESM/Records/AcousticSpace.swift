@@ -18,21 +18,21 @@
 
 import Foundation
 
-nonisolated package struct AcousticSpace {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct AcousticSpace: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// SNAM -> SNDR. Direct ambient sound for any cell pointing at this
     /// acoustic space; nil when absent.
-    package let ambientSound: FormID?
+    public let ambientSound: FormID?
     /// RDAT -> REGN. Region whose type-7 sound area (RDSA entries) is borrowed
     /// to drive this interior's ambience. CK label: "Interiors Only". nil when
     /// absent; resolved through RegionStore by the audio director.
-    package let borrowedRegion: FormID?
+    public let borrowedRegion: FormID?
     /// BNAM -> REVB. Reverb / environment preset; decoded for completeness but
     /// unused until a reverb runtime exists. nil when absent.
-    package let reverbModel: FormID?
+    public let reverbModel: FormID?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "ASPC" else {
             throw ESMError.malformed("expected ASPC record, got \(record.type)")
         }

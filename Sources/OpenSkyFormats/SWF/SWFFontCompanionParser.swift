@@ -9,11 +9,11 @@
 
 import Foundation
 
-nonisolated package enum SWFFontCompanionParser {
+nonisolated public enum SWFFontCompanionParser: Sendable {
     /// DefineFontAlignZones (73): FontID UI16, CSMTableHint UB[2] + Reserved
     /// UB[6], then a ZONERECORD per glyph. The zone table needs the referenced
     /// font's glyph count to size, so it is retained raw (see type doc).
-    package static func parseAlignZones(tag: SWFTag) throws -> SWFFontAlignZones {
+    public static func parseAlignZones(tag: SWFTag) throws -> SWFFontAlignZones {
         var reader = BinaryReader(tag.body)
         guard reader.bytesRemaining >= 3 else {
             throw SWFFontError.truncatedCompanionTag(tag.code)
@@ -30,7 +30,7 @@ nonisolated package enum SWFFontCompanionParser {
 
     /// CSMTextSettings (74): TextID UI16, UseFlashType UB[2] + GridFit UB[3] +
     /// Reserved UB[3], Thickness FLOAT32, Sharpness FLOAT32, Reserved UI8.
-    package static func parseCSMTextSettings(tag: SWFTag) throws -> SWFCSMTextSettings {
+    public static func parseCSMTextSettings(tag: SWFTag) throws -> SWFCSMTextSettings {
         var reader = BinaryReader(tag.body)
         guard reader.bytesRemaining >= 11 else {
             throw SWFFontError.truncatedCompanionTag(tag.code)
@@ -51,7 +51,7 @@ nonisolated package enum SWFFontCompanionParser {
     /// DefineFontName (88): FontID UI16, FontName STRING, FontCopyright STRING.
     /// Both strings are null-terminated; SWF 6 and later declare them UTF-8, so
     /// they take the engine-wide `GameText` policy like every other SWF string.
-    package static func parseFontName(tag: SWFTag) throws -> SWFFontName {
+    public static func parseFontName(tag: SWFTag) throws -> SWFFontName {
         var reader = BinaryReader(tag.body)
         let fontID = try reader.readUInt16()
         let name = try reader.readZString()

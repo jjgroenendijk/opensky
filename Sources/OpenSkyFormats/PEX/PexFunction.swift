@@ -3,28 +3,28 @@
 
 import Foundation
 
-nonisolated package struct PexFunctionFlags: OptionSet, Equatable, Sendable {
-    package let rawValue: UInt8
+nonisolated public struct PexFunctionFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt8
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         self.rawValue = rawValue
     }
 
-    package static let global = PexFunctionFlags(rawValue: 1 << 0)
-    package static let native = PexFunctionFlags(rawValue: 1 << 1)
+    public static let global = PexFunctionFlags(rawValue: 1 << 0)
+    public static let native = PexFunctionFlags(rawValue: 1 << 1)
 }
 
-nonisolated package struct PexFunction: Equatable, Sendable {
-    package let returnTypeName: String
-    package let documentation: String
-    package let userFlags: UInt32
-    package let flags: PexFunctionFlags
-    package let parameters: [PexTypedName]
-    package let localVariables: [PexTypedName]
-    package let instructions: [PexInstruction]
+nonisolated public struct PexFunction: Equatable, Sendable {
+    public let returnTypeName: String
+    public let documentation: String
+    public let userFlags: UInt32
+    public let flags: PexFunctionFlags
+    public let parameters: [PexTypedName]
+    public let localVariables: [PexTypedName]
+    public let instructions: [PexInstruction]
 }
 
-nonisolated package struct PexNamedFunction: Equatable, Sendable {
-    package let name: String
-    package let function: PexFunction
+nonisolated public struct PexNamedFunction: Equatable, Sendable {
+    public let name: String
+    public let function: PexFunction
 }

@@ -4,20 +4,27 @@
 import Foundation
 
 /// Builds a minimal spec-conformant BSA v105 byte blob.
-struct BSAFixture {
-    struct File {
-        let folder: String
-        let name: String
+public struct BSAFixture: Sendable {
+    public struct File: Sendable {
+        public let folder: String
+        public let name: String
         /// Bytes stored in the data area, verbatim.
-        let stored: Data
+        public let stored: Data
         /// Toggle bit 30 of the size field (inverts archive default compression).
-        var toggleCompression = false
+        public var toggleCompression = false
+
+        public init(folder: String, name: String, stored: Data, toggleCompression: Bool = false) {
+            self.folder = folder
+            self.name = name
+            self.stored = stored
+            self.toggleCompression = toggleCompression
+        }
     }
 
-    var flags: UInt32 = 0x3 // folder + file names present
-    var files: [File] = []
+    public var flags: UInt32 = 0x3 // folder + file names present
+    public var files: [File] = []
 
-    func build() -> Data {
+    public func build() -> Data {
         // Preserve first-seen folder order.
         var folders: [(name: String, files: [File])] = []
         for file in files {
@@ -77,26 +84,31 @@ struct BSAFixture {
         }
         return header + records + blocks + names + payloads
     }
+
+    public init(flags: UInt32 = 0x3, files: [File] = []) {
+        self.flags = flags
+        self.files = files
+    }
 }
 
 extension Data {
-    mutating func appendUInt16(_ value: UInt16) {
+    public mutating func appendUInt16(_ value: UInt16) {
         Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
     }
 
-    mutating func appendUInt32(_ value: UInt32) {
+    public mutating func appendUInt32(_ value: UInt32) {
         Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
     }
 
-    mutating func appendUInt64(_ value: UInt64) {
+    public mutating func appendUInt64(_ value: UInt64) {
         Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
     }
 
-    mutating func appendFloat32(_ value: Float) {
+    public mutating func appendFloat32(_ value: Float) {
         appendUInt32(value.bitPattern)
     }
 
-    mutating func appendFloat16(_ value: Float) {
+    public mutating func appendFloat16(_ value: Float) {
         appendUInt16(Float16(value).bitPattern)
     }
 }

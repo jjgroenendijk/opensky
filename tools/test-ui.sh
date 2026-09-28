@@ -20,12 +20,12 @@
 # missing grant produces the same error string for a genuine reason. That case
 # points at `make test-perms`.
 #
-# Usage: tools/test-ui.sh PROJECT SCHEME DESTINATION [extra xcodebuild args...]
+# Usage: tools/test-ui.sh WORKSPACE SCHEME DESTINATION [extra xcodebuild args...]
 # Env:   OPENSKY_RESULT_BUNDLE  optional -resultBundlePath target, overriding
 #                               the run directory under build/test-results
 set -eu
 
-project="$1"
+workspace="$1"
 scheme="$2"
 destination="$3"
 shift 3
@@ -61,7 +61,7 @@ log="$run_dir/test-ui.log"
 status=0
 # shellcheck disable=SC2086  # bundle_flag + passthrough flags are word-split on purpose
 "$root/tools/xcodebuild-run.sh" test-ui \
-    xcodebuild -project "$project" -scheme "$scheme" -destination "$destination" \
+    xcodebuild -workspace "$workspace" -scheme "$scheme" -destination "$destination" \
     -derivedDataPath "$derived_data" \
     $bundle_flag "$@" -testPlan UITests test || status=$?
 

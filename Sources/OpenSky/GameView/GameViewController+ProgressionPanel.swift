@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension GameViewController: ProgressionControlProviding {
     var progressionSkillSelection: Int32 {

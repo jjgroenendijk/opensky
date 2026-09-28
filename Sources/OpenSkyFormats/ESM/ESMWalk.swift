@@ -7,7 +7,7 @@
 import Foundation
 import OSLog
 
-nonisolated package enum ESMWalk {
+nonisolated public enum ESMWalk: Sendable {
     private static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "ESMWalk"
@@ -15,7 +15,7 @@ nonisolated package enum ESMWalk {
 
     /// Depth-first over every record in every top group (TES4 excluded).
     /// Return false from `body` to stop early.
-    package static func forEachRecord(in file: ESMFile, _ body: (ESMRecord) -> Bool) {
+    public static func forEachRecord(in file: ESMFile, _ body: (ESMRecord) -> Bool) {
         for group in file.topGroups {
             guard walk(group: group, body) else { return }
         }
@@ -38,7 +38,7 @@ nonisolated package enum ESMWalk {
     }
 
     /// FormID -> record type over the whole plugin (headers only, fast).
-    package static func recordTypeIndex(in file: ESMFile) -> [UInt32: FourCC] {
+    public static func recordTypeIndex(in file: ESMFile) -> [UInt32: FourCC] {
         var index: [UInt32: FourCC] = [:]
         forEachRecord(in: file) { record in
             index[record.formID] = record.type
@@ -48,7 +48,7 @@ nonisolated package enum ESMWalk {
     }
 
     /// First record whose FormID matches (0 is the null sentinel -> nil).
-    package static func record(withFormID formID: UInt32, in file: ESMFile) -> ESMRecord? {
+    public static func record(withFormID formID: UInt32, in file: ESMFile) -> ESMRecord? {
         guard formID != 0 else { return nil }
         var found: ESMRecord?
         forEachRecord(in: file) { record in
@@ -64,7 +64,7 @@ nonisolated package enum ESMWalk {
     /// First record whose EDID matches, case-insensitively. Decodes the
     /// fields of every record until the hit — slow on Skyrim.esm (whole-file
     /// decompression), acceptable for a dev tool.
-    package static func record(withEditorID editorID: String, in file: ESMFile) -> ESMRecord? {
+    public static func record(withEditorID editorID: String, in file: ESMFile) -> ESMRecord? {
         let wanted = editorID.lowercased()
         var found: ESMRecord?
         forEachRecord(in: file) { record in
@@ -78,7 +78,7 @@ nonisolated package enum ESMWalk {
     }
 
     /// EDID zstring of a record, nil when absent or undecodable.
-    package static func editorID(of record: ESMRecord) -> String? {
+    public static func editorID(of record: ESMRecord) -> String? {
         guard let fields = try? record.fields() else { return nil }
         for field in fields where field.type == "EDID" {
             var reader = BinaryReader(field.data)

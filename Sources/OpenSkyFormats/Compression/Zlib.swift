@@ -9,7 +9,7 @@
 import Compression
 import Foundation
 
-nonisolated package enum ZlibError: Error, Equatable {
+nonisolated public enum ZlibError: Error, Equatable, Sendable {
     /// First two bytes fail the RFC 1950 CMF/FLG check (method 8, mod-31).
     case notZlib
     /// FDICT bit set — preset dictionaries are never used by the game.
@@ -20,14 +20,14 @@ nonisolated package enum ZlibError: Error, Equatable {
     case sizeMismatch(expected: Int, actual: Int)
 }
 
-nonisolated package enum Zlib {
+nonisolated public enum Zlib: Sendable {
     /// Sanity cap on declared output so a malformed size field cannot balloon
     /// memory. Largest vanilla records (NAVI) are tens of MB.
-    package static let sizeCap = 1 << 28
+    public static let sizeCap = 1 << 28
 
     /// Decompresses a full zlib stream (header + deflate + adler32) whose
     /// decompressed size is known up front, as plugin records store it.
-    package static func decompress(_ stream: Data, decompressedSize: Int) throws -> Data {
+    public static func decompress(_ stream: Data, decompressedSize: Int) throws -> Data {
         guard decompressedSize >= 0, decompressedSize <= sizeCap else {
             throw ZlibError.invalidSize(decompressedSize)
         }

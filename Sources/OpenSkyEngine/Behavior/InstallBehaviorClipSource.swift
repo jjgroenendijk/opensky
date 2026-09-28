@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Loads clips out of the install on demand, so only the clips the graphs
 /// actually reach are read. Capped, because a graph that reaches thousands of

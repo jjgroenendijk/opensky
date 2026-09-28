@@ -20,7 +20,7 @@ import Foundation
 /// confirmed against the vanilla files by the naming convention Bethesda uses
 /// for behavior variables (`b*` bool, `i*` int32, `f*` real); see the
 /// Verification section of docs/formats/hkx-behavior.md.
-nonisolated package enum HKBVariableType: Int, Equatable, Sendable {
+nonisolated public enum HKBVariableType: Int, Equatable, Sendable {
     case invalid = -1
     case bool = 0
     case int8 = 1
@@ -34,13 +34,13 @@ nonisolated package enum HKBVariableType: Int, Equatable, Sendable {
 
     /// True when the variable's initial value lives in the quad list rather
     /// than the word list of `hkbVariableValueSet`.
-    package var isQuad: Bool {
+    public var isQuad: Bool {
         self == .vector3 || self == .vector4 || self == .quaternion
     }
 }
 
 nonisolated extension HKBVariableType: CustomStringConvertible {
-    package var description: String {
+    public var description: String {
         switch self {
         case .invalid: "invalid"
         case .bool: "bool"
@@ -59,27 +59,27 @@ nonisolated extension HKBVariableType: CustomStringConvertible {
 /// One entry of `hkbBehaviorGraphData::m_variableInfos`. `rawType` is kept
 /// beside the decoded case so an unknown value from a modded file stays
 /// reportable instead of being silently normalised.
-nonisolated package struct HKBVariableInfo: Equatable {
-    package let rawType: Int
-    package let type: HKBVariableType?
+nonisolated public struct HKBVariableInfo: Equatable, Sendable {
+    public let rawType: Int
+    public let type: HKBVariableType?
 }
 
 /// Decoded `hkbBehaviorGraphData`: the graph's declarations. Variable and
 /// event indices used by nodes address these lists positionally, and the
 /// matching names come from `stringData`.
-nonisolated package struct HKBBehaviorGraphData: Equatable {
-    package let attributeDefaults: [Float]
-    package let variableInfos: [HKBVariableInfo]
-    package let characterPropertyInfos: [HKBVariableInfo]
+nonisolated public struct HKBBehaviorGraphData: Equatable, Sendable {
+    public let attributeDefaults: [Float]
+    public let variableInfos: [HKBVariableInfo]
+    public let characterPropertyInfos: [HKBVariableInfo]
     /// One `hkbEventInfo::m_flags` per declared event.
-    package let eventFlags: [UInt32]
-    package let wordMinVariableValues: [Int]
-    package let wordMaxVariableValues: [Int]
-    package let variableInitialValues: HKBVariableValueSet?
-    package let stringData: HKBBehaviorGraphStringData?
-    package let unresolved: [HKXUnresolvedReference]
+    public let eventFlags: [UInt32]
+    public let wordMinVariableValues: [Int]
+    public let wordMaxVariableValues: [Int]
+    public let variableInitialValues: HKBVariableValueSet?
+    public let stringData: HKBBehaviorGraphStringData?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBehaviorGraphData"
+    public static let className = "hkbBehaviorGraphData"
 
     // hkReferencedObject base is 16 bytes; six hkArray then two pointers.
     private static let attributeDefaultsField = HKXField(0x10, "m_attributeDefaults")
@@ -100,7 +100,7 @@ nonisolated package struct HKBBehaviorGraphData: Equatable {
     /// hkbEventInfo is 4 bytes: a single u32 flags word.
     private static let eventInfoStride = 4
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBehaviorGraphData?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -176,18 +176,18 @@ nonisolated package struct HKBBehaviorGraphData: Equatable {
 /// Decoded `hkbBehaviorGraph`: the top-level generator of a behavior file.
 /// `rootGenerator` is the entry point of the node tree that item 14.2 decodes;
 /// this item records where it is and what class it is, not what it does.
-nonisolated package struct HKBBehaviorGraph: Equatable {
-    package let name: String?
-    package let userData: UInt64
+nonisolated public struct HKBBehaviorGraph: Equatable, Sendable {
+    public let name: String?
+    public let userData: UInt64
     /// `hkbBehaviorGraph::m_variableMode` — how the graph treats variables
     /// when it is instanced (0 discards, 1 maintains them across activation).
-    package let variableMode: Int
-    package let rootGenerator: HKXPointerTarget?
-    package let rootGeneratorClassName: String?
-    package let data: HKBBehaviorGraphData?
-    package let unresolved: [HKXUnresolvedReference]
+    public let variableMode: Int
+    public let rootGenerator: HKXPointerTarget?
+    public let rootGeneratorClassName: String?
+    public let data: HKBBehaviorGraphData?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBehaviorGraph"
+    public static let className = "hkbBehaviorGraph"
 
     // hkbBehaviorGraph derives hkbGenerator -> hkbNode -> hkbBindable ->
     // hkReferencedObject, so the inherited members land first: hkbBindable
@@ -201,11 +201,11 @@ nonisolated package struct HKBBehaviorGraph: Equatable {
 
     /// Every hkbBehaviorGraph in the packfile, in inventory order. Vanilla
     /// behavior files carry exactly one.
-    package static func graphs(in graph: HKXObjectGraph) -> [HKBBehaviorGraph] {
+    public static func graphs(in graph: HKXObjectGraph) -> [HKBBehaviorGraph] {
         graph.objects(ofClass: className).compactMap { decode(at: $0, in: graph) }
     }
 
-    package static func decode(
+    public static func decode(
         at object: HKXObjectRef,
         in graph: HKXObjectGraph
     ) -> HKBBehaviorGraph? {
@@ -215,7 +215,7 @@ nonisolated package struct HKBBehaviorGraph: Equatable {
         return decode(at: target, in: graph)
     }
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBehaviorGraph?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }

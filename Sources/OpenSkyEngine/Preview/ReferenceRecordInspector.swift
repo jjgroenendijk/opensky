@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated struct ReferenceRecordInspector {
     private let index: RecordIndex

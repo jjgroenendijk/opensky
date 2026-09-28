@@ -7,6 +7,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated struct ConditionDataResolution: @unchecked Sendable {
     let keywords: KeywordStore?

@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum SWFActionSweep {
     private static let defaultHostAPILimit = 120

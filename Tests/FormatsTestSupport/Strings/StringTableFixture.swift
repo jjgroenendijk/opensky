@@ -6,10 +6,13 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum StringTableFixture {
+public enum StringTableFixture: Sendable {
     /// Builds a whole table file: header, directory (in entry order), data
     /// block. `bytes` are raw string payloads, terminator added here.
-    static func table(kind: StringTable.Kind, rawEntries: [(id: UInt32, bytes: Data)]) -> Data {
+    public static func table(
+        kind: StringTable.Kind,
+        rawEntries: [(id: UInt32, bytes: Data)]
+    ) -> Data {
         var directory = Data()
         var block = Data()
         for entry in rawEntries {
@@ -29,7 +32,10 @@ enum StringTableFixture {
         return out
     }
 
-    static func table(kind: StringTable.Kind, entries: [(id: UInt32, text: String)]) -> Data {
+    public static func table(
+        kind: StringTable.Kind,
+        entries: [(id: UInt32, text: String)]
+    ) -> Data {
         table(kind: kind, rawEntries: entries.map { ($0.id, Data($0.text.utf8)) })
     }
 }

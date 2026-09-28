@@ -9,9 +9,11 @@
 // spell-cost perk and an ability perk — so a suite asserts against the shape
 // the real records have rather than against a shape invented to be easy.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 
 @MainActor
 enum PerkRuntimeFixture {

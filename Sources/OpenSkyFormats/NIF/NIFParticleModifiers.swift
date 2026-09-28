@@ -19,19 +19,19 @@
 import Foundation
 import simd
 
-nonisolated package enum NIFParticleModifierDecoder {
+nonisolated public enum NIFParticleModifierDecoder: Sendable {
     /// nif.xml NiPSysEmitter subclasses used by Skyrim particle assets.
-    package static let emitterTypes: Set = [
+    public static let emitterTypes: Set = [
         "NiPSysBoxEmitter", "NiPSysCylinderEmitter",
         "NiPSysSphereEmitter", "NiPSysMeshEmitter"
     ]
 
-    package static func isEmitter(_ typeName: String) -> Bool {
+    public static func isEmitter(_ typeName: String) -> Bool {
         emitterTypes.contains(typeName)
     }
 
     /// Decodes a NiPSysEmitter subclass block into an engine emitter.
-    package static func emitter(
+    public static func emitter(
         typeName: String,
         data: Data,
         header: NIFHeader
@@ -61,7 +61,7 @@ nonisolated package enum NIFParticleModifierDecoder {
 
     /// Decodes a non-emitter NiPSysModifier subclass into an engine modifier.
     /// Unknown types return `.unsupported` without reading past the base.
-    package static func modifier(
+    public static func modifier(
         typeName: String,
         data: Data,
         header: NIFHeader

@@ -13,13 +13,13 @@
 
 import Foundation
 
-nonisolated package struct LocationRefType: Equatable {
-    package let formID: FormID
-    package let editorID: String?
-    package let editorColor: ReferenceRecordColor?
-    package let skipped: ReferenceRecordTally
+nonisolated public struct LocationRefType: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
+    public let editorColor: ReferenceRecordColor?
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "LCRT" else {
             throw ESMError.malformed("expected LCRT record, got \(record.type)")
         }
@@ -31,96 +31,96 @@ nonisolated package struct LocationRefType: Equatable {
     }
 }
 
-nonisolated package struct LocationDecodeTally: Equatable {
-    package private(set) var malformedFields: [FourCC: Int] = [:]
+nonisolated public struct LocationDecodeTally: Equatable, Sendable {
+    public private(set) var malformedFields: [FourCC: Int] = [:]
     /// Number of bytes dropped after the last whole packed-array element.
-    package private(set) var trailingArrayBytes: [FourCC: Int] = [:]
-    package private(set) var unknownFields: [FourCC: Int] = [:]
+    public private(set) var trailingArrayBytes: [FourCC: Int] = [:]
+    public private(set) var unknownFields: [FourCC: Int] = [:]
 
-    package mutating func noteMalformed(_ type: FourCC) {
+    public mutating func noteMalformed(_ type: FourCC) {
         malformedFields[type, default: 0] += 1
     }
 
-    package mutating func noteTail(_ type: FourCC, bytes: Int) {
+    public mutating func noteTail(_ type: FourCC, bytes: Int) {
         guard bytes > 0 else { return }
         trailingArrayBytes[type, default: 0] += bytes
     }
 
-    package mutating func noteUnknown(_ type: FourCC) {
+    public mutating func noteUnknown(_ type: FourCC) {
         unknownFields[type, default: 0] += 1
     }
 }
 
-nonisolated package struct Location: Equatable {
-    package struct PersistentReference: Equatable {
-        package let reference: FormID
-        package let worldOrCell: FormID
-        package let gridY: Int16
-        package let gridX: Int16
+nonisolated public struct Location: Equatable, Sendable {
+    public struct PersistentReference: Equatable, Sendable {
+        public let reference: FormID
+        public let worldOrCell: FormID
+        public let gridY: Int16
+        public let gridX: Int16
     }
 
-    package struct UniqueActor: Equatable {
-        package let actorBase: FormID
-        package let actorReference: FormID
-        package let location: FormID
+    public struct UniqueActor: Equatable, Sendable {
+        public let actorBase: FormID
+        public let actorReference: FormID
+        public let location: FormID
     }
 
-    package struct SpecialReference: Equatable {
-        package let type: FormID
-        package let reference: FormID
-        package let worldOrCell: FormID
-        package let gridY: Int16
-        package let gridX: Int16
+    public struct SpecialReference: Equatable, Sendable {
+        public let type: FormID
+        public let reference: FormID
+        public let worldOrCell: FormID
+        public let gridY: Int16
+        public let gridX: Int16
     }
 
-    package struct WorldspaceCells: Equatable {
-        package struct Grid: Equatable {
-            package let y: Int16
-            package let x: Int16
+    public struct WorldspaceCells: Equatable, Sendable {
+        public struct Grid: Equatable, Sendable {
+            public let y: Int16
+            public let x: Int16
         }
 
-        package let worldspace: FormID
-        package let cells: [Grid]
+        public let worldspace: FormID
+        public let cells: [Grid]
     }
 
-    package struct EnableParent: Equatable {
-        package let reference: FormID
-        package let parent: FormID
-        package let flags: UInt8
+    public struct EnableParent: Equatable, Sendable {
+        public let reference: FormID
+        public let parent: FormID
+        public let flags: UInt8
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let name: LString?
-    package let parent: FormID?
-    package let keywords: KeywordList
+    public let formID: FormID
+    public let editorID: String?
+    public let name: LString?
+    public let parent: FormID?
+    public let keywords: KeywordList
 
-    package let addedPersistentReferences: [PersistentReference]
-    package let persistentReferences: [PersistentReference]
-    package let removedPersistentReferences: [FormID]
-    package let addedUniqueActors: [UniqueActor]
-    package let uniqueActors: [UniqueActor]
-    package let removedUniqueActors: [FormID]
-    package let addedSpecialReferences: [SpecialReference]
-    package let specialReferences: [SpecialReference]
-    package let removedSpecialReferences: [FormID]
-    package let addedWorldspaceCells: [WorldspaceCells]
-    package let worldspaceCells: [WorldspaceCells]
-    package let removedWorldspaceCells: [WorldspaceCells]
-    package let addedInitiallyDisabledReferences: [FormID]
-    package let initiallyDisabledReferences: [FormID]
-    package let addedEnableParents: [EnableParent]
-    package let enableParents: [EnableParent]
+    public let addedPersistentReferences: [PersistentReference]
+    public let persistentReferences: [PersistentReference]
+    public let removedPersistentReferences: [FormID]
+    public let addedUniqueActors: [UniqueActor]
+    public let uniqueActors: [UniqueActor]
+    public let removedUniqueActors: [FormID]
+    public let addedSpecialReferences: [SpecialReference]
+    public let specialReferences: [SpecialReference]
+    public let removedSpecialReferences: [FormID]
+    public let addedWorldspaceCells: [WorldspaceCells]
+    public let worldspaceCells: [WorldspaceCells]
+    public let removedWorldspaceCells: [WorldspaceCells]
+    public let addedInitiallyDisabledReferences: [FormID]
+    public let initiallyDisabledReferences: [FormID]
+    public let addedEnableParents: [EnableParent]
+    public let enableParents: [EnableParent]
 
-    package let music: FormID?
-    package let crimeFaction: FormID?
-    package let worldMarker: FormID?
-    package let worldRadius: Float?
-    package let horseMarker: FormID?
-    package let editorColor: ReferenceRecordColor?
-    package let skipped: LocationDecodeTally
+    public let music: FormID?
+    public let crimeFaction: FormID?
+    public let worldMarker: FormID?
+    public let worldRadius: Float?
+    public let horseMarker: FormID?
+    public let editorColor: ReferenceRecordColor?
+    public let skipped: LocationDecodeTally
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "LCTN" else {
             throw ESMError.malformed("expected LCTN record, got \(record.type)")
         }

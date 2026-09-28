@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum AudioCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

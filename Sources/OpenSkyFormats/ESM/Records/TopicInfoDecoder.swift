@@ -4,28 +4,28 @@
 import Foundation
 
 nonisolated extension TopicInfo {
-    package struct Contents {
-        package let localized: Bool
-        package var editorID: String?
-        package var flags = Flags()
-        package var legacyDialogueTab: UInt16?
-        package var resetHours: Float = 0
-        package var previousTopic: FormID?
-        package var previousInfo: FormID?
-        package var favorLevel = FavorLevel.none
-        package var topicLinks: [FormID] = []
-        package var sharedInfo: FormID?
-        package var responses: [Response] = []
-        package var conditions = ConditionList()
-        package var prompt: LString?
-        package var speaker: FormID?
-        package var walkAwayTopic: FormID?
-        package var audioOutputOverride: FormID?
-        package var script = ScriptData(ownerType: "INFO")
-        package var tally = DialogueTally()
-        package var openResponse: Response?
+    public struct Contents: Sendable {
+        public let localized: Bool
+        public var editorID: String?
+        public var flags = Flags()
+        public var legacyDialogueTab: UInt16?
+        public var resetHours: Float = 0
+        public var previousTopic: FormID?
+        public var previousInfo: FormID?
+        public var favorLevel = FavorLevel.none
+        public var topicLinks: [FormID] = []
+        public var sharedInfo: FormID?
+        public var responses: [Response] = []
+        public var conditions = ConditionList()
+        public var prompt: LString?
+        public var speaker: FormID?
+        public var walkAwayTopic: FormID?
+        public var audioOutputOverride: FormID?
+        public var script = ScriptData(ownerType: "INFO")
+        public var tally = DialogueTally()
+        public var openResponse: Response?
 
-        package mutating func decode(field: ESMField) {
+        public mutating func decode(field: ESMField) {
             do {
                 if try decodeKnown(field: field) {
                     return
@@ -36,7 +36,7 @@ nonisolated extension TopicInfo {
             }
         }
 
-        package mutating func closeOpenResponse() {
+        public mutating func closeOpenResponse() {
             if let openResponse {
                 responses.append(openResponse)
                 self.openResponse = nil
@@ -122,7 +122,7 @@ nonisolated extension TopicInfo {
             resetHours = Float(scaled) * 24 / Float(UInt16.max)
         }
 
-        package static func readReference(_ reader: inout BinaryReader) throws -> FormID? {
+        public static func readReference(_ reader: inout BinaryReader) throws -> FormID? {
             let value = try FormID(reader.readUInt32())
             return value.isNull ? nil : value
         }

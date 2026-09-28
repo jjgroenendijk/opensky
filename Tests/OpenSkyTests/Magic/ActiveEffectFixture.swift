@@ -7,6 +7,7 @@
 // second actor-value weight, 0x40 archetype, 0x44 primary actor value and 0x58
 // second actor value.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

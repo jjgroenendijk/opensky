@@ -4,6 +4,7 @@
 // to live there.
 
 @testable import OpenSky
+@testable import OpenSkyGameData
 
 extension FakeWorldProviders {
     // TerrainLODControlProviding

@@ -1,6 +1,7 @@
 // Lighting decoder tests use synthetic in-code records only. Layouts:
 // UESP CELL/LGTM/LIGH pages + xEdit dev-4.1.6 wbDefinitionsTES5.pas.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

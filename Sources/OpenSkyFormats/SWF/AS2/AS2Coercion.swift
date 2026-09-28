@@ -15,16 +15,16 @@
 
 import Foundation
 
-nonisolated package struct AS2Coercion {
+nonisolated public struct AS2Coercion: Sendable {
     /// The SWF version of the movie whose bytecode is running.
-    package let swfVersion: UInt8
+    public let swfVersion: UInt8
 
     /// Vanilla Skyrim menus are published well past SWF 7, so the ECMAScript
     /// rules apply unless a caller says otherwise.
-    package static let latest = AS2Coercion(swfVersion: 9)
+    public static let latest = AS2Coercion(swfVersion: 9)
 
     /// The version from which Flash adopted the ECMAScript string rules.
-    package static let ecmaStringVersion: UInt8 = 7
+    public static let ecmaStringVersion: UInt8 = 7
 
     private var usesECMAStrings: Bool {
         swfVersion >= AS2Coercion.ecmaStringVersion
@@ -32,7 +32,7 @@ nonisolated package struct AS2Coercion {
 
     // MARK: - ToBoolean
 
-    package func toBoolean(_ value: AS2Value) -> Bool {
+    public func toBoolean(_ value: AS2Value) -> Bool {
         switch value {
         case .undefined, .null:
             false
@@ -59,7 +59,7 @@ nonisolated package struct AS2Coercion {
     /// Objects reach this only when `ToPrimitive` produced no primitive, which
     /// ECMA-262 treats as a `TypeError`; ActionScript has no exception here and
     /// yields NaN instead.
-    package func toNumber(_ value: AS2Value) -> Double {
+    public func toNumber(_ value: AS2Value) -> Double {
         switch value {
         case .undefined:
             usesECMAStrings ? Double.nan : 0
@@ -78,7 +78,7 @@ nonisolated package struct AS2Coercion {
 
     /// ECMA-262 3rd edition 9.3.1 "ToNumber Applied to the String Type", plus
     /// the `0x` hexadecimal form ActionScript accepts.
-    package func stringToNumber(_ text: String) -> Double {
+    public func stringToNumber(_ text: String) -> Double {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             return 0
@@ -105,7 +105,7 @@ nonisolated package struct AS2Coercion {
 
     // MARK: - ToString
 
-    package func toString(_ value: AS2Value) -> String {
+    public func toString(_ value: AS2Value) -> String {
         switch value {
         case .undefined:
             usesECMAStrings ? "undefined" : ""
@@ -125,7 +125,7 @@ nonisolated package struct AS2Coercion {
     // MARK: - Comparison
 
     /// `ActionEquals2` (0x49). Both arguments must already be primitive.
-    package func equals(_ left: AS2Value, _ right: AS2Value) -> Bool {
+    public func equals(_ left: AS2Value, _ right: AS2Value) -> Bool {
         switch (left, right) {
         case (.undefined, .undefined), (.null, .null),
              (.undefined, .null), (.null, .undefined):
@@ -148,7 +148,7 @@ nonisolated package struct AS2Coercion {
     /// swapped. Both arguments must already be primitive. An undefined
     /// comparison result (either side NaN) is reported as false, which is what
     /// both opcodes push.
-    package func lessThan(_ left: AS2Value, _ right: AS2Value) -> Bool {
+    public func lessThan(_ left: AS2Value, _ right: AS2Value) -> Bool {
         if case let .string(lhs) = left, case let .string(rhs) = right {
             return lhs.utf16.lexicographicallyPrecedes(rhs.utf16)
         }

@@ -41,61 +41,61 @@
 import Foundation
 
 /// One entry of the quest-stage fragment table.
-nonisolated package struct QuestFragment: Equatable {
+nonisolated public struct QuestFragment: Equatable, Sendable {
     /// Quest stage this fragment runs for, matching a QUST INDX stage index.
-    package let stageIndex: UInt16
+    public let stageIndex: UInt16
     /// Log entry within that stage. Signed on disk; vanilla writes 0 or a
     /// small positive index.
-    package let logEntryIndex: Int32
+    public let logEntryIndex: Int32
     /// Script the function lives on — normally the section's file name.
-    package let scriptName: String
+    public let scriptName: String
     /// Generated function name, e.g. "Fragment_5".
-    package let functionName: String
+    public let functionName: String
 }
 
 /// The scripts one quest alias carries, which live in the VMAD tail rather
 /// than in the ALST/ALLS block that defines the alias.
-nonisolated package struct QuestAliasScripts: Equatable {
+nonisolated public struct QuestAliasScripts: Equatable, Sendable {
     /// Quest and alias the scripts attach to. The FormID is the owning quest
     /// in every file the official tools produce, but the engine permits a
     /// cross-quest reference, so it is carried rather than assumed.
-    package let object: ScriptObjectReference
+    public let object: ScriptObjectReference
     /// Restated per alias. UESP notes it always equals the primary version.
-    package let version: Int16
+    public let version: Int16
     /// Restated per alias, likewise always the primary object format.
-    package let objectFormat: ScriptObjectFormat
-    package let scripts: [AttachedScript]
+    public let objectFormat: ScriptObjectFormat
+    public let scripts: [AttachedScript]
 
     /// Alias slot on `object`, or nil when the section names a direct FormID
     /// instead of an alias, which no shipped file does.
-    package var aliasID: Int16? {
+    public var aliasID: Int16? {
         object.isAlias ? object.alias : nil
     }
 }
 
 /// The whole decoded QUST fragment tail.
-nonisolated package struct QuestFragmentSection: Equatable {
+nonisolated public struct QuestFragmentSection: Equatable, Sendable {
     /// The leading int8. Always 2; anything else means the Creation Kit would
     /// have failed to load alias script data, so it is recorded, not enforced.
-    package let extraBindDataVersion: Int8
+    public let extraBindDataVersion: Int8
     /// Generated fragment script, "QF_<editorID>_<formID>" by convention.
-    package let fileName: String
+    public let fileName: String
     /// The authored count, kept for diagnostics the way COCT and KSIZ are.
-    package let declaredFragmentCount: Int
-    package let fragments: [QuestFragment]
-    package let aliasScripts: [QuestAliasScripts]
+    public let declaredFragmentCount: Int
+    public let fragments: [QuestFragment]
+    public let aliasScripts: [QuestAliasScripts]
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         fragments.isEmpty && aliasScripts.isEmpty
     }
 
     /// True when the authored count disagrees with the fragments decoded.
-    package var fragmentCountMismatch: Bool {
+    public var fragmentCountMismatch: Bool {
         declaredFragmentCount != fragments.count
     }
 
     /// Fragments attached to `stage`, in file order.
-    package func fragments(forStage stage: UInt16) -> [QuestFragment] {
+    public func fragments(forStage stage: UInt16) -> [QuestFragment] {
         fragments.filter { $0.stageIndex == stage }
     }
 }

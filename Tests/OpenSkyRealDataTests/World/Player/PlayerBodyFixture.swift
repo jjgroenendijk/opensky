@@ -10,6 +10,7 @@ import Foundation
 import Metal
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import simd
 import Testing
 

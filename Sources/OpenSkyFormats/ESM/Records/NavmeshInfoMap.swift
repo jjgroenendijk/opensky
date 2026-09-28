@@ -53,37 +53,37 @@ import Foundation
 import simd
 
 /// One NVMI entry: the index's view of a single NAVM.
-nonisolated package struct NavmeshInfo: Sendable {
-    package struct Flags: OptionSet, Equatable, Sendable {
-        package let rawValue: UInt32
+nonisolated public struct NavmeshInfo: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
         /// The navmesh is an island: reachable only through its edge links.
-        package static let isIsland = Flags(rawValue: 1 << 5)
+        public static let isIsland = Flags(rawValue: 1 << 5)
         /// Untouched since generation.
-        package static let notEdited = Flags(rawValue: 1 << 6)
+        public static let notEdited = Flags(rawValue: 1 << 6)
     }
 
-    package let navmesh: FormID
-    package let flags: Flags
+    public let navmesh: FormID
+    public let flags: Flags
     /// Approximate centre, in game units. Coarse by design — the index exists
     /// to pick candidates, not to path through them.
-    package let approximateLocation: SIMD3<Float>
-    package let preferredPercent: Float
+    public let approximateLocation: SIMD3<Float>
+    public let preferredPercent: Float
     /// Navmeshes sharing an edge with this one.
-    package let edgeLinks: [FormID]
+    public let edgeLinks: [FormID]
     /// The subset of `edgeLinks` the generator marked preferred.
-    package let preferredEdgeLinks: [FormID]
+    public let preferredEdgeLinks: [FormID]
     /// DOOR REFRs reachable from this navmesh.
-    package let doors: [FormID]
+    public let doors: [FormID]
     /// Whether the skipped island block was present.
-    package let hasIslandData: Bool
-    package let location: NavmeshLocation
+    public let hasIslandData: Bool
+    public let location: NavmeshLocation
 
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.type == "NVMI" else {
             throw ESMError.malformed("expected NVMI field, got \(field.type)")
         }
@@ -142,22 +142,22 @@ nonisolated package struct NavmeshInfo: Sendable {
     }
 }
 
-nonisolated package struct NavmeshInfoMap: Sendable {
-    package let editorID: String?
+nonisolated public struct NavmeshInfoMap: Sendable {
+    public let editorID: String?
     /// NVER; 0x0C in `Skyrim.esm`.
-    package let version: UInt32
-    package let infos: [NavmeshInfo]
+    public let version: UInt32
+    public let infos: [NavmeshInfo]
     /// NVSI — navmeshes this plugin deletes from its masters.
-    package let deletedNavmeshes: [FormID]
+    public let deletedNavmeshes: [FormID]
     /// NVPP tallies; the paths themselves are skipped.
-    package let precomputedPathCount: Int
-    package let roadMarkerCount: Int
+    public let precomputedPathCount: Int
+    public let roadMarkerCount: Int
     /// NVMI entries that failed to decode. A malformed entry is skipped rather
     /// than failing the whole map: one bad index entry must not cost the engine
     /// every other navmesh in the plugin.
-    package let malformedInfoCount: Int
+    public let malformedInfoCount: Int
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "NAVI" else {
             throw ESMError.malformed("expected NAVI record, got \(record.type)")
         }

@@ -6,6 +6,7 @@
 // cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas.
 // See docs/formats/item-records.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

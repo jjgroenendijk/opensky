@@ -25,58 +25,58 @@
 
 import Foundation
 
-nonisolated package enum LIPError: Error, Equatable {
+nonisolated public enum LIPError: Error, Equatable, Sendable {
     case malformed(String)
     case unsupported(String)
 }
 
-nonisolated package struct LIPHeader: Equatable {
-    package let durationTicks: UInt32
-    package let activeCurveCount: UInt32
-    package let frameCount: Int
-    package let firstFrame: Int
-    package let unknownValue: UInt16
+nonisolated public struct LIPHeader: Equatable, Sendable {
+    public let durationTicks: UInt32
+    public let activeCurveCount: UInt32
+    public let frameCount: Int
+    public let firstFrame: Int
+    public let unknownValue: UInt16
     /// Values per key as declared at the tuple-width field: `3` for the
     /// humanoid family, `2` for the family whose header carries extra bytes.
-    package let tupleWidth: Int
+    public let tupleWidth: Int
     /// Declared speech-target vocabulary: 16 humanoid, 8 creature.
-    package let targetCount: Int
+    public let targetCount: Int
     /// Slots in one frame, derived from the tick budget rather than assumed.
-    package let slotsPerFrame: Int
+    public let slotsPerFrame: Int
     /// Bytes consumed by the header, which is 24 plus any extra bytes before
     /// the tuple width.
-    package let headerSize: Int
+    public let headerSize: Int
 }
 
-nonisolated package struct LIPKey: Equatable {
-    package let frame: Int
-    package let slot: Int
-    package let value: Float
+nonisolated public struct LIPKey: Equatable, Sendable {
+    public let frame: Int
+    public let slot: Int
+    public let value: Float
     /// The payload repeated the same Float32 bytes immediately after `value`.
     /// OpenFaceFX identifies this as an equal-tangent encoding. OpenSky tallies
     /// it but samples only the first value until that semantic is confirmed.
-    package let hasDuplicate: Bool
+    public let hasDuplicate: Bool
 }
 
-nonisolated package struct LIPSample: Equatable {
-    package let trackTime: Double
-    package let weightsBySlot: [Int: Float]
+nonisolated public struct LIPSample: Equatable, Sendable {
+    public let trackTime: Double
+    public let weightsBySlot: [Int: Float]
 }
 
-nonisolated package struct LIPFile: Equatable {
-    package static let framesPerSecond = 30.0
+nonisolated public struct LIPFile: Equatable, Sendable {
+    public static let framesPerSecond = 30.0
     /// The humanoid family's stride, and the one the synthetic fixtures use.
     /// A decoded file reports its own through `header.slotsPerFrame`.
-    package static let slotCount = 33
-    package static let speechTargetCount = 16
+    public static let slotCount = 33
+    public static let speechTargetCount = 16
 
-    package let header: LIPHeader
-    package let keys: [LIPKey]
-    package let duplicateValueCount: Int
-    package let markerCount: Int
-    package let unmappedKeyCount: Int
+    public let header: LIPHeader
+    public let keys: [LIPKey]
+    public let duplicateValueCount: Int
+    public let markerCount: Int
+    public let unmappedKeyCount: Int
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         do {
             self = try LIPDecoder(data: data).decode()
         } catch let error as LIPError {
@@ -86,7 +86,7 @@ nonisolated package struct LIPFile: Equatable {
         }
     }
 
-    package init(header: LIPHeader, keys: [LIPKey]) {
+    public init(header: LIPHeader, keys: [LIPKey]) {
         self.header = header
         self.keys = keys
         duplicateValueCount = keys.count(where: \.hasDuplicate)
@@ -108,11 +108,11 @@ nonisolated package struct LIPFile: Equatable {
         self.unmappedKeyCount = unmappedKeyCount
     }
 
-    package var duration: Double {
+    public var duration: Double {
         Double(header.firstFrame + header.frameCount) / Self.framesPerSecond
     }
 
-    package func sample(at seconds: Double) -> LIPSample {
+    public func sample(at seconds: Double) -> LIPSample {
         let safeSeconds = seconds.isFinite ? max(0, seconds) : 0
         let frame = safeSeconds * Self.framesPerSecond - Double(header.firstFrame)
         let maximumFrame = Double(max(0, header.frameCount - 1))

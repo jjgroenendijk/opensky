@@ -6,6 +6,7 @@
 // what is worth testing follows from that, which is why the cases below are
 // about which flag bits are set rather than about string parsing.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

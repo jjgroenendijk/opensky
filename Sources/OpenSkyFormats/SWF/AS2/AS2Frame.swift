@@ -15,7 +15,7 @@
 import Foundation
 
 /// What the interpreter does with the value a frame returns when it is popped.
-nonisolated package enum AS2FrameCompletion {
+nonisolated public enum AS2FrameCompletion {
     /// The frame is the base of an interpreter loop: the value is the result of
     /// the `AS2Interpreter` entry point that started it.
     case value
@@ -26,50 +26,50 @@ nonisolated package enum AS2FrameCompletion {
     case construct(AS2Object)
 }
 
-nonisolated package final class AS2Frame {
+nonisolated public final class AS2Frame {
     /// Where an empty-stack read is recorded.
-    package let runtime: AS2Runtime
+    public let runtime: AS2Runtime
     /// The stream this frame executes records from. Branch targets and function
     /// bodies are byte offsets into it.
-    package let block: SWFActionBlock
+    public let block: SWFActionBlock
     /// The variable target: where an assignment to an undeclared name lands.
     /// A later milestone makes this the running movie clip.
-    package let target: AS2Object
-    package var thisValue: AS2Value
+    public let target: AS2Object
+    public var thisValue: AS2Value
 
-    package var stack: [AS2Value] = []
-    package var registers: [AS2Value] = []
+    public var stack: [AS2Value] = []
+    public var registers: [AS2Value] = []
     /// Outermost first; the last entry is where `ActionDefineLocal` writes.
-    package var scope: [AS2Object] = []
+    public var scope: [AS2Object] = []
     /// The pool the most recent `ActionConstantPool` installed.
-    package var constantPool: [String] = []
-    package var stackLimit = AS2Limits.standard.stackDepth
+    public var constantPool: [String] = []
+    public var stackLimit = AS2Limits.standard.stackDepth
     /// Byte offset of the record being executed, so a fault can name it.
-    package var currentOffset = 0
+    public var currentOffset = 0
 
     /// The records this frame executes: a whole block for a timeline stream, a
     /// function body for a call.
-    package var range: Range<Int> = 0 ..< 0
+    public var range: Range<Int> = 0 ..< 0
     /// The instruction pointer — the next record index inside `range`. It lives
     /// on the frame rather than in a local so the interpreter can suspend a
     /// frame across a call instead of recursing on the Swift stack.
-    package var index = 0
-    package var completion: AS2FrameCompletion = .value
+    public var index = 0
+    public var completion: AS2FrameCompletion = .value
     /// False for the frame an entry point starts with, true for a frame a call
     /// pushed. Only the latter count against `AS2Limits.callDepth`.
-    package var isCall = false
+    public var isCall = false
     /// The prototype the running function was found on — the class whose method
     /// this frame is executing. `super` resolves from here rather than from
     /// `thisValue.__proto__`, which is what lets a three-level hierarchy walk up
     /// one level per call instead of calling itself forever (issue #136). Nil
     /// when the frame is not running a method of a class.
-    package var basePrototype: AS2Object?
+    public var basePrototype: AS2Object?
 
     /// `ActionDefineFunction` has no register header; the SWF 5 action model
     /// gives a stream four registers.
-    package static let defaultRegisterCount = 4
+    public static let defaultRegisterCount = 4
 
-    package init(
+    public init(
         runtime: AS2Runtime,
         block: SWFActionBlock,
         target: AS2Object,
@@ -83,11 +83,11 @@ nonisolated package final class AS2Frame {
 
     /// Where `ActionDefineLocal` and `ActionDefineLocal2` write: the innermost
     /// scope, which is a function's activation object or the timeline target.
-    package var localScope: AS2Object {
+    public var localScope: AS2Object {
         scope.last ?? target
     }
 
-    package func push(_ value: AS2Value) throws(AS2Fault) {
+    public func push(_ value: AS2Value) throws(AS2Fault) {
         guard stack.count < stackLimit else {
             throw AS2Fault.stackOverflow(offset: currentOffset)
         }
@@ -99,7 +99,7 @@ nonisolated package final class AS2Frame {
     /// emits a join-point `ActionPop` that both branches reach with an empty
     /// stack, which occurs in 666 of the 1,180 vanilla action blocks. Treating
     /// it as a fault would abort more than half of them.
-    package func pop() -> AS2Value {
+    public func pop() -> AS2Value {
         guard let value = stack.popLast() else {
             runtime.noteStackUnderflow()
             return .undefined
@@ -109,7 +109,7 @@ nonisolated package final class AS2Frame {
 
     /// The top of the stack without removing it — what `ActionStoreRegister`
     /// and `ActionPushDuplicate` read. Empty reads as `undefined`, like `pop`.
-    package func peek() -> AS2Value {
+    public func peek() -> AS2Value {
         guard let value = stack.last else {
             runtime.noteStackUnderflow()
             return .undefined
@@ -117,13 +117,13 @@ nonisolated package final class AS2Frame {
         return value
     }
 
-    package func register(_ index: Int) -> AS2Value {
+    public func register(_ index: Int) -> AS2Value {
         registers.indices.contains(index) ? registers[index] : .undefined
     }
 
     /// Writes a register, ignoring an index the function never allocated —
     /// malformed bytecode must not trap.
-    package func setRegister(_ index: Int, to value: AS2Value) {
+    public func setRegister(_ index: Int, to value: AS2Value) {
         guard registers.indices.contains(index) else {
             return
         }
@@ -133,7 +133,7 @@ nonisolated package final class AS2Frame {
     /// Resolves an `ActionPush` constant-pool reference. An index past the end
     /// of the pool reads as `undefined`, which is what Flash does with a stale
     /// reference rather than failing the stream.
-    package func constant(_ index: Int) -> AS2Value {
+    public func constant(_ index: Int) -> AS2Value {
         constantPool.indices.contains(index) ? .string(constantPool[index]) : .undefined
     }
 }

@@ -4,8 +4,8 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum VMADFixture {
-    enum Value {
+public enum VMADFixture: Sendable {
+    public enum Value: Sendable {
         case none
         case object(ScriptObjectReference)
         case string(String)
@@ -18,7 +18,7 @@ enum VMADFixture {
         case floats([Float])
         case booleans([Bool])
 
-        var type: UInt8 {
+        public var type: UInt8 {
             switch self {
             case .none: 0
             case .object: 1
@@ -35,31 +35,31 @@ enum VMADFixture {
         }
     }
 
-    struct Property {
-        let name: String
-        let flags: UInt8
-        let value: Value
+    public struct Property: Sendable {
+        public let name: String
+        public let flags: UInt8
+        public let value: Value
 
-        init(_ name: String, _ value: Value, flags: UInt8 = 1) {
+        public init(_ name: String, _ value: Value, flags: UInt8 = 1) {
             self.name = name
             self.flags = flags
             self.value = value
         }
     }
 
-    struct Script {
-        let name: String
-        let flags: UInt8
-        let properties: [Property]
+    public struct Script: Sendable {
+        public let name: String
+        public let flags: UInt8
+        public let properties: [Property]
 
-        init(_ name: String, flags: UInt8 = 0, properties: [Property]) {
+        public init(_ name: String, flags: UInt8 = 0, properties: [Property]) {
             self.name = name
             self.flags = flags
             self.properties = properties
         }
     }
 
-    static func object(
+    public static func object(
         _ formID: UInt32,
         alias: Int16 = -1,
         unused: UInt16 = 0
@@ -67,7 +67,7 @@ enum VMADFixture {
         ScriptObjectReference(formID: FormID(formID), alias: alias, unused: unused)
     }
 
-    static func payload(
+    public static func payload(
         version: Int16 = 5,
         objectFormat: ScriptObjectFormat = .formIDLast,
         scripts: [Script],
@@ -83,7 +83,7 @@ enum VMADFixture {
 
     /// uint16 count followed by that many script entries — the shape used both
     /// by the primary list and by each quest alias section in the VMAD tail.
-    static func scriptArray(
+    public static func scriptArray(
         _ scripts: [Script],
         version: Int16 = 5,
         objectFormat: ScriptObjectFormat = .formIDLast

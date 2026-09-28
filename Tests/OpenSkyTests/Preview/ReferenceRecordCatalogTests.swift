@@ -1,9 +1,11 @@
 // Synthetic load-order coverage for the M18 Asset Browser query and resolved
 // inspector. No game records or extracted data are fixtures.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct ReferenceRecordCatalogTests {

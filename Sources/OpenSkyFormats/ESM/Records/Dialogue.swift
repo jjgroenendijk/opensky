@@ -10,12 +10,12 @@
 
 import Foundation
 
-nonisolated package enum DialogueSkipKind: Hashable {
+nonisolated public enum DialogueSkipKind: Hashable, Sendable {
     case unknownField(FourCC)
     case malformedField(FourCC)
     case orphanResponseField(FourCC)
 
-    package var name: String {
+    public var name: String {
         switch self {
         case let .unknownField(type): "unknown \(type)"
         case let .malformedField(type): "malformed \(type)"
@@ -24,18 +24,18 @@ nonisolated package enum DialogueSkipKind: Hashable {
     }
 }
 
-nonisolated package struct DialogueTally: Equatable {
-    package private(set) var counts: [DialogueSkipKind: Int] = [:]
+nonisolated public struct DialogueTally: Equatable, Sendable {
+    public private(set) var counts: [DialogueSkipKind: Int] = [:]
 
-    package var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         counts.isEmpty
     }
 
-    package var ranked: [(name: String, count: Int)] {
+    public var ranked: [(name: String, count: Int)] {
         counts
             .sorted {
                 if $0.value != $1.value {
@@ -46,7 +46,7 @@ nonisolated package struct DialogueTally: Equatable {
             .map { (name: $0.key.name, count: $0.value) }
     }
 
-    package mutating func note(_ kind: DialogueSkipKind) {
+    public mutating func note(_ kind: DialogueSkipKind) {
         counts[kind, default: 0] += 1
     }
 }

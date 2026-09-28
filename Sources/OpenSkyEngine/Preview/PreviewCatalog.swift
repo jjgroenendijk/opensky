@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// What one sidebar row selects.
 nonisolated enum PreviewSelection {

@@ -2,6 +2,7 @@
 // 8.3.2). `ActionDefineFunction2` outnumbers `ActionDefineFunction` eight to
 // one in the vanilla movies, so both paths are pinned here.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

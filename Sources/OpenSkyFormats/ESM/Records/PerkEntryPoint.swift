@@ -17,15 +17,15 @@
 
 import Foundation
 
-nonisolated package struct PerkEntryPoint: Hashable, CustomStringConvertible, Sendable {
-    package let rawValue: UInt8
+nonisolated public struct PerkEntryPoint: Hashable, CustomStringConvertible, Sendable {
+    public let rawValue: UInt8
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         self.rawValue = rawValue
     }
 
     /// The xEdit name of this entry point, or nil for an id outside the table.
-    package var name: String? {
+    public var name: String? {
         let index = Int(rawValue)
         guard index < Self.names.count else { return nil }
         return Self.names[index]
@@ -34,17 +34,17 @@ nonisolated package struct PerkEntryPoint: Hashable, CustomStringConvertible, Se
     /// Whether the name table covers this id. False means the record authored
     /// an entry point this build does not know, which is kept and counted
     /// rather than dropped.
-    package var isKnown: Bool {
+    public var isKnown: Bool {
         name != nil
     }
 
-    package var description: String {
+    public var description: String {
         name.map { "\($0) (\(rawValue))" } ?? "unknown entry point (\(rawValue))"
     }
 
     /// The entry points named in xEdit order; the array index is the on-disk
     /// byte. Kept as one list so the id-to-name mapping cannot drift.
-    package static let names = [
+    public static let names = [
         "Calculate Weapon Damage",
         "Calculate My Critical Hit Chance",
         "Calculate My Critical Hit Damage",

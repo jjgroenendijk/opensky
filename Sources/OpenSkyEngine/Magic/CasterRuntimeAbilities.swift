@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension CasterRuntime {
     /// Applies every ability `holder` knows as an effect on `holder`.

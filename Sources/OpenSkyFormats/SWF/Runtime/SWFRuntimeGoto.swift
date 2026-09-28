@@ -26,7 +26,7 @@ nonisolated extension SWFMovieRuntime {
     /// same accumulation `SWFDisplayListBuilder` performs for frame 1, kept as
     /// `SWFPlacement` rather than `SWFPlacedObject` so a placement's CLIPACTIONS
     /// handlers survive the walk.
-    package func accumulatedPlacements(
+    public func accumulatedPlacements(
         to index: Int,
         frames: [SWFTimelineFrame]
     ) -> [UInt16: SWFPlacement] {
@@ -87,7 +87,7 @@ nonisolated extension SWFMovieRuntime {
     /// Brings a clip's children to the destination frame's state: instances the
     /// destination keeps are kept and re-applied, instances it does not are
     /// unloaded, and depths it introduces are instantiated and brought up.
-    package func reconcile(to index: Int, of node: SWFDisplayObject, frames: [SWFTimelineFrame]) {
+    public func reconcile(to index: Int, of node: SWFDisplayObject, frames: [SWFTimelineFrame]) {
         let target = accumulatedPlacements(to: index, frames: frames)
         for child in node.children where target[child.depth] == nil {
             dispatchPlacementLifecycle(child, phase: .unloaded)

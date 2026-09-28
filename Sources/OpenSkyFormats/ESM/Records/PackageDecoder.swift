@@ -4,7 +4,7 @@
 
 import Foundation
 
-nonisolated package enum PackageDecoder {
+nonisolated public enum PackageDecoder: Sendable {
     private enum Section {
         case header
         case publicData
@@ -26,7 +26,7 @@ nonisolated package enum PackageDecoder {
         var scriptData = ScriptData(ownerType: "PACK")
     }
 
-    package static func decode(_ record: ESMRecord) throws -> Package {
+    public static func decode(_ record: ESMRecord) throws -> Package {
         guard record.type == "PACK" else {
             throw ESMError.malformed("expected PACK record, got \(record.type)")
         }

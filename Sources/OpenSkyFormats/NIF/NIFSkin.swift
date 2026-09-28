@@ -8,15 +8,14 @@
 // Layout documented in docs/formats/nif-skinning.md.
 
 import Foundation
-import OpenSkyShaderTypes
 import simd
 
-nonisolated package struct NIFTransform: Equatable {
-    package let rotation: simd_float3x3
-    package let translation: SIMD3<Float>
-    package let scale: Float
+nonisolated public struct NIFTransform: Equatable, Sendable {
+    public let rotation: simd_float3x3
+    public let translation: SIMD3<Float>
+    public let scale: Float
 
-    package var matrix: float4x4 {
+    public var matrix: float4x4 {
         float4x4(columns: (
             SIMD4(rotation.columns.0 * scale, 0),
             SIMD4(rotation.columns.1 * scale, 0),
@@ -25,7 +24,7 @@ nonisolated package struct NIFTransform: Equatable {
         ))
     }
 
-    package init(reader: inout BinaryReader) throws {
+    public init(reader: inout BinaryReader) throws {
         // Nine floats in nif.xml Matrix33 order, transposed into the engine's
         // column-vector convention — see `NIFObject.localTransform`.
         rotation = try simd_float3x3(rows: [
@@ -42,19 +41,19 @@ nonisolated package struct NIFTransform: Equatable {
     }
 }
 
-nonisolated package struct NIFSkinInstance {
-    package struct BodyPartition: Equatable {
-        package let flags: UInt16
-        package let bodyPart: UInt16
+nonisolated public struct NIFSkinInstance: Sendable {
+    public struct BodyPartition: Equatable, Sendable {
+        public let flags: UInt16
+        public let bodyPart: UInt16
     }
 
-    package let dataRef: Int32
-    package let skinPartitionRef: Int32
-    package let skeletonRootRef: Int32
-    package let boneRefs: [Int32]
-    package let bodyPartitions: [BodyPartition]
+    public let dataRef: Int32
+    public let skinPartitionRef: Int32
+    public let skeletonRootRef: Int32
+    public let boneRefs: [Int32]
+    public let bodyPartitions: [BodyPartition]
 
-    package init(data: Data, isDismember: Bool) throws {
+    public init(data: Data, isDismember: Bool) throws {
         var reader = BinaryReader(data)
         dataRef = try Int32(bitPattern: reader.readUInt32())
         skinPartitionRef = try Int32(bitPattern: reader.readUInt32())
@@ -90,23 +89,23 @@ nonisolated package struct NIFSkinInstance {
     }
 }
 
-nonisolated package struct NIFSkinData {
-    package struct VertexWeight: Equatable {
-        package let vertex: UInt16
-        package let weight: Float
+nonisolated public struct NIFSkinData: Sendable {
+    public struct VertexWeight: Equatable, Sendable {
+        public let vertex: UInt16
+        public let weight: Float
     }
 
-    package struct Bone: Equatable {
-        package let skinToBone: NIFTransform
-        package let boundingSphereCenter: SIMD3<Float>
-        package let boundingSphereRadius: Float
-        package let vertexWeights: [VertexWeight]
+    public struct Bone: Equatable, Sendable {
+        public let skinToBone: NIFTransform
+        public let boundingSphereCenter: SIMD3<Float>
+        public let boundingSphereRadius: Float
+        public let vertexWeights: [VertexWeight]
     }
 
-    package let rootParentToSkin: NIFTransform
-    package let bones: [Bone]
+    public let rootParentToSkin: NIFTransform
+    public let bones: [Bone]
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         rootParentToSkin = try NIFTransform(reader: &reader)
         let boneCount = try Int(reader.readUInt32())
@@ -153,26 +152,26 @@ nonisolated package struct NIFSkinData {
     }
 }
 
-nonisolated package struct NIFSkinPartition {
-    package struct Partition {
-        package let bonePalette: [UInt16]
-        package let vertexMap: [UInt16]
-        package let vertexWeights: [SIMD4<Float>]
-        package let boneIndices: [SIMD4<UInt16>]
+nonisolated public struct NIFSkinPartition: Sendable {
+    public struct Partition: Sendable {
+        public let bonePalette: [UInt16]
+        public let vertexMap: [UInt16]
+        public let vertexWeights: [SIMD4<Float>]
+        public let boneIndices: [SIMD4<UInt16>]
         /// Global vertex indices in SSE's mandatory triangle-copy field.
-        package let triangleIndices: [UInt16]
+        public let triangleIndices: [UInt16]
         /// SSE "Global VB" byte (nif.xml SkinPartition). Set on creature
         /// meshes whose top-level stream stores skin-instance bone indices
         /// directly; clear when indices are partition-palette-local.
         /// Semantics probed on SabreCat.nif — see docs/formats/nif-skinning.md.
-        package let usesGlobalVertexBuffer: Bool
+        public let usesGlobalVertexBuffer: Bool
     }
 
-    package let attributes: NIFTriShape.VertexAttributes
-    package let vertices: NIFTriShape.VertexArrays
-    package let partitions: [Partition]
+    public let attributes: NIFTriShape.VertexAttributes
+    public let vertices: NIFTriShape.VertexArrays
+    public let partitions: [Partition]
 
-    package init(data: Data, header: NIFHeader, shapeVertexCount: Int? = nil) throws {
+    public init(data: Data, header: NIFHeader, shapeVertexCount: Int? = nil) throws {
         guard header.bsStream?.version == 100 else {
             throw NIFError.unsupported("NiSkinPartition outside an SSE stream (BS 100)")
         }

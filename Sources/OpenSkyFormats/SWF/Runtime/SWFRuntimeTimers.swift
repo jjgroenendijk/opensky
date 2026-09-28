@@ -24,42 +24,42 @@
 import Foundation
 
 /// Timers a running movie scheduled, keyed by the id `setInterval` handed back.
-nonisolated package final class SWFRuntimeTimers {
+nonisolated public final class SWFRuntimeTimers {
     /// One scheduled callback.
-    package struct Entry: Equatable {
-        package let id: Int
+    public struct Entry: Equatable {
+        public let id: Int
         /// The function to call, or the receiver when `method` names one.
-        package let callee: AS2Value
+        public let callee: AS2Value
         /// Method name for the `setInterval(object, "name", ms)` form.
-        package let method: String?
-        package let arguments: [AS2Value]
+        public let method: String?
+        public let arguments: [AS2Value]
         /// Ticks between fires, at least 1.
-        package let period: Int
+        public let period: Int
         /// Ticks left before the next fire.
-        package var remaining: Int
+        public var remaining: Int
         /// False for `setTimeout`, which is removed after it fires once.
-        package let repeats: Bool
+        public let repeats: Bool
     }
 
-    package private(set) var entries: [Entry] = []
+    public private(set) var entries: [Entry] = []
     private var nextID = 1
     /// Timers refused because the movie scheduled more than this. A runaway
     /// `setInterval` loop is counted rather than allowed to grow the list.
-    package private(set) var dropped = 0
+    public private(set) var dropped = 0
 
     /// Live timers one movie may hold.
-    package static let maximumTimers = 256
+    public static let maximumTimers = 256
 
-    package var count: Int {
+    public var count: Int {
         entries.count
     }
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         entries.isEmpty
     }
 
     /// Schedules a timer and returns its id, or 0 when the list is full.
-    package func add(
+    public func add(
         callee: AS2Value,
         method: String?,
         arguments: [AS2Value],
@@ -83,20 +83,20 @@ nonisolated package final class SWFRuntimeTimers {
     }
 
     @discardableResult
-    package func remove(id: Int) -> Bool {
+    public func remove(id: Int) -> Bool {
         let before = entries.count
         entries.removeAll { $0.id == id }
         return entries.count != before
     }
 
-    package func removeAll() {
+    public func removeAll() {
         entries.removeAll()
     }
 
     /// Advances every timer by one tick and returns the ones that came due, in
     /// id order so a frame is reproducible. A timer scheduled by a callback in
     /// this pass is not in the returned list and therefore cannot fire twice.
-    package func tick() -> [Entry] {
+    public func tick() -> [Entry] {
         var due: [Entry] = []
         var kept: [Entry] = []
         kept.reserveCapacity(entries.count)
@@ -121,7 +121,7 @@ nonisolated extension SWFMovieRuntime {
     /// Milliseconds to ticks against the movie's declared frame rate. A rate the
     /// header never set, or an interval below one frame, still costs one tick —
     /// a zero-tick timer would fire forever inside a single `advance()`.
-    package func timerTicks(milliseconds: Double) -> Int {
+    public func timerTicks(milliseconds: Double) -> Int {
         let rate = movie.frameRate > 0 ? Double(movie.frameRate) : 30
         guard milliseconds.isFinite, milliseconds > 0 else {
             return 1
@@ -132,7 +132,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// Fires every timer that came due this tick. Called from `advance()`, never
     /// from a clock.
-    package func fireDueTimers() {
+    public func fireDueTimers() {
         for entry in timers.tick() {
             fire(entry)
         }
@@ -170,7 +170,7 @@ nonisolated extension SWFMovieRuntime {
 
 nonisolated extension SWFRuntimeNatives {
     /// The four global timer functions.
-    package static func installTimers(_ runtime: AS2Runtime) {
+    public static func installTimers(_ runtime: AS2Runtime) {
         AS2Natives.method(runtime, on: runtime.globalObject, name: "setInterval") { context in
             try schedule(context, repeats: true)
         }

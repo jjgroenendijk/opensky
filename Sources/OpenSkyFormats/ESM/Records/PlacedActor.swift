@@ -11,20 +11,20 @@
 import Foundation
 import simd
 
-nonisolated package struct PlacedActor {
-    package let formID: FormID
+nonisolated public struct PlacedActor: Sendable {
+    public let formID: FormID
     /// NAME — the NPC_ base actor this reference places.
-    package let base: FormID
-    package let placement: PlacedReference.Placement
+    public let base: FormID
+    public let placement: PlacedReference.Placement
     /// XSCL — uniform scale, defaulting to 1 when the field is absent.
-    package let scale: Float
+    public let scale: Float
     /// Record-header flag 0x800 (UESP): the actor stays hidden until a quest
     /// or script enables it. M5 has no script state -> explicit render skip.
-    package let isInitiallyDisabled: Bool
+    public let isInitiallyDisabled: Bool
     /// VMAD — Papyrus scripts attached directly to this placed actor.
-    package let scriptData: ScriptData
+    public let scriptData: ScriptData
 
-    package init(
+    public init(
         copying actor: PlacedActor,
         placement: PlacedReference.Placement,
         scale: Float
@@ -37,7 +37,7 @@ nonisolated package struct PlacedActor {
         scriptData = actor.scriptData
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "ACHR" else {
             throw ESMError.malformed("expected ACHR record, got \(record.type)")
         }

@@ -5,6 +5,7 @@
 // Placement rules + the how-to: docs/tools/app-ui.md.
 
 import AppKit
+import OpenSkyGameData
 
 /// Sidebar grouping. Rows render under their section's group header, in
 /// `allCases` order.

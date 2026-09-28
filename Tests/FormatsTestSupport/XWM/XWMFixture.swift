@@ -8,14 +8,14 @@
 
 import Foundation
 
-enum XWMFixture {
+public enum XWMFixture: Sendable {
     /// WAVE_FORMAT_WMAUDIO2, the tag vanilla Skyrim SE `.xwm` files carry.
-    static let formatTagWMAv2: UInt16 = 0x0161
+    public static let formatTagWMAv2: UInt16 = 0x0161
     /// Packet size vanilla files use for `nBlockAlign`.
-    static let defaultBlockAlign: UInt16 = 2230
+    public static let defaultBlockAlign: UInt16 = 2230
 
     /// One RIFF chunk: four-character id, UInt32 size, body, pad to even.
-    static func chunk(_ identifier: String, _ body: Data) -> Data {
+    public static func chunk(_ identifier: String, _ body: Data) -> Data {
         var out = Data(identifier.utf8)
         out.appendUInt32(UInt32(body.count))
         out.append(body)
@@ -26,7 +26,7 @@ enum XWMFixture {
     }
 
     /// WAVEFORMATEX body of a `fmt ` chunk.
-    static func formatBody(
+    public static func formatBody(
         formatTag: UInt16 = formatTagWMAv2,
         channelCount: UInt16 = 2,
         sampleRate: UInt32 = 44100,
@@ -48,7 +48,7 @@ enum XWMFixture {
     }
 
     /// `dpds` body: cumulative decoded byte counts, one UInt32 per packet.
-    static func packetTableBody(_ entries: [UInt32]) -> Data {
+    public static func packetTableBody(_ entries: [UInt32]) -> Data {
         var out = Data()
         for entry in entries {
             out.appendUInt32(entry)
@@ -57,7 +57,7 @@ enum XWMFixture {
     }
 
     /// Payload bytes tagged by packet index so tests can assert slicing.
-    static func payload(packetCount: Int, blockAlign: Int = Int(defaultBlockAlign)) -> Data {
+    public static func payload(packetCount: Int, blockAlign: Int = Int(defaultBlockAlign)) -> Data {
         var out = Data()
         for index in 0 ..< packetCount {
             out.append(Data(
@@ -70,7 +70,7 @@ enum XWMFixture {
 
     /// Wraps already-built chunks in a RIFF/XWMA header. `riffSize` overrides
     /// the size field so tests can claim more bytes than the buffer holds.
-    static func container(
+    public static func container(
         magic: String = "RIFF",
         formType: String = "XWMA",
         chunks: Data,
@@ -85,7 +85,7 @@ enum XWMFixture {
 
     /// A well-formed two-channel 44.1 kHz WMAv2 file whose `dpds` table has
     /// one entry per packet, each packet decoding to `decodedBytesPerPacket`.
-    static func file(
+    public static func file(
         packetCount: Int = 3,
         formatTag: UInt16 = formatTagWMAv2,
         blockAlign: UInt16 = defaultBlockAlign,

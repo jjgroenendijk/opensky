@@ -5,6 +5,7 @@
 // Every quest, script and reference is synthetic (`PapyrusQuestFixture`), so
 // nothing here reads game data.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

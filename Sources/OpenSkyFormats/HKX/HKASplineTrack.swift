@@ -5,52 +5,52 @@
 import Foundation
 import simd
 
-nonisolated package struct HKASplineTransformMask {
-    package let quantization: UInt8
-    package let position: UInt8
-    package let rotation: UInt8
-    package let scale: UInt8
+nonisolated public struct HKASplineTransformMask: Sendable {
+    public let quantization: UInt8
+    public let position: UInt8
+    public let rotation: UInt8
+    public let scale: UInt8
 }
 
-nonisolated package struct HKASplineVectorDescriptor {
-    package let typeMask: UInt8
-    package let quantization: Int
-    package let identity: Float
-    package let trackIndex: Int
-    package let component: String
+nonisolated public struct HKASplineVectorDescriptor: Sendable {
+    public let typeMask: UInt8
+    public let quantization: Int
+    public let identity: Float
+    public let trackIndex: Int
+    public let component: String
 }
 
-nonisolated package enum HKASplineSubTrackType {
+nonisolated public enum HKASplineSubTrackType: Sendable {
     case identity
     case constant
     case spline
 }
 
-nonisolated package struct HKASplineBounds {
-    package let minimum: Float
-    package let maximum: Float
+nonisolated public struct HKASplineBounds: Sendable {
+    public let minimum: Float
+    public let maximum: Float
 }
 
-nonisolated package struct HKASplineTransformTrack {
-    package let translation: HKASplineVectorTrack
-    package let rotation: HKASplineQuaternionTrack
-    package let scale: HKASplineVectorTrack
+nonisolated public struct HKASplineTransformTrack: Sendable {
+    public let translation: HKASplineVectorTrack
+    public let rotation: HKASplineQuaternionTrack
+    public let scale: HKASplineVectorTrack
 }
 
-nonisolated package struct HKASplineVectorTrack {
-    package let constants: SIMD3<Float>
-    package let types: [HKASplineSubTrackType]
-    package let header: HKASplineHeader?
-    package let controlPoints: [[Float]]
+nonisolated public struct HKASplineVectorTrack: Sendable {
+    public let constants: SIMD3<Float>
+    public let types: [HKASplineSubTrackType]
+    public let header: HKASplineHeader?
+    public let controlPoints: [[Float]]
 
-    package init(constants: SIMD3<Float>) {
+    public init(constants: SIMD3<Float>) {
         self.constants = constants
         types = [.constant, .constant, .constant]
         header = nil
         controlPoints = [[], [], []]
     }
 
-    package init(
+    public init(
         constants: SIMD3<Float>,
         types: [HKASplineSubTrackType],
         header: HKASplineHeader,
@@ -62,7 +62,7 @@ nonisolated package struct HKASplineVectorTrack {
         self.controlPoints = controlPoints
     }
 
-    package func value(at frame: Float) -> SIMD3<Float> {
+    public func value(at frame: Float) -> SIMD3<Float> {
         guard let header else { return constants }
         var value = constants
         for axis in 0 ..< 3 where types[axis] == .spline {
@@ -72,12 +72,12 @@ nonisolated package struct HKASplineVectorTrack {
     }
 }
 
-nonisolated package enum HKASplineQuaternionTrack {
+nonisolated public enum HKASplineQuaternionTrack: Sendable {
     case identity
     case constant(SIMD4<Float>)
     case spline(header: HKASplineHeader, controlPoints: [SIMD4<Float>])
 
-    package func value(at frame: Float) -> SIMD4<Float> {
+    public func value(at frame: Float) -> SIMD4<Float> {
         switch self {
         case .identity:
             SIMD4(0, 0, 0, 1)
@@ -89,12 +89,12 @@ nonisolated package enum HKASplineQuaternionTrack {
     }
 }
 
-nonisolated package struct HKASplineHeader {
-    package let degree: Int
-    package let knots: [UInt8]
-    package let controlPointCount: Int
+nonisolated public struct HKASplineHeader: Sendable {
+    public let degree: Int
+    public let knots: [UInt8]
+    public let controlPointCount: Int
 
-    package func value(at frame: Float, controlPoints: [Float]) -> Float {
+    public func value(at frame: Float, controlPoints: [Float]) -> Float {
         let span = knotSpan(for: frame)
         var points = (0 ... degree).map { controlPoints[span - degree + $0] }
         for level in 1 ... degree {
@@ -112,7 +112,7 @@ nonisolated package struct HKASplineHeader {
         return points[degree]
     }
 
-    package func value(at frame: Float, controlPoints: [SIMD4<Float>]) -> SIMD4<Float> {
+    public func value(at frame: Float, controlPoints: [SIMD4<Float>]) -> SIMD4<Float> {
         let span = knotSpan(for: frame)
         var points = (0 ... degree).map { controlPoints[span - degree + $0] }
         for level in 1 ... degree {
@@ -149,33 +149,33 @@ nonisolated package struct HKASplineHeader {
     }
 }
 
-nonisolated package struct HKASplineCursor {
-    package let data: Data
-    package let blockIndex: Int
-    package var offset: Int
-    package let limit: Int
+nonisolated public struct HKASplineCursor: Sendable {
+    public let data: Data
+    public let blockIndex: Int
+    public var offset: Int
+    public let limit: Int
 
-    package mutating func readUInt8() throws -> UInt8 {
+    public mutating func readUInt8() throws -> UInt8 {
         try require(1)
         defer { offset += 1 }
         return data[offset]
     }
 
-    package mutating func readUInt16() throws -> UInt16 {
+    public mutating func readUInt16() throws -> UInt16 {
         let low = try UInt16(readUInt8())
         return try low | UInt16(readUInt8()) << 8
     }
 
-    package mutating func readUInt32() throws -> UInt32 {
+    public mutating func readUInt32() throws -> UInt32 {
         let low = try UInt32(readUInt16())
         return try low | UInt32(readUInt16()) << 16
     }
 
-    package mutating func readFloat() throws -> Float {
+    public mutating func readFloat() throws -> Float {
         try Float(bitPattern: readUInt32())
     }
 
-    package mutating func readFiniteFloat(trackIndex: Int, component: String) throws -> Float {
+    public mutating func readFiniteFloat(trackIndex: Int, component: String) throws -> Float {
         let value = try readFloat()
         guard value.isFinite else {
             throw HKASplineAnimationError.invalidSpline(
@@ -185,7 +185,7 @@ nonisolated package struct HKASplineCursor {
         return value
     }
 
-    package mutating func readSplineHeader(
+    public mutating func readSplineHeader(
         trackIndex: Int,
         component: String
     ) throws -> HKASplineHeader {
@@ -216,7 +216,7 @@ nonisolated package struct HKASplineCursor {
 
     /// Havok 40-bit quaternion: three signed 12-bit components scaled to
     /// [-1/sqrt(2), +1/sqrt(2)], 2-bit omitted-largest lane, 1-bit sign.
-    package mutating func readQuaternion40() throws -> SIMD4<Float> {
+    public mutating func readQuaternion40() throws -> SIMD4<Float> {
         var bits: UInt64 = 0
         for byteIndex in 0 ..< 5 {
             try bits |= UInt64(readUInt8()) << UInt64(byteIndex * 8)
@@ -243,12 +243,12 @@ nonisolated package struct HKASplineCursor {
         return output
     }
 
-    package mutating func skip(_ count: Int) throws {
+    public mutating func skip(_ count: Int) throws {
         try require(count)
         offset += count
     }
 
-    package mutating func align(to alignment: Int) throws {
+    public mutating func align(to alignment: Int) throws {
         let aligned = (offset + alignment - 1) & ~(alignment - 1)
         try skip(aligned - offset)
     }

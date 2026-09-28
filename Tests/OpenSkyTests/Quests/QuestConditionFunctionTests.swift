@@ -6,6 +6,7 @@
 // the Creation Kit spells each 4096 higher. Conditions are built in code with
 // `ConditionFixture`, so nothing here reads game data.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

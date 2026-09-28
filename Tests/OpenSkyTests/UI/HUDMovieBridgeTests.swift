@@ -3,6 +3,7 @@
 // installed in code.
 
 import AppKit
+import FormatsTestSupport
 @testable import OpenSky
 @testable import OpenSkyFormats
 import simd

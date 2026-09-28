@@ -136,7 +136,7 @@ if [ -n "$optimized" ]; then
     derived_data="$OPENSKY_DERIVED_DATA-optimized"
     printf '[INFO] optimized build, derived data: %s\n' "$derived_data"
 fi
-set -- xcodebuild -project "$root/OpenSky.xcodeproj" -scheme OpenSky \
+set -- xcodebuild -workspace "$root/OpenSky.xcworkspace" -scheme OpenSky \
     -configuration Debug -derivedDataPath "$derived_data" \
     -destination 'platform=macOS' -testPlan RealData \
     -parallel-testing-enabled NO -maximum-parallel-testing-workers 1

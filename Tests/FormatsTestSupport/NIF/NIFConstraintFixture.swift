@@ -6,10 +6,10 @@ import Foundation
 @testable import OpenSkyFormats
 import simd
 
-enum NIFConstraintFixture {
+public enum NIFConstraintFixture: Sendable {
     /// nif.xml `bhkConstraintCInfo`: entity count (always 2), both entity
     /// pointers, priority.
-    static func info(entityA: Int32, entityB: Int32, priority: UInt32 = 1) -> Data {
+    public static func info(entityA: Int32, entityB: Int32, priority: UInt32 = 1) -> Data {
         var data = Data()
         data.appendUInt32(2)
         data.appendRef(entityA)
@@ -19,7 +19,7 @@ enum NIFConstraintFixture {
     }
 
     /// nif.xml `bhkConstraintMotorCInfo`. `type` 0 writes the byte alone.
-    static func motor(type: UInt8 = 0, enabled: Bool = false) -> Data {
+    public static func motor(type: UInt8 = 0, enabled: Bool = false) -> Data {
         var data = Data([type])
         switch type {
         case 1:
@@ -44,7 +44,7 @@ enum NIFConstraintFixture {
         return data
     }
 
-    static func ragdoll(
+    public static func ragdoll(
         entityA: Int32,
         entityB: Int32,
         pivotA: SIMD3<Float>,
@@ -72,7 +72,7 @@ enum NIFConstraintFixture {
         return data
     }
 
-    static func hinge(
+    public static func hinge(
         entityA: Int32,
         entityB: Int32,
         pivotA: SIMD3<Float>,
@@ -85,7 +85,7 @@ enum NIFConstraintFixture {
         return data
     }
 
-    static func limitedHinge(
+    public static func limitedHinge(
         entityA: Int32,
         entityB: Int32,
         pivotA: SIMD3<Float>,
@@ -116,7 +116,7 @@ enum NIFConstraintFixture {
         return data
     }
 
-    static func ballAndSocket(
+    public static func ballAndSocket(
         entityA: Int32,
         entityB: Int32,
         pivotA: SIMD3<Float>,
@@ -128,7 +128,7 @@ enum NIFConstraintFixture {
         return data
     }
 
-    static func stiffSpring(
+    public static func stiffSpring(
         entityA: Int32,
         entityB: Int32,
         pivotA: SIMD3<Float>,
@@ -142,7 +142,7 @@ enum NIFConstraintFixture {
         return data
     }
 
-    static func prismatic(
+    public static func prismatic(
         entityA: Int32,
         entityB: Int32,
         pivotA: SIMD3<Float>,
@@ -165,7 +165,7 @@ enum NIFConstraintFixture {
 
     /// `bhkMalleableConstraint`: outer constraint info, wrapped type, a
     /// repeated constraint info, the wrapped payload, then strength.
-    static func malleable(
+    public static func malleable(
         entityA: Int32,
         entityB: Int32,
         wrappedType: UInt32,

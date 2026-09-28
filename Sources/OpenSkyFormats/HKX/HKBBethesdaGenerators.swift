@@ -20,24 +20,24 @@ import Foundation
 /// two characters can play matching halves of a paired animation, lining them
 /// up on a marker rather than on clip time. Used by the killmove and furniture
 /// states.
-nonisolated package struct BSSynchronizedClipGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
+nonisolated public struct BSSynchronizedClipGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
     /// The wrapped `hkbClipGenerator`.
-    package let clipGenerator: HKXPointerTarget?
+    public let clipGenerator: HKXPointerTarget?
     /// Prefix prepended to the partner's animation name to find its half.
-    package let syncAnimPrefix: String?
-    package let syncClipIgnoreMarkPlacement: Bool
-    package let getToMarkTime: Float
-    package let markErrorThreshold: Float
+    public let syncAnimPrefix: String?
+    public let syncClipIgnoreMarkPlacement: Bool
+    public let getToMarkTime: Float
+    public let markErrorThreshold: Float
     /// True on the character the pair is aligned to.
-    package let leadCharacter: Bool
-    package let reorientSupportChar: Bool
-    package let applyMotionFromRoot: Bool
+    public let leadCharacter: Bool
+    public let reorientSupportChar: Bool
+    public let applyMotionFromRoot: Bool
     /// Index into the character file's animation list; -1 when unbound.
-    package let animationBindingIndex: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let animationBindingIndex: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSSynchronizedClipGenerator"
+    public static let className = "BSSynchronizedClipGenerator"
 
     private static let clipGeneratorField = HKXField(0x50, "m_pClipGenerator")
     private static let syncAnimPrefixField = HKXField(0x58, "m_SyncAnimPrefix")
@@ -52,7 +52,7 @@ nonisolated package struct BSSynchronizedClipGenerator: HKBClass, Equatable {
     /// Past three `SERIALIZE_IGNORED` qs-transforms and the runtime pointers.
     private static let bindingIndexField = HKXField(0x128, "m_sAnimationBindingIndex")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSSynchronizedClipGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -72,15 +72,15 @@ nonisolated package struct BSSynchronizedClipGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references + HKBReference.optional("m_pClipGenerator", clipGenerator)
     }
 
-    package var summary: String {
+    public var summary: String {
         "sync prefix \"\(syncAnimPrefix ?? "")\", lead \(leadCharacter), "
             + "binding \(animationBindingIndex)"
     }
@@ -88,20 +88,20 @@ nonisolated package struct BSSynchronizedClipGenerator: HKBClass, Equatable {
 
 /// Decoded `BSiStateTaggingGenerator`, size 96: runs one child and, while it
 /// runs, publishes a state number the rest of the graph can test.
-nonisolated package struct BSiStateTaggingGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
-    package let defaultGenerator: HKXPointerTarget?
-    package let stateToSetAs: Int
-    package let priority: Int
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct BSiStateTaggingGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
+    public let defaultGenerator: HKXPointerTarget?
+    public let stateToSetAs: Int
+    public let priority: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSiStateTaggingGenerator"
+    public static let className = "BSiStateTaggingGenerator"
 
     private static let defaultGeneratorField = HKXField(0x50, "m_pDefaultGenerator")
     private static let stateToSetAsField = HKXField(0x58, "m_iStateToSetAs")
     private static let priorityField = HKXField(0x5C, "m_iPriority")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSiStateTaggingGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -115,15 +115,15 @@ nonisolated package struct BSiStateTaggingGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references + HKBReference.optional("m_pDefaultGenerator", defaultGenerator)
     }
 
-    package var summary: String {
+    public var summary: String {
         "tags state \(stateToSetAs) at priority \(priority)"
     }
 }
@@ -131,20 +131,20 @@ nonisolated package struct BSiStateTaggingGenerator: HKBClass, Equatable {
 /// Decoded `BSBoneSwitchGeneratorBoneData`, size 64: one child of a bone-switch
 /// generator plus the bone mask it owns. Derives `hkbBindable`, so it has no
 /// name.
-nonisolated package struct BSBoneSwitchGeneratorBoneData: HKBClass, Equatable {
-    package let variableBindingSet: HKXPointerTarget?
-    package let generator: HKXPointerTarget?
+nonisolated public struct BSBoneSwitchGeneratorBoneData: HKBClass, Equatable, Sendable {
+    public let variableBindingSet: HKXPointerTarget?
+    public let generator: HKXPointerTarget?
     /// `hkbBoneWeightArray` selecting the bones this child owns.
-    package let boneWeight: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+    public let boneWeight: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSBoneSwitchGeneratorBoneData"
+    public static let className = "BSBoneSwitchGeneratorBoneData"
 
     private static let variableBindingSetField = HKXField(0x10, "m_variableBindingSet")
     private static let generatorField = HKXField(0x30, "m_pGenerator")
     private static let boneWeightField = HKXField(0x38, "m_spBoneWeight")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSBoneSwitchGeneratorBoneData?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -156,13 +156,13 @@ nonisolated package struct BSBoneSwitchGeneratorBoneData: HKBClass, Equatable {
         )
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         HKBReference.optional("m_variableBindingSet", variableBindingSet)
             + HKBReference.optional("m_pGenerator", generator)
             + HKBReference.optional("m_spBoneWeight", boneWeight)
     }
 
-    package var summary: String {
+    public var summary: String {
         "bone-switch child, mask \(boneWeight != nil ? "set" : "none")"
     }
 }
@@ -170,19 +170,19 @@ nonisolated package struct BSBoneSwitchGeneratorBoneData: HKBClass, Equatable {
 /// Decoded `BSBoneSwitchGenerator`, size 112: runs a default generator for the
 /// whole skeleton and overrides named bone groups with other children. This is
 /// how the first-person arms are driven from a different clip than the body.
-nonisolated package struct BSBoneSwitchGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
-    package let defaultGenerator: HKXPointerTarget?
+nonisolated public struct BSBoneSwitchGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
+    public let defaultGenerator: HKXPointerTarget?
     /// `BSBoneSwitchGeneratorBoneData` objects, index-preserving.
-    package let children: [HKXPointerTarget?]
-    package let unresolved: [HKXUnresolvedReference]
+    public let children: [HKXPointerTarget?]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSBoneSwitchGenerator"
+    public static let className = "BSBoneSwitchGenerator"
 
     private static let defaultGeneratorField = HKXField(0x50, "m_pDefaultGenerator")
     private static let childrenField = HKXField(0x58, "m_ChildrenA")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSBoneSwitchGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -195,17 +195,17 @@ nonisolated package struct BSBoneSwitchGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references
             + HKBReference.optional("m_pDefaultGenerator", defaultGenerator)
             + HKBReference.each("m_ChildrenA", children)
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(children.count) bone-switch children"
     }
 }
@@ -213,18 +213,18 @@ nonisolated package struct BSBoneSwitchGenerator: HKBClass, Equatable {
 /// Decoded `BSCyclicBlendTransitionGenerator`, size 176: wraps a blender so a
 /// blend parameter can be frozen at a cycle boundary, which keeps a looping
 /// clip from popping when the parameter moves mid-stride.
-nonisolated package struct BSCyclicBlendTransitionGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
-    package let blenderGenerator: HKXPointerTarget?
-    package let eventToFreezeBlendValue: HKBEventProperty
-    package let eventToCrossBlend: HKBEventProperty
-    package let blendParameter: Float
-    package let transitionDuration: Float
+nonisolated public struct BSCyclicBlendTransitionGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
+    public let blenderGenerator: HKXPointerTarget?
+    public let eventToFreezeBlendValue: HKBEventProperty
+    public let eventToCrossBlend: HKBEventProperty
+    public let blendParameter: Float
+    public let transitionDuration: Float
     /// `hkbBlendCurveUtils::BlendCurve`.
-    package let blendCurve: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let blendCurve: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSCyclicBlendTransitionGenerator"
+    public static let className = "BSCyclicBlendTransitionGenerator"
 
     private static let blenderGeneratorField = HKXField(0x50, "m_pBlenderGenerator")
     private static let freezeEventOffset = 0x58
@@ -233,7 +233,7 @@ nonisolated package struct BSCyclicBlendTransitionGenerator: HKBClass, Equatable
     private static let transitionDurationField = HKXField(0x7C, "m_fTransitionDuration")
     private static let blendCurveField = HKXField(0x80, "m_eBlendCurve")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSCyclicBlendTransitionGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -257,18 +257,18 @@ nonisolated package struct BSCyclicBlendTransitionGenerator: HKBClass, Equatable
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references
             + HKBReference.optional("m_pBlenderGenerator", blenderGenerator)
             + eventToFreezeBlendValue.references(named: "m_EventToFreezeBlendValue")
             + eventToCrossBlend.references(named: "m_EventToCrossBlend")
     }
 
-    package var summary: String {
+    public var summary: String {
         "freeze on event \(eventToFreezeBlendValue.id), "
             + "transition \(transitionDuration)s"
     }
@@ -276,17 +276,17 @@ nonisolated package struct BSCyclicBlendTransitionGenerator: HKBClass, Equatable
 
 /// Decoded `BSOffsetAnimationGenerator`, size 176: adds a pose offset sampled
 /// from a second clip on top of a default generator, scaled by a variable.
-nonisolated package struct BSOffsetAnimationGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
-    package let defaultGenerator: HKXPointerTarget?
-    package let offsetClipGenerator: HKXPointerTarget?
+nonisolated public struct BSOffsetAnimationGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
+    public let defaultGenerator: HKXPointerTarget?
+    public let offsetClipGenerator: HKXPointerTarget?
     /// The blend amount; normally bound to a graph variable.
-    package let offsetVariable: Float
-    package let offsetRangeStart: Float
-    package let offsetRangeEnd: Float
-    package let unresolved: [HKXUnresolvedReference]
+    public let offsetVariable: Float
+    public let offsetRangeStart: Float
+    public let offsetRangeEnd: Float
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSOffsetAnimationGenerator"
+    public static let className = "BSOffsetAnimationGenerator"
 
     private static let defaultGeneratorField = HKXField(0x50, "m_pDefaultGenerator")
     private static let offsetClipField = HKXField(0x60, "m_pOffsetClipGenerator")
@@ -294,7 +294,7 @@ nonisolated package struct BSOffsetAnimationGenerator: HKBClass, Equatable {
     private static let rangeStartField = HKXField(0x6C, "m_fOffsetRangeStart")
     private static let rangeEndField = HKXField(0x70, "m_fOffsetRangeEnd")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSOffsetAnimationGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -310,17 +310,17 @@ nonisolated package struct BSOffsetAnimationGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references
             + HKBReference.optional("m_pDefaultGenerator", defaultGenerator)
             + HKBReference.optional("m_pOffsetClipGenerator", offsetClipGenerator)
     }
 
-    package var summary: String {
+    public var summary: String {
         "offset range \(offsetRangeStart)-\(offsetRangeEnd)"
     }
 }

@@ -10,6 +10,7 @@
 // movie still has that shape is the real-data gate's job.
 
 import AppKit
+import FormatsTestSupport
 @testable import OpenSky
 @testable import OpenSkyFormats
 import Testing

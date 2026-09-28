@@ -20,22 +20,22 @@
 
 import Foundation
 
-nonisolated package struct LeveledList {
+nonisolated public struct LeveledList: Sendable {
     /// LVLF flags (UESP LVLN/LVLI flag table).
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt8
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
         /// All entries at or below player level are candidates.
-        package static let calculateFromAllLevels = Flags(rawValue: 0x01)
+        public static let calculateFromAllLevels = Flags(rawValue: 0x01)
         /// Re-roll the list for each placed count instead of once.
-        package static let calculateForEach = Flags(rawValue: 0x02)
+        public static let calculateForEach = Flags(rawValue: 0x02)
         /// Use every entry — the list is a bundle, not alternatives
         /// (e.g. ArmorStormcloakSet: boots + cuirass + gauntlets + helmet).
-        package static let useAll = Flags(rawValue: 0x04)
+        public static let useAll = Flags(rawValue: 0x04)
     }
 
     /// One LVLO entry. UESP documents 12 bytes (uint32 level, FormID
@@ -43,24 +43,24 @@ nonisolated package struct LeveledList {
     /// wbDefinitionsCommon.pas dev-4.1.6) reads level as uint16 + 2 pad and
     /// accepts an 8-byte form with count defaulting to 1 — byte-identical
     /// for sane values, so decode the lenient shape.
-    package struct Entry: Equatable {
-        package let level: UInt16
-        package let reference: FormID
-        package let count: UInt32
+    public struct Entry: Equatable, Sendable {
+        public let level: UInt16
+        public let reference: FormID
+        public let count: UInt32
     }
 
-    package let formID: FormID
+    public let formID: FormID
     /// Which of LVLN, LVLI or LVSP this list came from; the entry references
     /// mean different things in each.
-    package let recordType: FourCC
-    package let editorID: String?
+    public let recordType: FourCC
+    public let editorID: String?
     /// LVLD — percent chance the list resolves to nothing.
-    package let chanceNone: UInt8
-    package let flags: Flags
-    package let entries: [Entry]
+    public let chanceNone: UInt8
+    public let flags: Flags
+    public let entries: [Entry]
 
     /// Deterministic bind-pose policy: highest level wins, first among ties.
-    package var deterministicEntry: Entry? {
+    public var deterministicEntry: Entry? {
         entries.enumerated().min { lhs, rhs in
             lhs.element.level != rhs.element.level
                 ? lhs.element.level > rhs.element.level
@@ -69,9 +69,9 @@ nonisolated package struct LeveledList {
     }
 
     /// The record types this decoder accepts.
-    package static let recordTypes: Set<FourCC> = ["LVLN", "LVLI", "LVSP"]
+    public static let recordTypes: Set<FourCC> = ["LVLN", "LVLI", "LVSP"]
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard Self.recordTypes.contains(record.type) else {
             throw ESMError.malformed("expected LVLN/LVLI/LVSP record, got \(record.type)")
         }

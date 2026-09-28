@@ -4,11 +4,11 @@
 /// the pure streaming-side type. `CellSceneBuilder.buildScene` still takes
 /// raw `gridX`/`gridY` Int32; convert at the call site (`coordinate.x`,
 /// `coordinate.y`).
-nonisolated package struct CellCoordinate: Hashable {
-    package var x: Int32
-    package var y: Int32
+nonisolated public struct CellCoordinate: Hashable, Sendable {
+    public var x: Int32
+    public var y: Int32
 
-    package init(x: Int32, y: Int32) {
+    public init(x: Int32, y: Int32) {
         self.x = x
         self.y = y
     }

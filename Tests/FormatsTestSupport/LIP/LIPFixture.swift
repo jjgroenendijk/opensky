@@ -4,15 +4,22 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum LIPFixture {
-    struct Cell {
-        let frame: Int
-        let slot: Int
-        let value: Float
-        var duplicate = false
+public enum LIPFixture: Sendable {
+    public struct Cell: Sendable {
+        public let frame: Int
+        public let slot: Int
+        public let value: Float
+        public var duplicate = false
 
-        func position(slotsPerFrame: Int = LIPFile.slotCount) -> Int {
+        public func position(slotsPerFrame: Int = LIPFile.slotCount) -> Int {
             frame * slotsPerFrame + slot
+        }
+
+        public init(frame: Int, slot: Int, value: Float, duplicate: Bool = false) {
+            self.frame = frame
+            self.slot = slot
+            self.value = value
+            self.duplicate = duplicate
         }
     }
 
@@ -20,7 +27,7 @@ enum LIPFixture {
     /// extra bytes between the frame count and the tuple width (issue #449).
     /// `slotsPerFrame` drives both the grid and the duration field, because the
     /// two are the same fact on disk.
-    static func file(
+    public static func file(
         version: UInt32 = 1,
         frameCount: UInt16 = 2,
         firstFrame: Int32 = 0,

@@ -32,29 +32,29 @@ import Foundation
 import simd
 
 /// Everything one rigid-body block holds, before scene transforms compose in.
-nonisolated package struct NIFRigidBodyRecord {
-    package static let bodyTypeNames: Set = ["bhkRigidBody", "bhkRigidBodyT"]
+nonisolated public struct NIFRigidBodyRecord: Sendable {
+    public static let bodyTypeNames: Set = ["bhkRigidBody", "bhkRigidBodyT"]
     /// Refs are 4 bytes each and the body flags follow, so a count past this
     /// share of the remaining block cannot be real.
-    package static let maxConstraintCount = 256
+    public static let maxConstraintCount = 256
 
-    package let shapeRef: Int32
-    package let worldFilter: NIFCollisionFilter
-    package let rigidBodyFilter: NIFCollisionFilter
+    public let shapeRef: Int32
+    public let worldFilter: NIFCollisionFilter
+    public let rigidBodyFilter: NIFCollisionFilter
     /// nif.xml `hkResponseType` from `bhkEntityCInfo`.
-    package let entityResponse: UInt8
+    public let entityResponse: UInt8
     /// The same enum repeated inside `bhkRigidBodyCInfo2010`.
-    package let rigidBodyResponse: UInt8
+    public let rigidBodyResponse: UInt8
     /// The body's own translation + rotation. Applied only by `bhkRigidBodyT`;
     /// a plain `bhkRigidBody` serializes it and ignores it.
-    package let localTransform: float4x4
-    package let dynamics: NIFRigidBodyDynamics
+    public let localTransform: float4x4
+    public let dynamics: NIFRigidBodyDynamics
     /// Block refs to `bhkConstraint` subclasses, unresolved.
-    package let constraintRefs: [Int32]
+    public let constraintRefs: [Int32]
     /// Bit 1 means the body responds to wind.
-    package let bodyFlags: UInt16
+    public let bodyFlags: UInt16
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         shapeRef = try reader.readNIFRef()
         worldFilter = try reader.readCollisionFilter()

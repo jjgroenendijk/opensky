@@ -8,20 +8,20 @@
 
 import Foundation
 
-enum FUZFixture {
-    static let magic = "FUZE"
-    static let version: UInt32 = 1
+public enum FUZFixture: Sendable {
+    public static let magic = "FUZE"
+    public static let version: UInt32 = 1
 
     /// Lip bytes tagged by index so a test can assert the blob was sliced at
     /// the right boundary.
-    static func lip(byteCount: Int) -> Data {
+    public static func lip(byteCount: Int) -> Data {
         Data((0 ..< byteCount).map { UInt8(truncatingIfNeeded: $0) })
     }
 
     /// A `.fuz` file: header, `lipByteCount` bytes of lip blob, then `audio`.
     /// `declaredLipSize` overrides the header field so a test can claim more
     /// lip bytes than the buffer holds.
-    static func file(
+    public static func file(
         magic: String = magic,
         version: UInt32 = version,
         lipByteCount: Int = 16,

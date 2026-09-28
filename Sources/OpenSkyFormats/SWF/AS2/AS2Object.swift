@@ -18,46 +18,46 @@ import Foundation
 /// The attributes `ASSetPropFlags` toggles. The bit values are the ones the
 /// Flash built-in has always used; the SWF specification does not define this
 /// function, so this mapping is observed, not specified.
-nonisolated package struct AS2PropertyFlags: OptionSet, Equatable {
-    package let rawValue: UInt8
+nonisolated public struct AS2PropertyFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt8
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         self.rawValue = rawValue
     }
 
     /// Hidden from `ActionEnumerate2` (0x55) and `for (var name in object)`.
-    package static let dontEnumerate = AS2PropertyFlags(rawValue: 1)
+    public static let dontEnumerate = AS2PropertyFlags(rawValue: 1)
     /// `ActionDelete` (0x3A) leaves the property in place.
-    package static let dontDelete = AS2PropertyFlags(rawValue: 2)
+    public static let dontDelete = AS2PropertyFlags(rawValue: 2)
     /// Assignment is ignored.
-    package static let readOnly = AS2PropertyFlags(rawValue: 4)
+    public static let readOnly = AS2PropertyFlags(rawValue: 4)
 }
 
 /// One slot in an object's property table. A slot is either a stored value or a
 /// getter/setter pair installed by `Object.prototype.addProperty`; the
 /// interpreter, not the object, invokes the accessors because calling needs an
 /// execution context.
-nonisolated package struct AS2Property {
-    package var value: AS2Value = .undefined
-    package var flags: AS2PropertyFlags = []
-    package var getter: AS2Object?
-    package var setter: AS2Object?
+nonisolated public struct AS2Property {
+    public var value: AS2Value = .undefined
+    public var flags: AS2PropertyFlags = []
+    public var getter: AS2Object?
+    public var setter: AS2Object?
 
-    package var isVirtual: Bool {
+    public var isVirtual: Bool {
         getter != nil || setter != nil
     }
 }
 
 /// Where a name resolved on a prototype chain: the object that owns the slot
 /// and the slot itself.
-nonisolated package struct AS2PropertyLookup {
-    package let owner: AS2Object
-    package let property: AS2Property
+nonisolated public struct AS2PropertyLookup {
+    public let owner: AS2Object
+    public let property: AS2Property
 }
 
 /// Receives object-table mutations that a host needs to index. The interpreter
 /// remains unaware of what the observer represents.
-nonisolated package protocol AS2ObjectMutationObserver: AnyObject {
+nonisolated public protocol AS2ObjectMutationObserver: AnyObject {
     func object(_ object: AS2Object, didMutateProperty name: String)
     func objectDidMutatePrototype(_ object: AS2Object)
 }
@@ -65,58 +65,58 @@ nonisolated package protocol AS2ObjectMutationObserver: AnyObject {
 /// An ActionScript 2 object. Functions are objects with a `callable`; arrays
 /// are objects with a live `arrayLength`; display objects (a later milestone)
 /// are objects carrying a `hostPayload`.
-nonisolated package final class AS2Object {
+nonisolated public final class AS2Object {
     /// `__proto__`. Member lookup walks this chain.
-    package var prototype: AS2Object? {
+    public var prototype: AS2Object? {
         didSet {
             mutationObserver?.objectDidMutatePrototype(self)
         }
     }
 
     /// Optional weak hook for host indexes derived from dynamic members.
-    package weak var mutationObserver: (any AS2ObjectMutationObserver)?
+    public weak var mutationObserver: (any AS2ObjectMutationObserver)?
     /// Non-nil when this object can be called or constructed.
-    package var callable: AS2Callable?
+    public var callable: AS2Callable?
     /// Opaque engine-owned payload — the seam a later milestone uses to back an
     /// object with a display object. The interpreter never inspects it, but its
     /// presence routes unresolved members to `AS2Host`.
-    package var hostPayload: AnyObject?
+    public var hostPayload: AnyObject?
     /// Overrides what `ActionTypeOf` reports, so a host-backed object can
     /// answer `"movieclip"`.
-    package var typeOverride: String?
+    public var typeOverride: String?
     /// Set on a `super` binding: calls through this object bind `this` to the
     /// stored value instead of to the binding itself.
-    package var superThis: AS2Value?
+    public var superThis: AS2Value?
     /// Set on a `super` binding: the prototype the superclass constructor this
     /// binding calls belongs to. It becomes the called frame's
     /// `AS2Frame.basePrototype`, so the next `super` up the chain resolves one
     /// level higher instead of re-entering the same constructor (issue #136).
-    package var superBase: AS2Object?
+    public var superBase: AS2Object?
     /// Non-nil for array-like objects; one past the highest assigned index.
-    package private(set) var arrayLength: Int?
+    public private(set) var arrayLength: Int?
 
     private var order: [String] = []
     private var table: [String: AS2Property] = [:]
 
-    package init(prototype: AS2Object? = nil) {
+    public init(prototype: AS2Object? = nil) {
         self.prototype = prototype
     }
 
-    package var isFunction: Bool {
+    public var isFunction: Bool {
         callable != nil
     }
 
-    package var isArray: Bool {
+    public var isArray: Bool {
         arrayLength != nil
     }
 
     /// True when a host owns this object's real state, so member misses are
     /// worth asking `AS2Host` about.
-    package var isHostBacked: Bool {
+    public var isHostBacked: Bool {
         hostPayload != nil
     }
 
-    package var typeName: String {
+    public var typeName: String {
         if let typeOverride {
             return typeOverride
         }
@@ -124,22 +124,22 @@ nonisolated package final class AS2Object {
     }
 
     /// Own property names in insertion order.
-    package var ownPropertyNames: [String] {
+    public var ownPropertyNames: [String] {
         order
     }
 
-    package func ownProperty(_ name: String) -> AS2Property? {
+    public func ownProperty(_ name: String) -> AS2Property? {
         table[name]
     }
 
-    package func hasOwnProperty(_ name: String) -> Bool {
+    public func hasOwnProperty(_ name: String) -> Bool {
         table[name] != nil
     }
 
     /// Walks `__proto__` until the name resolves. Cycles are bounded by
     /// `prototypeChainLimit` so a malformed `__proto__` assignment cannot hang
     /// the interpreter.
-    package func lookup(_ name: String) -> AS2PropertyLookup? {
+    public func lookup(_ name: String) -> AS2PropertyLookup? {
         var current: AS2Object? = self
         var steps = 0
         while let object = current, steps < AS2Object.prototypeChainLimit {
@@ -152,13 +152,13 @@ nonisolated package final class AS2Object {
         return nil
     }
 
-    package func hasProperty(_ name: String) -> Bool {
+    public func hasProperty(_ name: String) -> Bool {
         lookup(name) != nil
     }
 
     /// Installs or replaces a slot, ignoring `readOnly` — the path natives and
     /// the object model itself use.
-    package func define(_ value: AS2Value, for name: String, flags: AS2PropertyFlags = []) {
+    public func define(_ value: AS2Value, for name: String, flags: AS2PropertyFlags = []) {
         var property = table[name] ?? AS2Property()
         property.value = value
         property.flags = flags
@@ -171,7 +171,7 @@ nonisolated package final class AS2Object {
     /// the caller can leave the value untouched without raising an error —
     /// ActionScript assignment to a read-only property fails silently.
     @discardableResult
-    package func assign(_ value: AS2Value, for name: String) -> Bool {
+    public func assign(_ value: AS2Value, for name: String) -> Bool {
         var property = table[name] ?? AS2Property()
         if property.flags.contains(.readOnly) {
             return false
@@ -184,7 +184,7 @@ nonisolated package final class AS2Object {
     /// `Object.prototype.addProperty(name, getter, setter)`. A getter is
     /// mandatory in Flash; a nil setter makes the property read-only.
     @discardableResult
-    package func addAccessor(name: String, getter: AS2Object?, setter: AS2Object?) -> Bool {
+    public func addAccessor(name: String, getter: AS2Object?, setter: AS2Object?) -> Bool {
         guard getter != nil || setter != nil else {
             return false
         }
@@ -197,7 +197,7 @@ nonisolated package final class AS2Object {
     }
 
     @discardableResult
-    package func removeProperty(_ name: String) -> Bool {
+    public func removeProperty(_ name: String) -> Bool {
         guard let property = table[name] else {
             return false
         }
@@ -220,7 +220,7 @@ nonisolated package final class AS2Object {
     }
 
     /// Replaces a slot's attributes without touching its value.
-    package func setFlags(_ flags: AS2PropertyFlags, for name: String) {
+    public func setFlags(_ flags: AS2PropertyFlags, for name: String) {
         guard var property = table[name] else {
             return
         }
@@ -229,7 +229,7 @@ nonisolated package final class AS2Object {
     }
 
     /// Marks this object as array-like with the given length.
-    package func markArray(length: Int) {
+    public func markArray(length: Int) {
         arrayLength = max(0, length)
     }
 
@@ -244,7 +244,7 @@ nonisolated package final class AS2Object {
 
     /// A canonical array index: decimal digits with no sign, no leading zero
     /// beyond `"0"` itself, and inside `Int32` range.
-    package static func arrayIndex(_ name: String) -> Int? {
+    public static func arrayIndex(_ name: String) -> Int? {
         guard !name.isEmpty, name.allSatisfy(\.isASCII), name.allSatisfy(\.isNumber) else {
             return nil
         }
@@ -258,5 +258,5 @@ nonisolated package final class AS2Object {
     }
 
     /// Guards against a `__proto__` cycle built by malformed bytecode.
-    package static let prototypeChainLimit = 64
+    public static let prototypeChainLimit = 64
 }

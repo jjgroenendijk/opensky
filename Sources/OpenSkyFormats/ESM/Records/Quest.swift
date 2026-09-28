@@ -41,39 +41,39 @@
 
 import Foundation
 
-nonisolated package struct Quest {
+nonisolated public struct Quest: Sendable {
     /// DNAM's leading uint16. UESP splits the same two bytes into a pair of
     /// uint8 flag fields and names only five of the bits; xEdit names all
     /// sixteen, and those names are used here.
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt16
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
-        package static let startGameEnabled = Flags(rawValue: 1 << 0)
-        package static let completed = Flags(rawValue: 1 << 1)
-        package static let addIdleTopicToHello = Flags(rawValue: 1 << 2)
-        package static let allowRepeatedStages = Flags(rawValue: 1 << 3)
-        package static let startsEnabled = Flags(rawValue: 1 << 4)
-        package static let displayedInHUD = Flags(rawValue: 1 << 5)
-        package static let failed = Flags(rawValue: 1 << 6)
-        package static let stageWait = Flags(rawValue: 1 << 7)
-        package static let runOnce = Flags(rawValue: 1 << 8)
-        package static let excludeFromDialogueExport = Flags(rawValue: 1 << 9)
-        package static let warnOnAliasFillFailure = Flags(rawValue: 1 << 10)
-        package static let active = Flags(rawValue: 1 << 11)
-        package static let repeatsConditions = Flags(rawValue: 1 << 12)
-        package static let keepInstance = Flags(rawValue: 1 << 13)
-        package static let wantDormant = Flags(rawValue: 1 << 14)
-        package static let hasDialogueData = Flags(rawValue: 1 << 15)
+        public static let startGameEnabled = Flags(rawValue: 1 << 0)
+        public static let completed = Flags(rawValue: 1 << 1)
+        public static let addIdleTopicToHello = Flags(rawValue: 1 << 2)
+        public static let allowRepeatedStages = Flags(rawValue: 1 << 3)
+        public static let startsEnabled = Flags(rawValue: 1 << 4)
+        public static let displayedInHUD = Flags(rawValue: 1 << 5)
+        public static let failed = Flags(rawValue: 1 << 6)
+        public static let stageWait = Flags(rawValue: 1 << 7)
+        public static let runOnce = Flags(rawValue: 1 << 8)
+        public static let excludeFromDialogueExport = Flags(rawValue: 1 << 9)
+        public static let warnOnAliasFillFailure = Flags(rawValue: 1 << 10)
+        public static let active = Flags(rawValue: 1 << 11)
+        public static let repeatsConditions = Flags(rawValue: 1 << 12)
+        public static let keepInstance = Flags(rawValue: 1 << 13)
+        public static let wantDormant = Flags(rawValue: 1 << 14)
+        public static let hasDialogueData = Flags(rawValue: 1 << 15)
     }
 
     /// DNAM's trailing uint32. Type 0 keeps the quest out of the journal
     /// entirely, and type 6 shows only its objectives, which is what makes the
     /// census's "miscellaneous" bucket the cheapest journal surface to target.
-    package enum Kind: Equatable {
+    public enum Kind: Equatable, Sendable {
         case none
         case mainQuest
         case magesGuild
@@ -91,7 +91,7 @@ nonisolated package struct Quest {
         // One branch per documented value; a lookup table would not read
         // better than the list, so the complexity cap is waived here.
         // swiftlint:disable:next cyclomatic_complexity
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             switch rawValue {
             case 0: self = .none
             case 1: self = .mainQuest
@@ -109,7 +109,7 @@ nonisolated package struct Quest {
             }
         }
 
-        package var name: String {
+        public var name: String {
             switch self {
             case .none: "none"
             case .mainQuest: "main quest"
@@ -128,68 +128,68 @@ nonisolated package struct Quest {
         }
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// FULL. Hidden by the journal for a miscellaneous quest, which shows only
     /// its objectives.
-    package let name: LString?
-    package let flags: Flags
+    public let name: LString?
+    public let flags: Flags
     /// 0...100 in the Creation Kit; the higher-priority quest owns a shared
     /// alias when two quests want the same reference.
-    package let priority: UInt8
-    package let kind: Kind
+    public let priority: UInt8
+    public let kind: Kind
     /// ENAM, the story-manager event this quest starts from. Matches an SMEN
     /// short name; carried raw because the story manager is not modelled.
-    package let event: FourCC?
+    public let event: FourCC?
     /// QTGL, the globals the journal text may substitute into.
-    package let textDisplayGlobals: [FormID]
+    public let textDisplayGlobals: [FormID]
     /// FLTR, the Creation Kit's Object Window folder path. Authoring metadata.
-    package let objectWindowFilter: String?
+    public let objectWindowFilter: String?
     /// The CTDA run before NEXT: whether the quest's dialogue is available.
-    package let dialogueConditions: ConditionList
+    public let dialogueConditions: ConditionList
     /// The CTDA run after NEXT: the story-manager node conditions.
-    package let storyManagerConditions: ConditionList
+    public let storyManagerConditions: ConditionList
     /// Stages in file order. Stage indices are not unique within a quest.
-    package let stages: [Stage]
+    public let stages: [Stage]
     /// Objectives in file order. Objective indices are not unique either.
-    package let objectives: [Objective]
+    public let objectives: [Objective]
     /// ANAM, the Creation Kit's next-free alias ID counter.
-    package let nextAliasID: UInt32?
-    package let aliases: [Alias]
+    public let nextAliasID: UInt32?
+    public let aliases: [Alias]
     /// The NNAM that follows the alias run — a plain zstring, unlike the
     /// objective NNAM, and unused by shipped Skyrim data.
-    package let questDescription: String?
+    public let questDescription: String?
     /// Record-level QSTA targets, a pre-alias form kept for compatibility.
     /// Their `alias` word is a direct reference FormID, not an alias ID.
-    package let legacyTargets: [Target]
+    public let legacyTargets: [Target]
     /// VMAD, including the decoded QUST fragment tail.
-    package let script: ScriptData
-    package let skipped: QuestTally
+    public let script: ScriptData
+    public let skipped: QuestTally
 
     /// Quest-stage script fragments, from the VMAD tail rather than the stage
     /// subrecords. Empty when the quest has no stage scripts, and also when
     /// its fragment tail failed to decode (`script.skipped` records that).
-    package var fragments: [QuestFragment] {
+    public var fragments: [QuestFragment] {
         script.questFragments?.fragments ?? []
     }
 
     /// Scripts attached to this quest's aliases, likewise from the VMAD tail.
-    package var aliasScripts: [QuestAliasScripts] {
+    public var aliasScripts: [QuestAliasScripts] {
         script.questFragments?.aliasScripts ?? []
     }
 
     /// The alias `id` names, or nil when the quest defines no such alias.
-    package func alias(id: UInt32) -> Alias? {
+    public func alias(id: UInt32) -> Alias? {
         aliases.first { $0.id == id }
     }
 
     /// Stages carrying at least one journal log entry — the ones a journal UI
     /// can actually display.
-    package var journalStages: [Stage] {
+    public var journalStages: [Stage] {
         stages.filter { stage in stage.logEntries.contains { $0.text != nil } }
     }
 
-    package init(record: ESMRecord, localized: Bool = false) throws {
+    public init(record: ESMRecord, localized: Bool = false) throws {
         guard record.type == "QUST" else {
             throw ESMError.malformed("expected QUST record, got \(record.type)")
         }
@@ -225,7 +225,7 @@ nonisolated package struct Quest {
 /// Reason-tagged count of everything a QUST decode chose to drop, mirroring
 /// `ScriptDataTally`. A sweep asserts against it; a single record's copy
 /// explains why its stage or alias count came out lower than expected.
-nonisolated package enum QuestSkipKind: Hashable {
+nonisolated public enum QuestSkipKind: Hashable, Sendable {
     /// A subrecord this decoder does not model — a later-game addition, a
     /// Creation Kit leftover such as SCHR, or a modder's own field.
     case unknownField(FourCC)
@@ -237,7 +237,7 @@ nonisolated package enum QuestSkipKind: Hashable {
     /// before its ALED terminator arrived.
     case unterminatedAlias
 
-    package var name: String {
+    public var name: String {
         switch self {
         case let .unknownField(type): "unknown \(type)"
         case let .malformedField(type): "malformed \(type)"
@@ -247,18 +247,18 @@ nonisolated package enum QuestSkipKind: Hashable {
     }
 }
 
-nonisolated package struct QuestTally: Equatable {
-    package private(set) var counts: [QuestSkipKind: Int] = [:]
+nonisolated public struct QuestTally: Equatable, Sendable {
+    public private(set) var counts: [QuestSkipKind: Int] = [:]
 
-    package var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         counts.isEmpty
     }
 
-    package var ranked: [(name: String, count: Int)] {
+    public var ranked: [(name: String, count: Int)] {
         counts
             .sorted {
                 $0.value == $1.value
@@ -268,11 +268,11 @@ nonisolated package struct QuestTally: Equatable {
             .map { ($0.key.name, $0.value) }
     }
 
-    package mutating func note(_ kind: QuestSkipKind, count: Int = 1) {
+    public mutating func note(_ kind: QuestSkipKind, count: Int = 1) {
         counts[kind, default: 0] += count
     }
 
-    package mutating func merge(_ other: QuestTally) {
+    public mutating func merge(_ other: QuestTally) {
         for (kind, count) in other.counts {
             note(kind, count: count)
         }

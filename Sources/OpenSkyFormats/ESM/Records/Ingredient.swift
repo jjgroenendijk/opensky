@@ -23,31 +23,31 @@
 
 import Foundation
 
-nonisolated package struct Ingredient {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+nonisolated public struct Ingredient: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
         /// Ingredient value is authored rather than summed from the effects.
-        package static let noAutoCalc = Flags(rawValue: 0x0000_0001)
-        package static let food = Flags(rawValue: 0x0000_0002)
-        package static let referencesPersist = Flags(rawValue: 0x0000_0100)
+        public static let noAutoCalc = Flags(rawValue: 0x0000_0001)
+        public static let food = Flags(rawValue: 0x0000_0002)
+        public static let referencesPersist = Flags(rawValue: 0x0000_0100)
     }
 
-    package let formID: FormID
-    package let fields: InventoryItemFields
+    public let formID: FormID
+    public let fields: InventoryItemFields
     /// DATA — gold value and carry weight.
-    package let itemValue: ItemValue
+    public let itemValue: ItemValue
     /// ENIT value word. Distinct from `itemValue.value`: this one feeds the
     /// auto-calc cost formula, the DATA one is the price.
-    package let autoCalcValue: Int32
-    package let flags: Flags
-    package let effects: [MagicItemEffect]
+    public let autoCalcValue: Int32
+    public let flags: Flags
+    public let effects: [MagicItemEffect]
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "INGR" else {
             throw ESMError.malformed("expected INGR record, got \(record.type)")
         }

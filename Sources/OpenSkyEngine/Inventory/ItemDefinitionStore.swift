@@ -25,6 +25,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// The ENCH link a weapon or a piece of armor carries, already resolved
 /// against the load order where a resolver was supplied (issue #466). The

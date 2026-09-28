@@ -40,10 +40,13 @@ conflict.
   downloads it.
 - Target membership under `Sources/` follows the folder split, not a list in the project
   file: `OpenSky/` builds only into the app, `OpenSkyEngine/` and `ShaderTypes/` build
-  into both the app and `OpenSkyCLI`, `OpenSkyCLI/` builds only into the CLI, and
-  `OpenSkyFormats/` builds the `OpenSkyFormats` framework that both link. An
-  app-only source (importing AppKit, Cocoa, or SwiftUI) belongs under `OpenSky/`;
-  leaving it under `OpenSkyEngine/` breaks the CLI build. `make cli-boundary` catches this.
+  into both the app and `OpenSkyCLI`, and `OpenSkyCLI/` builds only into the CLI. The
+  library modules below the engine, `OpenSkyFormats/` and `OpenSkyGameData/`, are targets
+  of the Swift package in `Package.swift`, and both the app and the CLI link them
+  (`docs/tools/modules.md`). Build through `OpenSky.xcworkspace`, which holds both, as `make`
+  does. An app-only source (importing AppKit, Cocoa, or SwiftUI)
+  belongs under `OpenSky/`; leaving it under `OpenSkyEngine/` breaks the CLI build.
+  `make cli-boundary` catches this.
 - A folder that builds a target has the target's name, in PascalCase: `Sources/OpenSky/`
   builds `OpenSky`, `Tests/OpenSkyTests/` builds `OpenSkyTests`. A test selector names the
   target: `make test-fast T='OpenSkyFormatsTests/BSAArchiveTests'`. Two names stay lowercase on
@@ -77,8 +80,8 @@ conflict.
 
 ## Where things live
 
-The repo root holds only this document, `Makefile`, the Xcode project, `Config/`,
-`Sources/`, `Tests/`, `docs/`, `tools/`, and dotfiles.
+The repo root holds only this document, `Makefile`, the Xcode project and the workspace
+that holds it beside `Package.swift`, `Config/`, `Sources/`, `Tests/`, `docs/`, `tools/`, and dotfiles.
 
 ```text
 Config/
@@ -88,14 +91,16 @@ Sources/
   OpenSky/              OpenSky (app) only: Shell/, Panels/, GameView/, Resources/
   OpenSkyEngine/        OpenSky and OpenSkyCLI: one folder per domain
   OpenSkyCLI/           OpenSkyCLI only: Commands/, SWF/, Support/
-  OpenSkyFormats/       the OpenSkyFormats framework: format parsers, one folder per format
+  OpenSkyFormats/       package module: format parsers, one folder per format
+  OpenSkyGameData/      package module: virtual file system, load order, record stores
   ShaderTypes/          OpenSky and OpenSkyCLI: the clang module wrapping ShaderTypes.h
 Tests/
   OpenSkyTests/         synthetic unit suites for the app and engine
-  OpenSkyFormatsTests/  synthetic unit suites for OpenSkyFormats alone
+  OpenSkyFormatsTests/  package test target: synthetic suites for OpenSkyFormats
+  OpenSkyGameDataTests/ package test target: synthetic suites for OpenSkyGameData
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
-  FormatsTestSupport/   byte-building fixtures all three unit bundles compile; not a target
+  FormatsTestSupport/   package library: byte-building fixtures every unit test target uses
   OpenSkyUITests/       XCUITest smoke tests
 ```
 
@@ -104,7 +109,7 @@ included: `Config/Build/Signing.xcconfig` names one Apple Development identity f
 target, because macOS ties permission grants to the code signature and ad-hoc signing
 re-asks on every build (`docs/tools/build-system.md`). `Config/TestPlans/` holds the four
 checked-in test plans, for the same reason: which bundles a run touches is reviewable
-configuration, not a flag. `UnitTests.xctestplan` lists `OpenSkyTests` and `OpenSkyFormatsTests`,
+configuration, not a flag. `UnitTests.xctestplan` lists `OpenSkyTests` and the package test targets,
 `UITests.xctestplan` lists `OpenSkyUITests` alone, and `RealData.xctestplan` lists
 `OpenSkyRealDataTests` alone and carries the data root into the test host — no plan lists
 the UI bundle beside an app-hosted unit bundle, because such a bundle deadlocks the UI
@@ -112,7 +117,8 @@ runner it shares a session with (`docs/testing.md`). A gated suite written outsi
 `Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would ever run it.
 
 No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngine/`,
-`Sources/OpenSkyFormats/`, or `Sources/OpenSkyEngine/World/`; each goes in a domain folder:
+`Sources/OpenSkyFormats/`, or `Sources/OpenSkyEngine/World/`; each goes in a domain folder.
+`Sources/OpenSkyGameData/` is small enough to stay flat:
 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
@@ -121,8 +127,9 @@ No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngi
   ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
   folder.
 - `Sources/OpenSkyFormats/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus
-  `Binary/`, `Compression/`, and `Geometry/`. It never imports engine code; runtime behavior
-  over a record goes in an engine extension file (`docs/tools/modules.md`).
+  `Binary/`, `Compression/`, and `Geometry/`. A package module never imports a module above
+  it; behavior that needs a higher layer goes in an extension file up there
+  (`docs/tools/modules.md`).
 - `Sources/OpenSkyEngine/World/`: `Actors/`, `Cells/`, `Collision/`, `Conditions/`,
   `Navigation/`, `Packages/`, `Player/`, `State/`, `Streaming/`, `Terrain/`, and `Weather/`.
 - `Sources/OpenSkyCLI/`: `OpenSkyCLI.swift` (dispatch) and `OpenSkyCLIUsage.swift` at the
@@ -244,10 +251,12 @@ tuple cap, introduce a struct.
   global actor. The type's isolation does not carry into a separately declared extension.
   Isolation is per declaration, not per file: a `private` helper below a `nonisolated`
   type is main-actor isolated until it says otherwise.
-- A declaration in `OpenSkyFormats` that other targets use is `package`, not `public`. A
-  struct the engine builds needs an explicit `package init(...)`, because the implicit
-  memberwise one stays internal. Every file that uses the module writes
-  `import OpenSkyFormats`; tests write `@testable import OpenSkyFormats`.
+- A declaration in a package module that other modules use is `public`. A struct another
+  module builds needs an explicit `public init(...)`, because the implicit memberwise one
+  stays internal, and a public value type states `Sendable` itself, because Swift does not
+  infer it across a module boundary. Every file that uses a module writes its own
+  `import`; tests write `@testable import`. New modules and their dependencies go in
+  `Package.swift`, never in the project file.
 - `throws` plus typed errors for parse and load failures; malformed input must not crash.
 - Anything repeatable becomes a `make` target or a git hook, never a documented manual
   procedure. Local hooks and CI mirror each other, so changing one gate changes both — keep

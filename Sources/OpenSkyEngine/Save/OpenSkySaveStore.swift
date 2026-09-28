@@ -15,6 +15,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Failure modes introduced by the slot layer, distinct from
 /// `OpenSkySaveError`, which describes the container's own contents.

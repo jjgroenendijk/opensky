@@ -6,49 +6,105 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum SWFDisplayFixture {
+public enum SWFDisplayFixture: Sendable {
     /// MATRIX fields for a place tag; scale/rotate write as 16.16 fixed point.
-    struct MatrixSpec {
-        var scaleX: Float?
-        var scaleY: Float?
-        var rotateSkew0: Float?
-        var rotateSkew1: Float?
-        var translateX: Int32 = 0
-        var translateY: Int32 = 0
+    public struct MatrixSpec: Sendable {
+        public var scaleX: Float?
+        public var scaleY: Float?
+        public var rotateSkew0: Float?
+        public var rotateSkew1: Float?
+        public var translateX: Int32 = 0
+        public var translateY: Int32 = 0
+
+        public init(
+            scaleX: Float? = nil,
+            scaleY: Float? = nil,
+            rotateSkew0: Float? = nil,
+            rotateSkew1: Float? = nil,
+            translateX: Int32 = 0,
+            translateY: Int32 = 0
+        ) {
+            self.scaleX = scaleX
+            self.scaleY = scaleY
+            self.rotateSkew0 = rotateSkew0
+            self.rotateSkew1 = rotateSkew1
+            self.translateX = translateX
+            self.translateY = translateY
+        }
     }
 
     /// CXFORM terms as raw SB values: multiply in 8.8 fixed (256 = 1.0), add
     /// in the -255..255 integer domain.
-    struct CxformSpec {
-        var multiplyTerms: [Int32]?
-        var addTerms: [Int32]?
-        var nbits = 12
+    public struct CxformSpec: Sendable {
+        public var multiplyTerms: [Int32]?
+        public var addTerms: [Int32]?
+        public var nbits = 12
+
+        public init(multiplyTerms: [Int32]? = nil, addTerms: [Int32]? = nil, nbits: Int = 12) {
+            self.multiplyTerms = multiplyTerms
+            self.addTerms = addTerms
+            self.nbits = nbits
+        }
     }
 
-    struct Place2 {
-        var depth: UInt16 = 1
-        var move = false
-        var characterId: UInt16?
-        var matrix: MatrixSpec?
-        var cxform: CxformSpec?
-        var ratio: UInt16?
-        var name: String?
-        var clipDepth: UInt16?
+    public struct Place2: Sendable {
+        public var depth: UInt16 = 1
+        public var move = false
+        public var characterId: UInt16?
+        public var matrix: MatrixSpec?
+        public var cxform: CxformSpec?
+        public var ratio: UInt16?
+        public var name: String?
+        public var clipDepth: UInt16?
         /// Raw CLIPACTIONS bytes (see `SWFActionFixture.clipActions`). Present
         /// bytes set `PlaceFlagHasClipActions` and are appended last.
-        var clipActions: Data?
+        public var clipActions: Data?
+
+        public init(
+            depth: UInt16 = 1,
+            move: Bool = false,
+            characterId: UInt16? = nil,
+            matrix: MatrixSpec? = nil,
+            cxform: CxformSpec? = nil,
+            ratio: UInt16? = nil,
+            name: String? = nil,
+            clipDepth: UInt16? = nil,
+            clipActions: Data? = nil
+        ) {
+            self.depth = depth
+            self.move = move
+            self.characterId = characterId
+            self.matrix = matrix
+            self.cxform = cxform
+            self.ratio = ratio
+            self.name = name
+            self.clipDepth = clipDepth
+            self.clipActions = clipActions
+        }
     }
 
-    struct Place3 {
-        var place = Place2()
-        var className: String?
-        var blendMode: UInt8?
+    public struct Place3: Sendable {
+        public var place = Place2()
+        public var className: String?
+        public var blendMode: UInt8?
         /// Encoded as blur filters (FilterID 1, 9-byte bodies).
-        var blurFilterCount = 0
+        public var blurFilterCount = 0
+
+        public init(
+            place: Place2 = Place2(),
+            className: String? = nil,
+            blendMode: UInt8? = nil,
+            blurFilterCount: Int = 0
+        ) {
+            self.place = place
+            self.className = className
+            self.blendMode = blendMode
+            self.blurFilterCount = blurFilterCount
+        }
     }
 
     /// DefineShape (2): an axis-aligned solid-color rectangle in twips.
-    static func rectangleShapeTag(
+    public static func rectangleShapeTag(
         characterId: UInt16,
         width: Int32,
         height: Int32,
@@ -73,7 +129,7 @@ enum SWFDisplayFixture {
     }
 
     /// PlaceObject (4): character id + depth + MATRIX + optional CXFORM.
-    static func placeObjectTag(
+    public static func placeObjectTag(
         characterId: UInt16,
         depth: UInt16,
         matrix: MatrixSpec = MatrixSpec(),
@@ -90,7 +146,7 @@ enum SWFDisplayFixture {
         return SWFFixture.Tag(code: 4, body: writer.bytes())
     }
 
-    static func placeObject2Tag(_ place: Place2) -> SWFFixture.Tag {
+    public static func placeObject2Tag(_ place: Place2) -> SWFFixture.Tag {
         var writer = SWFBitWriter()
         writer.appendByte(place2Flags(place))
         writer.appendUInt16LE(place.depth)
@@ -102,7 +158,7 @@ enum SWFDisplayFixture {
         return SWFFixture.Tag(code: 26, body: writer.bytes())
     }
 
-    static func placeObject3Tag(_ place3: Place3) -> SWFFixture.Tag {
+    public static func placeObject3Tag(_ place3: Place3) -> SWFFixture.Tag {
         var writer = SWFBitWriter()
         writer.appendByte(place2Flags(place3.place))
         var flags2: UInt8 = 0
@@ -138,29 +194,29 @@ enum SWFDisplayFixture {
         return SWFFixture.Tag(code: 70, body: writer.bytes())
     }
 
-    static func removeObjectTag(characterId: UInt16, depth: UInt16) -> SWFFixture.Tag {
+    public static func removeObjectTag(characterId: UInt16, depth: UInt16) -> SWFFixture.Tag {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(characterId)
         writer.appendUInt16LE(depth)
         return SWFFixture.Tag(code: 5, body: writer.bytes())
     }
 
-    static func removeObject2Tag(depth: UInt16) -> SWFFixture.Tag {
+    public static func removeObject2Tag(depth: UInt16) -> SWFFixture.Tag {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(depth)
         return SWFFixture.Tag(code: 28, body: writer.bytes())
     }
 
-    static var showFrameTag: SWFFixture.Tag {
+    public static var showFrameTag: SWFFixture.Tag {
         SWFFixture.Tag(code: 1, body: Data())
     }
 
-    static func backgroundColorTag(_ color: SWFColor) -> SWFFixture.Tag {
+    public static func backgroundColorTag(_ color: SWFColor) -> SWFFixture.Tag {
         SWFFixture.Tag(code: 9, body: Data([color.red, color.green, color.blue]))
     }
 
     /// FrameLabel (43): Name STRING plus the optional NamedAnchor UI8.
-    static func frameLabelTag(_ name: String, namedAnchor: Bool = false) -> SWFFixture.Tag {
+    public static func frameLabelTag(_ name: String, namedAnchor: Bool = false) -> SWFFixture.Tag {
         var writer = SWFBitWriter()
         writeString(&writer, name)
         if namedAnchor {
@@ -170,7 +226,7 @@ enum SWFDisplayFixture {
     }
 
     /// ExportAssets (56): Count UI16 then (CharacterId UI16, Name STRING).
-    static func exportAssetsTag(_ assets: [(UInt16, String)]) -> SWFFixture.Tag {
+    public static func exportAssetsTag(_ assets: [(UInt16, String)]) -> SWFFixture.Tag {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(UInt16(assets.count))
         for asset in assets {
@@ -182,7 +238,7 @@ enum SWFDisplayFixture {
 
     /// ImportAssets2 (71): URL STRING, two reserved bytes, Count UI16, then
     /// (CharacterId UI16, Name STRING) pairs (spec v19 p. 286).
-    static func importAssets2Tag(url: String, assets: [(UInt16, String)]) -> SWFFixture.Tag {
+    public static func importAssets2Tag(url: String, assets: [(UInt16, String)]) -> SWFFixture.Tag {
         var writer = SWFBitWriter()
         writeString(&writer, url)
         writer.appendByte(1)
@@ -196,7 +252,7 @@ enum SWFDisplayFixture {
     }
 
     /// DefineSprite (39): id + frame count + nested control tags + End.
-    static func spriteTag(
+    public static func spriteTag(
         characterId: UInt16,
         frameCount: UInt16,
         tags: [SWFFixture.Tag]
@@ -212,7 +268,7 @@ enum SWFDisplayFixture {
     }
 
     /// Builds a movie from tags (End appended by the fixture).
-    static func movie(
+    public static func movie(
         tags: [SWFFixture.Tag],
         version: UInt8 = 6,
         frameWidthTwips: Int32 = 8000,
@@ -282,7 +338,7 @@ extension SWFDisplayFixture {
 
     /// MATRIX record: optional 16.16 scale pair, optional 16.16 rotate pair,
     /// then twip translation (spec p. 23).
-    static func writeMatrix(_ writer: inout SWFBitWriter, _ matrix: MatrixSpec) {
+    public static func writeMatrix(_ writer: inout SWFBitWriter, _ matrix: MatrixSpec) {
         writer.align()
         if let scaleX = matrix.scaleX ?? matrix.scaleY {
             let rawX = Int32(scaleX * 65536)
@@ -321,7 +377,7 @@ extension SWFDisplayFixture {
 
     /// CXFORM(WITHALPHA): HasAdd, HasMult, Nbits, mult terms then add terms
     /// (spec pp. 24-25). Channel count 3 (RGB) or 4 (RGBA).
-    static func writeCxform(
+    public static func writeCxform(
         _ writer: inout SWFBitWriter,
         _ cxform: CxformSpec,
         hasAlpha: Bool

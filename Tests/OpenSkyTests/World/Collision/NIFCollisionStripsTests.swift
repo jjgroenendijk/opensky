@@ -3,6 +3,7 @@
 // Synthetic in-code payloads only; layouts: NifTools nif.xml and
 // docs/formats/nif-collision.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

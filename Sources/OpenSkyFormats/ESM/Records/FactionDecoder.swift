@@ -10,42 +10,42 @@ import Foundation
 /// FNAM that follow belong to it, so an incoming RNAM (and the end of the
 /// record) closes the one in progress. A stray MNAM before any RNAM has no
 /// rank to attach to and is tallied rather than dropped silently.
-nonisolated package struct FactionFields {
+nonisolated public struct FactionFields: Sendable {
     /// The FormID-valued links, grouped so the struct that carries them into
     /// `Faction` stays inside the parameter-count cap.
-    package struct Links: Equatable {
-        package var exteriorJailMarker: FormID?
-        package var followerWaitMarker: FormID?
-        package var evidenceChest: FormID?
-        package var playerInventoryContainer: FormID?
-        package var sharedCrimeFactionList: FormID?
-        package var jailOutfit: FormID?
-        package var vendorBuySellList: FormID?
-        package var merchantContainer: FormID?
+    public struct Links: Equatable, Sendable {
+        public var exteriorJailMarker: FormID?
+        public var followerWaitMarker: FormID?
+        public var evidenceChest: FormID?
+        public var playerInventoryContainer: FormID?
+        public var sharedCrimeFactionList: FormID?
+        public var jailOutfit: FormID?
+        public var vendorBuySellList: FormID?
+        public var merchantContainer: FormID?
     }
 
-    package let localized: Bool
-    package var editorID: String?
-    package var name: LString?
-    package var relations: [Faction.Relation] = []
-    package var flags = Faction.Flags()
-    package var links = Links()
-    package var crimeValues: Faction.CrimeValues?
-    package var ranks: [Faction.Rank] = []
-    package var vendorValues: Faction.VendorValues?
-    package var vendorLocation: Faction.VendorLocation?
-    package var vendorConditions = ConditionList()
-    package var skipped = FactionDecodeTally()
+    public let localized: Bool
+    public var editorID: String?
+    public var name: LString?
+    public var relations: [Faction.Relation] = []
+    public var flags = Faction.Flags()
+    public var links = Links()
+    public var crimeValues: Faction.CrimeValues?
+    public var ranks: [Faction.Rank] = []
+    public var vendorValues: Faction.VendorValues?
+    public var vendorLocation: Faction.VendorLocation?
+    public var vendorConditions = ConditionList()
+    public var skipped = FactionDecodeTally()
 
     private var pendingRank: Faction.Rank?
 
-    package init(localized: Bool) {
+    public init(localized: Bool) {
         self.localized = localized
     }
 
     /// A malformed field costs its own value, never the record: every throw
     /// from the readers below lands here as one tally entry.
-    package mutating func decode(_ field: ESMField) {
+    public mutating func decode(_ field: ESMField) {
         do {
             try decodeIdentity(field)
         } catch {
@@ -55,7 +55,7 @@ nonisolated package struct FactionFields {
 
     /// Closes the rank group left open by the last RNAM. The record decode
     /// calls this once the field loop ends.
-    package mutating func finishRank() {
+    public mutating func finishRank() {
         if let pendingRank {
             ranks.append(pendingRank)
         }

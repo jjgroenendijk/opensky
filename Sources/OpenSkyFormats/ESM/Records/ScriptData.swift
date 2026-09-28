@@ -16,7 +16,7 @@
 
 import Foundation
 
-nonisolated package enum ScriptDataError: Error, Equatable {
+nonisolated public enum ScriptDataError: Error, Equatable, Sendable {
     case binary(BinaryReaderError)
     case unsupportedVersion(Int16)
     case unsupportedObjectFormat(Int16)
@@ -30,33 +30,33 @@ nonisolated package enum ScriptDataError: Error, Equatable {
     case unknownFragmentFlags(recordType: FourCC?, flags: UInt8)
 }
 
-nonisolated package enum ScriptObjectFormat: Int16, Equatable {
+nonisolated public enum ScriptObjectFormat: Int16, Equatable, Sendable {
     case formIDFirst = 1
     case formIDLast = 2
 }
 
-nonisolated package struct ScriptObjectReference: Equatable {
-    package let formID: FormID
+nonisolated public struct ScriptObjectReference: Equatable, Sendable {
+    public let formID: FormID
     /// -1 means a direct FormID. Any other value selects an alias on the quest
     /// identified by `formID`. M13.1 decodes the alias definitions those slots
     /// name (`Quest.Alias`) and M13.4 fills them at runtime, but the fill is a
     /// world fact rather than a record one: resolving an alias slot to a
     /// reference needs the running quest's table, which is why nothing here
     /// answers it and `ScriptDataBinding` takes a seam for it.
-    package let alias: Int16
-    package let unused: UInt16
+    public let alias: Int16
+    public let unused: UInt16
 
-    package var isAlias: Bool {
+    public var isAlias: Bool {
         alias != -1
     }
 
-    package func directReferenceKey(using resolver: FormIDResolver) -> ReferenceKey? {
+    public func directReferenceKey(using resolver: FormIDResolver) -> ReferenceKey? {
         guard !isAlias else { return nil }
         return ReferenceKey.resolve(formID, using: resolver)
     }
 }
 
-nonisolated package enum ScriptPropertyValue: Equatable {
+nonisolated public enum ScriptPropertyValue: Equatable, Sendable {
     case none
     case object(ScriptObjectReference)
     case string(String)
@@ -70,57 +70,57 @@ nonisolated package enum ScriptPropertyValue: Equatable {
     case booleans([Bool])
 }
 
-nonisolated package struct ScriptProperty: Equatable {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt8
+nonisolated public struct ScriptProperty: Equatable, Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
-        package static let edited = Flags(rawValue: 0x01)
-        package static let removed = Flags(rawValue: 0x02)
+        public static let edited = Flags(rawValue: 0x01)
+        public static let removed = Flags(rawValue: 0x02)
     }
 
-    package let name: String
-    package let type: UInt8
-    package let flags: Flags
-    package let value: ScriptPropertyValue
+    public let name: String
+    public let type: UInt8
+    public let flags: Flags
+    public let value: ScriptPropertyValue
 }
 
-nonisolated package struct AttachedScript: Equatable {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt8
+nonisolated public struct AttachedScript: Equatable, Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
-        package static let inherited = Flags(rawValue: 0x01)
-        package static let removed = Flags(rawValue: 0x02)
+        public static let inherited = Flags(rawValue: 0x01)
+        public static let removed = Flags(rawValue: 0x02)
     }
 
-    package let name: String
-    package let flags: Flags
-    package let properties: [ScriptProperty]
+    public let name: String
+    public let flags: Flags
+    public let properties: [ScriptProperty]
 
-    package init(name: String, flags: Flags, properties: [ScriptProperty]) {
+    public init(name: String, flags: Flags, properties: [ScriptProperty]) {
         self.name = name
         self.flags = flags
         self.properties = properties
     }
 
-    package var isRemoved: Bool {
+    public var isRemoved: Bool {
         flags.contains(.removed)
     }
 }
 
-nonisolated package enum ScriptDataSkipKind: Hashable {
+nonisolated public enum ScriptDataSkipKind: Hashable, Sendable {
     case aliasObject
     case removedProperty
     case fragments(FourCC)
 
-    package var name: String {
+    public var name: String {
         switch self {
         case .aliasObject:
             "alias object"
@@ -132,14 +132,14 @@ nonisolated package enum ScriptDataSkipKind: Hashable {
     }
 }
 
-nonisolated package struct ScriptDataTally: Equatable {
-    package private(set) var counts: [ScriptDataSkipKind: Int] = [:]
+nonisolated public struct ScriptDataTally: Equatable, Sendable {
+    public private(set) var counts: [ScriptDataSkipKind: Int] = [:]
 
-    package var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    package var ranked: [(name: String, count: Int)] {
+    public var ranked: [(name: String, count: Int)] {
         counts
             .sorted {
                 $0.value == $1.value
@@ -149,11 +149,11 @@ nonisolated package struct ScriptDataTally: Equatable {
             .map { ($0.key.name, $0.value) }
     }
 
-    package mutating func note(_ kind: ScriptDataSkipKind, count: Int = 1) {
+    public mutating func note(_ kind: ScriptDataSkipKind, count: Int = 1) {
         counts[kind, default: 0] += count
     }
 
-    package mutating func merge(_ other: ScriptDataTally) {
+    public mutating func merge(_ other: ScriptDataTally) {
         for (kind, count) in other.counts {
             note(kind, count: count)
         }
@@ -161,26 +161,26 @@ nonisolated package struct ScriptDataTally: Equatable {
 }
 
 /// Accumulator for a VMAD field inside one record's field loop.
-nonisolated package struct ScriptData: Equatable {
-    package let ownerType: FourCC?
-    package var version: Int16?
-    package var objectFormat: ScriptObjectFormat?
-    package var scripts: [AttachedScript] = []
+nonisolated public struct ScriptData: Equatable, Sendable {
+    public let ownerType: FourCC?
+    public var version: Int16?
+    public var objectFormat: ScriptObjectFormat?
+    public var scripts: [AttachedScript] = []
     /// Decoded QUST tail. Nil for every other carrier, and also for a QUST
     /// whose tail failed to decode — that case keeps the primary scripts and
     /// records one `.fragments("QUST")` tally entry instead.
-    package var questFragments: QuestFragmentSection?
+    public var questFragments: QuestFragmentSection?
     /// Decoded INFO tail (issue #426). Nil for every other carrier, and also
     /// for an INFO whose tail failed to decode — that case keeps the primary
     /// scripts and records one `.fragments("INFO")` tally entry instead.
-    package var infoFragments: TopicInfoFragmentSection?
-    package var skipped = ScriptDataTally()
+    public var infoFragments: TopicInfoFragmentSection?
+    public var skipped = ScriptDataTally()
 
-    package init(ownerType: FourCC? = nil) {
+    public init(ownerType: FourCC? = nil) {
         self.ownerType = ownerType
     }
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         scripts.isEmpty && questFragments == nil && infoFragments == nil
     }
 }

@@ -2,6 +2,7 @@
 // handling, and the `useAIData` template inheritance the hostility derivation
 // depends on. No game-derived bytes.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

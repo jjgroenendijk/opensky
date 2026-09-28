@@ -19,13 +19,13 @@
 import Foundation
 
 /// PRKE byte 0 — which of the three shapes the effect's DATA carries.
-nonisolated package enum PerkEffectType: Hashable, CustomStringConvertible, Sendable {
+nonisolated public enum PerkEffectType: Hashable, CustomStringConvertible, Sendable {
     case quest
     case ability
     case entryPoint
     case unknown(raw: UInt8)
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         switch rawValue {
         case 0: self = .quest
         case 1: self = .ability
@@ -34,7 +34,7 @@ nonisolated package enum PerkEffectType: Hashable, CustomStringConvertible, Send
         }
     }
 
-    package var rawValue: UInt8 {
+    public var rawValue: UInt8 {
         switch self {
         case .quest: 0
         case .ability: 1
@@ -43,7 +43,7 @@ nonisolated package enum PerkEffectType: Hashable, CustomStringConvertible, Send
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .quest: "quest"
         case .ability: "ability"
@@ -56,7 +56,7 @@ nonisolated package enum PerkEffectType: Hashable, CustomStringConvertible, Send
 /// The second byte of an entry-point DATA: how the entry point's value is
 /// changed. Which EPFD shape belongs to each is noted per case, and it is the
 /// EPFT field — not this — that is trusted when the two disagree.
-nonisolated package enum PerkFunction: Hashable, CustomStringConvertible, Sendable {
+nonisolated public enum PerkFunction: Hashable, CustomStringConvertible, Sendable {
     case setValue
     case addValue
     case multiplyValue
@@ -77,7 +77,7 @@ nonisolated package enum PerkFunction: Hashable, CustomStringConvertible, Sendab
     // One branch per documented value; a lookup table would not read better
     // than the list, so the complexity cap is waived here.
     // swiftlint:disable:next cyclomatic_complexity
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         switch rawValue {
         case 1: self = .setValue
         case 2: self = .addValue
@@ -100,7 +100,7 @@ nonisolated package enum PerkFunction: Hashable, CustomStringConvertible, Sendab
 
     /// The four functions whose EPFT=2 payload is an actor value and a factor
     /// rather than a pair of floats (`wbEPFDDecider`, line 1196).
-    package var readsActorValuePair: Bool {
+    public var readsActorValuePair: Bool {
         switch self {
         case .addActorValueMultiplier,
              .setToActorValueMultiplier,
@@ -112,7 +112,7 @@ nonisolated package enum PerkFunction: Hashable, CustomStringConvertible, Sendab
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .setValue: "set value"
         case .addValue: "add value"
@@ -135,7 +135,7 @@ nonisolated package enum PerkFunction: Hashable, CustomStringConvertible, Sendab
 }
 
 /// EPFT — the declared shape of the EPFD payload.
-nonisolated package enum PerkFunctionType: Hashable, CustomStringConvertible, Sendable {
+nonisolated public enum PerkFunctionType: Hashable, CustomStringConvertible, Sendable {
     case none
     case float
     case floatPair
@@ -146,7 +146,7 @@ nonisolated package enum PerkFunctionType: Hashable, CustomStringConvertible, Se
     case localizedText
     case unknown(raw: UInt8)
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         switch rawValue {
         case 0: self = .none
         case 1: self = .float
@@ -160,7 +160,7 @@ nonisolated package enum PerkFunctionType: Hashable, CustomStringConvertible, Se
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .none: "none"
         case .float: "float"
@@ -178,7 +178,7 @@ nonisolated package enum PerkFunctionType: Hashable, CustomStringConvertible, Se
 /// EPFD, read through the EPFT type and — for the float pair — the declared
 /// function. `raw` is the honest answer for a payload whose declared type this
 /// build does not know or whose bytes do not fit the declared shape.
-nonisolated package enum PerkFunctionData: Equatable, Sendable, CustomStringConvertible {
+nonisolated public enum PerkFunctionData: Equatable, Sendable, CustomStringConvertible {
     case float(Float)
     case floatPair(Float, Float)
     /// EPFT 2 under one of the actor-value functions: the actor value the
@@ -198,7 +198,7 @@ nonisolated package enum PerkFunctionData: Equatable, Sendable, CustomStringConv
     case localizedText(LString)
     case raw(Data)
 
-    package var description: String {
+    public var description: String {
         switch self {
         case let .float(value): String(format: "%.4f", value)
         case let .floatPair(first, second): String(format: "%.4f, %.4f", first, second)
@@ -220,7 +220,7 @@ nonisolated package enum PerkFunctionData: Equatable, Sendable, CustomStringConv
     /// as xEdit rounds it. A payload outside `Int32`'s range, or a NaN, reads
     /// as -1 — the "no actor value" index the rest of the engine already uses —
     /// rather than trapping on the conversion.
-    package static func actorValueIndex(fromFloat value: Float) -> Int32 {
+    public static func actorValueIndex(fromFloat value: Float) -> Int32 {
         let rounded = value.rounded()
         guard
             rounded.isFinite,
@@ -240,48 +240,48 @@ nonisolated package enum PerkFunctionData: Equatable, Sendable, CustomStringConv
 
 /// EPF3 — the flags an "add activate choice" function carries beside its
 /// button label.
-nonisolated package struct PerkScriptFlags: Equatable, Sendable {
-    package static let byteCount = 4
+nonisolated public struct PerkScriptFlags: Equatable, Sendable {
+    public static let byteCount = 4
 
-    package struct Options: OptionSet, Equatable, Sendable {
-        package let rawValue: UInt16
+    public struct Options: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
-        package static let runImmediately = Options(rawValue: 1 << 0)
-        package static let replaceDefault = Options(rawValue: 1 << 1)
+        public static let runImmediately = Options(rawValue: 1 << 0)
+        public static let replaceDefault = Options(rawValue: 1 << 1)
     }
 
-    package let options: Options
+    public let options: Options
     /// Which VMAD perk fragment runs for this choice.
-    package let fragmentIndex: UInt16
+    public let fragmentIndex: UInt16
 }
 
 /// One PRKC block: the tab index conditions run against, and the CTDA run that
 /// belongs to it. Which subject each index names depends on the entry point
 /// (UESP "Perk Effect Types" lists them per effect, typically perk owner,
 /// target and attacker), so the index is kept raw.
-nonisolated package struct PerkConditionTab: Equatable {
-    package let runOn: Int8
-    package var conditions: ConditionList
+nonisolated public struct PerkConditionTab: Equatable, Sendable {
+    public let runOn: Int8
+    public var conditions: ConditionList
 }
 
 /// The DATA payload an entry-point effect declares.
-nonisolated package struct PerkEntryPointEffect: Equatable {
-    package static let byteCount = 3
+nonisolated public struct PerkEntryPointEffect: Equatable, Sendable {
+    public static let byteCount = 3
 
-    package let entryPoint: PerkEntryPoint
-    package let function: PerkFunction
+    public let entryPoint: PerkEntryPoint
+    public let function: PerkFunction
     /// How many PRKC tabs the effect is expected to carry. xEdit marks it
     /// ignored on write because it is fixed per entry point; it is kept here so
     /// a sweep can check it against the tabs actually decoded.
-    package let conditionTabCount: UInt8
+    public let conditionTabCount: UInt8
 }
 
 /// The typed DATA of one effect, chosen by the PRKE type byte.
-nonisolated package enum PerkEffectData: Equatable {
+nonisolated public enum PerkEffectData: Equatable, Sendable {
     /// Quest effect: 4-byte QUST link, uint16 stage, then two unused bytes
     /// that carry junk in vanilla records.
     case quest(quest: FormID?, stage: UInt16)
@@ -292,34 +292,34 @@ nonisolated package enum PerkEffectData: Equatable {
 }
 
 /// One complete PRKE...PRKF section.
-nonisolated package struct PerkEffect: Equatable {
-    package let type: PerkEffectType
+nonisolated public struct PerkEffect: Equatable, Sendable {
+    public let type: PerkEffectType
     /// PRKE byte 1. Zero means rank 1, which is how the Creation Kit shows it.
-    package let rank: UInt8
-    package let priority: UInt8
+    public let rank: UInt8
+    public let priority: UInt8
     /// Nil when the section carried no DATA at all, which is a mod quirk the
     /// record tally counts.
-    package let data: PerkEffectData?
-    package let conditionTabs: [PerkConditionTab]
-    package let functionType: PerkFunctionType?
+    public let data: PerkEffectData?
+    public let conditionTabs: [PerkConditionTab]
+    public let functionType: PerkFunctionType?
     /// EPF2, the activate-choice button label.
-    package let buttonLabel: LString?
-    package let scriptFlags: PerkScriptFlags?
-    package let functionData: PerkFunctionData?
+    public let buttonLabel: LString?
+    public let scriptFlags: PerkScriptFlags?
+    public let functionData: PerkFunctionData?
     /// Whether the section ended on its PRKF marker rather than at the end of
     /// the record.
-    package let isTerminated: Bool
+    public let isTerminated: Bool
 
     /// The entry point this effect answers for, or nil for a quest or ability
     /// effect. This is what `PerkStore`'s entry-point index keys on.
-    package var entryPoint: PerkEntryPoint? {
+    public var entryPoint: PerkEntryPoint? {
         guard case let .entryPoint(payload) = data else { return nil }
         return payload.entryPoint
     }
 
     /// The spell this effect grants or casts: an ability effect's DATA link,
     /// or the SPEL an entry-point function selects.
-    package var spell: FormID? {
+    public var spell: FormID? {
         switch data {
         case let .ability(spell):
             return spell
@@ -330,7 +330,7 @@ nonisolated package struct PerkEffect: Equatable {
     }
 
     /// Rank as the Creation Kit numbers it, counting from one.
-    package var displayRank: Int {
+    public var displayRank: Int {
         Int(rank) + 1
     }
 }

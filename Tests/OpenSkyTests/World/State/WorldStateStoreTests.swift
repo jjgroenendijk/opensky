@@ -6,6 +6,7 @@
 // built in code — the baseline tests decode REFR/ACHR records straight from
 // ESMFixture bytes, the same shape RuntimeReferenceIndexTests uses.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

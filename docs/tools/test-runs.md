@@ -20,10 +20,10 @@ under `Config/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
-| `UnitTests.xctestplan` | `OpenSkyTests`, `OpenSkyFormatsTests` | `make test`, `make test-fast`, `make test-one`. The scheme default |
+| `UnitTests.xctestplan` | `OpenSkyTests`, `OpenSkyFormatsTests`, `OpenSkyGameDataTests` | `make test`, `make test-fast`, `make test-one`. The scheme default |
 | `UITests.xctestplan` | `OpenSkyUITests` | `make test-ui` |
 | `RealData.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make realtest`, `make realtest-all` |
-| `Sanitizers.xctestplan` | `OpenSkyTests`, `OpenSkyFormatsTests`, one configuration per sanitizer | `make test-sanitize` |
+| `Sanitizers.xctestplan` | the unit plan's targets, one configuration per sanitizer | `make test-sanitize` |
 
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at `-only-testing`, so
 a selector never saves building a bundle. A plan does, because the plan decides what is built.
@@ -83,8 +83,8 @@ it, and that no plan lists an app-hosted bundle beside `OpenSkyUITests`.
 
 ## Code coverage
 
-The unit, UI, and sanitizer plans gather line coverage for the `OpenSky` and `OpenSkyFormats`
-targets only, so the number is about engine code, not the test bundles. `make test` gathers it and
+The unit, UI, and sanitizer plans gather line coverage for the `OpenSky` target and the package
+modules only, so the number is about engine code, not the test bundles. `make test` gathers it and
 `make test-report` prints it.
 There is no separate target and no `-enableCodeCoverage` flag. `ENABLE_CODE_COVERAGE` defaults to
 `YES` in Xcode, so coverage was already gathered on every run and thrown away. Scoping it cost

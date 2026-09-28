@@ -5,6 +5,7 @@
 // non-persistent instance's timers. Stage B serializes these states into the
 // save chunk; nothing here touches bytes.
 
+import FormatsTestSupport
 @testable import OpenSky
 import Testing
 

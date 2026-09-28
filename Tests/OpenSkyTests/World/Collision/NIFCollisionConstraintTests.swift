@@ -2,6 +2,7 @@
 // skeleton shape a ragdoll carrier takes.
 // Layouts: NifTools nif.xml; docs/formats/nif-collision.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

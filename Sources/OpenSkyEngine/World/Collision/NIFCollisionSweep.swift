@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated struct NIFCollisionAssetReport {
     let path: String

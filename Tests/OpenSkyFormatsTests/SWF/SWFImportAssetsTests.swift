@@ -3,6 +3,7 @@
 // never defines, because the movie imports that character by name from a
 // fontlib. Synthetic fixtures only.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

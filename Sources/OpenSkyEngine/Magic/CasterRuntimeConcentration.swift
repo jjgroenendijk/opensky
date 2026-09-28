@@ -16,6 +16,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension CasterRuntime {
     /// One frame of a maintained cast: drain, apply the whole seconds that

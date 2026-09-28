@@ -35,35 +35,35 @@ import Foundation
 /// different things in the two records: xEdit names it "Ignore Resistance" on
 /// SPEL and "Script Effect Always Applies" on SCRL, so both names are exposed
 /// over the same bit rather than one being guessed for the other.
-nonisolated package struct SpellFlags: OptionSet, Equatable {
-    package let rawValue: UInt32
+nonisolated public struct SpellFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt32
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self.rawValue = rawValue
     }
 
     /// Bit 0 — the SPIT base cost is authored, not derived from the effects.
-    package static let manualCostCalc = Self(rawValue: 1 << 0)
+    public static let manualCostCalc = Self(rawValue: 1 << 0)
     /// Bit 16 — xEdit "Unknown 16"; vanilla sets it together with bit 18.
-    package static let unknown16 = Self(rawValue: 1 << 16)
-    package static let pcStartSpell = Self(rawValue: 1 << 17)
+    public static let unknown16 = Self(rawValue: 1 << 16)
+    public static let pcStartSpell = Self(rawValue: 1 << 17)
     /// Bit 18 — xEdit "Unknown 18"; vanilla sets it together with bit 16.
-    package static let unknown18 = Self(rawValue: 1 << 18)
-    package static let areaEffectIgnoresLineOfSight = Self(rawValue: 1 << 19)
+    public static let unknown18 = Self(rawValue: 1 << 18)
+    public static let areaEffectIgnoresLineOfSight = Self(rawValue: 1 << 19)
     /// Bit 20 on SPEL.
-    package static let ignoreResistance = Self(rawValue: 1 << 20)
+    public static let ignoreResistance = Self(rawValue: 1 << 20)
     /// Bit 20 on SCRL — the same bit under the name xEdit gives it there.
-    package static let scriptEffectAlwaysApplies = Self(rawValue: 1 << 20)
-    package static let disallowAbsorbReflect = Self(rawValue: 1 << 21)
+    public static let scriptEffectAlwaysApplies = Self(rawValue: 1 << 20)
+    public static let disallowAbsorbReflect = Self(rawValue: 1 << 21)
     /// Bit 22 — xEdit "Unknown 22".
-    package static let unknown22 = Self(rawValue: 1 << 22)
-    package static let noDualCastModifications = Self(rawValue: 1 << 23)
+    public static let unknown22 = Self(rawValue: 1 << 22)
+    public static let noDualCastModifications = Self(rawValue: 1 << 23)
 }
 
 /// SPIT spell type. SCRL writes 0 in this word, which xEdit labels "Scroll"
 /// for that record; the decoded value stays `.spell` and the record type is
 /// what distinguishes a scroll.
-nonisolated package enum SpellType: Equatable, CustomStringConvertible {
+nonisolated public enum SpellType: Equatable, CustomStringConvertible, Sendable {
     case spell
     case disease
     case power
@@ -74,7 +74,7 @@ nonisolated package enum SpellType: Equatable, CustomStringConvertible {
     case voice
     case unknown(raw: UInt32)
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self = switch rawValue {
         case 0: .spell
         case 1: .disease
@@ -88,7 +88,7 @@ nonisolated package enum SpellType: Equatable, CustomStringConvertible {
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .spell: "spell"
         case .disease: "disease"
@@ -103,27 +103,27 @@ nonisolated package enum SpellType: Equatable, CustomStringConvertible {
     }
 }
 
-nonisolated package struct SpellItemData: Equatable {
+nonisolated public struct SpellItemData: Equatable, Sendable {
     /// The magicka cost stored in the record. Authoritative only when
     /// `flags` contains `.manualCostCalc`.
-    package let baseCost: UInt32
-    package let flags: SpellFlags
-    package let type: SpellType
-    package let chargeTime: Float
-    package let castingType: MagicEffectCastingType
-    package let delivery: MagicEffectDelivery
+    public let baseCost: UInt32
+    public let flags: SpellFlags
+    public let type: SpellType
+    public let chargeTime: Float
+    public let castingType: MagicEffectCastingType
+    public let delivery: MagicEffectDelivery
     /// Minimum duration of a concentration spell.
-    package let castDuration: Float
-    package let range: Float
+    public let castDuration: Float
+    public let range: Float
     /// PERK that halves the cost. Decoded and left unresolved: perks are M20.
-    package let halfCostPerk: FormID?
+    public let halfCostPerk: FormID?
 
     /// True when the cost has to be derived from the effect list.
-    package var usesAutoCalculatedCost: Bool {
+    public var usesAutoCalculatedCost: Bool {
         !flags.contains(.manualCostCalc)
     }
 
-    package var unknownEnumCount: Int {
+    public var unknownEnumCount: Int {
         var count = 0
         if case .unknown = type {
             count += 1
@@ -137,7 +137,7 @@ nonisolated package struct SpellItemData: Equatable {
         return count
     }
 
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count >= 36 else {
             throw ESMError.malformed(
                 "\(field.type) SPIT has \(field.data.count) bytes, expected 36"

@@ -23,6 +23,7 @@ import Metal
 import MetalKit
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct M13AcceptanceRenderTests {

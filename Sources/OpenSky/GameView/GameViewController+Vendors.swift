@@ -13,6 +13,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension GameViewController {
     /// The engine's vendor reader over the provider's FACT and FLST indexes.

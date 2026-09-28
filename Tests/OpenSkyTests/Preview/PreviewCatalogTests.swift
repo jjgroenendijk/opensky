@@ -2,9 +2,11 @@
 // rows, filtering. Synthetic entries + in-code plugin fixture only
 // (AGENTS.md "Legal & IP boundary").
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct PreviewCatalogTests {

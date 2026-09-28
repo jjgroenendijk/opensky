@@ -26,7 +26,7 @@
 
 import Foundation
 
-nonisolated package enum WAVError: Error, Equatable {
+nonisolated public enum WAVError: Error, Equatable, Sendable {
     /// Structural damage: not a RIFF/WAVE form, a chunk running past the end,
     /// a missing `fmt ` or `data` chunk.
     case malformed(String)
@@ -34,14 +34,14 @@ nonisolated package enum WAVError: Error, Equatable {
     case unsupportedFormat(String)
 }
 
-nonisolated package struct WAVFile {
+nonisolated public struct WAVFile: Sendable {
     /// The `fmt ` members this reader uses.
-    package struct Format: Equatable, Sendable {
+    public struct Format: Equatable, Sendable {
         /// `wFormatTag`. 1 is WAVE_FORMAT_PCM, the only tag read here.
-        package let formatTag: UInt16
-        package let channelCount: Int
-        package let sampleRate: Int
-        package let bitsPerSample: Int
+        public let formatTag: UInt16
+        public let channelCount: Int
+        public let sampleRate: Int
+        public let bitsPerSample: Int
     }
 
     private enum Layout {
@@ -60,15 +60,15 @@ nonisolated package struct WAVFile {
         static let pcmTag: UInt16 = 1
     }
 
-    package let format: Format
+    public let format: Format
     /// Interleaved sample frames, one `Float` per sample in [-1, 1].
-    package let samples: [Float]
+    public let samples: [Float]
     /// Sample frames, i.e. `samples.count / channelCount`.
-    package var frameCount: Int {
+    public var frameCount: Int {
         format.channelCount > 0 ? samples.count / format.channelCount : 0
     }
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         let fileEnd = try Self.readRIFFHeader(reader: &reader, byteCount: data.count)
         var format: Format?

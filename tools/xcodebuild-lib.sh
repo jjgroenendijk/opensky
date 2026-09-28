@@ -58,7 +58,7 @@ xcodebuild_xctestrun() {
 
 # A cached .xctestrun is reusable only while nothing that feeds the build has
 # changed since it was written. Sources, xcconfig and test plans under Config/,
-# the project file, and the vendored ffmpeg cover every input; the sweep costs
+# the project file, Package.swift, and the vendored ffmpeg cover every input; the sweep costs
 # around a tenth of a second where a "null" build-for-testing costs tens of
 # seconds. Missing file or any newer input -> stale (exit 0). Biased toward
 # rebuilding: a false "stale" wastes one incremental build, a false "fresh"
@@ -68,7 +68,7 @@ xcodebuild_xctestrun_stale() {
     root="$2"
     [ -f "$xctestrun" ] || return 0
     [ -n "$(find -H "$root/Sources" "$root/Tests" \
-        "$root/Config" "$root/OpenSky.xcodeproj/project.pbxproj" \
+        "$root/Config" "$root/OpenSky.xcodeproj/project.pbxproj" "$root/Package.swift" \
         "$root/.vendor/ffmpeg" \
         -newer "$xctestrun" -print 2>/dev/null | head -n 1)" ]
 }

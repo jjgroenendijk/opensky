@@ -24,49 +24,49 @@
 import Foundation
 
 /// One movie's action-side summary line.
-nonisolated package struct SWFActionMovieSummary: Equatable {
-    package let path: String
-    package let actionBlocks: Int
-    package let actionRecords: Int
-    package let distinctOpcodes: Int
-    package let unknownOpcodes: Int
-    package let undecodedOpcodes: Int
-    package let warnings: Int
+nonisolated public struct SWFActionMovieSummary: Equatable, Sendable {
+    public let path: String
+    public let actionBlocks: Int
+    public let actionRecords: Int
+    public let distinctOpcodes: Int
+    public let unknownOpcodes: Int
+    public let undecodedOpcodes: Int
+    public let warnings: Int
 }
 
 /// Accumulates the action-side inventory across every movie `record(_:path:)`
 /// is called with. A pure value type: no I/O, no printing — `openskycli`
 /// formats and prints what this collects.
-nonisolated package struct SWFActionInventory {
-    package private(set) var movies: [SWFActionMovieSummary] = []
-    package private(set) var opcodeCounts: [UInt8: Int] = [:]
-    package private(set) var opcodeMovies: [UInt8: Set<String>] = [:]
-    package private(set) var unknownOpcodeMovies: [UInt8: Set<String>] = [:]
-    package private(set) var hostNameCounts: [String: Int] = [:]
-    package private(set) var hostNameMovies: [String: Set<String>] = [:]
-    package private(set) var clipEventCounts: [String: Int] = [:]
-    package private(set) var clipEventMovies: [String: Set<String>] = [:]
+nonisolated public struct SWFActionInventory: Sendable {
+    public private(set) var movies: [SWFActionMovieSummary] = []
+    public private(set) var opcodeCounts: [UInt8: Int] = [:]
+    public private(set) var opcodeMovies: [UInt8: Set<String>] = [:]
+    public private(set) var unknownOpcodeMovies: [UInt8: Set<String>] = [:]
+    public private(set) var hostNameCounts: [String: Int] = [:]
+    public private(set) var hostNameMovies: [String: Set<String>] = [:]
+    public private(set) var clipEventCounts: [String: Int] = [:]
+    public private(set) var clipEventMovies: [String: Set<String>] = [:]
 
-    package private(set) var defineFunctionCount = 0
-    package private(set) var defineFunction2Count = 0
-    package private(set) var maxRegisterCount: UInt8 = 0
-    package private(set) var withCount = 0
-    package private(set) var tryCount = 0
-    package private(set) var constantPoolCount = 0
-    package private(set) var maxConstantPoolSize = 0
-    package private(set) var maxBlockBytes = 0
-    package private(set) var maxBlockRecords = 0
-    package private(set) var doActionBlockCount = 0
-    package private(set) var doInitActionBlockCount = 0
-    package private(set) var clipActionBlockCount = 0
+    public private(set) var defineFunctionCount = 0
+    public private(set) var defineFunction2Count = 0
+    public private(set) var maxRegisterCount: UInt8 = 0
+    public private(set) var withCount = 0
+    public private(set) var tryCount = 0
+    public private(set) var constantPoolCount = 0
+    public private(set) var maxConstantPoolSize = 0
+    public private(set) var maxBlockBytes = 0
+    public private(set) var maxBlockRecords = 0
+    public private(set) var doActionBlockCount = 0
+    public private(set) var doInitActionBlockCount = 0
+    public private(set) var clipActionBlockCount = 0
 
-    package init() {}
+    public init() {}
 
-    package var distinctOpcodeCount: Int {
+    public var distinctOpcodeCount: Int {
         opcodeCounts.keys.count
     }
 
-    package var distinctHostNameCount: Int {
+    public var distinctHostNameCount: Int {
         hostNameCounts.keys.count
     }
 
@@ -89,7 +89,7 @@ nonisolated package struct SWFActionInventory {
     /// Records one movie's action side: every DoAction block (main timeline
     /// and every sprite), every CLIPACTIONS handler, and every DoInitAction
     /// block, in the stable order `SWFMovie.actionBlocks` documents.
-    package mutating func record(_ movie: SWFMovie, path: String) {
+    public mutating func record(_ movie: SWFMovie, path: String) {
         var walk = SWFActionTimelineWalk()
         walk.add(movie.timeline)
         for characterId in movie.characters.keys.sorted() {

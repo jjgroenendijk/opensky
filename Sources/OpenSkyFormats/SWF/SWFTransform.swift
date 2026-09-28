@@ -10,23 +10,22 @@
 // `y' = x * RotateSkew0 + y * ScaleY + TranslateY`.
 
 import Foundation
-import OpenSkyShaderTypes
 import simd
 
 /// Affine map `out.x = scaleX*x + rotateSkew1*y + translateX`,
 /// `out.y = rotateSkew0*x + scaleY*y + translateY`.
-nonisolated package struct SWFTransform: Equatable {
-    package var scaleX: Float = 1
-    package var rotateSkew0: Float = 0
-    package var rotateSkew1: Float = 0
-    package var scaleY: Float = 1
-    package var translateX: Float = 0
-    package var translateY: Float = 0
+nonisolated public struct SWFTransform: Equatable, Sendable {
+    public var scaleX: Float = 1
+    public var rotateSkew0: Float = 0
+    public var rotateSkew1: Float = 0
+    public var scaleY: Float = 1
+    public var translateX: Float = 0
+    public var translateY: Float = 0
 
-    package static let identity = SWFTransform(scaleX: 1, scaleY: 1)
+    public static let identity = SWFTransform(scaleX: 1, scaleY: 1)
 
     /// Lifts a decoded MATRIX record (translation in twips).
-    package init(matrix: SWFMatrix) {
+    public init(matrix: SWFMatrix) {
         scaleX = matrix.scaleX
         rotateSkew0 = matrix.rotateSkew0
         rotateSkew1 = matrix.rotateSkew1
@@ -35,7 +34,7 @@ nonisolated package struct SWFTransform: Equatable {
         translateY = Float(matrix.translateY)
     }
 
-    package init(
+    public init(
         scaleX: Float,
         rotateSkew0: Float,
         rotateSkew1: Float,
@@ -49,7 +48,7 @@ nonisolated package struct SWFTransform: Equatable {
     }
 
     /// Pure scale + translation.
-    package init(scaleX: Float, scaleY: Float, translateX: Float = 0, translateY: Float = 0) {
+    public init(scaleX: Float, scaleY: Float, translateX: Float = 0, translateY: Float = 0) {
         self.init(
             scaleX: scaleX,
             rotateSkew0: 0,
@@ -60,7 +59,7 @@ nonisolated package struct SWFTransform: Equatable {
         )
     }
 
-    package func apply(_ point: SIMD2<Float>) -> SIMD2<Float> {
+    public func apply(_ point: SIMD2<Float>) -> SIMD2<Float> {
         SIMD2(
             scaleX * point.x + rotateSkew1 * point.y + translateX,
             rotateSkew0 * point.x + scaleY * point.y + translateY
@@ -69,7 +68,7 @@ nonisolated package struct SWFTransform: Equatable {
 
     /// The transform equivalent to applying `inner` first, then `self` — the
     /// order a parent timeline wraps a child placement.
-    package func concatenating(_ inner: SWFTransform) -> SWFTransform {
+    public func concatenating(_ inner: SWFTransform) -> SWFTransform {
         SWFTransform(
             scaleX: scaleX * inner.scaleX + rotateSkew1 * inner.rotateSkew0,
             rotateSkew0: rotateSkew0 * inner.scaleX + scaleY * inner.rotateSkew0,
@@ -81,7 +80,7 @@ nonisolated package struct SWFTransform: Equatable {
     }
 
     /// nil when the linear part is singular (a degenerate fill matrix).
-    package var inverted: SWFTransform? {
+    public var inverted: SWFTransform? {
         let determinant = scaleX * scaleY - rotateSkew0 * rotateSkew1
         guard determinant.isFinite, abs(determinant) > .ulpOfOne else { return nil }
         let inverse = 1 / determinant
@@ -97,18 +96,18 @@ nonisolated package struct SWFTransform: Equatable {
 
     /// Area-preserving uniform scale estimate — the factor glyph
     /// rasterization uses to pick a pixel size under this transform.
-    package var approximateScale: Float {
+    public var approximateScale: Float {
         let determinant = abs(scaleX * scaleY - rotateSkew0 * rotateSkew1)
         return determinant.isFinite ? determinant.squareRoot() : 0
     }
 
     /// The linear part in the order `SWFDrawUniforms` expects
     /// (ScaleX, RotateSkew0, RotateSkew1, ScaleY).
-    package var packedLinear: SIMD4<Float> {
+    public var packedLinear: SIMD4<Float> {
         SIMD4(scaleX, rotateSkew0, rotateSkew1, scaleY)
     }
 
-    package var packedTranslation: SIMD2<Float> {
+    public var packedTranslation: SIMD2<Float> {
         SIMD2(translateX, translateY)
     }
 }
@@ -116,10 +115,10 @@ nonisolated package struct SWFTransform: Equatable {
 /// Deterministic stage-to-viewport mapping: uniform scale that fits the
 /// movie's FrameSize into the viewport, centered (letterboxed on mismatched
 /// aspect ratios). Same movie + same viewport -> the same transform.
-nonisolated package enum SWFViewportMapping {
+nonisolated public enum SWFViewportMapping: Sendable {
     /// Twips -> framebuffer pixels for a movie frame rendered into
     /// `viewportPixels`.
-    package static func twipsToPixels(
+    public static func twipsToPixels(
         frameSize: SWFRect,
         viewportPixels: SIMD2<Float>,
         contentScale: Float = 1
@@ -146,7 +145,7 @@ nonisolated package enum SWFViewportMapping {
     }
 
     /// Framebuffer pixels (origin top-left, y down) -> Metal NDC.
-    package static func pixelsToClip(viewportPixels: SIMD2<Float>) -> SWFTransform {
+    public static func pixelsToClip(viewportPixels: SIMD2<Float>) -> SWFTransform {
         guard viewportPixels.x > 0, viewportPixels.y > 0 else { return .identity }
         return SWFTransform(
             scaleX: 2 / viewportPixels.x,

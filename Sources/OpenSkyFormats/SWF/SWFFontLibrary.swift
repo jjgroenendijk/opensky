@@ -9,11 +9,11 @@
 
 import Foundation
 
-nonisolated package struct SWFFontLibrary {
+nonisolated public struct SWFFontLibrary: Sendable {
     /// A font found by name, with the movie it came from.
-    package struct Resolved: Equatable {
-        package let movie: String
-        package let font: SWFFontDefinition
+    public struct Resolved: Equatable, Sendable {
+        public let movie: String
+        public let font: SWFFontDefinition
     }
 
     /// Registered fonts in registration order (movie, font).
@@ -24,16 +24,16 @@ nonisolated package struct SWFFontLibrary {
     private var byLowerName: [String: Int] = [:]
 
     /// Movie file names successfully registered.
-    package private(set) var registeredMovies: [String] = []
+    public private(set) var registeredMovies: [String] = []
 
-    package init() {}
+    public init() {}
 
     /// Decodes every DefineFont2/3 in `file` and indexes it by its ExportAssets
     /// export names (if any) and its internal font name. A font that fails to
     /// decode is skipped, not fatal. `movie` is the source file name for
     /// reporting. Returns the number of fonts registered from this movie.
     @discardableResult
-    package mutating func register(movie: String, file: SWFFile) -> Int {
+    public mutating func register(movie: String, file: SWFFile) -> Int {
         registeredMovies.append(movie)
         let exportNames = exportNamesByCharacterId(file)
         var added = 0
@@ -51,7 +51,7 @@ nonisolated package struct SWFFontLibrary {
     }
 
     /// The font registered under `name` (exact, then case-insensitive), or nil.
-    package func font(named name: String) -> Resolved? {
+    public func font(named name: String) -> Resolved? {
         if let index = byName[name] {
             return fonts[index]
         }
@@ -64,7 +64,7 @@ nonisolated package struct SWFFontLibrary {
     /// Resolves a logical alias (e.g. "$EverywhereFont") to a font: looks up the
     /// alias in the config's `map` directives, then finds a registered font with
     /// that name.
-    package func resolve(alias: String, config: SWFFontConfig) -> Resolved? {
+    public func resolve(alias: String, config: SWFFontConfig) -> Resolved? {
         guard let map = config.maps.first(where: { $0.alias == alias }) else { return nil }
         return font(named: map.fontName)
     }

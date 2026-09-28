@@ -45,54 +45,54 @@
 
 import Foundation
 
-nonisolated package struct ArmorAddon {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct ArmorAddon: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// BOD2/BODT biped slots + armor type; nil when absent.
-    package let bodyTemplate: BodyTemplate?
+    public let bodyTemplate: BodyTemplate?
     /// RNAM — the one primary race the armature must have.
-    package let primaryRace: FormID?
+    public let primaryRace: FormID?
     /// MODL — extra races this armature also applies to.
-    package let additionalRaces: [FormID]
+    public let additionalRaces: [FormID]
     /// MOD2 — male biped model path relative to Data/ ("meshes\\...").
-    package let maleModelPath: String?
+    public let maleModelPath: String?
     /// MOD3 — female biped model path.
-    package let femaleModelPath: String?
+    public let femaleModelPath: String?
     /// MOD4 — male first-person model path; nil when the armature shows
     /// nothing on the player's own arms.
-    package let maleFirstPersonModelPath: String?
+    public let maleFirstPersonModelPath: String?
     /// MOD5 — female first-person model path.
-    package let femaleFirstPersonModelPath: String?
+    public let femaleFirstPersonModelPath: String?
     /// DNAM male draw priority; 0 when the record carries no DNAM.
-    package let malePriority: UInt8
+    public let malePriority: UInt8
     /// DNAM female draw priority; 0 when the record carries no DNAM.
-    package let femalePriority: UInt8
+    public let femalePriority: UInt8
     /// DNAM weapon adjust — how far a weapon floats from its attachment point
     /// on an actor wearing this armature. Decoded now because the field is
     /// read here anyway; the hand attachment does not apply it yet.
-    package let weaponAdjust: Float
+    public let weaponAdjust: Float
     /// SNDD — the FSTS footstep set an actor wearing this armature walks with
     /// (issue #352). xEdit dev-4.1.6 names it `wbFormIDCk(SNDD, 'Footstep
     /// Sound', [FSTS, NULL])` at line 4216. Only the boot armatures carry one:
     /// vanilla's `NakedFeet*` armatures point at `FSTBarefootFootstepSet`,
     /// light boots at `FSTArmorLightFootstepSet`, and heavy boots at
     /// `FSTArmorHeavyFootstepSet`. Nil when absent or null.
-    package let footstepSound: FormID?
+    public let footstepSound: FormID?
 
     /// The draw priority that applies to one gender.
-    package func priority(female: Bool) -> UInt8 {
+    public func priority(female: Bool) -> UInt8 {
         female ? femalePriority : malePriority
     }
 
     /// The first-person model for one gender, with the same cross-gender
     /// fallback the third-person selection uses: an armature that declares only
     /// MOD4 shows it on both genders rather than showing nothing.
-    package func firstPersonModelPath(female: Bool) -> String? {
+    public func firstPersonModelPath(female: Bool) -> String? {
         let preferred = female ? femaleFirstPersonModelPath : maleFirstPersonModelPath
         return preferred ?? maleFirstPersonModelPath ?? femaleFirstPersonModelPath
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "ARMA" else {
             throw ESMError.malformed("expected ARMA record, got \(record.type)")
         }

@@ -26,7 +26,7 @@
 
 import Foundation
 
-nonisolated package enum PerkSkipKind: Hashable {
+nonisolated public enum PerkSkipKind: Hashable, Sendable {
     case unknownField(FourCC)
     case malformedField(FourCC)
     /// An effect-only subrecord (DATA payload, PRKC, EPFT, EPFD, ...) that
@@ -37,7 +37,7 @@ nonisolated package enum PerkSkipKind: Hashable {
     /// An effect that ran to the end of the record without its PRKF marker.
     case unterminatedEffect
 
-    package var name: String {
+    public var name: String {
         switch self {
         case let .unknownField(type): "unknown \(type)"
         case let .malformedField(type): "malformed \(type)"
@@ -48,18 +48,18 @@ nonisolated package enum PerkSkipKind: Hashable {
     }
 }
 
-nonisolated package struct PerkTally: Equatable {
-    package private(set) var counts: [PerkSkipKind: Int] = [:]
+nonisolated public struct PerkTally: Equatable, Sendable {
+    public private(set) var counts: [PerkSkipKind: Int] = [:]
 
-    package var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         counts.isEmpty
     }
 
-    package var ranked: [(name: String, count: Int)] {
+    public var ranked: [(name: String, count: Int)] {
         counts
             .sorted {
                 $0.value == $1.value
@@ -69,11 +69,11 @@ nonisolated package struct PerkTally: Equatable {
             .map { ($0.key.name, $0.value) }
     }
 
-    package mutating func note(_ kind: PerkSkipKind, count: Int = 1) {
+    public mutating func note(_ kind: PerkSkipKind, count: Int = 1) {
         counts[kind, default: 0] += count
     }
 
-    package mutating func merge(_ other: PerkTally) {
+    public mutating func merge(_ other: PerkTally) {
         for (kind, count) in other.counts {
             note(kind, count: count)
         }
@@ -93,19 +93,19 @@ nonisolated package struct PerkTally: Equatable {
 /// count it displays after load, which is why its editor disagrees with the
 /// bytes. Both are exposed verbatim; anything wanting the ranks walks the
 /// chain through `PerkStore.rankChain(from:)`.
-nonisolated package struct PerkHeaderData: Equatable {
-    package static let byteCount = 5
+nonisolated public struct PerkHeaderData: Equatable, Sendable {
+    public static let byteCount = 5
 
-    package let isTrait: Bool
+    public let isTrait: Bool
     /// Minimum skill level the perk needs, 0 on a perk with no requirement.
-    package let level: UInt8
+    public let level: UInt8
     /// The declared rank count, verbatim. Vanilla mostly authors 1 regardless
     /// of how many ranks the perk really has — see the note above.
-    package let rankCount: UInt8
-    package let isPlayable: Bool
-    package let isHidden: Bool
+    public let rankCount: UInt8
+    public let isPlayable: Bool
+    public let isHidden: Bool
 
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count >= Self.byteCount else {
             throw ESMError.malformed(
                 "PERK DATA has \(field.data.count) bytes, expected \(Self.byteCount)"
@@ -119,7 +119,7 @@ nonisolated package struct PerkHeaderData: Equatable {
         isHidden = try reader.readUInt8() != 0
     }
 
-    package init(
+    public init(
         isTrait: Bool,
         level: UInt8,
         rankCount: UInt8,
@@ -134,41 +134,41 @@ nonisolated package struct PerkHeaderData: Equatable {
     }
 }
 
-nonisolated package struct Perk {
-    package let formID: FormID
-    package let editorID: String?
-    package let name: LString?
-    package let description: LString?
-    package let iconPath: String?
+nonisolated public struct Perk: Sendable {
+    public let formID: FormID
+    public let editorID: String?
+    public let name: LString?
+    public let description: LString?
+    public let iconPath: String?
     /// The record-level CTDA run: whether the perk is available to be taken.
-    package let conditions: ConditionList
+    public let conditions: ConditionList
     /// Nil when the record carried no DATA or a truncated one; the effects are
     /// still decoded, because a perk with an unreadable header is still what a
     /// runtime formula queries.
-    package let data: PerkHeaderData?
+    public let data: PerkHeaderData?
     /// NNAM, the next rank of this perk. Null links decode to nil.
-    package let nextPerk: FormID?
-    package let effects: [PerkEffect]
-    package let script: ScriptData
-    package let skipped: PerkTally
+    public let nextPerk: FormID?
+    public let effects: [PerkEffect]
+    public let script: ScriptData
+    public let skipped: PerkTally
 
     /// The rank count the record declares, defaulting to one when DATA did not
     /// decode. Not the number of ranks the perk actually has: that is the
     /// length of its NNAM chain, which `PerkStore.rankChain(from:)` walks.
-    package var declaredRankCount: UInt8 {
+    public var declaredRankCount: UInt8 {
         max(data?.rankCount ?? 1, 1)
     }
 
-    package var isPlayable: Bool {
+    public var isPlayable: Bool {
         data?.isPlayable ?? false
     }
 
     /// Every effect that hooks an entry point, in record order.
-    package var entryPointEffects: [PerkEffect] {
+    public var entryPointEffects: [PerkEffect] {
         effects.filter { $0.entryPoint != nil }
     }
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "PERK" else {
             throw ESMError.malformed("expected PERK record, got \(record.type)")
         }

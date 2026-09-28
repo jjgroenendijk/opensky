@@ -13,10 +13,10 @@ import simd
 
 /// Reader helpers shared by NVNM geometry and the NVMI index entries, which
 /// spell counted arrays and the parent-cell union identically.
-nonisolated package enum NavmeshDecoding {
+nonisolated public enum NavmeshDecoding: Sendable {
     /// uint32 element count, rejected when the array it introduces cannot fit
     /// in what is left of the payload.
-    package static func readCount(
+    public static func readCount(
         _ reader: inout BinaryReader,
         elementSize: Int,
         of what: String
@@ -30,7 +30,7 @@ nonisolated package enum NavmeshDecoding {
         return count
     }
 
-    package static func readVector3(_ reader: inout BinaryReader) throws -> SIMD3<Float> {
+    public static func readVector3(_ reader: inout BinaryReader) throws -> SIMD3<Float> {
         try SIMD3(reader.readFloat32(), reader.readFloat32(), reader.readFloat32())
     }
 
@@ -38,7 +38,7 @@ nonisolated package enum NavmeshDecoding {
     /// worldspace, then either the parent CELL or the exterior grid square.
     /// A null worldspace is what makes it an interior (xEdit
     /// `wbNVNMParentDecider`); the grid pair is stored Y first.
-    package static func readLocation(_ reader: inout BinaryReader) throws -> NavmeshLocation {
+    public static func readLocation(_ reader: inout BinaryReader) throws -> NavmeshLocation {
         _ = try reader.readUInt32() // CRC hash of "PathingCell", a constant
         let world = try FormID(reader.readUInt32())
         guard !world.isNull else {
@@ -50,61 +50,61 @@ nonisolated package enum NavmeshDecoding {
     }
 }
 
-nonisolated package struct NavmeshGeometry: Sendable {
+nonisolated public struct NavmeshGeometry: Sendable {
     /// Per-triangle flag bits (xEdit `wbNavmeshTriangleFlags`). The three edge
     /// bits say the matching neighbour index is an edge-link into another
     /// navmesh rather than a triangle in this one.
-    package struct TriangleFlags: OptionSet, Equatable, Sendable {
-        package let rawValue: UInt16
+    public struct TriangleFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
-        package static let edge01Link = TriangleFlags(rawValue: 1 << 0)
-        package static let edge12Link = TriangleFlags(rawValue: 1 << 1)
-        package static let edge20Link = TriangleFlags(rawValue: 1 << 2)
-        package static let deleted = TriangleFlags(rawValue: 1 << 3)
-        package static let noLargeCreatures = TriangleFlags(rawValue: 1 << 4)
-        package static let overlapping = TriangleFlags(rawValue: 1 << 5)
-        package static let preferred = TriangleFlags(rawValue: 1 << 6)
-        package static let water = TriangleFlags(rawValue: 1 << 9)
-        package static let door = TriangleFlags(rawValue: 1 << 10)
-        package static let found = TriangleFlags(rawValue: 1 << 11)
+        public static let edge01Link = TriangleFlags(rawValue: 1 << 0)
+        public static let edge12Link = TriangleFlags(rawValue: 1 << 1)
+        public static let edge20Link = TriangleFlags(rawValue: 1 << 2)
+        public static let deleted = TriangleFlags(rawValue: 1 << 3)
+        public static let noLargeCreatures = TriangleFlags(rawValue: 1 << 4)
+        public static let overlapping = TriangleFlags(rawValue: 1 << 5)
+        public static let preferred = TriangleFlags(rawValue: 1 << 6)
+        public static let water = TriangleFlags(rawValue: 1 << 9)
+        public static let door = TriangleFlags(rawValue: 1 << 10)
+        public static let found = TriangleFlags(rawValue: 1 << 11)
     }
 
     /// One walkable face. `neighbors` holds the triangle bordering edge 0-1,
     /// 1-2 and 2-0 in that order, or -1 where the edge borders nothing. Where
     /// the matching `TriangleFlags` edge bit is set the value indexes this
     /// navmesh's edge-link array instead, which is why it is not resolved here.
-    package struct Triangle: Equatable, Sendable {
-        package static let encodedSize = 16
+    public struct Triangle: Equatable, Sendable {
+        public static let encodedSize = 16
 
-        package let vertices: SIMD3<UInt16>
-        package let neighbors: SIMD3<Int16>
-        package let flags: TriangleFlags
+        public let vertices: SIMD3<UInt16>
+        public let neighbors: SIMD3<Int16>
+        public let flags: TriangleFlags
         /// Cover nibbles packed two-edges-to-a-uint16. Retained raw: xEdit's
         /// own comment says the documented flag names are wrong and nothing
         /// in OpenSky reads cover yet.
-        package let coverFlags: UInt16
+        public let coverFlags: UInt16
     }
 
     /// How an actor crosses from this navmesh into a neighbouring one.
-    package enum EdgeLinkType: UInt32, Sendable {
+    public enum EdgeLinkType: UInt32, Sendable {
         case portal = 0
         case ledgeUp = 1
         case ledgeDown = 2
         case enableDisablePortal = 3
     }
 
-    package struct EdgeLink: Equatable, Sendable {
-        package static let encodedSize = 10
+    public struct EdgeLink: Equatable, Sendable {
+        public static let encodedSize = 10
 
         /// Nil for a value outside the documented set; `rawType` keeps it.
-        package let type: EdgeLinkType?
-        package let rawType: UInt32
+        public let type: EdgeLinkType?
+        public let rawType: UInt32
         /// The NAVM on the other side of the boundary.
-        package let navmesh: FormID
+        public let navmesh: FormID
         /// Triangle index inside `navmesh` — the far side of the link, not a
         /// triangle in this mesh. The census established that: validating it
         /// against the local triangle array rejected more than half the
@@ -114,39 +114,39 @@ nonisolated package struct NavmeshGeometry: Sendable {
         /// this one none. Nothing local can range-check it, so it is not
         /// checked here; the pathing graph resolves it against the navmesh it
         /// names (16.2, issue #200).
-        package let triangle: Int16
+        public let triangle: Int16
     }
 
     /// A triangle standing at a door threshold, paired with the DOOR REFR an
     /// actor passing over it teleports through.
-    package struct DoorLink: Equatable, Sendable {
-        package static let encodedSize = 10
+    public struct DoorLink: Equatable, Sendable {
+        public static let encodedSize = 10
 
-        package let triangle: Int16
-        package let door: FormID
+        public let triangle: Int16
+        public let door: FormID
     }
 
     /// NVNM version; 12 in every vanilla record.
-    package let version: UInt32
-    package let location: NavmeshLocation
-    package let vertices: [SIMD3<Float>]
-    package let triangles: [Triangle]
-    package let edgeLinks: [EdgeLink]
-    package let doorLinks: [DoorLink]
+    public let version: UInt32
+    public let location: NavmeshLocation
+    public let vertices: [SIMD3<Float>]
+    public let triangles: [Triangle]
+    public let edgeLinks: [EdgeLink]
+    public let doorLinks: [DoorLink]
     /// Cover-triangle list length. The list itself is validated and dropped.
-    package let coverTriangleCount: Int
+    public let coverTriangleCount: Int
     /// Navmesh-grid divisor: the grid is divisor x divisor squares. xEdit
     /// treats a value over 12 as "no grid follows"; this decoder does the same.
-    package let gridDivisor: UInt32
+    public let gridDivisor: UInt32
     /// Extent of one grid square, in game units.
-    package let gridSize: SIMD2<Float>
-    package let boundsMin: SIMD3<Float>
-    package let boundsMax: SIMD3<Float>
+    public let gridSize: SIMD2<Float>
+    public let boundsMin: SIMD3<Float>
+    public let boundsMax: SIMD3<Float>
     /// Total triangle indices across every grid square, kept for the census;
     /// the per-square lists themselves are validated and dropped.
-    package let gridTriangleIndexCount: Int
+    public let gridTriangleIndexCount: Int
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         version = try reader.readUInt32()
         location = try NavmeshDecoding.readLocation(&reader)

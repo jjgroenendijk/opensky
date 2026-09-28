@@ -13,6 +13,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension GameViewController: CastingControlProviding {
     var castingControlSnapshot: CastingControlSnapshot {

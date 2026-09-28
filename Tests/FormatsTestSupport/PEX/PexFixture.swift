@@ -4,8 +4,8 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum PexFixture {
-    enum Value {
+public enum PexFixture: Sendable {
+    public enum Value: Sendable {
         case null
         case identifier(UInt16)
         case string(UInt16)
@@ -14,12 +14,17 @@ enum PexFixture {
         case boolean(Bool)
     }
 
-    struct Instruction {
-        let opcode: UInt8
-        let operands: [Value]
+    public struct Instruction: Sendable {
+        public let opcode: UInt8
+        public let operands: [Value]
+
+        public init(opcode: UInt8, operands: [Value]) {
+            self.opcode = opcode
+            self.operands = operands
+        }
     }
 
-    static let strings = [
+    public static let strings = [
         "",
         "FixtureObject",
         "ParentObject",
@@ -45,7 +50,7 @@ enum PexFixture {
         "staticCall"
     ]
 
-    static var everyInstruction: [Instruction] {
+    public static var everyInstruction: [Instruction] {
         (UInt8(0x00) ... UInt8(0x23)).map { raw in
             let opcode = PexOpcode(rawValue: raw)
             var operands = Array(
@@ -69,7 +74,7 @@ enum PexFixture {
         }
     }
 
-    static func file(
+    public static func file(
         instructions: [Instruction] = everyInstruction,
         objectNameIndex: UInt16 = 1,
         magic: UInt32 = PexFile.magic,
@@ -114,7 +119,7 @@ enum PexFixture {
         return out
     }
 
-    static func instruction(opcode: UInt8, operands: [Value] = []) -> Data {
+    public static func instruction(opcode: UInt8, operands: [Value] = []) -> Data {
         var out = Data([opcode])
         for operand in operands {
             out.append(value: operand)
@@ -122,7 +127,7 @@ enum PexFixture {
         return out
     }
 
-    static func runtimeFile(objects: [PexObject]) -> PexFile {
+    public static func runtimeFile(objects: [PexObject]) -> PexFile {
         PexFile(
             header: PexHeader(
                 majorVersion: 3,
@@ -140,7 +145,7 @@ enum PexFixture {
         )
     }
 
-    static func runtimeFunction(
+    public static func runtimeFunction(
         returnType: String = "None",
         flags: PexFunctionFlags = [],
         parameters: [PexTypedName] = [],
@@ -158,7 +163,7 @@ enum PexFixture {
         )
     }
 
-    static func runtimeObject(
+    public static func runtimeObject(
         name: String,
         parent: String = "",
         automaticState: String = "",

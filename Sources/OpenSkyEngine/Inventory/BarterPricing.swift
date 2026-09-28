@@ -26,6 +26,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// The barter price factors one merchant transaction is priced at.
 nonisolated struct BarterPricing: Equatable, Sendable {

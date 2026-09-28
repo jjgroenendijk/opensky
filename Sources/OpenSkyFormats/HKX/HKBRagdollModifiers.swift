@@ -27,17 +27,17 @@ import Foundation
 /// twelve response rates in a fixed order. Kept as a flat array because nothing
 /// in this milestone reads an individual gain, and naming twelve floats that
 /// M15 may re-derive would be twelve chances to be wrong.
-nonisolated package struct HKBFootIkGains: Equatable {
+nonisolated public struct HKBFootIkGains: Equatable, Sendable {
     /// In Havok's declared order: on/off, ground ascending, ground descending,
     /// foot planted, foot raised, foot unlock, world-from-model feedback,
     /// error up/down bias, align world-from-model, hip orientation, max knee
     /// angle difference, ankle orientation.
-    package let gains: [Float]
+    public let gains: [Float]
 
-    package static let count = 12
-    package static let stride = 48
+    public static let count = 12
+    public static let stride = 48
 
-    package static func decode(
+    public static func decode(
         _ cursor: inout HKXObjectCursor,
         at offset: Int,
         named member: String
@@ -51,17 +51,17 @@ nonisolated package struct HKBFootIkGains: Equatable {
 }
 
 /// One entry of `hkbFootIkControlsModifier::m_legs`, 48 bytes.
-nonisolated package struct HKBFootIkLeg: Equatable {
-    package let groundPosition: SIMD4<Float>
+nonisolated public struct HKBFootIkLeg: Equatable, Sendable {
+    public let groundPosition: SIMD4<Float>
     /// Raised when the foot leaves the ground.
-    package let ungroundedEvent: HKBEventProperty
-    package let verticalError: Float
-    package let hitSomething: Bool
-    package let isPlantedMS: Bool
+    public let ungroundedEvent: HKBEventProperty
+    public let verticalError: Float
+    public let hitSomething: Bool
+    public let isPlantedMS: Bool
 
-    package static let stride = 48
+    public static let stride = 48
 
-    package static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBFootIkLeg {
+    public static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBFootIkLeg {
         let member = "m_legs[\(index)]"
         return HKBFootIkLeg(
             groundPosition: element
@@ -81,15 +81,15 @@ nonisolated package struct HKBFootIkLeg: Equatable {
 
 /// Decoded `hkbFootIkControlsModifier`, size 176: feeds the foot-IK solver the
 /// per-leg ground contacts the graph believes in.
-nonisolated package struct HKBFootIkControlsModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let gains: HKBFootIkGains
-    package let legs: [HKBFootIkLeg]
-    package let errorOutTranslation: SIMD4<Float>
-    package let alignWithGroundRotation: SIMD4<Float>
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBFootIkControlsModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let gains: HKBFootIkGains
+    public let legs: [HKBFootIkLeg]
+    public let errorOutTranslation: SIMD4<Float>
+    public let alignWithGroundRotation: SIMD4<Float>
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbFootIkControlsModifier"
+    public static let className = "hkbFootIkControlsModifier"
 
     /// `m_controlData` starts at 0x50 and its only member is `m_gains` at +0.
     private static let gainsOffset = 0x50
@@ -97,7 +97,7 @@ nonisolated package struct HKBFootIkControlsModifier: HKBClass, Equatable {
     private static let errorOutField = HKXField(0x90, "m_errorOutTranslation")
     private static let alignRotationField = HKXField(0xA0, "m_alignWithGroundRotation")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBFootIkControlsModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -131,42 +131,42 @@ nonisolated package struct HKBFootIkControlsModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + legs.enumerated().flatMap { index, leg in
             leg.ungroundedEvent.references(named: "m_legs[\(index)].m_ungroundedEvent")
         }
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(legs.count) legs, \(gains.gains.count) foot-IK gains"
     }
 }
 
 /// Decoded `hkbPoweredRagdollControlsModifier`, size 144: drives a ragdoll
 /// towards the animated pose with a motor rather than replacing it.
-nonisolated package struct HKBPoweredRagdollControlsModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let maxForce: Float
-    package let tau: Float
-    package let damping: Float
-    package let proportionalRecoveryVelocity: Float
-    package let constantRecoveryVelocity: Float
+nonisolated public struct HKBPoweredRagdollControlsModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let maxForce: Float
+    public let tau: Float
+    public let damping: Float
+    public let proportionalRecoveryVelocity: Float
+    public let constantRecoveryVelocity: Float
     /// `hkbBoneIndexArray` of the bones the motor drives.
-    package let bones: HKXPointerTarget?
-    package let poseMatchingBone0: Int
-    package let poseMatchingBone1: Int
-    package let poseMatchingBone2: Int
+    public let bones: HKXPointerTarget?
+    public let poseMatchingBone0: Int
+    public let poseMatchingBone1: Int
+    public let poseMatchingBone2: Int
     /// `hkbWorldFromModelModeData::WorldFromModelMode`.
-    package let worldFromModelMode: Int
+    public let worldFromModelMode: Int
     /// `hkbBoneWeightArray` scaling the motor per bone.
-    package let boneWeights: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+    public let boneWeights: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbPoweredRagdollControlsModifier"
+    public static let className = "hkbPoweredRagdollControlsModifier"
 
     private static let maxForceField = HKXField(0x50, "m_controlData.m_maxForce")
     private static let tauField = HKXField(0x54, "m_controlData.m_tau")
@@ -190,7 +190,7 @@ nonisolated package struct HKBPoweredRagdollControlsModifier: HKBClass, Equatabl
     private static let modeField = HKXField(0x7E, "m_worldFromModelModeData.m_mode")
     private static let boneWeightsField = HKXField(0x80, "m_boneWeights")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBPoweredRagdollControlsModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -212,17 +212,17 @@ nonisolated package struct HKBPoweredRagdollControlsModifier: HKBClass, Equatabl
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
             + HKBReference.optional("m_bones", bones)
             + HKBReference.optional("m_boneWeights", boneWeights)
     }
 
-    package var summary: String {
+    public var summary: String {
         "max force \(maxForce), tau \(tau), damping \(damping)"
     }
 }
@@ -231,28 +231,28 @@ nonisolated package struct HKBPoweredRagdollControlsModifier: HKBClass, Equatabl
 /// to the keyframe-hierarchy solver. Its `m_controlData` embeds a 48-byte
 /// `hkaKeyFrameHierarchyUtilityControlData` whose members are M15's business
 /// and are deliberately not decoded here; `m_durationToBlend` sits past it.
-nonisolated package struct HKBRigidBodyRagdollControlsModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let durationToBlend: Float
+nonisolated public struct HKBRigidBodyRagdollControlsModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let durationToBlend: Float
     /// `hkbBoneIndexArray` of the bones handed to the ragdoll.
-    package let bones: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+    public let bones: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbRigidBodyRagdollControlsModifier"
+    public static let className = "hkbRigidBodyRagdollControlsModifier"
 
     /// The blend `0_master.hkx` authors on its one instance of this class,
     /// `DriveRagdollRB`, read off the local install through
     /// `openskycli hkx meshes\actors\character\behaviors\0_master.hkx`. It is
     /// what a session with no evaluated graph falls back to (issue #197), so
     /// that the fallback is vanilla's own number rather than an invented one.
-    package static let vanillaBlendDuration: Float = 0.5
+    public static let vanillaBlendDuration: Float = 0.5
 
     private static let durationToBlendField = HKXField(
         0x80, "m_controlData.m_durationToBlend"
     )
     private static let bonesField = HKXField(0x90, "m_bones")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBRigidBodyRagdollControlsModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -265,15 +265,15 @@ nonisolated package struct HKBRigidBodyRagdollControlsModifier: HKBClass, Equata
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + HKBReference.optional("m_bones", bones)
     }
 
-    package var summary: String {
+    public var summary: String {
         "blend over \(durationToBlend)s"
     }
 }

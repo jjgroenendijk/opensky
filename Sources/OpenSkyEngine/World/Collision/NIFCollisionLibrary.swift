@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated enum NIFCollisionLibraryError: Error, Equatable {
     case fileNotFound(path: String)

@@ -4,6 +4,7 @@
 // bytes (AGENTS.md legal boundary). Observed values probed on SabreCat.nif,
 // documented in docs/formats/nif.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

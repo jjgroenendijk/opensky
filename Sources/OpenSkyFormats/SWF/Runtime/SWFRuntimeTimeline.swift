@@ -20,12 +20,12 @@ nonisolated extension SWFMovieRuntime {
     /// The frames a node actually decoded. A sprite's declared `FrameCount` can
     /// exceed them, so indexing uses this and `_totalframes` uses the
     /// declaration.
-    package func frames(of node: SWFDisplayObject) -> [SWFTimelineFrame] {
+    public func frames(of node: SWFDisplayObject) -> [SWFTimelineFrame] {
         node.timeline?.frames ?? []
     }
 
     /// Moves `node`'s playhead to `index` and executes that frame.
-    package func enterFrame(_ index: Int, of node: SWFDisplayObject) {
+    public func enterFrame(_ index: Int, of node: SWFDisplayObject) {
         let frames = frames(of: node)
         guard node.isClip, !frames.isEmpty else {
             return
@@ -42,14 +42,14 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// `gotoAndStop` / `gotoAndPlay` by zero-based frame index.
-    package func gotoFrame(_ index: Int, of node: SWFDisplayObject, play: Bool) {
+    public func gotoFrame(_ index: Int, of node: SWFDisplayObject, play: Bool) {
         node.isPlaying = play
         enterFrame(index, of: node)
     }
 
     /// `gotoAndStop("label")` / `ActionGoToLabel`. An unknown label leaves the
     /// playhead alone and lands in the tally, never throws.
-    package func gotoLabel(_ label: String, of node: SWFDisplayObject, play: Bool) {
+    public func gotoLabel(_ label: String, of node: SWFDisplayObject, play: Bool) {
         guard let index = node.timeline?.frameIndex(forLabel: label) else {
             runtime.noteMissing("gotoAndStop(\(label))")
             node.isPlaying = play
@@ -59,7 +59,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// The AS2 timeline opcodes, once the host resolved their target.
-    package func perform(_ command: AS2TimelineCommand, on node: SWFDisplayObject) {
+    public func perform(_ command: AS2TimelineCommand, on node: SWFDisplayObject) {
         switch command {
         case .stop:
             node.isPlaying = false
@@ -144,7 +144,7 @@ nonisolated extension SWFMovieRuntime {
         bringUp(node)
     }
 
-    package func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
+    public func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
         if let matrix = placement.matrix {
             node.matrix = matrix
         }
@@ -175,7 +175,7 @@ nonisolated extension SWFMovieRuntime {
     /// `load` and run the frame's actions. The constructor sees a clip whose
     /// children already exist, which is what CLIK components expect, and the
     /// event order is the one the `ClipEventFlags` table implies.
-    package func bringUp(_ node: SWFDisplayObject) {
+    public func bringUp(_ node: SWFDisplayObject) {
         let frames = frames(of: node)
         if node.isClip, !frames.isEmpty {
             apply(frame: frames[0], to: node)

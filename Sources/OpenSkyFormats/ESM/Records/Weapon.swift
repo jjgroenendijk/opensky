@@ -47,10 +47,10 @@
 
 import Foundation
 
-nonisolated package struct Weapon {
+nonisolated public struct Weapon: Sendable {
     /// DNAM animation type. Decides the attack animation set and, with the
     /// keywords, what the weapon reads as in the UI.
-    package enum AnimationType: UInt8, Equatable {
+    public enum AnimationType: UInt8, Equatable, Sendable {
         case other = 0
         case oneHandSword = 1
         case oneHandDagger = 2
@@ -63,66 +63,66 @@ nonisolated package struct Weapon {
         case crossbow = 9
     }
 
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt16
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
-        package static let ignoresNormalWeaponResistance = Flags(rawValue: 0x0001)
-        package static let cannotDrop = Flags(rawValue: 0x0008)
-        package static let embeddedWeapon = Flags(rawValue: 0x0020)
-        package static let nonPlayable = Flags(rawValue: 0x0080)
+        public static let ignoresNormalWeaponResistance = Flags(rawValue: 0x0001)
+        public static let cannotDrop = Flags(rawValue: 0x0008)
+        public static let embeddedWeapon = Flags(rawValue: 0x0020)
+        public static let nonPlayable = Flags(rawValue: 0x0080)
     }
 
     /// CRDT — critical-hit numbers plus the SPEL applied on a critical.
-    package struct CriticalData: Equatable {
-        package let damage: UInt16
+    public struct CriticalData: Equatable, Sendable {
+        public let damage: UInt16
         /// Chance multiplier; the CK constrains it to 0...1.5.
-        package let percentMultiplier: Float
+        public let percentMultiplier: Float
         /// True when the critical effect only fires on a killing blow.
-        package let onDeath: Bool
+        public let onDeath: Bool
         /// SPEL applied on a critical hit; nil when unset.
-        package let effect: FormID?
+        public let effect: FormID?
     }
 
-    package let formID: FormID
-    package let fields: InventoryItemFields
+    public let formID: FormID
+    public let fields: InventoryItemFields
     /// DESC — flavour text, set on artifacts and enchanted uniques.
-    package let description: LString?
+    public let description: LString?
     /// DATA gold value and weight.
-    package let itemValue: ItemValue
+    public let itemValue: ItemValue
     /// DATA base damage before skill, perk and enchantment scaling.
-    package let damage: UInt16
+    public let damage: UInt16
     /// DNAM animation type; nil when the byte is outside the documented set.
-    package let animationType: AnimationType?
+    public let animationType: AnimationType?
     /// DNAM attack speed multiplier.
-    package let speed: Float
+    public let speed: Float
     /// DNAM reach multiplier.
-    package let reach: Float
-    package let flags: Flags
+    public let reach: Float
+    public let flags: Flags
     /// DNAM governing skill as an actor-value index; nil when -1 (no skill).
-    package let skill: Int32?
+    public let skill: Int32?
     /// DNAM stagger magnitude.
-    package let stagger: Float
-    package let criticalData: CriticalData?
+    public let stagger: Float
+    public let criticalData: CriticalData?
     /// EITM — ENCH applied by the weapon; nil on unenchanted weapons.
-    package let enchantment: FormID?
+    public let enchantment: FormID?
     /// EAMT — enchantment charge; feeds the gold-value formula in #179.
-    package let enchantmentCharge: UInt16?
+    public let enchantmentCharge: UInt16?
     /// ETYP — EQUP slot ("BothHands", "EitherHand").
-    package let equipType: FormID?
+    public let equipType: FormID?
     /// CNAM — the WEAP this record templates from, nil when standalone.
-    package let template: FormID?
+    public let template: FormID?
     /// INAM — the IPDS an ordinary swing's impact resolves through; nil when
     /// the weapon names none.
-    package let impactDataSet: FormID?
+    public let impactDataSet: FormID?
     /// BIDS — the IPDS a shield bash resolves through; nil when unset. Not the
     /// swing's set: UESP names the two separately and only bashing reads this.
-    package let blockBashImpactDataSet: FormID?
+    public let blockBashImpactDataSet: FormID?
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "WEAP" else {
             throw ESMError.malformed("expected WEAP record, got \(record.type)")
         }

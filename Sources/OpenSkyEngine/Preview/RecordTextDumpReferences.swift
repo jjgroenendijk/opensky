@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
     struct KeywordContext {

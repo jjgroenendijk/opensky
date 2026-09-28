@@ -19,6 +19,7 @@
 // code, and no game file is opened.
 
 import AppKit
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

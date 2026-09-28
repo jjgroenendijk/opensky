@@ -9,14 +9,14 @@ import Foundation
 @testable import OpenSkyFormats
 import Testing
 
-enum ShoutFixture {
+public enum ShoutFixture: Sendable {
     /// One SNAM entry's authored values.
-    struct WordSpec {
-        let word: UInt32
-        let spell: UInt32
-        let recovery: Float
+    public struct WordSpec: Sendable {
+        public let word: UInt32
+        public let spell: UInt32
+        public let recovery: Float
 
-        init(word: UInt32, spell: UInt32, recovery: Float) {
+        public init(word: UInt32, spell: UInt32, recovery: Float) {
             self.word = word
             self.spell = spell
             self.recovery = recovery
@@ -24,7 +24,7 @@ enum ShoutFixture {
     }
 
     /// One SHOU with a FULL, a DESC, an MDOB and one SNAM per requested word.
-    static func shout(editorID: String, words: [WordSpec]) throws -> ESMRecord {
+    public static func shout(editorID: String, words: [WordSpec]) throws -> ESMRecord {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
         fields += ESMFixture.field("FULL", ESMFixture.zstring("Fire Breath"))
         var menuObject = Data()
@@ -38,7 +38,7 @@ enum ShoutFixture {
     }
 
     /// A 12-byte SNAM: word FormID, spell FormID, recovery time.
-    static func wordEntry(_ entry: WordSpec) -> Data {
+    public static func wordEntry(_ entry: WordSpec) -> Data {
         var data = Data()
         data.appendUInt32(entry.word)
         data.appendUInt32(entry.spell)
@@ -47,7 +47,7 @@ enum ShoutFixture {
     }
 
     /// A 12-byte LVLO: uint16 level, two pad bytes, FormID, uint32 count.
-    static func leveledEntry(level: UInt16, reference: UInt32, count: UInt32 = 1) -> Data {
+    public static func leveledEntry(level: UInt16, reference: UInt32, count: UInt32 = 1) -> Data {
         var data = Data()
         data.appendUInt16(level)
         data.appendUInt16(0)
@@ -57,7 +57,11 @@ enum ShoutFixture {
     }
 
     /// A single-record plugin parsed back into the one record it holds.
-    static func record(type: String, fields: Data, formID: UInt32 = 0x123) throws -> ESMRecord {
+    public static func record(
+        type: String,
+        fields: Data,
+        formID: UInt32 = 0x123
+    ) throws -> ESMRecord {
         let plugin = ESMFixture.tes4()
             + ESMFixture.topGroup(
                 type,

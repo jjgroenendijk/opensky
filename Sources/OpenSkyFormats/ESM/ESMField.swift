@@ -7,13 +7,13 @@
 
 import Foundation
 
-nonisolated package struct ESMField {
-    package let type: FourCC
-    package let data: Data
+nonisolated public struct ESMField: Sendable {
+    public let type: FourCC
+    public let data: Data
 
     /// Parses a record's whole field region. XXXX markers are folded into the
     /// field they extend and not emitted themselves.
-    package static func parseAll(_ data: Data) throws -> [ESMField] {
+    public static func parseAll(_ data: Data) throws -> [ESMField] {
         var fields: [ESMField] = []
         var reader = BinaryReader(data)
         var sizeOverride: Int?

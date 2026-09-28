@@ -2,6 +2,7 @@
 // shape every CLIK component has, because a component extends
 // `gfx.core.UIComponent`, which extends `MovieClip`.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

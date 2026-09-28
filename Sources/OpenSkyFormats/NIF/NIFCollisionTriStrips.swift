@@ -11,7 +11,7 @@ import Foundation
 import simd
 
 nonisolated extension NIFCollisionTriangleCollections {
-    package static func decodeTriStrips(data: Data, scale: SIMD3<Float>) throws -> Soup {
+    public static func decodeTriStrips(data: Data, scale: SIMD3<Float>) throws -> Soup {
         var reader = BinaryReader(data)
         _ = try reader.readUInt32() // group ID
         let vertexCount = try Int(reader.readUInt16())

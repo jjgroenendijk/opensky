@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum AssetCommand {
     static func runNIF(context: CLIContext, scanner: inout ArgumentScanner) throws {

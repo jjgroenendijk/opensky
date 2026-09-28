@@ -6,7 +6,7 @@ import Foundation
 import simd
 
 nonisolated extension NIFCollisionDecoder {
-    package mutating func decodeLeafShape(
+    public mutating func decodeLeafShape(
         block: NIFFile.Block,
         parent: float4x4
     ) throws -> [NIFCollisionShape] {

@@ -8,56 +8,56 @@
 
 import Foundation
 
-nonisolated package enum ESMError: Error, Equatable {
+nonisolated public enum ESMError: Error, Equatable, Sendable {
     /// File does not start with a TES4 header record.
     case missingTES4
     /// Structural damage: truncated headers, sizes past the container end, ...
     case malformed(String)
 }
 
-nonisolated package struct ESMRecord {
+nonisolated public struct ESMRecord: Sendable {
     /// Record flag bits OpenSky interprets. Many bits are per-record-type
     /// overloads (see UESP table); only globally-meaningful ones live here.
-    package struct Flags: OptionSet {
-        package let rawValue: UInt32
+    public struct Flags: OptionSet, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
         /// TES4: ESM file, pinned to the top of the load order.
-        package static let esm = Flags(rawValue: 1 << 0)
-        package static let deleted = Flags(rawValue: 1 << 5)
+        public static let esm = Flags(rawValue: 1 << 0)
+        public static let deleted = Flags(rawValue: 1 << 5)
         /// TES4: strings live in .strings/.dlstrings/.ilstrings tables.
-        package static let localized = Flags(rawValue: 1 << 7)
+        public static let localized = Flags(rawValue: 1 << 7)
         /// TES4: ESL (light) file, loaded into the 0xFE FormID space.
-        package static let esl = Flags(rawValue: 1 << 9)
+        public static let esl = Flags(rawValue: 1 << 9)
         /// REFR/ACHR: placed reference starts disabled until a script or
         /// quest enables it (UESP record-header flag 0x800).
-        package static let initiallyDisabled = Flags(rawValue: 1 << 11)
-        package static let ignored = Flags(rawValue: 1 << 12)
+        public static let initiallyDisabled = Flags(rawValue: 1 << 11)
+        public static let ignored = Flags(rawValue: 1 << 12)
         /// GLOB: the global is constant and the Creation Kit refuses to let a
         /// script write it (UESP GLOB record-header flag 0x40).
-        package static let constantGlobal = Flags(rawValue: 1 << 6)
+        public static let constantGlobal = Flags(rawValue: 1 << 6)
         /// Data is uint32 decompressedSize + zlib stream.
-        package static let compressed = Flags(rawValue: 1 << 18)
+        public static let compressed = Flags(rawValue: 1 << 18)
     }
 
     /// 24-byte SSE record header (Oblivion's is 20 — not supported).
-    package struct Header {
-        package static let size = 24
+    public struct Header: Sendable {
+        public static let size = 24
 
-        package let type: FourCC
-        package let dataSize: UInt32
-        package let flags: Flags
-        package let formID: UInt32
-        package let timestamp: UInt16
-        package let versionControl: UInt16
+        public let type: FourCC
+        public let dataSize: UInt32
+        public let flags: Flags
+        public let formID: UInt32
+        public let timestamp: UInt16
+        public let versionControl: UInt16
         /// Internal form version: 43 = Skyrim LE, 44 = SSE.
-        package let version: UInt16
-        package let unknown: UInt16
+        public let version: UInt16
+        public let unknown: UInt16
 
-        package init(reader: inout BinaryReader) throws {
+        public init(reader: inout BinaryReader) throws {
             type = try reader.readFourCC()
             dataSize = try reader.readUInt32()
             flags = try Flags(rawValue: reader.readUInt32())
@@ -69,45 +69,45 @@ nonisolated package struct ESMRecord {
         }
     }
 
-    package let header: Header
+    public let header: Header
     /// Absolute range of the (possibly compressed) data payload in `file`.
-    package let dataRange: Range<Int>
+    public let dataRange: Range<Int>
     /// The whole plugin file (memory-mapped); payloads stay untouched until
     /// `fieldData()` is called.
     private let file: Data
 
-    package init(header: Header, dataRange: Range<Int>, file: Data) {
+    public init(header: Header, dataRange: Range<Int>, file: Data) {
         self.header = header
         self.dataRange = dataRange
         self.file = file
     }
 
-    package var type: FourCC {
+    public var type: FourCC {
         header.type
     }
 
-    package var formID: UInt32 {
+    public var formID: UInt32 {
         header.formID
     }
 
-    package var flags: Flags {
+    public var flags: Flags {
         header.flags
     }
 
-    package var isCompressed: Bool {
+    public var isCompressed: Bool {
         header.flags.contains(.compressed)
     }
 
-    package var isDeleted: Bool {
+    public var isDeleted: Bool {
         header.flags.contains(.deleted)
     }
 
-    package var isInitiallyDisabled: Bool {
+    public var isInitiallyDisabled: Bool {
         header.flags.contains(.initiallyDisabled)
     }
 
     /// Field bytes, zlib-decompressed when the record is compressed.
-    package func fieldData() throws -> Data {
+    public func fieldData() throws -> Data {
         var reader = BinaryReader(file, offset: dataRange.lowerBound)
         guard isCompressed else {
             return try reader.read(count: dataRange.count)
@@ -119,7 +119,7 @@ nonisolated package struct ESMRecord {
 
     /// Parses all fields. XXXX size extensions are resolved into the extended
     /// field; the XXXX marker itself is not emitted.
-    package func fields() throws -> [ESMField] {
+    public func fields() throws -> [ESMField] {
         try ESMField.parseAll(fieldData())
     }
 }

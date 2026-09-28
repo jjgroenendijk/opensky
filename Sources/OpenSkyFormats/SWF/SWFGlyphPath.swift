@@ -9,7 +9,7 @@
 
 import CoreGraphics
 
-nonisolated package enum SWFGlyphPath {
+nonisolated public enum SWFGlyphPath: Sendable {
     /// Builds a CGPath for a glyph's segments, scaled so one EM square spans
     /// `emPixelSize` pixels, and flipped from SWF's y-down glyph space to
     /// CoreGraphics y-up with the baseline at y = 0. Returns nil for an empty
@@ -19,7 +19,7 @@ nonisolated package enum SWFGlyphPath {
     ///   - segments: glyph shape edges in absolute glyph-coordinate twips.
     ///   - unitsPerEM: glyph units per EM (1024 DefineFont2, 20480 DefineFont3).
     ///   - emPixelSize: target EM size in pixels (the text height in pixels).
-    package static func makePath(
+    public static func makePath(
         segments: [SWFShapeSegment],
         unitsPerEM: Int,
         emPixelSize: Int

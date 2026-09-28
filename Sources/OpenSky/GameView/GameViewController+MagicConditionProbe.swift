@@ -17,6 +17,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension GameViewController {
     /// One probe: which function to run and how to spell its parameter.

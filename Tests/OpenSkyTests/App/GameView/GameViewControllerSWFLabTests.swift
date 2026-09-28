@@ -6,9 +6,11 @@
 // nil renderer as "no GPU assignment", exactly as the other control bridges).
 
 import AppKit
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct GameViewControllerSWFLabTests {

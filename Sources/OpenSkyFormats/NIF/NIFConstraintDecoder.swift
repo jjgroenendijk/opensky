@@ -11,10 +11,10 @@
 import Foundation
 import simd
 
-nonisolated package enum NIFConstraintDecoder {
+nonisolated public enum NIFConstraintDecoder: Sendable {
     /// Constraint block types this decoder reads, keyed to the `hkConstraintType`
     /// the block's payload follows.
-    package static let types: [String: NIFConstraintType] = [
+    public static let types: [String: NIFConstraintType] = [
         "bhkBallAndSocketConstraint": .ballAndSocket,
         "bhkHingeConstraint": .hinge,
         "bhkLimitedHingeConstraint": .limitedHinge,
@@ -26,7 +26,7 @@ nonisolated package enum NIFConstraintDecoder {
 
     /// Throws `NIFError.unsupported` for a constraint class outside `types`,
     /// so the caller tallies it by block type and keeps the body.
-    package static func decode(block: NIFFile.Block, index: Int) throws -> NIFCollisionConstraint {
+    public static func decode(block: NIFFile.Block, index: Int) throws -> NIFCollisionConstraint {
         guard let type = types[block.typeName] else {
             throw NIFError.unsupported("constraint class \(block.typeName)")
         }

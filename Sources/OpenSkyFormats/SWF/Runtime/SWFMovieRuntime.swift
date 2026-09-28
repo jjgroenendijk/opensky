@@ -23,87 +23,87 @@
 
 import Foundation
 
-nonisolated package final class SWFMovieRuntime {
+nonisolated public final class SWFMovieRuntime {
     /// The decoded movie plus its resolved external fonts.
-    package let movieScene: SWFMovieScene
-    package let runtime: AS2Runtime
-    package let host: SWFRuntimeHost
+    public let movieScene: SWFMovieScene
+    public let runtime: AS2Runtime
+    public let host: SWFRuntimeHost
 
     /// `_root` / `_level0`.
-    package let root: SWFDisplayObject
+    public let root: SWFDisplayObject
     /// `MovieClip.prototype` — where the clip methods live, and what a class
     /// registered against a sprite ultimately inherits from.
-    package let movieClipPrototype: AS2Object
+    public let movieClipPrototype: AS2Object
     /// `TextField.prototype`.
-    package let textFieldPrototype: AS2Object
+    public let textFieldPrototype: AS2Object
 
     /// Ticks applied since bring-up. Reported, never used as a time source.
-    package private(set) var tickCount = 0
+    public private(set) var tickCount = 0
     /// True when the display tree changed since the last `makeScene()`.
-    package private(set) var isDirty = true
+    public private(set) var isDirty = true
     /// Instantiations refused because the tree hit `maximumNodes`.
-    package private(set) var droppedInstantiations = 0
+    public private(set) var droppedInstantiations = 0
     /// Frame DoAction blocks skipped because a frame action re-entered its own
     /// clip past `maximumGotoDepth`.
-    package private(set) var droppedFrameActions = 0
+    public private(set) var droppedFrameActions = 0
     /// True once `start()` has run.
-    package private(set) var isStarted = false
+    public private(set) var isStarted = false
     /// What `Selection.setFocus` last pointed at. An unconsumed key falls back
     /// to this node's own handler; the CLIK framework does its own focus
     /// bookkeeping on top.
-    package weak var focusTarget: SWFDisplayObject?
+    public weak var focusTarget: SWFDisplayObject?
     /// Accepted `Selection.setFocus` calls, so a test can assert focus moved
     /// without depending on which node it moved to.
-    package var focusChanges = 0
+    public var focusChanges = 0
     /// Nesting guard for a frame action that jumps the same clip again.
-    package var gotoDepth = 0
+    public var gotoDepth = 0
     /// Live pointer and key state (milestone 8.3.2 phase 3).
-    package let input = SWFRuntimeInputState()
+    public let input = SWFRuntimeInputState()
     /// `setInterval` / `setTimeout` callbacks, fired from `advance()`.
-    package let timers = SWFRuntimeTimers()
+    public let timers = SWFRuntimeTimers()
     /// Both directions of the `GameDelegate` bridge, bounded.
-    package private(set) var invokeLog = SWFInvokeLog()
+    public private(set) var invokeLog = SWFInvokeLog()
     /// Engine-side handlers a movie may call by name.
-    package var hostFunctions: [String: SWFHostFunction] = [:]
+    public var hostFunctions: [String: SWFHostFunction] = [:]
     /// Placements that attached a key CLIPACTIONS handler. Zero across the whole
     /// vanilla install, which is what lets key dispatch skip the tree walk.
-    package private(set) var keyClipHandlers = 0
+    public private(set) var keyClipHandlers = 0
     /// Clips that currently expose one of Flash's three global mouse handlers.
-    package let globalMouseHandlers = SWFGlobalMouseHandlerRegistry()
+    public let globalMouseHandlers = SWFGlobalMouseHandlerRegistry()
 
     /// Display nodes one movie may hold. Vanilla menus build a few hundred; a
     /// runaway `attachMovie` loop is what this stops.
-    package static let maximumNodes = 4096
+    public static let maximumNodes = 4096
     /// How deep a `gotoAndStop` inside a frame action may re-enter.
-    package static let maximumGotoDepth = 8
+    public static let maximumGotoDepth = 8
     /// How far below the root the engine looks for a menu's `handleInput`.
-    package static let maximumHandlerDepth = 3
+    public static let maximumHandlerDepth = 3
     /// Longest interval a movie may schedule, in ticks. A minute at 60 frames
     /// per second, which is far past anything a menu waits for.
-    package static let maximumTimerTicks = 3600
+    public static let maximumTimerTicks = 3600
 
-    package var movie: SWFMovie {
+    public var movie: SWFMovie {
         movieScene.movie
     }
 
-    package var tally: AS2Tally {
+    public var tally: AS2Tally {
         runtime.tally
     }
 
-    package var traceLog: AS2TraceLog {
+    public var traceLog: AS2TraceLog {
         runtime.traceLog
     }
 
     /// Live node count, walked on demand (the tree is small).
-    package var nodeCount: Int {
+    public var nodeCount: Int {
         root.nodeCount()
     }
 
-    package var globalMouseHandlerClips: Int {
+    public var globalMouseHandlerClips: Int {
         globalMouseHandlers.count
     }
 
-    package init(movieScene: SWFMovieScene, limits: AS2Limits = .standard) {
+    public init(movieScene: SWFMovieScene, limits: AS2Limits = .standard) {
         self.movieScene = movieScene
         let host = SWFRuntimeHost()
         self.host = host
@@ -123,7 +123,7 @@ nonisolated package final class SWFMovieRuntime {
     }
 
     /// Runs the bring-up sequence. Safe to call once; later calls are ignored.
-    package func start() {
+    public func start() {
         guard !isStarted else {
             return
         }
@@ -137,7 +137,7 @@ nonisolated package final class SWFMovieRuntime {
 
     /// One explicit tick: every playing clip advances one frame. Call it from
     /// the engine's frame loop, never from a timer inside the layer.
-    package func advance() {
+    public func advance() {
         guard isStarted else {
             start()
             return
@@ -164,7 +164,7 @@ nonisolated package final class SWFMovieRuntime {
     /// Calls an ActionScript function the movie defined, with the root clip as
     /// the default receiver — the engine-to-movie direction of the bridge.
     @discardableResult
-    package func invoke(
+    public func invoke(
         _ name: String,
         on target: SWFDisplayObject? = nil,
         arguments: [AS2Value] = []
@@ -180,30 +180,30 @@ nonisolated package final class SWFMovieRuntime {
         )
     }
 
-    package func markDirty() {
+    public func markDirty() {
         isDirty = true
     }
 
-    package func noteDroppedFrameActions(_ count: Int) {
+    public func noteDroppedFrameActions(_ count: Int) {
         droppedFrameActions += count
     }
 
     /// Records one bridge call. The log is bounded and drops oldest first.
-    package func noteInvoke(_ entry: SWFInvokeEntry) {
+    public func noteInvoke(_ entry: SWFInvokeEntry) {
         invokeLog.append(entry)
     }
 
-    package func clearInvokeLog() {
+    public func clearInvokeLog() {
         invokeLog.clear()
     }
 
-    package func noteKeyClipHandler() {
+    public func noteKeyClipHandler() {
         keyClipHandlers += 1
     }
 
     /// Clears the dirty flag; the scene generator calls it after it reads the
     /// tree.
-    package func clearDirty() {
+    public func clearDirty() {
         isDirty = false
     }
 
@@ -212,7 +212,7 @@ nonisolated package final class SWFMovieRuntime {
     /// Builds the display object for a character id, wiring its ActionScript
     /// face. Returns nil for a character that cannot be placed (a font, a
     /// bitmap, or an id the dictionary does not hold).
-    package func makeDisplayObject(characterId: UInt16) -> SWFDisplayObject? {
+    public func makeDisplayObject(characterId: UInt16) -> SWFDisplayObject? {
         guard nodeCount < SWFMovieRuntime.maximumNodes else {
             droppedInstantiations += 1
             return nil
@@ -247,7 +247,7 @@ nonisolated package final class SWFMovieRuntime {
     /// Runs the class registered against a placed character's linkage name,
     /// with the display object as `this`. This plus running DoInitAction first
     /// is the whole reason a vanilla menu comes alive.
-    package func constructRegisteredClass(for node: SWFDisplayObject) {
+    public func constructRegisteredClass(for node: SWFDisplayObject) {
         guard
             let characterId = node.characterId,
             let linkage = movie.exportedIds[characterId],
@@ -267,7 +267,7 @@ nonisolated package final class SWFMovieRuntime {
     /// `attachMovie(linkageName, instanceName, depth)`: instantiates an exported
     /// character into a parent clip. Returns the new node, or nil when the
     /// linkage name names nothing placeable.
-    package func attach(
+    public func attach(
         linkage: String,
         into parent: SWFDisplayObject,
         depth: UInt16,

@@ -4,8 +4,8 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum MagicEffectFixture {
-    static func data(
+public enum MagicEffectFixture: Sendable {
+    public static func data(
         archetype: UInt32 = 0,
         castingType: UInt32 = 1,
         delivery: UInt32 = 2,
@@ -22,7 +22,7 @@ enum MagicEffectFixture {
         ])
     }
 
-    static func record(type: String, formID: UInt32 = 0, fields: Data) throws -> ESMRecord {
+    public static func record(type: String, formID: UInt32 = 0, fields: Data) throws -> ESMRecord {
         let file = try ESMFile(
             data: ESMFixture.tes4()
                 + ESMFixture.topGroup(
@@ -42,7 +42,7 @@ enum MagicEffectFixture {
         return record
     }
 
-    static func words(_ values: [UInt32]) -> Data {
+    public static func words(_ values: [UInt32]) -> Data {
         var data = Data()
         for value in values {
             data.appendUInt32(value)

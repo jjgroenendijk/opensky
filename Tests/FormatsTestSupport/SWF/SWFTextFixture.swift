@@ -7,36 +7,57 @@ import Foundation
 @testable import OpenSkyFormats
 
 /// Assembles a DefineText (11) / DefineText2 (33) tag body.
-struct SWFTextBodyBuilder {
+public struct SWFTextBodyBuilder: Sendable {
     /// One glyph placement inside a text record.
-    struct Glyph {
-        let index: Int
-        let advance: Int32
+    public struct Glyph: Sendable {
+        public let index: Int
+        public let advance: Int32
+
+        public init(index: Int, advance: Int32) {
+            self.index = index
+            self.advance = advance
+        }
     }
 
     /// One TEXTRECORD: optional state changes then glyph placements.
-    struct Record {
-        var fontID: UInt16?
-        var textHeight: UInt16?
-        var color: SWFColor?
-        var xOffset: Int16?
-        var yOffset: Int16?
-        var glyphs: [Glyph] = []
+    public struct Record: Sendable {
+        public var fontID: UInt16?
+        public var textHeight: UInt16?
+        public var color: SWFColor?
+        public var xOffset: Int16?
+        public var yOffset: Int16?
+        public var glyphs: [Glyph] = []
+
+        public init(
+            fontID: UInt16? = nil,
+            textHeight: UInt16? = nil,
+            color: SWFColor? = nil,
+            xOffset: Int16? = nil,
+            yOffset: Int16? = nil,
+            glyphs: [Glyph] = []
+        ) {
+            self.fontID = fontID
+            self.textHeight = textHeight
+            self.color = color
+            self.xOffset = xOffset
+            self.yOffset = yOffset
+            self.glyphs = glyphs
+        }
     }
 
-    var characterId: UInt16 = 1
-    var bounds = SWFRect(xMin: 0, xMax: 2000, yMin: 0, yMax: 400)
-    var translateX: Int32 = 0
-    var translateY: Int32 = 0
+    public var characterId: UInt16 = 1
+    public var bounds = SWFRect(xMin: 0, xMax: 2000, yMin: 0, yMax: 400)
+    public var translateX: Int32 = 0
+    public var translateY: Int32 = 0
     /// DefineText2 stores RGBA colors; DefineText stores RGB.
-    var rgba = false
-    var glyphBits = 8
-    var advanceBits = 12
-    var records: [Record] = []
+    public var rgba = false
+    public var glyphBits = 8
+    public var advanceBits = 12
+    public var records: [Record] = []
 
-    var writer = SWFBitWriter()
+    public var writer = SWFBitWriter()
 
-    mutating func build() -> Data {
+    public mutating func build() -> Data {
         writer = SWFBitWriter()
         writer.appendUInt16LE(characterId)
         appendRect(bounds)
@@ -117,25 +138,47 @@ struct SWFTextBodyBuilder {
         writer.writeSB(translateX, count: nbits)
         writer.writeSB(translateY, count: nbits)
     }
+
+    public init(
+        characterId: UInt16 = 1,
+        bounds: SWFRect = SWFRect(xMin: 0, xMax: 2000, yMin: 0, yMax: 400),
+        translateX: Int32 = 0,
+        translateY: Int32 = 0,
+        rgba: Bool = false,
+        glyphBits: Int = 8,
+        advanceBits: Int = 12,
+        records: [Record] = [],
+        writer: SWFBitWriter = SWFBitWriter()
+    ) {
+        self.characterId = characterId
+        self.bounds = bounds
+        self.translateX = translateX
+        self.translateY = translateY
+        self.rgba = rgba
+        self.glyphBits = glyphBits
+        self.advanceBits = advanceBits
+        self.records = records
+        self.writer = writer
+    }
 }
 
 /// Assembles a DefineEditText (37) tag body.
-struct SWFEditTextBodyBuilder {
-    var characterId: UInt16 = 1
-    var bounds = SWFRect(xMin: 0, xMax: 4000, yMin: 0, yMax: 800)
-    var flags = SWFEditTextFlags()
-    var fontID: UInt16?
-    var fontClass: String?
-    var fontHeight: UInt16?
-    var color: SWFColor?
-    var maxLength: UInt16?
-    var layout: SWFEditTextLayout?
-    var variableName = ""
-    var initialText: String?
+public struct SWFEditTextBodyBuilder: Sendable {
+    public var characterId: UInt16 = 1
+    public var bounds = SWFRect(xMin: 0, xMax: 4000, yMin: 0, yMax: 800)
+    public var flags = SWFEditTextFlags()
+    public var fontID: UInt16?
+    public var fontClass: String?
+    public var fontHeight: UInt16?
+    public var color: SWFColor?
+    public var maxLength: UInt16?
+    public var layout: SWFEditTextLayout?
+    public var variableName = ""
+    public var initialText: String?
 
-    var writer = SWFBitWriter()
+    public var writer = SWFBitWriter()
 
-    mutating func build() -> Data {
+    public mutating func build() -> Data {
         writer = SWFBitWriter()
         writer.appendUInt16LE(characterId)
         appendRect(bounds)
@@ -199,5 +242,33 @@ struct SWFEditTextBodyBuilder {
         for field in fields {
             writer.writeSB(field, count: nbits)
         }
+    }
+
+    public init(
+        characterId: UInt16 = 1,
+        bounds: SWFRect = SWFRect(xMin: 0, xMax: 4000, yMin: 0, yMax: 800),
+        flags: SWFEditTextFlags = SWFEditTextFlags(),
+        fontID: UInt16? = nil,
+        fontClass: String? = nil,
+        fontHeight: UInt16? = nil,
+        color: SWFColor? = nil,
+        maxLength: UInt16? = nil,
+        layout: SWFEditTextLayout? = nil,
+        variableName: String = "",
+        initialText: String? = nil,
+        writer: SWFBitWriter = SWFBitWriter()
+    ) {
+        self.characterId = characterId
+        self.bounds = bounds
+        self.flags = flags
+        self.fontID = fontID
+        self.fontClass = fontClass
+        self.fontHeight = fontHeight
+        self.color = color
+        self.maxLength = maxLength
+        self.layout = layout
+        self.variableName = variableName
+        self.initialText = initialText
+        self.writer = writer
     }
 }

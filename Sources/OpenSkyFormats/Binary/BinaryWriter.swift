@@ -4,7 +4,7 @@
 
 import Foundation
 
-nonisolated package enum BinaryWriterError: Error, Equatable {
+nonisolated public enum BinaryWriterError: Error, Equatable, Sendable {
     /// The string could not be represented in the requested encoding.
     case unencodableString(String)
     /// A zero-terminated string cannot contain an embedded NUL byte.
@@ -12,37 +12,37 @@ nonisolated package enum BinaryWriterError: Error, Equatable {
 }
 
 /// Append-only byte buffer builder. Value type: copy to branch, cheap to extend.
-nonisolated package struct BinaryWriter {
-    package private(set) var data = Data()
+nonisolated public struct BinaryWriter: Sendable {
+    public private(set) var data = Data()
 
-    package init() {}
+    public init() {}
 
-    package var count: Int {
+    public var count: Int {
         data.count
     }
 
-    package mutating func write(_ bytes: Data) {
+    public mutating func write(_ bytes: Data) {
         data.append(bytes)
     }
 
-    package mutating func writeUInt8(_ value: UInt8) {
+    public mutating func writeUInt8(_ value: UInt8) {
         data.append(value)
     }
 
-    package mutating func writeUInt16(_ value: UInt16) {
+    public mutating func writeUInt16(_ value: UInt16) {
         writeInteger(value)
     }
 
-    package mutating func writeUInt32(_ value: UInt32) {
+    public mutating func writeUInt32(_ value: UInt32) {
         writeInteger(value)
     }
 
-    package mutating func writeUInt64(_ value: UInt64) {
+    public mutating func writeUInt64(_ value: UInt64) {
         writeInteger(value)
     }
 
     /// IEEE 754 single-precision float, little-endian bit pattern.
-    package mutating func writeFloat32(_ value: Float) {
+    public mutating func writeFloat32(_ value: Float) {
         writeUInt32(value.bitPattern)
     }
 
@@ -52,7 +52,7 @@ nonisolated package struct BinaryWriter {
     }
 
     /// Zero-terminated string ("zstring"): encoded bytes plus a NUL terminator.
-    package mutating func writeZString(
+    public mutating func writeZString(
         _ string: String,
         encoding: String.Encoding = .windowsCP1252
     ) throws {

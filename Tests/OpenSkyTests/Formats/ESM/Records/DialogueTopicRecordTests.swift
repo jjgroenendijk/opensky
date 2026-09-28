@@ -1,6 +1,7 @@
 // DIAL decoder tests over synthetic bytes. Layout: UESP DIAL and xEdit
 // dev-4.1.6 `wbRecord(DIAL, ...)`.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

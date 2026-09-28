@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 /// Accumulates display-list decode + scene-flattening results across a sweep.

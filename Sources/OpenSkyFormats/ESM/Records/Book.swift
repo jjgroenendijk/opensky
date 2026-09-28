@@ -33,21 +33,21 @@
 
 import Foundation
 
-nonisolated package struct Book {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt8
+nonisolated public struct Book: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
-        package static let teachesSkill = Flags(rawValue: 0x01)
-        package static let cannotBeTaken = Flags(rawValue: 0x02)
-        package static let teachesSpell = Flags(rawValue: 0x04)
+        public static let teachesSkill = Flags(rawValue: 0x01)
+        public static let cannotBeTaken = Flags(rawValue: 0x02)
+        public static let teachesSpell = Flags(rawValue: 0x04)
     }
 
     /// What reading the book grants, decoded from DATA flags + teaches word.
-    package enum Teaches: Equatable {
+    public enum Teaches: Equatable, Sendable {
         case nothing
         /// Actor-value index of the skill raised on read.
         case skill(Int32)
@@ -57,12 +57,12 @@ nonisolated package struct Book {
 
     /// DATA type byte. Vanilla SSE writes 0 everywhere; 255 is the legacy
     /// note/scroll marker. Unknown values keep their raw byte.
-    package enum Kind: Equatable {
+    public enum Kind: Equatable, Sendable {
         case book
         case note
         case unknown(UInt8)
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .book
             case 255: self = .note
@@ -71,19 +71,19 @@ nonisolated package struct Book {
         }
     }
 
-    package let formID: FormID
-    package let fields: InventoryItemFields
+    public let formID: FormID
+    public let fields: InventoryItemFields
     /// DESC — the book's body text.
-    package let text: LString?
+    public let text: LString?
     /// CNAM — short description shown in the inventory pane.
-    package let inventoryDescription: LString?
-    package let flags: Flags
-    package let kind: Kind
-    package let teaches: Teaches
+    public let inventoryDescription: LString?
+    public let flags: Flags
+    public let kind: Kind
+    public let teaches: Teaches
     /// DATA gold value and weight.
-    package let itemValue: ItemValue
+    public let itemValue: ItemValue
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "BOOK" else {
             throw ESMError.malformed("expected BOOK record, got \(record.type)")
         }

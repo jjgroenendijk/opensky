@@ -4,25 +4,25 @@
 
 import Foundation
 
-nonisolated package struct VoiceType {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt8
+nonisolated public struct VoiceType: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
-        package static let allowsDefaultDialogue = Flags(rawValue: 0x01)
-        package static let female = Flags(rawValue: 0x02)
+        public static let allowsDefaultDialogue = Flags(rawValue: 0x01)
+        public static let female = Flags(rawValue: 0x02)
     }
 
-    package let formID: FormID
+    public let formID: FormID
     /// EDID is also the directory name under Sound/Voice/<plugin>/.
-    package let editorID: String?
-    package let flags: Flags
-    package let skipped: DialogueTally
+    public let editorID: String?
+    public let flags: Flags
+    public let skipped: DialogueTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "VTYP" else {
             throw ESMError.malformed("expected VTYP record, got \(record.type)")
         }

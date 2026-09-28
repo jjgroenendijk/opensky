@@ -8,20 +8,20 @@
 
 import Foundation
 
-nonisolated package struct ESMFile {
+nonisolated public struct ESMFile: Sendable {
     /// TES4 plugin-info record (HEDR, masters, description).
-    package let tes4: ESMRecord
+    public let tes4: ESMRecord
     /// Top-level groups in file order (~118 in Skyrim.esm).
-    package let topGroups: [ESMGroup]
+    public let topGroups: [ESMGroup]
 
     /// Memory-maps the plugin; nothing beyond top-level headers is read.
-    package init(url: URL) throws {
+    public init(url: URL) throws {
         // `mappedIfSafe` may copy external-volume files into anonymous RAM.
         // Game installs are commonly on USB volumes, so mapping is mandatory.
         try self.init(data: Data(contentsOf: url, options: .alwaysMapped))
     }
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         let children = try ESMGroup.parseChildren(in: data, range: 0 ..< data.count)
         guard case let .record(first)? = children.first, first.type == "TES4" else {
             throw ESMError.missingTES4
@@ -36,7 +36,7 @@ nonisolated package struct ESMFile {
     }
 
     /// First top group holding `recordType` records (e.g. "WRLD").
-    package func topGroup(of recordType: FourCC) -> ESMGroup? {
+    public func topGroup(of recordType: FourCC) -> ESMGroup? {
         topGroups.first { $0.recordType == recordType }
     }
 }

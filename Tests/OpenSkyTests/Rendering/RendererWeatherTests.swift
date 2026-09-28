@@ -4,6 +4,7 @@
 // weathers differ. Synthetic fixtures only (AGENTS.md "Legal & IP boundary");
 // skips without a Metal 4 device (paravirtual CI), like RendererShadowTests.
 
+import FormatsTestSupport
 import Foundation
 import Metal
 import MetalKit

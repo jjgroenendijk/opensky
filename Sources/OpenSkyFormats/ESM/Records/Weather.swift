@@ -16,20 +16,20 @@
 import Foundation
 import simd
 
-nonisolated package struct Weather {
+nonisolated public struct Weather: Sendable {
     /// One NAM0 color layer: same RGB tint at each time of day. Values 0-1
     /// (source is RGBX bytes; the X pad byte is dropped, like WaterType).
-    package struct Colors: Equatable {
-        package let sunrise: SIMD3<Float>
-        package let day: SIMD3<Float>
-        package let sunset: SIMD3<Float>
-        package let night: SIMD3<Float>
+    public struct Colors: Equatable, Sendable {
+        public let sunrise: SIMD3<Float>
+        public let day: SIMD3<Float>
+        public let sunset: SIMD3<Float>
+        public let night: SIMD3<Float>
     }
 
     /// NAM0 component index -> meaning. Order per UESP/xEdit wbWeatherColors.
     /// skyrim.esm omits trailing entries, so a record may carry only the first
     /// 13 or 14 of these; count derives from data size (16 bytes each).
-    package enum Component: Int, CaseIterable {
+    public enum Component: Int, CaseIterable, Sendable {
         case skyUpper = 0
         case fogNear = 1
         case unknownCloudLayer = 2 // ignored; overwritten by PNAM in-game
@@ -51,20 +51,20 @@ nonisolated package struct Weather {
 
     /// FNAM fog distances. Pow/max are nil for the legacy 16-byte (4-float)
     /// variant that carries only the near/far pairs.
-    package struct FogDistances: Equatable {
-        package let dayNear: Float
-        package let dayFar: Float
-        package let nightNear: Float
-        package let nightFar: Float
-        package let dayPow: Float?
-        package let nightPow: Float?
-        package let dayMax: Float?
-        package let nightMax: Float?
+    public struct FogDistances: Equatable, Sendable {
+        public let dayNear: Float
+        public let dayFar: Float
+        public let nightNear: Float
+        public let nightFar: Float
+        public let dayPow: Float?
+        public let nightPow: Float?
+        public let dayMax: Float?
+        public let nightMax: Float?
     }
 
     /// Weather classification, derived from the DATA flags low nibble. At most
     /// one bit is set; absent -> none. Raw flags kept in `WeatherData.flags`.
-    package enum Precipitation: Equatable {
+    public enum Precipitation: Equatable, Sendable {
         case none
         case pleasant
         case cloudy
@@ -74,23 +74,23 @@ nonisolated package struct Weather {
 
     /// DATA block. uint8 fields the CK shows as floats are pre-scaled here;
     /// see per-field ranges. thunderFrequency kept raw (255 = low, 15 = high).
-    package struct WeatherData: Equatable {
-        package let windSpeed: Float // 0-1
-        package let transDelta: Float // 0-0.25
-        package let sunGlare: Float // 0-1
-        package let sunDamage: Float // 0-1
-        package let precipitationBeginFadeIn: Float // 0-1
-        package let precipitationEndFadeOut: Float // 0-1
-        package let thunderBeginFadeIn: Float // 0-1
-        package let thunderEndFadeOut: Float // 0-1
-        package let thunderFrequency: UInt8 // raw: 255 low .. 15 high
-        package let flags: UInt8 // raw classification/effect bitfield
-        package let lightningColor: SIMD3<Float> // 0-1 RGB
-        package let windDirection: Float // degrees, 0-360
-        package let windDirectionRange: Float // degrees, 0-180
+    public struct WeatherData: Equatable, Sendable {
+        public let windSpeed: Float // 0-1
+        public let transDelta: Float // 0-0.25
+        public let sunGlare: Float // 0-1
+        public let sunDamage: Float // 0-1
+        public let precipitationBeginFadeIn: Float // 0-1
+        public let precipitationEndFadeOut: Float // 0-1
+        public let thunderBeginFadeIn: Float // 0-1
+        public let thunderEndFadeOut: Float // 0-1
+        public let thunderFrequency: UInt8 // raw: 255 low .. 15 high
+        public let flags: UInt8 // raw classification/effect bitfield
+        public let lightningColor: SIMD3<Float> // 0-1 RGB
+        public let windDirection: Float // degrees, 0-360
+        public let windDirectionRange: Float // degrees, 0-180
 
         /// Classification from the low-nibble flag bits (UESP: at most one set).
-        package var precipitation: Precipitation {
+        public var precipitation: Precipitation {
             if flags & 0x01 != 0 {
                 return .pleasant
             }
@@ -111,35 +111,35 @@ nonisolated package struct Weather {
     /// specular color and the trailing float. xEdit labels the float "Scale";
     /// some community docs call it a fresnel/specular power. Colors are 0-1
     /// (RGBX bytes, pad dropped, like the NAM0 layers).
-    package struct DirectionalAmbient: Equatable {
-        package let colors: DirectionalAmbientColors
-        package let specular: SIMD3<Float>
-        package let scale: Float
+    public struct DirectionalAmbient: Equatable, Sendable {
+        public let colors: DirectionalAmbientColors
+        public let specular: SIMD3<Float>
+        public let scale: Float
     }
 
     /// The four DALC keyframes a WTHR carries, one per time of day. Record
     /// order is Sunrise, Day, Sunset, Night (xEdit wbDefinitionsTES5 WTHR).
-    package struct DirectionalAmbientKeyframes: Equatable {
-        package let sunrise: DirectionalAmbient
-        package let day: DirectionalAmbient
-        package let sunset: DirectionalAmbient
-        package let night: DirectionalAmbient
+    public struct DirectionalAmbientKeyframes: Equatable, Sendable {
+        public let sunrise: DirectionalAmbient
+        public let day: DirectionalAmbient
+        public let sunset: DirectionalAmbient
+        public let night: DirectionalAmbient
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// NAM0 layers indexed by `Component.rawValue`. nil when NAM0 absent or an
     /// unrecognised (non-16-multiple) size. May be shorter than Component.count.
-    package let colors: [Colors]?
+    public let colors: [Colors]?
     /// FNAM fog distances. nil when absent or an unrecognised size.
-    package let fog: FogDistances?
+    public let fog: FogDistances?
     /// DATA block. nil when absent or not the known 19-byte SSE size.
-    package let data: WeatherData?
+    public let data: WeatherData?
     /// DALC directional ambient keyframes. nil when the record carries fewer
     /// than four 32-byte DALC subrecords (skipped rather than guessed).
-    package let directionalAmbient: DirectionalAmbientKeyframes?
+    public let directionalAmbient: DirectionalAmbientKeyframes?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "WTHR" else {
             throw ESMError.malformed("expected WTHR record, got \(record.type)")
         }
@@ -306,44 +306,44 @@ nonisolated package struct Weather {
 /// body-length budget.
 nonisolated extension Weather {
     /// Layer for a named component, nil if the record omitted that index.
-    package func colors(for component: Component) -> Colors? {
+    public func colors(for component: Component) -> Colors? {
         guard let colors, component.rawValue < colors.count else { return nil }
         return colors[component.rawValue]
     }
 
-    package var skyUpper: Colors? {
+    public var skyUpper: Colors? {
         colors(for: .skyUpper)
     }
 
-    package var skyLower: Colors? {
+    public var skyLower: Colors? {
         colors(for: .skyLower)
     }
 
-    package var horizon: Colors? {
+    public var horizon: Colors? {
         colors(for: .horizon)
     }
 
-    package var ambient: Colors? {
+    public var ambient: Colors? {
         colors(for: .ambient)
     }
 
-    package var sun: Colors? {
+    public var sun: Colors? {
         colors(for: .sun)
     }
 
-    package var sunGlare: Colors? {
+    public var sunGlare: Colors? {
         colors(for: .sunGlare)
     }
 
-    package var stars: Colors? {
+    public var stars: Colors? {
         colors(for: .stars)
     }
 
-    package var fogNear: Colors? {
+    public var fogNear: Colors? {
         colors(for: .fogNear)
     }
 
-    package var fogFar: Colors? {
+    public var fogFar: Colors? {
         colors(for: .fogFar)
     }
 }

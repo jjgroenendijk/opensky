@@ -16,23 +16,23 @@
 
 import Foundation
 
-nonisolated package struct MagicItemHeader {
+nonisolated public struct MagicItemHeader: Sendable {
     /// EDID, FULL, OBND, KSIZ/KWDA and, on SCRL, MODL/ICON/YNAM/ZNAM.
-    package var fields = InventoryItemFields()
+    public var fields = InventoryItemFields()
     /// DESC — the spell or scroll description shown in the magic menu. Empty
     /// on a scroll means the game concatenates the effect descriptions.
-    package var description: LString?
+    public var description: LString?
     /// MDOB — STAT shown in the menu preview.
-    package var menuDisplayObject: FormID?
+    public var menuDisplayObject: FormID?
     /// ETYP — EQUP equip slot, left raw here and resolved through
     /// `EquipSlotStore` by whichever consumer needs the slot.
-    package var equipType: FormID?
+    public var equipType: FormID?
 
-    package init() {}
+    public init() {}
 
     /// Decodes `field` when it belongs to the shared header and reports
     /// whether it was consumed.
-    package mutating func decode(field: ESMField, localized: Bool) throws -> Bool {
+    public mutating func decode(field: ESMField, localized: Bool) throws -> Bool {
         if try fields.decode(field: field, localized: localized) {
             return true
         }

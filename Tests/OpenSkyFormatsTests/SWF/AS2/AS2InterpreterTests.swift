@@ -2,6 +2,7 @@
 // comparison, bitwise, stack, constant pool, registers, and branches. Every
 // stream is assembled from synthetic bytes by `SWFActionFixture`.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

@@ -3,6 +3,7 @@
 // optional ASTP titles, and the defensive paths — wrong record type, truncated
 // DATA, unknown field. No game-derived bytes.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

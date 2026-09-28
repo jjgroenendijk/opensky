@@ -8,9 +8,11 @@
 // `ReferenceKey`s or the suites would be testing the fixture rather than the
 // derivation.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 
 enum HostilityFixture {
     static let pluginName = "Base.esm"

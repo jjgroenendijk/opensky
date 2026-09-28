@@ -3,6 +3,7 @@
 // boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" LAND/LTEX/TXST +
 // xEdit wbDefinitionsCommon.pas; see docs/formats/land.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

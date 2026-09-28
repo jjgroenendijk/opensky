@@ -21,7 +21,7 @@
 
 import Foundation
 
-nonisolated package struct ModelBase {
+nonisolated public struct ModelBase: Sendable {
     /// Record types this decoder accepts — all carry EDID + MODL where STAT
     /// does. CellSceneBuilder indexes each of these top groups separately.
     ///
@@ -36,7 +36,7 @@ nonisolated package struct ModelBase {
     /// rather than through a single MODL, so it needs the arbitration issue
     /// #178 owns. A dropped cuirass is therefore not yet drawable, which the
     /// take path reports rather than hides.
-    package static let supportedTypes: Set<FourCC> = [
+    public static let supportedTypes: Set<FourCC> = [
         "MSTT", "TREE", "FURN", "ACTI", "CONT", "DOOR",
         "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK"
     ]
@@ -45,7 +45,7 @@ nonisolated package struct ModelBase {
     /// activating one takes it into an inventory. Read by
     /// `CellSceneBuilder.interactionAction(for:)` and by the take path, so both
     /// answer from one list.
-    package static let itemTypes: Set<FourCC> = [
+    public static let itemTypes: Set<FourCC> = [
         "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK"
     ]
 
@@ -61,35 +61,35 @@ nonisolated package struct ModelBase {
     ///   CONT SNAM/QNAM     at lines 4519-4520  (QNAM, not ANAM — cross-record
     ///                                            trap; ANAM on CONT is a
     ///                                            different unused field)
-    package struct Sounds: Equatable {
+    public struct Sounds: Equatable, Sendable {
         /// One-shot on use-key activation. DOOR.SNAM, ACTI.VNAM, CONT.SNAM.
-        package let activation: FormID?
+        public let activation: FormID?
         /// One-shot on close.
         /// DOOR.ANAM, CONT.QNAM.
-        package let close: FormID?
+        public let close: FormID?
         /// Continuous positional loop while in range. DOOR.BNAM, ACTI.SNAM.
-        package let loop: FormID?
+        public let loop: FormID?
     }
 
-    package let formID: FormID
-    package let recordType: FourCC
-    package let editorID: String?
+    public let formID: FormID
+    public let recordType: FourCC
+    public let editorID: String?
     /// FULL — in-game display name; localized plugins store a string-table ID.
-    package let name: LString?
+    public let name: LString?
     /// ACTI RNAM — custom activation verb such as "Mine" or "Place".
-    package let activateTextOverride: LString?
+    public let activateTextOverride: LString?
     /// Record-specific flags can suppress manual use-key activation.
-    package let allowsManualInteraction: Bool
+    public let allowsManualInteraction: Bool
     /// MODL — mesh path relative to Data/ (e.g. "meshes\\trees\\treepineforest01.nif").
     /// Nil for bases with no model (rare outside markers).
-    package let modelPath: String?
+    public let modelPath: String?
     /// Sound links for activator/door/container bases; nil when the record
     /// carries none of the decoded sound fields.
-    package let sounds: Sounds?
+    public let sounds: Sounds?
     /// VMAD — Papyrus scripts attached to this activator-like base record.
-    package let scriptData: ScriptData
+    public let scriptData: ScriptData
 
-    package init(record: ESMRecord, localized: Bool = false) throws {
+    public init(record: ESMRecord, localized: Bool = false) throws {
         guard Self.supportedTypes.contains(record.type) else {
             let accepted = Self.supportedTypes.map(\.description).sorted().joined(separator: "/")
             throw ESMError.malformed(

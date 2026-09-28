@@ -10,33 +10,33 @@
 import Foundation
 import simd
 
-nonisolated package enum TRIError: Error, Equatable {
+nonisolated public enum TRIError: Error, Equatable, Sendable {
     case malformed(String)
     case unsupportedVersion(String)
 }
 
-nonisolated package struct TRITriangle: Equatable {
-    package let vertices: SIMD3<UInt32>
+nonisolated public struct TRITriangle: Equatable, Sendable {
+    public let vertices: SIMD3<UInt32>
 }
 
-nonisolated package struct TRIMorphTarget: Equatable {
-    package let name: String
+nonisolated public struct TRIMorphTarget: Equatable, Sendable {
+    public let name: String
     /// Multiplier applied to each signed-integer delta component.
-    package let scale: Float
+    public let scale: Float
     /// Signed on-disk components widened to Float, one per base vertex.
-    package let deltas: [SIMD3<Float>]
+    public let deltas: [SIMD3<Float>]
 
-    package var scaledDeltas: [SIMD3<Float>] {
+    public var scaledDeltas: [SIMD3<Float>] {
         deltas.map { $0 * scale }
     }
 }
 
-nonisolated package struct TRIFile: Equatable {
-    package let baseVertices: [SIMD3<Float>]
-    package let triangles: [TRITriangle]
-    package let morphTargets: [TRIMorphTarget]
+nonisolated public struct TRIFile: Equatable, Sendable {
+    public let baseVertices: [SIMD3<Float>]
+    public let triangles: [TRITriangle]
+    public let morphTargets: [TRIMorphTarget]
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         do {
             var decoder = TRIDecoder(data: data)
             let decoded = try decoder.decode()
@@ -50,7 +50,7 @@ nonisolated package struct TRIFile: Equatable {
         }
     }
 
-    package init(
+    public init(
         baseVertices: [SIMD3<Float>],
         triangles: [TRITriangle],
         morphTargets: [TRIMorphTarget]
@@ -60,7 +60,7 @@ nonisolated package struct TRIFile: Equatable {
         self.morphTargets = morphTargets
     }
 
-    package func target(named name: String) -> TRIMorphTarget? {
+    public func target(named name: String) -> TRIMorphTarget? {
         morphTargets.first { $0.name == name }
     }
 }

@@ -11,7 +11,7 @@
 # Configuration
 # ------------------------------------------------------------------------------
 
-PROJECT          := OpenSky.xcodeproj
+WORKSPACE        := OpenSky.xcworkspace
 SCHEME           := OpenSky
 CLI_SCHEME       := OpenSkyCLI
 CONFIG           ?= Debug
@@ -45,7 +45,7 @@ PRUNE_DAYS       ?= 14
 # Targets append only their action and their own flags, so the project, cache
 # location, and XCODEBUILD_FLAGS cannot drift apart. tools/xcodebuild-lib.sh is
 # the shell twin of this.
-xcb = xcodebuild -project $(PROJECT) -scheme $(1) -configuration $(2) \
+xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
 	$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS)
 XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
 XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
@@ -223,7 +223,7 @@ test: vendor-link cache-link ## Build and run the unit tests through the build s
 test-fast: vendor-link cache-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
 	@case "$(T)" in \
 		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
-		OpenSkyTests/* | OpenSkyFormatsTests/*) ./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
+		OpenSky*Tests/*) ./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
 		*) ./tools/test-fast.sh $(if $(B),-B,) -t "OpenSkyTests/$(T)" ;; \
 	esac
 
@@ -235,7 +235,7 @@ test-one: vendor-link cache-link ## Build and run one test: T=Class[/method] or 
 		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
 		echo "        ClassName[/methodName] resolves under OpenSkyTests"; \
 		exit 2; }
-	@case "$(T)" in */*/* | OpenSkyFormatsTests/*) spec="$(T)";; *) spec="OpenSkyTests/$(T)";; esac; \
+	@case "$(T)" in */*/* | OpenSky*Tests/*) spec="$(T)";; *) spec="OpenSkyTests/$(T)";; esac; \
 	case "$$spec" in OpenSkyUITests/*) plan="$(UI_PLAN)";; *) plan="$(UNIT_PLAN)";; esac; \
 	bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) one)/one.xcresult"; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
@@ -244,7 +244,7 @@ test-one: vendor-link cache-link ## Build and run one test: T=Class[/method] or 
 
 test-ui: vendor-link cache-link ## Build and run the UI tests (launches and drives the app)
 	@./tools/test-ui.sh \
-		$(PROJECT) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
+		$(WORKSPACE) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
 
 test-report: ## Summarize the newest test result bundle, failures included
 	@./tools/test-report.sh $(TEST_RESULTS)

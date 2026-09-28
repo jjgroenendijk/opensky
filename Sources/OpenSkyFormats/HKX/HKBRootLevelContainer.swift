@@ -16,20 +16,20 @@ import Foundation
 
 /// One entry of `hkRootLevelContainer::m_namedVariants`: an authored name, the
 /// Havok class name of the payload, and a pointer to the payload object.
-nonisolated package struct HKBNamedVariant: Equatable {
-    package let name: String?
-    package let className: String?
-    package let variant: HKXPointerTarget?
+nonisolated public struct HKBNamedVariant: Equatable, Sendable {
+    public let name: String?
+    public let className: String?
+    public let variant: HKXPointerTarget?
 }
 
 /// Decoded `hkRootLevelContainer`. `variants` is in file order; vanilla
 /// behavior files carry exactly one.
-nonisolated package struct HKBRootLevelContainer: Equatable {
-    package let variants: [HKBNamedVariant]
+nonisolated public struct HKBRootLevelContainer: Equatable, Sendable {
+    public let variants: [HKBNamedVariant]
     /// Fields that did not resolve while decoding, for the census report.
-    package let unresolved: [HKXUnresolvedReference]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkRootLevelContainer"
+    public static let className = "hkRootLevelContainer"
 
     /// `m_namedVariants` hkArray at offset 0 — hkRootLevelContainer has no
     /// base class, so the array is the whole 16-byte object.
@@ -45,7 +45,7 @@ nonisolated package struct HKBRootLevelContainer: Equatable {
     /// registers no `hkRootLevelContainer` object at all, which no vanilla
     /// file does — the caller reports that as a malformed file rather than
     /// guessing a role from the container header.
-    package static func root(in graph: HKXObjectGraph) -> HKBRootLevelContainer? {
+    public static func root(in graph: HKXObjectGraph) -> HKBRootLevelContainer? {
         guard
             let object = graph.objects(ofClass: className).first,
             var cursor = graph.cursor(at: object)
@@ -74,7 +74,7 @@ nonisolated package struct HKBRootLevelContainer: Equatable {
     }
 
     /// The payload of the first variant whose declared class name matches.
-    package func variant(ofClass name: String) -> HKXPointerTarget? {
+    public func variant(ofClass name: String) -> HKXPointerTarget? {
         variants.first { $0.className == name }?.variant
     }
 }

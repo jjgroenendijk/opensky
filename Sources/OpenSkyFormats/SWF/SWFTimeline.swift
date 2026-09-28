@@ -16,12 +16,12 @@
 import Foundation
 
 /// One display-list mutation inside a frame, in tag order.
-nonisolated package enum SWFTimelineStep: Equatable {
+nonisolated public enum SWFTimelineStep: Equatable, Sendable {
     case place(SWFPlacement)
     case remove(SWFRemoval)
 
     /// The CLIPACTIONS handlers this step attaches to a placed sprite, if any.
-    package var clipActionBlocks: [SWFActionBlock] {
+    public var clipActionBlocks: [SWFActionBlock] {
         guard case let .place(placement) = self, let clip = placement.clipActions else {
             return []
         }
@@ -29,7 +29,7 @@ nonisolated package enum SWFTimelineStep: Equatable {
     }
 
     /// CLIPACTIONS framing problems recorded on this step.
-    package var clipActionWarnings: Int {
+    public var clipActionWarnings: Int {
         guard case let .place(placement) = self, let clip = placement.clipActions else {
             return 0
         }
@@ -39,13 +39,13 @@ nonisolated package enum SWFTimelineStep: Equatable {
 
 /// One frame: the control tags that execute before its ShowFrame, the
 /// DoAction (12) blocks that run with it, and the FrameLabel (43) naming it.
-nonisolated package struct SWFTimelineFrame: Equatable {
-    package let steps: [SWFTimelineStep]
-    package let actions: [SWFActionBlock]
+nonisolated public struct SWFTimelineFrame: Equatable, Sendable {
+    public let steps: [SWFTimelineStep]
+    public let actions: [SWFActionBlock]
     /// FrameLabel (43) attached to this frame, or nil when it has none.
-    package let label: String?
+    public let label: String?
 
-    package init(steps: [SWFTimelineStep], actions: [SWFActionBlock], label: String? = nil) {
+    public init(steps: [SWFTimelineStep], actions: [SWFActionBlock], label: String? = nil) {
         self.steps = steps
         self.actions = actions
         self.label = label
@@ -54,21 +54,21 @@ nonisolated package struct SWFTimelineFrame: Equatable {
 
 /// A decoded timeline: every frame, plus the display list and tag counters
 /// frame 1 resolves to.
-nonisolated package struct SWFTimeline: Equatable {
+nonisolated public struct SWFTimeline: Equatable, Sendable {
     /// Frames in playback order. A trailing run of tags without a closing
     /// ShowFrame still forms a frame, matching how a player would publish it.
-    package let frames: [SWFTimelineFrame]
+    public let frames: [SWFTimelineFrame]
     /// Display list after frame 1, depth-ascending (the paint order).
-    package let frame1: [SWFPlacedObject]
+    public let frame1: [SWFPlacedObject]
     /// Display-list counters for frame 1 only.
-    package let tally: SWFMovieTally
+    public let tally: SWFMovieTally
 
-    package static let empty = SWFTimeline(frames: [], frame1: [], tally: SWFMovieTally())
+    public static let empty = SWFTimeline(frames: [], frame1: [], tally: SWFMovieTally())
 
     /// Zero-based index of the frame carrying `label`. Matched exactly first,
     /// then case-insensitively: ActionScript path and label matching is
     /// case-insensitive below SWF 7, and authors mix casing either way.
-    package func frameIndex(forLabel label: String) -> Int? {
+    public func frameIndex(forLabel label: String) -> Int? {
         if let exact = frames.firstIndex(where: { $0.label == label }) {
             return exact
         }
@@ -77,21 +77,21 @@ nonisolated package struct SWFTimeline: Equatable {
     }
 
     /// Every label in frame order, for reporting.
-    package var frameLabels: [String] {
+    public var frameLabels: [String] {
         frames.compactMap(\.label)
     }
 
     /// Every action stream this timeline carries, frame by frame: the frame's
     /// DoAction blocks first, then the CLIPACTIONS handlers its placements
     /// attach.
-    package var actionBlocks: [SWFActionBlock] {
+    public var actionBlocks: [SWFActionBlock] {
         frames.flatMap { frame in
             frame.actions + frame.steps.flatMap(\.clipActionBlocks)
         }
     }
 
     /// Action-side counters over every frame of this timeline.
-    package var actionTally: SWFMovieTally {
+    public var actionTally: SWFMovieTally {
         var tally = SWFMovieTally()
         for frame in frames {
             for block in frame.actions {
@@ -111,11 +111,11 @@ nonisolated package struct SWFTimeline: Equatable {
 /// Walks a control-tag stream once and splits it into frames. The main movie
 /// and every sprite body run through this, so a later runtime steps either the
 /// same way.
-nonisolated package struct SWFTimelineDecoder {
+nonisolated public struct SWFTimelineDecoder: Sendable {
     /// The movie's SWF version — CLIPEVENTFLAGS width depends on it.
-    package let version: UInt8
+    public let version: UInt8
     /// SetBackgroundColor (9) seen in frame 1; nil when the stream sets none.
-    package private(set) var backgroundColor: SWFColor?
+    public private(set) var backgroundColor: SWFColor?
     private var builder = SWFDisplayListBuilder()
     private var frozen = false
     private var frames: [SWFTimelineFrame] = []
@@ -123,13 +123,13 @@ nonisolated package struct SWFTimelineDecoder {
     private var actions: [SWFActionBlock] = []
     private var label: String?
 
-    package init(version: UInt8) {
+    public init(version: UInt8) {
         self.version = version
     }
 
     /// Executes one tag. Definition tags are ignored here; the movie decoder
     /// routes those into the character dictionary.
-    package mutating func accept(_ tag: SWFTag) {
+    public mutating func accept(_ tag: SWFTag) {
         switch tag.code {
         case SWFDisplayListParser.placeObjectCode,
              SWFDisplayListParser.placeObject2Code,
@@ -163,7 +163,7 @@ nonisolated package struct SWFTimelineDecoder {
     }
 
     /// Closes any pending frame and resolves frame 1.
-    package mutating func finish() -> SWFTimeline {
+    public mutating func finish() -> SWFTimeline {
         if !steps.isEmpty || !actions.isEmpty || label != nil {
             closeFrame()
         }
@@ -216,7 +216,7 @@ nonisolated package struct SWFTimelineDecoder {
 
 nonisolated extension SWFMovieTally {
     /// Accumulates one parsed action stream into the action-side counters.
-    package mutating func record(actions block: SWFActionBlock) {
+    public mutating func record(actions block: SWFActionBlock) {
         actionBlocks += 1
         actionRecords += block.records.count
         actionWarnings += block.warnings.count

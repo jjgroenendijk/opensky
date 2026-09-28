@@ -5,9 +5,11 @@
 // extracted game files (AGENTS.md "Legal & IP boundary"). The ingredient rule
 // is UESP "Skyrim:Alchemy Effects", cited at `ItemDefinitionStore.magicItemUse`.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 @MainActor

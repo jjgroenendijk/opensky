@@ -10,6 +10,7 @@
 //
 // Synthetic ESM + NIF bytes only, never extracted game files.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

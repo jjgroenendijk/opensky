@@ -5,19 +5,19 @@
 import Foundation
 import simd
 
-nonisolated package struct HKASplineBlockLayout {
-    package let blockIndex: Int
-    package let start: Int
-    package let end: Int
-    package let transformByteCount: Int
-    package let transformTrackCount: Int
-    package let floatTrackCount: Int
+nonisolated public struct HKASplineBlockLayout: Sendable {
+    public let blockIndex: Int
+    public let start: Int
+    public let end: Int
+    public let transformByteCount: Int
+    public let transformTrackCount: Int
+    public let floatTrackCount: Int
 }
 
-nonisolated package struct HKASplineBlock {
+nonisolated public struct HKASplineBlock: Sendable {
     private let tracks: [HKASplineTransformTrack]
 
-    package static func decode(
+    public static func decode(
         data: Data,
         layout: HKASplineBlockLayout
     ) throws -> HKASplineBlock {
@@ -113,7 +113,7 @@ nonisolated package struct HKASplineBlock {
         return tracks
     }
 
-    package func localTransforms(at localFrame: Float) throws -> [HKABonePose] {
+    public func localTransforms(at localFrame: Float) throws -> [HKABonePose] {
         var result: [HKABonePose] = []
         result.reserveCapacity(tracks.count)
         for (index, track) in tracks.enumerated() {

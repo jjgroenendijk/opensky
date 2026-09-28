@@ -20,6 +20,7 @@
 // class layouts in docs/formats/hkx-behavior-nodes.md record, so a table entry
 // that disagreed with a decoder's highest offset would fail the nominal case.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

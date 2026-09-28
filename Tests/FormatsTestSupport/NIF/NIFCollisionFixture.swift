@@ -5,35 +5,8 @@ import Foundation
 @testable import OpenSkyFormats
 import simd
 
-enum NIFCollisionFixture {
-    /// The inertial tail of `bhkRigidBodyCInfo2010`, so a test names only the
-    /// fields it cares about. Values are in the file's own units: metres,
-    /// kilograms, radians.
-    struct Dynamics {
-        var linearVelocity: SIMD3<Float> = .zero
-        var angularVelocity: SIMD3<Float> = .zero
-        /// Rows in nif.xml order: m11 m12 m13 | m21 m22 m23 | m31 m32 m33.
-        var inertiaRows: [SIMD3<Float>] = [
-            SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(0, 0, 1)
-        ]
-        var center: SIMD3<Float> = .zero
-        var mass: Float = 0
-        var linearDamping: Float = 0
-        var angularDamping: Float = 0
-        var timeFactor: Float = 1
-        var gravityFactor: Float = 1
-        var friction: Float = 0
-        var rollingFrictionMultiplier: Float = 0
-        var restitution: Float = 0
-        var maxLinearVelocity: Float = 0
-        var maxAngularVelocity: Float = 0
-        var penetrationDepth: Float = 0
-        var deactivatorType: UInt8 = 1
-        var solverDeactivation: UInt8 = 1
-        var qualityType: UInt8 = 1
-    }
-
-    static func collisionObject(
+public enum NIFCollisionFixture: Sendable {
+    public static func collisionObject(
         target: Int32 = 0,
         flags: UInt16 = 0x81,
         body: Int32
@@ -47,7 +20,7 @@ enum NIFCollisionFixture {
 
     /// `bhkBlendCollisionObject` inherits `bhkCollisionObject` and appends two
     /// blend-gain floats (nif.xml).
-    static func blendCollisionObject(
+    public static func blendCollisionObject(
         target: Int32 = 0,
         flags: UInt16 = 0x89,
         body: Int32
@@ -58,7 +31,7 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func rigidBody(
+    public static func rigidBody(
         shape: Int32,
         worldLayer: UInt8 = 1,
         worldFlags: UInt8 = 0,
@@ -126,21 +99,21 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func list(_ refs: [Int32]) -> Data {
+    public static func list(_ refs: [Int32]) -> Data {
         var data = Data()
         data.appendUInt32(UInt32(refs.count))
         refs.forEach { data.appendRef($0) }
         return data
     }
 
-    static func sphere(radius: Float, material: UInt32 = 0) -> Data {
+    public static func sphere(radius: Float, material: UInt32 = 0) -> Data {
         var data = Data()
         data.appendUInt32(material)
         data.appendFloat32(radius)
         return data
     }
 
-    static func box(_ halfExtents: SIMD3<Float>, material: UInt32 = 0) -> Data {
+    public static func box(_ halfExtents: SIMD3<Float>, material: UInt32 = 0) -> Data {
         var data = Data()
         data.appendUInt32(material)
         data.appendFloat32(0.05)
@@ -150,7 +123,7 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func capsule(
+    public static func capsule(
         first: SIMD3<Float>,
         second: SIMD3<Float>,
         radius: Float,
@@ -167,7 +140,7 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func convexVertices(
+    public static func convexVertices(
         _ vertices: [SIMD3<Float>],
         normals: [SIMD4<Float>] = [],
         material: UInt32 = 0
@@ -183,7 +156,7 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func transformShape(child: Int32, translation: SIMD3<Float>) -> Data {
+    public static func transformShape(child: Int32, translation: SIMD3<Float>) -> Data {
         var data = Data()
         data.appendRef(child)
         data.appendUInt32(0)
@@ -193,13 +166,13 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func mopp(child: Int32) -> Data {
+    public static func mopp(child: Int32) -> Data {
         var data = Data()
         data.appendRef(child)
         return data
     }
 
-    static func compressedShape(
+    public static func compressedShape(
         dataRef: Int32,
         scale: SIMD3<Float> = SIMD3(repeating: 1)
     ) -> Data {
@@ -211,7 +184,7 @@ enum NIFCollisionFixture {
         return data
     }
 
-    static func compressedData(
+    public static func compressedData(
         materials: [UInt32] = [0],
         bigTriangleMaterialIndex: UInt32 = 0,
         chunkMaterialIndex: UInt32 = 0
@@ -282,30 +255,30 @@ enum NIFCollisionFixture {
 /// Internal rather than fileprivate: NIFCollisionStripFixture.swift builds the
 /// packed-strips payloads with the same primitives.
 extension Data {
-    mutating func appendRef(_ value: Int32) {
+    public mutating func appendRef(_ value: Int32) {
         appendUInt32(UInt32(bitPattern: value))
     }
 
-    mutating func appendFilter(layer: UInt8, flags: UInt8 = 0, group: UInt16 = 0) {
+    public mutating func appendFilter(layer: UInt8, flags: UInt8 = 0, group: UInt16 = 0) {
         append(layer)
         append(flags)
         appendUInt16(group)
     }
 
-    mutating func appendVector3(_ value: SIMD3<Float>) {
+    public mutating func appendVector3(_ value: SIMD3<Float>) {
         appendFloat32(value.x)
         appendFloat32(value.y)
         appendFloat32(value.z)
     }
 
-    mutating func appendVector4(_ value: SIMD4<Float>) {
+    public mutating func appendVector4(_ value: SIMD4<Float>) {
         appendFloat32(value.x)
         appendFloat32(value.y)
         appendFloat32(value.z)
         appendFloat32(value.w)
     }
 
-    mutating func appendMatrix(translation: SIMD3<Float>) {
+    public mutating func appendMatrix(translation: SIMD3<Float>) {
         appendVector4(SIMD4(1, 0, 0, 0))
         appendVector4(SIMD4(0, 1, 0, 0))
         appendVector4(SIMD4(0, 0, 1, 0))

@@ -13,6 +13,7 @@
 // install resolves it once `PapyrusWorldRuntime.resolveScript` has pulled the
 // parent chain in.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

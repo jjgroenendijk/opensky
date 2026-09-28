@@ -7,7 +7,7 @@
 
 import Foundation
 
-nonisolated package enum HKXError: Error, Equatable {
+nonisolated public enum HKXError: Error, Equatable, Sendable {
     /// First two u32s are not the packfile magic pair.
     case badMagic(found0: UInt32, found1: UInt32)
     /// Layout rules the engine does not support (SSE files are 8-byte
@@ -24,35 +24,35 @@ nonisolated package enum HKXError: Error, Equatable {
 }
 
 /// Packfile header, 64 bytes at offset 0. All integers little-endian.
-nonisolated package struct HKXHeader {
-    package static let magic0: UInt32 = 0x57E0_E057
-    package static let magic1: UInt32 = 0x10C0_C010
+nonisolated public struct HKXHeader: Sendable {
+    public static let magic0: UInt32 = 0x57E0_E057
+    public static let magic1: UInt32 = 0x10C0_C010
     /// Observed on every SSE file probed; other versions may parse but are
     /// flagged by callers, not rejected here.
-    package static let expectedVersionString = "hk_2010.2.0-r1"
+    public static let expectedVersionString = "hk_2010.2.0-r1"
 
-    package let userTag: UInt32
-    package let fileVersion: UInt32
+    public let userTag: UInt32
+    public let fileVersion: UInt32
     /// Layout rules, 4 bytes: pointer size, endianness, padding reuse,
     /// empty-base-class optimization. SSE: 8 / 1 / 0 / 1.
-    package let pointerSize: UInt8
-    package let isLittleEndian: Bool
-    package let reusePaddingOptimization: Bool
-    package let emptyBaseClassOptimization: Bool
-    package let sectionCount: Int
+    public let pointerSize: UInt8
+    public let isLittleEndian: Bool
+    public let reusePaddingOptimization: Bool
+    public let emptyBaseClassOptimization: Bool
+    public let sectionCount: Int
     /// Section holding the top-level object (SSE: 2 -> `__data__`) and the
     /// object's offset inside it (SSE: 0).
-    package let contentsSectionIndex: Int
-    package let contentsSectionOffset: Int
+    public let contentsSectionIndex: Int
+    public let contentsSectionOffset: Int
     /// Section + offset of the top-level object's class-name string
     /// (SSE: `__classnames__` offset of "hkRootLevelContainer").
-    package let contentsClassNameSectionIndex: Int
-    package let contentsClassNameOffset: Int
+    public let contentsClassNameSectionIndex: Int
+    public let contentsClassNameOffset: Int
     /// Null-terminated inside a 16-byte 0xFF-padded field.
-    package let versionString: String
-    package let flags: UInt32
+    public let versionString: String
+    public let flags: UInt32
 
-    package init(reader: inout BinaryReader) throws {
+    public init(reader: inout BinaryReader) throws {
         let magic0 = try reader.readUInt32()
         let magic1 = try reader.readUInt32()
         guard magic0 == Self.magic0, magic1 == Self.magic1 else {

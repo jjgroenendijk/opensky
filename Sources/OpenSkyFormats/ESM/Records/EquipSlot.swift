@@ -31,18 +31,18 @@
 
 import Foundation
 
-nonisolated package struct EquipSlot: Equatable {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct EquipSlot: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// PNAM — the slots this one is composed of, in record order. Empty on a
     /// leaf slot such as RightHand.
-    package let parents: [FormID]
+    public let parents: [FormID]
     /// DATA — uint32 boolean. True means the item fills every parent slot at
     /// once (BothHands); false means it fills one of them (EitherHand).
-    package let usesAllParents: Bool
-    package let skipped: ReferenceRecordTally
+    public let usesAllParents: Bool
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "EQUP" else {
             throw ESMError.malformed("expected EQUP record, got \(record.type)")
         }

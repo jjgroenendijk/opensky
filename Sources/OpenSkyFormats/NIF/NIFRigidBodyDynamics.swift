@@ -12,7 +12,7 @@ import Foundation
 import simd
 
 /// nif.xml `hkMotionType`. Decides whether item 15.2 integrates a body at all.
-nonisolated package enum NIFMotionSystem: UInt8, CaseIterable, Sendable {
+nonisolated public enum NIFMotionSystem: UInt8, CaseIterable, Sendable {
     case invalid = 0
     case dynamic = 1
     case sphereInertia = 2
@@ -26,7 +26,7 @@ nonisolated package enum NIFMotionSystem: UInt8, CaseIterable, Sendable {
 
     /// True where the body is integrated from forces rather than driven by
     /// animation or nailed to the world.
-    package var isSimulated: Bool {
+    public var isSimulated: Bool {
         switch self {
         case .dynamic, .sphereInertia, .sphereStabilized,
              .boxInertia, .boxStabilized, .thinBox:
@@ -38,7 +38,7 @@ nonisolated package enum NIFMotionSystem: UInt8, CaseIterable, Sendable {
 }
 
 /// nif.xml `hkQualityType`: collision priority the solver gives the body.
-nonisolated package enum NIFCollisionQuality: UInt8, CaseIterable, Sendable {
+nonisolated public enum NIFCollisionQuality: UInt8, CaseIterable, Sendable {
     case invalid = 0
     case fixed = 1
     case keyframed = 2
@@ -52,14 +52,14 @@ nonisolated package enum NIFCollisionQuality: UInt8, CaseIterable, Sendable {
 }
 
 /// nif.xml `hkDeactivatorType`.
-nonisolated package enum NIFDeactivatorType: UInt8, CaseIterable, Sendable {
+nonisolated public enum NIFDeactivatorType: UInt8, CaseIterable, Sendable {
     case invalid = 0
     case never = 1
     case spatial = 2
 }
 
 /// nif.xml `hkSolverDeactivation`.
-nonisolated package enum NIFSolverDeactivation: UInt8, CaseIterable, Sendable {
+nonisolated public enum NIFSolverDeactivation: UInt8, CaseIterable, Sendable {
     case invalid = 0
     case off = 1
     case low = 2
@@ -76,60 +76,60 @@ nonisolated package enum NIFSolverDeactivation: UInt8, CaseIterable, Sendable {
 /// in the Havok SI units the file stores, because the integrator in item 15.2
 /// picks its own working units and a half-converted body would be worse than
 /// an unconverted one.
-nonisolated package struct NIFRigidBodyDynamics: Sendable {
+nonisolated public struct NIFRigidBodyDynamics: Sendable {
     /// Kilograms. Zero means immovable even where the motion system is dynamic.
-    package let mass: Float
+    public let mass: Float
     /// kg m^2, symmetric. nif.xml stores 3x4 rows with an unused fourth
     /// column; read as rows and transposed here so it applies to column
     /// vectors, the same convention as `NIFObjectPrefix.rotation`.
-    package let inertiaTensor: float3x3
+    public let inertiaTensor: float3x3
     /// Engine units, body-local.
-    package let centerOfMass: SIMD3<Float>
+    public let centerOfMass: SIMD3<Float>
     /// Metres per second, body-local. Vanilla static geometry stores zero.
-    package let linearVelocity: SIMD3<Float>
+    public let linearVelocity: SIMD3<Float>
     /// Radians per second.
-    package let angularVelocity: SIMD3<Float>
+    public let angularVelocity: SIMD3<Float>
     /// Fraction of linear velocity removed per second.
-    package let linearDamping: Float
+    public let linearDamping: Float
     /// Fraction of angular velocity removed per second.
-    package let angularDamping: Float
-    package let timeFactor: Float
-    package let gravityFactor: Float
-    package let friction: Float
-    package let rollingFrictionMultiplier: Float
-    package let restitution: Float
+    public let angularDamping: Float
+    public let timeFactor: Float
+    public let gravityFactor: Float
+    public let friction: Float
+    public let rollingFrictionMultiplier: Float
+    public let restitution: Float
     /// Metres per second.
-    package let maxLinearVelocity: Float
+    public let maxLinearVelocity: Float
     /// Radians per second.
-    package let maxAngularVelocity: Float
+    public let maxAngularVelocity: Float
     /// Metres of penetration the solver is allowed to tolerate.
-    package let penetrationDepth: Float
+    public let penetrationDepth: Float
     /// Raw `hkMotionType` byte; `motionSystem` names it where the value is known.
-    package let rawMotionSystem: UInt8
-    package let rawDeactivatorType: UInt8
-    package let rawSolverDeactivation: UInt8
-    package let rawQualityType: UInt8
+    public let rawMotionSystem: UInt8
+    public let rawDeactivatorType: UInt8
+    public let rawSolverDeactivation: UInt8
+    public let rawQualityType: UInt8
 
-    package var motionSystem: NIFMotionSystem? {
+    public var motionSystem: NIFMotionSystem? {
         NIFMotionSystem(rawValue: rawMotionSystem)
     }
 
-    package var deactivatorType: NIFDeactivatorType? {
+    public var deactivatorType: NIFDeactivatorType? {
         NIFDeactivatorType(rawValue: rawDeactivatorType)
     }
 
-    package var solverDeactivation: NIFSolverDeactivation? {
+    public var solverDeactivation: NIFSolverDeactivation? {
         NIFSolverDeactivation(rawValue: rawSolverDeactivation)
     }
 
-    package var qualityType: NIFCollisionQuality? {
+    public var qualityType: NIFCollisionQuality? {
         NIFCollisionQuality(rawValue: rawQualityType)
     }
 
     /// A body item 15.2 should integrate: a known simulated motion system with
     /// a positive finite mass. An unknown motion byte is not simulated, so a
     /// modded or future value degrades to static rather than to nonsense.
-    package var isSimulated: Bool {
+    public var isSimulated: Bool {
         (motionSystem?.isSimulated ?? false) && mass > 0 && mass.isFinite
     }
 }

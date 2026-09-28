@@ -13,22 +13,22 @@
 
 import Foundation
 
-nonisolated package struct CharacterClass: Equatable {
+nonisolated public struct CharacterClass: Equatable, Sendable {
     /// DATA 0x20 / 0x21 / 0x22: "Each byte provides the weight assigned to
     /// that attribute. The weights are used to distribute the fixed 10
     /// attribute points per level among the three attributes." (UESP CLAS)
-    package struct AttributeWeights: Equatable {
-        package var health: UInt8 = 0
-        package var magicka: UInt8 = 0
-        package var stamina: UInt8 = 0
+    public struct AttributeWeights: Equatable, Sendable {
+        public var health: UInt8 = 0
+        public var magicka: UInt8 = 0
+        public var stamina: UInt8 = 0
 
-        package init(health: UInt8 = 0, magicka: UInt8 = 0, stamina: UInt8 = 0) {
+        public init(health: UInt8 = 0, magicka: UInt8 = 0, stamina: UInt8 = 0) {
             self.health = health
             self.magicka = magicka
             self.stamina = stamina
         }
 
-        package var sum: Int {
+        public var sum: Int {
             Int(health) + Int(magicka) + Int(stamina)
         }
     }
@@ -38,27 +38,27 @@ nonisolated package struct CharacterClass: Equatable {
     /// One-handed; at byte 17, Enchanting) ... The weights are used to
     /// distribute the fixed 8 skill points per level among the various skills.
     /// Skills with a weight of zero never increase." (UESP CLAS)
-    package struct SkillWeights: Equatable {
+    public struct SkillWeights: Equatable, Sendable {
         /// Actor-value index of the first weight byte, `One-Handed`.
-        package static let firstActorValue: Int32 = 6
+        public static let firstActorValue: Int32 = 6
         /// How many weight bytes DATA carries, one per skill.
-        package static let count = 18
+        public static let count = 18
 
         /// One weight per skill, in actor-value index order from
         /// `firstActorValue`. Empty when DATA was too short to reach them.
-        package var weights: [UInt8] = []
+        public var weights: [UInt8] = []
 
-        package init(weights: [UInt8] = []) {
+        public init(weights: [UInt8] = []) {
             self.weights = weights
         }
 
-        package var sum: Int {
+        public var sum: Int {
             weights.reduce(0) { $0 + Int($1) }
         }
 
         /// Weight of the skill at vanilla actor-value `index`, or nil when that
         /// index is not one of the eighteen skills.
-        package func weight(at index: Int32) -> UInt8? {
+        public func weight(at index: Int32) -> UInt8? {
             let offset = Int(index - Self.firstActorValue)
             guard weights.indices.contains(offset) else { return nil }
             return weights[offset]
@@ -66,26 +66,26 @@ nonisolated package struct CharacterClass: Equatable {
 
         /// Every skill index this class weights, paired with its weight, in
         /// actor-value index order.
-        package var byActorValue: [(index: Int32, weight: Int)] {
+        public var byActorValue: [(index: Int32, weight: Int)] {
             weights.enumerated().map { offset, weight in
                 (index: Self.firstActorValue + Int32(offset), weight: Int(weight))
             }
         }
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// FULL — display name; localized plugins store a string-table ID.
-    package let name: LString?
-    package let attributeWeights: AttributeWeights
+    public let name: LString?
+    public let attributeWeights: AttributeWeights
     /// DATA 0x06, the per-skill weights (issue #468).
-    package let skillWeights: SkillWeights
+    public let skillWeights: SkillWeights
     /// DATA 0x18, the health ratio below which an essential or protected actor
     /// enters bleedout (CK "Class"). Decoded here so 15.6 does not have to
     /// re-open the record; nothing in this issue reads it.
-    package let bleedoutDefault: Float
+    public let bleedoutDefault: Float
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "CLAS" else {
             throw ESMError.malformed("expected CLAS record, got \(record.type)")
         }

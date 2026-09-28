@@ -15,25 +15,25 @@ import Foundation
 /// absolute positions). Style indices are 0 for "no style" or a 1-based index
 /// into `SWFShapeDefinition.fillStyles` / `.lineStyles` — the same convention
 /// the file uses, kept so index 0 stays the documented "not filled" marker.
-nonisolated package struct SWFShapeSegment: Equatable {
-    package enum Edge: Equatable {
+nonisolated public struct SWFShapeSegment: Equatable, Sendable {
+    public enum Edge: Equatable, Sendable {
         case line(toX: Int32, toY: Int32)
         /// Quadratic Bezier: control point then end anchor (spec
         /// CurvedEdgeRecord, p. 130).
         case quadratic(controlX: Int32, controlY: Int32, toX: Int32, toY: Int32)
     }
 
-    package let fromX: Int32
-    package let fromY: Int32
-    package let edge: Edge
+    public let fromX: Int32
+    public let fromY: Int32
+    public let edge: Edge
     /// Fill on the left of the travel direction (spec "FillStyle0 and
     /// FillStyle1", p. 128).
-    package let fillStyle0: Int
+    public let fillStyle0: Int
     /// Fill on the right of the travel direction.
-    package let fillStyle1: Int
-    package let lineStyle: Int
+    public let fillStyle1: Int
+    public let lineStyle: Int
 
-    package var endPoint: (x: Int32, y: Int32) {
+    public var endPoint: (x: Int32, y: Int32) {
         switch edge {
         case let .line(toX, toY): (toX, toY)
         case let .quadratic(_, _, toX, toY): (toX, toY)
@@ -42,26 +42,26 @@ nonisolated package struct SWFShapeSegment: Equatable {
 }
 
 /// A decoded DefineShape character: styles plus the flat edge list.
-nonisolated package struct SWFShapeDefinition: Equatable {
+nonisolated public struct SWFShapeDefinition: Equatable, Sendable {
     /// Tag codes this parser accepts, in spec order.
-    package static let tagCodes: Set<UInt16> = [2, 22, 32, 83]
+    public static let tagCodes: Set<UInt16> = [2, 22, 32, 83]
 
-    package let characterId: UInt16
+    public let characterId: UInt16
     /// Shape bounds in twips (strokes included).
-    package let bounds: SWFRect
+    public let bounds: SWFRect
     /// DefineShape4 only: bounds excluding strokes.
-    package let edgeBounds: SWFRect?
+    public let edgeBounds: SWFRect?
     /// DefineShape4 UsesFillWindingRule (SWF 10+). False selects the default
     /// even-odd fill rule.
-    package let usesFillWindingRule: Bool
+    public let usesFillWindingRule: Bool
     /// Flattened across StateNewStyles generations; segments index into this
     /// 1-based (0 = unfilled).
-    package let fillStyles: [SWFFillStyle]
-    package let lineStyles: [SWFLineStyle]
-    package let segments: [SWFShapeSegment]
+    public let fillStyles: [SWFFillStyle]
+    public let lineStyles: [SWFLineStyle]
+    public let segments: [SWFShapeSegment]
 
     /// Decodes a DefineShape/2/3/4 tag body.
-    package static func parse(tag: SWFTag) throws -> SWFShapeDefinition {
+    public static func parse(tag: SWFTag) throws -> SWFShapeDefinition {
         guard let version = SWFShapeVersion(tagCode: tag.code) else {
             throw SWFShapeError.unsupportedTag(tag.code)
         }
@@ -93,20 +93,20 @@ nonisolated package struct SWFShapeDefinition: Equatable {
     /// glyphs (spec chapter 6 "SHAPE", p. 125). Fill indices in the returned
     /// segments are the glyph convention: 0 = off, 1 = on. Shared with
     /// milestone 8.2.3 font decoding.
-    package static func parseGlyphSegments(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
+    public static func parseGlyphSegments(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
         try SWFShapeParser.parseGlyphShape(&bits)
     }
 }
 
 /// Which DefineShape tag a body came from. Drives the per-version rules: RGB
 /// vs RGBA colors, extended 0xFF style counts, and LINESTYLE2.
-nonisolated package enum SWFShapeVersion {
+nonisolated public enum SWFShapeVersion: Sendable {
     case shape1
     case shape2
     case shape3
     case shape4
 
-    package init?(tagCode: UInt16) {
+    public init?(tagCode: UInt16) {
         switch tagCode {
         case 2: self = .shape1
         case 22: self = .shape2
@@ -118,7 +118,7 @@ nonisolated package enum SWFShapeVersion {
 
     /// DefineShape3/4 store RGBA everywhere DefineShape/2 store RGB (spec
     /// FILLSTYLE / LINESTYLE / GRADRECORD color columns).
-    package var hasAlphaColors: Bool {
+    public var hasAlphaColors: Bool {
         self == .shape3 || self == .shape4
     }
 
@@ -126,12 +126,12 @@ nonisolated package enum SWFShapeVersion {
     /// only for Shape2 and Shape3" (spec FILLSTYLEARRAY, p. 122) — and by
     /// DefineShape4, which extends DefineShape3. DefineShape reads 0xFF as a
     /// literal count of 255.
-    package var supportsExtendedStyleCount: Bool {
+    public var supportsExtendedStyleCount: Bool {
         self != .shape1
     }
 
     /// DefineShape4 line styles are LINESTYLE2 (spec LINESTYLEARRAY, p. 123).
-    package var usesLineStyle2: Bool {
+    public var usesLineStyle2: Bool {
         self == .shape4
     }
 }

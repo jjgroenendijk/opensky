@@ -72,7 +72,7 @@ nonisolated extension Quest.Alias {
 
     /// Consumes one subrecord of the open alias group. Every failure costs the
     /// subrecord and nothing more; the caller keeps the alias either way.
-    package mutating func decode(field: ESMField, tally: inout QuestTally) throws {
+    public mutating func decode(field: ESMField, tally: inout QuestTally) throws {
         if try decodeSlot(field, tally: &tally) {
             return
         }

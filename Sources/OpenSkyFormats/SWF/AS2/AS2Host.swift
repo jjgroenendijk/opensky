@@ -21,7 +21,7 @@
 import Foundation
 
 /// A timeline request an action made against its target.
-nonisolated package enum AS2TimelineCommand: Equatable {
+nonisolated public enum AS2TimelineCommand: Equatable, Sendable {
     /// `ActionStop` (0x07).
     case stop
     /// `ActionPlay` (0x06).
@@ -33,7 +33,7 @@ nonisolated package enum AS2TimelineCommand: Equatable {
 }
 
 /// The objects a bare `_root` / `_parent` / `_level0` reference resolves to.
-nonisolated package enum AS2SpecialTarget: String, CaseIterable {
+nonisolated public enum AS2SpecialTarget: String, CaseIterable, Sendable {
     case root = "_root"
     case parent = "_parent"
     case level0 = "_level0"
@@ -41,7 +41,7 @@ nonisolated package enum AS2SpecialTarget: String, CaseIterable {
 
 /// The numbered display properties `ActionGetProperty` (0x22) and
 /// `ActionSetProperty` (0x23) address.
-nonisolated package enum AS2DisplayProperty: Int, CaseIterable {
+nonisolated public enum AS2DisplayProperty: Int, CaseIterable, Sendable {
     case positionX = 0
     case positionY
     case scaleX
@@ -67,11 +67,11 @@ nonisolated package enum AS2DisplayProperty: Int, CaseIterable {
 
     /// The ActionScript spelling, which is also the member name the same
     /// property is reachable under (`clip._x`).
-    package var actionScriptName: String {
+    public var actionScriptName: String {
         AS2DisplayProperty.names[rawValue]
     }
 
-    package static func named(_ name: String) -> AS2DisplayProperty? {
+    public static func named(_ name: String) -> AS2DisplayProperty? {
         guard let index = names.firstIndex(of: name) else {
             return nil
         }
@@ -89,7 +89,7 @@ nonisolated package enum AS2DisplayProperty: Int, CaseIterable {
 /// What the interpreter asks the engine. Every method may decline (nil or
 /// false); declining is normal while the display layer does not exist, and the
 /// interpreter turns it into a tally entry rather than an error.
-nonisolated package protocol AS2Host: AnyObject {
+nonisolated public protocol AS2Host: AnyObject {
     /// `ActionStop`, `ActionPlay`, `ActionGotoFrame`, `ActionGoToLabel`.
     func perform(_ command: AS2TimelineCommand, target: AS2Object)
 

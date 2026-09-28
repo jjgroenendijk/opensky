@@ -4,9 +4,11 @@
 // game file.
 
 import AVFAudio
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 enum MusicFixture {

@@ -2,6 +2,7 @@
 // way a stream can be wrong has to end in a recorded fault; every demand on the
 // display layer has to end in a host event and a tally entry.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

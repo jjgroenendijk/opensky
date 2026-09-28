@@ -13,48 +13,48 @@
 import Foundation
 import simd
 
-nonisolated package struct Region {
+nonisolated public struct Region: Sendable {
     /// One RDWT entry under a weather (type 3) data area.
-    package struct WeatherChance: Equatable {
-        package let weather: FormID
+    public struct WeatherChance: Equatable, Sendable {
+        public let weather: FormID
         /// Chance in percent (entries sum to 100 across the area).
-        package let chance: Int
+        public let chance: Int
         /// Optional GLOB (unused by the game); nil when the FormID is null.
-        package let global: FormID?
+        public let global: FormID?
     }
 
     /// One RDSA entry under a sound (type 7) data area. Source of per-region
     /// ambient sound: xEdit wbRegionSounds (wbDefinitionsCommon.pas:8729-8747).
     /// Each entry is a 12-byte struct: SNDR (or SOUN legacy marker) FormID,
     /// weather-state filter flags, and a per-entry weight.
-    package struct SoundEntry: Equatable {
+    public struct SoundEntry: Equatable, Sendable {
         /// Weather states under which this entry is eligible. Bit 0x01 = pleasant,
         /// 0x02 = cloudy, 0x04 = rainy, 0x08 = snowy. An empty set means the
         /// entry plays in all weather.
-        package struct Conditions: OptionSet, Equatable {
-            package let rawValue: UInt32
+        public struct Conditions: OptionSet, Equatable, Sendable {
+            public let rawValue: UInt32
 
-            package init(rawValue: UInt32) {
+            public init(rawValue: UInt32) {
                 self.rawValue = rawValue
             }
 
-            package static let pleasant = Conditions(rawValue: 0x0001)
-            package static let cloudy = Conditions(rawValue: 0x0002)
-            package static let rainy = Conditions(rawValue: 0x0004)
-            package static let snowy = Conditions(rawValue: 0x0008)
+            public static let pleasant = Conditions(rawValue: 0x0001)
+            public static let cloudy = Conditions(rawValue: 0x0002)
+            public static let rainy = Conditions(rawValue: 0x0004)
+            public static let snowy = Conditions(rawValue: 0x0008)
 
             /// The bit set CK uses when "all weather" is selected.
-            package static let all: Conditions = [.pleasant, .cloudy, .rainy, .snowy]
+            public static let all: Conditions = [.pleasant, .cloudy, .rainy, .snowy]
         }
 
         /// SNDR (or SOUN legacy marker) FormID. The runtime resolves the
         /// SOUN.SDSC hop to its SNDR.
-        package let sound: FormID
-        package let conditions: Conditions
+        public let sound: FormID
+        public let conditions: Conditions
         /// Per-entry weight in the 0-1 range (probe against Skyrim.esm:
         /// min 0.01, max 1.0; the CK presents it as a percentage but the
         /// stored value is the 0-1 weight the runtime uses).
-        package let chance: Float
+        public let chance: Float
     }
 
     /// RDAT area type codes (uint32). Weather and sound are decoded.
@@ -67,30 +67,30 @@ nonisolated package struct Region {
         case sound = 7
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// WNAM worldspace this region belongs to; nil when absent.
-    package let worldspace: FormID?
+    public let worldspace: FormID?
     /// RCLR editor map color; nil when absent.
-    package let mapColor: SIMD3<Float>?
+    public let mapColor: SIMD3<Float>?
     /// RDWT weather entries from the weather data area; empty when absent.
-    package let weatherList: [WeatherChance]
+    public let weatherList: [WeatherChance]
     /// Weather area RDAT priority; nil when no weather area present.
-    package let weatherPriority: Int?
+    public let weatherPriority: Int?
     /// Weather area RDAT override flag (RDAT flags bit 0x01).
-    package let weatherOverride: Bool
+    public let weatherOverride: Bool
     /// RDSA entries from the sound data area; empty when absent.
-    package let soundList: [SoundEntry]
+    public let soundList: [SoundEntry]
     /// Sound area RDAT priority; nil when no sound area present.
-    package let soundPriority: Int?
+    public let soundPriority: Int?
     /// Sound area RDAT override flag.
-    package let soundOverride: Bool
+    public let soundOverride: Bool
     /// RDMO — region music type (MUSC), M9.2.3. UESP REGN notes it "can appear
     /// with RDSA under same RDAT or on its own", so it is accepted regardless
     /// of the current area context. nil when absent or null.
-    package let musicType: FormID?
+    public let musicType: FormID?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "REGN" else {
             throw ESMError.malformed("expected REGN record, got \(record.type)")
         }

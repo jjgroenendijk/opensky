@@ -9,9 +9,9 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum InventoryFixture {
+public enum InventoryFixture: Sendable {
     /// Parses fixture bytes back into the single record they encode.
-    static func record(_ bytes: Data) throws -> ESMRecord {
+    public static func record(_ bytes: Data) throws -> ESMRecord {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {
             throw ESMError.malformed("fixture did not produce a record")
@@ -19,13 +19,13 @@ enum InventoryFixture {
         return record
     }
 
-    static func formIDField(_ type: String, _ value: UInt32) -> Data {
+    public static func formIDField(_ type: String, _ value: UInt32) -> Data {
         var data = Data()
         data.appendUInt32(value)
         return ESMFixture.field(type, data)
     }
 
-    static func keywordFields(_ keywords: [UInt32]) -> Data {
+    public static func keywordFields(_ keywords: [UInt32]) -> Data {
         var count = Data()
         count.appendUInt32(UInt32(keywords.count))
         var payload = Data()
@@ -36,7 +36,7 @@ enum InventoryFixture {
     }
 
     /// OBND: six int16, (-2,-2,-2) to (2,2,2).
-    static func boundsData() -> Data {
+    public static func boundsData() -> Data {
         var data = Data()
         for value: Int16 in [-2, -2, -2, 2, 2, 2] {
             data.appendUInt16(UInt16(bitPattern: value))
@@ -45,7 +45,7 @@ enum InventoryFixture {
     }
 
     /// The 8-byte value+weight DATA shared by MISC, INGR and ARMO.
-    static func valueWeightData(value: Int32, weight: Float) -> Data {
+    public static func valueWeightData(value: Int32, weight: Float) -> Data {
         var data = Data()
         data.appendUInt32(UInt32(bitPattern: value))
         data.appendUInt32(weight.bitPattern)
@@ -53,7 +53,7 @@ enum InventoryFixture {
     }
 
     /// BOOK DATA: flags, type, 2 unused, teaches union, value, weight.
-    static func bookData(
+    public static func bookData(
         flags: UInt8, kind: UInt8, teaches: UInt32, value: Int32, weight: Float
     ) -> Data {
         var data = Data([flags, kind, 0, 0])
@@ -64,7 +64,7 @@ enum InventoryFixture {
     }
 
     /// ALCH ENIT: value, flags, addiction, addiction chance, consume sound.
-    static func enitData(value: Int32, flags: UInt32) -> Data {
+    public static func enitData(value: Int32, flags: UInt32) -> Data {
         var data = Data()
         data.appendUInt32(UInt32(bitPattern: value))
         data.appendUInt32(flags)
@@ -74,7 +74,7 @@ enum InventoryFixture {
         return data
     }
 
-    static func effectFields(
+    public static func effectFields(
         effect: UInt32, magnitude: Float, area: UInt32, duration: UInt32
     ) -> Data {
         var efit = Data()
@@ -85,7 +85,7 @@ enum InventoryFixture {
     }
 
     /// WEAP DATA: uint32 value, float weight, uint16 damage.
-    static func weaponData(value: Int32, weight: Float, damage: UInt16) -> Data {
+    public static func weaponData(value: Int32, weight: Float, damage: UInt16) -> Data {
         var data = valueWeightData(value: value, weight: weight)
         data.appendUInt16(damage)
         return data
@@ -93,7 +93,7 @@ enum InventoryFixture {
 
     /// WEAP DNAM: 100 bytes; only 0x00, 0x04, 0x08, 0x0C, 0x4C and 0x60 are
     /// read. Stagger is fixed at 0.75 so its offset is asserted too.
-    static func weaponDNAM(
+    public static func weaponDNAM(
         animation: UInt8, speed: Float, reach: Float, flags: UInt16, skill: Int32
     ) -> Data {
         var data = Data([animation, 0, 0, 0])
@@ -108,7 +108,7 @@ enum InventoryFixture {
     }
 
     /// WEAP CRDT: 24 bytes in SSE (SPEL at 0x10), 16 in classic (at 0x0C).
-    static func criticalData(sse: Bool, damage: UInt16, spell: UInt32) -> Data {
+    public static func criticalData(sse: Bool, damage: UInt16, spell: UInt32) -> Data {
         var data = Data()
         data.appendUInt16(damage)
         data.appendUInt16(0)
@@ -123,7 +123,7 @@ enum InventoryFixture {
     }
 
     /// AMMO DATA: projectile, flags, damage, value, and — SSE only — weight.
-    static func ammoData(
+    public static func ammoData(
         projectile: UInt32, flags: UInt32, damage: Float, value: Int32, weight: Float?
     ) -> Data {
         var data = Data()
@@ -137,14 +137,14 @@ enum InventoryFixture {
         return data
     }
 
-    static func cntoData(item: UInt32, count: Int32) -> Data {
+    public static func cntoData(item: UInt32, count: Int32) -> Data {
         var data = Data()
         data.appendUInt32(item)
         data.appendUInt32(UInt32(bitPattern: count))
         return data
     }
 
-    static func coedData(owner: UInt32, condition: Float) -> Data {
+    public static func coedData(owner: UInt32, condition: Float) -> Data {
         var data = Data()
         data.appendUInt32(owner)
         data.appendUInt32(0) // global / required rank union

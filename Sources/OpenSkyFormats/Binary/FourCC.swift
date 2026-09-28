@@ -4,14 +4,14 @@
 
 import Foundation
 
-nonisolated package struct FourCC: Hashable, Sendable {
+nonisolated public struct FourCC: Hashable, Sendable {
     /// The four bytes as read little-endian (first character in the low byte).
-    package let rawValue: UInt32
+    public let rawValue: UInt32
 }
 
 nonisolated extension FourCC: ExpressibleByStringLiteral {
     /// Programmer-supplied literals only (`"WRLD"`); traps on wrong length.
-    package init(stringLiteral value: StringLiteralType) {
+    public init(stringLiteral value: StringLiteralType) {
         let bytes = Array(value.utf8)
         precondition(bytes.count == 4, "FourCC literal must be exactly 4 bytes")
         self.init(
@@ -24,7 +24,7 @@ nonisolated extension FourCC: ExpressibleByStringLiteral {
 }
 
 nonisolated extension FourCC: CustomStringConvertible {
-    package var description: String {
+    public var description: String {
         let bytes = withUnsafeBytes(of: rawValue.littleEndian) { Array($0) }
         guard
             bytes.allSatisfy({ (0x20 ... 0x7E).contains($0) }),
@@ -37,7 +37,7 @@ nonisolated extension FourCC: CustomStringConvertible {
 }
 
 nonisolated extension BinaryReader {
-    package mutating func readFourCC() throws -> FourCC {
+    public mutating func readFourCC() throws -> FourCC {
         try FourCC(rawValue: readUInt32())
     }
 }

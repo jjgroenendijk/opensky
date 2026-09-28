@@ -33,6 +33,7 @@
 //   0x00_4010  CONT LeveledChest   (the useAll bundle, twice over)
 //   0x00_4020  CONT Empty
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

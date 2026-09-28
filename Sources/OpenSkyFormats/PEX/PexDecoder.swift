@@ -3,15 +3,15 @@
 
 import Foundation
 
-nonisolated package struct PexDecoder {
-    package var reader: PexReader
-    package var strings: [String] = []
+nonisolated public struct PexDecoder: Sendable {
+    public var reader: PexReader
+    public var strings: [String] = []
 
-    package init(data: Data) {
+    public init(data: Data) {
         reader = PexReader(data)
     }
 
-    package mutating func decode() throws -> PexFile {
+    public mutating func decode() throws -> PexFile {
         let header = try decodeHeader()
         strings = try decodeStrings()
         let debugInfo = try decodeDebugInfo()
@@ -110,7 +110,7 @@ nonisolated package struct PexDecoder {
         return flags
     }
 
-    package func resolve(_ index: UInt16) throws -> String {
+    public func resolve(_ index: UInt16) throws -> String {
         guard Int(index) < strings.count else {
             throw PexError.stringIndexOutOfRange(index: index, count: strings.count)
         }
@@ -119,54 +119,54 @@ nonisolated package struct PexDecoder {
 }
 
 /// Sequential big-endian reader private to the PEX decoder.
-nonisolated package struct PexReader {
+nonisolated public struct PexReader: Sendable {
     private let data: Data
-    package private(set) var offset = 0
+    public private(set) var offset = 0
 
-    package init(_ data: Data) {
+    public init(_ data: Data) {
         self.data = data
     }
 
-    package var bytesRemaining: Int {
+    public var bytesRemaining: Int {
         max(0, data.count - offset)
     }
 
-    package mutating func readUInt8() throws -> UInt8 {
+    public mutating func readUInt8() throws -> UInt8 {
         try read(count: 1)[0]
     }
 
-    package mutating func readUInt16() throws -> UInt16 {
+    public mutating func readUInt16() throws -> UInt16 {
         let bytes = try read(count: 2)
         return UInt16(bytes[0]) << 8 | UInt16(bytes[1])
     }
 
-    package mutating func readUInt32() throws -> UInt32 {
+    public mutating func readUInt32() throws -> UInt32 {
         let bytes = try read(count: 4)
         return bytes.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
     }
 
-    package mutating func readUInt64() throws -> UInt64 {
+    public mutating func readUInt64() throws -> UInt64 {
         let bytes = try read(count: 8)
         return bytes.reduce(UInt64(0)) { ($0 << 8) | UInt64($1) }
     }
 
-    package mutating func readInt32() throws -> Int32 {
+    public mutating func readInt32() throws -> Int32 {
         try Int32(bitPattern: readUInt32())
     }
 
-    package mutating func readFloat32() throws -> Float {
+    public mutating func readFloat32() throws -> Float {
         try Float(bitPattern: readUInt32())
     }
 
     /// Length-prefixed string table entry. Compiled scripts are usually ASCII,
     /// but a mod's compiler is free to emit anything, so this decodes under the
     /// engine-wide `GameText` policy rather than failing the file.
-    package mutating func readString() throws -> String {
+    public mutating func readString() throws -> String {
         let length = try Int(readUInt16())
         return try GameText.decode(read(count: length))
     }
 
-    package mutating func subreader(count: Int) throws -> PexReader {
+    public mutating func subreader(count: Int) throws -> PexReader {
         try PexReader(read(count: count))
     }
 

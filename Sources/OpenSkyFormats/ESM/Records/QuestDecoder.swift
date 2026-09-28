@@ -16,45 +16,45 @@
 import Foundation
 
 nonisolated extension Quest {
-    package struct Contents {
-        package let localized: Bool
+    public struct Contents: Sendable {
+        public let localized: Bool
 
-        package var editorID: String?
-        package var name: LString?
-        package var flags = Flags()
-        package var priority: UInt8 = 0
-        package var kind = Kind.none
-        package var event: FourCC?
-        package var textDisplayGlobals: [FormID] = []
-        package var objectWindowFilter: String?
-        package var dialogueConditions = ConditionList()
-        package var storyManagerConditions = ConditionList()
-        package var stages: [Stage] = []
-        package var objectives: [Objective] = []
-        package var nextAliasID: UInt32?
-        package var aliases: [Alias] = []
-        package var questDescription: String?
-        package var legacyTargets: [Target] = []
-        package var script = ScriptData(ownerType: "QUST")
-        package var tally = QuestTally()
+        public var editorID: String?
+        public var name: LString?
+        public var flags = Flags()
+        public var priority: UInt8 = 0
+        public var kind = Kind.none
+        public var event: FourCC?
+        public var textDisplayGlobals: [FormID] = []
+        public var objectWindowFilter: String?
+        public var dialogueConditions = ConditionList()
+        public var storyManagerConditions = ConditionList()
+        public var stages: [Stage] = []
+        public var objectives: [Objective] = []
+        public var nextAliasID: UInt32?
+        public var aliases: [Alias] = []
+        public var questDescription: String?
+        public var legacyTargets: [Target] = []
+        public var script = ScriptData(ownerType: "QUST")
+        public var tally = QuestTally()
 
         /// NEXT: the CTDA run before it is the quest's dialogue condition set,
         /// the run after it belongs to the story manager.
-        package var sawConditionSeparator = false
+        public var sawConditionSeparator = false
         /// ANAM: ends the objective run and opens the alias run, which is also
         /// what disambiguates the trailing NNAM and QSTA fields.
-        package var sawAliasMarker = false
-        package var openStage: Stage?
-        package var openLogEntry: LogEntry?
-        package var openObjective: Objective?
-        package var openTarget: Target?
-        package var openAlias: Alias?
+        public var sawAliasMarker = false
+        public var openStage: Stage?
+        public var openLogEntry: LogEntry?
+        public var openObjective: Objective?
+        public var openTarget: Target?
+        public var openAlias: Alias?
 
-        package init(localized: Bool) {
+        public init(localized: Bool) {
             self.localized = localized
         }
 
-        package mutating func decode(field: ESMField) throws {
+        public mutating func decode(field: ESMField) throws {
             switch field.type {
             case "ALST":
                 try beginAlias(field, category: .reference)
@@ -72,7 +72,7 @@ nonisolated extension Quest {
         }
 
         /// Flushes every group still open at the end of the field run.
-        package mutating func closeOpenGroups() {
+        public mutating func closeOpenGroups() {
             endAlias(terminated: false)
             flushObjective()
             flushStage()
@@ -197,7 +197,7 @@ nonisolated extension Quest {
         /// misplaced subrecord costs one entry instead of falling through into
         /// another group's reading of the same four letters.
         @discardableResult
-        package mutating func note(_ kind: QuestSkipKind) -> Bool {
+        public mutating func note(_ kind: QuestSkipKind) -> Bool {
             tally.note(kind)
             return true
         }

@@ -41,6 +41,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Where a skill's `AVSK` advancement parameters come from.
 ///

@@ -21,7 +21,7 @@ nonisolated extension NIFFile {
 
     /// Flattens the block tree into drawable meshes with model-space
     /// transforms and deduplicated material slots.
-    package func model(skeleton: NIFSkeleton? = nil) throws -> Model {
+    public func model(skeleton: NIFSkeleton? = nil) throws -> Model {
         var flattener = try Flattener(file: self, skeleton: skeleton)
         for root in roots {
             try flattener.walk(from: root)
@@ -33,33 +33,33 @@ nonisolated extension NIFFile {
         )
     }
 
-    package struct Flattener {
+    public struct Flattener: Sendable {
         /// Dedup key: which shader/alpha property blocks a shape referenced.
-        package struct SlotKey: Hashable {
-            package let shaderPropertyBlock: Int?
-            package let alphaPropertyBlock: Int?
+        public struct SlotKey: Hashable, Sendable {
+            public let shaderPropertyBlock: Int?
+            public let alphaPropertyBlock: Int?
         }
 
-        package let file: NIFFile
-        package let hierarchy: NIFNodeHierarchy
-        package let skeleton: NIFSkeleton?
-        package var meshes: [Mesh] = []
-        package var materials: [Material] = []
-        package var slotIndexes: [SlotKey: Int] = [:]
-        package var skippedShapeCount = 0
+        public let file: NIFFile
+        public let hierarchy: NIFNodeHierarchy
+        public let skeleton: NIFSkeleton?
+        public var meshes: [Mesh] = []
+        public var materials: [Material] = []
+        public var slotIndexes: [SlotKey: Int] = [:]
+        public var skippedShapeCount = 0
 
         /// Types that carry drawable geometry rather than children.
-        package static let shapeTypes: Set = [
+        public static let shapeTypes: Set = [
             "BSTriShape", "BSSubIndexTriShape", "BSDynamicTriShape"
         ]
 
-        package init(file: NIFFile, skeleton: NIFSkeleton?) throws {
+        public init(file: NIFFile, skeleton: NIFSkeleton?) throws {
             self.file = file
             hierarchy = try NIFNodeHierarchy(file: file)
             self.skeleton = skeleton
         }
 
-        package mutating func walk(from root: Int32) throws {
+        public mutating func walk(from root: Int32) throws {
             var stack = NIFGraphStack(root: root)
             while let visit = stack.next() {
                 guard visit.ref >= 0 else { continue } // -1 = null ref
@@ -158,15 +158,15 @@ nonisolated extension NIFFile {
             ))
         }
 
-        package struct ShapeGeometry {
-            package let positions: [SIMD3<Float>]
-            package let normals: [SIMD3<Float>]
-            package let tangents: [SIMD3<Float>]
-            package let bitangents: [SIMD3<Float>]
-            package let uvs: [SIMD2<Float>]
-            package let colors: [SIMD4<Float>]
-            package let indices: [UInt16]
-            package let skinning: MeshSkinning?
+        public struct ShapeGeometry: Sendable {
+            public let positions: [SIMD3<Float>]
+            public let normals: [SIMD3<Float>]
+            public let tangents: [SIMD3<Float>]
+            public let bitangents: [SIMD3<Float>]
+            public let uvs: [SIMD2<Float>]
+            public let colors: [SIMD4<Float>]
+            public let indices: [UInt16]
+            public let skinning: MeshSkinning?
         }
 
         private func resolveGeometry(

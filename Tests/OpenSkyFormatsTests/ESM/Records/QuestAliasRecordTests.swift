@@ -6,6 +6,7 @@
 // Core/wbDefinitionsTES5.pas reference aliases line 8869, location aliases
 // 8971. See docs/formats/quest-records.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

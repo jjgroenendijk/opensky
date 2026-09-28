@@ -3,6 +3,7 @@
 // bounds, emit one load summary.
 
 import OpenSkyFormats
+import OpenSkyGameData
 import OSLog
 
 nonisolated struct CellGeometryBuild {

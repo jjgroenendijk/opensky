@@ -18,7 +18,7 @@ import Foundation
 nonisolated extension SWFRuntimeNatives {
     // MARK: - TextField
 
-    package static func installTextField(_ runtime: AS2Runtime, prototype: AS2Object) {
+    public static func installTextField(_ runtime: AS2Runtime, prototype: AS2Object) {
         AS2Natives.constructor(runtime, name: "TextField", prototype: prototype) { _ in .undefined }
         AS2Natives.method(runtime, on: prototype, name: "SetText") { context in
             try assignText(context, html: false)
@@ -52,7 +52,7 @@ nonisolated extension SWFRuntimeNatives {
     /// movie's own `FrameSize` in pixels: OpenSky letterboxes the movie into the
     /// viewport rather than reflowing it, so the stage a menu lays itself out
     /// against never changes size.
-    package static func installStage(_ runtime: AS2Runtime, movie: SWFMovie) {
+    public static func installStage(_ runtime: AS2Runtime, movie: SWFMovie) {
         let stage = runtime.makeObject()
         let widthTwips = Float(movie.frameSize.xMax - movie.frameSize.xMin)
         let heightTwips = Float(movie.frameSize.yMax - movie.frameSize.yMin)
@@ -103,7 +103,7 @@ nonisolated extension SWFRuntimeNatives {
 
     // MARK: - Selection
 
-    package static func installSelection(_ runtime: AS2Runtime) {
+    public static func installSelection(_ runtime: AS2Runtime) {
         let selection = runtime.makeObject()
         AS2Natives.method(runtime, on: selection, name: "setFocus") { context in
             guard let owner = movieRuntime(context) else {
@@ -133,7 +133,7 @@ nonisolated extension SWFMovieRuntime {
     /// `Selection.setFocus(target)`: accepts a display object or a path string.
     /// Passing null clears focus, which Flash treats as a successful call.
     @discardableResult
-    package func setFocus(_ target: AS2Value) -> Bool {
+    public func setFocus(_ target: AS2Value) -> Bool {
         switch target {
         case .null, .undefined:
             focusTarget = nil

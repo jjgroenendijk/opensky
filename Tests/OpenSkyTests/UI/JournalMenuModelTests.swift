@@ -6,6 +6,7 @@
 // inline and no string table is needed — which is also the unlocalized-mod
 // path through `JournalMenuModel.text`.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

@@ -13,22 +13,22 @@
 
 import Foundation
 
-nonisolated package enum SWFActionParser {
-    package static let doActionCode: UInt16 = 12
-    package static let doInitActionCode: UInt16 = 59
+nonisolated public enum SWFActionParser: Sendable {
+    public static let doActionCode: UInt16 = 12
+    public static let doInitActionCode: UInt16 = 59
     /// `ActionEndFlag`: the zero byte that terminates an action stream.
-    package static let endFlag: UInt8 = 0
+    public static let endFlag: UInt8 = 0
 
     /// Frames an action byte stream. Record offsets are relative to the first
     /// byte of `data`.
-    package static func parse(_ data: Data) -> SWFActionBlock {
+    public static func parse(_ data: Data) -> SWFActionBlock {
         var framer = Framer(data: data)
         framer.run()
         return framer.block
     }
 
     /// DoAction (12): the whole tag body is the action stream.
-    package static func parseDoAction(tag: SWFTag) throws -> SWFActionBlock {
+    public static func parseDoAction(tag: SWFTag) throws -> SWFActionBlock {
         guard tag.code == doActionCode else {
             throw SWFActionError.unsupportedTag(tag.code)
         }
@@ -38,7 +38,7 @@ nonisolated package enum SWFActionParser {
     /// DoInitAction (59): `Sprite ID` UI16 then the action stream. Record
     /// offsets are relative to the stream, not to the tag body, so the sprite
     /// id does not shift them.
-    package static func parseDoInitAction(tag: SWFTag) throws -> SWFDoInitAction {
+    public static func parseDoInitAction(tag: SWFTag) throws -> SWFDoInitAction {
         guard tag.code == doInitActionCode else {
             throw SWFActionError.unsupportedTag(tag.code)
         }

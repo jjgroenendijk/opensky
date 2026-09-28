@@ -13,6 +13,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Why an actor's values could not be derived.
 ///

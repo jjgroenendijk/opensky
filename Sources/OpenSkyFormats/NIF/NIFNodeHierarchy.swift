@@ -8,12 +8,12 @@
 import Foundation
 import simd
 
-nonisolated package struct NIFNodeHierarchy {
-    package let worldTransforms: [Int: float4x4]
-    package let parentTransforms: [Int: float4x4]
-    package let names: [Int: String]
+nonisolated public struct NIFNodeHierarchy: Sendable {
+    public let worldTransforms: [Int: float4x4]
+    public let parentTransforms: [Int: float4x4]
+    public let names: [Int: String]
 
-    package init(file: NIFFile) throws {
+    public init(file: NIFFile) throws {
         var builder = Builder(file: file)
         for root in file.roots {
             try builder.walk(from: root)
@@ -87,16 +87,16 @@ nonisolated package struct NIFNodeHierarchy {
 /// Bind-pose bone tree decoded from a skeleton NIF. Skin instances refer to
 /// dummy nodes in their own file; names connect those refs to full skeleton
 /// world transforms, including translations omitted by vanilla body dummies.
-nonisolated package struct NIFSkeleton {
-    package let boneTransforms: [String: float4x4]
+nonisolated public struct NIFSkeleton: Sendable {
+    public let boneTransforms: [String: float4x4]
 
     /// Direct construction, for tests and for a caller that already has a bone
     /// table (the rigid-attachment bind lookup, issue #178).
-    package init(boneTransforms: [String: float4x4]) {
+    public init(boneTransforms: [String: float4x4]) {
         self.boneTransforms = boneTransforms
     }
 
-    package init(file: NIFFile) throws {
+    public init(file: NIFFile) throws {
         let hierarchy = try NIFNodeHierarchy(file: file)
         var transforms: [String: float4x4] = [:]
         for (index, name) in hierarchy.names where transforms[name] == nil {
@@ -114,7 +114,7 @@ nonisolated package struct NIFSkeleton {
     /// `Weapon` and the NIF names the same node `WEAPON` (observed with
     /// `openskycli skeleton --nif`, recorded in docs/engine/actor-resolution.md). Skin
     /// bone names match exactly and take the fast path.
-    package func transform(forBoneNamed name: String) -> float4x4? {
+    public func transform(forBoneNamed name: String) -> float4x4? {
         if let exact = boneTransforms[name] {
             return exact
         }

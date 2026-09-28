@@ -47,6 +47,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Everything the derivation needs to know about one actor.
 ///

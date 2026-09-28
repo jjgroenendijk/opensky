@@ -1,6 +1,7 @@
 // TES4 header decode + FormID master resolution tests over synthetic
 // in-code plugins (ESMFixture).
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

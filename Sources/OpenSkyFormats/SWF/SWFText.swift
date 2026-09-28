@@ -9,43 +9,43 @@
 
 import Foundation
 
-nonisolated package enum SWFTextError: Error, Equatable {
+nonisolated public enum SWFTextError: Error, Equatable, Sendable {
     /// Tag code is not DefineText (11) or DefineText2 (33).
     case unsupportedTag(UInt16)
 }
 
 /// One placed glyph in a TEXTRECORD: an index into the current font's glyph
 /// table and the advance (twips) added to the pen after drawing it.
-nonisolated package struct SWFGlyphEntry: Equatable {
-    package let glyphIndex: Int
-    package let advance: Int32
+nonisolated public struct SWFGlyphEntry: Equatable, Sendable {
+    public let glyphIndex: Int
+    public let advance: Int32
 }
 
 /// One TEXTRECORD. A record optionally changes the active font (with its text
 /// height), color, and pen x/y offset (all twips), then places `glyphs`. Absent
 /// state fields inherit the value carried by earlier records (spec p. 174).
-nonisolated package struct SWFTextRecord: Equatable {
-    package let fontID: UInt16?
+nonisolated public struct SWFTextRecord: Equatable, Sendable {
+    public let fontID: UInt16?
     /// Font size in twips; present exactly when `fontID` is (StyleFlagsHasFont).
-    package let textHeight: UInt16?
-    package let color: SWFColor?
-    package let xOffset: Int32?
-    package let yOffset: Int32?
-    package let glyphs: [SWFGlyphEntry]
+    public let textHeight: UInt16?
+    public let color: SWFColor?
+    public let xOffset: Int32?
+    public let yOffset: Int32?
+    public let glyphs: [SWFGlyphEntry]
 }
 
 /// A decoded DefineText/DefineText2 character.
-nonisolated package struct SWFTextDefinition: Equatable {
+nonisolated public struct SWFTextDefinition: Equatable, Sendable {
     /// Tag codes this parser accepts.
-    package static let tagCodes: Set<UInt16> = [11, 33]
+    public static let tagCodes: Set<UInt16> = [11, 33]
 
-    package let characterId: UInt16
-    package let bounds: SWFRect
-    package let matrix: SWFMatrix
-    package let records: [SWFTextRecord]
+    public let characterId: UInt16
+    public let bounds: SWFRect
+    public let matrix: SWFMatrix
+    public let records: [SWFTextRecord]
 
     /// Decodes a DefineText (11, RGB) or DefineText2 (33, RGBA) tag body.
-    package static func parse(tag: SWFTag) throws -> SWFTextDefinition {
+    public static func parse(tag: SWFTag) throws -> SWFTextDefinition {
         guard tag.code == 11 || tag.code == 33 else {
             throw SWFTextError.unsupportedTag(tag.code)
         }

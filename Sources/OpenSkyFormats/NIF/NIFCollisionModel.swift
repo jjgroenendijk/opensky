@@ -10,30 +10,30 @@
 import Foundation
 import simd
 
-nonisolated package struct NIFCollisionFilter: Equatable, Sendable {
+nonisolated public struct NIFCollisionFilter: Equatable, Sendable {
     /// NifTools SkyrimLayer raw value.
-    package let layer: UInt8
+    public let layer: UInt8
     /// NifTools CollisionFilterFlags: biped part + MOPP/no-collision/link bits.
-    package let flags: UInt8
-    package let group: UInt16
+    public let flags: UInt8
+    public let group: UInt16
 
     /// nif.xml `CollisionFilterFlags` is a bitfield over one byte: bits 0-4 are
     /// a `BipedPart`, bit 5 is `MOPP Scaled`, bit 6 is `No Collision`, bit 7 is
     /// `Linked Group`.
-    package static let bipedPartMask: UInt8 = 0x1F
-    package static let noCollisionFlag: UInt8 = 0x40
+    public static let bipedPartMask: UInt8 = 0x1F
+    public static let noCollisionFlag: UInt8 = 0x40
 
     /// The layers nif.xml says the biped part field is meaningful on: "Used
     /// only if the Layer is 8 (or 32/33 for Skyrim and later)" — `SKYL_BIPED`,
     /// `SKYL_DEADBIP` and `SKYL_BIPED_NO_CC`.
-    package static let bipedLayers: Set<UInt8> = [8, 32, 33]
+    public static let bipedLayers: Set<UInt8> = [8, 32, 33]
 
-    package var isPlayerSolid: Bool {
+    public var isPlayerSolid: Bool {
         // SkyrimLayer 12 = trigger, 15 = non-collidable.
         layer != 12 && layer != 15 && !hasNoCollision
     }
 
-    package var hasNoCollision: Bool {
+    public var hasNoCollision: Bool {
         flags & Self.noCollisionFlag != 0
     }
 
@@ -44,14 +44,14 @@ nonisolated package struct NIFCollisionFilter: Equatable, Sendable {
     /// part — `P_OTHER`, which the vanilla humanoid puts on `NPC Neck` — so a
     /// consumer that read the bits unconditionally could not tell a neck from a
     /// crate. Only the layer says whether the bits are a part at all.
-    package var bipedPart: UInt8? {
+    public var bipedPart: UInt8? {
         Self.bipedLayers.contains(layer) ? flags & Self.bipedPartMask : nil
     }
 
     /// SkyrimLayer 12 (`SKYL_TRIGGER`) specifically. Not the negation of
     /// `isPlayerSolid`: layer 15 and the `No Collision` flag also fail that
     /// test without naming a trigger.
-    package var isTriggerVolume: Bool {
+    public var isTriggerVolume: Bool {
         layer == 12
     }
 }
@@ -60,45 +60,45 @@ nonisolated package struct NIFCollisionFilter: Equatable, Sendable {
 /// off `bhkCollisionObject`; the per-bone bodies of a character skeleton hang
 /// off `bhkBlendCollisionObject`, which inherits it and appends two blend-gain
 /// floats this decoder does not read.
-nonisolated package enum NIFCollisionCarrier: String, Sendable {
+nonisolated public enum NIFCollisionCarrier: String, Sendable {
     case collisionObject = "bhkCollisionObject"
     case blendCollisionObject = "bhkBlendCollisionObject"
 }
 
-nonisolated package struct NIFCollisionBody {
-    package let targetBlock: Int32
+nonisolated public struct NIFCollisionBody: Sendable {
+    public let targetBlock: Int32
     /// Name of the target `NiAVObject`. On a character skeleton this is the
     /// bone the body belongs to, which is the only mapping the file carries
     /// between ragdoll bodies and the animation skeleton.
-    package let targetName: String?
+    public let targetName: String?
     /// Block index of the `bhkRigidBody`/`bhkRigidBodyT` itself, so a
     /// constraint's entity pointers can name the bodies they bind.
-    package let bodyBlock: Int
-    package let carrier: NIFCollisionCarrier
-    package let collisionObjectFlags: UInt16
-    package let worldFilter: NIFCollisionFilter
-    package let rigidBodyFilter: NIFCollisionFilter
+    public let bodyBlock: Int
+    public let carrier: NIFCollisionCarrier
+    public let collisionObjectFlags: UInt16
+    public let worldFilter: NIFCollisionFilter
+    public let rigidBodyFilter: NIFCollisionFilter
     /// NifTools hkResponseType raw values from bhkEntity + rigid-body CInfo.
-    package let entityResponse: UInt8
-    package let rigidBodyResponse: UInt8
+    public let entityResponse: UInt8
+    public let rigidBodyResponse: UInt8
     /// Mass, inertia, damping, friction, and motion classification.
-    package let dynamics: NIFRigidBodyDynamics
+    public let dynamics: NIFRigidBodyDynamics
     /// Joints this body names. A joint binds two bodies and both list it, so
     /// the same block appears twice in a model; `NIFCollisionModel.constraints`
     /// is the de-duplicated view.
-    package let constraints: [NIFCollisionConstraint]
+    public let constraints: [NIFCollisionConstraint]
     /// nif.xml `Body Flags`: bit 1 means the body responds to wind.
-    package let bodyFlags: UInt16
+    public let bodyFlags: UInt16
     /// Model-local target transform composed with bhkRigidBodyT transform.
-    package let transform: float4x4
-    package let shapes: [NIFCollisionShape]
+    public let transform: float4x4
+    public let shapes: [NIFCollisionShape]
 
     /// Raw `hkMotionType` byte. `dynamics.motionSystem` names it.
-    package var motionSystem: UInt8 {
+    public var motionSystem: UInt8 {
         dynamics.rawMotionSystem
     }
 
-    package var isPlayerSolid: Bool {
+    public var isPlayerSolid: Bool {
         worldFilter.isPlayerSolid
             && rigidBodyFilter.isPlayerSolid
             && entityResponse == 1
@@ -109,7 +109,7 @@ nonisolated package struct NIFCollisionBody {
     /// Either filter is enough because vanilla trigger bodies are inconsistent
     /// about which of the two copies carries the layer. Such a body is never
     /// player-solid, so trigger routing and solid collision stay disjoint.
-    package var isTriggerVolume: Bool {
+    public var isTriggerVolume: Bool {
         worldFilter.isTriggerVolume || rigidBodyFilter.isTriggerVolume
     }
 
@@ -120,20 +120,20 @@ nonisolated package struct NIFCollisionBody {
     /// Either filter for the reason `isTriggerVolume` takes either: the two
     /// copies are not guaranteed to agree. On the vanilla humanoid skeleton
     /// they do, on all eighteen bodies, and both name `SKYL_BIPED`.
-    package var bipedPart: UInt8? {
+    public var bipedPart: UInt8? {
         worldFilter.bipedPart ?? rigidBodyFilter.bipedPart
     }
 
     /// Whether either filter switched this body's collision off outright.
-    package var hasNoCollision: Bool {
+    public var hasNoCollision: Bool {
         worldFilter.hasNoCollision || rigidBodyFilter.hasNoCollision
     }
 }
 
-nonisolated package struct NIFCollisionShape {
+nonisolated public struct NIFCollisionShape: Sendable {
     /// Body-local wrapper/chunk transform. Translation is in engine units.
-    package let transform: float4x4
-    package let geometry: NIFCollisionGeometry
+    public let transform: float4x4
+    public let geometry: NIFCollisionGeometry
     /// NifTools `SkyrimHavokMaterial`: the hash of the surface's Creation Kit
     /// material name (issue #358). Nil where the block carries no material, and
     /// left raw here because a NIF has no way to resolve it — turning it into a
@@ -143,9 +143,9 @@ nonisolated package struct NIFCollisionShape {
     /// compressed mesh's chunks, a packed strip shape's sub-shapes — the
     /// decoder emits one shape per material rather than a per-triangle table,
     /// because those blocks already partition their geometry that way.
-    package let material: UInt32?
+    public let material: UInt32?
 
-    package init(
+    public init(
         transform: float4x4,
         geometry: NIFCollisionGeometry,
         material: UInt32? = nil
@@ -156,7 +156,7 @@ nonisolated package struct NIFCollisionShape {
     }
 }
 
-nonisolated package enum NIFCollisionGeometry {
+nonisolated public enum NIFCollisionGeometry: Sendable {
     /// Vertices are engine units; indices are validated triangle triples.
     case triangleSoup(vertices: [SIMD3<Float>], indices: [UInt32])
     /// Original convex points + derived hull connectivity. NIF stores points
@@ -167,27 +167,27 @@ nonisolated package enum NIFCollisionGeometry {
     case capsule(first: SIMD3<Float>, second: SIMD3<Float>, radius: Float)
 }
 
-nonisolated package struct NIFCollisionFailure: Equatable, Sendable {
-    package let block: Int
-    package let message: String
+nonisolated public struct NIFCollisionFailure: Equatable, Sendable {
+    public let block: Int
+    public let message: String
 }
 
-nonisolated package struct NIFCollisionModel {
+nonisolated public struct NIFCollisionModel: Sendable {
     /// 64 Skyrim units/yard converted to units/metre. Community constant;
     /// verified against vanilla Whiterun render/collision bounds in 4.2 probe.
-    package static let havokToEngineScale: Float = 69.99125
+    public static let havokToEngineScale: Float = 69.99125
 
-    package let bodies: [NIFCollisionBody]
+    public let bodies: [NIFCollisionBody]
     /// Reachable shape/data variants omitted from output, grouped by block type.
-    package let unsupportedReachableBlocks: [String: Int]
+    public let unsupportedReachableBlocks: [String: Int]
     /// Per-root decode failures; other roots remain available.
-    package let decodeFailures: [NIFCollisionFailure]
+    public let decodeFailures: [NIFCollisionFailure]
 
-    package var shapeCount: Int {
+    public var shapeCount: Int {
         bodies.reduce(0) { $0 + $1.shapes.count }
     }
 
-    package var triangleCount: Int {
+    public var triangleCount: Int {
         bodies.reduce(0) { total, body in
             total + body.shapes.reduce(0) { shapeTotal, shape in
                 guard case let .triangleSoup(_, indices) = shape.geometry else {
@@ -201,7 +201,7 @@ nonisolated package struct NIFCollisionModel {
     /// Havok material value -> how many decoded shapes name it. The probe's
     /// evidence that meshes carry materials at all, and that the values they
     /// carry are ones a MATT hashes to.
-    package var shapeMaterials: [UInt32: Int] {
+    public var shapeMaterials: [UInt32: Int] {
         bodies.reduce(into: [:]) { counts, body in
             for shape in body.shapes {
                 guard let material = shape.material else { continue }
@@ -210,20 +210,20 @@ nonisolated package struct NIFCollisionModel {
         }
     }
 
-    package var filteredBodyCount: Int {
+    public var filteredBodyCount: Int {
         bodies.count(where: { !$0.isPlayerSolid })
     }
 
     /// Every joint in the model, once. A joint binds two bodies and both of
     /// them list it, so the per-body arrays double-count.
-    package var constraints: [NIFCollisionConstraint] {
+    public var constraints: [NIFCollisionConstraint] {
         var seen: Set<Int> = []
         return bodies.flatMap(\.constraints).filter { seen.insert($0.block).inserted }
     }
 
     /// Rigid-body block index -> the name of the scene object it hangs off.
     /// On a character skeleton that is the bone name.
-    package var bodyNamesByBlock: [Int: String] {
+    public var bodyNamesByBlock: [Int: String] {
         bodies.reduce(into: [:]) { names, body in
             names[body.bodyBlock] = body.targetName
         }
@@ -231,7 +231,7 @@ nonisolated package struct NIFCollisionModel {
 
     /// The two bone names a joint binds, nil where the end points outside the
     /// decoded bodies or at an unnamed node.
-    package func boneNames(
+    public func boneNames(
         of constraint: NIFCollisionConstraint
     ) -> (a: String?, b: String?) {
         let names = bodyNamesByBlock
@@ -241,7 +241,7 @@ nonisolated package struct NIFCollisionModel {
     /// Model-space AABB after composing scene-target, rigid-body, wrapper,
     /// and chunk transforms. Primitive bounds are exact before rotation and
     /// conservative after the final affine transform.
-    package var bounds: ModelBounds? {
+    public var bounds: ModelBounds? {
         var result: ModelBounds?
         for body in bodies {
             for shape in body.shapes {
@@ -256,7 +256,7 @@ nonisolated package struct NIFCollisionModel {
     /// Local-space AABB of one decoded shape. Internal because the dynamic
     /// body world (issue #193) needs the same box for a shape it re-places
     /// every step.
-    package static func bounds(of geometry: NIFCollisionGeometry) -> ModelBounds? {
+    public static func bounds(of geometry: NIFCollisionGeometry) -> ModelBounds? {
         switch geometry {
         case let .triangleSoup(vertices, _), let .convexVertices(vertices, _):
             return ModelBounds.containing(vertices)

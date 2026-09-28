@@ -10,26 +10,26 @@
 
 import Foundation
 
-nonisolated package struct NIFNode {
+nonisolated public struct NIFNode: Sendable {
     /// Block types traversed as plain grouping nodes: NiNode layout prefix,
     /// draw-all-children semantics. Selector nodes (NiSwitchNode, NiLODNode)
     /// are deliberately absent — drawing every child would stack their
     /// alternatives on top of each other.
-    package static let traversedTypes: Set = [
+    public static let traversedTypes: Set = [
         "NiNode", "BSFadeNode", "BSLeafAnimNode", "BSTreeNode",
         "BSOrderedNode", "BSMultiBoundNode"
     ]
 
-    package let object: NIFObjectPrefix
+    public let object: NIFObjectPrefix
     /// Child block refs in file order; -1 = empty slot (kept positional).
-    package let children: [Int32]
+    public let children: [Int32]
 
-    package init(object: NIFObjectPrefix, children: [Int32]) {
+    public init(object: NIFObjectPrefix, children: [Int32]) {
         self.object = object
         self.children = children
     }
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         object = try NIFObjectPrefix(reader: &reader, header: header)
 

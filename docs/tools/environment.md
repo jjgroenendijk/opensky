@@ -84,8 +84,9 @@ real signature) and opens the right settings pane for the rest.
 
 Observed 2026-09-28. A test bundle without a test host runs in the plain `xctest` runner. macOS
 asks that runner for removable-volume access, and the run waits on the dialog until it times out
-with "timed out while preparing". Clicking Allow once let the run continue. `OpenSkyFormatsTests`
-is hosted by `OpenSky.app` for this reason ([Swift modules](/tools/modules.md)).
+with "timed out while preparing". Clicking Allow once let the run continue. The package test
+targets run in that runner ([Swift modules](/tools/modules.md)), so a machine without the grant sees
+the same dialog on its first unit run.
 
 Retires when `make test-ui` reaches a test case on this machine.
 

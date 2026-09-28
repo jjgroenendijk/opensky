@@ -11,39 +11,39 @@
 
 import Foundation
 
-nonisolated package enum ReferenceRecordSkipKind: Hashable {
+nonisolated public enum ReferenceRecordSkipKind: Hashable, Sendable {
     case unknownField(FourCC)
     case malformedField(FourCC)
     case unknownDefaultObjectTag(FourCC)
 }
 
-nonisolated package struct ReferenceRecordTally: Equatable {
-    package private(set) var counts: [ReferenceRecordSkipKind: Int] = [:]
+nonisolated public struct ReferenceRecordTally: Equatable, Sendable {
+    public private(set) var counts: [ReferenceRecordSkipKind: Int] = [:]
 
-    package var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    package mutating func note(_ kind: ReferenceRecordSkipKind) {
+    public mutating func note(_ kind: ReferenceRecordSkipKind) {
         counts[kind, default: 0] += 1
     }
 }
 
 /// CNAM byte RGBA used only to distinguish records in editor tooling.
-nonisolated package struct ReferenceRecordColor: Equatable {
-    package let red: UInt8
-    package let green: UInt8
-    package let blue: UInt8
-    package let alpha: UInt8
+nonisolated public struct ReferenceRecordColor: Equatable, Sendable {
+    public let red: UInt8
+    public let green: UInt8
+    public let blue: UInt8
+    public let alpha: UInt8
 
-    package init(red: UInt8, green: UInt8, blue: UInt8, alpha: UInt8) {
+    public init(red: UInt8, green: UInt8, blue: UInt8, alpha: UInt8) {
         self.red = red
         self.green = green
         self.blue = blue
         self.alpha = alpha
     }
 
-    package init(reader: inout BinaryReader) throws {
+    public init(reader: inout BinaryReader) throws {
         try self.init(
             red: reader.readUInt8(),
             green: reader.readUInt8(),
@@ -53,13 +53,13 @@ nonisolated package struct ReferenceRecordColor: Equatable {
     }
 }
 
-nonisolated package struct Keyword: Equatable {
-    package let formID: FormID
-    package let editorID: String?
-    package let editorColor: ReferenceRecordColor?
-    package let skipped: ReferenceRecordTally
+nonisolated public struct Keyword: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
+    public let editorColor: ReferenceRecordColor?
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "KYWD" else {
             throw ESMError.malformed("expected KYWD record, got \(record.type)")
         }
@@ -71,13 +71,13 @@ nonisolated package struct Keyword: Equatable {
     }
 }
 
-nonisolated package struct ActionRecord: Equatable {
-    package let formID: FormID
-    package let editorID: String?
-    package let editorColor: ReferenceRecordColor?
-    package let skipped: ReferenceRecordTally
+nonisolated public struct ActionRecord: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
+    public let editorColor: ReferenceRecordColor?
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "AACT" else {
             throw ESMError.malformed("expected AACT record, got \(record.type)")
         }
@@ -89,12 +89,12 @@ nonisolated package struct ActionRecord: Equatable {
     }
 }
 
-nonisolated package struct ReferenceRecordFields {
-    package let editorID: String?
-    package let editorColor: ReferenceRecordColor?
-    package let skipped: ReferenceRecordTally
+nonisolated public struct ReferenceRecordFields: Sendable {
+    public let editorID: String?
+    public let editorColor: ReferenceRecordColor?
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         var editorID: String?
         var editorColor: ReferenceRecordColor?
         var tally = ReferenceRecordTally()

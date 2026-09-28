@@ -8,11 +8,11 @@
 
 import Foundation
 
-nonisolated package enum GameText {
+nonisolated public enum GameText: Sendable {
     /// Total: every byte sequence decodes to some string, so a mis-encoded name
     /// degrades to mojibake instead of failing the record, asset, or archive
     /// that carries it.
-    package static func decode(_ bytes: Data) -> String {
+    public static func decode(_ bytes: Data) -> String {
         if let utf8 = String(data: bytes, encoding: .utf8) {
             return utf8
         }
@@ -27,7 +27,7 @@ nonisolated package enum GameText {
 }
 
 /// How a `BinaryReader` string read turns bytes into text.
-nonisolated package enum TextDecoding: Equatable {
+nonisolated public enum TextDecoding: Equatable, Sendable {
     /// The engine-wide lenient game-data policy (`GameText.decode`). Never fails.
     case gameText
     /// One fixed encoding; bytes outside it throw `BinaryReaderError.invalidString`.
@@ -36,7 +36,7 @@ nonisolated package enum TextDecoding: Equatable {
     case strict(String.Encoding)
 
     /// Nil only for `.strict` when the bytes are not valid in that encoding.
-    package func decode(_ bytes: Data) -> String? {
+    public func decode(_ bytes: Data) -> String? {
         switch self {
         case .gameText:
             GameText.decode(bytes)

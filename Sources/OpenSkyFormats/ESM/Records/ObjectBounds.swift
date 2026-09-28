@@ -18,22 +18,22 @@
 
 import Foundation
 
-nonisolated package struct ObjectBounds: Equatable {
+nonisolated public struct ObjectBounds: Equatable, Sendable {
     /// Minimum corner (X1, Y1, Z1) in game units.
-    package let minimum: SIMD3<Int16>
+    public let minimum: SIMD3<Int16>
     /// Maximum corner (X2, Y2, Z2) in game units.
-    package let maximum: SIMD3<Int16>
+    public let maximum: SIMD3<Int16>
 
     /// True when every component is zero — the "no meaningful bounds" case
     /// vanilla writes for records whose volume the engine never queries.
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         minimum == .zero && maximum == .zero
     }
 
     /// Decodes an OBND payload. A field shorter than 12 bytes is structurally
     /// unusable, so it throws rather than inventing a box; callers that would
     /// rather skip the record catch and continue per the mod-quirk rule.
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count >= 12 else {
             throw ESMError.malformed(
                 "OBND has \(field.data.count) bytes, expected 12"

@@ -31,10 +31,10 @@
 
 import Foundation
 
-nonisolated package struct Condition: Equatable, Sendable {
+nonisolated public struct Condition: Equatable, Sendable {
     /// Top 3 bits of the operator byte. 6 and 7 are undefined on disk and are
     /// kept verbatim instead of being forced onto a real comparison.
-    package enum ComparisonOperator: Equatable, Sendable {
+    public enum ComparisonOperator: Equatable, Sendable {
         case equal
         case notEqual
         case greaterThan
@@ -43,7 +43,7 @@ nonisolated package struct Condition: Equatable, Sendable {
         case lessThanOrEqual
         case unknown(UInt8)
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .equal
             case 1: self = .notEqual
@@ -57,31 +57,31 @@ nonisolated package struct Condition: Equatable, Sendable {
     }
 
     /// Low 5 bits of the operator byte.
-    package struct Flags: OptionSet, Equatable, Sendable {
-        package let rawValue: UInt8
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
         /// This condition ORs with the next one instead of ANDing.
-        package static let or = Flags(rawValue: 0x01)
-        package static let useAliases = Flags(rawValue: 0x02)
+        public static let or = Flags(rawValue: 0x01)
+        public static let useAliases = Flags(rawValue: 0x02)
         /// Comparison value is a GLOB FormID rather than a float.
-        package static let useGlobal = Flags(rawValue: 0x04)
-        package static let usePackData = Flags(rawValue: 0x08)
-        package static let swapSubjectAndTarget = Flags(rawValue: 0x10)
+        public static let useGlobal = Flags(rawValue: 0x04)
+        public static let usePackData = Flags(rawValue: 0x08)
+        public static let swapSubjectAndTarget = Flags(rawValue: 0x10)
     }
 
     /// The right-hand side of the comparison: a literal, or the current value
     /// of a global variable when `Flags.useGlobal` is set.
-    package enum ComparisonValue: Equatable, Sendable {
+    public enum ComparisonValue: Equatable, Sendable {
         case value(Float)
         case global(FormID)
     }
 
     /// Which object the function runs against (offset 20).
-    package enum RunOnType: Equatable, Sendable {
+    public enum RunOnType: Equatable, Sendable {
         case subject
         case target
         case reference
@@ -92,7 +92,7 @@ nonisolated package struct Condition: Equatable, Sendable {
         case eventData
         case unknown(UInt32)
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             switch rawValue {
             case 0: self = .subject
             case 1: self = .target
@@ -109,45 +109,45 @@ nonisolated package struct Condition: Equatable, Sendable {
 
     /// A raw 4-byte function parameter. The function index picks the real type,
     /// so the word is stored verbatim and reinterpreted on request.
-    package struct Parameter: Equatable, Sendable {
-        package let rawValue: UInt32
+    public struct Parameter: Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package var asFloat: Float {
+        public var asFloat: Float {
             Float(bitPattern: rawValue)
         }
 
-        package var asFormID: FormID {
+        public var asFormID: FormID {
             FormID(rawValue)
         }
 
-        package var asInt32: Int32 {
+        public var asInt32: Int32 {
             Int32(bitPattern: rawValue)
         }
     }
 
-    package let comparison: ComparisonOperator
-    package let flags: Flags
-    package let comparisonValue: ComparisonValue
+    public let comparison: ComparisonOperator
+    public let flags: Flags
+    public let comparisonValue: ComparisonValue
     /// Raw on-disk function index. The Creation Kit numbers these 4096 higher,
     /// so `GetWantBlocking` (CK 4096) is 0 here. Interpreting it is issue #251.
-    package let functionIndex: UInt16
-    package let parameter1: Parameter
-    package let parameter2: Parameter
-    package let runOn: RunOnType
+    public let functionIndex: UInt16
+    public let parameter1: Parameter
+    public let parameter2: Parameter
+    public let runOn: RunOnType
     /// Offset 24. Meaningful only when `runOn == .reference`; otherwise xEdit
     /// treats it as ignored and it may hold leftover garbage.
-    package let reference: FormID
+    public let reference: FormID
     /// Offset 28, called parameter #3 by xEdit and the quest-alias /
     /// package-data index by UESP. -1 means unused. Stored, not interpreted.
-    package let parameter3: Int32
+    public let parameter3: Int32
     /// CIS1 — replaces `parameter1` when the record carries one.
-    package var parameter1Name: String?
+    public var parameter1Name: String?
     /// CIS2 — replaces `parameter2` when the record carries one.
-    package var parameter2Name: String?
+    public var parameter2Name: String?
 
     /// A condition nothing authored: one function index and its parameters,
     /// for an evaluation surface that asks a function directly rather than
@@ -156,7 +156,7 @@ nonisolated package struct Condition: Equatable, Sendable {
     /// The comparison is fixed at `>= 0`, which every documented return value
     /// satisfies, because such a surface wants the function's *value* and not a
     /// verdict about a threshold nobody chose. `ConditionProbe` is the caller.
-    package init(
+    public init(
         probingFunction functionIndex: UInt16,
         parameter1: UInt32 = 0,
         parameter2: UInt32 = 0,
@@ -175,7 +175,7 @@ nonisolated package struct Condition: Equatable, Sendable {
 
     /// Decodes one CTDA field. Returns nil when the payload is not exactly 32
     /// bytes, which is a mod quirk to skip rather than a fatal error.
-    package init?(ctda field: ESMField) throws {
+    public init?(ctda field: ESMField) throws {
         guard field.type == "CTDA" else {
             throw ESMError.malformed("expected CTDA field, got \(field.type)")
         }
@@ -203,17 +203,17 @@ nonisolated package struct Condition: Equatable, Sendable {
 /// Accumulator for a CITC/CTDA/CIS1/CIS2 run inside one record's field loop.
 /// Record decoders forward every unrecognised field here and keep whatever it
 /// claims, so all condition-bearing record types share one implementation.
-nonisolated package struct ConditionList: Equatable, Sendable {
+nonisolated public struct ConditionList: Equatable, Sendable {
     /// CITC, the authored count of the CTDA fields that follow it. Absent on
     /// many records, and never trusted over the CTDA fields actually decoded:
     /// a record may carry several condition runs (every Skyrim.esm record whose
     /// CITC disagrees with its CTDA count is a PACK, where the CITC covers only
     /// the package's own run and the rest belong to nested package data). The
     /// last CITC seen wins.
-    package private(set) var declaredCount: Int?
-    package private(set) var conditions: [Condition] = []
+    public private(set) var declaredCount: Int?
+    public private(set) var conditions: [Condition] = []
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         conditions.isEmpty
     }
 
@@ -221,14 +221,14 @@ nonisolated package struct ConditionList: Equatable, Sendable {
     /// that route a CTDA run to one of several lists — PERK picks the perk's
     /// own conditions or the open entry-point tab — ask this before choosing
     /// which list to hand the field to.
-    package static func isConditionField(_ type: FourCC) -> Bool {
+    public static func isConditionField(_ type: FourCC) -> Bool {
         type == "CITC" || type == "CTDA" || type == "CIS1" || type == "CIS2"
     }
 
     /// Consumes `field` when it is part of a condition run. Returns false for
     /// anything else so the caller can keep matching its own fields.
     @discardableResult
-    package mutating func decode(field: ESMField) throws -> Bool {
+    public mutating func decode(field: ESMField) throws -> Bool {
         switch field.type {
         case "CITC":
             guard field.data.count == 4 else { return true }

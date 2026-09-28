@@ -11,25 +11,25 @@
 
 import Foundation
 
-nonisolated package struct ActorBase {
+nonisolated public struct ActorBase: Sendable {
     /// ACBS uint32 flags — only the bits this engine consumes are named.
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let female = Flags(rawValue: 0x0000_0001)
+        public static let female = Flags(rawValue: 0x0000_0001)
         /// "Auto calc stats": the actor's health/magicka/stamina come from
         /// race + class + level rather than from race plus the ACBS offsets
         /// alone (UESP NPC_ ACBS; CK "Stats Tab").
-        package static let autoCalcStats = Flags(rawValue: 0x0000_0010)
-        package static let unique = Flags(rawValue: 0x0000_0020)
+        public static let autoCalcStats = Flags(rawValue: 0x0000_0010)
+        public static let unique = Flags(rawValue: 0x0000_0020)
         /// "PC Level Mult": the level word holds a multiplier x1000 against
         /// the player's level instead of a fixed level. The Creation Kit
         /// forces auto-calc on whenever this is set (CK "Stats Tab").
-        package static let pcLevelMult = Flags(rawValue: 0x0000_0080)
+        public static let pcLevelMult = Flags(rawValue: 0x0000_0080)
     }
 
     /// The ACBS words the actor-value derivation reads, kept together because
@@ -39,17 +39,17 @@ nonisolated package struct ActorBase {
     /// The three offsets are signed: the Creation Kit calls them "an amount to
     /// add or subtract from the calculated value" and vanilla records use
     /// negative offsets freely.
-    package struct Stats: Equatable {
+    public struct Stats: Equatable, Sendable {
         /// ACBS 0x08. A fixed level when `pcLevelMult` is clear, otherwise the
         /// player-level multiplier scaled by 1000.
-        package var levelWord: UInt16 = 1
+        public var levelWord: UInt16 = 1
         /// ACBS 0x0A / 0x0C, the clamp applied to a `pcLevelMult` level.
-        package var calcMinLevel: UInt16 = 0
-        package var calcMaxLevel: UInt16 = 0
+        public var calcMinLevel: UInt16 = 0
+        public var calcMaxLevel: UInt16 = 0
         /// ACBS 0x14 / 0x04 / 0x06.
-        package var healthOffset: Int16 = 0
-        package var magickaOffset: Int16 = 0
-        package var staminaOffset: Int16 = 0
+        public var healthOffset: Int16 = 0
+        public var magickaOffset: Int16 = 0
+        public var staminaOffset: Int16 = 0
         /// ACBS 0x0E "Speed Multiplier" (UESP NPC_ ACBS), which is the base of
         /// actor value 30, `Speed Mult` (issue #468). It belongs to the
         /// `useStats` template group with the three offsets — UESP names the
@@ -58,20 +58,20 @@ nonisolated package struct ActorBase {
         ///
         /// 100 when ACBS is too short to reach it, which is the Creation Kit's
         /// own default for an actor nobody has slowed down or sped up.
-        package var speedMultiplier: UInt16 = 100
+        public var speedMultiplier: UInt16 = 100
         /// CNAM — the CLAS whose attribute weights spread an auto-calc actor's
         /// per-level points.
-        package var characterClass: FormID?
+        public var characterClass: FormID?
         /// DNAM's three baked uint16 values, which the Creation Kit writes for
         /// an auto-calc actor and leaves as junk otherwise (UESP NPC_ DNAM:
         /// "if auto-calc stats is on, otherwise seems to be random"). Never an
         /// input to the derivation — kept only so a probe can compare what
         /// OpenSky derives against what the editor baked.
-        package var bakedHealth: Int16?
-        package var bakedMagicka: Int16?
-        package var bakedStamina: Int16?
+        public var bakedHealth: Int16?
+        public var bakedMagicka: Int16?
+        public var bakedStamina: Int16?
 
-        package init(
+        public init(
             levelWord: UInt16 = 1,
             calcMinLevel: UInt16 = 0,
             calcMaxLevel: UInt16 = 0,
@@ -98,27 +98,27 @@ nonisolated package struct ActorBase {
         }
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// FULL — display name; localized plugins store a string-table ID.
-    package let name: LString?
-    package let flags: Flags
-    package let templateFlags: TemplateFlags
+    public let name: LString?
+    public let flags: Flags
+    public let templateFlags: TemplateFlags
     /// TPLT — template chain target: another NPC_ or an LVLN leveled list.
-    package let template: FormID?
+    public let template: FormID?
     /// RNAM — race, required by spec.
-    package let race: FormID?
+    public let race: FormID?
     /// VTCK — voice type. It belongs to the ACBS `useTraits` inheritance
     /// group with race, gender and appearance (UESP NPC_ template flags).
-    package let voiceType: FormID?
+    public let voiceType: FormID?
     /// WNAM — worn armor (naked skin override); race skin when absent.
-    package let wornArmor: FormID?
+    public let wornArmor: FormID?
     /// PNAM — head parts, one FormID per repeated subrecord.
-    package let headParts: [FormID]
+    public let headParts: [FormID]
     /// DOFT — default outfit.
-    package let defaultOutfit: FormID?
+    public let defaultOutfit: FormID?
     /// PKID — ordered AI package stack. The first matching entry wins.
-    package let packages: [FormID]
+    public let packages: [FormID]
     /// SPLO — the actor's spell list: the SPEL records it knows without
     /// learning them, in record order (issue #470).
     ///
@@ -130,7 +130,7 @@ nonisolated package struct ActorBase {
     /// This list inherits through `TemplateFlags.useSpellList`, which the
     /// template chain resolves — the same rule the stats and inventory groups
     /// follow.
-    package let spells: [FormID]
+    public let spells: [FormID]
     /// PRKR — the perks the actor is authored with, in record order
     /// (issue #497).
     ///
@@ -144,7 +144,7 @@ nonisolated package struct ActorBase {
     /// This list inherits through `TemplateFlags.useSpellList`, which UESP
     /// names "Use spelllist (both spells and perks)", so it resolves on the
     /// same flag the `SPLO` run does.
-    package let perks: [FormID]
+    public let perks: [FormID]
     /// SNAM — the factions the actor is authored into, in record order
     /// (issue #501). Consuming them for hostility, crime and services is the
     /// rest of milestone M21.
@@ -152,9 +152,9 @@ nonisolated package struct ActorBase {
     /// This list inherits through `TemplateFlags.useFactions`, resolved by
     /// `ActorTemplateResolver.resolveFactions(base:)` the way the spell and
     /// package runs resolve on their own flags.
-    package let factions: [FactionMembership]
+    public let factions: [FactionMembership]
     /// ACBS/CNAM/DNAM stat inputs (issue #194).
-    package let stats: Stats
+    public let stats: Stats
     /// AIDT — aggression, confidence, morality and assistance (issue #503).
     /// Nil when the record authors no AIDT or authors one too short to read,
     /// which `ActorAIData.absent` is the documented stand-in for.
@@ -162,7 +162,7 @@ nonisolated package struct ActorBase {
     /// This struct inherits through `TemplateFlags.useAIData`, resolved by
     /// `ActorTemplateResolver.resolveFactions(base:)` beside the SNAM run,
     /// because the hostility derivation reads the two together.
-    package let aiData: ActorAIData?
+    public let aiData: ActorAIData?
     /// CRIF — the crime faction this actor reports crimes to (issue #505),
     /// which is what the Creation Kit's `Actor.GetCrimeFaction` answers: "the
     /// Faction the actor reports crimes to". UESP's NPC_ page lists it as a
@@ -171,11 +171,11 @@ nonisolated package struct ActorBase {
     ///
     /// Inherits through `TemplateFlags.useFactions` beside the SNAM run,
     /// resolved by `ActorTemplateResolver.resolveFactions(base:)`.
-    package let crimeFaction: FormID?
+    public let crimeFaction: FormID?
     /// VMAD — Papyrus scripts attached to the NPC_ base.
-    package let scriptData: ScriptData
+    public let scriptData: ScriptData
 
-    package var isFemale: Bool {
+    public var isFemale: Bool {
         flags.contains(.female)
     }
 
@@ -183,11 +183,11 @@ nonisolated package struct ActorBase {
     /// plus the ACBS offsets alone. `pcLevelMult` implies it: "Note that if PC
     /// Level Mult is checked, Auto Calc Stats will always be checked."
     /// (<https://ck.uesp.net/wiki/Stats_Tab>)
-    package var autoCalculatesStats: Bool {
+    public var autoCalculatesStats: Bool {
         flags.contains(.autoCalcStats) || flags.contains(.pcLevelMult)
     }
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "NPC_" else {
             throw ESMError.malformed("expected NPC_ record, got \(record.type)")
         }
@@ -392,26 +392,26 @@ nonisolated package struct ActorBase {
 nonisolated extension ActorBase {
     /// ACBS template-data flags: when a bit is set and TPLT is present, the
     /// corresponding field group comes from the template, not this record.
-    package struct TemplateFlags: OptionSet, Equatable {
-        package let rawValue: UInt16
+    public struct TemplateFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
-        package static let useTraits = TemplateFlags(rawValue: 0x0001)
-        package static let useStats = TemplateFlags(rawValue: 0x0002)
-        package static let useFactions = TemplateFlags(rawValue: 0x0004)
-        package static let useSpellList = TemplateFlags(rawValue: 0x0008)
-        package static let useAIData = TemplateFlags(rawValue: 0x0010)
-        package static let useAIPackages = TemplateFlags(rawValue: 0x0020)
-        package static let useModelAnimation = TemplateFlags(rawValue: 0x0040)
-        package static let useBaseData = TemplateFlags(rawValue: 0x0080)
-        package static let useInventory = TemplateFlags(rawValue: 0x0100)
-        package static let useScript = TemplateFlags(rawValue: 0x0200)
-        package static let useDefPackList = TemplateFlags(rawValue: 0x0400)
-        package static let useAttackData = TemplateFlags(rawValue: 0x0800)
-        package static let useKeywords = TemplateFlags(rawValue: 0x1000)
+        public static let useTraits = TemplateFlags(rawValue: 0x0001)
+        public static let useStats = TemplateFlags(rawValue: 0x0002)
+        public static let useFactions = TemplateFlags(rawValue: 0x0004)
+        public static let useSpellList = TemplateFlags(rawValue: 0x0008)
+        public static let useAIData = TemplateFlags(rawValue: 0x0010)
+        public static let useAIPackages = TemplateFlags(rawValue: 0x0020)
+        public static let useModelAnimation = TemplateFlags(rawValue: 0x0040)
+        public static let useBaseData = TemplateFlags(rawValue: 0x0080)
+        public static let useInventory = TemplateFlags(rawValue: 0x0100)
+        public static let useScript = TemplateFlags(rawValue: 0x0200)
+        public static let useDefPackList = TemplateFlags(rawValue: 0x0400)
+        public static let useAttackData = TemplateFlags(rawValue: 0x0800)
+        public static let useKeywords = TemplateFlags(rawValue: 0x1000)
     }
 
     /// One SNAM: the FACT the actor belongs to and its rank inside it.
@@ -420,10 +420,10 @@ nonisolated extension ActorBase {
     /// ranks, which the Creation Kit uses to mean "a member the faction's rank
     /// titles do not name". The three bytes that follow the rank are unused in
     /// Skyrim (xEdit `wbFaction`) and are not read.
-    package struct FactionMembership: Equatable {
-        package static let byteCount = 8
+    public struct FactionMembership: Equatable, Sendable {
+        public static let byteCount = 8
 
-        package let faction: FormID
-        package let rank: Int8
+        public let faction: FormID
+        public let rank: Int8
     }
 }

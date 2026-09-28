@@ -27,12 +27,12 @@ import Foundation
 /// The shift saturates at `UInt16.max` instead of wrapping: an id that would
 /// leave the 16-bit space becomes a reference to nothing, which the display
 /// list already tolerates, and is counted in `saturatedReferences`.
-nonisolated package struct SWFCharacterRemap {
-    package let offset: Int
+nonisolated public struct SWFCharacterRemap: Sendable {
+    public let offset: Int
     /// References that could not be shifted inside `UInt16` and were saturated.
-    package private(set) var saturatedReferences = 0
+    public private(set) var saturatedReferences = 0
 
-    package mutating func id(_ value: UInt16) -> UInt16 {
+    public mutating func id(_ value: UInt16) -> UInt16 {
         let shifted = Int(value) + offset
         guard shifted <= Int(UInt16.max) else {
             saturatedReferences += 1
@@ -41,7 +41,7 @@ nonisolated package struct SWFCharacterRemap {
         return UInt16(shifted)
     }
 
-    package mutating func id(optional value: UInt16?) -> UInt16? {
+    public mutating func id(optional value: UInt16?) -> UInt16? {
         guard let value else {
             return nil
         }
@@ -53,7 +53,7 @@ nonisolated package struct SWFCharacterRemap {
     /// The whole character dictionary, keys and internal references alike. A
     /// key that saturates would land on top of another character, so it is
     /// dropped rather than merged wrong; the count still records the loss.
-    package mutating func characters(_ source: [UInt16: SWFCharacter]) -> [UInt16: SWFCharacter] {
+    public mutating func characters(_ source: [UInt16: SWFCharacter]) -> [UInt16: SWFCharacter] {
         var result: [UInt16: SWFCharacter] = [:]
         result.reserveCapacity(source.count)
         for key in source.keys.sorted() {
@@ -68,7 +68,7 @@ nonisolated package struct SWFCharacterRemap {
         return result
     }
 
-    package mutating func character(_ source: SWFCharacter) -> SWFCharacter {
+    public mutating func character(_ source: SWFCharacter) -> SWFCharacter {
         switch source {
         case let .shape(shape): .shape(self.shape(shape))
         case let .bitmap(bitmap): .bitmap(self.bitmap(bitmap))
@@ -81,7 +81,7 @@ nonisolated package struct SWFCharacterRemap {
 
     // MARK: - Definitions
 
-    package mutating func shape(_ source: SWFShapeDefinition) -> SWFShapeDefinition {
+    public mutating func shape(_ source: SWFShapeDefinition) -> SWFShapeDefinition {
         SWFShapeDefinition(
             characterId: id(source.characterId),
             bounds: source.bounds,
@@ -93,7 +93,7 @@ nonisolated package struct SWFCharacterRemap {
         )
     }
 
-    package mutating func bitmap(_ source: SWFBitmap) -> SWFBitmap {
+    public mutating func bitmap(_ source: SWFBitmap) -> SWFBitmap {
         SWFBitmap(
             characterId: id(source.characterId),
             width: source.width,
@@ -105,7 +105,7 @@ nonisolated package struct SWFCharacterRemap {
         )
     }
 
-    package mutating func font(_ source: SWFFontDefinition) -> SWFFontDefinition {
+    public mutating func font(_ source: SWFFontDefinition) -> SWFFontDefinition {
         SWFFontDefinition(
             fontID: id(source.fontID),
             isHighResolution: source.isHighResolution,
@@ -117,7 +117,7 @@ nonisolated package struct SWFCharacterRemap {
         )
     }
 
-    package mutating func staticText(_ source: SWFTextDefinition) -> SWFTextDefinition {
+    public mutating func staticText(_ source: SWFTextDefinition) -> SWFTextDefinition {
         SWFTextDefinition(
             characterId: id(source.characterId),
             bounds: source.bounds,
@@ -126,7 +126,7 @@ nonisolated package struct SWFCharacterRemap {
         )
     }
 
-    package mutating func editText(_ source: SWFEditText) -> SWFEditText {
+    public mutating func editText(_ source: SWFEditText) -> SWFEditText {
         SWFEditText(
             characterId: id(source.characterId),
             bounds: source.bounds,
@@ -142,7 +142,7 @@ nonisolated package struct SWFCharacterRemap {
         )
     }
 
-    package mutating func sprite(_ source: SWFSprite) -> SWFSprite {
+    public mutating func sprite(_ source: SWFSprite) -> SWFSprite {
         SWFSprite(
             characterId: id(source.characterId),
             frameCount: source.frameCount,
@@ -152,7 +152,7 @@ nonisolated package struct SWFCharacterRemap {
 
     // MARK: - Timelines
 
-    package mutating func timeline(_ source: SWFTimeline) -> SWFTimeline {
+    public mutating func timeline(_ source: SWFTimeline) -> SWFTimeline {
         SWFTimeline(
             frames: source.frames.map { frame($0) },
             frame1: source.frame1.map { placedObject($0) },
@@ -160,13 +160,13 @@ nonisolated package struct SWFCharacterRemap {
         )
     }
 
-    package mutating func initActions(_ source: [SWFDoInitAction]) -> [SWFDoInitAction] {
+    public mutating func initActions(_ source: [SWFDoInitAction]) -> [SWFDoInitAction] {
         source.map { SWFDoInitAction(spriteId: id($0.spriteId), actions: $0.actions) }
     }
 
     // MARK: - Name tables
 
-    package mutating func exportedNames(_ source: [String: UInt16]) -> [String: UInt16] {
+    public mutating func exportedNames(_ source: [String: UInt16]) -> [String: UInt16] {
         var result: [String: UInt16] = [:]
         result.reserveCapacity(source.count)
         for name in source.keys.sorted() {
@@ -176,7 +176,7 @@ nonisolated package struct SWFCharacterRemap {
         return result
     }
 
-    package mutating func importedNames(_ source: [UInt16: String]) -> [UInt16: String] {
+    public mutating func importedNames(_ source: [UInt16: String]) -> [UInt16: String] {
         var result: [UInt16: String] = [:]
         result.reserveCapacity(source.count)
         for key in source.keys.sorted() {

@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
     static func progressionSummary(

@@ -1,6 +1,7 @@
 // Synthetic GMST records only. Layout and type selection follow the open xEdit
 // definitions cited by GameSetting; no game data is copied into fixtures.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

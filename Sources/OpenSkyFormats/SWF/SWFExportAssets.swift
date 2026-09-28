@@ -17,18 +17,18 @@ import Foundation
 
 /// One exported character: the id inside this movie plus the linkage name
 /// other movies and ActionScript address it by.
-nonisolated package struct SWFExportedAsset: Equatable {
-    package let characterId: UInt16
-    package let name: String
+nonisolated public struct SWFExportedAsset: Equatable, Sendable {
+    public let characterId: UInt16
+    public let name: String
 }
 
 /// One ExportAssets (56) tag.
-nonisolated package struct SWFExportedAssets: Equatable {
-    package static let tagCode: UInt16 = 56
+nonisolated public struct SWFExportedAssets: Equatable, Sendable {
+    public static let tagCode: UInt16 = 56
 
-    package let assets: [SWFExportedAsset]
+    public let assets: [SWFExportedAsset]
 
-    package static func parse(tag: SWFTag) throws -> SWFExportedAssets {
+    public static func parse(tag: SWFTag) throws -> SWFExportedAssets {
         guard tag.code == tagCode else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }

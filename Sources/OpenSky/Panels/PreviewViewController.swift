@@ -6,6 +6,7 @@
 // Sources/OpenSkyEngine/Preview/ (AppKit-free, unit-tested); this file is the main-app UI shell.
 
 import AppKit
+import OpenSkyGameData
 
 final class PreviewViewController: NSViewController {
     /// Located install, set by the app delegate before the view loads;

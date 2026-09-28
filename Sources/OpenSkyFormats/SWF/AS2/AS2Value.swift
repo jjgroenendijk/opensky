@@ -14,7 +14,7 @@
 import Foundation
 
 /// One ActionScript 2 value.
-nonisolated package enum AS2Value {
+nonisolated public enum AS2Value {
     case undefined
     case null
     case boolean(Bool)
@@ -25,13 +25,13 @@ nonisolated package enum AS2Value {
 
 nonisolated extension AS2Value {
     /// A number built from an integer, the form most opcodes produce.
-    package static func integer(_ value: Int) -> AS2Value {
+    public static func integer(_ value: Int) -> AS2Value {
         .number(Double(value))
     }
 
     /// True for everything except `.object` — the ECMA-262 3rd edition
     /// "primitive value" set (section 4.3.2).
-    package var isPrimitive: Bool {
+    public var isPrimitive: Bool {
         if case .object = self {
             return false
         }
@@ -39,7 +39,7 @@ nonisolated extension AS2Value {
     }
 
     /// The referenced object, or nil for a primitive.
-    package var objectValue: AS2Object? {
+    public var objectValue: AS2Object? {
         guard case let .object(object) = self else {
             return nil
         }
@@ -47,7 +47,7 @@ nonisolated extension AS2Value {
     }
 
     /// The referenced object when it is callable, else nil.
-    package var functionValue: AS2Object? {
+    public var functionValue: AS2Object? {
         guard let object = objectValue, object.isFunction else {
             return nil
         }
@@ -58,7 +58,7 @@ nonisolated extension AS2Value {
     /// ECMAScript in two places: `typeof null` is `"null"` rather than
     /// `"object"`, and a display object reports its own name (`"movieclip"`),
     /// which an object carries in `AS2Object.typeOverride`.
-    package var typeName: String {
+    public var typeName: String {
         switch self {
         case .undefined: "undefined"
         case .null: "null"
@@ -77,7 +77,7 @@ nonisolated extension AS2Value: Equatable {
     ///
     /// Reference: ECMA-262 3rd edition, section 11.9.6 "The Strict Equality
     /// Comparison Algorithm".
-    package static func == (left: AS2Value, right: AS2Value) -> Bool {
+    public static func == (left: AS2Value, right: AS2Value) -> Bool {
         switch (left, right) {
         case (.undefined, .undefined), (.null, .null):
             true

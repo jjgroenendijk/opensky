@@ -16,75 +16,75 @@
 
 import Foundation
 
-nonisolated package struct FactionDecodeTally: Equatable {
-    package private(set) var malformedFields: [FourCC: Int] = [:]
-    package private(set) var unknownFields: [FourCC: Int] = [:]
+nonisolated public struct FactionDecodeTally: Equatable, Sendable {
+    public private(set) var malformedFields: [FourCC: Int] = [:]
+    public private(set) var unknownFields: [FourCC: Int] = [:]
     /// Bytes past the last whole element of a packed array, or past the last
     /// documented member of a struct that arrived longer than the spec.
-    package private(set) var trailingBytes: [FourCC: Int] = [:]
+    public private(set) var trailingBytes: [FourCC: Int] = [:]
     /// VENV offset 6, which xEdit calls "Unknown 1" and UESP folds into a
     /// 32-bit radius. Counted whenever it is nonzero, because a nonzero word
     /// there is the only observation that could tell the two readings apart.
-    package private(set) var vendorRadiusHighWordSet = 0
+    public private(set) var vendorRadiusHighWordSet = 0
 
-    package var total: Int {
+    public var total: Int {
         malformedFields.values.reduce(0, +)
             + unknownFields.values.reduce(0, +)
             + trailingBytes.values.reduce(0, +)
     }
 
-    package mutating func noteMalformed(_ type: FourCC) {
+    public mutating func noteMalformed(_ type: FourCC) {
         malformedFields[type, default: 0] += 1
     }
 
-    package mutating func noteUnknown(_ type: FourCC) {
+    public mutating func noteUnknown(_ type: FourCC) {
         unknownFields[type, default: 0] += 1
     }
 
-    package mutating func noteTail(_ type: FourCC, bytes: Int) {
+    public mutating func noteTail(_ type: FourCC, bytes: Int) {
         guard bytes > 0 else { return }
         trailingBytes[type, default: 0] += bytes
     }
 
-    package mutating func noteVendorRadiusHighWord() {
+    public mutating func noteVendorRadiusHighWord() {
         vendorRadiusHighWordSet += 1
     }
 }
 
-nonisolated package struct Faction: Equatable {
+nonisolated public struct Faction: Equatable, Sendable {
     /// DATA. Bit names follow xEdit, which spells out which crime each "ignore"
     /// bit covers; UESP names the same bits with the same values.
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let hiddenFromNPC = Flags(rawValue: 0x0000_0001)
-        package static let specialCombat = Flags(rawValue: 0x0000_0002)
-        package static let trackCrime = Flags(rawValue: 0x0000_0040)
-        package static let ignoreMurder = Flags(rawValue: 0x0000_0080)
-        package static let ignoreAssault = Flags(rawValue: 0x0000_0100)
-        package static let ignoreStealing = Flags(rawValue: 0x0000_0200)
-        package static let ignoreTrespass = Flags(rawValue: 0x0000_0400)
-        package static let doNotReportCrimesAgainstMembers = Flags(rawValue: 0x0000_0800)
-        package static let crimeGoldUseDefaults = Flags(rawValue: 0x0000_1000)
-        package static let ignorePickpocket = Flags(rawValue: 0x0000_2000)
-        package static let vendor = Flags(rawValue: 0x0000_4000)
-        package static let canBeOwner = Flags(rawValue: 0x0000_8000)
-        package static let ignoreWerewolf = Flags(rawValue: 0x0001_0000)
+        public static let hiddenFromNPC = Flags(rawValue: 0x0000_0001)
+        public static let specialCombat = Flags(rawValue: 0x0000_0002)
+        public static let trackCrime = Flags(rawValue: 0x0000_0040)
+        public static let ignoreMurder = Flags(rawValue: 0x0000_0080)
+        public static let ignoreAssault = Flags(rawValue: 0x0000_0100)
+        public static let ignoreStealing = Flags(rawValue: 0x0000_0200)
+        public static let ignoreTrespass = Flags(rawValue: 0x0000_0400)
+        public static let doNotReportCrimesAgainstMembers = Flags(rawValue: 0x0000_0800)
+        public static let crimeGoldUseDefaults = Flags(rawValue: 0x0000_1000)
+        public static let ignorePickpocket = Flags(rawValue: 0x0000_2000)
+        public static let vendor = Flags(rawValue: 0x0000_4000)
+        public static let canBeOwner = Flags(rawValue: 0x0000_8000)
+        public static let ignoreWerewolf = Flags(rawValue: 0x0001_0000)
     }
 
     /// XNAM's third word: how members of the two factions treat each other.
-    package enum CombatReaction: Equatable, CustomStringConvertible {
+    public enum CombatReaction: Equatable, CustomStringConvertible, Sendable {
         case neutral
         case enemy
         case ally
         case friend
         case unknown(raw: UInt32)
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             switch rawValue {
             case 0: self = .neutral
             case 1: self = .enemy
@@ -94,7 +94,7 @@ nonisolated package struct Faction: Equatable {
             }
         }
 
-        package var description: String {
+        public var description: String {
             switch self {
             case .neutral: "neutral"
             case .enemy: "enemy"
@@ -107,45 +107,45 @@ nonisolated package struct Faction: Equatable {
 
     /// One XNAM, 12 bytes. The target is a FACT or a RACE — xEdit accepts both
     /// and vanilla authors both — so nothing here assumes the record type.
-    package struct Relation: Equatable {
-        package static let byteCount = 12
+    public struct Relation: Equatable, Sendable {
+        public static let byteCount = 12
 
-        package let faction: FormID
+        public let faction: FormID
         /// Signed disposition modifier. xEdit notes the Creation Kit no longer
         /// edits it and vanilla leaves it zero except on one record.
-        package let modifier: Int32
-        package let reaction: CombatReaction
+        public let modifier: Int32
+        public let reaction: CombatReaction
     }
 
     /// CRVA, 12, 16 or 20 bytes. The three trailing fields arrived in later
     /// record versions, so they are optional rather than defaulted: a caller
     /// that needs the steal multiplier has to decide what an absent one means
     /// (issue #504), and a zero would silently answer for it.
-    package struct CrimeValues: Equatable {
-        package static let requiredByteCount = 12
-        package static let withStealMultiplierByteCount = 16
-        package static let fullByteCount = 20
+    public struct CrimeValues: Equatable, Sendable {
+        public static let requiredByteCount = 12
+        public static let withStealMultiplierByteCount = 16
+        public static let fullByteCount = 20
 
-        package let arrest: Bool
-        package let attackOnSight: Bool
-        package let murder: UInt16
-        package let assault: UInt16
-        package let trespass: UInt16
-        package let pickpocket: UInt16
+        public let arrest: Bool
+        public let attackOnSight: Bool
+        public let murder: UInt16
+        public let assault: UInt16
+        public let trespass: UInt16
+        public let pickpocket: UInt16
         /// Offset 10. Both sources call it unused and observe nonzero values,
         /// so it is kept verbatim and never read as a gold amount.
-        package let unknown: UInt16
-        package let stealMultiplier: Float?
-        package let escape: UInt16?
-        package let werewolf: UInt16?
+        public let unknown: UInt16
+        public let stealMultiplier: Float?
+        public let escape: UInt16?
+        public let werewolf: UInt16?
     }
 
     /// One RNAM/MNAM/FNAM group. The titles are localizable, so they are
     /// `LString` and may be string-table IDs rather than text.
-    package struct Rank: Equatable {
-        package let index: UInt32
-        package var maleTitle: LString?
-        package var femaleTitle: LString?
+    public struct Rank: Equatable, Sendable {
+        public let index: UInt32
+        public var maleTitle: LString?
+        public var femaleTitle: LString?
     }
 
     /// VENV, 12 bytes. The two sources disagree about offsets 4...7: xEdit
@@ -153,65 +153,65 @@ nonisolated package struct Faction: Equatable {
     /// radius. This decode follows xEdit and tallies a nonzero word at offset 6
     /// (`FactionDecodeTally.vendorRadiusHighWordSet`), which is the observation
     /// that would distinguish them; the real-data suite reports the count.
-    package struct VendorValues: Equatable {
-        package static let byteCount = 12
+    public struct VendorValues: Equatable, Sendable {
+        public static let byteCount = 12
 
-        package let startHour: UInt16
-        package let endHour: UInt16
-        package let radius: UInt16
-        package let onlyBuysStolenItems: Bool
-        package let notSellBuy: Bool
+        public let startHour: UInt16
+        public let endHour: UInt16
+        public let radius: UInt16
+        public let onlyBuysStolenItems: Bool
+        public let notSellBuy: Bool
     }
 
     /// PLVD, 12 bytes: where the vendor trades. The middle word's meaning is
     /// decided by `type`, and the type registry is package-location shared
     /// (issue #506), so the word stays raw here.
-    package struct VendorLocation: Equatable {
-        package static let byteCount = 12
+    public struct VendorLocation: Equatable, Sendable {
+        public static let byteCount = 12
 
-        package let type: Int32
-        package let value: UInt32
-        package let radius: Int32
+        public let type: Int32
+        public let value: UInt32
+        public let radius: Int32
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let name: LString?
-    package let relations: [Relation]
-    package let flags: Flags
+    public let formID: FormID
+    public let editorID: String?
+    public let name: LString?
+    public let relations: [Relation]
+    public let flags: Flags
     /// JAIL — exterior jail marker REFR.
-    package let exteriorJailMarker: FormID?
+    public let exteriorJailMarker: FormID?
     /// WAIT — the marker the player's followers wait at.
-    package let followerWaitMarker: FormID?
+    public let followerWaitMarker: FormID?
     /// STOL — the container stolen goods are confiscated into.
-    package let evidenceChest: FormID?
+    public let evidenceChest: FormID?
     /// PLCN — the container the player's own inventory is held in.
-    package let playerInventoryContainer: FormID?
+    public let playerInventoryContainer: FormID?
     /// CRGR — FLST of factions that share this one's crimes.
-    package let sharedCrimeFactionList: FormID?
+    public let sharedCrimeFactionList: FormID?
     /// JOUT — the OTFT the jailed player wears.
-    package let jailOutfit: FormID?
-    package let crimeValues: CrimeValues?
-    package let ranks: [Rank]
+    public let jailOutfit: FormID?
+    public let crimeValues: CrimeValues?
+    public let ranks: [Rank]
     /// VEND — FLST of what the vendor buys and sells.
-    package let vendorBuySellList: FormID?
+    public let vendorBuySellList: FormID?
     /// VENC — the merchant's REFR container.
-    package let merchantContainer: FormID?
-    package let vendorValues: VendorValues?
-    package let vendorLocation: VendorLocation?
+    public let merchantContainer: FormID?
+    public let vendorValues: VendorValues?
+    public let vendorLocation: VendorLocation?
     /// The trailing CITC/CTDA run: the vendor trades only while these hold.
-    package let vendorConditions: ConditionList
-    package let skipped: FactionDecodeTally
+    public let vendorConditions: ConditionList
+    public let skipped: FactionDecodeTally
 
-    package var isVendor: Bool {
+    public var isVendor: Bool {
         flags.contains(.vendor)
     }
 
-    package var tracksCrime: Bool {
+    public var tracksCrime: Bool {
         flags.contains(.trackCrime)
     }
 
-    package var displayName: String {
+    public var displayName: String {
         switch name {
         case let .inline(value): value
         case .tableID, nil: editorID ?? formID.description
@@ -220,14 +220,14 @@ nonisolated package struct Faction: Equatable {
 
     /// The title one rank shows, preferring the gendered one the caller asked
     /// for and falling back to the other when the record only authored one.
-    package func rankTitle(_ index: UInt32, female: Bool) -> LString? {
+    public func rankTitle(_ index: UInt32, female: Bool) -> LString? {
         guard let rank = ranks.first(where: { $0.index == index }) else { return nil }
         return female
             ? rank.femaleTitle ?? rank.maleTitle
             : rank.maleTitle ?? rank.femaleTitle
     }
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "FACT" else {
             throw ESMError.malformed("expected FACT record, got \(record.type)")
         }

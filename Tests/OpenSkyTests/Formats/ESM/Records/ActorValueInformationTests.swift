@@ -1,6 +1,7 @@
 // Synthetic AVIF decode coverage. Fixtures are authored from the cited field
 // layout and contain no bytes from the game install.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

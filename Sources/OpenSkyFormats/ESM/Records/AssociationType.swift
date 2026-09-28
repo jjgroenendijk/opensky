@@ -16,51 +16,51 @@
 
 import Foundation
 
-nonisolated package struct AssociationType: Equatable {
+nonisolated public struct AssociationType: Equatable, Sendable {
     /// DATA, uint32. Only bit 0 is named by either source.
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let familyAssociation = Flags(rawValue: 0x0000_0001)
+        public static let familyAssociation = Flags(rawValue: 0x0000_0001)
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// MPRT — what the parent side is called when male.
-    package let maleParentTitle: String?
+    public let maleParentTitle: String?
     /// FPRT — what the parent side is called when female.
-    package let femaleParentTitle: String?
+    public let femaleParentTitle: String?
     /// MCHT — what the child side is called when male. Optional in the record:
     /// a symmetric association such as an alliance names only the parent side.
-    package let maleChildTitle: String?
+    public let maleChildTitle: String?
     /// FCHT — what the child side is called when female.
-    package let femaleChildTitle: String?
-    package let flags: Flags
-    package let skipped: ReferenceRecordTally
+    public let femaleChildTitle: String?
+    public let flags: Flags
+    public let skipped: ReferenceRecordTally
 
-    package var isFamilyAssociation: Bool {
+    public var isFamilyAssociation: Bool {
         flags.contains(.familyAssociation)
     }
 
     /// The title one side shows, preferring the gendered one the caller asked
     /// for and falling back to the other when the record only authored one.
-    package func parentTitle(female: Bool) -> String? {
+    public func parentTitle(female: Bool) -> String? {
         female
             ? femaleParentTitle ?? maleParentTitle
             : maleParentTitle ?? femaleParentTitle
     }
 
-    package func childTitle(female: Bool) -> String? {
+    public func childTitle(female: Bool) -> String? {
         female
             ? femaleChildTitle ?? maleChildTitle
             : maleChildTitle ?? femaleChildTitle
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "ASTP" else {
             throw ESMError.malformed("expected ASTP record, got \(record.type)")
         }

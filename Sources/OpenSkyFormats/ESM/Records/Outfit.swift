@@ -8,13 +8,13 @@
 
 import Foundation
 
-nonisolated package struct Outfit {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct Outfit: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// INAM — outfit contents, each an ARMO or LVLI FormID.
-    package let items: [FormID]
+    public let items: [FormID]
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "OTFT" else {
             throw ESMError.malformed("expected OTFT record, got \(record.type)")
         }

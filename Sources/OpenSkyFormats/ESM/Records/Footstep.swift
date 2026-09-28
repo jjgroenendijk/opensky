@@ -32,7 +32,7 @@ import Foundation
 /// Which of a footstep set's five lists a lookup wants. The raw values are the
 /// DATA array order, not the XCNT order, because that is what the decoder
 /// walks.
-nonisolated package enum FootstepGait: Int, CaseIterable, Sendable {
+nonisolated public enum FootstepGait: Int, CaseIterable, Sendable {
     case swimming
     case sneaking
     case sprinting
@@ -42,18 +42,18 @@ nonisolated package enum FootstepGait: Int, CaseIterable, Sendable {
 
 /// One FSTP: a tag the behavior graph raises paired with the impact data set
 /// that resolves the tag to a sound for the surface under the foot.
-nonisolated package struct Footstep: Equatable, Sendable {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct Footstep: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// DATA -> IPDS. Nil when absent or null, which leaves this footstep silent
     /// rather than unresolvable.
-    package let impactDataSet: FormID?
+    public let impactDataSet: FormID?
     /// ANAM. The behavior-graph event name that fires this footstep, spelled
     /// exactly as `0_master.hkx` declares it (`FootLeft`, `FootScuffRight`,
     /// `JumpDown`, ...). Nil when the record carries no ANAM.
-    package let tag: String?
+    public let tag: String?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "FSTP" else {
             throw ESMError.malformed("expected FSTP record, got \(record.type)")
         }
@@ -83,14 +83,14 @@ nonisolated package struct Footstep: Equatable, Sendable {
 }
 
 /// One FSTS: five per-gait lists of FSTP FormIDs.
-nonisolated package struct FootstepSet: Equatable, Sendable {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct FootstepSet: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// The five lists, indexed by `FootstepGait.rawValue`. Always five entries,
     /// any of which may be empty.
     private let lists: [[FormID]]
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "FSTS" else {
             throw ESMError.malformed("expected FSTS record, got \(record.type)")
         }
@@ -118,14 +118,14 @@ nonisolated package struct FootstepSet: Equatable, Sendable {
     }
 
     /// Test seam and the shape the store hands back for a set it synthesized.
-    package init(formID: FormID, editorID: String?, lists: [FootstepGait: [FormID]]) {
+    public init(formID: FormID, editorID: String?, lists: [FootstepGait: [FormID]]) {
         self.formID = formID
         self.editorID = editorID
         self.lists = FootstepGait.allCases.map { lists[$0] ?? [] }
     }
 
     /// The footsteps for one gait, in record order.
-    package func footsteps(for gait: FootstepGait) -> [FormID] {
+    public func footsteps(for gait: FootstepGait) -> [FormID] {
         lists[gait.rawValue]
     }
 

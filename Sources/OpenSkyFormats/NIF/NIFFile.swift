@@ -9,21 +9,21 @@
 
 import Foundation
 
-nonisolated package struct NIFFile {
+nonisolated public struct NIFFile: Sendable {
     /// One block: type name from the header table + raw payload bytes.
-    package struct Block {
-        package let typeName: String
-        package let data: Data
+    public struct Block: Sendable {
+        public let typeName: String
+        public let data: Data
     }
 
-    package let header: NIFHeader
+    public let header: NIFHeader
     /// Every block in file order, header's size array as the slice widths.
-    package let blocks: [Block]
+    public let blocks: [Block]
     /// Footer root refs: block indices; -1 = null ref. Not validated here —
     /// ref resolution is the scene-graph layer's job.
-    package let roots: [Int32]
+    public let roots: [Int32]
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         header = try NIFHeader(reader: &reader)
 
@@ -53,7 +53,7 @@ nonisolated package struct NIFFile {
     }
 
     /// Block-type histogram, for probes and coverage decisions.
-    package func blockTypeCounts() -> [String: Int] {
+    public func blockTypeCounts() -> [String: Int] {
         var counts: [String: Int] = [:]
         for block in blocks {
             counts[block.typeName, default: 0] += 1

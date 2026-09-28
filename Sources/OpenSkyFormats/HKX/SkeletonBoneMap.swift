@@ -13,30 +13,30 @@ import Foundation
 
 /// One HKX bone with no NIF node, or one NIF node with no HKX bone, plus the
 /// reason it went unmatched.
-nonisolated package struct SkeletonBoneMismatch: Equatable {
-    package let name: String
-    package let reason: String
+nonisolated public struct SkeletonBoneMismatch: Equatable, Sendable {
+    public let name: String
+    public let reason: String
 }
 
 /// Result of matching HKX bone names against NIF node names, both directions.
 /// Match is exact name equality — the vanilla rig shares bone names verbatim
 /// between the two files, so no normalization is applied (it would mask real
 /// divergence).
-nonisolated package struct SkeletonBoneMap {
+nonisolated public struct SkeletonBoneMap: Sendable {
     /// HKX bone names that also name a NIF node, in HKX bone order.
-    package let matched: [String]
+    public let matched: [String]
     /// HKX bones with no NIF node (control/attach helpers, rig-only bones).
-    package let unmatchedHKX: [SkeletonBoneMismatch]
+    public let unmatchedHKX: [SkeletonBoneMismatch]
     /// NIF nodes with no HKX bone (mesh-only nodes the rig omits).
-    package let unmatchedNIF: [SkeletonBoneMismatch]
+    public let unmatchedNIF: [SkeletonBoneMismatch]
 
-    package var matchedCount: Int {
+    public var matchedCount: Int {
         matched.count
     }
 
     /// Builds the map. `nifNodeNames` is the NIF-side key set
     /// (NIFSkeleton.boneTransforms.keys).
-    package init(hkxBoneNames: [String], nifNodeNames: Set<String>) {
+    public init(hkxBoneNames: [String], nifNodeNames: Set<String>) {
         var matched: [String] = []
         var unmatchedHKX: [SkeletonBoneMismatch] = []
         for bone in hkxBoneNames {

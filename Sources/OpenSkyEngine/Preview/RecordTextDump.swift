@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated enum RecordTextDump {
     /// Big records (Tamriel WRLD carries thousands of RNAMs) get capped so

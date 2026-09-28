@@ -9,15 +9,15 @@
 import Foundation
 
 /// What the renderer draws: the movie plus its external font substitutions.
-nonisolated package struct SWFMovieScene {
-    package let movie: SWFMovie
+nonisolated public struct SWFMovieScene: Sendable {
+    public let movie: SWFMovie
     /// Fonts substituted by name: keys are the placeholder font name or the
     /// edit text's FontClass (exact match first, then lowercased).
-    package var externalFonts: [String: SWFFontDefinition] = [:]
+    public var externalFonts: [String: SWFFontDefinition] = [:]
     /// Font names/classes that could not be resolved anywhere (tally).
-    package var unresolvedFontNames: [String] = []
+    public var unresolvedFontNames: [String] = []
 
-    package init(
+    public init(
         movie: SWFMovie,
         externalFonts: [String: SWFFontDefinition] = [:],
         unresolvedFontNames: [String] = []
@@ -31,7 +31,7 @@ nonisolated package struct SWFMovieScene {
     /// has glyphs, otherwise the external substitution registered for the
     /// placeholder's name or the field's FontClass. nil -> the text is
     /// skipped (counted by the renderer).
-    package func resolvedFont(for text: SWFEditText) -> SWFFontDefinition? {
+    public func resolvedFont(for text: SWFEditText) -> SWFFontDefinition? {
         if let fontID = text.fontID, let internalFont = movie.font(fontID) {
             if !internalFont.glyphs.isEmpty {
                 return internalFont
@@ -61,7 +61,7 @@ nonisolated package struct SWFMovieScene {
     /// Every font name an edit text may need substituted: placeholder
     /// (zero-glyph) internal fonts referenced by FontID, imported FontIDs
     /// (ImportAssets2 export names), plus FontClass names.
-    package var referencedExternalFontNames: [String] {
+    public var referencedExternalFontNames: [String] {
         var names: [String] = []
         var seen = Set<String>()
         for id in movie.characters.keys.sorted() {
@@ -89,7 +89,7 @@ nonisolated package struct SWFMovieScene {
     /// name is looked up as a `map` alias first (the vanilla pattern), then
     /// directly as a registered font name. Unresolved names are recorded, not
     /// fatal — the affected texts fall out with a renderer tally.
-    package mutating func resolveExternalFonts(config: SWFFontConfig, library: SWFFontLibrary) {
+    public mutating func resolveExternalFonts(config: SWFFontConfig, library: SWFFontLibrary) {
         for name in referencedExternalFontNames {
             let resolved = library.resolve(alias: name, config: config)
                 ?? library.font(named: name)

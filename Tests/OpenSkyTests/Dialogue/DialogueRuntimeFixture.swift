@@ -12,6 +12,7 @@
 // `GetIsID` for the speaker, and the follow-up flow runs through TCLT links
 // rather than through a previous-info chain, which `Skyrim.esm` uses zero times.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

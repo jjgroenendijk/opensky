@@ -6,18 +6,25 @@
 import Foundation
 import simd
 
-enum NIFParticleFixture {
+public enum NIFParticleFixture: Sendable {
     /// BSStripPSysData tail appended after the NiPSysData body.
-    struct StripTail {
-        let maxPointCount: UInt16
-        let startCap: Float
-        let endCap: Float
-        let zPrepass: Bool
+    public struct StripTail: Sendable {
+        public let maxPointCount: UInt16
+        public let startCap: Float
+        public let endCap: Float
+        public let zPrepass: Bool
+
+        public init(maxPointCount: UInt16, startCap: Float, endCap: Float, zPrepass: Bool) {
+            self.maxPointCount = maxPointCount
+            self.startCap = startCap
+            self.endCap = endCap
+            self.zPrepass = zPrepass
+        }
     }
 
     /// NiPSysData payload, Bethesda-20.2 layout. Under BS202 the geometry
     /// arrays carry no length, so only presence bytes + scalars are emitted.
-    static func psysData(
+    public static func psysData(
         maxParticles: UInt16,
         hasRadii: Bool = false,
         hasSizes: Bool = false,
@@ -72,7 +79,7 @@ enum NIFParticleFixture {
     }
 
     /// NiParticleSystem payload, BS stream 100 (SSE) layout.
-    static func particleSystemSSE(
+    public static func particleSystemSSE(
         prefix: Data = NIFFixture.avObjectPrefix(),
         skinRef: Int32 = -1,
         shaderPropertyRef: Int32 = -1,
@@ -95,7 +102,7 @@ enum NIFParticleFixture {
     }
 
     /// NiParticleSystem payload, BS stream 83 (Skyrim LE) layout.
-    static func particleSystemLE(
+    public static func particleSystemLE(
         prefix: Data = NIFFixture.avObjectPrefix(),
         dataRef: Int32,
         skinInstanceRef: Int32 = -1,
@@ -125,7 +132,7 @@ enum NIFParticleFixture {
     }
 
     /// NiPSysModifier base run shared by every modifier + emitter payload.
-    static func modifierBase(
+    public static func modifierBase(
         nameIndex: UInt32 = 0xFFFF_FFFF,
         order: UInt32 = 0,
         targetRef: Int32 = -1,
@@ -140,7 +147,7 @@ enum NIFParticleFixture {
     }
 
     /// NiPSysEmitter birth-parameter run, appended after modifierBase.
-    static func emitterBase(
+    public static func emitterBase(
         speed: Float = 0,
         speedVariation: Float = 0,
         declination: Float = 0,
@@ -171,7 +178,7 @@ enum NIFParticleFixture {
         return out
     }
 
-    static func boxEmitter(
+    public static func boxEmitter(
         base: Data,
         emitter: Data,
         emitterObjectRef: Int32 = -1,
@@ -187,7 +194,7 @@ enum NIFParticleFixture {
         return out
     }
 
-    static func sphereEmitter(
+    public static func sphereEmitter(
         base: Data,
         emitter: Data,
         emitterObjectRef: Int32 = -1,
@@ -199,7 +206,7 @@ enum NIFParticleFixture {
         return out
     }
 
-    static func meshEmitter(
+    public static func meshEmitter(
         base: Data,
         emitter: Data,
         meshRefs: [Int32],
@@ -216,7 +223,7 @@ enum NIFParticleFixture {
         return out
     }
 
-    static func gravityModifier(
+    public static func gravityModifier(
         base: Data,
         axis: SIMD3<Float>,
         strength: Float
@@ -235,7 +242,7 @@ enum NIFParticleFixture {
         return out
     }
 
-    static func scaleModifier(base: Data, scales: [Float]) -> Data {
+    public static func scaleModifier(base: Data, scales: [Float]) -> Data {
         var out = base
         out.appendUInt32(UInt32(scales.count))
         for scale in scales {
@@ -244,7 +251,7 @@ enum NIFParticleFixture {
         return out
     }
 
-    static func lodModifier(
+    public static func lodModifier(
         base: Data,
         beginDistance: Float,
         endDistance: Float,
@@ -273,7 +280,7 @@ extension NIFParticleFixture {
     /// BSEffectShaderProperty payload (nif.xml layout, BS stream 83/100):
     /// NiObjectNET run, flags, UV transform, source texture, clamp + skipped
     /// bytes, falloff, base color, scale, soft depth, greyscale texture.
-    static func effectShaderProperty(
+    public static func effectShaderProperty(
         flags1: UInt32 = 0,
         flags2: UInt32 = 0,
         sourceTexture: String = "",
@@ -306,7 +313,7 @@ extension NIFParticleFixture {
     }
 
     /// NiAlphaProperty payload: NiObjectNET run + AlphaFlags + threshold.
-    static func alphaProperty(flags: UInt16, threshold: UInt8) -> Data {
+    public static func alphaProperty(flags: UInt16, threshold: UInt8) -> Data {
         var out = Data()
         out.appendUInt32(0xFFFF_FFFF) // name: none
         out.appendUInt32(0) // extra data count

@@ -6,6 +6,7 @@
 // the Creation Kit spells each 4096 higher. Every condition is a real 32-byte
 // CTDA decoded through `Condition(ctda:)`, so nothing here reads game data.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

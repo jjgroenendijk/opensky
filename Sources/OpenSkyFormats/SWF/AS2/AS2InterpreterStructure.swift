@@ -15,7 +15,7 @@
 import Foundation
 
 nonisolated extension AS2Interpreter {
-    package func structureOp(
+    public func structureOp(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
@@ -82,7 +82,7 @@ nonisolated extension AS2Interpreter {
 
     /// Walks the object's `__proto__` chain looking for the constructor's
     /// `prototype`.
-    package func isInstance(_ value: AS2Value, of constructor: AS2Value) -> Bool {
+    public func isInstance(_ value: AS2Value, of constructor: AS2Value) -> Bool {
         guard
             let object = value.objectValue,
             let target = constructor.objectValue?
@@ -131,7 +131,7 @@ nonisolated extension AS2Interpreter {
     /// three-level hierarchy would call itself until the depth cap fired
     /// (issue #136). Only the class's own `__constructor__` counts: the
     /// inherited one belongs to the superclass and would name the wrong parent.
-    package func superBinding(for thisValue: AS2Value, base: AS2Object? = nil) -> AS2Object? {
+    public func superBinding(for thisValue: AS2Value, base: AS2Object? = nil) -> AS2Object? {
         guard let home = base ?? thisValue.objectValue?.prototype else {
             return nil
         }

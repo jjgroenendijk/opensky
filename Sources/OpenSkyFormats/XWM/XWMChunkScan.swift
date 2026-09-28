@@ -16,16 +16,16 @@
 import Foundation
 
 /// The three chunks OpenSky reads, located inside one `.xwm` buffer.
-nonisolated package struct XWMChunkScan {
+nonisolated public struct XWMChunkScan: Sendable {
     /// `fmt ` fields exactly as stored, before any range validation.
-    package struct RawFormat: Equatable {
-        package let formatTag: UInt16
-        package let channelCount: Int
-        package let sampleRate: Int
-        package let averageBytesPerSecond: Int
-        package let blockAlign: Int
-        package let bitsPerSample: Int
-        package let extraData: Data
+    public struct RawFormat: Equatable, Sendable {
+        public let formatTag: UInt16
+        public let channelCount: Int
+        public let sampleRate: Int
+        public let averageBytesPerSecond: Int
+        public let blockAlign: Int
+        public let bitsPerSample: Int
+        public let extraData: Data
     }
 
     private enum Layout {
@@ -47,11 +47,11 @@ nonisolated package struct XWMChunkScan {
         static let packetTableEntrySize = 4
     }
 
-    package let format: RawFormat
-    package let packetTable: [UInt32]
-    package let payloadRange: Range<Int>
+    public let format: RawFormat
+    public let packetTable: [UInt32]
+    public let payloadRange: Range<Int>
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         let fileEnd = try Self.readRIFFHeader(reader: &reader, byteCount: data.count)
 

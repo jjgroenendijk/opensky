@@ -8,6 +8,7 @@
 // itU32, wbEnum(['None', 'Box', 'Sphere', 'Portal Box', 'Line']))])`.
 // Documented in docs/formats/placed-references.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

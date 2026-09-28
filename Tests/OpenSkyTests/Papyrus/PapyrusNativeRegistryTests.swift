@@ -1,5 +1,6 @@
 // Native registry families, fallback policy, and tally evidence.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

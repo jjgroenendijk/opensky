@@ -4,8 +4,8 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum FormListFixture {
-    static func record(
+public enum FormListFixture: Sendable {
+    public static func record(
         formID: UInt32,
         editorID: String? = nil,
         entries: [UInt32] = []
@@ -13,7 +13,7 @@ enum FormListFixture {
         try parse(recordBytes(formID: formID, editorID: editorID, entries: entries))
     }
 
-    static func recordBytes(
+    public static func recordBytes(
         formID: UInt32,
         editorID: String? = nil,
         entries: [UInt32] = []
@@ -28,7 +28,7 @@ enum FormListFixture {
         return ESMFixture.record("FLST", formID: formID, data: fields)
     }
 
-    static func parse(_ bytes: Data) throws -> ESMRecord {
+    public static func parse(_ bytes: Data) throws -> ESMRecord {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {
             throw ESMError.malformed("fixture did not produce a record")
@@ -36,7 +36,7 @@ enum FormListFixture {
         return record
     }
 
-    static func uint32(_ value: UInt32) -> Data {
+    public static func uint32(_ value: UInt32) -> Data {
         withUnsafeBytes(of: value.littleEndian) { Data($0) }
     }
 }
