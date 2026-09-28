@@ -4,7 +4,7 @@
 // passes through untouched.
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyAudio
 @testable import OpenSkyFormatsAudio
 import Testing
 

@@ -5,6 +5,7 @@
 // rendering layer itself never sees a walk controller or a clock.
 
 import MetalKit
+import OpenSkyAudio
 import OpenSkyRendering
 
 extension Renderer {

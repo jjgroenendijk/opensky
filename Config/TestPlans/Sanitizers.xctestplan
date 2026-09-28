@@ -85,6 +85,11 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyRendering",
           "name" : "OpenSkyRendering"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyAudio",
+          "name" : "OpenSkyAudio"
         }
       ]
     }
@@ -184,6 +189,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyRenderingTests",
         "name" : "OpenSkyRenderingTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyAudioTests",
+        "name" : "OpenSkyAudioTests"
       }
     }
   ],

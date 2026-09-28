@@ -9,6 +9,7 @@
 // Both call `emitAmbienceContextIfNeeded()` here.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

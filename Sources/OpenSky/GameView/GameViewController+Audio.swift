@@ -4,6 +4,7 @@
 // and an empty picker so the panel never crashes.
 
 import AppKit
+import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData

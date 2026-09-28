@@ -236,6 +236,18 @@ targets += testing(
 )
 
 targets += foundation(
+    "OpenSkyAudio",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsAudio", "OpenSkyGameData",
+        "CFFmpeg"
+    ],
+    tests: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsAudio", "OpenSkyGameData",
+        "FormatsCoreTesting", "FormatsESMTesting", "FormatsAudioTesting"
+    ]
+)
+
+targets += foundation(
     "OpenSkyRendering",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
@@ -253,7 +265,7 @@ targets += foundation(
     "OpenSkyEngine",
     dependencies: ["OpenSkyFormatsCore"] + formatFamilies.map { "OpenSkyFormats\($0)" } + [
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyDiagnostics", "OpenSkyPhysics",
-        "OpenSkyRendering", "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyRendering", "OpenSkyAudio", "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

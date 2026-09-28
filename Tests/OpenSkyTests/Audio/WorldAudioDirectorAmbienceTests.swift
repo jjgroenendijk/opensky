@@ -4,6 +4,7 @@
 // telling the truth about what is playing. See docs/engine/world-sfx.md.
 
 import AVFAudio
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

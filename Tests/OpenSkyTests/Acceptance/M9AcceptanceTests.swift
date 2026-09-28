@@ -17,6 +17,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 import Testing
 

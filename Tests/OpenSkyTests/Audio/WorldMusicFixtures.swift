@@ -8,6 +8,7 @@ import FormatsAudioTesting
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -171,8 +172,15 @@ enum MusicFixture {
 
 @MainActor
 enum MusicDirectorFixture {
+    /// An offline stereo engine, the same one the OpenSkyAudio suites build.
     static func makeRunningEngine() throws -> WorldAudioEngine {
-        try MusicAudioFixture.makeRunningEngine()
+        let format = try #require(
+            AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
+        )
+        let engine = WorldAudioEngine(manualRenderingFormat: format)
+        engine.isEnabled = true
+        try #require(engine.isRunning, "offline engine failed: \(engine.unavailableReason ?? "")")
+        return engine
     }
 
     /// Director over the default store. `missingPaths` fail to load, so a test

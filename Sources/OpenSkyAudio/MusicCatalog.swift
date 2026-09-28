@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Where the listener is, expressed as the only fields music selection reads.
 /// The streamer emits a fresh value whenever the center cell changes (exterior
@@ -62,6 +63,20 @@ nonisolated public struct MusicContext: Equatable, Sendable {
             mix(UInt64(region.rawValue))
         }
         return hash
+    }
+
+    public init(
+        isInterior: Bool,
+        cellMusicType: FormID?,
+        regions: [FormID],
+        worldspaceMusicType: FormID?,
+        cellIdentity: UInt32
+    ) {
+        self.isInterior = isInterior
+        self.cellMusicType = cellMusicType
+        self.regions = regions
+        self.worldspaceMusicType = worldspaceMusicType
+        self.cellIdentity = cellIdentity
     }
 }
 

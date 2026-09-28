@@ -4,6 +4,7 @@
 // compile; see Tests/TestSupport/AGENTS.md.
 
 import AppKit
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 import Testing
 

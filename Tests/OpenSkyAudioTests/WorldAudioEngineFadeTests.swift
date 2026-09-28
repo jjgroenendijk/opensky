@@ -4,7 +4,7 @@
 // offline fixtures live in WorldAudioEngineNonPositionalTests.swift.
 
 import AVFAudio
-import OpenSkyEngine
+@testable import OpenSkyAudio
 @testable import OpenSkyFormatsCore
 import simd
 import Testing

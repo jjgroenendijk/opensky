@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyShaderTypes
 import simd

@@ -10,7 +10,7 @@
 // player node down, and no WMA fixture may enter the repository.
 
 import AVFAudio
-@testable import OpenSkyEngine
+@testable import OpenSkyAudio
 @testable import OpenSkyFormatsCore
 import simd
 import Testing

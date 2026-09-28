@@ -11,6 +11,7 @@
 // to its serial queue.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics

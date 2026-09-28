@@ -12,6 +12,7 @@
 // a crash. Design + policy: docs/engine/music.md.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OSLog

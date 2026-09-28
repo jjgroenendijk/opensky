@@ -99,6 +99,7 @@ Sources/
   OpenSkyDiagnostics/   package module: memory footprint, debug world overlays
   OpenSkyPhysics/       package module: collision worlds, dynamic bodies, ragdolls
   OpenSkyRendering/     package module: Metal renderer, scenes, cameras, terrain meshes
+  OpenSkyAudio/         package module: audio graph, decoders, sound and music stores
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
@@ -108,6 +109,7 @@ Tests/
   OpenSkyBehaviorTests/ package test target: synthetic suites for OpenSkyBehavior
   OpenSkyPhysicsTests/  package test target: synthetic suites for OpenSkyPhysics
   OpenSkyRenderingTests/ package test target: synthetic suites for OpenSkyRendering
+  OpenSkyAudioTests/    package test target: synthetic suites for OpenSkyAudio
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
@@ -136,7 +138,7 @@ renderer at its root and puts `UI/`, `Terrain/`, and `Weather/` in folders. The 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
   and `Resources/` (`Assets.xcassets`, `Branding/`).
-- `Sources/OpenSkyEngine/`: one folder per domain (`Magic/`, `Dialogue/`, `Audio/`,
+- `Sources/OpenSkyEngine/`: one folder per domain (`Magic/`, `Dialogue/`, `Quests/`,
   ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
   folder.
 - `Sources/OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus

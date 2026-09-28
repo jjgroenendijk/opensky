@@ -21,6 +21,7 @@
 // `logs/m9-audio-acceptance.log` and names records, paths and counts only.
 
 import Foundation
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsCore

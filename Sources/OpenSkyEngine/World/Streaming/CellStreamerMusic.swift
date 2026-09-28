@@ -9,6 +9,7 @@
 //   - Exterior recenter: the per-frame `update()` walk in CellStreamer.swift.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

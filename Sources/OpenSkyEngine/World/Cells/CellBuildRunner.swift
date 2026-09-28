@@ -5,6 +5,7 @@
 // frame. Concurrency confinement decision: docs/engine/cell-streaming.md.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

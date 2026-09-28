@@ -4,6 +4,7 @@
 // result into the actor's existing FaceMorphPlayback.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyRendering

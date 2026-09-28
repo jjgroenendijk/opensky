@@ -6,6 +6,7 @@
 // scene to a sink (Renderer.setScene in the app). Concurrency + void-cell
 // design: docs/engine/cell-streaming.md.
 
+import OpenSkyAudio
 import OpenSkyDiagnostics
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

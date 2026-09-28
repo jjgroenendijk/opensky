@@ -4,6 +4,7 @@
 
 import AppKit
 import MetalKit
+import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyRendering
