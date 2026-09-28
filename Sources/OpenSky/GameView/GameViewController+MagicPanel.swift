@@ -10,6 +10,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 extension GameViewController: MagicEffectControlProviding {
     var magicEffectControlSnapshot: MagicEffectControlSnapshot {

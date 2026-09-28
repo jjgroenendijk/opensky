@@ -19,6 +19,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyWorldState
 
 extension GameViewController {
     // MARK: Game time

@@ -18,6 +18,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyWorldState
 
 extension QuestRuntime {
     // MARK: - Reading

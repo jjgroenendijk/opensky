@@ -22,6 +22,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 extension GameViewController: InventoryEquipmentControlProviding {
     var inventoryEquipmentInspectionTarget: EquipmentTargetSelector {

@@ -27,6 +27,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorldState
 import Testing
 
 extension M10AcceptanceTests {

@@ -27,6 +27,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One actor's owned perks, in ascending key order.
 ///

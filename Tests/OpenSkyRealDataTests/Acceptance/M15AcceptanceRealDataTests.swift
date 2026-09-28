@@ -23,6 +23,7 @@
 
 import Foundation
 @testable import OpenSkyBehavior
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData

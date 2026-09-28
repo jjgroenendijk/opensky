@@ -21,6 +21,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// One owner's saved enchanted-item state, before it is merged back into the
 /// delta.

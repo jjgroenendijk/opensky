@@ -21,6 +21,7 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyWorldState
 import Testing
 
 struct M10StateAcceptanceRealDataTests {

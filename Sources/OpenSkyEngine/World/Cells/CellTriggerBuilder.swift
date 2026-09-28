@@ -20,6 +20,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyWorldState
 import simd
 
 /// Both immutable collision products of one cell build. They are produced

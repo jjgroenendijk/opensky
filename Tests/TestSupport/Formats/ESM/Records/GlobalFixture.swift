@@ -7,6 +7,7 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorldState
 
 enum GlobalFixture {
     /// GLOB record: EDID zstring, FNAM type character, FLTV float32.

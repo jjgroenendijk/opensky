@@ -12,6 +12,7 @@ import FormatsESMTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+@testable import OpenSkyWorldState
 import simd
 import Testing
 

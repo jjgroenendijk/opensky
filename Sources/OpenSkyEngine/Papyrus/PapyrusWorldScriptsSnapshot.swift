@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 @MainActor
 extension PapyrusWorldRuntime {

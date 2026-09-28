@@ -23,6 +23,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/detection.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import simd
 

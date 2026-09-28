@@ -12,6 +12,7 @@ import FormatsESMTesting
 import FormatsPEXTesting
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyWorldState
 import Testing
 
 /// Shared fixture for the update-timer test suites: one scripted reference

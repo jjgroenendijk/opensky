@@ -7,6 +7,7 @@
 // milestone rather than stubbed into looking successful.
 
 import Foundation
+import OpenSkyWorldState
 
 nonisolated extension PapyrusNativeFunctions {
     /// `float GetPositionX()`, `GetPositionY()`, `GetPositionZ()`.

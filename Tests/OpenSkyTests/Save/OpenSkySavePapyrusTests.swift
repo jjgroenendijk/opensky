@@ -12,6 +12,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyWorldState
 import Testing
 
 struct OpenSkySavePapyrusTests {

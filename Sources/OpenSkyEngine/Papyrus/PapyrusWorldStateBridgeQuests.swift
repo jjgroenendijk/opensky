@@ -49,6 +49,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 @MainActor
 extension PapyrusWorldStateBridge {

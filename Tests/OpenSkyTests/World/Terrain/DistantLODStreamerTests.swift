@@ -1,6 +1,7 @@
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+@testable import OpenSkyWorldState
 import simd
 import Testing
 

@@ -10,6 +10,7 @@
 import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 extension GameViewController: ActorValueControlProviding {
     var actorValueTarget: ActorValueTargetSelector {

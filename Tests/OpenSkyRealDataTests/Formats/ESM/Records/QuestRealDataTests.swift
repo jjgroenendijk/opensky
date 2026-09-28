@@ -19,6 +19,7 @@
 // `wbRecord(QUST, ...)` line 8759 and `wbVMADFragmentedQUST` line 2929.
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

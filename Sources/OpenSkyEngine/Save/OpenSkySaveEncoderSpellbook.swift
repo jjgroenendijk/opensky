@@ -16,6 +16,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's spellbook paired with the snapshot entry it came from.

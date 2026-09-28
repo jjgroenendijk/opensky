@@ -29,6 +29,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

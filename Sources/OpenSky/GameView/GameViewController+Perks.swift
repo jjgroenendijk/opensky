@@ -18,6 +18,7 @@
 // the player in this engine, and the perks a player has are the ones they took.
 
 import AppKit
+import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
 

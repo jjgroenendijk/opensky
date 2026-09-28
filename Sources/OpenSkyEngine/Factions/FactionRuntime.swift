@@ -28,6 +28,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// What one seeding pass did.
 nonisolated public struct FactionSeedReport: Equatable, Sendable {

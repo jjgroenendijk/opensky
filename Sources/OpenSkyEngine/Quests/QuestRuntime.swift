@@ -32,6 +32,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// Reads and mutates quest state on top of a `WorldStateStore`.
 @MainActor

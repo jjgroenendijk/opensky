@@ -2,7 +2,9 @@
 // registry with every feature's functions. It lives above the features because
 // it names all of them; the condition core names none.
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension ConditionContext {
     public init(

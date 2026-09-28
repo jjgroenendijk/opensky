@@ -13,6 +13,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// The `PLVL` chunk: every snapshot entry carrying character-level

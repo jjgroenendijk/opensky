@@ -6,6 +6,7 @@
 // budget-bounded drain per tick with carry-over to the next frame.
 
 import Foundation
+import OpenSkyWorldState
 
 extension PapyrusWorldRuntime {
     /// Advances exactly one fixed step: resumes due latent calls, then drains

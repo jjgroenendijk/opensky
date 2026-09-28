@@ -16,6 +16,7 @@
 // the panel reads it directly and asks the index only what it is for.
 
 import AppKit
+import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData

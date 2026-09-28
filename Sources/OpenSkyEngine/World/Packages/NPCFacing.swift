@@ -18,6 +18,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 import simd
 
 /// What starting a turn needs. The placement and scale come from the caller

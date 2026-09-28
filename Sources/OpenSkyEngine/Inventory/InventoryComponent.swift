@@ -30,6 +30,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One stack of identical items: a base FormID, whether they were stolen, and
 /// how many of it there are.

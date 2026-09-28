@@ -20,6 +20,7 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorldState
 import OSLog
 
 struct JournalRuntimeState {

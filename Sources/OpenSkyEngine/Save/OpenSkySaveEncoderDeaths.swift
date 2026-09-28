@@ -15,6 +15,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's death paired with the snapshot entry it came from.

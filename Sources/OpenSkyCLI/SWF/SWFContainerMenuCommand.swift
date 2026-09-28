@@ -13,6 +13,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyWorldState
 
 enum SWFContainerMenuCommand {
     private static let defaultTicks = 20

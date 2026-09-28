@@ -34,6 +34,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
+import OpenSkyWorldState
 
 /// The player's level, banked character experience and perk-point pool.
 nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {

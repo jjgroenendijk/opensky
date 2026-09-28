@@ -15,9 +15,11 @@
 // just broader than necessary.
 
 import AppKit
+import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// State the runtime-state bridge owns. Stored on `GameViewController` because
 /// extensions cannot add stored properties; nothing else writes it.

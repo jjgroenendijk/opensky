@@ -18,6 +18,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyWorldState
 
 extension GameViewController {
     /// Equips on the selected target, unequipping whatever conflicts.

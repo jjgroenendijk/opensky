@@ -14,6 +14,7 @@
 // evidence away.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
 /// Why one response was not chosen.

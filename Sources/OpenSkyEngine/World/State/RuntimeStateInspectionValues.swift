@@ -11,6 +11,7 @@
 // Documented in docs/engine/runtime-state.md.
 
 import Foundation
+import OpenSkyWorldState
 
 /// Number spelling shared by every M10.2 runtime-state readout, so a timescale,
 /// a global value and a condition's right-hand side all read the same way.

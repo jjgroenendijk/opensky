@@ -21,6 +21,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 @MainActor
 public struct EnchantmentLedger {

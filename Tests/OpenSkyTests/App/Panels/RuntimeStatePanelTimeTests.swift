@@ -11,6 +11,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
+@testable import OpenSkyWorldState
 import Testing
 
 struct RuntimeStatePanelTimeTests {

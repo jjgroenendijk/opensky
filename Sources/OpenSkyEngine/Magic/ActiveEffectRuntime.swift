@@ -24,8 +24,10 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 @MainActor
 public struct ActiveEffectRuntime {

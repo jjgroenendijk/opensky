@@ -8,6 +8,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One spawned object paired with the snapshot entry it came from.

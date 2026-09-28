@@ -30,6 +30,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 import simd
 
 /// Failures the world-item layer reports. Inventory arithmetic failures are

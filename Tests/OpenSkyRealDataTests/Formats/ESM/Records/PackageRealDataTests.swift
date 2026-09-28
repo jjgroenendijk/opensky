@@ -2,10 +2,12 @@
 // no bytes, dumps, or rendered game content leave the gitignored run output.
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyWorldState
 import Testing
 
 struct PackageRealDataTests {

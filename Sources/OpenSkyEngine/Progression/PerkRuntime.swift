@@ -26,8 +26,10 @@
 // Documented in docs/engine/perks.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// What one seeding pass did.
 nonisolated public struct PerkSeedReport: Equatable, Sendable {

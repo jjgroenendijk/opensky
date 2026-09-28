@@ -3,6 +3,7 @@
 // Asset Browser.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

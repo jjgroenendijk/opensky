@@ -9,6 +9,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One owner's inventory paired with the snapshot entry it came from.

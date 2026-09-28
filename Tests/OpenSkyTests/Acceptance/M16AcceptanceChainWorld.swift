@@ -9,6 +9,7 @@
 // diorama rather than a chain.
 
 @testable import OpenSkyBehavior
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import simd

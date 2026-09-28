@@ -34,6 +34,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyWorldState
 import simd
 
 /// One actor the runtime can kill and ragdoll.

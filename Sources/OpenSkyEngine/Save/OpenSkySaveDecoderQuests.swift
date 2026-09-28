@@ -11,6 +11,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// One quest's saved state, before it is merged back into its delta.
 nonisolated public struct SaveQuestEntry: Equatable, Sendable {

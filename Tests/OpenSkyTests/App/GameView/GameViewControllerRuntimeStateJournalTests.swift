@@ -15,6 +15,7 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorldState
 import Testing
 
 struct GameViewControllerRuntimeStateJournalTests {

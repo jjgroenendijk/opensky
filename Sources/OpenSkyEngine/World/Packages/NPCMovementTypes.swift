@@ -4,6 +4,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 import simd
 
 nonisolated public enum NPCMovementState: String, Equatable, Sendable {

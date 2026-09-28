@@ -29,6 +29,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {
     // MARK: - Reading

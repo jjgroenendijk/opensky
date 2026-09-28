@@ -36,6 +36,7 @@
 // papered over; every effect that is running answers identically.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

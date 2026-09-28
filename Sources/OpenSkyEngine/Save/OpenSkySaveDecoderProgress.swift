@@ -17,6 +17,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// One actor's saved character-level progress, before it is merged back into
 /// the delta.

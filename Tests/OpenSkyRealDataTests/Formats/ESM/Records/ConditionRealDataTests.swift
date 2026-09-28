@@ -16,6 +16,7 @@
 // Core/wbDefinitionsTES5.pas `wbCTDA` (line 6889).
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

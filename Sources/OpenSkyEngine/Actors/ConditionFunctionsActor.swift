@@ -33,6 +33,7 @@
 // context was not wired.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {

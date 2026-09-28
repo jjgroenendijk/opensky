@@ -17,6 +17,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 import OSLog
 
 /// One cell's references as a build should place them: the index entries every

@@ -14,8 +14,11 @@
 
 import FormatsESMTesting
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
+@testable import OpenSkyWorldState
 
 enum DialogueRuntimeFixture {
     /// Start-game-enabled, so it runs off its DNAM flag with nothing started.

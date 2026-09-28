@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's memberships paired with the snapshot entry they came from.

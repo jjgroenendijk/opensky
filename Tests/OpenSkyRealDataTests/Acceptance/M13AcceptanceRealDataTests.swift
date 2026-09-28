@@ -22,9 +22,11 @@
 // supplies the data root and the RSS watchdog.
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyWorldState
 import Testing
 
 struct M13AcceptanceRealDataTests {

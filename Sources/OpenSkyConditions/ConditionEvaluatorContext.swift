@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 /// A feature's condition seam: the state its condition functions read,
 /// resolved for one evaluation. A context holds at most one value per type,
@@ -281,5 +282,10 @@ nonisolated public struct ConditionCall: Sendable {
     ) -> Result<ReferenceKey, ConditionFailure> {
         guard let key else { return .failure(.unresolvedReference(runOn)) }
         return .success(key)
+    }
+
+    public init(condition: Condition, context: ConditionContext) {
+        self.condition = condition
+        self.context = context
     }
 }

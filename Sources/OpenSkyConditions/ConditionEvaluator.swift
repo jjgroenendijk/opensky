@@ -38,6 +38,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case keyword

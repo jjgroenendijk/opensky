@@ -5,6 +5,7 @@
 // timer at most once.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyWorldState
 import Testing
 
 @MainActor

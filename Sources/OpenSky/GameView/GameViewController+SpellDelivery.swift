@@ -25,6 +25,7 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorldState
 import simd
 
 extension GameViewController: SpellHitApplying {

@@ -14,6 +14,7 @@
 // Documented in docs/engine/conditions.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
 nonisolated public enum ConditionProbe: Sendable {

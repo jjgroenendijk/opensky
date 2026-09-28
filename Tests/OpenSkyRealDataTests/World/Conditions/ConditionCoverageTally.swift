@@ -16,6 +16,7 @@
 // it (AGENTS.md Legal & IP), and it is written only to gitignored `logs/`.
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 

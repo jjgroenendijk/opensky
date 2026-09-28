@@ -31,6 +31,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// Reads and writes relationship ranks on top of a `WorldStateStore`, with the
 /// authored `RELA` records behind them.

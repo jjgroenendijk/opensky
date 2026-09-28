@@ -7,8 +7,10 @@
 // does to said-state and to the follow-up topics.
 
 import Foundation
+@testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorldState
 import Testing
 
 @MainActor

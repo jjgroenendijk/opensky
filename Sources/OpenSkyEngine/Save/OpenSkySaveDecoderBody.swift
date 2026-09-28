@@ -13,6 +13,7 @@
 // `private` nested type is invisible across files.
 
 import Foundation
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveDecoder {
     /// Parsed chunk payloads, with the defaults an absent chunk implies.

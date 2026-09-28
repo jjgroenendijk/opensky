@@ -16,6 +16,7 @@
 // distinguishable from a zero.
 
 import AppKit
+import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

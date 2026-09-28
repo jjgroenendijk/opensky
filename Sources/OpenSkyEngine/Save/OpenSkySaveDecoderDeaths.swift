@@ -11,6 +11,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 /// One actor's saved death, before it is merged back into the delta.
 nonisolated public struct SaveDeathEntry: Equatable, Sendable {

@@ -5,6 +5,7 @@
 // evaluated twice against the same clock answers the same way.
 
 import Foundation
+import OpenSkyWorldState
 
 nonisolated extension ConditionFunctions {
     public static func installTime(_ registry: inout ConditionFunctionRegistry) {

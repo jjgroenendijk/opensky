@@ -26,6 +26,7 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorldState
 import simd
 
 extension GameViewController: MeleeCombatWorld {
