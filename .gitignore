@@ -19,9 +19,9 @@ xcuserdata/
 /.vendor/
 
 # ── Per-developer build settings ──────────────────────────────────────────────
-# Optional signing override, included by Config/Signing.xcconfig when present. Nothing
+# Optional signing override, included by Config/Build/Signing.xcconfig when present. Nothing
 # creates it; write one by hand to sign with something other than the checked-in identity.
-/Config/Local.xcconfig
+/Config/Build/Local.xcconfig
 
 # ── SwiftPM ───────────────────────────────────────────────────────────────────
 .swiftpm/
@@ -38,7 +38,7 @@ node_modules/
 # Render captures stay local (logs/ or temp), never in source control.
 *.[pP][nN][gG]
 # Exception: AppIcon PNGs generated from our own SVG (make icon) — no game content.
-!opensky/App/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png
+!Sources/OpenSkyApp/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png
 
 # ── Logs (AGENTS.md "Code scripts": all logs go to logs/) ─────────────────────
 logs/*

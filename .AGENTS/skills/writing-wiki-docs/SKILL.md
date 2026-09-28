@@ -13,7 +13,7 @@ A docs page holds what the code cannot show. Everything else lives somewhere bet
 | --- | --- |
 | Who changed what, when, in which issue or milestone | `git log`, merged PRs, closed issues |
 | What a type or function does | Its name, its types, a short doc comment |
-| Which tests cover something | The test files. `grep -rl TypeName openskyTests` finds them |
+| Which tests cover something | The test files. `grep -rl TypeName Tests` finds them |
 | Milestone acceptance records | The PR or issue that closes the milestone |
 | Open work and plans | GitHub issues and milestones |
 | Numbers that change with the next commit (counts, timings) | Nowhere. Measure them when needed |

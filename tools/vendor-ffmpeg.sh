@@ -1,6 +1,6 @@
 #!/bin/sh
 # OpenSky vendored ffmpeg: a minimal, decode-only, LGPL-only build of libavutil,
-# libavcodec and libswresample, used by opensky/Audio to turn WMAv2 payloads into PCM.
+# libavcodec and libswresample, used by Sources/OpenSkyEngine/Audio to turn WMAv2 payloads into PCM.
 #
 # Homebrew's ffmpeg is deliberately not used: it is configured --enable-gpl
 # --enable-version3, which would relicense a redistributed OpenSky, and it drags in

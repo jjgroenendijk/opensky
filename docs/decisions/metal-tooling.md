@@ -12,8 +12,8 @@ tags: [decision, tooling, metal, lint, format]
 
 - Formatter: clang-format (Metal is C++-based; Apple ships clang-format with Xcode,
   invoked `xcrun clang-format`). Config `tools/format/.clang-format`, style matched to
-  hand-written `opensky/Engine/Rendering/Shaders.metal` conventions. Wired into `make format` /
-  `make format-check` (`metal-format` target) + pre-commit hook
+  hand-written `Sources/OpenSkyEngine/Rendering/Shaders.metal` conventions. Wired into `make format`
+  / `make format-check` (`metal-format` target) + pre-commit hook
   `.githooks/pre-commit/35-metal-format.sh` (format + re-stage, mirrors Swift hook).
 - Linter: no standalone Metal linter exists (clang-tidy needs a Metal compile database;
   not worth the setup for one shader file). Documented exception: the Metal compiler is

@@ -2,7 +2,7 @@
 # Run openskyTests -- the synthetic unit bundle alone, not the real-data one -- under
 # the runtime sanitizers (issue #383).
 #
-# `Config/Sanitizers.xctestplan` carries two configurations, because Thread and
+# `Config/TestPlans/Sanitizers.xctestplan` carries two configurations, because Thread and
 # Address Sanitizer cannot be enabled in the same build:
 #
 #   Thread    SWIFT_THREAD_SANITIZER / ENABLE_THREAD_SANITIZER
@@ -53,7 +53,7 @@ case "$configuration" in
     "" | Thread | Address) ;;
     *)
         echo "[ERROR] unknown configuration: $configuration" \
-            "(Config/Sanitizers.xctestplan has Thread and Address)" >&2
+            "(Config/TestPlans/Sanitizers.xctestplan has Thread and Address)" >&2
         exit 2
         ;;
 esac

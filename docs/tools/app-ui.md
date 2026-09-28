@@ -11,9 +11,9 @@ tags: [tool, gui, dev, ui, framework]
 
 This page covers the app's own interface: sidebar destinations, control panels, and inspectors. It
 is not the in-game UI, which is vanilla SWF movies ([SWF layer](/rendering/swf-layer.md)). The
-framework is in `opensky/App/Shell/`. `AGENTS.md` requires that every user-visible behavior can be
-selected, forced, toggled, or inspected from the sidebar without a CLI command. This page says where
-that surface goes and how to build it.
+framework is in `Sources/OpenSkyApp/Shell/`. `AGENTS.md` requires that every user-visible behavior
+can be selected, forced, toggled, or inspected from the sidebar without a CLI command. This page
+says where that surface goes and how to build it.
 
 ## Shell anatomy
 
@@ -116,7 +116,7 @@ type length limit. The arrays join in sidebar order.
   provider-backed helpers as the panel. Do not build a panel to read its state.
 - A full-content factory gets the data root and any startup error. The controller conforms to
   `FullContentReloadable`, so a Settings reload reaches the cached instance.
-- App-only AppKit code goes under `opensky/App/`, which only the app target builds.
+- App-only AppKit code goes under `Sources/OpenSkyApp/`, which only the app target builds.
 
 ## Building panels
 
@@ -164,11 +164,11 @@ controls.
 ## Theme
 
 The shell has a fixed dark design inspired by Skyrim. All tokens are in
-`opensky/App/Shell/Theme.swift`, and the app forces dark appearance, so system controls match. Take
-every color and heading font from `Theme`: surfaces, parchment ink, gold accent (also the asset
-catalog `AccentColor`), and dividers. Headings are uppercase and tracked in Futura Condensed Medium,
-which macOS ships, with a system fallback. Nothing is bundled, so the fallback must work. No Bethesda
-fonts, art, or UI assets: the look comes from color and type only.
+`Sources/OpenSkyApp/Shell/Theme.swift`, and the app forces dark appearance, so system controls
+match. Take every color and heading font from `Theme`: surfaces, parchment ink, gold accent (also
+the asset catalog `AccentColor`), and dividers. Headings are uppercase and tracked in Futura
+Condensed Medium, which macOS ships, with a system fallback. Nothing is bundled, so the fallback
+must work. No Bethesda fonts, art, or UI assets: the look comes from color and type only.
 
 ## Accessibility id contract
 

@@ -3,7 +3,7 @@
 #
 # Xcode keeps its compilation cache at DerivedData/CompilationCache.noindex, one per
 # derived-data tree, so every fresh worktree used to compile the whole project from
-# nothing. Config/Debug.xcconfig turns on prefix mapping, which rewrites the checkout
+# nothing. Config/Build/Debug.xcconfig turns on prefix mapping, which rewrites the checkout
 # path to /^src before a cache key is computed, so the same source compiled in two
 # worktrees produces the same key. This script points a linked worktree's cache
 # directory at the main checkout's, so those keys land in one store: a fresh

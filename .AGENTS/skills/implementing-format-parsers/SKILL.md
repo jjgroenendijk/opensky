@@ -34,9 +34,9 @@ discipline lives here, not there.
 
 ## Testing
 
-- Unit-test in the matching `openskyTests/Formats/<Format>/` folder with synthetic fixtures built in
-  code (existing patterns: `BSAFixture`, `ESMFixture`, `NIFFixture`, `StringTableFixture`, all under
-  `openskyTestSupport/`). NEVER check in extracted game files — not even tiny ones.
+- Unit-test in the matching `Tests/UnitTests/Formats/<Format>/` folder with synthetic fixtures built
+  in code (existing patterns: `BSAFixture`, `ESMFixture`, `NIFFixture`, `StringTableFixture`, all
+  under `Tests/TestSupport/`). NEVER check in extracted game files — not even tiny ones.
 - Verify against the real install via an env-gated probe (load the `probing-real-game-data`
   skill) or `make run-cli ARGS=...`; probes never land in commits.
 

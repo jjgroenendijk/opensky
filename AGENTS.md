@@ -38,11 +38,15 @@ conflict.
   `git mv`, and AppleDouble `._*` files are ignored.
 - Xcode 26 ships without the Metal Toolchain. `make bootstrap`, once per checkout,
   downloads it.
-- Target membership under `opensky/` follows the folder split, not a list in the project
-  file: `App/` builds only into the app, `Engine/` and `SharedHeaders/` build into both the
-  app and `openskycli`. An app-only source (importing AppKit, Cocoa, or SwiftUI) belongs
-  under `App/`; leaving it under `Engine/` breaks the CLI build. `make cli-boundary`
-  catches this.
+- Target membership under `Sources/` follows the folder split, not a list in the project
+  file: `OpenSkyApp/` builds only into the app, `OpenSkyEngine/` and `ShaderTypes/` build
+  into both the app and `openskycli`, and `OpenSkyCLI/` builds only into `openskycli`. An
+  app-only source (importing AppKit, Cocoa, or SwiftUI) belongs under `OpenSkyApp/`;
+  leaving it under `OpenSkyEngine/` breaks the CLI build. `make cli-boundary` catches this.
+- Folder names are not target names. The folders are `Sources/OpenSkyApp/`,
+  `Tests/UnitTests/`, and so on; the targets and modules stay `opensky`, `openskycli`,
+  `openskyTests`, `openskyRealDataTests`, and `openskyUITests`. A test selector names the
+  target: `make test-fast T='openskyTests/BSAArchiveTests'`.
 - The build cache is `DerivedData/` inside the checkout, not the Xcode default under
   `$HOME`: this project's cache runs to tens of gigabytes and the boot volume is small
   enough that the default location fills it mid-session. `make` passes `-derivedDataPath`
@@ -71,45 +75,61 @@ conflict.
 
 ## Where things live
 
-The repo root holds only this document, `Makefile`, the Xcode project, `Config/`, and
-dotfiles. Every build setting lives in `Config/*.xcconfig`, not in the pbxproj, signing
-included: `Config/Signing.xcconfig` names one Apple Development identity for every target,
-because macOS ties permission grants to the code signature and ad-hoc signing re-asks on
-every build (`docs/tools/build-system.md`). `Config/` also holds the four checked-in test
-plans, for the same reason: which bundles a run touches is reviewable configuration, not a
-flag. `UnitTests.xctestplan` lists `openskyTests` alone, `UITests.xctestplan` lists
-`openskyUITests` alone, and `RealData.xctestplan` lists `openskyRealDataTests` alone and
-carries the data root into the test host — no plan lists the UI bundle beside an app-hosted
-unit bundle, because such a bundle deadlocks the UI runner it shares a session with
-(`docs/testing.md`).
-Test sources split by target membership the same way `opensky/` does: `openskyTests/` holds
-the synthetic unit suites, `openskyRealDataTests/` holds every env-gated suite that reads the
-user's install, `openskyTestSupport/` holds the fixtures both bundles compile, and
-`openskyUITests/` holds the XCUITest smoke tests. A gated suite written outside
-`openskyRealDataTests/` fails `make lint`, because nothing would ever run it.
-`opensky/` splits by target membership:
-`opensky/App/` holds the AppKit and SwiftUI shell; `opensky/Engine/` holds everything
-CLI-safe; `opensky/SharedHeaders/` holds `ShaderTypes/`, the clang module wrapping
-`ShaderTypes.h`. No Swift file sits loose at the root of `opensky/App/`, `opensky/Engine/`,
-or `opensky/Engine/World/`; each goes in a domain folder:
+The repo root holds only this document, `Makefile`, the Xcode project, `Config/`,
+`Sources/`, `Tests/`, `docs/`, `tools/`, and dotfiles.
 
-- `opensky/App/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one view
-  controller per destination), `GameView/` (`GameViewController` and its extensions), and
-  `Resources/` (`Assets.xcassets`, `Branding/`).
-- `opensky/Engine/`: one folder per domain (`Magic/`, `Dialogue/`, `Rendering/`, ...). A
-  panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain folder.
-  Keep format parsers (`Formats/`) separate from rendering.
-- `opensky/Engine/World/`: `Actors/`, `Cells/`, `Collision/`, `Conditions/`, `Navigation/`,
-  `Packages/`, `Player/`, `State/`, `Streaming/`, `Terrain/`, and `Weather/`.
+```text
+Config/
+  Build/          *.xcconfig, every build setting
+  TestPlans/      *.xctestplan, which bundles a run touches
+Sources/
+  OpenSkyApp/     app target only: Shell/, Panels/, GameView/, Resources/
+  OpenSkyEngine/  app and CLI: one folder per domain
+  OpenSkyCLI/     openskycli only: Commands/, SWF/, Support/
+  ShaderTypes/    app and CLI: the clang module wrapping ShaderTypes.h
+Tests/
+  UnitTests/      openskyTests: synthetic unit suites
+  RealDataTests/  openskyRealDataTests: env-gated suites that read the user's install
+  TestSupport/    fixtures both unit bundles compile; not a target of its own
+  UITests/        openskyUITests: XCUITest smoke tests
+```
+
+Every build setting lives in `Config/Build/*.xcconfig`, not in the pbxproj, signing
+included: `Config/Build/Signing.xcconfig` names one Apple Development identity for every
+target, because macOS ties permission grants to the code signature and ad-hoc signing
+re-asks on every build (`docs/tools/build-system.md`). `Config/TestPlans/` holds the four
+checked-in test plans, for the same reason: which bundles a run touches is reviewable
+configuration, not a flag. `UnitTests.xctestplan` lists `openskyTests` alone,
+`UITests.xctestplan` lists `openskyUITests` alone, and `RealData.xctestplan` lists
+`openskyRealDataTests` alone and carries the data root into the test host — no plan lists
+the UI bundle beside an app-hosted unit bundle, because such a bundle deadlocks the UI
+runner it shares a session with (`docs/testing.md`). A gated suite written outside
+`Tests/RealDataTests/` fails `make lint`, because nothing would ever run it.
+
+No Swift file sits loose at the root of `Sources/OpenSkyApp/`, `Sources/OpenSkyEngine/`,
+or `Sources/OpenSkyEngine/World/`; each goes in a domain folder:
+
+- `Sources/OpenSkyApp/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
+  view controller per destination), `GameView/` (`GameViewController` and its extensions),
+  and `Resources/` (`Assets.xcassets`, `Branding/`).
+- `Sources/OpenSkyEngine/`: one folder per domain (`Magic/`, `Dialogue/`, `Rendering/`,
+  ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
+  folder. Keep format parsers (`Formats/`) separate from rendering.
+- `Sources/OpenSkyEngine/World/`: `Actors/`, `Cells/`, `Collision/`, `Conditions/`,
+  `Navigation/`, `Packages/`, `Player/`, `State/`, `Streaming/`, `Terrain/`, and `Weather/`.
+- `Sources/OpenSkyCLI/`: `OpenSkyCLI.swift` (dispatch) and `OpenSkyCLIUsage.swift` at the
+  root, one file per subcommand in `Commands/`, the Flash (SWF) probes in `SWF/`, and
+  shared plumbing in `Support/`.
 
 An extension file is named `Type+Feature.swift`, for example
 `GameView/GameViewController+Magic.swift`. Test folders use the same subfolder names as the
-source file they test: the tests for `opensky/Engine/World/Terrain/TerrainMeshBuilder.swift`
-live in `openskyTests/World/Terrain/`, and tests for app code live under `App/`. Only
+source file they test: the tests for
+`Sources/OpenSkyEngine/World/Terrain/TerrainMeshBuilder.swift` live in
+`Tests/UnitTests/World/Terrain/`, and tests for app code live under `Tests/UnitTests/App/`. Only
 cross-cutting folders are test-only: `Acceptance/` (milestone gates), `Fakes/`, and
-`Support/`. File names stay unique inside a target, because Swift rejects two files with one
-name in the same module. Skills live in `.AGENTS/skills/` (`.claude/skills`
-symlinks there). `logs/` and `.vendor/` are gitignored. `docs/` groups pages by folder: `formats/`,
+`Support/`. File names stay unique inside a target, because Swift rejects two files with
+one name in the same module. Skills live in `.AGENTS/skills/` (`.claude/skills` symlinks
+there). `logs/` and `.vendor/` are gitignored. `docs/` groups pages by folder: `formats/`,
 `engine/`, `rendering/`, `decisions/`, and `tools/`.
 
 Run output is per-run, not per-name: a script that writes a transcript, a capture, or a
@@ -209,7 +229,7 @@ either baseline; regenerate one only after a cleanup removes findings
 
 ## Conventions
 
-- Swift-to-Metal shared structs go in `opensky/SharedHeaders/ShaderTypes/ShaderTypes.h`
+- Swift-to-Metal shared structs go in `Sources/ShaderTypes/ShaderTypes.h`
   with explicit `simd`-aligned layout. Swift reaches them through the clang module that
   wraps the header: a file that uses one writes `import OpenSkyShaderTypes`. There is no
   bridging header, so the types are not implicitly visible. Metal shaders keep writing

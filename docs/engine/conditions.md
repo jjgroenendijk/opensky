@@ -12,7 +12,7 @@ This page explains how OpenSky answers "is this condition list true right now?".
 `CTDA` layout is on [conditions](/formats/conditions.md). The functions and their special
 cases are on [condition functions](/engine/condition-functions.md).
 
-The evaluator lives under `opensky/Engine/World/`, not beside the decoder. It needs runtime
+The evaluator lives under `Sources/OpenSkyEngine/World/`, not beside the decoder. It needs runtime
 state that a format parser must never touch: globals, the game clock, and the runtime
 reference index ([runtime state](/engine/runtime-state.md)).
 

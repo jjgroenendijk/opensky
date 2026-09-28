@@ -8,8 +8,8 @@ tags: [testing, tooling, process]
 
 # Testing setup
 
-Tests run through `make`. Fixture rules are in `openskyTests/AGENTS.md`,
-`openskyRealDataTests/AGENTS.md`, `openskyTestSupport/AGENTS.md`, and the legal section of
+Tests run through `make`. Fixture rules are in `Tests/UnitTests/AGENTS.md`,
+`Tests/RealDataTests/AGENTS.md`, `Tests/TestSupport/AGENTS.md`, and the legal section of
 `AGENTS.md`: synthetic data built in code only, never files taken from the game. How the test plans,
 the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-runs.md) page.
 
@@ -23,8 +23,8 @@ the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-r
 - `openskyUITests`: XCUITest smoke tests. The app launches, the main window appears, and there is no
   game data alert.
 
-`openskyTestSupport/` is not a target. Both unit bundles compile it, the way `opensky/Engine/` is
-shared by the app and `openskycli`. It has no `@Test`, because a test there would run in both
+`Tests/TestSupport/` is not a target. Both unit bundles compile it, the way `Sources/OpenSkyEngine/`
+is shared by the app and `openskycli`. It has no `@Test`, because a test there would run in both
 bundles.
 
 ## Entry points
@@ -78,7 +78,7 @@ changes only the optimization level and sets the `OPENSKY_OPTIMIZED` condition, 
 budget applies. Its products go in `DerivedData-optimized/`, so switching between it and `make test`
 does not rebuild the engine each time ([dynamic bodies](/engine/dynamic-bodies.md)).
 
-A gated suite written outside `openskyRealDataTests/` fails `make lint`, because nothing would ever
+A gated suite written outside `Tests/RealDataTests/` fails `make lint`, because nothing would ever
 run it: `make realtest-all` would not reach it, and `make test` would skip it.
 
 ## Memory watchdog

@@ -138,12 +138,12 @@ if [ "$plan" = "RealData" ]; then
             echo "[ERROR] OPENSKY_DATA_ROOT does not match the built .xctestrun:"
             echo "          environment: $OPENSKY_DATA_ROOT"
             echo "          .xctestrun:  $data_root"
-            echo "        Edit Config/RealData.xctestplan and rerun with -B."
+            echo "        Edit Config/TestPlans/RealData.xctestplan and rerun with -B."
         } >&2
         exit 2
     fi
     if [ ! -e "$data_root/Data/Skyrim.esm" ] && [ ! -e "$data_root/Skyrim.esm" ]; then
-        echo "[ERROR] no Skyrim install at $data_root (edit Config/RealData.xctestplan)" >&2
+        echo "[ERROR] no Skyrim install at $data_root (edit Config/TestPlans/RealData.xctestplan)" >&2
         exit 1
     fi
     cap_mb="${cap_mb:-4096}"

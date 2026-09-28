@@ -22,8 +22,8 @@ selection and kept, so the loaded catalog, filter, selection, and warm caches su
 and Settings reloads. Preview images have low compression resistance, so a large bitmap never
 resizes the window.
 
-The browse and preview model has no AppKit and lives in `opensky/Engine/Preview/`, so it is tested
-without a window and shared with the CLI. Only the AppKit shells live under `opensky/App/`.
+The browse and preview model has no AppKit and lives in `Sources/OpenSkyEngine/Preview/`, so it is tested
+without a window and shared with the CLI. Only the AppKit shells live under `Sources/OpenSkyApp/`.
 
 ## Browsing
 

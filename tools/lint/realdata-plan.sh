@@ -1,12 +1,12 @@
 #!/bin/sh
 # RealData test-target lint (issues #381, #418). `make realtest-all` runs whatever
-# Config/RealData.xctestplan selects, and since #418 that is one whole target:
+# Config/TestPlans/RealData.xctestplan selects, and since #418 that is one whole target:
 # openskyRealDataTests. So the check is no longer "is every suite named in the
 # plan" -- a 57-entry list nobody could keep spelled right -- but the two
 # structural facts that make target-level selection correct:
 #
-#   * Every env-gated suite lives in openskyRealDataTests/. One in openskyTests/
-#     or openskyTestSupport/ is a suite `make realtest-all` never runs, and it
+#   * Every env-gated suite lives in Tests/RealDataTests/. One in Tests/UnitTests/
+#     or Tests/TestSupport/ is a suite `make realtest-all` never runs, and it
 #     would silently skip inside `make test` instead, because a plain
 #     `xcodebuild test` does not forward OPENSKY_DATA_ROOT into the host.
 #   * The plan selects that target, with no selectedTests narrowing it -- a
@@ -18,7 +18,7 @@
 # runner deadlock.
 #
 # A suite counts as env-gated when its file declares the real-data root
-# (`dataRoot: GameDataRoot?`, the shape openskyRealDataTests/CLAUDE.md
+# (`dataRoot: GameDataRoot?`, the shape Tests/RealDataTests/CLAUDE.md
 # prescribes) and the type carries at least one @Test.
 set -eu
 
@@ -30,10 +30,10 @@ import pathlib
 import re
 import sys
 
-PLAN = pathlib.Path("Config/RealData.xctestplan")
+PLAN = pathlib.Path("Config/TestPlans/RealData.xctestplan")
 TARGET = "openskyRealDataTests"
-HOME = pathlib.Path(TARGET)
-ELSEWHERE = [pathlib.Path("openskyTests"), pathlib.Path("openskyTestSupport")]
+HOME = pathlib.Path("Tests/RealDataTests")
+ELSEWHERE = [pathlib.Path("Tests/UnitTests"), pathlib.Path("Tests/TestSupport")]
 # A Swift Testing suite is a plain type declaration -- no @Suite attribute is
 # required -- so the declarations are found positionally and each one keeps the
 # text up to the next declaration.
