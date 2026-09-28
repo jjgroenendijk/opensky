@@ -21,6 +21,9 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// Skill-advancement state the controller owns. Extensions cannot add stored

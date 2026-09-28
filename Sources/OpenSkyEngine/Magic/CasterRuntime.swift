@@ -41,6 +41,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 import simd
 
 /// What a cast needs from the world it happens in.
@@ -166,7 +167,7 @@ public final class CasterRuntime {
     /// The perk runtime a cost is folded through (issue #497), or nil in a
     /// session with no perk data — every synthetic scene, where the record's
     /// own cost is what the caster pays. See `CasterRuntimePerkCost.swift`.
-    public var perks: PerkRuntime?
+    public var perks: (any PerkAccess)?
 
     public init(
         spellbook: SpellbookRuntime,

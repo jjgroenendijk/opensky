@@ -51,7 +51,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// The two game settings skill advancement reads, resolved once.
 ///
@@ -109,6 +108,18 @@ nonisolated public struct SkillAdvanceOutcome: Equatable, Sendable {
 
     public var didAdvance: Bool {
         levelsGained > 0
+    }
+
+    public init(
+        levelsGained: Int,
+        level: Float,
+        carriedExperience: Float,
+        characterExperience: Float
+    ) {
+        self.levelsGained = levelsGained
+        self.level = level
+        self.carriedExperience = carriedExperience
+        self.characterExperience = characterExperience
     }
 }
 

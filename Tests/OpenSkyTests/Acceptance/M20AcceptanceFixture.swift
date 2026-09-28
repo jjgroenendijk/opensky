@@ -11,6 +11,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
+@testable import OpenSkyProgression
 
 @MainActor
 enum M20Fixture {
@@ -32,7 +33,11 @@ enum M20Fixture {
         let values = PerkRuntimeFixture.values(store: controller.worldState)
 
         controller.actorValues.runtime = values
-        controller.perks.runtime = PerkRuntime(store: controller.worldState, perks: perks)
+        controller.perks.runtime = PerkRuntime(
+            store: controller.worldState,
+            perks: perks,
+            conditionRegistry: .standard
+        )
         controller.perks.pluginName = PerkRuntimeFixture.pluginName
 
         let leveling = PlayerLevelRuntime(values: values)

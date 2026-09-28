@@ -15,6 +15,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyProgression
 
 /// One section of the Progression panel.
 class ProgressionPanelSection: PanelSectionViewController {

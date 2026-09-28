@@ -105,6 +105,7 @@ Sources/
   OpenSkyActors*/       feature module: actor value runtime; Interface: actor state values
   OpenSkyFactions*/     feature module: faction runtimes; Interface: faction state values
   OpenSkyPerception*/   feature module: perception runtime; Interface: detection values
+  OpenSkyProgression*/  feature module: perk and skill runtimes; Interface: progress state
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
@@ -119,6 +120,7 @@ Tests/
   OpenSkyActorsTests/   package test target: synthetic suites for OpenSkyActors
   OpenSkyFactionsTests/ package test target: synthetic suites for OpenSkyFactions
   OpenSkyPerceptionTests/ package test target: synthetic suites for OpenSkyPerception
+  OpenSkyProgressionTests/ package test target: synthetic suites for OpenSkyProgression
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module

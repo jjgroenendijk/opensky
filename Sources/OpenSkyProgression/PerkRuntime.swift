@@ -29,6 +29,7 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// What one seeding pass did.
@@ -44,7 +45,7 @@ nonisolated public struct PerkSeedReport: Equatable, Sendable {
 
 /// Reads and mutates owned perks on top of a `WorldStateStore`.
 @MainActor
-public struct PerkRuntime {
+public struct PerkRuntime: PerkAccess {
     /// Load-order PERK lookup behind every stored key, and the entry-point
     /// index every evaluation queries.
     public let perks: PerkStore
@@ -68,7 +69,7 @@ public struct PerkRuntime {
         store: WorldStateStore,
         perks: PerkStore,
         conditions: ConditionContext = ConditionContext(),
-        conditionRegistry: ConditionFunctionRegistry = .standard
+        conditionRegistry: ConditionFunctionRegistry
     ) {
         worldState = store
         self.perks = perks

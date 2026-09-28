@@ -21,6 +21,7 @@ import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyProgressionInterface
 import simd
 
 /// One resident actor as the combat loop sees it.

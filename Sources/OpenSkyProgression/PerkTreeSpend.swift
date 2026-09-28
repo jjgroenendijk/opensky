@@ -45,6 +45,7 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 
 /// Why a perk-point spend was refused.
 ///
@@ -91,7 +92,7 @@ public struct PerkTreeSpendValidator {
     public init(
         runtime: PerkRuntime,
         trees: PerkTreeIndex,
-        conditionRegistry: ConditionFunctionRegistry = .standard
+        conditionRegistry: ConditionFunctionRegistry
     ) {
         self.runtime = runtime
         self.trees = trees

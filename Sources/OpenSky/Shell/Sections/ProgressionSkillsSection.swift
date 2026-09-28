@@ -17,6 +17,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyProgression
 
 final class ProgressionSkillsSection: ProgressionPanelSection {
     /// What the amount field starts at: one use, which is what a single swing

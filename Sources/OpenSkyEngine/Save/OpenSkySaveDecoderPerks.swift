@@ -17,6 +17,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// One actor's saved perks, before they are merged back into the delta.

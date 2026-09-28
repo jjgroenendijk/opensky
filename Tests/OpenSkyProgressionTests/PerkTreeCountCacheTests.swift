@@ -6,8 +6,8 @@
 // under test is when the cache goes back to the records and what it counts, and
 // a synthetic tree states both without a load order.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyProgression
 import Testing
 
 struct PerkTreeCountCacheTests {

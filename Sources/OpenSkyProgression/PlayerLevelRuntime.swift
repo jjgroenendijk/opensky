@@ -39,6 +39,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// What one award of character experience did.

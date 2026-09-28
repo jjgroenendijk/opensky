@@ -8,6 +8,7 @@
 // `CombatFortifyBonus`.
 
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import Testing

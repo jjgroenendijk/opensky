@@ -15,6 +15,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyProgression
 
 final class ProgressionCharacterSection: ProgressionPanelSection {
     /// What the experience field starts at: enough that one click crosses the
