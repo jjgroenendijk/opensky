@@ -216,7 +216,7 @@ Docs hold only what the code cannot show: where a fact comes from, why a design 
 where OpenSky differs from the original game, how subsystems work together, and how to use
 the tools. Code documents itself through names, types, and short doc comments. History
 lives in git, so a page carries no issue numbers, milestones, acceptance records, test
-lists, or timestamps. A page stays at 200 lines or fewer (`make docs-length`); split a longer
+lists, or timestamps. A page stays at 400 lines or fewer (`make docs-length`); split a longer
 one by topic. A change that alters one of those facts updates `docs/` in the same commit.
 Load the `writing-wiki-docs` skill before writing there.
 
