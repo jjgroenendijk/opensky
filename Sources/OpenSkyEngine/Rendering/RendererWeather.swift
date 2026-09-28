@@ -1,42 +1,10 @@
-// Renderer-side weather glue (M7.2.2), split from Renderer/RendererAnimation/
-// RendererScenePass (file-length limits): the per-frame weather advance, the
-// published wind accessor, and the frame-fog resolution that lets active
-// exterior weather override the fog uniforms without touching interior lighting.
+// Frame-fog resolution (M7.2.2): active exterior weather overrides the fog
+// uniforms without touching interior lighting. The weather advance itself runs
+// in the game session (`Renderer+Weather.swift`).
 
-import QuartzCore
 import simd
 
 extension Renderer {
-    /// Published wind for precipitation/grass/particles/audio (M7.3-7.5). Calm
-    /// when no weather is active.
-    public var currentWind: WindState {
-        weatherEnabled ? weather?.currentWind ?? .calm : .calm
-    }
-
-    /// Advances the weather runtime (transition + reroll accumulation) and
-    /// caches this frame's resolved weather. No weather system -> the cache
-    /// stays nil and the renderer behaves exactly as before (procedural sky,
-    /// camera lighting). Cheap: two resolves + one blend. Reroll cadence is
-    /// fed real elapsed game hours off the game clock (issue #164); a fixed
-    /// clock — offscreen renders, CLI — therefore elapses none.
-    public func updateWeather(deltaTime: Float) {
-        guard weatherEnabled, let weather else {
-            currentResolvedWeather = nil
-            return
-        }
-        weather.update(
-            deltaTime: max(deltaTime, 0),
-            hour: timeOfDay,
-            elapsedGameHours: consumeElapsedGameHours()
-        )
-        currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
-    }
-
-    public func updateWeatherFromWallClock() {
-        let delta = weatherClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
-        updateWeather(deltaTime: delta)
-    }
-
     /// The frame's fog uniforms: active exterior weather fog wins, else the
     /// interior CELL/LGTM fog, else disabled (matches the pre-weather default).
     public struct FrameFog {

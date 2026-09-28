@@ -26,12 +26,12 @@ extension Renderer {
         // same rings and survives the swap, so its groups are part of the size
         // the new rings have to cover (issue #189).
         let newDraw = try regrownDrawRing(
-            for: newScene.drawCount + (playerBody?.render.drawCount ?? 0)
-                + (playerFirstPersonRig?.render.drawCount ?? 0)
+            for: newScene.drawCount + (frameDriver?.playerBodyRig?.render.drawCount ?? 0)
+                + (frameDriver?.firstPersonRig?.render.drawCount ?? 0)
         )
         let newInstance = try regrownInstanceRing(
-            for: newScene.instanceCount + (playerBody?.render.instanceCount ?? 0)
-                + (playerFirstPersonRig?.render.instanceCount ?? 0)
+            for: newScene.instanceCount + (frameDriver?.playerBodyRig?.render.instanceCount ?? 0)
+                + (frameDriver?.firstPersonRig?.render.instanceCount ?? 0)
         )
         // Old scene allocations retire as a whole; anything the new scene
         // shares is filtered out at purge time (live-set check), not here.
@@ -39,7 +39,7 @@ extension Renderer {
         scene = newScene
         if let newCamera {
             camera = newCamera
-            reseedMovement(camera: newCamera)
+            frameDriver?.didReplaceCamera(newCamera)
         }
         if let newDraw {
             adoptDrawRing(newDraw, retiring: &retiring)

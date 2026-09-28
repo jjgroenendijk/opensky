@@ -200,20 +200,20 @@ extension Renderer {
             // World simulation (issue #171) runs on the same fixed step, so an
             // offscreen bench or test drives the Papyrus VM deterministically.
             // The game clock still never advances here.
-            updateWorldSim(deltaTime: simDelta)
+            frameDriver?.updateWorldSim(deltaTime: simDelta)
         }
         // Weather resolves from the current time-of-day each frame; forced
         // weather (tests) stays deterministic because the offscreen path never
         // advances the game clock, so no game-hours elapse and auto reroll
         // never fires (issue #164).
-        updateWeather(deltaTime: advanceAnimation ? simDelta : 0)
+        frameDriver?.updateWeather(deltaTime: advanceAnimation ? simDelta : 0)
         if advanceAnimation {
             updateParticles(deltaTime: simDelta)
             updatePrecipitation(deltaTime: simDelta)
             // Same per-frame audio work draw(in:) does, so the benchmark's audio
             // budget measures the shipping tick. A no-op (and unmeasured) while
             // no WorldAudioEngine is attached, which is every render test.
-            updateAudio(deltaTime: simDelta)
+            frameDriver?.updateAudio(deltaTime: simDelta)
         }
         endFrameEvent.wait(untilSignaledValue: UInt64(frameIndex - 1), timeoutMS: 2000)
         let slot = frameIndex % Self.maxFramesInFlight
@@ -274,7 +274,7 @@ extension Renderer {
     ) throws -> MTLTexture {
         self.animationTime = animationTime
         updateAnimations(deltaTime: 0)
-        updateWeather(deltaTime: 0)
+        frameDriver?.updateWeather(deltaTime: 0)
         seekParticles(to: animationTime)
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
         residencySet.addAllocations([color, depth])
@@ -337,8 +337,8 @@ extension Renderer {
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
             animationMS.append(lastAnimationUpdateMS)
             shadowMS.append(lastShadowUpdateMS)
-            audioUpdateMS.append(lastAudioUpdateMS)
-            scriptUpdateMS.append(lastScriptUpdateMS)
+            audioUpdateMS.append(frameDriver?.lastAudioUpdateMS ?? 0)
+            scriptUpdateMS.append(frameDriver?.lastScriptUpdateMS ?? 0)
             if settled {
                 return OffscreenBenchResult(
                     frameMS: frameMS,
@@ -391,8 +391,8 @@ extension Renderer {
             frameMS.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
             animationMS.append(lastAnimationUpdateMS)
             shadowMS.append(lastShadowUpdateMS)
-            audioUpdateMS.append(lastAudioUpdateMS)
-            scriptUpdateMS.append(lastScriptUpdateMS)
+            audioUpdateMS.append(frameDriver?.lastAudioUpdateMS ?? 0)
+            scriptUpdateMS.append(frameDriver?.lastScriptUpdateMS ?? 0)
         }
         return OffscreenBenchResult(
             frameMS: frameMS,

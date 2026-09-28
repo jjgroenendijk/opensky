@@ -15,45 +15,6 @@ import Metal
 import simd
 
 extension Renderer {
-    /// Attaches the assembled body, sizing the draw rings for its groups and
-    /// making its buffers resident. Replacing an attached body (a new equipped
-    /// set) retires the old one's allocations the same way a scene swap does.
-    public func setPlayerBody(_ body: PlayerBody?) throws {
-        let retiring = playerBody?.residencyAllocations ?? []
-        playerBody = body
-        updatePlayerBodyPose()
-        if let body {
-            try growRingsForPlayerBody(body)
-            residencySet.addAllocations(body.residencyAllocations)
-            residencySet.commit()
-        }
-        retireAllocations(retiring)
-    }
-
-    /// Moves the body onto the capsule and refreshes its palettes.
-    ///
-    /// Called once per input frame, after the controller has resolved this
-    /// frame's position, so the body and the camera never disagree by a frame.
-    /// In fly mode the body is left exactly where the player last stood: fly is
-    /// a developer view of the same world, not a different world.
-    public func updatePlayerBodyPose() {
-        guard let playerBody, movementMode.isPlayerControlled else { return }
-        playerBody.place(
-            feetPosition: walkController.feetPosition,
-            yaw: freeFlyCamera.yaw
-        )
-    }
-
-    /// The player's contribution to the per-frame animation pass. Mirrors what
-    /// `RenderScene.updateAnimations` does for cell-owned actors, including the
-    /// `World > Environment` animation A/B toggle.
-    public func updatePlayerBodyAnimation(enabled: Bool) -> Int {
-        guard let playerBody else { return 0 }
-        return enabled
-            ? playerBody.animation.update(at: 0)
-            : playerBody.animation.resetToBindPose()
-    }
-
     /// Scene opaque groups plus the player's, so one list feeds the scene pass
     /// and it cannot forget the body.
     ///
@@ -64,37 +25,33 @@ extension Renderer {
     /// encoded after everything else into their own depth slice
     /// (`RendererFirstPersonArms.swift`).
     public var opaqueDrawGroups: [DrawGroup] {
-        guard let playerBody, isPlayerBodyVisible else { return scene.opaque }
+        guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
+            return scene.opaque
+        }
         return scene.opaque + playerBody.render.opaque
     }
 
     public var alphaTestedDrawGroups: [DrawGroup] {
-        guard let playerBody, isPlayerBodyVisible else { return scene.alphaTested }
+        guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
+            return scene.alphaTested
+        }
         return scene.alphaTested + playerBody.render.alphaTested
-    }
-
-    /// What this frame draws and casts, from the one policy value that owns
-    /// the whole matrix (`PlayerRigVisibility`, issue #190).
-    public var rigVisibility: PlayerRigVisibility {
-        PlayerRigVisibility.resolve(
-            mode: movementMode,
-            hasBody: playerBody != nil,
-            hasArms: playerFirstPersonRig != nil,
-            armsEnabled: firstPersonArmsEnabled,
-            dialogueCamera: isDialogueCameraEngaged
-        )
     }
 
     /// What the shadow pass rasterizes: the scene plus the player's body in
     /// every mode a player exists in, whether or not the eye can see it. The
     /// reasoning is on `PlayerRigVisibility`.
     public var shadowOpaqueDrawGroups: [DrawGroup] {
-        guard let playerBody, rigVisibility.castsBodyShadow else { return scene.opaque }
+        guard let playerBody = frameDriver?.playerBodyRig, rigVisibility.castsBodyShadow else {
+            return scene.opaque
+        }
         return scene.opaque + playerBody.render.opaque
     }
 
     public var shadowAlphaTestedDrawGroups: [DrawGroup] {
-        guard let playerBody, rigVisibility.castsBodyShadow else { return scene.alphaTested }
+        guard let playerBody = frameDriver?.playerBodyRig, rigVisibility.castsBodyShadow else {
+            return scene.alphaTested
+        }
         return scene.alphaTested + playerBody.render.alphaTested
     }
 
@@ -106,7 +63,7 @@ extension Renderer {
     /// Grows the draw and instance rings to cover the scene plus the body. The
     /// scene's own sizing runs in `setScene` and knows nothing about the player,
     /// so a body attached over a large scene has to ask for its own headroom.
-    private func growRingsForPlayerBody(_ body: PlayerBody) throws {
+    public func growRingsForPlayerBody(_ body: any RenderRig) throws {
         try growRings(
             drawCount: scene.drawCount + body.render.drawCount,
             instanceCount: scene.instanceCount + body.render.instanceCount

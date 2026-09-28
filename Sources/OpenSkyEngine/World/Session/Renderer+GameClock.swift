@@ -38,14 +38,6 @@ extension Renderer {
         }
     }
 
-    /// Fractional hour of day in [0, 24), projected from the game clock.
-    /// Setting it scrubs the clock's hour and keeps the date — the same
-    /// observable meaning every pre-clock call site relied on.
-    public var timeOfDay: Float {
-        get { gameTime.clock.hourOfDay }
-        set { gameTime.clock.setHour(newValue) }
-    }
-
     /// Current timescale: the `TimeScale` global through the seam, the
     /// vanilla default 20 when nothing resolves it. Clamping happens in
     /// `GameClock.advance`.
