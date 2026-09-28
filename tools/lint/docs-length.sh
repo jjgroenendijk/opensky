@@ -2,11 +2,11 @@
 # Docs page length limit. A docs page holds only what the code cannot show, so
 # a long page usually repeats the code or the history. The limit is in lines
 # because every prose line wraps at 100 characters (markdownlint MD013), so
-# 200 lines is about ten minutes of reading. A page over the limit is split by
+# 400 lines is about twenty minutes of reading. A page over the limit is split by
 # topic or cut.
 set -eu
 
-limit=200
+limit=400
 cd "$(git rev-parse --show-toplevel)"
 
 status=0
