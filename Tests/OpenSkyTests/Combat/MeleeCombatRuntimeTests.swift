@@ -18,6 +18,8 @@
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyMagicInterface
+@testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 import simd
 import Testing

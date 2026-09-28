@@ -26,6 +26,8 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorldState
 import simd
@@ -66,7 +68,8 @@ final class CombatCastingChain {
             values: values,
             effects: ActiveEffectRuntime(
                 values: values,
-                effects: SpellbookFixture.effectStore(index: index)
+                effects: SpellbookFixture.effectStore(index: index),
+                conditionRegistry: .standard
             )
         )
     }

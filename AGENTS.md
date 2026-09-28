@@ -108,7 +108,7 @@ Sources/
   OpenSkyPerception*/   feature module: perception runtime; Interface: detection values
   OpenSkyProgression*/  feature module: perk and skill runtimes; Interface: progress state
   OpenSkyInventory*/    feature module: inventory and equipment runtimes; Interface: state, access
-  OpenSkyMagicInterface/ package module: magic values that features below magic read
+  OpenSkyMagic*/        feature module: effect and caster runtimes; Interface: spell hits, seams
   OpenSkyWorldInterface/ package module: interaction events and placed interactions
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
@@ -124,6 +124,7 @@ Tests/
   OpenSkyActorsTests/   package test target: synthetic suites for OpenSkyActors
   OpenSkyCrimeTests/    package test target: synthetic suites for OpenSkyCrime
   OpenSkyInventoryTests/ package test target: synthetic suites for OpenSkyInventory
+  OpenSkyMagicTests/    package test target: synthetic suites for OpenSkyMagic
   OpenSkyFactionsTests/ package test target: synthetic suites for OpenSkyFactions
   OpenSkyPerceptionTests/ package test target: synthetic suites for OpenSkyPerception
   OpenSkyProgressionTests/ package test target: synthetic suites for OpenSkyProgression
@@ -135,6 +136,7 @@ Tests/
   OpenSkyCrimeTesting/  package library: crime fixtures
   OpenSkyInventoryTesting/ package library: inventory baseline plugin fixture
   OpenSkyWorldTesting/  package library: fake reference source
+  OpenSkyMagicTesting/  package library: active effect plugin fixture
   OpenSkyFactionsTesting/ package library: faction and hostility fixtures
   OpenSkyPerceptionTesting/ package library: perception world fake and fixtures
   OpenSkyUITests/       XCUITest smoke tests
@@ -160,7 +162,7 @@ renderer at its root and puts `UI/`, `Terrain/`, and `Weather/` in folders. The 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
   and `Resources/` (`Assets.xcassets`, `Branding/`).
-- `Sources/OpenSkyEngine/`: one folder per domain (`Magic/`, `Dialogue/`, `Quests/`,
+- `Sources/OpenSkyEngine/`: one folder per domain (`Combat/`, `Dialogue/`, `Quests/`,
   ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
   folder.
 - `Sources/OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus

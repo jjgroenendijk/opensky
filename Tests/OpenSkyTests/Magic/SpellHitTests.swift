@@ -14,6 +14,9 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
+@testable import OpenSkyPhysics
 @testable import OpenSkyWorldState
 import simd
 import Testing
@@ -34,7 +37,11 @@ struct SpellHitTests {
         let values = SpellbookFixture.values(store: store)
         let effects = try SpellbookFixture.effectStore(index: SpellbookFixture.index())
         return Harness(
-            effects: ActiveEffectRuntime(values: values, effects: effects),
+            effects: ActiveEffectRuntime(
+                values: values,
+                effects: effects,
+                conditionRegistry: .standard
+            ),
             values: values,
             spellbook: spellbook
         )

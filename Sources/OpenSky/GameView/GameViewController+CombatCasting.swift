@@ -34,6 +34,8 @@ import OpenSkyActors
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagic
+import OpenSkyMagicInterface
 import simd
 
 extension GameViewController {

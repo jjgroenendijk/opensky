@@ -17,6 +17,8 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing
@@ -71,7 +73,11 @@ struct PapyrusNativeSpellTests {
         let casterWorld = FakeCasterWorld()
         caster.attach(world: casterWorld)
         let effects = EffectBox(
-            runtime: ActiveEffectRuntime(values: values, effects: effectStore)
+            runtime: ActiveEffectRuntime(
+                values: values,
+                effects: effectStore,
+                conditionRegistry: .standard
+            )
         )
         session.bridge.actorValueRuntime = { values }
         session.bridge.casterRuntime = { [weak caster] in caster }

@@ -17,6 +17,7 @@
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 import simd

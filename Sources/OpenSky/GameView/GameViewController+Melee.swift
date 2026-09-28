@@ -22,6 +22,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 import OpenSkyRendering
 import simd
 

@@ -20,6 +20,8 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorldState
 import simd
@@ -222,7 +224,11 @@ struct SpellDeliveryAcceptanceRealDataTests {
 
         let projectiles = ProjectileRuntime(settings: .synthetic)
         let world = AcceptanceWorld(
-            effects: ActiveEffectRuntime(values: values, effects: magicEffects),
+            effects: ActiveEffectRuntime(
+                values: values,
+                effects: magicEffects,
+                conditionRegistry: .standard
+            ),
             items: ItemDefinitionStore(file: file),
             projectiles: projectiles,
             holder: holder

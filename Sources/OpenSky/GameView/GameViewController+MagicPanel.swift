@@ -10,6 +10,8 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyWorldState
 
 extension GameViewController: MagicEffectControlProviding {

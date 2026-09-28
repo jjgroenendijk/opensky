@@ -10,6 +10,7 @@ import Foundation
 import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
 import Testing
 
 struct ActorSpellBaselineTests {

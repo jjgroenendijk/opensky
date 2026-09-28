@@ -22,6 +22,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 import OpenSkyWorldState
 import simd
 
@@ -33,7 +34,7 @@ extension PapyrusWorldStateBridge {
             let caster = casterRuntime?(),
             let holder = actorHolder(for: key)
         else { return nil }
-        let spellbook = caster.spellbook.state(of: holder)
+        let spellbook = caster.spellbookAccess.state(of: holder)
         let effects = worldState.component(ActiveEffectState.self, for: key)
         let active = effects?.effects ?? []
         return PapyrusSpellState(
@@ -53,7 +54,7 @@ extension PapyrusWorldStateBridge {
         guard let caster = casterRuntime?(), let holder = actorHolder(for: actor) else {
             return false
         }
-        return caster.spellbook.learn(spell, on: holder)
+        return caster.spellbookAccess.learn(spell, on: holder)
     }
 
     @discardableResult
@@ -61,7 +62,7 @@ extension PapyrusWorldStateBridge {
         guard let caster = casterRuntime?(), let holder = actorHolder(for: actor) else {
             return false
         }
-        return caster.spellbook.forget(spell, on: holder)
+        return caster.spellbookAccess.forget(spell, on: holder)
     }
 
     // MARK: - Readying
@@ -78,8 +79,8 @@ extension PapyrusWorldStateBridge {
         // "If the calling actor does not have akSpell, it will be given to
         // them." (<https://ck.uesp.net/wiki/EquipSpell_-_Actor>) The learn is
         // therefore part of the equip rather than a caller's responsibility.
-        caster.spellbook.learn(spell, on: holder)
-        return (try? caster.spellbook.equip(spell, in: hand, on: holder)) != nil
+        caster.spellbookAccess.learn(spell, on: holder)
+        return (try? caster.spellbookAccess.equip(spell, in: hand, on: holder)) != nil
     }
 
     @discardableResult
@@ -90,9 +91,9 @@ extension PapyrusWorldStateBridge {
             let caster = casterRuntime?(),
             let holder = actorHolder(for: actor),
             let hand = source.hand,
-            caster.spellbook.state(of: holder).spell(in: hand) == spell
+            caster.spellbookAccess.state(of: holder).spell(in: hand) == spell
         else { return false }
-        return caster.spellbook.unequip(hand, on: holder) != nil
+        return caster.spellbookAccess.unequip(hand, on: holder) != nil
     }
 
     // MARK: - Dispelling
@@ -106,7 +107,7 @@ extension PapyrusWorldStateBridge {
     @discardableResult
     public func dispelAllSpells(on actor: ReferenceKey) -> Int {
         guard let holder = actorHolder(for: actor) else { return 0 }
-        let spells = casterRuntime?()?.spellbook.spells
+        let spells = casterRuntime?()?.spellbookAccess.spells
         return dispelEffects?(holder) { effect in
             Self.isDispellable(effect, spells: spells)
         } ?? 0
@@ -140,7 +141,7 @@ extension PapyrusWorldStateBridge {
     ) -> Bool {
         guard
             let caster = casterRuntime?(),
-            let record = caster.spellbook.record(spell),
+            let record = caster.spellbookAccess.record(spell),
             let holder = actorHolder(for: source)
         else { return false }
         guard

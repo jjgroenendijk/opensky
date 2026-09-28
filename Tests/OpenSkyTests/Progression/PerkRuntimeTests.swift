@@ -9,6 +9,8 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyProgression
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState
@@ -172,7 +174,8 @@ struct PerkRuntimeTests {
         let spells = PerkRuntimeFixture.spellStore(index: index)
         var effects = ActiveEffectRuntime(
             values: PerkRuntimeFixture.values(store: store),
-            effects: MagicEffectStore(index: index)
+            effects: MagicEffectStore(index: index),
+            conditionRegistry: .standard
         )
         let ability = PerkRuntimeFixture.key(PerkRuntimeFixture.Perk.ability)
         let spell = PerkRuntimeFixture.key(PerkRuntimeFixture.Spell.stoneskin)

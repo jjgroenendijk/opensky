@@ -26,6 +26,7 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagicInterface
 import Testing
 
 struct EnchantmentRuntimeRealDataTests {

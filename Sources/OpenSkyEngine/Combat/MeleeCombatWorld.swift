@@ -20,6 +20,7 @@
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
 import simd

@@ -170,6 +170,11 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyMagicInterface",
           "name" : "OpenSkyMagicInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyMagic",
+          "name" : "OpenSkyMagic"
         }
       ]
     }
@@ -333,6 +338,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyInventoryTests",
         "name" : "OpenSkyInventoryTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyMagicTests",
+        "name" : "OpenSkyMagicTests"
       }
     }
   ],

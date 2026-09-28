@@ -19,6 +19,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 import OpenSkyWorldState
 
 /// One actor's saved active effects, before they are merged back into the

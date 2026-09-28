@@ -12,6 +12,8 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyMagic
+import OpenSkyMagicInterface
 
 final class CombatSpellcastingSection: PanelSectionViewController {
     weak var provider: (any CastingControlProviding)? {

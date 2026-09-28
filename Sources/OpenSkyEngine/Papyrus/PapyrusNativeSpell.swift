@@ -34,6 +34,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 
 nonisolated extension PapyrusNativeFunctions {
     public static func installSpell(into registry: inout PapyrusNativeRegistry) {

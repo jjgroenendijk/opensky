@@ -322,7 +322,6 @@ targets += interface(
         "OpenSkyWorldState"
     ]
 )
-targets += interface("OpenSkyMagic", dependencies: [])
 
 targets += feature(
     "OpenSkyActors",
@@ -388,6 +387,27 @@ targets += feature(
     tests: [
         "OpenSkyPerceptionInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyPhysics",
         "OpenSkyDiagnostics", "OpenSkyShaderTypes"
+    ]
+)
+targets += feature(
+    "OpenSkyMagic",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions", "OpenSkyPhysics", "OpenSkyActorsInterface",
+        "OpenSkyProgressionInterface", "OpenSkyInventoryInterface"
+    ],
+    interface: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions", "OpenSkyPhysics", "OpenSkyActorsInterface",
+        "OpenSkyInventoryInterface"
+    ],
+    testing: ["OpenSkyFormatsESM", "OpenSkyGameData", "FormatsCoreTesting", "FormatsESMTesting"],
+    tests: [
+        "OpenSkyMagicInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyPhysics", "OpenSkyActorsInterface",
+        "OpenSkyActors", "OpenSkyProgressionInterface", "OpenSkyInventoryInterface",
+        "OpenSkyInventory", "OpenSkyInventoryTesting", "OpenSkyPerceptionInterface",
+        "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
 

@@ -33,6 +33,7 @@
 
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
 

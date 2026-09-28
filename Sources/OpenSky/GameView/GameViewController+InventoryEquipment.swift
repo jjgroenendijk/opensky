@@ -27,6 +27,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
