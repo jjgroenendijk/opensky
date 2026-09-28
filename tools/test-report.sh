@@ -107,7 +107,7 @@ else:
 PY
 
 # Coverage (issue #382). The UnitTests and AllTests plans gather it for the
-# `opensky` target, so every bundle from `make test` carries it and the
+# `OpenSky` target, so every bundle from `make test` carries it and the
 # percentage arrives through the same command as the pass/fail counts rather
 # than out of a hand-parsed .xcresult. A bundle from a run that gathered none
 # still has to report as a missing number rather than a failure, so a non-zero

@@ -17,9 +17,9 @@
   "testTargets" : [
     {
       "target" : {
-        "containerPath" : "container:opensky.xcodeproj",
+        "containerPath" : "container:OpenSky.xcodeproj",
         "identifier" : "5AD1000130001093001700A1",
-        "name" : "openskyRealDataTests"
+        "name" : "OpenSkyRealDataTests"
       }
     }
   ],

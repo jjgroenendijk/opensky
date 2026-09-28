@@ -23,7 +23,7 @@ and Settings reloads. Preview images have low compression resistance, so a large
 resizes the window.
 
 The browse and preview model has no AppKit and lives in `Sources/OpenSkyEngine/Preview/`, so it is tested
-without a window and shared with the CLI. Only the AppKit shells live under `Sources/OpenSkyApp/`.
+without a window and shared with the CLI. Only the AppKit shells live under `Sources/OpenSky/`.
 
 ## Browsing
 

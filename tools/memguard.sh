@@ -14,7 +14,7 @@ max_seconds="${2:-900}"
 cap_bytes=$((cap_mb * 1024 * 1024))
 
 # Match unit-test hosts, app, and CLI benchmark; never this script or grep.
-pattern='opensky\.app/Contents/MacOS/opensky|Debug/openskycli( |$)|openskyTests\.xctest|openskyUITests|xctest'
+pattern='OpenSky\.app/Contents/MacOS/OpenSky|Debug/openskycli( |$)|OpenSkyTests\.xctest|OpenSkyUITests|xctest'
 
 echo "[MEMGUARD] cap ${cap_mb} MB, timeout ${max_seconds}s, pattern ${pattern}"
 

@@ -7,7 +7,7 @@
 // file-length limit.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 
 /// Sends a control's action the way a click would, so a test drives the panel
 /// through the same path AppKit does.

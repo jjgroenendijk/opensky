@@ -9,8 +9,8 @@ description: Adds or changes OpenSky main-app UI - sidebar destinations, control
 
 The OpenSky app's own dev and verification UI: sidebar destinations and the control panels
 under them. Not the in-game Scaleform UI. The framework lives in
-`Sources/OpenSkyApp/Shell/`, destination view controllers in `Sources/OpenSkyApp/Panels/`, and the
-`GameViewController` extensions that feed them in `Sources/OpenSkyApp/GameView/`, one
+`Sources/OpenSky/Shell/`, destination view controllers in `Sources/OpenSky/Panels/`, and the
+`GameViewController` extensions that feed them in `Sources/OpenSky/GameView/`, one
 `GameViewController+Feature.swift` file per feature. The panel seam the view controller
 reads, `XControlProviding.swift`, lives in the engine domain folder it inspects.
 
@@ -46,7 +46,7 @@ direct-content panels" in `docs/tools/app-ui.md`.
   `DestinationDescriptor`. Sidebar aggregation and Reset all use those actions and never
   construct an unopened panel. Details in "Override provenance and reset" in
   `docs/tools/app-ui.md`.
-- Put app-only AppKit code under `Sources/OpenSkyApp/`, which only the app target builds. No
+- Put app-only AppKit code under `Sources/OpenSky/`, which only the app target builds. No
   project file edit is needed. `make cli-boundary` fails if it lands under `Sources/OpenSkyEngine/`.
 
 ## Invariants you cannot break
@@ -83,7 +83,7 @@ rows, `PanelSection-<id>` headers, `<Thing>Control` and `<Thing>StatsLabel`, sec
 `ScreenshotButton`.
 
 Pin the ids as literal assertions in `DestinationRegistryTests` and update those literals in
-the same change that renames an id. Keep `openskyUITests` correct even where the UI-test
+the same change that renames an id. Keep `OpenSkyUITests` correct even where the UI-test
 harness cannot run locally (`docs/tools/environment.md`).
 
 ## Verify

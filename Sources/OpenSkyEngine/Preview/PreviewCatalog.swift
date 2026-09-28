@@ -1,7 +1,7 @@
 // Browse catalog for the main app's asset browser: every archive entry
 // plus every plugin record flattened into filterable sidebar rows. AppKit-free
 // so grouping + filtering unit-test without a window (main app owns the UI,
-// openskyTests exercises this). See docs/tools/preview-gui.md.
+// OpenSkyTests exercises this). See docs/tools/preview-gui.md.
 
 import Foundation
 

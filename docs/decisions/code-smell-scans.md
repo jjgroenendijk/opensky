@@ -24,8 +24,8 @@ see the whole program instead of one file at a time. They are gated locally:
   It reports unused declarations, properties that are assigned but never read, unused
   imports, and redundant conformances. Periphery reads the index store the compiler
   writes during a build (`COMPILER_INDEX_STORE_ENABLE = YES` in
-  `Config/Build/Debug.xcconfig`), so it needs builds of the current tree for `openskyTests`,
-  the app with `openskyRealDataTests`, and `openskycli`. `make dead-code` runs those
+  `Config/Build/Debug.xcconfig`), so it needs builds of the current tree for `OpenSkyTests`,
+  the app with `OpenSkyRealDataTests`, and `OpenSkyCLI`. `make dead-code` runs those
   builds itself, with the compilation cache off and into its own tree
   (`DerivedData-index/`), because a build replayed from the shared cache writes almost
   no index data. The first run in a worktree is a full build; later runs are
@@ -73,7 +73,7 @@ Homebrew. Neither is linked into or shipped with OpenSky.
 - Periphery's results are only as fresh as the index store. After switching branches
   in the same worktree, stale records can hide or invent findings until the next build.
   `make clean` resets the index.
-- `openskyUITests` is not built by `make dead-code`, so its sources are not scanned
+- `OpenSkyUITests` is not built by `make dead-code`, so its sources are not scanned
   for dead code. They drive the app through accessibility identifiers and reference no
   engine declarations.
 - Metal shaders are outside both scans. jscpd has no Metal grammar, and the project has

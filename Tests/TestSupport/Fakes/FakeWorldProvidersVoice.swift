@@ -8,7 +8,7 @@
 // matches, so a panel test exercises the truncation the real picker does.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 
 @MainActor
 struct FakeVoiceState {

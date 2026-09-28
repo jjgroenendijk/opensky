@@ -13,7 +13,7 @@ app, so a parse failure or skip in the CLI is exactly what the renderer would do
 
 ## Sharing code with the app
 
-Target membership follows the folders under `Sources/`. The app builds `OpenSkyApp/`,
+Target membership follows the folders under `Sources/`. The app builds `OpenSky/`,
 `OpenSkyEngine/`, and `ShaderTypes/`. The CLI builds `OpenSkyEngine/`, `ShaderTypes/`, and
 `OpenSkyCLI/`. So app-only code is invisible to the CLI with no exception lists to maintain. Metal
 structs come through the `OpenSkyShaderTypes` module ([build system](/tools/build-system.md)).

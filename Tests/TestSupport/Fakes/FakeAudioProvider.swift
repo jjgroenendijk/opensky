@@ -1,10 +1,10 @@
 // The audio control fake, shared by every suite that drives World > Audio and by
-// the real-data footstep suite in openskyRealDataTests. It lives here rather than
+// the real-data footstep suite in OpenSkyRealDataTests. It lives here rather than
 // beside one suite because openskyTestSupport is the folder both test targets
 // compile; see Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 import Testing
 
 /// Shared with the M9.2.4 mute/solo satellite file

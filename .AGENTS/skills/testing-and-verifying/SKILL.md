@@ -24,7 +24,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Hook, Makefile, or `tools/` script | `make check`, then run the changed target or script once |
 | Parser or math routine | New or updated synthetic-fixture tests, `make test-fast T='Suite'` for the suites that cover it |
 | Engine logic in one subsystem | `make test-fast T='Suite'` for its suites, then `make test-fast` (whole unit plan) once before pushing |
-| Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSkyApp/` and `OpenSkyEngine/` | `make verify-build`, then `make test-fast` |
+| Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and `OpenSkyEngine/` | `make verify-build`, then `make test-fast` |
 | Rendering or shaders | Unit tests plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make realtest T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill; `make test-ui` when a smoke-test path changed |
@@ -45,8 +45,8 @@ test first, watch it fail, then fix.
 - `make test-fast T='Suite'` runs a whole suite; `T='Suite/method()'` runs one test. A
   selector that matches nothing fails loudly with near-matches, so a typo cannot pass.
 - Batch several edits into one run instead of rerunning after each edit.
-- `make verify-build` compiles the app, `openskycli`, and both unit bundles without running
-  a test. It is the only routine command that compiles `openskyRealDataTests`, and the
+- `make verify-build` compiles the app, `OpenSkyCLI`, and both unit bundles without running
+  a test. It is the only routine command that compiles `OpenSkyRealDataTests`, and the
   cheapest way to catch a type change that breaks a target you did not test.
 - `make dead-code` scans for new unused code. Run it when a change adds, removes, or stops
   using declarations. It builds uncached into its own tree, so its first run in a worktree

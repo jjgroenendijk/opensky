@@ -5,7 +5,7 @@
 // The two lists are deliberately different so a test can tell which side the
 // panel is showing without inspecting the model.
 
-@testable import opensky
+@testable import OpenSky
 
 extension FakeWorldProviders {
     static let merchantList = InventoryMenuModel(

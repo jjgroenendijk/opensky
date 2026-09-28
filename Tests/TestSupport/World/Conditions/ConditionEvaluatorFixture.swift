@@ -7,7 +7,7 @@
 // rather than a hand-made value that could drift from the layout.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum ConditionEvaluatorFixture {
     /// A well-formed 32-byte CTDA field. `operatorBits` are the top 3 bits of

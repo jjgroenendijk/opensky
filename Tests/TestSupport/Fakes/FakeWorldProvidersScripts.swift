@@ -1,10 +1,10 @@
 // `FakeWorldProviders`' ScriptControlProviding forwarding (issue #278). The fake
 // is shared by both test targets, so every conformance it carries has to be too;
-// the suite that used to hold this lives on in openskyTests. See
+// the suite that used to hold this lives on in OpenSkyTests. See
 // Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 import Testing
 
 /// Forwards the Papyrus seam to the panel tests' recorder rather than

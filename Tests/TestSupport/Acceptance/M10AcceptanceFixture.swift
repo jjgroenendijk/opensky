@@ -1,7 +1,7 @@
 // The clock plan the M10 acceptance suites run on (issue #166): one game hour per
 // real second, driven half a real second at a time. Both test targets compile this
-// folder, so the synthetic weather suite in openskyTests and the real-install suite
-// in openskyRealDataTests are held to the same numbers instead of keeping two
+// folder, so the synthetic weather suite in OpenSkyTests and the real-install suite
+// in OpenSkyRealDataTests are held to the same numbers instead of keeping two
 // copies that could drift. See Tests/TestSupport/AGENTS.md.
 
 enum M10AcceptanceClock {

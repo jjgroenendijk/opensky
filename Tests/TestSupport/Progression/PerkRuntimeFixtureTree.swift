@@ -10,7 +10,7 @@
 // 2026-08-20 with `openskycli record AVOneHanded`.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 @MainActor
 extension PerkRuntimeFixture {

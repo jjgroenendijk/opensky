@@ -2,7 +2,7 @@
 // UESP layout; no game data is embedded.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum VMADFixture {
     enum Value {

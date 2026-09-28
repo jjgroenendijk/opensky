@@ -26,7 +26,7 @@ log="$log_dir/probe.log"
 echo "[INFO] run directory: $log_dir"
 
 echo "[INFO] building openskycli (log: $log)"
-xcodebuild -project "$root/opensky.xcodeproj" -scheme openskycli -configuration Debug \
+xcodebuild -project "$root/OpenSky.xcodeproj" -scheme OpenSkyCLI -configuration Debug \
   -derivedDataPath "$derived_data" build >"$log" 2>&1
 cli="$(xcodebuild_products_dir Debug)/openskycli"
 [ -x "$cli" ] || { echo "[ERROR] openskycli binary not found at $cli"; exit 1; }

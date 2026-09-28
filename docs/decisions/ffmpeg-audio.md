@@ -77,7 +77,7 @@ file makes reruns free.
 
 LGPL 2.1 lets a work that is not LGPL use the library, if the user can replace the library with a
 changed version. OpenSky meets that three ways: the library is linked dynamically, so a new dylib
-needs no relinking; the copies in `opensky.app/Contents/Frameworks` are plain files a user can
+needs no relinking; the copies in `OpenSky.app/Contents/Frameworks` are plain files a user can
 overwrite; and `tools/vendor-ffmpeg.sh` is the complete recipe, pinned to one upstream release. No
 ffmpeg source is changed, so there are no changes to publish. A redistributed app must carry the LGPL
 text and this notice, which is a packaging task for when binaries first ship.
@@ -87,7 +87,7 @@ text and this notice, which is a packaging task for when binaries first ship.
 The module map declares a `[system]` module `CFFmpeg` over `tools/ffmpeg/shim.h`, which includes the
 few headers the decoder uses. `SWIFT_INCLUDE_PATHS` lists `tools/ffmpeg` and
 `.vendor/ffmpeg/include`, so every target that compiles the audio sources finds the module, including
-the unit test bundle through `@testable import opensky`. The app and CLI carry the link settings
+the unit test bundle through `@testable import OpenSky`. The app and CLI carry the link settings
 themselves: `LIBRARY_SEARCH_PATHS` into the prefix and `-lavcodec -lavutil -lswresample`.
 
 The module map has no `link` directives on purpose. Autolinking would make every target that imports

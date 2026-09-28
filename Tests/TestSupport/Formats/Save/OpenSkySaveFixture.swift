@@ -9,7 +9,7 @@
 // value at an exact offset instead of hunting for one in encoder output.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 import simd
 
 nonisolated enum OpenSkySaveFixture {

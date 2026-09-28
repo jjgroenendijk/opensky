@@ -4,7 +4,7 @@
 // extracted game files (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum EquipSlotFixture {
     /// One EQUP's fields: an editor ID, an optional packed PNAM parent array,

@@ -82,7 +82,7 @@ tar -xf "$TARBALL" -C "$SRC_DIR" >>"$LOG" 2>&1 || fail "extract failed"
 # --disable-autodetect stops configure from picking up anything installed on this machine,
 # which is what keeps the result free of third-party (and possibly GPL) code.
 # --install-name-dir=@rpath makes the dylibs relocatable so they can be embedded in
-# opensky.app without any install_name_tool rewriting.
+# OpenSky.app without any install_name_tool rewriting.
 (
   cd "$BUILD_DIR" &&
     ./configure \
@@ -145,7 +145,7 @@ if echo "$report" | grep -qE -- '--enable-(gpl|nonfree|version3|lib[a-z0-9]+)'; 
 fi
 
 # Every dependency must be either a sibling dylib (@rpath) or an OS library, so the three
-# copies embedded in opensky.app are the whole closure.
+# copies embedded in OpenSky.app are the whole closure.
 for lib in "$PREFIX"/lib/libavutil.dylib "$PREFIX"/lib/libavcodec.dylib \
   "$PREFIX"/lib/libswresample.dylib; do
   [ -f "$lib" ] || fail "expected library missing: $lib"

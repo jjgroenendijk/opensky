@@ -1,12 +1,12 @@
 #!/bin/sh
-# Regenerate AppIcon PNGs from the SVG logo source (Sources/OpenSkyApp/Resources/Branding/opensky-logo.svg).
+# Regenerate AppIcon PNGs from the SVG logo source (Sources/OpenSky/Resources/Branding/opensky-logo.svg).
 # Run via `make icon`. Requires librsvg (`brew install librsvg`).
 set -eu
 
 cd "$(dirname "$0")/.."
 
-SRC="Sources/OpenSkyApp/Resources/Branding/opensky-logo.svg"
-OUT="Sources/OpenSkyApp/Resources/Assets.xcassets/AppIcon.appiconset"
+SRC="Sources/OpenSky/Resources/Branding/opensky-logo.svg"
+OUT="Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset"
 
 command -v rsvg-convert >/dev/null 2>&1 || {
     echo "[ERROR] rsvg-convert not found — install with: brew install librsvg" >&2

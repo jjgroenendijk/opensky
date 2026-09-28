@@ -6,7 +6,7 @@
 // rebuild reads — never extracted game files (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 import simd
 import Testing
 

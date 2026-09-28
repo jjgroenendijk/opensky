@@ -4,7 +4,7 @@
 // See Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 
 /// Forwards the dialogue seam to the panel tests' recorder rather than
 /// duplicating it, so a registry-level reset and a panel-level button click are

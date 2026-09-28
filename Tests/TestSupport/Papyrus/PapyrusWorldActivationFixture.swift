@@ -1,15 +1,15 @@
 // The activation fixtures for issue #172: the placed interaction, the
 // `OnActivate` script and the door session every activation test builds on.
 // The M11 and M13 scripted-world chains reuse `interaction(reference:action:)`,
-// and those chains are compiled into openskyRealDataTests as well, so the
+// and those chains are compiled into OpenSkyRealDataTests as well, so the
 // fixture half of the suite lives in the folder both test targets compile.
 // The suite's tests are extensions of this type in
-// `Tests/UnitTests/Papyrus/PapyrusWorldActivationTests.swift`; nothing here is private,
+// `Tests/OpenSkyTests/Papyrus/PapyrusWorldActivationTests.swift`; nothing here is private,
 // because the two halves are no longer one file. See
 // Tests/TestSupport/AGENTS.md.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 import simd
 
 @MainActor

@@ -3,7 +3,7 @@
 // several panel suites use it, so it is not owned by any one of them.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 
 /// Stands in for the game controller, which conforms to every provider
 /// protocol. Shared with `WorldPanelTests` so a panel test exercises the same

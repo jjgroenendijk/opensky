@@ -6,11 +6,11 @@
 // Fixtures are synthetic throughout — ESMFixture plugin bytes and NIFFixture
 // meshes in a temp directory, never extracted game files (AGENTS.md Legal & IP
 // boundary). The suite's own tests are extensions of this type under
-// Tests/UnitTests/. See Tests/TestSupport/AGENTS.md.
+// Tests/OpenSkyTests/. See Tests/TestSupport/AGENTS.md.
 
 import Foundation
 import Metal
-@testable import opensky
+@testable import OpenSky
 import simd
 import Testing
 

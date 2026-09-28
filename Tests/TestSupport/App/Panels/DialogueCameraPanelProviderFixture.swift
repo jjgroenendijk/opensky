@@ -8,7 +8,7 @@
 // file-length limit.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 import simd
 
 /// Builds a `DialogueCameraSnapshot` from only the fields a test cares about.

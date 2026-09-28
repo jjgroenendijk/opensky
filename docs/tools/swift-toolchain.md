@@ -20,7 +20,7 @@ reachable as `make swift-baseline`, so neither can regress silently.
   passes. A missing or non-Apple `swiftc` fails the same way.
 * Any `SWIFT_VERSION` build setting reads something other than `6.0`. Both places a
   setting can be declared are scanned: `Config/Build/*.xcconfig`, where the one declaration
-  covering every target lives today, and `opensky.xcodeproj/project.pbxproj`, where a
+  covering every target lives today, and `OpenSky.xcodeproj/project.pbxproj`, where a
   reintroduced per-target setting would override it. A project with no `SWIFT_VERSION` at
   all is treated as a failure rather than a pass. See
   [Build system and xcodebuild invocation](/tools/build-system.md).

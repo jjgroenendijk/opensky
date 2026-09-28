@@ -28,7 +28,7 @@ required="$required_major.$required_minor.$required_patch"
 # Language mode every SWIFT_VERSION build setting must carry.
 required_language_mode="6.0"
 
-pbxproj="opensky.xcodeproj/project.pbxproj"
+pbxproj="OpenSky.xcodeproj/project.pbxproj"
 
 if ! command -v swiftc >/dev/null 2>&1; then
   printf '[FAIL] swiftc not found. Install Xcode 26 and run: make bootstrap\n' >&2

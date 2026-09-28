@@ -3,7 +3,7 @@
 // here at file scope, away from that file's size cap.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 /// Test build runner: the test stages completions and controls their order,
 /// standing in for the serial DispatchQueue without any async timing.

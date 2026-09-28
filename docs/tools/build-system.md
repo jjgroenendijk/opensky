@@ -40,29 +40,29 @@ prefix on every line, which checks that it still holds.
 
 ## Build settings in Config/
 
-Every build setting is in a text file under `Config/`. The build configurations in the project file
-have empty `buildSettings` and name one of these files as their base. So a setting change is a
-one-line diff a review can read, and the project file, the worst merge conflict surface when many
-worktrees run in parallel, holds no copies of the same values.
+Every build setting is in a text file under `Config/Build/`. The project file has empty
+`buildSettings` and names these files as bases. So a setting change is a one-line diff a review can
+read, and the project file, the worst merge conflict surface, holds no copies of the values.
 
 ```text
 Config/
-├── Base.xcconfig            deployment target, SDK, Swift mode, warnings, versioning
-├── Debug.xcconfig           #include Base + -Onone, dwarf, testability, prefix mapping
-├── Release.xcconfig         #include Base + wholemodule, dSYM, VALIDATE_PRODUCT
-├── Signing.xcconfig         CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM, one identity
-├── App.xcconfig             opensky: bundle id, Info.plist keys, ffmpeg link + rpath
-├── CLI.xcconfig             openskycli: isolation default, ffmpeg link + rpath
-├── Tests.xcconfig           the unit bundles: TEST_HOST, BUNDLE_LOADER
-├── UITests.xcconfig         openskyUITests: TEST_TARGET_NAME
-└── *.xctestplan             the four test plans (see test runs)
+├── Build/
+│   ├── Base.xcconfig        deployment target, SDK, Swift mode, warnings, versioning
+│   ├── Debug.xcconfig       #include Base + -Onone, dwarf, testability, prefix mapping
+│   ├── Release.xcconfig     #include Base + wholemodule, dSYM, VALIDATE_PRODUCT
+│   ├── Signing.xcconfig     CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM, one identity
+│   ├── App.xcconfig         OpenSky: bundle id, Info.plist keys, ffmpeg link + rpath
+│   ├── CLI.xcconfig         OpenSkyCLI: binary name, isolation default, ffmpeg link + rpath
+│   ├── Tests.xcconfig       the unit bundles: TEST_HOST, BUNDLE_LOADER
+│   └── UITests.xcconfig     OpenSkyUITests: TEST_TARGET_NAME
+└── TestPlans/
+    └── *.xctestplan         the four test plans (see test runs)
 ```
 
-The test plans are here for the same reason: they are reviewable configuration the scheme points
-at ([test runs](/tools/test-runs.md)). `Debug.xcconfig` and `Release.xcconfig` are the project's base
-configurations and cover every target. The target files sit above them and apply to both
-configurations of one target. A setting that differs per configuration inside one target is the only
-case that still belongs in the project file.
+The test plans are in `Config/TestPlans/` for the same reason ([test runs](/tools/test-runs.md)).
+`Debug.xcconfig` and `Release.xcconfig` are the project's base configurations for every target. The
+target files sit above them and apply to both configurations of one target. Only a setting that
+differs per configuration inside one target still belongs in the project file.
 
 `tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `Config/Build/*.xcconfig` and the project
 file, so the Swift 6 mode check still catches a configuration that slips back
@@ -78,7 +78,7 @@ no other file does. `MTL_HEADER_SEARCH_PATHS` points at the same folder, so `Sha
 `#import "ShaderTypes.h"`.
 
 There is no bridging header. A bridging header is visible to every Swift file in its target, so every
-file depended on the shared header whether it used it or not, and `openskycli` had to name the app's
+file depended on the shared header whether it used it or not, and `OpenSkyCLI` had to name the app's
 header by path. The header also pulls in Foundation and `simd`, so files that relied on that now
 import them themselves, as `SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY` asks.
 
@@ -135,7 +135,7 @@ The mapping has three costs:
 - A replayed task writes no index data. Periphery reads the index, so `make dead-code` builds
   uncached into `DerivedData-index/` ([code smell scans](/decisions/code-smell-scans.md)).
 - `#filePath` reads `/^src/...`, so a test cannot find the checkout from it. Real-data suites find
-  `logs/` by walking up from the test bundle to the folder holding `opensky.xcodeproj`.
+  `logs/` by walking up from the test bundle to the folder holding `OpenSky.xcodeproj`.
 - Debug info names sources `/^src/...`. A command-line `lldb` needs
   `settings set target.source-map /^src <checkout>`.
 

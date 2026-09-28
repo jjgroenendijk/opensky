@@ -11,7 +11,7 @@ Sanctioned path for "run engine code against the real install and look at the re
 probe is throwaway and never lands in a commit.
 
 Two things this skill deliberately does not repeat: how to write a test in this repo
-(`Tests/UnitTests/AGENTS.md` and `Tests/RealDataTests/AGENTS.md` load automatically when you
+(`Tests/OpenSkyTests/AGENTS.md` and `Tests/OpenSkyRealDataTests/AGENTS.md` load automatically when you
 touch those directories, and cover `@MainActor`, env gating, `make realtest`, and fixtures),
 and the CLI subcommand reference (`docs/tools/cli.md`).
 
@@ -21,11 +21,11 @@ and the CLI subcommand reference (`docs/tools/cli.md`).
 `make run-cli ARGS="record --type LAND ..."` beats writing a probe. A probe that recurs
 across sessions gets promoted to an `openskycli` subcommand (rules in `Sources/OpenSkyCLI/AGENTS.md`).
 
-Otherwise probe from a scratch test class in `Tests/RealDataTests/`, copying the shape of
+Otherwise probe from a scratch test class in `Tests/OpenSkyRealDataTests/`, copying the shape of
 `CellRenderRealDataTests.swift`. That folder is the whole `RealData` plan, so a class there
 runs under `make realtest` with the data root in the host. Never
 `swift path/to/script.swift` against engine sources — the engine is not a package, so a
-script cannot import `opensky` and dies on top-level statement rules.
+script cannot import `OpenSky` and dies on top-level statement rules.
 
 ## Rendering verification
 

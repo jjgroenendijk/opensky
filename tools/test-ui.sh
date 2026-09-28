@@ -2,8 +2,8 @@
 # Run the UI test target, turning a missing Accessibility grant into an
 # actionable message instead of an opaque multi-minute hang.
 #
-# The plan selection is load-bearing (issue #380). `openskyTests` and
-# `openskyRealDataTests` are both app-hosted: their test host *is* opensky.app.
+# The plan selection is load-bearing (issue #380). `OpenSkyTests` and
+# `OpenSkyRealDataTests` are both app-hosted: their test host *is* OpenSky.app.
 # Put either in the same test session as the UI
 # runner and xcodebuild stands the app up as a test host, injecting
 # libXCTestBundleInject.dylib, so the app sits in
@@ -13,7 +13,7 @@
 # while enabling automation mode" — which reads like a permission failure but is
 # a deadlock, and is why `make test-ui` never once reached a test case.
 # `-only-testing:` does not avoid it: it filters which tests run, not which
-# targets the session stands up. The UITests plan, which lists openskyUITests
+# targets the session stands up. The UITests plan, which lists OpenSkyUITests
 # alone, does.
 #
 # With that fixed the runner really does request kTCCServiceAccessibility, and a
@@ -72,7 +72,7 @@ if [ "$status" -ne 0 ] && grep -q "enabling automation mode" "$log"; then
           The runner asked macOS for Accessibility and did not get an answer.
           Fix once:   make test-perms
           Then grant: System Settings > Privacy & Security > Accessibility >
-                      openskyUITests-Runner.app
+                      OpenSkyUITests-Runner.app
           The grant is keyed to the runner's code signature, so it is one click
           per signature, not per run. Meanwhile, verify render behavior via
           Renderer.renderOffscreen unit tests or `make run-cli ARGS="render ..."`

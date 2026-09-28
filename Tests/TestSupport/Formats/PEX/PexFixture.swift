@@ -2,7 +2,7 @@
 // public UESP layout; no compiled game script is committed.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum PexFixture {
     enum Value {

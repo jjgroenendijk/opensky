@@ -1,16 +1,16 @@
 # AGENTS.md — openskyTestSupport
 
-Test support compiled into **both** unit-test bundles: `openskyTests` and
-`openskyRealDataTests`. The folder exists because the two targets are separate modules with
+Test support compiled into **both** unit-test bundles: `OpenSkyTests` and
+`OpenSkyRealDataTests`. The folder exists because the two targets are separate modules with
 no way to import each other, while a fixture like `ESMFixture` or `FakeWorldProviders` is
 needed by both (issue #418). Membership follows the folder, exactly as `Sources/OpenSkyEngine/`
-builds into the app and `openskycli`.
+builds into the app and `OpenSkyCLI`.
 
 ## What belongs here
 
 Fixtures, fakes, and harnesses — anything with no `@Test` of its own — that at least one
-suite in each bundle uses. Support only the synthetic suites use stays in `Tests/UnitTests/`;
-support only the real-data suites use stays in `Tests/RealDataTests/`. Keeping the split
+suite in each bundle uses. Support only the synthetic suites use stays in `Tests/OpenSkyTests/`;
+support only the real-data suites use stays in `Tests/OpenSkyRealDataTests/`. Keeping the split
 tight matters: a file here is compiled twice, once per bundle.
 
 Fixtures are synthetic and built in code, never an extracted game file (root `AGENTS.md`,
@@ -25,9 +25,9 @@ under `make realtest-all`. Nothing enforces that, so it is a review point.
 That is why three types are split across the two folders: the fixture half of
 `CellSceneBuilderTests`, `CellStreamerTests` and `PapyrusWorldActivationTests` is declared
 here, and the suite's `@Test` methods live in extensions of the same type under
-`Tests/UnitTests/`. The type name is deliberately unchanged, so no call site moved and no test
+`Tests/OpenSkyTests/`. The type name is deliberately unchanged, so no call site moved and no test
 identifier changed. When splitting another one, keep the declaration and the reusable members
-here, take the tests to `Tests/UnitTests/`, and widen any `private` member the tests still
+here, take the tests to `Tests/OpenSkyTests/`, and widen any `private` member the tests still
 reach — the two halves are no longer one file, so file-private no longer spans them.
 
 A type whose shared part is only constants does not need that treatment: give the constants
