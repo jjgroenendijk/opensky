@@ -3,8 +3,8 @@
 // turns a reaction into a drawn weapon. No game-derived bytes.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 import Testing
 
 struct ActorReactionTests {

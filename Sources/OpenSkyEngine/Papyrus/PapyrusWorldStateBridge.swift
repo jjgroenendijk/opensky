@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
@@ -102,11 +103,11 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// before handing the runtime over. Nil in a session with no faction data,
     /// and every membership native then refuses rather than reporting "not a
     /// member".
-    public var factionRuntime: ((ReferenceKey) -> FactionRuntime?)?
+    public var factionRuntime: ((ReferenceKey) -> (any FactionAccess)?)?
     /// The session's relationship runtime, which the two relationship natives go
     /// through (issue #508). No actor argument, because nothing here has to be
     /// seeded: a relationship override exists only once a script writes one.
-    public var relationshipRuntime: (() -> RelationshipRuntime?)?
+    public var relationshipRuntime: (() -> (any RelationshipAccess)?)?
     /// What one actor makes of another, derived by the session rather than here
     /// (issue #508). A closure because the derivation needs profiles the
     /// controller assembles from the streamer, the records and the store.

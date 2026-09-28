@@ -98,9 +98,11 @@ OpenSkyWorldState         runtime state store, open component set, game clock, g
 OpenSkyConditions         condition evaluator, function registry, core functions
   ^
 OpenSkyActorsInterface    actor state components, ActorValueAccess, actor conditions
+OpenSkyFactionsInterface  membership and relationship state, hostility values, seams
 OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
   ^
 OpenSkyActors             actor value runtime
+OpenSkyFactions           faction and relationship runtimes, hostility derivation
 OpenSkyPerception         perception runtime, detection formula, sight, overlay
   ^
 OpenSkyEngine             the rest of the engine, until it is split; imports interfaces only
@@ -132,11 +134,12 @@ A lower module never imports a higher one. These patterns keep it that way:
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
   to move the camera and run the world. The engine's `GameSession` is that driver.
 - Logic that only reads plugin records, with no runtime state, is not a feature. It moves down
-  into `OpenSkyGameData`. Example: actor templates, derived actor values, and resistances.
+  into `OpenSkyGameData`. Examples: actor templates, derived actor values, resistances, and
+  faction relations.
 - A feature that another module calls into offers a protocol in its interface. Example: crime
   asks `DetectionObserving` which observers saw an act. Magic and progression change actor values
-  through `ActorValueAccess`. The implementation conforms, and the app hands it over as that
-  protocol.
+  through `ActorValueAccess`, and scripts change faction ranks through `FactionAccess`. The
+  implementation conforms, and the app hands it over as that protocol.
 - A lower module that stores something for every feature keeps an open set instead of a closed
   enum. `OpenSkyWorldState` stores any `WorldStateComponent`, and each feature declares its own
   `WorldStateComponentKind`. `ConditionContext` stores any `ConditionResolution` by type, and each
@@ -171,8 +174,9 @@ satisfies an old `import`, and the build fails with two types of the same name, 
 Shared test fixtures live in a testing library, `Tests/<Name>Testing/`. For a foundation
 module the name is the one the module declares, for example `BehaviorTesting`. For a feature it
 is the feature name plus `Testing`, for example `OpenSkyPerceptionTesting`, and it depends on the
-feature's interface, not its implementation. Its declarations are `public`, and it may
-`@testable import` the module it builds fixtures for.
+feature's interface, not its implementation. A fixture builder that needs the implementation
+stays in the test target that uses it, for example `HostilityFixture+Derivation.swift`. Its
+declarations are `public`, and it may `@testable import` the module it builds fixtures for.
 
 A testing library changes how Xcode builds the module it uses. The app and the test bundles
 then share that module, so Xcode builds it as a dynamic framework. A module that depends on

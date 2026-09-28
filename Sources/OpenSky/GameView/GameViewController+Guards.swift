@@ -26,6 +26,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPerception

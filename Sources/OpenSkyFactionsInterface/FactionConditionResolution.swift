@@ -42,7 +42,7 @@ nonisolated public struct FactionConditionResolution: @unchecked Sendable, Senda
     public let sourcePlugin: String?
     /// Factions, relationships and crime over the aggression table — the same
     /// value the combat loop derives hostility from. Nil beside a nil store.
-    public let derivation: HostilityDerivation?
+    public let derivation: (any HostilityDeriving)?
 
     private let profiles: [ReferenceKey: ActorSocialProfile]
 
@@ -51,7 +51,7 @@ nonisolated public struct FactionConditionResolution: @unchecked Sendable, Senda
     public init(
         factions: FactionStore? = nil,
         sourcePlugin: String? = nil,
-        derivation: HostilityDerivation? = nil,
+        derivation: (any HostilityDeriving)? = nil,
         profiles: [ReferenceKey: ActorSocialProfile] = [:]
     ) {
         self.factions = factions

@@ -37,6 +37,7 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

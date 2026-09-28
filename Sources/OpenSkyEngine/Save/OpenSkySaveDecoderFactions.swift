@@ -15,6 +15,7 @@
 // not destroy progress.
 
 import Foundation
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

@@ -11,6 +11,7 @@
 // Documented in docs/engine/papyrus-activation.md and docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

@@ -5,6 +5,8 @@
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
+@testable import OpenSkyFactionsInterface
+@testable import OpenSkyGameData
 import Testing
 
 struct CrimeFactionReadoutTests {

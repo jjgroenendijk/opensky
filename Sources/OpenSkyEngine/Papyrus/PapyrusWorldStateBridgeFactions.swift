@@ -21,7 +21,9 @@
 
 import Foundation
 import OpenSkyConditions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 extension PapyrusWorldStateBridge {
     @discardableResult

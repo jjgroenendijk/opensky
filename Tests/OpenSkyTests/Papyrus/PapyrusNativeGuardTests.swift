@@ -9,6 +9,8 @@
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
+@testable import OpenSkyFactions
+@testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState

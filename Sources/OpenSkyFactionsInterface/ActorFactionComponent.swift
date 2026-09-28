@@ -33,6 +33,11 @@ nonisolated public struct ActorFactionMembership: Equatable, Sendable, Comparabl
     public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.faction == rhs.faction ? lhs.rank < rhs.rank : lhs.faction < rhs.faction
     }
+
+    public init(faction: ReferenceKey, rank: Int8) {
+        self.faction = faction
+        self.rank = rank
+    }
 }
 
 /// Every faction one actor currently belongs to, in ascending faction-key
