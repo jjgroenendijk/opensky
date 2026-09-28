@@ -8,6 +8,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 nonisolated public enum OpenSkySaveEntryDecoder: Sendable {

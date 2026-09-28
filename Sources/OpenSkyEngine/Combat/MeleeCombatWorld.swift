@@ -19,6 +19,7 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 /// Who is swinging, and from where.

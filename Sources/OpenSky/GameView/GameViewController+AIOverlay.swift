@@ -1,6 +1,7 @@
 // M16 world-overlay bridge over the live renderer. The gate panel arrives in
 // issue #203 and consumes only AIOverlayControlProviding.
 
+import OpenSkyDiagnostics
 import OpenSkyEngine
 
 extension GameViewController: AIOverlayControlProviding {

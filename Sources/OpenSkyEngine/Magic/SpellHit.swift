@@ -49,6 +49,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 /// What a spell carries with it once it has left the caster.

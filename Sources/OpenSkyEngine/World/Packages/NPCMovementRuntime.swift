@@ -2,6 +2,8 @@
 // persistence, and actor trigger occupancy (issue #423).
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 public struct NPCMovementWorld {

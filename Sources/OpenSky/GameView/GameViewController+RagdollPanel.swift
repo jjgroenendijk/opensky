@@ -12,6 +12,7 @@
 import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 extension GameViewController: RagdollControlProviding {

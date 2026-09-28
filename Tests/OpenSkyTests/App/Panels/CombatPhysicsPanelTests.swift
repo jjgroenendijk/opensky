@@ -14,6 +14,7 @@ import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyPhysics
 import Testing
 
 struct CombatPhysicsPanelTests {

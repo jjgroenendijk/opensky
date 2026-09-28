@@ -9,6 +9,7 @@ import FormatsESMTesting
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyPhysics
 import simd
 import Testing
 

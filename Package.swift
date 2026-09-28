@@ -215,11 +215,32 @@ targets += testing(
     dependencies: ["OpenSkyBehavior", "OpenSkyFormatsAnimation", "FormatsAnimationTesting"]
 )
 
+targets += foundation("OpenSkyDiagnostics", dependencies: ["OpenSkyShaderTypes"])
+targets += foundation(
+    "OpenSkyPhysics",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "OpenSkyGameData", "OpenSkyBehavior"
+    ],
+    tests: [
+        "PhysicsTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "FormatsCoreTesting", "FormatsMeshTesting"
+    ]
+)
+targets += testing(
+    "PhysicsTesting",
+    dependencies: [
+        "OpenSkyPhysics", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "OpenSkyGameData"
+    ]
+)
+
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
     "OpenSkyEngine",
     dependencies: ["OpenSkyFormatsCore"] + formatFamilies.map { "OpenSkyFormats\($0)" } + [
-        "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyDiagnostics", "OpenSkyPhysics",
+        "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

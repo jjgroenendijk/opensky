@@ -96,6 +96,8 @@ Sources/
                         PEX, SWF; one folder per format inside
   OpenSkyGameData/      package module: virtual file system, load order, record stores
   OpenSkyBehavior/      package module: behavior graph evaluation, skeleton pose math
+  OpenSkyDiagnostics/   package module: memory footprint, debug world overlays
+  OpenSkyPhysics/       package module: collision worlds, dynamic bodies, ragdolls
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
@@ -103,10 +105,12 @@ Tests/
   OpenSkyFormats*Tests/ package test targets: synthetic suites, one per format module
   OpenSkyGameDataTests/ package test target: synthetic suites for OpenSkyGameData
   OpenSkyBehaviorTests/ package test target: synthetic suites for OpenSkyBehavior
+  OpenSkyPhysicsTests/  package test target: synthetic suites for OpenSkyPhysics
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
   BehaviorTesting/      package library: behavior graph fixtures
+  PhysicsTesting/       package library: collision scene and ragdoll fixtures
   OpenSkyUITests/       XCUITest smoke tests
 ```
 
@@ -136,7 +140,7 @@ No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngi
   `Binary/`, `Compression/`, and `Geometry/`. A package module never imports a module above
   it; behavior that needs a higher layer goes in an extension file up there
   (`docs/tools/modules.md`).
-- `Sources/OpenSkyEngine/World/`: `Actors/`, `Cells/`, `Collision/`, `Conditions/`,
+- `Sources/OpenSkyEngine/World/`: `Actors/`, `Cells/`, `Conditions/`,
   `Navigation/`, `Packages/`, `Player/`, `State/`, `Streaming/`, `Terrain/`, and `Weather/`.
 - `Sources/OpenSkyCLI/`: `OpenSkyCLI.swift` (dispatch) and `OpenSkyCLIUsage.swift` at the
   root, one file per subcommand in `Commands/`, the Flash (SWF) probes in `SWF/`, and

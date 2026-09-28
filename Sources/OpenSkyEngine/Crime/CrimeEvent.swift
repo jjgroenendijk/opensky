@@ -28,6 +28,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One kind of crime the engine can witness happening.
 nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparable {

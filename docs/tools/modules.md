@@ -88,6 +88,9 @@ OpenSkyGameData           virtual file system, load order, record index, record 
   ^
 OpenSkyBehavior           Havok behavior graph evaluation, skeleton pose math
   ^
+OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls
+OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkyShaderTypes
+  ^
 OpenSkyEngine             the rest of the engine, until it is split
   ^
 OpenSky app, OpenSkyCLI   composition roots

@@ -3,6 +3,7 @@
 // the same intent without becoming movement authorities.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 nonisolated public enum NPCMovementState: String, Equatable, Sendable {

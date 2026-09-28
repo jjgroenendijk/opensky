@@ -6,6 +6,8 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 /// Built cells currently resident, keyed by exterior grid coordinate.

@@ -5,6 +5,7 @@
 // distance non-admissible.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 nonisolated public enum NavigationPortal: Equatable, Sendable {

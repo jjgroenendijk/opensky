@@ -24,6 +24,7 @@
 // Documented in docs/engine/detection.md.
 
 import Foundation
+import OpenSkyDiagnostics
 import simd
 
 nonisolated public enum PerceptionOverlay: Sendable {

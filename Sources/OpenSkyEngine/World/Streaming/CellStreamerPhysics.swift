@@ -14,6 +14,8 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 extension CellStreamer {
@@ -31,7 +33,11 @@ extension CellStreamer {
         )
         dynamicBodies.retainBodies(occupying: Set(residentDynamicBodyScenes().keys))
         for settled in dynamicBodies.drainSettledTransforms() {
-            onBodySettled?(settled.key, settled.transform, settled.placingCell)
+            onBodySettled?(
+                settled.key,
+                ReferenceTransformOverride(placement: settled.placement),
+                settled.placingCell
+            )
         }
         if composition.setDynamicDrawOwnership(dynamicBodies.exteriorDrawOwnership) {
             // Draw ownership changes only at a cell boundary. Recompose once

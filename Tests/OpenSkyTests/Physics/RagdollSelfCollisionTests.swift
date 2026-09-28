@@ -11,6 +11,8 @@
 
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsMesh
+@testable import OpenSkyPhysics
+import PhysicsTesting
 import simd
 import Testing
 

@@ -5,6 +5,7 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPhysics
 import OSLog
 
 nonisolated public struct CellGeometryBuild {

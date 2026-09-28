@@ -5,7 +5,9 @@
 // data, synthetic DemoScene).
 
 import AppKit
+import OpenSkyDiagnostics
 import OpenSkyEngine
+import OpenSkyPhysics
 
 extension GameViewController: CameraControlProviding {
     var cameraPose: CameraPoseSnapshot {

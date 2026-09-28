@@ -3,6 +3,7 @@
 // coverage swaps, door transitions and state rebuilds therefore need no
 // navigation-specific callbacks.
 
+import OpenSkyGameData
 import simd
 
 public struct CellStreamerNavigationState {

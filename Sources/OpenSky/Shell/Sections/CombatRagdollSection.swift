@@ -17,6 +17,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyPhysics
 
 final class CombatRagdollSection: PanelSectionViewController {
     weak var provider: (any RagdollControlProviding)? {

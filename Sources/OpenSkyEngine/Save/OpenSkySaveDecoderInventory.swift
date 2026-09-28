@@ -13,6 +13,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One owner's saved inventory, before it is merged back into its delta.
 nonisolated public struct SaveInventoryEntry: Equatable, Sendable {

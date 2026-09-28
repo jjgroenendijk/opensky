@@ -31,6 +31,8 @@ import AppKit
 import OpenSkyBehavior
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 extension GameViewController: ProjectileWorld {

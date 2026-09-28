@@ -41,6 +41,7 @@
 //
 // See docs/engine/dialogue-camera.md.
 
+import OpenSkyPhysics
 import simd
 
 /// What one frame of the dialogue camera is computed from. Everything here is

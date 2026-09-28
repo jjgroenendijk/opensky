@@ -4,6 +4,7 @@
 
 import AppKit
 @testable import OpenSkyEngine
+@testable import OpenSkyPhysics
 import Testing
 
 /// Records what the Triggers section asks of the live streamer (issue #173).

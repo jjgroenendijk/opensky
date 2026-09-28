@@ -2,6 +2,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 nonisolated extension WalkController {

@@ -7,6 +7,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
+@testable import OpenSkyPhysics
 import simd
 import Testing
 

@@ -9,6 +9,7 @@
 // "Legal & IP").
 
 @testable import OpenSkyEngine
+@testable import OpenSkyPhysics
 import simd
 
 /// One held input driven for a number of fixed steps.

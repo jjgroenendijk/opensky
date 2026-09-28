@@ -10,6 +10,7 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyGameData
 import Testing
 
 /// Records "Probe.Note" calls in dispatch order while forwarding everything

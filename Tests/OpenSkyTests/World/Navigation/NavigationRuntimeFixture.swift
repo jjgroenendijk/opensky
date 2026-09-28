@@ -5,6 +5,7 @@
 import FormatsESMTesting
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 import simd
 
 @MainActor

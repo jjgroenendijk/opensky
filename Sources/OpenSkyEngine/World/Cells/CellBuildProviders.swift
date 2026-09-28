@@ -13,6 +13,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPhysics
 
 /// Optional weather runtime a provider can expose (M7.2.2). GameViewController
 /// pulls it off the provider to hand the renderer. Built once at setup from the

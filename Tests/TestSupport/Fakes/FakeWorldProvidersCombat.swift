@@ -10,6 +10,7 @@
 
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyPhysics
 
 /// The actor-value half of the fake's stored state (issue #194).
 struct FakeActorValueState {

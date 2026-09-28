@@ -16,6 +16,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 import simd
 
 /// The engine objects the gate drives, wired the way `wireWorldItems` wires

@@ -6,6 +6,8 @@
 // data, no Papyrus VM (the VM half lives in PapyrusWorldTriggerTests).
 
 @testable import OpenSkyEngine
+@testable import OpenSkyGameData
+@testable import OpenSkyPhysics
 import simd
 import Testing
 

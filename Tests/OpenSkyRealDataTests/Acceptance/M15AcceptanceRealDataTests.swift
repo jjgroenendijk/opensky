@@ -26,6 +26,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
+@testable import OpenSkyPhysics
 import simd
 import Testing
 

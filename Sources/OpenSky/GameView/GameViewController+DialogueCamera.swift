@@ -21,9 +21,11 @@
 // See docs/engine/dialogue-camera.md.
 
 import AppKit
+import OpenSkyDiagnostics
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 /// Dialogue-camera state the controller owns. Extensions cannot add stored

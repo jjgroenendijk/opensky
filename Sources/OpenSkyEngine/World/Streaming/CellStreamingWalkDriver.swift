@@ -1,5 +1,6 @@
 // Exterior half of M4.5 walk benchmark driver.
 
+import OpenSkyPhysics
 import simd
 
 @MainActor

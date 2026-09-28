@@ -2,6 +2,8 @@
 // collision, terrain, triggers, and residency already meet here.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 public struct CellStreamerNPCMovementState {

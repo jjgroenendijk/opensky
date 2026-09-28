@@ -18,6 +18,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One actor's saved active effects, before they are merged back into the
 /// delta.

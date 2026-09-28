@@ -5,6 +5,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
+import OpenSkyPhysics
 import simd
 
 nonisolated public enum PrecipitationRoofOcclusion: Sendable {

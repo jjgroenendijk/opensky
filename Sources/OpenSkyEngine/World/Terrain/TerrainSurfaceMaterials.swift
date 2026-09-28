@@ -14,6 +14,7 @@
 // player sees most of there.
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 nonisolated public struct TerrainSurfaceMaterials: Equatable, Sendable {

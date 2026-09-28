@@ -3,6 +3,8 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 extension CellStreamer {

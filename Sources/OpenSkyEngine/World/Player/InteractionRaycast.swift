@@ -6,6 +6,7 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyPhysics
 import simd
 
 nonisolated private struct LocalInteractionRay {

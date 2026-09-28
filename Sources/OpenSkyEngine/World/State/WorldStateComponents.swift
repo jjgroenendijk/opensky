@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 /// Identity of one component slot on a reference.

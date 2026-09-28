@@ -3,6 +3,8 @@
 // engine units and path endpoints are feet positions.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 nonisolated public struct NavigationTriangleID: Hashable, Comparable, Sendable {

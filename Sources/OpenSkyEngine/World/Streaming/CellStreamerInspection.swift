@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyPhysics
 
 extension CellStreamer {
     /// Grid slots that reached a terminal state: resident + void + failed.

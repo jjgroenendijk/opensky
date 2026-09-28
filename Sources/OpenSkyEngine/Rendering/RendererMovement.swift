@@ -1,5 +1,6 @@
 // Renderer camera movement split from Renderer.swift for file-length limits.
 
+import OpenSkyPhysics
 import QuartzCore
 
 extension Renderer {

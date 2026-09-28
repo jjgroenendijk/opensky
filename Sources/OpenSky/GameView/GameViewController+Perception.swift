@@ -12,8 +12,10 @@
 // hostile. A pass that ran first would describe the previous frame's world.
 
 import AppKit
+import OpenSkyDiagnostics
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 /// Perception state the controller owns. Extensions cannot add stored

@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One script slated for instantiation during an attach, in deterministic
 /// `sortedEntries()` × VMAD-script order.

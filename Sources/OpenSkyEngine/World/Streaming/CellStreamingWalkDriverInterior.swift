@@ -1,5 +1,6 @@
 // Interior crossing + paired exterior return for M4.5 walk benchmark.
 
+import OpenSkyGameData
 import simd
 
 @MainActor

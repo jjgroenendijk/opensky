@@ -19,6 +19,7 @@
 // the eye is and nothing about where the player is looking.
 
 import OpenSkyFormatsCore
+import OpenSkyPhysics
 import simd
 
 nonisolated public struct ThirdPersonCamera: Equatable, Sendable {

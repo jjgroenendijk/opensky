@@ -4,6 +4,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyDiagnostics
 import OpenSkyShaderTypes
 
 nonisolated public struct WorldOverlayDrawStats: Equatable, Sendable {

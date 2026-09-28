@@ -27,6 +27,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 extension CellStreamer {

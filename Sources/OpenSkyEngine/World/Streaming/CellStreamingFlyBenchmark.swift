@@ -6,6 +6,7 @@
 // milestone claims repeatable from openskycli.
 
 import Foundation
+import OpenSkyDiagnostics
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import simd

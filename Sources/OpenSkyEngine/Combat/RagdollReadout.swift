@@ -6,6 +6,7 @@
 // Documented in docs/engine/ragdoll.md.
 
 import Foundation
+import OpenSkyPhysics
 
 nonisolated public enum RagdollReadout: Sendable {
     /// How many corpses are simulating, and how many have stopped.

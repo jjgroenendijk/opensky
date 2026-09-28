@@ -10,6 +10,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Mutable, main-actor-owned store of per-reference runtime state.
 ///

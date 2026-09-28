@@ -19,6 +19,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One recorded component mutation.
 ///
