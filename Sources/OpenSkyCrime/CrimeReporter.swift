@@ -19,39 +19,13 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-/// Everything about the running session a crime needs to know.
-@MainActor
-public protocol CrimeWorld: AnyObject {
-    /// The owner in force for one resident reference: its own `XOWN`, else the
-    /// owner of the cell it stands in (`OwnershipResolver`). Nil when nothing
-    /// claims it, and also when nothing resident is that reference — a
-    /// reference the session cannot see is not one it can call owned.
-    func crimeOwner(of key: ReferenceKey) -> ReferenceOwner?
-
-    /// The crime faction answering for `cell`, walking the location parent
-    /// chain (`CrimeFactionResolver`). Nil where the place belongs to nobody.
-    func crimeFaction(in cell: CellSceneLocation?) -> ReferenceKey?
-
-    /// Which cell a resident reference stands in, so a crime is attributed to
-    /// the cell whose rebuild makes it visible.
-    func crimeCell(of key: ReferenceKey) -> CellSceneLocation?
-
-    /// One item's authored gold value, which is what a theft bounty is scaled
-    /// from. Zero for a form no loaded plugin describes — the same answer
-    /// `InventoryRuntime.carriedValue` gives, because inventing a value would
-    /// put a number the data never authored into a bounty.
-    func crimeItemValue(of item: FormID) -> Int64
-
-    /// Who is acting, with the memberships an ownership check needs.
-    func crimeActor(_ key: ReferenceKey) -> CrimeActor
-}
-
 /// Turns things that happened into ledger entries.
 @MainActor
-public final class CrimeReporter {
+public final class CrimeReporter: CrimeReporting {
     /// The ledger and the pricing behind it. A `var` because the witness source
     /// is attached after construction, exactly as `HostilityDerivation.crime`
     /// is.
@@ -207,5 +181,30 @@ public final class CrimeReporter {
             crimeFaction: world?.crimeFaction(in: cell),
             cell: cell
         )
+    }
+}
+
+extension CrimeReporter {
+    @discardableResult
+    public func report(_ event: CrimeEvent) -> CrimeOutcome {
+        runtime.report(event)
+    }
+
+    public func crimeGold(of faction: ReferenceKey) -> Int32 {
+        runtime.crimeGold(of: faction)
+    }
+
+    public func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int32 {
+        runtime.crimeGold(of: faction, violent: violent)
+    }
+
+    @discardableResult
+    public func modifyCrimeGold(by delta: Int32, violent: Bool, of faction: ReferenceKey) -> Int32 {
+        runtime.modifyCrimeGold(by: delta, violent: violent, of: faction)
+    }
+
+    @discardableResult
+    public func setCrimeGold(_ gold: Int32, violent: Bool, of faction: ReferenceKey) -> Int32 {
+        runtime.setCrimeGold(gold, violent: violent, of: faction)
     }
 }

@@ -36,6 +36,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 
 /// Failures the equipment layer reports. Like `InventoryError`, every one is a
 /// caller mistake rather than malformed input.

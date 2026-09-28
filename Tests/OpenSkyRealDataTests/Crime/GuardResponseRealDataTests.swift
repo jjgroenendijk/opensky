@@ -11,6 +11,7 @@
 // "Legal & IP boundary").
 
 import Foundation
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM

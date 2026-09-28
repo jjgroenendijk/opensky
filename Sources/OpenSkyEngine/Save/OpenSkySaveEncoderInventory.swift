@@ -9,6 +9,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {

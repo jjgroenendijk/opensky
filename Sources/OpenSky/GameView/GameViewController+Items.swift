@@ -15,7 +15,9 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// State the world-item bridge owns. Stored on `GameViewController` because

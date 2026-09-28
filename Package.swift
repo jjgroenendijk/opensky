@@ -110,10 +110,25 @@ func testing(_ name: String, dependencies: [String]) -> [Target] {
     return [target]
 }
 
+/// A feature's interface, declared before its implementation because a feature
+/// declared earlier needs it. `feature(name, ...)` later finds it and depends on it.
+func interface(_ feature: String, dependencies: [String]) -> [Target] {
+    let name = "\(feature)Interface"
+    let target = Target.target(
+        name: name,
+        dependencies: checked(name, dependencies),
+        swiftSettings: librarySettings
+    )
+    declared.append(name)
+    libraryTargets.append(name)
+    return [target]
+}
+
 /// A feature module, by The Modular Architecture:
 /// - `<name>`: the implementation. Only the composition roots import it.
 /// - `<name>Interface`: the protocols and value types other modules use. Declared
-///   when `interface` is non-nil; its dependencies are the list given.
+///   when `interface` is non-nil; its dependencies are the list given. An interface
+///   declared earlier with `interface(_:dependencies:)` is used instead.
 /// - `<name>Testing`: fakes and fixtures other modules' tests share. Declared when
 ///   `testing` is non-nil.
 /// - `<name>Tests`: the unit tests of `<name>`. Declared when `tests` is non-nil;
@@ -136,7 +151,7 @@ func feature(
         declared.append(interfaceName)
         libraryTargets.append(interfaceName)
     }
-    let ownInterface = interface == nil ? [] : [interfaceName]
+    let ownInterface = interface != nil || declared.contains(interfaceName) ? [interfaceName] : []
     targets.append(.target(
         name: name,
         dependencies: checked(name, ownInterface + dependencies),
@@ -280,6 +295,19 @@ targets += foundation(
 
 // Features
 
+// Interfaces declared ahead of their implementations, because features below them
+// need their values.
+targets += interface("OpenSkyWorld", dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsESM"])
+targets += interface(
+    "OpenSkyInventory",
+    dependencies: [
+        "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM",
+        "OpenSkyGameData",
+        "OpenSkyWorldState"
+    ]
+)
+
 targets += feature(
     "OpenSkyActors",
     dependencies: ["OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState"],
@@ -347,6 +375,29 @@ targets += feature(
     ]
 )
 
+targets += feature(
+    "OpenSkyCrime",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions", "OpenSkyActorsInterface", "OpenSkyFactionsInterface",
+        "OpenSkyInventoryInterface", "OpenSkyPerceptionInterface", "OpenSkyWorldInterface"
+    ],
+    interface: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions", "OpenSkyActorsInterface", "OpenSkyFactionsInterface",
+        "OpenSkyInventoryInterface"
+    ],
+    testing: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyFactionsInterface", "FormatsCoreTesting", "FormatsESMTesting"
+    ],
+    tests: [
+        "OpenSkyCrimeInterface", "OpenSkyActorsInterface", "OpenSkyFactionsInterface",
+        "OpenSkyInventoryInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyWorldState", "OpenSkyConditions", "FormatsCoreTesting", "FormatsESMTesting"
+    ]
+)
+
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
     "OpenSkyEngine",
@@ -354,8 +405,8 @@ targets += foundation(
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyDiagnostics", "OpenSkyPhysics",
         "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyConditions",
         "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
-        "OpenSkyProgressionInterface",
-        "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
+        "OpenSkyWorldInterface", "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

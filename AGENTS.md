@@ -103,9 +103,12 @@ Sources/
   OpenSkyWorldState/    package module: runtime state store, components, clock, globals
   OpenSkyConditions/    package module: condition evaluator and function registry
   OpenSkyActors*/       feature module: actor value runtime; Interface: actor state values
+  OpenSkyCrime*/        feature module: crime runtime, ownership; Interface: CrimeReporting
   OpenSkyFactions*/     feature module: faction runtimes; Interface: faction state values
   OpenSkyPerception*/   feature module: perception runtime; Interface: detection values
   OpenSkyProgression*/  feature module: perk and skill runtimes; Interface: progress state
+  OpenSkyInventoryInterface/ package module: inventory state values and InventoryAccess
+  OpenSkyWorldInterface/ package module: interaction events and placed interactions
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
@@ -118,6 +121,7 @@ Tests/
   OpenSkyAudioTests/    package test target: synthetic suites for OpenSkyAudio
   OpenSkyWorldStateTests/ package test target: synthetic suites for OpenSkyWorldState
   OpenSkyActorsTests/   package test target: synthetic suites for OpenSkyActors
+  OpenSkyCrimeTests/    package test target: synthetic suites for OpenSkyCrime
   OpenSkyFactionsTests/ package test target: synthetic suites for OpenSkyFactions
   OpenSkyPerceptionTests/ package test target: synthetic suites for OpenSkyPerception
   OpenSkyProgressionTests/ package test target: synthetic suites for OpenSkyProgression
@@ -126,6 +130,7 @@ Tests/
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
   BehaviorTesting/      package library: behavior graph fixtures
   PhysicsTesting/       package library: collision scene and ragdoll fixtures
+  OpenSkyCrimeTesting/  package library: crime fixtures
   OpenSkyFactionsTesting/ package library: faction and hostility fixtures
   OpenSkyPerceptionTesting/ package library: perception world fake and fixtures
   OpenSkyUITests/       XCUITest smoke tests

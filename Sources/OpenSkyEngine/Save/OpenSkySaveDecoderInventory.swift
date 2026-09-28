@@ -14,6 +14,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 /// One owner's saved inventory, before it is merged back into its delta.

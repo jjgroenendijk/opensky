@@ -8,6 +8,7 @@
 // and the section reports it as an override.
 
 import AppKit
+import OpenSkyCrime
 import OpenSkyEngine
 
 final class FactionVendorSection: CrimeFactionPanelSection {

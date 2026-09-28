@@ -13,6 +13,7 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+@testable import OpenSkyWorldInterface
 import simd
 import Testing
 

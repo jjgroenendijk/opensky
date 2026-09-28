@@ -5,6 +5,7 @@
 // performed, which lets a panel test drive `World > Crime & Factions` with no
 // renderer, no window and no game data.
 
+@testable import OpenSkyCrime
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 

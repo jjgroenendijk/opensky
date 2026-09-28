@@ -22,6 +22,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyWorldState

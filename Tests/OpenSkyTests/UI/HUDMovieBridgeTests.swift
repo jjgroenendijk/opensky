@@ -8,6 +8,7 @@ import FormatsSWFTesting
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyWorldInterface
 import simd
 import Testing
 

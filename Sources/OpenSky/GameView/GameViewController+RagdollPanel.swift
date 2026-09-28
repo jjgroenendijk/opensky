@@ -12,8 +12,10 @@
 import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

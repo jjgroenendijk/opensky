@@ -16,7 +16,9 @@
 // Documented in docs/engine/interaction.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 /// A live transfer session between one container and the player.

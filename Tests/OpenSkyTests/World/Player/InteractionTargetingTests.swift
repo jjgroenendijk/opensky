@@ -3,6 +3,7 @@
 
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyWorldInterface
 import simd
 import Testing
 

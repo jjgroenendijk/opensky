@@ -20,6 +20,8 @@
 
 import AppKit
 import OpenSkyActorsInterface
+import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyEngine
 import OpenSkyFactions
 import OpenSkyFactionsInterface

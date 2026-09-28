@@ -28,8 +28,11 @@
 // Documented in docs/engine/interaction.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -137,7 +140,7 @@ public final class WorldItemRuntime {
     /// #504). Nil in a session with no crime runtime — a synthetic scene, or a
     /// load order with no FACT data — where every take is an honest one, which
     /// is the behaviour this file had before crime existed.
-    public var crime: CrimeReporter?
+    public var crime: (any CrimeReporting)?
 
     public var store: WorldStateStore {
         inventory.store

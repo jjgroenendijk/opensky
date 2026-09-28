@@ -85,6 +85,11 @@ nonisolated public struct StolenSplit: Equatable, Sendable {
     public var isEmpty: Bool {
         total <= 0
     }
+
+    public init(clean: Int32, stolen: Int32) {
+        self.clean = clean
+        self.stolen = stolen
+    }
 }
 
 /// Failures the inventory layer reports. Every one of them is a caller mistake

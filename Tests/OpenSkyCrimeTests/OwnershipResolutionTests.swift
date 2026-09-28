@@ -6,7 +6,9 @@
 // and who counts as allowed.
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyCrime
+@testable import OpenSkyCrimeInterface
+@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 import Testing
 

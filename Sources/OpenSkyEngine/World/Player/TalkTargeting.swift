@@ -31,6 +31,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyWorldInterface
 import simd
 
 /// The streamer's Talk seam: who is a candidate, who is currently picked, and

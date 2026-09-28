@@ -18,69 +18,69 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState
 
-enum CrimeFixture {
-    static let pluginName = "Base.esm"
+public enum CrimeFixture {
+    public static let pluginName = "Base.esm"
 
     /// FormIDs the suites name. Factions low, locations mid, actor bases high,
     /// so a mistaken swap shows up as an unresolved link rather than as a wrong
     /// answer.
-    enum Factions {
+    public enum Factions {
         /// Tracks crime and prices all four kinds.
-        static let hold: UInt32 = 0x10
+        public static let hold: UInt32 = 0x10
         /// Tracks crime but ignores stealing.
-        static let tolerant: UInt32 = 0x11
+        public static let tolerant: UInt32 = 0x11
         /// Owns property and does not track crime at all.
-        static let shopkeepers: UInt32 = 0x12
+        public static let shopkeepers: UInt32 = 0x12
         /// What the `GFAC` default object names: membership makes a guard
         /// (issue #505).
-        static let guards: UInt32 = 0x13
+        public static let guards: UInt32 = 0x13
     }
 
     /// The hold's jail links (issue #505): a `STOL` evidence chest and a
     /// `JAIL` exterior marker. Placed-reference FormIDs, so they sit apart
     /// from every record the fixture actually carries.
-    enum Links {
-        static let evidenceChest: UInt32 = 0x700
-        static let jailMarker: UInt32 = 0x701
+    public enum Links {
+        public static let evidenceChest: UInt32 = 0x700
+        public static let jailMarker: UInt32 = 0x701
     }
 
     /// The `DOBJ` record's own FormID.
-    static let defaultObjects: UInt32 = 0x31
+    public static let defaultObjects: UInt32 = 0x31
 
-    enum Locations {
-        static let shop: UInt32 = 0x100
-        static let city: UInt32 = 0x101
-        static let holdSeat: UInt32 = 0x102
+    public enum Locations {
+        public static let shop: UInt32 = 0x100
+        public static let city: UInt32 = 0x101
+        public static let holdSeat: UInt32 = 0x102
         /// A place whose whole chain names no crime faction.
-        static let wilderness: UInt32 = 0x103
+        public static let wilderness: UInt32 = 0x103
     }
 
-    enum Actors {
-        static let shopkeeper: UInt32 = 0x600
-        static let resident: UInt32 = 0x601
+    public enum Actors {
+        public static let shopkeeper: UInt32 = 0x600
+        public static let resident: UInt32 = 0x601
     }
 
     /// `Faction.Flags` raw values the fixture composes from, spelled out so a
     /// suite reads as the behaviour it is pinning.
-    enum Flags {
-        static let tracksCrime = Faction.Flags.trackCrime.rawValue
-        static let canBeOwner = Faction.Flags.canBeOwner.rawValue
-        static let ignoresStealing = Faction.Flags.ignoreStealing.rawValue
-        static let doesNotReportAgainstMembers =
+    public enum Flags {
+        public static let tracksCrime = Faction.Flags.trackCrime.rawValue
+        public static let canBeOwner = Faction.Flags.canBeOwner.rawValue
+        public static let ignoresStealing = Faction.Flags.ignoreStealing.rawValue
+        public static let doesNotReportAgainstMembers =
             Faction.Flags.doNotReportCrimesAgainstMembers.rawValue
     }
 
-    static func key(_ objectID: UInt32) -> ReferenceKey {
+    public static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: pluginName.lowercased(), objectID: objectID)
     }
 
-    static func id(_ objectID: UInt32) -> ResolvedFormID {
+    public static func id(_ objectID: UInt32) -> ResolvedFormID {
         ResolvedFormID(plugin: pluginName, objectID: objectID)
     }
 
@@ -89,7 +89,7 @@ enum CrimeFixture {
     /// The default load order the suites run against: three factions and a
     /// four-step location chain whose crime faction is authored at the hold,
     /// exactly as `WhiterunHoldLocation` authors Whiterun's.
-    static func file() throws -> ESMFile {
+    public static func file() throws -> ESMFile {
         var data = ESMFixture.tes4()
         data += ESMFixture.topGroup("FACT", contents: [
             faction(
@@ -118,26 +118,18 @@ enum CrimeFixture {
         return try ESMFile(data: data)
     }
 
-    static func factionStore() throws -> FactionStore {
+    public static func factionStore() throws -> FactionStore {
         try FactionStore(plugins: [(pluginName, file())])
     }
 
-    static func locationStore() throws -> LocationStore {
+    public static func locationStore() throws -> LocationStore {
         try LocationStore(plugins: [(pluginName, file())])
-    }
-
-    static func crimeFactions() throws -> CrimeFactionResolver {
-        try CrimeFactionResolver(locations: locationStore(), factions: factionStore())
-    }
-
-    static func ownershipResolver() throws -> OwnershipResolver {
-        try OwnershipResolver(factions: factionStore(), pluginName: pluginName)
     }
 
     // MARK: - Records
 
     /// One FACT with a `CRVA` block, the flags given, and any link fields.
-    static func faction(
+    public static func faction(
         _ formID: UInt32,
         _ editorID: String,
         flags: UInt32,
@@ -155,7 +147,7 @@ enum CrimeFixture {
 
     /// The `DOBJ` naming the guard faction under `GFAC`, laid out as a run of
     /// four-character tag and FormID pairs (docs/formats/records.md).
-    static func defaultObjectsRecord() -> Data {
+    public static func defaultObjectsRecord() -> Data {
         var defaults = Data("GFAC".utf8)
         defaults.appendUInt32(Factions.guards)
         return ESMFixture.record(
@@ -166,7 +158,7 @@ enum CrimeFixture {
     }
 
     /// One LCTN, optionally naming a parent and a crime faction (`FNAM`).
-    static func location(
+    public static func location(
         _ formID: UInt32,
         _ editorID: String,
         parent: UInt32? = nil,
@@ -185,7 +177,7 @@ enum CrimeFixture {
     /// One CELL with an optional `XLCN` link and an optional `XOWN`/`XRNK`
     /// pair — the fields ownership precedence and crime-faction resolution both
     /// read.
-    static func cell(
+    public static func cell(
         formID: UInt32 = 0x50,
         location: UInt32? = nil,
         owner: UInt32? = nil,
@@ -208,12 +200,12 @@ enum CrimeFixture {
     // MARK: - Actors and events
 
     /// The player, optionally in factions.
-    static func player(memberships: [(faction: UInt32, rank: Int8)] = []) -> CrimeActor {
+    public static func player(memberships: [(faction: UInt32, rank: Int8)] = []) -> CrimeActor {
         CrimeActor(key: .player, base: nil, memberships: state(memberships))
     }
 
     /// One NPC by its base record, optionally in factions.
-    static func actor(
+    public static func actor(
         _ reference: UInt32,
         base: UInt32,
         memberships: [(faction: UInt32, rank: Int8)] = []
@@ -221,14 +213,14 @@ enum CrimeFixture {
         CrimeActor(key: key(reference), base: key(base), memberships: state(memberships))
     }
 
-    static func state(_ memberships: [(faction: UInt32, rank: Int8)]) -> ActorFactionState {
+    public static func state(_ memberships: [(faction: UInt32, rank: Int8)]) -> ActorFactionState {
         ActorFactionState(memberships: memberships.map {
             ActorFactionMembership(faction: key($0.faction), rank: $0.rank)
         })
     }
 
     /// One crime against the hold, witnessed or not.
-    static func event(
+    public static func event(
         _ kind: CrimeKind,
         faction: UInt32? = Factions.hold,
         victim: UInt32? = nil,
@@ -243,11 +235,5 @@ enum CrimeFixture {
             witnessed: witnessed,
             stolenValue: stolenValue
         )
-    }
-
-    /// A crime runtime over a fresh store and the fixture load order.
-    @MainActor
-    static func runtime(store: WorldStateStore = WorldStateStore()) throws -> CrimeRuntime {
-        try CrimeRuntime(store: store, factions: factionStore())
     }
 }

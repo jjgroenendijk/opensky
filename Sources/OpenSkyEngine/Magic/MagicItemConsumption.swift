@@ -25,6 +25,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 
 /// What consuming one item applies.
 nonisolated public struct MagicItemUse: Equatable, Sendable {

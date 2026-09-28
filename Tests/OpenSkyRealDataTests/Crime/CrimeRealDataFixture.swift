@@ -12,11 +12,14 @@
 
 import Foundation
 import Metal
+@testable import OpenSkyCrime
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing
 

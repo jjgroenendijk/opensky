@@ -9,6 +9,7 @@
 // thief is actually asking.
 
 import AppKit
+import OpenSkyCrime
 import OpenSkyEngine
 
 final class CrimeTheftSection: CrimeFactionPanelSection {

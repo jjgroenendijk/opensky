@@ -37,34 +37,10 @@
 // Documented in docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-
-/// Why an arrest outcome could not run.
-nonisolated public enum ArrestRefusal: Error, Equatable, Sendable {
-    /// The player owes this faction nothing.
-    case noBounty
-    /// The player's gold does not cover the bounty.
-    case cannotAfford(owed: Int32, gold: Int32)
-}
-
-/// What one arrest outcome did.
-nonisolated public struct ArrestSettlement: Equatable, Sendable {
-    public let faction: ReferenceKey
-    /// The bounty that was cleared.
-    public let bounty: Int32
-    /// Gold taken from the player; zero for a jail sentence.
-    public let goldPaid: Int32
-    /// Stolen stacks that went to the evidence chest.
-    public let confiscated: [InventoryStack]
-    /// Where they went, or nil when nothing moved.
-    public let evidenceChest: ReferenceKey?
-    /// Days served; zero for a paid fine.
-    public let sentenceDays: Int
-    /// Where the player should stand afterwards: the faction's exterior jail
-    /// marker for a sentence or a pay-and-go-to-jail, nil otherwise.
-    public let releaseMarker: ReferenceKey?
-}
+import OpenSkyInventoryInterface
 
 /// The two ways an arrest ends, over the crime ledger and the inventory.
 @MainActor
@@ -75,7 +51,7 @@ public struct CrimeArrest {
     public static let maximumSentenceDays = 7
 
     public let crime: CrimeRuntime
-    public let inventory: InventoryRuntime
+    public let inventory: any InventoryAccess
 
     /// Days served for `bounty`: one per hundred gold, at least one, at most
     /// seven.
@@ -178,7 +154,7 @@ public struct CrimeArrest {
         return (try? inventory.confiscateStolen(from: .player, to: evidence)) ?? []
     }
 
-    public init(crime: CrimeRuntime, inventory: InventoryRuntime) {
+    public init(crime: CrimeRuntime, inventory: any InventoryAccess) {
         self.crime = crime
         self.inventory = inventory
     }

@@ -6,7 +6,9 @@
 // stolen item's value rounded down (<https://en.uesp.net/wiki/Skyrim:Crime>).
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyCrime
+@testable import OpenSkyCrimeInterface
+@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing

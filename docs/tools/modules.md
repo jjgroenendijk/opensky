@@ -70,6 +70,11 @@ says. Both helpers check each dependency before the package loads:
 
 A broken rule stops the manifest with a message that names both modules.
 
+A third helper, `interface`, declares only `XInterface`. It is for a feature that is split
+later than a module that already needs its interface. Example: crime needs `InventoryAccess`
+before inventory is split, so `interface("OpenSkyInventory", ...)` comes first, and a later
+`feature("OpenSkyInventory", ...)` uses that interface instead of declaring a second one.
+
 The helpers also give every target the same settings: the language settings of
 `Config/Build/Base.xcconfig`, `MainActor` default isolation for library code, and the header
 path of the vendored ffmpeg. Test targets also link ffmpeg, because a package test executable
@@ -97,12 +102,17 @@ OpenSkyWorldState         runtime state store, open component set, game clock, g
   ^
 OpenSkyConditions         condition evaluator, function registry, core functions
   ^
+OpenSkyWorldInterface     interaction events and rays, placed interactions
+OpenSkyInventoryInterface inventory state, holders, vendors, InventoryAccess
+  ^
 OpenSkyActorsInterface    actor state components, ActorValueAccess, actor conditions
+OpenSkyCrimeInterface     crime events, ledger, arrest state, ownership values, CrimeReporting
 OpenSkyFactionsInterface  membership and relationship state, hostility values, seams
 OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
 OpenSkyProgressionInterface perk and progress state, skill use events, PerkAccess
   ^
 OpenSkyActors             actor value runtime
+OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
 OpenSkyPerception         perception runtime, detection formula, sight, overlay
 OpenSkyProgression        perk, skill, and level runtimes, perk entry-point evaluator
@@ -140,7 +150,8 @@ A lower module never imports a higher one. These patterns keep it that way:
   faction relations, and the leveling and skill formulas.
 - A feature that another module calls into offers a protocol in its interface. Example: crime
   asks `DetectionObserving` which observers saw an act. Magic and progression change actor values
-  through `ActorValueAccess`, and scripts change faction ranks through `FactionAccess`. The
+  through `ActorValueAccess`, and scripts change faction ranks through `FactionAccess`. Items
+report theft through `CrimeReporting`, and an arrest takes gold through `InventoryAccess`. The
   implementation conforms, and the app hands it over as that protocol.
 - A lower module never names a registry or default that a higher module owns. Example:
   `PerkRuntime` takes its `ConditionFunctionRegistry` as a parameter, and the caller passes

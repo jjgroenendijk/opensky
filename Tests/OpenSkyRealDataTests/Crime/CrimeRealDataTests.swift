@@ -17,10 +17,14 @@
 
 import Foundation
 import Metal
+@testable import OpenSkyCrime
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyInventoryInterface
+@testable import OpenSkyWorldInterface
 import Testing
 
 struct CrimeRealDataTests {

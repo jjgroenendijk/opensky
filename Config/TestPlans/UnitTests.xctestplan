@@ -128,6 +128,26 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyProgressionInterface",
           "name" : "OpenSkyProgressionInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyCrime",
+          "name" : "OpenSkyCrime"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyCrimeInterface",
+          "name" : "OpenSkyCrimeInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyInventoryInterface",
+          "name" : "OpenSkyInventoryInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyWorldInterface",
+          "name" : "OpenSkyWorldInterface"
         }
       ]
     }
@@ -275,6 +295,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyProgressionTests",
         "name" : "OpenSkyProgressionTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyCrimeTests",
+        "name" : "OpenSkyCrimeTests"
       }
     }
   ],

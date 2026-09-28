@@ -7,7 +7,8 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyCrime
+@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing

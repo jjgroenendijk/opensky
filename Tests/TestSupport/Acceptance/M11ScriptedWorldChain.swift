@@ -15,6 +15,7 @@ import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing

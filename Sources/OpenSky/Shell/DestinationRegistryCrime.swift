@@ -12,6 +12,7 @@
 // purpose, and "Reset all overrides" leaves them alone.
 
 import AppKit
+import OpenSkyCrime
 import OpenSkyEngine
 
 extension DestinationRegistry {

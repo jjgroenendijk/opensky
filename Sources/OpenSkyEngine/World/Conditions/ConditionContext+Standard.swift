@@ -4,6 +4,7 @@
 
 import OpenSkyActorsInterface
 import OpenSkyConditions
+import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface

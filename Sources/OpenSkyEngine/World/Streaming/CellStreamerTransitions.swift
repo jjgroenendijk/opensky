@@ -4,6 +4,7 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import OSLog
 import simd
 

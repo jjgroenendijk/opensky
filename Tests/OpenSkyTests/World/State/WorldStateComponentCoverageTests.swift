@@ -5,11 +5,13 @@
 // kind fails here until it is storable, readable and resettable.
 import Foundation
 @testable import OpenSkyActorsInterface
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyInventoryInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState

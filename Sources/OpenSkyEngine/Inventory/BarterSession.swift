@@ -21,6 +21,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 
 /// Why a transaction did not happen.
 nonisolated public enum BarterError: Error, Equatable {

@@ -4,10 +4,12 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 
 nonisolated public enum CrimeFactionReadout: Sendable {
     // MARK: - Bounty

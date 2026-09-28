@@ -3,8 +3,10 @@
 // snapshot, so it can be asserted without AppKit, without a Metal device and
 // without a game install.
 
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventoryInterface
 import Testing
 
 struct InventoryEquipmentReadoutTests {

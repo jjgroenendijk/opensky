@@ -32,6 +32,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 /// Failures readying a spell reports. Like `EquipmentError`, each is a caller

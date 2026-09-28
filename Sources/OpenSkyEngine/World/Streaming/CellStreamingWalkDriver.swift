@@ -2,6 +2,7 @@
 
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 
 @MainActor

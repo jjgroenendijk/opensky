@@ -7,9 +7,12 @@
 // where `Actor.ShowBarterMenu` lands.
 
 import AppKit
+import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension GameViewController: CrimeFactionControlProviding {
