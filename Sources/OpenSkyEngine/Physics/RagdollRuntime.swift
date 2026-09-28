@@ -30,6 +30,7 @@
 //
 // Documented in docs/engine/ragdoll.md.
 
+import OpenSkyFormats
 import simd
 
 /// One actor the runtime can kill and ragdoll.

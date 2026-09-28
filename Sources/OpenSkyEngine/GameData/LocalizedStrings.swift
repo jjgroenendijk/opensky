@@ -10,6 +10,7 @@
 // rule, AGENTS.md). Format: docs/formats/strings.md.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 import Synchronization
 

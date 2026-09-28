@@ -10,6 +10,7 @@
 // placement and facing.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// A `PerceptionWorld` over one render's built cells. Line of sight goes

@@ -30,6 +30,7 @@
 // Documented in docs/engine/papyrus-spell-natives.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One actor's magic as a Papyrus native sees it.
 nonisolated struct PapyrusSpellState: Equatable, Sendable {

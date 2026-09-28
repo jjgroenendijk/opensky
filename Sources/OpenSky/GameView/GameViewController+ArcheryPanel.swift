@@ -8,6 +8,7 @@
 // the sidebar is indistinguishable downstream from one the player took.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 extension GameViewController: ArcheryControlProviding {

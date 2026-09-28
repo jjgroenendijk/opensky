@@ -8,6 +8,8 @@
 // driving a fixed-step simulation is how a readout stops matching the world it
 // describes.
 
+import OpenSkyFormats
+
 /// One resolved detection setting as a panel shows it: the name it is addressed
 /// by, its value, and where that value came from.
 nonisolated struct DetectionSettingReadout: Equatable {

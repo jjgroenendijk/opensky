@@ -30,6 +30,7 @@
 // Documented in docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What one reconciliation did.
 nonisolated struct PerkAbilityReport: Equatable, Sendable {

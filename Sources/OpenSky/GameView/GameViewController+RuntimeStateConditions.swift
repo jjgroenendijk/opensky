@@ -22,6 +22,7 @@
 // same answer. That is what makes this surface usable as verification evidence.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     var runtimeStateConditionSources: [String] {

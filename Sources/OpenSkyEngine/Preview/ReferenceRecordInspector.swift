@@ -2,6 +2,7 @@
 // feeds the CLI record command, keeping link honesty out of the AppKit layer.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ReferenceRecordInspector {
     private let index: RecordIndex

@@ -3,6 +3,7 @@
 // against exact triangle/convex/box faces. Curved shapes use their world AABB;
 // vanilla architectural roofs resolve through triangle collections.
 
+import OpenSkyFormats
 import simd
 
 nonisolated enum PrecipitationRoofOcclusion {

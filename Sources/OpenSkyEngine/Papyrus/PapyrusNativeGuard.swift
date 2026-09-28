@@ -10,6 +10,7 @@
 // Documented in docs/engine/papyrus-activation.md and docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
     static func installGuard(into registry: inout PapyrusNativeRegistry) {

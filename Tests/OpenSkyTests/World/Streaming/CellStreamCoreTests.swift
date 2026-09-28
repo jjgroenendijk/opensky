@@ -4,6 +4,7 @@
 // Metal, no async, synthetic coordinates (AGENTS.md testing rule).
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct CellStreamCoreTests {

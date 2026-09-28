@@ -4,6 +4,7 @@
 // values, not NIF bytes.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 enum DynamicBodyScene {

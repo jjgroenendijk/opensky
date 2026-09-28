@@ -26,6 +26,7 @@
 // Documented in docs/engine/crime.md and docs/engine/detection.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Where the crime runtime asks whether anybody is watching.
 @MainActor

@@ -17,6 +17,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 /// One pinned expectation, spelled as a type rather than a tuple so the

@@ -49,6 +49,7 @@
 // Documented in docs/engine/projectiles.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ArcherySettings: Equatable {
     /// `f1PArrowTiltUpAngle` — degrees the aim ray is tilted up by in first

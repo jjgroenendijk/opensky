@@ -30,6 +30,7 @@
 // Documented in docs/engine/ai-spell-use.md.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController {

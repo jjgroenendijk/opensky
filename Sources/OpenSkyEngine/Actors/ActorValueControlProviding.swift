@@ -15,6 +15,7 @@
 // AppKit-free, so it compiles into `openskycli` alongside the app.
 
 import Foundation
+import OpenSkyFormats
 
 /// One actor's values as a panel spells them.
 nonisolated struct ActorValueReadout: Equatable, Sendable {

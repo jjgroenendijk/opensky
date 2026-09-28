@@ -10,6 +10,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 private final class JournalCallLog: @unchecked Sendable {

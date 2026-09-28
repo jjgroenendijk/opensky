@@ -37,6 +37,7 @@
 // Documented in docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One override: the other actor, and the rank the pair holds.
 ///

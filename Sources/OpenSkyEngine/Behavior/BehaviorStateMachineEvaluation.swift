@@ -17,6 +17,7 @@
 // `docs/engine/behavior-state-machines.md`.
 
 import Foundation
+import OpenSkyFormats
 
 /// One transition the update may fire, with where it was found.
 nonisolated struct BehaviorTransitionCandidate {

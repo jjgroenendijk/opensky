@@ -54,6 +54,7 @@
 // Documented in docs/engine/papyrus-actor-natives.md and docs/engine/hostility.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
     static func installFaction(into registry: inout PapyrusNativeRegistry) {

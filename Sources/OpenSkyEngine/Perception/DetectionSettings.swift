@@ -33,6 +33,7 @@
 // Documented in docs/engine/detection.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct DetectionSettings: Equatable {
     // MARK: - Read from the load order

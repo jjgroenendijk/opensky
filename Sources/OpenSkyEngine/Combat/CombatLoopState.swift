@@ -22,6 +22,7 @@
 //
 // Documented in docs/engine/combat.md.
 
+import OpenSkyFormats
 import simd
 
 /// The player's combat situation as of one step.

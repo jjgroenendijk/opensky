@@ -1,6 +1,7 @@
 // Method, parent, and static call opcodes.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusInterpreter {
     func callOp(

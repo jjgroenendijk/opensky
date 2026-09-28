@@ -25,6 +25,7 @@
 // Documented in docs/engine/barter.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// The barter price factors one merchant transaction is priced at.
 nonisolated struct BarterPricing: Equatable, Sendable {

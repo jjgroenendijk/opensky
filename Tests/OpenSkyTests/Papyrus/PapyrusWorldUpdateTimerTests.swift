@@ -9,6 +9,7 @@
 // exact rounding the registry uses.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 /// Shared fixture for the update-timer test suites: one scripted reference

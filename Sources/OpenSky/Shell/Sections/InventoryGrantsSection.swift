@@ -15,6 +15,7 @@
 // would give the same deltas two owners.
 
 import AppKit
+import OpenSkyFormats
 
 final class InventoryGrantsSection: PanelSectionViewController {
     weak var provider: (any InventoryEquipmentControlProviding)? {

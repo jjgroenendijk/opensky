@@ -34,6 +34,7 @@
 // still more than the `None` the parameter would otherwise carry.
 
 import Foundation
+import OpenSkyFormats
 
 extension PapyrusWorldRuntime {
     /// Queues `OnHit(akAggressor, akSource, akProjectile, abPowerAttack,

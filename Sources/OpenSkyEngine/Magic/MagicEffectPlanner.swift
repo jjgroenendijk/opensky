@@ -46,6 +46,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One MGEF entry resolved into an application the runtime can carry out.
 nonisolated struct MagicEffectApplication: Equatable {

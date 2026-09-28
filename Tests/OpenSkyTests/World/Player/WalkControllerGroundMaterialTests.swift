@@ -3,6 +3,7 @@
 // carries a per-shape material, and the controller says which one is underfoot.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

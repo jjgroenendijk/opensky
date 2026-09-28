@@ -3,6 +3,7 @@
 // the caller supplies the opaque Papyrus handle for that live reference.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 
 nonisolated enum ScriptBindingError: Error, Equatable {

@@ -1,5 +1,7 @@
 // Distant LOD bridge split from CellSceneBuilder to keep core WRLD walk dense.
 
+import OpenSkyFormats
+
 nonisolated extension CellSceneBuilder {
     nonisolated func buildDistantLOD(
         worldspaceEditorID: String,

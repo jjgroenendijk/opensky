@@ -4,6 +4,7 @@
 // tools/probe.sh).
 
 import Foundation
+import OpenSkyFormats
 
 enum AudioCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

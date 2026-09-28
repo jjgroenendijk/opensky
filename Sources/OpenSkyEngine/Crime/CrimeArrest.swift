@@ -37,6 +37,7 @@
 // Documented in docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Why an arrest outcome could not run.
 nonisolated enum ArrestRefusal: Error, Equatable, Sendable {

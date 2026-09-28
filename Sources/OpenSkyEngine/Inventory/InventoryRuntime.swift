@@ -23,6 +23,7 @@
 // Documented in docs/engine/inventory-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One inventory owner: its identity, which plugin record its baseline comes
 /// from, and the cell its mutations are attributed to.

@@ -21,6 +21,7 @@
 // See docs/engine/dialogue-camera.md.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 /// Dialogue-camera state the controller owns. Extensions cannot add stored

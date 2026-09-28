@@ -2,7 +2,7 @@
 // dev-4.1.6 `wbRecord(DIAL, ...)`.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct DialogueTopicRecordTests {

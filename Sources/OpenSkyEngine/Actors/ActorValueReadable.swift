@@ -16,6 +16,7 @@
 // Documented in docs/engine/actor-values.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// An observation of one actor's values that can answer for any actor value.
 nonisolated protocol ActorValueReadable {

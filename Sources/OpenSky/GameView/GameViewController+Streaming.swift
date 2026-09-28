@@ -2,6 +2,7 @@
 // GameViewController.swift to keep that file under the strict-lint size cap
 // after the M9.2.2 ambience-context subscription landed here.
 
+import OpenSkyFormats
 import OSLog
 import simd
 

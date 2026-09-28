@@ -9,6 +9,7 @@
 // Documented in docs/engine/runtime-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Mutable, main-actor-owned store of per-reference runtime state.
 ///

@@ -17,6 +17,7 @@
 // the selected actor rather than on everything.
 
 import AppKit
+import OpenSkyFormats
 
 final class CombatActorValuesSection: PanelSectionViewController {
     weak var provider: (any ActorValueControlProviding)? {

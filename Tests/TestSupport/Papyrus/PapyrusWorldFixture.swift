@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 /// Records "Probe.Note" calls in dispatch order while forwarding everything

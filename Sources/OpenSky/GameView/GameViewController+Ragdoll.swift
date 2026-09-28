@@ -12,6 +12,7 @@
 // 15.4 promoted the queue to allow.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 /// Ragdoll state the controller owns. Extensions cannot add stored properties,

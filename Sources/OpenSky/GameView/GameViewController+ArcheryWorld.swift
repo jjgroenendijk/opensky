@@ -28,6 +28,7 @@
 //   the spawn path does not have.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController: ProjectileWorld {

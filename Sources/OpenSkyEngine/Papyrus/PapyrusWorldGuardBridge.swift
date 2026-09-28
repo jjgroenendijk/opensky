@@ -11,6 +11,7 @@
 // Documented in docs/engine/papyrus-activation.md and docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Guard and arrest operations a Papyrus native may perform.
 @MainActor

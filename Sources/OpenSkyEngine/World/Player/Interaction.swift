@@ -2,6 +2,7 @@
 // view-ray target and emits a typed event when the use key activates it.
 // UI and future Papyrus consumers subscribe without owning targeting rules.
 
+import OpenSkyFormats
 import simd
 
 nonisolated enum InteractionAction: Equatable, Sendable {

@@ -10,6 +10,7 @@
 
 import AVFAudio
 import Foundation
+import OpenSkyFormats
 
 extension WorldAudioEngine {
     /// Builds a PCM buffer from RIFF/WAVE bytes.

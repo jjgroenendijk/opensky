@@ -9,6 +9,7 @@
 // chain + record layouts documented in docs/engine/actor-resolution.md.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 import simd
 

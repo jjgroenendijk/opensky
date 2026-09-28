@@ -4,6 +4,7 @@
 // so both tools show the same decode (docs/tools/preview-gui.md).
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum RecordTextDump {
     /// Big records (Tamriel WRLD carries thousands of RNAMs) get capped so

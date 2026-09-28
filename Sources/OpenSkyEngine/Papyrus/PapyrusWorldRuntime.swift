@@ -16,6 +16,7 @@
 //   keeps retirement O(instances) instead of scanning scheduler entries.
 
 import Foundation
+import OpenSkyFormats
 
 @MainActor
 final class PapyrusWorldRuntime {

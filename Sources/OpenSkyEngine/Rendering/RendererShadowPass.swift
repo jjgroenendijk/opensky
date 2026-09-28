@@ -9,6 +9,7 @@
 
 import Foundation
 import Metal
+import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 

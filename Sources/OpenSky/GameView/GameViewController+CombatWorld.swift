@@ -21,6 +21,7 @@
 // playback and says so.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController: CombatLoopWorld {

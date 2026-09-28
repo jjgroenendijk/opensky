@@ -9,6 +9,7 @@
 // The actions live in `GameViewController+CrimeFactionActions.swift`.
 
 import AppKit
+import OpenSkyFormats
 
 /// What the panel has selected. Nil selections fall back to the first option
 /// the snapshot offers, which is what the popups show.

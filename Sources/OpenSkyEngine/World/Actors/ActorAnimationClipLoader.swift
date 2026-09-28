@@ -27,6 +27,7 @@
 // Documented in docs/engine/combat-behavior.md and docs/engine/actor-animation.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum ActorAnimationClipLoader {
     /// Where every character animation and skeleton lives.

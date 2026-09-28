@@ -2,6 +2,7 @@
 // and location links legible in both the CLI and Asset Browser.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension RecordTextDump {
     struct KeywordContext {

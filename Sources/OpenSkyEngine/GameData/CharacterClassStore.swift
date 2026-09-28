@@ -12,10 +12,11 @@
 // seen unless it lived in the same file as the actors.
 //
 // What a class contributes is documented with the record
-// (`Sources/OpenSkyEngine/Formats/ESM/Records/CharacterClass.swift`) and with the
+// (`Sources/OpenSkyFormats/ESM/Records/CharacterClass.swift`) and with the
 // derivation it feeds (docs/engine/actor-values.md).
 
 import Foundation
+import OpenSkyFormats
 
 /// One CLAS record under its load-order identity.
 nonisolated struct ResolvedCharacterClass: Equatable {

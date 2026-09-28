@@ -14,6 +14,7 @@
 // Read-only. Output is plain text and stable enough to grep.
 
 import Foundation
+import OpenSkyFormats
 
 enum ArcheryCommand {
     /// The distance the per-arrow drop is reported at. A round number inside

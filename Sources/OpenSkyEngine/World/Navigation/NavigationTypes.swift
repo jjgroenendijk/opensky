@@ -2,6 +2,7 @@
 // future actor path follower (issue #200). Navigation coordinates are world
 // engine units and path endpoints are feet positions.
 
+import OpenSkyFormats
 import simd
 
 nonisolated struct NavigationTriangleID: Hashable, Comparable, Sendable {

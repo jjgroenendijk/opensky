@@ -7,6 +7,7 @@
 // where `Actor.ShowBarterMenu` lands.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController: CrimeFactionControlProviding {
     var bountyFactionSelection: ReferenceKey? {

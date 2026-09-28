@@ -15,6 +15,7 @@
 // Documented in docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 extension CasterRuntime {
     /// One frame of a maintained cast: drain, apply the whole seconds that

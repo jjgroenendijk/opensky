@@ -12,6 +12,7 @@
 // deliberately absent this milestone.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ResolvedWordOfPower: Equatable {
     let id: ResolvedFormID

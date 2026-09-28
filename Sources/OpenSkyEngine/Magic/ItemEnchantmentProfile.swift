@@ -40,6 +40,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One enchanted item's enchantment, resolved.
 nonisolated struct ItemEnchantmentProfile: Equatable, Sendable {

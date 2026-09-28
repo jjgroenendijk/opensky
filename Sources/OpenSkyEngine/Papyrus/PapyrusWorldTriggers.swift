@@ -13,6 +13,7 @@
 // script of the authoring reference is both free and correct.
 
 import Foundation
+import OpenSkyFormats
 
 extension PapyrusWorldRuntime {
     /// Queues `OnTriggerEnter(akActionRef)` on every script instance attached

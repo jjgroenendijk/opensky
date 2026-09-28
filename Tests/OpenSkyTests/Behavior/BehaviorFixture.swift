@@ -13,6 +13,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 /// An in-memory `BehaviorObjectSource`: objects placed at offsets the test

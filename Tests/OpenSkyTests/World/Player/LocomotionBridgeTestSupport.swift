@@ -3,6 +3,7 @@
 // `LocomotionBridgeTests` so both files stay inside the lint type-length cap.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 extension LocomotionBridgeTests {

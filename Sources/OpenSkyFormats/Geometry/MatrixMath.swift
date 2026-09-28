@@ -1,0 +1,215 @@
+// Column-major, right-handed matrix helpers for the render pipeline.
+// Conventions match Metal clip space: z in [0, 1], camera looks down -z.
+// World space is Skyrim's Z-up right-handed basis at native units; see
+// docs/decisions/coordinates.md for the binding conventions.
+
+import simd
+
+nonisolated package enum MatrixMath {
+    /// Basis change from Skyrim Z-up world axes to Metal-style y-up:
+    /// (x, y, z) -> (x, z, -y). Proper rotation (det +1), no reflection.
+    package static let zUpToYUp = float4x4(columns: (
+        SIMD4<Float>(1, 0, 0, 0),
+        SIMD4<Float>(0, 0, -1, 0),
+        SIMD4<Float>(0, 1, 0, 0),
+        SIMD4<Float>(0, 0, 0, 1)
+    ))
+
+    package static func radians(fromDegrees degrees: Float) -> Float {
+        degrees / 180 * .pi
+    }
+
+    /// The inverse, for a control that presents an angle in degrees over a
+    /// value the engine keeps in radians (issue #190).
+    package static func degrees(fromRadians radians: Float) -> Float {
+        radians / .pi * 180
+    }
+
+    /// Rodrigues rotation about an arbitrary axis.
+    package static func rotation(radians: Float, axis: SIMD3<Float>) -> float4x4 {
+        let unit = simd_normalize(axis)
+        let ct = cosf(radians)
+        let st = sinf(radians)
+        let ci = 1 - ct
+        let x = unit.x
+        let y = unit.y
+        let z = unit.z
+        return float4x4(columns: (
+            SIMD4<Float>(ct + x * x * ci, y * x * ci + z * st, z * x * ci - y * st, 0),
+            SIMD4<Float>(x * y * ci - z * st, ct + y * y * ci, z * y * ci + x * st, 0),
+            SIMD4<Float>(x * z * ci + y * st, y * z * ci - x * st, ct + z * z * ci, 0),
+            SIMD4<Float>(0, 0, 0, 1)
+        ))
+    }
+
+    /// Counter-clockwise rotation about +X (viewed from the positive axis end).
+    package static func rotationX(radians: Float) -> float4x4 {
+        let ct = cosf(radians)
+        let st = sinf(radians)
+        return float4x4(columns: (
+            SIMD4<Float>(1, 0, 0, 0),
+            SIMD4<Float>(0, ct, st, 0),
+            SIMD4<Float>(0, -st, ct, 0),
+            SIMD4<Float>(0, 0, 0, 1)
+        ))
+    }
+
+    /// Counter-clockwise rotation about +Y.
+    package static func rotationY(radians: Float) -> float4x4 {
+        let ct = cosf(radians)
+        let st = sinf(radians)
+        return float4x4(columns: (
+            SIMD4<Float>(ct, 0, -st, 0),
+            SIMD4<Float>(0, 1, 0, 0),
+            SIMD4<Float>(st, 0, ct, 0),
+            SIMD4<Float>(0, 0, 0, 1)
+        ))
+    }
+
+    /// Counter-clockwise rotation about +Z.
+    package static func rotationZ(radians: Float) -> float4x4 {
+        let ct = cosf(radians)
+        let st = sinf(radians)
+        return float4x4(columns: (
+            SIMD4<Float>(ct, st, 0, 0),
+            SIMD4<Float>(-st, ct, 0, 0),
+            SIMD4<Float>(0, 0, 1, 0),
+            SIMD4<Float>(0, 0, 0, 1)
+        ))
+    }
+
+    package static func translation(_ offset: SIMD3<Float>) -> float4x4 {
+        var matrix = matrix_identity_float4x4
+        matrix.columns.3 = SIMD4<Float>(offset.x, offset.y, offset.z, 1)
+        return matrix
+    }
+
+    package static func scale(uniform factor: Float) -> float4x4 {
+        float4x4(diagonal: SIMD4<Float>(factor, factor, factor, 1))
+    }
+
+    /// Right-handed view matrix: eye space has +x right, +y up, camera looking
+    /// down -z. Works directly with Z-up world vectors — pass `up` = +Z and the
+    /// Z-up -> y-up basis change falls out of the orthonormal construction.
+    /// `up` must not be parallel to the view direction.
+    package static func lookAt(
+        eye: SIMD3<Float>,
+        target: SIMD3<Float>,
+        up: SIMD3<Float>
+    ) -> float4x4 {
+        let forward = simd_normalize(target - eye)
+        let right = simd_normalize(simd_cross(forward, up))
+        let trueUp = simd_cross(right, forward)
+        return float4x4(columns: (
+            SIMD4<Float>(right.x, trueUp.x, -forward.x, 0),
+            SIMD4<Float>(right.y, trueUp.y, -forward.y, 0),
+            SIMD4<Float>(right.z, trueUp.z, -forward.z, 0),
+            SIMD4<Float>(
+                -simd_dot(right, eye),
+                -simd_dot(trueUp, eye),
+                simd_dot(forward, eye),
+                1
+            )
+        ))
+    }
+
+    /// World transform of a placed reference (REFR): T * Rz(-z) * Ry(-y) * Rx(-x) * S.
+    /// Bethesda euler angles turn clockwise viewed from the positive axis end,
+    /// hence the negation against the CCW helpers above; order Z*Y*X with X
+    /// innermost. Sign/order rationale + verification plan:
+    /// docs/decisions/coordinates.md.
+    package static func placement(
+        position: SIMD3<Float>,
+        rotation: SIMD3<Float>,
+        scale: Float
+    ) -> float4x4 {
+        translation(position)
+            * rotationZ(radians: -rotation.z)
+            * rotationY(radians: -rotation.y)
+            * rotationX(radians: -rotation.x)
+            * Self.scale(uniform: scale)
+    }
+
+    /// The inverse of `placement`'s rotation: the Bethesda euler triple whose
+    /// `Rz(-z) * Ry(-y) * Rx(-x)` reproduces `orientation`.
+    ///
+    /// A simulated rigid body integrates an orientation quaternion but persists
+    /// through `ReferenceTransformOverride`, which stores the record's own euler
+    /// angles (issue #193). Without this the two representations could not be
+    /// the same rotation, and a settled object would be found rotated after a
+    /// save and reload.
+    ///
+    /// The middle angle is recovered through `asin`, so it comes back in
+    /// `-pi/2 ... pi/2`. That names the same rotation as any other triple for it.
+    /// Straight up or straight down leaves the outer two angles degenerate; the
+    /// X angle is pinned to zero there and the whole rotation is carried by Z,
+    /// which is the conventional resolution.
+    package static func eulerAngles(of orientation: simd_quatf) -> SIMD3<Float> {
+        let matrix = float3x3(orientation)
+        // matrix[column][row]; the derivation below reads row-major.
+        let row2Column0 = matrix[0][2]
+        let pitch = asinf(Swift.min(Swift.max(-row2Column0, -1), 1))
+        let yaw: Float
+        let roll: Float
+        if abs(row2Column0) < 0.999_99 {
+            yaw = atan2f(matrix[0][1], matrix[0][0])
+            roll = atan2f(matrix[1][2], matrix[2][2])
+        } else {
+            yaw = atan2f(-matrix[1][0], matrix[1][1])
+            roll = 0
+        }
+        return SIMD3<Float>(-roll, -pitch, -yaw)
+    }
+
+    /// Normal-transform matrix: inverse-transpose of `matrix`, correct for
+    /// world-space normals under non-uniform scale. Multiply with w = 0
+    /// vectors and take xyz. Singular input (zero scale — pathological
+    /// external data) falls back to identity instead of producing NaNs.
+    package static func normalMatrix(_ matrix: float4x4) -> float4x4 {
+        guard abs(matrix.determinant) > .ulpOfOne else { return matrix_identity_float4x4 }
+        return matrix.inverse.transpose
+    }
+
+    /// Right-handed perspective projection mapping z to Metal's [0, 1] range.
+    package static func perspective(
+        fovYRadians: Float,
+        aspectRatio: Float,
+        nearZ: Float,
+        farZ: Float
+    ) -> float4x4 {
+        let ys = 1 / tanf(fovYRadians * 0.5)
+        let xs = ys / aspectRatio
+        let zs = farZ / (nearZ - farZ)
+        return float4x4(columns: (
+            SIMD4<Float>(xs, 0, 0, 0),
+            SIMD4<Float>(0, ys, 0, 0),
+            SIMD4<Float>(0, 0, zs, -1),
+            SIMD4<Float>(0, 0, zs * nearZ, 0)
+        ))
+    }
+
+    // Six bounds are the canonical orthographic-frustum signature (l/r/b/t/n/f).
+    // swiftlint:disable function_parameter_count
+    /// Right-handed orthographic projection mapping z to Metal's [0, 1] range.
+    /// Eye space looks down -z, so eye z in [-farZ, -nearZ] maps to clip z in
+    /// [0, 1]; x in [left, right] and y in [bottom, top] map to [-1, 1].
+    package static func orthographic(
+        left: Float,
+        right: Float,
+        bottom: Float,
+        top: Float,
+        nearZ: Float,
+        farZ: Float
+    ) -> float4x4 {
+        let rml = right - left
+        let tmb = top - bottom
+        let nmf = nearZ - farZ
+        return float4x4(columns: (
+            SIMD4<Float>(2 / rml, 0, 0, 0),
+            SIMD4<Float>(0, 2 / tmb, 0, 0),
+            SIMD4<Float>(0, 0, 1 / nmf, 0),
+            SIMD4<Float>(-(right + left) / rml, -(top + bottom) / tmb, nearZ / nmf, 1)
+        ))
+    }
+    // swiftlint:enable function_parameter_count
+}

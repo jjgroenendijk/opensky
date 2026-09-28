@@ -36,6 +36,7 @@
 // Documented in docs/engine/runtime-state.md and docs/engine/dialogue.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Failures the dialogue layer reports.
 ///

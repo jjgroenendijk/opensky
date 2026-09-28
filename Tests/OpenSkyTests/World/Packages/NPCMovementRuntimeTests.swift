@@ -2,6 +2,7 @@
 // bounded recovery, sparse persistence, and crowd cap (issue #423).
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

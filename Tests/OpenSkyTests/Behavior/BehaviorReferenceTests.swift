@@ -8,6 +8,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 /// A `BehaviorReferenceSource` backed by instances the test already built.

@@ -5,6 +5,7 @@
 // rather than what the impact did.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

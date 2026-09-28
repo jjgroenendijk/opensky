@@ -3,6 +3,7 @@
 // AGENTS.md robustness rule) and a world AABB for camera placement.
 
 import Foundation
+import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 

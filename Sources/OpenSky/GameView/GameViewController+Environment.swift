@@ -5,6 +5,7 @@
 // destination drives all of them.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController: WeatherControlProviding {

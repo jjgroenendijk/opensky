@@ -4,6 +4,7 @@
 import Foundation
 import Metal
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct TextureLoaderTests {

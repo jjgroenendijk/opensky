@@ -15,6 +15,7 @@
 // Documented in docs/engine/perks.md and docs/engine/condition-functions.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Every actor's owned perks plus the store their FormID parameters resolve
 /// against.

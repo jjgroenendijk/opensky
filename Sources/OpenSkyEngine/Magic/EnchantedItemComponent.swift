@@ -33,6 +33,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One owner's enchanted-item bookkeeping: charge left per weapon, and the
 /// constant effects each worn item established.

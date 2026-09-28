@@ -11,6 +11,7 @@
 // ground plane. Layout + placement math: docs/engine/terrain.md.
 
 import Foundation
+import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 

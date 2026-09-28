@@ -11,6 +11,7 @@
 // The reading half lives in `GameViewController+ProgressionTree.swift`.
 
 import Foundation
+import OpenSkyFormats
 
 extension GameViewController: ProgressionControlProviding {
     var progressionSkillSelection: Int32 {

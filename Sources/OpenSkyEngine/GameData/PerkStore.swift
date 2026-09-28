@@ -13,6 +13,7 @@
 // issue 20.4 and deliberately absent here.
 
 import Foundation
+import OpenSkyFormats
 
 /// One effect of a perk, joined against the spell store.
 nonisolated struct ResolvedPerkEffect {

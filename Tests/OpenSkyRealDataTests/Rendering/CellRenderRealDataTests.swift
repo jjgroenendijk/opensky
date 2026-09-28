@@ -12,6 +12,7 @@ import ImageIO
 import Metal
 import MetalKit
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 import UniformTypeIdentifiers
 

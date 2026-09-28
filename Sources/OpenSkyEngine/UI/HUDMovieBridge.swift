@@ -4,6 +4,7 @@
 // movie lifetime; the caller batches mutations through `Renderer.updateSWFRuntime`.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct HUDMeterValues: Equatable, Sendable {
     var health: Float

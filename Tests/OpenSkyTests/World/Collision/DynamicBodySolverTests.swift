@@ -3,6 +3,7 @@
 // stays above the floor, and produces the same resting state twice.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

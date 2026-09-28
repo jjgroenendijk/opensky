@@ -1,6 +1,7 @@
 // Walkable surface probe for bounded capsule step offset. Vertical faces are
 // excluded by slope; triangle winding is treated two-sided for collision.
 
+import OpenSkyFormats
 import simd
 
 /// A surface the capsule can step up onto: the height it sits at, and what it

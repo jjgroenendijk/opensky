@@ -12,6 +12,7 @@
 // do — and that native lands in `openBarter(with:)`.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     /// The engine's vendor reader over the provider's FACT and FLST indexes.

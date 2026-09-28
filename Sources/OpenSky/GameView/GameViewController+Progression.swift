@@ -19,6 +19,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import AppKit
+import OpenSkyFormats
 
 /// Character-level state the controller owns. Extensions cannot add stored
 /// properties, so it lives as one value on `GameViewController`.

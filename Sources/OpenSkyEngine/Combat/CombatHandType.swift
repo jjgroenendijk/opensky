@@ -39,6 +39,7 @@
 // Documented in docs/engine/combat-graph-names.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One hand's contents as the behavior graph counts them.
 ///

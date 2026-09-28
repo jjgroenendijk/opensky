@@ -14,6 +14,7 @@
 // outside it is a reason-tagged failure rather than a spellless stranger.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     /// Known spells, active effects and cast state for every actor this session

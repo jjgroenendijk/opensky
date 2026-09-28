@@ -6,6 +6,7 @@
 // stopped showing.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct SWFLabRuntimeReadoutTests {

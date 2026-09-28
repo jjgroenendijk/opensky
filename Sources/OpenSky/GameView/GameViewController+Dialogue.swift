@@ -15,6 +15,7 @@
 // See docs/engine/dialogue-menu.md.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 struct DialogueBridgeState {

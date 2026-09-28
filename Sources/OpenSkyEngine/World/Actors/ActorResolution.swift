@@ -11,6 +11,7 @@
 // Documented in docs/engine/actor-resolution.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Terminal resolution failures. Per-field fallbacks never throw; only a
 /// broken chain (dangling FormID, cycle, unusable list) does.

@@ -16,6 +16,7 @@
 // property the movie reads off a row it was handed lands in that tally.
 
 import Foundation
+import OpenSkyFormats
 
 enum SWFQuestJournalCommand {
     /// `MGRArniel01`, the M13 target quest: the cheapest journal-visible quest

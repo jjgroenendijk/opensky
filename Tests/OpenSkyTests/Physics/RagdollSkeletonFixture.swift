@@ -8,6 +8,7 @@
 // everything else is fixed.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 enum RagdollSkeletonFixture {

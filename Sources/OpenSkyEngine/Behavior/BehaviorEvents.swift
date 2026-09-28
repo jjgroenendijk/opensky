@@ -14,6 +14,7 @@
 // docs/engine/behavior-runtime.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One raised event: which index, what it is called, and the string payload
 /// the authored data attached to it, if any.

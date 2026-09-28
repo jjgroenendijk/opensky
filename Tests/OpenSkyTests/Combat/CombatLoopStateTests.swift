@@ -7,6 +7,7 @@
 // 15.8's combat-target condition among them, reads exactly that answer.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

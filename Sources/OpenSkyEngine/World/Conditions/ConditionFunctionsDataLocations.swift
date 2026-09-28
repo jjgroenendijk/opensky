@@ -2,6 +2,7 @@
 // load order before registration. All reads go through `ConditionDataResolution`.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
     static func installLocationData(_ registry: inout ConditionFunctionRegistry) {

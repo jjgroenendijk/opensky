@@ -5,6 +5,7 @@
 // by full-file EDID scan.
 
 import Foundation
+import OpenSkyFormats
 
 enum RecordCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

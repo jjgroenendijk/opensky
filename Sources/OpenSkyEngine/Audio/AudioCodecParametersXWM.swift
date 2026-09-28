@@ -13,6 +13,7 @@
 // docs/engine/audio-decoding.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension AudioCodecParameters {
     /// The six-byte WMAv2 extradata block ffmpeg's xWMA demuxer synthesizes when

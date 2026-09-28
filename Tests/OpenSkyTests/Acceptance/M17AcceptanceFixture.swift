@@ -28,6 +28,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 enum M17AcceptanceFixture {
     static let greetingTopic: UInt32 = 0x0000_1700

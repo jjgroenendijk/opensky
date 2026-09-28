@@ -11,6 +11,7 @@
 // search and give-up — run with no renderer, no window and no game data.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 @MainActor

@@ -47,6 +47,7 @@
 // Documented in docs/engine/spell-delivery.md.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// What a spell carries with it once it has left the caster.

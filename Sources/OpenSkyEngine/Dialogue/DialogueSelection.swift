@@ -14,6 +14,7 @@
 // evidence away.
 
 import Foundation
+import OpenSkyFormats
 
 /// Why one response was not chosen.
 ///

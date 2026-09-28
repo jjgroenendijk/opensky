@@ -20,6 +20,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
+import OpenSkyFormats
 
 @MainActor
 struct EnchantmentLedger {

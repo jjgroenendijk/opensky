@@ -22,6 +22,7 @@
 // (FULL -> `.strings`, long-form body text -> `.dlstrings`).
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension JournalMenuModel {
     /// Resolves one lstring, with or without string tables.

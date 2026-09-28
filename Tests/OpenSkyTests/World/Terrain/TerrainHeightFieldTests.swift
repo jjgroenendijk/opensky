@@ -2,6 +2,7 @@
 // TerrainMeshBuilder's SW->NE rendered triangles, never a bilinear patch.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

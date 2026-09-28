@@ -26,6 +26,7 @@
 // docs/engine/inventory-equipment.md and docs/engine/inventory-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// The hands an equipped item takes. Not a biped slot: nothing in BOD2/BODT
 /// describes holding something.

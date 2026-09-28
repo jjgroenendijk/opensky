@@ -12,6 +12,7 @@
 // player out of a guild they just joined would undo the demonstration.
 
 import AppKit
+import OpenSkyFormats
 
 final class FactionMembershipSection: CrimeFactionPanelSection {
     let crosshairControl = NSButton(title: "Use crosshair actor", target: nil, action: nil)

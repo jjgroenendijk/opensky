@@ -36,6 +36,7 @@
 // papered over; every effect that is running answers identically.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
     static func installMagic(_ registry: inout ConditionFunctionRegistry) {

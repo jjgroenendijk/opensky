@@ -12,6 +12,7 @@
 // Adding a second reset here would give the same deltas two owners.
 
 import AppKit
+import OpenSkyFormats
 
 final class ItemsSection: PanelSectionViewController {
     weak var provider: (any ItemControlProviding)? {

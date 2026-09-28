@@ -6,6 +6,7 @@
 // cached is a real resolution rather than a stand-in.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 @MainActor

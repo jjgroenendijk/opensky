@@ -20,6 +20,7 @@
 //   which is the truth rather than a silent no-op.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController: MeleeCombatWorld {

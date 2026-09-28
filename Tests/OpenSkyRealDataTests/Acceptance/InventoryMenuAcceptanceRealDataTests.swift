@@ -9,6 +9,7 @@ import Foundation
 import Metal
 import MetalKit
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct InventoryMenuAcceptanceRealDataTests {

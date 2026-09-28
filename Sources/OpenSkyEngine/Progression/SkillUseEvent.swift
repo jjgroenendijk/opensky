@@ -37,6 +37,7 @@
 // Documented in docs/engine/skill-advancement.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What was done, in the emitting system's own terms.
 ///

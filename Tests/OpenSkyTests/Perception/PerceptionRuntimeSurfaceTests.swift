@@ -6,6 +6,7 @@
 // perceives, and this half is about what the pass costs and what it hands out.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 import Testing

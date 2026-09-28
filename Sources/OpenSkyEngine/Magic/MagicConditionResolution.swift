@@ -29,6 +29,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One actor's magic as a condition sees it.
 nonisolated struct MagicConditionState: Equatable, Sendable {

@@ -3,6 +3,7 @@
 // per-tick budget and report.
 
 import Foundation
+import OpenSkyFormats
 
 /// World-side identity of one attached script instance: the reference the
 /// script is attached to plus its lowercased script name. `Comparable` orders

@@ -2,6 +2,7 @@
 // Coordinates/FormIDs identify observed records only; no game payload lives
 // in the repository.
 
+import OpenSkyFormats
 import simd
 
 nonisolated enum WalkPathRoute {

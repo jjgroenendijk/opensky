@@ -3,6 +3,7 @@
 // whole voice corpus. Satellite of AudioVoiceSweep.swift.
 
 import Foundation
+import OpenSkyFormats
 
 /// Name-derivation result, per plugin and in total.
 struct VoiceNameReport {

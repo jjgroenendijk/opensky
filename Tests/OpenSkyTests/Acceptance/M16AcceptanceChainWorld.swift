@@ -9,6 +9,7 @@
 // diorama rather than a chain.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 extension M16AcceptanceChain: PerceptionWorld {

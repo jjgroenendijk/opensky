@@ -7,6 +7,7 @@
 import AppKit
 import Metal
 import MetalKit
+import OpenSkyFormats
 import simd
 
 final class PreviewDetailBuilder {

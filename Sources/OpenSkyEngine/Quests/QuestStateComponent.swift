@@ -56,6 +56,7 @@
 // Documented in docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Display state of one quest objective, addressed by its QOBJ index.
 ///

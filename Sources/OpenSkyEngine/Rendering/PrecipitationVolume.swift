@@ -4,6 +4,7 @@
 // tiny streak/flake masks are generated at runtime.
 
 import Metal
+import OpenSkyFormats
 import simd
 
 nonisolated struct PrecipitationRuntimeSnapshot: Equatable {

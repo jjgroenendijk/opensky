@@ -10,6 +10,7 @@
 // AppKit-free, so it compiles into `openskycli` alongside the app.
 
 import Foundation
+import OpenSkyFormats
 
 /// One stack as the panel spells it: what it is, how many, and what to call it.
 nonisolated struct ItemStackReadout: Equatable, Sendable {

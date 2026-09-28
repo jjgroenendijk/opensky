@@ -8,6 +8,7 @@
 // load-order-relative FormID.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated final class DialogueStore: Sendable {
     private let topicsByFormID: [UInt32: DialogueTopic]

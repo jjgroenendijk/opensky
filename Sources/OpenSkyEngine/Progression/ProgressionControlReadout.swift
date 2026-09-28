@@ -6,6 +6,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum ProgressionControlReadout {
     /// Column width the skill lines pad their names to. Wide enough for

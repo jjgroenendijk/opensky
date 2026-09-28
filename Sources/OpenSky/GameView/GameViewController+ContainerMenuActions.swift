@@ -9,6 +9,7 @@
 // than one that says why it did nothing.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController: ContainerMenuControlProviding {
     var containerMenuIsOpen: Bool {

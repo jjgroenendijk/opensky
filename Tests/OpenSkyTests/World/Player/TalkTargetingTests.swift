@@ -3,6 +3,7 @@
 // narrowphase, so no world, no streamer and no install.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

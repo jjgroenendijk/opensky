@@ -7,6 +7,7 @@
 // unit-testable without AppKit, exactly like `SWFLabReadout`.
 
 import Foundation
+import OpenSkyFormats
 
 @MainActor
 extension PapyrusWorldRuntime {

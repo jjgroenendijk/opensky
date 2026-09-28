@@ -11,6 +11,7 @@
 // arguments and prints.
 
 import Foundation
+import OpenSkyFormats
 
 enum ActorValueCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

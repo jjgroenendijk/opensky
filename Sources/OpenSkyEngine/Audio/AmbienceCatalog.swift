@@ -14,6 +14,7 @@
 //   ASPC record body:    xEdit wbDefinitionsTES5.pas:5401-5407.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// Identity of the cell whose ambience should be playing. The streamer emits a

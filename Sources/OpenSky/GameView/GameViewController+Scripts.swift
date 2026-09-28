@@ -1,3 +1,5 @@
+import OpenSkyFormats
+
 // Papyrus bridge for the World > Scripts sidebar panel (issue #278). Sampling
 // and formatting live elsewhere — `PapyrusWorldRuntime.scriptsSnapshot` builds
 // the value and `ScriptsReadout` words it — so this file is only the seam

@@ -1,6 +1,7 @@
 // Shared location lookup and same-location functions for issue #455.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
     typealias ConditionLocationLookup = @Sendable (ConditionCall) -> Result<

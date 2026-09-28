@@ -18,8 +18,9 @@ SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
 // module directory Sources/ShaderTypes.
 MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/ShaderTypes
 
-// The vendored decode-only ffmpeg. A command-line tool has no bundle to embed into, so
-// it loads the dylibs straight from .vendor at run time.
-LD_RUNPATH_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
+// A command-line tool has no bundle to embed into. It loads the vendored decode-only
+// ffmpeg straight from .vendor, and OpenSkyFormats.framework from beside itself in the
+// built-products directory.
+LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path $(SRCROOT)/.vendor/ffmpeg/lib
 LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
 OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample

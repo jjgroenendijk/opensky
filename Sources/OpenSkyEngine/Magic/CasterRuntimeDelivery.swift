@@ -42,6 +42,7 @@
 // Documented in docs/engine/spell-delivery.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Which deliveries this build carries out.
 nonisolated enum SpellDelivery {

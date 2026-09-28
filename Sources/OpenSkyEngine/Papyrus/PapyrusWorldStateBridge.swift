@@ -7,6 +7,7 @@
 // held weakly because the same controller owns both.
 
 import Foundation
+import OpenSkyFormats
 
 @MainActor
 final class PapyrusWorldStateBridge: PapyrusWorldBridge {

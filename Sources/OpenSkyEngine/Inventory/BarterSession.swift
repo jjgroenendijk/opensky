@@ -20,6 +20,7 @@
 // Documented in docs/engine/barter.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Why a transaction did not happen.
 nonisolated enum BarterError: Error, Equatable {

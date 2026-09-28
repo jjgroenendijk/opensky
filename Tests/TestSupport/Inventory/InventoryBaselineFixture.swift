@@ -35,6 +35,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 enum InventoryBaselineFixture {
     static let gold = FormID(0x0000_000F)

@@ -16,6 +16,7 @@
 // distinguishable from a zero.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     /// One probe: which function to run and how to spell its parameter.

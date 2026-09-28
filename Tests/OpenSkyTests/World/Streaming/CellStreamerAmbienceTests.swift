@@ -4,6 +4,7 @@
 // runner + CellScene helpers without growing that file past the length limit.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 extension CellStreamerTests {

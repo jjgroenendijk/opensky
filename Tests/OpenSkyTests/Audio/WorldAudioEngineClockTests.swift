@@ -11,6 +11,7 @@
 
 import AVFAudio
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

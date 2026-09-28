@@ -9,6 +9,7 @@
 //   - Exterior recenter: the per-frame `update()` walk in CellStreamer.swift.
 
 import Foundation
+import OpenSkyFormats
 
 /// Cheap identity for diff: only the fields that drive `MusicSelection.resolve`.
 /// Equal keys never re-resolve, so a steady-state frame costs one comparison.

@@ -11,6 +11,7 @@
 // values, and xEdit dev Core/wbDefinitionsTES5.pas for the index table.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum ConditionFunctions {
     static func install(into registry: inout ConditionFunctionRegistry) {

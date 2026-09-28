@@ -4,6 +4,7 @@
 // parse failure here reproduces what later animation/skeleton loading sees.
 
 import Foundation
+import OpenSkyFormats
 
 enum HKXCommand {
     /// First N objects listed verbatim; the rest collapse into a truncation

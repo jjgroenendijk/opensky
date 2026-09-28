@@ -15,6 +15,7 @@
 // Documented in docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct QuestAliasResolution: Sendable {
     private let defaults: QuestStore

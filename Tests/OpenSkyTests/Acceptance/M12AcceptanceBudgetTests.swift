@@ -16,6 +16,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 /// A provider whose builds report whatever summary the case needs, so the real

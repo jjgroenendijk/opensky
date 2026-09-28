@@ -22,6 +22,7 @@
 // cited at each registration.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
     static func installDialogue(_ registry: inout ConditionFunctionRegistry) {

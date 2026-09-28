@@ -19,6 +19,7 @@
 // rather than recomputed, so a take costs no raycast.
 
 import AppKit
+import OpenSkyFormats
 
 /// Crime state the controller owns. Extensions cannot add stored properties, so
 /// it lives as one value on `GameViewController`.

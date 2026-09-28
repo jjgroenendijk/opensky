@@ -41,6 +41,7 @@
 // Documented in docs/engine/inventory-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Which plugin record an owner's baseline comes from.
 ///

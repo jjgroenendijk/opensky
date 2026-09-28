@@ -7,6 +7,7 @@
 // script activates something without the player pointing at it.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
     /// `bool Activate(ObjectReference akActivator, bool abDefaultProcessingOnly = false)`.

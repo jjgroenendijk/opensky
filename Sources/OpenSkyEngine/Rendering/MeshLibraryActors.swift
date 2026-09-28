@@ -5,6 +5,7 @@
 
 import Foundation
 import Metal
+import OpenSkyFormats
 import simd
 
 nonisolated extension MeshLibrary {

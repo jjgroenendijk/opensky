@@ -28,6 +28,7 @@
 // silently wrong.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
     static func installQuest(into registry: inout PapyrusNativeRegistry) {

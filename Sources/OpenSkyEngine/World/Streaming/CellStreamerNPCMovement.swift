@@ -1,6 +1,7 @@
 // Cell-streamer integration for NPC locomotion (issue #423). Navigation,
 // collision, terrain, triggers, and residency already meet here.
 
+import OpenSkyFormats
 import simd
 
 struct CellStreamerNPCMovementState {

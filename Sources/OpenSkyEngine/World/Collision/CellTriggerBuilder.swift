@@ -15,6 +15,7 @@
 // the render scene, and the resulting set is immutable once built.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// Both immutable collision products of one cell build. They are produced

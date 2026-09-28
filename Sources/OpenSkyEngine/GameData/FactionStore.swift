@@ -7,6 +7,7 @@
 // store and are the rest of milestone M21.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ResolvedFaction: Equatable {
     let id: ResolvedFormID

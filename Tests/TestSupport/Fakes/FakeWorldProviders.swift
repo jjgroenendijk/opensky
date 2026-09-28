@@ -4,6 +4,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// Stands in for the game controller, which conforms to every provider
 /// protocol. Shared with `WorldPanelTests` so a panel test exercises the same

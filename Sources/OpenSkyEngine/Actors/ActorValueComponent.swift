@@ -26,6 +26,7 @@
 // Documented in docs/engine/actor-value-store.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One actor's current primary values, plus whatever it has stored for the
 /// rest of the actor-value table.

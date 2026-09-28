@@ -8,6 +8,7 @@
 // from. Group nesting reference: UESP "Skyrim Mod:Mod File Format" — Groups.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 
 /// A decoded REFR plus the children group it was stored in.

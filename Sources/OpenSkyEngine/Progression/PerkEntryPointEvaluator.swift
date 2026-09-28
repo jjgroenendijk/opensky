@@ -57,6 +57,7 @@
 // Documented in docs/engine/perks.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One perk effect as the evaluator sees it: the function to apply, the payload
 /// it reads, and the priority it declared.

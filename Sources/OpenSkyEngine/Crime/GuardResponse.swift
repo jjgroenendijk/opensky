@@ -30,6 +30,7 @@
 // Documented in docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What a guard does on seeing the player with a bounty.
 nonisolated enum CrimeResponse: Equatable, Sendable {

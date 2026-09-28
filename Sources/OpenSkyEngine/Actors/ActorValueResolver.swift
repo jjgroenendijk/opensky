@@ -12,6 +12,7 @@
 // Documented in docs/engine/actor-values.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Why an actor's values could not be derived.
 ///

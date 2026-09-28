@@ -13,6 +13,7 @@
 // docs/engine/detection.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// The `AIOverlayStatsLabel` lines: what is switched on and what it cost.
 nonisolated enum AIOverlayReadout {

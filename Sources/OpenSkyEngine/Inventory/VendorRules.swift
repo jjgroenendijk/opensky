@@ -40,6 +40,7 @@
 // Documented in docs/engine/vendor-factions.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// When a vendor trades, from the `VENV` start and end hours.
 nonisolated struct VendorHours: Equatable, Sendable {

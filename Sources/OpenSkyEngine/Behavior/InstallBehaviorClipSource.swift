@@ -13,6 +13,7 @@
 // (AGENTS.md "Legal & IP boundary").
 
 import Foundation
+import OpenSkyFormats
 
 /// Loads clips out of the install on demand, so only the clips the graphs
 /// actually reach are read. Capped, because a graph that reaches thousands of

@@ -15,6 +15,7 @@
 // Documented in docs/engine/hostility.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Directional reaction lookup between two factions.
 nonisolated struct FactionRelationIndex {

@@ -8,6 +8,7 @@
 // third shape.
 
 import Foundation
+import OpenSkyFormats
 
 /// One container the panel can nominate as the merchant.
 ///

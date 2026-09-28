@@ -67,6 +67,7 @@
 // Documented in docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What one fill pass produced: the table, why each empty alias is empty, and
 /// whether the quest is allowed to start with it.

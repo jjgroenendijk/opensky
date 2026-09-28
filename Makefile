@@ -152,7 +152,7 @@ md-lint: ## Lint Markdown strictly
 sh-lint: ## Shellcheck the hooks and tools/ scripts
 	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
 
-cli-boundary: ## Keep AppKit out of Sources/OpenSkyEngine, which the CLI also builds
+cli-boundary: ## Keep AppKit out of the engine and format sources the CLI also builds
 	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
 
 realdata-plan: ## Check every env-gated suite is in the RealData plan
@@ -259,7 +259,7 @@ test: vendor-link cache-link ## Build and run the unit tests through the build s
 test-fast: vendor-link cache-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
 	@case "$(T)" in \
 		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
-		OpenSkyTests/*) ./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
+		OpenSkyTests/* | OpenSkyFormatsTests/*) ./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
 		*) ./tools/test-fast.sh $(if $(B),-B,) -t "OpenSkyTests/$(T)" ;; \
 	esac
 
@@ -271,7 +271,7 @@ test-one: vendor-link cache-link ## Build and run one test: T=Class[/method] or 
 		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
 		echo "        ClassName[/methodName] resolves under OpenSkyTests"; \
 		exit 2; }
-	@case "$(T)" in */*/*) spec="$(T)";; *) spec="OpenSkyTests/$(T)";; esac; \
+	@case "$(T)" in */*/* | OpenSkyFormatsTests/*) spec="$(T)";; *) spec="OpenSkyTests/$(T)";; esac; \
 	case "$$spec" in OpenSkyUITests/*) plan="$(UI_PLAN)";; *) plan="$(UNIT_PLAN)";; esac; \
 	bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) one)/one.xcresult"; \
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \

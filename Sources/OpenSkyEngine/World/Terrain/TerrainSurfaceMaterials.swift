@@ -13,6 +13,7 @@
 // texture at each vertex winning — the material under the foot is the one the
 // player sees most of there.
 
+import OpenSkyFormats
 import simd
 
 nonisolated struct TerrainSurfaceMaterials: Equatable, Sendable {

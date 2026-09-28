@@ -5,6 +5,7 @@
 // the tie the same way `InteractionRaycaster` does.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

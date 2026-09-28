@@ -7,6 +7,7 @@
 // showing a number nothing produced.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// The fake's inventory-and-equipment ledger, kept together so
 /// `FakeWorldProviders` spends one stored property on it.

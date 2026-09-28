@@ -4,6 +4,7 @@
 // docs/engine/cell-streaming.md (coverage transition).
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 
 extension CellStreamer {

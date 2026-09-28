@@ -9,6 +9,7 @@
 // negative). residentNearZ is resident geometry's nearest-toward-sun distance.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

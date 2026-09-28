@@ -19,6 +19,7 @@
 // grouped by exactly the rule every other placement is grouped by.
 
 import Metal
+import OpenSkyFormats
 import simd
 
 nonisolated final class PlayerBody {

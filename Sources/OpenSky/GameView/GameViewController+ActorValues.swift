@@ -12,6 +12,7 @@
 // the established rule and it is why nothing here checks `menuMode` itself.
 
 import AppKit
+import OpenSkyFormats
 import OSLog
 
 /// Actor-value state the controller owns. Extensions cannot add stored

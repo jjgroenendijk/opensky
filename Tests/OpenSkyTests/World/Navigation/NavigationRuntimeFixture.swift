@@ -3,6 +3,7 @@
 // no game bytes enter the test target.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 @MainActor

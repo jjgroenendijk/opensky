@@ -8,6 +8,7 @@
 // `Renderer.sendSWFInput` both delivers the key and repaints.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension DialogueMenuMovieBridge {
     /// Delivers one menu event to a live movie through the renderer, which

@@ -6,6 +6,7 @@
 // STAT, plus ModelBase's cited MSTT/TREE/FURN/ACTI/CONT/DOOR pages.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ExteriorCellModelCatalog {
     let file: ESMFile

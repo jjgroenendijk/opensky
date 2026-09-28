@@ -37,6 +37,7 @@
 // Documented in docs/engine/melee-damage.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct CombatSettings: Equatable {
     /// `fCombatDistance` — the base melee reach in world units, which WEAP

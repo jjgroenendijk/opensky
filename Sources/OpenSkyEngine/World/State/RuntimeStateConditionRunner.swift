@@ -20,6 +20,7 @@
 // Documented in docs/engine/global-variables.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum RuntimeStateConditionRunner {
     /// Evaluates `conditions` against `context`, accumulating into `tally` so a

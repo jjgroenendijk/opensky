@@ -5,6 +5,7 @@
 // than guessed at.
 
 import Foundation
+import OpenSkyFormats
 
 enum GMSTCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

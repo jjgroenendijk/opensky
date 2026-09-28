@@ -62,6 +62,7 @@
 // docs/engine/archery.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// The fortify multipliers the damage formulas take.
 ///

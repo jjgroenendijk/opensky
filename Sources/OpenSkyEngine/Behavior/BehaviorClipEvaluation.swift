@@ -26,6 +26,7 @@
 // a mark on the animation, so it comes round again every loop.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// The playing part of a clip, in animation-local seconds.

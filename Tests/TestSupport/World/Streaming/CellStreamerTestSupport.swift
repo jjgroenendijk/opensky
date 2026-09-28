@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// Test build runner: the test stages completions and controls their order,
 /// standing in for the serial DispatchQueue without any async timing.

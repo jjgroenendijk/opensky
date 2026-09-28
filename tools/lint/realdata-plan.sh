@@ -5,8 +5,8 @@
 # plan" -- a 57-entry list nobody could keep spelled right -- but the two
 # structural facts that make target-level selection correct:
 #
-#   * Every env-gated suite lives in Tests/OpenSkyRealDataTests/. One in Tests/OpenSkyTests/
-#     or Tests/TestSupport/ is a suite `make realtest-all` never runs, and it
+#   * Every env-gated suite lives in Tests/OpenSkyRealDataTests/. One in Tests/OpenSkyTests/,
+#     Tests/OpenSkyFormatsTests/, or Tests/TestSupport/ is a suite `make realtest-all` never runs, and it
 #     would silently skip inside `make test` instead, because a plain
 #     `xcodebuild test` does not forward OPENSKY_DATA_ROOT into the host.
 #   * The plan selects that target, with no selectedTests narrowing it -- a
@@ -33,7 +33,11 @@ import sys
 PLAN = pathlib.Path("Config/TestPlans/RealData.xctestplan")
 TARGET = "OpenSkyRealDataTests"
 HOME = pathlib.Path("Tests/OpenSkyRealDataTests")
-ELSEWHERE = [pathlib.Path("Tests/OpenSkyTests"), pathlib.Path("Tests/TestSupport")]
+ELSEWHERE = [
+    pathlib.Path("Tests/OpenSkyTests"),
+    pathlib.Path("Tests/OpenSkyFormatsTests"),
+    pathlib.Path("Tests/TestSupport"),
+]
 # A Swift Testing suite is a plain type declaration -- no @Suite attribute is
 # required -- so the declarations are found positionally and each one keeps the
 # text up to the next declaration.

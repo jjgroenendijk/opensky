@@ -4,6 +4,7 @@
 // MusicCatalogTests for the strict type-length limit; same synthetic fixtures.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct MusicCatalogPlaylistTests {

@@ -11,6 +11,7 @@
 // entry by entry, not what the world then did with it.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 @MainActor

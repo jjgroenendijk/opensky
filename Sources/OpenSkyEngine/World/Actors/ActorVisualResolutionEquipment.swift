@@ -46,6 +46,7 @@
 // Documented in docs/engine/actor-resolution.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Skeleton nodes a rigid attachment can hang from.
 ///

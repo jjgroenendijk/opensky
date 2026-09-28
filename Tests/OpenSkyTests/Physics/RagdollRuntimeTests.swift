@@ -6,6 +6,7 @@
 // hand-off or falls back to an immediate one.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

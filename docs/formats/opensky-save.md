@@ -115,7 +115,7 @@ chunk cannot read into the next.
 | `STOL` | stolen item counts | actors |
 | `CRVG` | violent part of crime gold | actors |
 
-The code also defines `SPLB`, `PRKS`, and `PLVL` (layouts in `Sources/OpenSkyEngine/Formats/Save/`).
+The code also defines `SPLB`, `PRKS`, and `PLVL` (layouts in `Sources/OpenSkyEngine/Save/`).
 `AVGN` is an old tag that `AVOV` replaced; it is now skipped.
 
 `GALC` is exactly 8 bytes: a uint64, the next number the generated-reference allocator gives

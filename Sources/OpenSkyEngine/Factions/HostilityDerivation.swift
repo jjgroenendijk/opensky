@@ -46,6 +46,7 @@
 // Documented in docs/engine/hostility.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Everything the derivation needs to know about one actor.
 ///

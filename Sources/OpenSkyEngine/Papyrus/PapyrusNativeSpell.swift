@@ -33,6 +33,7 @@
 // receiver for one of its methods to be about.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
     static func installSpell(into registry: inout PapyrusNativeRegistry) {

@@ -11,6 +11,7 @@
 // material-less surface does, through the table's representative impact.
 
 import Foundation
+import OpenSkyFormats
 
 enum FootstepCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

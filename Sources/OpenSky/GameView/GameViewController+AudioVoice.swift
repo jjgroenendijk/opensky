@@ -9,6 +9,7 @@
 // there is".
 
 import AppKit
+import OpenSkyFormats
 import OSLog
 import simd
 

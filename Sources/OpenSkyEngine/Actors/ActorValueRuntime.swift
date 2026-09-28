@@ -23,6 +23,7 @@
 // Documented in docs/engine/actor-value-store.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Reads and mutates actor values on top of a `WorldStateStore`.
 @MainActor

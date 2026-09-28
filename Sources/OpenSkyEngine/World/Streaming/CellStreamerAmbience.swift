@@ -9,6 +9,7 @@
 // Both call `emitAmbienceContextIfNeeded()` here.
 
 import Foundation
+import OpenSkyFormats
 
 /// Cheap identity for diff: only the fields that drive `AmbienceBed.resolve`.
 /// The director's bed cache means equal keys never re-resolve.

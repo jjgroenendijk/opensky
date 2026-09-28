@@ -2,6 +2,7 @@
 // (issue #423). The path follower owns travel; animation and combat consume
 // the same intent without becoming movement authorities.
 
+import OpenSkyFormats
 import simd
 
 nonisolated enum NPCMovementState: String, Equatable, Sendable {

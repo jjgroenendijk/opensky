@@ -30,6 +30,7 @@
 // Documented in docs/engine/bounty-ledger.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// How many of each kind of crime one actor has committed against one faction.
 ///

@@ -7,6 +7,7 @@
 // exists to demonstrate rather than restore a knob.
 
 import AppKit
+import OpenSkyFormats
 
 final class CrimeBountySection: CrimeFactionPanelSection {
     static let defaultAmount: Int32 = 100

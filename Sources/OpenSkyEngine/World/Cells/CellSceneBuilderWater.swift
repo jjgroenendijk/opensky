@@ -4,6 +4,7 @@
 // UESP CELL/WRLD/WATR + xEdit dev-4.1.6 wbDefinitionsTES5.pas.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 import simd
 

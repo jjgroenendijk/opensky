@@ -2,6 +2,7 @@
 // logical stats entry, while spatial chunks keep capsule narrowphase from
 // retesting an entire building or landscape collision mesh per substep.
 
+import OpenSkyFormats
 import simd
 
 nonisolated struct StaticCollisionPartition {

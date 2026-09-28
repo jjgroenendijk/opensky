@@ -10,6 +10,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 enum HostilityFixture {
     static let pluginName = "Base.esm"

@@ -12,6 +12,7 @@
 // the binding application every node's evaluation reads through.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// Where a decoded object comes from. The engine answers from a parsed

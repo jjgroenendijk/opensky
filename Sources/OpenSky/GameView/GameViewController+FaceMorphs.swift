@@ -1,6 +1,7 @@
 // Live app bridge for the HUD & Interaction Face Morphs section.
 
 import Foundation
+import OpenSkyFormats
 
 extension GameViewController: FaceMorphControlProviding {
     var faceMorphSnapshot: FaceMorphControlSnapshot {

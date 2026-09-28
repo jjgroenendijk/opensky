@@ -22,6 +22,7 @@
 // Documented in docs/engine/projectiles.md and docs/engine/spell-delivery.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What a projectile carries, and therefore what it does when it lands.
 nonisolated enum ProjectilePayload: Equatable, Sendable {

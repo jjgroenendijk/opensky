@@ -6,6 +6,7 @@
 import AVFAudio
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 enum MusicFixture {

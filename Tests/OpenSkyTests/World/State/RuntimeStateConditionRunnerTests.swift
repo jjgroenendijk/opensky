@@ -12,6 +12,7 @@
 // synthetic and built in code; no game data is read.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct RuntimeStateConditionRunnerTests {

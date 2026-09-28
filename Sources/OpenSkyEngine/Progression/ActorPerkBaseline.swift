@@ -22,6 +22,7 @@
 // Documented in docs/engine/perks.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Re-derives actor perk lists from plugin data.
 nonisolated struct ActorPerkBaselineResolver {

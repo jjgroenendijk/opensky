@@ -1,5 +1,6 @@
 // Traditional tree LOD build, split from ring selection/terrain placement.
 
+import OpenSkyFormats
 import simd
 
 nonisolated extension DistantLODBuilder {

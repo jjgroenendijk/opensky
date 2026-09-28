@@ -11,6 +11,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 /// One behavior file's decode outcome plus where it came from, so a failure

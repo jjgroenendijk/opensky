@@ -13,6 +13,7 @@
 // through the same code path, with no second set of rules.
 
 import AppKit
+import OpenSkyFormats
 
 /// State the world-item bridge owns. Stored on `GameViewController` because
 /// extensions cannot add stored properties; nothing else writes it.

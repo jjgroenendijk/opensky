@@ -5,6 +5,7 @@
 // is. The literals both halves hand it live here so neither file owns them.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 @MainActor

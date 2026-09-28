@@ -37,6 +37,7 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One `XOWN`/`XRNK` pair as the records carry it, before anything resolves
 /// which kind of record the link names.

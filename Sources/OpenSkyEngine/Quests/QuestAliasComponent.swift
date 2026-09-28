@@ -26,6 +26,7 @@
 // Documented in docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One filled reference alias: the ALST alias ID and the world reference it
 /// resolved to.

@@ -37,6 +37,7 @@
 // Documented in docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 extension CasterRuntime {
     /// The `Mod Spell Cost` entry point, by its documented id.

@@ -8,6 +8,7 @@
 // malformed movie from taking a control action down with it.
 
 import AppKit
+import OpenSkyFormats
 
 extension SWFRuntimeSection {
     /// Wires target/action/identifier for every control. Called once from

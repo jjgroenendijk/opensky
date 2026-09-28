@@ -14,6 +14,7 @@
 
 import AVFAudio
 import Foundation
+import OpenSkyFormats
 import Synchronization
 
 nonisolated final class AudioSourceStreamer: @unchecked Sendable {

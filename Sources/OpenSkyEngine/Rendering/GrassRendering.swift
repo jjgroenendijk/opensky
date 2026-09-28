@@ -4,6 +4,7 @@
 // RenderScene merging preserves batches across resident cell boundaries.
 
 import Metal
+import OpenSkyFormats
 import simd
 
 nonisolated enum GrassRenderPolicy {

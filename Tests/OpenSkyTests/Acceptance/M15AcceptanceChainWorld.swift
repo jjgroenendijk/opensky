@@ -16,6 +16,7 @@
 // gate does not have.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 // MARK: - Melee

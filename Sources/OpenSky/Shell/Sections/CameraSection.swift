@@ -8,6 +8,7 @@
 // bug report can carry the exact camera that produced a frame.
 
 import AppKit
+import OpenSkyFormats
 
 final class CameraSection: PanelSectionViewController {
     weak var provider: (any CameraControlProviding)? {

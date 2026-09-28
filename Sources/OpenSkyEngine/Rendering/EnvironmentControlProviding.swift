@@ -3,6 +3,7 @@
 // the CLI target, so a protocol added here needs no project-membership change.
 
 import Foundation
+import OpenSkyFormats
 
 @MainActor
 protocol ShadowControlProviding: AnyObject {

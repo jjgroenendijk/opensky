@@ -20,18 +20,18 @@ under `Config/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
-| `UnitTests.xctestplan` | `OpenSkyTests` | `make test`, `make test-fast`, `make test-one`. The scheme default |
+| `UnitTests.xctestplan` | `OpenSkyTests`, `OpenSkyFormatsTests` | `make test`, `make test-fast`, `make test-one`. The scheme default |
 | `UITests.xctestplan` | `OpenSkyUITests` | `make test-ui` |
 | `RealData.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make realtest`, `make realtest-all` |
-| `Sanitizers.xctestplan` | `OpenSkyTests`, one configuration per sanitizer | `make test-sanitize` |
+| `Sanitizers.xctestplan` | `OpenSkyTests`, `OpenSkyFormatsTests`, one configuration per sanitizer | `make test-sanitize` |
 
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at `-only-testing`, so
 a selector never saves building a bundle. A plan does, because the plan decides what is built.
 `make test-one` adds `-only-testing` on top of a plan, and switches to `UITests` when the selector
 names `OpenSkyUITests`.
 
-No plan lists the UI bundle beside an app-hosted bundle, and this is on purpose. `OpenSkyTests` and
-`OpenSkyRealDataTests` are hosted by `OpenSky.app`. Put either in the same session as the UI runner,
+No plan lists the UI bundle beside an app-hosted bundle, and this is on purpose. All three unit
+bundles are hosted by `OpenSky.app`. Put either in the same session as the UI runner,
 and xcodebuild starts the app as a test host with `libXCTestBundleInject.dylib`. The app then waits
 in `-[XCTestDriver _prepareTestConfigurationAndIDESession]` for an IDE session that belongs to the
 runner, while the runner waits for the app to enter automation mode. Neither moves, and after 60
@@ -83,8 +83,9 @@ it, and that no plan lists an app-hosted bundle beside `OpenSkyUITests`.
 
 ## Code coverage
 
-The unit, UI, and sanitizer plans gather line coverage for the `OpenSky` target only, so the number
-is about engine code, not the test bundles. `make test` gathers it and `make test-report` prints it.
+The unit, UI, and sanitizer plans gather line coverage for the `OpenSky` and `OpenSkyFormats`
+targets only, so the number is about engine code, not the test bundles. `make test` gathers it and
+`make test-report` prints it.
 There is no separate target and no `-enableCodeCoverage` flag. `ENABLE_CODE_COVERAGE` defaults to
 `YES` in Xcode, so coverage was already gathered on every run and thrown away. Scoping it cost
 nothing measurable: turning it on explicitly recompiled nothing and changed the time within noise.
@@ -95,7 +96,7 @@ crash". A floor would need a baseline argument, like a perf budget.
 
 ## Sanitizers
 
-`make test-sanitize` runs `OpenSkyTests` under runtime sanitizers. Three things make this worth the
+`make test-sanitize` runs both unit bundles under runtime sanitizers. Three things make this worth the
 time: ffmpeg is reached across a C boundary where Swift's safety stops, the parsers slice
 `UnsafeRawBufferPointer` over memory-mapped archives, where a bad read lands in mapped memory instead
 of failing a bounds check, and much of the engine's concurrency is in `nonisolated` code that Swift
@@ -115,12 +116,12 @@ added, so a new report is a regression, and a real one becomes its own GitHub is
 
 ## Where test time goes
 
-Building costs more than testing. Cross-module incremental builds are on, so the test bundle
-recompiles only files that use a changed declaration. But the whole engine is one module that every
-test file imports, so a change to a widely used type still recompiles most of both targets. An edit
-inside one function body recompiles one file. Adding one internal method recompiled about 80 app
-files and 16 test files. The shared compilation cache removes the cold first build in a new worktree
-([build system](/tools/build-system.md#one-store-for-every-worktree)).
+Building costs more than testing. Cross-module incremental builds are on, so a test bundle
+recompiles only files that use a changed declaration. Inside one module, most test files use most
+of it, so a change to a widely used engine type still recompiles most of `OpenSkyTests`. The parser
+tests are in their own bundle over their own module, so an engine change does not recompile them
+([Swift modules](/tools/modules.md)). An edit inside one function body recompiles one file. The
+shared compilation cache removes the cold first build in a new worktree ([build system](/tools/build-system.md#one-store-for-every-worktree)).
 
 Swift Testing reports a duration that includes time a `@MainActor` test waited for the main actor.
 So durations from a parallel run are not a cost profile. Measure one test with

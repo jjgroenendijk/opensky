@@ -15,6 +15,7 @@
 // (AGENTS.md "Legal & IP boundary").
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated final class InstallBehaviorReferenceSource: BehaviorReferenceSource {
     private let fileSystem: VirtualFileSystem

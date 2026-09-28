@@ -4,6 +4,7 @@
 // without a game install.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct InventoryEquipmentReadoutTests {

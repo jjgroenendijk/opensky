@@ -7,6 +7,7 @@
 // conformance follows.
 
 import Foundation
+import OpenSkyFormats
 
 extension GameViewController: MagicEffectControlProviding {
     var magicEffectControlSnapshot: MagicEffectControlSnapshot {

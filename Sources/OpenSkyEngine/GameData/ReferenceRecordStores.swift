@@ -3,6 +3,7 @@
 // plugin definition that authored it.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ResolvedEncounterZone: Equatable {
     let id: ResolvedFormID

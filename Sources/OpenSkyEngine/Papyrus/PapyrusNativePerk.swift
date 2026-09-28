@@ -14,6 +14,7 @@
 // Documented in docs/engine/papyrus-activation.md and docs/engine/perks.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
     static func installPerk(into registry: inout PapyrusNativeRegistry) {
