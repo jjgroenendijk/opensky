@@ -10,7 +10,7 @@ tags: [tool, make, logs, disk, retention]
 # Run output layout and make prune
 
 Two gitignored trees hold everything a run of the tooling produces: `logs/` for
-transcripts and captures, `build/test-results/` for `.xcresult` bundles. Both grow without
+transcripts and captures, `DerivedData/TestResults/` for `.xcresult` bundles. Both grow without
 bound and neither is anybody's job to clean, which fills the data volume mid-session — one
 `DerivedData/` per linked worktree already runs to tens of gigabytes, and the worktree for
 a merged branch leaves its cache behind. The convention below makes each run a single
@@ -23,8 +23,14 @@ Every script that writes output a human reads later allocates one directory per 
 ```text
 logs/<script>/<UTC timestamp>/          for example logs/probe/<YYYYMMDDTHHMMSSZ>/
 logs/<script>/latest -> <UTC timestamp>
-build/test-results/<name>/<UTC timestamp>/<name>.xcresult
+DerivedData/TestResults/<name>/<UTC timestamp>/<name>.xcresult
 ```
+
+Result bundles live under the build cache, not under `build/`. Xcode watches the Swift
+package at the repository root while it runs tests. A result bundle that grows inside the
+package root makes Xcode resolve the package again in the middle of the run. With the
+engine in the package, that crashed `xcodebuild test` with a `DVTInvalidation` assertion.
+Xcode does not watch its own build cache, so bundles there are safe.
 
 The timestamp is `date -u +%Y%m%dT%H%M%SZ`, so directory names sort in time order — that
 is how "newest run" and "older than the retention age" are both decided, without consulting
@@ -33,7 +39,7 @@ directory, repoints `latest`, and prints the absolute path:
 
 ```sh
 run_dir="$("$root/tools/run-dir.sh" probe)"                       # under logs/
-bundle="$("$root/tools/run-dir.sh" -b build/test-results unit)"   # under build/
+bundle="$("$root/tools/run-dir.sh" -b "$OPENSKY_DERIVED_DATA/TestResults" unit)"  # absolute
 ```
 
 Two rules follow from this and matter when adding a script:
@@ -61,14 +67,14 @@ reads like a stale file rather than contention.
 | Producer | Run directory | Contents |
 | --- | --- | --- |
 | `make build`, `cli`, `test`, `test-one`, `install` | `logs/<target>/` | xcodebuild transcript |
-| `make test`, `make test-one` | `build/test-results/unit`, `.../one` | `.xcresult` bundle |
-| `tools/test-ui.sh` | `logs/test-ui/`, `build/test-results/test-ui/` | transcript, `.xcresult` |
-| `tools/realtest.sh` | `logs/realtest/`, `build/test-results/realtest/` | two transcripts, `enumeration.json`, `.xcresult` |
+| `make test`, `make test-one` | `DerivedData/TestResults/unit`, `.../one` | `.xcresult` bundle |
+| `tools/test-ui.sh` | `logs/test-ui/`, `DerivedData/TestResults/test-ui/` | transcript, `.xcresult` |
+| `tools/realtest.sh` | `logs/realtest/`, `DerivedData/TestResults/realtest/` | two transcripts, `enumeration.json`, `.xcresult` |
 | `tools/probe.sh` | `logs/probe/` | `probe.log` and every PNG the probe renders |
 | `tools/check-docs-links.sh` | `logs/docs-links/` | link report |
 | `tools/vendor-ffmpeg.sh` | `logs/vendor-ffmpeg/` | configure and build log, only when it actually builds |
 
-`make test-report` reads the newest `.xcresult` under `build/test-results`, one run
+`make test-report` reads the newest `.xcresult` under `DerivedData/TestResults`, one run
 directory deep, and falls back to the DerivedData glob when there is none.
 
 ## make prune
@@ -89,12 +95,13 @@ the plan, deletes them, and reports the space freed. Four rules produce the plan
    so git's own `worktree prune` never reaches them.
 2. **`build/install`**, the private Release tree `make install` used before it started
    sharing the main derived-data cache.
-3. **Aged-out runs** under `logs/` and `build/test-results/`: a run directory whose
+3. **Aged-out runs** under `logs/` and `DerivedData/TestResults/`: a run directory whose
    timestamp is older than the retention age goes, except that the newest run of each
    script is always kept, so `latest` still resolves after a prune. A `latest` symlink left
    dangling by a prune is removed.
 4. **Pre-convention leftovers**: loose files directly under `logs/` older than the
-   retention age, and `.xcresult` bundles written straight into `build/test-results`.
+   retention age, `.xcresult` bundles written straight into `build/test-results`, and
+   run directories left in `build/test-results/` from before bundles moved.
 
 ## What prune will not touch
 

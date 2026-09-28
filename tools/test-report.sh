@@ -1,7 +1,7 @@
 #!/bin/sh
 # Print a deterministic pass/fail summary + per-failure detail from the newest
 # test result bundle. Prefers the fixed bundle written by `make test`/`test-one`
-# (build/test-results/*.xcresult) so it never races a parallel run's DerivedData
+# (DerivedData/TestResults/*.xcresult) so it never races a parallel run's DerivedData
 # bundle; falls back to the DerivedData glob when no fixed bundle exists.
 #
 # A result bundle is only readable once xcodebuild finalizes it (writes
@@ -10,14 +10,14 @@
 # reader" — indistinguishable from a real failure. This script waits briefly for
 # finalization and reports "bundle not ready" as its own state.
 #
-# Usage: tools/test-report.sh [RESULTS_DIR]   (default build/test-results)
+# Usage: tools/test-report.sh [RESULTS_DIR]   (default DerivedData/TestResults)
 set -eu
 
-results_dir="${1:-build/test-results}"
+results_dir="${1:-${OPENSKY_DERIVED_DATA:-$PWD/DerivedData}/TestResults}"
 
 newest() {
     # Newest *.xcresult under $1 by mtime, or empty. Bundles sit one run
-    # directory deep (build/test-results/<name>/<timestamp>/*.xcresult, issue
+    # directory deep (TestResults/<name>/<timestamp>/*.xcresult, issue
     # #347); `latest` symlinks are not followed, so no bundle is seen twice.
     find "$1" -maxdepth 3 -name '*.xcresult' -prune -exec stat -f '%m %N' {} + \
         2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-

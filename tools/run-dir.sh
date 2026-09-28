@@ -9,8 +9,8 @@
 # age a run out without guessing which loose file belonged to which run.
 #
 # Usage: tools/run-dir.sh [-b BASE] NAME
-#   BASE  where the per-script tree lives, relative to the repo root. Default
-#         "logs"; result bundles pass "build/test-results".
+#   BASE  where the per-script tree lives, relative to the repo root or absolute.
+#         Default "logs"; result bundles pass "$OPENSKY_DERIVED_DATA/TestResults".
 #   NAME  the script or make target the run belongs to (probe, test-ui, unit).
 #
 # Prints the absolute path of the created run directory. A script that calls
@@ -44,7 +44,10 @@ fi
 
 name="$1"
 root="$(cd "$(dirname "$0")/.." && pwd)"
-parent="$root/$base/$name"
+case "$base" in
+    /*) parent="$base/$name" ;;
+    *) parent="$root/$base/$name" ;;
+esac
 
 # Timestamps sort lexicographically, which is what `make prune` compares
 # against its retention cutoff and how "newest run" is decided.

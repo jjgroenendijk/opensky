@@ -18,7 +18,6 @@ CONFIG           ?= Debug
 DESTINATION      ?= platform=macOS
 XCODEBUILD_FLAGS ?=
 SWIFT_PATHS      := Sources Tests
-TEST_RESULTS     := build/test-results
 
 # Build cache. It lives inside the checkout, not in Xcode's default under $HOME:
 # this project's cache runs to tens of gigabytes, and the boot volume is small
@@ -27,6 +26,10 @@ TEST_RESULTS     := build/test-results
 DERIVED_DATA     ?= $(CURDIR)/DerivedData
 XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
+# Test result bundles. They live under the build cache rather than build/: xcodebuild
+# watches the package root, and a result bundle growing there during `test` makes it
+# re-resolve the package mid-run, which crashes it once the package is large (#582).
+TEST_RESULTS     := $(DERIVED_DATA)/TestResults
 # Xcode's default cache location. Only `make clean` uses it, to sweep what an
 # Xcode GUI build or an older checkout left there.
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
