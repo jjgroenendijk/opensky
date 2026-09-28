@@ -43,12 +43,11 @@ xcodebuild_summary() {
 # `xcodebuild build-for-testing` writes one .xctestrun per test plan under
 # Build/Products, embedding the platform and SDK version in the name
 # (OpenSky_<Plan>_macosx<version>-arm64.xctestrun). The version segment moves
-# with the SDK, so callers resolve by glob and take the newest match. The glob
-# also matches the lowercase name a build from before the scheme rename left. Prints
+# with the SDK, so callers resolve by glob and take the newest match. Prints
 # nothing when no build-for-testing has run for the plan yet.
 xcodebuild_xctestrun() {
     newest=""
-    for candidate in "$OPENSKY_DERIVED_DATA/Build/Products/"[Oo]pen[Ss]ky_"$1"_*.xctestrun; do
+    for candidate in "$OPENSKY_DERIVED_DATA/Build/Products/OpenSky_$1_"*.xctestrun; do
         [ -f "$candidate" ] || continue
         if [ -z "$newest" ] || [ "$candidate" -nt "$newest" ]; then
             newest="$candidate"
