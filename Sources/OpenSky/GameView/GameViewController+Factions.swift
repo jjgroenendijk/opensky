@@ -28,6 +28,8 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

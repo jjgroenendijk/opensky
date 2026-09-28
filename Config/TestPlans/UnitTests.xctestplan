@@ -108,6 +108,16 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyActorsInterface",
           "name" : "OpenSkyActorsInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFactions",
+          "name" : "OpenSkyFactions"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFactionsInterface",
+          "name" : "OpenSkyFactionsInterface"
         }
       ]
     }
@@ -239,6 +249,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyActorsTests",
         "name" : "OpenSkyActorsTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFactionsTests",
+        "name" : "OpenSkyFactionsTests"
       }
     }
   ],

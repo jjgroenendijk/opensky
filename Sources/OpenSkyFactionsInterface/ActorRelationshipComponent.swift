@@ -58,6 +58,11 @@ nonisolated public struct ActorRelationshipOverride: Equatable, Sendable, Compar
     public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.other == rhs.other ? lhs.rank < rhs.rank : lhs.other < rhs.other
     }
+
+    public init(other: ReferenceKey, rank: Int8) {
+        self.other = other
+        self.rank = rank
+    }
 }
 
 /// Every relationship rank one actor has been given by a script, in ascending

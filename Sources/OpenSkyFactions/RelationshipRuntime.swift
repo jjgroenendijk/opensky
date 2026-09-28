@@ -29,6 +29,7 @@
 // Documented in docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
@@ -36,7 +37,7 @@ import OpenSkyWorldState
 /// Reads and writes relationship ranks on top of a `WorldStateStore`, with the
 /// authored `RELA` records behind them.
 @MainActor
-public struct RelationshipRuntime {
+public struct RelationshipRuntime: RelationshipAccess {
     /// Load-order RELA and ASTP lookup behind the authored layer.
     public let relationships: RelationshipStore
 

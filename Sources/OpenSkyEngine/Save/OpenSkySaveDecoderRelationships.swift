@@ -16,6 +16,7 @@
 // set.
 
 import Foundation
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

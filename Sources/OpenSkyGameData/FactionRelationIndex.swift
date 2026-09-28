@@ -16,7 +16,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// Directional reaction lookup between two factions.
 nonisolated public struct FactionRelationIndex: Sendable {

@@ -40,6 +40,7 @@
 // Documented in docs/engine/vendor-factions.md.
 
 import Foundation
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

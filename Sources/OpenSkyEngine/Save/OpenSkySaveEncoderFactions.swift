@@ -11,6 +11,7 @@
 // set produces identical bytes.
 
 import Foundation
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyWorldState
 

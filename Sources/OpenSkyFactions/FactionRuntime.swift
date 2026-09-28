@@ -27,27 +27,15 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
-/// What one seeding pass did.
-nonisolated public struct FactionSeedReport: Equatable, Sendable {
-    /// Factions the pass added, in the order the record authored them.
-    public let added: [ReferenceKey]
-    /// `SNAM` entries the load order carries no FACT record for, which is a
-    /// dangling link rather than an error.
-    public let unresolved: Int
-    /// True when this actor had already been seeded, so the pass did nothing.
-    public let wasAlreadySeeded: Bool
-
-    public static let none = FactionSeedReport(added: [], unresolved: 0, wasAlreadySeeded: false)
-}
-
 /// Reads and mutates faction memberships on top of a `WorldStateStore`, and
 /// answers what one actor makes of another.
 @MainActor
-public struct FactionRuntime {
+public struct FactionRuntime: FactionAccess {
     /// Load-order FACT lookup behind every stored membership.
     public let factions: FactionStore
     /// Record-side resolution of an actor's authored `SNAM` run and `AIDT`.

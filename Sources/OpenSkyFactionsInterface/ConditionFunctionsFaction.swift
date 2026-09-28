@@ -54,6 +54,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPerceptionInterface
 
 nonisolated extension ConditionFunctions {

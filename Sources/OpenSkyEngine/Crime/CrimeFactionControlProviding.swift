@@ -13,7 +13,9 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One faction a popup offers, named the way the readout names it.
 nonisolated public struct FactionOption: Equatable, Sendable {
