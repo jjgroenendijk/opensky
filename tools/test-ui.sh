@@ -22,7 +22,7 @@
 #
 # Usage: tools/test-ui.sh WORKSPACE SCHEME DESTINATION [extra xcodebuild args...]
 # Env:   OPENSKY_RESULT_BUNDLE  optional -resultBundlePath target, overriding
-#                               the run directory under build/test-results
+#                               the run directory under $OPENSKY_DERIVED_DATA/TestResults
 set -eu
 
 workspace="$1"
@@ -47,7 +47,7 @@ printf '[INFO] run directory: %s\n' "$run_dir"
 # `make test-report` looks for the newest one; it follows the same shape.
 bundle="${OPENSKY_RESULT_BUNDLE:-}"
 if [ -z "$bundle" ]; then
-    bundle="$("$root/tools/run-dir.sh" -b build/test-results test-ui)/ui.xcresult"
+    bundle="$("$root/tools/run-dir.sh" -b "$derived_data/TestResults" test-ui)/ui.xcresult"
 else
     rm -rf "$bundle"
     mkdir -p "$(dirname "$bundle")"

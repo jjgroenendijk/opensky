@@ -74,7 +74,7 @@ run_dir="$("$root/tools/run-dir.sh" test-fast)"
 OPENSKY_RUN_DIR="$run_dir"
 export OPENSKY_RUN_DIR
 printf '[INFO] run directory: %s\n' "$run_dir"
-result_bundle="$("$root/tools/run-dir.sh" -b build/test-results fast)/fast.xcresult"
+result_bundle="$("$root/tools/run-dir.sh" -b "$OPENSKY_DERIVED_DATA/TestResults" fast)/fast.xcresult"
 
 # Build (or reuse) the products and the .xctestrun for the plan.
 xctestrun="$(xcodebuild_xctestrun "$plan")"

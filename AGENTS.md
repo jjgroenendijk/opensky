@@ -39,14 +39,13 @@ conflict.
 - Xcode 26 ships without the Metal Toolchain. `make bootstrap`, once per checkout,
   downloads it.
 - Target membership under `Sources/` follows the folder split, not a list in the project
-  file: `OpenSky/` builds only into the app, `OpenSkyEngine/` and `ShaderTypes/` build
-  into both the app and `OpenSkyCLI`, and `OpenSkyCLI/` builds only into the CLI. The
-  library modules below the engine, `OpenSkyFormats/` and `OpenSkyGameData/`, are targets
-  of the Swift package in `Package.swift`, and both the app and the CLI link them
-  (`docs/tools/modules.md`). Build through `OpenSky.xcworkspace`, which holds both, as `make`
-  does. An app-only source (importing AppKit, Cocoa, or SwiftUI)
-  belongs under `OpenSky/`; leaving it under `OpenSkyEngine/` breaks the CLI build.
-  `make cli-boundary` catches this.
+  file: `OpenSky/` builds only into the app, `OpenSkyCLI/` only into the CLI, and
+  `Shaders/` into both. Every other folder under `Sources/` is a module of the Swift
+  package in `Package.swift`. The app and the CLI link all of them through one product,
+  `OpenSkyModules`, so a new module needs no project-file edit (`docs/tools/modules.md`).
+  Build through `OpenSky.xcworkspace`, which holds both, as `make` does. An app-only source
+  (importing AppKit, Cocoa, or SwiftUI) belongs under `OpenSky/`; anywhere else it breaks
+  the CLI build. `make cli-boundary` catches this.
 - A folder that builds a target has the target's name, in PascalCase: `Sources/OpenSky/`
   builds `OpenSky`, `Tests/OpenSkyTests/` builds `OpenSkyTests`. A test selector names the
   target: `make test-fast T='OpenSkyFormatsTests/BSAArchiveTests'`. Two names stay lowercase on
@@ -89,11 +88,13 @@ Config/
   TestPlans/            *.xctestplan, which bundles a run touches
 Sources/
   OpenSky/              OpenSky (app) only: Shell/, Panels/, GameView/, Resources/
-  OpenSkyEngine/        OpenSky and OpenSkyCLI: one folder per domain
   OpenSkyCLI/           OpenSkyCLI only: Commands/, SWF/, Support/
+  Shaders/              OpenSky and OpenSkyCLI: Shaders.metal
+  OpenSkyEngine/        package module: the engine not yet split, one folder per domain
   OpenSkyFormats/       package module: format parsers, one folder per format
   OpenSkyGameData/      package module: virtual file system, load order, record stores
-  ShaderTypes/          OpenSky and OpenSkyCLI: the clang module wrapping ShaderTypes.h
+  OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
+  CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
   OpenSkyTests/         synthetic unit suites for the app and engine
   OpenSkyFormatsTests/  package test target: synthetic suites for OpenSkyFormats
@@ -149,7 +150,7 @@ there). `logs/` and `.vendor/` are gitignored. `docs/` groups pages by folder: `
 
 Run output is per-run, not per-name: a script that writes a transcript, a capture, or a
 result bundle puts it in `logs/<script>/<UTC timestamp>/` (or the same shape under
-`build/test-results/`) through `tools/run-dir.sh`, prints that directory, and points
+`DerivedData/TestResults/`) through `tools/run-dir.sh`, prints that directory, and points
 `latest` at it. Link the run directory, never a loose file. `make prune` deletes stale
 worktree `DerivedData/` and aged-out runs; `docs/tools/run-output.md` has the rules.
 
@@ -238,7 +239,7 @@ tuple cap, introduce a struct.
 
 ## Conventions
 
-- Swift-to-Metal shared structs go in `Sources/ShaderTypes/ShaderTypes.h`
+- Swift-to-Metal shared structs go in `Sources/OpenSkyShaderTypes/ShaderTypes.h`
   with explicit `simd`-aligned layout. Swift reaches them through the clang module that
   wraps the header: a file that uses one writes `import OpenSkyShaderTypes`. There is no
   bridging header, so the types are not implicitly visible. Metal shaders keep writing

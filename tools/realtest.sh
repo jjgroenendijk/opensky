@@ -126,7 +126,7 @@ run_dir="$("$root/tools/run-dir.sh" realtest)"
 OPENSKY_RUN_DIR="$run_dir"
 export OPENSKY_RUN_DIR
 printf '[INFO] run directory: %s\n' "$run_dir"
-result_bundle="$("$root/tools/run-dir.sh" -b build/test-results realtest)/realtest.xcresult"
+result_bundle="$("$root/tools/run-dir.sh" -b "$OPENSKY_DERIVED_DATA/TestResults" realtest)/realtest.xcresult"
 
 # Parallel testing off keeps xcodebuild to one test host, which is what makes
 # the watchdog's per-process cap meaningful; Swift Testing still runs its own

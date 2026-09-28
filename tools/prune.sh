@@ -140,7 +140,11 @@ fi
 #    main derived-data cache.
 add "obsolete install tree" "$root/build/install"
 
-# 3. Result bundles and log runs past the retention age.
+# 3. Result bundles and log runs past the retention age. Result bundles moved
+#    from build/test-results to DerivedData/TestResults (#582); the old tree is
+#    pruned the same way until it ages out.
+results="${OPENSKY_DERIVED_DATA:-$root/DerivedData}/TestResults"
+prune_run_dirs "$results" "aged-out result bundle"
 prune_run_dirs "$root/build/test-results" "aged-out result bundle"
 prune_run_dirs "$root/logs" "aged-out run output"
 # Bundles written straight into build/test-results predate the run-directory
@@ -193,7 +197,7 @@ done <"$plan"
 
 # A pruned run can leave `latest` pointing at nothing; drop those symlinks so a
 # dangling link never reads as "the newest run is missing".
-for base in "$root/logs" "$root/build/test-results"; do
+for base in "$root/logs" "$results" "$root/build/test-results"; do
     [ -d "$base" ] || continue
     for name_dir in "$base"/*; do
         link="$name_dir/latest"
