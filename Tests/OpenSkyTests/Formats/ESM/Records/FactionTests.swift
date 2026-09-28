@@ -2,6 +2,7 @@
 // malformed record produces, and the dump the CLI and Asset Browser print. No
 // game-derived bytes.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

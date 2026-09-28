@@ -5,13 +5,13 @@
 import Foundation
 import simd
 
-nonisolated package struct NIFMultiBoundNode {
-    package let object: NIFObjectPrefix
-    package let children: [Int32]
-    package let multiBoundRef: Int32
-    package let cullingMode: UInt32
+nonisolated public struct NIFMultiBoundNode: Sendable {
+    public let object: NIFObjectPrefix
+    public let children: [Int32]
+    public let multiBoundRef: Int32
+    public let cullingMode: UInt32
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         object = try NIFObjectPrefix(reader: &reader, header: header)
         children = try Self.readRefs(&reader, label: "child")
@@ -38,20 +38,20 @@ nonisolated package struct NIFMultiBoundNode {
     }
 }
 
-nonisolated package struct NIFMultiBound {
-    package let dataRef: Int32
+nonisolated public struct NIFMultiBound: Sendable {
+    public let dataRef: Int32
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         dataRef = try Int32(bitPattern: reader.readUInt32())
     }
 }
 
-nonisolated package struct NIFMultiBoundAABB {
-    package let center: SIMD3<Float>
-    package let extent: SIMD3<Float>
+nonisolated public struct NIFMultiBoundAABB: Sendable {
+    public let center: SIMD3<Float>
+    public let extent: SIMD3<Float>
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         center = try reader.readVector3()
         extent = try reader.readVector3()

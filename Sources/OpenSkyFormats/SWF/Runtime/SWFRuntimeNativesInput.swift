@@ -21,29 +21,29 @@ import Foundation
 /// The ActionScript 2 `Key` constants, named so Swift callers do not spell raw
 /// numbers. Values are the Flash key codes, which follow the Windows virtual
 /// key codes for the keys that have one.
-nonisolated package enum SWFKeyCode {
-    package static let backspace = 8
-    package static let tab = 9
-    package static let enter = 13
-    package static let shift = 16
-    package static let control = 17
-    package static let alt = 18
-    package static let capsLock = 20
-    package static let escape = 27
-    package static let space = 32
-    package static let pageUp = 33
-    package static let pageDown = 34
-    package static let end = 35
-    package static let home = 36
-    package static let left = 37
-    package static let up = 38
-    package static let right = 39
-    package static let down = 40
-    package static let insert = 45
-    package static let delete = 46
+nonisolated public enum SWFKeyCode: Sendable {
+    public static let backspace = 8
+    public static let tab = 9
+    public static let enter = 13
+    public static let shift = 16
+    public static let control = 17
+    public static let alt = 18
+    public static let capsLock = 20
+    public static let escape = 27
+    public static let space = 32
+    public static let pageUp = 33
+    public static let pageDown = 34
+    public static let end = 35
+    public static let home = 36
+    public static let left = 37
+    public static let up = 38
+    public static let right = 39
+    public static let down = 40
+    public static let insert = 45
+    public static let delete = 46
 
     /// Name to value, exactly as the `Key` class exposes them.
-    package static let constants: [(name: String, value: Int)] = [
+    public static let constants: [(name: String, value: Int)] = [
         ("BACKSPACE", backspace), ("TAB", tab), ("ENTER", enter), ("SHIFT", shift),
         ("CONTROL", control), ("ALT", alt), ("CAPSLOCK", capsLock), ("ESCAPE", escape),
         ("SPACE", space), ("PGUP", pageUp), ("PGDN", pageDown), ("END", end),
@@ -54,7 +54,7 @@ nonisolated package enum SWFKeyCode {
 
 nonisolated extension SWFRuntimeNatives {
     /// `Key`: a broadcaster plus the query methods a listener calls back into.
-    package static func installKey(_ runtime: AS2Runtime) {
+    public static func installKey(_ runtime: AS2Runtime) {
         let key = runtime.makeObject()
         for constant in SWFKeyCode.constants {
             key.define(
@@ -83,7 +83,7 @@ nonisolated extension SWFRuntimeNatives {
 
     /// `Mouse`: a broadcaster plus cursor visibility, which OpenSky records
     /// rather than acts on — the engine draws no system cursor over the movie.
-    package static func installMouse(_ runtime: AS2Runtime) {
+    public static func installMouse(_ runtime: AS2Runtime) {
         let mouse = runtime.makeObject()
         mouse.define(.boolean(true), for: "_visible", flags: .dontEnumerate)
         AS2Natives.method(runtime, on: mouse, name: "show") { context in

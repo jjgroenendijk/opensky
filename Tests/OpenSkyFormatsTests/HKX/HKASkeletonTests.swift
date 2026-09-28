@@ -3,6 +3,7 @@
 // Bone names are invented, not vanilla Skyrim bone names. Object byte map:
 // docs/formats/hka-skeleton.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

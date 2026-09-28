@@ -9,15 +9,15 @@
 import Foundation
 import simd
 
-nonisolated package struct DirectionalAmbientColors: Equatable {
-    package let positiveX: SIMD3<Float>
-    package let negativeX: SIMD3<Float>
-    package let positiveY: SIMD3<Float>
-    package let negativeY: SIMD3<Float>
-    package let positiveZ: SIMD3<Float>
-    package let negativeZ: SIMD3<Float>
+nonisolated public struct DirectionalAmbientColors: Equatable, Sendable {
+    public let positiveX: SIMD3<Float>
+    public let negativeX: SIMD3<Float>
+    public let positiveY: SIMD3<Float>
+    public let negativeY: SIMD3<Float>
+    public let positiveZ: SIMD3<Float>
+    public let negativeZ: SIMD3<Float>
 
-    package init(
+    public init(
         positiveX: SIMD3<Float>,
         negativeX: SIMD3<Float>,
         positiveY: SIMD3<Float>,
@@ -33,7 +33,7 @@ nonisolated package struct DirectionalAmbientColors: Equatable {
         self.negativeZ = negativeZ
     }
 
-    package static let black = DirectionalAmbientColors(
+    public static let black = DirectionalAmbientColors(
         positiveX: .zero,
         negativeX: .zero,
         positiveY: .zero,
@@ -43,47 +43,47 @@ nonisolated package struct DirectionalAmbientColors: Equatable {
     )
 }
 
-nonisolated package struct CellLightingValues: Equatable {
-    package struct InheritFlags: OptionSet, Equatable {
-        package let rawValue: UInt32
+nonisolated public struct CellLightingValues: Equatable, Sendable {
+    public struct InheritFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let ambientColor = InheritFlags(rawValue: 0x0001)
-        package static let directionalColor = InheritFlags(rawValue: 0x0002)
-        package static let fogColor = InheritFlags(rawValue: 0x0004)
-        package static let fogNear = InheritFlags(rawValue: 0x0008)
-        package static let fogFar = InheritFlags(rawValue: 0x0010)
-        package static let directionalRotation = InheritFlags(rawValue: 0x0020)
-        package static let directionalFade = InheritFlags(rawValue: 0x0040)
-        package static let fogClipDistance = InheritFlags(rawValue: 0x0080)
-        package static let fogPower = InheritFlags(rawValue: 0x0100)
-        package static let fogMax = InheritFlags(rawValue: 0x0200)
-        package static let lightFadeDistances = InheritFlags(rawValue: 0x0400)
+        public static let ambientColor = InheritFlags(rawValue: 0x0001)
+        public static let directionalColor = InheritFlags(rawValue: 0x0002)
+        public static let fogColor = InheritFlags(rawValue: 0x0004)
+        public static let fogNear = InheritFlags(rawValue: 0x0008)
+        public static let fogFar = InheritFlags(rawValue: 0x0010)
+        public static let directionalRotation = InheritFlags(rawValue: 0x0020)
+        public static let directionalFade = InheritFlags(rawValue: 0x0040)
+        public static let fogClipDistance = InheritFlags(rawValue: 0x0080)
+        public static let fogPower = InheritFlags(rawValue: 0x0100)
+        public static let fogMax = InheritFlags(rawValue: 0x0200)
+        public static let lightFadeDistances = InheritFlags(rawValue: 0x0400)
     }
 
-    package let ambientColor: SIMD3<Float>
-    package let directionalColor: SIMD3<Float>
-    package let fogNearColor: SIMD3<Float>
-    package let fogNear: Float
-    package let fogFar: Float
+    public let ambientColor: SIMD3<Float>
+    public let directionalColor: SIMD3<Float>
+    public let fogNearColor: SIMD3<Float>
+    public let fogNear: Float
+    public let fogFar: Float
     /// Integer degrees. Vanilla probe: Whiterun interior template uses 180.
-    package let directionalRotationXY: Int32
-    package let directionalRotationZ: Int32
-    package let directionalFade: Float
-    package let fogClipDistance: Float
-    package let fogPower: Float
+    public let directionalRotationXY: Int32
+    public let directionalRotationZ: Int32
+    public let directionalFade: Float
+    public let fogClipDistance: Float
+    public let fogPower: Float
     /// Optional tail: truncated XCLL variants stop at or within this block.
-    package let directionalAmbient: DirectionalAmbientColors?
-    package let fogFarColor: SIMD3<Float>?
-    package let fogMax: Float?
-    package let lightFadeBegin: Float?
-    package let lightFadeEnd: Float?
-    package let inherits: InheritFlags
+    public let directionalAmbient: DirectionalAmbientColors?
+    public let fogFarColor: SIMD3<Float>?
+    public let fogMax: Float?
+    public let lightFadeBegin: Float?
+    public let lightFadeEnd: Float?
+    public let inherits: InheritFlags
 
-    package init(
+    public init(
         ambientColor: SIMD3<Float>,
         directionalColor: SIMD3<Float>,
         fogNearColor: SIMD3<Float>,
@@ -122,7 +122,7 @@ nonisolated package struct CellLightingValues: Equatable {
     /// XCLL/LGTM share their first 88 bytes. Byte 88 is XCLL inheritance;
     /// LGTM reserves it. Fields from byte 40 onward are optional so known
     /// truncated variants decode without shifting later offsets.
-    package static func decode(_ data: Data, hasInheritFlags: Bool) throws -> CellLightingValues? {
+    public static func decode(_ data: Data, hasInheritFlags: Bool) throws -> CellLightingValues? {
         guard data.count >= 40 else { return nil }
         var reader = BinaryReader(data)
         let ambientColor = try readColor(&reader)
@@ -171,7 +171,7 @@ nonisolated package struct CellLightingValues: Equatable {
         )
     }
 
-    package func replacingDirectionalAmbient(
+    public func replacingDirectionalAmbient(
         _ colors: DirectionalAmbientColors?
     ) -> CellLightingValues {
         CellLightingValues(
@@ -194,7 +194,7 @@ nonisolated package struct CellLightingValues: Equatable {
         )
     }
 
-    package static func decodeDirectionalAmbient(_ data: Data) throws -> DirectionalAmbientColors? {
+    public static func decodeDirectionalAmbient(_ data: Data) throws -> DirectionalAmbientColors? {
         var reader = BinaryReader(data)
         return try readDirectionalAmbientIfPresent(&reader)
     }
@@ -239,12 +239,12 @@ nonisolated package struct CellLightingValues: Equatable {
     }
 }
 
-nonisolated package struct LightingTemplate {
-    package let formID: FormID
-    package let editorID: String?
-    package let values: CellLightingValues
+nonisolated public struct LightingTemplate: Sendable {
+    public let formID: FormID
+    public let editorID: String?
+    public let values: CellLightingValues
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "LGTM" else {
             throw ESMError.malformed("expected LGTM record, got \(record.type)")
         }

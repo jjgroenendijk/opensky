@@ -2,6 +2,7 @@
 // the documented layout (docs/formats/xwm.md); no extracted game audio is
 // involved. Malformed input must throw `XWMError`, never trap.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

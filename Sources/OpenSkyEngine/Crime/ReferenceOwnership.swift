@@ -38,6 +38,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// One `XOWN`/`XRNK` pair as the records carry it, before anything resolves
 /// which kind of record the link names.

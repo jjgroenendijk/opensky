@@ -38,6 +38,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Why an arrest outcome could not run.
 nonisolated enum ArrestRefusal: Error, Equatable, Sendable {

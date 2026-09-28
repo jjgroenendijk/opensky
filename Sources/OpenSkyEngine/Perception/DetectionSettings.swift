@@ -34,6 +34,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated struct DetectionSettings: Equatable {
     // MARK: - Read from the load order

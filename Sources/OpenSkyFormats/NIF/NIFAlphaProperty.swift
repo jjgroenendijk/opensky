@@ -11,46 +11,46 @@
 
 import Foundation
 
-nonisolated package struct NIFAlphaProperty: Equatable {
-    package let name: String?
+nonisolated public struct NIFAlphaProperty: Equatable, Sendable {
+    public let name: String?
     /// Raw AlphaFlags; derived accessors below.
-    package let flags: UInt16
+    public let flags: UInt16
     /// Alpha-test cutoff, 0-255.
-    package let threshold: UInt8
+    public let threshold: UInt8
 
-    package var blendEnabled: Bool {
+    public var blendEnabled: Bool {
         flags & 0x0001 != 0
     }
 
     /// nif.xml AlphaFunction: 0 ONE, 1 ZERO, 4 DEST_COLOR, 5 INV_DEST_COLOR,
     /// 6 SRC_ALPHA, 7 INV_SRC_ALPHA…
-    package var sourceBlendMode: UInt16 {
+    public var sourceBlendMode: UInt16 {
         (flags >> 1) & 0xF
     }
 
-    package var destinationBlendMode: UInt16 {
+    public var destinationBlendMode: UInt16 {
         (flags >> 5) & 0xF
     }
 
-    package var testEnabled: Bool {
+    public var testEnabled: Bool {
         flags & 0x0200 != 0
     }
 
     /// nif.xml TestFunction: 0 ALWAYS … 4 GREATER (default) … 7 NEVER.
-    package var testFunction: UInt16 {
+    public var testFunction: UInt16 {
         (flags >> 10) & 0x7
     }
 
-    package var noSorter: Bool {
+    public var noSorter: Bool {
         flags & 0x2000 != 0
     }
 
     /// Threshold remapped for shader compare against sampled alpha.
-    package var testThreshold: Float {
+    public var testThreshold: Float {
         Float(threshold) / 255
     }
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         name = try NIFObjectNET(reader: &reader, header: header).name
         flags = try reader.readUInt16()

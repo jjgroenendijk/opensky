@@ -5,6 +5,7 @@
 // Function indices here are the raw on-disk numbers (Creation Kit number minus
 // 4096) — see the ConditionFunctions.swift header for the sources.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

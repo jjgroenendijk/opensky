@@ -16,7 +16,7 @@
 import Foundation
 import simd
 
-nonisolated package enum HKASkeletonError: Error, Equatable {
+nonisolated public enum HKASkeletonError: Error, Equatable, Sendable {
     /// hkArray/hkStringPtr target runs past the section payload.
     case arrayOutOfBounds(field: String, offset: Int, needed: Int, available: Int)
     /// hkArray reports elements but carries no local fixup to their data.
@@ -34,18 +34,18 @@ nonisolated package enum HKASkeletonError: Error, Equatable {
 /// One bone's bind transform in its parent's space. Havok hkQsTransform packs
 /// translation/scale as float4 with a junk w lane — decoded to SIMD3 so the
 /// padding never leaks into engine math.
-nonisolated package struct HKABonePose: Equatable {
-    package let translation: SIMD3<Float>
-    package let rotation: simd_quatf
-    package let scale: SIMD3<Float>
+nonisolated public struct HKABonePose: Equatable, Sendable {
+    public let translation: SIMD3<Float>
+    public let rotation: simd_quatf
+    public let scale: SIMD3<Float>
 
-    package init(translation: SIMD3<Float>, rotation: simd_quatf, scale: SIMD3<Float>) {
+    public init(translation: SIMD3<Float>, rotation: simd_quatf, scale: SIMD3<Float>) {
         self.translation = translation
         self.rotation = rotation
         self.scale = scale
     }
 
-    package static func == (lhs: HKABonePose, rhs: HKABonePose) -> Bool {
+    public static func == (lhs: HKABonePose, rhs: HKABonePose) -> Bool {
         lhs.translation == rhs.translation
             && lhs.rotation.vector == rhs.rotation.vector
             && lhs.scale == rhs.scale
@@ -54,45 +54,45 @@ nonisolated package struct HKABonePose: Equatable {
 
 /// One skeleton bone: name (skin/NIF-node key) + whether its translation is
 /// locked by the ragdoll (`m_lockTranslation`).
-nonisolated package struct HKABone: Equatable {
-    package let name: String
-    package let lockTranslation: Bool
+nonisolated public struct HKABone: Equatable, Sendable {
+    public let name: String
+    public let lockTranslation: Bool
 }
 
 /// Decoded hkaSkeleton: the bone hierarchy + bind pose one HKX packfile holds.
 /// `parentIndices[i]` is bone i's parent (-1 for a root — vanilla human rigs
 /// carry two roots, so callers must not assume one). Reference pose is
 /// parent-relative, matching NIF NiNode local transforms.
-nonisolated package struct HKASkeleton {
-    package let name: String?
-    package let bones: [HKABone]
-    package let parentIndices: [Int]
-    package let referencePose: [HKABonePose]
+nonisolated public struct HKASkeleton: Sendable {
+    public let name: String?
+    public let bones: [HKABone]
+    public let parentIndices: [Int]
+    public let referencePose: [HKABonePose]
 
-    package var boneNames: [String] {
+    public var boneNames: [String] {
         bones.map(\.name)
     }
 
-    package var lockTranslation: [Bool] {
+    public var lockTranslation: [Bool] {
         bones.map(\.lockTranslation)
     }
 
-    package var boneCount: Int {
+    public var boneCount: Int {
         bones.count
     }
 
     /// Bone indices with no parent. Multiple in vanilla rigs (extra control
     /// node beside the skeleton root).
-    package var rootIndices: [Int] {
+    public var rootIndices: [Int] {
         parentIndices.enumerated().filter { $0.element == -1 }.map(\.offset)
     }
 
-    package static let className = "hkaSkeleton"
+    public static let className = "hkaSkeleton"
 
     /// Every hkaSkeleton in the packfile, in inventory order (rig before
     /// ragdoll in vanilla skeleton.hkx). Objects located via the container's
     /// virtual fixups; a malformed one throws rather than corrupting the set.
-    package static func skeletons(in file: HKXFile) throws -> [HKASkeleton] {
+    public static func skeletons(in file: HKXFile) throws -> [HKASkeleton] {
         let graph = try HKXObjectGraph(file: file)
         var result: [HKASkeleton] = []
         for object in graph.objects(ofClass: className) {

@@ -11,23 +11,23 @@
 import Foundation
 
 /// Not `private`: `Perk` drives it and reads its result.
-nonisolated package struct PerkContents {
+nonisolated public struct PerkContents: Sendable {
     /// One PRKE section while it is still being collected.
-    package struct OpenEffect {
-        package let type: PerkEffectType
-        package let rank: UInt8
-        package let priority: UInt8
-        package var data: PerkEffectData?
-        package var tabs: [PerkConditionTab] = []
-        package var functionType: PerkFunctionType?
-        package var buttonLabel: LString?
-        package var scriptFlags: PerkScriptFlags?
+    public struct OpenEffect: Sendable {
+        public let type: PerkEffectType
+        public let rank: UInt8
+        public let priority: UInt8
+        public var data: PerkEffectData?
+        public var tabs: [PerkConditionTab] = []
+        public var functionType: PerkFunctionType?
+        public var buttonLabel: LString?
+        public var scriptFlags: PerkScriptFlags?
         /// EPFD verbatim; read into `PerkFunctionData` when the effect closes.
-        package var functionDataField: ESMField?
+        public var functionDataField: ESMField?
 
         /// The function byte the effect's DATA declared, which is half of what
         /// decides how EPFD reads.
-        package var function: PerkFunction? {
+        public var function: PerkFunction? {
             guard case let .entryPoint(payload) = data else { return nil }
             return payload.function
         }
@@ -39,26 +39,26 @@ nonisolated package struct PerkContents {
         "PRKC", "EPFT", "EPF2", "EPF3", "EPFD"
     ]
 
-    package let localized: Bool
+    public let localized: Bool
 
-    package var editorID: String?
-    package var name: LString?
-    package var description: LString?
-    package var iconPath: String?
-    package var conditions = ConditionList()
-    package var data: PerkHeaderData?
-    package var nextPerk: FormID?
-    package var effects: [PerkEffect] = []
-    package var script = ScriptData(ownerType: "PERK")
-    package var skipped = PerkTally()
+    public var editorID: String?
+    public var name: LString?
+    public var description: LString?
+    public var iconPath: String?
+    public var conditions = ConditionList()
+    public var data: PerkHeaderData?
+    public var nextPerk: FormID?
+    public var effects: [PerkEffect] = []
+    public var script = ScriptData(ownerType: "PERK")
+    public var skipped = PerkTally()
 
     private var open: OpenEffect?
 
-    package init(localized: Bool) {
+    public init(localized: Bool) {
         self.localized = localized
     }
 
-    package mutating func decode(_ field: ESMField) {
+    public mutating func decode(_ field: ESMField) {
         do {
             switch field.type {
             case "PRKE":
@@ -84,7 +84,7 @@ nonisolated package struct PerkContents {
 
     /// Flushes the effect still open, if any. Called on the next PRKE, on PRKF,
     /// and once more after the last field of the record.
-    package mutating func closeOpenEffect(terminated: Bool) {
+    public mutating func closeOpenEffect(terminated: Bool) {
         guard let open else { return }
         if !terminated {
             skipped.note(.unterminatedEffect)
@@ -285,20 +285,20 @@ nonisolated package struct PerkContents {
 
 /// The fixed-width reads PERK fields need, each checking its own length so a
 /// truncated field throws instead of reading past the end.
-nonisolated package enum PerkFieldReader {
-    package static func byte(_ field: ESMField) throws -> UInt8 {
+nonisolated public enum PerkFieldReader: Sendable {
+    public static func byte(_ field: ESMField) throws -> UInt8 {
         guard let first = field.data.first else {
             throw ESMError.malformed("PERK \(field.type) is empty, expected 1 byte")
         }
         return first
     }
 
-    package static func zstring(_ field: ESMField) throws -> String {
+    public static func zstring(_ field: ESMField) throws -> String {
         var reader = BinaryReader(field.data)
         return try reader.readZString()
     }
 
-    package static func link(_ field: ESMField) throws -> FormID? {
+    public static func link(_ field: ESMField) throws -> FormID? {
         guard field.data.count >= 4 else {
             throw ESMError.malformed(
                 "PERK \(field.type) has \(field.data.count) bytes, expected 4"
@@ -309,7 +309,7 @@ nonisolated package enum PerkFieldReader {
         return id.isNull ? nil : id
     }
 
-    package static func scriptFlags(_ field: ESMField) throws -> PerkScriptFlags {
+    public static func scriptFlags(_ field: ESMField) throws -> PerkScriptFlags {
         guard field.data.count >= PerkScriptFlags.byteCount else {
             throw ESMError.malformed(
                 "PERK EPF3 has \(field.data.count) bytes, expected \(PerkScriptFlags.byteCount)"

@@ -6,7 +6,7 @@ nonisolated extension ScriptData {
     /// Consumes `field` when it is VMAD. Returns false for anything else so
     /// record decoders can forward unmatched fields without a second switch.
     @discardableResult
-    package mutating func decode(field: ESMField) throws -> Bool {
+    public mutating func decode(field: ESMField) throws -> Bool {
         guard field.type == "VMAD" else { return false }
         do {
             var decoder = ScriptDataDecoder(data: field.data, ownerType: ownerType)
@@ -26,19 +26,19 @@ nonisolated extension ScriptData {
     }
 }
 
-nonisolated package struct ScriptDataPayload {
-    package let version: Int16
-    package let objectFormat: ScriptObjectFormat
-    package let scripts: [AttachedScript]
-    package let questFragments: QuestFragmentSection?
-    package let infoFragments: TopicInfoFragmentSection?
-    package let skipped: ScriptDataTally
+nonisolated public struct ScriptDataPayload: Sendable {
+    public let version: Int16
+    public let objectFormat: ScriptObjectFormat
+    public let scripts: [AttachedScript]
+    public let questFragments: QuestFragmentSection?
+    public let infoFragments: TopicInfoFragmentSection?
+    public let skipped: ScriptDataTally
 }
 
 /// Not `private`: the QUST fragment tail is decoded by an extension in
 /// ScriptDataQuestFragmentDecoder.swift, which needs the reader and the
 /// primary script, property and object readers this type owns.
-nonisolated package struct ScriptDataDecoder {
+nonisolated public struct ScriptDataDecoder: Sendable {
     /// Carriers whose VMAD may end in a record-specific fragment tail. QUST
     /// (`ScriptDataQuestFragments.swift`) and INFO
     /// (`ScriptDataInfoFragments.swift`) are decoded; the other three are still
@@ -47,20 +47,20 @@ nonisolated package struct ScriptDataDecoder {
         "INFO", "PACK", "PERK", "QUST", "SCEN"
     ]
 
-    package var reader: BinaryReader
-    package let ownerType: FourCC?
-    package var version: Int16 = 0
-    package var objectFormat: ScriptObjectFormat = .formIDLast
-    package var questFragments: QuestFragmentSection?
-    package var infoFragments: TopicInfoFragmentSection?
-    package var skipped = ScriptDataTally()
+    public var reader: BinaryReader
+    public let ownerType: FourCC?
+    public var version: Int16 = 0
+    public var objectFormat: ScriptObjectFormat = .formIDLast
+    public var questFragments: QuestFragmentSection?
+    public var infoFragments: TopicInfoFragmentSection?
+    public var skipped = ScriptDataTally()
 
-    package init(data: Data, ownerType: FourCC?) {
+    public init(data: Data, ownerType: FourCC?) {
         reader = BinaryReader(data)
         self.ownerType = ownerType
     }
 
-    package mutating func decode() throws -> ScriptDataPayload {
+    public mutating func decode() throws -> ScriptDataPayload {
         version = try Int16(bitPattern: reader.readUInt16())
         guard (2 ... 5).contains(version) else {
             throw ScriptDataError.unsupportedVersion(version)
@@ -92,7 +92,7 @@ nonisolated package struct ScriptDataDecoder {
         )
     }
 
-    package mutating func decodeScript() throws -> AttachedScript {
+    public mutating func decodeScript() throws -> AttachedScript {
         let name = try readString()
         let flags = version >= 4 ? try AttachedScript.Flags(rawValue: reader.readUInt8()) : []
         let propertyCount = try checkedCount(
@@ -182,7 +182,7 @@ nonisolated package struct ScriptDataDecoder {
     /// - Parameter notingAlias: false for the object that opens a quest-alias
     ///   script section, where an alias slot is the whole point rather than a
     ///   deferred resolution the tally exists to count.
-    package mutating func decodeObject(notingAlias: Bool = true) throws -> ScriptObjectReference {
+    public mutating func decodeObject(notingAlias: Bool = true) throws -> ScriptObjectReference {
         let formID: FormID
         let alias: Int16
         let unused: UInt16
@@ -205,12 +205,12 @@ nonisolated package struct ScriptDataDecoder {
 
     /// Length-prefixed VMAD string; decodes under the engine-wide `GameText`
     /// policy, so only the length prefix can fail the read.
-    package mutating func readString() throws -> String {
+    public mutating func readString() throws -> String {
         let length = try Int(reader.readUInt16())
         return try GameText.decode(reader.read(count: length))
     }
 
-    package func checkedCount(
+    public func checkedCount(
         _ count: UInt32,
         minimumSize: Int,
         context: String

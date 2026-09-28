@@ -6,10 +6,10 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum RelationshipFixture {
+public enum RelationshipFixture: Sendable {
     /// The 16-byte DATA struct, optionally truncated to stand in for a record
     /// a mod wrote short.
-    static func data(
+    public static func data(
         parent: UInt32,
         child: UInt32,
         rank: UInt16,
@@ -30,7 +30,7 @@ enum RelationshipFixture {
 
     /// A whole RELA record's bytes: editor ID first, then whatever the caller
     /// appended, in the order the caller gave.
-    static func record(
+    public static func record(
         formID: UInt32,
         editorID: String?,
         headerFlags: UInt32 = 0,
@@ -50,7 +50,7 @@ enum RelationshipFixture {
 
     /// A whole ASTP record. Each title is dropped when nil, matching a record
     /// that names only the parent side.
-    static func associationType(
+    public static func associationType(
         formID: UInt32,
         editorID: String?,
         maleParent: String? = nil,
@@ -84,7 +84,7 @@ enum RelationshipFixture {
 
     /// A plugin carrying a RELA and an ASTP top group, either of which may be
     /// empty.
-    static func plugin(
+    public static func plugin(
         masters: [String] = [],
         relationships: [Data] = [],
         associationTypes: [Data] = []
@@ -100,7 +100,7 @@ enum RelationshipFixture {
     }
 
     /// Parses one fixture record out of its bytes.
-    static func decode(_ bytes: Data) throws -> ESMRecord {
+    public static func decode(_ bytes: Data) throws -> ESMRecord {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {
             throw ESMError.malformed("fixture did not produce a record")

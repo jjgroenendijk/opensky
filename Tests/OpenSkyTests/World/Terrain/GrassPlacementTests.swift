@@ -2,6 +2,7 @@
 // records. Covers deterministic seeding, splat coverage, terrain limits, and
 // GRAS variance controls without game assets.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

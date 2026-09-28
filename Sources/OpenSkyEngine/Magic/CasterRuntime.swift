@@ -39,6 +39,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 /// What a cast needs from the world it happens in.

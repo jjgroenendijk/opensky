@@ -3,6 +3,7 @@
 // strict type-body limit. Layouts follow NifTools nif.xml; no game bytes or
 // extracted assets are fixtures (AGENTS.md legal boundary).
 
+import FormatsTestSupport
 import Foundation
 import simd
 

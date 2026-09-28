@@ -6,6 +6,7 @@
 // inert controls, matching the other `*ControlProviding` bridges.
 
 import AppKit
+import OpenSkyGameData
 
 extension GameViewController {
     /// Which built-in overlay sample the UI Lab shows. Declared here rather

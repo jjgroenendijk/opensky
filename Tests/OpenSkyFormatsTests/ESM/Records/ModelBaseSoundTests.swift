@@ -2,6 +2,7 @@
 // fields only. Layout: xEdit dev-4.1.6 wbDefinitionsTES5.pas lines 4921-4923
 // (DOOR), 3323-3324 (ACTI), 4519-4520 (CONT); see docs/formats/world-records.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

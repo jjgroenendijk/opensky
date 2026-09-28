@@ -12,26 +12,26 @@ import Foundation
 
 /// One node of a walked graph: where it lives, what it decoded to, and how deep
 /// below the root it was first reached.
-nonisolated package struct HKBGraphNode {
-    package let target: HKXPointerTarget
-    package let object: any HKBClass
-    package let depth: Int
+nonisolated public struct HKBGraphNode: Sendable {
+    public let target: HKXPointerTarget
+    public let object: any HKBClass
+    public let depth: Int
 }
 
 /// The node tree below one root generator, in first-visit order.
-nonisolated package struct HKBGraphTopology {
-    package let nodes: [HKBGraphNode]
+nonisolated public struct HKBGraphTopology: Sendable {
+    public let nodes: [HKBGraphNode]
     /// Class names reached but not decodable, with how many objects each cost.
-    package let skippedClassCounts: [String: Int]
+    public let skippedClassCounts: [String: Int]
     /// References that pointed at a location registering no class at all.
-    package let unregisteredTargetCount: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let unregisteredTargetCount: Int
+    public let unresolved: [HKXUnresolvedReference]
 
     /// Depth-first, first-visit-wins walk from `root`. A behavior graph is a
     /// DAG rather than a tree — a transition effect or a bone weight array is
     /// shared by many nodes — so visited targets are tracked and a repeat
     /// reference is not re-decoded.
-    package static func walk(from root: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func walk(from root: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBGraphTopology
     {
         var nodes: [HKBGraphNode] = []
@@ -69,7 +69,7 @@ nonisolated package struct HKBGraphTopology {
     }
 
     /// Every walked node of one class, in visit order.
-    package func nodes(ofClass className: String) -> [HKBGraphNode] {
+    public func nodes(ofClass className: String) -> [HKBGraphNode] {
         nodes.filter { $0.object.className == className }
     }
 }
@@ -77,32 +77,32 @@ nonisolated package struct HKBGraphTopology {
 /// The result of decoding every registered object in one packfile: what
 /// decoded, what had no decoder, and every field that failed to resolve. This
 /// is the sweep's evidence that the layouts in this milestone are right.
-nonisolated package struct HKBDecodeReport {
+nonisolated public struct HKBDecodeReport: Sendable {
     /// Objects decoded per class name.
-    package let decodedCounts: [String: Int]
+    public let decodedCounts: [String: Int]
     /// Objects whose class has no registered decoder, per class name. Under the
     /// full-graph rule this must be empty for a player behavior file.
-    package let skippedCounts: [String: Int]
+    public let skippedCounts: [String: Int]
     /// Objects whose class has a decoder that still returned nil — a cursor
     /// that could not be placed, which means a corrupt object offset.
-    package let failedCounts: [String: Int]
-    package let unresolved: [HKXUnresolvedReference]
+    public let failedCounts: [String: Int]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package var decodedTotal: Int {
+    public var decodedTotal: Int {
         decodedCounts.values.reduce(0, +)
     }
 
-    package var skippedTotal: Int {
+    public var skippedTotal: Int {
         skippedCounts.values.reduce(0, +)
     }
 
-    package var failedTotal: Int {
+    public var failedTotal: Int {
         failedCounts.values.reduce(0, +)
     }
 
     /// Class names the file declares that no decoder covers, sorted for a
     /// stable assertion message.
-    package var uncoveredClassNames: [String] {
+    public var uncoveredClassNames: [String] {
         skippedCounts.keys.sorted()
     }
 
@@ -110,7 +110,7 @@ nonisolated package struct HKBDecodeReport {
     /// item 14.1 are counted as covered rather than decoded again, because
     /// `HKBBehaviorCensus` already walks those and decoding them twice would
     /// double-count their misses.
-    package static func decodeAll(in graph: HKXObjectGraph) -> HKBDecodeReport {
+    public static func decodeAll(in graph: HKXObjectGraph) -> HKBDecodeReport {
         var decoded: [String: Int] = [:]
         var skipped: [String: Int] = [:]
         var failed: [String: Int] = [:]

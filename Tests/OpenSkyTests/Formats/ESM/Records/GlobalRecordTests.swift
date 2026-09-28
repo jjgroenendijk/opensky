@@ -2,6 +2,7 @@
 // "Skyrim Mod:Mod File Format/GLOB" and xEdit `wbRecord(GLOB, ...)`; see
 // docs/formats/records.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

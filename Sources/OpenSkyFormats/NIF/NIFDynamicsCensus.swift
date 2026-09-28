@@ -10,27 +10,27 @@ import Foundation
 
 /// One joint reduced to the two scene objects it binds. On a character
 /// skeleton those names are bones.
-nonisolated package struct NIFConstraintBonePair: Hashable, Sendable {
-    package let type: String
-    package let bodyA: String
-    package let bodyB: String
+nonisolated public struct NIFConstraintBonePair: Hashable, Sendable {
+    public let type: String
+    public let bodyA: String
+    public let bodyB: String
 }
 
 /// Mass distribution over the bodies that carry one. Kilograms, as stored.
-nonisolated package struct NIFMassDistribution: Sendable {
-    package private(set) var bodyCount = 0
-    package private(set) var minimum = Float.greatestFiniteMagnitude
-    package private(set) var maximum = -Float.greatestFiniteMagnitude
-    package private(set) var total: Double = 0
+nonisolated public struct NIFMassDistribution: Sendable {
+    public private(set) var bodyCount = 0
+    public private(set) var minimum = Float.greatestFiniteMagnitude
+    public private(set) var maximum = -Float.greatestFiniteMagnitude
+    public private(set) var total: Double = 0
     /// Power-of-ten bucket exponent -> body count, so `0` is 1 to 10 kg.
     /// Bodies at zero mass are counted separately by the census.
-    package private(set) var decades: [Int: Int] = [:]
+    public private(set) var decades: [Int: Int] = [:]
 
-    package var mean: Float? {
+    public var mean: Float? {
         bodyCount > 0 ? Float(total / Double(bodyCount)) : nil
     }
 
-    package mutating func add(_ mass: Float) {
+    public mutating func add(_ mass: Float) {
         guard mass.isFinite, mass > 0 else { return }
         bodyCount += 1
         minimum = min(minimum, mass)
@@ -40,44 +40,44 @@ nonisolated package struct NIFMassDistribution: Sendable {
     }
 }
 
-nonisolated package struct NIFDynamicsCensus: Sendable {
-    package private(set) var modelCount = 0
-    package private(set) var collisionBearingModelCount = 0
-    package private(set) var bodyCount = 0
+nonisolated public struct NIFDynamicsCensus: Sendable {
+    public private(set) var modelCount = 0
+    public private(set) var collisionBearingModelCount = 0
+    public private(set) var bodyCount = 0
     /// Bodies item 15.2 would integrate: simulated motion system, positive mass.
-    package private(set) var simulatedBodyCount = 0
+    public private(set) var simulatedBodyCount = 0
     /// Bodies whose motion system says simulated but whose mass is zero, which
     /// is the combination a naive integrator divides by.
-    package private(set) var masslessSimulatedBodyCount = 0
+    public private(set) var masslessSimulatedBodyCount = 0
     /// Raw `hkMotionType` byte -> body count.
-    package private(set) var motionSystemCounts: [UInt8: Int] = [:]
+    public private(set) var motionSystemCounts: [UInt8: Int] = [:]
     /// Raw `hkQualityType` byte -> body count.
-    package private(set) var qualityCounts: [UInt8: Int] = [:]
+    public private(set) var qualityCounts: [UInt8: Int] = [:]
     /// `SkyrimLayer` raw value from the rigid-body filter -> body count.
-    package private(set) var layerCounts: [UInt8: Int] = [:]
+    public private(set) var layerCounts: [UInt8: Int] = [:]
     /// `bhkCollisionObject` vs `bhkBlendCollisionObject` -> body count.
-    package private(set) var carrierCounts: [String: Int] = [:]
-    package private(set) var mass = NIFMassDistribution()
-    package private(set) var zeroMassBodyCount = 0
+    public private(set) var carrierCounts: [String: Int] = [:]
+    public private(set) var mass = NIFMassDistribution()
+    public private(set) var zeroMassBodyCount = 0
     /// Constraint block type name -> how many joints of it were decoded.
-    package private(set) var constraintTypeCounts: [String: Int] = [:]
+    public private(set) var constraintTypeCounts: [String: Int] = [:]
     /// Distinct joint-to-bone-pair bindings, with how many models show each.
-    package private(set) var bonePairs: [NIFConstraintBonePair: Int] = [:]
+    public private(set) var bonePairs: [NIFConstraintBonePair: Int] = [:]
     /// Constraint ends whose entity pointer named no decoded body.
-    package private(set) var unboundConstraintEndCount = 0
+    public private(set) var unboundConstraintEndCount = 0
     /// Reachable block types the decoder does not read, by type.
-    package private(set) var unsupportedBlocks: [String: Int] = [:]
-    package private(set) var decodeFailureCount = 0
+    public private(set) var unsupportedBlocks: [String: Int] = [:]
+    public private(set) var decodeFailureCount = 0
     /// Every decode failure with the model and block it came from, so a
     /// non-zero tally is diagnosable without re-running the sweep.
-    package private(set) var decodeFailures: [String] = []
+    public private(set) var decodeFailures: [String] = []
     /// Model paths that did not parse at all, with the reason.
-    package private(set) var loadFailures: [String] = []
+    public private(set) var loadFailures: [String] = []
     /// Models whose census contributed a constraint, so the report can name
     /// where the ragdoll data lives.
-    package private(set) var constraintBearingModelPaths: [String] = []
+    public private(set) var constraintBearingModelPaths: [String] = []
 
-    package mutating func record(model: NIFCollisionModel, path: String) {
+    public mutating func record(model: NIFCollisionModel, path: String) {
         modelCount += 1
         if !model.bodies.isEmpty {
             collisionBearingModelCount += 1
@@ -95,7 +95,7 @@ nonisolated package struct NIFDynamicsCensus: Sendable {
         }
     }
 
-    package mutating func record(loadFailure: String, path: String) {
+    public mutating func record(loadFailure: String, path: String) {
         modelCount += 1
         loadFailures.append("\(path): \(loadFailure)")
     }

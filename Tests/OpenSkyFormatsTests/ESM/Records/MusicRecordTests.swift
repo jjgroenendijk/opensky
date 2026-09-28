@@ -3,6 +3,7 @@
 // dev-4.1.6 wbDefinitionsTES5.pas lines 7074-7092 and 7203-7226.
 // See docs/formats/music.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

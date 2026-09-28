@@ -10,15 +10,15 @@
 
 import Foundation
 
-nonisolated package struct TextureSet {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct TextureSet: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// TX00 — diffuse map path relative to Data/ (e.g. "textures\\...\\x.dds").
-    package let diffusePath: String?
+    public let diffusePath: String?
     /// TX01 — normal/gloss map path.
-    package let normalPath: String?
+    public let normalPath: String?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "TXST" else {
             throw ESMError.malformed("expected TXST record, got \(record.type)")
         }

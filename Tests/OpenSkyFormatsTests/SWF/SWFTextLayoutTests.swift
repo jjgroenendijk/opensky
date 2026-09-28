@@ -3,6 +3,7 @@
 // alignment, kerning, and missing-glyph accounting. Synthetic fonts built
 // with SWFFontBodyBuilder.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

@@ -3,9 +3,11 @@
 // and the session state that picks one confrontation at a time. Synthetic
 // records only (CrimeFixture).
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct GuardResponseTests {

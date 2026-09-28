@@ -14,28 +14,28 @@ import simd
 nonisolated extension PlacedReference {
     /// XPRM field: the invisible volume a reference encloses. Trigger boxes,
     /// activation volumes, portal boxes and occlusion volumes all carry one.
-    nonisolated package struct Primitive: Equatable, Sendable {
+    nonisolated public struct Primitive: Equatable, Sendable {
         /// Half-extents in native Skyrim world units, pre-scale — the stored
         /// values are half the volume's size along each axis, which is why
         /// UESP labels the row "Bounds / 2" and xEdit displays it with a
         /// float scale of 2. XSCL still multiplies them at placement time.
-        package let halfExtents: SIMD3<Float>
+        public let halfExtents: SIMD3<Float>
         /// Editor wireframe color, stored 0...1 (UESP: "Color / 255"). Not
         /// rendered in game; kept because it distinguishes volume roles in
         /// the Creation Kit and costs nothing to carry.
-        package let color: SIMD3<Float>
+        public let color: SIMD3<Float>
         /// Fourth `wbFloatRGBA` member, named "Alpha" by xEdit and left
         /// unknown by UESP. Preserved verbatim rather than interpreted; see
         /// the flagged uncertainty in docs/formats/placed-references.md.
-        package let unknown: Float
+        public let unknown: Float
         /// Volume shape. `halfExtents` reads as a box's half-size for `.box`
         /// and `.portalBox`, and as a radius triple for `.sphere`.
-        package let type: PrimitiveType
+        public let type: PrimitiveType
     }
 
     /// XPRM trailing uint32. Names follow xEdit's `wbEnum`; UESP lists the
     /// same range but leaves 4 unnamed.
-    nonisolated package enum PrimitiveType: UInt32, Equatable, Sendable {
+    nonisolated public enum PrimitiveType: UInt32, Equatable, Sendable {
         case none = 0
         case box = 1
         case sphere = 2
@@ -62,7 +62,7 @@ nonisolated extension PlacedReference {
     ///
     /// Layout, UESP REFR + xEdit wbDefinitionsTES5.pas: exact 32-byte struct =
     /// bounds xyz, color rgb, unknown float (xEdit "Alpha"), uint32 type.
-    nonisolated package static func decodePrimitive(
+    nonisolated public static func decodePrimitive(
         _ field: ESMField,
         reference: FormID
     ) throws -> Primitive {

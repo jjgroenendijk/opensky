@@ -94,39 +94,39 @@
 
 import Foundation
 
-nonisolated package struct Projectile: Equatable, Sendable {
+nonisolated public struct Projectile: Equatable, Sendable {
     /// DATA flags. Only the ones an arrow can meaningfully set are named; the
     /// rest are carried in `rawValue` so a readout can print them.
-    package struct Flags: OptionSet, Equatable, Sendable {
-        package let rawValue: UInt16
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
         /// Travels instantly along a line rather than flying. Vanilla sets it
         /// on nothing an arrow fires, and the flight model refuses to
         /// integrate one.
-        package static let hitscan = Flags(rawValue: 0x0001)
-        package static let explosion = Flags(rawValue: 0x0002)
-        package static let alternateTrigger = Flags(rawValue: 0x0004)
-        package static let muzzleFlash = Flags(rawValue: 0x0008)
-        package static let canBeDisabled = Flags(rawValue: 0x0020)
+        public static let hitscan = Flags(rawValue: 0x0001)
+        public static let explosion = Flags(rawValue: 0x0002)
+        public static let alternateTrigger = Flags(rawValue: 0x0004)
+        public static let muzzleFlash = Flags(rawValue: 0x0008)
+        public static let canBeDisabled = Flags(rawValue: 0x0020)
         /// The projectile survives its impact as a pickup — what makes a spent
         /// arrow retrievable.
-        package static let canBePickedUp = Flags(rawValue: 0x0040)
-        package static let supersonic = Flags(rawValue: 0x0080)
-        package static let pinsLimbs = Flags(rawValue: 0x0100)
-        package static let passThroughSmallTransparent = Flags(rawValue: 0x0200)
-        package static let disableCombatAimCorrection = Flags(rawValue: 0x0400)
+        public static let canBePickedUp = Flags(rawValue: 0x0040)
+        public static let supersonic = Flags(rawValue: 0x0080)
+        public static let pinsLimbs = Flags(rawValue: 0x0100)
+        public static let passThroughSmallTransparent = Flags(rawValue: 0x0200)
+        public static let disableCombatAimCorrection = Flags(rawValue: 0x0400)
         /// xEdit names bit 11 `Rotation`; UESP's table stops at bit 10.
-        package static let rotation = Flags(rawValue: 0x0800)
+        public static let rotation = Flags(rawValue: 0x0800)
     }
 
     /// DATA type. Written as a bit value rather than an ordinal, but vanilla
     /// sets exactly one bit per record, so it decodes as a closed enum and an
     /// unrecognized value decodes as nil rather than being forced.
-    package enum Kind: UInt16, Equatable, Sendable, CaseIterable {
+    public enum Kind: UInt16, Equatable, Sendable, CaseIterable {
         case missile = 0x01
         case lobber = 0x02
         case beam = 0x04
@@ -136,48 +136,48 @@ nonisolated package struct Projectile: Equatable, Sendable {
         case arrow = 0x40
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let bounds: ObjectBounds?
+    public let formID: FormID
+    public let editorID: String?
+    public let bounds: ObjectBounds?
     /// MODL — the flying model, relative to `Data/`. What a stuck arrow is
     /// drawn from.
-    package let modelPath: String?
+    public let modelPath: String?
 
-    package let flags: Flags
+    public let flags: Flags
     /// DATA type; nil when the record names a value outside the documented set.
-    package let kind: Kind?
+    public let kind: Kind?
     /// DATA gravity, which is a dimensionless multiplier over world gravity and
     /// not an acceleration. See the file comment.
-    package let gravityFactor: Float
+    public let gravityFactor: Float
     /// DATA launch speed, world units per second.
-    package let speed: Float
+    public let speed: Float
     /// DATA range: the travel past which the projectile is given up on, world
     /// units. Zero on records that do not bound their flight.
-    package let range: Float
+    public let range: Float
     /// DATA impact force, which is what a hit pushes a dynamic body with.
-    package let impactForce: Float
+    public let impactForce: Float
     /// DATA collision radius, world units. Zero on records that fly as a point.
-    package let collisionRadius: Float
+    public let collisionRadius: Float
     /// DATA lifetime in seconds, the hard cap beside `range`. Zero where the
     /// record sets none.
-    package let lifetime: Float
+    public let lifetime: Float
     /// DATA — SNDR played while in flight; nil when unset or null.
-    package let sound: FormID?
+    public let sound: FormID?
     /// DATA — SNDR played when the projectile is disabled; nil when unset.
-    package let disableSound: FormID?
+    public let disableSound: FormID?
     /// DATA — EXPL detonated on impact; nil on an ordinary arrow. Explosive
     /// projectiles are out of item 15.5's scope, but the link is decoded so
     /// nothing has to guess whether a projectile is one.
-    package let explosion: FormID?
+    public let explosion: FormID?
     /// DATA +0x58 — COLL collision layer. The owning plugin is needed to
     /// resolve it; `CollisionLayerStore.collisionLayer(for:fromPlugin:)`
     /// exposes the resolved record.
-    package let collisionLayer: FormID?
+    public let collisionLayer: FormID?
     /// VNAM — how loud firing this is for detection purposes; nil when absent.
-    package let soundLevel: SoundLevel?
+    public let soundLevel: SoundLevel?
 
     /// VNAM detection level, in the order UESP lists it.
-    package enum SoundLevel: UInt32, Equatable, Sendable, CaseIterable {
+    public enum SoundLevel: UInt32, Equatable, Sendable, CaseIterable {
         case loud = 0
         case normal = 1
         case silent = 2
@@ -186,11 +186,11 @@ nonisolated package struct Projectile: Equatable, Sendable {
 
     /// Whether this record is one an arrow's flight model can integrate: it
     /// flies rather than tracing a line, and it has a launch speed.
-    package var isBallistic: Bool {
+    public var isBallistic: Bool {
         !flags.contains(.hitscan) && speed.isFinite && speed > 0
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "PROJ" else {
             throw ESMError.malformed("expected PROJ record, got \(record.type)")
         }
@@ -237,7 +237,7 @@ nonisolated package struct Projectile: Equatable, Sendable {
     }
 
     /// Test seam: a record's decoded values without a file behind them.
-    package init(
+    public init(
         formID: FormID,
         editorID: String? = nil,
         flags: Flags = [],

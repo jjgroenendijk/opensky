@@ -17,7 +17,7 @@
 import Foundation
 
 /// One entry of the character dictionary, keyed by character id.
-nonisolated package enum SWFCharacter {
+nonisolated public enum SWFCharacter: Sendable {
     case shape(SWFShapeDefinition)
     case bitmap(SWFBitmap)
     case font(SWFFontDefinition)
@@ -29,49 +29,49 @@ nonisolated package enum SWFCharacter {
 /// A DefineSprite character: its declared frame count plus its own timeline
 /// (nested placements resolved by depth like the main timeline, and the action
 /// blocks of every frame).
-nonisolated package struct SWFSprite {
-    package let characterId: UInt16
-    package let frameCount: UInt16
-    package let timeline: SWFTimeline
+nonisolated public struct SWFSprite: Sendable {
+    public let characterId: UInt16
+    public let frameCount: UInt16
+    public let timeline: SWFTimeline
 
     /// The sprite's frame-1 display list, depth-ascending.
-    package var frame1: [SWFPlacedObject] {
+    public var frame1: [SWFPlacedObject] {
         timeline.frame1
     }
 }
 
 /// One resolved display-list slot after executing the placement tags: the
 /// character occupying a depth with its accumulated state.
-nonisolated package struct SWFPlacedObject: Equatable {
-    package var depth: UInt16
-    package var characterId: UInt16
-    package var matrix = SWFMatrix.identity
-    package var colorTransform = SWFColorTransform.identity
-    package var ratio: UInt16?
-    package var name: String?
-    package var clipDepth: UInt16?
+nonisolated public struct SWFPlacedObject: Equatable, Sendable {
+    public var depth: UInt16
+    public var characterId: UInt16
+    public var matrix = SWFMatrix.identity
+    public var colorTransform = SWFColorTransform.identity
+    public var ratio: UInt16?
+    public var name: String?
+    public var clipDepth: UInt16?
 }
 
 /// Feature counters accumulated while decoding a movie's display list —
 /// including the recorded-but-ignored PlaceObject3 extras, so the sweep can
 /// report exactly what the renderer defers.
-nonisolated package struct SWFMovieTally: Equatable {
-    package var placeObject = 0
-    package var placeObject2 = 0
-    package var placeObject3 = 0
-    package var moves = 0
-    package var removals = 0
-    package var showFrames = 0
-    package var sprites = 0
-    package var clipLayers = 0
-    package var filters = 0
-    package var blendModes = 0
-    package var clipActions = 0
+nonisolated public struct SWFMovieTally: Equatable, Sendable {
+    public var placeObject = 0
+    public var placeObject2 = 0
+    public var placeObject3 = 0
+    public var moves = 0
+    public var removals = 0
+    public var showFrames = 0
+    public var sprites = 0
+    public var clipLayers = 0
+    public var filters = 0
+    public var blendModes = 0
+    public var clipActions = 0
     /// Placements naming a character id absent from the dictionary, or a
     /// modify targeting an empty depth — skipped, never fatal.
-    package var danglingPlacements = 0
+    public var danglingPlacements = 0
 
-    package init() {}
+    public init() {}
 
     // The counters above describe frame 1 only, because that is all the
     // renderer draws. The action counters below describe the whole movie —
@@ -81,19 +81,19 @@ nonisolated package struct SWFMovieTally: Equatable {
 
     /// Action streams found anywhere in the movie: DoAction (12), DoInitAction
     /// (59), and PlaceObject2/3 CLIPACTIONS handlers.
-    package var actionBlocks = 0
+    public var actionBlocks = 0
     /// ACTIONRECORDs framed across those streams (the terminating
     /// `ActionEndFlag` is not a record and is not counted).
-    package var actionRecords = 0
+    public var actionRecords = 0
     /// Records whose `ActionCode` is not in the Adobe action table.
-    package var unknownActionOpcodes = 0
+    public var unknownActionOpcodes = 0
     /// Records with an operand payload this stage frames but does not decode
     /// into typed operands. Their bytes are retained either way.
-    package var undecodedActionOpcodes = 0
+    public var undecodedActionOpcodes = 0
     /// Action-stream framing problems recorded instead of thrown.
-    package var actionWarnings = 0
+    public var actionWarnings = 0
 
-    package mutating func add(_ other: SWFMovieTally) {
+    public mutating func add(_ other: SWFMovieTally) {
         placeObject += other.placeObject
         placeObject2 += other.placeObject2
         placeObject3 += other.placeObject3
@@ -120,16 +120,16 @@ nonisolated package struct SWFMovieTally: Equatable {
 /// object at the depth; both -> replace the character at the depth. The spec
 /// leaves the unspecified fields of a replace undefined; observed Flash/GFx
 /// behavior keeps the previous state, which is what this does.
-nonisolated package struct SWFDisplayListBuilder {
+nonisolated public struct SWFDisplayListBuilder: Sendable {
     private var byDepth: [UInt16: SWFPlacedObject] = [:]
-    package private(set) var tally = SWFMovieTally()
+    public private(set) var tally = SWFMovieTally()
 
     /// The current list, depth-ascending (the paint order).
-    package var placements: [SWFPlacedObject] {
+    public var placements: [SWFPlacedObject] {
         byDepth.values.sorted { $0.depth < $1.depth }
     }
 
-    package mutating func apply(_ placement: SWFPlacement) {
+    public mutating func apply(_ placement: SWFPlacement) {
         tally.filters += placement.filterCount
         if placement.blendMode != nil {
             tally.blendModes += 1
@@ -165,7 +165,7 @@ nonisolated package struct SWFDisplayListBuilder {
         byDepth[placement.depth] = object
     }
 
-    package mutating func remove(_ removal: SWFRemoval) {
+    public mutating func remove(_ removal: SWFRemoval) {
         tally.removals += 1
         byDepth.removeValue(forKey: removal.depth)
     }
@@ -189,60 +189,60 @@ nonisolated package struct SWFDisplayListBuilder {
 
 /// A decoded movie ready for scene flattening: header framing, dictionary,
 /// background color, and the frame-1 display list.
-nonisolated package struct SWFMovie {
+nonisolated public struct SWFMovie: Sendable {
     /// SWF version of the source file. CLIPEVENTFLAGS width depends on it, and
     /// so will the action model a later interpreter accepts.
-    package let version: UInt8
-    package let frameSize: SWFRect
-    package let frameCount: UInt16
+    public let version: UInt8
+    public let frameSize: SWFRect
+    public let frameCount: UInt16
     /// Header `FrameRate` in frames per second. The AS2 timer natives convert a
     /// millisecond interval into ticks with it, so `setInterval` stays a
     /// function of the movie rather than of a clock.
-    package let frameRate: Float
+    public let frameRate: Float
     /// SetBackgroundColor (9); nil when the movie never sets one.
-    package let backgroundColor: SWFColor?
+    public let backgroundColor: SWFColor?
     /// The character dictionary. `var` because the cross-movie import merge
     /// (`SWFMovieImportMerger`) folds imported characters in after decoding;
     /// nothing else writes it, and the movie stays a value type.
-    package var characters: [UInt16: SWFCharacter]
+    public var characters: [UInt16: SWFCharacter]
     /// The main timeline: every frame's control tags and DoAction blocks.
-    package let timeline: SWFTimeline
+    public let timeline: SWFTimeline
     /// DoInitAction (59) blocks in tag order. Each names the sprite whose first
     /// instantiation its actions precede; the spec allows at most one per
     /// sprite, which is not enforced here. The import merge prepends the blocks
     /// of every merged source movie, so an imported class is registered before
     /// anything instantiates it.
-    package var initActions: [SWFDoInitAction]
+    public var initActions: [SWFDoInitAction]
     /// Characters this movie imports by name (ImportAssets/ImportAssets2):
     /// character id -> export name in the source movie. Vanilla movies import
     /// their fonts this way, so an edit text's FontID often lands here rather
     /// than in `characters`. The import merge adds the tables of every merged
     /// source movie, so a merged edit text still finds its font substitution.
-    package var importedNames: [UInt16: String]
+    public var importedNames: [UInt16: String]
     /// Every ImportAssets/ImportAssets2 tag with its source movie URL. A font
     /// import is answered by substitution (`SWFMovieScene.resolvedFont`); a
     /// sprite import needs the source movie itself, which is why the URL is
     /// kept rather than folded away into `importedNames`.
-    package let imports: [SWFImportedAssets]
+    public let imports: [SWFImportedAssets]
     /// Characters this movie exports by name (ExportAssets): linkage name ->
     /// character id. `Object.registerClass` binds a class to a linkage name, so
     /// this is the table that turns a registered class into something the
     /// display list can instantiate. An imported linkage name is added by the
     /// merge only when this movie does not already claim it.
-    package var exportedNames: [String: UInt16]
+    public var exportedNames: [String: UInt16]
     /// The same table read the other way: character id -> linkage name. A
     /// placement carries an id, so this is the direction instantiation needs.
     /// Duplicate exports of one id keep the alphabetically first name, which
     /// makes the map deterministic. The merge also files each bound placeholder
     /// id here under the name it was imported by.
-    package var exportedIds: [UInt16: String]
-    package let tally: SWFMovieTally
+    public var exportedIds: [UInt16: String]
+    public let tally: SWFMovieTally
     /// What the cross-movie import merge did, or an empty record when the movie
     /// imports nothing that needs merging. Counters only, never a throw.
-    package var importDiagnostics = SWFImportMergeDiagnostics()
+    public var importDiagnostics = SWFImportMergeDiagnostics()
 
     /// Main-timeline display list at the first ShowFrame, depth-ascending.
-    package var frame1: [SWFPlacedObject] {
+    public var frame1: [SWFPlacedObject] {
         timeline.frame1
     }
 
@@ -252,7 +252,7 @@ nonisolated package struct SWFMovie {
     /// its DoAction blocks come before the CLIPACTIONS handlers of its
     /// placements. A consumer walks a block with `SWFActionBlock.records` and
     /// seeks by byte offset with `SWFActionBlock.record(atOffset:)`.
-    package var actionBlocks: [SWFActionBlock] {
+    public var actionBlocks: [SWFActionBlock] {
         var blocks = timeline.actionBlocks
         for characterId in characters.keys.sorted() {
             if case let .sprite(sprite) = characters[characterId] {
@@ -262,7 +262,7 @@ nonisolated package struct SWFMovie {
         return blocks + initActions.map(\.actions)
     }
 
-    package init(file: SWFFile) throws {
+    public init(file: SWFFile) throws {
         version = file.version
         frameSize = file.frameSize
         frameCount = file.frameCount
@@ -294,42 +294,42 @@ nonisolated package struct SWFMovie {
         tally = total
     }
 
-    package func shape(_ id: UInt16) -> SWFShapeDefinition? {
+    public func shape(_ id: UInt16) -> SWFShapeDefinition? {
         if case let .shape(shape) = characters[id] {
             return shape
         }
         return nil
     }
 
-    package func bitmap(_ id: UInt16) -> SWFBitmap? {
+    public func bitmap(_ id: UInt16) -> SWFBitmap? {
         if case let .bitmap(bitmap) = characters[id] {
             return bitmap
         }
         return nil
     }
 
-    package func font(_ id: UInt16) -> SWFFontDefinition? {
+    public func font(_ id: UInt16) -> SWFFontDefinition? {
         if case let .font(font) = characters[id] {
             return font
         }
         return nil
     }
 
-    package func editText(_ id: UInt16) -> SWFEditText? {
+    public func editText(_ id: UInt16) -> SWFEditText? {
         if case let .editText(text) = characters[id] {
             return text
         }
         return nil
     }
 
-    package func staticText(_ id: UInt16) -> SWFTextDefinition? {
+    public func staticText(_ id: UInt16) -> SWFTextDefinition? {
         if case let .staticText(text) = characters[id] {
             return text
         }
         return nil
     }
 
-    package func sprite(_ id: UInt16) -> SWFSprite? {
+    public func sprite(_ id: UInt16) -> SWFSprite? {
         if case let .sprite(sprite) = characters[id] {
             return sprite
         }
@@ -341,7 +341,7 @@ nonisolated extension SWFDisplayListBuilder {
     /// Tally-only notes recorded by the timeline decoder alongside apply/remove.
     /// They live here because `tally` is `private(set)`, which limits its setter
     /// to this file.
-    package mutating func notePlaceObject(version: Int) {
+    public mutating func notePlaceObject(version: Int) {
         switch version {
         case 1: tally.placeObject += 1
         case 2: tally.placeObject2 += 1
@@ -349,11 +349,11 @@ nonisolated extension SWFDisplayListBuilder {
         }
     }
 
-    package mutating func noteShowFrame() {
+    public mutating func noteShowFrame() {
         tally.showFrames += 1
     }
 
-    package mutating func noteDanglingPlacement() {
+    public mutating func noteDanglingPlacement() {
         tally.danglingPlacements += 1
     }
 }

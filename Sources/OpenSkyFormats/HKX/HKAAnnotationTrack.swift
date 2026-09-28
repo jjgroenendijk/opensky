@@ -23,19 +23,19 @@
 import Foundation
 
 /// One annotation: when it fires inside the clip, and what it is called.
-nonisolated package struct HKAAnnotation: Equatable, Sendable {
+nonisolated public struct HKAAnnotation: Equatable, Sendable {
     /// Seconds from the start of the animation.
-    package let time: Float
-    package let text: String
+    public let time: Float
+    public let text: String
 }
 
 /// One `hkaAnnotationTrack`: a name and the annotations on it.
-nonisolated package struct HKAAnnotationTrack: Equatable, Sendable {
-    package let name: String?
-    package let annotations: [HKAAnnotation]
+nonisolated public struct HKAAnnotationTrack: Equatable, Sendable {
+    public let name: String?
+    public let annotations: [HKAAnnotation]
 
     /// `hkaAnnotationTrack`: `m_trackName` then the `m_annotations` hkArray.
-    package static let stride = 24
+    public static let stride = 24
     private static let nameField = HKXField(0x00, "m_trackName")
     private static let annotationsField = HKXField(0x08, "m_annotations")
 
@@ -47,7 +47,7 @@ nonisolated package struct HKAAnnotationTrack: Equatable, Sendable {
 
     /// `hkaAnimation::m_annotationTracks`, whose offset the animation byte map
     /// records.
-    package static let tracksField = HKXField(0x28, "m_annotationTracks")
+    public static let tracksField = HKXField(0x28, "m_annotationTracks")
 
     /// Reads every annotation track of the `hkaAnimation` `cursor` is open on.
     ///
@@ -56,7 +56,7 @@ nonisolated package struct HKAAnnotationTrack: Equatable, Sendable {
     /// annotations is the ordinary case. An unreadable element is skipped and
     /// recorded as a cursor miss, in keeping with "unknown field or variant ->
     /// skip and note" (AGENTS.md "Code quality").
-    package static func tracks(cursor: inout HKXObjectCursor) -> [HKAAnnotationTrack] {
+    public static func tracks(cursor: inout HKXObjectCursor) -> [HKAAnnotationTrack] {
         guard let view = cursor.array(at: tracksField) else { return [] }
         var tracks: [HKAAnnotationTrack] = []
         tracks.reserveCapacity(view.count)

@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 nonisolated struct DistantLODBlock: Equatable, Hashable {

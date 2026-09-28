@@ -14,6 +14,7 @@
 // Gated on a Metal 4 device; the loop's own evidence is `M12AcceptanceTests`,
 // which needs no GPU.
 
+import FormatsTestSupport
 import Foundation
 import Metal
 import MetalKit

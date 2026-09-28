@@ -35,7 +35,7 @@ discipline lives here, not there.
 ## Testing
 
 - The parser goes in `Sources/OpenSkyFormats/<Format>/`. It never imports engine code; see
-  `docs/tools/modules.md` for `package` access and explicit `package init(...)`.
+  `docs/tools/modules.md` for `public` access, explicit `public init(...)`, and `Sendable`.
 - Unit-test in the matching `Tests/OpenSkyFormatsTests/<Format>/` folder with synthetic fixtures
   built in code (existing patterns: `BSAFixture`, `ESMFixture`, `NIFFixture`, `StringTableFixture`,
   all under `Tests/FormatsTestSupport/`). A test that also builds engine state goes in

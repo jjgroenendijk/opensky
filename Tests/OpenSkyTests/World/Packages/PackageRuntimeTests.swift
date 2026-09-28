@@ -1,6 +1,7 @@
 // Package selection and bounded procedure machines over synthetic records and
 // synthetic navmesh geometry. No game data is embedded.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

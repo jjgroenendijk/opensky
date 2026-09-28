@@ -4,6 +4,7 @@
 // and the action-side tally. Also pins that frame-1 display-list behavior and
 // its counters are unchanged. Synthetic fixtures only.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

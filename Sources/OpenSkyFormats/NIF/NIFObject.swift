@@ -15,7 +15,7 @@ import simd
 
 nonisolated extension BinaryReader {
     /// Three little-endian floats (nif.xml Vector3).
-    package mutating func readVector3() throws -> SIMD3<Float> {
+    public mutating func readVector3() throws -> SIMD3<Float> {
         try SIMD3(readFloat32(), readFloat32(), readFloat32())
     }
 }
@@ -24,14 +24,14 @@ nonisolated extension BinaryReader {
 /// (skipped). Property blocks (BSLightingShaderProperty, NiAlphaProperty)
 /// start here directly; scene-graph objects continue with NiAVObject fields
 /// (NIFObjectPrefix).
-nonisolated package struct NIFObjectNET {
+nonisolated public struct NIFObjectNET: Sendable {
     /// Resolved from the header string table. nil when unnamed (index -1) or
     /// the index is junk — lenient because vanilla string tables carry
     /// exporter garbage (docs/formats/nif.md) and a bad name must not reject
     /// the mesh.
-    package let name: String?
+    public let name: String?
 
-    package init(reader: inout BinaryReader, header: NIFHeader) throws {
+    public init(reader: inout BinaryReader, header: NIFHeader) throws {
         let nameIndex = try reader.readUInt32()
         if nameIndex != .max, Int(nameIndex) < header.strings.count {
             name = header.strings[Int(nameIndex)]
@@ -50,23 +50,23 @@ nonisolated package struct NIFObjectNET {
     }
 }
 
-nonisolated package struct NIFObjectPrefix {
+nonisolated public struct NIFObjectPrefix: Sendable {
     /// See NIFObjectNET.name.
-    package let name: String?
-    package let flags: UInt32
-    package let translation: SIMD3<Float>
+    public let name: String?
+    public let flags: UInt32
+    public let translation: SIMD3<Float>
     /// The node's rotation in the engine's convention: `R * v` on column
     /// vectors. Transposed on the way in, because NIF is a row-vector format
     /// (see `init`).
-    package let rotation: simd_float3x3
-    package let scale: Float
+    public let rotation: simd_float3x3
+    public let scale: Float
     /// bhk collision object ref; -1 = none. Recorded, never followed (M2
     /// skips collision).
-    package let collisionRef: Int32
+    public let collisionRef: Int32
 
     /// Local transform `T * R * S` (column vectors, matches
     /// docs/decisions/coordinates.md).
-    package var localTransform: float4x4 {
+    public var localTransform: float4x4 {
         float4x4(columns: (
             SIMD4<Float>(rotation.columns.0 * scale, 0),
             SIMD4<Float>(rotation.columns.1 * scale, 0),
@@ -75,7 +75,7 @@ nonisolated package struct NIFObjectPrefix {
         ))
     }
 
-    package init(reader: inout BinaryReader, header: NIFHeader) throws {
+    public init(reader: inout BinaryReader, header: NIFHeader) throws {
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {
             throw NIFError.unsupported(

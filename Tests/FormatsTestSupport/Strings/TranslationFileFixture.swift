@@ -5,9 +5,9 @@
 
 import Foundation
 
-enum TranslationFileFixture {
+public enum TranslationFileFixture: Sendable {
     /// Encodes `$key<TAB>value` pairs as a translation file, one pair per line.
-    static func file(
+    public static func file(
         _ pairs: [(key: String, value: String)],
         bom: Bool = true,
         lineEnding: String = "\r\n",
@@ -21,7 +21,7 @@ enum TranslationFileFixture {
 
     /// Encodes arbitrary text as UTF-16 with an optional BOM. Lets a test build
     /// deliberately malformed input (missing tab, stray lines, odd bytes).
-    static func encode(_ text: String, bom: Bool = true, bigEndian: Bool = false) -> Data {
+    public static func encode(_ text: String, bom: Bool = true, bigEndian: Bool = false) -> Data {
         var data = Data()
         if bom {
             data.append(contentsOf: bigEndian ? [0xFE, 0xFF] : [0xFF, 0xFE])

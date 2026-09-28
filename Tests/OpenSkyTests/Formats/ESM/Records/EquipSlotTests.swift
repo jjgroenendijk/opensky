@@ -7,9 +7,11 @@
 // a choose-one composite, an all-of composite, and a one-parent composite that
 // is how a shield ends up in the left hand.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct EquipSlotTests {

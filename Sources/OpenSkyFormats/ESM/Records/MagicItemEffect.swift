@@ -26,26 +26,26 @@
 
 import Foundation
 
-nonisolated package struct MagicItemEffect: Equatable, Sendable {
+nonisolated public struct MagicItemEffect: Equatable, Sendable {
     /// EFID — the MGEF this entry applies; resolved through MagicEffectStore.
-    package let effect: FormID
+    public let effect: FormID
     /// EFIT magnitude. Units are per-MGEF and are not interpreted here.
-    package let magnitude: Float
+    public let magnitude: Float
     /// EFIT area of effect, 0 for a point effect.
-    package let area: UInt32
+    public let area: UInt32
     /// EFIT duration in seconds, 0 for instantaneous.
-    package let duration: UInt32
+    public let duration: UInt32
     /// CTDA conditions gating this effect, in file order. Decoded through the
     /// shared `ConditionList` so CITC counts and CIS1/CIS2 parameter-name
     /// overrides behave exactly as they do everywhere else.
-    package let conditions: ConditionList
+    public let conditions: ConditionList
 
     /// The same entry with its magnitude multiplied, which is what a
     /// resistance-scaled application hands the effect runtime (issue #471).
     ///
     /// A copy rather than a mutation: the decoded record is what the load order
     /// says, and a scaled entry is one application of it.
-    package func scalingMagnitude(by multiplier: Float) -> MagicItemEffect {
+    public func scalingMagnitude(by multiplier: Float) -> MagicItemEffect {
         guard multiplier.isFinite else { return self }
         return MagicItemEffect(
             effect: effect,
@@ -60,7 +60,7 @@ nonisolated package struct MagicItemEffect: Equatable, Sendable {
 /// Mutable accumulator that folds the EFID/EFIT/CTDA run into entries. A
 /// record's field switch forwards every field it does not own; `finish()`
 /// flushes the effect still being built when the record ends.
-nonisolated package struct MagicItemEffectList {
+nonisolated public struct MagicItemEffectList: Sendable {
     private var effects: [MagicItemEffect] = []
     private var pendingEffect: FormID?
     private var pendingMagnitude: Float = 0
@@ -68,11 +68,11 @@ nonisolated package struct MagicItemEffectList {
     private var pendingDuration: UInt32 = 0
     private var pendingConditions = ConditionList()
 
-    package init() {}
+    public init() {}
 
     /// Decodes `field` when it belongs to the effect run and reports whether
     /// it was consumed.
-    package mutating func decode(field: ESMField) throws -> Bool {
+    public mutating func decode(field: ESMField) throws -> Bool {
         switch field.type {
         case "EFID":
             flush()
@@ -94,7 +94,7 @@ nonisolated package struct MagicItemEffectList {
 
     /// Flushes the effect under construction and returns every entry in file
     /// order. Call once, after the record's field loop.
-    package mutating func finish() -> [MagicItemEffect] {
+    public mutating func finish() -> [MagicItemEffect] {
         flush()
         return effects
     }

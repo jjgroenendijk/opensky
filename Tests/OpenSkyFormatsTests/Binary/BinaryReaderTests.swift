@@ -1,5 +1,6 @@
 // Unit tests for BinaryReader bounds checking and string decoding.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

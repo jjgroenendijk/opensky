@@ -9,29 +9,45 @@ import Foundation
 /// Assembles a DefineFont2 (48) / DefineFont3 (75) tag body. `flags` drives the
 /// offset/code integer widths; the offset table is computed from the glyph
 /// shape sizes so the parser's slice math is exercised for real.
-struct SWFFontBodyBuilder {
+public struct SWFFontBodyBuilder: Sendable {
     /// Layout block written only when `flags.hasLayout` is set.
-    struct Layout {
-        var ascent: Int16 = 0
-        var descent: Int16 = 0
-        var leading: Int16 = 0
-        var advances: [Int16] = []
-        var bounds: [SWFRect] = []
-        var kerning: [SWFKerningRecord] = []
+    public struct Layout: Sendable {
+        public var ascent: Int16 = 0
+        public var descent: Int16 = 0
+        public var leading: Int16 = 0
+        public var advances: [Int16] = []
+        public var bounds: [SWFRect] = []
+        public var kerning: [SWFKerningRecord] = []
+
+        public init(
+            ascent: Int16 = 0,
+            descent: Int16 = 0,
+            leading: Int16 = 0,
+            advances: [Int16] = [],
+            bounds: [SWFRect] = [],
+            kerning: [SWFKerningRecord] = []
+        ) {
+            self.ascent = ascent
+            self.descent = descent
+            self.leading = leading
+            self.advances = advances
+            self.bounds = bounds
+            self.kerning = kerning
+        }
     }
 
-    var fontID: UInt16 = 1
-    var flags = SWFFontFlags()
-    var languageCode: UInt8 = 0
-    var name = "TestFont"
-    var codes: [UInt16] = []
+    public var fontID: UInt16 = 1
+    public var flags = SWFFontFlags()
+    public var languageCode: UInt8 = 0
+    public var name = "TestFont"
+    public var codes: [UInt16] = []
     /// One bare glyph SHAPE (NumFillBits/NumLineBits + records) per glyph.
-    var shapes: [Data] = []
-    var layout: Layout?
+    public var shapes: [Data] = []
+    public var layout: Layout?
 
     /// A bare glyph SHAPE for a filled triangle spanning `size` glyph units,
     /// starting at the origin (SWF glyph space is y-down).
-    static func triangleGlyphShape(size: Int32) -> Data {
+    public static func triangleGlyphShape(size: Int32) -> Data {
         glyphShape { builder in
             var change = SWFShapeBodyBuilder.StyleChange(moveToX: 0, moveToY: 0)
             change.fill1 = 1
@@ -43,7 +59,7 @@ struct SWFFontBodyBuilder {
     }
 
     /// Wraps glyph records in the bare-SHAPE framing (index bits + end record).
-    static func glyphShape(_ records: (inout SWFShapeBodyBuilder) -> Void) -> Data {
+    public static func glyphShape(_ records: (inout SWFShapeBodyBuilder) -> Void) -> Data {
         var builder = SWFShapeBodyBuilder()
         builder.appendIndexBits(fill: 1, line: 0)
         records(&builder)
@@ -51,7 +67,7 @@ struct SWFFontBodyBuilder {
         return builder.build()
     }
 
-    func build() -> Data {
+    public func build() -> Data {
         var out = Data()
         out.appendUInt16(fontID)
         out.append(flagsByte())
@@ -159,5 +175,23 @@ struct SWFFontBodyBuilder {
             }
             out.appendUInt16(UInt16(bitPattern: record.adjustment))
         }
+    }
+
+    public init(
+        fontID: UInt16 = 1,
+        flags: SWFFontFlags = SWFFontFlags(),
+        languageCode: UInt8 = 0,
+        name: String = "TestFont",
+        codes: [UInt16] = [],
+        shapes: [Data] = [],
+        layout: Layout? = nil
+    ) {
+        self.fontID = fontID
+        self.flags = flags
+        self.languageCode = languageCode
+        self.name = name
+        self.codes = codes
+        self.shapes = shapes
+        self.layout = layout
     }
 }

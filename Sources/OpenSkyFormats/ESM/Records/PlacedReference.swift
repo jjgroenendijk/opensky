@@ -21,14 +21,14 @@
 import Foundation
 import simd
 
-nonisolated package struct PlacedReference {
+nonisolated public struct PlacedReference: Sendable {
     /// DATA field: 24 bytes, positions in game units, rotations in radians
     /// (Skyrim world axes — see docs/decisions/coordinates.md).
-    package struct Placement: Equatable {
-        package let position: SIMD3<Float>
-        package let rotation: SIMD3<Float>
+    public struct Placement: Equatable, Sendable {
+        public let position: SIMD3<Float>
+        public let rotation: SIMD3<Float>
 
-        package init(position: SIMD3<Float>, rotation: SIMD3<Float>) {
+        public init(position: SIMD3<Float>, rotation: SIMD3<Float>) {
             self.position = position
             self.rotation = rotation
         }
@@ -36,20 +36,20 @@ nonisolated package struct PlacedReference {
 
     /// XTEL field: destination door reference + arrival transform + flags.
     /// xEdit names the FormID target "Door" but constrains it to REFR.
-    package struct TeleportDestination: Equatable {
-        package struct Flags: OptionSet, Equatable {
-            package let rawValue: UInt32
+    public struct TeleportDestination: Equatable, Sendable {
+        public struct Flags: OptionSet, Equatable, Sendable {
+            public let rawValue: UInt32
 
-            package init(rawValue: UInt32) {
+            public init(rawValue: UInt32) {
                 self.rawValue = rawValue
             }
 
-            package static let noAlarm = Flags(rawValue: 0x0000_0001)
+            public static let noAlarm = Flags(rawValue: 0x0000_0001)
         }
 
-        package let door: FormID
-        package let placement: Placement
-        package let flags: Flags
+        public let door: FormID
+        public let placement: Placement
+        public let flags: Flags
     }
 
     /// XLKR field: one entry of the reference's linked-reference list.
@@ -70,52 +70,52 @@ nonisolated package struct PlacedReference {
     /// ref. Skyrim.esm never puts a reference in slot 0 of an 8-byte payload,
     /// so OpenSky reads an 8-byte slot 0 as a keyword unconditionally. A mod
     /// that broke that would have its link read as tagged with a non-keyword.
-    package struct LinkedReference: Equatable {
+    public struct LinkedReference: Equatable, Sendable {
         /// KYWD tagging the link (`LinkCarryStart`, `LinkCarryEnd`, ...).
         /// `nil` when the link carries no keyword.
-        package let keyword: FormID?
+        public let keyword: FormID?
         /// The reference this REFR links to — a REFR/ACHR/PLYR in practice.
-        package let ref: FormID
+        public let ref: FormID
     }
 
-    package let formID: FormID
+    public let formID: FormID
     /// Record-header flag 0x800: hidden until a script or quest enables it.
-    package let isInitiallyDisabled: Bool
+    public let isInitiallyDisabled: Bool
     /// NAME — the base object this reference places.
-    package let base: FormID
+    public let base: FormID
     /// DATA placement as decoded. `var` because a cell build lays a runtime
     /// transform override over the record's value before it places anything
     /// (issue #160, `CellSceneBuilder.applyRuntimeState`); decoding itself
     /// never rewrites it.
-    package var placement: Placement
+    public var placement: Placement
     /// XSCL — uniform scale, defaulting to 1 when the field is absent. `var`
     /// for the same runtime-override reason as `placement`.
-    package var scale: Float
+    public var scale: Float
     /// XTEL — present only on teleporting door references.
-    package let teleportDestination: TeleportDestination?
+    public let teleportDestination: TeleportDestination?
     /// XRDS — per-reference point-light radius override.
-    package let lightRadius: Float?
+    public let lightRadius: Float?
     /// XEMI — LIGH/REGN emittance override; LIGH handled by lighting pass.
-    package let emittance: FormID?
+    public let emittance: FormID?
     /// XPRM — the primitive volume this reference encloses, nil when absent.
     /// Layout and decode policy live in `PlacedReferencePrimitive.swift`.
-    package let primitive: Primitive?
+    public let primitive: Primitive?
     /// XLKR — every linked reference, in file order. The subrecord repeats,
     /// so this is an array rather than an optional; it is empty when the
     /// reference links to nothing. Read it through
     /// `linkedReference(keyword:)` rather than by index.
-    package let linkedReferences: [LinkedReference]
+    public let linkedReferences: [LinkedReference]
     /// XOWN — the NPC_ or FACT that owns this reference; nil when unowned.
     /// Taking an owned item is theft, and an owned container is a crime scene.
-    package let owner: FormID?
+    public let owner: FormID?
     /// XRNK — faction rank required to use the reference freely. Meaningful
     /// only when `owner` is a FACT; nil when the field is absent.
-    package let ownerFactionRank: Int32?
+    public let ownerFactionRank: Int32?
     /// XCNT — how many of the base item this reference places. Nil when
     /// absent, which means one.
-    package let itemCount: Int32?
+    public let itemCount: Int32?
     /// VMAD — Papyrus scripts attached directly to this placed reference.
-    package let scriptData: ScriptData
+    public let scriptData: ScriptData
 
     /// The link `ObjectReference.GetLinkedRef(akKeyword)` resolves to: the
     /// first entry tagged with `keyword`, or — passing `nil`, the Papyrus
@@ -127,11 +127,11 @@ nonisolated package struct PlacedReference {
     /// that repeats a keyword and none that carries more than one untagged
     /// link, so first-match and only-match agree on real data. The deepest
     /// list observed is 19 links.
-    package func linkedReference(keyword: FormID? = nil) -> FormID? {
+    public func linkedReference(keyword: FormID? = nil) -> FormID? {
         linkedReferences.first { $0.keyword == keyword }?.ref
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "REFR" else {
             throw ESMError.malformed("expected REFR record, got \(record.type)")
         }
@@ -184,7 +184,7 @@ nonisolated package struct PlacedReference {
     /// raycasts and interaction metadata address it exactly like an authored
     /// placement. `itemCount` carries the stack size, matching the XCNT a
     /// placed inventory item would have used.
-    package init(
+    public init(
         spawnedBase base: FormID,
         placement: Placement,
         scale: Float,

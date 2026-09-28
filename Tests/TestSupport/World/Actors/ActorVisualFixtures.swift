@@ -2,6 +2,7 @@
 // in code via ESMFixture, never extracted game files (AGENTS.md "Legal & IP
 // boundary"). Used by ActorVisualResolutionTests.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

@@ -1,6 +1,7 @@
 // Synthetic TRI parser tests. Fixtures are authored bytes, never extracted
 // game content (AGENTS.md legal boundary).
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

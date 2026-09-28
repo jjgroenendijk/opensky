@@ -5,28 +5,28 @@
 
 import simd
 
-nonisolated package enum MatrixMath {
+nonisolated public enum MatrixMath: Sendable {
     /// Basis change from Skyrim Z-up world axes to Metal-style y-up:
     /// (x, y, z) -> (x, z, -y). Proper rotation (det +1), no reflection.
-    package static let zUpToYUp = float4x4(columns: (
+    public static let zUpToYUp = float4x4(columns: (
         SIMD4<Float>(1, 0, 0, 0),
         SIMD4<Float>(0, 0, -1, 0),
         SIMD4<Float>(0, 1, 0, 0),
         SIMD4<Float>(0, 0, 0, 1)
     ))
 
-    package static func radians(fromDegrees degrees: Float) -> Float {
+    public static func radians(fromDegrees degrees: Float) -> Float {
         degrees / 180 * .pi
     }
 
     /// The inverse, for a control that presents an angle in degrees over a
     /// value the engine keeps in radians (issue #190).
-    package static func degrees(fromRadians radians: Float) -> Float {
+    public static func degrees(fromRadians radians: Float) -> Float {
         radians / .pi * 180
     }
 
     /// Rodrigues rotation about an arbitrary axis.
-    package static func rotation(radians: Float, axis: SIMD3<Float>) -> float4x4 {
+    public static func rotation(radians: Float, axis: SIMD3<Float>) -> float4x4 {
         let unit = simd_normalize(axis)
         let ct = cosf(radians)
         let st = sinf(radians)
@@ -43,7 +43,7 @@ nonisolated package enum MatrixMath {
     }
 
     /// Counter-clockwise rotation about +X (viewed from the positive axis end).
-    package static func rotationX(radians: Float) -> float4x4 {
+    public static func rotationX(radians: Float) -> float4x4 {
         let ct = cosf(radians)
         let st = sinf(radians)
         return float4x4(columns: (
@@ -55,7 +55,7 @@ nonisolated package enum MatrixMath {
     }
 
     /// Counter-clockwise rotation about +Y.
-    package static func rotationY(radians: Float) -> float4x4 {
+    public static func rotationY(radians: Float) -> float4x4 {
         let ct = cosf(radians)
         let st = sinf(radians)
         return float4x4(columns: (
@@ -67,7 +67,7 @@ nonisolated package enum MatrixMath {
     }
 
     /// Counter-clockwise rotation about +Z.
-    package static func rotationZ(radians: Float) -> float4x4 {
+    public static func rotationZ(radians: Float) -> float4x4 {
         let ct = cosf(radians)
         let st = sinf(radians)
         return float4x4(columns: (
@@ -78,13 +78,13 @@ nonisolated package enum MatrixMath {
         ))
     }
 
-    package static func translation(_ offset: SIMD3<Float>) -> float4x4 {
+    public static func translation(_ offset: SIMD3<Float>) -> float4x4 {
         var matrix = matrix_identity_float4x4
         matrix.columns.3 = SIMD4<Float>(offset.x, offset.y, offset.z, 1)
         return matrix
     }
 
-    package static func scale(uniform factor: Float) -> float4x4 {
+    public static func scale(uniform factor: Float) -> float4x4 {
         float4x4(diagonal: SIMD4<Float>(factor, factor, factor, 1))
     }
 
@@ -92,7 +92,7 @@ nonisolated package enum MatrixMath {
     /// down -z. Works directly with Z-up world vectors — pass `up` = +Z and the
     /// Z-up -> y-up basis change falls out of the orthonormal construction.
     /// `up` must not be parallel to the view direction.
-    package static func lookAt(
+    public static func lookAt(
         eye: SIMD3<Float>,
         target: SIMD3<Float>,
         up: SIMD3<Float>
@@ -118,7 +118,7 @@ nonisolated package enum MatrixMath {
     /// hence the negation against the CCW helpers above; order Z*Y*X with X
     /// innermost. Sign/order rationale + verification plan:
     /// docs/decisions/coordinates.md.
-    package static func placement(
+    public static func placement(
         position: SIMD3<Float>,
         rotation: SIMD3<Float>,
         scale: Float
@@ -144,7 +144,7 @@ nonisolated package enum MatrixMath {
     /// Straight up or straight down leaves the outer two angles degenerate; the
     /// X angle is pinned to zero there and the whole rotation is carried by Z,
     /// which is the conventional resolution.
-    package static func eulerAngles(of orientation: simd_quatf) -> SIMD3<Float> {
+    public static func eulerAngles(of orientation: simd_quatf) -> SIMD3<Float> {
         let matrix = float3x3(orientation)
         // matrix[column][row]; the derivation below reads row-major.
         let row2Column0 = matrix[0][2]
@@ -165,13 +165,13 @@ nonisolated package enum MatrixMath {
     /// world-space normals under non-uniform scale. Multiply with w = 0
     /// vectors and take xyz. Singular input (zero scale — pathological
     /// external data) falls back to identity instead of producing NaNs.
-    package static func normalMatrix(_ matrix: float4x4) -> float4x4 {
+    public static func normalMatrix(_ matrix: float4x4) -> float4x4 {
         guard abs(matrix.determinant) > .ulpOfOne else { return matrix_identity_float4x4 }
         return matrix.inverse.transpose
     }
 
     /// Right-handed perspective projection mapping z to Metal's [0, 1] range.
-    package static func perspective(
+    public static func perspective(
         fovYRadians: Float,
         aspectRatio: Float,
         nearZ: Float,
@@ -193,7 +193,7 @@ nonisolated package enum MatrixMath {
     /// Right-handed orthographic projection mapping z to Metal's [0, 1] range.
     /// Eye space looks down -z, so eye z in [-farZ, -nearZ] maps to clip z in
     /// [0, 1]; x in [left, right] and y in [bottom, top] map to [-1, 1].
-    package static func orthographic(
+    public static func orthographic(
         left: Float,
         right: Float,
         bottom: Float,

@@ -9,10 +9,10 @@
 import Foundation
 import simd
 
-nonisolated package struct NIFDynamicTriShape {
-    package let shape: NIFTriShape
+nonisolated public struct NIFDynamicTriShape: Sendable {
+    public let shape: NIFTriShape
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         let inherited = try NIFTriShape(reader: &reader, header: header)
         let byteCount = try Int(reader.readUInt32())

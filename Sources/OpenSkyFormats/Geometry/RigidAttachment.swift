@@ -35,7 +35,7 @@
 import Foundation
 import simd
 
-nonisolated package enum RigidAttachment {
+nonisolated public enum RigidAttachment: Sendable {
     /// `model` rewritten so every mesh is skinned to the single bone `bone`.
     ///
     /// - Parameters:
@@ -47,7 +47,7 @@ nonisolated package enum RigidAttachment {
     ///     used for the bind palette. Identity leaves an un-animated
     ///     attachment at the actor's origin, which is a visible, honest
     ///     failure rather than a hidden one.
-    package static func skinned(
+    public static func skinned(
         _ model: Model,
         to bone: String,
         restTransform: float4x4

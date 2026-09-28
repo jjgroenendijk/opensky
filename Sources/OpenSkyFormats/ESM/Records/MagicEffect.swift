@@ -10,96 +10,96 @@
 
 import Foundation
 
-nonisolated package struct MagicEffectFlags: OptionSet, Equatable {
-    package let rawValue: UInt32
+nonisolated public struct MagicEffectFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt32
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self.rawValue = rawValue
     }
 
-    package static let hostile = Self(rawValue: 1 << 0)
-    package static let recover = Self(rawValue: 1 << 1)
-    package static let detrimental = Self(rawValue: 1 << 2)
-    package static let snapToNavmesh = Self(rawValue: 1 << 3)
-    package static let noHitEvent = Self(rawValue: 1 << 4)
-    package static let dispelWithKeywords = Self(rawValue: 1 << 8)
-    package static let noDuration = Self(rawValue: 1 << 9)
-    package static let noMagnitude = Self(rawValue: 1 << 10)
-    package static let noArea = Self(rawValue: 1 << 11)
-    package static let effectsPersist = Self(rawValue: 1 << 12)
-    package static let goryVisuals = Self(rawValue: 1 << 14)
-    package static let hideInUI = Self(rawValue: 1 << 15)
-    package static let noRecast = Self(rawValue: 1 << 17)
-    package static let powerAffectsMagnitude = Self(rawValue: 1 << 21)
-    package static let powerAffectsDuration = Self(rawValue: 1 << 22)
-    package static let painless = Self(rawValue: 1 << 26)
-    package static let noHitEffect = Self(rawValue: 1 << 27)
-    package static let noDeathDispel = Self(rawValue: 1 << 28)
+    public static let hostile = Self(rawValue: 1 << 0)
+    public static let recover = Self(rawValue: 1 << 1)
+    public static let detrimental = Self(rawValue: 1 << 2)
+    public static let snapToNavmesh = Self(rawValue: 1 << 3)
+    public static let noHitEvent = Self(rawValue: 1 << 4)
+    public static let dispelWithKeywords = Self(rawValue: 1 << 8)
+    public static let noDuration = Self(rawValue: 1 << 9)
+    public static let noMagnitude = Self(rawValue: 1 << 10)
+    public static let noArea = Self(rawValue: 1 << 11)
+    public static let effectsPersist = Self(rawValue: 1 << 12)
+    public static let goryVisuals = Self(rawValue: 1 << 14)
+    public static let hideInUI = Self(rawValue: 1 << 15)
+    public static let noRecast = Self(rawValue: 1 << 17)
+    public static let powerAffectsMagnitude = Self(rawValue: 1 << 21)
+    public static let powerAffectsDuration = Self(rawValue: 1 << 22)
+    public static let painless = Self(rawValue: 1 << 26)
+    public static let noHitEffect = Self(rawValue: 1 << 27)
+    public static let noDeathDispel = Self(rawValue: 1 << 28)
 }
 
-nonisolated package struct MagicEffectSound: Equatable {
-    package let kind: UInt32
-    package let descriptor: FormID?
+nonisolated public struct MagicEffectSound: Equatable, Sendable {
+    public let kind: UInt32
+    public let descriptor: FormID?
 }
 
-nonisolated package enum MagicEffectSkipKind: Hashable {
+nonisolated public enum MagicEffectSkipKind: Hashable, Sendable {
     case unknownField(FourCC)
     case malformedField(FourCC)
 }
 
-nonisolated package struct MagicEffectTally: Equatable {
-    package private(set) var counts: [MagicEffectSkipKind: Int] = [:]
+nonisolated public struct MagicEffectTally: Equatable, Sendable {
+    public private(set) var counts: [MagicEffectSkipKind: Int] = [:]
 
-    package var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    package mutating func note(_ kind: MagicEffectSkipKind) {
+    public mutating func note(_ kind: MagicEffectSkipKind) {
         counts[kind, default: 0] += 1
     }
 }
 
-nonisolated package struct MagicEffectData: Equatable {
-    package let flags: MagicEffectFlags
-    package let baseCost: Float
-    package let associatedItem: FormID?
-    package let magicSkill: Int32
-    package let resistanceActorValue: Int32
-    package let counterEffectCount: UInt16
-    package let castingLight: FormID?
-    package let taperWeight: Float
-    package let hitShader: FormID?
-    package let enchantShader: FormID?
-    package let minimumSkillLevel: UInt32
-    package let spellmakingArea: UInt32
-    package let castingTime: Float
-    package let taperCurve: Float
-    package let taperDuration: Float
-    package let secondActorValueWeight: Float
-    package let archetype: MagicEffectArchetype
-    package let relatedActorValue: Int32
-    package let projectile: FormID?
-    package let explosion: FormID?
-    package let castingType: MagicEffectCastingType
-    package let delivery: MagicEffectDelivery
-    package let secondActorValue: Int32
-    package let castingArt: FormID?
-    package let hitEffectArt: FormID?
-    package let impactData: FormID?
-    package let skillUsageMultiplier: Float
-    package let dualCastArt: FormID?
-    package let dualCastScale: Float
-    package let enchantArt: FormID?
-    package let hitVisuals: FormID?
-    package let enchantVisuals: FormID?
-    package let equipAbility: FormID?
-    package let imageSpaceModifier: FormID?
-    package let perkToApply: FormID?
-    package let castingSoundLevel: UInt32
-    package let scriptAIScore: Float
-    package let scriptAIDelay: Float
+nonisolated public struct MagicEffectData: Equatable, Sendable {
+    public let flags: MagicEffectFlags
+    public let baseCost: Float
+    public let associatedItem: FormID?
+    public let magicSkill: Int32
+    public let resistanceActorValue: Int32
+    public let counterEffectCount: UInt16
+    public let castingLight: FormID?
+    public let taperWeight: Float
+    public let hitShader: FormID?
+    public let enchantShader: FormID?
+    public let minimumSkillLevel: UInt32
+    public let spellmakingArea: UInt32
+    public let castingTime: Float
+    public let taperCurve: Float
+    public let taperDuration: Float
+    public let secondActorValueWeight: Float
+    public let archetype: MagicEffectArchetype
+    public let relatedActorValue: Int32
+    public let projectile: FormID?
+    public let explosion: FormID?
+    public let castingType: MagicEffectCastingType
+    public let delivery: MagicEffectDelivery
+    public let secondActorValue: Int32
+    public let castingArt: FormID?
+    public let hitEffectArt: FormID?
+    public let impactData: FormID?
+    public let skillUsageMultiplier: Float
+    public let dualCastArt: FormID?
+    public let dualCastScale: Float
+    public let enchantArt: FormID?
+    public let hitVisuals: FormID?
+    public let enchantVisuals: FormID?
+    public let equipAbility: FormID?
+    public let imageSpaceModifier: FormID?
+    public let perkToApply: FormID?
+    public let castingSoundLevel: UInt32
+    public let scriptAIScore: Float
+    public let scriptAIDelay: Float
 
-    package var unknownEnumCount: Int {
+    public var unknownEnumCount: Int {
         var count = 0
         if case .unknown = archetype {
             count += 1
@@ -113,7 +113,7 @@ nonisolated package struct MagicEffectData: Equatable {
         return count
     }
 
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count == 152 else {
             throw ESMError.malformed(
                 "MGEF DATA has \(field.data.count) bytes, expected exactly 152"
@@ -171,20 +171,20 @@ nonisolated package struct MagicEffectData: Equatable {
     }
 }
 
-nonisolated package struct MagicEffect: Equatable {
-    package let formID: FormID
-    package let editorID: String?
-    package let name: LString?
-    package let description: LString?
-    package let menuDisplayObject: FormID?
-    package let keywords: KeywordList
-    package let data: MagicEffectData?
-    package let counterEffects: [FormID]
-    package let sounds: [MagicEffectSound]
-    package let conditions: ConditionList
-    package let skipped: MagicEffectTally
+nonisolated public struct MagicEffect: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
+    public let name: LString?
+    public let description: LString?
+    public let menuDisplayObject: FormID?
+    public let keywords: KeywordList
+    public let data: MagicEffectData?
+    public let counterEffects: [FormID]
+    public let sounds: [MagicEffectSound]
+    public let conditions: ConditionList
+    public let skipped: MagicEffectTally
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "MGEF" else {
             throw ESMError.malformed("expected MGEF record, got \(record.type)")
         }
@@ -205,7 +205,7 @@ nonisolated package struct MagicEffect: Equatable {
         skipped = decoder.skipped
     }
 
-    package init(formID: FormID, editorID: String?, name: LString?, data: MagicEffectData?) {
+    public init(formID: FormID, editorID: String?, name: LString?, data: MagicEffectData?) {
         self.formID = formID
         self.editorID = editorID
         self.name = name

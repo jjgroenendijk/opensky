@@ -4,6 +4,7 @@
 // evaluator tests (issue #187) need the same synthetic clip.
 // Byte map: docs/formats/hka-animation.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

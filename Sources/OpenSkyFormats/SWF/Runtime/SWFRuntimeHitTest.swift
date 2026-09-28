@@ -22,12 +22,12 @@ import simd
 
 /// What a hit test found: the topmost mouse-enabled node under the pointer, and
 /// the topmost node of any kind, which is what a diagnostic readout wants.
-nonisolated package struct SWFHitResult {
+nonisolated public struct SWFHitResult {
     /// The node that should receive `onPress`, or nil when the pointer is over
     /// nothing interactive.
-    package let target: SWFDisplayObject?
+    public let target: SWFDisplayObject?
     /// The topmost drawable node under the pointer, interactive or not.
-    package let topmost: SWFDisplayObject?
+    public let topmost: SWFDisplayObject?
 }
 
 nonisolated extension SWFMovieRuntime {
@@ -35,13 +35,13 @@ nonisolated extension SWFMovieRuntime {
     /// event to a clip only when the clip can handle one; CLIK's `Button`
     /// assigns `onPress`, `onRelease`, `onRollOver`, and `onRollOut` in
     /// `configUI`, so the presence of any of them is the test.
-    package static let mouseHandlerNames = [
+    public static let mouseHandlerNames = [
         "onPress", "onRelease", "onReleaseOutside", "onRollOver", "onRollOut",
         "onDragOver", "onDragOut", "onMouseDown", "onMouseUp"
     ]
 
     /// Hit tests the whole tree at a point in stage twips.
-    package func hitTest(stageTwips point: SIMD2<Float>) -> SWFHitResult {
+    public func hitTest(stageTwips point: SIMD2<Float>) -> SWFHitResult {
         var search = SWFHitSearch(runtime: self, point: point)
         search.walk(node: root, transform: .identity, depth: 0)
         return SWFHitResult(target: search.target, topmost: search.topmost)
@@ -49,7 +49,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// True when the node itself can consume a mouse event, either through a
     /// handler member or a CLIPACTIONS mouse handler.
-    package func isMouseEnabled(_ node: SWFDisplayObject) -> Bool {
+    public func isMouseEnabled(_ node: SWFDisplayObject) -> Bool {
         guard node.isClip else {
             return false
         }
@@ -61,7 +61,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// True when the point falls inside the node's own character bounds,
     /// expressed in the node's local space.
-    package func containsLocally(_ node: SWFDisplayObject, localPoint: SIMD2<Float>) -> Bool {
+    public func containsLocally(_ node: SWFDisplayObject, localPoint: SIMD2<Float>) -> Bool {
         localBounds(of: node).contains(localPoint)
     }
 }
@@ -69,7 +69,7 @@ nonisolated extension SWFMovieRuntime {
 nonisolated extension SWFClipEventFlags {
     /// Every mouse-driven clip event, for deciding whether a node is a mouse
     /// target without naming each flag at the call site.
-    package static let mouseEvents: SWFClipEventFlags = [
+    public static let mouseEvents: SWFClipEventFlags = [
         .mouseMove, .mouseDown, .mouseUp, .press, .release, .releaseOutside,
         .rollOver, .rollOut, .dragOver, .dragOut
     ]

@@ -3,6 +3,7 @@
 
 import Metal
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated struct CellProviderIndexes {
     /// The four load-order magic stores, decoded off one shared `RecordIndex`

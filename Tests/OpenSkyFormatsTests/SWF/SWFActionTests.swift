@@ -3,6 +3,7 @@
 // offsets, the block-shaped actions, byte-offset seeking, and the degradations
 // a malformed stream must survive. Synthetic fixtures only.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

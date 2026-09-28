@@ -12,69 +12,69 @@
 import Foundation
 import simd
 
-nonisolated package struct Land {
+nonisolated public struct Land: Sendable {
     /// One cell edge is a 33x33 vertex grid (32 quads at 128 game units each,
     /// spanning the 4096-unit cell). Rows run south->north, columns west->east.
-    package static let dimension = 33
+    public static let dimension = 33
     /// 33x33 vertices per subrecord grid.
-    package static let vertexCount = dimension * dimension
+    public static let vertexCount = dimension * dimension
 
     /// VHGT: gradient-coded height map. Stored as a float anchor plus signed
     /// per-vertex deltas; `heights` is the fully accumulated, *8-scaled field.
-    package struct HeightField {
+    public struct HeightField: Sendable {
         /// Raw VHGT offset float — accumulation seed, before the *8 scale.
-        package let anchor: Float
+        public let anchor: Float
         /// 1089 heights in game units, row-major south->north / west->east.
-        package let heights: [Float]
+        public let heights: [Float]
     }
 
     /// BTXT: the base texture covering one quadrant (layer 0 of the splat).
-    package struct QuadrantTexture: Equatable {
+    public struct QuadrantTexture: Equatable, Sendable {
         /// LTEX FormID this quadrant's base texture resolves to.
-        package let texture: FormID
+        public let texture: FormID
         /// Quadrant index 0-3 (bottom-left, bottom-right, top-left, top-right).
-        package let quadrant: UInt8
+        public let quadrant: UInt8
         /// Layer number — 0/-1 for the base per spec, kept verbatim.
-        package let layer: Int16
+        public let layer: Int16
     }
 
     /// One VTXT entry: an alpha weight for an additional layer at a vertex on
     /// the quadrant's 17x17 sub-grid.
-    package struct AlphaSample: Equatable {
+    public struct AlphaSample: Equatable, Sendable {
         /// Vertex index 0-288 on the 17x17 quadrant grid.
-        package let position: UInt16
+        public let position: UInt16
         /// Blend weight 0.0-1.0.
-        package let opacity: Float
+        public let opacity: Float
     }
 
     /// ATXT header plus the VTXT alpha map that follows it. Order in `layers`
     /// is the on-disk order — the layer number drives splat blend order.
-    package struct TextureLayer {
+    public struct TextureLayer: Sendable {
         /// LTEX FormID this layer's texture resolves to.
-        package let texture: FormID
+        public let texture: FormID
         /// Quadrant index 0-3.
-        package let quadrant: UInt8
+        public let quadrant: UInt8
         /// Layer number (blend order above the base).
-        package let layer: Int16
+        public let layer: Int16
         /// Sparse per-vertex alpha weights from the paired VTXT.
-        package let alphas: [AlphaSample]
+        public let alphas: [AlphaSample]
     }
 
-    package let formID: FormID
+    public let formID: FormID
     /// DATA — land flags (quadrant include bits etc.); kept raw for now.
-    package let flags: UInt32
+    public let flags: UInt32
     /// VHGT height field. Nil only for a degenerate LAND without heights.
-    package let heightField: HeightField?
+    public let heightField: HeightField?
     /// VNML — 33x33 signed per-vertex normals (x, y, z). Nil when absent.
-    package let normals: [SIMD3<Int8>]?
+    public let normals: [SIMD3<Int8>]?
     /// VCLR — 33x33 per-vertex colors (r, g, b). Optional subrecord.
-    package let colors: [SIMD3<UInt8>]?
+    public let colors: [SIMD3<UInt8>]?
     /// BTXT base textures, one per painted quadrant.
-    package let baseTextures: [QuadrantTexture]
+    public let baseTextures: [QuadrantTexture]
     /// ATXT/VTXT additional layers in on-disk order.
-    package let layers: [TextureLayer]
+    public let layers: [TextureLayer]
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "LAND" else {
             throw ESMError.malformed("expected LAND record, got \(record.type)")
         }

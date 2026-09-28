@@ -18,19 +18,19 @@
 import Foundation
 import simd
 
-nonisolated package struct NIFParticleSystem {
-    package let object: NIFObjectPrefix
+nonisolated public struct NIFParticleSystem: Sendable {
+    public let object: NIFObjectPrefix
     /// NiPSysData block ref; -1 = none. Source differs by stream (see file
     /// header comment) but the resolved ref is the same either way.
-    package let dataRef: Int32
-    package let shaderPropertyRef: Int32
-    package let alphaPropertyRef: Int32
+    public let dataRef: Int32
+    public let shaderPropertyRef: Int32
+    public let alphaPropertyRef: Int32
     /// nif.xml World Space (default true).
-    package let worldSpace: Bool
+    public let worldSpace: Bool
     /// NiPSysModifier block refs in chain order; -1 entries kept positional.
-    package let modifierRefs: [Int32]
+    public let modifierRefs: [Int32]
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {

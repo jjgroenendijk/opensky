@@ -28,6 +28,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// One perk's place in the tree that grants it.
 nonisolated struct PerkTreePlacement: Equatable, Sendable {

@@ -18,16 +18,16 @@ import Foundation
 /// One IPCT, reduced to its sound links. The decal, model, and hazard members
 /// are deliberately not decoded: nothing draws an impact yet, and a field this
 /// decoder does not read cannot go stale against the spec.
-nonisolated package struct Impact: Equatable, Sendable {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct Impact: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// SNAM -> SNDR. The impact's primary sound; nil when absent or null.
-    package let sound: FormID?
+    public let sound: FormID?
     /// NAM1 -> SNDR. The secondary sound vanilla layers under a few impacts;
     /// nil when absent or null.
-    package let secondarySound: FormID?
+    public let secondarySound: FormID?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "IPCT" else {
             throw ESMError.malformed("expected IPCT record, got \(record.type)")
         }
@@ -65,23 +65,23 @@ nonisolated package struct Impact: Equatable, Sendable {
 
 /// One IPDS: the material-to-impact table an impact source is resolved
 /// through.
-nonisolated package struct ImpactDataSet: Equatable, Sendable {
+nonisolated public struct ImpactDataSet: Equatable, Sendable {
     /// One PNAM pair.
-    package struct Entry: Equatable, Sendable {
+    public struct Entry: Equatable, Sendable {
         /// MATT material type the pair applies to.
-        package let material: FormID
+        public let material: FormID
         /// IPCT to play on that material.
-        package let impact: FormID
+        public let impact: FormID
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// The PNAM pairs in record order. Vanilla sets carry one pair per material
     /// the Creation Kit knows about — around 70 of them — and most name the
     /// same impact throughout.
-    package let entries: [Entry]
+    public let entries: [Entry]
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "IPDS" else {
             throw ESMError.malformed("expected IPDS record, got \(record.type)")
         }
@@ -110,7 +110,7 @@ nonisolated package struct ImpactDataSet: Equatable, Sendable {
     }
 
     /// Test seam.
-    package init(formID: FormID, editorID: String?, entries: [Entry]) {
+    public init(formID: FormID, editorID: String?, entries: [Entry]) {
         self.formID = formID
         self.editorID = editorID
         self.entries = entries
@@ -125,7 +125,7 @@ nonisolated package struct ImpactDataSet: Equatable, Sendable {
     /// record order — a measurement of what the authored table mostly says
     /// rather than a hardcoded material. A set whose entries all agree, which
     /// is the common vanilla case, returns that one impact exactly.
-    package func impact(for material: FormID?) -> FormID? {
+    public func impact(for material: FormID?) -> FormID? {
         if let material, let match = entries.first(where: { $0.material == material }) {
             return match.impact
         }

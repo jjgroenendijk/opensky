@@ -16,6 +16,7 @@
 // halves cancel either way, but every pose written over it was composed in the
 // wrong convention.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

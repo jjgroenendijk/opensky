@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum SkeletonCommand {
     /// Cap the per-skeleton bone dump so a 99-bone rig stays greppable.

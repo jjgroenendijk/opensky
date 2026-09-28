@@ -9,88 +9,88 @@
 
 import Foundation
 
-nonisolated package struct Cell {
+nonisolated public struct Cell: Sendable {
     /// XCLW override. Missing field means use WRLD DNAM; three known bit
     /// patterns mean explicitly no water and must not fall back to WRLD.
-    package enum WaterHeight: Equatable {
+    public enum WaterHeight: Equatable, Sendable {
         case height(Float)
         case noWater
     }
 
     /// DATA field (uint16; one byte in some records — see init).
-    package struct Flags: OptionSet {
-        package let rawValue: UInt16
+    public struct Flags: OptionSet, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
-        package static let interior = Flags(rawValue: 0x0001)
-        package static let hasWater = Flags(rawValue: 0x0002)
-        package static let noTravelFromHere = Flags(rawValue: 0x0004)
-        package static let noLODWater = Flags(rawValue: 0x0008)
-        package static let publicArea = Flags(rawValue: 0x0020)
-        package static let handChanged = Flags(rawValue: 0x0040)
-        package static let showSky = Flags(rawValue: 0x0080)
-        package static let useSkyLighting = Flags(rawValue: 0x0100)
+        public static let interior = Flags(rawValue: 0x0001)
+        public static let hasWater = Flags(rawValue: 0x0002)
+        public static let noTravelFromHere = Flags(rawValue: 0x0004)
+        public static let noLODWater = Flags(rawValue: 0x0008)
+        public static let publicArea = Flags(rawValue: 0x0020)
+        public static let handChanged = Flags(rawValue: 0x0040)
+        public static let showSky = Flags(rawValue: 0x0080)
+        public static let useSkyLighting = Flags(rawValue: 0x0100)
     }
 
     /// XCLC field: exterior grid slot. One cell spans 4096 game units.
-    package struct Grid: Equatable {
-        package let x: Int32
-        package let y: Int32
+    public struct Grid: Equatable, Sendable {
+        public let x: Int32
+        public let y: Int32
         /// Force-hide-land-quad bits 0x1-0x8; high bits carry CK noise
         /// (UESP notes they look random) — kept verbatim, masked by users.
-        package let quadFlags: UInt32
+        public let quadFlags: UInt32
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// FULL — interior cells only in vanilla.
-    package let name: LString?
-    package let flags: Flags
+    public let name: LString?
+    public let flags: Flags
     /// Present on exterior cells, nil on interiors.
-    package let grid: Grid?
+    public let grid: Grid?
     /// XCLW. nil = inherit WRLD DNAM default water height.
-    package let waterHeight: WaterHeight?
+    public let waterHeight: WaterHeight?
     /// XCWT per-cell WATR override. nil = use WRLD NAM2.
-    package let waterType: FormID?
+    public let waterType: FormID?
     /// XCLL cell-local lighting values; nil when absent or too truncated.
-    package let lighting: CellLightingValues?
+    public let lighting: CellLightingValues?
     /// LTMP -> LGTM lighting template.
-    package let lightingTemplate: FormID?
+    public let lightingTemplate: FormID?
     /// XCLR — REGN regions overlapping this exterior cell (empty on interiors
     /// and cells without XCLR). Feeds region weather selection (M7.2.2) and
     /// region ambient sound selection (M9.2.2).
-    package let regions: [FormID]
+    public let regions: [FormID]
     /// XCAS — acoustic space (ASPC) reference, the interior-ambience hook
     /// (M9.2.2). Exterior cells generally carry none; interiors point at an
     /// ASPC whose SNAM/RDAT drive the per-cell ambient bed. nil when absent.
-    package let acousticSpace: FormID?
+    public let acousticSpace: FormID?
     /// XCMO — music type (MUSC) override for this cell (M9.2.3). nil when
     /// absent or null; the music director then falls back to the worldspace
     /// or region music.
-    package let musicType: FormID?
+    public let musicType: FormID?
     /// XLCN — the LCTN containing this cell.
-    package let location: FormID?
+    public let location: FormID?
     /// XEZN — the ECZN governing this cell's encounter level and reset data.
-    package let encounterZone: FormID?
+    public let encounterZone: FormID?
     /// XOWN — the NPC_ or FACT that owns everything in this cell, which is what
     /// a reference with no `XOWN` of its own inherits (issue #504). nil when
     /// the cell is unowned, which is the normal state for a dungeon and for the
     /// player's own house.
-    package let owner: FormID?
+    public let owner: FormID?
     /// XRNK — the faction rank a member needs before the cell's contents are
     /// theirs to use. Meaningful only when `owner` names a FACT; nil when the
     /// field is absent, which is every vanilla cell observed on this install.
-    package let ownerFactionRank: Int32?
+    public let ownerFactionRank: Int32?
 
-    package var isInterior: Bool {
+    public var isInterior: Bool {
         flags.contains(.interior)
     }
 
     /// - Parameter localized: TES4 localized flag of the owning plugin.
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "CELL" else {
             throw ESMError.malformed("expected CELL record, got \(record.type)")
         }

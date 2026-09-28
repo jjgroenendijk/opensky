@@ -31,7 +31,7 @@ nonisolated extension SWFMovieRuntime {
     /// Returns false when the node has no such handler, which is the normal
     /// case and never a fault.
     @discardableResult
-    package func dispatch(
+    public func dispatch(
         _ handler: String,
         to node: SWFDisplayObject,
         arguments: [AS2Value] = []
@@ -50,7 +50,7 @@ nonisolated extension SWFMovieRuntime {
     /// event first, then the matching handler member. Flash runs both, and a
     /// movie may define either.
     @discardableResult
-    package func dispatchClipEvent(
+    public func dispatchClipEvent(
         _ event: SWFClipEventFlags,
         to node: SWFDisplayObject,
         keyCode: UInt8? = nil
@@ -90,7 +90,7 @@ nonisolated extension SWFMovieRuntime {
     /// The lifecycle a newly placed instance runs through, in the order the
     /// `ClipEventFlags` table implies: `initialize` before the registered
     /// class's constructor, then `construct`, then `load`.
-    package func dispatchPlacementLifecycle(_ node: SWFDisplayObject, phase: SWFClipLifecycle) {
+    public func dispatchPlacementLifecycle(_ node: SWFDisplayObject, phase: SWFClipLifecycle) {
         switch phase {
         case .initialize:
             dispatchClipEvent(.initialize, to: node)
@@ -106,7 +106,7 @@ nonisolated extension SWFMovieRuntime {
     /// `onEnterFrame` member. Vanilla menus set `onEnterFrame` on the instance —
     /// `startmenu.swf` does it on both `Menu_mc` and `BottomButtons_mc` — so the
     /// member path is the one that matters.
-    package func dispatchEnterFrame(of node: SWFDisplayObject, remainingDepth: Int) {
+    public func dispatchEnterFrame(of node: SWFDisplayObject, remainingDepth: Int) {
         guard remainingDepth > 0 else {
             return
         }
@@ -126,7 +126,7 @@ nonisolated extension SWFMovieRuntime {
     /// `Selection` share; CLIK's `gfx.managers.InputDelegate` registers itself
     /// on `Key` this way, which is how a vanilla menu sees a keystroke at all.
     @discardableResult
-    package func broadcast(
+    public func broadcast(
         _ message: String,
         from broadcaster: AS2Object,
         arguments: [AS2Value] = []
@@ -152,13 +152,13 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// A `_global` broadcaster by name (`Key`, `Mouse`, `Stage`, `Selection`).
-    package func globalBroadcaster(_ name: String) -> AS2Object? {
+    public func globalBroadcaster(_ name: String) -> AS2Object? {
         runtime.globalObject.lookup(name)?.property.value.objectValue
     }
 }
 
 /// Where a placed instance is in its bring-up, for `dispatchPlacementLifecycle`.
-nonisolated package enum SWFClipLifecycle: Equatable {
+nonisolated public enum SWFClipLifecycle: Equatable, Sendable {
     /// The instance exists and its own frame 1 is built; the registered class
     /// constructor has not run yet.
     case initialize
@@ -183,7 +183,7 @@ nonisolated extension SWFClipEventFlags {
         dragOver.rawValue: "onDragOver", dragOut.rawValue: "onDragOut"
     ]
 
-    package static func handlerName(for event: SWFClipEventFlags) -> String? {
+    public static func handlerName(for event: SWFClipEventFlags) -> String? {
         handlerNames[event.rawValue]
     }
 }

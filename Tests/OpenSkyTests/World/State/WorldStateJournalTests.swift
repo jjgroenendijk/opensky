@@ -4,6 +4,7 @@
 // The store is @MainActor, so the suite is too. Fixtures are synthetic and
 // built in code.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

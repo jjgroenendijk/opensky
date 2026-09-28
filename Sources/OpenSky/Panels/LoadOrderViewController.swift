@@ -7,6 +7,7 @@
 // (`PluginLoadOrder`, `PluginLoadOrderReport`); this file is the AppKit shell.
 
 import AppKit
+import OpenSkyGameData
 
 final class LoadOrderViewController: NSViewController {
     /// Located install, set by the shell before the view loads; nil -> the

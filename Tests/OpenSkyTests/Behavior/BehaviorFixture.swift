@@ -11,6 +11,7 @@
 // clip time advance and looping are exercised through the same sampling seam
 // the engine uses.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

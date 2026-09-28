@@ -25,23 +25,23 @@ import Foundation
 /// One member of a Havok class: the section-local byte offset from the object
 /// base plus the Havok member name, quoted verbatim by every unresolved
 /// reference note so a census report names the field that failed.
-nonisolated package struct HKXField: Equatable {
-    package let offset: Int
-    package let name: String
+nonisolated public struct HKXField: Equatable, Sendable {
+    public let offset: Int
+    public let name: String
 
-    package init(_ offset: Int, _ name: String) {
+    public init(_ offset: Int, _ name: String) {
         self.offset = offset
         self.name = name
     }
 
     /// The element itself, for a cursor already positioned on an array
     /// element whose only member sits at offset 0 (hkStringPtr, pointer).
-    package static let element = HKXField(0, "element")
+    public static let element = HKXField(0, "element")
 }
 
 /// Why one field did not resolve. Recorded rather than thrown: the object
 /// stays inspectable and the census reports the miss.
-nonisolated package enum HKXResolutionMiss: String, Equatable, Sendable {
+nonisolated public enum HKXResolutionMiss: String, Equatable, Sendable {
     /// The pointer is null on disk and no fixup patches it.
     case noFixup
     /// The fixup targets a section the file does not define.
@@ -55,30 +55,30 @@ nonisolated package enum HKXResolutionMiss: String, Equatable, Sendable {
 }
 
 /// One recorded resolution failure: which member of which object, and why.
-nonisolated package struct HKXUnresolvedReference: Equatable, Sendable {
-    package let sectionIndex: Int
-    package let objectOffset: Int
-    package let field: String
-    package let miss: HKXResolutionMiss
+nonisolated public struct HKXUnresolvedReference: Equatable, Sendable {
+    public let sectionIndex: Int
+    public let objectOffset: Int
+    public let field: String
+    public let miss: HKXResolutionMiss
 }
 
 /// Located element data of one hkArray: where the elements start and how many
 /// there are. The element stride is the reading class's business, so it stays
 /// a parameter of the read rather than a member here.
-nonisolated package struct HKXArrayView: Equatable {
-    package let sectionIndex: Int
-    package let dataOffset: Int
-    package let count: Int
+nonisolated public struct HKXArrayView: Equatable, Sendable {
+    public let sectionIndex: Int
+    public let dataOffset: Int
+    public let count: Int
 }
 
 /// A resolved cross-object pointer: instance at `dataOffset` inside section
 /// `sectionIndex`. Havok stores null on disk, so this is the fixup target, not
 /// the stored pointer value.
-nonisolated package struct HKXPointerTarget: Equatable, Hashable {
-    package let sectionIndex: Int
-    package let dataOffset: Int
+nonisolated public struct HKXPointerTarget: Equatable, Hashable, Sendable {
+    public let sectionIndex: Int
+    public let dataOffset: Int
 
-    package init(sectionIndex: Int, dataOffset: Int) {
+    public init(sectionIndex: Int, dataOffset: Int) {
         self.sectionIndex = sectionIndex
         self.dataOffset = dataOffset
     }
@@ -88,8 +88,8 @@ nonisolated package struct HKXPointerTarget: Equatable, Hashable {
 /// local and global fixups keyed by source offset, and the class name of every
 /// registered object keyed by its location. Build one per file and hand out
 /// cursors; the indexes are shared by copy-on-write, so a cursor is cheap.
-nonisolated package struct HKXObjectGraph {
-    package let file: HKXFile
+nonisolated public struct HKXObjectGraph: Sendable {
+    public let file: HKXFile
 
     /// Section payload (object data only) per section index.
     private let payloads: [Data]
@@ -100,7 +100,7 @@ nonisolated package struct HKXObjectGraph {
     /// Object location -> class name, from the virtual-fixup inventory.
     private let classNames: [HKXPointerTarget: String]
 
-    package init(file: HKXFile) throws {
+    public init(file: HKXFile) throws {
         self.file = file
         var payloads: [Data] = []
         var localTargets: [[Int: Int]] = []
@@ -136,43 +136,43 @@ nonisolated package struct HKXObjectGraph {
     }
 
     /// Every registered object of one class, in inventory order.
-    package func objects(ofClass name: String) -> [HKXObjectRef] {
+    public func objects(ofClass name: String) -> [HKXObjectRef] {
         file.objects.filter { $0.className == name }
     }
 
     /// Class name of the object registered at `target`, nil when the location
     /// carries no virtual fixup (an inline struct rather than an instance).
-    package func className(at target: HKXPointerTarget) -> String? {
+    public func className(at target: HKXPointerTarget) -> String? {
         classNames[target]
     }
 
-    package func payload(ofSection index: Int) -> Data? {
+    public func payload(ofSection index: Int) -> Data? {
         payloads.indices.contains(index) ? payloads[index] : nil
     }
 
     /// Intra-section fixup target for a pointer stored at `offset`.
-    package func localTarget(section: Int, from offset: Int) -> Int? {
+    public func localTarget(section: Int, from offset: Int) -> Int? {
         localTargets.indices.contains(section) ? localTargets[section][offset] : nil
     }
 
     /// Cross-section fixup target for a pointer stored at `offset`.
-    package func globalTarget(section: Int, from offset: Int) -> HKXPointerTarget? {
+    public func globalTarget(section: Int, from offset: Int) -> HKXPointerTarget? {
         globalTargets.indices.contains(section) ? globalTargets[section][offset] : nil
     }
 
     /// Cursor over the object at a section-local offset.
-    package func cursor(section: Int, offset: Int) -> HKXObjectCursor? {
+    public func cursor(section: Int, offset: Int) -> HKXObjectCursor? {
         guard let payload = payload(ofSection: section), offset >= 0, offset < payload.count else {
             return nil
         }
         return HKXObjectCursor(graph: self, sectionIndex: section, base: offset, payload: payload)
     }
 
-    package func cursor(at target: HKXPointerTarget) -> HKXObjectCursor? {
+    public func cursor(at target: HKXPointerTarget) -> HKXObjectCursor? {
         cursor(section: target.sectionIndex, offset: target.dataOffset)
     }
 
-    package func cursor(at object: HKXObjectRef) -> HKXObjectCursor? {
+    public func cursor(at object: HKXObjectRef) -> HKXObjectCursor? {
         cursor(section: object.sectionIndex, offset: object.dataOffset)
     }
 
@@ -180,7 +180,7 @@ nonisolated package struct HKXObjectGraph {
     /// the same API as object members. Elements may live in a different
     /// section than the object holding the descriptor, which is why this hangs
     /// off the graph rather than off the owning cursor.
-    package func element(of view: HKXArrayView, index: Int, stride: Int) -> HKXObjectCursor? {
+    public func element(of view: HKXArrayView, index: Int, stride: Int) -> HKXObjectCursor? {
         guard index >= 0, index < view.count, stride > 0 else { return nil }
         guard let payload = payload(ofSection: view.sectionIndex) else { return nil }
         let start = view.dataOffset + index * stride

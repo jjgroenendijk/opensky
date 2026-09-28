@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated enum SoundResolveError: Error, Equatable {
     case soundNotFound(FormID)

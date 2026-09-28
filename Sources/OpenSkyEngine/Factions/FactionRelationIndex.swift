@@ -16,6 +16,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Directional reaction lookup between two factions.
 nonisolated struct FactionRelationIndex {

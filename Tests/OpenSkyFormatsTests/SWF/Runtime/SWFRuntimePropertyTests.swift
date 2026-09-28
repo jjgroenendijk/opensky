@@ -6,6 +6,7 @@
 // terms, and a wrong factor of 20 misplaces every menu without erroring. Each
 // conversion below asserts both directions.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

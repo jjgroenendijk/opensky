@@ -1,9 +1,11 @@
 // Synthetic COLL decode and resolved-link tests. Layout: UESP COLL and xEdit
 // dev-4.1.6 wbDefinitionsTES5.pas lines 7614-7637.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct CollisionLayerTests {

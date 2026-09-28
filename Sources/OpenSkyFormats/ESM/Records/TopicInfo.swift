@@ -8,39 +8,39 @@
 
 import Foundation
 
-nonisolated package struct TopicInfo {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt16
+nonisolated public struct TopicInfo: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
 
-        package init(rawValue: UInt16) {
+        public init(rawValue: UInt16) {
             self.rawValue = rawValue
         }
 
-        package static let goodbye = Flags(rawValue: 1 << 0)
-        package static let random = Flags(rawValue: 1 << 1)
-        package static let sayOnce = Flags(rawValue: 1 << 2)
-        package static let requiresPlayerActivation = Flags(rawValue: 1 << 3)
-        package static let infoRefusal = Flags(rawValue: 1 << 4)
-        package static let randomEnd = Flags(rawValue: 1 << 5)
-        package static let invisibleContinue = Flags(rawValue: 1 << 6)
-        package static let walkAway = Flags(rawValue: 1 << 7)
-        package static let walkAwayInvisibleInMenu = Flags(rawValue: 1 << 8)
-        package static let forceSubtitle = Flags(rawValue: 1 << 9)
-        package static let canMoveWhileGreeting = Flags(rawValue: 1 << 10)
-        package static let noLipFile = Flags(rawValue: 1 << 11)
-        package static let requiresPostProcessing = Flags(rawValue: 1 << 12)
-        package static let hasAudioOutputOverride = Flags(rawValue: 1 << 13)
-        package static let spendsFavorPoints = Flags(rawValue: 1 << 14)
+        public static let goodbye = Flags(rawValue: 1 << 0)
+        public static let random = Flags(rawValue: 1 << 1)
+        public static let sayOnce = Flags(rawValue: 1 << 2)
+        public static let requiresPlayerActivation = Flags(rawValue: 1 << 3)
+        public static let infoRefusal = Flags(rawValue: 1 << 4)
+        public static let randomEnd = Flags(rawValue: 1 << 5)
+        public static let invisibleContinue = Flags(rawValue: 1 << 6)
+        public static let walkAway = Flags(rawValue: 1 << 7)
+        public static let walkAwayInvisibleInMenu = Flags(rawValue: 1 << 8)
+        public static let forceSubtitle = Flags(rawValue: 1 << 9)
+        public static let canMoveWhileGreeting = Flags(rawValue: 1 << 10)
+        public static let noLipFile = Flags(rawValue: 1 << 11)
+        public static let requiresPostProcessing = Flags(rawValue: 1 << 12)
+        public static let hasAudioOutputOverride = Flags(rawValue: 1 << 13)
+        public static let spendsFavorPoints = Flags(rawValue: 1 << 14)
     }
 
-    package enum FavorLevel: Equatable {
+    public enum FavorLevel: Equatable, Sendable {
         case none
         case small
         case medium
         case large
         case unknown(UInt8)
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .none
             case 1: self = .small
@@ -51,8 +51,8 @@ nonisolated package struct TopicInfo {
         }
     }
 
-    package struct Response: Equatable {
-        package enum Emotion: Equatable {
+    public struct Response: Equatable, Sendable {
+        public enum Emotion: Equatable, Sendable {
             case neutral
             case anger
             case disgust
@@ -63,7 +63,7 @@ nonisolated package struct TopicInfo {
             case puzzled
             case unknown(UInt32)
 
-            package init(rawValue: UInt32) {
+            public init(rawValue: UInt32) {
                 switch rawValue {
                 case 0: self = .neutral
                 case 1: self = .anger
@@ -78,50 +78,50 @@ nonisolated package struct TopicInfo {
             }
         }
 
-        package let emotion: Emotion
-        package let emotionValue: UInt32
-        package let number: UInt8
-        package let sound: FormID?
-        package let usesEmotionAnimation: Bool
-        package var text: LString?
-        package var scriptNotes: String?
-        package var edits: String?
-        package var speakerIdle: FormID?
-        package var listenerIdle: FormID?
+        public let emotion: Emotion
+        public let emotionValue: UInt32
+        public let number: UInt8
+        public let sound: FormID?
+        public let usesEmotionAnimation: Bool
+        public var text: LString?
+        public var scriptNotes: String?
+        public var edits: String?
+        public var speakerIdle: FormID?
+        public var listenerIdle: FormID?
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let flags: Flags
+    public let formID: FormID
+    public let editorID: String?
+    public let flags: Flags
     /// DATA only, absent from ENAM-era records.
-    package let legacyDialogueTab: UInt16?
+    public let legacyDialogueTab: UInt16?
     /// DATA days or ENAM's scaled day fraction, normalized to hours.
-    package let resetHours: Float
-    package let previousTopic: FormID?
-    package let previousInfo: FormID?
-    package let favorLevel: FavorLevel
-    package let topicLinks: [FormID]
-    package let sharedInfo: FormID?
-    package let responses: [Response]
-    package let conditions: ConditionList
-    package let prompt: LString?
-    package let speaker: FormID?
-    package let walkAwayTopic: FormID?
-    package let audioOutputOverride: FormID?
+    public let resetHours: Float
+    public let previousTopic: FormID?
+    public let previousInfo: FormID?
+    public let favorLevel: FavorLevel
+    public let topicLinks: [FormID]
+    public let sharedInfo: FormID?
+    public let responses: [Response]
+    public let conditions: ConditionList
+    public let prompt: LString?
+    public let speaker: FormID?
+    public let walkAwayTopic: FormID?
+    public let audioOutputOverride: FormID?
     /// VMAD's script list, including the decoded INFO fragment tail.
-    package let script: ScriptData
-    package let skipped: DialogueTally
+    public let script: ScriptData
+    public let skipped: DialogueTally
 
     /// Result-script fragments, from the VMAD tail rather than from a field of
     /// their own. Empty when the response carries no result script, and also
     /// when its fragment tail failed to decode (`script.skipped` records that).
-    package var fragments: [TopicInfoFragment] {
+    public var fragments: [TopicInfoFragment] {
         script.infoFragments?.fragments ?? []
     }
 
     /// The generated result script, "TIF_<editorID>_<formID>" by convention, or
     /// nil when the response carries no fragment at all.
-    package var fragmentScriptName: String? {
+    public var fragmentScriptName: String? {
         guard
             let section = script.infoFragments, !section.isEmpty,
             !section.fileName.isEmpty
@@ -131,7 +131,7 @@ nonisolated package struct TopicInfo {
         return section.fileName
     }
 
-    package init(record: ESMRecord, localized: Bool = false) throws {
+    public init(record: ESMRecord, localized: Bool = false) throws {
         guard record.type == "INFO" else {
             throw ESMError.malformed("expected INFO record, got \(record.type)")
         }

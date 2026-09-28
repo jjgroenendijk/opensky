@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 import OSLog
 import simd
 

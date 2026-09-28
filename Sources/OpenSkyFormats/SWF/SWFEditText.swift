@@ -11,64 +11,64 @@
 import Foundation
 
 /// The DefineEditText flag word (spec p. 176), one bit per capability.
-nonisolated package struct SWFEditTextFlags: Equatable {
-    package var hasText = false
-    package var wordWrap = false
-    package var multiline = false
-    package var password = false
-    package var readOnly = false
-    package var hasTextColor = false
-    package var hasMaxLength = false
-    package var hasFont = false
-    package var hasFontClass = false
-    package var autoSize = false
-    package var hasLayout = false
-    package var noSelect = false
-    package var border = false
-    package var wasStatic = false
-    package var html = false
-    package var useOutlines = false
+nonisolated public struct SWFEditTextFlags: Equatable, Sendable {
+    public var hasText = false
+    public var wordWrap = false
+    public var multiline = false
+    public var password = false
+    public var readOnly = false
+    public var hasTextColor = false
+    public var hasMaxLength = false
+    public var hasFont = false
+    public var hasFontClass = false
+    public var autoSize = false
+    public var hasLayout = false
+    public var noSelect = false
+    public var border = false
+    public var wasStatic = false
+    public var html = false
+    public var useOutlines = false
 }
 
 /// The optional DefineEditText paragraph layout block (spec p. 177).
-nonisolated package struct SWFEditTextLayout: Equatable {
+nonisolated public struct SWFEditTextLayout: Equatable, Sendable {
     /// 0 left, 1 right, 2 center, 3 justify.
-    package let align: UInt8
-    package let leftMargin: UInt16
-    package let rightMargin: UInt16
-    package let indent: UInt16
-    package let leading: Int16
+    public let align: UInt8
+    public let leftMargin: UInt16
+    public let rightMargin: UInt16
+    public let indent: UInt16
+    public let leading: Int16
 }
 
 /// A decoded DefineEditText character.
-nonisolated package struct SWFEditText: Equatable {
+nonisolated public struct SWFEditText: Equatable, Sendable {
     /// The tag code this parser accepts.
-    package static let tagCode: UInt16 = 37
+    public static let tagCode: UInt16 = 37
 
-    package let characterId: UInt16
-    package let bounds: SWFRect
-    package let flags: SWFEditTextFlags
-    package let fontID: UInt16?
-    package let fontClass: String?
+    public let characterId: UInt16
+    public let bounds: SWFRect
+    public let flags: SWFEditTextFlags
+    public let fontID: UInt16?
+    public let fontClass: String?
     /// Font height in twips; present when a font id or font class is set.
-    package let fontHeight: UInt16?
-    package let color: SWFColor?
-    package let maxLength: UInt16?
-    package let layout: SWFEditTextLayout?
-    package let variableName: String
+    public let fontHeight: UInt16?
+    public let color: SWFColor?
+    public let maxLength: UInt16?
+    public let layout: SWFEditTextLayout?
+    public let variableName: String
     /// The InitialText string exactly as stored (may contain HTML markup when
     /// `flags.html` is set), or nil when the field carries no initial text.
-    package let initialText: String?
+    public let initialText: String?
 
     /// Plain-text view of `initialText`: markup stripped when the field is HTML,
     /// otherwise the stored string. Full HTML text layout is deferred to 8.3.x.
-    package var plainText: String? {
+    public var plainText: String? {
         guard let initialText else { return nil }
         return flags.html ? SWFEditText.stripHTML(initialText) : initialText
     }
 
     /// Decodes a DefineEditText (37) tag body.
-    package static func parse(tag: SWFTag) throws -> SWFEditText {
+    public static func parse(tag: SWFTag) throws -> SWFEditText {
         guard tag.code == tagCode else {
             throw SWFTextError.unsupportedTag(tag.code)
         }
@@ -160,7 +160,7 @@ nonisolated package struct SWFEditText: Equatable {
     /// Removes `<...>` markup for the plain-text fallback. Deliberately minimal:
     /// it does not decode entities or honor tag semantics — HTML text layout is
     /// 8.3.x work, this only yields readable content for static rendering.
-    package static func stripHTML(_ text: String) -> String {
+    public static func stripHTML(_ text: String) -> String {
         var result = ""
         var insideTag = false
         for character in text {

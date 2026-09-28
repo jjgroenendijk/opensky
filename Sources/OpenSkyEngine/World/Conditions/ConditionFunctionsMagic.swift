@@ -37,6 +37,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     static func installMagic(_ registry: inout ConditionFunctionRegistry) {

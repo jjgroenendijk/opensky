@@ -15,9 +15,9 @@
 // parameters were recovered by search and then confirmed against every named
 // value the enum lists (`HavokMaterialHashTests`).
 
-nonisolated package enum HavokMaterialHash {
+nonisolated public enum HavokMaterialHash: Sendable {
     /// The Havok material value a NIF stores for `name`, which is `MATT.MNAM`.
-    package static func value(ofMaterialName name: String) -> UInt32 {
+    public static func value(ofMaterialName name: String) -> UInt32 {
         var register: UInt32 = 0
         for byte in name.lowercased().utf8 {
             register = table[Int((register ^ UInt32(byte)) & 0xFF)] ^ (register >> 8)

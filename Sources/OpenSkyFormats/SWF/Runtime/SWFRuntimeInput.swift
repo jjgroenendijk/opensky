@@ -23,7 +23,7 @@ import Foundation
 import simd
 
 /// One injected input event. Pointer coordinates are movie stage pixels.
-nonisolated package enum SWFInputEvent: Equatable {
+nonisolated public enum SWFInputEvent: Equatable, Sendable {
     case pointerMoved(x: Double, y: Double)
     case pointerPressed(x: Double, y: Double)
     case pointerReleased(x: Double, y: Double)
@@ -36,47 +36,47 @@ nonisolated package enum SWFInputEvent: Equatable {
 /// Live pointer, key, and focus state. A class so the runtime can hold it
 /// without growing its own type body, and so the natives can read it back
 /// through the host.
-nonisolated package final class SWFRuntimeInputState {
+nonisolated public final class SWFRuntimeInputState {
     /// Pointer position in stage twips.
-    package var pointer = SIMD2<Float>.zero
-    package var isPointerDown = false
+    public var pointer = SIMD2<Float>.zero
+    public var isPointerDown = false
     /// `Key.getCode()` / `Key.getAscii()`: the most recent key event.
-    package var lastKeyCode = 0
-    package var lastKeyAscii = 0
+    public var lastKeyCode = 0
+    public var lastKeyAscii = 0
     /// Codes currently held, for `Key.isDown`.
-    package private(set) var downKeys: Set<Int> = []
+    public private(set) var downKeys: Set<Int> = []
     /// Node under the pointer, for rollover and rollout transitions.
-    package weak var hoverTarget: SWFDisplayObject?
+    public weak var hoverTarget: SWFDisplayObject?
     /// Node the press started on, for release and release-outside routing.
-    package weak var pressTarget: SWFDisplayObject?
+    public weak var pressTarget: SWFDisplayObject?
     /// Events accepted, reported by the UI Lab readout.
-    package private(set) var pointerEvents = 0
-    package private(set) var keyEvents = 0
+    public private(set) var pointerEvents = 0
+    public private(set) var keyEvents = 0
 
     /// Held keys kept. A stuck key from a dropped key-up must not grow the set
     /// without bound; the AS2 key domain is a byte anyway.
-    package static let maximumHeldKeys = 256
+    public static let maximumHeldKeys = 256
 
-    package func notePointerEvent() {
+    public func notePointerEvent() {
         pointerEvents += 1
     }
 
-    package func noteKeyEvent() {
+    public func noteKeyEvent() {
         keyEvents += 1
     }
 
-    package func hold(_ code: Int) {
+    public func hold(_ code: Int) {
         guard downKeys.count < SWFRuntimeInputState.maximumHeldKeys else {
             return
         }
         downKeys.insert(code)
     }
 
-    package func release(_ code: Int) {
+    public func release(_ code: Int) {
         downKeys.remove(code)
     }
 
-    package func isDown(_ code: Int) -> Bool {
+    public func isDown(_ code: Int) -> Bool {
         downKeys.contains(code)
     }
 }
@@ -87,7 +87,7 @@ nonisolated extension SWFMovieRuntime {
     /// CLIPACTIONS handler ran. A false answer is normal and never a fault; it
     /// is what lets the engine give an unconsumed key to the world instead.
     @discardableResult
-    package func handle(_ event: SWFInputEvent) -> Bool {
+    public func handle(_ event: SWFInputEvent) -> Bool {
         guard isStarted else {
             return false
         }
@@ -108,7 +108,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// The pointer in a node's local space, in pixels — `_xmouse` / `_ymouse`.
-    package func mousePosition(in node: SWFDisplayObject) -> SIMD2<Float> {
+    public func mousePosition(in node: SWFDisplayObject) -> SIMD2<Float> {
         guard let inverse = transform(of: node)?.inverted else {
             return input.pointer / Self.twipsPerPixel
         }
@@ -117,7 +117,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// A node's accumulated matrix from the root, or nil when the node is not in
     /// this tree.
-    package func transform(of node: SWFDisplayObject) -> SWFTransform? {
+    public func transform(of node: SWFDisplayObject) -> SWFTransform? {
         var chain: [SWFDisplayObject] = []
         var current: SWFDisplayObject? = node
         var steps = 0
@@ -321,7 +321,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// Bounded walk over every clip in the tree.
-    package func forEachClip(_ body: (SWFDisplayObject) -> Void) {
+    public func forEachClip(_ body: (SWFDisplayObject) -> Void) {
         var stack: [(node: SWFDisplayObject, depth: Int)] = [(root, 0)]
         while let entry = stack.popLast() {
             guard entry.depth < SWFDisplayObject.maximumTreeDepth else {
@@ -338,12 +338,12 @@ nonisolated extension SWFMovieRuntime {
 }
 
 /// Viewport-to-stage mapping for injected pointer events.
-nonisolated package enum SWFInputMapping {
+nonisolated public enum SWFInputMapping: Sendable {
     /// Converts a framebuffer pixel (origin top-left, y down) into movie stage
     /// pixels, inverting the same letterbox transform the renderer uses. Returns
     /// nil for a point in the letterbox bars, which belongs to no part of the
     /// movie.
-    package static func stagePoint(
+    public static func stagePoint(
         viewportPoint: SIMD2<Float>,
         frameSize: SWFRect,
         viewportPixels: SIMD2<Float>

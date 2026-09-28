@@ -10,33 +10,33 @@
 
 import Foundation
 
-nonisolated package struct EncounterZone: Equatable, Sendable {
-    package struct Flags: OptionSet, Equatable, Sendable {
-        package let rawValue: UInt8
+nonisolated public struct EncounterZone: Equatable, Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
-        package static let neverResets = Flags(rawValue: 0x01)
-        package static let matchesPlayerBelowMinimumLevel = Flags(rawValue: 0x02)
-        package static let disablesCombatBoundary = Flags(rawValue: 0x04)
+        public static let neverResets = Flags(rawValue: 0x01)
+        public static let matchesPlayerBelowMinimumLevel = Flags(rawValue: 0x02)
+        public static let disablesCombatBoundary = Flags(rawValue: 0x04)
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// DATA +0x00: NPC_ or FACT owner.
-    package let owner: FormID?
+    public let owner: FormID?
     /// DATA +0x04: associated LCTN.
-    package let location: FormID?
+    public let location: FormID?
     /// DATA +0x08: faction rank, or -1 where ownership is not faction-based.
-    package let rank: Int8?
-    package let minimumLevel: Int8?
-    package let flags: Flags
-    package let maximumLevel: Int8?
-    package let skipped: ReferenceRecordTally
+    public let rank: Int8?
+    public let minimumLevel: Int8?
+    public let flags: Flags
+    public let maximumLevel: Int8?
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "ECZN" else {
             throw ESMError.malformed("expected ECZN record, got \(record.type)")
         }

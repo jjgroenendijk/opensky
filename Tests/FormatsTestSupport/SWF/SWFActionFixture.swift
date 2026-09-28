@@ -7,16 +7,21 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum SWFActionFixture {
+public enum SWFActionFixture: Sendable {
     /// One record to emit: an opcode plus the operand bytes it carries.
     /// Opcodes below 0x80 emit no length and no payload.
-    struct Action {
-        let code: UInt8
-        var operands = Data()
+    public struct Action: Sendable {
+        public let code: UInt8
+        public var operands = Data()
+
+        public init(code: UInt8, operands: Data = Data()) {
+            self.code = code
+            self.operands = operands
+        }
     }
 
     /// A value for `ActionPush`, mirroring `SWFActionValue` on the write side.
-    enum PushValue {
+    public enum PushValue: Sendable {
         case string(String)
         case float(Float)
         case null
@@ -30,17 +35,23 @@ enum SWFActionFixture {
     }
 
     /// One CLIPACTIONRECORD.
-    struct ClipHandler {
-        var events: SWFClipEventFlags
-        var keyCode: UInt8?
+    public struct ClipHandler: Sendable {
+        public var events: SWFClipEventFlags
+        public var keyCode: UInt8?
         /// An already-framed action stream (see `stream(_:appendEnd:)`).
-        var actions: Data
+        public var actions: Data
+
+        public init(events: SWFClipEventFlags, keyCode: UInt8? = nil, actions: Data) {
+            self.events = events
+            self.keyCode = keyCode
+            self.actions = actions
+        }
     }
 
     /// ACTIONRECORD framing: `ActionCode` UI8, and for codes 0x80 and above a
     /// UI16 `Length` plus that many operand bytes. `appendEnd` writes the
     /// terminating `ActionEndFlag`.
-    static func stream(_ actions: [Action], appendEnd: Bool = true) -> Data {
+    public static func stream(_ actions: [Action], appendEnd: Bool = true) -> Data {
         var data = Data()
         for action in actions {
             data.append(action.code)
@@ -61,11 +72,11 @@ enum SWFActionFixture {
 // MARK: - Record builders
 
 extension SWFActionFixture {
-    static func noOperands(_ code: UInt8) -> Action {
+    public static func noOperands(_ code: UInt8) -> Action {
         Action(code: code)
     }
 
-    static func push(_ values: [PushValue]) -> Action {
+    public static func push(_ values: [PushValue]) -> Action {
         var operands = Data()
         for value in values {
             operands.append(encode(value))
@@ -73,7 +84,7 @@ extension SWFActionFixture {
         return Action(code: 0x96, operands: operands)
     }
 
-    static func constantPool(_ strings: [String]) -> Action {
+    public static func constantPool(_ strings: [String]) -> Action {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(UInt16(strings.count))
         for string in strings {
@@ -84,19 +95,19 @@ extension SWFActionFixture {
     }
 
     /// `ActionJump` (0x99) or `ActionIf` (0x9D): SI16 `BranchOffset`.
-    static func branch(code: UInt8, offset: Int16) -> Action {
+    public static func branch(code: UInt8, offset: Int16) -> Action {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(UInt16(bitPattern: offset))
         return Action(code: code, operands: writer.bytes())
     }
 
-    static func gotoFrame(_ frame: UInt16) -> Action {
+    public static func gotoFrame(_ frame: UInt16) -> Action {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(frame)
         return Action(code: 0x81, operands: writer.bytes())
     }
 
-    static func gotoFrame2(play: Bool, sceneBias: UInt16?) -> Action {
+    public static func gotoFrame2(play: Bool, sceneBias: UInt16?) -> Action {
         var writer = SWFBitWriter()
         writer.appendByte((sceneBias != nil ? 0x02 : 0) | (play ? 0x01 : 0))
         if let sceneBias {
@@ -105,53 +116,57 @@ extension SWFActionFixture {
         return Action(code: 0x9F, operands: writer.bytes())
     }
 
-    static func waitForFrame(frame: UInt16, skipCount: UInt8) -> Action {
+    public static func waitForFrame(frame: UInt16, skipCount: UInt8) -> Action {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(frame)
         writer.appendByte(skipCount)
         return Action(code: 0x8A, operands: writer.bytes())
     }
 
-    static func waitForFrame2(skipCount: UInt8) -> Action {
+    public static func waitForFrame2(skipCount: UInt8) -> Action {
         Action(code: 0x8D, operands: Data([skipCount]))
     }
 
-    static func getURL(url: String, target: String) -> Action {
+    public static func getURL(url: String, target: String) -> Action {
         var writer = SWFBitWriter()
         appendString(&writer, url)
         appendString(&writer, target)
         return Action(code: 0x83, operands: writer.bytes())
     }
 
-    static func getURL2(sendVarsMethod: UInt8, loadTarget: Bool, loadVariables: Bool) -> Action {
+    public static func getURL2(
+        sendVarsMethod: UInt8,
+        loadTarget: Bool,
+        loadVariables: Bool
+    ) -> Action {
         let flags = (sendVarsMethod << 6) | (loadTarget ? 0x02 : 0) | (loadVariables ? 0x01 : 0)
         return Action(code: 0x9A, operands: Data([flags]))
     }
 
-    static func storeRegister(_ number: UInt8) -> Action {
+    public static func storeRegister(_ number: UInt8) -> Action {
         Action(code: 0x87, operands: Data([number]))
     }
 
-    static func setTarget(_ name: String) -> Action {
+    public static func setTarget(_ name: String) -> Action {
         var writer = SWFBitWriter()
         appendString(&writer, name)
         return Action(code: 0x8B, operands: writer.bytes())
     }
 
-    static func goToLabel(_ label: String) -> Action {
+    public static func goToLabel(_ label: String) -> Action {
         var writer = SWFBitWriter()
         appendString(&writer, label)
         return Action(code: 0x8C, operands: writer.bytes())
     }
 
-    static func with(bodySize: UInt16) -> Action {
+    public static func with(bodySize: UInt16) -> Action {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(bodySize)
         return Action(code: 0x94, operands: writer.bytes())
     }
 
     /// `ActionDefineFunction` (0x9B): name, parameter names, `codeSize`.
-    static func defineFunction(
+    public static func defineFunction(
         name: String,
         parameters: [String],
         bodySize: UInt16
@@ -168,7 +183,7 @@ extension SWFActionFixture {
 
     /// `ActionDefineFunction2` (0x8E). `parameters` pairs each register number
     /// with its parameter name in REGISTERPARAM order.
-    static func defineFunction2(
+    public static func defineFunction2(
         name: String,
         parameters: [(UInt8, String)],
         registerCount: UInt8,
@@ -190,7 +205,7 @@ extension SWFActionFixture {
     }
 
     /// `ActionTry` (0x8F) with a named catch variable.
-    static func tryBlock(
+    public static func tryBlock(
         catchName: String,
         trySize: UInt16,
         catchSize: UInt16,
@@ -210,17 +225,17 @@ extension SWFActionFixture {
 
 extension SWFActionFixture {
     /// DoAction (12).
-    static func doActionTag(_ actions: [Action]) -> SWFFixture.Tag {
+    public static func doActionTag(_ actions: [Action]) -> SWFFixture.Tag {
         SWFFixture.Tag(code: 12, body: stream(actions))
     }
 
     /// DoAction (12) over a hand-built byte stream, for malformed cases.
-    static func doActionTag(bytes: Data) -> SWFFixture.Tag {
+    public static func doActionTag(bytes: Data) -> SWFFixture.Tag {
         SWFFixture.Tag(code: 12, body: bytes)
     }
 
     /// DoInitAction (59): `Sprite ID` UI16 then the action stream.
-    static func doInitActionTag(spriteId: UInt16, _ actions: [Action]) -> SWFFixture.Tag {
+    public static func doInitActionTag(spriteId: UInt16, _ actions: [Action]) -> SWFFixture.Tag {
         var writer = SWFBitWriter()
         writer.appendUInt16LE(spriteId)
         var body = writer.bytes()
@@ -230,7 +245,7 @@ extension SWFActionFixture {
 
     /// CLIPACTIONS: reserved UI16, `AllEventFlags`, the handlers, then the
     /// all-zero `ClipActionEndFlag`. `version` picks the 2- or 4-byte flag word.
-    static func clipActions(
+    public static func clipActions(
         version: UInt8,
         allEvents: SWFClipEventFlags,
         handlers: [ClipHandler]

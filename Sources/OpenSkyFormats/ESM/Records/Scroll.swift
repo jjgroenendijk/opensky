@@ -20,25 +20,25 @@
 
 import Foundation
 
-nonisolated package struct Scroll {
-    package let formID: FormID
-    package let header: MagicItemHeader
+nonisolated public struct Scroll: Sendable {
+    public let formID: FormID
+    public let header: MagicItemHeader
     /// DATA — gold value and carry weight.
-    package let itemValue: ItemValue
+    public let itemValue: ItemValue
     /// SPIT. Nil when the field is absent or too short to decode.
-    package let data: SpellItemData?
-    package let effects: [MagicItemEffect]
-    package let skipped: MagicEffectTally
+    public let data: SpellItemData?
+    public let effects: [MagicItemEffect]
+    public let skipped: MagicEffectTally
 
-    package var editorID: String? {
+    public var editorID: String? {
         header.fields.editorID
     }
 
-    package var name: LString? {
+    public var name: LString? {
         header.fields.name
     }
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "SCRL" else {
             throw ESMError.malformed("expected SCRL record, got \(record.type)")
         }

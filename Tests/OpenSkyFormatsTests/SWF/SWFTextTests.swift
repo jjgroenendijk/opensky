@@ -1,6 +1,7 @@
 // Unit tests for DefineText (11) / DefineText2 (33) and DefineEditText (37)
 // decoding. All fixtures are synthetic, built through the text body builders.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

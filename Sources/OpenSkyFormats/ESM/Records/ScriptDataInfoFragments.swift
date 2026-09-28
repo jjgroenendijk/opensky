@@ -45,14 +45,14 @@ import Foundation
 /// rather than flattening the pair, because the two run at opposite ends of a
 /// response and a caller that runs both at once would set a quest stage before
 /// the line it belongs to was ever delivered.
-nonisolated package enum TopicInfoFragmentPhase: Equatable, Sendable, CaseIterable {
+nonisolated public enum TopicInfoFragmentPhase: Equatable, Sendable, CaseIterable {
     /// Runs as the response starts.
     case begin
     /// Runs once the response has finished.
     case end
 
     /// Bit in the tail's flag byte that declares this phase present.
-    package var flagBit: UInt8 {
+    public var flagBit: UInt8 {
         switch self {
         case .begin: 1 << 0
         case .end: 1 << 1
@@ -61,36 +61,36 @@ nonisolated package enum TopicInfoFragmentPhase: Equatable, Sendable, CaseIterab
 }
 
 /// One entry of the INFO fragment table.
-nonisolated package struct TopicInfoFragment: Equatable {
+nonisolated public struct TopicInfoFragment: Equatable, Sendable {
     /// Result box this fragment came from, derived from its position against
     /// the flag bits rather than from anything stored in the entry.
-    package let phase: TopicInfoFragmentPhase
+    public let phase: TopicInfoFragmentPhase
     /// Script the function lives on — normally the section's file name.
-    package let scriptName: String
+    public let scriptName: String
     /// Generated function name, e.g. "Fragment_0".
-    package let functionName: String
+    public let functionName: String
 }
 
 /// The whole decoded INFO fragment tail.
-nonisolated package struct TopicInfoFragmentSection: Equatable {
+nonisolated public struct TopicInfoFragmentSection: Equatable, Sendable {
     /// The leading int8. Always 2 in shipped data; anything else means the
     /// Creation Kit would have failed to load the section, so it is recorded,
     /// not enforced.
-    package let extraBindDataVersion: Int8
+    public let extraBindDataVersion: Int8
     /// The raw flag byte, kept because a bit outside 0x1 and 0x2 is a fact
     /// about the file that the decoded fragment list cannot express.
-    package let flags: UInt8
+    public let flags: UInt8
     /// Generated fragment script, "TIF_<editorID>_<formID>" by convention.
-    package let fileName: String
-    package let fragments: [TopicInfoFragment]
+    public let fileName: String
+    public let fragments: [TopicInfoFragment]
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         fragments.isEmpty
     }
 
     /// The fragment for one result box, or nil when the response has no script
     /// in it.
-    package func fragment(_ phase: TopicInfoFragmentPhase) -> TopicInfoFragment? {
+    public func fragment(_ phase: TopicInfoFragmentPhase) -> TopicInfoFragment? {
         fragments.first { $0.phase == phase }
     }
 }

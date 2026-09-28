@@ -14,23 +14,23 @@ import Foundation
 
 /// Decoded `hkbManualSelectorGenerator`, size 96: runs exactly one of its
 /// children, chosen by an index that is normally bound to a graph variable.
-nonisolated package struct HKBManualSelectorGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
-    package let generators: [HKXPointerTarget?]
+nonisolated public struct HKBManualSelectorGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
+    public let generators: [HKXPointerTarget?]
     /// Index into `m_generators`; the member a binding writes to select a child.
-    package let selectedGeneratorIndex: Int
+    public let selectedGeneratorIndex: Int
     /// The index actually running. Authored as a serialized member here rather
     /// than `SERIALIZE_IGNORED`, so it is decoded even though 14.3 owns it.
-    package let currentGeneratorIndex: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let currentGeneratorIndex: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbManualSelectorGenerator"
+    public static let className = "hkbManualSelectorGenerator"
 
     private static let generatorsField = HKXField(0x48, "m_generators")
     private static let selectedField = HKXField(0x58, "m_selectedGeneratorIndex")
     private static let currentField = HKXField(0x59, "m_currentGeneratorIndex")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBManualSelectorGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -44,33 +44,33 @@ nonisolated package struct HKBManualSelectorGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references + HKBReference.each("m_generators", generators)
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(generators.count) generators, selected \(selectedGeneratorIndex)"
     }
 }
 
 /// Decoded `hkbModifierGenerator`, size 88: runs one child generator and pipes
 /// its pose through one modifier.
-nonisolated package struct HKBModifierGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
-    package let modifier: HKXPointerTarget?
-    package let generator: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBModifierGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
+    public let modifier: HKXPointerTarget?
+    public let generator: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbModifierGenerator"
+    public static let className = "hkbModifierGenerator"
 
     private static let modifierField = HKXField(0x48, "m_modifier")
     private static let generatorField = HKXField(0x50, "m_generator")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBModifierGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -83,17 +83,17 @@ nonisolated package struct HKBModifierGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references
             + HKBReference.optional("m_modifier", modifier)
             + HKBReference.optional("m_generator", generator)
     }
 
-    package var summary: String {
+    public var summary: String {
         "modifier \(modifier != nil ? "set" : "none"), "
             + "generator \(generator != nil ? "set" : "none")"
     }
@@ -103,17 +103,17 @@ nonisolated package struct HKBModifierGenerator: HKBClass, Equatable {
 /// generator of another behavior file, named rather than pointed at. This is
 /// how `0_Master.hkb` pulls in the per-activity behavior files; resolving the
 /// name to a loaded graph is item 14.5's job, not this decoder's.
-nonisolated package struct HKBBehaviorReferenceGenerator: HKBClass, Equatable {
-    package let node: HKBNodeHeader
+nonisolated public struct HKBBehaviorReferenceGenerator: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
     /// Behavior file name as the project's `m_behaviorFilenames` spells it.
-    package let behaviorName: String?
-    package let unresolved: [HKXUnresolvedReference]
+    public let behaviorName: String?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBehaviorReferenceGenerator"
+    public static let className = "hkbBehaviorReferenceGenerator"
 
     private static let behaviorNameField = HKXField(0x48, "m_behaviorName")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBehaviorReferenceGenerator?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -125,15 +125,15 @@ nonisolated package struct HKBBehaviorReferenceGenerator: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "behavior \"\(behaviorName ?? "<none>")\""
     }
 }
@@ -141,29 +141,29 @@ nonisolated package struct HKBBehaviorReferenceGenerator: HKBClass, Equatable {
 /// Decoded `hkbBlendingTransitionEffect`, size 144. Derives `hkbTransitionEffect`
 /// -> `hkbGenerator`, so `m_selfTransitionMode` and `m_eventMode` at 0x48 and
 /// 0x49 come from the base and this class's own members start at 0x50.
-nonisolated package struct HKBBlendingTransitionEffect: HKBClass, Equatable {
-    package let node: HKBNodeHeader
+nonisolated public struct HKBBlendingTransitionEffect: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
     /// `hkbTransitionEffect::SelfTransitionMode`: what happens when a state
     /// transitions to itself (0 continue, 1 reset, 2 blend).
-    package let selfTransitionMode: Int
+    public let selfTransitionMode: Int
     /// `hkbTransitionEffect::EventMode`: whether events fire during the blend.
-    package let eventMode: Int
+    public let eventMode: Int
     /// Blend length in seconds.
-    package let duration: Float
+    public let duration: Float
     /// Where in the destination clip the blend starts, as a fraction.
-    package let toGeneratorStartTimeFraction: Float
+    public let toGeneratorStartTimeFraction: Float
     /// `hkbBlendingTransitionEffect::FlagBits`, a bit set (1 ignore
     /// from-generator, 2 sync, 4 ignore world-from-model, 8 ignore to-generator).
-    package let flags: Int
+    public let flags: Int
     /// `hkbBlendingTransitionEffect::EndMode`: what to do when the source clip
     /// ends before the blend does.
-    package let endMode: Int
+    public let endMode: Int
     /// `hkbBlendCurveUtils::BlendCurve`: 0 smooth, 1 linear, 2 linear-to-ease,
     /// 3 ease-to-linear.
-    package let blendCurve: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let blendCurve: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBlendingTransitionEffect"
+    public static let className = "hkbBlendingTransitionEffect"
 
     private static let selfTransitionModeField = HKXField(0x48, "m_selfTransitionMode")
     private static let eventModeField = HKXField(0x49, "m_eventMode")
@@ -175,7 +175,7 @@ nonisolated package struct HKBBlendingTransitionEffect: HKBClass, Equatable {
     private static let endModeField = HKXField(0x5A, "m_endMode")
     private static let blendCurveField = HKXField(0x5B, "m_blendCurve")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBlendingTransitionEffect?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -193,15 +193,15 @@ nonisolated package struct HKBBlendingTransitionEffect: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "duration \(duration)s, blend curve \(blendCurve), end mode \(endMode)"
     }
 }

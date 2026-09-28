@@ -10,24 +10,24 @@
 
 import Foundation
 
-struct HKASplineAnimationFixture {
-    var duration: Float = 1
-    var quantization: UInt8 = 0x45 // vectors 16-bit, rotations 40-bit
-    var descendingKnots = false
-    var transformByteCountOverride: Int?
-    var omitDataFixup = false
+public struct HKASplineAnimationFixture: Sendable {
+    public var duration: Float = 1
+    public var quantization: UInt8 = 0x45 // vectors 16-bit, rotations 40-bit
+    public var descendingKnots = false
+    public var transformByteCountOverride: Int?
+    public var omitDataFixup = false
     /// Registers a fixup for `m_extractedMotion`, so the decoded animation
     /// reports `carriesExtractedMotion`. What it points at is a placeholder:
     /// the parser reads the presence of the pointer and never follows it.
-    var carriesExtractedMotion = false
+    public var carriesExtractedMotion = false
     /// Annotation tracks, each a track name and its `(time, text)` marks, laid
     /// out at `hkaAnimation.m_annotationTracks`. Vanilla puts the footstep tags
     /// here rather than in the behavior file's clip triggers.
-    var annotationTracks: [(name: String, annotations: [(time: Float, text: String)])] = []
+    public var annotationTracks: [(name: String, annotations: [(time: Float, text: String)])] = []
 
     private static let objectSize = 176
 
-    func build() -> Data {
+    public func build() -> Data {
         var block = blockData()
         let transformByteCount = transformByteCountOverride ?? block.count
         if transformByteCount > block.count {
@@ -235,5 +235,23 @@ struct HKASplineAnimationFixture {
 
     private func writeFloat(_ value: Float, at offset: Int, to bytes: inout [UInt8]) {
         writeUInt32(value.bitPattern, at: offset, to: &bytes)
+    }
+
+    public init(
+        duration: Float = 1,
+        quantization: UInt8 = 0x45,
+        descendingKnots: Bool = false,
+        transformByteCountOverride: Int? = nil,
+        omitDataFixup: Bool = false,
+        carriesExtractedMotion: Bool = false,
+        annotationTracks: [(name: String, annotations: [(time: Float, text: String)])] = []
+    ) {
+        self.duration = duration
+        self.quantization = quantization
+        self.descendingKnots = descendingKnots
+        self.transformByteCountOverride = transformByteCountOverride
+        self.omitDataFixup = omitDataFixup
+        self.carriesExtractedMotion = carriesExtractedMotion
+        self.annotationTracks = annotationTracks
     }
 }

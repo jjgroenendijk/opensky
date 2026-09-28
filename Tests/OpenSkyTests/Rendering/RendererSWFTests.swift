@@ -6,6 +6,7 @@
 // clip layer must reduce the covered area, and the draw stats must count
 // draws/triangles/glyphs/masks. Pattern from RendererUITests.
 
+import FormatsTestSupport
 import Foundation
 import Metal
 import MetalKit

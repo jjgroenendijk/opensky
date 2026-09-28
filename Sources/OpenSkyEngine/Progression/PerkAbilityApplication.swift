@@ -31,6 +31,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// What one reconciliation did.
 nonisolated struct PerkAbilityReport: Equatable, Sendable {

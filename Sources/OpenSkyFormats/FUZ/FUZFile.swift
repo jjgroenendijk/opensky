@@ -21,7 +21,7 @@
 
 import Foundation
 
-nonisolated package enum FUZError: Error, Equatable {
+nonisolated public enum FUZError: Error, Equatable, Sendable {
     /// Input violates the documented layout.
     case malformed(String)
     /// Structurally valid `.fuz` in a variant OpenSky declines.
@@ -31,7 +31,7 @@ nonisolated package enum FUZError: Error, Equatable {
 /// A framed `.fuz` file: the container version, the lip-sync blob and the
 /// encoded audio payload. Parsing is bounds-checked throughout; malformed
 /// input throws `FUZError` rather than trapping.
-nonisolated package struct FUZFile {
+nonisolated public struct FUZFile: Sendable {
     private enum Layout {
         static let magic: FourCC = "FUZE"
         /// Magic + `Version` + `LIP Size`.
@@ -42,14 +42,14 @@ nonisolated package struct FUZFile {
     }
 
     /// `Version`. Always `1` in the vanilla corpus.
-    package let version: UInt32
+    public let version: UInt32
     /// `LIP Data`, or nil when `LIP Size` is zero. A voice line whose INFO sets
     /// `noLipFile` ships with no lip blob, which is legal and common.
-    package let lipData: Data?
+    public let lipData: Data?
     /// `XWM Data`: the rest of the file, a complete RIFF/XWMA stream.
-    package let audioData: Data
+    public let audioData: Data
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         let magic: FourCC
         do {
@@ -92,18 +92,18 @@ nonisolated package struct FUZFile {
 }
 
 nonisolated extension FUZFile {
-    package var lipByteCount: Int {
+    public var lipByteCount: Int {
         lipData?.count ?? 0
     }
 
-    package var audioByteCount: Int {
+    public var audioByteCount: Int {
         audioData.count
     }
 
     /// Frames the audio payload as xWMA. Separate from `init` so a framing
     /// sweep can report container failures apart from audio failures, and so
     /// the lip blob is reachable without paying for the RIFF walk.
-    package func audio() throws -> XWMFile {
+    public func audio() throws -> XWMFile {
         try XWMFile(data: audioData)
     }
 }

@@ -14,7 +14,7 @@ import Foundation
 
 /// Builds one packfile holding arbitrary hkb objects. Offsets are the caller's
 /// choice so an assertion can name the byte it reads.
-struct HKBNodeFixture {
+public struct HKBNodeFixture: Sendable {
     /// Zero-filled object data; writes patch it in place.
     private var payload: Data
     /// Extra class-name entries beyond HKXFixture's three defaults, in the
@@ -29,9 +29,9 @@ struct HKBNodeFixture {
     private static let defaultClassCount = 3
     private static let firstSyntheticSignature: UInt32 = 0x5100_0000
     /// The `__data__` section index in every HKXFixture build.
-    static let dataSection = 2
+    public static let dataSection = 2
 
-    init(payloadSize: Int) {
+    public init(payloadSize: Int) {
         payload = Data(count: payloadSize)
     }
 
@@ -41,7 +41,7 @@ struct HKBNodeFixture {
     /// to the name table on first use. Returns the pointer target callers use
     /// to decode it.
     @discardableResult
-    mutating func addObject(_ className: String, at offset: Int) -> HKXPointerTarget {
+    public mutating func addObject(_ className: String, at offset: Int) -> HKXPointerTarget {
         registered.append((offset: offset, classIndex: classIndex(for: className)))
         return HKXPointerTarget(sectionIndex: Self.dataSection, dataOffset: offset)
     }
@@ -57,35 +57,35 @@ struct HKBNodeFixture {
 
     // MARK: - Scalar writes
 
-    mutating func setUInt8(_ value: UInt8, at offset: Int) {
+    public mutating func setUInt8(_ value: UInt8, at offset: Int) {
         write(Data([value]), at: offset)
     }
 
-    mutating func setBool(_ value: Bool, at offset: Int) {
+    public mutating func setBool(_ value: Bool, at offset: Int) {
         setUInt8(value ? 1 : 0, at: offset)
     }
 
-    mutating func setInt16(_ value: Int16, at offset: Int) {
+    public mutating func setInt16(_ value: Int16, at offset: Int) {
         write(Data(withUnsafeBytes(of: value.littleEndian) { Data($0) }), at: offset)
     }
 
-    mutating func setInt32(_ value: Int32, at offset: Int) {
+    public mutating func setInt32(_ value: Int32, at offset: Int) {
         write(Data(withUnsafeBytes(of: value.littleEndian) { Data($0) }), at: offset)
     }
 
-    mutating func setUInt32(_ value: UInt32, at offset: Int) {
+    public mutating func setUInt32(_ value: UInt32, at offset: Int) {
         write(Data(withUnsafeBytes(of: value.littleEndian) { Data($0) }), at: offset)
     }
 
-    mutating func setUInt64(_ value: UInt64, at offset: Int) {
+    public mutating func setUInt64(_ value: UInt64, at offset: Int) {
         write(Data(withUnsafeBytes(of: value.littleEndian) { Data($0) }), at: offset)
     }
 
-    mutating func setFloat(_ value: Float, at offset: Int) {
+    public mutating func setFloat(_ value: Float, at offset: Int) {
         setUInt32(value.bitPattern, at: offset)
     }
 
-    mutating func setVector4(_ value: SIMD4<Float>, at offset: Int) {
+    public mutating func setVector4(_ value: SIMD4<Float>, at offset: Int) {
         for lane in 0 ..< 4 {
             setFloat(value[lane], at: offset + lane * 4)
         }
@@ -103,7 +103,7 @@ struct HKBNodeFixture {
 
     /// Patches the 8-byte pointer at `offset` to `target` through the local
     /// fixup table, the way an intra-section pointer resolves.
-    mutating func setPointer(at offset: Int, to target: Int) {
+    public mutating func setPointer(at offset: Int, to target: Int) {
         localFixups.append(HKXFixture.LocalFixup(
             from: UInt32(offset), toOffset: UInt32(target)
         ))
@@ -111,7 +111,7 @@ struct HKBNodeFixture {
 
     /// Patches the pointer at `offset` through the *global* table to a section
     /// the file does not define, which is the `sectionMissing` miss case.
-    mutating func setDanglingPointer(at offset: Int, toSection section: UInt32 = 9) {
+    public mutating func setDanglingPointer(at offset: Int, toSection section: UInt32 = 9) {
         globalFixups.append(HKXFixture.GlobalFixup(
             from: UInt32(offset), toSection: section, toOffset: 0
         ))
@@ -119,7 +119,7 @@ struct HKBNodeFixture {
 
     /// Stores `value` as a NUL-terminated ASCII string at `storage` and points
     /// the hkStringPtr at `offset` to it.
-    mutating func setString(_ value: String, at offset: Int, storage: Int) {
+    public mutating func setString(_ value: String, at offset: Int, storage: Int) {
         var bytes = Data(value.utf8)
         bytes.append(0)
         write(bytes, at: storage)
@@ -129,7 +129,7 @@ struct HKBNodeFixture {
     /// Fills an hkArray descriptor: pointer to `dataOffset`, `count` elements,
     /// and a capacity word. An empty array is left null with no fixup, which is
     /// how a packfile writes one, so `count == 0` writes nothing.
-    mutating func setArray(at offset: Int, count: Int, dataOffset: Int) {
+    public mutating func setArray(at offset: Int, count: Int, dataOffset: Int) {
         setInt32(Int32(count), at: offset + 8)
         // Bit 31 of capacityAndFlags is a Havok owned-memory flag; the decoder
         // must read the size word rather than this one.
@@ -140,7 +140,7 @@ struct HKBNodeFixture {
 
     /// Fills an `hkArray<T*>` descriptor plus one local fixup per element, so
     /// the elements resolve as pointers to the given targets.
-    mutating func setPointerArray(at offset: Int, dataOffset: Int, targets: [Int]) {
+    public mutating func setPointerArray(at offset: Int, dataOffset: Int, targets: [Int]) {
         setArray(at: offset, count: targets.count, dataOffset: dataOffset)
         for (index, target) in targets.enumerated() {
             setPointer(at: dataOffset + index * 8, to: target)
@@ -152,11 +152,11 @@ struct HKBNodeFixture {
     /// Truncates the object payload to `count` bytes, so an object runs past
     /// the end of its section — the truncated-object case every class test
     /// exercises.
-    mutating func truncatePayload(to count: Int) {
+    public mutating func truncatePayload(to count: Int) {
         payload = payload.prefix(count)
     }
 
-    func buildFile() throws -> HKXFile {
+    public func buildFile() throws -> HKXFile {
         var fixture = HKXFixture()
         fixture.classNames += extraClassNames
         fixture.rootClassIndex = 2
@@ -177,7 +177,7 @@ struct HKBNodeFixture {
         return try HKXFile(data: fixture.build())
     }
 
-    func buildGraph() throws -> HKXObjectGraph {
+    public func buildGraph() throws -> HKXObjectGraph {
         try HKXObjectGraph(file: buildFile())
     }
 }

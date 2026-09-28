@@ -14,15 +14,15 @@
 
 import Foundation
 
-nonisolated package struct MiscItem {
-    package let formID: FormID
+nonisolated public struct MiscItem: Sendable {
+    public let formID: FormID
     /// Shared carryable-item subrecords: EDID, FULL, MODL, OBND, keywords,
     /// icons, pickup/drop sounds.
-    package let fields: InventoryItemFields
+    public let fields: InventoryItemFields
     /// DATA — gold value and carry weight.
-    package let itemValue: ItemValue
+    public let itemValue: ItemValue
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "MISC" else {
             throw ESMError.malformed("expected MISC record, got \(record.type)")
         }

@@ -2,6 +2,7 @@
 // (ESMFixture) — never extracted game files (AGENTS.md "Legal & IP boundary").
 // Chain shapes + FaceGen convention: docs/engine/actor-resolution.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

@@ -14,6 +14,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 /// Combat-loop state the controller owns. Extensions cannot add stored

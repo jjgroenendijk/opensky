@@ -3,57 +3,57 @@
 
 import Foundation
 
-nonisolated package struct PexVariable: Equatable, Sendable {
-    package let name: String
-    package let typeName: String
-    package let userFlags: UInt32
-    package let initialValue: PexValue
+nonisolated public struct PexVariable: Equatable, Sendable {
+    public let name: String
+    public let typeName: String
+    public let userFlags: UInt32
+    public let initialValue: PexValue
 }
 
-nonisolated package struct PexTypedName: Equatable, Sendable {
-    package let name: String
-    package let typeName: String
+nonisolated public struct PexTypedName: Equatable, Sendable {
+    public let name: String
+    public let typeName: String
 }
 
-nonisolated package struct PexPropertyFlags: OptionSet, Equatable, Sendable {
-    package let rawValue: UInt8
+nonisolated public struct PexPropertyFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt8
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         self.rawValue = rawValue
     }
 
-    package static let readable = PexPropertyFlags(rawValue: 1 << 0)
-    package static let writable = PexPropertyFlags(rawValue: 1 << 1)
-    package static let automatic = PexPropertyFlags(rawValue: 1 << 2)
+    public static let readable = PexPropertyFlags(rawValue: 1 << 0)
+    public static let writable = PexPropertyFlags(rawValue: 1 << 1)
+    public static let automatic = PexPropertyFlags(rawValue: 1 << 2)
 }
 
-nonisolated package struct PexProperty: Equatable, Sendable {
-    package let name: String
-    package let typeName: String
-    package let documentation: String
-    package let userFlags: UInt32
-    package let flags: PexPropertyFlags
-    package let automaticVariableName: String?
-    package let readHandler: PexFunction?
-    package let writeHandler: PexFunction?
+nonisolated public struct PexProperty: Equatable, Sendable {
+    public let name: String
+    public let typeName: String
+    public let documentation: String
+    public let userFlags: UInt32
+    public let flags: PexPropertyFlags
+    public let automaticVariableName: String?
+    public let readHandler: PexFunction?
+    public let writeHandler: PexFunction?
 }
 
-nonisolated package struct PexState: Equatable, Sendable {
-    package let name: String
-    package let functions: [PexNamedFunction]
+nonisolated public struct PexState: Equatable, Sendable {
+    public let name: String
+    public let functions: [PexNamedFunction]
 }
 
-nonisolated package struct PexObject: Equatable, Sendable {
-    package let name: String
-    package let parentClassName: String
-    package let documentation: String
-    package let userFlags: UInt32
-    package let automaticStateName: String
-    package let variables: [PexVariable]
-    package let properties: [PexProperty]
-    package let states: [PexState]
+nonisolated public struct PexObject: Equatable, Sendable {
+    public let name: String
+    public let parentClassName: String
+    public let documentation: String
+    public let userFlags: UInt32
+    public let automaticStateName: String
+    public let variables: [PexVariable]
+    public let properties: [PexProperty]
+    public let states: [PexState]
 
-    package var functions: [PexFunction] {
+    public var functions: [PexFunction] {
         properties.flatMap { [$0.readHandler, $0.writeHandler].compactMap(\.self) }
             + states.flatMap { $0.functions.map(\.function) }
     }

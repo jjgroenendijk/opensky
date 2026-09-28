@@ -8,27 +8,27 @@
 
 import Foundation
 
-nonisolated package struct HeadPart: Equatable {
-    nonisolated package enum MorphKind: UInt32, Equatable {
+nonisolated public struct HeadPart: Equatable, Sendable {
+    nonisolated public enum MorphKind: UInt32, Equatable, Sendable {
         case race = 0
         case expression = 1
         case chargen = 2
     }
 
-    nonisolated package struct MorphPath: Equatable {
-        package let kind: MorphKind
-        package let path: String
+    nonisolated public struct MorphPath: Equatable, Sendable {
+        public let kind: MorphKind
+        public let path: String
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let morphPaths: [MorphPath]
+    public let formID: FormID
+    public let editorID: String?
+    public let morphPaths: [MorphPath]
 
-    package var expressionMorphPath: String? {
+    public var expressionMorphPath: String? {
         morphPaths.first { $0.kind == .expression }?.path
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "HDPT" else {
             throw ESMError.malformed("expected HDPT record, got \(record.type)")
         }

@@ -12,7 +12,7 @@ import Foundation
 /// Why an invocation stopped early. Thrown internally, never out of a public
 /// entry point — `AS2Runtime` catches it and reports it in the result and the
 /// tally.
-nonisolated package enum AS2Fault: Error, Equatable {
+nonisolated public enum AS2Fault: Error, Equatable, Sendable {
     /// The operand stack grew past `AS2Limits.stackDepth`.
     case stackOverflow(offset: Int)
     /// A branch resolved to a byte offset that starts no record, or one outside
@@ -31,7 +31,7 @@ nonisolated package enum AS2Fault: Error, Equatable {
     case reentryDepthExceeded(offset: Int)
 
     /// Byte offset within the block where the fault was raised.
-    package var offset: Int {
+    public var offset: Int {
         switch self {
         case let .stackOverflow(offset),
              let .invalidJump(offset, _), let .truncatedBody(offset),
@@ -42,7 +42,7 @@ nonisolated package enum AS2Fault: Error, Equatable {
     }
 
     /// Short stable name for the tally and the UI readout.
-    package var kind: String {
+    public var kind: String {
         switch self {
         case .stackOverflow: "stackOverflow"
         case .invalidJump: "invalidJump"
@@ -57,52 +57,52 @@ nonisolated package enum AS2Fault: Error, Equatable {
 /// The bounds every invocation runs under. All of them are configurable so the
 /// app can raise a cap for a specific movie without a rebuild, but the defaults
 /// are what the engine ships with.
-nonisolated package struct AS2Limits: Equatable {
+nonisolated public struct AS2Limits: Equatable, Sendable {
     /// Actions one top-level invocation may execute, shared by every nested
     /// call it makes. The largest vanilla action block is 5,886 records, so a
     /// million actions leaves roughly two orders of magnitude of headroom for
     /// loops while capping a runaway at well under a second of work.
-    package var actionBudget = 1_000_000
+    public var actionBudget = 1_000_000
     /// Nested calls. The interpreter runs bytecode calls on its own frame stack
     /// rather than on the Swift stack, so this is a policy limit and matches
     /// Flash's own 256-frame default instead of being sized for stack safety.
-    package var callDepth = 256
+    public var callDepth = 256
     /// Nested re-entries into the interpreter from Swift. A built-in such as
     /// `Function.prototype.apply`, or a property accessor that has to answer
     /// with a bytecode result, needs that result synchronously and therefore
     /// runs a nested interpreter loop. Those are the only calls that consume
     /// Swift stack, so they carry their own — much smaller — cap.
-    package var reentryDepth = 32
+    public var reentryDepth = 32
     /// Operand-stack entries per frame. Flash compiles expressions, not
     /// unbounded stack machines; a few thousand entries only ever accumulate
     /// through a bug in the bytecode or in this interpreter.
-    package var stackDepth = 4096
+    public var stackDepth = 4096
     /// Registers a single `ActionDefineFunction2` may claim. The header field
     /// is a `UInt8`, and the deepest vanilla function uses 23.
-    package var registerCount = 256
+    public var registerCount = 256
     /// Distinct names the tally keeps per category. Totals keep counting past
     /// it, so a capped tally still reports how much it did not name.
-    package var tallyNames = 256
+    public var tallyNames = 256
     /// Faults kept verbatim; the count keeps rising past this.
-    package var faultRecords = 64
+    public var faultRecords = 64
     /// `ActionTrace` messages kept, oldest dropped first.
-    package var traceEntries = 512
+    public var traceEntries = 512
     /// Characters kept per trace message.
-    package var traceLength = 512
+    public var traceLength = 512
 
-    package static let standard = AS2Limits()
+    public static let standard = AS2Limits()
 }
 
 /// What one invocation produced.
-nonisolated package struct AS2ExecutionResult: Equatable {
+nonisolated public struct AS2ExecutionResult: Equatable {
     /// The value the stream returned; `undefined` for a timeline block.
-    package let value: AS2Value
+    public let value: AS2Value
     /// Actions executed, including every nested call.
-    package let actionsExecuted: Int
+    public let actionsExecuted: Int
     /// Non-nil when the invocation was aborted.
-    package let fault: AS2Fault?
+    public let fault: AS2Fault?
 
-    package var completed: Bool {
+    public var completed: Bool {
         fault == nil
     }
 
@@ -110,7 +110,7 @@ nonisolated package struct AS2ExecutionResult: Equatable {
     /// `AS2Object` reference, so the type is not `Sendable` and a stored static
     /// would be shared mutable state under Swift 6. Building the `.undefined`
     /// case per access costs nothing.
-    package static var empty: AS2ExecutionResult {
+    public static var empty: AS2ExecutionResult {
         AS2ExecutionResult(value: .undefined, actionsExecuted: 0, fault: nil)
     }
 }

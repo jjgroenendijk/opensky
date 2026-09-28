@@ -6,27 +6,27 @@ import Foundation
 
 /// SNCT sound-category node. Categories form a parent hierarchy; the records
 /// flagged `shouldAppearOnMenu` are the user-facing mixer categories.
-nonisolated package struct SoundCategory {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+nonisolated public struct SoundCategory: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let muteWhenSubmerged = Flags(rawValue: 1 << 0)
-        package static let shouldAppearOnMenu = Flags(rawValue: 1 << 1)
+        public static let muteWhenSubmerged = Flags(rawValue: 1 << 0)
+        public static let shouldAppearOnMenu = Flags(rawValue: 1 << 1)
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let name: LString?
-    package let flags: Flags
-    package let parent: FormID?
-    package let staticVolumeMultiplier: Float?
-    package let defaultMenuValue: Float?
+    public let formID: FormID
+    public let editorID: String?
+    public let name: LString?
+    public let flags: Flags
+    public let parent: FormID?
+    public let staticVolumeMultiplier: Float?
+    public let defaultMenuValue: Float?
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "SNCT" else {
             throw ESMError.malformed("expected SNCT record, got \(record.type)")
         }
@@ -82,8 +82,8 @@ nonisolated package struct SoundCategory {
     }
 }
 
-nonisolated package struct SoundDescriptor {
-    package enum Looping: Equatable {
+nonisolated public struct SoundDescriptor: Sendable {
+    public enum Looping: Equatable, Sendable {
         case none
         case loop
         case envelopeFast
@@ -91,25 +91,25 @@ nonisolated package struct SoundDescriptor {
         case unknown(UInt8)
     }
 
-    package struct Parameters: Equatable {
-        package let frequencyShiftPercent: Int
-        package let frequencyVariancePercent: Int
-        package let priority: Int
-        package let decibelVariance: Int
-        package let staticAttenuationDecibels: Float
+    public struct Parameters: Equatable, Sendable {
+        public let frequencyShiftPercent: Int
+        public let frequencyVariancePercent: Int
+        public let priority: Int
+        public let decibelVariance: Int
+        public let staticAttenuationDecibels: Float
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let descriptorType: UInt32?
-    package let category: FormID?
-    package let alternateFor: FormID?
-    package let tracks: [String]
-    package let outputModel: FormID?
-    package let looping: Looping?
-    package let parameters: Parameters?
+    public let formID: FormID
+    public let editorID: String?
+    public let descriptorType: UInt32?
+    public let category: FormID?
+    public let alternateFor: FormID?
+    public let tracks: [String]
+    public let outputModel: FormID?
+    public let looping: Looping?
+    public let parameters: Parameters?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "SNDR" else {
             throw ESMError.malformed("expected SNDR record, got \(record.type)")
         }
@@ -220,21 +220,21 @@ nonisolated package struct SoundDescriptor {
     }
 }
 
-nonisolated package struct SoundMarker {
-    package let formID: FormID
-    package let editorID: String?
-    package let descriptor: FormID?
+nonisolated public struct SoundMarker: Sendable {
+    public let formID: FormID
+    public let editorID: String?
+    public let descriptor: FormID?
 
     /// Memberwise init for synthesized markers (e.g. when a SNDR FormID was
     /// stored directly on a DOOR/ACTI/CONT and the runtime resolves it
     /// without an actual SOUN record in the plugin).
-    package init(formID: FormID, editorID: String?, descriptor: FormID?) {
+    public init(formID: FormID, editorID: String?, descriptor: FormID?) {
         self.formID = formID
         self.editorID = editorID
         self.descriptor = descriptor
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "SOUN" else {
             throw ESMError.malformed("expected SOUN record, got \(record.type)")
         }

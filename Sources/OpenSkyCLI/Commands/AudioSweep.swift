@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum AudioSweep {
     static func run(context: CLIContext) throws {

@@ -2,6 +2,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     typealias ConditionLocationLookup = @Sendable (ConditionCall) -> Result<

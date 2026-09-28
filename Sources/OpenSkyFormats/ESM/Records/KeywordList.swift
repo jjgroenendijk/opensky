@@ -18,24 +18,24 @@
 
 import Foundation
 
-nonisolated package struct KeywordList: Equatable {
+nonisolated public struct KeywordList: Equatable, Sendable {
     /// KWDA entries in file order. Empty when the record carries no keywords.
-    package private(set) var keywords: [FormID] = []
+    public private(set) var keywords: [FormID] = []
     /// KSIZ as written, kept for diagnostics only. Nil when KSIZ is absent —
     /// which is legal, since a KWDA can appear without one in modded data.
-    package private(set) var declaredCount: UInt32?
+    public private(set) var declaredCount: UInt32?
 
-    package init() {}
+    public init() {}
 
     /// True when KSIZ is present and disagrees with the decoded KWDA length.
-    package var countMismatch: Bool {
+    public var countMismatch: Bool {
         guard let declaredCount else { return false }
         return Int(declaredCount) != keywords.count
     }
 
     /// Decodes `field` when it is KSIZ or KWDA and reports whether it was
     /// consumed, so a record's field switch can fall through to its own cases.
-    package mutating func decode(field: ESMField) throws -> Bool {
+    public mutating func decode(field: ESMField) throws -> Bool {
         switch field.type {
         case "KSIZ":
             guard field.data.count >= 4 else { return true }
@@ -55,7 +55,7 @@ nonisolated package struct KeywordList: Equatable {
         return true
     }
 
-    package func contains(_ keyword: FormID) -> Bool {
+    public func contains(_ keyword: FormID) -> Bool {
         keywords.contains(keyword)
     }
 }

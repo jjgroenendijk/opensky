@@ -12,9 +12,11 @@
 // Layouts: UESP "Skyrim Mod:Mod File Format" subpages /SPEL, /EQUP, /MGEF and
 // /BOOK.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 
 @MainActor
 enum SpellbookFixture {

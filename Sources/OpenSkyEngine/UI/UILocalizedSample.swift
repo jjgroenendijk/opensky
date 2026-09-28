@@ -9,6 +9,7 @@
 // can show resolved text.
 
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 nonisolated extension LocalizedLabels {

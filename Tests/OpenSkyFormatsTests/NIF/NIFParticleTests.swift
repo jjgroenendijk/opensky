@@ -5,6 +5,7 @@
 // .unsupported, and defensive rejection of truncated + out-of-range input.
 // Layouts per NifTools nif.xml; docs/formats/nif-particles.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

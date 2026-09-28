@@ -6,9 +6,9 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum FactionFixture {
+public enum FactionFixture: Sendable {
     /// One XNAM: FACT or RACE link, signed modifier, combat reaction.
-    static func relation(_ faction: UInt32, modifier: Int32, reaction: UInt32) -> Data {
+    public static func relation(_ faction: UInt32, modifier: Int32, reaction: UInt32) -> Data {
         var data = Data()
         data.appendUInt32(faction)
         data.appendUInt32(UInt32(bitPattern: modifier))
@@ -18,7 +18,7 @@ enum FactionFixture {
 
     /// CRVA at its full 20-byte length, or truncated to `byteCount` to stand in
     /// for a record written at an older record version.
-    static func crimeValues(
+    public static func crimeValues(
         arrest: Bool = true,
         attackOnSight: Bool = false,
         murder: UInt16 = 1000,
@@ -44,7 +44,7 @@ enum FactionFixture {
     }
 
     /// VENV, 12 bytes. `radiusHighWord` is the disputed word at offset 6.
-    static func vendorValues(
+    public static func vendorValues(
         startHour: UInt16 = 8,
         endHour: UInt16 = 18,
         radius: UInt16 = 1500,
@@ -62,7 +62,7 @@ enum FactionFixture {
         return ESMFixture.field("VENV", data)
     }
 
-    static func vendorLocation(type: Int32, value: UInt32, radius: Int32) -> Data {
+    public static func vendorLocation(type: Int32, value: UInt32, radius: Int32) -> Data {
         var data = Data()
         data.appendUInt32(UInt32(bitPattern: type))
         data.appendUInt32(value)
@@ -71,7 +71,7 @@ enum FactionFixture {
     }
 
     /// One RNAM/MNAM/FNAM group, with either title droppable.
-    static func rank(_ index: UInt32, male: String? = nil, female: String? = nil) -> Data {
+    public static func rank(_ index: UInt32, male: String? = nil, female: String? = nil) -> Data {
         var data = Data()
         data.appendUInt32(index)
         var out = ESMFixture.field("RNAM", data)
@@ -84,13 +84,13 @@ enum FactionFixture {
         return out
     }
 
-    static func link(_ type: String, _ value: UInt32) -> Data {
+    public static func link(_ type: String, _ value: UInt32) -> Data {
         var data = Data()
         data.appendUInt32(value)
         return ESMFixture.field(type, data)
     }
 
-    static func flags(_ value: UInt32) -> Data {
+    public static func flags(_ value: UInt32) -> Data {
         var data = Data()
         data.appendUInt32(value)
         return ESMFixture.field("DATA", data)
@@ -98,7 +98,7 @@ enum FactionFixture {
 
     /// A whole FACT record's bytes: identity first, then whatever the caller
     /// appended, in the order the caller gave.
-    static func record(
+    public static func record(
         formID: UInt32,
         editorID: String?,
         name: String? = nil,
@@ -116,7 +116,7 @@ enum FactionFixture {
 
     /// AIDT at its full 20-byte length, or truncated to `byteCount` to stand in
     /// for a record a mod wrote short (docs/formats/actors.md).
-    static func aiData(
+    public static func aiData(
         aggression: UInt8 = 0,
         confidence: UInt8 = 2,
         energy: UInt8 = 50,
@@ -142,7 +142,7 @@ enum FactionFixture {
 
     /// An NPC_ carrying the minimum ACBS the decoder requires, a template link
     /// and template flags, a SNAM run and an optional AIDT.
-    static func actor(
+    public static func actor(
         formID: UInt32,
         editorID: String,
         templateFlags: UInt16 = 0,
@@ -175,7 +175,7 @@ enum FactionFixture {
     }
 
     /// Parses one fixture record out of its bytes.
-    static func decode(_ bytes: Data) throws -> ESMRecord {
+    public static func decode(_ bytes: Data) throws -> ESMRecord {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {
             throw ESMError.malformed("fixture did not produce a record")

@@ -18,7 +18,7 @@ import Foundation
 /// The stored value counts up from the friendliest, while the value
 /// `GetRelationshipRank` returns counts down from +4 to -4 — `signedRank`
 /// carries that conversion so a caller never re-derives it from the raw word.
-nonisolated package enum RelationshipRank: Equatable, CustomStringConvertible {
+nonisolated public enum RelationshipRank: Equatable, CustomStringConvertible, Sendable {
     case lover
     case ally
     case confidant
@@ -32,7 +32,7 @@ nonisolated package enum RelationshipRank: Equatable, CustomStringConvertible {
     /// and a clamp would silently turn it into a real rank.
     case unknown(raw: UInt16)
 
-    package init(rawValue: UInt16) {
+    public init(rawValue: UInt16) {
         switch rawValue {
         case 0: self = .lover
         case 1: self = .ally
@@ -47,7 +47,7 @@ nonisolated package enum RelationshipRank: Equatable, CustomStringConvertible {
         }
     }
 
-    package var rawValue: UInt16 {
+    public var rawValue: UInt16 {
         switch self {
         case .lover: 0
         case .ally: 1
@@ -67,21 +67,21 @@ nonisolated package enum RelationshipRank: Equatable, CustomStringConvertible {
     /// (<https://ck.uesp.net/wiki/SetRelationshipRank_-_Actor>). The inverse of
     /// `signedRank`, and what turns a scripted rank back into a record rank so
     /// the reaction grouping can be applied to it.
-    package init?(signedRank: Int) {
+    public init?(signedRank: Int) {
         guard (-4 ... 4).contains(signedRank) else { return nil }
         self.init(rawValue: UInt16(4 - signedRank))
     }
 
     /// The `GetRelationshipRank` value: +4 for a lover down to -4 for an
     /// archnemesis, and nil for a raw value the spec does not name.
-    package var signedRank: Int? {
+    public var signedRank: Int? {
         switch self {
         case .unknown: nil
         default: 4 - Int(rawValue)
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .lover: "lover"
         case .ally: "ally"
@@ -101,35 +101,35 @@ nonisolated package enum RelationshipRank: Equatable, CustomStringConvertible {
 /// the other seven bits unnamed; UESP reads offsets 12...13 as one uint16 whose
 /// only named bit is `0x8000`. Little-endian, those are the same bit, so this
 /// takes the byte reading and keeps the byte at offset 12 verbatim.
-nonisolated package struct RelationshipFlags: OptionSet, Equatable {
-    package let rawValue: UInt8
+nonisolated public struct RelationshipFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt8
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         self.rawValue = rawValue
     }
 
-    package static let secret = RelationshipFlags(rawValue: 0x80)
+    public static let secret = RelationshipFlags(rawValue: 0x80)
 }
 
 /// The whole DATA struct, 16 bytes.
-nonisolated package struct RelationshipData: Equatable {
-    package static let byteCount = 16
+nonisolated public struct RelationshipData: Equatable, Sendable {
+    public static let byteCount = 16
 
     /// Both links are `NPC_` or NULL. "Parent" and "child" are the record's own
     /// direction words and carry no biological meaning — the association type
     /// is what says whether the pair is a family, a courtship or a rivalry.
-    package let parent: FormID?
-    package let child: FormID?
-    package let rank: RelationshipRank
+    public let parent: FormID?
+    public let child: FormID?
+    public let rank: RelationshipRank
     /// Offset 12, xEdit `wbByteArray('Unknown', 1)`. Kept verbatim because a
     /// nonzero byte there is the observation that would separate the two
     /// readings of the flag word.
-    package let unknown: UInt8
-    package let flags: RelationshipFlags
+    public let unknown: UInt8
+    public let flags: RelationshipFlags
     /// ASTP or NULL, left unresolved here: joining it is `RelationshipStore`'s.
-    package let associationType: FormID?
+    public let associationType: FormID?
 
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count >= Self.byteCount else {
             throw ESMError.malformed(
                 "RELA DATA has \(field.data.count) bytes, expected at least \(Self.byteCount)"
@@ -152,45 +152,45 @@ nonisolated package struct RelationshipData: Equatable {
     }
 }
 
-nonisolated package struct Relationship: Equatable {
+nonisolated public struct Relationship: Equatable, Sendable {
     /// xEdit also names bit 6 of the RELA *record header* flags "Secret"
     /// (`wbRecord(RELA, 'Relationship', wbFlags(wbFlagsList([6, 'Secret'])), ...)`),
     /// which UESP does not mention at all. Neither source says which of the two
     /// the game reads, so both are decoded and the real-data suite reports how
     /// often they disagree.
-    package static let secretHeaderFlag: UInt32 = 1 << 6
+    public static let secretHeaderFlag: UInt32 = 1 << 6
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// Nil when the record carries no DATA or a truncated one. A relationship
     /// without it names no pair, so the store drops it rather than inventing
     /// a parent; the tally records why.
-    package let data: RelationshipData?
+    public let data: RelationshipData?
     /// Record header flag bit 6 — see `secretHeaderFlag`.
-    package let headerSecret: Bool
-    package let skipped: ReferenceRecordTally
+    public let headerSecret: Bool
+    public let skipped: ReferenceRecordTally
 
-    package var parent: FormID? {
+    public var parent: FormID? {
         data?.parent
     }
 
-    package var child: FormID? {
+    public var child: FormID? {
         data?.child
     }
 
-    package var rank: RelationshipRank? {
+    public var rank: RelationshipRank? {
         data?.rank
     }
 
-    package var associationType: FormID? {
+    public var associationType: FormID? {
         data?.associationType
     }
 
-    package var isSecret: Bool {
+    public var isSecret: Bool {
         data?.flags.contains(.secret) ?? false
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "RELA" else {
             throw ESMError.malformed("expected RELA record, got \(record.type)")
         }

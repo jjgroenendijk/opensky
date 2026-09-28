@@ -10,6 +10,7 @@
 // come back with the values the fixture wrote, and a walk that reaches every
 // object through the registry rather than through a hand-written switch.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

@@ -2,6 +2,7 @@
 // built in code via SWFFixture — never extracted game files (AGENTS.md "Legal
 // & IP boundary").
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

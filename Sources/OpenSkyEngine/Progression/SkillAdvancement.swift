@@ -51,6 +51,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// The two game settings skill advancement reads, resolved once.
 ///

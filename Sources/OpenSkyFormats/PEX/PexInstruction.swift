@@ -6,7 +6,7 @@
 
 import Foundation
 
-nonisolated package enum PexValue: Equatable, Sendable {
+nonisolated public enum PexValue: Equatable, Sendable {
     case null
     case identifier(String)
     case string(String)
@@ -14,7 +14,7 @@ nonisolated package enum PexValue: Equatable, Sendable {
     case float(Float)
     case boolean(Bool)
 
-    package var stringValue: String? {
+    public var stringValue: String? {
         switch self {
         case let .identifier(value), let .string(value):
             value
@@ -24,7 +24,7 @@ nonisolated package enum PexValue: Equatable, Sendable {
     }
 }
 
-nonisolated package enum PexOpcode: Equatable, Hashable, Sendable {
+nonisolated public enum PexOpcode: Equatable, Hashable, Sendable {
     case nop
     case integerAdd
     case floatAdd
@@ -102,7 +102,7 @@ nonisolated package enum PexOpcode: Equatable, Hashable, Sendable {
         .arrayReverseFindElement
     ]
 
-    package init(rawValue: UInt8) {
+    public init(rawValue: UInt8) {
         if Int(rawValue) < Self.knownOpcodes.count {
             self = Self.knownOpcodes[Int(rawValue)]
         } else {
@@ -110,7 +110,7 @@ nonisolated package enum PexOpcode: Equatable, Hashable, Sendable {
         }
     }
 
-    package var rawValue: UInt8 {
+    public var rawValue: UInt8 {
         switch self {
         case .nop: 0x00
         case .integerAdd: 0x01
@@ -152,7 +152,7 @@ nonisolated package enum PexOpcode: Equatable, Hashable, Sendable {
         }
     }
 
-    package var name: String {
+    public var name: String {
         switch self {
         case .nop: "nop"
         case .integerAdd: "iadd"
@@ -195,7 +195,7 @@ nonisolated package enum PexOpcode: Equatable, Hashable, Sendable {
     }
 
     /// Operand count before any call's integer vararg count and arguments.
-    package var fixedOperandCount: Int {
+    public var fixedOperandCount: Int {
         switch self {
         case .nop, .unknown:
             0
@@ -220,13 +220,13 @@ nonisolated package enum PexOpcode: Equatable, Hashable, Sendable {
         }
     }
 
-    package var hasVarargs: Bool {
+    public var hasVarargs: Bool {
         self == .callMethod || self == .callParent || self == .callStatic
     }
 }
 
-nonisolated package struct PexInstruction: Equatable, Sendable {
-    package let opcode: PexOpcode
+nonisolated public struct PexInstruction: Equatable, Sendable {
+    public let opcode: PexOpcode
     /// Fixed operands followed by the call count value and call arguments.
-    package let operands: [PexValue]
+    public let operands: [PexValue]
 }

@@ -5,6 +5,7 @@
 // docs/engine/audio.md and docs/engine/walk-mode.md.
 
 import AVFAudio
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

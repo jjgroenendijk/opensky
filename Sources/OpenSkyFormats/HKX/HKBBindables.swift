@@ -20,28 +20,28 @@ import Foundation
 /// Havok flags `SERIALIZE_IGNORED` here are the resolved member pointer and the
 /// cached offsets, which a packfile writes as zeros; the authored data is the
 /// member path, the variable index, and how the two are joined.
-nonisolated package struct HKBVariableBinding: Equatable {
+nonisolated public struct HKBVariableBinding: Equatable, Sendable {
     /// Member path on the bound object, e.g. `m_blendParameter`. An empty path
     /// binds the object itself, which is how a generator is bound wholesale.
-    package let memberPath: String?
+    public let memberPath: String?
     /// Index into the graph's variable list, or into its character-property
     /// list when `bindingType` says so.
-    package let variableIndex: Int
+    public let variableIndex: Int
     /// Which bit of a bool-packed variable this binding reads; -1 when the
     /// binding is not bit-addressed.
-    package let bitIndex: Int
+    public let bitIndex: Int
     /// `hkbVariableBindingSet::Binding::BindingType`: 0 binds a graph variable,
     /// 1 binds a character property.
-    package let bindingType: Int
+    public let bindingType: Int
 
-    package static let stride = 40
+    public static let stride = 40
 
     private static let memberPathField = HKXField(0x00, "m_memberPath")
     private static let variableIndexField = HKXField(0x1C, "m_variableIndex")
     private static let bitIndexField = HKXField(0x20, "m_bitIndex")
     private static let bindingTypeField = HKXField(0x21, "m_bindingType")
 
-    package static func decode(_ element: inout HKXObjectCursor) -> HKBVariableBinding {
+    public static func decode(_ element: inout HKXObjectCursor) -> HKBVariableBinding {
         HKBVariableBinding(
             memberPath: element.string(at: memberPathField),
             variableIndex: element.int32(at: variableIndexField) ?? -1,
@@ -52,20 +52,20 @@ nonisolated package struct HKBVariableBinding: Equatable {
 }
 
 /// Decoded `hkbVariableBindingSet`: every graph variable bound into one node.
-nonisolated package struct HKBVariableBindingSet: HKBClass, Equatable {
-    package let bindings: [HKBVariableBinding]
+nonisolated public struct HKBVariableBindingSet: HKBClass, Equatable, Sendable {
+    public let bindings: [HKBVariableBinding]
     /// Index of the binding that drives the owning node's enable flag, or -1.
-    package let indexOfBindingToEnable: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let indexOfBindingToEnable: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbVariableBindingSet"
+    public static let className = "hkbVariableBindingSet"
 
     private static let bindingsField = HKXField(0x10, "m_bindings")
     private static let indexOfBindingToEnableField = HKXField(
         0x20, "m_indexOfBindingToEnable"
     )
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBVariableBindingSet?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -92,25 +92,25 @@ nonisolated package struct HKBVariableBindingSet: HKBClass, Equatable {
         )
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(bindings.count) bindings, enable binding \(indexOfBindingToEnable)"
     }
 }
 
 /// Decoded `hkbBoneWeightArray`: one weight per skeleton bone, used by blender
 /// children and by the Bethesda bone-switch generator to blend per bone.
-nonisolated package struct HKBBoneWeightArray: HKBClass, Equatable {
-    package let variableBindingSet: HKXPointerTarget?
-    package let boneWeights: [Float]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBBoneWeightArray: HKBClass, Equatable, Sendable {
+    public let variableBindingSet: HKXPointerTarget?
+    public let boneWeights: [Float]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBoneWeightArray"
+    public static let className = "hkbBoneWeightArray"
 
     // hkbBindable's binding set at 0x10, then this class's own member.
     private static let variableBindingSetField = HKXField(0x10, "m_variableBindingSet")
     private static let boneWeightsField = HKXField(0x30, "m_boneWeights")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBoneWeightArray?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -121,27 +121,27 @@ nonisolated package struct HKBBoneWeightArray: HKBClass, Equatable {
         )
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         HKBReference.optional("m_variableBindingSet", variableBindingSet)
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(boneWeights.count) bone weights"
     }
 }
 
 /// Decoded `hkbBoneIndexArray`: a bone subset, named by skeleton bone index.
-nonisolated package struct HKBBoneIndexArray: HKBClass, Equatable {
-    package let variableBindingSet: HKXPointerTarget?
-    package let boneIndices: [Int]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBBoneIndexArray: HKBClass, Equatable, Sendable {
+    public let variableBindingSet: HKXPointerTarget?
+    public let boneIndices: [Int]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBoneIndexArray"
+    public static let className = "hkbBoneIndexArray"
 
     private static let variableBindingSetField = HKXField(0x10, "m_variableBindingSet")
     private static let boneIndicesField = HKXField(0x30, "m_boneIndices")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBoneIndexArray?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -152,11 +152,11 @@ nonisolated package struct HKBBoneIndexArray: HKBClass, Equatable {
         )
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         HKBReference.optional("m_variableBindingSet", variableBindingSet)
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(boneIndices.count) bone indices"
     }
 }
@@ -164,15 +164,15 @@ nonisolated package struct HKBBoneIndexArray: HKBClass, Equatable {
 /// Decoded `hkbStringEventPayload`: the payload an event carries when the
 /// authored data attaches a string to it. The only payload class the vanilla
 /// player graph uses.
-nonisolated package struct HKBStringEventPayload: HKBClass, Equatable {
-    package let data: String?
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBStringEventPayload: HKBClass, Equatable, Sendable {
+    public let data: String?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbStringEventPayload"
+    public static let className = "hkbStringEventPayload"
 
     private static let dataField = HKXField(0x10, "m_data")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBStringEventPayload?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -182,7 +182,7 @@ nonisolated package struct HKBStringEventPayload: HKBClass, Equatable {
         )
     }
 
-    package var summary: String {
+    public var summary: String {
         "payload \"\(data ?? "")\""
     }
 }

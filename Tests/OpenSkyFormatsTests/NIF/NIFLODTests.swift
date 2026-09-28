@@ -1,3 +1,4 @@
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

@@ -5,6 +5,7 @@
 // cstring reads, plus the rule that an unresolvable field yields nil and a
 // recorded reason rather than a trap. Byte map: docs/formats/hkx-behavior.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

@@ -3,6 +3,7 @@
 // "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" per-record
 // pages; biped slot bits from NifTools nif.xml BSDismemberBodyPartType.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

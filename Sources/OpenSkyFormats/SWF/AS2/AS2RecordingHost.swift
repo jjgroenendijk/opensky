@@ -9,7 +9,7 @@
 import Foundation
 
 /// One request the interpreter made of the host.
-nonisolated package enum AS2HostEvent: Equatable {
+nonisolated public enum AS2HostEvent: Equatable, Sendable {
     case timeline(AS2TimelineCommand)
     case propertyRead(AS2DisplayProperty)
     case propertyWrite(AS2DisplayProperty)
@@ -20,19 +20,19 @@ nonisolated package enum AS2HostEvent: Equatable {
 }
 
 /// Records host traffic and declines all of it.
-nonisolated package final class AS2RecordingHost: AS2Host {
+nonisolated public final class AS2RecordingHost: AS2Host {
     /// Events kept; the oldest are dropped once the list is full.
-    package let eventLimit: Int
+    public let eventLimit: Int
 
-    package private(set) var events: [AS2HostEvent] = []
+    public private(set) var events: [AS2HostEvent] = []
     /// Every event, including ones already dropped.
-    package private(set) var eventTotal = 0
+    public private(set) var eventTotal = 0
 
-    package init(eventLimit: Int = 1024) {
+    public init(eventLimit: Int = 1024) {
         self.eventLimit = max(1, eventLimit)
     }
 
-    package var timelineCommands: [AS2TimelineCommand] {
+    public var timelineCommands: [AS2TimelineCommand] {
         events.compactMap {
             guard case let .timeline(command) = $0 else {
                 return nil
@@ -41,18 +41,18 @@ nonisolated package final class AS2RecordingHost: AS2Host {
         }
     }
 
-    package func perform(_ command: AS2TimelineCommand, target: AS2Object) {
+    public func perform(_ command: AS2TimelineCommand, target: AS2Object) {
         _ = target
         record(.timeline(command))
     }
 
-    package func property(_ property: AS2DisplayProperty, of target: AS2Value) -> AS2Value? {
+    public func property(_ property: AS2DisplayProperty, of target: AS2Value) -> AS2Value? {
         _ = target
         record(.propertyRead(property))
         return nil
     }
 
-    package func setProperty(
+    public func setProperty(
         _ property: AS2DisplayProperty,
         of target: AS2Value,
         to value: AS2Value
@@ -62,18 +62,18 @@ nonisolated package final class AS2RecordingHost: AS2Host {
         return false
     }
 
-    package func targetPath(of object: AS2Object) -> String? {
+    public func targetPath(of object: AS2Object) -> String? {
         _ = object
         return nil
     }
 
-    package func object(atPath path: String, from origin: AS2Object) -> AS2Object? {
+    public func object(atPath path: String, from origin: AS2Object) -> AS2Object? {
         _ = origin
         record(.pathRequest(path))
         return nil
     }
 
-    package func specialObject(
+    public func specialObject(
         _ kind: AS2SpecialTarget,
         relativeTo origin: AS2Object
     ) -> AS2Object? {
@@ -82,19 +82,19 @@ nonisolated package final class AS2RecordingHost: AS2Host {
         return nil
     }
 
-    package func member(_ name: String, of object: AS2Object) -> AS2Value? {
+    public func member(_ name: String, of object: AS2Object) -> AS2Value? {
         _ = object
         record(.memberRead(name))
         return nil
     }
 
-    package func setMember(_ name: String, of object: AS2Object, to value: AS2Value) -> Bool {
+    public func setMember(_ name: String, of object: AS2Object, to value: AS2Value) -> Bool {
         _ = (object, value)
         record(.memberWrite(name))
         return false
     }
 
-    package func clear() {
+    public func clear() {
         events.removeAll()
         eventTotal = 0
     }

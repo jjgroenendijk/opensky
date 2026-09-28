@@ -8,7 +8,7 @@
 
 import Foundation
 
-nonisolated package enum GameSettingError: Error, Equatable {
+nonisolated public enum GameSettingError: Error, Equatable, Sendable {
     case expectedGMST(FourCC)
     case missingField(FourCC)
     case duplicateField(FourCC)
@@ -19,18 +19,18 @@ nonisolated package enum GameSettingError: Error, Equatable {
     case invalidString(editorID: String)
 }
 
-nonisolated package struct GameSetting: Equatable {
-    package enum Value: Equatable {
+nonisolated public struct GameSetting: Equatable, Sendable {
+    public enum Value: Equatable, Sendable {
         case string(LString)
         case integer(Int32)
         case float(Float)
         case boolean(Bool)
     }
 
-    package let editorID: String
-    package let value: Value
+    public let editorID: String
+    public let value: Value
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "GMST" else {
             throw GameSettingError.expectedGMST(record.type)
         }

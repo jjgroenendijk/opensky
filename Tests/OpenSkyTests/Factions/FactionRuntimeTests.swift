@@ -3,9 +3,11 @@
 // hostility the runtime answers through the world-state store. No game-derived
 // bytes.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 @MainActor

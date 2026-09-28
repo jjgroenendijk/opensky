@@ -11,9 +11,9 @@
 
 import Foundation
 
-nonisolated package enum SWFFontParser {
+nonisolated public enum SWFFontParser: Sendable {
     /// Decodes a DefineFont2 (48) or DefineFont3 (75) tag body.
-    package static func parse(tag: SWFTag) throws -> SWFFontDefinition {
+    public static func parse(tag: SWFTag) throws -> SWFFontDefinition {
         guard tag.code == 48 || tag.code == 75 else {
             throw SWFFontError.unsupportedTag(tag.code)
         }

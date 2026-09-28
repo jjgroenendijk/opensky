@@ -8,34 +8,34 @@
 
 import Foundation
 
-nonisolated package struct PluginHeader {
+nonisolated public struct PluginHeader: Sendable {
     /// HEDR field (12 bytes): file stats written by the CK.
-    package struct Stats {
+    public struct Stats: Sendable {
         /// 0.94/1.7 = original Skyrim, 1.71 = SSE with extended header usage.
-        package let version: Float
+        public let version: Float
         /// Record + group count (CK-maintained; not trusted for traversal).
-        package let recordCount: Int32
+        public let recordCount: Int32
         /// Next object ID the CK would assign in this plugin.
-        package let nextObjectID: UInt32
+        public let nextObjectID: UInt32
     }
 
     /// Record flags of the TES4 record (esm / localized / esl bits).
-    package let flags: ESMRecord.Flags
-    package let stats: Stats
+    public let flags: ESMRecord.Flags
+    public let stats: Stats
     /// CNAM zstring, absent in most vanilla masters.
-    package let author: String?
+    public let author: String?
     /// SNAM zstring.
-    package let description: String?
+    public let description: String?
     /// MAST zstrings in file order; index order defines FormID master indices.
-    package let masters: [String]
+    public let masters: [String]
 
     /// Whether FormIDs in strings-bearing fields point into lstring tables
     /// (`Strings/<plugin>_<lang>.strings` etc.) instead of inline text.
-    package var isLocalized: Bool {
+    public var isLocalized: Bool {
         flags.contains(.localized)
     }
 
-    package init(tes4: ESMRecord) throws {
+    public init(tes4: ESMRecord) throws {
         guard tes4.type == "TES4" else {
             throw ESMError.malformed("expected TES4 record, got \(tes4.type)")
         }
@@ -77,7 +77,7 @@ nonisolated package struct PluginHeader {
 
     /// Resolver for raw FormIDs found in this plugin's records. The plugin's
     /// own file name is not stored in the file, so the caller supplies it.
-    package func formIDResolver(pluginName: String) -> FormIDResolver {
+    public func formIDResolver(pluginName: String) -> FormIDResolver {
         FormIDResolver(pluginName: pluginName, masters: masters)
     }
 
@@ -96,7 +96,7 @@ nonisolated package struct PluginHeader {
 nonisolated extension ESMFile {
     /// Decodes the TES4 record. Cheap (one small record) but not cached —
     /// callers keep the result.
-    package func pluginHeader() throws -> PluginHeader {
+    public func pluginHeader() throws -> PluginHeader {
         try PluginHeader(tes4: tes4)
     }
 }

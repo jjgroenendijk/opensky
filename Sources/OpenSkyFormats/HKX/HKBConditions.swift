@@ -17,16 +17,16 @@ import Foundation
 
 /// Decoded `hkbExpressionCondition`, size 32. Derives `hkbCondition`, which
 /// adds nothing to `hkReferencedObject`, so the expression sits at 0x10.
-nonisolated package struct HKBExpressionCondition: HKBClass, Equatable {
+nonisolated public struct HKBExpressionCondition: HKBClass, Equatable, Sendable {
     /// The authored test, e.g. `bIsSynced == 1`.
-    package let expression: String?
-    package let unresolved: [HKXUnresolvedReference]
+    public let expression: String?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbExpressionCondition"
+    public static let className = "hkbExpressionCondition"
 
     private static let expressionField = HKXField(0x10, "m_expression")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBExpressionCondition?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -36,22 +36,22 @@ nonisolated package struct HKBExpressionCondition: HKBClass, Equatable {
         )
     }
 
-    package var summary: String {
+    public var summary: String {
         "condition \"\(expression ?? "")\""
     }
 }
 
 /// Decoded `hkbStringCondition`, size 24: the same idea with the member spelled
 /// `m_conditionString`.
-nonisolated package struct HKBStringCondition: HKBClass, Equatable {
-    package let conditionString: String?
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBStringCondition: HKBClass, Equatable, Sendable {
+    public let conditionString: String?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbStringCondition"
+    public static let className = "hkbStringCondition"
 
     private static let conditionStringField = HKXField(0x10, "m_conditionString")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBStringCondition?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -61,26 +61,26 @@ nonisolated package struct HKBStringCondition: HKBClass, Equatable {
         )
     }
 
-    package var summary: String {
+    public var summary: String {
         "condition \"\(conditionString ?? "")\""
     }
 }
 
 /// One entry of `hkbExpressionDataArray::m_expressionsData`, 24 bytes: an
 /// expression plus where its result goes.
-nonisolated package struct HKBExpressionData: Equatable {
-    package let expression: String?
+nonisolated public struct HKBExpressionData: Equatable, Sendable {
+    public let expression: String?
     /// Graph variable the result is written to, or -1.
-    package let assignmentVariableIndex: Int
+    public let assignmentVariableIndex: Int
     /// Event raised when the expression becomes true, or -1.
-    package let assignmentEventIndex: Int
+    public let assignmentEventIndex: Int
     /// `hkbEvaluateExpressionModifier::EventMode`: 0 raise on true, 1 raise on
     /// false-to-true, 2 raise on true-to-false.
-    package let eventMode: Int
+    public let eventMode: Int
 
-    package static let stride = 24
+    public static let stride = 24
 
-    package static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBExpressionData {
+    public static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBExpressionData {
         let member = "m_expressionsData[\(index)]"
         return HKBExpressionData(
             expression: element.string(at: HKXField(0x00, "\(member).m_expression")),
@@ -94,15 +94,15 @@ nonisolated package struct HKBExpressionData: Equatable {
 }
 
 /// Decoded `hkbExpressionDataArray`, size 32.
-nonisolated package struct HKBExpressionDataArray: HKBClass, Equatable {
-    package let expressionsData: [HKBExpressionData]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBExpressionDataArray: HKBClass, Equatable, Sendable {
+    public let expressionsData: [HKBExpressionData]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbExpressionDataArray"
+    public static let className = "hkbExpressionDataArray"
 
     private static let expressionsDataField = HKXField(0x10, "m_expressionsData")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBExpressionDataArray?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -127,23 +127,23 @@ nonisolated package struct HKBExpressionDataArray: HKBClass, Equatable {
         )
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(expressionsData.count) expressions"
     }
 }
 
 /// One entry of `hkbEventRangeDataArray::m_eventData`, 32 bytes: the event to
 /// raise while an input value sits below `m_upperBound`.
-nonisolated package struct HKBEventRangeData: Equatable {
-    package let upperBound: Float
-    package let event: HKBEventProperty
+nonisolated public struct HKBEventRangeData: Equatable, Sendable {
+    public let upperBound: Float
+    public let event: HKBEventProperty
     /// `hkbEventRangeData::EventRangeMode`: 0 send on entering the range,
     /// 1 send on exiting it, 2 send while inside it.
-    package let eventMode: Int
+    public let eventMode: Int
 
-    package static let stride = 32
+    public static let stride = 32
 
-    package static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBEventRangeData {
+    public static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBEventRangeData {
         let member = "m_eventData[\(index)]"
         return HKBEventRangeData(
             upperBound: element
@@ -155,15 +155,15 @@ nonisolated package struct HKBEventRangeData: Equatable {
 }
 
 /// Decoded `hkbEventRangeDataArray`, size 32.
-nonisolated package struct HKBEventRangeDataArray: HKBClass, Equatable {
-    package let eventData: [HKBEventRangeData]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBEventRangeDataArray: HKBClass, Equatable, Sendable {
+    public let eventData: [HKBEventRangeData]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbEventRangeDataArray"
+    public static let className = "hkbEventRangeDataArray"
 
     private static let eventDataField = HKXField(0x10, "m_eventData")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBEventRangeDataArray?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -186,13 +186,13 @@ nonisolated package struct HKBEventRangeDataArray: HKBClass, Equatable {
         return HKBEventRangeDataArray(eventData: entries, unresolved: cursor.unresolved)
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         eventData.enumerated().flatMap { index, entry in
             entry.event.references(named: "m_eventData[\(index)].m_event")
         }
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(eventData.count) event ranges"
     }
 }

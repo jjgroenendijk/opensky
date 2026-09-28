@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     static func installLocationData(_ registry: inout ConditionFunctionRegistry) {

@@ -9,13 +9,13 @@ import Foundation
 nonisolated extension HKXObjectCursor {
     /// Pointer size on 64-bit packfiles; also the stride of an hkArray of
     /// pointers or of hkStringPtr.
-    package static let pointerStride = 8
+    public static let pointerStride = 8
 
     /// Elements of an `hkArray<hkStringPtr>`. Index-preserving: a null or
     /// unreadable element yields nil in place, because variable and event
     /// names are addressed by index and a compacted list would silently
     /// renumber them.
-    package mutating func stringArray(at field: HKXField) -> [String?] {
+    public mutating func stringArray(at field: HKXField) -> [String?] {
         guard let view = array(at: field) else { return [] }
         return (0 ..< view.count).map { index in
             guard
@@ -34,7 +34,7 @@ nonisolated extension HKXObjectCursor {
 
     /// Elements of an `hkArray<T*>`, index-preserving for the same reason as
     /// `stringArray`.
-    package mutating func pointerArray(at field: HKXField) -> [HKXPointerTarget?] {
+    public mutating func pointerArray(at field: HKXField) -> [HKXPointerTarget?] {
         guard let view = array(at: field) else { return [] }
         return (0 ..< view.count).map { index in
             guard
@@ -53,27 +53,27 @@ nonisolated extension HKXObjectCursor {
 
     /// Elements of an `hkArray<hkInt16>`. Nil when any element is unreadable —
     /// index arrays are load-bearing, so a partial read is worse than none.
-    package mutating func int16Array(at field: HKXField) -> [Int]? {
+    public mutating func int16Array(at field: HKXField) -> [Int]? {
         elements(at: field, stride: 2) { $0.int16(at: .element) }
     }
 
     /// Elements of an `hkArray<hkInt32>`.
-    package mutating func int32Array(at field: HKXField) -> [Int]? {
+    public mutating func int32Array(at field: HKXField) -> [Int]? {
         elements(at: field, stride: 4) { $0.int32(at: .element) }
     }
 
     /// Elements of an `hkArray<hkUint32>`.
-    package mutating func uint32Array(at field: HKXField) -> [UInt32]? {
+    public mutating func uint32Array(at field: HKXField) -> [UInt32]? {
         elements(at: field, stride: 4) { $0.uint32(at: .element) }
     }
 
     /// Elements of an `hkArray<hkReal>`.
-    package mutating func float32Array(at field: HKXField) -> [Float]? {
+    public mutating func float32Array(at field: HKXField) -> [Float]? {
         elements(at: field, stride: 4) { $0.float32(at: .element) }
     }
 
     /// Bytes of an `hkArray<hkUint8>`, read as one slice.
-    package mutating func byteArray(at field: HKXField) -> Data? {
+    public mutating func byteArray(at field: HKXField) -> Data? {
         guard let view = array(at: field) else { return nil }
         guard let payload = graph.payload(ofSection: view.sectionIndex) else {
             recordMiss(field, .sectionMissing)

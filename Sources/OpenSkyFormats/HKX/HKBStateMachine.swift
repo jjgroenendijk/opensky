@@ -17,37 +17,37 @@ import Foundation
 
 /// Decoded `hkbStateMachine`, size 264. Derives `hkbGenerator` -> `hkbNode`, so
 /// the inherited members occupy 0x10 through 0x47 and its own start at 0x48.
-nonisolated package struct HKBStateMachine: HKBClass, Equatable {
-    package let node: HKBNodeHeader
+nonisolated public struct HKBStateMachine: HKBClass, Equatable, Sendable {
+    public let node: HKBNodeHeader
     /// Raised whenever the machine changes state or starts a transition.
-    package let eventToSendWhenStateOrTransitionChanges: HKBEventProperty
+    public let eventToSendWhenStateOrTransitionChanges: HKBEventProperty
     /// Optional `hkbStateChooser` that overrides the start state at activation.
     /// No vanilla player file carries one, so this is normally null.
-    package let startStateChooser: HKXPointerTarget?
+    public let startStateChooser: HKXPointerTarget?
     /// State *id* (not index) the machine enters when activated.
-    package let startStateId: Int
-    package let returnToPreviousStateEventId: Int
-    package let randomTransitionEventId: Int
-    package let transitionToNextHigherStateEventId: Int
-    package let transitionToNextLowerStateEventId: Int
+    public let startStateId: Int
+    public let returnToPreviousStateEventId: Int
+    public let randomTransitionEventId: Int
+    public let transitionToNextHigherStateEventId: Int
+    public let transitionToNextLowerStateEventId: Int
     /// Index of the graph variable this machine keeps its current state in, or
     /// -1 when the machine is not variable-synced.
-    package let syncVariableIndex: Int
-    package let wrapAroundStateId: Bool
-    package let maxSimultaneousTransitions: Int
+    public let syncVariableIndex: Int
+    public let wrapAroundStateId: Bool
+    public let maxSimultaneousTransitions: Int
     /// `hkbStateMachine::StartStateMode`: 0 uses `m_startStateId`, 1 syncs from
     /// the variable, 2 re-enters the state that was current at deactivation.
-    package let startStateMode: Int
+    public let startStateMode: Int
     /// `hkbStateMachine::StateMachineSelfTransitionMode`.
-    package let selfTransitionMode: Int
+    public let selfTransitionMode: Int
     /// `hkbStateMachineStateInfo` objects, index-preserving.
-    package let states: [HKXPointerTarget?]
+    public let states: [HKXPointerTarget?]
     /// `hkbStateMachineTransitionInfoArray` of transitions that may fire from
     /// any state.
-    package let wildcardTransitions: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+    public let wildcardTransitions: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbStateMachine"
+    public static let className = "hkbStateMachine"
 
     private static let eventToSendField = 0x48
     private static let startStateChooserField = HKXField(0x60, "m_startStateChooser")
@@ -76,7 +76,7 @@ nonisolated package struct HKBStateMachine: HKBClass, Equatable {
     private static let statesField = HKXField(0x90, "m_states")
     private static let wildcardTransitionsField = HKXField(0xA0, "m_wildcardTransitions")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBStateMachine?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -110,11 +110,11 @@ nonisolated package struct HKBStateMachine: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         node.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         node.references
             + eventToSendWhenStateOrTransitionChanges
             .references(named: "m_eventToSendWhenStateOrTransitionChanges")
@@ -123,7 +123,7 @@ nonisolated package struct HKBStateMachine: HKBClass, Equatable {
             + HKBReference.optional("m_wildcardTransitions", wildcardTransitions)
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(states.count) states, start state id \(startStateId), "
             + "start mode \(startStateMode), sync variable \(syncVariableIndex)"
     }
@@ -132,25 +132,25 @@ nonisolated package struct HKBStateMachine: HKBClass, Equatable {
 /// Decoded `hkbStateMachineStateInfo`, size 120. Derives `hkbBindable`, not
 /// `hkbNode`, so it has a name of its own at 0x60 rather than the inherited one
 /// at 0x38 — the most common offset mistake in this class set.
-nonisolated package struct HKBStateMachineStateInfo: HKBClass, Equatable {
-    package let variableBindingSet: HKXPointerTarget?
+nonisolated public struct HKBStateMachineStateInfo: HKBClass, Equatable, Sendable {
+    public let variableBindingSet: HKXPointerTarget?
     /// `hkbStateMachineEventPropertyArray` raised on entering this state.
-    package let enterNotifyEvents: HKXPointerTarget?
+    public let enterNotifyEvents: HKXPointerTarget?
     /// `hkbStateMachineEventPropertyArray` raised on leaving it.
-    package let exitNotifyEvents: HKXPointerTarget?
+    public let exitNotifyEvents: HKXPointerTarget?
     /// `hkbStateMachineTransitionInfoArray` of transitions out of this state.
-    package let transitions: HKXPointerTarget?
+    public let transitions: HKXPointerTarget?
     /// The generator that runs while this state is current.
-    package let generator: HKXPointerTarget?
-    package let name: String?
+    public let generator: HKXPointerTarget?
+    public let name: String?
     /// The id transitions address this state by; not its index in `m_states`.
-    package let stateId: Int
+    public let stateId: Int
     /// Weight when a random transition picks among candidate states.
-    package let probability: Float
-    package let enable: Bool
-    package let unresolved: [HKXUnresolvedReference]
+    public let probability: Float
+    public let enable: Bool
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbStateMachineStateInfo"
+    public static let className = "hkbStateMachineStateInfo"
 
     private static let variableBindingSetField = HKXField(0x10, "m_variableBindingSet")
     private static let enterNotifyEventsField = HKXField(0x40, "m_enterNotifyEvents")
@@ -162,7 +162,7 @@ nonisolated package struct HKBStateMachineStateInfo: HKBClass, Equatable {
     private static let probabilityField = HKXField(0x6C, "m_probability")
     private static let enableField = HKXField(0x70, "m_enable")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBStateMachineStateInfo?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -180,11 +180,11 @@ nonisolated package struct HKBStateMachineStateInfo: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         HKBReference.optional("m_variableBindingSet", variableBindingSet)
             + HKBReference.optional("m_enterNotifyEvents", enterNotifyEvents)
             + HKBReference.optional("m_exitNotifyEvents", exitNotifyEvents)
@@ -192,7 +192,7 @@ nonisolated package struct HKBStateMachineStateInfo: HKBClass, Equatable {
             + HKBReference.optional("m_generator", generator)
     }
 
-    package var summary: String {
+    public var summary: String {
         "state id \(stateId), probability \(probability), enable \(enable)"
     }
 }

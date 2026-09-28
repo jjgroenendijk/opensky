@@ -2,6 +2,7 @@
 // payloads and the stray subrecords a mod can author. The well-formed cases
 // live in PerkRecordTests. Fixtures contain no bytes from the game install.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

@@ -17,16 +17,16 @@
 
 import Foundation
 
-nonisolated package struct WordOfPower: Equatable {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct WordOfPower: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// FULL — the word in dragon-font transliteration.
-    package let name: LString?
+    public let name: LString?
     /// TNAM — the word translated into the plugin's language.
-    package let translation: LString?
-    package let skipped: ReferenceRecordTally
+    public let translation: LString?
+    public let skipped: ReferenceRecordTally
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "WOOP" else {
             throw ESMError.malformed("expected WOOP record, got \(record.type)")
         }

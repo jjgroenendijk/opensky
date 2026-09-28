@@ -8,6 +8,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 
 extension GameViewController: CrimeFactionControlProviding {
     var bountyFactionSelection: ReferenceKey? {

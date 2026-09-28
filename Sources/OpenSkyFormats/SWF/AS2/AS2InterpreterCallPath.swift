@@ -13,15 +13,15 @@ import Foundation
 /// Everything a call needs besides the function object: the receiver, the
 /// arguments, the site that issued it, where the result goes, and the class
 /// prototype the callee was found on.
-nonisolated package struct AS2CallSite {
-    package let thisValue: AS2Value
-    package let arguments: [AS2Value]
+nonisolated public struct AS2CallSite {
+    public let thisValue: AS2Value
+    public let arguments: [AS2Value]
     /// Byte offset of the calling record, so a depth fault can name it.
-    package let offset: Int
-    package var completion: AS2FrameCompletion = .value
+    public let offset: Int
+    public var completion: AS2FrameCompletion = .value
     /// The prototype the callee lives on. It becomes the called frame's
     /// `AS2Frame.basePrototype`, which is where its `super` starts walking.
-    package var base: AS2Object?
+    public var base: AS2Object?
 }
 
 nonisolated extension AS2Interpreter {
@@ -29,7 +29,7 @@ nonisolated extension AS2Interpreter {
     /// frame the interpreter loop picks up next, and `site.completion` says
     /// where its return value goes. A non-callable object is not an error in
     /// ActionScript: the call yields `undefined`.
-    package func startCall(
+    public func startCall(
         _ function: AS2Object,
         _ site: AS2CallSite
     ) throws(AS2Fault) -> AS2CallStart {
@@ -80,7 +80,7 @@ nonisolated extension AS2Interpreter {
     /// path — a built-in or a property accessor that cannot continue without
     /// the result — and the only one that costs Swift stack, so it carries
     /// `AS2Limits.reentryDepth` on top of the ordinary call-depth cap.
-    package func call(
+    public func call(
         _ function: AS2Object,
         thisValue: AS2Value,
         arguments: [AS2Value],
@@ -106,7 +106,7 @@ nonisolated extension AS2Interpreter {
 
     /// Starts a call whose result belongs on `frame`'s operand stack — the
     /// shape every call opcode has.
-    package func callPushingResult(
+    public func callPushingResult(
         _ function: AS2Object,
         _ site: AS2CallSite,
         frame: AS2Frame

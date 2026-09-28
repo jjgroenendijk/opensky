@@ -15,8 +15,8 @@ the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-r
 
 ## Targets
 
-- `OpenSkyFormatsTests`: unit tests for the `OpenSkyFormats` parser module, with
-  `@testable import OpenSkyFormats`. A change to engine code does not rebuild them
+- `OpenSkyFormatsTests` and `OpenSkyGameDataTests`: package test targets, one per library module
+  in `Package.swift`. A change to engine code does not rebuild them
   ([Swift modules](/tools/modules.md)).
 - `OpenSkyTests`: unit tests with Swift Testing and `@testable import OpenSky`. Math, the virtual
   file system, the runtime, and the renderer through offscreen paths. None of it needs game data.
@@ -27,9 +27,9 @@ the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-r
   game data alert.
 
 `Tests/TestSupport/` is not a target. Both `OpenSkyTests` and `OpenSkyRealDataTests` compile it,
-the way `Sources/OpenSkyEngine/` is shared by the app and `OpenSkyCLI`. `Tests/FormatsTestSupport/`
-holds the fixtures that only build bytes, and all three unit bundles compile it. Neither folder has
-a `@Test`, because a test there would run in more than one bundle.
+the way `Sources/OpenSkyEngine/` is shared by the app and `OpenSkyCLI`. It has no `@Test`, because
+a test there would run in both bundles. `Tests/FormatsTestSupport/` is a package library with the
+fixtures that only build bytes. Every unit test target links it.
 
 ## Entry points
 
@@ -37,7 +37,7 @@ a `@Test`, because a test there would run in more than one bundle.
 | --- | --- |
 | `make test` | The unit plan through the build system |
 | `make test-fast [T='Suite/test()'] [B=1]` | The fast loop: build once, then run against the cached products. `B=1` forces a build |
-| `make test-one T=Class[/test]` | One class or method through the build system. A bare name resolves under `OpenSkyTests/`. Name `OpenSkyFormatsTests/Class` for a parser suite |
+| `make test-one T=Class[/test]` | One class or method through the build system. A bare name resolves under `OpenSkyTests/`. Name the target for a package suite, for example `OpenSkyGameDataTests/Class` |
 | `make verify-build` | Compiles the app, the CLI, and both unit bundles without running a test. The only routine command that compiles the real-data suites |
 | `make test-report` | Pass and fail counts, each failure's name and message, and code coverage, from the newest result bundle |
 | `make realtest T='Class/method()' [CAP=MB]` | One real-data test under the memory watchdog |

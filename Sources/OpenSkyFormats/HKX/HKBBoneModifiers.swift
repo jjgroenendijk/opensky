@@ -21,20 +21,20 @@ import Foundation
 
 /// Decoded `hkbTwistModifier`, size 144: spreads one rotation across a chain of
 /// bones, which is how the player's spine follows the aim direction.
-nonisolated package struct HKBTwistModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let axisOfRotation: SIMD4<Float>
-    package let twistAngle: Float
-    package let startBoneIndex: Int
-    package let endBoneIndex: Int
+nonisolated public struct HKBTwistModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let axisOfRotation: SIMD4<Float>
+    public let twistAngle: Float
+    public let startBoneIndex: Int
+    public let endBoneIndex: Int
     /// `hkbTwistModifier::SetAngleMethod`: 0 linear, 1 ramped.
-    package let setAngleMethod: Int
+    public let setAngleMethod: Int
     /// `hkbTwistModifier::RotationAxisCoordinates`: 0 model space, 1 local.
-    package let rotationAxisCoordinates: Int
-    package let isAdditive: Bool
-    package let unresolved: [HKXUnresolvedReference]
+    public let rotationAxisCoordinates: Int
+    public let isAdditive: Bool
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbTwistModifier"
+    public static let className = "hkbTwistModifier"
 
     private static let axisField = HKXField(0x50, "m_axisOfRotation")
     private static let twistAngleField = HKXField(0x60, "m_twistAngle")
@@ -44,7 +44,7 @@ nonisolated package struct HKBTwistModifier: HKBClass, Equatable {
     private static let axisCoordinatesField = HKXField(0x69, "m_rotationAxisCoordinates")
     private static let isAdditiveField = HKXField(0x6A, "m_isAdditive")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBTwistModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -62,35 +62,35 @@ nonisolated package struct HKBTwistModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "twist \(twistAngle) rad over bones \(startBoneIndex)-\(endBoneIndex)"
     }
 }
 
 /// Decoded `hkbRotateCharacterModifier`, size 128: turns the whole character at
 /// a fixed rate, used by the turn-in-place states.
-nonisolated package struct HKBRotateCharacterModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let degreesPerSecond: Float
-    package let speedMultiplier: Float
-    package let axisOfRotation: SIMD4<Float>
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBRotateCharacterModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let degreesPerSecond: Float
+    public let speedMultiplier: Float
+    public let axisOfRotation: SIMD4<Float>
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbRotateCharacterModifier"
+    public static let className = "hkbRotateCharacterModifier"
 
     private static let degreesPerSecondField = HKXField(0x50, "m_degreesPerSecond")
     private static let speedMultiplierField = HKXField(0x54, "m_speedMultiplier")
     private static let axisField = HKXField(0x60, "m_axisOfRotation")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBRotateCharacterModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -104,29 +104,29 @@ nonisolated package struct HKBRotateCharacterModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(degreesPerSecond) deg/s times \(speedMultiplier)"
     }
 }
 
 /// One entry of `hkbKeyframeBonesModifier::m_keyframeInfo`, 48 bytes.
-nonisolated package struct HKBKeyframeInfo: Equatable {
-    package let keyframedPosition: SIMD4<Float>
-    package let keyframedRotation: SIMD4<Float>
-    package let boneIndex: Int
-    package let isValid: Bool
+nonisolated public struct HKBKeyframeInfo: Equatable, Sendable {
+    public let keyframedPosition: SIMD4<Float>
+    public let keyframedRotation: SIMD4<Float>
+    public let boneIndex: Int
+    public let isValid: Bool
 
-    package static let stride = 48
+    public static let stride = 48
 
-    package static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBKeyframeInfo {
+    public static func decode(_ element: inout HKXObjectCursor, index: Int) -> HKBKeyframeInfo {
         let member = "m_keyframeInfo[\(index)]"
         return HKBKeyframeInfo(
             keyframedPosition: element
@@ -141,19 +141,19 @@ nonisolated package struct HKBKeyframeInfo: Equatable {
 
 /// Decoded `hkbKeyframeBonesModifier`, size 104: pins named bones to explicit
 /// transforms, overriding whatever the generator produced for them.
-nonisolated package struct HKBKeyframeBonesModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let keyframeInfo: [HKBKeyframeInfo]
+nonisolated public struct HKBKeyframeBonesModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let keyframeInfo: [HKBKeyframeInfo]
     /// `hkbBoneIndexArray` naming which bones are keyframed.
-    package let keyframedBonesList: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+    public let keyframedBonesList: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbKeyframeBonesModifier"
+    public static let className = "hkbKeyframeBonesModifier"
 
     private static let keyframeInfoField = HKXField(0x50, "m_keyframeInfo")
     private static let keyframedBonesListField = HKXField(0x60, "m_keyframedBonesList")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBKeyframeBonesModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -182,33 +182,33 @@ nonisolated package struct HKBKeyframeBonesModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
             + HKBReference.optional("m_keyframedBonesList", keyframedBonesList)
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(keyframeInfo.count) keyframed bones"
     }
 }
 
 /// Decoded `hkbGetUpModifier`, size 128: rotates the character upright from a
 /// ragdoll pose over a fixed duration.
-nonisolated package struct HKBGetUpModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let groundNormal: SIMD4<Float>
-    package let duration: Float
-    package let alignWithGroundDuration: Float
-    package let rootBoneIndex: Int
-    package let otherBoneIndex: Int
-    package let anotherBoneIndex: Int
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBGetUpModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let groundNormal: SIMD4<Float>
+    public let duration: Float
+    public let alignWithGroundDuration: Float
+    public let rootBoneIndex: Int
+    public let otherBoneIndex: Int
+    public let anotherBoneIndex: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbGetUpModifier"
+    public static let className = "hkbGetUpModifier"
 
     private static let groundNormalField = HKXField(0x50, "m_groundNormal")
     private static let durationField = HKXField(0x60, "m_duration")
@@ -217,7 +217,7 @@ nonisolated package struct HKBGetUpModifier: HKBClass, Equatable {
     private static let otherBoneField = HKXField(0x6A, "m_otherBoneIndex")
     private static let anotherBoneField = HKXField(0x6C, "m_anotherBoneIndex")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBGetUpModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -234,15 +234,15 @@ nonisolated package struct HKBGetUpModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "get up over \(duration)s, align \(alignWithGroundDuration)s"
     }
 }

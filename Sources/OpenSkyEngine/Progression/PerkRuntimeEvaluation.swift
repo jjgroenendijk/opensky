@@ -37,6 +37,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 import os
 
 /// Which world reference each condition-tab subject is, for one evaluation.

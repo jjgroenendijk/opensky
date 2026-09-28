@@ -20,86 +20,86 @@
 
 import Foundation
 
-nonisolated package enum AS2Opcode {
+nonisolated public enum AS2Opcode: Sendable {
     // Stack and constants
-    package static let push: UInt8 = 0x96
-    package static let pop: UInt8 = 0x17
-    package static let pushDuplicate: UInt8 = 0x4C
-    package static let stackSwap: UInt8 = 0x4D
-    package static let storeRegister: UInt8 = 0x87
-    package static let constantPool: UInt8 = 0x88
+    public static let push: UInt8 = 0x96
+    public static let pop: UInt8 = 0x17
+    public static let pushDuplicate: UInt8 = 0x4C
+    public static let stackSwap: UInt8 = 0x4D
+    public static let storeRegister: UInt8 = 0x87
+    public static let constantPool: UInt8 = 0x88
 
     // Arithmetic
-    package static let subtract: UInt8 = 0x0B
-    package static let multiply: UInt8 = 0x0C
-    package static let divide: UInt8 = 0x0D
-    package static let modulo: UInt8 = 0x3F
-    package static let add2: UInt8 = 0x47
-    package static let increment: UInt8 = 0x50
-    package static let decrement: UInt8 = 0x51
-    package static let toNumber: UInt8 = 0x4A
-    package static let toString: UInt8 = 0x4B
+    public static let subtract: UInt8 = 0x0B
+    public static let multiply: UInt8 = 0x0C
+    public static let divide: UInt8 = 0x0D
+    public static let modulo: UInt8 = 0x3F
+    public static let add2: UInt8 = 0x47
+    public static let increment: UInt8 = 0x50
+    public static let decrement: UInt8 = 0x51
+    public static let toNumber: UInt8 = 0x4A
+    public static let toString: UInt8 = 0x4B
 
     // Comparison and logic
-    package static let not: UInt8 = 0x12
-    package static let equals2: UInt8 = 0x49
-    package static let strictEquals: UInt8 = 0x66
-    package static let less2: UInt8 = 0x48
-    package static let greater: UInt8 = 0x67
+    public static let not: UInt8 = 0x12
+    public static let equals2: UInt8 = 0x49
+    public static let strictEquals: UInt8 = 0x66
+    public static let less2: UInt8 = 0x48
+    public static let greater: UInt8 = 0x67
 
     // Bitwise
-    package static let bitAnd: UInt8 = 0x60
-    package static let bitOr: UInt8 = 0x61
-    package static let bitXor: UInt8 = 0x62
-    package static let bitLShift: UInt8 = 0x63
-    package static let bitRShift: UInt8 = 0x64
-    package static let bitURShift: UInt8 = 0x65
+    public static let bitAnd: UInt8 = 0x60
+    public static let bitOr: UInt8 = 0x61
+    public static let bitXor: UInt8 = 0x62
+    public static let bitLShift: UInt8 = 0x63
+    public static let bitRShift: UInt8 = 0x64
+    public static let bitURShift: UInt8 = 0x65
 
     // Variables and members
-    package static let getVariable: UInt8 = 0x1C
-    package static let setVariable: UInt8 = 0x1D
-    package static let getMember: UInt8 = 0x4E
-    package static let setMember: UInt8 = 0x4F
-    package static let defineLocal: UInt8 = 0x3C
-    package static let defineLocal2: UInt8 = 0x41
-    package static let delete: UInt8 = 0x3A
-    package static let delete2: UInt8 = 0x3B
+    public static let getVariable: UInt8 = 0x1C
+    public static let setVariable: UInt8 = 0x1D
+    public static let getMember: UInt8 = 0x4E
+    public static let setMember: UInt8 = 0x4F
+    public static let defineLocal: UInt8 = 0x3C
+    public static let defineLocal2: UInt8 = 0x41
+    public static let delete: UInt8 = 0x3A
+    public static let delete2: UInt8 = 0x3B
 
     // Object structure
-    package static let initObject: UInt8 = 0x43
-    package static let initArray: UInt8 = 0x42
-    package static let enumerate2: UInt8 = 0x55
-    package static let typeOf: UInt8 = 0x44
-    package static let instanceOf: UInt8 = 0x54
-    package static let extends: UInt8 = 0x69
-    package static let castOp: UInt8 = 0x2B
+    public static let initObject: UInt8 = 0x43
+    public static let initArray: UInt8 = 0x42
+    public static let enumerate2: UInt8 = 0x55
+    public static let typeOf: UInt8 = 0x44
+    public static let instanceOf: UInt8 = 0x54
+    public static let extends: UInt8 = 0x69
+    public static let castOp: UInt8 = 0x2B
 
     // Calls and functions
-    package static let callFunction: UInt8 = 0x3D
-    package static let callMethod: UInt8 = 0x52
-    package static let newObject: UInt8 = 0x40
-    package static let newMethod: UInt8 = 0x53
-    package static let returnValue: UInt8 = 0x3E
-    package static let defineFunction: UInt8 = 0x9B
-    package static let defineFunction2: UInt8 = 0x8E
+    public static let callFunction: UInt8 = 0x3D
+    public static let callMethod: UInt8 = 0x52
+    public static let newObject: UInt8 = 0x40
+    public static let newMethod: UInt8 = 0x53
+    public static let returnValue: UInt8 = 0x3E
+    public static let defineFunction: UInt8 = 0x9B
+    public static let defineFunction2: UInt8 = 0x8E
 
     // Control flow
-    package static let jump: UInt8 = 0x99
-    package static let branchIfTrue: UInt8 = 0x9D
+    public static let jump: UInt8 = 0x99
+    public static let branchIfTrue: UInt8 = 0x9D
 
     // Host and timeline
-    package static let play: UInt8 = 0x06
-    package static let stop: UInt8 = 0x07
-    package static let gotoFrame: UInt8 = 0x81
-    package static let goToLabel: UInt8 = 0x8C
-    package static let getProperty: UInt8 = 0x22
-    package static let setProperty: UInt8 = 0x23
-    package static let targetPath: UInt8 = 0x45
-    package static let trace: UInt8 = 0x26
+    public static let play: UInt8 = 0x06
+    public static let stop: UInt8 = 0x07
+    public static let gotoFrame: UInt8 = 0x81
+    public static let goToLabel: UInt8 = 0x8C
+    public static let getProperty: UInt8 = 0x22
+    public static let setProperty: UInt8 = 0x23
+    public static let targetPath: UInt8 = 0x45
+    public static let trace: UInt8 = 0x26
 
     /// Every opcode the dispatch tables handle, for the coverage test that
     /// pins this set against `SWFActionName`.
-    package static let implemented: Set<UInt8> = [
+    public static let implemented: Set<UInt8> = [
         push, pop, pushDuplicate, stackSwap, storeRegister, constantPool,
         subtract, multiply, divide, modulo, add2, increment, decrement,
         toNumber, toString, not, equals2, strictEquals, less2, greater,

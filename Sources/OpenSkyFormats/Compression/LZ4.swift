@@ -9,7 +9,7 @@
 import Compression
 import Foundation
 
-nonisolated package enum LZ4Error: Error, Equatable {
+nonisolated public enum LZ4Error: Error, Equatable, Sendable {
     case badMagic(UInt32)
     case unsupportedVersion(UInt8)
     case unsupportedBlockMaximum(UInt8)
@@ -20,7 +20,7 @@ nonisolated package enum LZ4Error: Error, Equatable {
     case outputOverflow(limit: Int)
 }
 
-nonisolated package enum LZ4 {
+nonisolated public enum LZ4: Sendable {
     private static let frameMagic: UInt32 = 0x184D_2204
 
     private struct FrameDescriptor {
@@ -31,7 +31,7 @@ nonisolated package enum LZ4 {
 
     /// Decompress a complete LZ4 frame. `sizeLimit` caps the output so a
     /// malicious size field cannot balloon memory.
-    package static func decompressFrame(_ data: Data, sizeLimit: Int) throws -> Data {
+    public static func decompressFrame(_ data: Data, sizeLimit: Int) throws -> Data {
         var reader = BinaryReader(data)
         let descriptor = try readFrameHeader(&reader)
         if descriptor.blocksIndependent {
@@ -195,7 +195,7 @@ nonisolated package enum LZ4 {
 
     /// Decompress one raw LZ4 block, appending to `output`. Matches may
     /// reference bytes already in `output` (linked blocks).
-    package static func decompressBlock(
+    public static func decompressBlock(
         _ block: Data,
         into output: inout [UInt8],
         sizeLimit: Int

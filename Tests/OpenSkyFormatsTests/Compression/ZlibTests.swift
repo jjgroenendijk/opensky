@@ -1,6 +1,7 @@
 // Zlib stream decoder tests. Streams are built by ESMFixture.zlibStream via
 // Apple's Compression encoder + hand-computed RFC 1950 wrapper.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

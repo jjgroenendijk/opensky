@@ -1,9 +1,11 @@
 // Synthetic coverage for the fourteen M18 data condition functions (issue
 // #455). Every CTDA and record byte is built in code; no game data is used.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 @MainActor

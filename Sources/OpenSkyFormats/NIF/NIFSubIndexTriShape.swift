@@ -4,18 +4,18 @@
 
 import Foundation
 
-nonisolated package struct NIFSubIndexTriShape {
-    package struct Segment: Equatable {
-        package let flags: UInt8
+nonisolated public struct NIFSubIndexTriShape: Sendable {
+    public struct Segment: Equatable, Sendable {
+        public let flags: UInt8
         /// First index in BSTriShape's flat triangle-index array.
-        package let startIndex: UInt32
-        package let primitiveCount: UInt32
+        public let startIndex: UInt32
+        public let primitiveCount: UInt32
     }
 
-    package let shape: NIFTriShape
-    package let segments: [Segment]
+    public let shape: NIFTriShape
+    public let segments: [Segment]
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         guard header.bsStream?.version == 100 else {
             throw NIFError.unsupported("BSSubIndexTriShape outside an SSE stream (BS 100)")
         }

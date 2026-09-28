@@ -10,28 +10,9 @@ import Foundation
 @testable import OpenSkyFormats
 import simd
 
-enum NavmeshFixture {
-    /// One triangle as the fixture spells it, before packing.
-    struct Triangle {
-        var vertices: SIMD3<UInt16>
-        var neighbors: SIMD3<Int16> = SIMD3(repeating: -1)
-        var flags: UInt16 = 0
-        var coverFlags: UInt16 = 0
-    }
-
-    struct EdgeLink {
-        var type: UInt32 = 0
-        var navmesh: UInt32
-        var triangle: Int16
-    }
-
-    struct DoorLink {
-        var triangle: Int16
-        var door: UInt32
-    }
-
+public enum NavmeshFixture: Sendable {
     /// Parses fixture bytes back into the single record they encode.
-    static func record(_ bytes: Data) throws -> ESMRecord {
+    public static func record(_ bytes: Data) throws -> ESMRecord {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {
             throw ESMError.malformed("fixture did not produce a record")
@@ -41,7 +22,7 @@ enum NavmeshFixture {
 
     /// A whole NVNM payload. `world` null makes it an interior addressed by
     /// `cell`; otherwise the exterior grid pair is written, Y first.
-    static func geometry(
+    public static func geometry(
         version: UInt32 = 12,
         world: UInt32 = 0,
         cell: UInt32 = 0x1234,
@@ -87,7 +68,7 @@ enum NavmeshFixture {
     /// NAVM record wrapping a NVNM payload. Payloads over 64 KB have to travel
     /// through the `XXXX` size extension, which is exactly the case NVNM was
     /// the original reason for.
-    static func navmRecord(
+    public static func navmRecord(
         formID: UInt32 = 0x100,
         flags: UInt32 = 0,
         editorID: String? = nil,
@@ -105,7 +86,7 @@ enum NavmeshFixture {
     }
 
     /// One NVMI entry.
-    static func info(
+    public static func info(
         navmesh: UInt32,
         flags: UInt32 = 0,
         location approximate: SIMD3<Float> = SIMD3(1, 2, 3),
@@ -141,7 +122,7 @@ enum NavmeshFixture {
     }
 
     /// NAVI record: NVER, the NVMI entries, and optionally NVSI deletions.
-    static func naviRecord(
+    public static func naviRecord(
         formID: UInt32 = 0x10,
         recordFlags: UInt32 = 0,
         version: UInt32 = 0x0C,
@@ -164,13 +145,16 @@ enum NavmeshFixture {
     }
 
     /// TES4 plus a NAVI top group holding `records`.
-    static func plugin(naviRecords: Data) -> Data {
+    public static func plugin(naviRecords: Data) -> Data {
         ESMFixture.tes4() + ESMFixture.topGroup("NAVI", contents: naviRecords)
     }
 
     /// A cell-children group (type 6) with a temporary-children group (type 9)
     /// holding `records`, parsed back into the `ESMGroup` the walk takes.
-    static func cellChildren(parent: UInt32 = 0x2B, temporary records: Data) throws -> ESMGroup {
+    public static func cellChildren(
+        parent: UInt32 = 0x2B,
+        temporary records: Data
+    ) throws -> ESMGroup {
         let bytes = ESMFixture.childGroup(
             parent: parent,
             groupType: 6,
@@ -185,7 +169,7 @@ enum NavmeshFixture {
 
     /// Two triangles sharing the edge between vertices 1 and 2 — the smallest
     /// mesh with a real neighbour relationship in it.
-    static func twoTriangleMesh() -> Data {
+    public static func twoTriangleMesh() -> Data {
         geometry(
             vertices: [
                 SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(1, 1, 0)

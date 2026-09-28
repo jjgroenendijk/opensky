@@ -13,7 +13,7 @@
 
 import Foundation
 
-nonisolated package enum ActorValueInformationSkipKind: Hashable {
+nonisolated public enum ActorValueInformationSkipKind: Hashable, Sendable {
     case unknownField(FourCC)
     case malformedField(FourCC)
     /// A perk-tree node that reached its end without one of the fields xEdit
@@ -21,14 +21,14 @@ nonisolated package enum ActorValueInformationSkipKind: Hashable {
     case incompletePerkTreeNode
 }
 
-nonisolated package struct ActorValueInformationTally: Equatable {
-    package private(set) var counts: [ActorValueInformationSkipKind: Int] = [:]
+nonisolated public struct ActorValueInformationTally: Equatable, Sendable {
+    public private(set) var counts: [ActorValueInformationSkipKind: Int] = [:]
 
-    package var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    package mutating func note(_ kind: ActorValueInformationSkipKind) {
+    public mutating func note(_ kind: ActorValueInformationSkipKind) {
         counts[kind, default: 0] += 1
     }
 }
@@ -40,14 +40,14 @@ nonisolated package struct ActorValueInformationTally: Equatable {
 /// something else ("large 4byte info"), so the raw word is kept on the record
 /// and this enum is derived from it. An out-of-range word is `unknown` rather
 /// than a decode failure.
-nonisolated package enum ActorValueSkillCategory: Equatable, CustomStringConvertible {
+nonisolated public enum ActorValueSkillCategory: Equatable, CustomStringConvertible, Sendable {
     case none
     case combat
     case magic
     case stealth
     case unknown(raw: UInt32)
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         switch rawValue {
         case 0: self = .none
         case 1: self = .combat
@@ -57,7 +57,7 @@ nonisolated package enum ActorValueSkillCategory: Equatable, CustomStringConvert
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .none: "none"
         case .combat: "combat"
@@ -75,15 +75,15 @@ nonisolated package enum ActorValueSkillCategory: Equatable, CustomStringConvert
 /// the reading, so the field is stored under UESP's name and the disagreement
 /// is left visible instead of being resolved by guesswork. Consuming these for
 /// experience gain is issue 20.5.
-nonisolated package struct SkillUseParameters: Equatable {
-    package static let byteCount = 16
+nonisolated public struct SkillUseParameters: Equatable, Sendable {
+    public static let byteCount = 16
 
-    package let useMultiplier: Float
-    package let useOffset: Float
-    package let improveMultiplier: Float
-    package let improveOffset: Float
+    public let useMultiplier: Float
+    public let useOffset: Float
+    public let improveMultiplier: Float
+    public let improveOffset: Float
 
-    package init(
+    public init(
         useMultiplier: Float,
         useOffset: Float,
         improveMultiplier: Float,
@@ -95,7 +95,7 @@ nonisolated package struct SkillUseParameters: Equatable {
         self.improveOffset = improveOffset
     }
 
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count == Self.byteCount else {
             throw ESMError.malformed(
                 "AVIF AVSK has \(field.data.count) bytes, expected exactly \(Self.byteCount)"
@@ -109,22 +109,22 @@ nonisolated package struct SkillUseParameters: Equatable {
     }
 }
 
-nonisolated package struct ActorValueInformation: Equatable {
-    package let formID: FormID
-    package let editorID: String?
-    package let name: LString?
-    package let description: LString?
+nonisolated public struct ActorValueInformation: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
+    public let name: LString?
+    public let description: LString?
     /// ANAM. UESP notes it is only authored on a couple of records, so nil is
     /// the normal answer rather than a miss.
-    package let abbreviation: String?
-    package let iconPath: String?
+    public let abbreviation: String?
+    public let iconPath: String?
     /// CNAM verbatim, or nil when the record has none.
-    package let categoryRaw: UInt32?
-    package let skillUse: SkillUseParameters?
-    package let perkTree: [PerkTreeNode]
-    package let skipped: ActorValueInformationTally
+    public let categoryRaw: UInt32?
+    public let skillUse: SkillUseParameters?
+    public let perkTree: [PerkTreeNode]
+    public let skipped: ActorValueInformationTally
 
-    package var skillCategory: ActorValueSkillCategory? {
+    public var skillCategory: ActorValueSkillCategory? {
         categoryRaw.map(ActorValueSkillCategory.init(rawValue:))
     }
 
@@ -137,7 +137,7 @@ nonisolated package struct ActorValueInformation: Equatable {
     /// caller that means the skills has to join the index and ask
     /// `ActorValueIdentity.isSkill(index:)` — which is what the store's
     /// `skills` does.
-    package var hasPerkTree: Bool {
+    public var hasPerkTree: Bool {
         skillUse != nil && !perkTree.isEmpty
     }
 
@@ -151,7 +151,7 @@ nonisolated package struct ActorValueInformation: Equatable {
     /// with punctuation dropped and case folded, which is what makes the
     /// table's `One-Handed` and an editor ID's `OneHanded` one name, and it
     /// carries the three legacy spellings vanilla editor ids use.
-    package var vanillaActorValueIndex: Int32? {
+    public var vanillaActorValueIndex: Int32? {
         if let editorID {
             if let index = ActorValueIdentity.index(recordName: editorID) {
                 return index
@@ -171,7 +171,7 @@ nonisolated package struct ActorValueInformation: Equatable {
         return nil
     }
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "AVIF" else {
             throw ESMError.malformed("expected AVIF record, got \(record.type)")
         }

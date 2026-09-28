@@ -3,9 +3,7 @@
     {
       "id" : "4E9F1C20-0005-4A00-9B00-000000000005",
       "name" : "UI",
-      "options" : {
-
-      }
+      "options" : {}
     }
   ],
   "defaultOptions" : {
@@ -17,9 +15,14 @@
           "name" : "OpenSky"
         },
         {
-          "containerPath" : "container:OpenSky.xcodeproj",
-          "identifier" : "5AF000013000109300170010",
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormats",
           "name" : "OpenSkyFormats"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyGameData",
+          "name" : "OpenSkyGameData"
         }
       ]
     }

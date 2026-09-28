@@ -2,6 +2,7 @@
 // budget-bounded drain with carry-over, global order, per-instance serial
 // delivery across a latent suspension, and the fixed-step latent wake.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 import Testing

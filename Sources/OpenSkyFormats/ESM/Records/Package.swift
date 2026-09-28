@@ -13,31 +13,31 @@
 
 import Foundation
 
-nonisolated package struct Package: Equatable {
-    package struct GeneralFlags: OptionSet, Equatable, Sendable {
-        package let rawValue: UInt32
+nonisolated public struct Package: Equatable, Sendable {
+    public struct GeneralFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let mustComplete = GeneralFlags(rawValue: 0x0000_0004)
-        package static let maintainSpeedAtGoal = GeneralFlags(rawValue: 0x0000_0008)
-        package static let oncePerDay = GeneralFlags(rawValue: 0x0000_0400)
-        package static let usesPreferredSpeed = GeneralFlags(rawValue: 0x0000_2000)
-        package static let alwaysSneak = GeneralFlags(rawValue: 0x0002_0000)
-        package static let ignoreCombat = GeneralFlags(rawValue: 0x0010_0000)
-        package static let weaponsUnequipped = GeneralFlags(rawValue: 0x0020_0000)
-        package static let weaponDrawn = GeneralFlags(rawValue: 0x0080_0000)
-        package static let wearSleepOutfit = GeneralFlags(rawValue: 0x2000_0000)
+        public static let mustComplete = GeneralFlags(rawValue: 0x0000_0004)
+        public static let maintainSpeedAtGoal = GeneralFlags(rawValue: 0x0000_0008)
+        public static let oncePerDay = GeneralFlags(rawValue: 0x0000_0400)
+        public static let usesPreferredSpeed = GeneralFlags(rawValue: 0x0000_2000)
+        public static let alwaysSneak = GeneralFlags(rawValue: 0x0002_0000)
+        public static let ignoreCombat = GeneralFlags(rawValue: 0x0010_0000)
+        public static let weaponsUnequipped = GeneralFlags(rawValue: 0x0020_0000)
+        public static let weaponDrawn = GeneralFlags(rawValue: 0x0080_0000)
+        public static let wearSleepOutfit = GeneralFlags(rawValue: 0x2000_0000)
     }
 
-    package enum Kind: Equatable, Sendable {
+    public enum Kind: Equatable, Sendable {
         case package
         case template
         case unknown(UInt8)
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             switch rawValue {
             case 18: self = .package
             case 19: self = .template
@@ -46,14 +46,14 @@ nonisolated package struct Package: Equatable {
         }
     }
 
-    package enum PreferredSpeed: Equatable, Sendable {
+    public enum PreferredSpeed: Equatable, Sendable {
         case walk
         case jog
         case run
         case fastWalk
         case unknown(UInt8)
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .walk
             case 1: self = .jog
@@ -64,28 +64,28 @@ nonisolated package struct Package: Equatable {
         }
     }
 
-    package struct GeneralData: Equatable, Sendable {
-        package let flags: GeneralFlags
-        package let kind: Kind
-        package let interruptOverride: UInt8
-        package let preferredSpeed: PreferredSpeed
-        package let interruptFlags: UInt16
+    public struct GeneralData: Equatable, Sendable {
+        public let flags: GeneralFlags
+        public let kind: Kind
+        public let interruptOverride: UInt8
+        public let preferredSpeed: PreferredSpeed
+        public let interruptFlags: UInt16
     }
 
-    package struct Schedule: Equatable, Sendable {
+    public struct Schedule: Equatable, Sendable {
         /// -1 means any; positive values are 1-based months.
-        package let month: Int8
+        public let month: Int8
         /// -1 any, 0...6 individual weekdays, 7...10 grouped weekdays.
-        package let dayOfWeek: Int8
+        public let dayOfWeek: Int8
         /// 0 means any; otherwise a 1-based day of month.
-        package let date: Int8
+        public let date: Int8
         /// -1 means any; otherwise 0...23.
-        package let hour: Int8
+        public let hour: Int8
         /// -1 means the start of the authored hour; otherwise 0...59.
-        package let minute: Int8
-        package let durationMinutes: UInt32
+        public let minute: Int8
+        public let durationMinutes: UInt32
 
-        package static let anytime = Schedule(
+        public static let anytime = Schedule(
             month: -1,
             dayOfWeek: -1,
             date: 0,
@@ -95,7 +95,7 @@ nonisolated package struct Package: Equatable {
         )
     }
 
-    package enum LocationKind: Int32, Equatable, Sendable {
+    public enum LocationKind: Int32, Equatable, Sendable {
         case nearReference = 0
         case inCell = 1
         case nearPackageStart = 2
@@ -106,16 +106,16 @@ nonisolated package struct Package: Equatable {
         case nearSelf = 12
     }
 
-    package struct Location: Equatable, Sendable {
-        package let rawKind: Int32
-        package let value: UInt32
-        package let radius: Int32
+    public struct Location: Equatable, Sendable {
+        public let rawKind: Int32
+        public let value: UInt32
+        public let radius: Int32
 
-        package var kind: LocationKind? {
+        public var kind: LocationKind? {
             LocationKind(rawValue: rawKind)
         }
 
-        package var formID: FormID? {
+        public var formID: FormID? {
             switch kind {
             case .nearReference, .inCell, .nearLinkedReference:
                 value == 0 ? nil : FormID(value)
@@ -124,7 +124,7 @@ nonisolated package struct Package: Equatable {
         }
     }
 
-    package enum TargetKind: Int32, Equatable, Sendable {
+    public enum TargetKind: Int32, Equatable, Sendable {
         case specificReference = 0
         case objectID = 1
         case objectType = 2
@@ -134,17 +134,17 @@ nonisolated package struct Package: Equatable {
         case actor = 6
     }
 
-    package struct Target: Equatable, Sendable {
-        package let rawKind: Int32
-        package let value: UInt32
-        package let countOrDistance: Int32
+    public struct Target: Equatable, Sendable {
+        public let rawKind: Int32
+        public let value: UInt32
+        public let countOrDistance: Int32
 
-        package var kind: TargetKind? {
+        public var kind: TargetKind? {
             TargetKind(rawValue: rawKind)
         }
     }
 
-    package enum DataValue: Equatable, Sendable {
+    public enum DataValue: Equatable, Sendable {
         case boolean(Bool)
         case integer(Int32)
         case float(Float)
@@ -154,26 +154,26 @@ nonisolated package struct Package: Equatable {
         case unknown(type: String, bytes: Int)
     }
 
-    package struct DataInput: Equatable, Sendable {
-        package let index: Int8?
-        package let type: String
-        package let value: DataValue
+    public struct DataInput: Equatable, Sendable {
+        public let index: Int8?
+        public let type: String
+        public let value: DataValue
     }
 
-    package let formID: FormID
-    package let editorID: String?
-    package let general: GeneralData
-    package let schedule: Schedule
-    package let conditions: ConditionList
-    package let template: FormID?
-    package let dataInputs: [DataInput]
+    public let formID: FormID
+    public let editorID: String?
+    public let general: GeneralData
+    public let schedule: Schedule
+    public let conditions: ConditionList
+    public let template: FormID?
+    public let dataInputs: [DataInput]
     /// Procedure names from template-package PNAM zstrings, in record order.
-    package let procedureTypes: [String]
-    package let scriptData: ScriptData
+    public let procedureTypes: [String]
+    public let scriptData: ScriptData
 }
 
 nonisolated extension Package {
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         self = try PackageDecoder.decode(record)
     }
 }

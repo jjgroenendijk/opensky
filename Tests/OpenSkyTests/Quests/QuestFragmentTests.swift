@@ -5,6 +5,7 @@
 // Records"; xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbVMADFragmentedQUST`
 // line 2929. See docs/formats/vmad.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

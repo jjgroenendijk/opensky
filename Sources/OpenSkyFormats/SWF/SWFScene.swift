@@ -15,44 +15,44 @@ import Foundation
 /// One drawable resolved from the display list: a character reference plus
 /// the accumulated transform (character-local twips -> movie twips) and color
 /// transform.
-nonisolated package struct SWFSceneItem: Equatable {
-    package enum Content: Equatable {
+nonisolated public struct SWFSceneItem: Equatable, Sendable {
+    public enum Content: Equatable, Sendable {
         case shape(UInt16)
         case staticText(UInt16)
         case editText(UInt16)
     }
 
-    package let content: Content
-    package let transform: SWFTransform
-    package let colorTransform: SWFColorTransform
+    public let content: Content
+    public let transform: SWFTransform
+    public let colorTransform: SWFColorTransform
     /// Runtime text for an `editText` item, overriding the character's
     /// `InitialText`. nil means "draw the character as authored", which is what
     /// the static path always produces. Declared last so the memberwise
     /// initializer of the static path keeps its three-argument spelling.
-    package var textOverride: String?
+    public var textOverride: String?
 }
 
 /// Ordered render commands for one frame. Masks carry the geometry items the
 /// stencil pass draws (a clip layer that is a sprite contributes every shape
 /// of its frame 1); `endClip` repeats the same items so the renderer can
 /// decrement exactly what was incremented.
-nonisolated package enum SWFSceneCommand: Equatable {
+nonisolated public enum SWFSceneCommand: Equatable, Sendable {
     case beginClip(masks: [SWFSceneItem])
     case endClip(masks: [SWFSceneItem])
     case draw(item: SWFSceneItem, clipCount: Int)
 }
 
 /// The flattened frame: commands in paint order plus skip accounting.
-nonisolated package struct SWFScene: Equatable {
-    package let commands: [SWFSceneCommand]
+nonisolated public struct SWFScene: Equatable, Sendable {
+    public let commands: [SWFSceneCommand]
     /// Placements referencing characters that cannot draw (missing ids,
     /// fonts/bitmaps placed directly, text used as a clip mask).
-    package let skippedPlacements: Int
+    public let skippedPlacements: Int
 
     /// Sprite recursion is bounded defensively; vanilla nesting is shallow.
-    package static let maximumSpriteDepth = 16
+    public static let maximumSpriteDepth = 16
 
-    package static func build(movie: SWFMovie) -> SWFScene {
+    public static func build(movie: SWFMovie) -> SWFScene {
         var builder = SceneBuilder(movie: movie)
         builder.walk(
             placements: movie.frame1,

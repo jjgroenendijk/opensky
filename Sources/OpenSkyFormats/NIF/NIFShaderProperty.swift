@@ -15,33 +15,33 @@
 import Foundation
 import simd
 
-nonisolated package struct NIFLightingShaderProperty {
+nonisolated public struct NIFLightingShaderProperty: Sendable {
     /// nif.xml BSLightingShaderType: 0 default, 1 environment map, 5 skin
     /// tint, … — selects the conditional tail this decoder never reads.
-    package let shaderType: UInt32
-    package let name: String?
+    public let shaderType: UInt32
+    public let name: String?
     /// Raw SkyrimShaderPropertyFlags1/2; derived accessors below for the
     /// bits the renderer consumes.
-    package let shaderFlags1: UInt32
-    package let shaderFlags2: UInt32
-    package let uvOffset: SIMD2<Float>
-    package let uvScale: SIMD2<Float>
+    public let shaderFlags1: UInt32
+    public let shaderFlags2: UInt32
+    public let uvOffset: SIMD2<Float>
+    public let uvScale: SIMD2<Float>
     /// BSShaderTextureSet block ref; -1 = none.
-    package let textureSetRef: Int32
+    public let textureSetRef: Int32
     /// Material opacity, 1 = opaque (vanilla range reaches past 1 to shape
     /// alpha falloff).
-    package let alpha: Float
+    public let alpha: Float
     /// Specular power.
-    package let glossiness: Float
-    package let specularColor: SIMD3<Float>
-    package let specularStrength: Float
+    public let glossiness: Float
+    public let specularColor: SIMD3<Float>
+    public let specularStrength: Float
 
     /// SLSF2 bit 4 Double_Sided -> cull mode none.
-    package var isDoubleSided: Bool {
+    public var isDoubleSided: Bool {
         shaderFlags2 & 0x10 != 0
     }
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {
             throw NIFError.unsupported(

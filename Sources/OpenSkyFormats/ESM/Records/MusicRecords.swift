@@ -13,41 +13,41 @@
 
 import Foundation
 
-nonisolated package struct MusicType {
+nonisolated public struct MusicType: Sendable {
     /// FNAM bitfield. Bit 0x10 is unnamed in xEdit ("Unknown 4") and is kept
     /// in `rawValue` rather than given a speculative name.
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let playsOneSelection = Flags(rawValue: 0x0001)
-        package static let abruptTransition = Flags(rawValue: 0x0002)
-        package static let cycleTracks = Flags(rawValue: 0x0004)
+        public static let playsOneSelection = Flags(rawValue: 0x0001)
+        public static let abruptTransition = Flags(rawValue: 0x0002)
+        public static let cycleTracks = Flags(rawValue: 0x0004)
         /// Only meaningful together with `cycleTracks` (UESP MUSC).
-        package static let maintainTrackOrder = Flags(rawValue: 0x0008)
-        package static let ducksCurrentTrack = Flags(rawValue: 0x0020)
+        public static let maintainTrackOrder = Flags(rawValue: 0x0008)
+        public static let ducksCurrentTrack = Flags(rawValue: 0x0020)
         /// Skyrim Special Edition only; named "Unknown 6" in older games.
-        package static let doesNotQueue = Flags(rawValue: 0x0040)
+        public static let doesNotQueue = Flags(rawValue: 0x0040)
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// FNAM. Empty set when the field is absent or the wrong width.
-    package let flags: Flags
+    public let flags: Flags
     /// PNAM first uint16. 1 is the highest priority, 100 the lowest.
-    package let priority: Int?
+    public let priority: Int?
     /// PNAM second uint16, stored scaled by 100 (126 means 1.26 dB).
-    package let duckingDecibels: Float?
+    public let duckingDecibels: Float?
     /// WNAM, seconds.
-    package let fadeDuration: Float?
+    public let fadeDuration: Float?
     /// TNAM — MUST FormIDs in record order. Null entries are kept verbatim so
     /// callers see the authored ordering; `MusicRecordStore.resolve` drops them.
-    package let tracks: [FormID]
+    public let tracks: [FormID]
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "MUSC" else {
             throw ESMError.malformed("expected MUSC record, got \(record.type)")
         }
@@ -101,16 +101,16 @@ nonisolated package struct MusicType {
     }
 }
 
-nonisolated package struct MusicTrack {
+nonisolated public struct MusicTrack: Sendable {
     /// CNAM. The three documented values are hashed type tags rather than a
     /// dense enumeration, so unknown tags round-trip through `unknown`.
-    package enum TrackType: Equatable {
+    public enum TrackType: Equatable, Sendable {
         case palette
         case singleTrack
         case silentTrack
         case unknown(UInt32)
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             switch rawValue {
             case 0x23F6_78C3: self = .palette
             case 0x6ED7_E048: self = .singleTrack
@@ -121,38 +121,38 @@ nonisolated package struct MusicTrack {
     }
 
     /// LNAM, a 12-byte struct.
-    package struct LoopData: Equatable {
-        package let beginSeconds: Float
-        package let endSeconds: Float
-        package let count: Int
+    public struct LoopData: Equatable, Sendable {
+        public let beginSeconds: Float
+        public let endSeconds: Float
+        public let count: Int
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// CNAM. nil when absent or the wrong width.
-    package let trackType: TrackType?
+    public let trackType: TrackType?
     /// FLTV, seconds. Authored on silent and palette tracks.
-    package let duration: Float?
+    public let duration: Float?
     /// DNAM, seconds. Authored on palette tracks.
-    package let fadeOut: Float?
+    public let fadeOut: Float?
     /// ANAM — the audio file, relative to the game data root. Raw as authored;
     /// `MusicRecordStore.canonicalMusicPath` turns it into a VFS key.
-    package let trackFileName: String?
+    public let trackFileName: String?
     /// BNAM — the optional finale/tail file, same path rules as `trackFileName`.
-    package let finaleFileName: String?
+    public let finaleFileName: String?
     /// FNAM — cue points in seconds, in record order.
-    package let cuePoints: [Float]
-    package let loopData: LoopData?
+    public let cuePoints: [Float]
+    public let loopData: LoopData?
     /// SNAM — palette children (MUST FormIDs). A null entry is a layer
     /// separator (UESP MUST), so nulls are kept verbatim.
-    package let tracks: [FormID]
+    public let tracks: [FormID]
     /// CTDA conditions gating this track, in record order.
-    package let conditions: [Condition]
+    public let conditions: [Condition]
     /// CITC, the authored condition count. nil when the field is absent; it can
     /// disagree with `conditions.count` if a CTDA payload was malformed.
-    package let declaredConditionCount: Int?
+    public let declaredConditionCount: Int?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "MUST" else {
             throw ESMError.malformed("expected MUST record, got \(record.type)")
         }

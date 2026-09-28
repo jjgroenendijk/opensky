@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated enum ReferenceRecordType: String, CaseIterable {
     case keyword = "KYWD"

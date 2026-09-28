@@ -9,10 +9,10 @@
 
 import Foundation
 
-nonisolated package struct Grass: Equatable {
+nonisolated public struct Grass: Equatable, Sendable {
     /// DATA units-from-water rule. Unknown mod values stay representable so a
     /// future policy can support them without making the record undecodable.
-    package enum WaterRule: Equatable {
+    public enum WaterRule: Equatable, Sendable {
         case aboveAtLeast
         case aboveAtMost
         case belowAtLeast
@@ -23,7 +23,7 @@ nonisolated package struct Grass: Equatable {
         case eitherAtMostBelow
         case unknown(UInt32)
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self = switch rawValue {
             case 0: .aboveAtLeast
             case 1: .aboveAtMost
@@ -38,41 +38,41 @@ nonisolated package struct Grass: Equatable {
         }
     }
 
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt8
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
 
-        package init(rawValue: UInt8) {
+        public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
 
-        package static let vertexLighting = Flags(rawValue: 0x01)
-        package static let uniformScaling = Flags(rawValue: 0x02)
-        package static let fitToSlope = Flags(rawValue: 0x04)
+        public static let vertexLighting = Flags(rawValue: 0x01)
+        public static let uniformScaling = Flags(rawValue: 0x02)
+        public static let fitToSlope = Flags(rawValue: 0x04)
     }
 
     /// Fixed 32-byte DATA body, kept separate from record identity/model.
-    package struct PlacementData: Equatable {
-        package let density: UInt8
-        package let minimumSlopeDegrees: UInt8
-        package let maximumSlopeDegrees: UInt8
-        package let unitsFromWater: UInt16
-        package let waterRule: WaterRule
-        package let positionRange: Float
-        package let heightRange: Float
-        package let colorRange: Float
-        package let wavePeriod: Float
-        package let flags: Flags
+    public struct PlacementData: Equatable, Sendable {
+        public let density: UInt8
+        public let minimumSlopeDegrees: UInt8
+        public let maximumSlopeDegrees: UInt8
+        public let unitsFromWater: UInt16
+        public let waterRule: WaterRule
+        public let positionRange: Float
+        public let heightRange: Float
+        public let colorRange: Float
+        public let wavePeriod: Float
+        public let flags: Flags
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// MODL — NIF path relative to Data/.
-    package let modelPath: String?
+    public let modelPath: String?
     /// DATA is required by xEdit; nil remains decodable so callers can
     /// reason-tag malformed mod records instead of losing record identity.
-    package let placement: PlacementData?
+    public let placement: PlacementData?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "GRAS" else {
             throw ESMError.malformed("expected GRAS record, got \(record.type)")
         }

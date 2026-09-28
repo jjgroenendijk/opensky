@@ -32,28 +32,28 @@
 
 import Foundation
 
-nonisolated package struct SpellCostResult: Equatable {
+nonisolated public struct SpellCostResult: Equatable, Sendable {
     /// The cost the game charges: the authored SPIT value on a manual-cost
     /// record, the auto-calculated total otherwise.
-    package let cost: UInt32
+    public let cost: UInt32
     /// The auto-calculated total, always computed so a manual record can be
     /// compared against what the formula would have produced.
-    package let autoCalculated: Float
+    public let autoCalculated: Float
     /// True when the record carries `SpellFlags.manualCostCalc`.
-    package let isManual: Bool
+    public let isManual: Bool
     /// Effects whose MGEF link did not resolve, and so contributed nothing.
-    package let unresolvedEffects: Int
+    public let unresolvedEffects: Int
 }
 
-nonisolated package enum SpellCost {
+nonisolated public enum SpellCost: Sendable {
     /// The exponent UESP documents for the per-effect cost curve.
-    package static let exponent: Float = 1.1
+    public static let exponent: Float = 1.1
     /// Magnitude floor and the duration substituted for an instant effect.
-    package static let minimumMagnitude: Float = 1
-    package static let instantDuration: Float = 10
+    public static let minimumMagnitude: Float = 1
+    public static let instantDuration: Float = 10
 
     /// One effect's contribution, with the documented substitutions applied.
-    package static func effectCost(
+    public static func effectCost(
         baseCost: Float,
         magnitude: Float,
         duration: UInt32,
@@ -74,19 +74,19 @@ nonisolated package enum SpellCost {
     /// Truncating per effect rather than once at the end is what matches the
     /// costs vanilla stores — 89 percent of auto-calculated records against 62
     /// percent for a rounded total (docs/formats/magic-records.md).
-    package static func contribution(_ effectCost: Float) -> Float {
+    public static func contribution(_ effectCost: Float) -> Float {
         effectCost.rounded(.down)
     }
 
     /// Totals per-effect costs a caller has already computed, applying the
     /// same truncation.
-    package static func total(ofEffectCosts costs: [Float]) -> Float {
+    public static func total(ofEffectCosts costs: [Float]) -> Float {
         costs.reduce(0) { $0 + contribution($1) }
     }
 
     /// Totals the effect list. `baseCost` returns the MGEF base cost for one
     /// effect, or nil when the EFID link does not resolve.
-    package static func autoCalculated(
+    public static func autoCalculated(
         effects: [MagicItemEffect],
         castingType: MagicEffectCastingType,
         baseCost: (MagicItemEffect) -> Float?
@@ -109,7 +109,7 @@ nonisolated package enum SpellCost {
     }
 
     /// The full result for a record, honoring the manual-cost flag.
-    package static func result(
+    public static func result(
         data: SpellItemData?,
         effects: [MagicItemEffect],
         baseCost: (MagicItemEffect) -> Float?
@@ -128,7 +128,7 @@ nonisolated package enum SpellCost {
 
     /// Variant for a caller that already summed the per-effect contributions,
     /// so the effect list is not resolved twice.
-    package static func result(
+    public static func result(
         data: SpellItemData?,
         total: Float,
         unresolvedEffects: Int
@@ -145,7 +145,7 @@ nonisolated package enum SpellCost {
     /// authored cost and its manual-cost flag in ENIT rather than SPIT, and
     /// UESP documents the identical per-effect curve for both records, so the
     /// two headers meet here instead of in a second cost routine.
-    package static func result(
+    public static func result(
         isManual: Bool,
         authoredCost: UInt32,
         total: Float,
@@ -162,7 +162,7 @@ nonisolated package enum SpellCost {
     /// Nearest whole magicka point. A non-finite or negative total — only
     /// reachable from a mod-authored magnitude — clamps to zero rather than
     /// trapping on the conversion.
-    package static func rounded(_ total: Float) -> UInt32 {
+    public static func rounded(_ total: Float) -> UInt32 {
         let value = total.rounded()
         guard value.isFinite, value > 0 else { return 0 }
         return value >= Float(UInt32.max) ? UInt32.max : UInt32(value)

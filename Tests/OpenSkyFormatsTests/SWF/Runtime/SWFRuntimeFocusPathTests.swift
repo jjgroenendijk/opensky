@@ -4,6 +4,7 @@
 // limit. Device-free, synthetic fixtures only — no test reads a real `.swf`
 // (AGENTS.md "Legal & IP boundary").
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

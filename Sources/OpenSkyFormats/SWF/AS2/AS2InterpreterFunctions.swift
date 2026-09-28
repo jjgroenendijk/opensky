@@ -19,7 +19,7 @@ nonisolated extension AS2Interpreter {
     /// `ActionDefineFunction` (0x9B) and `ActionDefineFunction2` (0x8E). The
     /// body is the next `bodySize` bytes of the same stream, so execution
     /// resumes after it.
-    package func defineFunction(
+    public func defineFunction(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow {
@@ -61,7 +61,7 @@ nonisolated extension AS2Interpreter {
 
     /// Builds the frame a bytecode function body runs in. Returns nil for an
     /// empty body, which calls to `undefined` without ever entering the loop.
-    package func makeFrame(
+    public func makeFrame(
         _ body: AS2BytecodeBody,
         function: AS2Object,
         site: AS2CallSite

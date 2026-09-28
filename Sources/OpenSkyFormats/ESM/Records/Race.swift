@@ -20,7 +20,7 @@
 
 import Foundation
 
-nonisolated package struct Race {
+nonisolated public struct Race: Sendable {
     private enum Gender: Equatable {
         case male
         case female
@@ -98,17 +98,17 @@ nonisolated package struct Race {
 
     /// DATA uint32 flags at offset 0x20 (UESP RACE) — only the
     /// appearance-relevant bits are named.
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let playable = Flags(rawValue: 0x0000_0001)
+        public static let playable = Flags(rawValue: 0x0000_0001)
         /// Race uses baked FaceGen head assets (facegeom/facetint files);
         /// clear on creature races like cow/dog/bear.
-        package static let faceGenHead = Flags(rawValue: 0x0000_0002)
+        public static let faceGenHead = Flags(rawValue: 0x0000_0002)
     }
 
     /// The DATA floats a level-1 actor of this race starts with, and the
@@ -120,28 +120,28 @@ nonisolated package struct Race {
     /// each second" (<https://ck.uesp.net/wiki/Race>). The regen fields are
     /// therefore percentages, not fractions — vanilla `NordRace` stores 0.7,
     /// meaning 0.7% of maximum health per second.
-    package struct Stats: Equatable {
-        package var startingHealth: Float = 0
-        package var startingMagicka: Float = 0
-        package var startingStamina: Float = 0
+    public struct Stats: Equatable, Sendable {
+        public var startingHealth: Float = 0
+        public var startingMagicka: Float = 0
+        public var startingStamina: Float = 0
         /// Percent of the maximum restored per second.
-        package var healthRegenPercent: Float = 0
-        package var magickaRegenPercent: Float = 0
-        package var staminaRegenPercent: Float = 0
+        public var healthRegenPercent: Float = 0
+        public var magickaRegenPercent: Float = 0
+        public var staminaRegenPercent: Float = 0
         /// DATA 0x00: the seven "Skill N (Actor list value)" / "Racial bonus
         /// for skill N" byte pairs (UESP RACE DATA), in file order, with the
         /// pairs whose bonus is zero dropped — a race authors seven slots and
         /// vanilla leaves the unused ones at 0/0, which would otherwise read as
         /// a bonus to actor value 0 (`Aggression`).
-        package var skillBonuses: [SkillBonus] = []
+        public var skillBonuses: [SkillBonus] = []
         /// DATA 0x30 "Base Carry Weight", the base of actor value 32.
-        package var baseCarryWeight: Float = 0
+        public var baseCarryWeight: Float = 0
         /// DATA 0x34 "Base Mass", the base of actor value 36.
-        package var baseMass: Float = 0
+        public var baseMass: Float = 0
         /// DATA 0x60 "Unarmed Damage", the base of actor value 35.
-        package var unarmedDamage: Float = 0
+        public var unarmedDamage: Float = 0
 
-        package init(
+        public init(
             startingHealth: Float = 0,
             startingMagicka: Float = 0,
             startingStamina: Float = 0,
@@ -168,40 +168,40 @@ nonisolated package struct Race {
 
     /// One RACE DATA skill-bonus pair: a vanilla actor-value index and the
     /// number of points this race adds to it.
-    package struct SkillBonus: Equatable {
+    public struct SkillBonus: Equatable, Sendable {
         /// Actor-value index, as `ActorValueIdentity` numbers them.
-        package var actorValue: Int32
-        package var bonus: Float
+        public var actorValue: Int32
+        public var bonus: Float
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// FULL — display name; localized plugins store a string-table ID.
-    package let name: LString?
+    public let name: LString?
     /// WNAM — default skin, an ARMO applied when an actor wears nothing.
-    package let defaultSkin: FormID?
+    public let defaultSkin: FormID?
     /// BOD2/BODT biped slots + armor type; nil when absent.
-    package let bodyTemplate: BodyTemplate?
+    public let bodyTemplate: BodyTemplate?
     /// DATA flags; empty when DATA is absent or too short.
-    package let flags: Flags
+    public let flags: Flags
     /// DATA starting attributes and regen rates; all-zero when DATA is absent
     /// or too short to reach them.
-    package let stats: Stats
+    public let stats: Stats
     /// SPLO — the spells and abilities every actor of this race carries
     /// (issue #470). The `SPCT` count in front of the run is not read, for the
     /// reason `ActorBase.spells` states: counting the entries answers the same
     /// question and cannot disagree with the file.
-    package let spells: [FormID]
+    public let spells: [FormID]
     /// ANAM under the male (MNAM) skeleton block.
-    package let maleSkeletonPath: String?
+    public let maleSkeletonPath: String?
     /// ANAM under the female (FNAM) skeleton block.
-    package let femaleSkeletonPath: String?
+    public let femaleSkeletonPath: String?
     /// HEAD references under the male FaceGen head-data marker.
-    package let maleHeadParts: [FormID]
+    public let maleHeadParts: [FormID]
     /// HEAD references under the female FaceGen head-data marker.
-    package let femaleHeadParts: [FormID]
+    public let femaleHeadParts: [FormID]
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "RACE" else {
             throw ESMError.malformed("expected RACE record, got \(record.type)")
         }

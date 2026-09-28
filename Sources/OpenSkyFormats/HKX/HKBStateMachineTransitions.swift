@@ -16,15 +16,15 @@ import Foundation
 
 /// Decoded `hkbStateMachineTimeInterval`, 16 bytes: the window, in local time
 /// or between two events, during which a transition may trigger or initiate.
-nonisolated package struct HKBStateMachineTimeInterval: Equatable {
-    package let enterEventId: Int
-    package let exitEventId: Int
-    package let enterTime: Float
-    package let exitTime: Float
+nonisolated public struct HKBStateMachineTimeInterval: Equatable, Sendable {
+    public let enterEventId: Int
+    public let exitEventId: Int
+    public let enterTime: Float
+    public let exitTime: Float
 
-    package static let stride = 16
+    public static let stride = 16
 
-    package static func decode(
+    public static func decode(
         _ cursor: inout HKXObjectCursor,
         at offset: Int,
         named member: String
@@ -43,25 +43,25 @@ nonisolated package struct HKBStateMachineTimeInterval: Equatable {
 }
 
 /// One entry of `hkbStateMachineTransitionInfoArray::m_transitions`, 72 bytes.
-nonisolated package struct HKBStateMachineTransitionInfo: Equatable {
-    package let triggerInterval: HKBStateMachineTimeInterval
-    package let initiateInterval: HKBStateMachineTimeInterval
+nonisolated public struct HKBStateMachineTransitionInfo: Equatable, Sendable {
+    public let triggerInterval: HKBStateMachineTimeInterval
+    public let initiateInterval: HKBStateMachineTimeInterval
     /// The `hkbTransitionEffect` that blends between the two generators; null
     /// means an instant cut.
-    package let transition: HKXPointerTarget?
+    public let transition: HKXPointerTarget?
     /// An `hkbCondition` that must hold for the transition to fire.
-    package let condition: HKXPointerTarget?
+    public let condition: HKXPointerTarget?
     /// Index into the graph's event list that triggers this transition.
-    package let eventId: Int
+    public let eventId: Int
     /// `hkbStateMachineStateInfo::m_stateId` of the destination state.
-    package let toStateId: Int
-    package let fromNestedStateId: Int
-    package let toNestedStateId: Int
-    package let priority: Int
+    public let toStateId: Int
+    public let fromNestedStateId: Int
+    public let toNestedStateId: Int
+    public let priority: Int
     /// `hkbStateMachineTransitionInfo::TransitionFlags`.
-    package let flags: Int
+    public let flags: Int
 
-    package static let stride = 72
+    public static let stride = 72
 
     private static let transitionField = HKXField(0x20, "m_transition")
     private static let conditionField = HKXField(0x28, "m_condition")
@@ -72,7 +72,7 @@ nonisolated package struct HKBStateMachineTransitionInfo: Equatable {
     private static let priorityField = HKXField(0x40, "m_priority")
     private static let flagsField = HKXField(0x42, "m_flags")
 
-    package static func decode(_ element: inout HKXObjectCursor) -> HKBStateMachineTransitionInfo {
+    public static func decode(_ element: inout HKXObjectCursor) -> HKBStateMachineTransitionInfo {
         HKBStateMachineTransitionInfo(
             triggerInterval: HKBStateMachineTimeInterval.decode(
                 &element, at: 0x00, named: "m_triggerInterval"
@@ -91,22 +91,22 @@ nonisolated package struct HKBStateMachineTransitionInfo: Equatable {
         )
     }
 
-    package func references(index: Int) -> [HKBReference] {
+    public func references(index: Int) -> [HKBReference] {
         HKBReference.optional("m_transitions[\(index)].m_transition", transition)
             + HKBReference.optional("m_transitions[\(index)].m_condition", condition)
     }
 }
 
 /// Decoded `hkbStateMachineTransitionInfoArray`, size 32.
-nonisolated package struct HKBStateMachineTransitionInfoArray: HKBClass, Equatable {
-    package let transitions: [HKBStateMachineTransitionInfo]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBStateMachineTransitionInfoArray: HKBClass, Equatable, Sendable {
+    public let transitions: [HKBStateMachineTransitionInfo]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbStateMachineTransitionInfoArray"
+    public static let className = "hkbStateMachineTransitionInfoArray"
 
     private static let transitionsField = HKXField(0x10, "m_transitions")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBStateMachineTransitionInfoArray?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -133,26 +133,26 @@ nonisolated package struct HKBStateMachineTransitionInfoArray: HKBClass, Equatab
         )
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         transitions.enumerated().flatMap { $1.references(index: $0) }
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(transitions.count) transitions"
     }
 }
 
 /// Decoded `hkbStateMachineEventPropertyArray`, size 32: the events a state
 /// raises when it is entered or left.
-nonisolated package struct HKBStateMachineEventPropertyArray: HKBClass, Equatable {
-    package let events: [HKBEventProperty]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBStateMachineEventPropertyArray: HKBClass, Equatable, Sendable {
+    public let events: [HKBEventProperty]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbStateMachineEventPropertyArray"
+    public static let className = "hkbStateMachineEventPropertyArray"
 
     private static let eventsField = HKXField(0x10, "m_events")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBStateMachineEventPropertyArray?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -179,13 +179,13 @@ nonisolated package struct HKBStateMachineEventPropertyArray: HKBClass, Equatabl
         )
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         events.enumerated().flatMap { index, event in
             event.references(named: "m_events[\(index)]")
         }
     }
 
-    package var summary: String {
+    public var summary: String {
         "\(events.count) events: " + events.map { String($0.id) }.joined(separator: ", ")
     }
 }

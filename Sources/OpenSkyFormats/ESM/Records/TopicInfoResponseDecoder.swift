@@ -4,14 +4,14 @@
 import Foundation
 
 nonisolated extension TopicInfo.Contents {
-    package func isResponseField(_ type: FourCC) -> Bool {
+    public func isResponseField(_ type: FourCC) -> Bool {
         switch type {
         case "NAM1", "NAM2", "NAM3", "SNAM", "LNAM": true
         default: false
         }
     }
 
-    package mutating func beginResponse(_ field: ESMField) throws {
+    public mutating func beginResponse(_ field: ESMField) throws {
         closeOpenResponse()
         guard field.data.count >= 24 else {
             throw BinaryReaderError.outOfBounds(
@@ -37,7 +37,7 @@ nonisolated extension TopicInfo.Contents {
         )
     }
 
-    package mutating func decodeResponseField(_ field: ESMField) throws {
+    public mutating func decodeResponseField(_ field: ESMField) throws {
         guard var response = openResponse else {
             tally.note(.orphanResponseField(field.type))
             return

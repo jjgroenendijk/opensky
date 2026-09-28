@@ -6,6 +6,7 @@
 // code and read through `InventoryBaselineResolver.build(from:)`, so these
 // cover the record indexing as well as the derivation.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

@@ -7,6 +7,7 @@
 // destination lists it, and this window only names the file it comes from.
 
 import AppKit
+import OpenSkyGameData
 
 final class SettingsWindowController: NSWindowController {
     /// Called after a persisted engine-load setting changes.

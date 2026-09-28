@@ -43,7 +43,8 @@ not reachable from this half. `Tests/TestSupport/AGENTS.md` has the rule.
 - Fixtures are synthetic and built in code — never a real extracted file. The existing
   helpers are `BSAFixture`, `ESMFixture`, `NIFFixture`, and `StringTableFixture`, in
   `Tests/FormatsTestSupport/`.
-- A parser test that needs no engine code belongs in `Tests/OpenSkyFormatsTests/`, not here.
+- A test that needs only one package module belongs in that module's test target, for
+  example `Tests/OpenSkyGameDataTests/`, not here.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `logs/`.

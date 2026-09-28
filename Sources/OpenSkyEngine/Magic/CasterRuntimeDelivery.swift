@@ -43,6 +43,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Which deliveries this build carries out.
 nonisolated enum SpellDelivery {

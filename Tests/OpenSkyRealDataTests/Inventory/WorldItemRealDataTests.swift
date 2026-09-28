@@ -15,6 +15,7 @@ import Foundation
 import Metal
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct WorldItemRealDataTests {

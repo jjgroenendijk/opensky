@@ -5,6 +5,7 @@
 // xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRArray('Linked References',
 // wbStruct(XLKR, ...))`. Documented in docs/formats/placed-references.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

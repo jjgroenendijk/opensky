@@ -6,26 +6,26 @@
 import Foundation
 import simd
 
-nonisolated package struct Material: Hashable {
+nonisolated public struct Material: Hashable, Sendable {
     /// Normalized VFS key ("textures/….dds"); nil = no texture.
-    package let diffuseTexture: String?
-    package let normalTexture: String?
-    package let uvOffset: SIMD2<Float>
-    package let uvScale: SIMD2<Float>
+    public let diffuseTexture: String?
+    public let normalTexture: String?
+    public let uvOffset: SIMD2<Float>
+    public let uvScale: SIMD2<Float>
     /// Material opacity, 1 = opaque.
-    package let alpha: Float
+    public let alpha: Float
     /// Specular power.
-    package let glossiness: Float
-    package let specularColor: SIMD3<Float>
-    package let specularStrength: Float
+    public let glossiness: Float
+    public let specularColor: SIMD3<Float>
+    public let specularStrength: Float
     /// Render both faces (cull mode none).
-    package let doubleSided: Bool
+    public let doubleSided: Bool
     /// Alpha blending on (NiAlphaProperty blend bit).
-    package let alphaBlend: Bool
+    public let alphaBlend: Bool
     /// Alpha-test cutoff in [0, 1]; nil = no test. Foliage cutouts set this.
-    package let alphaTestThreshold: Float?
+    public let alphaTestThreshold: Float?
 
-    package init(
+    public init(
         diffuseTexture: String?,
         normalTexture: String?,
         uvOffset: SIMD2<Float>,
@@ -54,7 +54,7 @@ nonisolated package struct Material: Hashable {
     /// Neutral stand-in for shapes without a lighting shader (effect, water
     /// and sky shaders are out of M2 scope): untextured, opaque, defaults
     /// from nif.xml.
-    package static let fallback = Material(
+    public static let fallback = Material(
         diffuseTexture: nil,
         normalTexture: nil,
         uvOffset: .zero,

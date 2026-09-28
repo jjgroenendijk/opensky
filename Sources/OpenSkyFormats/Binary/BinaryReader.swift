@@ -4,7 +4,7 @@
 
 import Foundation
 
-nonisolated package enum BinaryReaderError: Error, Equatable {
+nonisolated public enum BinaryReaderError: Error, Equatable, Sendable {
     /// Read past the end: wanted `count` bytes at `offset`, only `available` left.
     case outOfBounds(offset: Int, count: Int, available: Int)
     /// Null terminator not found scanning a zero-terminated string.
@@ -15,28 +15,28 @@ nonisolated package enum BinaryReaderError: Error, Equatable {
 }
 
 /// Sequential cursor over a `Data`. Value type: copy to branch, cheap slices.
-nonisolated package struct BinaryReader {
-    package let data: Data
-    package private(set) var offset: Int
+nonisolated public struct BinaryReader: Sendable {
+    public let data: Data
+    public private(set) var offset: Int
 
-    package init(_ data: Data, offset: Int = 0) {
+    public init(_ data: Data, offset: Int = 0) {
         self.data = data
         self.offset = offset
     }
 
-    package var bytesRemaining: Int {
+    public var bytesRemaining: Int {
         max(0, data.count - offset)
     }
 
-    package mutating func seek(to newOffset: Int) {
+    public mutating func seek(to newOffset: Int) {
         offset = newOffset
     }
 
-    package mutating func skip(_ count: Int) {
+    public mutating func skip(_ count: Int) {
         offset += count
     }
 
-    package mutating func read(count: Int) throws -> Data {
+    public mutating func read(count: Int) throws -> Data {
         guard count >= 0, offset >= 0, offset + count <= data.count else {
             throw BinaryReaderError.outOfBounds(
                 offset: offset,
@@ -51,24 +51,24 @@ nonisolated package struct BinaryReader {
         return slice
     }
 
-    package mutating func readUInt8() throws -> UInt8 {
+    public mutating func readUInt8() throws -> UInt8 {
         try read(count: 1)[0]
     }
 
-    package mutating func readUInt16() throws -> UInt16 {
+    public mutating func readUInt16() throws -> UInt16 {
         try readInteger()
     }
 
-    package mutating func readUInt32() throws -> UInt32 {
+    public mutating func readUInt32() throws -> UInt32 {
         try readInteger()
     }
 
-    package mutating func readUInt64() throws -> UInt64 {
+    public mutating func readUInt64() throws -> UInt64 {
         try readInteger()
     }
 
     /// IEEE 754 single-precision float, little-endian bit pattern.
-    package mutating func readFloat32() throws -> Float {
+    public mutating func readFloat32() throws -> Float {
         try Float(bitPattern: readUInt32())
     }
 
@@ -81,7 +81,7 @@ nonisolated package struct BinaryReader {
 
     /// Raw bytes of a zero-terminated string, terminator excluded. Cursor ends
     /// past the terminator. For callers that pick the text encoding themselves.
-    package mutating func readZStringData() throws -> Data {
+    public mutating func readZStringData() throws -> Data {
         let start = offset
         var end = offset
         while true {
@@ -101,7 +101,7 @@ nonisolated package struct BinaryReader {
     /// Zero-terminated string ("zstring"). Cursor ends past the terminator.
     /// Decodes under the engine-wide game-text policy unless told otherwise
     /// (`GameText`, docs/decisions/string-decoding.md).
-    package mutating func readZString(_ decoding: TextDecoding = .gameText) throws -> String {
+    public mutating func readZString(_ decoding: TextDecoding = .gameText) throws -> String {
         let start = offset
         let bytes = try readZStringData()
         guard let string = decoding.decode(bytes) else {
@@ -111,7 +111,7 @@ nonisolated package struct BinaryReader {
     }
 
     /// Length-prefixed string including a trailing null ("bzstring", BSA folder names).
-    package mutating func readBZString(_ decoding: TextDecoding = .gameText) throws -> String {
+    public mutating func readBZString(_ decoding: TextDecoding = .gameText) throws -> String {
         let start = offset
         let length = try Int(readUInt8())
         guard length > 0 else { return "" }
@@ -124,7 +124,7 @@ nonisolated package struct BinaryReader {
     }
 
     /// Length-prefixed string without terminator ("bstring", embedded file names).
-    package mutating func readBString(_ decoding: TextDecoding = .gameText) throws -> String {
+    public mutating func readBString(_ decoding: TextDecoding = .gameText) throws -> String {
         let start = offset
         let length = try Int(readUInt8())
         let bytes = try read(count: length)

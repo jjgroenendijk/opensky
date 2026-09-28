@@ -23,6 +23,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Every actor's crime ledger plus the store a faction parameter resolves
 /// against.

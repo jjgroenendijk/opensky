@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum HKXCommand {
     /// First N objects listed verbatim; the rest collapse into a truncation

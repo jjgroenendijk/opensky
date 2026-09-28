@@ -6,7 +6,7 @@
 import Foundation
 
 nonisolated extension DefaultObjectTag {
-    package static let knownMeanings: [FourCC: String] = {
+    public static let knownMeanings: [FourCC: String] = {
         let source = """
         AAAC	Action - Activate
         AAB1	Action - Bleedout Start

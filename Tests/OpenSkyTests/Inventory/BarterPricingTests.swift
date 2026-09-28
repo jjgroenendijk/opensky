@@ -5,9 +5,11 @@
 // the two trade price caps are quoted numbers from that page, not values this
 // implementation produced and then had a test written around.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 import Testing
 
 struct BarterPricingTests {

@@ -16,6 +16,7 @@
 // * `OpenSkyGateLeverScript` reaches its quest through an automatic VMAD
 //   property, which is how an authored lever names the quest it advances.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

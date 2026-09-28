@@ -11,17 +11,17 @@
 
 import Foundation
 
-nonisolated package struct FormList: Equatable {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct FormList: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// LNAM entries in file order. Nil is a legal null FormID element, not a
     /// missing entry. The format permits nulls even when a particular load
     /// order contains none.
-    package let entries: [FormID?]
+    public let entries: [FormID?]
     /// Number of LNAM payload tails shorter than one complete FormID.
-    package let malformedEntryCount: Int
+    public let malformedEntryCount: Int
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "FLST" else {
             throw ESMError.malformed("expected FLST record, got \(record.type)")
         }

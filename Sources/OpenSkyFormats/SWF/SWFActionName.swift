@@ -15,20 +15,20 @@
 
 import Foundation
 
-nonisolated package enum SWFActionName {
+nonisolated public enum SWFActionName: Sendable {
     /// Human-readable name for a standard Adobe action code, or `nil` when the
     /// code is not in the Adobe specification (reserved or malformed).
-    package static func name(forCode code: UInt8) -> String? {
+    public static func name(forCode code: UInt8) -> String? {
         names[code]
     }
 
     /// Whether `code` is a standard Adobe ActionScript 1/2 opcode.
-    package static func isKnown(_ code: UInt8) -> Bool {
+    public static func isKnown(_ code: UInt8) -> Bool {
         names[code] != nil
     }
 
     /// Every opcode the Adobe specification names, code-ascending.
-    package static var knownCodes: [UInt8] {
+    public static var knownCodes: [UInt8] {
         names.keys.sorted()
     }
 

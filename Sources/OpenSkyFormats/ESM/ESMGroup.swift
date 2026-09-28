@@ -9,9 +9,9 @@
 
 import Foundation
 
-nonisolated package struct ESMGroup {
+nonisolated public struct ESMGroup: Sendable {
     /// Group types 0-9 (SSE). Raw value = on-disk int32.
-    package enum Kind: Int32 {
+    public enum Kind: Int32, Sendable {
         case top = 0
         case worldChildren
         case interiorCellBlock
@@ -24,17 +24,17 @@ nonisolated package struct ESMGroup {
         case cellTemporaryChildren
     }
 
-    package struct Header {
-        package static let size = 24
+    public struct Header: Sendable {
+        public static let size = 24
 
         /// Raw label bytes; interpret via the typed accessors on ESMGroup.
-        package let label: UInt32
-        package let groupType: Int32
-        package let timestamp: UInt16
-        package let versionControl: UInt16
+        public let label: UInt32
+        public let groupType: Int32
+        public let timestamp: UInt16
+        public let versionControl: UInt16
 
         /// Reads label onward — caller has consumed the GRUP tag + groupSize.
-        package init(reader: inout BinaryReader) throws {
+        public init(reader: inout BinaryReader) throws {
             label = try reader.readUInt32()
             groupType = try Int32(bitPattern: reader.readUInt32())
             timestamp = try reader.readUInt16()
@@ -43,34 +43,34 @@ nonisolated package struct ESMGroup {
         }
     }
 
-    package enum Child {
+    public enum Child: Sendable {
         case record(ESMRecord)
         case group(ESMGroup)
     }
 
-    package let header: Header
+    public let header: Header
     /// Absolute range of the group's contents (children) in `file`.
-    package let contentRange: Range<Int>
+    public let contentRange: Range<Int>
     private let file: Data
 
-    package init(header: Header, contentRange: Range<Int>, file: Data) {
+    public init(header: Header, contentRange: Range<Int>, file: Data) {
         self.header = header
         self.contentRange = contentRange
         self.file = file
     }
 
     /// Nil for group types this engine does not know (future/modded).
-    package var kind: Kind? {
+    public var kind: Kind? {
         Kind(rawValue: header.groupType)
     }
 
     /// Top group: the record type it holds.
-    package var recordType: FourCC? {
+    public var recordType: FourCC? {
         kind == .top ? FourCC(rawValue: header.label) : nil
     }
 
     /// Children groups: FormID of the parent WRLD/CELL/DIAL record.
-    package var parentFormID: UInt32? {
+    public var parentFormID: UInt32? {
         switch kind {
         case .worldChildren, .cellChildren, .topicChildren,
              .cellPersistentChildren, .cellTemporaryChildren:
@@ -82,7 +82,7 @@ nonisolated package struct ESMGroup {
 
     /// Exterior cell (sub-)block: grid coordinates. The label stores Y in the
     /// low int16 and X in the high int16 (reversed, per spec).
-    package var grid: (x: Int16, y: Int16)? {
+    public var grid: (x: Int16, y: Int16)? {
         switch kind {
         case .exteriorCellBlock, .exteriorCellSubBlock:
             (
@@ -95,7 +95,7 @@ nonisolated package struct ESMGroup {
     }
 
     /// Interior cell (sub-)block: block number.
-    package var blockNumber: Int32? {
+    public var blockNumber: Int32? {
         switch kind {
         case .interiorCellBlock, .interiorCellSubBlock:
             Int32(bitPattern: header.label)
@@ -105,7 +105,7 @@ nonisolated package struct ESMGroup {
     }
 
     /// Parses direct children (headers only; payloads stay lazy).
-    package func children() throws -> [Child] {
+    public func children() throws -> [Child] {
         try Self.parseChildren(in: file, range: contentRange)
     }
 
@@ -113,7 +113,7 @@ nonisolated package struct ESMGroup {
     /// Every child must lie fully inside the range; both header kinds are 24
     /// bytes, and each child advances the cursor by at least that much, so the
     /// walk always terminates.
-    package static func parseChildren(in file: Data, range: Range<Int>) throws -> [Child] {
+    public static func parseChildren(in file: Data, range: Range<Int>) throws -> [Child] {
         var children: [Child] = []
         var offset = range.lowerBound
         while offset < range.upperBound {

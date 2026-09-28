@@ -27,7 +27,7 @@
 import Foundation
 
 /// What executing one record does to the instruction pointer.
-nonisolated package enum AS2Flow {
+nonisolated public enum AS2Flow {
     case next
     /// Continue at this record index.
     case jump(Int)
@@ -38,38 +38,38 @@ nonisolated package enum AS2Flow {
 }
 
 /// What starting a call produced.
-nonisolated package enum AS2CallStart {
+nonisolated public enum AS2CallStart {
     /// A built-in ran to completion here and now.
     case value(AS2Value)
     /// A bytecode frame was pushed onto the interpreter's call stack.
     case pushed
 }
 
-nonisolated package final class AS2Interpreter {
-    package let runtime: AS2Runtime
+nonisolated public final class AS2Interpreter {
+    public let runtime: AS2Runtime
 
     private var remainingBudget: Int
     /// The explicit call stack, innermost last. Internal rather than private
     /// because `AS2InterpreterCallPath` pushes onto it.
-    package var frames: [AS2Frame] = []
+    public var frames: [AS2Frame] = []
     /// Live frames and built-ins that a call pushed, which is what
     /// `AS2Limits.callDepth` bounds. The frame an entry point starts with does
     /// not count.
-    package var callDepth = 0
+    public var callDepth = 0
     /// Nested interpreter loops running underneath a Swift call.
-    package var reentryDepth = 0
-    package private(set) var actionsExecuted = 0
+    public var reentryDepth = 0
+    public private(set) var actionsExecuted = 0
 
-    package init(runtime: AS2Runtime) {
+    public init(runtime: AS2Runtime) {
         self.runtime = runtime
         remainingBudget = runtime.limits.actionBudget
     }
 
-    package var limits: AS2Limits {
+    public var limits: AS2Limits {
         runtime.limits
     }
 
-    package var coercion: AS2Coercion {
+    public var coercion: AS2Coercion {
         runtime.coercion
     }
 
@@ -77,7 +77,7 @@ nonisolated package final class AS2Interpreter {
 
     /// Runs one action stream with `target` as both `this` and the variable
     /// target. Faults are recorded and reported, never thrown out.
-    package func execute(block: SWFActionBlock, target: AS2Object) -> AS2ExecutionResult {
+    public func execute(block: SWFActionBlock, target: AS2Object) -> AS2ExecutionResult {
         let frame = AS2Frame(
             runtime: runtime, block: block, target: target, thisValue: .object(target)
         )
@@ -96,7 +96,7 @@ nonisolated package final class AS2Interpreter {
 
     /// Calls an already-resolved function object from outside the bytecode —
     /// the engine-to-movie invoke path.
-    package func invoke(
+    public func invoke(
         function: AS2Object,
         thisValue: AS2Value,
         arguments: [AS2Value]
@@ -144,7 +144,7 @@ nonisolated package final class AS2Interpreter {
     /// value the frame that started there produced. A call inside it pushes
     /// another frame instead of recursing, so the depth this loop reaches is
     /// bounded by memory rather than by the Swift stack.
-    package func runFrames(baseDepth: Int) throws(AS2Fault) -> AS2Value {
+    public func runFrames(baseDepth: Int) throws(AS2Fault) -> AS2Value {
         defer { unwind(to: baseDepth) }
         var result = AS2Value.undefined
         while frames.count > baseDepth {
@@ -251,7 +251,7 @@ nonisolated package final class AS2Interpreter {
     /// lands in the middle of a record, or outside the body being executed, is
     /// a fault — Flash's own behavior there is undefined, and a wrong index
     /// would execute arbitrary operands as opcodes.
-    package func recordIndex(
+    public func recordIndex(
         forByteOffset byteOffset: Int,
         frame: AS2Frame
     ) throws(AS2Fault) -> Int {
@@ -266,7 +266,7 @@ nonisolated package final class AS2Interpreter {
     }
 
     /// Runs a built-in, mapping its untyped `throws` back onto `AS2Fault`.
-    package func invokeNative(
+    public func invokeNative(
         _ body: AS2NativeBody,
         context: AS2CallContext
     ) throws(AS2Fault) -> AS2Value {

@@ -23,7 +23,7 @@
 
 import Foundation
 
-nonisolated package enum XWMError: Error, Equatable {
+nonisolated public enum XWMError: Error, Equatable, Sendable {
     /// Input violates the documented layout.
     case malformed(String)
     /// Structurally valid xWMA carrying a codec OpenSky does not read.
@@ -32,32 +32,32 @@ nonisolated package enum XWMError: Error, Equatable {
 
 /// WAVEFORMATEX parameters a WMA decoder needs, lifted out of the `fmt `
 /// chunk. Field names follow the Microsoft struct members they come from.
-nonisolated package struct XWMCodecParameters: Equatable {
+nonisolated public struct XWMCodecParameters: Equatable, Sendable {
     /// `wFormatTag`. `0x0161` is WAVE_FORMAT_WMAUDIO2 (WMAv2).
-    package let formatTag: UInt16
+    public let formatTag: UInt16
     /// `nChannels`.
-    package let channelCount: Int
+    public let channelCount: Int
     /// `nSamplesPerSec`, in hertz.
-    package let sampleRate: Int
+    public let sampleRate: Int
     /// `nAvgBytesPerSec`. Times eight this is the nominal bit rate.
-    package let averageBytesPerSecond: Int
+    public let averageBytesPerSecond: Int
     /// `nBlockAlign` — the size of one encoded xWMA packet in the payload.
-    package let blockAlign: Int
+    public let blockAlign: Int
     /// `wBitsPerSample` of the *decoded* PCM, not of the encoded packets.
-    package let bitsPerSample: Int
+    public let bitsPerSample: Int
     /// The `cbSize` trailer of the `fmt ` chunk. Vanilla `.xwm` carries none;
     /// see docs/formats/xwm.md for the decoder-side extradata policy.
-    package let extraData: Data
+    public let extraData: Data
 
     /// Bytes one decoded PCM frame (one sample across all channels) occupies.
     /// This is the divisor xwma.c applies to the last `dpds` entry to get a
     /// sample count.
-    package var bytesPerDecodedFrame: Int {
+    public var bytesPerDecodedFrame: Int {
         channelCount * bitsPerSample / 8
     }
 
     /// Nominal bit rate in bits per second.
-    package var bitRate: Int {
+    public var bitRate: Int {
         averageBytesPerSecond * 8
     }
 }
@@ -65,7 +65,7 @@ nonisolated package struct XWMCodecParameters: Equatable {
 /// A framed `.xwm` file: codec parameters, the packet-boundary table, and the
 /// encoded payload. Parsing is bounds-checked throughout; malformed input
 /// throws `XWMError` rather than trapping.
-nonisolated package struct XWMFile {
+nonisolated public struct XWMFile: Sendable {
     private enum Layout {
         /// WAVE_FORMAT_WMAUDIO2 — the only tag vanilla Skyrim SE `.xwm` uses.
         static let formatTagWMAv2: UInt16 = 0x0161
@@ -79,17 +79,17 @@ nonisolated package struct XWMFile {
         static let maxSampleRate = 384_000
     }
 
-    package let codec: XWMCodecParameters
+    public let codec: XWMCodecParameters
     /// `dpds` contents: entry `index` is the total number of decoded PCM bytes
     /// accumulated once packet `index` has been decoded. Empty when the file
     /// carries no `dpds` chunk.
-    package let packetCumulativeDecodedBytes: [UInt32]
+    public let packetCumulativeDecodedBytes: [UInt32]
 
     private let source: Data
     /// Byte range of the `data` chunk body within `source`.
     private let payloadRange: Range<Int>
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         source = data
         let chunks = try XWMChunkScan(data: data)
         codec = try Self.makeCodecParameters(chunks.format)
@@ -147,27 +147,27 @@ nonisolated package struct XWMFile {
 nonisolated extension XWMFile {
     /// Encoded payload: the `data` chunk body, a sequence of `blockAlign`
     /// sized packets. Copied out on demand so a framed file stays cheap.
-    package var payload: Data {
+    public var payload: Data {
         source.subdata(
             in: (source.startIndex + payloadRange.lowerBound)
                 ..< (source.startIndex + payloadRange.upperBound)
         )
     }
 
-    package var payloadByteCount: Int {
+    public var payloadByteCount: Int {
         payloadRange.count
     }
 
     /// Packets in the payload. The final packet may be short; xwma.c clamps
     /// its read to what is left, so a partial trailing packet is framed, not
     /// dropped.
-    package var packetCount: Int {
+    public var packetCount: Int {
         (payloadByteCount + codec.blockAlign - 1) / codec.blockAlign
     }
 
     /// One encoded packet, or `nil` when `index` is out of range. Streaming
     /// callers use this instead of holding `payload`.
-    package func packet(at index: Int) -> Data? {
+    public func packet(at index: Int) -> Data? {
         guard index >= 0, index < packetCount else { return nil }
         let start = payloadRange.lowerBound + index * codec.blockAlign
         let end = min(start + codec.blockAlign, payloadRange.upperBound)
@@ -178,20 +178,20 @@ nonisolated extension XWMFile {
 
     /// Total decoded PCM bytes the container claims, from the last `dpds`
     /// entry. `nil` when the file carries no packet table.
-    package var declaredDecodedByteCount: Int? {
+    public var declaredDecodedByteCount: Int? {
         packetCumulativeDecodedBytes.last.map(Int.init)
     }
 
     /// Decoded PCM sample frames the container claims (xwma.c duration math:
     /// last `dpds` entry / (channels * bitsPerSample / 8)).
-    package var declaredSampleCount: Int? {
+    public var declaredSampleCount: Int? {
         let bytesPerFrame = codec.bytesPerDecodedFrame
         guard bytesPerFrame > 0, let decoded = declaredDecodedByteCount else { return nil }
         return decoded / bytesPerFrame
     }
 
     /// Playing time in seconds from the packet table, or `nil` without one.
-    package var declaredDuration: Double? {
+    public var declaredDuration: Double? {
         guard codec.sampleRate > 0, let samples = declaredSampleCount else { return nil }
         return Double(samples) / Double(codec.sampleRate)
     }
@@ -199,7 +199,7 @@ nonisolated extension XWMFile {
     /// Whether the packet table has one entry per payload packet. Advisory:
     /// a mismatch is reported by the sweep rather than rejected, because a
     /// file can legitimately carry no `dpds` chunk at all.
-    package var isPacketTableConsistent: Bool {
+    public var isPacketTableConsistent: Bool {
         packetCumulativeDecodedBytes.isEmpty
             || packetCumulativeDecodedBytes.count == packetCount
     }

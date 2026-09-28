@@ -36,28 +36,28 @@ import Foundation
 /// ENIT flags. xEdit names bit 0 "No Auto-Calc" and UESP names the same bit
 /// "ManualCalc"; both mean the authored cost wins over the derived one, which
 /// is what `SpellFlags.manualCostCalc` means on a spell.
-nonisolated package struct EnchantmentFlags: OptionSet, Equatable {
-    package let rawValue: UInt32
+nonisolated public struct EnchantmentFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt32
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self.rawValue = rawValue
     }
 
     /// Bit 0 — the ENIT enchantment cost is authored, not derived.
-    package static let manualCostCalc = Self(rawValue: 1 << 0)
+    public static let manualCostCalc = Self(rawValue: 1 << 0)
     /// Bit 2 — recasting extends the running duration instead of restarting it.
-    package static let extendDurationOnRecast = Self(rawValue: 1 << 2)
+    public static let extendDurationOnRecast = Self(rawValue: 1 << 2)
 }
 
 /// ENIT enchantment type. The two documented values are far apart rather than
 /// consecutive, so anything else stays an `unknown(raw:)` instead of being
 /// folded into either.
-nonisolated package enum EnchantmentType: Equatable, CustomStringConvertible {
+nonisolated public enum EnchantmentType: Equatable, CustomStringConvertible, Sendable {
     case enchantment
     case staffEnchantment
     case unknown(raw: UInt32)
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self = switch rawValue {
         case 0x06: .enchantment
         case 0x0C: .staffEnchantment
@@ -65,7 +65,7 @@ nonisolated package enum EnchantmentType: Equatable, CustomStringConvertible {
         }
     }
 
-    package var description: String {
+    public var description: String {
         switch self {
         case .enchantment: "enchantment"
         case .staffEnchantment: "staff enchantment"
@@ -74,34 +74,34 @@ nonisolated package enum EnchantmentType: Equatable, CustomStringConvertible {
     }
 }
 
-nonisolated package struct EnchantmentItemData: Equatable {
+nonisolated public struct EnchantmentItemData: Equatable, Sendable {
     /// The shortest ENIT the decoder accepts: the form-version-37 variant that
     /// omits the worn-restrictions link.
-    package static let minimumSize = 32
+    public static let minimumSize = 32
     /// The full struct, worn-restrictions link included.
-    package static let fullSize = 36
+    public static let fullSize = 36
 
     /// Magicka charged per use. Authoritative only under `.manualCostCalc`.
-    package let cost: Int32
-    package let flags: EnchantmentFlags
-    package let castingType: MagicEffectCastingType
+    public let cost: Int32
+    public let flags: EnchantmentFlags
+    public let castingType: MagicEffectCastingType
     /// Fully charged value of an item carrying this enchantment.
-    package let amount: Int32
-    package let delivery: MagicEffectDelivery
-    package let type: EnchantmentType
-    package let chargeTime: Float
+    public let amount: Int32
+    public let delivery: MagicEffectDelivery
+    public let type: EnchantmentType
+    public let chargeTime: Float
     /// The ENCH this one derives from; nil when it is itself a base.
-    package let baseEnchantment: FormID?
+    public let baseEnchantment: FormID?
     /// FLST of the slots this enchantment may be applied to. Nil both when the
     /// link is null and when the payload is the 32-byte variant.
-    package let wornRestrictions: FormID?
+    public let wornRestrictions: FormID?
 
     /// True when the cost has to be derived from the effect list.
-    package var usesAutoCalculatedCost: Bool {
+    public var usesAutoCalculatedCost: Bool {
         !flags.contains(.manualCostCalc)
     }
 
-    package var unknownEnumCount: Int {
+    public var unknownEnumCount: Int {
         var count = 0
         if case .unknown = castingType {
             count += 1
@@ -115,7 +115,7 @@ nonisolated package struct EnchantmentItemData: Equatable {
         return count
     }
 
-    package init(field: ESMField) throws {
+    public init(field: ESMField) throws {
         guard field.data.count >= Self.minimumSize else {
             throw ESMError.malformed(
                 "\(field.type) ENIT has \(field.data.count) bytes, expected "

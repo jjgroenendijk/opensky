@@ -9,6 +9,7 @@
 // "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" subpages
 // /NPC_, /RACE and /LVSP.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

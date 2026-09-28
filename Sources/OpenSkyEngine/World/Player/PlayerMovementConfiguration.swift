@@ -8,6 +8,7 @@
 // player's gaits are authored in (docs/formats/records.md).
 
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated struct MovementSetting: Equatable {
     let value: Float

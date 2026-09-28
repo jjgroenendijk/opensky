@@ -9,57 +9,57 @@
 
 import Foundation
 
-nonisolated package struct Climate {
+nonisolated public struct Climate: Sendable {
     /// One WLST entry: weather that can occur under this climate + its chance.
-    package struct WeatherChance: Equatable {
-        package let weather: FormID
+    public struct WeatherChance: Equatable, Sendable {
+        public let weather: FormID
         /// Chance in percent (WLST chances sum to 100 across the list).
-        package let chance: Int
+        public let chance: Int
         /// Optional GLOB that scales the chance; nil when the FormID is null.
-        package let global: FormID?
+        public let global: FormID?
     }
 
     /// TNAM timing + moon phase, decoded from the packed 6-byte struct.
-    package struct Timing: Equatable {
+    public struct Timing: Equatable, Sendable {
         /// Minutes past midnight (raw uint8 x 10).
-        package let sunriseBegin: Int
-        package let sunriseEnd: Int
-        package let sunsetBegin: Int
-        package let sunsetEnd: Int
+        public let sunriseBegin: Int
+        public let sunriseEnd: Int
+        public let sunsetBegin: Int
+        public let sunsetEnd: Int
         /// 0-100.
-        package let volatility: Int
+        public let volatility: Int
         /// Raw moons byte: phase length (bits 0-5) + masser/secunda flags.
-        package let moons: UInt8
+        public let moons: UInt8
         /// Moon phase length in days (mask 0x3F).
-        package var phaseLengthDays: Int {
+        public var phaseLengthDays: Int {
             Int(moons & 0x3F)
         }
 
         /// Masser present (bit 0x40).
-        package var masser: Bool {
+        public var masser: Bool {
             moons & 0x40 != 0
         }
 
         /// Secunda present (bit 0x80).
-        package var secunda: Bool {
+        public var secunda: Bool {
             moons & 0x80 != 0
         }
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// WLST weather list; empty when absent.
-    package let weatherList: [WeatherChance]
+    public let weatherList: [WeatherChance]
     /// TNAM sun/moon timing; nil when absent or wrong-size.
-    package let timing: Timing?
+    public let timing: Timing?
     /// FNAM sun texture path.
-    package let sunTexture: String?
+    public let sunTexture: String?
     /// GNAM sun glare texture path.
-    package let glareTexture: String?
+    public let glareTexture: String?
     /// MODL night-sky model path (MODT skipped).
-    package let nightSkyModel: String?
+    public let nightSkyModel: String?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "CLMT" else {
             throw ESMError.malformed("expected CLMT record, got \(record.type)")
         }

@@ -3,6 +3,7 @@
 // all synthetic, never extracted game files.
 
 import CoreGraphics
+import FormatsTestSupport
 import Foundation
 import ImageIO
 @testable import OpenSkyFormats

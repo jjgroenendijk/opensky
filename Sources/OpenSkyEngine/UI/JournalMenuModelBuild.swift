@@ -23,6 +23,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 nonisolated extension JournalMenuModel {
     /// Resolves one lstring, with or without string tables.

@@ -16,7 +16,7 @@
 import Foundation
 
 nonisolated extension AS2Interpreter {
-    package func controlOp(
+    public func controlOp(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
@@ -39,7 +39,7 @@ nonisolated extension AS2Interpreter {
         }
     }
 
-    package func hostOp(_ record: SWFActionRecord, frame: AS2Frame) throws(AS2Fault) -> AS2Flow? {
+    public func hostOp(_ record: SWFActionRecord, frame: AS2Frame) throws(AS2Fault) -> AS2Flow? {
         switch record.code {
         case AS2Opcode.stop:
             runtime.host.perform(.stop, target: frame.target)

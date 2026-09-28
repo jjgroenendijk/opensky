@@ -15,19 +15,19 @@ import simd
 /// `result = clamp(color * multiply + add, 0, 1)`. Multiply terms decode from
 /// 8.8 fixed point (stored value / 256); add terms decode from the -255..255
 /// integer domain (stored value / 255).
-nonisolated package struct SWFColorTransform: Equatable {
-    package var multiply = SIMD4<Float>(repeating: 1)
-    package var add = SIMD4<Float>(repeating: 0)
+nonisolated public struct SWFColorTransform: Equatable, Sendable {
+    public var multiply = SIMD4<Float>(repeating: 1)
+    public var add = SIMD4<Float>(repeating: 0)
 
-    package static let identity = SWFColorTransform()
+    public static let identity = SWFColorTransform()
 
-    package var isIdentity: Bool {
+    public var isIdentity: Bool {
         self == .identity
     }
 
     /// Decodes a CXFORM (`hasAlpha == false`, alpha terms untouched) or
     /// CXFORMWITHALPHA record at the reader's position.
-    package static func parse(
+    public static func parse(
         _ bits: inout SWFBitReader,
         hasAlpha: Bool
     ) throws -> SWFColorTransform {
@@ -51,13 +51,13 @@ nonisolated package struct SWFColorTransform: Equatable {
     }
 
     /// Applies `self` to a straight-alpha color.
-    package func apply(to color: SIMD4<Float>) -> SIMD4<Float> {
+    public func apply(to color: SIMD4<Float>) -> SIMD4<Float> {
         simd_clamp(color * multiply + add, SIMD4(repeating: 0), SIMD4(repeating: 1))
     }
 
     /// The transform equivalent to applying `inner` first, then `self` — the
     /// order a parent timeline wraps a child placement.
-    package func concatenating(_ inner: SWFColorTransform) -> SWFColorTransform {
+    public func concatenating(_ inner: SWFColorTransform) -> SWFColorTransform {
         SWFColorTransform(
             multiply: multiply * inner.multiply,
             add: multiply * inner.add + add

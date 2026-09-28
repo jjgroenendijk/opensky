@@ -1,6 +1,7 @@
 // Synthetic skin block + bind-pose flatten tests. Layouts follow NifTools
 // nif.xml; fixtures contain no game bytes (AGENTS.md legal boundary).
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

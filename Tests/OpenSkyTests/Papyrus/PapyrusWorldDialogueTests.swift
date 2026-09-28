@@ -11,6 +11,7 @@
 // `DialogueFixture` — never extracted game files (AGENTS.md "Legal & IP
 // boundary").
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

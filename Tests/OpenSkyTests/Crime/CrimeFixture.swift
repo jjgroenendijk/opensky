@@ -15,9 +15,11 @@
 // makes an arithmetic mistake in the suites read as a wrong bounty rather than
 // as a fixture nobody can check.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats
+@testable import OpenSkyGameData
 
 enum CrimeFixture {
     static let pluginName = "Base.esm"

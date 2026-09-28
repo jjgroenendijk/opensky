@@ -11,15 +11,15 @@
 
 import Foundation
 
-nonisolated package enum SWFTagName {
+nonisolated public enum SWFTagName: Sendable {
     /// Human-readable name for a standard Adobe tag code, or `nil` when the
     /// code is not in the Adobe specification (reserved, or a GFx extension).
-    package static func name(forCode code: UInt16) -> String? {
+    public static func name(forCode code: UInt16) -> String? {
         names[code]
     }
 
     /// Whether `code` is a standard Adobe tag.
-    package static func isKnown(_ code: UInt16) -> Bool {
+    public static func isKnown(_ code: UInt16) -> Bool {
         names[code] != nil
     }
 

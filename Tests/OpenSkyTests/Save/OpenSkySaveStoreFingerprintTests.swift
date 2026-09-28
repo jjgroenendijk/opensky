@@ -5,8 +5,10 @@
 // Plugins are synthetic TES4 bytes from ESMFixture written into a temporary
 // directory laid out like an install root, so no game data is involved.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyGameData
 import Testing
 
 struct OpenSkySaveStoreFingerprintTests {

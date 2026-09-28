@@ -65,19 +65,19 @@ import Foundation
 /// Where a navmesh sits in the world. Interiors name their CELL directly;
 /// exteriors name a worldspace and the cell square inside it, because an
 /// exterior navmesh is authored per grid square rather than per CELL record.
-nonisolated package enum NavmeshLocation: Hashable, Sendable {
+nonisolated public enum NavmeshLocation: Hashable, Sendable {
     case interior(cell: FormID)
     case exterior(world: FormID, x: Int32, y: Int32)
 }
 
-nonisolated package struct Navmesh: Sendable {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct Navmesh: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// NVNM. Required: a NAVM without geometry is structurally unusable, so
     /// its absence is a decode error rather than an empty mesh.
-    package let geometry: NavmeshGeometry
+    public let geometry: NavmeshGeometry
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "NAVM" else {
             throw ESMError.malformed("expected NAVM record, got \(record.type)")
         }

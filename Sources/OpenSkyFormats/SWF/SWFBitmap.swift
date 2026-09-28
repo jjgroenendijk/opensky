@@ -10,7 +10,7 @@
 
 import Foundation
 
-nonisolated package enum SWFBitmapError: Error, Equatable {
+nonisolated public enum SWFBitmapError: Error, Equatable, Sendable {
     /// Tag code is not one of the six bitmap definition tags.
     case unsupportedTag(UInt16)
     /// BitmapFormat byte outside the values the tag defines (3/4/5 for
@@ -29,8 +29,8 @@ nonisolated package enum SWFBitmapError: Error, Equatable {
 /// ARGB data "must already be multiplied by the alpha channel value" (spec
 /// p. 143) and stays that way here; JPEG color with a separate alpha plane is
 /// straight (non-premultiplied).
-nonisolated package struct SWFBitmap: Equatable {
-    package enum SourceFormat: String, Equatable {
+nonisolated public struct SWFBitmap: Equatable, Sendable {
+    public enum SourceFormat: String, Equatable, Sendable {
         case lossless8
         case lossless15
         case lossless24
@@ -40,31 +40,31 @@ nonisolated package struct SWFBitmap: Equatable {
         case gif
     }
 
-    package let characterId: UInt16
-    package let width: Int
-    package let height: Int
-    package let pixels: Data
-    package let premultipliedAlpha: Bool
-    package let sourceFormat: SourceFormat
+    public let characterId: UInt16
+    public let width: Int
+    public let height: Int
+    public let pixels: Data
+    public let premultipliedAlpha: Bool
+    public let sourceFormat: SourceFormat
     /// DefineBitsJPEG4 deblocking-filter strength (8.8 fixed point, 0-100%).
     /// Decoded for completeness; no deblocking filter is applied.
-    package let jpegDeblockParam: Float?
+    public let jpegDeblockParam: Float?
 }
 
-nonisolated package enum SWFBitmapDecoder {
+nonisolated public enum SWFBitmapDecoder: Sendable {
     /// DefineBits (6), DefineBitsLossless (20), DefineBitsJPEG2 (21),
     /// DefineBitsJPEG3 (35), DefineBitsLossless2 (36), DefineBitsJPEG4 (90).
-    package static let tagCodes: Set<UInt16> = [6, 20, 21, 35, 36, 90]
+    public static let tagCodes: Set<UInt16> = [6, 20, 21, 35, 36, 90]
     /// JPEGTables (8): shared encoding tables for every DefineBits tag.
-    package static let jpegTablesTagCode: UInt16 = 8
+    public static let jpegTablesTagCode: UInt16 = 8
 
     /// Pixel-count sanity cap (16 megapixels) so malformed dimensions cannot
     /// balloon memory before zlib size validation kicks in.
-    package static let maxPixelCount = 1 << 24
+    public static let maxPixelCount = 1 << 24
 
     /// Decodes any bitmap definition tag. `jpegTables` is the body of the
     /// movie's JPEGTables tag, required context for DefineBits (6) only.
-    package static func decode(tag: SWFTag, jpegTables: Data? = nil) throws -> SWFBitmap {
+    public static func decode(tag: SWFTag, jpegTables: Data? = nil) throws -> SWFBitmap {
         switch tag.code {
         case 20, 36:
             return try decodeLossless(tag)
@@ -76,13 +76,13 @@ nonisolated package enum SWFBitmapDecoder {
     }
 
     /// Header fields shared by both lossless tags.
-    package struct LosslessHeader {
-        package let characterId: UInt16
-        package let width: Int
-        package let height: Int
+    public struct LosslessHeader: Sendable {
+        public let characterId: UInt16
+        public let width: Int
+        public let height: Int
     }
 
-    package static func decodeLossless(_ tag: SWFTag) throws -> SWFBitmap {
+    public static func decodeLossless(_ tag: SWFTag) throws -> SWFBitmap {
         var reader = BinaryReader(tag.body)
         let characterId = try reader.readUInt16()
         let format = try reader.readUInt8()

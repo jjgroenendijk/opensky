@@ -1,3 +1,4 @@
+import FormatsTestSupport
 @testable import OpenSky
 @testable import OpenSkyFormats
 import Testing

@@ -14,7 +14,7 @@
 
 import Foundation
 
-nonisolated package enum SWFDisplayListError: Error, Equatable {
+nonisolated public enum SWFDisplayListError: Error, Equatable, Sendable {
     /// Tag code handed to a parser expecting a different display-list tag.
     case unsupportedTag(UInt16)
     /// A FILTERLIST entry carried an unknown FilterID, so the remaining tag
@@ -25,52 +25,52 @@ nonisolated package enum SWFDisplayListError: Error, Equatable {
 /// One decoded PlaceObject/PlaceObject2/PlaceObject3 tag. Optional members
 /// mirror the tag's presence flags; `isMove` is PlaceFlagMove (PlaceObject2/3
 /// modify-vs-place semantics).
-nonisolated package struct SWFPlacement: Equatable {
-    package var depth: UInt16 = 0
-    package var isMove = false
-    package var characterId: UInt16?
-    package var matrix: SWFMatrix?
-    package var colorTransform: SWFColorTransform?
-    package var ratio: UInt16?
-    package var name: String?
-    package var clipDepth: UInt16?
+nonisolated public struct SWFPlacement: Equatable, Sendable {
+    public var depth: UInt16 = 0
+    public var isMove = false
+    public var characterId: UInt16?
+    public var matrix: SWFMatrix?
+    public var colorTransform: SWFColorTransform?
+    public var ratio: UInt16?
+    public var name: String?
+    public var clipDepth: UInt16?
     /// PlaceObject3 only.
-    package var className: String?
+    public var className: String?
     /// PlaceObject3 BlendMode byte (0/1 = normal), recorded + ignored.
-    package var blendMode: UInt8?
+    public var blendMode: UInt8?
     /// PlaceObject3 SurfaceFilterList entry count, recorded + ignored.
-    package var filterCount = 0
+    public var filterCount = 0
     /// PlaceObject2/3 `PlaceFlagHasClipActions`.
-    package var hasClipActions = false
+    public var hasClipActions = false
     /// The decoded CLIPACTIONS block, non-nil whenever `hasClipActions` is set.
     /// A block that could not be framed still lands here, carrying whatever
     /// handlers were read plus its warnings, so a malformed handler list never
     /// costs the tag its placement.
-    package var clipActions: SWFClipActions?
+    public var clipActions: SWFClipActions?
 }
 
 /// One RemoveObject/RemoveObject2 tag. RemoveObject also names the character
 /// it expects at the depth; RemoveObject2 removes by depth alone.
-nonisolated package struct SWFRemoval: Equatable {
-    package let depth: UInt16
-    package let characterId: UInt16?
+nonisolated public struct SWFRemoval: Equatable, Sendable {
+    public let depth: UInt16
+    public let characterId: UInt16?
 }
 
-nonisolated package enum SWFDisplayListParser {
-    package static let placeObjectCode: UInt16 = 4
-    package static let placeObject2Code: UInt16 = 26
-    package static let placeObject3Code: UInt16 = 70
-    package static let removeObjectCode: UInt16 = 5
-    package static let removeObject2Code: UInt16 = 28
-    package static let setBackgroundColorCode: UInt16 = 9
-    package static let showFrameCode: UInt16 = 1
-    package static let defineSpriteCode: UInt16 = 39
+nonisolated public enum SWFDisplayListParser: Sendable {
+    public static let placeObjectCode: UInt16 = 4
+    public static let placeObject2Code: UInt16 = 26
+    public static let placeObject3Code: UInt16 = 70
+    public static let removeObjectCode: UInt16 = 5
+    public static let removeObject2Code: UInt16 = 28
+    public static let setBackgroundColorCode: UInt16 = 9
+    public static let showFrameCode: UInt16 = 1
+    public static let defineSpriteCode: UInt16 = 39
 
     /// Decodes any of the three PlaceObject tag versions. `version` is the
     /// movie's SWF version, which sets the CLIPEVENTFLAGS width; it defaults to
     /// 6 because every vanilla Interface movie is SWF 8 or later, so the wide
     /// form is the norm.
-    package static func parsePlacement(tag: SWFTag, version: UInt8 = 6) throws -> SWFPlacement {
+    public static func parsePlacement(tag: SWFTag, version: UInt8 = 6) throws -> SWFPlacement {
         switch tag.code {
         case placeObjectCode: try parsePlaceObject(tag.body)
         case placeObject2Code: try parsePlaceObject2(tag.body, version: version)
@@ -81,7 +81,7 @@ nonisolated package enum SWFDisplayListParser {
 
     /// RemoveObject (5): CharacterId UI16 + Depth UI16.
     /// RemoveObject2 (28): Depth UI16.
-    package static func parseRemoval(tag: SWFTag) throws -> SWFRemoval {
+    public static func parseRemoval(tag: SWFTag) throws -> SWFRemoval {
         var bits = SWFBitReader(tag.body)
         switch tag.code {
         case removeObjectCode:
@@ -95,7 +95,7 @@ nonisolated package enum SWFDisplayListParser {
     }
 
     /// SetBackgroundColor (9): RGB record.
-    package static func parseBackgroundColor(tag: SWFTag) throws -> SWFColor {
+    public static func parseBackgroundColor(tag: SWFTag) throws -> SWFColor {
         guard tag.code == setBackgroundColorCode else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }

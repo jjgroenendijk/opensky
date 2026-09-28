@@ -15,6 +15,7 @@
 import Foundation
 import Metal
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 nonisolated enum MeshLibraryError: Error, Equatable {

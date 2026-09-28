@@ -1,6 +1,7 @@
 // WATR decoder coverage over synthetic DNAM bytes only. Layout sources:
 // UESP WATR + xEdit dev-4.1.6; see docs/formats/water.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

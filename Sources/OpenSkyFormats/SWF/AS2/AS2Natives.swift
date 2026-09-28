@@ -15,8 +15,8 @@
 
 import Foundation
 
-nonisolated package enum AS2Natives {
-    package static func install(into runtime: AS2Runtime) {
+nonisolated public enum AS2Natives: Sendable {
+    public static func install(into runtime: AS2Runtime) {
         installObject(runtime)
         installFunction(runtime)
         installArray(runtime)
@@ -29,7 +29,7 @@ nonisolated package enum AS2Natives {
 
     /// Defines a global constructor bound to an existing prototype object.
     @discardableResult
-    package static func constructor(
+    public static func constructor(
         _ runtime: AS2Runtime,
         name: String,
         prototype: AS2Object,
@@ -44,7 +44,7 @@ nonisolated package enum AS2Natives {
 
     /// Defines a non-enumerable method, the way every Flash built-in member is
     /// declared.
-    package static func method(
+    public static func method(
         _ runtime: AS2Runtime,
         on object: AS2Object,
         name: String,

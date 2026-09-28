@@ -10,16 +10,16 @@
 
 import Foundation
 
-nonisolated package struct HKAAnimationBinding {
-    package let originalSkeletonName: String?
-    package let animationTarget: HKXPointerTarget?
-    package let transformTrackToBoneIndices: [Int]
-    package let floatTrackToSlotIndices: [Int]
-    package let blendHint: Int
+nonisolated public struct HKAAnimationBinding: Sendable {
+    public let originalSkeletonName: String?
+    public let animationTarget: HKXPointerTarget?
+    public let transformTrackToBoneIndices: [Int]
+    public let floatTrackToSlotIndices: [Int]
+    public let blendHint: Int
 
-    package static let className = "hkaAnimationBinding"
+    public static let className = "hkaAnimationBinding"
 
-    package static func bindings(in file: HKXFile) throws -> [HKAAnimationBinding] {
+    public static func bindings(in file: HKXFile) throws -> [HKAAnimationBinding] {
         let graph = try HKXObjectGraph(file: file)
         var result: [HKAAnimationBinding] = []
         for object in graph.objects(ofClass: className) {
@@ -30,7 +30,7 @@ nonisolated package struct HKAAnimationBinding {
     }
 
     /// Empty transform map is Havok's compact identity representation.
-    package func boneIndices(transformTrackCount: Int) throws -> [Int] {
+    public func boneIndices(transformTrackCount: Int) throws -> [Int] {
         if transformTrackToBoneIndices.isEmpty {
             return Array(0 ..< transformTrackCount)
         }

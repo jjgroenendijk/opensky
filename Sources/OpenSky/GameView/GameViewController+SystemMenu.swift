@@ -6,6 +6,7 @@
 // into the CLI target. See docs/engine/system-menu.md.
 
 import AppKit
+import OpenSkyGameData
 import OSLog
 
 struct SystemMenuRuntimeState {

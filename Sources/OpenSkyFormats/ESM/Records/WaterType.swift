@@ -9,25 +9,25 @@
 import Foundation
 import simd
 
-nonisolated package struct WaterType {
-    package struct Colors: Equatable {
-        package let shallow: SIMD3<Float>
-        package let deep: SIMD3<Float>
-        package let reflection: SIMD3<Float>
+nonisolated public struct WaterType: Sendable {
+    public struct Colors: Equatable, Sendable {
+        public let shallow: SIMD3<Float>
+        public let deep: SIMD3<Float>
+        public let reflection: SIMD3<Float>
 
-        package init(shallow: SIMD3<Float>, deep: SIMD3<Float>, reflection: SIMD3<Float>) {
+        public init(shallow: SIMD3<Float>, deep: SIMD3<Float>, reflection: SIMD3<Float>) {
             self.shallow = shallow
             self.deep = deep
             self.reflection = reflection
         }
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// DNAM colors. nil for absent or unknown-size DNAM variants.
-    package let colors: Colors?
+    public let colors: Colors?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "WATR" else {
             throw ESMError.malformed("expected WATR record, got \(record.type)")
         }

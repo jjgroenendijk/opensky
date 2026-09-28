@@ -6,6 +6,7 @@
 // Core/wbDefinitionsTES5.pas `wbRecord(PROJ, ...)` line 5449. See
 // docs/formats/projectiles.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

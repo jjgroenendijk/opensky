@@ -27,6 +27,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum SWFDialogueMenuCommand {
     private static let defaultTicks = 20

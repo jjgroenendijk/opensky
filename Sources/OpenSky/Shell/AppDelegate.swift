@@ -4,6 +4,7 @@
 
 import AppKit
 import Metal
+import OpenSkyGameData
 import OSLog
 
 final class AppDelegate: NSObject, NSApplicationDelegate {

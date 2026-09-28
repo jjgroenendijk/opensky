@@ -25,6 +25,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 @MainActor
 struct ActiveEffectRuntime {

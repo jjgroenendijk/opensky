@@ -17,7 +17,7 @@
 
 import Foundation
 
-nonisolated package enum TranslationFileError: Error, Equatable {
+nonisolated public enum TranslationFileError: Error, Equatable, Sendable {
     /// Bytes are not decodable UTF-16 (odd byte count or an unpaired surrogate).
     case notUTF16
 }
@@ -25,30 +25,30 @@ nonisolated package enum TranslationFileError: Error, Equatable {
 /// One parsed translation file: `$key` -> value. Decoded eagerly because these
 /// files are small (a few hundred short lines). Keys keep their leading `$` and
 /// exact case.
-nonisolated package struct TranslationFile: Equatable {
+nonisolated public struct TranslationFile: Equatable, Sendable {
     /// `$key` (verbatim, case-sensitive) -> translated value.
-    package let entries: [String: String]
+    public let entries: [String: String]
 
-    package var count: Int {
+    public var count: Int {
         entries.count
     }
 
-    package var isEmpty: Bool {
+    public var isEmpty: Bool {
         entries.isEmpty
     }
 
-    package var keys: [String] {
+    public var keys: [String] {
         Array(entries.keys)
     }
 
     /// Builds a file directly from already-parsed entries. Used by in-app
     /// synthetic sample content (Developer > UI Lab localized preview) and tests;
     /// `init(data:)` remains the only on-disk path.
-    package init(entries: [String: String]) {
+    public init(entries: [String: String]) {
         self.entries = entries
     }
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         let text = try Self.decodeUTF16(data)
         var entries: [String: String] = [:]
         // Vanilla lines end with CRLF; tolerate lone LF and a trailing newline.
@@ -68,7 +68,7 @@ nonisolated package struct TranslationFile: Equatable {
     }
 
     /// Looks up one value by full key (leading `$` included). Nil when absent.
-    package func value(forKey key: String) -> String? {
+    public func value(forKey key: String) -> String? {
         entries[key]
     }
 

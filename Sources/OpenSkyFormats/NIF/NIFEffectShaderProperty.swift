@@ -21,89 +21,89 @@
 import Foundation
 import simd
 
-nonisolated package struct NIFEffectShaderProperty: Equatable {
-    package let name: String?
+nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
+    public let name: String?
     /// Raw SkyrimShaderPropertyFlags1/2; derived accessors below expose the
     /// bits the renderer consumes.
-    package let shaderFlags1: UInt32
-    package let shaderFlags2: UInt32
-    package let uvOffset: SIMD2<Float>
-    package let uvScale: SIMD2<Float>
+    public let shaderFlags1: UInt32
+    public let shaderFlags2: UInt32
+    public let uvOffset: SIMD2<Float>
+    public let uvScale: SIMD2<Float>
     /// Inline effect texture path (nif.xml SizedString), raw as stored. Empty
     /// -> nil. `sourceTexturePath` gives the VFS-normalized key.
-    package let sourceTexture: String?
+    public let sourceTexture: String?
     /// nif.xml TexClampMode byte (0 clamp S/T … 3 wrap S/T).
-    package let textureClampMode: UInt8
+    public let textureClampMode: UInt8
     /// Cosine-of-angle falloff endpoints + their opacity multipliers; active
     /// when `usesFalloff` is set (SLSF1 Use_Falloff).
-    package let falloffStartAngle: Float
-    package let falloffStopAngle: Float
-    package let falloffStartOpacity: Float
-    package let falloffStopOpacity: Float
+    public let falloffStartAngle: Float
+    public let falloffStopAngle: Float
+    public let falloffStartOpacity: Float
+    public let falloffStopOpacity: Float
     /// nif.xml "Base Color" (Color4) — the effect's emissive color incl.
     /// alpha; scaled by `baseColorScale` ("Base Color Scale", RGB multiplier).
-    package let baseColor: SIMD4<Float>
-    package let baseColorScale: Float
+    public let baseColor: SIMD4<Float>
+    public let baseColorScale: Float
     /// Depth over which the soft-particle edge fades (nif.xml Soft Falloff
     /// Depth); used when `isSoftEffect` is set.
-    package let softFalloffDepth: Float
+    public let softFalloffDepth: Float
     /// Greyscale palette texture (nif.xml SizedString), raw as stored. Feeds
     /// the greyscale-to-palette color/alpha paths. Empty -> nil.
-    package let greyscaleTexture: String?
+    public let greyscaleTexture: String?
 
     /// VFS lookup key for the effect texture (see NIFShaderTextureSet.vfsKey).
-    package var sourceTexturePath: String? {
+    public var sourceTexturePath: String? {
         sourceTexture.flatMap(NIFShaderTextureSet.vfsKey(for:))
     }
 
     /// VFS lookup key for the greyscale palette texture.
-    package var greyscaleTexturePath: String? {
+    public var greyscaleTexturePath: String? {
         greyscaleTexture.flatMap(NIFShaderTextureSet.vfsKey(for:))
     }
 
     /// SLSF2 bit 4 Double_Sided -> cull mode none.
-    package var isDoubleSided: Bool {
+    public var isDoubleSided: Bool {
         shaderFlags2 & 0x10 != 0
     }
 
     /// SLSF1 bit 30 Soft_Effect -> soft-particle depth fade.
-    package var isSoftEffect: Bool {
+    public var isSoftEffect: Bool {
         shaderFlags1 & 0x4000_0000 != 0
     }
 
     /// SLSF1 bit 4 Greyscale_To_PaletteColor -> RGB from palette texture.
-    package var usesGreyscaleToPaletteColor: Bool {
+    public var usesGreyscaleToPaletteColor: Bool {
         shaderFlags1 & 0x10 != 0
     }
 
     /// SLSF1 bit 5 Greyscale_To_PaletteAlpha -> alpha from palette texture.
-    package var usesGreyscaleToPaletteAlpha: Bool {
+    public var usesGreyscaleToPaletteAlpha: Bool {
         shaderFlags1 & 0x20 != 0
     }
 
     /// SLSF1 bit 6 Use_Falloff -> apply the angular falloff fields.
-    package var usesFalloff: Bool {
+    public var usesFalloff: Bool {
         shaderFlags1 & 0x40 != 0
     }
 
     /// SLSF1 bit 3 Vertex_Alpha -> vertex-color alpha modulates opacity.
-    package var hasVertexAlpha: Bool {
+    public var hasVertexAlpha: Bool {
         shaderFlags1 & 0x08 != 0
     }
 
     /// SLSF1 bit 31 ZBuffer_Test (nif.xml places ZBuffer_Test in flags 1, not
     /// flags 2) -> depth test enabled.
-    package var isZBufferTest: Bool {
+    public var isZBufferTest: Bool {
         shaderFlags1 & 0x8000_0000 != 0
     }
 
     /// SLSF2 bit 0 ZBuffer_Write cleared -> no depth writes (typical for
     /// additive/transparent effects).
-    package var isZBufferWriteDisabled: Bool {
+    public var isZBufferWriteDisabled: Bool {
         shaderFlags2 & 0x01 == 0
     }
 
-    package init(data: Data, header: NIFHeader) throws {
+    public init(data: Data, header: NIFHeader) throws {
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {
             throw NIFError.unsupported(

@@ -8,6 +8,7 @@
 // `Double(n) * fixedStepSeconds >= interval` — so the expectations share the
 // exact rounding the registry uses.
 
+import FormatsTestSupport
 @testable import OpenSky
 @testable import OpenSkyFormats
 import Testing

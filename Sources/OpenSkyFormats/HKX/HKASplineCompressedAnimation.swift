@@ -9,7 +9,7 @@
 import Foundation
 import simd
 
-nonisolated package enum HKASplineAnimationError: Error, Equatable {
+nonisolated public enum HKASplineAnimationError: Error, Equatable, Sendable {
     case invalidMetadata(field: String, value: String)
     case missingArrayData(field: String, count: Int)
     case arrayOutOfBounds(field: String, offset: Int, needed: Int, available: Int)
@@ -22,22 +22,22 @@ nonisolated package enum HKASplineAnimationError: Error, Equatable {
     case nonFiniteTransform(trackIndex: Int)
 }
 
-nonisolated package struct HKABoneTransformSample {
-    package let boneIndex: Int
-    package let pose: HKABonePose
+nonisolated public struct HKABoneTransformSample: Sendable {
+    public let boneIndex: Int
+    public let pose: HKABonePose
 }
 
 /// Decoded spline clip. `localTransforms` preserves transform-track order;
 /// `boneLocalTransforms` resolves that order through hkaAnimationBinding.
-nonisolated package struct HKASplineCompressedAnimation {
-    package let objectSectionIndex: Int
-    package let objectDataOffset: Int
-    package let duration: Float
-    package let frameDuration: Float
-    package let frameCount: Int
-    package let maxFramesPerBlock: Int
-    package let transformTrackCount: Int
-    package let floatTrackCount: Int
+nonisolated public struct HKASplineCompressedAnimation: Sendable {
+    public let objectSectionIndex: Int
+    public let objectDataOffset: Int
+    public let duration: Float
+    public let frameDuration: Float
+    public let frameCount: Int
+    public let maxFramesPerBlock: Int
+    public let transformTrackCount: Int
+    public let floatTrackCount: Int
     /// True when `hkaAnimation.m_extractedMotion` points at an
     /// `hkaAnimatedReferenceFrame`, which is Havok's statement that this clip
     /// carries authored travel rather than animating in place.
@@ -47,14 +47,14 @@ nonisolated package struct HKASplineCompressedAnimation {
     /// the flag exists so a consumer can tell an in-place clip from a
     /// root-motion clip without inferring it from how far the root bone
     /// happens to drift. See docs/engine/walk-mode.md.
-    package let carriesExtractedMotion: Bool
+    public let carriesExtractedMotion: Bool
     /// `hkaAnimation.m_annotationTracks`. Havok exports one track per transform
     /// track and vanilla Skyrim leaves all but the first empty, so consumers
     /// read `annotations` rather than indexing this.
-    package let annotationTracks: [HKAAnnotationTrack]
-    package let blocks: [HKASplineBlock]
+    public let annotationTracks: [HKAAnnotationTrack]
+    public let blocks: [HKASplineBlock]
 
-    package var blockCount: Int {
+    public var blockCount: Int {
         blocks.count
     }
 
@@ -62,14 +62,14 @@ nonisolated package struct HKASplineCompressedAnimation {
     /// the footstep tags: `FootLeft` and `FootRight` are annotations on the
     /// locomotion clips, not triggers on the behavior file's clip generators
     /// (see HKAAnnotationTrack.swift).
-    package var annotations: [HKAAnnotation] {
+    public var annotations: [HKAAnnotation] {
         annotationTracks.flatMap(\.annotations).sorted { $0.time < $1.time }
     }
 
-    package static let className = "hkaSplineCompressedAnimation"
+    public static let className = "hkaSplineCompressedAnimation"
 
     /// Every spline-compressed animation object in inventory order.
-    package static func animations(in file: HKXFile) throws -> [HKASplineCompressedAnimation] {
+    public static func animations(in file: HKXFile) throws -> [HKASplineCompressedAnimation] {
         let graph = try HKXObjectGraph(file: file)
         var result: [HKASplineCompressedAnimation] = []
         for object in graph.objects(ofClass: className) {
@@ -81,7 +81,7 @@ nonisolated package struct HKASplineCompressedAnimation {
 
     /// Samples every transform track at seconds from clip start. Time clamps
     /// to [0, duration], including exact final-frame sampling.
-    package func localTransforms(at time: Float) throws -> [HKABonePose] {
+    public func localTransforms(at time: Float) throws -> [HKABonePose] {
         guard time.isFinite else {
             throw HKASplineAnimationError.invalidMetadata(
                 field: "sample time", value: String(describing: time)
@@ -106,7 +106,7 @@ nonisolated package struct HKASplineCompressedAnimation {
 
     /// Resolves transform-track order through hkaAnimationBinding. Empty
     /// mapping means identity, as in Skyrim's mt_idle clip.
-    package func boneLocalTransforms(
+    public func boneLocalTransforms(
         at time: Float,
         binding: HKAAnimationBinding
     ) throws -> [HKABoneTransformSample] {

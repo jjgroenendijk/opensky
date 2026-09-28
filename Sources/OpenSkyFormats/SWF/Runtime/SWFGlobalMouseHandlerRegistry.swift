@@ -4,7 +4,7 @@
 
 import Foundation
 
-nonisolated package final class SWFGlobalMouseHandlerRegistry: AS2ObjectMutationObserver {
+nonisolated public final class SWFGlobalMouseHandlerRegistry: AS2ObjectMutationObserver {
     private struct ActiveClip {
         let node: SWFDisplayObject
         let depthPath: [UInt16]
@@ -15,17 +15,17 @@ nonisolated package final class SWFGlobalMouseHandlerRegistry: AS2ObjectMutation
         [ObjectIdentifier: [ObjectIdentifier: SWFDisplayHandle]] = [:]
     private var dependenciesByNode: [ObjectIdentifier: Set<ObjectIdentifier>] = [:]
 
-    package var count: Int {
+    public var count: Int {
         candidates.count
     }
 
-    package func observe(_ node: SWFDisplayObject) {
+    public func observe(_ node: SWFDisplayObject) {
         node.object.mutationObserver = self
         observePrototypeChain(of: node)
         refresh(node)
     }
 
-    package func refresh(_ node: SWFDisplayObject) {
+    public func refresh(_ node: SWFDisplayObject) {
         let identifier = ObjectIdentifier(node)
         guard node.isClip, hasGlobalHandler(node) else {
             candidates[identifier] = nil
@@ -38,7 +38,7 @@ nonisolated package final class SWFGlobalMouseHandlerRegistry: AS2ObjectMutation
 
     /// Live candidates in the same highest-depth-first preorder as the former
     /// full-tree walk.
-    package func activeClips(in root: SWFDisplayObject) -> [SWFDisplayObject] {
+    public func activeClips(in root: SWFDisplayObject) -> [SWFDisplayObject] {
         var active: [ActiveClip] = []
         var staleIdentifiers: [ObjectIdentifier] = []
         for (identifier, handle) in candidates {
@@ -59,14 +59,14 @@ nonisolated package final class SWFGlobalMouseHandlerRegistry: AS2ObjectMutation
         return active.map(\.node)
     }
 
-    package func object(_ object: AS2Object, didMutateProperty name: String) {
+    public func object(_ object: AS2Object, didMutateProperty name: String) {
         if Self.handlerNames.contains(name), let node = SWFDisplayObject.resolve(object) {
             refresh(node)
         }
         refreshDependents(of: object)
     }
 
-    package func objectDidMutatePrototype(_ object: AS2Object) {
+    public func objectDidMutatePrototype(_ object: AS2Object) {
         if let node = SWFDisplayObject.resolve(object) {
             observePrototypeChain(of: node)
             refresh(node)

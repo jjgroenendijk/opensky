@@ -3,6 +3,7 @@
 // former Environment panel LOD controls).
 
 import AppKit
+import OpenSkyGameData
 
 final class TerrainLODSection: PanelSectionViewController {
     weak var provider: (any TerrainLODControlProviding)? {

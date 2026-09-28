@@ -8,20 +8,20 @@ import Foundation
 
 /// Assembles a DefineShape/2/3/4 tag body through `SWFBitWriter`, mirroring
 /// the bit packing `SWFShapeParser` reads back.
-struct SWFShapeBodyBuilder {
-    var writer = SWFBitWriter()
+public struct SWFShapeBodyBuilder: Sendable {
+    public var writer = SWFBitWriter()
     private var fillIndexBits = 0
     private var lineIndexBits = 0
 
-    func build() -> Data {
+    public func build() -> Data {
         writer.bytes()
     }
 
-    mutating func appendCharacterId(_ characterId: UInt16) {
+    public mutating func appendCharacterId(_ characterId: UInt16) {
         writer.appendUInt16LE(characterId)
     }
 
-    mutating func appendRect(xMin: Int32, xMax: Int32, yMin: Int32, yMax: Int32) {
+    public mutating func appendRect(xMin: Int32, xMax: Int32, yMin: Int32, yMax: Int32) {
         writer.align()
         let fields = [xMin, xMax, yMin, yMax]
         let nbits = fields.map(SWFFixture.signedBitWidth).max() ?? 1
@@ -33,7 +33,7 @@ struct SWFShapeBodyBuilder {
 
     /// DefineShape4 flag byte: Reserved UB[5], UsesFillWindingRule,
     /// UsesNonScalingStrokes, UsesScalingStrokes.
-    mutating func appendShape4Flags(usesWindingRule: Bool) {
+    public mutating func appendShape4Flags(usesWindingRule: Bool) {
         writer.align()
         writer.writeUB(0, count: 5)
         writer.writeUB(usesWindingRule ? 1 : 0, count: 1)
@@ -41,7 +41,7 @@ struct SWFShapeBodyBuilder {
     }
 
     /// FILLSTYLEARRAY / LINESTYLEARRAY count byte, with the 0xFF UI16 escape.
-    mutating func appendStyleCount(_ count: Int, extended: Bool = false) {
+    public mutating func appendStyleCount(_ count: Int, extended: Bool = false) {
         if extended {
             writer.appendByte(0xFF)
             writer.appendUInt16LE(UInt16(count))
@@ -50,20 +50,20 @@ struct SWFShapeBodyBuilder {
         }
     }
 
-    mutating func appendColor(_ color: SWFColor, rgba: Bool) {
+    public mutating func appendColor(_ color: SWFColor, rgba: Bool) {
         writer.appendBytes([color.red, color.green, color.blue])
         if rgba {
             writer.appendByte(color.alpha)
         }
     }
 
-    mutating func appendSolidFill(_ color: SWFColor, rgba: Bool) {
+    public mutating func appendSolidFill(_ color: SWFColor, rgba: Bool) {
         writer.appendByte(0x00)
         appendColor(color, rgba: rgba)
     }
 
     /// Translation-only MATRIX (HasScale = HasRotate = 0).
-    mutating func appendMatrix(translateX: Int32, translateY: Int32) {
+    public mutating func appendMatrix(translateX: Int32, translateY: Int32) {
         writer.align()
         writer.writeUB(0, count: 1)
         writer.writeUB(0, count: 1)
@@ -78,7 +78,7 @@ struct SWFShapeBodyBuilder {
 
     /// Linear (0x10) or radial (0x12) gradient fill with a translation-only
     /// matrix and pad spread / normal interpolation.
-    mutating func appendGradientFill(
+    public mutating func appendGradientFill(
         type: UInt8,
         translate: Int32,
         stops: [SWFGradientRecord],
@@ -96,20 +96,20 @@ struct SWFShapeBodyBuilder {
         }
     }
 
-    mutating func appendBitmapFill(type: UInt8, characterId: UInt16) {
+    public mutating func appendBitmapFill(type: UInt8, characterId: UInt16) {
         writer.appendByte(type)
         writer.appendUInt16LE(characterId)
         appendMatrix(translateX: 0, translateY: 0)
     }
 
-    mutating func appendLineStyle(width: UInt16, color: SWFColor, rgba: Bool) {
+    public mutating func appendLineStyle(width: UInt16, color: SWFColor, rgba: Bool) {
         writer.appendUInt16LE(width)
         appendColor(color, rgba: rgba)
     }
 
     /// NumFillBits UB[4] + NumLineBits UB[4]; the widths are reused by the
     /// style-change records that follow.
-    mutating func appendIndexBits(fill: Int, line: Int) {
+    public mutating func appendIndexBits(fill: Int, line: Int) {
         writer.align()
         writer.writeUB(UInt32(fill), count: 4)
         writer.writeUB(UInt32(line), count: 4)
@@ -119,16 +119,32 @@ struct SWFShapeBodyBuilder {
 
     /// StyleChangeRecord contents; `newStyles` writes only the flag — the
     /// caller appends the new style arrays and index bits right after.
-    struct StyleChange {
-        var moveToX: Int32?
-        var moveToY: Int32?
-        var fill0: Int?
-        var fill1: Int?
-        var line: Int?
-        var newStyles = false
+    public struct StyleChange: Sendable {
+        public var moveToX: Int32?
+        public var moveToY: Int32?
+        public var fill0: Int?
+        public var fill1: Int?
+        public var line: Int?
+        public var newStyles = false
+
+        public init(
+            moveToX: Int32? = nil,
+            moveToY: Int32? = nil,
+            fill0: Int? = nil,
+            fill1: Int? = nil,
+            line: Int? = nil,
+            newStyles: Bool = false
+        ) {
+            self.moveToX = moveToX
+            self.moveToY = moveToY
+            self.fill0 = fill0
+            self.fill1 = fill1
+            self.line = line
+            self.newStyles = newStyles
+        }
     }
 
-    mutating func appendStyleChange(_ change: StyleChange) {
+    public mutating func appendStyleChange(_ change: StyleChange) {
         writer.writeUB(0, count: 1) // non-edge record
         writer.writeUB(change.newStyles ? 1 : 0, count: 1)
         writer.writeUB(change.line != nil ? 1 : 0, count: 1)
@@ -155,12 +171,12 @@ struct SWFShapeBodyBuilder {
         }
     }
 
-    mutating func appendMoveTo(x: Int32, y: Int32) {
+    public mutating func appendMoveTo(x: Int32, y: Int32) {
         appendStyleChange(StyleChange(moveToX: x, moveToY: y))
     }
 
     /// General straight edge carrying both deltas.
-    mutating func appendStraightEdge(deltaX: Int32, deltaY: Int32) {
+    public mutating func appendStraightEdge(deltaX: Int32, deltaY: Int32) {
         writer.writeUB(1, count: 1) // edge record
         writer.writeUB(1, count: 1) // straight
         let nbits = edgeBits(deltaX, deltaY)
@@ -171,7 +187,7 @@ struct SWFShapeBodyBuilder {
     }
 
     /// Vert/horz straight edge (GeneralLineFlag = 0) carrying one delta.
-    mutating func appendAxisEdge(delta: Int32, vertical: Bool) {
+    public mutating func appendAxisEdge(delta: Int32, vertical: Bool) {
         writer.writeUB(1, count: 1)
         writer.writeUB(1, count: 1)
         let nbits = edgeBits(delta, 0)
@@ -181,7 +197,7 @@ struct SWFShapeBodyBuilder {
         writer.writeSB(delta, count: nbits)
     }
 
-    mutating func appendCurvedEdge(
+    public mutating func appendCurvedEdge(
         controlDeltaX: Int32,
         controlDeltaY: Int32,
         anchorDeltaX: Int32,
@@ -201,7 +217,7 @@ struct SWFShapeBodyBuilder {
     }
 
     /// EndShapeRecord: six zero bits.
-    mutating func appendEndRecord() {
+    public mutating func appendEndRecord() {
         writer.writeUB(0, count: 6)
     }
 
@@ -212,5 +228,9 @@ struct SWFShapeBodyBuilder {
             SWFFixture.signedBitWidth(first),
             SWFFixture.signedBitWidth(second)
         )
+    }
+
+    public init(writer: SWFBitWriter = SWFBitWriter()) {
+        self.writer = writer
     }
 }

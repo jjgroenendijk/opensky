@@ -11,7 +11,7 @@
 
 import Foundation
 
-nonisolated package enum SWFError: Error, Equatable {
+nonisolated public enum SWFError: Error, Equatable, Sendable {
     /// Signature is not one of the three SWF magics.
     case notASWF
     /// ZWS (LZMA) body compression — recognized but not decoded at this stage.
@@ -22,38 +22,38 @@ nonisolated package enum SWFError: Error, Equatable {
 
 /// One framed tag: its record-header code and the raw body bytes. The body is
 /// left undecoded — later milestones interpret it by code.
-nonisolated package struct SWFTag: Equatable {
-    package let code: UInt16
-    package let body: Data
+nonisolated public struct SWFTag: Equatable, Sendable {
+    public let code: UInt16
+    public let body: Data
 }
 
 /// Rectangle in twips (1/20 px), as stored in the FrameSize RECT.
-nonisolated package struct SWFRect: Equatable {
-    package let xMin: Int32
-    package let xMax: Int32
-    package let yMin: Int32
-    package let yMax: Int32
+nonisolated public struct SWFRect: Equatable, Sendable {
+    public let xMin: Int32
+    public let xMax: Int32
+    public let yMin: Int32
+    public let yMax: Int32
 }
 
 /// A parsed SWF container: header fields plus the flat tag sequence, ending
 /// with the End tag (code 0). Trailing bytes after End are ignored.
-nonisolated package struct SWFFile {
-    package enum Compression: Equatable {
+nonisolated public struct SWFFile: Sendable {
+    public enum Compression: Equatable, Sendable {
         case none // FWS
         case zlib // CWS
     }
 
-    package let version: UInt8
-    package let compression: Compression
+    public let version: UInt8
+    public let compression: Compression
     /// Uncompressed length of the whole file including the 8-byte header.
-    package let fileLength: Int
-    package let frameSize: SWFRect
-    package let frameRate: Float
-    package let frameCount: UInt16
+    public let fileLength: Int
+    public let frameSize: SWFRect
+    public let frameRate: Float
+    public let frameCount: UInt16
     /// Tags in stream order, terminating End tag included.
-    package let tags: [SWFTag]
+    public let tags: [SWFTag]
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         let signatureData = try reader.read(count: 3)
         version = try reader.readUInt8()
@@ -126,7 +126,7 @@ nonisolated package struct SWFFile {
     /// length == 0x3F means the real length follows as a UI32 LE ("long" tag).
     /// The stream terminates at the End tag (code 0). Internal because
     /// DefineSprite (39) bodies carry the same nested tag framing (SWFMovie).
-    package static func parseTags(_ reader: inout BinaryReader) throws -> [SWFTag] {
+    public static func parseTags(_ reader: inout BinaryReader) throws -> [SWFTag] {
         var tags: [SWFTag] = []
         while true {
             let recordHeader = try reader.readUInt16()

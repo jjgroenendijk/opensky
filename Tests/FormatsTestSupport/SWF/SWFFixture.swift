@@ -7,26 +7,31 @@
 import Foundation
 
 /// Builds a minimal spec-conformant SWF (FWS or CWS) byte blob.
-struct SWFFixture {
-    struct Tag {
-        let code: UInt16
-        let body: Data
+public struct SWFFixture: Sendable {
+    public struct Tag: Sendable {
+        public let code: UInt16
+        public let body: Data
+
+        public init(code: UInt16, body: Data) {
+            self.code = code
+            self.body = body
+        }
     }
 
-    var signature = "FWS"
-    var version: UInt8 = 6
-    var xMin: Int32 = 0
-    var xMax: Int32 = 8000
-    var yMin: Int32 = 0
-    var yMax: Int32 = 6000
+    public var signature = "FWS"
+    public var version: UInt8 = 6
+    public var xMin: Int32 = 0
+    public var xMax: Int32 = 8000
+    public var yMin: Int32 = 0
+    public var yMax: Int32 = 6000
     /// FrameRate as 8.8 fixed point (integer fps << 8). 24 fps default.
-    var frameRateFixed: UInt16 = 24 << 8
-    var frameCount: UInt16 = 1
-    var tags: [Tag] = []
+    public var frameRateFixed: UInt16 = 24 << 8
+    public var frameCount: UInt16 = 1
+    public var tags: [Tag] = []
     /// Append the terminating End tag (code 0, empty body) after `tags`.
-    var appendEnd = true
+    public var appendEnd = true
 
-    func build() -> Data {
+    public func build() -> Data {
         var body = rectBytes()
         body.appendUInt16(frameRateFixed)
         body.appendUInt16(frameCount)
@@ -58,7 +63,7 @@ struct SWFFixture {
     }
 
     /// RECORDHEADER + body. Long form (UI32 length) when body >= 0x3F bytes.
-    static func tagBytes(code: UInt16, body: Data) -> Data {
+    public static func tagBytes(code: UInt16, body: Data) -> Data {
         var out = Data()
         if body.count >= 0x3F {
             out.appendUInt16((code << 6) | 0x3F)
@@ -71,61 +76,87 @@ struct SWFFixture {
     }
 
     /// Minimum SB width holding `value` in two's complement (>= 1).
-    static func signedBitWidth(_ value: Int32) -> Int {
+    public static func signedBitWidth(_ value: Int32) -> Int {
         var bits = 1
         while value < -(Int32(1) << (bits - 1)) || value > (Int32(1) << (bits - 1)) - 1 {
             bits += 1
         }
         return bits
     }
+
+    public init(
+        signature: String = "FWS",
+        version: UInt8 = 6,
+        xMin: Int32 = 0,
+        xMax: Int32 = 8000,
+        yMin: Int32 = 0,
+        yMax: Int32 = 6000,
+        frameRateFixed: UInt16 = 24 << 8,
+        frameCount: UInt16 = 1,
+        tags: [Tag] = [],
+        appendEnd: Bool = true
+    ) {
+        self.signature = signature
+        self.version = version
+        self.xMin = xMin
+        self.xMax = xMax
+        self.yMin = yMin
+        self.yMax = yMax
+        self.frameRateFixed = frameRateFixed
+        self.frameCount = frameCount
+        self.tags = tags
+        self.appendEnd = appendEnd
+    }
 }
 
 /// MSB-first bit accumulator mirroring SWFBitReader's read order. Shared by
 /// the container fixture and the shape/bitmap fixtures (SWFShapeFixture).
-struct SWFBitWriter {
+public struct SWFBitWriter: Sendable {
     private var bits: [UInt8] = []
 
-    mutating func writeUB(_ value: UInt32, count: Int) {
+    public init() {}
+
+    public mutating func writeUB(_ value: UInt32, count: Int) {
         for index in stride(from: count - 1, through: 0, by: -1) {
             bits.append(UInt8((value >> index) & 1))
         }
     }
 
-    mutating func writeSB(_ value: Int32, count: Int) {
+    public mutating func writeSB(_ value: Int32, count: Int) {
         let mask: UInt32 = count >= 32 ? .max : (1 << count) - 1
         writeUB(UInt32(bitPattern: value) & mask, count: count)
     }
 
     /// Pads with zero bits to the next byte boundary, mirroring
     /// `SWFBitReader.align()`.
-    mutating func align() {
+    public mutating func align() {
         while bits.count % 8 != 0 {
             bits.append(0)
         }
     }
 
-    mutating func appendByte(_ value: UInt8) {
+    public mutating func appendByte(_ value: UInt8) {
         align()
         writeUB(UInt32(value), count: 8)
     }
 
-    mutating func appendBytes(_ values: [UInt8]) {
+    public mutating func appendBytes(_ values: [UInt8]) {
         for value in values {
             appendByte(value)
         }
     }
 
-    mutating func appendUInt16LE(_ value: UInt16) {
+    public mutating func appendUInt16LE(_ value: UInt16) {
         appendByte(UInt8(value & 0xFF))
         appendByte(UInt8(value >> 8))
     }
 
-    mutating func appendUInt32LE(_ value: UInt32) {
+    public mutating func appendUInt32LE(_ value: UInt32) {
         appendUInt16LE(UInt16(value & 0xFFFF))
         appendUInt16LE(UInt16(value >> 16))
     }
 
-    func bytes() -> Data {
+    public func bytes() -> Data {
         var out = Data()
         var accumulator: UInt8 = 0
         var filled = 0

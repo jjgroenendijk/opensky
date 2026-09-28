@@ -7,7 +7,7 @@
 
 import Foundation
 
-nonisolated package enum BSAError: Error, Equatable {
+nonisolated public enum BSAError: Error, Equatable, Sendable {
     case notABSA
     case unsupportedVersion(UInt32)
     case missingNames
@@ -16,48 +16,48 @@ nonisolated package enum BSAError: Error, Equatable {
     case sizeMismatch(expected: Int, actual: Int)
 }
 
-nonisolated package struct BSAArchive {
-    package struct ArchiveFlags: OptionSet {
-        package let rawValue: UInt32
+nonisolated public struct BSAArchive: Sendable {
+    public struct ArchiveFlags: OptionSet, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
-        package static let includeFolderNames = ArchiveFlags(rawValue: 1 << 0)
-        package static let includeFileNames = ArchiveFlags(rawValue: 1 << 1)
-        package static let compressedByDefault = ArchiveFlags(rawValue: 1 << 2)
-        package static let embeddedFileNames = ArchiveFlags(rawValue: 1 << 8)
+        public static let includeFolderNames = ArchiveFlags(rawValue: 1 << 0)
+        public static let includeFileNames = ArchiveFlags(rawValue: 1 << 1)
+        public static let compressedByDefault = ArchiveFlags(rawValue: 1 << 2)
+        public static let embeddedFileNames = ArchiveFlags(rawValue: 1 << 8)
     }
 
-    package struct Entry {
-        package let folder: String
-        package let name: String
+    public struct Entry: Sendable {
+        public let folder: String
+        public let name: String
         /// Full lowercase path with backslash separators, as the game refers to files.
-        package var path: String {
+        public var path: String {
             folder.isEmpty ? name : "\(folder)\\\(name)"
         }
 
-        package let offset: UInt32
-        package let packedSize: UInt32
-        package let isCompressed: Bool
+        public let offset: UInt32
+        public let packedSize: UInt32
+        public let isCompressed: Bool
     }
 
-    package static let supportedVersion: UInt32 = 105
+    public static let supportedVersion: UInt32 = 105
 
-    package let flags: ArchiveFlags
-    package let entries: [Entry]
+    public let flags: ArchiveFlags
+    public let entries: [Entry]
     private let data: Data
     private let entriesByPath: [String: Int]
 
     /// Memory-maps the archive; nothing beyond the tables is read up front.
-    package init(url: URL) throws {
+    public init(url: URL) throws {
         // `mappedIfSafe` may copy external-volume files into anonymous RAM.
         // Vanilla archives total ~15 GB, so mapping must be mandatory.
         try self.init(data: Data(contentsOf: url, options: .alwaysMapped))
     }
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         self.data = data
         var reader = BinaryReader(data)
 
@@ -181,13 +181,13 @@ nonisolated package struct BSAArchive {
     }
 
     /// Case-insensitive lookup; accepts `/` or `\` separators.
-    package func entry(forPath path: String) -> Entry? {
+    public func entry(forPath path: String) -> Entry? {
         let key = path.lowercased().replacingOccurrences(of: "/", with: "\\")
         return entriesByPath[key].map { entries[$0] }
     }
 
     /// Extracts and (if needed) decompresses one file's payload.
-    package func contents(of entry: Entry) throws -> Data {
+    public func contents(of entry: Entry) throws -> Data {
         var reader = BinaryReader(data, offset: Int(entry.offset))
         var remaining = Int(entry.packedSize)
 

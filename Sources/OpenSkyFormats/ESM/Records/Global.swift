@@ -18,18 +18,18 @@
 
 import Foundation
 
-nonisolated package struct Global: Equatable {
+nonisolated public struct Global: Equatable, Sendable {
     /// FNAM type character. xEdit enumerates exactly three (`s`, `l`, `f`) and
     /// defaults the editor to Float, which is also what OpenSky falls back to
     /// when FNAM is absent or carries a character no open spec describes.
-    package enum ValueType: Equatable, Sendable, CaseIterable {
+    public enum ValueType: Equatable, Sendable, CaseIterable {
         case short
         case long
         case float
 
         /// Nil for a character outside the documented set, which the decoder
         /// treats as "no usable FNAM" rather than as a fatal error.
-        package init?(fnam: UInt8) {
+        public init?(fnam: UInt8) {
             switch fnam {
             case UInt8(ascii: "s"): self = .short
             case UInt8(ascii: "l"): self = .long
@@ -39,7 +39,7 @@ nonisolated package struct Global: Equatable {
         }
 
         /// The FNAM character this type is written as.
-        package var fnam: UInt8 {
+        public var fnam: UInt8 {
             switch self {
             case .short: UInt8(ascii: "s")
             case .long: UInt8(ascii: "l")
@@ -49,7 +49,7 @@ nonisolated package struct Global: Equatable {
 
         /// True for the two integer types, whose values are rounded on every
         /// write so a short or long global never holds a fraction.
-        package var isInteger: Bool {
+        public var isInteger: Bool {
             self != .float
         }
 
@@ -64,27 +64,27 @@ nonisolated package struct Global: Equatable {
         /// than propagating a NaN through comparisons that must be total.
         /// Nothing is clamped to 16 or 32 bits: the value lives in a float on
         /// disk, and clamping would discard mod data the file can represent.
-        package func coerce(_ raw: Float) -> Float {
+        public func coerce(_ raw: Float) -> Float {
             guard isInteger else { return raw }
             guard raw.isFinite else { return 0 }
             return raw.rounded(.toNearestOrAwayFromZero)
         }
     }
 
-    package let formID: FormID
-    package let editorID: String?
+    public let formID: FormID
+    public let editorID: String?
     /// Record header flag 0x40. The Creation Kit forbids editing a constant
     /// global at runtime; OpenSky records the bit and leaves the policy to the
     /// caller rather than silently refusing writes.
-    package let isConstant: Bool
+    public let isConstant: Bool
     /// FNAM type plus the FLTV value, already coerced onto that type.
-    package let defaultValue: GlobalValue
+    public let defaultValue: GlobalValue
 
-    package var valueType: ValueType {
+    public var valueType: ValueType {
         defaultValue.type
     }
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "GLOB" else {
             throw ESMError.malformed("expected GLOB record, got \(record.type)")
         }
@@ -123,7 +123,7 @@ nonisolated package struct Global: Equatable {
 
     /// Synthetic global, for tests and for callers assembling defaults without
     /// a plugin.
-    package init(formID: FormID, editorID: String?, value: GlobalValue, isConstant: Bool = false) {
+    public init(formID: FormID, editorID: String?, value: GlobalValue, isConstant: Bool = false) {
         self.formID = formID
         self.editorID = editorID
         self.isConstant = isConstant
@@ -138,19 +138,19 @@ nonisolated package struct Global: Equatable {
 /// a script that stores 3.7 into a short global stores 4, and a condition that
 /// reads it back must see 4 whether the write came from Papyrus, the console or
 /// a save file.
-nonisolated package struct GlobalValue: Equatable, Sendable {
-    package let type: Global.ValueType
+nonisolated public struct GlobalValue: Equatable, Sendable {
+    public let type: Global.ValueType
     /// Value already coerced onto `type`; never a fraction for short or long.
-    package let value: Float
+    public let value: Float
 
-    package init(type: Global.ValueType, rawValue: Float) {
+    public init(type: Global.ValueType, rawValue: Float) {
         self.type = type
         value = type.coerce(rawValue)
     }
 
     /// The value as an integer, for a short or long global. Nil for a float
     /// global and for a magnitude no `Int64` can hold.
-    package var integerValue: Int64? {
+    public var integerValue: Int64? {
         guard type.isInteger, value >= -9.223_372e18, value <= 9.223_372e18 else { return nil }
         return Int64(value)
     }

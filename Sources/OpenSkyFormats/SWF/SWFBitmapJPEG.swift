@@ -18,7 +18,7 @@ import Foundation
 import ImageIO
 
 nonisolated extension SWFBitmapDecoder {
-    package static func decodeJPEGFamily(_ tag: SWFTag, jpegTables: Data?) throws -> SWFBitmap {
+    public static func decodeJPEGFamily(_ tag: SWFTag, jpegTables: Data?) throws -> SWFBitmap {
         var reader = BinaryReader(tag.body)
         let characterId = try reader.readUInt16()
         var alphaPlane: Data?
@@ -61,7 +61,7 @@ nonisolated extension SWFBitmapDecoder {
     /// Concatenates the JPEGTables stream and a DefineBits scan into one
     /// decodable JPEG: tables lose their trailing EOI, the scan loses its
     /// leading SOI. Empty or absent tables leave the scan untouched.
-    package static func mergedJPEG(tables: Data?, body: Data) -> Data {
+    public static func mergedJPEG(tables: Data?, body: Data) -> Data {
         let scan = strippingErroneousJPEGHeader(body)
         guard let tables, tables.count >= 2 else { return scan }
         var head = strippingErroneousJPEGHeader(tables)
@@ -77,7 +77,7 @@ nonisolated extension SWFBitmapDecoder {
     }
 
     /// Drops any pre-SWF8 erroneous 0xFF 0xD9 0xFF 0xD8 prefix headers.
-    package static func strippingErroneousJPEGHeader(_ data: Data) -> Data {
+    public static func strippingErroneousJPEGHeader(_ data: Data) -> Data {
         var out = data
         while out.count >= 4, out.prefix(4).elementsEqual([0xFF, 0xD9, 0xFF, 0xD8]) {
             out = out.dropFirst(4)
@@ -87,7 +87,7 @@ nonisolated extension SWFBitmapDecoder {
 
     /// Payload sniffing per the spec's signature lists; anything else is
     /// treated as JPEG.
-    package static func detectImageFormat(_ data: Data) -> SWFBitmap.SourceFormat {
+    public static func detectImageFormat(_ data: Data) -> SWFBitmap.SourceFormat {
         if data.prefix(8).elementsEqual([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) {
             return .png
         }
@@ -98,10 +98,10 @@ nonisolated extension SWFBitmapDecoder {
     }
 
     /// ImageIO decode result normalized to RGBA8.
-    package struct DecodedImage {
-        package let width: Int
-        package let height: Int
-        package let pixels: [UInt8]
+    public struct DecodedImage: Sendable {
+        public let width: Int
+        public let height: Int
+        public let pixels: [UInt8]
     }
 
     private static func renderRGBA(_ data: Data) throws -> DecodedImage {

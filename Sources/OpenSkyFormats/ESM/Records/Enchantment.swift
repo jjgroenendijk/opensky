@@ -21,19 +21,19 @@
 
 import Foundation
 
-nonisolated package struct Enchantment {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct Enchantment: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// FULL — the name shown on an item this enchantment is applied to.
-    package let name: LString?
+    public let name: LString?
     /// OBND. Always written, always zero on a vanilla ENCH.
-    package let bounds: ObjectBounds?
+    public let bounds: ObjectBounds?
     /// ENIT. Nil when the field is absent or too short to decode.
-    package let data: EnchantmentItemData?
-    package let effects: [MagicItemEffect]
-    package let skipped: MagicEffectTally
+    public let data: EnchantmentItemData?
+    public let effects: [MagicItemEffect]
+    public let skipped: MagicEffectTally
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "ENCH" else {
             throw ESMError.malformed("expected ENCH record, got \(record.type)")
         }

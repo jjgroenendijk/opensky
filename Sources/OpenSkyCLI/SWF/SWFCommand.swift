@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum SWFCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

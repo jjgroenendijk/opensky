@@ -26,27 +26,27 @@
 
 import Foundation
 
-nonisolated package struct Armor {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct Armor: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// FULL — display name; localized plugins store a string-table ID.
-    package let name: LString?
+    public let name: LString?
     /// RNAM — race the piece fits / filters against (0x19 DefaultRace usually).
-    package let race: FormID?
+    public let race: FormID?
     /// BOD2/BODT biped slots + armor type; nil when absent.
-    package let bodyTemplate: BodyTemplate?
+    public let bodyTemplate: BodyTemplate?
     /// MODL armature list: ARMA FormIDs that supply the worn geometry.
-    package let armatures: [FormID]
+    public let armatures: [FormID]
     /// DATA — gold value and carry weight.
-    package let itemValue: ItemValue
+    public let itemValue: ItemValue
     /// KSIZ/KWDA keyword array (material, vendor and set keywords).
-    package let keywords: KeywordList
+    public let keywords: KeywordList
     /// DNAM — base armor rating * 100; only the low 16 bits are meaningful.
-    package let armorRating: UInt32
+    public let armorRating: UInt32
     /// EITM — ENCH applied while the piece is worn; nil when unenchanted.
-    package let enchantment: FormID?
+    public let enchantment: FormID?
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "ARMO" else {
             throw ESMError.malformed("expected ARMO record, got \(record.type)")
         }

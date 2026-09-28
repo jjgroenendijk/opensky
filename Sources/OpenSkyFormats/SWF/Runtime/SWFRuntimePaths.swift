@@ -19,7 +19,7 @@ nonisolated extension SWFMovieRuntime {
     /// Resolves a dotted or slash-separated path. A leading `/` or a leading
     /// `_root` / `_level0` component makes it absolute; `..` and `_parent` walk
     /// up. Returns nil when any component names nothing.
-    package func node(atPath path: String, from origin: SWFDisplayObject) -> SWFDisplayObject? {
+    public func node(atPath path: String, from origin: SWFDisplayObject) -> SWFDisplayObject? {
         let trimmed = path.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else {
             return nil
@@ -41,7 +41,7 @@ nonisolated extension SWFMovieRuntime {
     /// Splits a path into components. Slash segments come first, because `..`
     /// only ever appears in the slash spelling and must not be split on its own
     /// dots; each remaining segment then splits on `.` for the dotted spelling.
-    package static func pathComponents(_ path: String) -> [String] {
+    public static func pathComponents(_ path: String) -> [String] {
         path.split(separator: "/").flatMap { segment -> [String] in
             if segment == ".." || segment == "." {
                 return [String(segment)]
@@ -66,7 +66,7 @@ nonisolated extension SWFMovieRuntime {
     // MARK: - Members
 
     /// A member of a display object the property table does not hold.
-    package func member(_ name: String, of node: SWFDisplayObject) -> AS2Value? {
+    public func member(_ name: String, of node: SWFDisplayObject) -> AS2Value? {
         if let property = AS2DisplayProperty.named(name) {
             return displayProperty(property, of: node)
         }
@@ -104,7 +104,7 @@ nonisolated extension SWFMovieRuntime {
     /// through to the ordinary property table, which is what makes CLIK's
     /// `__width` / `__height` pair — ordinary properties, not display
     /// properties — behave.
-    package func setMember(_ name: String, of node: SWFDisplayObject, to value: AS2Value) -> Bool {
+    public func setMember(_ name: String, of node: SWFDisplayObject, to value: AS2Value) -> Bool {
         if let property = AS2DisplayProperty.named(name) {
             return setDisplayProperty(property, of: node, to: value)
         }
@@ -132,7 +132,7 @@ nonisolated extension SWFMovieRuntime {
     /// Assigns a field's runtime content and writes the bound variable back, so
     /// a movie that reads `_root.someVar` after setting `field.text` sees the
     /// same string.
-    package func setText(_ value: String, of node: SWFDisplayObject) {
+    public func setText(_ value: String, of node: SWFDisplayObject) {
         node.textOverride = value
         if
             let characterId = node.characterId,
@@ -145,7 +145,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// The string a field currently draws: an explicit assignment first, then
     /// its `VariableName` binding, then the character's `InitialText`.
-    package func text(of node: SWFDisplayObject) -> String? {
+    public func text(of node: SWFDisplayObject) -> String? {
         if let override = node.textOverride {
             return override
         }

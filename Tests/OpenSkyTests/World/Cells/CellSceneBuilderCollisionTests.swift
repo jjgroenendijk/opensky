@@ -1,6 +1,7 @@
 // Static collision integration into exterior/interior CellScene. Synthetic
 // ESM + NIF bytes only; no game content.
 
+import FormatsTestSupport
 import Metal
 @testable import OpenSky
 @testable import OpenSkyFormats

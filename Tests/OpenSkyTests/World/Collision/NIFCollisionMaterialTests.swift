@@ -2,6 +2,7 @@
 // two block kinds that store several materials split into one shape per
 // material. Synthetic in-code payloads only; layouts from NifTools nif.xml.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

@@ -7,18 +7,18 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum SWFImportFixture {
+public enum SWFImportFixture: Sendable {
     /// Character ids every fixture movie uses, so a merge that forgets to
     /// remap collides visibly.
-    static let shapeId: UInt16 = 1
-    static let spriteId: UInt16 = 2
+    public static let shapeId: UInt16 = 1
+    public static let spriteId: UInt16 = 2
     /// The placeholder id an importing movie uses for the character it borrows.
-    static let placeholder: UInt16 = 60
+    public static let placeholder: UInt16 = 60
 
     /// A component movie: a rectangle inside a sprite, the sprite exported
     /// under `linkage`, and a DoInitAction registering a class against it.
     /// `width` identifies which movie a merged shape came from.
-    static func component(
+    public static func component(
         linkage: String,
         width: Int32,
         className: String = "Widget"
@@ -40,7 +40,7 @@ enum SWFImportFixture {
 
     /// A component that also imports one further character and places it inside
     /// its own sprite, so imports chain.
-    static func link(
+    public static func link(
         linkage: String,
         width: Int32,
         importURL: String,
@@ -65,7 +65,7 @@ enum SWFImportFixture {
     /// uses, one import, and a placement of the imported placeholder.
     /// `places` off leaves the placeholder unused, which is what a font import
     /// looks like.
-    static func importer(
+    public static func importer(
         url: String,
         importName: String,
         width: Int32 = 500,
@@ -96,10 +96,10 @@ enum SWFImportFixture {
     }
 
     /// The path an importing movie sits at in these tests.
-    static let importerPath = "interface\\menu.swf"
+    public static let importerPath = "interface\\menu.swf"
 
     /// Merges with a resolver backed by a path -> movie table.
-    static func merge(
+    public static func merge(
         _ movie: SWFMovie,
         path: String = importerPath,
         sources: [String: SWFMovie]
@@ -109,7 +109,7 @@ enum SWFImportFixture {
 
     /// The rectangle width of the shape a merged sprite places at depth 1,
     /// which identifies the movie the sprite's art came from.
-    static func artWidth(of sprite: SWFSprite, in movie: SWFMovie) -> Int32? {
+    public static func artWidth(of sprite: SWFSprite, in movie: SWFMovie) -> Int32? {
         for placed in sprite.frame1 where placed.depth == 1 {
             return movie.shape(placed.characterId)?.bounds.xMax
         }
@@ -117,7 +117,7 @@ enum SWFImportFixture {
     }
 
     /// The sprite a merged sprite places at depth 2 (the chained import).
-    static func nextSprite(of sprite: SWFSprite, in movie: SWFMovie) -> SWFSprite? {
+    public static func nextSprite(of sprite: SWFSprite, in movie: SWFMovie) -> SWFSprite? {
         for placed in sprite.frame1 where placed.depth == 2 {
             return movie.sprite(placed.characterId)
         }

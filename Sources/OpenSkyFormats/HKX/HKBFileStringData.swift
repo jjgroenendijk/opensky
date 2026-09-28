@@ -15,18 +15,18 @@ import Foundation
 /// Decoded `hkbProjectData` plus the `hkbProjectStringData` it points at. A
 /// project file (`defaultmale.hkx`, `firstperson.hkx`) is the root of one
 /// behavior set.
-nonisolated package struct HKBProjectData: Equatable {
-    package let animationFilenames: [String?]
-    package let behaviorFilenames: [String?]
-    package let characterFilenames: [String?]
-    package let eventNames: [String?]
-    package let animationPath: String?
-    package let behaviorPath: String?
-    package let characterPath: String?
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBProjectData: Equatable, Sendable {
+    public let animationFilenames: [String?]
+    public let behaviorFilenames: [String?]
+    public let characterFilenames: [String?]
+    public let eventNames: [String?]
+    public let animationPath: String?
+    public let behaviorPath: String?
+    public let characterPath: String?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbProjectData"
-    package static let stringDataClassName = "hkbProjectStringData"
+    public static let className = "hkbProjectData"
+    public static let stringDataClassName = "hkbProjectStringData"
 
     private static let stringDataField = HKXField(0x20, "m_stringData")
     private static let animationFilenamesField = HKXField(0x10, "m_animationFilenames")
@@ -37,7 +37,7 @@ nonisolated package struct HKBProjectData: Equatable {
     private static let behaviorPathField = HKXField(0x58, "m_behaviorPath")
     private static let characterPathField = HKXField(0x60, "m_characterPath")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBProjectData?
     {
         guard var owner = graph.cursor(at: target) else { return nil }
@@ -67,17 +67,17 @@ nonisolated package struct HKBProjectData: Equatable {
 /// Decoded `hkbCharacterData` plus the `hkbCharacterStringData` it points at.
 /// A character file binds one behavior file to one rig and to the clip list
 /// its graph may play.
-nonisolated package struct HKBCharacterData: Equatable {
-    package let name: String?
-    package let rigName: String?
-    package let ragdollName: String?
-    package let behaviorFilename: String?
-    package let animationNames: [String?]
-    package let characterPropertyNames: [String?]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBCharacterData: Equatable, Sendable {
+    public let name: String?
+    public let rigName: String?
+    public let ragdollName: String?
+    public let behaviorFilename: String?
+    public let animationNames: [String?]
+    public let characterPropertyNames: [String?]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbCharacterData"
-    package static let stringDataClassName = "hkbCharacterStringData"
+    public static let className = "hkbCharacterData"
+    public static let stringDataClassName = "hkbCharacterStringData"
 
     private static let stringDataField = HKXField(0x98, "m_stringData")
     private static let animationNamesField = HKXField(0x30, "m_animationNames")
@@ -89,7 +89,7 @@ nonisolated package struct HKBCharacterData: Equatable {
     private static let ragdollNameField = HKXField(0xB0, "m_ragdollName")
     private static let behaviorFilenameField = HKXField(0xB8, "m_behaviorFilename")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBCharacterData?
     {
         guard var owner = graph.cursor(at: target) else { return nil }

@@ -30,6 +30,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// One actor's magic as a condition sees it.
 nonisolated struct MagicConditionState: Equatable, Sendable {

@@ -3,10 +3,10 @@
 
 import Foundation
 
-enum SpellFixture {
+public enum SpellFixture: Sendable {
     /// The 36-byte SPIT struct: base cost, flags, type, charge time, casting
     /// type, delivery, cast duration, range, half-cost PERK.
-    static func spit(
+    public static func spit(
         baseCost: UInt32 = 0,
         flags: UInt32 = 0,
         type: UInt32 = 0,

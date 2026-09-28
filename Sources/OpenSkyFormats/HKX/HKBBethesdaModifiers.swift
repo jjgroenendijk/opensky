@@ -18,21 +18,21 @@ import Foundation
 /// Decoded `BSIsActiveModifier`, size 96: publishes whether each of up to five
 /// tracked slots is active, optionally inverted. Bound to graph variables, this
 /// is how one branch of the graph tests whether another branch is running.
-nonisolated package struct BSIsActiveModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
+nonisolated public struct BSIsActiveModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
     /// Five (isActive, invertActive) pairs in slot order.
-    package let isActive: [Bool]
-    package let invertActive: [Bool]
-    package let unresolved: [HKXUnresolvedReference]
+    public let isActive: [Bool]
+    public let invertActive: [Bool]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSIsActiveModifier"
+    public static let className = "BSIsActiveModifier"
 
     /// Ten consecutive bools from 0x50: slot n is at 0x50 + 2n, its invert
     /// flag at 0x51 + 2n.
     private static let slotCount = 5
     private static let slotsOffset = 0x50
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSIsActiveModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -56,31 +56,31 @@ nonisolated package struct BSIsActiveModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "active slots " + isActive.map { $0 ? "1" : "0" }.joined()
     }
 }
 
 /// Decoded `BSEventEveryNEventsModifier`, size 128: counts one event and raises
 /// another every N occurrences, optionally with the count randomised.
-nonisolated package struct BSEventEveryNEventsModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let eventToCheckFor: HKBEventProperty
-    package let eventToSend: HKBEventProperty
-    package let numberOfEventsBeforeSend: Int
-    package let minimumNumberOfEventsBeforeSend: Int
-    package let randomizeNumberOfEvents: Bool
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct BSEventEveryNEventsModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let eventToCheckFor: HKBEventProperty
+    public let eventToSend: HKBEventProperty
+    public let numberOfEventsBeforeSend: Int
+    public let minimumNumberOfEventsBeforeSend: Int
+    public let randomizeNumberOfEvents: Bool
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSEventEveryNEventsModifier"
+    public static let className = "BSEventEveryNEventsModifier"
 
     private static let checkForOffset = 0x50
     private static let toSendOffset = 0x60
@@ -90,7 +90,7 @@ nonisolated package struct BSEventEveryNEventsModifier: HKBClass, Equatable {
     )
     private static let randomizeField = HKXField(0x72, "m_randomizeNumberOfEvents")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSEventEveryNEventsModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -112,17 +112,17 @@ nonisolated package struct BSEventEveryNEventsModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
             + eventToCheckFor.references(named: "m_eventToCheckFor")
             + eventToSend.references(named: "m_eventToSend")
     }
 
-    package var summary: String {
+    public var summary: String {
         "event \(eventToSend.id) every \(numberOfEventsBeforeSend) "
             + "of event \(eventToCheckFor.id)"
     }
@@ -130,16 +130,16 @@ nonisolated package struct BSEventEveryNEventsModifier: HKBClass, Equatable {
 
 /// Decoded `BSEventOnDeactivateModifier`, size 96: raises one event when the
 /// node it sits under is deactivated.
-nonisolated package struct BSEventOnDeactivateModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let event: HKBEventProperty
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct BSEventOnDeactivateModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let event: HKBEventProperty
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSEventOnDeactivateModifier"
+    public static let className = "BSEventOnDeactivateModifier"
 
     private static let eventOffset = 0x50
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSEventOnDeactivateModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -151,35 +151,35 @@ nonisolated package struct BSEventOnDeactivateModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + event.references(named: "m_event")
     }
 
-    package var summary: String {
+    public var summary: String {
         "raises event \(event.id) on deactivate"
     }
 }
 
 /// One of `BSEventOnFalseToTrueModifier`'s three slots: a bound bool, an enable
 /// flag, and the event raised when the bool goes false to true.
-nonisolated package struct BSFalseToTrueSlot: Equatable {
-    package let enableEvent: Bool
-    package let variableToTest: Bool
-    package let eventToSend: HKBEventProperty
+nonisolated public struct BSFalseToTrueSlot: Equatable, Sendable {
+    public let enableEvent: Bool
+    public let variableToTest: Bool
+    public let eventToSend: HKBEventProperty
 }
 
 /// Decoded `BSEventOnFalseToTrueModifier`, size 160: three edge detectors in
 /// one node. The slots are laid out at a 24-byte pitch from 0x50.
-nonisolated package struct BSEventOnFalseToTrueModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let slots: [BSFalseToTrueSlot]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct BSEventOnFalseToTrueModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let slots: [BSFalseToTrueSlot]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSEventOnFalseToTrueModifier"
+    public static let className = "BSEventOnFalseToTrueModifier"
 
     private static let slotCount = 3
     private static let firstSlotOffset = 0x50
@@ -187,7 +187,7 @@ nonisolated package struct BSEventOnFalseToTrueModifier: HKBClass, Equatable {
     /// The event property sits 8 bytes past the slot's two flags.
     private static let slotEventOffset = 0x08
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSEventOnFalseToTrueModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -213,17 +213,17 @@ nonisolated package struct BSEventOnFalseToTrueModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references + slots.enumerated().flatMap { index, slot in
             slot.eventToSend.references(named: "m_EventToSend\(index + 1)")
         }
     }
 
-    package var summary: String {
+    public var summary: String {
         "slots " + slots.map { "\($0.enableEvent ? "on" : "off"):\($0.eventToSend.id)" }
             .joined(separator: " ")
     }
@@ -231,22 +231,22 @@ nonisolated package struct BSEventOnFalseToTrueModifier: HKBClass, Equatable {
 
 /// Decoded `BSInterpValueModifier`, size 104: eases `m_result` from `m_source`
 /// towards `m_target` at `m_gain` per second. All four are normally bound.
-nonisolated package struct BSInterpValueModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let source: Float
-    package let target: Float
-    package let result: Float
-    package let gain: Float
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct BSInterpValueModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let source: Float
+    public let target: Float
+    public let result: Float
+    public let gain: Float
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSInterpValueModifier"
+    public static let className = "BSInterpValueModifier"
 
     private static let sourceField = HKXField(0x50, "m_source")
     private static let targetField = HKXField(0x54, "m_target")
     private static let resultField = HKXField(0x58, "m_result")
     private static let gainField = HKXField(0x5C, "m_gain")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSInterpValueModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -261,33 +261,33 @@ nonisolated package struct BSInterpValueModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "interpolate \(source) -> \(target) at gain \(gain)"
     }
 }
 
 /// Decoded `BSModifyOnceModifier`, size 112: runs one modifier on activation and
 /// another on deactivation, each exactly once.
-nonisolated package struct BSModifyOnceModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let onActivateModifier: HKXPointerTarget?
-    package let onDeactivateModifier: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct BSModifyOnceModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let onActivateModifier: HKXPointerTarget?
+    public let onDeactivateModifier: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSModifyOnceModifier"
+    public static let className = "BSModifyOnceModifier"
 
     private static let onActivateField = HKXField(0x50, "m_pOnActivateModifier")
     private static let onDeactivateField = HKXField(0x60, "m_pOnDeactivateModifier")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSModifyOnceModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -300,17 +300,17 @@ nonisolated package struct BSModifyOnceModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
             + HKBReference.optional("m_pOnActivateModifier", onActivateModifier)
             + HKBReference.optional("m_pOnDeactivateModifier", onDeactivateModifier)
     }
 
-    package var summary: String {
+    public var summary: String {
         "on activate \(onActivateModifier != nil ? "set" : "none"), "
             + "on deactivate \(onDeactivateModifier != nil ? "set" : "none")"
     }
@@ -318,22 +318,22 @@ nonisolated package struct BSModifyOnceModifier: HKBClass, Equatable {
 
 /// Decoded `BSSpeedSamplerModifier`, size 96: samples the character's movement
 /// and publishes a speed and a direction the locomotion blenders weight against.
-nonisolated package struct BSSpeedSamplerModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let state: Int
-    package let direction: Float
-    package let goalSpeed: Float
-    package let speedOut: Float
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct BSSpeedSamplerModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let state: Int
+    public let direction: Float
+    public let goalSpeed: Float
+    public let speedOut: Float
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSSpeedSamplerModifier"
+    public static let className = "BSSpeedSamplerModifier"
 
     private static let stateField = HKXField(0x50, "m_state")
     private static let directionField = HKXField(0x54, "m_direction")
     private static let goalSpeedField = HKXField(0x58, "m_goalSpeed")
     private static let speedOutField = HKXField(0x5C, "m_speedOut")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSSpeedSamplerModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -348,34 +348,34 @@ nonisolated package struct BSSpeedSamplerModifier: HKBClass, Equatable {
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
     }
 
-    package var summary: String {
+    public var summary: String {
         "state \(state), goal speed \(goalSpeed)"
     }
 }
 
 /// Decoded `BSRagdollContactListenerModifier`, size 136: raises an event when a
 /// listed ragdoll bone touches something.
-nonisolated package struct BSRagdollContactListenerModifier: HKBClass, Equatable {
-    package let modifier: HKBModifierHeader
-    package let contactEvent: HKBEventProperty
+nonisolated public struct BSRagdollContactListenerModifier: HKBClass, Equatable, Sendable {
+    public let modifier: HKBModifierHeader
+    public let contactEvent: HKBEventProperty
     /// `hkbBoneIndexArray` of the bones listened to.
-    package let bones: HKXPointerTarget?
-    package let unresolved: [HKXUnresolvedReference]
+    public let bones: HKXPointerTarget?
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "BSRagdollContactListenerModifier"
+    public static let className = "BSRagdollContactListenerModifier"
 
     private static let contactEventOffset = 0x58
     private static let bonesField = HKXField(0x68, "m_bones")
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> BSRagdollContactListenerModifier?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -391,17 +391,17 @@ nonisolated package struct BSRagdollContactListenerModifier: HKBClass, Equatable
         )
     }
 
-    package var nodeName: String? {
+    public var nodeName: String? {
         modifier.name
     }
 
-    package var references: [HKBReference] {
+    public var references: [HKBReference] {
         modifier.references
             + contactEvent.references(named: "m_contactEvent")
             + HKBReference.optional("m_bones", bones)
     }
 
-    package var summary: String {
+    public var summary: String {
         "contact raises event \(contactEvent.id)"
     }
 }

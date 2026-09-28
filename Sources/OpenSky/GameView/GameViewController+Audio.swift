@@ -5,6 +5,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 /// Where a panel-triggered source lands: straight ahead of the camera, far

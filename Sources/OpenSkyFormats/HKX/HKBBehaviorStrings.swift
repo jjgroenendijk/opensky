@@ -18,14 +18,14 @@ import Foundation
 /// Decoded `hkbBehaviorGraphStringData`: the name tables the whole graph is
 /// addressed through. Entries stay index-preserving — a null name is nil in
 /// place, never dropped, because every index in the graph is positional.
-nonisolated package struct HKBBehaviorGraphStringData: Equatable {
-    package let eventNames: [String?]
-    package let attributeNames: [String?]
-    package let variableNames: [String?]
-    package let characterPropertyNames: [String?]
-    package let unresolved: [HKXUnresolvedReference]
+nonisolated public struct HKBBehaviorGraphStringData: Equatable, Sendable {
+    public let eventNames: [String?]
+    public let attributeNames: [String?]
+    public let variableNames: [String?]
+    public let characterPropertyNames: [String?]
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbBehaviorGraphStringData"
+    public static let className = "hkbBehaviorGraphStringData"
 
     // hkReferencedObject base is 16 bytes; four hkArray<hkStringPtr> follow.
     private static let eventNamesField = HKXField(0x10, "m_eventNames")
@@ -35,7 +35,7 @@ nonisolated package struct HKBBehaviorGraphStringData: Equatable {
         0x40, "m_characterPropertyNames"
     )
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBBehaviorGraphStringData?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -54,15 +54,15 @@ nonisolated package struct HKBBehaviorGraphStringData: Equatable {
 /// values hold bool, int, and real variables (a real is the float bit pattern
 /// stored in an i32), quad values hold vector and quaternion variables, and
 /// variant values hold pointer variables.
-nonisolated package struct HKBVariableValueSet: Equatable {
-    package let wordValues: [Int]
-    package let quadValues: [SIMD4<Float>]
+nonisolated public struct HKBVariableValueSet: Equatable, Sendable {
+    public let wordValues: [Int]
+    public let quadValues: [SIMD4<Float>]
     /// Pointer-typed variables are references to other objects; the census
     /// needs only how many there are, so the targets are not followed here.
-    package let variantCount: Int
-    package let unresolved: [HKXUnresolvedReference]
+    public let variantCount: Int
+    public let unresolved: [HKXUnresolvedReference]
 
-    package static let className = "hkbVariableValueSet"
+    public static let className = "hkbVariableValueSet"
 
     private static let wordValuesField = HKXField(0x10, "m_wordVariableValues")
     private static let quadValuesField = HKXField(0x20, "m_quadVariableValues")
@@ -70,7 +70,7 @@ nonisolated package struct HKBVariableValueSet: Equatable {
     /// hkVector4, four floats.
     private static let quadStride = 16
 
-    package static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
+    public static func decode(at target: HKXPointerTarget, in graph: HKXObjectGraph)
         -> HKBVariableValueSet?
     {
         guard var cursor = graph.cursor(at: target) else { return nil }
@@ -105,7 +105,7 @@ nonisolated package struct HKBVariableValueSet: Equatable {
     }
 
     /// A real-typed variable stores its float in the word slot's bit pattern.
-    package func realValue(at index: Int) -> Float? {
+    public func realValue(at index: Int) -> Float? {
         guard wordValues.indices.contains(index) else { return nil }
         return Float(bitPattern: UInt32(bitPattern: Int32(truncatingIfNeeded: wordValues[index])))
     }

@@ -6,29 +6,6 @@
 	objectVersion = 100;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		5AF000013000109300170030 /* OpenSkyFormats.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5AF000013000109300170001 /* OpenSkyFormats.framework */; };
-		5AF000013000109300170032 /* OpenSkyFormats.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5AF000013000109300170001 /* OpenSkyFormats.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		5AF000013000109300170033 /* OpenSkyFormats.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5AF000013000109300170001 /* OpenSkyFormats.framework */; };
-		5AF000013000109300170034 /* OpenSkyFormats.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5AF000013000109300170001 /* OpenSkyFormats.framework */; };
-		5AF000013000109300170035 /* OpenSkyFormats.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5AF000013000109300170001 /* OpenSkyFormats.framework */; };
-		5AF000013000109300170023 /* OpenSkyFormats.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5AF000013000109300170001 /* OpenSkyFormats.framework */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		5AF000013000109300170031 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				5AF000013000109300170032 /* OpenSkyFormats.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXContainerItemProxy section */
 		5A3BAE1A3000109300177F95 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -51,34 +28,6 @@
 			remoteGlobalIDString = 5A3BAE003000109100177F95;
 			remoteInfo = OpenSky;
 		};
-		5AF000013000109300170041 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5A3BADF93000109100177F95 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 5AF000013000109300170010;
-			remoteInfo = OpenSkyFormats;
-		};
-		5AF000013000109300170043 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5A3BADF93000109100177F95 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 5AF000013000109300170010;
-			remoteInfo = OpenSkyFormats;
-		};
-		5AF000013000109300170045 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5A3BADF93000109100177F95 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 5AF000013000109300170010;
-			remoteInfo = OpenSkyFormats;
-		};
-		5AF000013000109300170047 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5A3BADF93000109100177F95 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 5A3BAE003000109100177F95;
-			remoteInfo = OpenSky;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -95,10 +44,6 @@
 		5ACF160130001093001700B6 /* CLI.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = CLI.xcconfig; path = Build/CLI.xcconfig; sourceTree = "<group>"; };
 		5ACF160130001093001700B7 /* Tests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Tests.xcconfig; path = Build/Tests.xcconfig; sourceTree = "<group>"; };
 		5ACF160130001093001700B8 /* UITests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = UITests.xcconfig; path = Build/UITests.xcconfig; sourceTree = "<group>"; };
-		5AF000013000109300170001 /* OpenSkyFormats.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenSkyFormats.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		5AF000013000109300170002 /* OpenSkyFormatsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenSkyFormatsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5AF000013000109300170003 /* Formats.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Formats.xcconfig; path = Build/Formats.xcconfig; sourceTree = "<group>"; };
-		5AF000013000109300170004 /* FormatsTests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = FormatsTests.xcconfig; path = Build/FormatsTests.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -117,30 +62,6 @@
 				CLAUDE.md,
 			);
 			target = 5AD1000130001093001700A1 /* OpenSkyRealDataTests */;
-		};
-		5AF0000130001093001700B1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AGENTS.md,
-				CLAUDE.md,
-			);
-			target = 5A3BAE183000109300177F95 /* OpenSkyTests */;
-		};
-		5AF0000130001093001700B2 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AGENTS.md,
-				CLAUDE.md,
-			);
-			target = 5AD1000130001093001700A1 /* OpenSkyRealDataTests */;
-		};
-		5AF0000130001093001700B3 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AGENTS.md,
-				CLAUDE.md,
-			);
-			target = 5AF000013000109300170020 /* OpenSkyFormatsTests */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -189,39 +110,20 @@
 			path = TestSupport;
 			sourceTree = "<group>";
 		};
-		5AF000013000109300170005 /* OpenSkyFormats */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = OpenSkyFormats;
-			sourceTree = "<group>";
-		};
-		5AF000013000109300170006 /* OpenSkyFormatsTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = OpenSkyFormatsTests;
-			sourceTree = "<group>";
-		};
-		5AF000013000109300170007 /* FormatsTestSupport */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				5AF0000130001093001700B1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-				5AF0000130001093001700B2 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-				5AF0000130001093001700B3 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-			);
-			path = FormatsTestSupport;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		5A3BADFE3000109100177F95 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				5AF000013000109300170030 /* OpenSkyFormats.framework in Frameworks */,
+				5AF000033000109300170013 /* OpenSkyGameData in Frameworks */,
+				5AF000033000109300170011 /* OpenSkyFormats in Frameworks */,
 			);
 		};
 		5A3BAE163000109300177F95 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				5AF000013000109300170034 /* OpenSkyFormats.framework in Frameworks */,
+				5AF000033000109300170019 /* FormatsTestSupport in Frameworks */,
 			);
 		};
 		5A3BAE203000109300177F95 /* Frameworks */ = {
@@ -232,29 +134,15 @@
 		5AC1000130001093001700A4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				5AF000013000109300170033 /* OpenSkyFormats.framework in Frameworks */,
+				5AF000033000109300170017 /* OpenSkyGameData in Frameworks */,
+				5AF000033000109300170015 /* OpenSkyFormats in Frameworks */,
 			);
 		};
 		5AD1000130001093001700A4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				5AF000013000109300170035 /* OpenSkyFormats.framework in Frameworks */,
+				5AF00003300010930017001B /* FormatsTestSupport in Frameworks */,
 			);
-		};
-		5AF000013000109300170012 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5AF000013000109300170022 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				5AF000013000109300170023 /* OpenSkyFormats.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -270,8 +158,6 @@
 				5ACF160130001093001700B6 /* CLI.xcconfig */,
 				5ACF160130001093001700B7 /* Tests.xcconfig */,
 				5ACF160130001093001700B8 /* UITests.xcconfig */,
-				5AF000013000109300170003 /* Formats.xcconfig */,
-				5AF000013000109300170004 /* FormatsTests.xcconfig */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -291,7 +177,6 @@
 			children = (
 				5A3BAE033000109100177F96 /* OpenSky */,
 				5A3BAE033000109100177F95 /* OpenSkyEngine */,
-				5AF000013000109300170005 /* OpenSkyFormats */,
 				5AC1000130001093001700A5 /* OpenSkyCLI */,
 				5A3BAE033000109100177F97 /* ShaderTypes */,
 			);
@@ -302,10 +187,8 @@
 			isa = PBXGroup;
 			children = (
 				5A3BAE1C3000109300177F95 /* OpenSkyTests */,
-				5AF000013000109300170006 /* OpenSkyFormatsTests */,
 				5AD1000130001093001700A5 /* OpenSkyRealDataTests */,
 				5AD1000130001093001700A6 /* TestSupport */,
-				5AF000013000109300170007 /* FormatsTestSupport */,
 				5A3BAE263000109300177F95 /* OpenSkyUITests */,
 			);
 			path = Tests;
@@ -316,8 +199,6 @@
 			children = (
 				5A3BAE013000109100177F95 /* OpenSky.app */,
 				5AC1000130001093001700A2 /* openskycli */,
-				5AF000013000109300170001 /* OpenSkyFormats.framework */,
-				5AF000013000109300170002 /* OpenSkyFormatsTests.xctest */,
 				5A3BAE193000109300177F95 /* OpenSkyTests.xctest */,
 				5AD1000130001093001700A2 /* OpenSkyRealDataTests.xctest */,
 				5A3BAE233000109300177F95 /* OpenSkyUITests.xctest */,
@@ -336,13 +217,11 @@
 				5A3BADFD3000109100177F95 /* Sources */,
 				5A3BADFE3000109100177F95 /* Frameworks */,
 				5A3BADFF3000109100177F95 /* Resources */,
-				5AF000013000109300170031 /* Embed Frameworks */,
 				5AFF000130001093001700B2 /* Embed vendored ffmpeg */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				5AF000013000109300170040 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				5A3BAE033000109100177F96 /* OpenSky */,
@@ -350,6 +229,10 @@
 				5A3BAE033000109100177F97 /* ShaderTypes */,
 			);
 			name = OpenSky;
+			packageProductDependencies = (
+				5AF000033000109300170010 /* OpenSkyFormats */,
+				5AF000033000109300170012 /* OpenSkyGameData */,
+			);
 			productName = OpenSky;
 			productReference = 5A3BAE013000109100177F95 /* OpenSky.app */;
 			productType = "com.apple.product-type.application";
@@ -370,9 +253,11 @@
 			fileSystemSynchronizedGroups = (
 				5A3BAE1C3000109300177F95 /* OpenSkyTests */,
 				5AD1000130001093001700A6 /* TestSupport */,
-				5AF000013000109300170007 /* FormatsTestSupport */,
 			);
 			name = OpenSkyTests;
+			packageProductDependencies = (
+				5AF000033000109300170018 /* FormatsTestSupport */,
+			);
 			productName = OpenSkyTests;
 			productReference = 5A3BAE193000109300177F95 /* OpenSkyTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -414,9 +299,11 @@
 			fileSystemSynchronizedGroups = (
 				5AD1000130001093001700A5 /* OpenSkyRealDataTests */,
 				5AD1000130001093001700A6 /* TestSupport */,
-				5AF000013000109300170007 /* FormatsTestSupport */,
 			);
 			name = OpenSkyRealDataTests;
+			packageProductDependencies = (
+				5AF00003300010930017001A /* FormatsTestSupport */,
+			);
 			productName = OpenSkyRealDataTests;
 			productReference = 5AD1000130001093001700A2 /* OpenSkyRealDataTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -432,7 +319,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				5AF000013000109300170042 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				5A3BAE033000109100177F95 /* OpenSkyEngine */,
@@ -440,52 +326,13 @@
 				5AC1000130001093001700A5 /* OpenSkyCLI */,
 			);
 			name = OpenSkyCLI;
+			packageProductDependencies = (
+				5AF000033000109300170014 /* OpenSkyFormats */,
+				5AF000033000109300170016 /* OpenSkyGameData */,
+			);
 			productName = openskycli;
 			productReference = 5AC1000130001093001700A2 /* openskycli */;
 			productType = "com.apple.product-type.tool";
-		};
-		5AF000013000109300170010 /* OpenSkyFormats */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5AF000013000109300170050 /* Build configuration list for PBXNativeTarget "OpenSkyFormats" */;
-			buildPhases = (
-				5AF000013000109300170011 /* Sources */,
-				5AF000013000109300170012 /* Frameworks */,
-				5AF000013000109300170013 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				5AF000013000109300170005 /* OpenSkyFormats */,
-			);
-			name = OpenSkyFormats;
-			productName = OpenSkyFormats;
-			productReference = 5AF000013000109300170001 /* OpenSkyFormats.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		5AF000013000109300170020 /* OpenSkyFormatsTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5AF000013000109300170053 /* Build configuration list for PBXNativeTarget "OpenSkyFormatsTests" */;
-			buildPhases = (
-				5AF000013000109300170021 /* Sources */,
-				5AF000013000109300170022 /* Frameworks */,
-				5AF000013000109300170024 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				5AF000013000109300170044 /* PBXTargetDependency */,
-				5AF000013000109300170046 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				5AF000013000109300170006 /* OpenSkyFormatsTests */,
-				5AF000013000109300170007 /* FormatsTestSupport */,
-			);
-			name = OpenSkyFormatsTests;
-			productName = OpenSkyFormatsTests;
-			productReference = 5AF000013000109300170002 /* OpenSkyFormatsTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -514,13 +361,6 @@
 					5AC1000130001093001700A1 = {
 						CreatedOnToolsVersion = 26.6;
 					};
-					5AF000013000109300170010 = {
-						CreatedOnToolsVersion = 27.0;
-					};
-					5AF000013000109300170020 = {
-						CreatedOnToolsVersion = 27.0;
-						TestTargetID = 5A3BAE003000109100177F95;
-					};
 				};
 			};
 			buildConfigurationList = 5A3BADFC3000109100177F95 /* Build configuration list for PBXProject "OpenSky" */;
@@ -532,6 +372,9 @@
 			);
 			mainGroup = 5A3BADF83000109100177F95;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5AF000033000109300170001 /* XCLocalSwiftPackageReference "." */,
+			);
 			preferredProjectObjectVersion = 100;
 			productRefGroup = 5A3BAE023000109100177F95 /* Products */;
 			projectDirPath = "";
@@ -539,9 +382,7 @@
 			targets = (
 				5A3BAE003000109100177F95 /* OpenSky */,
 				5AC1000130001093001700A1 /* OpenSkyCLI */,
-				5AF000013000109300170010 /* OpenSkyFormats */,
 				5A3BAE183000109300177F95 /* OpenSkyTests */,
-				5AF000013000109300170020 /* OpenSkyFormatsTests */,
 				5AD1000130001093001700A1 /* OpenSkyRealDataTests */,
 				5A3BAE223000109300177F95 /* OpenSkyUITests */,
 			);
@@ -568,20 +409,6 @@
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
-		};
-		5AF000013000109300170013 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5AF000013000109300170024 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
@@ -677,20 +504,6 @@
 			files = (
 			);
 		};
-		5AF000013000109300170011 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5AF000013000109300170021 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -708,26 +521,6 @@
 			isa = PBXTargetDependency;
 			target = 5A3BAE003000109100177F95 /* OpenSky */;
 			targetProxy = 5AD1000130001093001700A8 /* PBXContainerItemProxy */;
-		};
-		5AF000013000109300170040 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 5AF000013000109300170010 /* OpenSkyFormats */;
-			targetProxy = 5AF000013000109300170041 /* PBXContainerItemProxy */;
-		};
-		5AF000013000109300170042 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 5AF000013000109300170010 /* OpenSkyFormats */;
-			targetProxy = 5AF000013000109300170043 /* PBXContainerItemProxy */;
-		};
-		5AF000013000109300170044 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 5AF000013000109300170010 /* OpenSkyFormats */;
-			targetProxy = 5AF000013000109300170045 /* PBXContainerItemProxy */;
-		};
-		5AF000013000109300170046 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 5A3BAE003000109100177F95 /* OpenSky */;
-			targetProxy = 5AF000013000109300170047 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -816,34 +609,6 @@
 			};
 			name = Release;
 		};
-		5AF000013000109300170051 /* Debug configuration for PBXNativeTarget "OpenSkyFormats" */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5AF000013000109300170003 /* Formats.xcconfig */;
-			buildSettings = {
-			};
-			name = Debug;
-		};
-		5AF000013000109300170052 /* Release configuration for PBXNativeTarget "OpenSkyFormats" */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5AF000013000109300170003 /* Formats.xcconfig */;
-			buildSettings = {
-			};
-			name = Release;
-		};
-		5AF000013000109300170054 /* Debug configuration for PBXNativeTarget "OpenSkyFormatsTests" */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5AF000013000109300170004 /* FormatsTests.xcconfig */;
-			buildSettings = {
-			};
-			name = Debug;
-		};
-		5AF000013000109300170055 /* Release configuration for PBXNativeTarget "OpenSkyFormatsTests" */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5AF000013000109300170004 /* FormatsTests.xcconfig */;
-			buildSettings = {
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -895,23 +660,50 @@
 			);
 			defaultConfigurationName = Release;
 		};
-		5AF000013000109300170050 /* Build configuration list for PBXNativeTarget "OpenSkyFormats" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				5AF000013000109300170051 /* Debug configuration for PBXNativeTarget "OpenSkyFormats" */,
-				5AF000013000109300170052 /* Release configuration for PBXNativeTarget "OpenSkyFormats" */,
-			);
-			defaultConfigurationName = Release;
-		};
-		5AF000013000109300170053 /* Build configuration list for PBXNativeTarget "OpenSkyFormatsTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				5AF000013000109300170054 /* Debug configuration for PBXNativeTarget "OpenSkyFormatsTests" */,
-				5AF000013000109300170055 /* Release configuration for PBXNativeTarget "OpenSkyFormatsTests" */,
-			);
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5AF000033000109300170001 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5AF000033000109300170010 /* OpenSkyFormats */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OpenSkyFormats;
+		};
+		5AF000033000109300170012 /* OpenSkyGameData */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OpenSkyGameData;
+		};
+		5AF000033000109300170014 /* OpenSkyFormats */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OpenSkyFormats;
+		};
+		5AF000033000109300170016 /* OpenSkyGameData */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OpenSkyGameData;
+		};
+		5AF000033000109300170018 /* FormatsTestSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FormatsTestSupport;
+		};
+		5AF00003300010930017001A /* FormatsTestSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FormatsTestSupport;
+		};
+/* End XCSwiftPackageProductDependency section */
+
+/* Begin PBXBuildFile section */
+		5AF000033000109300170011 /* OpenSkyFormats in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170010 /* OpenSkyFormats */; };
+		5AF000033000109300170013 /* OpenSkyGameData in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170012 /* OpenSkyGameData */; };
+		5AF000033000109300170015 /* OpenSkyFormats in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170014 /* OpenSkyFormats */; };
+		5AF000033000109300170017 /* OpenSkyGameData in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170016 /* OpenSkyGameData */; };
+		5AF000033000109300170019 /* FormatsTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170018 /* FormatsTestSupport */; };
+		5AF00003300010930017001B /* FormatsTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF00003300010930017001A /* FormatsTestSupport */; };
+/* End PBXBuildFile section */
 	};
 	rootObject = 5A3BADF93000109100177F95 /* Project object */;
 }

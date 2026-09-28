@@ -6,6 +6,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Builds one cell scene by grid coordinate. The single seam scene build
 /// crosses to reach `CellSceneBuilder`; a fake conformer lets CellStreamer

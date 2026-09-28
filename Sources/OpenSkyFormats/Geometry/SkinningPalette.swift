@@ -19,23 +19,23 @@ import simd
 
 /// The metadata one skinned mesh needs to be re-posed at runtime, plus the
 /// composition itself. Built once per mesh from `MeshSkinning`.
-nonisolated package struct SkinningPalette {
+nonisolated public struct SkinningPalette: Sendable {
     /// Skin-instance bone order — the names a skeleton pose is matched by.
-    package let boneNames: [String]
-    package let rootParentToSkin: float4x4
-    package let skinToBoneMatrices: [float4x4]
+    public let boneNames: [String]
+    public let rootParentToSkin: float4x4
+    public let skinToBoneMatrices: [float4x4]
     /// The verified NIF bind palette, and the fallback for any bone the pose
     /// does not name.
-    package let bindPoseMatrices: [float4x4]
+    public let bindPoseMatrices: [float4x4]
 
     /// One composed pose: the palette to upload, and how many of its bones the
     /// pose actually named.
-    package struct Posed {
-        package let matrices: [float4x4]
-        package let matchedBoneCount: Int
+    public struct Posed: Sendable {
+        public let matrices: [float4x4]
+        public let matchedBoneCount: Int
     }
 
-    package init(
+    public init(
         boneNames: [String],
         rootParentToSkin: float4x4,
         skinToBoneMatrices: [float4x4],
@@ -50,7 +50,7 @@ nonisolated package struct SkinningPalette {
     /// Nil for a mesh that carries no runtime-pose metadata: a synthetic or
     /// legacy skin whose three arrays do not agree on a bone count cannot be
     /// re-posed, and a partial palette would be worse than none.
-    package init?(_ skinning: MeshSkinning) {
+    public init?(_ skinning: MeshSkinning) {
         let boneCount = skinning.bindPoseMatrices.count
         guard
             skinning.boneNames.count == boneCount,
@@ -66,7 +66,7 @@ nonisolated package struct SkinningPalette {
 
     /// Composes an animated skeleton-world pose, keyed by bone name, into a
     /// palette. Unmatched helper and NIF-only bones keep their bind matrix.
-    package func posed(by transformsByName: [String: float4x4]) -> Posed {
+    public func posed(by transformsByName: [String: float4x4]) -> Posed {
         var matrices = bindPoseMatrices
         var matchedBoneCount = 0
         for index in boneNames.indices {

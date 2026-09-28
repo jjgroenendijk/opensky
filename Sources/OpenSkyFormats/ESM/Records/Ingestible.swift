@@ -29,36 +29,36 @@
 
 import Foundation
 
-nonisolated package struct Ingestible {
-    package struct Flags: OptionSet, Equatable {
-        package let rawValue: UInt32
+nonisolated public struct Ingestible: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
 
-        package init(rawValue: UInt32) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
 
         /// Gold value is authored, not derived from the effect costs.
-        package static let noAutoCalc = Flags(rawValue: 0x0000_0001)
-        package static let food = Flags(rawValue: 0x0000_0002)
-        package static let medicine = Flags(rawValue: 0x0001_0000)
-        package static let poison = Flags(rawValue: 0x0002_0000)
+        public static let noAutoCalc = Flags(rawValue: 0x0000_0001)
+        public static let food = Flags(rawValue: 0x0000_0002)
+        public static let medicine = Flags(rawValue: 0x0001_0000)
+        public static let poison = Flags(rawValue: 0x0002_0000)
     }
 
-    package let formID: FormID
-    package let fields: InventoryItemFields
+    public let formID: FormID
+    public let fields: InventoryItemFields
     /// DESC — flavour text; empty on most vanilla potions.
-    package let description: LString?
+    public let description: LString?
     /// Gold value from ENIT, carry weight from DATA.
-    package let itemValue: ItemValue
-    package let flags: Flags
+    public let itemValue: ItemValue
+    public let flags: Flags
     /// ENIT addiction link; vanilla never sets it.
-    package let addiction: FormID?
-    package let addictionChance: Float
+    public let addiction: FormID?
+    public let addictionChance: Float
     /// ENIT — SNDR played when the item is consumed.
-    package let consumeSound: FormID?
-    package let effects: [MagicItemEffect]
+    public let consumeSound: FormID?
+    public let effects: [MagicItemEffect]
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "ALCH" else {
             throw ESMError.malformed("expected ALCH record, got \(record.type)")
         }

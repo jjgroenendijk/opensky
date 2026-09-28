@@ -5,6 +5,7 @@
 // Every byte is built in code — REFR records, PEX objects, and the plugin the
 // rebuild reads — never extracted game files (AGENTS.md "Legal & IP boundary").
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

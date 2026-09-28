@@ -4,7 +4,7 @@ Test support compiled into two unit-test bundles: `OpenSkyTests` and
 `OpenSkyRealDataTests`. The folder exists because the two targets are separate modules with
 no way to import each other, while a fixture like `FakeWorldProviders` is needed by both
 (issue #418). A fixture that only builds bytes and needs no engine code goes in
-`Tests/FormatsTestSupport/` instead, so the parser bundle can use it too. Membership follows
+`Tests/FormatsTestSupport/` instead, so the package test targets can use it too. Membership follows
 the folder, exactly as `Sources/OpenSkyEngine/` builds into the app and `OpenSkyCLI`.
 
 ## What belongs here

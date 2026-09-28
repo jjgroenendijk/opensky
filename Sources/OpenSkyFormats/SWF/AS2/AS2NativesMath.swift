@@ -12,7 +12,7 @@
 import Foundation
 
 nonisolated extension AS2Natives {
-    package static func installNumber(_ runtime: AS2Runtime) {
+    public static func installNumber(_ runtime: AS2Runtime) {
         let prototype = runtime.numberPrototype
         method(runtime, on: prototype, name: "valueOf") { context in context.thisValue }
         method(runtime, on: prototype, name: "toString") { context in
@@ -31,7 +31,7 @@ nonisolated extension AS2Natives {
         function.define(.number(-.infinity), for: "NEGATIVE_INFINITY", flags: .dontEnumerate)
     }
 
-    package static func installBoolean(_ runtime: AS2Runtime) {
+    public static func installBoolean(_ runtime: AS2Runtime) {
         let prototype = runtime.booleanPrototype
         method(runtime, on: prototype, name: "valueOf") { context in context.thisValue }
         method(runtime, on: prototype, name: "toString") { context in
@@ -42,7 +42,7 @@ nonisolated extension AS2Natives {
         }
     }
 
-    package static func installMath(_ runtime: AS2Runtime) {
+    public static func installMath(_ runtime: AS2Runtime) {
         let math = runtime.makeObject()
         math.define(.number(Double.pi), for: "PI", flags: [.dontEnumerate, .readOnly])
         math.define(.number(M_E), for: "E", flags: [.dontEnumerate, .readOnly])
@@ -114,10 +114,10 @@ nonisolated extension AS2Natives {
 }
 
 /// Numeric parsing for the global `parseInt` and `parseFloat`.
-nonisolated package enum AS2NativeNumbers {
+nonisolated public enum AS2NativeNumbers: Sendable {
     /// ECMA-262 15.1.2.2. An explicit radix wins; otherwise a `0x` prefix means
     /// 16 and everything else means 10.
-    package static func parseInt(_ text: String, radix: Double) -> Double {
+    public static func parseInt(_ text: String, radix: Double) -> Double {
         var body = Substring(text.trimmingCharacters(in: .whitespacesAndNewlines))
         var sign = 1.0
         if body.hasPrefix("-") {
@@ -149,7 +149,7 @@ nonisolated package enum AS2NativeNumbers {
     }
 
     /// ECMA-262 15.1.2.3: the longest prefix that is a decimal literal.
-    package static func parseFloat(_ text: String) -> Double {
+    public static func parseFloat(_ text: String) -> Double {
         let trimmed = Substring(
             text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(scanLimit)
         )
@@ -170,7 +170,7 @@ nonisolated package enum AS2NativeNumbers {
 
     /// Longest prefix `parseFloat` examines. A number literal never needs more,
     /// and the scan is quadratic in the prefix length.
-    package static let scanLimit = 64
+    public static let scanLimit = 64
 
     private static func literalValue(_ text: Substring) -> Double? {
         var body = text

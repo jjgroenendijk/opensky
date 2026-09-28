@@ -5,9 +5,9 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum PerkFixture {
+public enum PerkFixture: Sendable {
     /// DATA at record level: trait, level, rank count, playable, hidden.
-    static func header(
+    public static func header(
         isTrait: Bool = false,
         level: UInt8 = 0,
         rankCount: UInt8 = 1,
@@ -25,7 +25,7 @@ enum PerkFixture {
 
     /// The record's field run: identity, optional conditions, DATA, optional
     /// NNAM, then the effect sections in order.
-    static func fields(
+    public static func fields(
         editorID: String,
         name: String? = nil,
         description: String? = nil,
@@ -53,7 +53,7 @@ enum PerkFixture {
 
     /// A quest section: PRKE type 0, DATA of quest link + stage + two junk
     /// bytes, PRKF.
-    static func questEffect(
+    public static func questEffect(
         quest: UInt32,
         stage: UInt16,
         rank: UInt8 = 0,
@@ -68,7 +68,7 @@ enum PerkFixture {
     }
 
     /// An ability section: PRKE type 1, DATA of one SPEL link, PRKF.
-    static func abilityEffect(
+    public static func abilityEffect(
         spell: UInt32,
         rank: UInt8 = 0,
         priority: UInt8 = 0
@@ -80,7 +80,7 @@ enum PerkFixture {
 
     /// An entry-point section: PRKE type 2, the three-byte DATA, one PRKC plus
     /// its CTDA run per tab, then the function parameters and PRKF.
-    static func entryPointEffect(
+    public static func entryPointEffect(
         entryPoint: UInt8,
         function: UInt8,
         conditionTabCount: UInt8? = nil,
@@ -121,25 +121,25 @@ enum PerkFixture {
         return terminated ? data + prkf() : data
     }
 
-    static func prke(type: UInt8, rank: UInt8 = 0, priority: UInt8 = 0) -> Data {
+    public static func prke(type: UInt8, rank: UInt8 = 0, priority: UInt8 = 0) -> Data {
         ESMFixture.field("PRKE", Data([type, rank, priority]))
     }
 
-    static func prkf() -> Data {
+    public static func prkf() -> Data {
         ESMFixture.field("PRKF", Data())
     }
 
-    static func word(_ value: UInt32) -> Data {
+    public static func word(_ value: UInt32) -> Data {
         var data = Data()
         data.appendUInt32(value)
         return data
     }
 
-    static func float(_ value: Float) -> Data {
+    public static func float(_ value: Float) -> Data {
         word(value.bitPattern)
     }
 
-    static func floats(_ values: [Float]) -> Data {
+    public static func floats(_ values: [Float]) -> Data {
         values.reduce(Data()) { $0 + float($1) }
     }
 
@@ -151,11 +151,11 @@ enum PerkFixture {
     /// rounding (`wbEPFDActorValueToStr`), and UESP spells the payload
     /// "float AV, float FACTOR". `AlchemySkillBoosts` reads back 146, not
     /// 0x43120000.
-    static func actorValueMultiplier(actorValue: Int32, factor: Float) -> Data {
+    public static func actorValueMultiplier(actorValue: Int32, factor: Float) -> Data {
         float(Float(actorValue)) + float(factor)
     }
 
-    static func record(formID: UInt32 = 0, fields: Data) throws -> ESMRecord {
+    public static func record(formID: UInt32 = 0, fields: Data) throws -> ESMRecord {
         let file = try ESMFile(
             data: ESMFixture.tes4()
                 + ESMFixture.topGroup(
@@ -175,7 +175,7 @@ enum PerkFixture {
 
     /// A plugin holding whole PERK records (and optionally SPEL records), for
     /// the store suites.
-    static func plugin(
+    public static func plugin(
         masters: [String] = [],
         perks: [Data] = [],
         spells: [Data] = [],
@@ -198,14 +198,14 @@ enum PerkFixture {
         return try ESMFile(data: data)
     }
 
-    static func perkRecord(formID: UInt32, fields: Data) -> Data {
+    public static func perkRecord(formID: UInt32, fields: Data) -> Data {
         ESMFixture.record("PERK", formID: formID, data: fields)
     }
 
     /// The smallest SPEL a perk can point at: an editor ID, a name and a SPIT
     /// the spell store can read. `halfCostPerk` fills the PERK link at SPIT
     /// offset 0x20, which is the link M19 decoded and left unresolved.
-    static func spellRecord(
+    public static func spellRecord(
         formID: UInt32,
         editorID: String,
         name: String,

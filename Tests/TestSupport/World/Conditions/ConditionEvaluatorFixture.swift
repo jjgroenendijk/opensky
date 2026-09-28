@@ -6,6 +6,7 @@
 // `Condition(ctda:)`, so every evaluator test also exercises the on-disk path
 // rather than a hand-made value that could drift from the layout.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

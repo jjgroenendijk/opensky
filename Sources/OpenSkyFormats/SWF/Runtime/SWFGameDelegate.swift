@@ -33,39 +33,39 @@
 import Foundation
 
 /// One call across the bridge, in either direction.
-nonisolated package struct SWFInvokeEntry: Equatable {
-    package enum Direction: String, Equatable {
+nonisolated public struct SWFInvokeEntry: Equatable, Sendable {
+    public enum Direction: String, Equatable, Sendable {
         case movieToEngine = "movie->engine"
         case engineToMovie = "engine->movie"
     }
 
-    package let direction: Direction
-    package let name: String
+    public let direction: Direction
+    public let name: String
     /// Comma-separated argument summary, clipped per `SWFInvokeLog.textLimit`.
-    package let arguments: String
+    public let arguments: String
     /// The value handed back, summarized the same way.
-    package let result: String
+    public let result: String
     /// False when nothing answered the call — an unregistered host function or
     /// a callback the movie never defined.
-    package let isHandled: Bool
+    public let isHandled: Bool
 }
 
 /// A bounded record of both bridge directions. Oldest entries drop first and
 /// `total` keeps counting, so a truncated log still reports how much it stopped
 /// recording — the same posture as `AS2TraceLog`.
-nonisolated package struct SWFInvokeLog: Equatable {
-    package let entryLimit: Int
-    package let textLimit: Int
+nonisolated public struct SWFInvokeLog: Equatable, Sendable {
+    public let entryLimit: Int
+    public let textLimit: Int
 
-    package private(set) var entries: [SWFInvokeEntry] = []
-    package private(set) var total = 0
+    public private(set) var entries: [SWFInvokeEntry] = []
+    public private(set) var total = 0
     /// Calls that nothing answered, including ones already dropped.
-    package private(set) var unhandled = 0
+    public private(set) var unhandled = 0
 
-    package static let defaultEntryLimit = 256
-    package static let defaultTextLimit = 240
+    public static let defaultEntryLimit = 256
+    public static let defaultTextLimit = 240
 
-    package init(
+    public init(
         entryLimit: Int = SWFInvokeLog.defaultEntryLimit,
         textLimit: Int = SWFInvokeLog.defaultTextLimit
     ) {
@@ -74,11 +74,11 @@ nonisolated package struct SWFInvokeLog: Equatable {
     }
 
     /// Entries dropped to stay inside `entryLimit`.
-    package var dropped: Int {
+    public var dropped: Int {
         max(0, total - entries.count)
     }
 
-    package mutating func append(_ entry: SWFInvokeEntry) {
+    public mutating func append(_ entry: SWFInvokeEntry) {
         total += 1
         if !entry.isHandled {
             unhandled += 1
@@ -89,18 +89,18 @@ nonisolated package struct SWFInvokeLog: Equatable {
         }
     }
 
-    package mutating func clear() {
+    public mutating func clear() {
         entries.removeAll()
         total = 0
         unhandled = 0
     }
 
     /// One-line summary of a value list, clipped to `textLimit`.
-    package func summary(_ values: [AS2Value]) -> String {
+    public func summary(_ values: [AS2Value]) -> String {
         clip(values.map(SWFInvokeLog.describe).joined(separator: ", "))
     }
 
-    package func summary(_ value: AS2Value) -> String {
+    public func summary(_ value: AS2Value) -> String {
         clip(SWFInvokeLog.describe(value))
     }
 
@@ -111,7 +111,7 @@ nonisolated package struct SWFInvokeLog: Equatable {
     /// A short, stable rendering of a value. Objects are named by kind rather
     /// than walked, because the log must not depend on an object graph that may
     /// be cyclic.
-    package static func describe(_ value: AS2Value) -> String {
+    public static func describe(_ value: AS2Value) -> String {
         switch value {
         case .undefined: "undefined"
         case .null: "null"
@@ -127,14 +127,14 @@ nonisolated package struct SWFInvokeLog: Equatable {
 /// A host function the movie may call by name. Returning `nil` means the
 /// handler ran but produced no response value; the engine then sends nothing
 /// back through `receiveResponse`.
-package typealias SWFHostFunction = @Sendable (SWFHostCall) -> AS2Value?
+public typealias SWFHostFunction = @Sendable (SWFHostCall) -> AS2Value?
 
 /// One movie-to-engine call as a handler sees it.
-nonisolated package struct SWFHostCall {
-    package let name: String
-    package let arguments: [AS2Value]
+nonisolated public struct SWFHostCall {
+    public let name: String
+    public let arguments: [AS2Value]
 
-    package func argument(_ index: Int) -> AS2Value {
+    public func argument(_ index: Int) -> AS2Value {
         arguments.indices.contains(index) ? arguments[index] : .undefined
     }
 }
@@ -142,16 +142,16 @@ nonisolated package struct SWFHostCall {
 nonisolated extension SWFMovieRuntime {
     /// Registers the Swift side of a movie-to-engine call. Registering the same
     /// name twice replaces the handler, which is what a menu reopening expects.
-    package func registerHostFunction(_ name: String, _ body: @escaping SWFHostFunction) {
+    public func registerHostFunction(_ name: String, _ body: @escaping SWFHostFunction) {
         hostFunctions[name] = body
     }
 
-    package func removeHostFunction(_ name: String) {
+    public func removeHostFunction(_ name: String) {
         hostFunctions[name] = nil
     }
 
     /// Registered names, sorted so a report is stable.
-    package var hostFunctionNames: [String] {
+    public var hostFunctionNames: [String] {
         hostFunctions.keys.sorted()
     }
 
@@ -161,7 +161,7 @@ nonisolated extension SWFMovieRuntime {
     /// spells it. An unregistered command is a logged no-op plus a tally entry,
     /// never an error — the degradation rule the scope decision fixed.
     @discardableResult
-    package func receiveExternalCall(_ values: [AS2Value]) -> AS2Value {
+    public func receiveExternalCall(_ values: [AS2Value]) -> AS2Value {
         guard case let .string(name) = values.first ?? .undefined else {
             runtime.noteMissing("ExternalInterface.call")
             return .undefined
@@ -177,7 +177,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// Dispatches to a registered handler and logs the call either way.
     @discardableResult
-    package func callHost(_ name: String, arguments: [AS2Value]) -> AS2Value? {
+    public func callHost(_ name: String, arguments: [AS2Value]) -> AS2Value? {
         guard let handler = hostFunctions[name] else {
             runtime.noteMissing(name)
             noteInvoke(
@@ -247,7 +247,7 @@ nonisolated extension SWFMovieRuntime {
     /// direct call on the root clip for a movie that ships no delegate, so the
     /// engine has one entry point either way.
     @discardableResult
-    package func callMovie(_ name: String, arguments: [AS2Value] = []) -> AS2Value {
+    public func callMovie(_ name: String, arguments: [AS2Value] = []) -> AS2Value {
         var result = AS2Value.undefined
         var handled = false
         if let delegate = gameDelegate, hasCallback(name, on: delegate) {
@@ -276,7 +276,7 @@ nonisolated extension SWFMovieRuntime {
     /// `GameDelegate` callbacks, so the engine-to-movie bridge needs a precise
     /// target path as well as the root/delegate entry point above.
     @discardableResult
-    package func callMovie(
+    public func callMovie(
         _ name: String,
         atPath path: String,
         arguments: [AS2Value] = []
@@ -301,7 +301,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// `_global.gfx.io.GameDelegate`, or nil for a movie that does not ship the
     /// CLIK library.
-    package var gameDelegate: AS2Object? {
+    public var gameDelegate: AS2Object? {
         ["gfx", "io", "GameDelegate"].reduce(runtime.globalObject) { object, name in
             object?.lookup(name)?.property.value.objectValue
         }
@@ -310,7 +310,7 @@ nonisolated extension SWFMovieRuntime {
     /// Callback names the movie registered, sorted. Reading `callBackHash`
     /// directly is what makes the log show which engine-to-movie calls a menu is
     /// actually prepared for.
-    package var movieCallbackNames: [String] {
+    public var movieCallbackNames: [String] {
         guard
             let hash = gameDelegate?.lookup("callBackHash")?.property.value.objectValue
         else {
@@ -365,7 +365,7 @@ nonisolated extension SWFRuntimeNatives {
     /// reach the host through. Installed under both the bare global name and
     /// `flash.external.ExternalInterface`, because AS2 code spells it either way
     /// depending on whether it imported the package.
-    package static func installExternalInterface(_ runtime: AS2Runtime) {
+    public static func installExternalInterface(_ runtime: AS2Runtime) {
         let external = runtime.makeObject()
         external.define(.boolean(true), for: "available", flags: .dontEnumerate)
         AS2Natives.method(runtime, on: external, name: "call") { context in

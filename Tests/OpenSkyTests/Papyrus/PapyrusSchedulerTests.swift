@@ -1,5 +1,6 @@
 // Fixed-step wake policy for real-time and game-time latent calls.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

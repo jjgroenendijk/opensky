@@ -7,6 +7,7 @@
 // Everything is built in code — REFR records, PEX objects, collision geometry.
 // No game content, no Metal.
 
+import FormatsTestSupport
 @testable import OpenSky
 import simd
 import Testing

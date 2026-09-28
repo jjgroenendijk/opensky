@@ -52,12 +52,12 @@ import Foundation
 
 /// Vanilla actor-value identity: index to name, name to index, and either to
 /// the three values the runtime stores (`ActorValueIdentity+Kind.swift`).
-nonisolated package enum ActorValueIdentity {
+nonisolated public enum ActorValueIdentity: Sendable {
     /// The index a CTDA or a script uses to mean "no actor value".
-    package static let noneIndex: Int32 = -1
+    public static let noneIndex: Int32 = -1
 
     /// `wbActorValueEnum` in file order, so `vanillaNames[n]` is index `n`.
-    package static let vanillaNames: [String] = [
+    public static let vanillaNames: [String] = [
         "Aggression", "Confidence", "Energy", "Morality",
         "Mood", "Assistance", "One-Handed", "Two-Handed",
         "Archery", "Block", "Smithing", "Heavy Armor",
@@ -118,18 +118,18 @@ nonisolated package enum ActorValueIdentity {
     /// Actor-value index of the first and last of the eighteen skills,
     /// `One-Handed` and `Enchanting`, which are contiguous in the table above.
     /// CLAS DATA weights them in this order, one byte each (UESP CLAS).
-    package static let firstSkillIndex: Int32 = 6
-    package static let lastSkillIndex: Int32 = 23
+    public static let firstSkillIndex: Int32 = 6
+    public static let lastSkillIndex: Int32 = 23
 
     /// The floor every skill starts from before a race bonus or a class spread:
     /// "Skill = 15 + [Racial bonus] + 8\*(Level-1)/(Sum of class' skill
     /// weights)\*[Skill weight]"
     /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>).
-    package static let skillFloor: Float = 15
+    public static let skillFloor: Float = 15
 
     /// Every skill index in table order, which is what a caller iterating the
     /// eighteen skills walks rather than rebuilding the range.
-    package static let skillIndices: [Int32] = Array(firstSkillIndex ... lastSkillIndex)
+    public static let skillIndices: [Int32] = Array(firstSkillIndex ... lastSkillIndex)
 
     /// Actor-value index of `One-Handed Skill Advance`, the first of the
     /// eighteen "Skill Advance" slots, which run in the same order as the
@@ -141,25 +141,25 @@ nonisolated package enum ActorValueIdentity {
     /// the progression runtime reads. `ActorValueIdentityTests` pins the name
     /// at this index and the contiguity of the run, so a table edit cannot move
     /// the mapping silently. See docs/engine/skill-advancement.md.
-    package static let firstSkillAdvanceIndex: Int32 = 114
+    public static let firstSkillAdvanceIndex: Int32 = 114
 
     /// Actor-value index of `Carry Weight`, which a stamina level-up pick
     /// raises alongside the stamina itself (issue #499, roadmap item 20.6):
     /// "Adding to your base stamina when you level up increases your carry
     /// weight by 5" (<https://en.uesp.net/wiki/Skyrim:Stamina>).
     /// `ActorValueIdentityTests` pins the name at this index.
-    package static let carryWeightIndex: Int32 = 32
+    public static let carryWeightIndex: Int32 = 32
 
     /// The `Skill Advance` slot that accumulates experience for the skill at
     /// `index`, or nil when `index` is not one of the eighteen skills.
-    package static func skillAdvanceIndex(forSkill index: Int32) -> Int32? {
+    public static func skillAdvanceIndex(forSkill index: Int32) -> Int32? {
         guard isSkill(index: index) else { return nil }
         return firstSkillAdvanceIndex + (index - firstSkillIndex)
     }
 
     /// The skill whose experience the `Skill Advance` slot at `index` holds, or
     /// nil for every other index — the inverse of `skillAdvanceIndex(forSkill:)`.
-    package static func skillIndex(forAdvance index: Int32) -> Int32? {
+    public static func skillIndex(forAdvance index: Int32) -> Int32? {
         let skill = firstSkillIndex + (index - firstSkillAdvanceIndex)
         guard isSkill(index: skill) else { return nil }
         return skill
@@ -170,12 +170,12 @@ nonisolated package enum ActorValueIdentity {
     ///
     /// `noneIndex` and every other number outside `0 ..< vanillaNames.count`
     /// answer false: "none" is the absence of a value, not a value.
-    package static func isVanilla(index: Int32) -> Bool {
+    public static func isVanilla(index: Int32) -> Bool {
         index >= 0 && Int(index) < vanillaNames.count
     }
 
     /// Whether `index` names one of the eighteen skills.
-    package static func isSkill(index: Int32) -> Bool {
+    public static func isSkill(index: Int32) -> Bool {
         index >= firstSkillIndex && index <= lastSkillIndex
     }
 
@@ -196,7 +196,7 @@ nonisolated package enum ActorValueIdentity {
     /// `ActorValueDerivation.generalBaseValues(inputs:)`. An actor with no
     /// record behind it — a summon — therefore reads 0 for both, which is a
     /// stated gap rather than an invented number; see docs/engine/actor-value-names.md.
-    package static func defaultValue(at index: Int32) -> Float? {
+    public static func defaultValue(at index: Int32) -> Float? {
         guard isVanilla(index: index) else { return nil }
         return isSkill(index: index) ? skillFloor : 0
     }
@@ -204,14 +204,14 @@ nonisolated package enum ActorValueIdentity {
     /// Vanilla name of `index`, or nil when no vanilla actor value carries it.
     /// `noneIndex` reports nil like any other number outside the table: "none"
     /// is the absence of a value, not a value.
-    package static func name(at index: Int32) -> String? {
+    public static func name(at index: Int32) -> String? {
         guard isVanilla(index: index) else { return nil }
         return vanillaNames[Int(index)]
     }
 
     /// Index of the vanilla actor value `name` spells, or nil for a name no
     /// vanilla actor value carries.
-    package static func index(named name: String) -> Int32? {
+    public static func index(named name: String) -> Int32? {
         namesByKey[normalized(name)]
     }
 
@@ -225,7 +225,7 @@ nonisolated package enum ActorValueIdentity {
     /// so the mapping is observed evidence with a standing regression check.
     /// The words are Oblivion-era skill names Skyrim kept in its editor ids;
     /// Papyrus uses `Marksman` for `Archery` the same way.
-    package static let recordNameAliases: [String: String] = [
+    public static let recordNameAliases: [String: String] = [
         "Marksman": "Archery",
         "Speechcraft": "Speech",
         "Mysticism": "Illusion"
@@ -239,7 +239,7 @@ nonisolated package enum ActorValueIdentity {
     /// table's own vocabulary, and their measured miss buckets
     /// (docs/engine/actor-value-names.md) should not move because AVIF needed three
     /// extra spellings.
-    package static func index(recordName name: String) -> Int32? {
+    public static func index(recordName name: String) -> Int32? {
         if let index = index(named: name) {
             return index
         }
@@ -250,7 +250,7 @@ nonisolated package enum ActorValueIdentity {
     /// A report-safe spelling of whatever a caller was given: the vanilla name
     /// when the index names one, and the bare number otherwise, so a tally line
     /// always names something.
-    package static func description(of index: Int32) -> String {
+    public static func description(of index: Int32) -> String {
         name(at: index) ?? "actor value \(index)"
     }
 

@@ -13,6 +13,7 @@
 
 import Foundation
 import Metal
+import OpenSkyGameData
 
 nonisolated final class TextureLibrary {
     /// Cache identity: same path + usage -> same MTLTexture. A path may be

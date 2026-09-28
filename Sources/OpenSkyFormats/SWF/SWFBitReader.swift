@@ -9,7 +9,7 @@
 
 import Foundation
 
-nonisolated package enum SWFBitReaderError: Error, Equatable {
+nonisolated public enum SWFBitReaderError: Error, Equatable, Sendable {
     /// Requested more bits than remain in the backing bytes.
     case outOfBounds(bitsRequested: Int, bitsRemaining: Int)
     /// A field width outside the representable 0...32 range was requested.
@@ -17,25 +17,25 @@ nonisolated package enum SWFBitReaderError: Error, Equatable {
 }
 
 /// Sequential most-significant-bit-first cursor over a `Data`. Value type.
-nonisolated package struct SWFBitReader {
+nonisolated public struct SWFBitReader: Sendable {
     private let data: Data
     /// Absolute bit index from the start of `data` (0 = MSB of first byte).
-    package private(set) var bitPosition: Int
+    public private(set) var bitPosition: Int
 
-    package init(_ data: Data) {
+    public init(_ data: Data) {
         self.data = data
         bitPosition = 0
     }
 
     /// Byte index of the cursor. Exact only when byte-aligned (see `align()`);
     /// callers align before handing the offset to a byte reader.
-    package var byteOffset: Int {
+    public var byteOffset: Int {
         bitPosition / 8
     }
 
     /// Advances to the next byte boundary, discarding leftover bits. SWF
     /// byte-aligns after a run of bit fields such as the FrameSize RECT.
-    package mutating func align() {
+    public mutating func align() {
         let remainder = bitPosition % 8
         if remainder != 0 {
             bitPosition += 8 - remainder
@@ -43,7 +43,7 @@ nonisolated package struct SWFBitReader {
     }
 
     /// Reads an unsigned `bits`-wide big-endian field (UB[bits]).
-    package mutating func readUB(_ bits: Int) throws -> UInt32 {
+    public mutating func readUB(_ bits: Int) throws -> UInt32 {
         guard bits >= 0, bits <= 32 else {
             throw SWFBitReaderError.invalidBitCount(bits)
         }
@@ -64,7 +64,7 @@ nonisolated package struct SWFBitReader {
 
     /// Reads a signed `bits`-wide two's-complement field (SB[bits]), sign
     /// extended from the top bit into a full `Int32`.
-    package mutating func readSB(_ bits: Int) throws -> Int32 {
+    public mutating func readSB(_ bits: Int) throws -> Int32 {
         let raw = try readUB(bits)
         guard bits > 0, raw & (1 << (bits - 1)) != 0 else {
             return Int32(bitPattern: raw)
@@ -80,13 +80,13 @@ nonisolated package struct SWFBitReader {
     // reads without handing off to a separate BinaryReader each time.
 
     /// Aligns to the next byte boundary and reads one byte (UI8).
-    package mutating func readAlignedUInt8() throws -> UInt8 {
+    public mutating func readAlignedUInt8() throws -> UInt8 {
         align()
         return try UInt8(readUB(8))
     }
 
     /// Aligns to the next byte boundary and reads a little-endian UI16.
-    package mutating func readAlignedUInt16() throws -> UInt16 {
+    public mutating func readAlignedUInt16() throws -> UInt16 {
         align()
         let low = try readUB(8)
         let high = try readUB(8)
@@ -97,13 +97,13 @@ nonisolated package struct SWFBitReader {
     /// a byte-oriented sub-read (such as a null-terminated string) to a
     /// `BinaryReader`. Callers `align()` first; a mid-byte cursor drops the
     /// partial leading byte. Pair with `advance(byteCount:)` to resync.
-    package var remainingData: Data {
+    public var remainingData: Data {
         data.subdata(in: (data.startIndex + byteOffset) ..< data.endIndex)
     }
 
     /// Advances the cursor by whole bytes, e.g. after a `BinaryReader` consumed
     /// `byteCount` bytes of `remainingData`.
-    package mutating func advance(byteCount: Int) {
+    public mutating func advance(byteCount: Int) {
         bitPosition += byteCount * 8
     }
 }

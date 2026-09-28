@@ -1,5 +1,6 @@
 // Interior + door scene-build tests. Synthetic plugin/NIF fixtures only.
 
+import FormatsTestSupport
 import Metal
 @testable import OpenSky
 @testable import OpenSkyFormats

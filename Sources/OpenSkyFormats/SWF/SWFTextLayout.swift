@@ -15,36 +15,36 @@ import Foundation
 
 /// One glyph to draw: the glyph-table index plus the baseline pen position in
 /// the text's local twip space.
-nonisolated package struct SWFGlyphPlacement: Equatable {
-    package let glyphIndex: Int
-    package let x: Float
-    package let y: Float
+nonisolated public struct SWFGlyphPlacement: Equatable, Sendable {
+    public let glyphIndex: Int
+    public let x: Float
+    public let y: Float
 }
 
 /// A run of glyphs sharing one font, size, and color — one renderer draw.
-nonisolated package struct SWFTextRun: Equatable {
+nonisolated public struct SWFTextRun: Equatable, Sendable {
     /// Font id for static-text records (resolved against the movie's
     /// dictionary); nil for edit text, whose font the caller resolved already.
-    package let fontID: UInt16?
+    public let fontID: UInt16?
     /// Text height (EM size) in twips.
-    package let emTwips: Float
+    public let emTwips: Float
     /// Straight text color.
-    package let color: SWFColor
-    package let glyphs: [SWFGlyphPlacement]
+    public let color: SWFColor
+    public let glyphs: [SWFGlyphPlacement]
 }
 
-nonisolated package struct SWFTextLayoutResult: Equatable {
-    package let runs: [SWFTextRun]
+nonisolated public struct SWFTextLayoutResult: Equatable, Sendable {
+    public let runs: [SWFTextRun]
     /// Characters with no glyph in the font (skipped, never fatal).
-    package let missingGlyphs: Int
+    public let missingGlyphs: Int
 }
 
-nonisolated package enum SWFTextLayout {
+nonisolated public enum SWFTextLayout: Sendable {
     /// Lays out a DefineText/DefineText2 block. Record state (font, height,
     /// color, pen offsets) inherits from earlier records; glyph advances move
     /// the pen. Positions are in the text tag's local space (its MATRIX is
     /// applied by the scene, not here).
-    package static func staticText(_ text: SWFTextDefinition) -> SWFTextLayoutResult {
+    public static func staticText(_ text: SWFTextDefinition) -> SWFTextLayoutResult {
         var runs: [SWFTextRun] = []
         var fontID: UInt16?
         var emTwips: Float = 240
@@ -89,7 +89,7 @@ nonisolated package enum SWFTextLayout {
     /// text. Lines split on newlines; word wrap applies when the field is
     /// flagged WordWrap; alignment comes from the layout block (0 left, 1
     /// right, 2 center; justify falls back to left).
-    package static func editText(
+    public static func editText(
         _ text: SWFEditText,
         font: SWFFontDefinition,
         content override: String? = nil

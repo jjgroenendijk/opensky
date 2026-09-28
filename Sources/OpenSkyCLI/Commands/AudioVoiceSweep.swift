@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum AudioVoiceSweep {
     /// Plugins that ship voice archives. Read in this order so the report is

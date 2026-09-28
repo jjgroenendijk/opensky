@@ -10,6 +10,7 @@
 // "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" subpages
 // /SPEL, /EQUP, /MGEF, /PROJ and /BOOK.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

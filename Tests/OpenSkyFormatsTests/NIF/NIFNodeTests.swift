@@ -1,6 +1,7 @@
 // NiNode + shared AV-object prefix decode tests over synthetic in-code
 // payloads (NIFFixture). Layouts per NifTools nif.xml; docs/formats/nif.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

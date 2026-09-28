@@ -19,7 +19,7 @@ import Foundation
 import simd
 
 nonisolated extension SWFRuntimeNatives {
-    package static func installClipGeometry(_ runtime: AS2Runtime, prototype: AS2Object) {
+    public static func installClipGeometry(_ runtime: AS2Runtime, prototype: AS2Object) {
         AS2Natives.method(runtime, on: prototype, name: "getBounds") { context in
             boundsObject(context)
         }
@@ -85,7 +85,7 @@ nonisolated extension SWFRuntimeNatives {
     /// `duplicateMovieClip(name, depth, [initObject])`: another instance of the
     /// same character in the same parent, which is how a vanilla level meter
     /// builds its row of dots.
-    package static func installDuplicate(_ runtime: AS2Runtime, prototype: AS2Object) {
+    public static func installDuplicate(_ runtime: AS2Runtime, prototype: AS2Object) {
         AS2Natives.method(runtime, on: prototype, name: "duplicateMovieClip") { context in
             guard
                 let owner = movieRuntime(context), let node = node(context),
@@ -114,7 +114,7 @@ nonisolated extension SWFRuntimeNatives {
     // MARK: - MovieClipLoader
 
     /// `new MovieClipLoader()`: a broadcaster whose `loadClip` always fails.
-    package static func installMovieClipLoader(_ runtime: AS2Runtime) {
+    public static func installMovieClipLoader(_ runtime: AS2Runtime) {
         let prototype = AS2Object(prototype: runtime.objectPrototype)
         AS2Natives.constructor(runtime, name: "MovieClipLoader", prototype: prototype) { context in
             guard let instance = context.thisObject else {
@@ -173,7 +173,7 @@ nonisolated extension SWFRuntimeNatives {
     /// player built-ins the vanilla level meter in `tweenmenu.swf` leans on: a
     /// probe measured 930 `Point` and 620 `add` misses in a single menu once its
     /// meter started animating.
-    package static func installGeometry(_ runtime: AS2Runtime) {
+    public static func installGeometry(_ runtime: AS2Runtime) {
         let prototype = AS2Object(prototype: runtime.objectPrototype)
         let constructor = AS2Natives.constructor(
             runtime, name: "Point", prototype: prototype

@@ -5,7 +5,7 @@ import Foundation
 import simd
 
 nonisolated extension NIFCompressedCollisionMesh {
-    package static func readChunks(
+    public static func readChunks(
         reader: inout BinaryReader,
         transforms: [ChunkTransform],
         scale: SIMD3<Float>,
@@ -185,7 +185,7 @@ nonisolated extension NIFCompressedCollisionMesh {
         }
     }
 
-    package static func appendValidated(
+    public static func appendValidated(
         _ triangle: [UInt16],
         vertexCount: Int,
         into output: inout [UInt32]

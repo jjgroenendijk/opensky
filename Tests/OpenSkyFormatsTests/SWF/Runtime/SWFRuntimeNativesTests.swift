@@ -5,6 +5,7 @@
 // so the first assertion here is simply that referencing them no longer counts
 // as missing.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

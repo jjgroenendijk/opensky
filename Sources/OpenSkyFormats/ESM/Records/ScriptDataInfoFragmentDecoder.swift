@@ -11,7 +11,7 @@ nonisolated extension ScriptDataDecoder {
     /// consumed. A malformed tail is not fatal: the caller falls back to the
     /// recorded skip, so the primary scripts of a response with a broken
     /// fragment table still reach the runtime (AGENTS.md mod-quirk rule).
-    package mutating func decodeInfoFragmentTail() -> Bool {
+    public mutating func decodeInfoFragmentTail() -> Bool {
         let start = reader.offset
         do {
             let section = try decodeInfoFragments()
@@ -27,7 +27,7 @@ nonisolated extension ScriptDataDecoder {
         }
     }
 
-    package mutating func decodeInfoFragments() throws -> TopicInfoFragmentSection {
+    public mutating func decodeInfoFragments() throws -> TopicInfoFragmentSection {
         let bindVersion = try Int8(bitPattern: reader.readUInt8())
         let flags = try reader.readUInt8()
         let fileName = try readString()

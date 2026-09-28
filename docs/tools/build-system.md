@@ -53,7 +53,6 @@ Config/
 │   ├── Signing.xcconfig     CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM, one identity
 │   ├── App.xcconfig         OpenSky: bundle id, Info.plist keys, ffmpeg link + rpath
 │   ├── CLI.xcconfig         OpenSkyCLI: binary name, isolation default, ffmpeg link + rpath
-│   ├── Formats*.xcconfig    OpenSkyFormats and OpenSkyFormatsTests (see Swift modules)
 │   ├── Tests.xcconfig       the unit bundles: TEST_HOST, BUNDLE_LOADER
 │   └── UITests.xcconfig     OpenSkyUITests: TEST_TARGET_NAME
 └── TestPlans/

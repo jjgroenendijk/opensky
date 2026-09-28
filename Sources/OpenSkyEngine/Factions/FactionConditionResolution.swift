@@ -23,6 +23,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Every actor's social profile plus the store a faction parameter resolves
 /// against and the derivation that answers about a pair.

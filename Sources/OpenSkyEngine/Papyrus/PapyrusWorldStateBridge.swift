@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 @MainActor
 final class PapyrusWorldStateBridge: PapyrusWorldBridge {

@@ -13,11 +13,11 @@ import Foundation
 
 nonisolated extension AS2Interpreter {
     /// Prefix the compiler gives a class property's generated getter.
-    package static let getterPrefix = "__get__"
+    public static let getterPrefix = "__get__"
     /// Prefix the compiler gives a class property's generated setter.
-    package static let setterPrefix = "__set__"
+    public static let setterPrefix = "__set__"
 
-    package func getMember(
+    public func getMember(
         _ name: String,
         of value: AS2Value,
         offset: Int
@@ -48,7 +48,7 @@ nonisolated extension AS2Interpreter {
     /// that method walks up from (issue #136). Nil when the receiver owns the
     /// slot itself — there is no class in between, so the caller falls back to
     /// the receiver's own prototype.
-    package func memberHome(_ name: String, of value: AS2Value) -> AS2Object? {
+    public func memberHome(_ name: String, of value: AS2Value) -> AS2Object? {
         guard
             let object = value.objectValue,
             let found = object.lookup(name),
@@ -59,7 +59,7 @@ nonisolated extension AS2Interpreter {
         return found.owner
     }
 
-    package func setMember(
+    public func setMember(
         _ name: String,
         of value: AS2Value,
         to newValue: AS2Value,

@@ -12,7 +12,7 @@ nonisolated extension Quest.Contents {
     // MARK: - Stages
 
     /// INDX, 4 bytes: uint16 stage index, uint8 flags, 1 unused byte.
-    package mutating func beginStage(_ field: ESMField) throws {
+    public mutating func beginStage(_ field: ESMField) throws {
         flushStage()
         guard field.data.count >= 4 else {
             note(.malformedField(field.type))
@@ -26,7 +26,7 @@ nonisolated extension Quest.Contents {
     }
 
     /// QSDT, one flags byte, opens a log entry inside the current stage.
-    package mutating func beginLogEntry(_ field: ESMField) throws {
+    public mutating func beginLogEntry(_ field: ESMField) throws {
         flushLogEntry()
         guard openStage != nil else {
             note(.orphanField(field.type))
@@ -42,7 +42,7 @@ nonisolated extension Quest.Contents {
         openLogEntry = entry
     }
 
-    package mutating func setLogEntryText(_ field: ESMField) throws {
+    public mutating func setLogEntryText(_ field: ESMField) throws {
         guard openLogEntry != nil else {
             note(.orphanField(field.type))
             return
@@ -50,7 +50,7 @@ nonisolated extension Quest.Contents {
         openLogEntry?.text = try LString(field: field, localized: localized)
     }
 
-    package mutating func setNextQuest(_ field: ESMField) throws {
+    public mutating func setNextQuest(_ field: ESMField) throws {
         guard openLogEntry != nil else {
             note(.orphanField(field.type))
             return
@@ -63,13 +63,13 @@ nonisolated extension Quest.Contents {
         openLogEntry?.nextQuest = try FormID(reader.readUInt32())
     }
 
-    package mutating func flushLogEntry() {
+    public mutating func flushLogEntry() {
         guard let entry = openLogEntry else { return }
         openLogEntry = nil
         openStage?.logEntries.append(entry)
     }
 
-    package mutating func flushStage() {
+    public mutating func flushStage() {
         flushLogEntry()
         guard let stage = openStage else { return }
         openStage = nil
@@ -79,7 +79,7 @@ nonisolated extension Quest.Contents {
     // MARK: - Objectives
 
     /// QOBJ, a uint16 index, opens an objective and ends the stage run.
-    package mutating func beginObjective(_ field: ESMField) throws {
+    public mutating func beginObjective(_ field: ESMField) throws {
         flushStage()
         flushObjective()
         guard field.data.count >= 2 else {
@@ -95,7 +95,7 @@ nonisolated extension Quest.Contents {
     /// FNAM at quest level is the objective's ORed-with-previous flag word.
     /// The same four letters inside an alias are that alias's flags, which is
     /// why the alias run intercepts fields before this switch ever sees them.
-    package mutating func setObjectiveFlags(_ field: ESMField) throws {
+    public mutating func setObjectiveFlags(_ field: ESMField) throws {
         guard openObjective != nil else {
             note(.orphanField(field.type))
             return
@@ -110,7 +110,7 @@ nonisolated extension Quest.Contents {
 
     /// NNAM is an objective's display text inside the objective run and the
     /// quest's own description once ANAM has ended that run.
-    package mutating func setDisplayTextOrDescription(_ field: ESMField) throws {
+    public mutating func setDisplayTextOrDescription(_ field: ESMField) throws {
         if openObjective != nil {
             openObjective?.displayText = try LString(field: field, localized: localized)
             return
@@ -126,7 +126,7 @@ nonisolated extension Quest.Contents {
     /// QSTA, 8 bytes: int32 alias or reference, uint8 ignores-locks flag, then
     /// 3 unused bytes. Inside an objective it opens an objective target; after
     /// the alias run it opens a record-level legacy target.
-    package mutating func beginTarget(_ field: ESMField) throws {
+    public mutating func beginTarget(_ field: ESMField) throws {
         flushTarget()
         guard openObjective != nil || sawAliasMarker else {
             note(.orphanField(field.type))
@@ -143,7 +143,7 @@ nonisolated extension Quest.Contents {
         openTarget = target
     }
 
-    package mutating func flushTarget() {
+    public mutating func flushTarget() {
         guard let target = openTarget else { return }
         openTarget = nil
         if openObjective != nil {
@@ -153,7 +153,7 @@ nonisolated extension Quest.Contents {
         }
     }
 
-    package mutating func flushObjective() {
+    public mutating func flushObjective() {
         flushTarget()
         guard let objective = openObjective else { return }
         openObjective = nil
@@ -165,7 +165,7 @@ nonisolated extension Quest.Contents {
     /// ALST opens a reference alias, ALLS a location alias. Both close any
     /// alias still open, because ALED is the only legal terminator and a
     /// missing one is a mod quirk rather than a reason to lose the record.
-    package mutating func beginAlias(_ field: ESMField, category: Quest.Alias.Category) throws {
+    public mutating func beginAlias(_ field: ESMField, category: Quest.Alias.Category) throws {
         endAlias(terminated: false)
         flushObjective()
         flushStage()
@@ -179,7 +179,7 @@ nonisolated extension Quest.Contents {
 
     /// - Parameter terminated: false when the group ended without its ALED
     ///   terminator, which is recorded but still keeps the alias.
-    package mutating func endAlias(terminated: Bool) {
+    public mutating func endAlias(terminated: Bool) {
         guard let alias = openAlias else {
             if terminated {
                 tally.note(.orphanField("ALED"))
@@ -193,7 +193,7 @@ nonisolated extension Quest.Contents {
         aliases.append(alias)
     }
 
-    package mutating func decodeAliasField(_ field: ESMField) throws {
+    public mutating func decodeAliasField(_ field: ESMField) throws {
         guard var alias = openAlias else { return }
         try alias.decode(field: field, tally: &tally)
         openAlias = alias

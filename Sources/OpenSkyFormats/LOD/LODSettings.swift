@@ -3,19 +3,19 @@
 
 import Foundation
 
-nonisolated package enum LODSettingsError: Error, Equatable {
+nonisolated public enum LODSettingsError: Error, Equatable, Sendable {
     case invalidSize(Int)
     case invalidStride(Int32)
     case invalidLevelRange(min: Int32, max: Int32)
 }
 
-nonisolated package struct LODSettings: Equatable {
-    package let origin: CellCoordinate
-    package let stride: Int32
-    package let minimumLevel: Int32
-    package let maximumLevel: Int32
+nonisolated public struct LODSettings: Equatable, Sendable {
+    public let origin: CellCoordinate
+    public let stride: Int32
+    public let minimumLevel: Int32
+    public let maximumLevel: Int32
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         guard data.count == 16 else { throw LODSettingsError.invalidSize(data.count) }
         var reader = BinaryReader(data)
         origin = try CellCoordinate(
@@ -31,7 +31,7 @@ nonisolated package struct LODSettings: Equatable {
         }
     }
 
-    package var levels: [Int32] {
+    public var levels: [Int32] {
         var out: [Int32] = []
         var level = minimumLevel
         while level <= maximumLevel {
@@ -42,7 +42,7 @@ nonisolated package struct LODSettings: Equatable {
         return out
     }
 
-    package func blockOrigin(containing cell: CellCoordinate, level: Int32) -> CellCoordinate {
+    public func blockOrigin(containing cell: CellCoordinate, level: Int32) -> CellCoordinate {
         CellCoordinate(
             x: origin.x + Self.floorDiv(cell.x - origin.x, by: level) * level,
             y: origin.y + Self.floorDiv(cell.y - origin.y, by: level) * level

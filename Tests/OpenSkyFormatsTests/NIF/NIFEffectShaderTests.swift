@@ -3,6 +3,7 @@
 // Layout: NifTools nif.xml (BSEffectShaderProperty, SkyrimShaderPropertyFlags1/2).
 //   https://github.com/niftools/nifxml/blob/develop/nif.xml
 
+import FormatsTestSupport
 @testable import OpenSkyFormats
 import simd
 import XCTest

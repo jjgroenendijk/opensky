@@ -5,6 +5,7 @@
 // Core/wbDefinitionsTES5.pas `wbRecord(QUST, 'Quest', ...)` line 8759.
 // See docs/formats/quest-records.md.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

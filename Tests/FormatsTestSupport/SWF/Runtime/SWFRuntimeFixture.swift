@@ -7,15 +7,15 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum SWFRuntimeFixture {
-    typealias Action = AS2Fixture.Action
+public enum SWFRuntimeFixture: Sendable {
+    public typealias Action = AS2Fixture.Action
 
-    static let ink = SWFColor(red: 220, green: 180, blue: 90, alpha: 255)
+    public static let ink = SWFColor(red: 220, green: 180, blue: 90, alpha: 255)
 
     /// `function <name>() { this.<marker> = 1 }` followed by
     /// `Object.registerClass("<linkage>", <name>)` — the shape every vanilla
     /// `DoInitAction` block ends in.
-    static func registerClass(
+    public static func registerClass(
         name: String,
         linkage: String,
         marker: String = "built"
@@ -42,7 +42,7 @@ enum SWFRuntimeFixture {
     /// `arguments` is one argument expression in call order;
     /// `ActionCallMethod` pops the first argument first, so the expressions are
     /// emitted in reverse.
-    static func call(
+    public static func call(
         method: String,
         on receiver: String,
         arguments: [[Action]] = []
@@ -59,7 +59,7 @@ enum SWFRuntimeFixture {
 
     /// `this.<method>(<argument>)` on the running timeline, discarding the
     /// result.
-    static func callOnThis(
+    public static func callOnThis(
         method: String,
         argument: SWFActionFixture.PushValue
     ) -> [Action] {
@@ -71,7 +71,7 @@ enum SWFRuntimeFixture {
         ]
     }
 
-    static func rectangle(id: UInt16, width: Int32 = 2000, height: Int32 = 1200)
+    public static func rectangle(id: UInt16, width: Int32 = 2000, height: Int32 = 1200)
         -> SWFFixture.Tag
     {
         SWFDisplayFixture.rectangleShapeTag(
@@ -79,7 +79,7 @@ enum SWFRuntimeFixture {
         )
     }
 
-    static func place(
+    public static func place(
         _ characterId: UInt16,
         depth: UInt16,
         name: String? = nil,
@@ -99,7 +99,7 @@ enum SWFRuntimeFixture {
     /// A movie whose root places sprite 2 (a rectangle inside a sprite) under
     /// the instance name `panel`, with sprite 2 exported as `PanelClip` and a
     /// class registered against that linkage name.
-    static func classMovieTags(marker: String = "built") -> [SWFFixture.Tag] {
+    public static func classMovieTags(marker: String = "built") -> [SWFFixture.Tag] {
         [
             rectangle(id: 1),
             SWFDisplayFixture.spriteTag(characterId: 2, frameCount: 1, tags: [
@@ -115,20 +115,26 @@ enum SWFRuntimeFixture {
         ]
     }
 
-    static func runtime(tags: [SWFFixture.Tag], version: UInt8 = 6) throws -> SWFMovieRuntime {
+    public static func runtime(
+        tags: [SWFFixture.Tag],
+        version: UInt8 = 6
+    ) throws -> SWFMovieRuntime {
         let movie = try SWFDisplayFixture.movie(tags: tags, version: version)
         return SWFMovieRuntime(movieScene: SWFMovieScene(movie: movie))
     }
 
     /// Runs the bring-up sequence and hands back the started runtime.
-    static func started(tags: [SWFFixture.Tag], version: UInt8 = 6) throws -> SWFMovieRuntime {
+    public static func started(
+        tags: [SWFFixture.Tag],
+        version: UInt8 = 6
+    ) throws -> SWFMovieRuntime {
         let runtime = try runtime(tags: tags, version: version)
         runtime.start()
         return runtime
     }
 
     /// Draw items of a generated scene, ignoring clip commands.
-    static func drawItems(_ scene: SWFScene) -> [SWFSceneItem] {
+    public static func drawItems(_ scene: SWFScene) -> [SWFSceneItem] {
         scene.commands.compactMap {
             guard case let .draw(item, _) = $0 else {
                 return nil

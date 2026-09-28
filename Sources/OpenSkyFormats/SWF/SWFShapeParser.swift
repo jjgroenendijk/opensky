@@ -12,16 +12,16 @@
 
 import Foundation
 
-nonisolated package enum SWFShapeParser {
+nonisolated public enum SWFShapeParser: Sendable {
     /// SHAPEWITHSTYLE decode output: flattened style lists plus segments.
-    package struct ShapeContents {
-        package let fillStyles: [SWFFillStyle]
-        package let lineStyles: [SWFLineStyle]
-        package let segments: [SWFShapeSegment]
+    public struct ShapeContents: Sendable {
+        public let fillStyles: [SWFFillStyle]
+        public let lineStyles: [SWFLineStyle]
+        public let segments: [SWFShapeSegment]
     }
 
     /// RECT: `Nbits = UB[5]`, then four SB[Nbits] twip fields. Byte-aligned.
-    package static func parseRect(_ bits: inout SWFBitReader) throws -> SWFRect {
+    public static func parseRect(_ bits: inout SWFBitReader) throws -> SWFRect {
         bits.align()
         let nbits = try Int(bits.readUB(5))
         return try SWFRect(
@@ -34,7 +34,7 @@ nonisolated package enum SWFShapeParser {
 
     /// MATRIX: optional 16.16 fixed scale pair, optional 16.16 rotate/skew
     /// pair, then twip translation. Byte-aligned.
-    package static func parseMatrix(_ bits: inout SWFBitReader) throws -> SWFMatrix {
+    public static func parseMatrix(_ bits: inout SWFBitReader) throws -> SWFMatrix {
         bits.align()
         var matrix = SWFMatrix.identity
         if try bits.readUB(1) == 1 {
@@ -54,7 +54,7 @@ nonisolated package enum SWFShapeParser {
     }
 
     /// RGB (3 bytes) or RGBA (4 bytes) color record; RGB parses as opaque.
-    package static func parseColor(_ bits: inout SWFBitReader, hasAlpha: Bool) throws -> SWFColor {
+    public static func parseColor(_ bits: inout SWFBitReader, hasAlpha: Bool) throws -> SWFColor {
         bits.align()
         return try SWFColor(
             red: UInt8(bits.readUB(8)),
@@ -66,7 +66,7 @@ nonisolated package enum SWFShapeParser {
 
     /// GRADIENT / FOCALGRADIENT: spread UB[2], interpolation UB[2],
     /// NumGradients UB[4], GRADRECORDs, then FIXED8 focal point when focal.
-    package static func parseGradient(
+    public static func parseGradient(
         _ bits: inout SWFBitReader,
         version: SWFShapeVersion,
         isFocal: Bool
@@ -98,7 +98,7 @@ nonisolated package enum SWFShapeParser {
     }
 
     /// One FILLSTYLE, dispatched on the FillStyleType byte.
-    package static func parseFillStyle(
+    public static func parseFillStyle(
         _ bits: inout SWFBitReader,
         version: SWFShapeVersion
     ) throws -> SWFFillStyle {
@@ -132,7 +132,7 @@ nonisolated package enum SWFShapeParser {
 
     /// FILLSTYLEARRAY: UI8 count; 0xFF escapes to a UI16 extended count for
     /// DefineShape2 and later. DefineShape treats 0xFF as a literal count.
-    package static func parseFillStyleArray(
+    public static func parseFillStyleArray(
         _ bits: inout SWFBitReader,
         version: SWFShapeVersion
     ) throws -> [SWFFillStyle] {
@@ -150,7 +150,7 @@ nonisolated package enum SWFShapeParser {
 
     /// LINESTYLEARRAY: UI8 count (0xFF escape as for fills), then LINESTYLE
     /// entries — LINESTYLE2 for DefineShape4.
-    package static func parseLineStyleArray(
+    public static func parseLineStyleArray(
         _ bits: inout SWFBitReader,
         version: SWFShapeVersion
     ) throws -> [SWFLineStyle] {
@@ -174,7 +174,7 @@ nonisolated package enum SWFShapeParser {
 
     /// LINESTYLE2 (DefineShape4): cap/join/scale flag bits, optional miter
     /// limit, then either an RGBA color or a stroke FILLSTYLE.
-    package static func parseLineStyle2(_ bits: inout SWFBitReader) throws -> SWFLineStyle {
+    public static func parseLineStyle2(_ bits: inout SWFBitReader) throws -> SWFLineStyle {
         let width = try bits.readAlignedUInt16()
         let startCap = try capStyle(bits.readUB(2))
         let joinRaw = try bits.readUB(2)
@@ -210,7 +210,7 @@ nonisolated package enum SWFShapeParser {
     }
 
     /// SHAPEWITHSTYLE: style arrays, index bit widths, record stream.
-    package static func parseShapeWithStyle(
+    public static func parseShapeWithStyle(
         _ bits: inout SWFBitReader,
         version: SWFShapeVersion
     ) throws -> ShapeContents {
@@ -232,7 +232,7 @@ nonisolated package enum SWFShapeParser {
 
     /// Bare SHAPE (DefineFont glyphs): index bit widths + records, no style
     /// arrays. Fill indices pass through unresolved (glyph on/off convention).
-    package static func parseGlyphShape(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
+    public static func parseGlyphShape(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
         var walker = ShapeRecordWalker(bits: bits, version: nil)
         try walker.readIndexBits()
         try walker.walkRecords()

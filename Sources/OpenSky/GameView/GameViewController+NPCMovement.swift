@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 
 struct NPCMovementBridgeState {
     var clips: [String: ActorAnimationClip] = [:]

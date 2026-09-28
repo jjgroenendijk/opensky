@@ -10,6 +10,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum SWFInventoryMenuCommand {
     private static let defaultTicks = 20

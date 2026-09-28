@@ -10,49 +10,49 @@
 
 import Foundation
 
-nonisolated package enum NIFError: Error, Equatable {
+nonisolated public enum NIFError: Error, Equatable, Sendable {
     /// Input violates the documented layout.
     case malformed(String)
     /// Valid NIF, but a variant OpenSky does not read (wrong version/endian).
     case unsupported(String)
 }
 
-nonisolated package struct NIFHeader {
+nonisolated public struct NIFHeader: Sendable {
     /// Skyrim SE (and LE, FO3/NV) mesh version 20.2.0.7, one hex byte per
     /// version component. Only version with the block-size array we rely on.
-    package static let supportedVersion: UInt32 = 0x1402_0007
+    public static let supportedVersion: UInt32 = 0x1402_0007
 
     /// BSStreamHeader — Bethesda export info. Present for 20.2.0.7 when
     /// user version >= 3 (nif.xml BSSTREAMHEADER condition). Skyrim LE
     /// streams 83, SSE streams 100.
-    package struct BSStream {
-        package let version: UInt32
-        package let author: String
-        package let processScript: String
-        package let exportScript: String
+    public struct BSStream: Sendable {
+        public let version: UInt32
+        public let author: String
+        public let processScript: String
+        public let exportScript: String
     }
 
     /// Newline-terminated text line, e.g. "Gamebryo File Format, Version
     /// 20.2.0.7". Informational; the binary `version` field is authoritative.
-    package let versionLine: String
-    package let version: UInt32
+    public let versionLine: String
+    public let version: UInt32
     /// 12 for Skyrim LE + SSE, 11 for FO3/NV.
-    package let userVersion: UInt32
-    package let blockCount: Int
-    package let bsStream: BSStream?
+    public let userVersion: UInt32
+    public let blockCount: Int
+    public let bsStream: BSStream?
     /// Distinct block type names used by this file, e.g. "BSTriShape".
-    package let blockTypes: [String]
+    public let blockTypes: [String]
     /// Per block: index into `blockTypes`. PhysX flag bit already masked off.
-    package let blockTypeIndices: [Int]
+    public let blockTypeIndices: [Int]
     /// Per block: on-disk byte size, the skip distance for unknown types.
-    package let blockSizes: [Int]
+    public let blockSizes: [Int]
     /// Shared string table; blocks refer to names by index into this.
-    package let strings: [String]
-    package let groups: [UInt32]
+    public let strings: [String]
+    public let groups: [UInt32]
     /// Offset of the first block's bytes (= reader position after the header).
-    package let blockDataOffset: Int
+    public let blockDataOffset: Int
 
-    package init(reader: inout BinaryReader) throws {
+    public init(reader: inout BinaryReader) throws {
         versionLine = try Self.readVersionLine(&reader)
         version = try reader.readUInt32()
         guard version == Self.supportedVersion else {

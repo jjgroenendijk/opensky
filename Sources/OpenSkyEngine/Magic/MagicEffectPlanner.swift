@@ -47,6 +47,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// One MGEF entry resolved into an application the runtime can carry out.
 nonisolated struct MagicEffectApplication: Equatable {

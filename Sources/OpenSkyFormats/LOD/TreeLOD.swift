@@ -5,7 +5,7 @@
 import Foundation
 import simd
 
-nonisolated package enum TreeLODError: Error, Equatable {
+nonisolated public enum TreeLODError: Error, Equatable, Sendable {
     case invalidCount(Int32)
     case duplicateTypeIndex(Int32)
     case invalidType(index: Int32)
@@ -14,21 +14,21 @@ nonisolated package enum TreeLODError: Error, Equatable {
     case unknownTypeIndex(Int32)
 }
 
-nonisolated package struct TreeLODType: Equatable {
-    package let index: Int32
-    package let width: Float
-    package let height: Float
-    package let uvMin: SIMD2<Float>
-    package let uvMax: SIMD2<Float>
+nonisolated public struct TreeLODType: Equatable, Sendable {
+    public let index: Int32
+    public let width: Float
+    public let height: Float
+    public let uvMin: SIMD2<Float>
+    public let uvMax: SIMD2<Float>
     /// Opaque xEdit `Unknown` word. Retained for inventory, not interpreted.
-    package let metadata: UInt32
+    public let metadata: UInt32
 }
 
-nonisolated package struct TreeLODList: Equatable {
-    package static let recordSize = 32
-    package let types: [TreeLODType]
+nonisolated public struct TreeLODList: Equatable, Sendable {
+    public static let recordSize = 32
+    public let types: [TreeLODType]
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var reader = BinaryReader(data)
         let count = try Int32(bitPattern: reader.readUInt32())
         guard count >= 0, Int64(count) <= Int64(reader.bytesRemaining / Self.recordSize) else {
@@ -58,7 +58,7 @@ nonisolated package struct TreeLODList: Equatable {
         types = parsed
     }
 
-    package func type(index: Int32) -> TreeLODType? {
+    public func type(index: Int32) -> TreeLODType? {
         types.first { $0.index == index }
     }
 
@@ -74,27 +74,27 @@ nonisolated package struct TreeLODList: Equatable {
     }
 }
 
-nonisolated package struct TreeLODReference: Equatable {
-    package let position: SIMD3<Float>
+nonisolated public struct TreeLODReference: Equatable, Sendable {
+    public let position: SIMD3<Float>
     /// Radians about +Z, generated in xEdit's 0...2pi range.
-    package let rotation: Float
-    package let scale: Float
-    package let formID: UInt32
+    public let rotation: Float
+    public let scale: Float
+    public let formID: UInt32
     /// Opaque xEdit `Unknown1`/`Unknown2` words.
-    package let metadata1: UInt32
-    package let metadata2: UInt32
+    public let metadata1: UInt32
+    public let metadata2: UInt32
 }
 
-nonisolated package struct TreeLODReferenceGroup: Equatable {
-    package let typeIndex: Int32
-    package let references: [TreeLODReference]
+nonisolated public struct TreeLODReferenceGroup: Equatable, Sendable {
+    public let typeIndex: Int32
+    public let references: [TreeLODReference]
 }
 
-nonisolated package struct TreeLODBlock: Equatable {
-    package static let referenceSize = 32
-    package let groups: [TreeLODReferenceGroup]
+nonisolated public struct TreeLODBlock: Equatable, Sendable {
+    public static let referenceSize = 32
+    public let groups: [TreeLODReferenceGroup]
 
-    package init(data: Data, list: TreeLODList? = nil) throws {
+    public init(data: Data, list: TreeLODList? = nil) throws {
         var reader = BinaryReader(data)
         let groupCount = try Int32(bitPattern: reader.readUInt32())
         guard groupCount >= 0, Int64(groupCount) <= Int64(reader.bytesRemaining / 8) else {
@@ -143,7 +143,7 @@ nonisolated package struct TreeLODBlock: Equatable {
         groups = parsed
     }
 
-    package var referenceCount: Int {
+    public var referenceCount: Int {
         groups.reduce(0) { $0 + $1.references.count }
     }
 

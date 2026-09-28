@@ -16,7 +16,7 @@
 import Foundation
 
 nonisolated extension AS2Interpreter {
-    package func variableOp(
+    public func variableOp(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
@@ -68,7 +68,7 @@ nonisolated extension AS2Interpreter {
         return .next
     }
 
-    package func getVariable(
+    public func getVariable(
         _ name: String,
         frame: AS2Frame,
         offset: Int
@@ -159,7 +159,7 @@ nonisolated extension AS2Interpreter {
         return value == .undefined ? nil : value
     }
 
-    package func setVariable(
+    public func setVariable(
         _ name: String,
         to value: AS2Value,
         frame: AS2Frame,

@@ -13,6 +13,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 import OSLog
 
 @MainActor

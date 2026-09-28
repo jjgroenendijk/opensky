@@ -4,8 +4,8 @@
 import Foundation
 @testable import OpenSkyFormats
 
-enum ActorValueInformationFixture {
-    static func skillUse(
+public enum ActorValueInformationFixture: Sendable {
+    public static func skillUse(
         useMultiplier: Float = 1.5,
         useOffset: Float = 2.5,
         improveMultiplier: Float = 3.5,
@@ -21,7 +21,7 @@ enum ActorValueInformationFixture {
 
     /// One perk-tree node in the field order the spec gives: PNAM, FNAM, XNAM,
     /// YNAM, HNAM, VNAM, SNAM, the CNAM connection run, then INAM.
-    static func node(
+    public static func node(
         perk: UInt32 = 0,
         parentRequired: UInt32 = 1,
         column: UInt32 = 0,
@@ -46,7 +46,7 @@ enum ActorValueInformationFixture {
         return data
     }
 
-    static func record(type: String, formID: UInt32 = 0, fields: Data) throws -> ESMRecord {
+    public static func record(type: String, formID: UInt32 = 0, fields: Data) throws -> ESMRecord {
         let file = try ESMFile(
             data: ESMFixture.tes4()
                 + ESMFixture.topGroup(
@@ -66,7 +66,7 @@ enum ActorValueInformationFixture {
         return record
     }
 
-    static func words(_ values: [UInt32]) -> Data {
+    public static func words(_ values: [UInt32]) -> Data {
         var data = Data()
         for value in values {
             data.appendUInt32(value)

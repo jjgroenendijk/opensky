@@ -27,7 +27,7 @@ nonisolated extension NIFFile {
 
     /// Flattens the block tree into the particle systems it contains, each in
     /// model space. Non-particle leaves are skipped; a malformed system throws.
-    package func particleSystems() throws -> [ParticleSystemDefinition] {
+    public func particleSystems() throws -> [ParticleSystemDefinition] {
         var walker = ParticleWalker(file: self)
         for root in roots {
             try walker.walk(from: root)

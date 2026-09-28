@@ -14,60 +14,60 @@ import Foundation
 /// little-endian flag word so reserved bits survive a round trip. The field is
 /// 2 bytes through SWF 5 and 4 bytes from SWF 6, and the events above
 /// `dragOver` only exist in the wide form.
-nonisolated package struct SWFClipEventFlags: OptionSet, Equatable {
-    package let rawValue: UInt32
+nonisolated public struct SWFClipEventFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt32
 
-    package init(rawValue: UInt32) {
+    public init(rawValue: UInt32) {
         self.rawValue = rawValue
     }
 
-    package static let load = SWFClipEventFlags(rawValue: 1 << 0)
-    package static let enterFrame = SWFClipEventFlags(rawValue: 1 << 1)
-    package static let unload = SWFClipEventFlags(rawValue: 1 << 2)
-    package static let mouseMove = SWFClipEventFlags(rawValue: 1 << 3)
-    package static let mouseDown = SWFClipEventFlags(rawValue: 1 << 4)
-    package static let mouseUp = SWFClipEventFlags(rawValue: 1 << 5)
-    package static let keyDown = SWFClipEventFlags(rawValue: 1 << 6)
-    package static let keyUp = SWFClipEventFlags(rawValue: 1 << 7)
-    package static let data = SWFClipEventFlags(rawValue: 1 << 8)
-    package static let initialize = SWFClipEventFlags(rawValue: 1 << 9)
-    package static let press = SWFClipEventFlags(rawValue: 1 << 10)
-    package static let release = SWFClipEventFlags(rawValue: 1 << 11)
-    package static let releaseOutside = SWFClipEventFlags(rawValue: 1 << 12)
-    package static let rollOver = SWFClipEventFlags(rawValue: 1 << 13)
-    package static let rollOut = SWFClipEventFlags(rawValue: 1 << 14)
-    package static let dragOver = SWFClipEventFlags(rawValue: 1 << 15)
-    package static let dragOut = SWFClipEventFlags(rawValue: 1 << 16)
-    package static let keyPress = SWFClipEventFlags(rawValue: 1 << 17)
-    package static let construct = SWFClipEventFlags(rawValue: 1 << 18)
+    public static let load = SWFClipEventFlags(rawValue: 1 << 0)
+    public static let enterFrame = SWFClipEventFlags(rawValue: 1 << 1)
+    public static let unload = SWFClipEventFlags(rawValue: 1 << 2)
+    public static let mouseMove = SWFClipEventFlags(rawValue: 1 << 3)
+    public static let mouseDown = SWFClipEventFlags(rawValue: 1 << 4)
+    public static let mouseUp = SWFClipEventFlags(rawValue: 1 << 5)
+    public static let keyDown = SWFClipEventFlags(rawValue: 1 << 6)
+    public static let keyUp = SWFClipEventFlags(rawValue: 1 << 7)
+    public static let data = SWFClipEventFlags(rawValue: 1 << 8)
+    public static let initialize = SWFClipEventFlags(rawValue: 1 << 9)
+    public static let press = SWFClipEventFlags(rawValue: 1 << 10)
+    public static let release = SWFClipEventFlags(rawValue: 1 << 11)
+    public static let releaseOutside = SWFClipEventFlags(rawValue: 1 << 12)
+    public static let rollOver = SWFClipEventFlags(rawValue: 1 << 13)
+    public static let rollOut = SWFClipEventFlags(rawValue: 1 << 14)
+    public static let dragOver = SWFClipEventFlags(rawValue: 1 << 15)
+    public static let dragOut = SWFClipEventFlags(rawValue: 1 << 16)
+    public static let keyPress = SWFClipEventFlags(rawValue: 1 << 17)
+    public static let construct = SWFClipEventFlags(rawValue: 1 << 18)
 }
 
 /// One CLIPACTIONRECORD: the events it handles, the key it traps for a
 /// `keyPress` handler, and its parsed action stream.
-nonisolated package struct SWFClipActionRecord: Equatable {
-    package let events: SWFClipEventFlags
+nonisolated public struct SWFClipActionRecord: Equatable, Sendable {
+    public let events: SWFClipEventFlags
     /// `KeyCode`, present only when `events` contains `keyPress`.
-    package let keyCode: UInt8?
-    package let actions: SWFActionBlock
+    public let keyCode: UInt8?
+    public let actions: SWFActionBlock
 }
 
 /// A decoded CLIPACTIONS block.
-nonisolated package struct SWFClipActions: Equatable {
+nonisolated public struct SWFClipActions: Equatable, Sendable {
     /// `AllEventFlags`: the union the tag declares, kept as written rather than
     /// recomputed, so a movie that disagrees with itself stays inspectable.
-    package let allEvents: SWFClipEventFlags
-    package let records: [SWFClipActionRecord]
+    public let allEvents: SWFClipEventFlags
+    public let records: [SWFClipActionRecord]
     /// Framing problems in the CLIPACTIONS block itself. Non-empty means
     /// handlers after the failure were not recovered.
-    package let warnings: [SWFActionWarning]
+    public let warnings: [SWFActionWarning]
 }
 
-nonisolated package enum SWFClipActionsParser {
+nonisolated public enum SWFClipActionsParser: Sendable {
     /// Frames a CLIPACTIONS block starting at the reader's current byte, and
     /// leaves the reader just past it. Never throws: a malformed block yields
     /// whatever handlers were framed plus a warning, because a place tag with
     /// bad clip actions must still place its character.
-    package static func parse(_ bits: inout SWFBitReader, version: UInt8) -> SWFClipActions {
+    public static func parse(_ bits: inout SWFBitReader, version: UInt8) -> SWFClipActions {
         bits.align()
         var decoder = ClipActionsDecoder(base: bits.byteOffset, version: version)
         var reader = BinaryReader(bits.remainingData)
@@ -79,7 +79,7 @@ nonisolated package enum SWFClipActionsParser {
     /// CLIPEVENTFLAGS is UI16 through SWF 5 and UI32 from SWF 6. Both are
     /// little-endian, and the narrow form is the low half of the wide one, so
     /// one flag layout serves both.
-    package static func flagWidth(version: UInt8) -> Int {
+    public static func flagWidth(version: UInt8) -> Int {
         version >= 6 ? 4 : 2
     }
 }

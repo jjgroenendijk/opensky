@@ -8,6 +8,7 @@
 // together exactly as `GameViewController.wirePapyrus` wires them, over
 // synthetic VMAD references and a synthetic script. No Metal, no game data.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

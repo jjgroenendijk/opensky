@@ -3,6 +3,7 @@
 // framing), removals, SetBackgroundColor, and the SWFTransform affine math
 // with the movie-to-viewport mapping. Synthetic fixtures only.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import simd

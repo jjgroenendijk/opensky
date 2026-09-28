@@ -16,7 +16,7 @@ import Foundation
 nonisolated extension SWFMovieRuntime {
     /// Regenerates the whole command stream from the live tree and clears the
     /// dirty flag.
-    package func makeScene() -> SWFScene {
+    public func makeScene() -> SWFScene {
         var builder = SWFRuntimeSceneBuilder(runtime: self)
         builder.walk(
             node: root,
@@ -31,7 +31,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// The command stream, but only when the tree changed since the last call.
     /// The per-frame path uses this so an idle movie costs nothing.
-    package func sceneIfChanged() -> SWFScene? {
+    public func sceneIfChanged() -> SWFScene? {
         isDirty ? makeScene() : nil
     }
 }

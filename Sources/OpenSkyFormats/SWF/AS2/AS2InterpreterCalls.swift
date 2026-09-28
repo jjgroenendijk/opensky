@@ -12,7 +12,7 @@
 import Foundation
 
 nonisolated extension AS2Interpreter {
-    package func callOp(
+    public func callOp(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
@@ -124,7 +124,7 @@ nonisolated extension AS2Interpreter {
     /// object of its own wins, which is what the `Array` and `Object`
     /// built-ins rely on — `AS2FrameCompletion.construct` applies that rule
     /// when the constructor's frame is popped.
-    package func construct(
+    public func construct(
         _ constructor: AS2Object,
         arguments: [AS2Value],
         offset: Int,
@@ -156,7 +156,7 @@ nonisolated extension AS2Interpreter {
 
     /// Pops the argument count and then the arguments. The first argument is on
     /// top of the stack, so the popped order is already the call order.
-    package func popArguments(_ frame: AS2Frame) throws(AS2Fault) -> [AS2Value] {
+    public func popArguments(_ frame: AS2Frame) throws(AS2Fault) -> [AS2Value] {
         let count = try toArgumentCount(frame.pop())
         var values: [AS2Value] = []
         values.reserveCapacity(min(count, 32))

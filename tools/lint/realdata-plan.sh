@@ -6,7 +6,7 @@
 # structural facts that make target-level selection correct:
 #
 #   * Every env-gated suite lives in Tests/OpenSkyRealDataTests/. One in Tests/OpenSkyTests/,
-#     Tests/OpenSkyFormatsTests/, or Tests/TestSupport/ is a suite `make realtest-all` never runs, and it
+#     a package test folder, or a support folder is a suite `make realtest-all` never runs, and it
 #     would silently skip inside `make test` instead, because a plain
 #     `xcodebuild test` does not forward OPENSKY_DATA_ROOT into the host.
 #   * The plan selects that target, with no selectedTests narrowing it -- a
@@ -36,6 +36,8 @@ HOME = pathlib.Path("Tests/OpenSkyRealDataTests")
 ELSEWHERE = [
     pathlib.Path("Tests/OpenSkyTests"),
     pathlib.Path("Tests/OpenSkyFormatsTests"),
+    pathlib.Path("Tests/OpenSkyGameDataTests"),
+    pathlib.Path("Tests/FormatsTestSupport"),
     pathlib.Path("Tests/TestSupport"),
 ]
 # A Swift Testing suite is a plain type declaration -- no @Suite attribute is

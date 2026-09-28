@@ -12,17 +12,17 @@ import simd
 
 /// An axis-aligned box in twips. `nil` bounds are represented by `isEmpty`
 /// rather than an optional so unions stay cheap.
-nonisolated package struct SWFBoundsBox: Equatable {
-    package var minX: Float
-    package var minY: Float
-    package var maxX: Float
-    package var maxY: Float
+nonisolated public struct SWFBoundsBox: Equatable, Sendable {
+    public var minX: Float
+    public var minY: Float
+    public var maxX: Float
+    public var maxY: Float
     /// True when nothing has been unioned in yet.
-    package var isEmpty: Bool
+    public var isEmpty: Bool
 
-    package static let empty = SWFBoundsBox(minX: 0, minY: 0, maxX: 0, maxY: 0, isEmpty: true)
+    public static let empty = SWFBoundsBox(minX: 0, minY: 0, maxX: 0, maxY: 0, isEmpty: true)
 
-    package init(minX: Float, minY: Float, maxX: Float, maxY: Float, isEmpty: Bool = false) {
+    public init(minX: Float, minY: Float, maxX: Float, maxY: Float, isEmpty: Bool = false) {
         self.minX = minX
         self.minY = minY
         self.maxX = maxX
@@ -30,22 +30,22 @@ nonisolated package struct SWFBoundsBox: Equatable {
         self.isEmpty = isEmpty
     }
 
-    package init(rect: SWFRect) {
+    public init(rect: SWFRect) {
         self.init(
             minX: Float(rect.xMin), minY: Float(rect.yMin),
             maxX: Float(rect.xMax), maxY: Float(rect.yMax)
         )
     }
 
-    package var width: Float {
+    public var width: Float {
         isEmpty ? 0 : maxX - minX
     }
 
-    package var height: Float {
+    public var height: Float {
         isEmpty ? 0 : maxY - minY
     }
 
-    package mutating func formUnion(_ other: SWFBoundsBox) {
+    public mutating func formUnion(_ other: SWFBoundsBox) {
         guard !other.isEmpty else {
             return
         }
@@ -60,7 +60,7 @@ nonisolated package struct SWFBoundsBox: Equatable {
     }
 
     /// The axis-aligned box covering this box's four transformed corners.
-    package func transformed(by transform: SWFTransform) -> SWFBoundsBox {
+    public func transformed(by transform: SWFTransform) -> SWFBoundsBox {
         guard !isEmpty else {
             return self
         }
@@ -82,7 +82,7 @@ nonisolated package struct SWFBoundsBox: Equatable {
         return box
     }
 
-    package func contains(_ point: SIMD2<Float>) -> Bool {
+    public func contains(_ point: SIMD2<Float>) -> Bool {
         guard !isEmpty else {
             return false
         }
@@ -93,7 +93,7 @@ nonisolated package struct SWFBoundsBox: Equatable {
 nonisolated extension SWFMovieRuntime {
     /// The node's own bounds in its local twip space, before its matrix.
     /// A clip unions its children's transformed bounds.
-    package func localBounds(
+    public func localBounds(
         of node: SWFDisplayObject,
         remainingDepth: Int = SWFDisplayObject.maximumTreeDepth
     ) -> SWFBoundsBox {
@@ -122,7 +122,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// The node's bounds in its parent's space — the box `_width`/`_height`
     /// report.
-    package func parentBounds(of node: SWFDisplayObject) -> SWFBoundsBox {
+    public func parentBounds(of node: SWFDisplayObject) -> SWFBoundsBox {
         localBounds(of: node).transformed(by: SWFTransform(matrix: node.matrix))
     }
 }

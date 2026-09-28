@@ -3,7 +3,7 @@
 import Foundation
 
 nonisolated extension PexDecoder {
-    package mutating func decodeObjects() throws -> [PexObject] {
+    public mutating func decodeObjects() throws -> [PexObject] {
         let count = try Int(reader.readUInt16())
         var result: [PexObject] = []
         result.reserveCapacity(count)

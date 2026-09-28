@@ -9,7 +9,7 @@
 
 import Foundation
 
-nonisolated package enum SWFActionError: Error, Equatable {
+nonisolated public enum SWFActionError: Error, Equatable, Sendable {
     /// Tag code handed to a parser expecting DoAction (12) or DoInitAction (59).
     case unsupportedTag(UInt16)
     /// DoInitAction body too short to hold its `Sprite ID`.
@@ -22,28 +22,28 @@ nonisolated package enum SWFActionError: Error, Equatable {
 /// `ActionDefineFunction2` preload/suppress flags (spec p. 111). The two flag
 /// bytes are read big-endian so the bit values match the order the spec's field
 /// table lists them in.
-nonisolated package struct SWFDefineFunctionFlags: OptionSet, Equatable {
-    package let rawValue: UInt16
+nonisolated public struct SWFDefineFunctionFlags: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt16
 
-    package init(rawValue: UInt16) {
+    public init(rawValue: UInt16) {
         self.rawValue = rawValue
     }
 
-    package static let preloadParent = SWFDefineFunctionFlags(rawValue: 0x8000)
-    package static let preloadRoot = SWFDefineFunctionFlags(rawValue: 0x4000)
-    package static let suppressSuper = SWFDefineFunctionFlags(rawValue: 0x2000)
-    package static let preloadSuper = SWFDefineFunctionFlags(rawValue: 0x1000)
-    package static let suppressArguments = SWFDefineFunctionFlags(rawValue: 0x0800)
-    package static let preloadArguments = SWFDefineFunctionFlags(rawValue: 0x0400)
-    package static let suppressThis = SWFDefineFunctionFlags(rawValue: 0x0200)
-    package static let preloadThis = SWFDefineFunctionFlags(rawValue: 0x0100)
-    package static let preloadGlobal = SWFDefineFunctionFlags(rawValue: 0x0001)
+    public static let preloadParent = SWFDefineFunctionFlags(rawValue: 0x8000)
+    public static let preloadRoot = SWFDefineFunctionFlags(rawValue: 0x4000)
+    public static let suppressSuper = SWFDefineFunctionFlags(rawValue: 0x2000)
+    public static let preloadSuper = SWFDefineFunctionFlags(rawValue: 0x1000)
+    public static let suppressArguments = SWFDefineFunctionFlags(rawValue: 0x0800)
+    public static let preloadArguments = SWFDefineFunctionFlags(rawValue: 0x0400)
+    public static let suppressThis = SWFDefineFunctionFlags(rawValue: 0x0200)
+    public static let preloadThis = SWFDefineFunctionFlags(rawValue: 0x0100)
+    public static let preloadGlobal = SWFDefineFunctionFlags(rawValue: 0x0001)
 }
 
 /// Why an action stream stopped early or lost detail. Recorded, never thrown:
 /// malformed bytecode must not fail a movie (AGENTS.md "Reverse-engineering
 /// discipline"), so the records framed before the problem stay usable.
-nonisolated package enum SWFActionWarning: Equatable {
+nonisolated public enum SWFActionWarning: Equatable, Sendable {
     /// A record header or its operand payload ran past the end of the stream.
     /// Framing stops here; earlier records are kept.
     case truncatedRecord(offset: Int, code: UInt8)
@@ -61,7 +61,7 @@ nonisolated package enum SWFActionWarning: Equatable {
 
 /// One value pushed by `ActionPush` (spec "ActionPush", p. 69). The `Type` byte
 /// selects the case; types 2 through 9 exist from SWF 5 on.
-nonisolated package enum SWFActionValue: Equatable {
+nonisolated public enum SWFActionValue: Equatable, Sendable {
     /// Type 0: null-terminated STRING.
     case string(String)
     /// Type 1: 32-bit IEEE single-precision little-endian FLOAT.
@@ -86,13 +86,13 @@ nonisolated package enum SWFActionValue: Equatable {
 }
 
 /// `ActionGetURL2` flag byte (spec "ActionGetURL2", p. 82).
-nonisolated package struct SWFGetURL2Flags: Equatable {
+nonisolated public struct SWFGetURL2Flags: Equatable, Sendable {
     /// `SendVarsMethod`: 0 = none, 1 = HTTP GET, 2 = HTTP POST.
-    package let sendVarsMethod: UInt8
+    public let sendVarsMethod: UInt8
     /// `LoadTargetFlag`: false = browser window, true = path to a sprite.
-    package let loadTarget: Bool
+    public let loadTarget: Bool
     /// `LoadVariablesFlag`.
-    package let loadVariables: Bool
+    public let loadVariables: Bool
 }
 
 /// `ActionDefineFunction` (spec p. 92) and `ActionDefineFunction2` (p. 111)
@@ -100,47 +100,47 @@ nonisolated package struct SWFGetURL2Flags: Equatable {
 /// `bodySize` bytes of the same stream are the body, so an interpreter reads it
 /// with `SWFActionBlock.records(from:byteCount:)` starting at the record's
 /// `endOffset`.
-nonisolated package struct SWFActionFunction: Equatable {
+nonisolated public struct SWFActionFunction: Equatable, Sendable {
     /// `FunctionName`; empty for an anonymous function literal.
-    package let name: String
+    public let name: String
     /// Parameter names in declaration order.
-    package let parameterNames: [String]
+    public let parameterNames: [String]
     /// `ActionDefineFunction2` REGISTERPARAM `Register` per parameter, in the
     /// same order as `parameterNames` (0 means "bind as a named variable").
     /// Empty for `ActionDefineFunction`, which has no register parameters.
-    package let parameterRegisters: [UInt8]
+    public let parameterRegisters: [UInt8]
     /// `ActionDefineFunction2` `RegisterCount`; 0 for `ActionDefineFunction`.
-    package let registerCount: UInt8
+    public let registerCount: UInt8
     /// `ActionDefineFunction2` preload/suppress flags; empty for
     /// `ActionDefineFunction`, which has none.
-    package let flags: SWFDefineFunctionFlags
+    public let flags: SWFDefineFunctionFlags
     /// `codeSize`: how many bytes of the stream after this record form the body.
-    package let bodySize: Int
+    public let bodySize: Int
 }
 
 /// `ActionTry` header (spec "ActionTry", p. 115). Like a function body, the
 /// try/catch/finally bodies are the following bytes of the same stream, sized
 /// by `trySize`, `catchSize`, and `finallySize` in that order.
-nonisolated package struct SWFActionTryBlock: Equatable {
+nonisolated public struct SWFActionTryBlock: Equatable, Sendable {
     /// `CatchInRegisterFlag`.
-    package let catchInRegister: Bool
+    public let catchInRegister: Bool
     /// `FinallyBlockFlag`.
-    package let hasFinallyBlock: Bool
+    public let hasFinallyBlock: Bool
     /// `CatchBlockFlag`.
-    package let hasCatchBlock: Bool
-    package let trySize: Int
-    package let catchSize: Int
-    package let finallySize: Int
+    public let hasCatchBlock: Bool
+    public let trySize: Int
+    public let catchSize: Int
+    public let finallySize: Int
     /// `CatchName`, present when `catchInRegister` is false; otherwise empty.
-    package let catchName: String
+    public let catchName: String
     /// `CatchRegister`, present when `catchInRegister` is true; otherwise nil.
-    package let catchRegister: UInt8?
+    public let catchRegister: UInt8?
 }
 
 /// Typed operands for the records this stage decodes. Every other record is
 /// still framed correctly and keeps its bytes in
 /// `SWFActionRecord.operandBytes`, reporting `.none` here — nothing is dropped.
-nonisolated package enum SWFActionOperands: Equatable {
+nonisolated public enum SWFActionOperands: Equatable, Sendable {
     /// No operands, or operands this stage does not decode further.
     case none
     /// `ActionPush` (0x96): one or more typed values, in push order.
@@ -180,57 +180,57 @@ nonisolated package enum SWFActionOperands: Equatable {
 
 /// One ACTIONRECORD: its opcode, where it sits in its stream, its raw operand
 /// bytes, and the typed decode when this stage understands the opcode.
-nonisolated package struct SWFActionRecord: Equatable {
+nonisolated public struct SWFActionRecord: Equatable, Sendable {
     /// ACTIONRECORDHEADER `ActionCode`.
-    package let code: UInt8
+    public let code: UInt8
     /// Byte offset of this record's `ActionCode` within its block. Branch
     /// targets and function bodies address records by this value.
-    package let offset: Int
+    public let offset: Int
     /// Byte offset one past this record. `ActionJump`/`ActionIf` add their
     /// `BranchOffset` to this, and a function/With/Try body starts here.
-    package let endOffset: Int
+    public let endOffset: Int
     /// The operand payload verbatim; empty when `code` is below 0x80, which the
     /// spec defines as carrying no payload.
-    package let operandBytes: Data
+    public let operandBytes: Data
     /// Typed decode of `operandBytes`, `.none` when this stage frames the
     /// opcode without interpreting it.
-    package let operands: SWFActionOperands
+    public let operands: SWFActionOperands
 
     /// Adobe name of the opcode, or nil when the code is not in the spec.
-    package var name: String? {
+    public var name: String? {
         SWFActionName.name(forCode: code)
     }
 
     /// Whether the ACTIONRECORDHEADER carries a `Length` field and a payload.
-    package var carriesOperands: Bool {
+    public var carriesOperands: Bool {
         code >= SWFActionRecord.operandFlag
     }
 
     /// An `ActionCode` at or above this value is followed by a UI16 `Length`.
-    package static let operandFlag: UInt8 = 0x80
+    public static let operandFlag: UInt8 = 0x80
 }
 
 /// A parsed ACTIONRECORD stream — one DoAction/DoInitAction tag body, or one
 /// CLIPACTIONRECORD's actions. Records are in stream order and their offsets
 /// ascend, so a byte offset resolves by binary search rather than an index that
 /// would have to be kept in sync.
-nonisolated package struct SWFActionBlock: Equatable {
+nonisolated public struct SWFActionBlock: Equatable, Sendable {
     /// Records in stream order. The terminating `ActionEndFlag` is consumed,
     /// not stored.
-    package let records: [SWFActionRecord]
+    public let records: [SWFActionRecord]
     /// Bytes consumed from the source data, including the trailing
     /// `ActionEndFlag` byte when the stream had one.
-    package let byteCount: Int
+    public let byteCount: Int
     /// Framing problems recorded instead of thrown. Non-empty means the stream
     /// stopped early or a record lost its typed operands.
-    package let warnings: [SWFActionWarning]
+    public let warnings: [SWFActionWarning]
 
-    package static let empty = SWFActionBlock(records: [], byteCount: 0, warnings: [])
+    public static let empty = SWFActionBlock(records: [], byteCount: 0, warnings: [])
 
     /// Index into `records` of the record that starts exactly at `offset`, or
     /// nil when nothing starts there — a branch into the middle of a record,
     /// which an interpreter must treat as a failed jump rather than a crash.
-    package func index(atOffset offset: Int) -> Int? {
+    public func index(atOffset offset: Int) -> Int? {
         var low = records.startIndex
         var high = records.endIndex
         while low < high {
@@ -249,14 +249,14 @@ nonisolated package struct SWFActionBlock: Equatable {
     }
 
     /// The record starting exactly at `offset`, or nil.
-    package func record(atOffset offset: Int) -> SWFActionRecord? {
+    public func record(atOffset offset: Int) -> SWFActionRecord? {
         index(atOffset: offset).map { records[$0] }
     }
 
     /// The records fully inside `[offset, offset + byteCount)` — the body of an
     /// `ActionDefineFunction`, `ActionWith`, or `ActionTry` block. Empty when
     /// `offset` does not start a record.
-    package func records(from offset: Int, byteCount: Int) -> ArraySlice<SWFActionRecord> {
+    public func records(from offset: Int, byteCount: Int) -> ArraySlice<SWFActionRecord> {
         guard let start = index(atOffset: offset) else {
             return []
         }
@@ -271,7 +271,7 @@ nonisolated package struct SWFActionBlock: Equatable {
 
 /// A DoInitAction (59) tag: the sprite whose first instantiation the actions
 /// precede, plus the actions themselves.
-nonisolated package struct SWFDoInitAction: Equatable {
-    package let spriteId: UInt16
-    package let actions: SWFActionBlock
+nonisolated public struct SWFDoInitAction: Equatable, Sendable {
+    public let spriteId: UInt16
+    public let actions: SWFActionBlock
 }

@@ -24,7 +24,7 @@ import Foundation
 /// 2. `plugin` keys order by plugin name first, using `String`'s `<` over the
 ///    already-lowercased name, then by `objectID` ascending.
 /// 3. `generated` keys order by sequence number ascending.
-nonisolated package enum ReferenceKey: Hashable, Sendable {
+nonisolated public enum ReferenceKey: Hashable, Sendable {
     /// Defining plugin plus low 24 bits of the FormID. The associated `name`
     /// is always lowercased — plugin file names are case-insensitive on the
     /// game's original platform and MAST spelling varies between plugins, so
@@ -53,23 +53,23 @@ nonisolated package enum ReferenceKey: Hashable, Sendable {
     /// drawn: no `RuntimeReferenceEntry` resolves it, so it is an activator
     /// identity and an object-handle identity, nothing more.
     /// Documented in docs/engine/papyrus-activation.md and docs/engine/reference-identity.md.
-    package static let player = ReferenceKey.generated(0)
+    public static let player = ReferenceKey.generated(0)
 
     /// Normalizes the resolved plugin name to lowercase.
-    package init(resolved: ResolvedFormID) {
+    public init(resolved: ResolvedFormID) {
         self = .plugin(name: resolved.plugin.lowercased(), objectID: resolved.objectID)
     }
 
     /// Resolves a file-relative FormID against its owning plugin's master
     /// list. Nil for the null FormID, which means "no reference".
-    package static func resolve(_ id: FormID, using resolver: FormIDResolver) -> ReferenceKey? {
+    public static func resolve(_ id: FormID, using resolver: FormIDResolver) -> ReferenceKey? {
         guard let resolved = resolver.resolve(id) else { return nil }
         return ReferenceKey(resolved: resolved)
     }
 }
 
 nonisolated extension ReferenceKey: Comparable {
-    package static func < (lhs: ReferenceKey, rhs: ReferenceKey) -> Bool {
+    public static func < (lhs: ReferenceKey, rhs: ReferenceKey) -> Bool {
         switch (lhs, rhs) {
         case let (.plugin(leftName, leftObject), .plugin(rightName, rightObject)):
             leftName == rightName ? leftObject < rightObject : leftName < rightName
@@ -84,7 +84,7 @@ nonisolated extension ReferenceKey: Comparable {
 }
 
 nonisolated extension ReferenceKey: CustomStringConvertible {
-    package var description: String {
+    public var description: String {
         switch self {
         case let .plugin(name, objectID):
             String(format: "%@:%06X", name, objectID)
@@ -101,18 +101,18 @@ nonisolated extension ReferenceKey: CustomStringConvertible {
 /// keys, which is what makes a saved game reproducible. Its entire state is
 /// `nextSequence`, so saving identity means saving that one number and
 /// restoring means passing it back to `init(nextSequence:)`.
-nonisolated package struct GeneratedReferenceAllocator: Hashable, Sendable {
+nonisolated public struct GeneratedReferenceAllocator: Hashable, Sendable {
     /// Sequence number the next `allocate()` will hand out. Starts at 1; 0 is
     /// reserved and never allocated, so it stays usable as a sentinel.
-    package private(set) var nextSequence: UInt64
+    public private(set) var nextSequence: UInt64
 
     /// Pass a previously saved `nextSequence` to resume allocating where a
     /// restored session left off.
-    package init(nextSequence: UInt64 = 1) {
+    public init(nextSequence: UInt64 = 1) {
         self.nextSequence = nextSequence
     }
 
-    package mutating func allocate() -> ReferenceKey {
+    public mutating func allocate() -> ReferenceKey {
         let sequence = nextSequence
         nextSequence += 1
         return .generated(sequence)

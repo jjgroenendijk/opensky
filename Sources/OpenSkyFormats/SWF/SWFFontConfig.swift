@@ -14,25 +14,25 @@
 
 import Foundation
 
-nonisolated package struct SWFFontConfig: Equatable {
+nonisolated public struct SWFFontConfig: Equatable, Sendable {
     /// One `map` directive: an alias, the font name it resolves to, and any
     /// trailing style keywords (retained but not used for matching).
-    package struct FontMap: Equatable {
-        package let alias: String
-        package let fontName: String
-        package let styles: [String]
+    public struct FontMap: Equatable, Sendable {
+        public let alias: String
+        public let fontName: String
+        public let styles: [String]
     }
 
     /// Movie file names from `fontlib` directives, in file order.
-    package let fontlibs: [String]
-    package let maps: [FontMap]
+    public let fontlibs: [String]
+    public let maps: [FontMap]
     /// Non-empty lines that matched no recognized directive.
-    package let unrecognizedLines: [String]
+    public let unrecognizedLines: [String]
 
     /// Parses fontconfig.txt text. Never throws: unrecognized content is
     /// collected rather than failing, so a mod's extra directives cannot break
     /// font resolution.
-    package static func parse(_ text: String) -> SWFFontConfig {
+    public static func parse(_ text: String) -> SWFFontConfig {
         var fontlibs: [String] = []
         var maps: [FontMap] = []
         var unrecognized: [String] = []

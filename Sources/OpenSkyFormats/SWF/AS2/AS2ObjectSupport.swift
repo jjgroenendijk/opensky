@@ -11,13 +11,13 @@ import Foundation
 nonisolated extension AS2Object {
     /// Reads an array element by index. Elements live in the ordinary property
     /// table under their decimal names, as ECMAScript specifies.
-    package func element(at index: Int) -> AS2Value {
+    public func element(at index: Int) -> AS2Value {
         ownProperty(String(index))?.value ?? .undefined
     }
 
     /// Writes an array element and extends `length` when the index is past the
     /// end.
-    package func setElement(_ value: AS2Value, at index: Int) {
+    public func setElement(_ value: AS2Value, at index: Int) {
         guard index >= 0 else {
             return
         }
@@ -28,12 +28,12 @@ nonisolated extension AS2Object {
     }
 
     /// Appends to an array-like object.
-    package func appendElement(_ value: AS2Value) {
+    public func appendElement(_ value: AS2Value) {
         setElement(value, at: arrayLength ?? 0)
     }
 
     /// Every element in index order, `undefined` for holes.
-    package var elements: [AS2Value] {
+    public var elements: [AS2Value] {
         guard let length = arrayLength else {
             return []
         }
@@ -42,7 +42,7 @@ nonisolated extension AS2Object {
 
     /// Applies an array `length` assignment: shrinking drops the elements past
     /// the new end, growing only moves the mark.
-    package func resizeArray(to length: Int) {
+    public func resizeArray(to length: Int) {
         let clamped = max(0, length)
         if let current = arrayLength, clamped < current {
             for index in clamped ..< current {
@@ -59,7 +59,7 @@ nonisolated extension AS2Object {
     /// Insertion order is used throughout, which the specification leaves
     /// implementation-defined; picking a fixed order keeps a menu's iteration
     /// deterministic across runs.
-    package func enumerableNames() -> [String] {
+    public func enumerableNames() -> [String] {
         var names: [String] = []
         var seen: Set<String> = []
         var current: AS2Object? = self
@@ -84,7 +84,7 @@ nonisolated extension AS2Object {
     /// `ASSetPropFlags(object, names, setFlags, clearFlags)`. A nil name list
     /// means every own property. Clearing wins over setting for a bit named in
     /// both, matching the built-in's documented order of operations.
-    package func applyPropertyFlags(
+    public func applyPropertyFlags(
         names: [String]?,
         adding: AS2PropertyFlags,
         removing: AS2PropertyFlags

@@ -4,6 +4,7 @@
 // Synthetic fixtures only — the resolver seam stands in for the VFS, so none of
 // this touches a real install.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSkyFormats
 import Testing

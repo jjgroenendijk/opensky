@@ -18,23 +18,23 @@
 
 import Foundation
 
-nonisolated package struct Spell {
-    package let formID: FormID
-    package let header: MagicItemHeader
+nonisolated public struct Spell: Sendable {
+    public let formID: FormID
+    public let header: MagicItemHeader
     /// SPIT. Nil when the field is absent or too short to decode.
-    package let data: SpellItemData?
-    package let effects: [MagicItemEffect]
-    package let skipped: MagicEffectTally
+    public let data: SpellItemData?
+    public let effects: [MagicItemEffect]
+    public let skipped: MagicEffectTally
 
-    package var editorID: String? {
+    public var editorID: String? {
         header.fields.editorID
     }
 
-    package var name: LString? {
+    public var name: LString? {
         header.fields.name
     }
 
-    package init(record: ESMRecord, localized: Bool) throws {
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "SPEL" else {
             throw ESMError.malformed("expected SPEL record, got \(record.type)")
         }
@@ -53,21 +53,21 @@ nonisolated package struct Spell {
 /// Field accumulator shared by the SPEL and SCRL decoders: the header, the
 /// SPIT struct, the effect run, and the unread-field tally. SCRL adds DATA on
 /// top through `decodeItemValue`.
-nonisolated package struct MagicItemFields {
-    package let localized: Bool
-    package private(set) var header = MagicItemHeader()
-    package private(set) var data: SpellItemData?
-    package private(set) var skipped = MagicEffectTally()
+nonisolated public struct MagicItemFields: Sendable {
+    public let localized: Bool
+    public private(set) var header = MagicItemHeader()
+    public private(set) var data: SpellItemData?
+    public private(set) var skipped = MagicEffectTally()
     private var effects = MagicItemEffectList()
 
-    package init(localized: Bool) {
+    public init(localized: Bool) {
         self.localized = localized
     }
 
     /// Decodes one field, tallying anything unread or malformed. Returns
     /// whether the field was consumed so SCRL can add its own cases.
     @discardableResult
-    package mutating func decode(_ field: ESMField) -> Bool {
+    public mutating func decode(_ field: ESMField) -> Bool {
         do {
             if try header.decode(field: field, localized: localized) {
                 return true
@@ -87,38 +87,38 @@ nonisolated package struct MagicItemFields {
         }
     }
 
-    package mutating func finishEffects() -> [MagicItemEffect] {
+    public mutating func finishEffects() -> [MagicItemEffect] {
         effects.finish()
     }
 }
 
 /// A decoded SPEL or SCRL, so one store and one inspector path can carry both.
-nonisolated package enum MagicCastingRecord {
+nonisolated public enum MagicCastingRecord: Sendable {
     case spell(Spell)
     case scroll(Scroll)
 
-    package var recordType: FourCC {
+    public var recordType: FourCC {
         switch self {
         case .spell: "SPEL"
         case .scroll: "SCRL"
         }
     }
 
-    package var editorID: String? {
+    public var editorID: String? {
         switch self {
         case let .spell(spell): spell.editorID
         case let .scroll(scroll): scroll.editorID
         }
     }
 
-    package var name: LString? {
+    public var name: LString? {
         switch self {
         case let .spell(spell): spell.name
         case let .scroll(scroll): scroll.name
         }
     }
 
-    package var data: SpellItemData? {
+    public var data: SpellItemData? {
         switch self {
         case let .spell(spell): spell.data
         case let .scroll(scroll): scroll.data
@@ -128,21 +128,21 @@ nonisolated package enum MagicCastingRecord {
     /// ETYP — the EQUP slot the record links to, still raw and still relative to
     /// the plugin that authored the record. What answers which hands a readied
     /// spell takes (issue #470).
-    package var equipType: FormID? {
+    public var equipType: FormID? {
         switch self {
         case let .spell(spell): spell.header.equipType
         case let .scroll(scroll): scroll.header.equipType
         }
     }
 
-    package var effects: [MagicItemEffect] {
+    public var effects: [MagicItemEffect] {
         switch self {
         case let .spell(spell): spell.effects
         case let .scroll(scroll): scroll.effects
         }
     }
 
-    package var skipped: MagicEffectTally {
+    public var skipped: MagicEffectTally {
         switch self {
         case let .spell(spell): spell.skipped
         case let .scroll(scroll): scroll.skipped

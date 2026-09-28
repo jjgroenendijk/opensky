@@ -5,6 +5,7 @@
 // truncation cases matter most: a clipped list must still say how much it
 // stopped showing.
 
+import FormatsTestSupport
 @testable import OpenSky
 @testable import OpenSkyFormats
 import Testing

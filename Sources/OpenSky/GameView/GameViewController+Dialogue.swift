@@ -16,6 +16,7 @@
 
 import AppKit
 import OpenSkyFormats
+import OpenSkyGameData
 import simd
 
 struct DialogueBridgeState {

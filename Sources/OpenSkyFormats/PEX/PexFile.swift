@@ -8,7 +8,7 @@
 
 import Foundation
 
-nonisolated package enum PexError: Error, Equatable {
+nonisolated public enum PexError: Error, Equatable, Sendable {
     case truncated(offset: Int, expected: Int, available: Int)
     case invalidMagic(UInt32)
     case unsupportedVersion(major: UInt8, minor: UInt8)
@@ -22,49 +22,49 @@ nonisolated package enum PexError: Error, Equatable {
     case trailingBytes(Int)
 }
 
-nonisolated package struct PexHeader: Equatable, Sendable {
-    package let majorVersion: UInt8
-    package let minorVersion: UInt8
-    package let gameID: UInt16
-    package let compilationTime: UInt64
-    package let sourceFileName: String
-    package let userName: String
-    package let machineName: String
+nonisolated public struct PexHeader: Equatable, Sendable {
+    public let majorVersion: UInt8
+    public let minorVersion: UInt8
+    public let gameID: UInt16
+    public let compilationTime: UInt64
+    public let sourceFileName: String
+    public let userName: String
+    public let machineName: String
 }
 
-nonisolated package struct PexDebugFunction: Equatable, Sendable {
-    package let objectName: String
-    package let stateName: String
-    package let functionName: String
-    package let functionType: UInt8
-    package let lineNumbers: [UInt16]
+nonisolated public struct PexDebugFunction: Equatable, Sendable {
+    public let objectName: String
+    public let stateName: String
+    public let functionName: String
+    public let functionType: UInt8
+    public let lineNumbers: [UInt16]
 }
 
-nonisolated package struct PexDebugInfo: Equatable, Sendable {
-    package let modificationTime: UInt64
-    package let functions: [PexDebugFunction]
+nonisolated public struct PexDebugInfo: Equatable, Sendable {
+    public let modificationTime: UInt64
+    public let functions: [PexDebugFunction]
 }
 
-nonisolated package struct PexUserFlag: Equatable, Sendable {
-    package let name: String
-    package let bitIndex: UInt8
+nonisolated public struct PexUserFlag: Equatable, Sendable {
+    public let name: String
+    public let bitIndex: UInt8
 }
 
-nonisolated package struct PexFile: Equatable, Sendable {
-    package static let magic: UInt32 = 0xFA57_C0DE
+nonisolated public struct PexFile: Equatable, Sendable {
+    public static let magic: UInt32 = 0xFA57_C0DE
 
-    package let header: PexHeader
-    package let strings: [String]
-    package let debugInfo: PexDebugInfo?
-    package let userFlags: [PexUserFlag]
-    package let objects: [PexObject]
+    public let header: PexHeader
+    public let strings: [String]
+    public let debugInfo: PexDebugInfo?
+    public let userFlags: [PexUserFlag]
+    public let objects: [PexObject]
 
-    package init(data: Data) throws {
+    public init(data: Data) throws {
         var decoder = PexDecoder(data: data)
         self = try decoder.decode()
     }
 
-    package init(
+    public init(
         header: PexHeader,
         strings: [String],
         debugInfo: PexDebugInfo?,

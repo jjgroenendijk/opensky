@@ -11,72 +11,89 @@ import Foundation
 
 /// Builds a minimal spec-conformant HKX packfile blob. Knobs corrupt one axis
 /// at a time so each parser guard has an isolated fixture.
-struct HKXFixture {
-    struct LocalFixup {
-        var from: UInt32
-        var toOffset: UInt32
+public struct HKXFixture: Sendable {
+    public struct LocalFixup: Sendable {
+        public var from: UInt32
+        public var toOffset: UInt32
+
+        public init(from: UInt32, toOffset: UInt32) {
+            self.from = from
+            self.toOffset = toOffset
+        }
     }
 
-    struct GlobalFixup {
-        var from: UInt32
-        var toSection: UInt32
-        var toOffset: UInt32
+    public struct GlobalFixup: Sendable {
+        public var from: UInt32
+        public var toSection: UInt32
+        public var toOffset: UInt32
+
+        public init(from: UInt32, toSection: UInt32, toOffset: UInt32) {
+            self.from = from
+            self.toSection = toSection
+            self.toOffset = toOffset
+        }
     }
 
-    struct VirtualFixup {
-        var dataOffset: UInt32
-        var classNameSection: UInt32
-        var classNameOffset: UInt32
+    public struct VirtualFixup: Sendable {
+        public var dataOffset: UInt32
+        public var classNameSection: UInt32
+        public var classNameOffset: UInt32
+
+        public init(dataOffset: UInt32, classNameSection: UInt32, classNameOffset: UInt32) {
+            self.dataOffset = dataOffset
+            self.classNameSection = classNameSection
+            self.classNameOffset = classNameOffset
+        }
     }
 
     // --- Well-formed defaults: valid 3-section file with one object at root. ---
-    var userTag: UInt32 = 0x1234_5678
-    var fileVersion: UInt32 = 8
-    var versionString = "hk_2010.2.0-r1"
-    var flags: UInt32 = 0
+    public var userTag: UInt32 = 0x1234_5678
+    public var fileVersion: UInt32 = 8
+    public var versionString = "hk_2010.2.0-r1"
+    public var flags: UInt32 = 0
     /// (signature, name) pairs; synthetic hashes, real Havok type names.
-    var classNames: [(signature: UInt32, name: String)] = [
+    public var classNames: [(signature: UInt32, name: String)] = [
         (0x0BD4_C87B, "hkClass"),
         (0x0B5F_0E29, "hkClassMember"),
         (0x6DAB_825E, "hkRootLevelContainer")
     ]
     /// Which class-name entry the header's contents pointer targets.
-    var rootClassIndex = 2
-    var dataPayloadSize = 48
+    public var rootClassIndex = 2
+    public var dataPayloadSize = 48
     /// Replaces the deterministic payload pattern with exact bytes (object
     /// decoding tests supply a hand-built hkaSkeleton payload). When set the
     /// __data__ section's data size follows the override length.
-    var payloadOverride: Data?
-    var localFixups: [LocalFixup] = [LocalFixup(from: 0, toOffset: 16)]
-    var globalFixups: [GlobalFixup] = [GlobalFixup(from: 4, toSection: 2, toOffset: 32)]
+    public var payloadOverride: Data?
+    public var localFixups: [LocalFixup] = [LocalFixup(from: 0, toOffset: 16)]
+    public var globalFixups: [GlobalFixup] = [GlobalFixup(from: 4, toSection: 2, toOffset: 32)]
     /// Extra objects beyond the auto root object (`rootObjectDataOffset`).
-    var virtualFixups: [VirtualFixup] = []
+    public var virtualFixups: [VirtualFixup] = []
     /// When set, build adds a virtual fixup registering the root object.
-    var rootObjectDataOffset: Int? = 0
+    public var rootObjectDataOffset: Int? = 0
 
     // --- Layout indices in the header (defaults match SSE files). ---
-    var contentsSectionIndex: UInt32 = 2
-    var contentsSectionOffset: UInt32 = 0
-    var contentsClassNameSectionIndex: UInt32 = 0
+    public var contentsSectionIndex: UInt32 = 2
+    public var contentsSectionOffset: UInt32 = 0
+    public var contentsClassNameSectionIndex: UInt32 = 0
     /// Overrides the computed root name-string offset when set.
-    var contentsClassNameOffsetOverride: Int?
+    public var contentsClassNameOffsetOverride: Int?
 
     // --- Corruption knobs (each isolated to one guard). ---
-    var badMagic = false
-    var pointerSize: UInt8 = 8
-    var littleEndian: UInt8 = 1
-    var sectionCountOverride: UInt32?
-    var truncateTo: Int?
+    public var badMagic = false
+    public var pointerSize: UInt8 = 8
+    public var littleEndian: UInt8 = 1
+    public var sectionCountOverride: UInt32?
+    public var truncateTo: Int?
     /// Inflates __data__ endOffset past EOF -> sectionOutOfBounds.
-    var dataEndOffsetOverride: Int?
+    public var dataEndOffsetOverride: Int?
     /// Swaps local/global offsets in __data__ header -> non-ascending.
-    var nonAscendingFixups = false
+    public var nonAscendingFixups = false
     /// Corrupts the 2nd class-name separator byte (0x09 -> 0x00) so the table
     /// parse stops early.
-    var badClassNameSeparator = false
+    public var badClassNameSeparator = false
     /// Pads each fixup region up to 16-byte alignment with a 0xFF tail (the
     /// 0xFFFFFFFF sentinel that must end a table).
-    var alignFixupRegions = false
+    public var alignFixupRegions = false
 
     private static let headerSize = 64
     private static let sectionHeaderSize = 48
@@ -86,45 +103,7 @@ struct HKXFixture {
         headerSize + sectionCount * sectionHeaderSize
     }
 
-    /// Deterministic payload pattern so slice tests can assert exact bytes,
-    /// or the caller's exact override.
-    var payloadBytes: Data {
-        payloadOverride ?? Data((0 ..< dataPayloadSize).map { UInt8($0 & 0xFF) })
-    }
-
-    /// Class-name blob + each entry's section-local name-string offset
-    /// (entry start + 5, matching HKXFile's `nameOffset` rule).
-    func classNameLayout() -> (blob: Data, nameOffsets: [Int]) {
-        var blob = Data()
-        var nameOffsets: [Int] = []
-        for (index, entry) in classNames.enumerated() {
-            nameOffsets.append(blob.count + 5)
-            blob.appendUInt32(entry.signature)
-            let separator: UInt8 = (badClassNameSeparator && index == 1) ? 0x00 : 0x09
-            blob.append(separator)
-            blob.append(Data(entry.name.utf8))
-            blob.append(0) // zstring terminator
-        }
-        blob.appendUInt32(0xFFFF_FFFF) // sentinel ends the table
-        while blob.count % 16 != 0 {
-            blob.append(0xFF)
-        } // 0xFF tail padding
-        return (blob, nameOffsets)
-    }
-
-    var classNamesBlob: Data {
-        classNameLayout().blob
-    }
-
-    func nameOffset(ofClass index: Int) -> Int {
-        classNameLayout().nameOffsets[index]
-    }
-
-    var rootNameOffset: Int {
-        nameOffset(ofClass: rootClassIndex)
-    }
-
-    func build() -> Data {
+    public func build() -> Data {
         let (classBlob, nameOffsets) = classNameLayout()
         let classnamesStart = Self.dataAreaStart
         let dataStart = classnamesStart + classBlob.count // __types__ shares this
@@ -270,5 +249,63 @@ struct HKXFixture {
             name: "__data__",
             offsets: [UInt32(dataStart), local, global, virtual, end, end, end]
         )
+    }
+
+    public init(
+        userTag: UInt32 = 0x1234_5678,
+        fileVersion: UInt32 = 8,
+        versionString: String = "hk_2010.2.0-r1",
+        flags: UInt32 = 0,
+        classNames: [(signature: UInt32, name: String)] = [
+            (0x0BD4_C87B, "hkClass"),
+            (0x0B5F_0E29, "hkClassMember"),
+            (0x6DAB_825E, "hkRootLevelContainer")
+        ],
+        rootClassIndex: Int = 2,
+        dataPayloadSize: Int = 48,
+        payloadOverride: Data? = nil,
+        localFixups: [LocalFixup] = [LocalFixup(from: 0, toOffset: 16)],
+        globalFixups: [GlobalFixup] = [GlobalFixup(from: 4, toSection: 2, toOffset: 32)],
+        virtualFixups: [VirtualFixup] = [],
+        rootObjectDataOffset: Int? = 0,
+        contentsSectionIndex: UInt32 = 2,
+        contentsSectionOffset: UInt32 = 0,
+        contentsClassNameSectionIndex: UInt32 = 0,
+        contentsClassNameOffsetOverride: Int? = nil,
+        badMagic: Bool = false,
+        pointerSize: UInt8 = 8,
+        littleEndian: UInt8 = 1,
+        sectionCountOverride: UInt32? = nil,
+        truncateTo: Int? = nil,
+        dataEndOffsetOverride: Int? = nil,
+        nonAscendingFixups: Bool = false,
+        badClassNameSeparator: Bool = false,
+        alignFixupRegions: Bool = false
+    ) {
+        self.userTag = userTag
+        self.fileVersion = fileVersion
+        self.versionString = versionString
+        self.flags = flags
+        self.classNames = classNames
+        self.rootClassIndex = rootClassIndex
+        self.dataPayloadSize = dataPayloadSize
+        self.payloadOverride = payloadOverride
+        self.localFixups = localFixups
+        self.globalFixups = globalFixups
+        self.virtualFixups = virtualFixups
+        self.rootObjectDataOffset = rootObjectDataOffset
+        self.contentsSectionIndex = contentsSectionIndex
+        self.contentsSectionOffset = contentsSectionOffset
+        self.contentsClassNameSectionIndex = contentsClassNameSectionIndex
+        self.contentsClassNameOffsetOverride = contentsClassNameOffsetOverride
+        self.badMagic = badMagic
+        self.pointerSize = pointerSize
+        self.littleEndian = littleEndian
+        self.sectionCountOverride = sectionCountOverride
+        self.truncateTo = truncateTo
+        self.dataEndOffsetOverride = dataEndOffsetOverride
+        self.nonAscendingFixups = nonAscendingFixups
+        self.badClassNameSeparator = badClassNameSeparator
+        self.alignFixupRegions = alignFixupRegions
     }
 }

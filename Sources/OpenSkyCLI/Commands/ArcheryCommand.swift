@@ -15,6 +15,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 enum ArcheryCommand {
     /// The distance the per-arrow drop is reported at. A round number inside

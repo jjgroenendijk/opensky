@@ -1,6 +1,7 @@
 // Synthetic DIAL/INFO/VTYP records and DIAL child groups, every byte built in
 // code from the UESP and xEdit layouts. Never extracted game data.
 
+import FormatsTestSupport
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormats

@@ -14,33 +14,33 @@
 import Foundation
 import simd
 
-nonisolated package enum NIFCompressedCollisionMesh {
-    package struct Soup {
-        package let vertices: [SIMD3<Float>]
-        package let indices: [UInt32]
+nonisolated public enum NIFCompressedCollisionMesh: Sendable {
+    public struct Soup: Sendable {
+        public let vertices: [SIMD3<Float>]
+        public let indices: [UInt32]
         /// `SkyrimHavokMaterial` from the block's chunk-material table
         /// (issue #358). Nil where the table is empty or the chunk indexes
         /// past it, which is malformed data rather than a reason to drop the
         /// geometry: a surface with no material still stops the player.
-        package let material: UInt32?
+        public let material: UInt32?
 
-        package init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
+        public init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
             self.vertices = vertices
             self.indices = indices
             self.material = material
         }
     }
 
-    package struct ChunkTransform {
-        package let translation: SIMD3<Float>
-        package let rotation: simd_quatf
+    public struct ChunkTransform: Sendable {
+        public let translation: SIMD3<Float>
+        public let rotation: simd_quatf
 
-        package func apply(to point: SIMD3<Float>) -> SIMD3<Float> {
+        public func apply(to point: SIMD3<Float>) -> SIMD3<Float> {
             rotation.act(point) + translation
         }
     }
 
-    package static func decode(data: Data, shapeScale: SIMD3<Float>) throws -> [Soup] {
+    public static func decode(data: Data, shapeScale: SIMD3<Float>) throws -> [Soup] {
         var reader = BinaryReader(data)
         try readHeader(reader: &reader)
         try skipIntegerArray(reader: &reader, label: "32-bit materials")
@@ -190,11 +190,11 @@ nonisolated package enum NIFCompressedCollisionMesh {
     /// saying it is a table index; every vanilla value observed is in range for
     /// the table, and the alternative reading — a raw `SkyrimHavokMaterial` —
     /// would have to be a value no material hashes to.
-    package static func material(at index: Int, in materials: [UInt32]) -> UInt32? {
+    public static func material(at index: Int, in materials: [UInt32]) -> UInt32? {
         materials.indices.contains(index) ? materials[index] : nil
     }
 
-    package static func checkedCount(
+    public static func checkedCount(
         reader: inout BinaryReader,
         stride: Int,
         label: String

@@ -4,36 +4,36 @@
 
 import Foundation
 
-nonisolated package struct PexCallTarget: Equatable, Hashable, Sendable {
-    package let object: String
-    package let function: String
+nonisolated public struct PexCallTarget: Equatable, Hashable, Sendable {
+    public let object: String
+    public let function: String
 
-    package var name: String {
+    public var name: String {
         "\(object).\(function)"
     }
 }
 
-nonisolated package struct PexInventory: Equatable, Sendable {
-    package static let defaultNameLimit = 1024
+nonisolated public struct PexInventory: Equatable, Sendable {
+    public static let defaultNameLimit = 1024
 
-    package let nameLimit: Int
+    public let nameLimit: Int
 
-    package private(set) var scriptTotal = 0
-    package private(set) var functionTotal = 0
-    package private(set) var instructionTotal = 0
-    package private(set) var opcodeCounts: [PexOpcode: Int] = [:]
-    package private(set) var externalCallCounts: [PexCallTarget: Int] = [:]
-    package private(set) var externalCallTotal = 0
-    package private(set) var unnamedExternalCalls = 0
-    package private(set) var decodeFailureNames: [String: Int] = [:]
-    package private(set) var decodeFailureTotal = 0
-    package private(set) var unnamedDecodeFailures = 0
+    public private(set) var scriptTotal = 0
+    public private(set) var functionTotal = 0
+    public private(set) var instructionTotal = 0
+    public private(set) var opcodeCounts: [PexOpcode: Int] = [:]
+    public private(set) var externalCallCounts: [PexCallTarget: Int] = [:]
+    public private(set) var externalCallTotal = 0
+    public private(set) var unnamedExternalCalls = 0
+    public private(set) var decodeFailureNames: [String: Int] = [:]
+    public private(set) var decodeFailureTotal = 0
+    public private(set) var unnamedDecodeFailures = 0
 
-    package init(nameLimit: Int = PexInventory.defaultNameLimit) {
+    public init(nameLimit: Int = PexInventory.defaultNameLimit) {
         self.nameLimit = max(0, nameLimit)
     }
 
-    package mutating func record(_ file: PexFile) {
+    public mutating func record(_ file: PexFile) {
         scriptTotal += 1
         for object in file.objects {
             for function in object.functions {
@@ -54,7 +54,7 @@ nonisolated package struct PexInventory: Equatable, Sendable {
         }
     }
 
-    package mutating func noteDecodeFailure(path: String) {
+    public mutating func noteDecodeFailure(path: String) {
         decodeFailureTotal += 1
         if decodeFailureNames[path] != nil || decodeFailureNames.count < nameLimit {
             decodeFailureNames[path, default: 0] += 1
@@ -63,7 +63,7 @@ nonisolated package struct PexInventory: Equatable, Sendable {
         }
     }
 
-    package var unknownOpcodeTotal: Int {
+    public var unknownOpcodeTotal: Int {
         opcodeCounts.reduce(0) { partial, entry in
             if case .unknown = entry.key {
                 partial + entry.value
@@ -73,7 +73,7 @@ nonisolated package struct PexInventory: Equatable, Sendable {
         }
     }
 
-    package var rankedOpcodes: [(name: String, count: Int)] {
+    public var rankedOpcodes: [(name: String, count: Int)] {
         opcodeCounts
             .sorted {
                 $0.value == $1.value
@@ -83,7 +83,7 @@ nonisolated package struct PexInventory: Equatable, Sendable {
             .map { ($0.key.name, $0.value) }
     }
 
-    package var rankedExternalCalls: [(name: String, count: Int)] {
+    public var rankedExternalCalls: [(name: String, count: Int)] {
         externalCallCounts
             .sorted {
                 $0.value == $1.value
@@ -93,7 +93,7 @@ nonisolated package struct PexInventory: Equatable, Sendable {
             .map { ($0.key.name, $0.value) }
     }
 
-    package var rankedDecodeFailures: [(name: String, count: Int)] {
+    public var rankedDecodeFailures: [(name: String, count: Int)] {
         decodeFailureNames
             .sorted {
                 $0.value == $1.value

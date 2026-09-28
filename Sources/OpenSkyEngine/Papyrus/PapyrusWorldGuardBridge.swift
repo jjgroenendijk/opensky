@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Guard and arrest operations a Papyrus native may perform.
 @MainActor

@@ -9,14 +9,14 @@
 
 import Foundation
 
-nonisolated package struct StaticObject {
-    package let formID: FormID
-    package let editorID: String?
+nonisolated public struct StaticObject: Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// MODL — mesh path relative to Data/ (e.g. "meshes\\clutter\\cup.nif").
     /// Nil for marker statics that have no model.
-    package let modelPath: String?
+    public let modelPath: String?
 
-    package init(record: ESMRecord) throws {
+    public init(record: ESMRecord) throws {
         guard record.type == "STAT" else {
             throw ESMError.malformed("expected STAT record, got \(record.type)")
         }

@@ -43,6 +43,7 @@
 
 import Foundation
 import OpenSkyFormats
+import OpenSkyGameData
 
 /// Why a perk-point spend was refused.
 ///
