@@ -11,12 +11,12 @@
 # Two grants matter here, and they are grants to the built products, not to the
 # terminal that launches them (issue #380):
 #
-#   1. Accessibility for openskyUITests-Runner.app. This is what "enabling
+#   1. Accessibility for OpenSkyUITests-Runner.app. This is what "enabling
 #      automation mode" asks for: WindowServer checks kTCCServiceAccessibility
 #      for nl.jjgroenendijk.openskyUITests.xctrunner before it will let the
 #      runner drive another process. Automation ("control this app with Apple
 #      events") is a different service and is not what XCTest requests.
-#   2. File access for opensky.app. DerivedData/ lives inside the checkout
+#   2. File access for OpenSky.app. DerivedData/ lives inside the checkout
 #      (AGENTS.md), the checkout is on an external volume, so macOS treats the
 #      built app as a binary on a removable volume and asks before it may read
 #      the game install.
@@ -70,8 +70,8 @@ check_signature() {
     fi
 }
 
-check_signature "$products/opensky.app"
-check_signature "$products/openskyUITests-Runner.app"
+check_signature "$products/OpenSky.app"
+check_signature "$products/OpenSkyUITests-Runner.app"
 
 cat <<'MSG'
 
@@ -82,12 +82,12 @@ rather than verified. Each is one click, once per signature:
 1. Accessibility — lets the UI-test runner drive the app, which is what
    "Timed out while enabling automation mode" means when it is missing.
    System Settings > Privacy & Security > Accessibility > add:
-     openskyUITests-Runner.app   (in DerivedData/Build/Products/Debug)
+     OpenSkyUITests-Runner.app   (in DerivedData/Build/Products/Debug)
 
 2. Files and Folders / Full Disk Access — lets the built app read the game
    install on the external volume without a prompt mid-run.
    System Settings > Privacy & Security > Full Disk Access > add:
-     opensky.app                 (in DerivedData/Build/Products/Debug)
+     OpenSky.app                 (in DerivedData/Build/Products/Debug)
 
 `make test-ui` is the check that matters: it reaches a test case when the
 Accessibility grant is in place, and fails fast naming this script when it is

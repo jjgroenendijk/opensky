@@ -6,7 +6,7 @@
 // boundary"). No renderer, no streamer, no window — the whole point of the
 // `PerceptionWorld` seam.
 
-@testable import opensky
+@testable import OpenSky
 import simd
 
 /// A world whose geometry is one closure. `blocked` returns true for a segment

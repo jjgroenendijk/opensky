@@ -5,7 +5,7 @@
 // fake exists now so the aggregate provider protocol stays satisfiable and the
 // registry tests keep compiling.
 
-@testable import opensky
+@testable import OpenSky
 
 /// The stored half of the fake's locomotion state, kept as one value so the
 /// class body above stays inside the type-length cap.

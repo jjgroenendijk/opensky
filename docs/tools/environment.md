@@ -68,14 +68,15 @@ Retires when a `plugins.txt` appears in a searched location.
 
 ## Permission grants
 
-Observed 2026-08-11 on macOS 26.6.1. `openskyUITests-Runner.app` starts, then XCTest times out after
-60 seconds with "Timed out while enabling automation mode", although the UI plan is isolated
+Observed 2026-08-11 on macOS 26.6.1, and again 2026-09-28. `OpenSkyUITests-Runner.app` starts,
+then XCTest times out after 60 seconds with "Timed out while enabling automation mode", although
+the UI plan is isolated
 correctly ([test runs](/tools/test-runs.md#test-plans)). The missing Accessibility grant is the rest
 of the problem.
 
 A grant belongs to the built product, not the terminal, and lasts only while the product keeps one
 code signature, which is why signing names a real identity ([build system](/tools/build-system.md#signing)).
-Accessibility goes to `openskyUITests-Runner.app`. File access goes to `opensky.app`, which macOS
+Accessibility goes to `OpenSkyUITests-Runner.app`. File access goes to `OpenSky.app`, which macOS
 treats as a program on a removable volume, because `DerivedData/` is on an external disk. The grant
 cannot be scripted: TCC is protected by SIP, and the Accessibility entry is in the root-owned system
 database. `make test-perms` checks what it can (the data root is readable, and both bundles have a

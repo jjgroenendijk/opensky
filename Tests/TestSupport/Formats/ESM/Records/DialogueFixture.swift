@@ -2,7 +2,7 @@
 // code from the UESP and xEdit layouts. Never extracted game data.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum DialogueFixture {
     static func parse(_ bytes: Data) throws -> ESMRecord {

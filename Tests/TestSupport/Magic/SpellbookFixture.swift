@@ -13,7 +13,7 @@
 // /BOOK.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 @MainActor
 enum SpellbookFixture {

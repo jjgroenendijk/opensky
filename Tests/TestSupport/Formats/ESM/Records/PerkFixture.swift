@@ -3,7 +3,7 @@
 // no bytes from the game install (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum PerkFixture {
     /// DATA at record level: trait, level, rank count, playable, hidden.

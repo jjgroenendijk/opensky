@@ -7,7 +7,7 @@
 // file-length limit.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 
 /// Builds a `DialogueControlSnapshot` from only the fields a test cares about.
 /// The snapshot is immutable by design and its memberwise initializer takes

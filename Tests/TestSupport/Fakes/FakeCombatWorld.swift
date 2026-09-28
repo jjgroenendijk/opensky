@@ -10,7 +10,7 @@
 // performed, which is what lets a whole fight — approach, attack, block, flee,
 // search and give-up — run with no renderer, no window and no game data.
 
-@testable import opensky
+@testable import OpenSky
 import simd
 
 @MainActor

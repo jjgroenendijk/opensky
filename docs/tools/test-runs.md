@@ -15,29 +15,29 @@ behaviors they depend on, with the dates they were seen, are on the
 
 ## Test plans
 
-Which bundles a run touches is a checked-in test plan, not a flag. The `opensky` scheme has four,
+Which bundles a run touches is a checked-in test plan, not a flag. The `OpenSky` scheme has four,
 under `Config/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
-| `UnitTests.xctestplan` | `openskyTests` | `make test`, `make test-fast`, `make test-one`. The scheme default |
-| `UITests.xctestplan` | `openskyUITests` | `make test-ui` |
-| `RealData.xctestplan` | `openskyRealDataTests`, plus the data root | `make realtest`, `make realtest-all` |
-| `Sanitizers.xctestplan` | `openskyTests`, one configuration per sanitizer | `make test-sanitize` |
+| `UnitTests.xctestplan` | `OpenSkyTests` | `make test`, `make test-fast`, `make test-one`. The scheme default |
+| `UITests.xctestplan` | `OpenSkyUITests` | `make test-ui` |
+| `RealData.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make realtest`, `make realtest-all` |
+| `Sanitizers.xctestplan` | `OpenSkyTests`, one configuration per sanitizer | `make test-sanitize` |
 
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at `-only-testing`, so
 a selector never saves building a bundle. A plan does, because the plan decides what is built.
 `make test-one` adds `-only-testing` on top of a plan, and switches to `UITests` when the selector
-names `openskyUITests`.
+names `OpenSkyUITests`.
 
-No plan lists the UI bundle beside an app-hosted bundle, and this is on purpose. `openskyTests` and
-`openskyRealDataTests` are hosted by `opensky.app`. Put either in the same session as the UI runner,
+No plan lists the UI bundle beside an app-hosted bundle, and this is on purpose. `OpenSkyTests` and
+`OpenSkyRealDataTests` are hosted by `OpenSky.app`. Put either in the same session as the UI runner,
 and xcodebuild starts the app as a test host with `libXCTestBundleInject.dylib`. The app then waits
 in `-[XCTestDriver _prepareTestConfigurationAndIDESession]` for an IDE session that belongs to the
 runner, while the runner waits for the app to enter automation mode. Neither moves, and after 60
 seconds XCTest reports `Timed out while enabling automation mode`. The message names a permission,
 which sent several searches looking for a missing grant, but it is a deadlock.
-`-only-testing:openskyUITests` does not avoid it, because a selector filters tests, not the targets
+`-only-testing:OpenSkyUITests` does not avoid it, because a selector filters tests, not the targets
 the session starts. Only the plan does.
 
 ## The fast loop
@@ -72,18 +72,18 @@ another install, edit the plan.
 
 A plan's `selectedTests` does not match Swift Testing tests: selecting any runs zero tests. So the
 plan selects the whole target, which does work. That is why the real-data suites are their own
-bundle. Before, they lived in `openskyTests`: every unit build compiled them though they always
+bundle. Before, they lived in `OpenSkyTests`: every unit build compiled them though they always
 skipped there, and the plan needed a long hand-kept list of suites. The shared fixtures now compile
 into both bundles instead. Types that mixed a fixture with `@Test` methods were split into a fixture
-in `Tests/TestSupport/` and tests in an extension under `Tests/UnitTests/`, so no test name changed.
+in `Tests/TestSupport/` and tests in an extension under `Tests/OpenSkyTests/`, so no test name changed.
 
 `make realdata-plan`, part of `make lint`, checks that every suite with a `dataRoot: GameDataRoot?`
-and a `@Test` is in `Tests/RealDataTests/`, that the plan selects that target and nothing narrows
-it, and that no plan lists an app-hosted bundle beside `openskyUITests`.
+and a `@Test` is in `Tests/OpenSkyRealDataTests/`, that the plan selects that target and nothing narrows
+it, and that no plan lists an app-hosted bundle beside `OpenSkyUITests`.
 
 ## Code coverage
 
-The unit, UI, and sanitizer plans gather line coverage for the `opensky` target only, so the number
+The unit, UI, and sanitizer plans gather line coverage for the `OpenSky` target only, so the number
 is about engine code, not the test bundles. `make test` gathers it and `make test-report` prints it.
 There is no separate target and no `-enableCodeCoverage` flag. `ENABLE_CODE_COVERAGE` defaults to
 `YES` in Xcode, so coverage was already gathered on every run and thrown away. Scoping it cost
@@ -95,7 +95,7 @@ crash". A floor would need a baseline argument, like a perf budget.
 
 ## Sanitizers
 
-`make test-sanitize` runs `openskyTests` under runtime sanitizers. Three things make this worth the
+`make test-sanitize` runs `OpenSkyTests` under runtime sanitizers. Three things make this worth the
 time: ffmpeg is reached across a C boundary where Swift's safety stops, the parsers slice
 `UnsafeRawBufferPointer` over memory-mapped archives, where a bad read lands in mapped memory instead
 of failing a bounds check, and much of the engine's concurrency is in `nonisolated` code that Swift

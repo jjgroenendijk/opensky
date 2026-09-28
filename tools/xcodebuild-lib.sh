@@ -42,12 +42,13 @@ xcodebuild_summary() {
 
 # `xcodebuild build-for-testing` writes one .xctestrun per test plan under
 # Build/Products, embedding the platform and SDK version in the name
-# (opensky_<Plan>_macosx<version>-arm64.xctestrun). The version segment moves
-# with the SDK, so callers resolve by glob and take the newest match. Prints
+# (OpenSky_<Plan>_macosx<version>-arm64.xctestrun). The version segment moves
+# with the SDK, so callers resolve by glob and take the newest match. The glob
+# also matches the lowercase name a build from before the scheme rename left. Prints
 # nothing when no build-for-testing has run for the plan yet.
 xcodebuild_xctestrun() {
     newest=""
-    for candidate in "$OPENSKY_DERIVED_DATA/Build/Products/opensky_$1_"*.xctestrun; do
+    for candidate in "$OPENSKY_DERIVED_DATA/Build/Products/"[Oo]pen[Ss]ky_"$1"_*.xctestrun; do
         [ -f "$candidate" ] || continue
         if [ -z "$newest" ] || [ "$candidate" -nt "$newest" ]; then
             newest="$candidate"
@@ -68,7 +69,7 @@ xcodebuild_xctestrun_stale() {
     root="$2"
     [ -f "$xctestrun" ] || return 0
     [ -n "$(find -H "$root/Sources" "$root/Tests" \
-        "$root/Config" "$root/opensky.xcodeproj/project.pbxproj" \
+        "$root/Config" "$root/OpenSky.xcodeproj/project.pbxproj" \
         "$root/.vendor/ffmpeg" \
         -newer "$xctestrun" -print 2>/dev/null | head -n 1)" ]
 }

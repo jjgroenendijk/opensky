@@ -10,7 +10,7 @@
 // the real records have rather than against a shape invented to be easy.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 @MainActor
 enum PerkRuntimeFixture {

@@ -3,7 +3,7 @@
 // these and forward to it, which is the same delegation their runtime-state
 // and trigger halves already use to stay inside the strict-lint type-body cap.
 
-@testable import opensky
+@testable import OpenSky
 
 @MainActor
 final class FakeFootstepControls {

@@ -3,7 +3,7 @@
 // No game asset is read and none could be — the solver's inputs are engine
 // values, not NIF bytes.
 
-@testable import opensky
+@testable import OpenSky
 import simd
 
 enum DynamicBodyScene {

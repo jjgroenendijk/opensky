@@ -11,7 +11,7 @@
 // /SPEL, /EQUP, /MGEF, /PROJ and /BOOK.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 extension SpellbookFixture {
     static var equipSlots: [Data] {

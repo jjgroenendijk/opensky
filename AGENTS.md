@@ -39,14 +39,15 @@ conflict.
 - Xcode 26 ships without the Metal Toolchain. `make bootstrap`, once per checkout,
   downloads it.
 - Target membership under `Sources/` follows the folder split, not a list in the project
-  file: `OpenSkyApp/` builds only into the app, `OpenSkyEngine/` and `ShaderTypes/` build
-  into both the app and `openskycli`, and `OpenSkyCLI/` builds only into `openskycli`. An
-  app-only source (importing AppKit, Cocoa, or SwiftUI) belongs under `OpenSkyApp/`;
+  file: `OpenSky/` builds only into the app, `OpenSkyEngine/` and `ShaderTypes/` build
+  into both the app and `OpenSkyCLI`, and `OpenSkyCLI/` builds only into the CLI. An
+  app-only source (importing AppKit, Cocoa, or SwiftUI) belongs under `OpenSky/`;
   leaving it under `OpenSkyEngine/` breaks the CLI build. `make cli-boundary` catches this.
-- Folder names are not target names. The folders are `Sources/OpenSkyApp/`,
-  `Tests/UnitTests/`, and so on; the targets and modules stay `opensky`, `openskycli`,
-  `openskyTests`, `openskyRealDataTests`, and `openskyUITests`. A test selector names the
-  target: `make test-fast T='openskyTests/BSAArchiveTests'`.
+- A folder that builds a target has the target's name, in PascalCase: `Sources/OpenSky/`
+  builds `OpenSky`, `Tests/OpenSkyTests/` builds `OpenSkyTests`. A test selector names the
+  target: `make test-fast T='OpenSkyTests/BSAArchiveTests'`. Two names stay lowercase on
+  purpose: the CLI binary is `openskycli`, as terminal commands usually are, and the
+  bundle IDs keep their old form, because macOS stores permission grants against them.
 - The build cache is `DerivedData/` inside the checkout, not the Xcode default under
   `$HOME`: this project's cache runs to tens of gigabytes and the boot volume is small
   enough that the default location fills it mid-session. `make` passes `-derivedDataPath`
@@ -80,18 +81,18 @@ The repo root holds only this document, `Makefile`, the Xcode project, `Config/`
 
 ```text
 Config/
-  Build/          *.xcconfig, every build setting
-  TestPlans/      *.xctestplan, which bundles a run touches
+  Build/                *.xcconfig, every build setting
+  TestPlans/            *.xctestplan, which bundles a run touches
 Sources/
-  OpenSkyApp/     app target only: Shell/, Panels/, GameView/, Resources/
-  OpenSkyEngine/  app and CLI: one folder per domain
-  OpenSkyCLI/     openskycli only: Commands/, SWF/, Support/
-  ShaderTypes/    app and CLI: the clang module wrapping ShaderTypes.h
+  OpenSky/              OpenSky (app) only: Shell/, Panels/, GameView/, Resources/
+  OpenSkyEngine/        OpenSky and OpenSkyCLI: one folder per domain
+  OpenSkyCLI/           OpenSkyCLI only: Commands/, SWF/, Support/
+  ShaderTypes/          OpenSky and OpenSkyCLI: the clang module wrapping ShaderTypes.h
 Tests/
-  UnitTests/      openskyTests: synthetic unit suites
-  RealDataTests/  openskyRealDataTests: env-gated suites that read the user's install
-  TestSupport/    fixtures both unit bundles compile; not a target of its own
-  UITests/        openskyUITests: XCUITest smoke tests
+  OpenSkyTests/         synthetic unit suites
+  OpenSkyRealDataTests/ env-gated suites that read the user's install
+  TestSupport/          fixtures both unit bundles compile; not a target of its own
+  OpenSkyUITests/       XCUITest smoke tests
 ```
 
 Every build setting lives in `Config/Build/*.xcconfig`, not in the pbxproj, signing
@@ -99,17 +100,17 @@ included: `Config/Build/Signing.xcconfig` names one Apple Development identity f
 target, because macOS ties permission grants to the code signature and ad-hoc signing
 re-asks on every build (`docs/tools/build-system.md`). `Config/TestPlans/` holds the four
 checked-in test plans, for the same reason: which bundles a run touches is reviewable
-configuration, not a flag. `UnitTests.xctestplan` lists `openskyTests` alone,
-`UITests.xctestplan` lists `openskyUITests` alone, and `RealData.xctestplan` lists
-`openskyRealDataTests` alone and carries the data root into the test host — no plan lists
+configuration, not a flag. `UnitTests.xctestplan` lists `OpenSkyTests` alone,
+`UITests.xctestplan` lists `OpenSkyUITests` alone, and `RealData.xctestplan` lists
+`OpenSkyRealDataTests` alone and carries the data root into the test host — no plan lists
 the UI bundle beside an app-hosted unit bundle, because such a bundle deadlocks the UI
 runner it shares a session with (`docs/testing.md`). A gated suite written outside
-`Tests/RealDataTests/` fails `make lint`, because nothing would ever run it.
+`Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would ever run it.
 
-No Swift file sits loose at the root of `Sources/OpenSkyApp/`, `Sources/OpenSkyEngine/`,
+No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngine/`,
 or `Sources/OpenSkyEngine/World/`; each goes in a domain folder:
 
-- `Sources/OpenSkyApp/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
+- `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
   and `Resources/` (`Assets.xcassets`, `Branding/`).
 - `Sources/OpenSkyEngine/`: one folder per domain (`Magic/`, `Dialogue/`, `Rendering/`,
@@ -125,7 +126,7 @@ An extension file is named `Type+Feature.swift`, for example
 `GameView/GameViewController+Magic.swift`. Test folders use the same subfolder names as the
 source file they test: the tests for
 `Sources/OpenSkyEngine/World/Terrain/TerrainMeshBuilder.swift` live in
-`Tests/UnitTests/World/Terrain/`, and tests for app code live under `Tests/UnitTests/App/`. Only
+`Tests/OpenSkyTests/World/Terrain/`, and tests for app code live under `Tests/OpenSkyTests/App/`. Only
 cross-cutting folders are test-only: `Acceptance/` (milestone gates), `Fakes/`, and
 `Support/`. File names stay unique inside a target, because Swift rejects two files with
 one name in the same module. Skills live in `.AGENTS/skills/` (`.claude/skills` symlinks
@@ -142,7 +143,7 @@ worktree `DerivedData/` and aged-out runs; `docs/tools/run-output.md` has the ru
 
 `make help` lists every target. `make fix` (autoformat plus strict lint) before committing;
 `make check` is the same gate without writes. `make install` refreshes
-`/Applications/opensky.app` after landing rendering work.
+`/Applications/OpenSky.app` after landing rendering work.
 
 No hook runs the tests: what to test and verify for a change is the author's judgment,
 guided by the `testing-and-verifying` skill, and recorded in the commit's `Tests:` section.

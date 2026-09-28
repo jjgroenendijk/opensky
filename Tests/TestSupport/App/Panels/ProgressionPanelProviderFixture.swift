@@ -6,7 +6,7 @@
 // would otherwise have to spell out the other fifteen.
 
 import AppKit
-@testable import opensky
+@testable import OpenSky
 
 nonisolated func makeProgressionSnapshot(
     isAvailable: Bool = true,

@@ -34,7 +34,7 @@
 //   0x00_4020  CONT Empty
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum InventoryBaselineFixture {
     static let gold = FormID(0x0000_000F)

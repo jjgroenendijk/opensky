@@ -1,5 +1,5 @@
 #!/bin/sh
-# Run openskyTests -- the synthetic unit bundle alone, not the real-data one -- under
+# Run OpenSkyTests -- the synthetic unit bundle alone, not the real-data one -- under
 # the runtime sanitizers (issue #383).
 #
 # `Config/TestPlans/Sanitizers.xctestplan` carries two configurations, because Thread and
@@ -82,7 +82,7 @@ result_bundle="$("$root/tools/run-dir.sh" -b build/test-results \
 # the runaway shape the cap exists to catch. Swift Testing still runs its own
 # tests concurrently inside that host, which is also what gives TSan something
 # to observe.
-set -- xcodebuild -project "$root/opensky.xcodeproj" -scheme opensky \
+set -- xcodebuild -project "$root/OpenSky.xcodeproj" -scheme OpenSky \
     -configuration Debug -derivedDataPath "$OPENSKY_DERIVED_DATA" \
     -destination 'platform=macOS' -testPlan Sanitizers \
     -parallel-testing-enabled NO -maximum-parallel-testing-workers 1
@@ -135,4 +135,4 @@ if [ "$failed" != "0" ]; then
     echo "[ERROR] $failed sanitized test(s) failed; see make test-report" >&2
     exit 1
 fi
-echo "[ OK ] openskyTests is clean under the sanitizers"
+echo "[ OK ] OpenSkyTests is clean under the sanitizers"

@@ -3,7 +3,7 @@
 // Every byte is built in code; no game data is embedded.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 import Testing
 
 /// Records "Probe.Note" calls in dispatch order while forwarding everything

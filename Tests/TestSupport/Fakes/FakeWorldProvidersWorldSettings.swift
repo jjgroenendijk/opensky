@@ -3,7 +3,7 @@
 // are: that class body is at the strict-lint size cap, and only stored state has
 // to live there.
 
-@testable import opensky
+@testable import OpenSky
 
 extension FakeWorldProviders {
     // TerrainLODControlProviding

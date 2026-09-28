@@ -7,7 +7,7 @@
 // Core/wbDefinitionsTES5.pas. See docs/formats/item-records.md.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum InventoryFixture {
     /// Parses fixture bytes back into the single record they encode.

@@ -1,6 +1,8 @@
-// Target-level settings for the opensky app, shared by Debug and Release.
+// Target-level settings for the OpenSky app, shared by Debug and Release.
 #include "Signing.xcconfig"
 
+// The identifier keeps its lowercase form from before the target was renamed, because
+// macOS stores permission grants and user defaults against it.
 PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.opensky
 SUPPORTED_PLATFORMS = macosx
 

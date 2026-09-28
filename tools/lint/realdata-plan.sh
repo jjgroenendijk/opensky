@@ -1,11 +1,11 @@
 #!/bin/sh
 # RealData test-target lint (issues #381, #418). `make realtest-all` runs whatever
 # Config/TestPlans/RealData.xctestplan selects, and since #418 that is one whole target:
-# openskyRealDataTests. So the check is no longer "is every suite named in the
+# OpenSkyRealDataTests. So the check is no longer "is every suite named in the
 # plan" -- a 57-entry list nobody could keep spelled right -- but the two
 # structural facts that make target-level selection correct:
 #
-#   * Every env-gated suite lives in Tests/RealDataTests/. One in Tests/UnitTests/
+#   * Every env-gated suite lives in Tests/OpenSkyRealDataTests/. One in Tests/OpenSkyTests/
 #     or Tests/TestSupport/ is a suite `make realtest-all` never runs, and it
 #     would silently skip inside `make test` instead, because a plain
 #     `xcodebuild test` does not forward OPENSKY_DATA_ROOT into the host.
@@ -14,11 +14,11 @@
 #     (measured, issue #381), so one would select nothing.
 #
 # It also re-asserts the issue #380 rule for the new bundle: no plan may list an
-# app-hosted unit bundle beside openskyUITests, or the test host and the UI
+# app-hosted unit bundle beside OpenSkyUITests, or the test host and the UI
 # runner deadlock.
 #
 # A suite counts as env-gated when its file declares the real-data root
-# (`dataRoot: GameDataRoot?`, the shape Tests/RealDataTests/CLAUDE.md
+# (`dataRoot: GameDataRoot?`, the shape Tests/OpenSkyRealDataTests/CLAUDE.md
 # prescribes) and the type carries at least one @Test.
 set -eu
 
@@ -31,9 +31,9 @@ import re
 import sys
 
 PLAN = pathlib.Path("Config/TestPlans/RealData.xctestplan")
-TARGET = "openskyRealDataTests"
-HOME = pathlib.Path("Tests/RealDataTests")
-ELSEWHERE = [pathlib.Path("Tests/UnitTests"), pathlib.Path("Tests/TestSupport")]
+TARGET = "OpenSkyRealDataTests"
+HOME = pathlib.Path("Tests/OpenSkyRealDataTests")
+ELSEWHERE = [pathlib.Path("Tests/OpenSkyTests"), pathlib.Path("Tests/TestSupport")]
 # A Swift Testing suite is a plain type declaration -- no @Suite attribute is
 # required -- so the declarations are found positionally and each one keeps the
 # text up to the next declaration.
@@ -84,16 +84,16 @@ for entry in entries:
             )
 
 # Issue #380: an app-hosted unit bundle and the UI runner deadlock in one session.
-HOSTED = {"openskyTests", TARGET}
+HOSTED = {"OpenSkyTests", TARGET}
 for path in sorted(pathlib.Path("Config").glob("*.xctestplan")):
     with path.open("rb") as stream:
         listed = {
             entry.get("target", {}).get("name")
             for entry in json.load(stream).get("testTargets", [])
         }
-    if "openskyUITests" in listed and listed & HOSTED:
+    if "OpenSkyUITests" in listed and listed & HOSTED:
         problems.append(
-            f"{path} lists openskyUITests beside {sorted(listed & HOSTED)};"
+            f"{path} lists OpenSkyUITests beside {sorted(listed & HOSTED)};"
             " an app-hosted unit bundle deadlocks the UI runner (issue #380)"
         )
 

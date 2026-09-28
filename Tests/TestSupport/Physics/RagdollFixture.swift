@@ -9,7 +9,7 @@
 // pattern the vanilla census reports for a leg (`NPC L Thigh` on a cone at the
 // hip, `NPC L Calf -> NPC L Thigh` on a limited hinge at the knee).
 
-@testable import opensky
+@testable import OpenSky
 import simd
 
 enum RagdollFixture {

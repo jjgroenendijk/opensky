@@ -1,7 +1,7 @@
-# AGENTS.md — openskycli
+# AGENTS.md — OpenSkyCLI
 
-CLI dev tool target. Full tool reference, including data-root resolution order and exit
-codes: `docs/tools/cli.md`.
+CLI dev tool target. It builds the `openskycli` binary. Full tool reference, including data-root
+resolution order and exit codes: `docs/tools/cli.md`.
 
 ## What it is
 
@@ -14,7 +14,7 @@ behavior.
 
 - `make cli` — build (Debug). `make probe` — env-gated smoke run (`tools/probe.sh`,
   self-skips when install absent, logs -> `logs/probe.log`).
-- No CLI-only test bundle; shared logic is tested in `Tests/UnitTests/`.
+- No CLI-only test bundle; shared logic is tested in `Tests/OpenSkyTests/`.
 
 ## Rules
 

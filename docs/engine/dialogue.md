@@ -17,7 +17,7 @@ the [dialogue records](/formats/dialogue.md) page. The menu is on the
 
 The runtime sits beside the world state, not inside it, like the quest runtime. The world state
 knows about keys, components, the change log, and snapshots, and nothing about records. The
-runtime uses no AppKit and also builds into `openskycli`.
+runtime uses no AppKit and also builds into `OpenSkyCLI`.
 
 ## Selection rules
 

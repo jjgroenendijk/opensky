@@ -1,5 +1,5 @@
-// Target-level settings for openskyUITests, shared by Debug and Release. The runner takes
-// the same signing inputs as everything else: `openskyUITests-Runner.app` is the process
+// Target-level settings for OpenSkyUITests, shared by Debug and Release. The runner takes
+// the same signing inputs as everything else: `OpenSkyUITests-Runner.app` is the process
 // that asks macOS for permission to drive the app, and macOS keys that grant to the
 // runner's code signature. Ad-hoc signing gives it a new signature on every build, so the
 // approval never sticks and every `make test-ui` run stops on a dialog. The values still
@@ -7,8 +7,10 @@
 // pinning `-` here bought nothing that Signing.xcconfig does not already give.
 #include "Signing.xcconfig"
 
+// The identifier keeps its lowercase form from before the target was renamed, because the
+// Accessibility grant is stored against it.
 PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.openskyUITests
-TEST_TARGET_NAME = opensky
+TEST_TARGET_NAME = OpenSky
 
 GENERATE_INFOPLIST_FILE = YES
 STRING_CATALOG_GENERATE_SYMBOLS = NO

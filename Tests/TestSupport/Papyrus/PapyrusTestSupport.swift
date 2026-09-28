@@ -1,5 +1,5 @@
 import Foundation
-@testable import opensky
+@testable import OpenSky
 import Testing
 
 enum PapyrusTestSupport {

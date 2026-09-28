@@ -38,7 +38,7 @@ node_modules/
 # Render captures stay local (logs/ or temp), never in source control.
 *.[pP][nN][gG]
 # Exception: AppIcon PNGs generated from our own SVG (make icon) — no game content.
-!Sources/OpenSkyApp/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png
+!Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png
 
 # ── Logs (AGENTS.md "Code scripts": all logs go to logs/) ─────────────────────
 logs/*

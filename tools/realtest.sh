@@ -3,7 +3,7 @@
 # either the whole RealData test plan, or exactly one test from it.
 #
 # `Config/TestPlans/RealData.xctestplan` does two jobs. It selects the
-# `openskyRealDataTests` target, which since issue #418 *is* the real-data set --
+# `OpenSkyRealDataTests` target, which since issue #418 *is* the real-data set --
 # every env-gated suite lives in that bundle and nothing else does -- and it
 # carries OPENSKY_DATA_ROOT as a plan environment entry, which xcodebuild *does*
 # forward into the unit-test host (measured, issue #381). That replaces the
@@ -136,7 +136,7 @@ if [ -n "$optimized" ]; then
     derived_data="$OPENSKY_DERIVED_DATA-optimized"
     printf '[INFO] optimized build, derived data: %s\n' "$derived_data"
 fi
-set -- xcodebuild -project "$root/opensky.xcodeproj" -scheme opensky \
+set -- xcodebuild -project "$root/OpenSky.xcodeproj" -scheme OpenSky \
     -configuration Debug -derivedDataPath "$derived_data" \
     -destination 'platform=macOS' -testPlan RealData \
     -parallel-testing-enabled NO -maximum-parallel-testing-workers 1
@@ -144,7 +144,7 @@ if [ -n "$optimized" ]; then
     set -- "$@" SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=s \
         SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG OPENSKY_OPTIMIZED"
 fi
-# No selector means the whole plan, which is the whole openskyRealDataTests
+# No selector means the whole plan, which is the whole OpenSkyRealDataTests
 # bundle: the plan selects that target and nothing narrows it further.
 if [ -n "$selector" ]; then
     set -- "$@" -only-testing:"$selector"

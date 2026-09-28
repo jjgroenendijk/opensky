@@ -1,0 +1,335 @@
+// `hkbClipGenerator` evaluation (issue #187): local time advance, playback
+// modes, triggers, and root-motion extraction.
+//
+// These run over the shared synthetic spline packfile, so time advance is
+// asserted through the same `HKASplineCompressedAnimation` sampling the engine
+// uses rather than through a stand-in. Nothing here is extracted from a game
+// file (AGENTS.md "Legal & IP boundary").
+
+import Foundation
+@testable import OpenSky
+import simd
+import Testing
+
+struct BehaviorClipTests {
+    private let tolerance: Float = 0.01
+
+    // MARK: - Clip time
+
+    @Test func clipTimeAdvancesWithTheTimestep() throws {
+        // The synthetic clip runs one second and ramps translation.x 0 to 30,
+        // so a quarter second in is x = 7.5 and half a second in is x = 15.
+        let (graph, _) = try splineGraph(mode: 1)
+        #expect(abs(graph.update(deltaTime: 0.25).bones[1].translation.x - 7.5) < tolerance)
+        #expect(abs(graph.update(deltaTime: 0.25).bones[1].translation.x - 15) < tolerance)
+    }
+
+    @Test func playbackSpeedScalesTheAdvance() throws {
+        let (graph, _) = try splineGraph(mode: 1, playbackSpeed: 2)
+        #expect(abs(graph.update(deltaTime: 0.25).bones[1].translation.x - 15) < tolerance)
+    }
+
+    @Test func aLoopingClipWrapsPastItsEnd() throws {
+        let (graph, _) = try splineGraph(mode: 1)
+        graph.update(deltaTime: 0.8)
+        // 0.8 + 0.3 = 1.1, which wraps to 0.1 and samples x = 3.
+        #expect(abs(graph.update(deltaTime: 0.3).bones[1].translation.x - 3) < tolerance)
+    }
+
+    @Test func aSinglePlayClipStopsAtItsEnd() throws {
+        let (graph, _) = try splineGraph(mode: 0)
+        graph.update(deltaTime: 0.8)
+        graph.update(deltaTime: 0.8)
+        #expect(abs(graph.update(deltaTime: 0.8).bones[1].translation.x - 30) < tolerance)
+    }
+
+    @Test func startTimePlacesAFreshlyActivatedClip() throws {
+        let (graph, _) = try splineGraph(mode: 1, startTime: 0.5)
+        // Seeded at 0.5, then advanced by the first step.
+        #expect(abs(graph.update(deltaTime: 0.1).bones[1].translation.x - 18) < tolerance)
+    }
+
+    @Test func pingPongPlaybackIsRunAsALoopAndTallied() throws {
+        let (graph, _) = try splineGraph(mode: 3)
+        graph.update(deltaTime: 0.5)
+        #expect(graph.tally.featureGaps["clipPingPongAsLoop"] == 1)
+    }
+
+    @Test func anUnresolvedClipLeavesTheReferencePoseAndOneTallyEntry() {
+        var table = BehaviorObjectTable()
+        let root = table.add(
+            BehaviorFixture.clipGenerator("missing", animationName: "nowhere"), at: 0x100
+        )
+        let graph = BehaviorFixture.instance(root: root, table: table)
+        let result = graph.update(deltaTime: 1 / 30)
+        #expect(result.bones == BehaviorFixture.skeleton().referencePose)
+        #expect(graph.tally.unresolvedClips["nowhere"] == 1)
+    }
+
+    // MARK: - Triggers
+
+    @Test func aTriggerFiresOnTheUpdateThatStepsOverIt() throws {
+        let (graph, _) = try splineGraph(
+            mode: 1,
+            triggers: [BehaviorTriggerSpec(
+                localTime: 0.5,
+                eventId: 0,
+                relativeToEnd: false,
+                acyclic: false
+            )],
+            events: ["mark"]
+        )
+        // The trigger is raised during the first update, so it is visible to
+        // the second: nothing a node raises is visible to its own update.
+        #expect(graph.update(deltaTime: 0.6).firedEvents.isEmpty)
+        #expect(graph.update(deltaTime: 0.1).firedEvents.map(\.name) == ["mark"])
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+    }
+
+    /// `m_relativeToEndOfClip` carries an offset *from* the end, and vanilla
+    /// writes it negative: `0_master.hkx`'s `MT_JumpLand` clip carries its
+    /// `JumpLandEnd` trigger at -0.8, meaning 0.8 seconds before the clip ends.
+    /// So the absolute time is the window length plus the offset. Subtracting
+    /// it instead put the trigger past the end of the clip, where nothing ever
+    /// crossed it, and parked the vanilla player graph in `JumpLandState`
+    /// forever (issue #189).
+    @Test func aTriggerRelativeToTheEndIsOffsetFromIt() throws {
+        let (graph, _) = try splineGraph(
+            mode: 1,
+            triggers: [BehaviorTriggerSpec(
+                localTime: -0.2,
+                eventId: 0,
+                relativeToEnd: true,
+                acyclic: false
+            )],
+            events: ["mark"]
+        )
+        graph.update(deltaTime: 0.5)
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+        // 0.5 + 0.4 = 0.9, which steps over the 0.8 mark.
+        graph.update(deltaTime: 0.3)
+        #expect(graph.update(deltaTime: 0.05).firedEvents.map(\.name) == ["mark"])
+    }
+
+    /// A positive offset from the end names a time past the clip, which nothing
+    /// can cross. Refused rather than folded back inside, because a trigger
+    /// outside its own clip is malformed data and guessing at it would fire an
+    /// event the author never placed.
+    @Test func aTriggerPastTheEndOfTheClipNeverFires() throws {
+        let (graph, _) = try splineGraph(
+            mode: 1,
+            triggers: [BehaviorTriggerSpec(
+                localTime: 0.2,
+                eventId: 0,
+                relativeToEnd: true,
+                acyclic: false
+            )],
+            events: ["mark"]
+        )
+        var fired = 0
+        for _ in 0 ..< 60 {
+            fired += graph.update(deltaTime: 0.1).firedEvents.count
+        }
+        #expect(fired == 0)
+    }
+
+    @Test func anAcyclicTriggerFiresOnTheFirstCycleOnly() throws {
+        let (graph, _) = try splineGraph(
+            mode: 1,
+            triggers: [BehaviorTriggerSpec(
+                localTime: 0.5,
+                eventId: 0,
+                relativeToEnd: false,
+                acyclic: true
+            )],
+            events: ["mark"]
+        )
+        var fired = 0
+        for _ in 0 ..< 60 {
+            fired += graph.update(deltaTime: 0.1).firedEvents.count
+        }
+        #expect(fired == 1)
+    }
+
+    // MARK: - Annotations
+
+    /// The clip's own `hkaAnnotationTrack` marks fire as playback crosses them,
+    /// by the name the annotation spells. This is the whole footstep chain:
+    /// Skyrim's locomotion clip generators carry an empty `m_triggers`, so
+    /// without this a walking player fires no `FootLeft` (issues #385, #394).
+    @Test func aClipAnnotationFiresOnTheUpdateThatStepsOverIt() throws {
+        let (graph, _) = try annotatedGraph(
+            annotations: [(time: 0.5, text: "FootLeft")], events: ["FootLeft"]
+        )
+        // Raised during the first update, so visible to the second — the same
+        // one-update latency every event in this evaluator has.
+        #expect(graph.update(deltaTime: 0.6).firedEvents.isEmpty)
+        #expect(graph.update(deltaTime: 0.1).firedEvents.map(\.name) == ["FootLeft"])
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+    }
+
+    /// An annotation is a mark on the animation, so it comes round on every
+    /// loop rather than once. A walk cycle that fired one footstep and then
+    /// went quiet would pass the test above and still be wrong.
+    @Test func aClipAnnotationFiresAgainOnEveryLoop() throws {
+        let (graph, _) = try annotatedGraph(
+            annotations: [(time: 0.5, text: "FootLeft")], events: ["FootLeft"]
+        )
+        var fired = 0
+        // Three seconds of a one-second looping clip: three crossings.
+        for _ in 0 ..< 30 {
+            fired += graph.update(deltaTime: 0.1).firedEvents.count
+        }
+        #expect(fired == 3)
+    }
+
+    /// An annotation authored *at* the clip's first frame fires on the update
+    /// that started the clip, and only that one (issue #403). Vanilla means
+    /// those marks: `1HM_Equip.hkx` carries `BeginWeaponDraw` at 0.0, and with
+    /// a half-open interval on the seeding update it could never fire, which
+    /// left a drawn sword still hanging on the sheathed node.
+    @Test func anAnnotationAtTheClipsFirstFrameFiresOnceWhenTheClipStarts() throws {
+        let (graph, _) = try annotatedGraph(
+            annotations: [(time: 0, text: "BeginWeaponDraw")], events: ["BeginWeaponDraw"]
+        )
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+        #expect(
+            graph.update(deltaTime: 0.1).firedEvents.map(\.name) == ["BeginWeaponDraw"]
+        )
+        #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
+    }
+
+    /// A graph that declares no event by the annotation's name is not an error.
+    /// One animation is played by behavior files that care about different
+    /// marks, so an unmatched name is dropped rather than tallied.
+    @Test func anAnnotationTheGraphDoesNotDeclareIsDropped() throws {
+        let (graph, _) = try annotatedGraph(
+            annotations: [(time: 0.5, text: "FootLeft")], events: ["somethingElse"]
+        )
+        var fired = 0
+        for _ in 0 ..< 30 {
+            fired += graph.update(deltaTime: 0.1).firedEvents.count
+        }
+        #expect(fired == 0)
+    }
+
+    // MARK: - Root motion
+
+    @Test func rootMotionIsExtractedAndKeptOutOfThePose() throws {
+        let graph = try rootMotionGraph(carriesExtractedMotion: true)
+        let result = graph.update(deltaTime: 0.5)
+        // Half a second of the ramp is 15 units of travel on the root bone...
+        #expect(abs(result.rootMotion.translation.x - 15) < tolerance)
+        #expect(result.rootMotion.isExtracted)
+        // ...and the pose's root bone stays at the skeleton's reference pose.
+        #expect(result.bones[0] == BehaviorFixture.skeleton().referencePose[0])
+    }
+
+    @Test func rootMotionAcrossALoopSeamAddsBothRuns() throws {
+        let graph = try rootMotionGraph(carriesExtractedMotion: true)
+        graph.update(deltaTime: 0.8)
+        // 0.8 to 1.0 is 6 units, then 0.0 to 0.1 is another 3: 9 in total, not
+        // the -21 a naive difference of samples would report.
+        let wrapped = graph.update(deltaTime: 0.3)
+        #expect(abs(wrapped.rootMotion.translation.x - 9) < tolerance)
+        #expect(wrapped.rootMotion.isExtracted)
+    }
+
+    /// The same ramp clip with `m_extractedMotion` left null — which is what
+    /// every vanilla animation is — reports no travel at all, however far its
+    /// root bone moves (issue #370).
+    @Test func anInPlaceClipReportsNoRootMotion() throws {
+        let graph = try rootMotionGraph(carriesExtractedMotion: false)
+        let result = graph.update(deltaTime: 0.5)
+        #expect(result.rootMotion == .identity)
+        #expect(!result.rootMotion.isExtracted)
+        // The pose is untouched by the rule: only the travel is dropped.
+        #expect(result.bones[0] == BehaviorFixture.skeleton().referencePose[0])
+    }
+
+    /// Approximating an extracted-motion clip's travel from the root bone is
+    /// tallied, because `hkaAnimatedReferenceFrame` itself is not decoded.
+    @Test func extractedMotionApproximationIsTallied() throws {
+        let extracted = try rootMotionGraph(carriesExtractedMotion: true)
+        extracted.update(deltaTime: 0.5)
+        let gap = BehaviorTally.Gap.clipExtractedMotionApproximated.rawValue
+        #expect(extracted.tally.featureGaps[gap] != nil)
+
+        let inPlace = try rootMotionGraph(carriesExtractedMotion: false)
+        inPlace.update(deltaTime: 0.5)
+        #expect(inPlace.tally.featureGaps[gap] == nil)
+    }
+
+    /// One clip generator over the ramp clip, bound to the root bone.
+    private func rootMotionGraph(
+        carriesExtractedMotion: Bool
+    ) throws -> BehaviorGraphInstance {
+        let clip = try BehaviorFixture.splineClip(
+            boneIndex: 0, carriesExtractedMotion: carriesExtractedMotion
+        )
+        var table = BehaviorObjectTable()
+        let root = table.add(
+            BehaviorFixture.clipGenerator("walk", animationName: "walk"), at: 0x100
+        )
+        return BehaviorFixture.instance(
+            root: root, table: table, clips: BehaviorClipTable(byName: ["walk": clip])
+        )
+    }
+
+    // MARK: - Helpers
+
+    /// A clip generator over the shared synthetic spline clip, with optional
+    /// triggers, ready to step.
+    /// The same one-clip graph as `splineGraph`, over a clip whose animation
+    /// carries annotation tracks rather than a trigger array.
+    private func annotatedGraph(
+        annotations: [(time: Float, text: String)],
+        events: [String]
+    ) throws -> (BehaviorGraphInstance, HKXPointerTarget) {
+        let clip = try BehaviorFixture.splineClip(annotations: annotations)
+        var table = BehaviorObjectTable()
+        let root = table.add(
+            BehaviorFixture.clipGenerator("walk", animationName: "walk", mode: 1),
+            at: 0x100
+        )
+        let graph = BehaviorFixture.instance(
+            root: root,
+            table: table,
+            data: BehaviorFixture.graphData(events: events),
+            clips: BehaviorClipTable(byName: ["walk": clip])
+        )
+        return (graph, root)
+    }
+
+    private func splineGraph(
+        mode: Int,
+        playbackSpeed: Float = 1,
+        startTime: Float = 0,
+        triggers: [BehaviorTriggerSpec] = [],
+        events: [String] = []
+    ) throws -> (BehaviorGraphInstance, HKXPointerTarget) {
+        let clip = try BehaviorFixture.splineClip()
+        var table = BehaviorObjectTable()
+        let triggerTarget = triggers.isEmpty
+            ? nil
+            : table.add(BehaviorFixture.clipTriggers(triggers), at: 0x80)
+        let root = table.add(
+            BehaviorFixture.clipGenerator(
+                "walk",
+                animationName: "walk",
+                mode: mode,
+                playbackSpeed: playbackSpeed,
+                startTime: startTime,
+                triggers: triggerTarget
+            ),
+            at: 0x100
+        )
+        let graph = BehaviorFixture.instance(
+            root: root,
+            table: table,
+            data: BehaviorFixture.graphData(events: events),
+            clips: BehaviorClipTable(byName: ["walk": clip])
+        )
+        return (graph, root)
+    }
+}

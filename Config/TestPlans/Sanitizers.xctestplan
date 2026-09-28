@@ -22,9 +22,9 @@
     "codeCoverage" : {
       "targets" : [
         {
-          "containerPath" : "container:opensky.xcodeproj",
+          "containerPath" : "container:OpenSky.xcodeproj",
           "identifier" : "5A3BAE003000109100177F95",
-          "name" : "opensky"
+          "name" : "OpenSky"
         }
       ]
     }
@@ -33,9 +33,9 @@
     {
       "parallelizable" : true,
       "target" : {
-        "containerPath" : "container:opensky.xcodeproj",
+        "containerPath" : "container:OpenSky.xcodeproj",
         "identifier" : "5A3BAE183000109300177F95",
-        "name" : "openskyTests"
+        "name" : "OpenSkyTests"
       }
     }
   ],

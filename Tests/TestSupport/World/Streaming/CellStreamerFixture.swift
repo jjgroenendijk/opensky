@@ -4,10 +4,10 @@
 // streaming and interaction suites drive a streamer built exactly this way.
 //
 // No Metal and no game data are involved. The suite's own tests are extensions
-// of this type under Tests/UnitTests/. See Tests/TestSupport/AGENTS.md.
+// of this type under Tests/OpenSkyTests/. See Tests/TestSupport/AGENTS.md.
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 import simd
 import Testing
 

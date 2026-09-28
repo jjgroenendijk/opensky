@@ -1,12 +1,12 @@
 // One M10 acceptance session — the provider set the panels bind to, the real
 // sidebar, the registry factory, and the control-sending helper every step uses.
-// Shared by the synthetic M10 and M11 suites in openskyTests and by the
-// real-data M10 suites in openskyRealDataTests, so it lives in the folder both
+// Shared by the synthetic M10 and M11 suites in OpenSkyTests and by the
+// real-data M10 suites in OpenSkyRealDataTests, so it lives in the folder both
 // test targets compile. See Tests/TestSupport/AGENTS.md.
 
 import AppKit
 import Foundation
-@testable import opensky
+@testable import OpenSky
 import Testing
 
 /// One M10.1 acceptance session: the provider set the panel binds to, the real

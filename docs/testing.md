@@ -8,23 +8,23 @@ tags: [testing, tooling, process]
 
 # Testing setup
 
-Tests run through `make`. Fixture rules are in `Tests/UnitTests/AGENTS.md`,
-`Tests/RealDataTests/AGENTS.md`, `Tests/TestSupport/AGENTS.md`, and the legal section of
+Tests run through `make`. Fixture rules are in `Tests/OpenSkyTests/AGENTS.md`,
+`Tests/OpenSkyRealDataTests/AGENTS.md`, `Tests/TestSupport/AGENTS.md`, and the legal section of
 `AGENTS.md`: synthetic data built in code only, never files taken from the game. How the test plans,
 the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-runs.md) page.
 
 ## Targets
 
-- `openskyTests`: unit tests with Swift Testing and `@testable import opensky`. Parsers, math, the
+- `OpenSkyTests`: unit tests with Swift Testing and `@testable import OpenSky`. Parsers, math, the
   virtual file system, and the renderer through offscreen paths. None of it needs game data.
-- `openskyRealDataTests`: the suites that read the user's install and skip without a data root. They
+- `OpenSkyRealDataTests`: the suites that read the user's install and skip without a data root. They
   are a separate bundle so `make test` does not compile them and the `RealData` plan can select them
   by target.
-- `openskyUITests`: XCUITest smoke tests. The app launches, the main window appears, and there is no
+- `OpenSkyUITests`: XCUITest smoke tests. The app launches, the main window appears, and there is no
   game data alert.
 
 `Tests/TestSupport/` is not a target. Both unit bundles compile it, the way `Sources/OpenSkyEngine/`
-is shared by the app and `openskycli`. It has no `@Test`, because a test there would run in both
+is shared by the app and `OpenSkyCLI`. It has no `@Test`, because a test there would run in both
 bundles.
 
 ## Entry points
@@ -33,7 +33,7 @@ bundles.
 | --- | --- |
 | `make test` | The unit plan through the build system |
 | `make test-fast [T='Suite/test()'] [B=1]` | The fast loop: build once, then run against the cached products. `B=1` forces a build |
-| `make test-one T=Class[/test]` | One class or method through the build system. A bare name resolves under `openskyTests/` |
+| `make test-one T=Class[/test]` | One class or method through the build system. A bare name resolves under `OpenSkyTests/` |
 | `make verify-build` | Compiles the app, the CLI, and both unit bundles without running a test. The only routine command that compiles the real-data suites |
 | `make test-report` | Pass and fail counts, each failure's name and message, and code coverage, from the newest result bundle |
 | `make realtest T='Class/method()' [CAP=MB]` | One real-data test under the memory watchdog |
@@ -78,8 +78,8 @@ changes only the optimization level and sets the `OPENSKY_OPTIMIZED` condition, 
 budget applies. Its products go in `DerivedData-optimized/`, so switching between it and `make test`
 does not rebuild the engine each time ([dynamic bodies](/engine/dynamic-bodies.md)).
 
-A gated suite written outside `Tests/RealDataTests/` fails `make lint`, because nothing would ever
-run it: `make realtest-all` would not reach it, and `make test` would skip it.
+A gated suite written outside `Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would
+ever run it: `make realtest-all` would not reach it, and `make test` would skip it.
 
 ## Memory watchdog
 

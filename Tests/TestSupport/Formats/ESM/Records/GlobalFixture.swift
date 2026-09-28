@@ -3,7 +3,7 @@
 // Layout: UESP "Skyrim Mod:Mod File Format/GLOB".
 
 import Foundation
-@testable import opensky
+@testable import OpenSky
 
 enum GlobalFixture {
     /// GLOB record: EDID zstring, FNAM type character, FLTV float32.

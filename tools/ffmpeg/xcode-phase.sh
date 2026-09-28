@@ -4,7 +4,7 @@
 #   check  Fail the build with an actionable message when .vendor/ffmpeg is missing or
 #          stale, instead of letting the link step emit "library not found for -lavcodec".
 #   embed  Copy the three dylibs into the app bundle's Frameworks folder and sign them,
-#          so /Applications/opensky.app is self-contained and immune to Homebrew churn.
+#          so /Applications/OpenSky.app is self-contained and immune to Homebrew churn.
 #
 # Both modes need SRCROOT; embed additionally needs BUILT_PRODUCTS_DIR and
 # FRAMEWORKS_FOLDER_PATH. Neither phase is declared alwaysOutOfDate, so an incremental

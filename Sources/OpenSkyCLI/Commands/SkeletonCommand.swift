@@ -4,7 +4,7 @@
 // skinning keys on, reporting matches + reason-tagged mismatches both
 // directions. Same parsers the engine uses (HKASkeleton, SkeletonBoneMap,
 // NIFSkeleton), so a mismatch here is what animation loading will see. CLI
-// parses args + prints only; the logic is unit-tested in openskyTests.
+// parses args + prints only; the logic is unit-tested in OpenSkyTests.
 
 import Foundation
 

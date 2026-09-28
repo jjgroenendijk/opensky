@@ -27,8 +27,8 @@
 #                           [-c CAP_MB] [-s GUARD_SECONDS]
 #   -p  test plan (default UnitTests). RealData runs under tools/memguard.sh
 #       with parallel testing off, like tools/realtest.sh.
-#   -t  -only-testing selector, fully qualified — openskyTests/Suite/test()
-#       under the unit plan, openskyRealDataTests/Suite/test() under RealData.
+#   -t  -only-testing selector, fully qualified — OpenSkyTests/Suite/test()
+#       under the unit plan, OpenSkyRealDataTests/Suite/test() under RealData.
 #   -B  force build-for-testing even when nothing looks stale.
 #   -c  watchdog kill threshold in MB (RealData only, default 4096).
 #   -s  watchdog lifetime in seconds (RealData only, default 900).
@@ -81,7 +81,7 @@ xctestrun="$(xcodebuild_xctestrun "$plan")"
 if [ -n "$force_build" ] || xcodebuild_xctestrun_stale "${xctestrun:-missing}" "$root"; then
     printf '[INFO] build-for-testing (%s): products or .xctestrun stale\n' "$plan"
     "$root/tools/xcodebuild-run.sh" test-fast-build \
-        xcodebuild -project "$root/opensky.xcodeproj" -scheme opensky \
+        xcodebuild -project "$root/OpenSky.xcodeproj" -scheme OpenSky \
         -configuration Debug -derivedDataPath "$OPENSKY_DERIVED_DATA" \
         -destination 'platform=macOS' -testPlan "$plan" build-for-testing
     xctestrun="$(xcodebuild_xctestrun "$plan")"
@@ -102,7 +102,7 @@ test_host="$(plutil -extract \
 if [ -n "$test_host" ] && [ ! -e "$test_host" ]; then
     printf '[INFO] test host missing (%s) -> rebuilding\n' "$test_host"
     "$root/tools/xcodebuild-run.sh" test-fast-build \
-        xcodebuild -project "$root/opensky.xcodeproj" -scheme opensky \
+        xcodebuild -project "$root/OpenSky.xcodeproj" -scheme OpenSky \
         -configuration Debug -derivedDataPath "$OPENSKY_DERIVED_DATA" \
         -destination 'platform=macOS' -testPlan "$plan" build-for-testing
     xctestrun="$(xcodebuild_xctestrun "$plan")"

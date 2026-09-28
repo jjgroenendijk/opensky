@@ -1,0 +1,155 @@
+// Ambience-bed behavior of WorldAudioSoundDirector over the offline-render
+// engine: bed start and swap on context change, the World > Audio toggle
+// retiring and restarting the bed live, looping bed sources, and the readout
+// telling the truth about what is playing. See docs/engine/world-sfx.md.
+
+import AVFAudio
+@testable import OpenSky
+import Testing
+
+@MainActor
+struct WorldAudioDirectorAmbienceTests {
+    private typealias Fixture = WorldAudioDirectorFixture
+
+    @Test func handleAmbienceRoutesNonPositionallyThroughTheCategorySubmix() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+
+        director.handleAmbienceContext(Fixture.regionContext)
+
+        let source = try #require(engine.sources.first)
+        #expect(engine.sources.count == 1)
+        #expect(source.category == .effects)
+        #expect(source.routing == .nonPositional)
+        #expect(source.worldPosition == .zero)
+        #expect(source.gain == 1)
+        let mixer = try #require(engine.categoryMixers[.effects])
+        let destinations = engine.engine.outputConnectionPoints(for: source.node, outputBus: 0)
+        #expect(destinations.contains { $0.node === mixer })
+    }
+
+    /// Ambience has no world position, so moving the listener to a distant
+    /// cell must not attenuate or retire the bed through positional cleanup.
+    @Test func ambienceSurvivesListenerCellMovement() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+
+        director.handleAmbienceContext(Fixture.regionContext)
+        let sourceID = try #require(engine.sources.first?.id)
+
+        engine.updateListener(
+            worldPosition: SIMD3<Float>(1_000_000, 1_000_000, 0), yaw: 0, pitch: 0
+        )
+        engine.tick(listenerCell: CellCoordinate(x: 250, y: 250), deltaTime: 1 / 60)
+
+        let source = try #require(engine.sources.first { $0.id == sourceID })
+        #expect(source.routing == .nonPositional)
+        #expect(engine.effectiveGain(of: source) == 1)
+    }
+
+    @Test func handleAmbienceRetiresPreviousBedOnContextChange() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+
+        director.handleAmbienceContext(Fixture.regionContext)
+        #expect(engine.sources.count == 1)
+
+        // Same context: no-op (the resolved bed did not change).
+        director.handleAmbienceContext(Fixture.regionContext)
+        #expect(engine.sources.count == 1)
+
+        // Empty context: retires the previous bed.
+        director.handleAmbienceContext(AmbienceContext.empty)
+        #expect(engine.sources.isEmpty)
+    }
+
+    @Test func handleAmbienceNoOpWhenDisabled() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+        director.ambienceEnabled = false
+
+        director.handleAmbienceContext(Fixture.regionContext)
+
+        #expect(engine.sources.isEmpty)
+    }
+
+    /// The panel checkbox must retire the playing bed the moment it is
+    /// unticked, and restart it when it is ticked again.
+    @Test func ambienceToggleRetiresAndRestartsBed() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+
+        director.handleAmbienceContext(Fixture.regionContext)
+        #expect(engine.sources.count == 1)
+        #expect(director.currentAmbienceDescription != "none")
+
+        director.ambienceEnabled = false
+        #expect(engine.sources.isEmpty, "unticking must retire the playing bed")
+        #expect(director.currentAmbienceDescription == "none")
+
+        director.ambienceEnabled = true
+        #expect(engine.sources.count == 1, "re-ticking must restart the bed")
+        #expect(engine.sources.first?.category == .effects)
+        #expect(director.currentAmbienceDescription != "none")
+    }
+
+    /// A context that arrives while ambience is off is remembered, so enabling
+    /// starts that bed without waiting for the center cell to change.
+    @Test func ambienceEnabledAfterContextStartsRememberedBed() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+        director.ambienceEnabled = false
+
+        director.handleAmbienceContext(Fixture.regionContext)
+        #expect(engine.sources.isEmpty)
+        #expect(director.currentAmbienceDescription == "none")
+
+        director.ambienceEnabled = true
+        #expect(engine.sources.count == 1)
+        #expect(director.currentAmbienceDescription != "none")
+    }
+
+    /// Bed sources start as loops, so the streamer rewinds at end of file
+    /// instead of the engine retiring the bed after a single pass.
+    @Test func ambienceSourcesAreStartedAsLoops() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+
+        director.handleAmbienceContext(Fixture.regionContext)
+
+        let source = try #require(engine.sources.first)
+        #expect(source.loops, "an ambience bed must be a looping source")
+    }
+
+    /// `WorldAudioEngine.stopSource(id:)` selectivity: retiring the bed leaves
+    /// a concurrent one-shot effect playing.
+    @Test func retiringAmbienceLeavesOneShotSFXAlive() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+
+        director.handleAmbienceContext(Fixture.regionContext)
+        director.handleInteraction(Fixture.makeInteractionEvent(
+            sounds: ModelBase.Sounds(activation: FormID(0xAAA), close: nil, loop: nil)
+        ))
+        #expect(engine.sources.count == 2)
+
+        director.ambienceEnabled = false
+
+        #expect(engine.sources.map(\.category) == [.effects])
+        #expect(director.currentAmbienceDescription == "none")
+    }
+
+    /// The readout must not claim a bed the engine already retired on its own
+    /// (FIFO eviction, cell purge, or a stream that ended).
+    @Test func readoutReportsNoneAfterEngineRetiresTheBed() throws {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeAmbienceDirector(engine: engine)
+
+        director.handleAmbienceContext(Fixture.regionContext)
+        #expect(director.currentAmbienceDescription != "none")
+
+        engine.stopAllSources()
+
+        #expect(director.currentAmbienceDescription == "none")
+    }
+}
