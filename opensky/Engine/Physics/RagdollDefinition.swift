@@ -27,7 +27,7 @@
 //    animation has taken the bone. Handing a ragdoll off from an animated pose is
 //    that product, and writing a simulated bone back is its inverse.
 //
-// Documented in docs/engine/ragdoll.md.
+// Documented in docs/engine/ragdoll-solver.md.
 
 import simd
 
@@ -135,7 +135,7 @@ nonisolated struct RagdollJointDefinition: Sendable {
     /// engine therefore reads it as a *rate*: the fraction of the joint's
     /// relative angular velocity that the joint's own resistance removes per
     /// second. That reading is a modelling choice, recorded as such in
-    /// docs/engine/ragdoll.md, and it is bounded in the only way that matters —
+    /// docs/engine/ragdoll-solver.md, and it is bounded in the only way that matters —
     /// friction can only ever take energy out, so a wrong scale makes a corpse
     /// stiff or floppy and can never make one unstable.
     let maxFriction: Float

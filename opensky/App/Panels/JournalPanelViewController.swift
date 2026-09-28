@@ -1,7 +1,7 @@
 // World > Quests & Journal destination panel (issue #184): the sidebar
 // verification surface for quest state and the vanilla journal page. Thin
 // composition of self-contained sections on the shared panel framework, the
-// same shape as ScriptsPanelViewController. Exact sidebar path and control ids:
+// same shape as ScriptsPanelViewController. Exact sidebar path and controls:
 // docs/engine/journal.md.
 //
 // Section order follows the order a session reaches for them: what the quests

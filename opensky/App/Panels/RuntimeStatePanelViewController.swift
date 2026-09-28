@@ -1,7 +1,7 @@
 // World > Runtime State destination panel: the sidebar verification surface for
 // the world-state store. Thin composition of self-contained sections on the
 // shared panel framework, the same shape as AudioPanelViewController. Exact
-// sidebar path and control ids: docs/engine/runtime-state.md.
+// sidebar path and controls: docs/engine/runtime-state.md.
 //
 // M10.1.5 landed inspect, change, reset, and save and load. M10.2 (issue #166)
 // adds the three surfaces the rest of the milestone made verifiable: the game

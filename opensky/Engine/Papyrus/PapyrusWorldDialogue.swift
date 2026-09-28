@@ -27,7 +27,7 @@
 //   therefore rises to the number of *distinct* responses a session has run a
 //   fragment for, which is bounded by the load order and small in practice.
 //
-// Documented in docs/engine/dialogue.md and docs/engine/papyrus-vm.md.
+// Documented in docs/engine/dialogue.md and docs/engine/papyrus-quests.md.
 
 import Foundation
 

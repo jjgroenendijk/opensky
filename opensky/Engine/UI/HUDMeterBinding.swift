@@ -15,7 +15,7 @@
 // it sixty times a second with the same three numbers would re-render a HUD
 // that did not move.
 //
-// Documented in docs/engine/actor-values.md.
+// Documented in docs/engine/actor-value-store.md.
 
 import Foundation
 

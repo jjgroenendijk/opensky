@@ -1,111 +1,84 @@
 ---
 type: Subsystem
 title: Actor package schedules
-description: Ordered resident-actor package selection, bounded reevaluation, procedure
-  machines, current-state inspection, and the intentional first AI-runtime limits.
+description: How an actor's AI package is picked from its ordered stack, when it is picked
+  again, the simple procedure machines, and what is not done yet.
 tags: [engine, ai, actors, packages, schedules, navigation]
-timestamp: 2026-08-09T00:00:00Z
 ---
 
 # Actor package schedules
 
-Issue #201 turns decoded [PACK records](/formats/packages.md) into deterministic current
-activity for resident actors. The engine layer is UI-free; issue #203 consumes its readout
-and force-reevaluation seams in the M16 acceptance panel.
+An AI package tells an actor what to do at a time of day, such as "sleep at home from 22:00".
+This page explains how OpenSky picks the current package for each loaded actor. The record is
+on the [packages](/formats/packages.md) page.
 
-## Selection and inheritance
+## Picking a package
 
-`PackageStore` indexes PACK and NPC_ records once beside the other cell-build provider
-indexes. `ActorTemplateResolver.resolvePackages(base:)` applies only the ACBS
-`useAIPackages` flag: a local empty list stays authoritative unless that flag explicitly
-delegates the whole ordered `PKID` stack to the template record.
+An actor's packages come from its `PKID` list. The list follows the template chain only when the
+AI packages template flag is set (see [actor records](/formats/actors.md#template-chain)). A
+local empty list stays empty when the flag is clear.
 
-For each registered resident actor, `ActorPackageRuntime` walks that stack in record order.
-It selects the first package whose `PSDT` schedule matches and whose header `ConditionList`
-evaluates true. A concrete package may follow a template chain; the concrete record remains
-the schedule and condition owner, while the terminal template supplies the procedure kind.
-Missing packages are skipped during selection. Direct resolution reports missing targets and
-template cycles as typed `PackageResolveError` values.
+OpenSky walks the list in record order. It picks the first package whose `PSDT` schedule matches
+the time and whose conditions are true.
 
-## Reevaluation and inspection
+A package can have a template chain. The package itself still owns the schedule and conditions.
+The last template in the chain gives the procedure kind. A missing package is skipped while
+picking. A missing template or a loop in the chain is an error.
 
-Selection is event-driven. The next pass is the earlier of an exact daily schedule start or
-end and a 15-game-minute maximum interval. The interval bounds calendar changes and mutable
-condition inputs without polling every frame. A clock moving backwards also forces a pass.
-The future panel can call `forceReevaluate` after a user mutation.
+## When to pick again
 
-Each actor readout contains actor identity, base FormID, current package FormID and editor
-ID, schedule, procedure kind, and last evaluation game time. A selection-change callback
-fires only when the selected FormID changes.
+Picking happens on events, not every frame. The next pick is at the earliest of:
 
-`GetDisabled` reads one immutable `ReferenceEnableResolution`: a runtime Enable/Disable
-component wins, otherwise the REFR or ACHR record-header initially-disabled flag is the
-baseline. This makes Heimskr's condition flip honest without letting condition evaluation
-reach into the main-actor world-state store.
+- the exact start or end of a daily schedule,
+- 15 game minutes after the last pick, to catch calendar and condition changes,
+- the clock moving backwards.
+
+A callback fires only when the picked package changes.
+
+`GetDisabled` reads a fixed snapshot of enable states: a runtime enable or disable wins,
+otherwise the reference's "initially disabled" flag. This lets condition evaluation see enable
+state without reaching into the live world state.
 
 ## Procedure machines
 
-`PackageProcedureMachine` is a deterministic, bounded state machine. It emits commands for
-the existing movement and future animation adapters rather than owning either system.
+A procedure machine is a small state machine. It sends commands to movement and animation. It
+does not own either system.
 
-| procedure | minimal behavior |
+| Procedure | Behavior |
 | --- | --- |
-| travel | move to the resolved destination, then complete |
-| wander | choose seeded points in a radius, pause one second, repeat |
-| sandbox | choose seeded points in a radius, pause four seconds, repeat |
-| sleep | move to the destination, then request a sleep loop |
-| eat | move to the destination, then request an eat loop |
+| Travel | Move to the target, then finish |
+| Wander | Pick seeded random points in a radius, wait 1 second, repeat |
+| Sandbox | Pick seeded random points in a radius, wait 4 seconds, repeat |
+| Sleep | Move to the target, then ask for a sleep loop |
+| Eat | Move to the target, then ask for an eat loop |
 
-Movement failure ends a machine as failed. Unsupported template procedures also fail
-explicitly. Wander points are uniform by area (`sqrt` radius sampling) and seeded through
-the same deterministic random generator used by conditions. Synthetic acceptance sends the
-travel command through the real resident navmesh pathfinder and pins all five state
-transitions.
+A movement failure ends the machine as failed. An unsupported procedure also fails, on purpose.
+Random points are even over the area (the radius is `sqrt` of a random number), and use the same
+seeded generator as conditions.
 
-## Runtime boundaries
+## In a session
 
-The app reconciles streamed ACHRs into the selector on the ordinary world-simulation tick.
-Actors leaving residency are unregistered; actors entering it evaluate against the live
-clock, quest/actor state, resident reference index, and immutable world-state enable
-snapshot. Selection therefore runs in a real session now, while the procedure command
-adapter and animation-event choice land with their visible consumer. Location and target
-data are decoded, but aliases and linked references need their owning runtime scopes before
-they can become world destinations.
+On each world tick, the app adds actors that came into range and removes those that left. New
+actors are picked against the live clock, quest and actor state, and enable state.
 
-The branch graph inside a template procedure is not interpreted, and only `GetDisabled`
-was added to condition coverage. Unsupported conditions stay reason-tagged false. The
-Whiterun pre-siege acceptance intentionally observes that behavior for Heimskr's jailed
-package.
+Not done yet:
 
-NPC trigger occupancy is not duplicated here. Issue #423 already made moving actor capsules
-diff trigger-volume occupancy and dispatch the actor as `akActionRef`; package movement will
-feed that same `MoveToPointControl` path.
+- Sending procedure commands to movement and animation.
+- Aliases and linked references as targets. They are decoded, but need their quest and
+  reference runtime first.
+- The branch graph inside a procedure tree.
 
-## Evidence
+A condition OpenSky cannot answer is false, with a reason. So an actor whose package depends on
+such a condition will not pick it. Example: Heimskr's jail package before the siege of Whiterun.
 
-Synthetic tests cover first-match priority, schedule edges and midnight wrap, a mutable
-condition flip, actor/package template inheritance, missing/cyclic templates, bounded and
-on-demand reevaluation, all five procedures, and travel over synthetic NAVM geometry.
+When packages move actors, they will use the same movement path that already updates trigger
+volumes, so triggers see the actor with no extra code.
 
-The env-gated Skyrim.esm test follows 21 PACK records reachable from Ysolda, Belethor,
-Hulda, and Heimskr. It pins the raw subrecord census and header-function tally, then selects
-each actor at every integer hour of a full pre-siege day. Game data is read in place and no
-record bytes or captures are written into the repository.
+## Controls
 
-## Verification surface
+World > AI & Navigation > Package shows the selected actor's current package, its editor ID, its
+procedure, and its schedule as a start time and duration.
 
-`World > AI & Navigation > Package` (`Destination-aiNavigation`) shows the selected actor's
-current package, its editor ID, its resolved procedure and its authored schedule, spelled as
-a start time and a duration rather than as the row of signed bytes PSDT carries, in
-`AIPackageStatsLabel`. Which actor it answers for comes from the destination's own Actor
-section.
-
-`AIPackageReevaluateControl` is the one control, and it is deliberately the only one.
-Selection is driven by the game clock and by the conditions the stack carries, so a panel
-that set a package directly would be showing a state the schedule never produced. The way to
-watch the schedule decide is to scrub the clock under `World > Runtime State > Time` and
-press Reevaluate, which runs `forceReevaluate(actor:clock:context:)` rather than waiting out
-the fifteen-game-minute interval.
-
-The acceptance record for item 16.5 is a row in
-[the sidebar acceptance ledger](/tools/sidebar-acceptance.md).
+The only control is Reevaluate, on purpose. The clock and conditions pick the package. A control
+that set a package directly would show a state the schedule never makes. To watch the schedule
+work, move the clock in World > Runtime State > Time and press Reevaluate.

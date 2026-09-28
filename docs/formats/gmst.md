@@ -1,86 +1,64 @@
 ---
 type: File Format
 title: Game settings (GMST)
-description: Typed GMST DATA decoding, selected movement settings, load-order precedence,
-  and fallback policy.
+description: How GMST DATA is typed, which movement settings OpenSky reads, and which plugin
+  wins.
 tags: [format, plugin, esm, gmst, movement, load-order]
-timestamp: 2026-07-28T00:00:00Z
 ---
 
 # Game settings (GMST)
 
-A GMST record is keyed by its `EDID`; unlike ordinary overrides, its FormID is not the
-setting identity. OpenSky decodes the EDID and DATA fields into `GameSetting`, then
-`GameSettingStore` resolves selected values from low to high plugin priority.
+A `GMST` record is one game setting. Its identity is its `EDID` (editor ID), not its
+FormID. Two plugins can define the same setting with different FormIDs.
 
-The format source is xEdit's open Skyrim definitions:
+Sources: xEdit
 [`wbGMSTUnionDecider`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsCommon.pas)
 and the
-[`GMST` record definition](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas).
+[`GMST` definition](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas).
 
-## Typed DATA
+## DATA type
 
-The first EDID character chooses the exact DATA representation:
+The first letter of the `EDID` gives the type of `DATA`:
 
-| Prefix | Value | DATA |
-|---|---|---|
-| `s` | string | localized `uint32` string-table ID, otherwise inline zstring |
-| `i` | integer | signed little-endian `int32` |
-| `f` | floating point | little-endian IEEE-754 `float32` |
-| `b` | Boolean | little-endian `uint32`, exactly `0` or `1` |
+| Prefix | Type | DATA |
+| --- | --- | --- |
+| `s` | string | A uint32 string-table ID if the plugin is localized, else a zstring |
+| `i` | integer | int32 |
+| `f` | float | float32 |
+| `b` | Boolean | uint32, must be `0` or `1` |
 
-EDID and DATA are each required exactly once. EDID and inline strings must consume their
-whole fields. Numeric values require exactly four bytes; unknown prefixes and Boolean values
-outside zero and one throw `GameSettingError`. A malformed record is skipped by the store
-and cannot erase a previously valid value.
+A record must have exactly one `EDID` and one `DATA`. A number must be exactly 4 bytes. An
+unknown prefix, or a Boolean other than 0 or 1, is an error. A bad record is skipped. It
+never removes a good value from an earlier plugin.
 
-## Movement settings and units
+## Movement settings
 
-The Creation Kit's open
-[settings catalog](https://ck.uesp.net/wiki/Category:Settings) identifies these movement
-settings and defaults:
+The Creation Kit [settings list](https://ck.uesp.net/wiki/Category:Settings) gives these
+names and defaults:
 
-| Controller value | Editor ID | Units | Missing/invalid fallback |
-|---|---|---|---:|
-| Walk speed | `fMoveCharWalkBase` | world units/second | 100 |
-| Run speed | `fMoveCharRunBase` | world units/second | 370 |
-| Step height | no confirmed Skyrim SE GMST | world units | 32 |
+| Value | Editor ID | Units | Fallback |
+| --- | --- | --- | --- |
+| Walk speed | `fMoveCharWalkBase` | world units per second | 100 |
+| Run speed | `fMoveCharRunBase` | world units per second | 370 |
+| Step height | none found | world units | 32 |
 
-The installed Skyrim SE data was probed read-only on 2026-07-28. `Skyrim.esm` contains a
-valid `fMoveCharWalkBase = 100` GMST. It contains no `fMoveCharRunBase`, so OpenSky uses the
-documented engine default. Neither the open definitions nor the installed official plugins
-confirmed a step-height GMST Editor ID; OpenSky retains its 32-unit fallback and labels that
-source explicitly rather than guessing a name.
+`Skyrim.esm` has `fMoveCharWalkBase = 100`. It has no `fMoveCharRunBase`, so OpenSky uses
+the documented default. No source names a step-height setting for Skyrim SE. OpenSky uses 32
+and marks the source as a fallback. It does not guess a name.
 
-For one fixed physics substep, horizontal distance is:
+In one physics step, the player moves:
 
 ```text
 distance = (running ? runSpeed : walkSpeed) * fixedTimeStep
 ```
 
-The step solver accepts support no higher than `feetHeight + stepHeight` and separately
-checks full raised-capsule clearance.
+The player can step onto ground no higher than `feetHeight + stepHeight`, and only if the
+raised capsule fits.
 
-## Selected load order and override policy
+## Which plugin wins
 
-`PluginLoadOrder` resolves installed official masters first, then installed `Skyrim.ccc`
-entries, then starred active entries from the located
-[plugins.txt](/formats/plugins-txt.md). Names resolve case-insensitively to the spelling in
-`Data/`; duplicates take their first position and entries with no file are reported rather
-than merged. Within that ordered set, later valid GMST records win by case-insensitive EDID
-even when their FormIDs differ.
+Plugins follow the [load order](/formats/plugins-txt.md). A later valid `GMST` wins over an
+earlier one with the same `EDID`, compared case-insensitively.
 
-This is still a selected GMST consumer rather than an engine-wide record merge. The load
-order it reads is now the real one and archive priority follows it too, but world, cell,
-asset, and FormID resolution still use their existing single-plugin paths.
-
-## Verification
-
-`GameSettingTests` covers float, integer, Boolean, inline/localized string, wrong sizes,
-unknown prefixes, invalid Boolean values, missing/duplicate fields, and trailing bytes.
-`GameSettingStoreTests` covers missing settings, malformed later records, EDID-based override
-precedence, and movement fallbacks. `PluginLoadOrderTests` covers official, Creation Club,
-starred active, absent, duplicate, and case-insensitive entries.
-
-`openskycli gmst movement` is the read-only real-data surface. It prints the resolved
-walk/run/step value, units, and winning source for every controller input.
+`openskycli gmst movement` prints each movement value, its units, and the plugin it came
+from.

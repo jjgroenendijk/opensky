@@ -11,7 +11,7 @@
 // them takeable. That is the whole reason drop reuses the component system
 // rather than adding a parallel list of runtime objects.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/reference-identity.md.
 
 import Foundation
 import OSLog

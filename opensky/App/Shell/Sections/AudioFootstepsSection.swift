@@ -4,7 +4,7 @@
 // surface material (issue #358), a play button that fires one tag without
 // walking, and a readout naming the set, the material, the tag list, and the
 // routed/played counts. Same shape as the other audio sections.
-// Sidebar path and control ids: docs/engine/audio.md.
+// Documented in docs/engine/footstep-sounds.md.
 
 import AppKit
 

@@ -12,7 +12,7 @@
 // CIS1/CIS2 condition override carries the authored alias *name*. Both end at
 // the same table; only the way in differs.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/quest-state.md.
 
 import Foundation
 

@@ -1,88 +1,63 @@
 ---
 type: Subsystem
 title: Free-fly camera
-description: Free-fly camera input model + math - WASDQE + mouse-look capture, yaw/pitch
-  pose, view matrix, movement speeds tuned to Skyrim scale.
+description: The free-fly camera's input model, its yaw and pitch math, and speeds sized to
+  Skyrim's scale.
 tags: [engine, rendering, camera, input]
-timestamp: 2026-07-26T00:00:00Z
 ---
 
 # Free-fly camera
 
-Todo 2.8. Fly through the rendered cell with keyboard + mouse. Three parts, split by
-layer so the math stays AppKit-free + unit-tested:
+The free-fly camera flies through the world with keyboard and mouse. The code has three parts,
+so the math has no AppKit and can be unit tested:
 
-- `opensky/Engine/Rendering/FreeFlyCamera.swift` — pure pose (position/yaw/pitch) -> view
-  matrix + per-frame integration. No AppKit.
-- `opensky/Engine/Rendering/CameraInputState.swift` — shared logical input state (pressed keys,
-  pointer deltas, boost). AppKit-free -> testable.
-- `opensky/App/GameView/GameMetalView.swift` — `MTKView` subclass, the only AppKit piece: NSEvents ->
-  `CameraInputState`, pointer capture.
+- `FreeFlyCamera`: the pose (position, yaw, pitch), the view matrix, and movement per frame.
+- `CameraInputState`: the pressed keys, mouse movement, and boost.
+- `GameMetalView`: the only AppKit part. It turns key and mouse events into `CameraInputState`
+  and captures the pointer.
 
-## Input model
+## Input
 
-- Movement: WASD horizontal, Q/E vertical. W forward along view direction, S back, A/D
-  strafe left/right, E up (+Z), Q down. Mapped by physical key code (US ANSI `kVK_*`), not
-  character -> WASD stays under the left hand on any layout.
-- Look: mouse deltas (`NSEvent.deltaX/deltaY`) while captured. Pointer right -> turn right,
-  pointer up -> look up. `deltaY` is positive pointer-down (top-left origin) -> negated.
-- Boost: Shift (`flagsChanged`) multiplies speed while held.
-- Activate: F latches one request. Walk mode resolves the current 192-unit
-  [interaction view ray](/engine/interaction.md); fly mode has no target and ignores it.
-- Mode: G latches one fly/walk toggle. Fly stays default; walk hands horizontal input + look
-  to [terrain walk controller](/engine/walk-mode.md). Q/E vertical input remains fly-only.
-- Capture: click in the view grabs the pointer (`NSCursor.hide` +
-  `CGAssociateMouseAndMouseCursorPosition(0)` -> raw deltas, cursor frozen in window). Esc
-  or first-responder loss releases + `CameraInputState.releaseAll()` so no key sticks.
-- Autorepeat: `keyDown` ignores `event.isARepeat` -> a held key is one press, not a stream.
-  State is a pressed-key set drained per frame, so repeats carry nothing new anyway.
+- Move: W and S forward and back along the view, A and D sideways, E up (+Z), Q down. Keys are
+  read by physical key code, not by character, so WASD stays under the left hand on any keyboard
+  layout.
+- Look: mouse movement while the pointer is captured. Pointer right turns right, pointer up looks
+  up. AppKit's `deltaY` is positive downward, so it is negated.
+- Boost: hold Shift.
+- Activate: F. In walk mode it uses the [interaction](/engine/interaction.md) target. Fly mode has
+  no target.
+- Mode: G cycles fly, [walk mode](/engine/walk-mode.md), and third person. Fly is the default. Q, E
+  work only in fly mode.
+- Capture: a click in the view hides the pointer and freezes it
+  (`CGAssociateMouseAndMouseCursorPosition(0)`), so only raw movement arrives. Esc, or the view
+  losing focus, releases it and clears all keys, so no key stays stuck.
+- Key repeat is ignored. A held key is one press.
 
-No GameController support (later milestone).
+## Math
 
-## Camera math
+The pose is a position (Z up, game units), a yaw, and a pitch, in radians.
 
-Pose = position (Z-up world units) + yaw + pitch (radians).
+- Yaw turns about +Z. 0 faces +X (east). pi/2 faces +Y (north).
+- Positive pitch looks up. It is clamped to +/-89 degrees, because a view straight up breaks
+  `lookAt`.
+- `forward = (cos p * cos y, cos p * sin y, sin p)`
+- `right = (sin y, -cos y, 0)`. It is always level, so strafing stays level at any pitch.
+- The view matrix is `lookAt(eye: position, target: position + forward, up: +Z)`, the same as the
+  rest of the renderer ([coordinates](/decisions/coordinates.md)).
 
-- yaw about world +Z: 0 -> +X (east), +pi/2 -> +Y (north).
-- pitch elevates: + looks up, clamped to +/-89 deg so forward never aligns world up
-  (that degenerates `lookAt`).
-- `forward = (cos p cos y, cos p sin y, sin p)`.
-- `right = (sin y, -cos y, 0)` — horizontal, so strafing stays level at any pitch. Equals
-  `cross(forward, +Z)` for level forward (yaw 0 -> south, -Y).
-- `viewMatrix = MatrixMath.lookAt(eye: position, target: position + forward, up: +Z)` —
-  same lookAt + Z-up basis change as the rest of the renderer
-  ([coordinates](/decisions/coordinates.md)).
+Each frame, look first, so movement uses the new heading. Then move along
+`forward * f + right * s + Z * v`, normalized so a diagonal is not faster, times speed and frame
+time. Mouse sensitivity is 0.0025 radians per point.
 
-Per frame (`FreeFlyCamera.update`): look first (movement uses the new heading), then move.
-Look: `yaw -= lookRight * sensitivity`, `pitch = clamp(pitch + lookUp * sensitivity)`,
-sensitivity 0.0025 rad/point. Move: combined direction
-`forward*fwd + right*strafe + Z*vertical`, normalized (diagonal not faster), times
-`speed * dt`.
+The frame time is clamped to 0.1 seconds, so a stall cannot jump the camera far.
 
-## Speeds (Skyrim scale)
+## Speed
 
-Exterior cell = 4096 units ([coordinates](/decisions/coordinates.md)). Base speed 1800
-units/s -> ~2.3 s per cell (seconds, not minutes). Shift x3.5 -> ~6300 units/s. Both are
-`FreeFlyCamera` constants; `crossingOneCellTakesSeconds` guards the tuning.
+An exterior cell is 4096 units. The base speed is 1800 units per second, so one cell takes about
+2.3 seconds. Shift multiplies it by 3.5, to about 6300 units per second.
 
-## Renderer wiring
+## Start pose
 
-`Renderer` holds a live `FreeFlyCamera`, seeded from the injected `SceneCamera`
-(`init(framing:)` recovers yaw/pitch from eye -> target -> the launch view matches the 2.7
-framing exactly). Optional `CameraInputState` (nil for offscreen/tests -> pose stays
-static, so `RendererOffscreenTests` / `CellRenderRealDataTests` are unchanged).
-`draw(in:)` calls `advanceCamera()`: real `dt` from `CACurrentMediaTime` clamped to 0.1 s
-(a stall cannot teleport), `input.makeInput(dt:)` -> `camera.update`. Sun/ambient still
-come from the injected `SceneCamera`; only view + camera position now come from the
-free-fly pose. When G selects walk, renderer instead advances `WalkController` with same
-frame input + resident terrain sampler. `GameViewController` owns the `CameraInputState`,
-sets it on `GameMetalView`, and passes it to `Renderer`.
-
-## Verification
-
-Camera math + input state unit-tested (`FreeFlyCameraTests`, `CameraInputStateTests`):
-orientation vs conventions, pitch clamp, movement direction relative to yaw, boost, seed
-reproduces the framing view. Offscreen render tests still pass (static pose = seeded
-framing). Live pointer capture is AppKit runtime behavior — not exercised by units and not
-GUI-verified here (app launches are user-visible); the input->state mapping that unit tests
-do cover is the load-bearing logic.
+The renderer starts the camera from the scene's framing camera. It works out the yaw and pitch
+from the eye and target, so the first frame matches the framing view. Offscreen renders and
+tests have no input, so the pose stays fixed.

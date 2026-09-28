@@ -1,246 +1,199 @@
 ---
 type: File Format
 title: hkaSplineCompressedAnimation Object
-description: Havok 2010 spline-compressed animation metadata, transform-block
-  grammar, quantization, and per-track local-transform sampling as shipped in Skyrim SE.
+description: Havok 2010 spline-compressed animation layout, annotations, transform blocks,
+  quantization, and sampling in Skyrim SE clips.
 tags: [format, havok, hkx, animation, spline]
-timestamp: 2026-07-20T00:00:00Z
 ---
 
 # hkaSplineCompressedAnimation object
 
-Idle `.hkx` clips store bone-local animation as `hkaSplineCompressedAnimation`, linked to
-bone indices by `hkaAnimationBinding`. This page covers both object layouts, transform
-blocks, vector/quaternion quantization, B-spline sampling. Packfile container/fixups:
-[HKX container](/formats/hkx-container.md). Skeleton/bind pose:
-[hkaSkeleton](/formats/hka-skeleton.md).
+Skyrim `.hkx` clips store bone animation as an `hkaSplineCompressedAnimation`. An
+`hkaAnimationBinding` links its tracks to skeleton bones. This page covers both objects, the
+transform blocks, the quantization, and the spline sampling. The container is on the
+[HKX container](/formats/hkx-container.md) page. The skeleton is on the
+[hkaSkeleton](/formats/hka-skeleton.md) page.
 
-Parser: `opensky/Engine/Formats/HKX/HKASplineCompressedAnimation.swift` +
-`HKASplineBlock.swift`. Entry point:
-`HKASplineCompressedAnimation.animations(in:)` + `HKAAnimationBinding.bindings(in:)`;
-bone-indexed sampling: `boneLocalTransforms(at:binding:)`. CLI gate:
-`openskycli animation <hkx-key>`
-([CLI](/tools/cli.md)). Tests: `HKASplineAnimationTests` over synthetic packfiles.
+## Sources
 
-## References + clean-room scope
+There is no public Havok specification. The layout and codec come from open parsers and were
+then checked against the local SSE install.
 
-No public Havok spec. Layout/codec reimplemented from independent open parsers, then
-probe-verified against user's local SSE install:
-
-* [exyorha/hkxparse](https://github.com/exyorha/hkxparse) (MIT) — Havok 2010 class
-  reflection: member order/types, 32-bit layout cross-check.
-* [ret2end/HKX2Library](https://github.com/ret2end/HKX2Library) (MIT) — SSE 64-bit
-  hkaAnimation + hkaSplineCompressedAnimation member offsets/array types.
-* [PredatorCZ/HavokLib](https://github.com/PredatorCZ/HavokLib) (GPLv3) — transform-mask
-  semantics, block grammar, vector quantization, 40-bit quaternion packing. Algorithm
-  independently expressed in Swift; no source copied.
-* Piegl + Tiller, *The NURBS Book*, 2nd ed. — standard knot-span/de Boor B-spline
+- [exyorha/hkxparse](https://github.com/exyorha/hkxparse) (MIT): Havok 2010 member order and
+  types, and a 32-bit layout cross-check.
+- [ret2end/HKX2Library](https://github.com/ret2end/HKX2Library) (MIT): SSE 64-bit member
+  offsets of `hkaAnimation` and `hkaSplineCompressedAnimation`.
+- [PredatorCZ/HavokLib](https://github.com/PredatorCZ/HavokLib) (GPLv3): what the transform
+  mask means, the block grammar, vector quantization, and 40-bit quaternions. OpenSky
+  rewrote the algorithm in Swift. No source was copied.
+- Piegl and Tiller, *The NURBS Book*, 2nd edition: standard knot-span and de Boor B-spline
   evaluation.
 
-No Havok SDK, Bethesda code, decompiled binary, extracted bytes, or game asset lands in
-repo (AGENTS.md Legal & IP).
+## Example: mt_idle.hkx
 
-## Observed SSE clip
+`meshes\actors\character\animations\male\mt_idle.hkx` in `Skyrim - Animations.bsa`:
 
-`meshes\actors\character\animations\male\mt_idle.hkx`, read in place from
-`Skyrim - Animations.bsa`:
-
-| property | observed |
+| Property | Value |
 | --- | --- |
-| container | `hk_2010.2.0-r1`, fileVersion 8, 64-bit LE |
-| object class / animation type | hkaSplineCompressedAnimation / 5 |
-| duration / frames | 9.133333 s / 275 (frames 0...274, 30 Hz) |
-| transform / float tracks | 99 / 4 |
-| blocks | 2; starts 0 + 20,576 in m_data |
-| max frames/block | 256; block duration 8.5 s |
-| transform bytes/block | 20,552 + 4,216 (both decode cursors close exactly) |
-| vector quantization | 16-bit (all 99 masks in both blocks) |
-| rotation quantization | 40-bit (all masks) |
-| spline degrees | 1 + 3 (one linear track/block; remaining dynamic tracks cubic) |
-| binding | NPC Root [Root]; empty transform map -> identity tracks 0...98 |
-| float-track map / blend hint | [4, 5, 6, 7] / 0 |
-
-Production decode sampled all 275 x 99 transforms over full duration: no throw, NaN, inf,
-or defensive-bound breach. Observed max absolute translation 121, max absolute scale 1,
-normalized quaternion length 0.9999999...1.0000001.
+| Container | `hk_2010.2.0-r1`, file version 8, 64-bit little-endian |
+| Class, animation type | `hkaSplineCompressedAnimation`, 5 |
+| Duration, frames | 9.133333 s, 275 frames at 30 Hz |
+| Transform tracks, float tracks | 99, 4 |
+| Blocks | 2, starting at 0 and 20576 in `m_data` |
+| Frames per block | 256. Block duration 8.5 s |
+| Vector quantization | 16-bit on every track |
+| Rotation quantization | 40-bit on every track |
+| Spline degree | 1 or 3 |
+| Binding | `NPC Root [Root]`, empty track map, so tracks 0 to 98 are bones 0 to 98 |
 
 ## Object layout (176 bytes, 8-byte pointers)
 
-At each hkaSplineCompressedAnimation virtual-fixup offset in `__data__`:
-
-| off | size | field | observed / meaning |
+| Offset | Size | Field | Meaning |
 | --- | --- | --- | --- |
-| 0x00 | 16 | vtable + hkReferencedObject | zero/persisted ref metadata; ignored |
-| 0x10 | 4 | hkaAnimation.m_type | 5 = spline compressed |
-| 0x14 | 4 | m_duration | seconds |
-| 0x18 | 4 | m_numberOfTransformTracks | 99 |
-| 0x1C | 4 | m_numberOfFloatTracks | 4; skipped by 6.3 |
-| 0x20 | 8 | m_extractedMotion ptr | fixup-managed; read for presence only |
-| 0x28 | 16 | m_annotationTracks hkArray | one track per transform track; see below |
-| 0x38 | 4 | m_numFrames | 275 |
-| 0x3C | 4 | m_numBlocks | 2 |
-| 0x40 | 4 | m_maxFramesPerBlock | 256 |
-| 0x44 | 4 | m_maskAndQuantizationSize | transformTracks*4 + floatTracks = 400 |
-| 0x48 | 4 | m_blockDuration | (maxFramesPerBlock-1)*frameDuration = 8.5 |
-| 0x4C | 4 | m_blockInverseDuration | 1/blockDuration |
-| 0x50 | 4 | m_frameDuration | 1/30 s |
-| 0x54 | 4 | pad | ignored |
-| 0x58 | 16 | m_blockOffsets hkArray\<u32\> | block starts relative to m_data |
-| 0x68 | 16 | m_floatBlockOffsets hkArray\<u32\> | transform-region size per block |
-| 0x78 | 16 | m_transformOffsets hkArray\<u32\> | empty in observed clip |
-| 0x88 | 16 | m_floatOffsets hkArray\<u32\> | empty in observed clip |
-| 0x98 | 16 | m_data hkArray\<u8\> | masks + compressed track data |
-| 0xA8 | 4 | m_endian | 0 (LE) |
-| 0xAC | 4 | pad | ignored |
+| 0x00 | 16 | vtable, `hkReferencedObject` | Ignored |
+| 0x10 | 4 | `m_type` | 5 means spline compressed |
+| 0x14 | 4 | `m_duration` | Seconds |
+| 0x18 | 4 | `m_numberOfTransformTracks` | |
+| 0x1C | 4 | `m_numberOfFloatTracks` | Skipped |
+| 0x20 | 8 | `m_extractedMotion` | Pointer. See below |
+| 0x28 | 16 | `m_annotationTracks` | `hkArray`. See below |
+| 0x38 | 4 | `m_numFrames` | |
+| 0x3C | 4 | `m_numBlocks` | |
+| 0x40 | 4 | `m_maxFramesPerBlock` | |
+| 0x44 | 4 | `m_maskAndQuantizationSize` | `transformTracks * 4 + floatTracks` |
+| 0x48 | 4 | `m_blockDuration` | `(maxFramesPerBlock - 1) * frameDuration` |
+| 0x4C | 4 | `m_blockInverseDuration` | `1 / blockDuration` |
+| 0x50 | 4 | `m_frameDuration` | 1/30 s |
+| 0x54 | 4 | padding | |
+| 0x58 | 16 | `m_blockOffsets` | `hkArray<uint32>`, block starts in `m_data` |
+| 0x68 | 16 | `m_floatBlockOffsets` | `hkArray<uint32>`, size of the transform part per block |
+| 0x78 | 16 | `m_transformOffsets` | `hkArray<uint32>`, empty in vanilla |
+| 0x88 | 16 | `m_floatOffsets` | `hkArray<uint32>`, empty in vanilla |
+| 0x98 | 16 | `m_data` | `hkArray<uint8>`, masks and track data |
+| 0xA8 | 4 | `m_endian` | 0, little-endian |
+| 0xAC | 4 | padding | |
 
-hkArray uses same pointer/fixup descriptor documented under
-[hkaSkeleton](/formats/hka-skeleton.md#hkarray-descriptor).
+`hkArray` works as described on the [hkaSkeleton](/formats/hka-skeleton.md#hkarray) page.
 
-### m_extractedMotion
+## Extracted motion
 
-`m_extractedMotion` at 0x20 points at an `hkaAnimatedReferenceFrame`: the authored travel
-of the character over the clip, held apart from the bone tracks. The parser reads whether
-the pointer resolves and exposes that as
-`HKASplineCompressedAnimation.carriesExtractedMotion`; the reference frame's own contents
-are not decoded, because no clip in a vanilla Skyrim SE install carries one. Every
-`hkaSplineCompressedAnimation` under `meshes\actors\character\` leaves it null, and none
-of the 2,654 HKX files there contains an `hkaAnimatedReferenceFrame` object at all.
+`m_extractedMotion` points at an `hkaAnimatedReferenceFrame`: how far the character travels
+over the clip, stored apart from the bone tracks. No vanilla clip has one. The pointer is null
+in every clip under `meshes\actors\character\`, and no file there has that object at all.
 
-The presence flag matters even so, because it is the only honest way to tell an in-place
-clip from a root-motion one. A vanilla clip's root bone is not still: the authored curve
-wanders by a fraction of a unit between samples, which at a 1/120 s simulation step reads
-as a double-digit speed. Any threshold over that difference misclassifies some steps.
-[Walk mode](/engine/walk-mode.md) covers what the engine does with the answer.
+OpenSky still records whether the pointer is set. It is the only reliable way to tell an
+in-place clip from a root-motion clip. A vanilla root bone always moves a tiny amount, so any
+speed threshold gets some physics steps wrong. See [walk mode](/engine/walk-mode.md).
 
-The member is read through `HKXObjectCursor.optionalPointer(at:)` rather than
-`pointer(at:)`, so a null does not enter the unresolved-reference log — an absent optional
-and a fixup that failed to resolve mean opposite things to the real-data sweep.
+## Annotations
 
-### m_annotationTracks
+`m_annotationTracks` is an `hkArray<hkaAnnotationTrack>`. Skyrim keeps footstep marks here.
+An annotation is a time in the clip and a short text. Example: `mt_walkforward.hkx` has
+`FootLeft` at 0.2333 s and `FootRight` at 0.8 s. These are the tags the
+[footstep records](/formats/footstep.md) answer to.
 
-`m_annotationTracks` at 0x28 is an `hkArray<hkaAnnotationTrack>`, and it is where Skyrim
-keeps its footstep marks. An annotation is a time inside the animation and a short piece of
-text a runtime turns into an event: `mt_walkforward.hkx` carries `FootLeft` at 0.2333 s and
-`FootRight` at 0.8 s, which are exactly the tags the vanilla `FSTS` footstep sets answer to
-([footstep records](/formats/footstep.md)).
+`hkaAnnotationTrack` (24 bytes):
 
-| off | size | field | observed / meaning |
+| Offset | Size | Field | Meaning |
 | --- | --- | --- | --- |
-| 0x00 | 8 | hkaAnnotationTrack.m_trackName ptr | local fixup -> bone name, or null |
-| 0x08 | 16 | m_annotations hkArray\<Annotation\> | empty on all but the first track |
+| 0x00 | 8 | `m_trackName` | Pointer to a bone name, or null |
+| 0x08 | 16 | `m_annotations` | `hkArray<Annotation>` |
 
-`hkaAnnotationTrack` is 24 bytes, so the array strides by 24. Each `Annotation` is 16:
+`Annotation` (16 bytes):
 
-| off | size | field | observed / meaning |
+| Offset | Size | Field | Meaning |
 | --- | --- | --- | --- |
-| 0x00 | 4 | m_time | seconds from clip start |
-| 0x04 | 4 | pad | the string pointer aligns to 8 |
-| 0x08 | 8 | m_text ptr | local fixup -> `FootLeft`, `FootRight`, ... |
+| 0x00 | 4 | `m_time` | Seconds from the clip start |
+| 0x04 | 4 | padding | The pointer is 8-byte aligned |
+| 0x08 | 8 | `m_text` | Pointer to text such as `FootLeft` |
 
-Havok exports one track per transform track and vanilla leaves all but the first empty, so
-`HKASplineCompressedAnimation.annotations` merges every track and sorts by time. The
-decode never throws: an unreadable element is skipped and recorded as a cursor miss,
-because a clip with no annotations is the ordinary case and an animation still poses bones
-without them.
+Havok writes one annotation track per transform track, and vanilla fills only the first.
+OpenSky merges all tracks, sorts by time, and skips an unreadable entry.
 
-The behavior runtime raises each annotation as playback crosses it — which is the only way
-a Skyrim footstep ever fires, because the locomotion `hkbClipGenerator`s in
-`mt_behavior.hkx` carry an *empty* `m_triggers`. See
-[behavior graph runtime](/engine/behavior-runtime.md#clip-triggers-and-annotations).
+The behavior runtime raises each annotation when playback passes it. This is the only way a
+Skyrim footstep fires: the walking clip generators in `mt_behavior.hkx` have an empty
+`m_triggers`. See [behavior runtime](/engine/behavior-clips.md#clip-triggers-and-annotations).
 
-## Binding layout (72 bytes, 8-byte pointers)
+## hkaAnimationBinding (72 bytes)
 
-At each hkaAnimationBinding virtual-fixup offset in `__data__`:
-
-| off | size | field | observed / meaning |
+| Offset | Size | Field | Meaning |
 | --- | --- | --- | --- |
-| 0x00 | 16 | vtable + hkReferencedObject | zero/persisted ref metadata; ignored |
-| 0x10 | 8 | m_originalSkeletonName ptr | local fixup -> `NPC Root [Root]` |
-| 0x18 | 8 | m_animation ptr | fixup -> spline object at data offset 304 |
-| 0x20 | 16 | m_transformTrackToBoneIndices hkArray\<i16\> | empty = identity mapping |
-| 0x30 | 16 | m_floatTrackToFloatSlotIndices hkArray\<i16\> | [4, 5, 6, 7] |
-| 0x40 | 1 | m_blendHint | 0 |
-| 0x41 | 7 | pad | ignored |
+| 0x00 | 16 | vtable, `hkReferencedObject` | Ignored |
+| 0x10 | 8 | `m_originalSkeletonName` | Pointer to text such as `NPC Root [Root]` |
+| 0x18 | 8 | `m_animation` | Pointer to the animation object |
+| 0x20 | 16 | `m_transformTrackToBoneIndices` | `hkArray<int16>`. Empty means track i is bone i |
+| 0x30 | 16 | `m_floatTrackToFloatSlotIndices` | `hkArray<int16>` |
+| 0x40 | 1 | `m_blendHint` | Then 7 bytes of padding |
 
-Open HavokLib's exporter applies track index directly when transform map is empty;
-production decode follows that compact identity rule. Non-empty maps must contain exactly
-one non-negative bone index per transform track. Binding animation pointer must match the
-sampled spline object's section + data offset; CLI rejects an unbound clip.
+An empty map means track i is bone i, as in HavokLib. A non-empty map needs one non-negative
+bone index per transform track.
 
 ## Transform block
 
 Each block starts at `m_data + m_blockOffsets[i]`:
 
 ```text
-transform masks: 4 bytes * numberOfTransformTracks
-float masks:     1 byte  * numberOfFloatTracks (skipped)
+transform masks: 4 bytes per transform track
+float masks:     1 byte per float track (skipped)
 pad to 4
 for each transform track:
   translation vector track
   rotation quaternion track
   pad to 4
   scale vector track
-float data begins at block start + m_floatBlockOffsets[i]
+float data starts at block start + m_floatBlockOffsets[i]
 ```
 
-Decoder must end exactly at `floatBlockOffsets[i]`; under/over-consumption throws
-`blockSizeMismatch`. This caught layout drift during probe and proves both real block
-grammars close without using next-block heuristics.
+The decoder must end exactly at `m_floatBlockOffsets[i]`. Ending early or late is an error.
+This check proves the real blocks are read correctly.
 
-### Transform mask (4 bytes/track)
+## Transform mask (4 bytes per track)
 
-| byte | field | meaning |
+| Byte | Field | Meaning |
 | --- | --- | --- |
-| 0 | quantization | bits 0-1 translation, 2-5 rotation selector, 6-7 scale |
-| 1 | translation types | bits 0-2 static XYZ; bits 4-6 spline XYZ |
-| 2 | rotation type | low nibble static; high nibble spline |
-| 3 | scale types | bits 0-2 static XYZ; bits 4-6 spline XYZ |
+| 0 | Quantization | Bits 0-1 translation, bits 2-5 rotation, bits 6-7 scale |
+| 1 | Translation types | Bits 0-2 static X, Y, Z. Bits 4-6 spline X, Y, Z |
+| 2 | Rotation type | Low 4 bits static, high 4 bits spline |
+| 3 | Scale types | Bits 0-2 static X, Y, Z. Bits 4-6 spline X, Y, Z |
 
-Type precedence matches open parsers: spline -> static -> identity. Identity vector lanes
-are 0 for translation, 1 for scale; identity quaternion is (0,0,0,1). Real mt_idle uses
-quantization byte `0x45` on every track/block: u16 vector control points + 40-bit quats.
-Unknown dynamic quantization throws `unsupportedQuantization`; it is never guessed.
+For each value, spline wins over static, and static wins over identity. Identity is 0 for
+translation, 1 for scale, and (0, 0, 0, 1) for rotation. `mt_idle` uses quantization byte
+`0x45` everywhere: 16-bit vector control points and 40-bit quaternions. An unknown
+quantization is an error. OpenSky does not guess.
 
-### Vector track
+## Vector track
 
-No spline lanes: one f32 per static lane in XYZ order; identity lanes consume no bytes.
-With any spline lane:
+With no spline lane: one float32 per static lane, in X, Y, Z order. Identity lanes use no
+bytes. With any spline lane:
 
 ```text
-u16 storedItemCount              controlPointCount = storedItemCount + 1
-u8  degree
-u8  knots[storedItemCount + degree + 2]
+uint16 storedItemCount           control points = storedItemCount + 1
+uint8  degree
+uint8  knots[storedItemCount + degree + 2]
 pad to 4
-for XYZ: spline -> f32 minimum + f32 maximum
-         static -> f32 value
-for each control point, XYZ order: spline lane -> u8/u16 quantized value
+for X, Y, Z: spline lane -> float32 minimum, float32 maximum
+             static lane -> float32 value
+for each control point, X, Y, Z: spline lane -> uint8 or uint16 value
 pad to 4
 ```
 
-Control value = `minimum + (maximum-minimum) * q/(2^bits-1)`. Knots must be
-non-descending; degree 1...4 + enough control points required.
+A control value is `minimum + (maximum - minimum) * q / (2^bits - 1)`. Knots must not go down.
+The degree must be 1 to 4, with enough control points.
 
-### 40-bit quaternion
+## 40-bit quaternion
 
-Five LE bytes pack three 12-bit stored components, 2-bit omitted-largest lane index,
-1-bit omitted-lane sign. Each stored integer `q` becomes
-`(q-2047)*0.000345436` (range about +/-1/sqrt(2)); missing component magnitude is
-`sqrt(max(0, 1-x*x-y*y-z*z))`. Sampled spline quaternions normalize before entering
-`HKABonePose` -> compression/interpolation drift never grows the rotation matrix.
+Five little-endian bytes hold three 12-bit components, a 2-bit index of the largest
+component (which is left out), and a 1-bit sign for it. Each stored value `q` becomes
+`(q - 2047) * 0.000345436`, a range of about +/- 1/sqrt(2). The missing component is
+`sqrt(max(0, 1 - x*x - y*y - z*z))`. Sampled quaternions are normalized, so rounding errors
+cannot grow the rotation.
 
 ## Sampling
 
-Input time clamps to `[0,duration]`. Block = `floor(time/blockDuration)`, clamped to last
-block. Local frame = `(time - block*blockDuration)/frameDuration`. Static/identity lanes
-return directly. Dynamic scalar/quaternion control points evaluate with standard
-knot-span + de Boor interpolation; quaternion result normalizes. `localTransforms(at:)`
-returns transform-track order; `boneLocalTransforms(at:binding:)` pairs each pose with its
-resolved skeleton bone index.
+1. Clamp the time to `[0, duration]`.
+2. Block = `floor(time / blockDuration)`, clamped to the last block.
+3. Frame in the block = `(time - block * blockDuration) / frameDuration`.
+4. Static and identity values are returned as they are. Spline values use the standard
+   knot-span and de Boor evaluation. Quaternions are normalized.
 
-## Defensive decode
-
-Typed `HKASplineAnimationError` covers invalid/non-finite metadata, missing fixup data,
-array/block bounds, table-count mismatch, unsupported quantization, invalid spline
-degree/knots/bounds, exact block-size mismatch, non-finite/unbounded sampled transforms.
-External input never force-unwraps/casts/traps. 6.3 decodes transform tracks only; four
-float tracks are structurally skipped via mask count + floatBlockOffsets.
+Float tracks are skipped by using the mask count and `m_floatBlockOffsets`.

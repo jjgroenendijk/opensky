@@ -1,89 +1,66 @@
 ---
 type: Subsystem
 title: Game data locator
-description: How OpenSky finds the user's Skyrim SE install - resolution order, validation, fail-loud rules.
+description: How OpenSky finds the user's Skyrim SE install - the search order, what counts as
+  an install, and why test hosts ignore saved settings.
 tags: [engine, io, config]
-timestamp: 2026-08-05T00:00:00Z
 ---
 
 # Game data locator
 
-`opensky/Engine/GameData/GameDataLocator.swift`. Resolves + validates the Skyrim SE install at
-launch. Install is read-only external input — never bundled, cached, or copied
-(AGENTS.md Legal & IP).
+OpenSky finds the user's Skyrim SE install when it starts. The install is read-only input. It is
+never bundled, cached, or copied.
 
-## Resolution order
+## Search order
 
-First configured source wins. Configured-but-invalid override -> throws, never falls
-through to the next source.
+The first source that is set wins. A source that is set but invalid is an error. The search does
+not go on to the next source.
 
-1. `OPENSKY_DATA_ROOT` env var — tests, CLI runs, one-off launches.
-2. `OpenSkyDataRoot` UserDefaults key — persistent per-machine setting:
-   `defaults write nl.jjgroenendijk.opensky OpenSkyDataRoot "<install path>"`,
-   or main app's Settings window.
-3. Default Steam path:
+1. The `OPENSKY_DATA_ROOT` environment variable. For tests, the CLI, and one-off runs.
+2. The `OpenSkyDataRoot` user default. This is the saved setting:
+   `defaults write nl.jjgroenendijk.opensky OpenSkyDataRoot "<install path>"`, or the app's
+   Settings window.
+3. The default Steam path:
    `~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition`.
 
-Setting lives in one shared defaults domain `nl.jjgroenendijk.opensky`
-(`GameDataLocator.settingsDefaults`). CLI reads it via `UserDefaults(suiteName:)`; main
-app, whose own domain is shared one, uses `.standard` (`suiteName` rejects current bundle
-id). Same plist either way.
+The setting lives in one shared defaults domain, `nl.jjgroenendijk.opensky`. The CLI reads it
+with `UserDefaults(suiteName:)`. The app uses `.standard`, because its own domain is that
+domain and `suiteName` refuses the app's own bundle ID. Both read the same file.
 
-## Sources withheld in a unit-test host
+## What counts as an install
 
-Inside the unit-test host only source 1 applies. `locate` takes both persistent sources as
-optionals and defaults them to `GameDataLocator.persistedRootDefaults` and
-`GameDataLocator.defaultInstallCandidate`, each of which is nil when
-`isRunningInTestHost` (the `XCTestConfigurationFilePath` env var, same signal the
-[headless test host](/testing.md) uses). Nil skips that source; nothing else changes, so
-an explicitly injected source still resolves and the error becomes
-`notFound(searched: [])`.
+A path is an install if `Data/Skyrim.esm` exists under it. A path to the `Data` folder itself is
+also accepted, because both forms appear in user settings. `~` is expanded.
 
-The host is the app bundle, so without this a machine whose app had been pointed at a real
-install fed that install to unit tests that are supposed to be install-independent. That is
-how `make test` came to sit forever in `open()` on the install's `Skyrim_Default.ini`:
-`TEST_RUNNER_OPENSKY_DATA_ROOT=""` clears only the env var, and a panel-reset test then
-reached the real install through the persisted default (issue #362). Real-data suites gate
-on the env var and are unaffected.
+The result has the install folder, the data folder, and which source was used. All engine reads
+go under the data folder.
 
-## Persisting a choice
+## Failure
 
-`GameDataLocator.saveUserChoice(path:)` — validates, then stores under the
-defaults key; invalid path throws and leaves the stored setting untouched.
-`clearUserChoice()` removes it (next locate falls back to the Steam default).
-Main-app Settings window drives both.
+A failure is a typed error. The app logs it (category `GameData`) and shows how to fix it in the
+World and Asset Browser views. Settings stays open to use. A new valid path rebuilds the world and
+reloads the browser without a restart. There is never a silent fallback.
 
-## The plugins.txt beside it
+`saveUserChoice(path:)` checks a path before saving it. An invalid path is an error, and the old
+setting stays. `clearUserChoice()` removes the setting.
 
-`PluginsTextLocator` is the same shape for the file that carries the plugin load order:
-`OPENSKY_PLUGINS_TXT`, then the `OpenSkyPluginsText` key in the same shared domain, then a
-search of the layouts a macOS install can take. It withholds the persisted default and the
-home directory in a test host for the same reason this one does. Unlike the data root, a
-missing plugins.txt is not a failure — it resolves to the vanilla masters. Details:
-[plugins.txt load order](/formats/plugins-txt.md).
+## Test hosts ignore saved settings
 
-## Validation
+Inside the unit test host, only the environment variable counts. The saved setting and the Steam
+path are skipped. The test host is detected by the `XCTestConfigurationFilePath` variable, as in
+[testing](/testing.md).
 
-Path counts as install root when `Data/Skyrim.esm` exists under it. Path pointing at the
-`Data/` folder itself (contains `Skyrim.esm` directly) also accepted — both shapes occur
-in user configs. Tilde expanded.
+The reason: the test host is the app, and the app reads the app's settings. On a machine where
+the app pointed at a real install, unit tests that must not depend on an install read that
+install anyway. Clearing the environment variable does not help, because the saved setting is
+still there. This once made `make test` hang, opening a real INI file.
 
-## Result + failure
+Real-data suites check the environment variable, so this does not affect them. UI tests pass a
+made-up install through `OPENSKY_DATA_ROOT`.
 
-Success -> `GameDataRoot { installURL, dataURL, source }`; `dataURL` is the only root
-engine reads go under. Failure -> `GameDataError` (typed, `LocalizedError`); AppDelegate
-logs via `os.Logger` (subsystem `nl.jjgroenendijk.opensky`, category `GameData`) + shows
-remediation inside World/Asset Browser. Settings stays reachable; successful change
-rebuilds World dependencies + reloads browser without relaunch. No silent fallback.
+## plugins.txt
 
-Probe skipped in the unit-test host (`XCTestConfigurationFilePath` env present) — tests
-must not depend on machine state. UI-tested app instances still run it; smoke test injects
-a synthetic root via `OPENSKY_DATA_ROOT`.
-
-## Tests
-
-`openskyTests/GameData/GameDataLocatorTests.swift` — synthetic temp-dir installs (empty
-`Skyrim.esm` marker), all sources injectable. Covers order, both root shapes, fail-loud
-on invalid override, not-found message, and the withheld persistent sources (the suite runs
-in the test host, so it asserts the withholding directly). UI smoke covers missing-data
-in-window state + Settings Cmd+, opening.
+The load order file is found the same way: `OPENSKY_PLUGINS_TXT`, then the `OpenSkyPluginsText`
+user default, then the places a macOS install can keep it. A test host skips the saved setting
+and the home folder for the same reason. Unlike the install, a missing `plugins.txt` is not an
+error. It means the vanilla masters. See [plugins.txt](/formats/plugins-txt.md).

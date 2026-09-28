@@ -10,7 +10,7 @@
 // their own hands. Depth-tested like ordinary geometry, the arms would push
 // through that wall. Vanilla's own answer to this is in its renderer and is
 // not observable from the install, so what OpenSky does is a deliberate
-// deviation, recorded as one in docs/engine/behavior-runtime.md:
+// deviation, recorded as one in docs/engine/first-person.md:
 //
 // The arms are encoded last, with the same projection and the same pipelines
 // as everything else, into a viewport whose depth range is compressed to

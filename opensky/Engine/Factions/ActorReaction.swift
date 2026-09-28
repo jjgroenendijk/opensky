@@ -21,7 +21,7 @@
 //   same four headings and states "relationships override factions":
 //   <https://ck.uesp.net/wiki/Relationship>
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/hostility.md.
 
 import Foundation
 

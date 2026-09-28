@@ -5,7 +5,6 @@ description: jscpd gates new copy-pasted Swift and Periphery gates new unused co
   against a checked-in baseline; why these two tools and not SonarQube, SonarCloud, or
   swiftlint analyze.
 tags: [decision, tooling, lint, code-quality]
-timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Code-smell scans - duplication and dead code
@@ -30,14 +29,14 @@ see the whole program instead of one file at a time. They are gated locally:
   builds itself, with the compilation cache off and into its own tree
   (`DerivedData-index/`), because a build replayed from the shared cache writes almost
   no index data. The first run in a worktree is a full build; later runs are
-  incremental, and the scan itself takes about eight seconds. It left the pre-push
-  hook on 2026-09-27, when the shared cache made the ordinary builds unusable for it.
+  incremental, and the scan itself takes about eight seconds. It is not in the pre-push
+  hook, because the shared cache makes the ordinary builds unusable for it.
   The settings are in `tools/lint/.periphery.yml`.
 
 Both gates compare against a baseline of the findings that were already there when the
 gates landed: `tools/lint/jscpd-baseline.json` (content fingerprints) and
 `tools/lint/periphery-baseline.json` (declaration USRs). New code must not add to the
-baseline. The existing findings are tracked in GitHub issue #569, not in this wiki.
+baseline. The existing findings are tracked in GitHub issues, not in this wiki.
 After a cleanup removes findings, `make dup-baseline` or `make dead-code-baseline`
 shrinks the baseline. Regenerating it to hide a new finding defeats the gate.
 

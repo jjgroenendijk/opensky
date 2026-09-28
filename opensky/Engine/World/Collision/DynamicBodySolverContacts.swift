@@ -8,7 +8,7 @@
 // rather than out of the velocities, which is what lets a resting body reach
 // the sleep thresholds instead of standing on a permanent upward bias.
 //
-// Documented in docs/engine/dynamic-bodies.md.
+// Documented in docs/engine/dynamic-narrowphase.md.
 
 import simd
 

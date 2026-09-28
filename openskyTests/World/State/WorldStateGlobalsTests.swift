@@ -1,6 +1,6 @@
 // Runtime global-variable layer in WorldStateStore (issue #165): typed
 // mutation and its rounding, reset to plugin default, the change journal, the
-// snapshot, and restore. See docs/engine/runtime-state.md.
+// snapshot, and restore. See docs/engine/global-variables.md.
 
 import Foundation
 @testable import opensky

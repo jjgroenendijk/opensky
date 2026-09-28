@@ -1,147 +1,98 @@
 ---
 type: File Format
 title: HKX Behavior Graph Objects
-description: Graph-level Havok behavior classes in Skyrim SE packfiles — root container,
-  hkbBehaviorGraph, graph data, string data, variable value set, project and character
-  string data — plus the shared object-graph resolution helpers and the vanilla census.
-tags: [format, havok, hkx, behavior, animation, milestone-14]
-timestamp: 2026-08-03T00:00:00Z
+description: Graph-level Havok behavior classes in Skyrim SE packfiles (root container,
+  behavior graph, graph data, strings, variable values, project and character data) and what
+  vanilla contains.
+tags: [format, havok, hkx, behavior, animation]
 ---
 
 # HKX behavior graph objects
 
-The [HKX packfile container](/formats/hkx-container.md) locates objects; this page covers
-the graph-level objects a Havok *behavior* packfile carries, and the shared helpers every
-object decoder now resolves its pointers through. The tree the graph's root generator heads
-is [HKX behavior node classes](/formats/hkx-behavior-nodes.md).
+A behavior graph decides which animation an actor plays. The
+[HKX container](/formats/hkx-container.md) page shows how to find objects in a packfile. This
+page covers the graph-level objects. The node tree under the root generator is on the
+[behavior node classes](/formats/hkx-behavior-nodes.md) page.
 
-Parsers: `opensky/Engine/Formats/HKX/HKXObjectGraph.swift`, `HKXObjectCursor.swift`,
-`HKXObjectCursorArrays.swift` (shared resolution); `HKBRootLevelContainer.swift`,
-`HKBBehaviorGraph.swift`, `HKBBehaviorStrings.swift`, `HKBFileStringData.swift` (classes);
-`HKBBehaviorCensus.swift` (the summary). CLI dump: `openskycli hkx <key>`
-([CLI](/tools/cli.md)). Tests: `HKXObjectGraphTests` and `HKBBehaviorGraphTests` over
-synthetic fixtures, plus the env-gated `HKBBehaviorCensusRealDataTests` sweep.
+`openskycli hkx <key>` prints a file's objects ([CLI](/tools/cli.md)).
 
-## Contents
+## Sources
 
-- References
-- Layout rules shared by every class
-- Shared resolution helpers
-- `hkRootLevelContainer` and named variants
-- `hkbBehaviorGraph`
-- `hkbBehaviorGraphData`
-- `hkbBehaviorGraphStringData`
-- `hkbVariableValueSet`
-- `hkbProjectData` and `hkbProjectStringData`
-- `hkbCharacterData` and `hkbCharacterStringData`
-- File role
-- Verification
+There is no public Havok specification. Member offsets come from open-source projects and were
+checked byte by byte against the local SSE install.
 
-## References
+- ret2end/HKX2Library (MIT): an SSE packfile reader and writer. Its offset tables and class
+  signatures are the main source. Its signatures match the vanilla class-name tables exactly
+  (`hkRootLevelContainer` `0x2772C11E`, `hkbBehaviorGraph` `0xB1218F86`, `hkbBehaviorGraphData`
+  `0x095ACA5D`, `hkbVariableValueSet` `0x27812D8D`, `hkbBehaviorGraphStringData`
+  `0xC713064E`). That is why it can be trusted for this Havok version.
+- soulsmods/DSMapStudio HKX2 (MIT): a second reimplementation of the same classes. Source for
+  the order of `hkbVariableInfo::VariableType`.
+- exyorha/hkxparse (MIT): container structures, as a cross-check.
 
-No public Havok specification. Member offsets are reimplemented from independent
-open-source projects and then verified byte for byte against the local SSE install:
-
-- ret2end/HKX2Library (MIT) — SSE-targeted packfile de/serialiser. Its per-class member
-  offset tables and its class signatures are the primary source for every layout below.
-  The signatures it records match the class-name table of the local vanilla files exactly
-  (`hkRootLevelContainer` 0x2772C11E, `hkbBehaviorGraph` 0xB1218F86, `hkbBehaviorGraphData`
-  0x095ACA5D, `hkbVariableValueSet` 0x27812D8D, `hkbBehaviorGraphStringData` 0xC713064E),
-  which is what makes it trustworthy for this file version.
-- soulsmods/DSMapStudio HKX2 (MIT) — independent reimplementation of the same class set;
-  source for the `hkbVariableInfo::VariableType` ordering.
-- exyorha/hkxparse (MIT) — packfile container structures, cross-checked.
-
-No Havok SDK headers, no decompiled or leaked source, and no Bethesda code were consulted
-(AGENTS.md "Legal & IP boundary"). The scope and the clean-room rule are recorded in
+No Havok SDK, leaked source, or Bethesda code was used. See
 [Havok behavior scope](/decisions/havok-behavior-scope.md).
 
-## Layout rules shared by every class
+## Shared layout rules
 
-All vanilla SSE behavior files are 64-bit little-endian `hk_2010.2.0-r1` packfiles, the
-same profile the container page records; the sweep asserts this rather than assuming it.
-Within that profile:
+Every vanilla behavior file is a 64-bit little-endian `hk_2010.2.0-r1` packfile.
 
 | Construct | Size | Layout |
 | --- | --- | --- |
-| pointer | 8 | Null on disk. The Havok "finish" pass patches it at load, so the fixup tables *are* the pointer values. |
-| `hkArray<T>` | 16 | `ptr` at +0, `i32 size` at +8, `u32 capacityAndFlags` at +12. Bit 31 of capacity is a Havok flag, so `size` drives element counts. An empty array is a null pointer with no fixup. |
-| `hkStringPtr` | 8 | Pointer to an in-place NUL-terminated ASCII string. Null is a legitimate absent string. |
-| `hkBaseObject` | 8 | Vtable pointer. |
-| `hkReferencedObject` | 16 | `hkBaseObject`, then `u16 memSizeAndFlags` at +8 and `i16 referenceCount` at +10, padded to 8. Every class below that derives from it starts its own members at 0x10. |
+| pointer | 8 | Null on disk. The fixup tables give the real target |
+| `hkArray<T>` | 16 | Pointer at +0, int32 size at +8, uint32 capacity and flags at +12. Use size. An empty array is a null pointer with no fixup |
+| `hkStringPtr` | 8 | Pointer to a null-terminated ASCII string. Null is a valid absent string |
+| `hkBaseObject` | 8 | Vtable pointer |
+| `hkReferencedObject` | 16 | `hkBaseObject`, uint16 at +8, int16 at +10, padding. Subclasses start at 0x10 |
 
-Members Havok flags `SERIALIZE_IGNORED` still occupy their bytes in a packfile — they are
-written as zeros, not omitted. Every offset in this page is therefore the absolute
-in-memory offset, not a position in a packed sequence.
+Members that Havok marks `SERIALIZE_IGNORED` still take their bytes in a packfile, written as
+zeros. So every offset on this page is the full in-memory offset.
 
-## Shared resolution helpers
+## Unresolved pointers
 
-`HKXObjectGraph` indexes one parsed `HKXFile`: section payloads, local and global fixups
-keyed by source offset, and the class name of every registered object keyed by its
-location. `HKXObjectCursor` is a read position on one object (or one array element); a
-class decoder declares its members as `HKXField(offset, "m_name")` constants and reads
-them through the cursor.
+A pointer or array that cannot be resolved gives no value and a reason: `noFixup`,
+`sectionMissing`, `outOfBounds`, `negativeCount`, or `undecodableString`. Only `noFixup` is
+normal, because Havok writes a null pointer for an absent optional value. Any other reason
+means the offset is wrong.
 
-Resolution never traps and never throws. An unresolvable field yields nil and appends an
-`HKXUnresolvedReference` naming the member and one of five reasons — `noFixup`,
-`sectionMissing`, `outOfBounds`, `negativeCount`, `undecodableString`. A caller that
-treats a field as load-bearing converts the nil into its own typed error;
-`hkaSkeleton`, `hkaSplineCompressedAnimation`, and `hkaAnimationBinding` all do exactly
-that and keep the error enums they already had.
+A pointer is looked up in the local fixups first, then in the global fixups. So a pointer
+into another section works the same way.
 
-`noFixup` is the one miss that is not a bug: Havok writes a null pointer for an absent
-optional. Every other reason means the decoder read the wrong bytes, which is what the
-real-data sweep asserts against.
+## hkRootLevelContainer
 
-Pointer resolution tries the local fixups first, then the global ones, so a pointer into
-another section resolves the same way as an intra-section one; an array's elements are
-read from whichever section the array's own fixup lands in.
+The entry point of every behavior, character, and project file. The file's role comes from
+the variants it holds, not from the header or the file name.
 
-## `hkRootLevelContainer` and named variants
+`hkRootLevelContainer` (16 bytes): `m_namedVariants` at 0x00, an
+`hkArray<hkRootLevelContainerNamedVariant>`.
 
-The entry point. Every behavior, character, and project file declares
-`hkRootLevelContainer` as the container header's root class, so the *file's* role comes
-from the named variants this object carries, not from the header and not from the
-filename.
+`hkRootLevelContainerNamedVariant` (24 bytes):
 
-`hkRootLevelContainer`, 16 bytes, no base class:
-
-| off | field | type |
+| Offset | Field | Type |
 | --- | --- | --- |
-| 0x00 | `m_namedVariants` | `hkArray<hkRootLevelContainerNamedVariant>` |
+| 0x00 | `m_name` | `hkStringPtr` |
+| 0x08 | `m_className` | `hkStringPtr`, the Havok class of the payload |
+| 0x10 | `m_variant` | Pointer to the payload |
 
-`hkRootLevelContainerNamedVariant`, 24 bytes, the array's element stride:
+## hkbBehaviorGraph (304 bytes)
 
-| off | field | type |
-| --- | --- | --- |
-| 0x00 | `m_name` | `hkStringPtr` — authored name |
-| 0x08 | `m_className` | `hkStringPtr` — Havok class name of the payload |
-| 0x10 | `m_variant` | pointer to the payload object |
+The chain is `hkbGenerator -> hkbNode -> hkbBindable -> hkReferencedObject`. `hkbBindable`
+ends at 0x30, and `hkbNode` uses 0x30 to 0x48.
 
-## `hkbBehaviorGraph`
-
-Derives `hkbGenerator` -> `hkbNode` -> `hkbBindable` -> `hkReferencedObject`, so the
-inherited members land first: `hkbBindable` ends at 0x30, `hkbNode` occupies 0x30-0x48,
-and the graph's own members follow. Total size 304.
-
-| off | field | type | notes |
+| Offset | Field | Type | Notes |
 | --- | --- | --- | --- |
-| 0x10 | `m_variableBindingSet` | pointer | from `hkbBindable` |
-| 0x30 | `m_userData` | `u64` | from `hkbNode` |
-| 0x38 | `m_name` | `hkStringPtr` | from `hkbNode`; the graph name, e.g. `MT_Behavior.hkb` |
-| 0x48 | `m_variableMode` | `i8` enum | how variables survive re-activation |
-| 0x80 | `m_rootGenerator` | pointer to `hkbGenerator` | head of the node tree |
-| 0x88 | `m_data` | pointer to `hkbBehaviorGraphData` | |
+| 0x10 | `m_variableBindingSet` | pointer | From `hkbBindable` |
+| 0x30 | `m_userData` | uint64 | From `hkbNode` |
+| 0x38 | `m_name` | `hkStringPtr` | From `hkbNode`. Example: `MT_Behavior.hkb` |
+| 0x48 | `m_variableMode` | int8 enum | How variables survive reactivation |
+| 0x80 | `m_rootGenerator` | pointer | Top of the node tree |
+| 0x88 | `m_data` | pointer | To `hkbBehaviorGraphData` |
 
-OpenSky decodes the name, user data, variable mode, and both pointers, and resolves the
-root generator's *class* through the object inventory. It does not walk the node tree.
+## hkbBehaviorGraphData (128 bytes)
 
-## `hkbBehaviorGraphData`
+The graph's declarations. Nodes refer to variables and events by index into these lists.
 
-Derives `hkReferencedObject`; size 128. Holds the graph's declarations. Variable and
-event indices used by nodes address these lists positionally.
-
-| off | field | type |
+| Offset | Field | Type |
 | --- | --- | --- |
 | 0x10 | `m_attributeDefaults` | `hkArray<hkReal>` |
 | 0x20 | `m_variableInfos` | `hkArray<hkbVariableInfo>` |
@@ -149,176 +100,97 @@ event indices used by nodes address these lists positionally.
 | 0x40 | `m_eventInfos` | `hkArray<hkbEventInfo>` |
 | 0x50 | `m_wordMinVariableValues` | `hkArray<hkbVariableValue>` |
 | 0x60 | `m_wordMaxVariableValues` | `hkArray<hkbVariableValue>` |
-| 0x70 | `m_variableInitialValues` | pointer to `hkbVariableValueSet` |
-| 0x78 | `m_stringData` | pointer to `hkbBehaviorGraphStringData` |
+| 0x70 | `m_variableInitialValues` | Pointer to `hkbVariableValueSet` |
+| 0x78 | `m_stringData` | Pointer to `hkbBehaviorGraphStringData` |
 
-Element structs:
+- `hkbVariableInfo` (6 bytes): a 4-byte role attribute, int8 `m_type` at 0x04, one padding
+  byte.
+- `hkbEventInfo` (4 bytes): uint32 flags.
+- `hkbVariableValue` (4 bytes): int32 value.
 
-- `hkbVariableInfo`, 6 bytes: a 4-byte `hkbRoleAttribute` at 0x00, then `i8 m_type` at
-  0x04 and one padding byte.
-- `hkbEventInfo`, 4 bytes: `u32 m_flags`.
-- `hkbVariableValue`, 4 bytes: `i32 m_value`. An array of them reads exactly like an
-  `hkArray<hkInt32>`.
+`VariableType`: -1 invalid, 0 bool, 1 int8, 2 int16, 3 int32, 4 real, 5 pointer, 6 vector3,
+7 vector4, 8 quaternion. Vanilla names confirm this: in `mt_behavior.hkx`, `bAnimationDriven`
+and `IsFirstPerson` are bool, `iSyncSprintState` and `iLeftHandType` are int32, and
+`blendDefault`, `Direction`, and `SpeedSampled` are real.
 
-`hkbVariableInfo::VariableType`: -1 invalid, 0 bool, 1 int8, 2 int16, 3 int32, 4 real,
-5 pointer, 6 vector3, 7 vector4, 8 quaternion.
+## hkbBehaviorGraphStringData (80 bytes)
 
-## `hkbBehaviorGraphStringData`
+Four name tables, each an `hkArray<hkStringPtr>`: `m_eventNames` (0x10), `m_attributeNames`
+(0x20), `m_variableNames` (0x30), `m_characterPropertyNames` (0x40). A null entry stays in
+place, because every index in the graph counts positions.
 
-Derives `hkReferencedObject`; size 80. Four parallel name tables, all
-`hkArray<hkStringPtr>`. OpenSky keeps them index-preserving — a null entry is nil in
-place, never dropped — because every index in the graph is positional.
+## hkbVariableValueSet (64 bytes)
 
-| off | field |
-| --- | --- |
-| 0x10 | `m_eventNames` |
-| 0x20 | `m_attributeNames` |
-| 0x30 | `m_variableNames` |
-| 0x40 | `m_characterPropertyNames` |
+The start value of every graph variable. The variable's type decides which list its index
+uses.
 
-## `hkbVariableValueSet`
-
-Derives `hkReferencedObject`; size 64. The initial value of every graph variable. A
-variable's declared type decides which list its index addresses.
-
-| off | field | type |
+| Offset | Field | Type |
 | --- | --- | --- |
-| 0x10 | `m_wordVariableValues` | `hkArray<hkbVariableValue>` — bool, int, and real |
-| 0x20 | `m_quadVariableValues` | `hkArray<hkVector4>`, stride 16 — vector and quaternion |
-| 0x30 | `m_variantVariableValues` | `hkArray<hkReferencedObject*>` — pointer variables |
+| 0x10 | `m_wordVariableValues` | `hkArray<hkbVariableValue>`: bool, int, real |
+| 0x20 | `m_quadVariableValues` | `hkArray<hkVector4>`, 16 bytes each: vectors, quaternions |
+| 0x30 | `m_variantVariableValues` | `hkArray<hkReferencedObject*>`: pointers |
 
-A real-typed variable stores its float as the bit pattern of its word slot, which is why
-`HKBVariableValueSet.realValue(at:)` reinterprets rather than converts.
+A real variable stores its float bits in the word slot. Read it by reinterpreting the bits,
+not by converting the integer.
 
-## `hkbProjectData` and `hkbProjectStringData`
+## hkbProjectData (48 bytes) and hkbProjectStringData (120 bytes)
 
-A project file is the root of one behavior set. `hkbProjectData` derives
-`hkReferencedObject`; size 48.
+A project file is the root of one behavior set.
 
-| off | field | type |
-| --- | --- | --- |
-| 0x10 | `m_worldUpWS` | `hkVector4` (observed `(0, 0, 1, 0)`) |
-| 0x20 | `m_stringData` | pointer to `hkbProjectStringData` |
-| 0x28 | `m_defaultEventMode` | `i8` enum (observed 2) |
+`hkbProjectData`: `m_worldUpWS` (`hkVector4` at 0x10, seen as `(0, 0, 1, 0)`), `m_stringData`
+(pointer at 0x20), `m_defaultEventMode` (int8 at 0x28, seen as 2).
 
-`hkbProjectStringData` derives `hkReferencedObject`; size 120.
+`hkbProjectStringData`: `hkArray<hkStringPtr>` fields `m_animationFilenames` (0x10),
+`m_behaviorFilenames` (0x20), `m_characterFilenames` (0x30), `m_eventNames` (0x40); then
+`hkStringPtr` fields `m_animationPath` (0x50), `m_behaviorPath` (0x58), `m_characterPath`
+(0x60), `m_fullPathToSource` (0x68), `m_rootPath` (0x70).
 
-| off | field | type |
-| --- | --- | --- |
-| 0x10 | `m_animationFilenames` | `hkArray<hkStringPtr>` |
-| 0x20 | `m_behaviorFilenames` | `hkArray<hkStringPtr>` |
-| 0x30 | `m_characterFilenames` | `hkArray<hkStringPtr>` |
-| 0x40 | `m_eventNames` | `hkArray<hkStringPtr>` |
-| 0x50 | `m_animationPath` | `hkStringPtr` |
-| 0x58 | `m_behaviorPath` | `hkStringPtr` |
-| 0x60 | `m_characterPath` | `hkStringPtr` |
-| 0x68 | `m_fullPathToSource` | `hkStringPtr` |
-| 0x70 | `m_rootPath` | `hkStringPtr` |
+## hkbCharacterData (176 bytes) and hkbCharacterStringData (192 bytes)
 
-## `hkbCharacterData` and `hkbCharacterStringData`
+A character file ties one behavior file to one skeleton and to the clips the graph may play.
 
-A character file binds one behavior file to one rig and to the clip list its graph may
-play. `hkbCharacterData` derives `hkReferencedObject`; size 176. Abridged to the members
-that matter here — OpenSky reads only `m_stringData`, and the neighbours are listed so
-the offset is checkable.
+`hkbCharacterData`, the fields near the one OpenSky reads: `m_characterPropertyInfos`
+(0x60), `m_characterPropertyValues` (0x80), `m_stringData` (pointer at 0x98), `m_scale`
+(`hkReal` at 0xA8).
 
-| off | field | type |
-| --- | --- | --- |
-| 0x60 | `m_characterPropertyInfos` | `hkArray<hkbVariableInfo>` |
-| 0x80 | `m_characterPropertyValues` | pointer to `hkbVariableValueSet` |
-| 0x98 | `m_stringData` | pointer to `hkbCharacterStringData` |
-| 0xA8 | `m_scale` | `hkReal` |
-
-`hkbCharacterStringData` derives `hkReferencedObject`; size 192.
-
-| off | field | type |
-| --- | --- | --- |
-| 0x10 | `m_deformableSkinNames` | `hkArray<hkStringPtr>` |
-| 0x20 | `m_rigidSkinNames` | `hkArray<hkStringPtr>` |
-| 0x30 | `m_animationNames` | `hkArray<hkStringPtr>` |
-| 0x40 | `m_animationFilenames` | `hkArray<hkStringPtr>` |
-| 0x50 | `m_characterPropertyNames` | `hkArray<hkStringPtr>` |
-| 0x60 | `m_retargetingSkeletonMapperFilenames` | `hkArray<hkStringPtr>` |
-| 0x70 | `m_lodNames` | `hkArray<hkStringPtr>` |
-| 0x80 | `m_mirroredSyncPointSubstringsA` | `hkArray<hkStringPtr>` |
-| 0x90 | `m_mirroredSyncPointSubstringsB` | `hkArray<hkStringPtr>` |
-| 0xA0 | `m_name` | `hkStringPtr` |
-| 0xA8 | `m_rigName` | `hkStringPtr` |
-| 0xB0 | `m_ragdollName` | `hkStringPtr` |
-| 0xB8 | `m_behaviorFilename` | `hkStringPtr` |
+`hkbCharacterStringData`: `hkArray<hkStringPtr>` fields `m_deformableSkinNames` (0x10),
+`m_rigidSkinNames` (0x20), `m_animationNames` (0x30), `m_animationFilenames` (0x40),
+`m_characterPropertyNames` (0x50), `m_retargetingSkeletonMapperFilenames` (0x60),
+`m_lodNames` (0x70), `m_mirroredSyncPointSubstringsA` (0x80),
+`m_mirroredSyncPointSubstringsB` (0x90); then `hkStringPtr` fields `m_name` (0xA0),
+`m_rigName` (0xA8), `m_ragdollName` (0xB0), `m_behaviorFilename` (0xB8).
 
 ## File role
 
-`HKBFileRole` is decided from the root container's variant class names, in this order:
+The role comes from the variant classes in the root container, checked in this order:
 
-| Variant class present | Role |
+| Variant class | Role |
 | --- | --- |
 | `hkbProjectData` | project |
 | `hkbCharacterData` | character |
 | `hkbBehaviorGraph` | behavior |
-| `hkaAnimationContainer` with a binding or spline animation object | animation |
+| `hkaAnimationContainer` with a binding or spline animation | animation |
 | `hkaAnimationContainer` without one | skeleton |
-| anything else | unknown |
+| other | unknown |
 
-The animation/skeleton split is a heuristic over the object inventory rather than a
-declared field, and it has one known false positive in vanilla — see below.
+The animation and skeleton split is a guess, and it is wrong once in vanilla:
+`animations\byoh\special_childdollplay2.hkx` looks like a skeleton, because its container has
+no clips. It is an animation file with an empty clip set.
 
-## Verification
+## What vanilla contains
 
-Census of every `.hkx` under `meshes\actors\character\` in the local SSE install
-(third-person plus `_1stperson`), 2026-08-03, produced by
-`HKBBehaviorCensusRealDataTests` and captured to the gitignored
-`logs/hkx-behavior-census.log`. Reproduce with
-`make realtest T='HKBBehaviorCensusRealDataTests/censusesCharacterBehaviorFiles()'`.
+Under `meshes\actors\character\` (third person and `_1stperson`):
 
-2,654 files. Every one parses at container level with zero throws, and every one is a
-64-bit `hk_2010.2.0-r1` packfile — no tagfile and no other Havok version appears, so the
-second container parser the scope warned about is not needed.
-
-Roles: 2,609 animation, 35 behavior, 4 skeleton, 3 character, 3 project. The 35 behavior
-files are 18 third-person plus 17 first-person. All three project files
-(`defaultmale.hkx`, `defaultfemale.hkx`, `_1stperson\firstperson.hkx`) leave
-`m_animationPath`, `m_behaviorPath`, and `m_characterPath` as empty strings and name
-exactly one character file each, so paths are relative to the project file's own folder.
-Both third-person character files and the first-person one name `Behaviors\0_Master.hkx`
-as their behavior entry point.
-
-Every one of the 35 behavior graphs has a name and a root generator, and every root
-generator is an `hkbStateMachine` — the node tree is a state machine at the top in all
-of them, without exception.
-
-Across the behavior files: 55 distinct object classes, 301 distinct variable names, 1,985
-distinct event names. The ten most common classes, as `class objects files`:
-
-```text
-hkbStateMachineStateInfo 5269 35
-hkbClipGenerator 4975 35
-hkbClipTriggerArray 3707 35
-hkbVariableBindingSet 3514 35
-hkbBlenderGeneratorChild 3358 32
-hkbStateMachine 1963 35
-hkbStateMachineTransitionInfoArray 1895 31
-hkbStateMachineEventPropertyArray 1560 35
-hkbBlenderGenerator 1014 32
-hkbModifierGenerator 773 28
-```
-
-Twelve of the 55 are Bethesda's own `BS*` classes (`BSSynchronizedClipGenerator`,
-`BSIsActiveModifier`, `BSiStateTaggingGenerator`, `BSBoneSwitchGenerator`, and others),
-so a decoder set covering only stock Havok classes would miss part of the vanilla graph.
-
-The `VariableType` values are confirmed by the vanilla naming convention rather than
-taken on trust: in `mt_behavior.hkx`, `bAnimationDriven` and `IsFirstPerson` decode as
-bool, `iSyncSprintState` and `iLeftHandType` as int32, and `blendDefault`, `Direction`,
-and `SpeedSampled` as real.
-
-Unresolved fields across all 2,654 files: two, both `m_ragdollName` with reason
-`noFixup`, on `_1stperson\characters\firstperson.hkx` and `_1stperson\firstperson.hkx`.
-First person has no ragdoll, so a null pointer is correct there. No `outOfBounds`,
-`sectionMissing`, `negativeCount`, or `undecodableString` miss occurs anywhere, which is
-the evidence that every offset in this page is right.
-
-Known role-heuristic false positive:
-`meshes\actors\character\animations\byoh\special_childdollplay2.hkx` classifies as
-skeleton because its `hkaAnimationContainer` carries no binding or spline animation
-object. It is an animation file with an empty clip set, not a rig.
+- Every file is a 64-bit `hk_2010.2.0-r1` packfile. There are no tagfiles and no other Havok
+  versions, so OpenSky needs only this one container parser.
+- The three project files (`defaultmale.hkx`, `defaultfemale.hkx`,
+  `_1stperson\firstperson.hkx`) leave all three paths empty and name one character file each.
+  So paths are relative to the project file's folder.
+- The character files name `Behaviors\0_Master.hkx` as the behavior entry point.
+- Every behavior graph's root generator is an `hkbStateMachine`.
+- The graphs use 55 classes. 12 are Bethesda's own `BS*` classes, such as
+  `BSSynchronizedClipGenerator` and `BSBoneSwitchGenerator`. So stock Havok classes alone
+  are not enough.
+- The only unresolved field is `m_ragdollName`, with reason `noFixup`, in the first-person
+  character files. First person has no ragdoll, so that is correct. No other miss happens,
+  which confirms the offsets on this page.

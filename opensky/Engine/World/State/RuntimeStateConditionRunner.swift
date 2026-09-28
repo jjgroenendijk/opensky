@@ -17,7 +17,7 @@
 //
 // No AppKit: this compiles into the app and the CLI target.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/global-variables.md.
 
 import Foundation
 

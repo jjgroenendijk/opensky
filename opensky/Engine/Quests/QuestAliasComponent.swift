@@ -23,7 +23,7 @@
 // holds at most one entry per ID, which is what makes two stores that filled
 // the same aliases encode byte-identically.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/quest-state.md.
 
 import Foundation
 

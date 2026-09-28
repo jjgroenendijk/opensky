@@ -17,7 +17,7 @@
 // the same one every other native family keeps — the registration validates
 // arguments and reports failures, the runtime decides what a slot means.
 //
-// Documented in docs/engine/actor-values.md and docs/engine/papyrus-vm.md.
+// Documented in docs/engine/actor-value-store.md and docs/engine/papyrus-actor-natives.md.
 
 import Foundation
 

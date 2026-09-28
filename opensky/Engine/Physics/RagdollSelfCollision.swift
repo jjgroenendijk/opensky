@@ -63,7 +63,7 @@
 // through, and the solver never sees the standing contacts that made 15.6 turn
 // the whole thing off.
 //
-// Documented in docs/engine/ragdoll.md.
+// Documented in docs/engine/ragdoll-solver.md.
 
 /// One unordered pair of bone indices, `first < second`.
 nonisolated struct RagdollBonePair: Hashable, Sendable, Comparable {

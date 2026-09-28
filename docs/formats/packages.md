@@ -1,141 +1,123 @@
 ---
 type: File Format
 title: AI packages (PACK, PKID)
-description: Skyrim SE PACK framing, schedules, package data, template links, procedures,
-  and the bounded decode policy used by resident-actor AI.
+description: PACK sections, schedules, template links, public data, procedures, and what the
+  decoder skips.
 tags: [format, plugin, ai, package, schedule, pack, pkid]
-timestamp: 2026-08-09T00:00:00Z
 ---
 
 # AI packages (PACK, PKID)
 
-`PACK` records describe an actor's scheduled activity. An NPC_ names an ordered stack with
-repeated `PKID` FormIDs; the first package whose calendar window and header conditions are
-true wins. Template packages supply the procedure definition while the concrete package
-supplies schedule, conditions, and bound data.
+A `PACK` record describes an activity for an actor, such as "sleep at home from 22:00". An
+`NPC_` lists its packages in order with repeated `PKID` FormIDs. The first package whose
+time window and conditions are true wins.
 
-Decoder: `Package` and `PackageDecoder` under
-`opensky/Engine/Formats/ESM/Records/`. Runtime use:
-[package schedules](/engine/package-schedules.md). Shared condition layout:
+A template package defines the procedure (the steps). A concrete package points at a
+template and gives the schedule, the conditions, and the data.
+
+Runtime use: [package schedules](/engine/package-schedules.md). Condition layout:
 [conditions](/formats/conditions.md).
 
-## Contents
+Sources: UESP [PACK](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PACK) and xEdit
+`dev-4.1.6`
+[`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas).
 
-* [Sources and section framing](#sources-and-section-framing)
-* [General data and schedule](#general-data-and-schedule)
-* [Template and public data](#template-and-public-data)
-* [Procedure tree](#procedure-tree)
-* [Decode boundary](#decode-boundary)
-* [Whiterun census](#whiterun-census)
+## Sections
 
-## Sources and section framing
+The same field name means different things in different parts of a `PACK`. So the decoder
+walks the fields in order and tracks the section:
 
-The byte layouts were checked against UESP's `PACK` page and xEdit dev-4.1.6
-`wbDefinitionsTES5.pas`. Field names repeat with different meanings, so decoding is a
-positioned walk rather than a flat field switch:
+1. Header: `EDID`, `PKDT`, `PSDT`, `VMAD`, and the package's own conditions.
+2. `PKCU` starts the public data.
+3. `XNAM` starts the procedure tree.
+4. `POBA`, `POEA`, or `POCA` starts the action fragments.
 
-1. Header: `EDID`, `PKDT`, `PSDT`, VMAD, and the package's own condition run.
-2. `PKCU` opens the public-data section.
-3. `XNAM` opens the procedure tree.
-4. `POBA`, `POEA`, or `POCA` begins the action-fragment tail.
+Only `CTDA` conditions before `PKCU` decide if the package runs. A `CTDA` inside the
+procedure tree belongs to one branch. It must not join the header conditions.
 
-Only CTDAs before `PKCU` belong to package selection. CTDAs inside the procedure tree are
-branch-local and must not silently join the header condition list.
+## PKDT general data (12 bytes)
 
-## General data and schedule
-
-`PKDT` is exactly 12 bytes.
-
-| offset | type | decoded value |
+| Offset | Type | Meaning |
 | --- | --- | --- |
-| 0 | uint32 | flags |
-| 4 | uint8 | kind: 18 package, 19 template, otherwise raw unknown |
-| 5 | uint8 | interrupt override |
-| 6 | uint8 | preferred speed: walk, jog, run, fast walk, or raw unknown |
-| 7 | uint8 | skipped byte |
-| 8 | uint16 | interrupt flags |
-| 10 | uint16 | skipped word |
+| 0 | uint32 | Flags |
+| 4 | uint8 | Kind: 18 package, 19 template |
+| 5 | uint8 | Interrupt override |
+| 6 | uint8 | Preferred speed: walk, jog, run, fast walk |
+| 7 | uint8 | Not read |
+| 8 | uint16 | Interrupt flags |
+| 10 | uint16 | Not read |
 
-Named general flags are the subset consumed or useful to inspection: must complete,
-maintain speed at goal, once per day, uses preferred speed, always sneak, ignore combat,
-weapons unequipped, weapon drawn, and wear sleep outfit. Other bits remain in `rawValue`.
+OpenSky names these flags: must complete, maintain speed at goal, once per day, uses
+preferred speed, always sneak, ignore combat, weapons unequipped, weapon drawn, and wear
+sleep outfit. It keeps the other bits.
 
-`PSDT` is exactly 12 bytes.
+## PSDT schedule (12 bytes)
 
-| offset | type | meaning |
+| Offset | Type | Meaning |
 | --- | --- | --- |
-| 0 | int8 | month; -1 any, otherwise 1-based |
-| 1 | int8 | weekday; -1 any, 0 Sundas through 6 Loredas, 7-10 groups |
-| 2 | int8 | date; 0 any, otherwise 1-based day |
-| 3 | int8 | start hour; -1 any |
-| 4 | int8 | start minute; -1 means start of the hour |
-| 5 | byte[3] | skipped |
-| 8 | uint32 | duration in game minutes |
+| 0 | int8 | Month. -1 means any. Otherwise counts from 1 |
+| 1 | int8 | Weekday. -1 any, 0 Sundas to 6 Loredas, 7 to 10 groups |
+| 2 | int8 | Day of month. 0 means any. Otherwise counts from 1 |
+| 3 | int8 | Start hour. -1 means any |
+| 4 | int8 | Start minute. -1 means the start of the hour |
+| 5 | byte[3] | Not read |
+| 8 | uint32 | Duration in game minutes |
 
-Weekday groups are weekdays (1-5), weekends (0 and 6), Morndas/Middas/Fredas, and
-Tirdas/Turdas. A positive duration is half-open: start inclusive, end exclusive. A window
-crossing midnight matches both sides of midnight. The runtime derives weekday from
-`GameClock.daysPassed`, whose zero is the vanilla Sundas start date.
+Weekday groups: 7 weekdays (1 to 5), 8 weekend (0 and 6), 9 Morndas, Middas, and Fredas,
+10 Tirdas and Turdas.
 
-## Template and public data
+A window includes its start and excludes its end. Example: start 22, duration 480 matches
+22:00 up to 05:59, on both sides of midnight. The weekday comes from the game clock. Day 0 of
+the clock is a Sundas, the vanilla start date.
 
-`PKCU` is exactly 12 bytes: input count, template PACK FormID, and version. OpenSky keeps
-the template link and follows it with cycle and missing-target errors.
+## PKCU and public data
 
-Public data repeats an `ANAM` zero-terminated type name followed by a value field. Repeated
-`UNAM` bytes assign the value indices after the values. The bounded types are:
+`PKCU` is 12 bytes: the input count, the template `PACK` FormID, and a version. OpenSky
+follows the template link and reports a loop or a missing template.
 
-| type name | value field | decoded value |
+Public data is a list. Each entry is an `ANAM` type name (a zstring) and a value field. After
+the values, repeated `UNAM` bytes give each value its index.
+
+| Type name | Value field | Value |
 | --- | --- | --- |
-| Bool | CNAM uint8 | Boolean |
-| Int | CNAM int32 | integer |
-| Float / ObjectList | CNAM float32 | float |
-| Location | PLDT, 12 bytes | kind, value, radius |
-| SingleRef / TargetSelector | PTDA, 12 bytes | kind, value, count or distance |
-| Topic | TPIC FormID or PDTO pair | topic FormID |
+| Bool | `CNAM` uint8 | Boolean |
+| Int | `CNAM` int32 | Integer |
+| Float, ObjectList | `CNAM` float32 | Float |
+| Location | `PLDT`, 12 bytes | Kind, value, radius |
+| SingleRef, TargetSelector | `PTDA`, 12 bytes | Kind, value, count or distance |
+| Topic | `TPIC` FormID or `PDTO` pair | Topic FormID |
 
-Location kinds decoded by name are near reference, in cell, near package start, near editor
-location, near linked reference, reference alias, location alias, and near self. Target
-kinds decoded by name are specific reference, object ID, object type, linked reference,
-reference alias, unknown selector, and actor. Unknown kind numbers stay raw; an unknown
-type/value pair becomes an explicit `.unknown(type:bytes:)` rather than a guessed value.
+Location kinds: near reference, in cell, near package start, near editor location, near
+linked reference, reference alias, location alias, near self.
+
+Target kinds: specific reference, object ID, object type, linked reference, reference alias,
+unknown selector, actor.
+
+Unknown kind numbers and unknown types are kept as raw values. They are not guessed.
 
 ## Procedure tree
 
-Template packages carry zero-terminated `PNAM` procedure names after `XNAM`. OpenSky keeps
-those names in record order and classifies the initial runtime subset as travel, wander,
-sandbox, sleep, or eat. Patrol templates use the travel machine. The procedure tree's
-branch graph, branch CTDAs, and embedded metadata are not decoded yet.
+A template has `PNAM` procedure names (zstrings) after `XNAM`. OpenSky keeps them in order and
+runs these: travel, wander, sandbox, sleep, and eat. Patrol uses travel. The branch graph and
+the branch conditions are not decoded yet.
 
-## Decode boundary
+## What is skipped
 
-Malformed required fixed-width `PKDT`, `PSDT`, `PKCU`, `PLDT`, `PTDA`, or `PDTO` values
-throw typed `ESMError.malformed` failures. A PACK missing `PKDT` or `PSDT` is unusable and
-also throws. Unknown enum values and public-data types are preserved without failing the
-record.
+- Idle animation header, combat style, owner quest.
+- Template control fields: `BNAM`, `PRCB`, `FNAM`, `PKC2`, `PFO2`, `PFOR`.
+- Procedure branches and their conditions.
+- Public-data metadata other than type, value, and index.
+- Action fragments (`POBA`, `POEA`, `POCA`), beyond the limited `VMAD` reading.
 
-Deliberately skipped today:
+A missing `PKDT` or `PSDT`, or a wrong size in `PKDT`, `PSDT`, `PKCU`, `PLDT`, `PTDA`, or
+`PDTO`, makes the record unusable. Unknown values do not.
 
-* idle animation header, combat style, and owner quest;
-* template `BNAM`, `PRCB`, `FNAM`, `PKC2`, `PFO2`, and `PFOR` control metadata;
-* procedure branch structure and its CTDAs;
-* public-data metadata beyond the type, value, and index;
-* `POBA`/`POEA`/`POCA` action fragments beyond bounded VMAD handling.
+## Vanilla example: Whiterun
 
-## Whiterun census
+The packages of Ysolda, Belethor, Hulda, and Heimskr, with every template they reach, are 21
+`PACK` records. Their header conditions use three functions: `GetDisabled` (index 35),
+`GetKeywordDataForLocation` (606), and `GetVMQuestVariable` (629).
 
-The issue #201 real-data gate follows the stacks of Ysolda, Belethor, Hulda, and Heimskr,
-including every reachable template: 21 unique PACK records. Their combined field surface is
-`ANAM BNAM CIS2 CITC CNAM CTDA EDID FNAM INAM PDTO PKC2 PKCU PKDT PLDT PNAM POBA POCA
-POEA PRCB PSDT PTDA SCHR UNAM VMAD XNAM`.
-
-Their header condition-function tally is `GetDisabled` (stored index 35) three times,
-`GetKeywordDataForLocation` (606) once, and `GetVMQuestVariable` (629) once. The two siege
-conditions remain unsupported and therefore false; their jailed package does not select in
-the pre-siege baseline. `GetDisabled` is implemented because it determines Heimskr's home
-versus camp packages in that baseline.
-
-References:
-
-* <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PACK>
-* <https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas>
+`GetDisabled` decides between the home package and the camp package of Heimskr. The other
+two belong to the siege of Whiterun. OpenSky treats them as false, so the siege package does
+not run before the siege.

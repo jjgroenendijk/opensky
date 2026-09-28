@@ -16,7 +16,7 @@
 // a test assertion and in `GetCombatState` — and what makes an illegal
 // combination unrepresentable rather than merely unlikely.
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/combat-behavior.md.
 
 import simd
 

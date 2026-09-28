@@ -1,202 +1,146 @@
 ---
 type: Subsystem
 title: Runtime navigation
-description: Resident navmesh graph, deterministic pathfinding, and the world-space
-  navmesh and path debug overlay.
+description: The loaded navmesh graph, path search and the funnel, when a path is replaced,
+  NPC path following, the movement cap, and the world-space debug overlay.
 tags: [engine, world, navigation, navmesh, streaming, pathfinding, rendering, overlay]
-timestamp: 2026-08-09T00:00:00Z
 ---
 
 # Runtime navigation
 
-Issue #200 turns decoded [NAVM geometry](/formats/navmesh.md) into a queryable graph whose
-lifetime follows [cell streaming](/engine/cell-streaming.md). Issue #423 adds the first
-consumer: capped NPC capsule movement over those corridors.
+Navigation turns the decoded [navmesh](/formats/navmesh.md) into a graph that can be searched,
+and moves NPCs along the paths it finds. The graph follows [cell streaming](/engine/cell-streaming.md).
 
-## Contents
+## Loaded graph
 
-* [Resident graph](#resident-graph)
-* [Projection and search](#projection-and-search)
-* [Funnel and clearance](#funnel-and-clearance)
-* [Invalidation and budget](#invalidation-and-budget)
-* [NPC path following](#npc-path-following)
-* [Position, triggers, and handoff](#position-triggers-and-handoff)
-* [Locomotion drive and cap](#locomotion-drive-and-cap)
-* [World-space debug overlay](#world-space-debug-overlay)
-* [Evidence and remaining gaps](#evidence-and-remaining-gaps)
-* [Verification surface](#verification-surface)
+The cell builder decodes each cell's `NAVM` records on its background queue. The cell scene owns
+them. When a scene loads or is rebuilt, its navmeshes are added. When it leaves, its geometry and
+doors are removed at once. This is the same rule physics uses.
 
-## Resident graph
+A triangle is named by the pair (`NAVM` FormID, triangle index). Neighbors inside a navmesh come
+from the triangle. An edge-link flag sends the neighbor through the navmesh's edge link table
+instead. Such a link counts only while the other navmesh is loaded too, so a cell border never
+leaves a path pointing at nothing. Deleted triangles and triangles with zero area are never used.
 
-`CellSceneBuilder` decodes the NAVM records in each cell's persistent and temporary child
-groups on its existing off-main build queue. A `CellScene` owns those immutable navmeshes
-beside its render and collision data. `CellStreamer.reconcileNavigation` uses the same
-location and state-sequence comparison as physics: it adds a newly resident or rebuilt
-scene, and removes geometry and doors as soon as their scene departs.
+Door links are indexed by door reference. A pair of doors joined by `XTEL` becomes a teleport link,
+but only while both door scenes are loaded.
 
-Triangles use the stable pair `(NAVM FormID, triangle index)` as their runtime identity.
-Local neighbours come from the triangle, while an edge-link flag redirects the neighbour
-index through the NAVM edge-link table. That target is usable only when its navmesh is also
-resident, so a cell boundary cannot leave a dangling path. Deleted and zero-area triangles
-never project or participate in a transition. Door links are indexed by door reference;
-paired `XTEL` references become explicit teleport transitions only while both door scenes
-are resident.
+## Search
 
-## Projection and search
+A query puts its start and target feet onto the nearest valid triangle, measured in XY, and takes
+Z from that triangle's plane. The nearest point can be on a face or an edge. The search reaches at
+most 256 units and reports a miss instead of using far geometry. Equal distances are broken by
+triangle ID.
 
-A query projects its start and target feet positions onto the closest valid triangle in XY,
-then reconstructs Z from that triangle's plane. The closest point can lie on a face or an
-edge. Search is bounded to 256 engine units by default and reports a start or target miss
-instead of choosing distant geometry. Equal-distance candidates resolve by triangle
-identity.
+A-star search runs over triangles:
 
-Deterministic A-star searches triangles. A shared-edge transition costs the distance from
-the source centroid to the edge midpoint plus the distance from that midpoint to the target
-centroid. Its heuristic is straight-line centroid distance. If the resident graph contains
-a teleport door, the heuristic becomes zero so a world-space shortcut cannot make it
-inadmissible; a door transition charges the two centroid-to-door legs but not the teleported
-gap. Open entries tie-break by total estimate, remaining estimate, then triangle identity.
-The binary heap, score maps, predecessor map, closed set, and corridor buffers retain their
-capacity across queries.
+- Crossing a shared edge costs the distance from the source center to the edge middle, plus from
+  the edge middle to the target center.
+- The estimate is the straight-line distance between centers. If the graph has a teleport door,
+  the estimate is 0, because a door can be a shortcut through space and the estimate must never be
+  too high.
+- A door costs the two legs to and from the door, not the jump between them.
+- Ties are broken by total estimate, then remaining estimate, then triangle ID. So the result is
+  the same every time.
 
-The returned `NavigationPath` contains waypoints, door reference plus waypoint-index
-crossings, nodes expanded, and triangle count. It also retains the corridor's cell sequence
-snapshot and original target for exact invalidation.
+The search reuses its heap and tables between queries.
 
-## Funnel and clearance
+The path holds its waypoints, its door crossings, the nodes searched, and the triangle count. It
+also keeps the state of the cells it passes and the original target, to tell when it is out of
+date.
 
-The corridor's shared edges become oriented portals. Each endpoint moves inward by the
-query capsule radius, which defaults to `PlayerCapsule.standard.radius`; a portal narrower
-than twice the radius collapses to its midpoint. The deterministic funnel algorithm then
-pulls the shortest polyline through those reduced portals. A door marker ends the current
-funnel segment, emits the authored door point and crossing, and starts a new segment at the
-paired door when the link teleports.
+## Funnel
 
-## Invalidation and budget
+The corridor's shared edges become portals. Each portal end moves inward by the capsule radius. A
+portal narrower than two radii shrinks to its middle point. The funnel algorithm then pulls the
+shortest line through the portals. A door ends the current funnel part, adds the door point, and
+starts a new part at the paired door.
 
-A path is current while every corridor cell still has the captured state sequence and the
-target remains within the default 64-unit tolerance. An unload, rebuild, or larger target
-move queues a replacement. Requests de-duplicate by follower identifier and keep insertion
-order; `CellStreamer.maximumNavigationRepathsPerFrame` limits work to two replacements per
-frame. Immediate `findPath` and projection calls remain available for user-driven queries
-and inspection.
+## Replacing a path
+
+A path is current while every cell on it has the same state as when it was found, and the target
+has moved less than 64 units. An unload, a rebuild, or a larger target move queues a new search.
+Requests merge per follower and keep their order. At most two are run per frame. Direct queries
+for user actions and inspection are not limited.
 
 ## NPC path following
 
-`NPCMovementRuntime` owns at most eight `NPCMover` values. A mover is created only after
-`MoveToPointControl.moveActor(_:to:)` finds a corridor; an actor with no destination owns no
-capsule, controller, graph, or per-frame work. Each mover has a standard actor capsule and
-its own `WalkController`, advanced through the same 120 Hz accumulator, terrain sampler,
-static collision query, slope response, and collide-and-slide path the player uses. A long
-rendered frame is clamped to 100 ms by the controller rather than becoming a teleport.
+At most eight NPCs move at once. A mover exists only after a path is found. An actor with no
+target has no capsule, controller, or work.
 
-The next waypoint defines a world-space direction. Facing turns toward it by at most one
-full revolution per second, and the mover publishes the same `LocomotionIntent` semantics
-as the player (`moveForward = 1`, plus the resolved gait). A leg more than 512 units away
-uses run speed; shorter legs use walk speed. The waypoint tolerance is 12 units. At a door
-crossing the mover reaches the authored source waypoint, reports the door reference, and
-resets its capsule at the paired destination waypoint before continuing. Jumping, swimming,
-and destinations requiring either remain unsupported rather than silently bypassing the
-navmesh.
+Each mover has a standard actor capsule and its own walk controller. It uses the same 120 Hz steps,
+terrain, collision, slope rules, and sliding as the player ([walk mode](/engine/walk-mode.md)). A
+long frame is clamped to 100 ms, so it cannot jump.
 
-Progress is distance to the current waypoint. Improving it by at least one unit resets the
-stuck clock. Two seconds without such progress makes one replacement query from the capsule's
-resolved position to the original target. A second two-second stall, or a replacement miss,
-records `gaveUp`; there is never a repath loop.
+- The mover turns toward the next waypoint, at most one full turn per second.
+- It sends the same movement intent the player does: forward, with a gait. A leg longer than 512
+  units runs. A shorter one walks.
+- A waypoint counts as reached within 12 units.
+- At a door, the mover reaches the door point, reports the door, and moves its capsule to the
+  paired door.
+- Jumping and swimming are not supported. A target that needs them fails. It does not skip the
+  navmesh.
 
-## Position, triggers, and handoff
+Progress is the distance to the next waypoint. Getting at least one unit closer resets the stuck
+timer. After two seconds with no progress, the mover searches again once, from where it is to the
+original target. A second stall, or a failed search, gives up. There is no loop of retries.
 
-Live rendering, melee targeting, and combat observation read the mover transform while an
-actor is walking. `ReferenceTransformOverride` is written only at four named boundaries:
-arrival, give-up, a change in the projected navmesh cell, and immediately before a save.
-The cell build now applies transform overrides to ACHR assembly as well as REFR assembly, so
-the journalled placement becomes the rebuilt actor baseline. No fixed step writes the
-journal.
+## Position and triggers
 
-Each active actor diffs its own trigger-volume set once per rendered movement frame. The
-ordinary `TriggerTransitionEvent` now carries the occupying actor when it is not the player,
-so `PapyrusWorldStateBridge` sends that actor's handle as `akActionRef`. Finishing a move
-emits leaves for any volumes the actor still occupies. Player occupancy remains unchanged.
+While an actor walks, drawing, melee targeting, and combat read the mover's position. The saved
+transform is written only at four moments: arrival, giving up, entering a new navmesh cell, and
+just before a save. The cell builder applies saved transforms to actors too, so a rebuilt actor
+starts where it was. No fixed step writes it.
 
-## Locomotion drive and cap
+Each moving actor checks which trigger volumes it is in once per frame. The trigger event carries
+the actor when it is not the player, so scripts get that actor as `akActionRef`. When a move ends,
+the actor leaves any volumes it is still in.
 
-Travel and animation meet at `NPCLocomotionDriveUpdate`. The value contains actor identity,
-directional intent, gait, yaw, and frame delta but no writable transform, so a later combat
-or package drive can raise events without becoming a second movement authority. The current
-app drive selects the observed gendered `mt_walkforward.hkx` and `mt_runforward.hkx` clips
-on `ActorAnimationPlayback`; those clips animate in place while the capsule supplies travel.
-Bounded combat overrides still interrupt the gait clip and return to it afterward.
+## Animation and the cap
 
-The simultaneous-mover cap is `NPCMovementRuntime.maximumSimultaneousMovers` (eight), with
-a named 2 ms CPU slice for all mover work in a 16.67 ms frame. The vanilla
-graph-versus-kinematic decision and measured costs are recorded under evidence below rather
-than treated as a taste preference. `MoveToPointControl` and
-`npcMovementReadouts()` expose the selected actor command plus state, waypoint, gait, and
-repath count for the M16 acceptance panel without placing AppKit in the engine.
+Movement and animation meet in one value: actor, direction, gait, yaw, and frame time. It has no
+writable transform, so a later combat or package system can use it without becoming a second owner
+of movement. The app plays `mt_walkforward.hkx` or `mt_runforward.hkx` for the actor's gender. The
+clips play in place while the capsule moves the actor. Combat clips still interrupt and return
+([actor animation](/engine/actor-animation.md)).
 
-## World-space debug overlay
+Movers are capped at eight, with a 2 ms CPU budget for all of them in a 16.67 ms frame. Why NPCs
+use in-place clips instead of full behavior graphs was measured, not guessed: eight vanilla
+behavior graphs cost more than the whole 2 ms budget even in an optimized build, before
+collision, paths, triggers, or drawing. The clip drive uses a small part of the budget.
+`make realtest-npc-perf` measures both ([testing](/testing.md)).
 
-`Renderer.worldOverlaySources` is a stable-order registry of per-frame builders. A source
-receives the renderer's navmesh and path toggle state and appends per-vertex-color triangles,
-line segments, or polylines to a pure `WorldOverlayDrawList`; replacing a source identifier
-keeps its position, and removing it needs no renderer change. The navigation source reads the
-same resident graph used for queries. It fills valid triangles with a deterministic color per
-cell, highlights the latest current corridor, and draws its waypoint polyline. A small Z lift
-avoids unstable coplanar depth ties. Both toggles default off.
+## Debug overlay
 
-`RendererOverlayPass` groups triangles before lines in one upload and draws them through one
-premultiplied-alpha pipeline with read-only `lessEqual` depth. It runs after the 3D scene and
-before SWF/UI in both drawable and `renderOffscreen` paths. The hard cap is 65,536 primitives
-per frame; `WorldOverlayDrawStats` reports submitted, drawn, triangle, line, dropped, draw-call,
-and truncation state. `AIOverlayControlProviding` exposes both toggles and that snapshot for
-the M16 gate panel. `openskycli screenshot --navmesh-overlay` supplies real-data captures.
+The renderer keeps an ordered list of overlay sources. Each frame, a source can add colored
+triangles, lines, or polylines to a draw list. Replacing a source keeps its place in the order.
 
-## Evidence and remaining gaps
+The navigation source reads the same graph as the search. It fills triangles with one color per
+cell, highlights the latest current corridor, and draws its waypoint line. A small lift in Z stops
+flicker against the ground. Both toggles are off by default.
 
-Synthetic tests cover a deterministic 2x2 grid, a two-cell edge link that disappears on
-unload, paired door traversal, sloped projection, degenerate and out-of-radius misses,
-target and cell invalidation, and the two-per-frame repath cap. The 2026-08-09 real-install
-probe measured the named Whiterun-hold launch to Chillfurrow Farm route at 4,471.50 units,
-34 triangles, 768 expansions, and 6.36 ms. The exterior-to-interior route through door
-`0001633D` measured 152.05 units, four triangles, ten expansions, and 1.67 ms, with one
-door crossing. The numeric report remains locally under the gitignored `logs/navigation/`.
+The overlay pass draws triangles, then lines, with premultiplied alpha and a read-only
+"less or equal" depth test. It runs after the 3D scene and before the UI, both on screen and
+offscreen. It draws at most 65,536 primitives per frame, and counts what it drew and dropped.
+`openskycli screenshot --navmesh-overlay` captures it ([CLI](/tools/cli.md)).
 
-On the same Apple Silicon machine, eight independently instantiated vanilla behavior graphs
-cost 25.20 ms per 60 Hz frame under the ordinary real-data build and 2.43 ms per frame under
-the optimized build, measured over 240 frames. The optimized number exceeds the entire 2 ms
-NPC movement slice before collision, path following, trigger occupancy, or drawing, so NPCs
-use the kinematic gait-clip drive. The repeatable optimized command is
-`make realtest-npc-perf`; the same test measures the selected drive at the cap and requires
-it to stay within the slice. That selected path measured 0.011 ms per frame for eight movers.
+## Not done yet
 
-The permanent offscreen real-data route starts at the Chillfurrow exterior return point,
-follows the four-triangle corridor through door `0001633D`, teleports to the paired interior
-waypoint, and arrives 96 units inside the farmhouse. It completed four waypoints in 32.54 ms
-of offscreen wall time in the 2026-08-09 ordinary real-data run.
+Movers do not avoid each other. Jumping, swimming, and other moves off the navmesh are not part of
+the graph.
 
-NPC movers now consume both routes. Dynamic obstacle avoidance between movers, jumping,
-swimming, and general off-mesh traversal are not part of this graph yet.
+## Controls
 
-## Verification surface
+World > AI & Navigation has three sections:
 
-`World > AI & Navigation` (`Destination-aiNavigation`) is the sidebar surface for
-everything on this page. Its Overlays section carries `AINavmeshOverlayControl` and
-`AIPathOverlayControl` over `AIOverlayStatsLabel`, which reports what the overlay pass
-submitted, drew, and dropped. Its Actor section selects which actor the rest of the
-destination answers for, through `AIActorSelectControl` or `AIActorCrosshairControl` over
-`AIActorStatsLabel`. Its Movement section sends that actor somewhere with
-`AIMoveToCrosshairControl`, stops it with `AIMoveStopControl`, and reports its mover state,
-waypoint, gait, and repath count in `AIMovementStatsLabel`.
+- Overlays: navmesh and path toggles, and a readout of what was drawn and dropped.
+- Actor: pick the actor the rest of the panel is about, from a list or under the crosshair.
+- Movement: send the actor to the crosshair point, stop it, and read its state, waypoint, gait,
+  and search count.
 
-The move control's point is the crosshair's own raycast hit, projected onto the nearest
-walkable triangle by the path query rather than by the panel. It reaches 4,096 units and is
-not gated on a player-controlled camera, unlike the HUD's use-key target: picking a
-destination for an actor across a market is an inspection, and the use key's arm's-length
-reach would only ever send an actor to its own feet. It is no longer than it needs to be,
-because the ray's bounds are what the collision broad phase searches and they grow with it,
-and the result is cached against the camera pose it was taken from — six sections read the
-snapshot twice a second, and a session inspecting a stationary scene should pay for one
-raycast rather than a dozen.
-
-The acceptance records for items 16.1 through 16.4 are rows in
-[the sidebar acceptance ledger](/tools/sidebar-acceptance.md).
+The move target is where the crosshair ray hits, put on the nearest triangle by the path search.
+The ray reaches 4096 units, and works in any camera mode. It is longer than the use key's reach,
+because sending an actor across a market is an inspection, and arm's length would only send it to
+its own feet. It is no longer than needed, because the collision search box grows with it. The
+result is cached for the current camera pose, so several panel sections reading it twice a second
+cost one raycast.

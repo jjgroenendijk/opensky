@@ -29,13 +29,13 @@ content (`AGENTS.md`, "Legal & IP boundary").
 ## Format
 
 ```text
-Milestone: M8.4.3
+Milestone: M8
 Sidebar path: World > HUD & Interaction > Elements
 Destination id: Destination-hudInteraction
 Controls exercised: HUDLayerEnabledControl, HUDCrosshairControl, HUDScaleControl
 Readout: HUDElementsStatsLabel
 Deterministic tests: HUDInteractionPanelTests, DestinationRegistryTests
-Local A/B (optional, never committed): logs/probe/20260804T191739Z/hud-elements-ab.png
+Local A/B (optional, never committed): logs/probe/<UTC timestamp>/hud-elements-ab.png
 ```
 
 - **Sidebar path**: the exact path a user clicks, with section names, spelled as the sidebar

@@ -17,7 +17,7 @@
 // it has to, because skinned geometry is placed by its bone palette as well as
 // by its model matrix. Rigid clutter has no such constraint.
 //
-// Documented in docs/engine/dynamic-bodies.md.
+// Documented in docs/engine/dynamic-body-drawing.md.
 
 import simd
 

@@ -23,7 +23,7 @@
 //
 // So the framing is derived from the two things that *are* measurable: the
 // player capsule (`PlayerCapsule.standard`, derived in
-// docs/engine/walk-mode.md) and the vertical field of view the scene pass
+// docs/engine/player-camera.md) and the vertical field of view the scene pass
 // projects with. The one taste number — how much of the frame the subject
 // fills — is not re-decided here; it is `ThirdPersonCamera.framingFillFraction`,
 // so the engine makes that call exactly once.
@@ -39,7 +39,7 @@
 // the conversation from across the room gets a camera at their shoulder rather
 // than one hovering between them and the speaker.
 //
-// See docs/engine/dialogue.md, "Dialogue camera".
+// See docs/engine/dialogue-camera.md.
 
 import simd
 

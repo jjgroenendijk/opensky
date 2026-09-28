@@ -3,112 +3,111 @@ type: File Format
 title: DDS texture container
 description: On-disk layout of Skyrim SE .dds textures and how OpenSky parses them.
 tags: [format, texture, dds, bcn, rgba8888, bgra8888, xrgb8888, rendering]
-timestamp: 2026-07-21T00:00:00Z
 ---
 
 # DDS texture container
 
-DirectDraw Surface — every Skyrim SE texture (`textures/**/*.dds` inside the texture
-BSAs, plus loose overrides). OpenSky reads 2D BC1-BC5/BC7 plus legacy 32-bit xRGB8888,
-RGBA8888, and BGRA8888. Parser: `opensky/Engine/Formats/DDS/DDSFile.swift`. GPU upload:
-`MTLTexture` via native BCn/BGRA8/RGBA8 pixel formats.
+Every Skyrim SE texture is a DDS (DirectDraw Surface) file. OpenSky reads 2D textures in
+BC1 to BC5 and BC7, and three uncompressed 32-bit layouts: xRGB8888, RGBA8888, and BGRA8888.
+Metal has native pixel formats for all of them.
 
-Reference: Microsoft DDS programming guide + struct pages —
-`DDS_HEADER`, `DDS_PIXELFORMAT`, `DDS_HEADER_DXT10`, dxgiformat.h.
-<https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide>
+Source: the Microsoft
+[DDS programming guide](https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide)
+and its pages for `DDS_HEADER`, `DDS_PIXELFORMAT`, `DDS_HEADER_DXT10`, and `dxgiformat.h`.
 
 ## File layout
 
-All little-endian.
+All integers are little-endian.
 
-| offset | size | field |
-| ------ | ---- | ----- |
-| 0 | 4 | magic `"DDS "` (0x20534444) |
+| Offset | Size | Field |
+| --- | --- | --- |
+| 0 | 4 | Magic `"DDS "` (`0x20534444`) |
 | 4 | 124 | `DDS_HEADER` |
-| 128 | 20 | `DDS_HEADER_DXT10` — only when pixel format FourCC = `"DX10"` |
-| after | — | mip chain, tightly packed, largest level first |
+| 128 | 20 | `DDS_HEADER_DXT10`, only when the FourCC is `"DX10"` |
+| after | | Mip levels, packed, largest first |
 
-### DDS_HEADER (124 bytes, incl. its own dwSize)
+## DDS_HEADER (124 bytes)
 
-| field | size | notes |
-| ----- | ---- | ----- |
-| dwSize | 4 | must be 124 |
-| dwFlags | 4 | `DDSD_MIPMAPCOUNT` 0x20000 gates dwMipMapCount |
-| dwHeight, dwWidth | 4+4 | height first |
-| dwPitchOrLinearSize | 4 | xRGB8888 requires `width * 4`; BCn sizes derived |
-| dwDepth | 4 | volumes rejected via caps2 instead |
-| dwMipMapCount | 4 | honored only with `DDSD_MIPMAPCOUNT`; else 1 level |
-| dwReserved1 | 44 | 11 x uint32, skipped |
+| Field | Size | Notes |
+| --- | --- | --- |
+| dwSize | 4 | Must be 124 |
+| dwFlags | 4 | `DDSD_MIPMAPCOUNT` (`0x20000`) makes dwMipMapCount valid |
+| dwHeight, dwWidth | 4 + 4 | Height comes first |
+| dwPitchOrLinearSize | 4 | Must be `width * 4` for 32-bit layouts |
+| dwDepth | 4 | Not used. Volumes are caught by dwCaps2 |
+| dwMipMapCount | 4 | Used only with `DDSD_MIPMAPCOUNT`. Otherwise 1 level |
+| dwReserved1 | 44 | Skipped |
 | ddspf | 32 | `DDS_PIXELFORMAT`, below |
-| dwCaps | 4 | skipped |
-| dwCaps2 | 4 | `DDSCAPS2_CUBEMAP` 0x200, `DDSCAPS2_VOLUME` 0x200000 -> `unsupported` |
-| dwCaps3, dwCaps4, dwReserved2 | 12 | skipped |
+| dwCaps | 4 | Skipped |
+| dwCaps2 | 4 | Cubemap `0x200` or volume `0x200000`: not supported |
+| dwCaps3, dwCaps4, dwReserved2 | 12 | Skipped |
 
-### DDS_PIXELFORMAT (32 bytes)
+## DDS_PIXELFORMAT (32 bytes)
 
-| field | size | notes |
-| ----- | ---- | ----- |
-| dwSize | 4 | must be 32 |
-| dwFlags | 4 | `DDPF_FOURCC` 0x4 for BCn; `DDPF_RGB` 0x40, optional alpha 0x1 |
-| dwFourCC | 4 | see mapping below |
-| dwRGBBitCount | 4 | xRGB8888 must be 32 |
-| dwRBitMask | 4 | xRGB8888 `0x00ff0000` |
-| dwGBitMask | 4 | xRGB8888 `0x0000ff00` |
-| dwBBitMask | 4 | xRGB8888 `0x000000ff` |
-| dwABitMask | 4 | xRGB8888 `0x00000000` |
+| Field | Size | Notes |
+| --- | --- | --- |
+| dwSize | 4 | Must be 32 |
+| dwFlags | 4 | `DDPF_FOURCC` `0x4` for BCn; `DDPF_RGB` `0x40`, alpha `0x1` |
+| dwFourCC | 4 | See the list below |
+| dwRGBBitCount | 4 | Must be 32 for the uncompressed layouts |
+| dwRBitMask, dwGBitMask, dwBBitMask, dwABitMask | 16 | See the table below |
 
-FourCC -> format: `DXT1`->BC1, `DXT3`->BC2, `DXT5`->BC3, `ATI1`/`BC4U`->BC4,
-`ATI2`/`BC5U`->BC5, `DX10`-> read `DDS_HEADER_DXT10`. (`DXT2`/`DXT4` premultiplied
-variants unseen in SSE -> `unsupported`.)
+FourCC to format: `DXT1` is BC1, `DXT3` is BC2, `DXT5` is BC3, `ATI1` or `BC4U` is BC4,
+`ATI2` or `BC5U` is BC5, and `DX10` means "read `DDS_HEADER_DXT10`". `DXT2` and `DXT4`
+(premultiplied alpha) do not appear in SSE and are not supported.
 
-Legacy xRGB8888 has no FourCC. `DDPF_RGB` + masks above describe a little-endian 32-bit
-word, so payload bytes are B,G,R,X. Parser also accepts `DDPF_RGB | DDPF_ALPHAPIXELS`
-RGBA8888 (`R=0x000000ff`, `G=0x0000ff00`, `B=0x00ff0000`, `A=0xff000000`) used by
-vanilla object LOD atlas. BGRA8888 (`R=0x00ff0000`, `G=0x0000ff00`, `B=0x000000ff`,
-`A=0xff000000`) carries stored alpha in vanilla tree LOD atlas. All require `DDSD_PITCH` +
-top-level pitch `width * 4`; other bit depths/flags/masks reject. xRGB X is undefined ->
-uploader writes 255 before BGRA8 upload; RGBA/BGRA alpha stays unchanged.
+Uncompressed layouts have no FourCC. The masks describe one little-endian 32-bit word:
 
-### DDS_HEADER_DXT10 (20 bytes)
+| Layout | R | G | B | A | Seen in vanilla |
+| --- | --- | --- | --- | --- | --- |
+| xRGB8888 | `0x00ff0000` | `0x0000ff00` | `0x000000ff` | `0` | Terrain |
+| RGBA8888 | `0x000000ff` | `0x0000ff00` | `0x00ff0000` | `0xff000000` | Object LOD atlas |
+| BGRA8888 | `0x00ff0000` | `0x0000ff00` | `0x000000ff` | `0xff000000` | Tree LOD atlas |
 
-| field | notes |
-| ----- | ----- |
-| dxgiFormat | UNORM codes accepted: BC1 71, BC2 74, BC3 77, BC4 80, BC5 83, BC7 98; `_SRGB` = UNORM+1 (BC1 72, BC2 75, BC3 78, BC7 99) -> `declaresSRGB`. 81/84 are BC4/BC5 `_SNORM`, rejected |
-| resourceDimension | must be 3 (TEXTURE2D) |
-| miscFlag | 0x4 (TEXTURECUBE) -> `unsupported` |
-| arraySize | > 1 -> `unsupported` |
-| miscFlags2 | alpha mode, skipped |
+So xRGB8888 bytes are B, G, R, X. All three need `DDSD_PITCH` and a pitch of `width * 4`.
+The X byte of xRGB8888 has no meaning, so OpenSky sets it to 255 before upload. Stored alpha
+stays as it is. Other bit counts, flags, or masks are not supported.
 
-## Mip chain math
+## DDS_HEADER_DXT10 (20 bytes)
 
-Levels are tightly packed after the header(s), no padding. Level `i` is
-`max(1, w >> i)` x `max(1, h >> i)` texels. BCn = `ceil(w_i/4) * ceil(h_i/4)` 4x4
-blocks: 8 bytes for BC1/BC4, 16 for BC2/BC3/BC5/BC7. 32-bit RGB = `w_i * h_i * 4`,
-`bytesPerRow(level) = w_i * 4`. Claimed mip count beyond full chain
-(`floor(log2(max(w,h))) + 1`) or chain running past EOF -> `malformed`; trailing extra
-bytes tolerated.
+| Field | Notes |
+| --- | --- |
+| dxgiFormat | Accepted: BC1 71, BC2 74, BC3 77, BC4 80, BC5 83, BC7 98. The `_SRGB` code is one higher (BC1 72, BC2 75, BC3 78, BC7 99). 81 and 84 are `_SNORM` and not supported |
+| resourceDimension | Must be 3 (TEXTURE2D) |
+| miscFlag | `0x4` (cube) is not supported |
+| arraySize | More than 1 is not supported |
+| miscFlags2 | Alpha mode. Skipped |
 
-## Observed in vanilla SSE (2.5 probe)
+## Mip level sizes
 
-Sweep of every `.dds` in the local install's BSAs (Textures0-8, Interface,
-_ResourcePack, CC Fish/AdvDSGS/Curios): 32 920 files.
+Levels follow the header with no padding. Level `i` is `max(1, w >> i)` by `max(1, h >> i)`
+texels.
 
-* BCn, parsed clean: 22 636 — BC3 18 074, BC1 4 417, BC2 145. Zero DX10
-  headers -> zero BC7, zero declared-sRGB; vanilla is legacy-FourCC only
-  (DX10/BC7 path still needed: standard for mods).
-* Initial sweep found 10 225 uncompressed RGB files (face `_msn` normal maps, tint masks,
-  interface art, LOD diffuse atlases), 58 cubemaps, 1 volume. xRGB8888 terrain, RGBA8888
-  object LOD, and BGRA8888 tree LOD diffuse maps now parse; other uncompressed layouts,
-  cubemaps + volumes remain typed errors -> placeholders.
-* 150 single-mip files; max dimension 8192 (not 4096).
-* Farmhouse texture set (candidate 2.7 cell area): 64 files, full decode +
-  `MTLTexture` upload, zero failures.
+- BCn: `ceil(w_i / 4) * ceil(h_i / 4)` blocks of 4x4 texels. A block is 8 bytes for BC1 and
+  BC4, and 16 bytes for BC2, BC3, BC5, and BC7.
+- 32-bit: `w_i * h_i * 4` bytes. One row is `w_i * 4` bytes.
+
+Example: a 256x128 BC1 texture. Level 0 is 64 x 32 blocks, which is 16384 bytes. Level 1 is
+32 x 16 blocks, which is 4096 bytes.
+
+A mip count larger than the full chain (`floor(log2(max(w, h))) + 1`) is an error, and so is
+a chain that runs past the end of the file. Extra bytes after the chain are allowed.
+
+## What vanilla uses
+
+A sweep of every `.dds` in the vanilla archives found:
+
+- Only legacy FourCC headers. No DX10 header, so no BC7 and no sRGB flag. Mods use DX10, so
+  OpenSky still reads it.
+- BC3 is the most common, then BC1, then a few BC2.
+- Many uncompressed files: face normal maps (`_msn`), tint masks, interface art, and LOD
+  atlases. Some use layouts OpenSky does not read yet. Those, and the cubemaps and one volume
+  texture, get placeholder textures.
+- Some files have only one mip level. The largest size is 8192, not 4096.
 
 ## Color space
 
-`declaresSRGB` (DX10 `_SRGB` code) is advisory only. The renderer picks color space
-per usage: diffuse -> sRGB `MTLPixelFormat` variant, normal/data maps -> linear
-(BC4/BC5 have no sRGB variants). Legacy-FourCC files carry no color-space info at all.
-32-bit RGB follows same usage policy: xRGB8888/BGRA8888 -> BGRA8, RGBA8888 -> RGBA8;
-diffuse uses sRGB, data uses linear. Absent xRGB alpha becomes fully opaque; stored alpha
-remains.
+The DX10 `_SRGB` flag is only a hint. The renderer picks the color space by how a texture is
+used. Diffuse (color) maps use an sRGB Metal format. Normal maps and data maps are linear.
+BC4 and BC5 have no sRGB format. Legacy FourCC files carry no color-space information at all.
+xRGB8888 and BGRA8888 upload as BGRA8, and RGBA8888 as RGBA8.

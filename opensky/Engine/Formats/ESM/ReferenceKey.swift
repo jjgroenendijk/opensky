@@ -52,7 +52,7 @@ nonisolated enum ReferenceKey: Hashable, Sendable {
     /// Never write world-state components under this key expecting them to be
     /// drawn: no `RuntimeReferenceEntry` resolves it, so it is an activator
     /// identity and an object-handle identity, nothing more.
-    /// Documented in docs/engine/papyrus-vm.md and docs/engine/runtime-state.md.
+    /// Documented in docs/engine/papyrus-activation.md and docs/engine/reference-identity.md.
     static let player = ReferenceKey.generated(0)
 
     /// Normalizes the resolved plugin name to lowercase.

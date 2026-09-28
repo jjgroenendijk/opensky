@@ -51,7 +51,7 @@
 // An unimplemented native is counted by name in `PapyrusNativeLog`, which is
 // what ranks the next one to build.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/combat.md.
+// Documented in docs/engine/papyrus-actor-natives.md and docs/engine/hostility.md.
 
 import Foundation
 

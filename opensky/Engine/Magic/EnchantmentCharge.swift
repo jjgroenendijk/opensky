@@ -41,13 +41,13 @@
 // Neither statement pins the runtime multiplier: the two disagree about which
 // skill is read, and 1.7 is quoted as an approximation with no formula beside it.
 // Rather than invent one, this engine charges the base cost, which is the number
-// the published tables print, and records the gap in docs/engine/magic.md.
+// the published tables print, and records the gap in docs/engine/item-enchantments.md.
 //
 // Recharging is out of this item's scope: an empty weapon stays empty, because
 // soul gems are not in this milestone. `restoring(to:)` exists for the load path
 // and for a dev control, not for a soul gem.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/item-enchantments.md.
 
 import Foundation
 

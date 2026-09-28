@@ -56,9 +56,9 @@
 // multiplier vanilla perks write. None of the three is read here: this item's scope
 // is the enchantment and potion terms, and folding a flat add into a multiplier
 // would be a different formula wearing the same name. Named as gaps in
-// docs/engine/magic.md.
+// docs/engine/item-enchantments.md.
 //
-// Documented in docs/engine/magic.md, docs/engine/melee-combat.md and
+// Documented in docs/engine/item-enchantments.md, docs/engine/melee-damage.md and
 // docs/engine/archery.md.
 
 import Foundation

@@ -27,7 +27,7 @@
 // means "for as long as it is carried" rather than "once", which is exactly
 // what `isConstant` means to the active-effect runtime.
 //
-// Documented in docs/engine/perks.md and docs/engine/magic.md.
+// Documented in docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
 

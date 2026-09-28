@@ -1,95 +1,88 @@
 ---
-type: Engine Design
+type: Subsystem
 title: Distant LOD streaming
-description: INI-driven rings, tree billboards, async composition, and verification.
+description: How the distant LOD rings are chosen from the INI settings, how block edges are
+  clipped so each cell has one terrain owner, and how LOD swaps in without holes.
 tags: [engine, streaming, lod, terrain, tree, rendering]
-timestamp: 2026-07-21T00:00:00Z
 ---
 
 # Distant LOD streaming
 
-`DistantLODSelection` maps live streaming center + [LOD settings](/formats/lod.md) + typed
-[INI settings](/formats/ini.md) to terrain/object blocks. World-unit thresholds become
-cell radii with `ceil(distance / 4096)`. Available levels map without holes:
+Distant LOD (level of detail) draws the land and objects beyond the loaded cells. The files are
+on the [LOD](/formats/lod.md) page. The distance settings come from the [INI](/formats/ini.md)
+files.
 
-| level | inner radius | outer radius | content |
-| --- | ---: | ---: | --- |
-| 4 | loaded radius (2) | `fBlockLevel0Distance` | terrain + objects |
-| 8 | prior outer | `fBlockLevel1Distance` | terrain + objects |
-| 16 | prior outer | `min(maximum, 2 * level1)` | terrain + objects |
-| 32 | prior outer | `fBlockMaximumDistance` | terrain |
+## Rings
 
-Grid anchoring uses lodsettings origin, not cell zero. Blocks outside settings stride drop.
-Each world cell inside configured far radius owns exactly one source: resident full terrain, L4,
-L8, L16, or L32. Selection keeps partially owned BTR blocks. `TerrainLODClipper` intersects
-every source triangle against each owned cell rectangle, triangulates resulting polygons,
-and interpolates position, normal, tangent, bitangent, UV, and color at cut edges. Adjacent
-masks partition source area exactly -> no missing or double-drawn XY coverage at full/L4 or
-L4/L8/L16/L32 boundaries. Clipped GPU models cache by BTR path + stable cell bitset. Fully
-owned blocks retain normal shared-path cache. Partial BTO object atlases still drop because
-their geometry lacks safe cell ownership metadata; this affects distant objects, not terrain
-coverage. L16 split is OpenSky policy: Skyrim exposes two near thresholds + one maximum,
-while asset set contains four power-of-two levels. Clamped `2 * level1` preserves
-coarsening and leaves contiguous ownership.
+Distances in game units become cell radii with `ceil(distance / 4096)`. The levels fit together
+with no gaps:
 
-LOD hides resident successful cells only, not desired grid slots. Void/failed cells have no
-full terrain and therefore remain visible in clipped L4 coverage.
+| Level | Inner radius | Outer radius | Content |
+| --- | --- | --- | --- |
+| 4 | Loaded radius (2) | `fBlockLevel0Distance` | Terrain and objects |
+| 8 | Previous outer | `fBlockLevel1Distance` | Terrain and objects |
+| 16 | Previous outer | `min(maximum, 2 * level1)` | Terrain and objects |
+| 32 | Previous outer | `fBlockMaximumDistance` | Terrain |
 
-## Async flow
+Skyrim has two near distances and one maximum, but the files have four levels. The level 16
+limit (`2 * level1`, capped at the maximum) is OpenSky's own choice. It keeps each level coarser
+than the last, with no gaps between them.
 
-`CellStreamer` requests one LOD scene per grid center through same `SerialCellBuildRunner`
-used by cell builds. Ordering keeps cache access confined to one utility queue:
+The block grid starts at the origin in the LOD settings file, not at cell 0. A block that is not
+on the settings stride is dropped.
 
-1. complete desired 5x5 reaches resident/void/failed;
-2. LOD build queues after near-grid work (first-load assets cannot starve cells);
-3. after first settled ring, recenter retains old full grid + LOD as complete coverage;
-4. replacement full cells integrate into an offscreen staging dictionary;
-5. matching replacement LOD completion atomically swaps staged full grid + ring in one
-   recompose; no transient hole or old-LOD/new-cell overlap;
-6. stale completion drops + evicts its assets;
-7. old LOD asset keys stay alive when still used by cells/new LOD, otherwise evict on queue.
+## One owner per cell
 
-`CellSceneComposition` merges resident full cells + optional LOD scene. Camera framing unions
-full-cell bounds only; far LOD must not pull launch camera back to whole-world scale.
+Every cell inside the far radius has exactly one terrain source: loaded full terrain, or level 4,
+8, 16, or 32. A LOD block can cover cells that belong to another source. So OpenSky clips the
+block: it cuts every triangle against each owned cell's rectangle, splits the pieces into
+triangles, and interpolates position, normal, tangent, bitangent, UV, and color at the cuts.
+Neighbor masks split the area exactly, so no ground is missing or drawn twice at any border.
+Clipped models are cached by file path and cell set.
 
-`DistantLODBuilder` reuses `MeshLibrary` + `TextureLibrary`: paths cache exactly like regular
-NIF/DDS assets. BTR gets south-west translation; BTO stays world-space. `WATER` subtree is
-absent until the sky and water milestone (M3). [LST/BTT tree LOD](/formats/lod.md) generates
-one cached crossed-plane model per tree type, then batches BTT transforms through normal
-instancing. `fTreeLoadDistance` applies as an exact world-space XY radius, not a square cell
-approximation. Tree LOD remains visible inside resident cells because full `TREE` records
-have no renderer yet; suppressing those refs would create a near-grid hole. Remove this
-fallback when full trees become a live consumer. Missing/malformed optional tree blocks
-increment separate unavailable accounting and do not suppress terrain/object LOD. Distant
-LOD does not cast or receive near cascaded shadows or local point lights; sun, ambient, and
-fog still apply. Per-instance main-pass culling + one instanced draw per LST type remain.
+Object LOD blocks (`.bto`) that are only partly owned are dropped, because their geometry does
+not say which cell each part belongs to. This affects distant objects, not terrain.
 
-Configuration loads once at app/CLI startup. Main app surface:
-`World > Environment > Distant LOD`. Four fields expose only live consumers: L4, L8, far,
-and trees. `Apply` (id `LODApplyControl`) writes an OpenSky override, updates the
-thread-safe config snapshot, and invalidates the current LOD ring so it rebuilds live.
-`Use Skyrim INI` clears override, reloads files, and rebuilds. Source label shows
-active filename or OpenSky override.
+LOD hides only cells that loaded. A cell that failed or has no land has no full terrain, so the
+level 4 LOD stays visible there.
 
-## Verification
+## Building without holes
 
-Vanilla Tamriel target `(6,-2)`, production-size 5x5 full grid:
+LOD scenes are built on the same serial queue as cells:
 
-```sh
-openskycli render --worldspace Tamriel --x 6 --y -2 --neighbors \
-  --size 1280x720 --zoom 1.4 --out logs/distant-lod-3.4-5x5.png
-```
+1. The 5 x 5 near grid finishes first: every cell loaded, empty, or failed.
+2. Then the LOD build is queued, so first-load LOD cannot hold up near cells.
+3. After the first ring, a move keeps the old grid and old LOD visible.
+4. New full cells are collected off-screen.
+5. When the matching new LOD is ready, the new cells and new LOD swap in together. There is no
+   moment with a hole, and no moment with old LOD over new cells.
+6. A LOD build that is out of date when it finishes is dropped, and its assets are freed.
+7. Old LOD assets stay loaded while cells or the new LOD still use them.
 
-2026-07-21 configured INI 5x5 result: 121 terrain/object blocks, 0 unavailable, 9 available
-tree blocks, 0 unavailable tree blocks, 2 placements inside the exact camera radius, 100%
-non-background pixels. Focused `(7,-3)` render: 131 terrain/object blocks, 9 tree blocks,
-35 placements, 100% non-background; tree atlas billboards are visible across distant hills
-and inside the loaded cell as the temporary full-tree fallback.
-Selection tests prove exact configured band boundaries and every cell through L32 outer
-radius has one terrain owner; synthetic crossing-triangle tests prove adjacent masks
-preserve source area with neither gap nor overlap. East/north real fly path settled three grids with
-35 unique builds, 9 unloads, 25 final residents, 0 void; 5,192 frames averaged 3.32 ms,
-p95 5.94 ms, max 17.75 ms under 33.33 ms budget.
+Camera framing uses only full cell bounds. Otherwise distant LOD would pull the start camera out
+to see the whole world.
 
-Generated render captures stay local; numeric ownership + frame metrics above are the
-repository acceptance evidence.
+LOD models and textures use the same caches as normal NIF and DDS files. Terrain blocks (`.btr`)
+are moved to their south-west corner. Object blocks (`.bto`) are already in world space.
+
+## Tree LOD
+
+Each tree type gets one cached model of two crossed planes. The tree positions (`.btt`) are
+drawn with normal instancing, one draw per type. `fTreeLoadDistance` is an exact circle, not a
+square of cells.
+
+Tree LOD also stays visible inside loaded cells, because full `TREE` records have no renderer
+yet. Hiding them would leave a hole in the near grid. Remove this when full trees are drawn. A
+missing tree block is counted on its own and does not hide terrain or object LOD.
+
+Distant LOD does not cast or receive near shadows and ignores point lights. Sun, ambient, and fog
+still apply.
+
+## Controls
+
+World > Environment > Distant LOD has four fields: level 4, level 8, far distance, and trees.
+Apply saves an OpenSky override and rebuilds the current ring at once. "Use Skyrim INI" clears
+the override, reloads the files, and rebuilds. A label shows which source is active.
+
+`openskycli render --worldspace Tamriel --x 6 --y -2 --neighbors` draws a 5 x 5 grid with its
+LOD ([CLI](/tools/cli.md)).

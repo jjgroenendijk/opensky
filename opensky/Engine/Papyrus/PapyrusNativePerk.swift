@@ -11,7 +11,7 @@
 // declares. `Game.GetPerk` and the perk-point functions belong to the perk tree
 // and the level-up screen, which are items 20.6 and 20.7.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/perks.md.
+// Documented in docs/engine/papyrus-activation.md and docs/engine/perks.md.
 
 import Foundation
 

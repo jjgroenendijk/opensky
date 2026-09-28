@@ -17,7 +17,7 @@
 // session owns by value: handing out a copy to dispel through would grow a
 // tally nothing ever reads and drop the write on the floor.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/magic.md.
+// Documented in docs/engine/papyrus-spell-natives.md and docs/engine/spellcasting.md.
 
 import Foundation
 import simd

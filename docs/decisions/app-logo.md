@@ -3,7 +3,6 @@ type: Decision
 title: App logo + icon pipeline
 description: Original "North Peak" SVG mark as app identity; rsvg-convert renders AppIcon set.
 tags: [branding, icon, tooling]
-timestamp: 2026-07-23T00:00:00Z
 ---
 
 # App logo + icon pipeline

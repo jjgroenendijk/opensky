@@ -117,7 +117,7 @@ final class Renderer: NSObject {
     /// Resident static collision broadphase, wired beside terrain by
     /// GameViewController. Empty in renderer-only paths.
     var collisionQuery: WalkController.CollisionQuery?
-    /// Behavior-graph locomotion bridge, issue #188 (docs/engine/walk-mode.md).
+    /// Behavior-graph locomotion bridge (docs/engine/walk-mode.md).
     var locomotion: LocomotionBridge
     /// Orbit/shoulder framing and collision zoom for `.thirdPerson`
     /// (issue #189). Pure math over the capsule pose; holds no pose of its own.

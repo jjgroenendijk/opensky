@@ -5,7 +5,7 @@
 // is one: the runtime is at the strict-lint length cap, and a tally is a value
 // with no behaviour of its own that a panel and a test both read.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spellcasting.md.
 
 import Foundation
 

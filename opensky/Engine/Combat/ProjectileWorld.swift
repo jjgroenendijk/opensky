@@ -17,7 +17,7 @@
 // asks for a key back and hands the key in again to remove it, rather than
 // carrying a bespoke drawing channel of its own.
 //
-// Documented in docs/engine/archery.md.
+// Documented in docs/engine/projectiles.md.
 
 import simd
 

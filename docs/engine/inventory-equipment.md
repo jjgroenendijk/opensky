@@ -1,248 +1,164 @@
 ---
 type: Subsystem
-title: Inventory and equipment gate
-description: The M12 milestone gate - the first repeatable gameplay loop proved end to end,
-  the World > Inventory & Equipment destination that drives and inspects it, ownership
-  reporting, appearance-skip accounting, and the acceptance record.
-tags: [engine, inventory, equipment, acceptance, app-ui, milestone]
-timestamp: 2026-08-02T00:00:00Z
+title: Inventory and equipment
+description: The item loop from take to save, why items are only created by grants, how
+  ownership is reported, how appearance skips are counted, and how hands are filled.
+tags: [engine, inventory, equipment, app-ui]
 ---
 
-# Inventory and equipment gate
+# Inventory and equipment
 
-Milestone 12, item 12.2.4. The point at which OpenSky stops being a viewer with a world in
-it and starts being a game loop: walk to a loose item, take it, open a container, transfer,
-equip, buy, sell, drop, save, load, and find the world and the actors exactly as they were
-left.
+This page covers how the item systems work together as one game loop: walk to an item, take it,
+open a container, move items, equip, buy, sell, drop, save, and load. The parts are on their own
+pages:
 
-Nothing new happens in the engine here. Every capability the loop exercises landed in
-[item and container records](/formats/actors.md), the inventory component under
-[runtime state](/engine/runtime-state.md), the world-item layer under
-[interaction](/engine/interaction.md), the equipment runtime, the
-[inventory menu](/engine/inventory-menu.md) and the
-[container and barter menus](/engine/barter.md). This page is what the gate added on top:
-one sidebar destination for the three things that had no surface, two pieces of accounting
-the loop needed to be checkable, and the record of what was verified.
-
-## Contents
-
-- [The loop](#the-loop)
-- [Grants](#grants)
-- [Ownership](#ownership)
-- [Appearance skips](#appearance-skips)
-- [Budgets](#budgets)
-- [Verification](#verification)
-- [Hand occupancy](#hand-occupancy)
-- [Limits / next](#limits--next)
-
-| Layer | File | Target |
-|---|---|---|
-| Panel seam | `opensky/Engine/Inventory/InventoryEquipmentControlProviding.swift` | app + CLI |
-| Readout text | `opensky/Engine/Inventory/InventoryEquipmentReadout.swift` | app + CLI |
-| Appearance-skip accounting | `opensky/Engine/World/Cells/CellSceneBuilderActors.swift` | app + CLI |
-| Per-actor skip lookup | `opensky/Engine/World/Streaming/CellStreamerInteraction.swift` | app + CLI |
-| Renderer + AppKit wiring | `opensky/App/GameView/GameViewController+InventoryEquipment.swift` | app |
-| Verification surface | `opensky/App/Panels/InventoryEquipmentPanelViewController.swift` and `opensky/App/Shell/Sections/InventoryGrants*.swift`, `ItemOwnership*.swift`, `EquipmentInspection*.swift` | app |
+- item and container records: [item records](/formats/item-records.md);
+- the inventory component: [runtime state](/engine/runtime-state.md);
+- taking and dropping world items: [interaction](/engine/interaction.md);
+- the menus: [inventory menu](/engine/inventory-menu.md) and [barter](/engine/barter.md).
 
 ## The loop
 
-Nine steps, each one a real runtime call with its own accounting:
+Each step is one runtime call.
 
-| Step | Call | What must hold |
-|---|---|---|
-| Grant | `InventoryRuntime.add` | the only step that creates items, and it says so |
-| Take | `WorldItemRuntime.take` | the item enters an inventory, the reference is deleted in its own cell |
-| Transfer | `ContainerSession.deposit` / `take` | both sides change, the total across them does not |
-| Equip | `EquipmentRuntime.equip` | the equipped set is written to the actor's cell; a conflicting piece displaces rather than stacks |
-| Buy | `BarterSession.buy` | gold one way, the item the other, in one write |
-| Sell | `BarterSession.sell` | the merchant pays less than it charged, and gold is still conserved |
-| Drop | `WorldItemRuntime.drop` | one item leaves the player, one spawned reference appears |
-| Save | `OpenSkySaveStore.save` | the whole delta, allocator position included |
-| Load | `WorldStateStore.restore` | a brand-new store is in the identical end state |
+| Step | What must hold |
+| --- | --- |
+| Grant | The only step that creates items, and it says so |
+| Take | The item enters an inventory. The reference is deleted in its own cell |
+| Transfer | Both sides change. The total across them does not |
+| Equip | The equipped set is written to the actor's cell. A piece in a used slot replaces the old one |
+| Buy | Gold moves one way and the item the other, in one write |
+| Sell | The merchant pays less than it charged. Gold is still kept whole |
+| Drop | One item leaves the player. One spawned reference appears |
+| Save | The whole change set is written, with the key counter |
+| Load | A new world state ends up in the same state |
 
-Conservation is the through-line: after the grant, no step creates or destroys anything.
-The gate reads the totals rather than assuming them, because the fixture chest's `CNTO`
-baseline resolves a leveled list and how much it holds is the data's answer to give.
+Nothing is created or destroyed after the grant. A container's starting contents come from its
+`CNTO` list, which can resolve a leveled list. So the totals are read from the data, not assumed.
 
-Refusals are ordinary outcomes that write nothing. A merchant with an empty purse still
-sells its whole stock, a player who cannot afford a sword keeps their gold, and equipping
-what an owner does not hold is a typed failure that leaves the equipped set untouched.
+A refusal writes nothing. A merchant with no gold still sells. A player who cannot pay keeps
+their gold. Equipping an item the owner does not hold is a typed failure, and the equipped set
+does not change.
+
+## Stacking
+
+Every item stacks by its base FormID. Two copies of one item are the same. Tempering,
+enchanting, charge, or health would make copies differ. Those need a larger stack key first.
 
 ## Grants
 
-`grantItem(_:count:to:)` is a developer control with no analogue in the shipping game. It
-exists because the loop needs a known item in a known inventory before it can move one, and
-hunting the world for one is neither repeatable nor something an acceptance record can
-name. It is `InventoryRuntime.add` and nothing more, so a granted stack lands in the
-journal, the dirty counts and the save exactly as a taken one does.
+A grant is a developer control. The real game has no such thing. The loop needs a known item in
+a known inventory before it can move one, and searching the world for one cannot be repeated. A
+grant is the plain "add to inventory" call, so it reaches the change log, the dirty counts, and
+the save exactly like a taken item.
 
-Two refusals, both stated rather than silent: a non-positive count, and a form no loaded
-plugin describes. The second matters because an unknown form has no weight, value or name,
-and a stack of one would put a number the data never authored into the accounting.
+A grant is refused, with a message, for:
 
-Grants land in the player's inventory or the open container's. A merchant is a container,
-so nominating one under `World > Container Menu > Merchant` and opening it makes this the
-merchant's stock too — which is how the gate stocks a merchant without a `VENDR`-style
-faction system existing.
+- a count of 0 or less;
+- a form no loaded plugin describes. An unknown form has no weight, value, or name, so it would
+  add a number the data never gave.
+
+A grant goes to the player or to the open container. A merchant is a container too, so granting
+into an open merchant chest adds to its stock.
 
 ## Ownership
 
-`XOWN` and `XRNK` decode in `PlacedReference` and are reported for whatever the crosshair
-is on. The readout was an inspection through M12 and M20, because no crime system existed;
-since issue #504 it states the *enforced* verdict — whether taking the reference would be
-theft for the player right now, which accounts for the cell's own `XOWN` and the player's
-faction ranks as well as the reference's field, and what the bounty would be if witnessed.
-See [crime and bounty](/engine/crime.md).
+`XOWN` and `XRNK` are decoded on each reference. The readout for the crosshair target says
+whether taking it would be theft for the player now. This uses the reference's owner, the cell's
+owner, and the player's faction ranks. It also shows the bounty if someone sees the take. See
+[crime and bounty](/engine/crime.md).
 
-Four conditions read as four different answers, never as a blank:
+There are four answers. None is left blank:
 
-- no crosshair target at all,
-- a target nothing claims ("taking this is not theft"),
-- a target with an owner the player may use, which is also not theft,
-- a target the player may not use, plus the faction rank when one is authored and the
-  bounty a witnessed take would accrue. An owner inherited from the cell says so, because
-  the reference itself names none.
+- no target;
+- a target no one owns: taking it is not theft;
+- a target with an owner the player may use: also not theft;
+- a target the player may not use, with the faction rank if one is set and the bounty. An owner
+  that comes from the cell says so, because the reference itself names none.
 
-A null `XOWN` is unowned rather than owned by form zero, which is the decoder's rule and not
-this panel's.
+A null `XOWN` means no owner. It does not mean "owned by form 0".
 
 ## Appearance skips
 
-`AppearanceSkip` has always existed inside `ActorVisualResolution` and, until this
-milestone, only reached a log line for actors that failed to render at all. That left a
-real gap: a piece of an equipped set that occupies a slot and draws nothing is
-indistinguishable from an equip that silently did nothing.
+An equipped piece can take a slot and draw nothing. Without a record of that, it would look the
+same as an equip that did nothing. So every skip for every built actor is counted, whether the
+actor draws or not, as `ACHR <id>: <reason> (<subject>)`. The cell load summary carries the list.
 
-`ActorBuildCounts.appearanceSkipReasons` now records every skip for every assembled actor,
-rendered or not, as `ACHR <id>: <reason> (<subject>)`, and `CellLoadSummary` carries the
-list. Only the `.appearance` subject is taken: the other `ActorAssemblySkip` subjects are
-asset-loading outcomes, which the failure buckets already own, and mixing the two would
-make a missing NIF read as a resolution decision.
+Only appearance skips are listed. The other skip kinds are about loading files, and the failure
+counts already cover those. Mixing them would make a missing NIF look like an appearance choice.
 
-The list sits deliberately outside the cell's exact-accounting identity. An actor whose
-skin torso is masked by its equipped cuirass renders perfectly and still reports a skip;
-counting that as a failure would break the identity for a case that is the outfit working.
+The list is not part of the cell's exact count of drawn and failed items. An actor whose skin
+torso is hidden by a cuirass draws correctly and still reports a skip. Counting that as a failure
+would be wrong, because it is the outfit working.
 
-`CellStreamer.appearanceSkipReasons(forActor:)` filters the resident cells' summaries by
-the `ACHR <id>:` prefix, trailing space included. Matching on a prefix rather than keeping
-a per-actor map is deliberate: a cell holds a handful of actors, a rebuild rewrites the
-whole list, and an index would be a second structure to keep in step for no gain.
+The skips for one actor are found by filtering the loaded cells' lists by the prefix `ACHR <id>:`,
+with the trailing space. A cell has few actors, and a rebuild rewrites the whole list. A separate
+map per actor would be a second structure to keep in step, for no gain.
 
 ## Budgets
 
-No new budget mechanism. `M12AcceptanceBudgetTests` runs the shipping validators —
-`validatedActorBuildMetrics` and `validatedFlyUpdateBudgets` — over the shipping
-`CellStreamingFlyBenchmarkConfiguration`, so the numbers the CLI bench enforces are the
-numbers the gate asserts. A cell whose actor is dressed from a runtime equipped set stays
-inside the actor-build budget, the new skip list does not disturb the accounting the same
-validator checks alongside the timing, and an over-budget build still produces the existing
-reason-tagged error.
-
-Frames rendered with a menu open meet the animation, audio and script update budgets by
-construction rather than by luck: menu mode advances every sim clock by zero, so a paused
-frame does no per-frame update work at all. Measured timings against the real install come
-from `openskycli bench --fly-path`, which cannot run in a unit test.
-
-## Verification
-
-Sidebar path **World > Inventory & Equipment** (`Destination-inventoryEquipment`), three
-sections: `PanelSection-inventoryGrants`, `PanelSection-itemOwnership` and
-`PanelSection-equipmentInspection`. Controls: `InventoryGrantFormIDField`,
-`InventoryGrantCountField`, `InventoryGrantTargetControl`, `InventoryGrantControl`,
-`EquipmentInspectionTargetControl`. Readouts: `InventoryGrantsStatsLabel`,
-`ItemOwnershipStatsLabel`, `EquipmentInspectionStatsLabel`.
-
-The loop's other halves are not duplicated here and the record names where they live:
-take, search, take-all, drop, equip and unequip are `World > HUD & Interaction > Items`
-(`ItemsTakeControl` and its siblings, `ItemsStatsLabel`); merchant nomination and the
-buy/sell transactions are `World > Container Menu` (`ContainerMerchantSelectControl`,
-`ContainerMenuBarterControl`, `ContainerMenuStatsLabel`); saving and loading are
-`World > Runtime State > Save` (`RuntimeStateSaveControl`, `RuntimeStateLoadControl`). Two
-sidebar paths owning one control would be worse than one path owning it and this record
-naming both.
-
-Inspecting the player rather than the nearest NPC is the destination's one departure from a
-documented default, so it is what the sidebar dot and "Reset all" act on. Granting
-deliberately does not light it: a grant is a world change, and `World > Runtime State`
-already owns resetting those.
-
-Covering tests:
-
-- `M12AcceptanceTests` — the whole loop in one scripted run over a synthetic plugin, with
-  the accounting checked at every step, plus ownership reaching the readout and the refusal
-  paths writing nothing.
-- `M12AcceptanceRenderTests` — the pixel evidence, device-gated. The taken item's pixels
-  leave and the dropped one's return, measured as changed-pixel counts and cross-checked:
-  a taken cell is byte-identical to a cell that never held the item, and a dropped one is
-  byte-identical to a cell whose plugin placed it. The equipped actor's silhouette changes,
-  with re-equipping the outfit's own piece as the control.
-- `M12AcceptanceBudgetTests` — the budget gates above.
-- `InventoryEquipmentPanelTests` — accessibility ids, section order, grant refusals,
-  the ownership and equipment readouts, and the override/reset contract.
-- `InventoryEquipmentReadoutTests` — every readout line as a pure function of one snapshot.
-- `DestinationRegistryInventoryEquipmentTests`, `DestinationRegistryTests`,
-  `AppSidebarModelTests` — placement, factory wiring and the id contract.
-
-Local A/B capture: none. A frame OpenSky renders from a real install embeds Bethesda
-assets, so captures stay in gitignored `logs/` and are never committed; the deterministic
-tests above are the evidence
-([sidebar acceptance](/tools/sidebar-acceptance.md)).
+The loop adds no budget of its own. The cell build and fly budgets check a cell whose actor wears
+a runtime equipped set. With a menu open, every simulation clock moves by zero, so a paused frame
+does no animation, audio, or script work.
 
 ## Hand occupancy
 
-Which hands a weapon fills is the one part of `EquipmentOccupancy` that does not come from
-a bitfield on the item. It comes from the WEAP `ETYP` link, resolved through the EQUP
-records of the same plugin by `EquipSlotTable`
-(`opensky/Engine/Inventory/EquipSlotTable.swift`): `EitherHand` resolves to the right hand,
-`BothHands` to both, `Shield` to the left, and a slot that names no hand — `Voice`,
-`Potion` — to none. The walk and the two policies behind it are documented under
-[magic records](/formats/magic-records.md); `EquipSlotStore` is the load-order-wide view
-the inspectors use.
+Which hands a weapon fills does not come from a bit field on the item. It comes from the `WEAP`
+`ETYP` link, resolved through the `EQUP` records of the same plugin
+([shout records](/formats/shout-records.md)):
 
-Issue #467 replaced the earlier heuristic, which read hands off the WEAP `DNAM` animation
-type because no EQUP decoder existed. That heuristic is deleted rather than kept as a
-fallback: a weapon whose `ETYP` resolves to nothing takes
-`EquipmentCatalog.defaultWeaponHands` (the right hand) and is counted in
-`unresolvedEquipTypes`, so a load order full of misses is visible rather than silently
-plausible. In the vanilla load order 3,354 of 3,359 weapons resolve and the other 5 carry
-no `ETYP` at all.
+| Slot | Hands |
+| --- | --- |
+| `EitherHand` | right |
+| `BothHands` | both |
+| `Shield` | left |
+| A slot that names no hand, like `Voice` or `Potion` | none |
 
-### Spells in hands
+A weapon whose `ETYP` resolves to nothing takes the right hand and is counted as unresolved. So
+a load order with many misses is visible, not quietly plausible. In vanilla, 5 weapons have no
+`ETYP` at all, and every other one resolves.
 
-A readied spell takes a hand too, and it does **not** go through `EquipmentRuntime`
-(issue #470). `equip` refuses anything the owner does not hold, and that refusal is the guard
-against silently equipping an item out of nowhere; a spell is never held, has no stack, no
-weight and no `EquippableItem` entry, so widening the refusal to serve it would drop the
-guard for every other caller.
+## Spells in hands
 
-Instead `SpellbookRuntime` (`opensky/Engine/Magic/SpellbookRuntime.swift`) owns readied
-spells in its own component and arbitrates against this layer over the one thing the two
-share — hands. Readying a spell unequips the weapon or shield whose hand it takes, and
-`SpellbookRuntime.equipItem` unequips the spell whose hand a weapon takes; that second
-direction is why the item equip path routes through it rather than calling
-`EquipmentRuntime.equip` directly. `HandSlots`, `EquipmentOccupancy` and the EQUP walk are
-the same on both sides.
+A readied spell fills a hand too, but it does not go through the equipment runtime. Equipment
+refuses anything the owner does not hold. That refusal guards against items from nowhere. A
+spell is never held: it has no stack, no weight, and no item entry. Widening the refusal for
+spells would drop the guard for every other caller.
 
-A spell's `ETYP` needs one distinction a weapon's never did: `BothHands` and `EitherHand`
-name the same two parents and differ only in the DATA "use all parents" byte, because the
-player names the hand a spell goes into. `EquipSlotHands.choice` keeps the two apart while
-`hands(of:)` keeps returning the single deterministic answer weapon occupancy has always
-used. The casting side of it is [magic and active effects](/engine/magic.md).
+The spellbook runtime owns readied spells in its own component. The two sides share only the
+hands:
 
-## Limits / next
+- Readying a spell unequips the weapon or shield in that hand.
+- Equipping an item goes through the spellbook, which unequips a spell in the needed hand.
 
-- Guard response to a bounty — confrontation, arrest, attack-on-sight — is issue #505, and
-  fence rules for the stolen flag are issue #506. Ownership itself is enforced since issue
-  #504 ([crime and bounty](/engine/crime.md)).
-- Armour still occupies biped slots only. ARMO also carries an `ETYP`, which OpenSky does
-  not decode, so a shield conflicts with a cuirass by body slot but not yet with a
-  two-handed weapon by hand.
-- The player has no rendered body until M14, so equipping on the player is a state-only
-  operation and its appearance-skip list is empty by construction rather than by omission.
-- A merchant is still a nominated container. Faction-linked vendor chests need `VENDR`-style
-  data that is not decoded.
-- A dropped object whose mesh carries a simulated Havok body now settles under
-  [dynamic rigid bodies](/engine/dynamic-bodies.md) (issue #193): `dropHeight` became the
-  release pose rather than the resting one. An object whose mesh carries no dynamic body
-  still rests where the drop placed it.
-- Carry weight is computed and shown but nothing is encumbered by it.
+A spell's `ETYP` needs one difference a weapon's never did. `BothHands` and `EitherHand` name the
+same two parents. They differ only in the "use all parents" byte of `DATA`, because the player
+chooses the hand for a spell. The slot table keeps the two apart for spells, and still gives the
+one fixed answer for weapons. Casting is on the [magic](/engine/magic.md) page.
+
+## Not done yet
+
+- Armor fills body slots only. `ARMO` also has an `ETYP`, which is not decoded. So a shield
+  conflicts with a cuirass by body slot, but not yet with a two-handed weapon by hand.
+- Carry weight is computed and shown, but nothing is slowed by it.
+- A dropped object with a simulated Havok body falls and settles
+  ([dynamic rigid bodies](/engine/dynamic-bodies.md)). One without a dynamic body stays where
+  it was placed.
+
+## Controls
+
+World > Inventory & Equipment has three sections:
+
+- Grants: a FormID, a count, and a target (player or open container).
+- Ownership: the theft verdict for the crosshair target.
+- Equipment inspection: the equipped set and appearance skips of the player or the nearest NPC.
+  The player is the default.
+
+The rest of the loop lives in one place each, so no control has two owners:
+
+- take, search, take all, drop, equip, unequip: World > HUD & Interaction > Items;
+- merchants, buying, and selling: World > Container Menu;
+- save and load: World > Runtime State > Save.
+
+A grant does not mark the panel as changed. A grant is a world change, and World > Runtime State
+already resets those.

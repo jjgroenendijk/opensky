@@ -65,7 +65,7 @@ nonisolated struct FirstPersonCamera: Equatable {
     /// Vanilla's own mechanism for keeping first-person geometry out of walls
     /// is in its renderer, which is not observable from the data, so this is a
     /// deliberate deviation and is recorded as one in
-    /// docs/engine/behavior-runtime.md. What OpenSky does instead: the arms are
+    /// docs/engine/first-person.md. What OpenSky does instead: the arms are
     /// encoded last, into a viewport whose depth range is `[0, depthSlice]`,
     /// with the same projection everything else uses. Their depths stay
     /// monotonic in distance, so the arms occlude *each other* correctly, and

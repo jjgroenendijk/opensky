@@ -77,7 +77,7 @@ extension GameViewController {
         // (<https://en.uesp.net/wiki/Skyrim:Magicka>) The player is dropped from
         // the set entirely rather than having magicka regeneration suppressed on
         // its own, because the same paragraph names no other value and no source
-        // says health and stamina keep going — see docs/engine/magic.md, which
+        // says health and stamina keep going — see docs/engine/spellcasting.md, which
         // records that as a stated deviation rather than a silent one.
         // Every caster, not only the player: item 19.10 casts an NPC's spells
         // through the same runtime, so a skeleton mid-charge stands down from

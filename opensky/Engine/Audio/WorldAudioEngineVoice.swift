@@ -9,7 +9,7 @@
 // with nothing in `AudioSourceStreamer` needing to learn a second container.
 // The lip blob is returned to the caller untouched for item 17.7.
 //
-// Documented in docs/engine/audio.md.
+// Documented in docs/engine/audio-decoding.md.
 
 import AVFAudio
 import Foundation

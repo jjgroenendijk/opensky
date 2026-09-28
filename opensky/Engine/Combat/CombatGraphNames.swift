@@ -27,7 +27,7 @@
 // ends on its own, and the melee state machine acts on the fired one either way
 // (see MeleeCombatState.swift).
 //
-// Documented in docs/engine/melee-combat.md.
+// Documented in docs/engine/combat-graph-names.md.
 
 import Foundation
 

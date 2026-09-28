@@ -30,7 +30,7 @@
 //   it).
 // * `damage` — never positive, and never written for a primary: a primary's
 //   damage is the drop in its stored current value instead. See
-//   docs/engine/actor-values.md.
+//   docs/engine/actor-value-store.md.
 //
 // A modifier write states itself against `ActorValueEntry` and arrives here
 // through `storing(_:baseline:)`, so there is one place an absolute base becomes
@@ -38,7 +38,7 @@
 // against the stored form, because adding to an offset needs no baseline and so
 // cannot drift through one.
 //
-// Documented in docs/engine/actor-values.md.
+// Documented in docs/engine/actor-value-store.md.
 
 import Foundation
 

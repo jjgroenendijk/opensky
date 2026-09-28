@@ -11,7 +11,7 @@
 //
 // The sweep is a small capsule rather than a ray because a ray slips through
 // the seam between two walls that a camera's near plane would clip through.
-// See docs/engine/walk-mode.md, "Third-person camera".
+// See docs/engine/player-camera.md, "Third-person framing".
 
 import simd
 

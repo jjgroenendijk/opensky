@@ -38,7 +38,7 @@
 //   simply carries no weight or value here, because no loaded plugin index
 //   describes it.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/inventory-state.md.
 
 import Foundation
 

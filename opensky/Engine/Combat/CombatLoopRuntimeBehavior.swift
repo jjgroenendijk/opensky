@@ -22,7 +22,7 @@
 // mover for a path and the mover's own crowd cap is the same number. What the
 // cut refused is counted rather than dropped silently.
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/combat-behavior.md.
 
 import Foundation
 import simd

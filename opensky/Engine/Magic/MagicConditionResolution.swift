@@ -26,7 +26,7 @@
 // SPIT fields of the readied spell. Held the way `ConditionDataResolution`
 // holds its three stores, for the same reason.
 //
-// Documented in docs/formats/conditions.md and docs/engine/magic.md.
+// Documented in docs/formats/conditions.md and docs/engine/spellcasting.md.
 
 import Foundation
 

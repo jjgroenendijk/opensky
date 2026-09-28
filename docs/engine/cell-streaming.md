@@ -1,397 +1,200 @@
 ---
 type: Subsystem
 title: Cell streaming
-description: Camera position -> desired NxN exterior-cell grid, built off the main thread
-  on one serial queue, streamed in/out around the free-fly camera with a per-frame budget,
-  and the world-state snapshot every dispatched build carries.
+description: How the camera position picks a grid of exterior cells, how cells build on one
+  serial queue and stream in and out with a per-frame limit, and how assets and memory stay
+  bounded.
 tags: [engine, world, streaming, esm, concurrency]
-timestamp: 2026-07-30T00:00:00Z
 ---
 
 # Cell streaming
 
-Milestone 3.2. Two halves: a pure grid manager (`CellGridManager`) decides which cells a
-camera wants; an async controller (`CellStreamer`) builds them off main and streams them
-into renderer.
+Streaming has two halves:
 
-`opensky/Engine/World/Streaming/CellGridManager.swift` maps a camera's world position to the set of
-exterior cells that should be loaded around it, and diffs that desired set against
-whatever the caller currently has resident. Pure `simd`-only value type -- no AppKit, no
-Metal, no I/O, no async -- so the mapping, grid contents, diffing and hysteresis are all
-unit-tested without a renderer (`openskyTests/World/Streaming/CellGridManagerTests.swift`).
+- The grid manager decides which cells the camera wants. It is a pure value type with no Metal,
+  no files, and no concurrency, so it is tested without a renderer.
+- The streamer builds those cells off the main thread and hands the finished scenes to the
+  renderer.
 
-## Types
+## Cell coordinates
 
-- `CellCoordinate` -- `{x: Int32, y: Int32}`, `Hashable`. The pure streaming-side grid
-  coordinate. Distinct from `Cell.Grid` (the decoded XCLC record field, which also carries
-  the force-hide-land-quad flags and belongs to one parsed plugin) -- `CellCoordinate` has
-  no tie to any plugin. `CellSceneBuilder.buildScene(worldspaceEditorID:gridX:gridY:)`
-  still takes raw `Int32` grid axes; convert at the call site
-  (`coordinate.x`/`coordinate.y`).
-- `CellGridDiff` -- `{loads: Set<CellCoordinate>, unloads: Set<CellCoordinate>}`. Both
-  sets empty never surfaces as a value -- `CellGridManager.update` returns nil instead.
-- `CellGridManager` -- the manager itself: a `radius` (rings around center) and a
-  `center` (`CellCoordinate`, hysteresis-gated, see below).
+One exterior cell is 4096 world units. Cell `(x, y)` covers world X from `x * 4096` up to (not
+including) `(x + 1) * 4096`, and the same for Y ([coordinates](/decisions/coordinates.md)).
 
-## Cell coordinate mapping
+The coordinate is the floor of `position / 4096`, rounding down, not toward zero. A camera at
+X = -1 must land in cell -1, not cell 0. Rounding toward zero would put every position just below
+zero in cell 0, which is wrong for the whole negative quarter of the world.
 
-One exterior cell = 4096 world units, cell `(x, y)` covers world X in
-`[x*4096, (x+1)*4096)`, same for Y (`docs/decisions/coordinates.md`). `CellCoordinate` is
-computed by floor division on `position.x / 4096` and `position.y / 4096`
-(`Float.rounded(.down)`, not truncation) -- a camera at X=-1 must land in cell -1, not
-cell 0. Truncation-toward-zero would put every negative-but-near-zero position in cell 0,
-silently wrong for the whole negative-X/Y quadrant of the worldspace. `cellCoordinate(for:)`
-reuses `TerrainMeshBuilder.cellSize` for the 4096 constant instead of redefining it.
+## The desired grid
 
-## Desired grid + radius
+`uGridsToLoad` in the Skyrim INI is the full side length of the grid.
+It is always odd, and 5 by default. The grid manager stores the number of rings around the
+center instead: `(uGridsToLoad - 1) / 2`, which is 2. So the desired grid is the
+`(2 * radius + 1)` squared cells around the center: 25 cells by default. Sources: UESP
+"Skyrim:INI Settings", and community Creation Kit notes that describe the same odd side length.
+A negative radius becomes 0, which is only the center cell.
 
-`uGridsToLoad` (Skyrim ini, Grid section) is documented as the full grid side length,
-always odd -- default 5. `CellGridManager.defaultRadius = 2` is the ring count
-(`(uGridsToLoad - 1) / 2`) so `desiredCells` returns the `(2*radius+1)^2` square of cells
-centered on `center` -- 25 cells at the default radius. Refs: UESP "Skyrim:INI Settings"
-Grid section; community SKSE/Creation Kit docs describe the same odd-side,
-center-plus-N-rings convention. `radius` is a manager-construction parameter, not
-hardcoded -- negative values clamp to 0 (just the center cell) rather than crashing on a
-malformed range.
+## Who owns the loaded set
 
-`desiredCells` returns a `Set`, unordered -- load priority/ordering (e.g. nearest cells
-first) is the streaming controller's concern, not this type's.
+The grid manager tracks only its center. It does not track which cells are loaded. Loads run in
+the background, can finish in any order, and can fail. A manager that tracked "loaded" itself
+would need confirm, cancel, and retry calls, and would drift from the truth the first time a load
+failed quietly.
 
-## Ownership split: who holds the loaded set
+Instead, every frame the caller passes in its own loaded set with the camera position. The
+manager moves the center if needed, computes the desired grid, and compares:
 
-`CellGridManager` tracks only its own desired *center* cell. It does **not** track which
-cells are actually loaded -- that set stays entirely with the caller.
-
-Why: the caller's loads are async (3.2's other sub-item, off the main queue) and can
-finish out of order or fail outright. If the manager tried to track "loaded" state
-itself, it would need a confirm/cancel/retry API and would drift from reality the moment
-a load failed silently or raced with an unload. Instead:
-
-```swift
-mutating func update(
-    cameraPosition: SIMD3<Float>,
-    loaded: Set<CellCoordinate>
-) -> CellGridDiff?
+```text
+loads   = desired - loaded
+unloads = loaded - desired
 ```
 
-Every frame, the caller passes its own source of truth (whatever it currently has
-resident) alongside the camera position. The manager recenters (subject to hysteresis,
-below), computes the desired grid, and diffs it fresh against `loaded`:
-`loads = desired.subtracting(loaded)`, `unloads = loaded.subtracting(desired)`. Returns
-nil when there is nothing to do -- center held, or center moved but `loaded` already
-matches the new desired grid exactly.
+A cell that failed, or is still building, is still missing from the loaded set, so it shows up
+in `loads` again next frame. No separate retry path is needed.
 
-Consequence: a cell that failed to load, or is still mid-flight when the frame's `loaded`
-snapshot is taken, simply reappears in `loads` on the very next `update` call, because it
-is still absent from `loaded`. No separate retry path needed -- the diff is always
-correct for whatever state the caller reports, by construction. The streaming controller
-(later commit) owns the actual load/unload dictionary and async work; this type never
-touches it.
+## Hysteresis at cell borders
 
-## Hysteresis against border thrash
+A camera moving back and forth over a border would change the center, and the whole grid, every
+time it crossed. So a new center is accepted only once the camera is at least 128 units (about
+1.8 m) past the border it crossed. This is checked per axis. A diagonal crossing needs the margin
+on both axes. 128 units is small next to a 4096-unit cell, but larger than jitter. So a clear
+crossing moves the center on the next frame, and noise does nothing.
 
-A camera oscillating across a cell border (patrol path, mouse jitter, float noise at the
-boundary) would otherwise flip `center` -- and therefore the whole desired grid -- every
-time floor division crosses the line, thrashing load/unload every frame near any border.
+## The streamer
 
-`CellGridManager.hysteresisMargin = 128` world units (~1.8 m,
-`docs/decisions/coordinates.md` scale). `recenterIfNeeded` only accepts a new candidate
-center once the camera has penetrated at least `hysteresisMargin` past whichever border
-it crossed -- checked per axis, so a diagonal corner crossing needs clearance on both X
-and Y before the diagonal neighbor becomes the new center. An axis that did not change
-cell needs no clearance on that axis. 128 units is small next to the 4096-unit cell
-(irrelevant to which cell is genuinely "current" for streaming purposes) but comfortably
-larger than positional jitter, so a border crossed once decisively still recenters on the
-very next `update` call -- no lag for genuine movement, no thrash for noise.
+The streamer owns the grid manager, the set of loaded cell scenes, a bookkeeping core, and a
+build runner. Once per frame, the renderer calls it with the camera position. It:
 
-`openskyTests/World/Streaming/CellGridManagerTests.swift` covers this directly: walking back and forth
-within the margin on either side of a border never changes `center` or emits a diff;
-crossing decisively past the margin recenters immediately; a diagonal crossing needs both
-axes past margin.
+1. collects finished builds;
+2. updates the grid around the camera, requesting new cells and dropping cells that left;
+3. adds at most one finished cell to the scene;
+4. gives the new combined scene to the renderer, if anything changed.
 
-`CellGridManager.cellCenter(of:)` is the inverse of `cellCoordinate(for:)` up to the
-half-cell offset -- the world position at a cell's center. The streamer seeds the grid on
-a known launch cell (FirstRenderCell) with it so `cellCoordinate(for:)` maps straight back
-to that cell.
+Every build request carries a world state snapshot, taken on the main thread when the request
+is made. That snapshot is the only way changeable runtime state reaches the build queue. A change
+to a cell already on screen queues a rebuild. The cell stays loaded and keeps drawing its old
+scene until the rebuild arrives ([runtime state](/engine/runtime-state.md)).
 
-## Streaming controller
+## One serial queue, no locks
 
-`opensky/Engine/World/Streaming/CellStreamer.swift` is the live controller. It owns the grid
-manager, a `CellSceneComposition` (resident cells by coordinate), a bookkeeping core
-(`CellStreamCore`), and a build runner. One main-thread entry point:
+The cell builder and the mesh and texture libraries are classes with changeable caches and no
+locks inside. They are confined to one serial dispatch queue. Every build runs there, one cell
+at a time. The main thread never touches them. It only receives finished cell scenes, which are
+values. Creating Metal buffers and textures on that queue is safe.
 
-```swift
-func update(cameraPosition: SIMD3<Float>, activate: Bool = false)
-```
+A queue was chosen over an actor:
 
-driven once per frame (`Renderer.onFrame`, below). Per call it: (1) collects finished
-builds, (2) re-grids around the camera -- dispatching newly-needed cells, dropping cells
-that left the grid, (3) integrates at most one finished cell, (4) hands the recomposed
-scene to a sink (`Renderer.setScene` in the app) when anything changed.
+- A serial queue runs one block to the end before the next. An actor pauses at every `await`, so
+  two builds could interleave there, and the "one thread, no locks" rule of the caches would have
+  to be checked again at each `await`. A build is synchronous CPU work and GPU uploads, with no
+  `await` inside. So a queue fits exactly.
+- The build call was already synchronous and throwing. Wrapping it in `queue.async` needs no
+  change to the caches.
 
-### Runtime world state crosses here
+Only the completion buffer, the set of pending coordinates, and the build counts cross between
+threads. One lock inside the runner guards them. The lock never goes into the caches. The main
+thread collects results once per frame.
 
-Every dispatched build carries a `WorldStateSnapshot`, taken from `CellStreamer.stateSource`
-on the main thread at dispatch time — that value is the only way mutable runtime state
-reaches the build queue. A mutation to an already-drawn cell queues a rebuild through the
-same one-per-frame path, and `CellStreamCore.rebuilding` keeps the cell resident (still
-rendering its old scene) while that rebuild is in flight, so a rebuild completion integrates
-instead of being discarded as stale. Full design, including how a mutation racing an
-in-flight build is resolved: [runtime reference identity and world
-state](/engine/runtime-state.md).
+## Scheduling
 
-### Concurrency model: one serial queue, confinement not locks
+The streamer keeps its own list of wanted cells, ordered from the center out, with a fixed
+tie-break. It gives the runner at most one cell at a time. A new center removes stale requests
+from the list before any file is read. A finished result is collected and added before the next
+request goes out. So the queue stays short, unloads run before the next build, and stale work
+cannot pile up behind a slow read from an external disk.
 
-`CellSceneBuilder` + `MeshLibrary` + `TextureLibrary` are non-`Sendable` classes with
-mutable caches and no internal locking. They are confined to ONE serial `DispatchQueue`
-(`SerialCellBuildRunner`, qos `.utility`): every `buildScene` runs there, one cell at a
-time, and the main thread never touches them. Main only ever receives finished `CellScene`
-*values*. GPU resource creation (MTLBuffer/MTLTexture) off that queue is safe.
+The runner also removes duplicates: a coordinate stays pending until the main thread collects
+its result, not only until the build returns.
 
-Queue chosen over an actor deliberately:
+## Empty and failed cells
 
-- A serial queue runs one block to completion before the next -- no reentrancy. An actor
-  suspends at every `await`, so two builds could interleave at suspension points; the
-  "single-threaded, no locks" invariant the caches rely on would need re-checking at each
-  `await`. Builds are synchronous CPU + GPU-upload work with no internal awaits, so a queue
-  is the exact fit.
-- The build API (`CellSceneBuilder.buildScene`) is already a synchronous throwing call;
-  wrapping it in `queue.async` needs no actor refactor of the caches.
+The bookkeeping core has four sets: resident (built), in flight (building), void (no `CELL`
+record), and failed (the build threw). The grid manager's loaded set is all four together.
 
-Shared state across the boundary is a completion buffer, pending-coordinate set, and build
-count map guarded by one `NSLock` inside runner. Lock stays in runner, never in caches --
-confinement keeps caches lock-free. Main polls `drainCompleted()` once per frame.
+Because void and failed cells count as loaded, the grid never asks for them again. Empty slots
+are common at the edge of a worldspace, and would otherwise be built and fail every frame.
 
-`CellSceneProvider` is the build seam (`buildCell(at:) -> CellScene`, throwing
-`cellNotFound` for void slots). `BuilderCellSceneProvider` adapts `CellSceneBuilder` in the
-app; unit tests inject a fake so streamer logic runs without Metal or game data.
-`CellBuildRunning` abstracts the executor: `SerialCellBuildRunner` in the app, a manual
-runner in tests that stages completions in any order.
+An unload removes the coordinate from every set, so a later visit builds it fresh. A result for
+a coordinate that is no longer in flight (unloaded during the build, or a late duplicate) is
+dropped as stale.
 
-### Request scheduling + dedupe
+## One new cell per frame
 
-Core marks full desired grid in flight, but `CellStreamer` owns a center-out local request
-list and submits at most one coordinate to `SerialCellBuildRunner`. Recenter filters
-obsolete local backlog before it touches disk. A completed result is drained + integrated
-before next request dispatch. Result: bounded queue, eviction runs before next build, stale
-work cannot accumulate behind a slow external-volume read.
+Adding a cell rebuilds the combined render scene, so at most one cell that draws is added per
+frame. Void, failed, and stale results are cheap and are all collected at once. So 25 finished
+cells take at most 25 frames to appear. Because requests go center-out, the start cell builds
+first.
 
-Runner dedupe is defence in depth. Its `pending` set keeps a coordinate from enqueue until
-main drains completion -- not merely until background build returns. Duplicate enqueue
-while completion waits in buffer remains a no-op. Scripted verification snapshots runner
-execution counts and requires every expected coordinate exactly once.
+## The first camera
 
-### Bookkeeping core + void/failed handling (no retry storms)
+Until the first cell that draws arrives, the streamer keeps the start cell as its center and
+ignores the renderer's placeholder camera. That first cell places the camera to frame it. Later
+scene changes never move the camera.
 
-`CellStreamCore` (pure value type, `openskyTests/World/Streaming/CellStreamCoreTests.swift`) holds four
-coordinate sets: `resident` (built), `inFlight` (building), `void` (no CELL record), and
-`failed` (build threw). Its key output is `accountedCells = resident ∪ inFlight ∪ void ∪
-failed`, fed to `CellGridManager.update` as the `loaded` set. Because void and failed
-count as accounted, the grid never re-emits them in `loads` -- a void exterior slot
-(`CellSceneError.cellNotFound`) or a cell whose build threw is remembered and never
-re-requested every frame. This is the retry-storm guard the task demands: without it,
-empty grid slots (common at worldspace edges) would rebuild-and-fail forever.
+## Assets and unload
 
-`apply(diff:)` folds one grid diff in: `loads` become `inFlight` (each requested exactly
-once, since loads already exclude accounted cells); `unloads` forget the slot from *every*
-set (a resident cell is dropped from the composition, everything else simply forgotten) so
-a return visit rebuilds it fresh. `integrate(coordinate:kind:)` moves a finished cell out
-of `inFlight` into the matching set; a coordinate no longer in `inFlight` (unloaded
-mid-flight, or a duplicate late completion) returns `.discardedStale` and is dropped --
-that is the out-of-order / stale-completion tolerance.
+Each cell scene lists the mesh and texture cache keys it used. A cached mesh remembers its
+texture keys, so a cache hit still marks every texture the new cell uses. Collision uses the same
+mesh keys ([static collision](/engine/collision-world.md)).
 
-### Per-frame integration budget
+On unload, the cell is removed first. Then the keys it used, minus the keys any loaded cell
+still uses, are evicted on the build queue. Assets shared with a neighbor survive. A build that
+became stale is never shown, and its keys take the same eviction path.
 
-A scene swap is a full recompose (`RenderScene(merging:)` + `Renderer.setScene` ring
-regrow), so the controller integrates at most one *drawable* cell per frame. Void / failed
-/ stale completions are cheap (no recompose) and drained freely; the first successful
-integration stops drain and rest wait for later frames. Once builds finish, integrating 25
-drawable results costs at most 25 frames. Requests dispatch center-out (nearest to grid
-center first, deterministic coordinate tie-break), so launch cell builds first.
+A renderer scene swap prepares every allocation that can fail before it changes live state. Old
+allocations stay until the GPU frames that use them finish, so a quick A, B, C change cannot free
+memory B still needs.
 
-### Camera reseed
+## Script lifetime
 
-Renderer starts on an empty scene (clear frame). Before first drawable integration,
-streamer ignores renderer's synthetic demo-camera position and holds configured launch
-center; otherwise first update recenters grid around DemoScene. First integrated cell with
-drawable bounds reseeds the camera via `setScene(camera: SceneCamera.framing(bounds:))`,
-snapping the free-fly view onto the launch cell once it arrives. Every later recompose
-passes a nil camera, so streaming never yanks the view out from under the user. A first
-cell that drew nothing (no bounds) does not reseed -- the next drawable cell does.
+The streamer announces when a cell joins and leaves the world, so the
+[Papyrus world runtime](/engine/papyrus-world.md) can follow cells without the streamer knowing
+about it. The join event has a flag that is true only when the cell really joined, and false when a
+cell that never left was only rebuilt. So a rebuild does not fire load events again. A scene with no
+known `CELL` identity is never announced, because subscribers file script instances by it.
 
-### Asset ownership + safe unload
+## Distant LOD and coverage
 
-Each `CellScene` carries `CellAssets`: normalized mesh-cache + texture-cache keys touched
-while it built. `MeshLibrary` records a model's texture-key closure, so a cached mesh hit
-still marks every texture new cell owns. M4.3 collision cache shares mesh keys; collision-only
-models enter same set. Composition unions resident keys. See
-[static collision world](/engine/collision-world.md).
+Once the whole 5x5 grid is settled, the same queue builds one [distant LOD](/engine/distant-lod.md)
+scene. It comes last, so its many first-load assets cannot delay near cells.
 
-Unload removes cell scene, then computes `departed keys - resident union`; only that drop
-set goes to provider eviction on serial build queue. Shared neighbor assets survive. With
-one submitted build, unload eviction enters executor before next build. A success that
-became stale while building is never composed; its unowned keys take same eviction path.
-Runner/provider confinement covers loads + unloads: no cache access from main, no
-eviction/build race.
+After that, moving the center starts a coverage change. The old scene stays on screen. New cells
+build and wait off screen. Void and failed slots stay covered by LOD. When the matching LOD
+arrives, the waiting cells and the new LOD ring go live in one swap. Another move drops waiting
+cells outside the newest grid. Waiting cells keep their assets from eviction until the swap.
 
-Renderer scene swaps prepare every fallible ring allocation before mutating live state.
-Retired allocations remain resident until their GPU frame drains; purge treats every
-undrained retire entry as live, preventing A -> B -> C overlap from removing allocations B
-still uses. Offscreen pumping purges by same rule.
+## Interiors
 
-### Launch path (async)
+A door transition uses the same serial runner ([interiors](/engine/interiors.md)). The exterior
+stays on screen while the interior builds. Once the interior is ready, the grid stops: no new
+requests, no LOD, no unloads. The exterior scene is kept to return to. Leaving through a door
+builds or replaces the destination cell, moves the camera to the door's `XTEL` pose, and restarts
+the grid.
 
-`AppDelegate` locates game data, then builds a `CellSceneProvider` factory (VFS ->
-`ESMFile` -> Texture/MeshLibrary -> `CellSceneBuilder`) -- cheap setup only, no cell built.
-`GameViewController.viewDidLoad` runs the factory, starts `Renderer` on an empty scene, and
-wires a `CellStreamer` centered on FirstRenderCell: the renderer's per-frame `onFrame` hook
-drives `streamer.update` with the live free-fly position, and the streamer's sink calls
-`Renderer.setScene`. Both captures are weak -> no retain cycle (the controller owns both).
-Missing game data keeps fail-loud behavior (locator alert); a provider-setup failure past
-that gate logs `[ERROR]` and leaves the renderer on the synthetic `DemoScene` so the window
-is never blank forever.
+## Actors
 
-`Renderer.onFrame` is a main-thread `CallbackFanOut<SIMD3<Float>>` invoked in `draw(in:)`
-after `advanceCamera`, passing `freeFlyCamera.position`. Handlers run in registration order,
-and the streamer registers before the HUD's `wireHUDFrameUpdates(renderer:)` so streaming
-still runs first; it became a fan-out in issue #171, when a plain optional closure meant the
-second of two assignments silently dropped the first. The streamer may call `setScene` back
-synchronously inside its handler -- safe, since it is the same thread and still between
-frames (this frame has not encoded yet), so the frame draws the freshly streamed scene. The
-offscreen / test render paths register no handler, so they are unchanged.
+Actors are part of a cell, not a separate stream. The cell build resolves and builds its `ACHR`
+records on the same queue ([actor appearance](/engine/actor-appearance.md)). So actors follow the
+same rules as statics: their body and head keys are cell assets, and a body shared by two loaded
+cells survives when one leaves. Skeletons are kept by the mesh library outside cell assets,
+because they are small and shared by everyone.
 
-### Script lifetime seams
+`ACHR` records in the worldspace's persistent cell are placed in streamed cells by position.
 
-Issue #171 added two announcements so the [Papyrus VM](/engine/papyrus-vm.md) can follow
-cell lifetime without the streamer depending on it:
+Each cell counts its actors exactly: found = drawn + disabled + failed. Every failure has a
+reason. The fly benchmark fails on any count that does not add up, or any failure with no reason.
 
-```swift
-var onCellAttached: ((CellScene, Bool) -> Void)?
-var onCellDetached: ((CellSceneLocation) -> Void)?
-```
+## Memory
 
-The `Bool` is `firstIntegration` -- true when a cell genuinely joined the live world, false
-when a cell that never left was merely re-integrated, which is the signal not to re-fire load
-events. Emission lives in `opensky/Engine/World/Streaming/CellStreamerPapyrus.swift`, and a scene
-without a `CellSceneLocation` (a door destination whose CELL identity failed to resolve) is never
-announced, since the location is the key a subscriber files instances under. Four call sites
-carry a decision: an exterior integration reads `CellStreamCore.rebuilding` before
-`integrate` clears it; staged coverage cells announce nothing until `commitCoverageTransition`
-promotes them, in sorted coordinate order, which is also why `discardStagedCells(outside:)`
-emits no detach; an interior door transition maps `isRebuild` to `firstIntegration:
-!isRebuild` and detaches the previous interior only when it is not a rebuild; and the
-exterior branch of a door arrival does not detach the scene it replaces, which shares the
-arriving scene's location.
+`Data(contentsOf:options: .mappedIfSafe)` may copy a file instead of mapping it, especially on an
+external disk. The Skyrim archives are about 14.6 GiB, so copying them would fill memory before
+any cell loads. Archives and plugins are opened with `.alwaysMapped`. They stay read-only, and
+pages load only when touched.
 
-M3.4 adds one optional [distant LOD scene](/engine/distant-lod.md) to composition. Same
-runner/provider queue builds it only after desired 5x5 is fully accounted, so 100+ first-load
-LOD assets cannot starve near cells. First settlement still integrates cells progressively.
-Once full grid + LOD exist, recenter starts a coverage transaction: old composition remains
-live, incoming successful cells stage offscreen, void/failed slots remain covered by LOD,
-then matching LOD completion commits staged cells + ring in one renderer swap. Repeated
-recenters discard staged cells outside newest desired grid. Asset keep-set includes staged
-scenes, preventing cache eviction before commit; old cell/LOD keys evict only after new
-composition owns replacement refs.
+Streaming reports the Darwin physical footprint (`task_vm_info.phys_footprint`), not the resident
+set size. Real-data tests have two guards: sampling inside the process, and `tools/memguard.sh`
+outside it, which reads the same number with `/usr/bin/footprint` and kills the process if
+sampling stops ([testing](/testing.md)).
 
-### Interior suspension
-
-M3.6 routes door transitions through the same serial runner. M8.4.1 supplies the exact DOOR
-REFR selected by the walk-mode [interaction view ray](/engine/interaction.md); pending-source
-dedupe prevents key repeat. Exterior scene stays live during build. Interior success swaps
-renderer to one non-grid scene and freezes grid diffs, build dispatch, LOD, unload. Exterior
-composition remains retained as return cache. Returning through an interior door
-seeds/replaces destination exterior cell, teleports camera to XTEL pose, clears interior
-scene, resumes normal grid settlement. Asset eviction uses active interior keys while
-inside, exterior union after return. Full flow:
-[interior door transitions](/engine/interiors.md).
-
-### Actor streaming (M5.5)
-
-Placed actors are cell content, not a separate stream: `buildScene` /
-`buildInteriorScene` run the ACHR collect -> resolve -> assemble pass
-(`CellSceneBuilderActors.swift`) on the same serial queue, and the assembled
-placements merge into the cell's `RenderScene` before the touched-key drain.
-Consequences, all inherited from the statics design:
-
-- Build/evict lifecycle: actor body/head model keys land in `CellScene.assets`
-  -> unload drop-set subtracts the resident union, so a body mesh shared by
-  two resident cells survives one cell's departure. Skeletons + the shared
-  character skeleton are retained by `MeshLibrary` outside cell assets
-  (small, universally shared).
-- Worldspace-persistent ACHRs (stored under the (0,0) persistent CELL) map
-  into streamed cells by physical position — same rule as persistent teleport
-  doors; cached per WRLD on the builder.
-- Resolver indexes (NPC_/LVLN + RACE/ARMO/ARMA/OTFT/LVLI) build once on the
-  first actor-bearing cell; the one-time cost lands in that cell's actor
-  duration (visible as the fly-bench max, excluded from p95 by ranking).
-- Exact accounting per cell: discovered = rendered + disabled skips +
-  failures ([actor records](/formats/actors.md)); every failure carries a
-  reason string (M5.6 zero-unexplained rule). `CellBuildMetric` mirrors
-  counts + reasons + actor phase duration; `bench --fly-path` fails on any
-  per-cell mismatch, reason-less failure, or actor-build p95 over budget,
-  and prints one accounting line per touched cell (`ActorCellReport`).
-
-## Memory safety + observed plateau
-
-`Data(contentsOf:options:.mappedIfSafe)` may copy instead of map, especially on external
-volumes. Skyrim BSA set here is ~14.6 GiB, matching pre-fix ~15 GiB physical footprint
-before any resident cell existed. Eviction cannot fix that fill-phase growth.
-`BSAArchive` + `ESMFile` now require `.alwaysMapped`: files remain read-only external
-input, pages fault lazily, setup no longer materializes every archive in process memory.
-
-Streaming reports Darwin `task_vm_info.phys_footprint`, not RSS. Real-data tests use two
-guards: in-process sampling each pump tick plus `tools/memguard.sh`, which obtains same
-ledger value through `/usr/bin/footprint` and kills fail-closed if sampling breaks. Harness
-disables parallel execution, enumerates exact Swift Testing identifier first, requires
-exactly one executed/passed result, reuses one color/depth target pair, paces at 100 Hz, and
-throws on timeout. This prevents zero-test green, duplicate host processes, RSS blind
-spots, render-target churn, and infinite polling.
-
-Observed 2026-07-18 against read-only USB Skyrim data:
-
-- Guarded real-data 5x5 fill: 25 resident, 0 void; ~444 MB at fill, ~448 MB after far
-  recenter/unload, ~414 MB at second settled grid; watchdog peak below 0.5 GB.
-- `openskycli bench --fly-path --size 1280x720`: center -> east -> north settled footprints
-  433 -> 425 -> 419 MB, 462 MB peak; 35 expected unique builds, each once; 9 initial
-  residents unloaded; final 25 resident/0 void. 4037 frames: main-thread update + sync
-  render avg 2.79 ms, p95 5.33 ms, max 53.48 ms vs 33.33 ms avg/p95 budget.
-
-M4.3 collision-enabled fly path, 2026-07-19: 35 builds processed 2,393 shapes/230,034
-triangles; collision phase avg 102.11 ms, p95 450.37 ms, max 497.01 ms vs current 700 ms p95
-budget. Waypoint footprint 471 -> 524 -> 442 MB, 580 MB peak / 1,024 MB cap. 4,730 render
-frames avg 3.13 ms, p95 5.79 ms, max 20.24 ms.
-
-M5.5 actor-enabled fly path, 2026-07-20: 55 ACHRs discovered = 27 rendered + 27
-initially-disabled skips + 1 asset-level failure, exact accounting in every cell
-(template/visual chains across the path all resolve — 107/107 + 65/65 via `actor`
-probe; the single failure surfaces at assembly). Actor phase avg 425.76 ms, p95
-2164.08 ms, max 5832.06 ms vs 3000 ms p95 budget; max is the first actor-bearing
-cell paying the one-time resolver index build, the rest is first-load skinned body +
-FaceGen decode (optimization filed: GH issue #56). Waypoint footprint
-539 -> 608 -> 607 MB, 700 MB peak / 1,024 MB cap. 5,559 render frames avg 3.14 ms,
-p95 5.75 ms, max 17.66 ms; collision phase unchanged (p95 465.15 ms).
-
-M5.6 acceptance run, 2026-07-20 (`make probe`, full pass): per-cell report present
-for all 35 touched cells, zero unexplained failures — the one failure was
-reason-tagged (ACHR `000DC8DE` sabre cat: `NiSkinPartition` global influence index
-wrongly remapped through the partition palette). Resolved by issue #64; re-verified
-2026-07-23 the fly bench reports 55 = 28 rendered + 27 disabled + 0 failed, ACHR
-`000DC8DE` renders. 5,614
-stream frames avg 3.15 ms / p95 5.79 ms; actor phase avg 433.09 ms / p95
-2190.79 ms; footprint 543 -> 611 -> 570 MB, peak 702 / 1,024 MB cap. Interior
-(ChillfurrowFarm): 1 actors (1 drawn). Actor acceptance detail:
-[actor records](/formats/actors.md).
-
-Issue #56 follow-up, 2026-07-28: a time-profile of the cold fly path found actor
-body and FaceGen loads spending most sampled queue time decompressing DDS
-payloads through the Debug Swift LZ4 loop. The [BSA reader](/formats/bsa.md)
-now sends independent raw blocks to Apple's system decoder while preserving
-the clean-room linked-block path. With identical 55 = 28 rendered + 27
-disabled + 0 failed actor accounting, the 35-cell Debug run moved from
-577.33/3093.60/7218.41 ms actor average/p95/max to
-378.44/2224.46/4427.78 ms. The actor p95 gate returns from 4500 to 3000 ms;
-cold rig, clip, body, and FaceGen loads remain inside the measured phase.
-
-These are debug-build verification numbers, not general hardware promise. Hard gates: 1
-GiB fly benchmark, 3.5 GiB in-process real test, 4 GiB external watchdog, final settled
-footprint <1.6x initial.
+Limits: 1 GiB for the fly benchmark, 3.5 GiB inside a real-data test, 4 GiB for the outside
+watchdog, and a final settled footprint below 1.6 times the start.

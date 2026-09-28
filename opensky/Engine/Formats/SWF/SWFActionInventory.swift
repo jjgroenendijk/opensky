@@ -1,10 +1,10 @@
-// AS2 opcode/API inventory (milestone 8.3.1 stage 2): tallies what
+// AS2 opcode/API inventory: tallies what
 // ActionScript bytecode the movies handed to `record(_:path:)` actually use —
 // opcode frequency, the host/GFx member and method names reached through
 // ActionGetMember/ActionSetMember/ActionCallMethod/ActionCallFunction/
 // ActionGetVariable/ActionSetVariable/ActionNewMethod/ActionDefineLocal,
 // clip-event handler usage, and function/structure statistics. This is the
-// evidence for the 8.3.1 decision doc (`docs/decisions/swf-as2-scope.md`); it
+// evidence for `docs/decisions/swf-as2-census.md`; it
 // executes nothing, and never throws.
 //
 // Host/API name resolution is a structural heuristic, not stack simulation:

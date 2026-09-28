@@ -91,7 +91,3 @@ Byte layout table, then what was confirmed on the real install.
 - `make docs-links`: every link inside `docs/` points at a file that exists.
 - `make docs-length`: no page is longer than the limit in `tools/lint/docs-length.sh`. A
   page over the limit is split by topic, or cut. Do not raise the limit.
-
-Pages listed in `tools/lint/docs-length-baseline.txt` are older pages that are still over
-the limit. When you shorten one below the limit, remove it from that file; the check fails
-until you do. Never add a page to the file.

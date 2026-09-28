@@ -18,7 +18,7 @@
 // then the lower reference FormID — so a sweep and a ray disagreeing about
 // which of two coincident shapes was hit is not a thing that can happen.
 //
-// Documented in docs/engine/dynamic-bodies.md.
+// Documented in docs/engine/dynamic-narrowphase.md.
 
 import simd
 

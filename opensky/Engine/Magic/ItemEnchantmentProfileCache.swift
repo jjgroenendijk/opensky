@@ -23,7 +23,7 @@
 // present entry with a nil value is the answer "this item carries no
 // enchantment", not a miss to be resolved again.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/item-enchantments.md.
 
 import Foundation
 

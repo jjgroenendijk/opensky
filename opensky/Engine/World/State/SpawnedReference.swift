@@ -18,7 +18,7 @@
 // in. The two agree in practice, because every writer attributes the mutation
 // to the same cell it spawns into.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/reference-identity.md.
 
 import Foundation
 

@@ -4,17 +4,15 @@ title: Engine-wide game-data string decoding
 description: One lenient policy for every string read out of game data — UTF-8, then
   windows-1252, then ISO 8859-1, never a failure — and the narrow strict exception.
 tags: [decision, formats, text, encoding, localization]
-timestamp: 2026-08-10T00:00:00Z
 ---
 
 # String decoding for game data
 
 Binding for every parser that turns bytes from the user's install into text: BSA names,
 ESM/plugin fields, VMAD script data, NIF string tables, PEX string tables, SWF strings,
-localized string tables, and INI files. Resolves GitHub issue #72, which recorded the
-inconsistency: BSA and VMAD assumed windows-1252, PEX and parts of SWF assumed UTF-8, NIF
-and the string tables already had a fallback chain, and each site chose its own failure
-behavior.
+localized string tables, and INI files. Before it, BSA and VMAD assumed windows-1252, PEX
+and parts of SWF assumed UTF-8, NIF and the string tables had a fallback chain, and each
+site chose its own failure behavior.
 
 ## Decision
 
@@ -53,11 +51,10 @@ mod's plugin, is a cosmetic defect in one string; failing the read would drop th
 record, or mesh that carries it and take working content down with it. Mojibake in one
 string is recoverable and visible; a lost archive is neither.
 
-The other half of issue #72 — "must never silently corrupt lookups" — is handled by
-normalization rather than by decode: BSA and VFS paths are lowercased and separator-folded
-before lookup ([VFS](/formats/vfs.md)), so both the archive side and the request side of a
-comparison run through the same decode and the same folding. A wrong-encoding name still
-matches itself.
+Lookups must never be silently corrupted. That is handled by normalization rather than by decode:
+BSA and VFS paths are lowercased and separator-folded before lookup ([VFS](/formats/vfs.md)), so
+both the archive side and the request side of a comparison run through the same decode and the same
+folding. A wrong-encoding name still matches itself.
 
 Bounds, framing and length prefixes stay strict. Only the bytes-to-text step is lenient:
 `BinaryReaderError.outOfBounds` and `.unterminatedString` are unaffected, and a string
@@ -80,19 +77,8 @@ stays strict UTF-8 ([OpenSky save](/formats/opensky-save.md)).
 
 ## Consequences
 
-* `GameText.decodeLossy` is gone; `GameText.decode` absorbed it and lost its optional
-  return.
-* `PexError.invalidString` and `ScriptDataError.invalidString` are gone — nothing can raise
-  them any more. Callers that pattern-matched them handled a case that cannot occur.
-* Localized string table lookup no longer throws on undecodable bytes
-  ([strings](/formats/strings.md)); it still throws on framing that leaves the data block.
-* Text written back out is unchanged: `BinaryWriter.writeZString` still takes an explicit
-  encoding and still throws on an unencodable string, because when writing we choose the
-  encoding and an unrepresentable character is a real error.
-
-## Verification
-
-`openskyTests/Formats/GameTextTests.swift` covers all three tiers, the cp1252-before-Latin-1
-ordering, totality over lone surrogates, truncated UTF-8 and all 256 byte values, and the
-strict rejection path. `openskyTests/Formats/BinaryReaderTests.swift` covers the three reader
-entry points against a byte windows-1252 leaves undefined.
+* Localized string table lookup does not throw on undecodable bytes
+  ([strings](/formats/strings.md)). It still throws on framing that leaves the data block.
+* Text written back out is different: `BinaryWriter.writeZString` takes an explicit encoding
+  and throws on a string it cannot encode, because when writing we choose the encoding and an
+  unrepresentable character is a real error.

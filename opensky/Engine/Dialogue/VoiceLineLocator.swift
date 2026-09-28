@@ -10,7 +10,7 @@
 // that loaded neither gets no quest name, which is a wrong path rather than a
 // crash — `DialogueVoice` reports the miss instead of playing silence.
 //
-// Documented in docs/formats/fuz.md and docs/engine/audio.md.
+// Documented in docs/formats/fuz.md and docs/engine/audio-decoding.md.
 
 import Foundation
 

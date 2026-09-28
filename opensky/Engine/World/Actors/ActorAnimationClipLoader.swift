@@ -24,7 +24,7 @@
 //   so the clip binds. It is a substitution, and it is written down rather than
 //   silently made.
 //
-// Documented in docs/engine/combat.md and docs/engine/actor-animation.md.
+// Documented in docs/engine/combat-behavior.md and docs/engine/actor-animation.md.
 
 import Foundation
 

@@ -3,101 +3,86 @@ type: File Format
 title: BSA Archive (v105, Skyrim SE)
 description: On-disk layout of Skyrim SE .bsa archives and how OpenSky reads them.
 tags: [format, archive, io, lz4]
-timestamp: 2026-07-28T00:00:00Z
 ---
 
 # BSA archive, version 105
 
-Bethesda archive holding meshes, textures, sounds, scripts. Skyrim SE uses
-version 105; LE used 104 (16-byte folder records, zlib) — not supported.
+A BSA archive holds meshes, textures, sounds, and scripts. Skyrim SE uses version 105. The
+original Skyrim used version 104, with 16-byte folder records and zlib. OpenSky does not read
+version 104 or Fallout 4 BA2 files.
 
-Reference: UESP "Skyrim Mod:Archive File Format"
-(<https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format>).
-Impl: `opensky/Engine/Formats/BSA/BSAArchive.swift`. All integers little-endian.
-Folder and file names decode under the engine-wide lenient text policy
-([string decoding](/decisions/string-decoding.md)): vanilla is ASCII, mods carry
-high bytes in either UTF-8 or windows-1252, and a wrong-encoding name yields
-mojibake rather than rejecting the archive. Lookups fold case and separators on
-both sides, so such a name still matches itself.
+Source: UESP [Archive File Format](https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format).
+All integers are little-endian.
 
-## Header — 36 bytes at offset 0
+Folder and file names use the [string decoding](/decisions/string-decoding.md) rules.
+Vanilla names are ASCII. Mods can use UTF-8 or windows-1252. A name in the wrong encoding
+decodes to odd characters, but the archive still opens. Lookups ignore case and separator
+style on both sides, so such a name still finds itself.
 
-| offset | type   | field                 | notes                          |
-| ------ | ------ | --------------------- | ------------------------------ |
-| 0x00   | char4  | fileId                | `BSA\0`                        |
-| 0x04   | uint32 | version               | 105 (SSE)                      |
-| 0x08   | uint32 | folderRecordOffset    | 36                             |
-| 0x0C   | uint32 | archiveFlags          | bitfield, below                |
-| 0x10   | uint32 | folderCount           |                                |
-| 0x14   | uint32 | fileCount             |                                |
-| 0x18   | uint32 | totalFolderNameLength | incl. nulls, excl. len prefix  |
-| 0x1C   | uint32 | totalFileNameLength   | incl. nulls                    |
-| 0x20   | uint32 | fileFlags             | content-type hints, unused     |
+## Header (36 bytes at offset 0)
 
-archiveFlags bits OpenSky cares about: 0x1 folder names present, 0x2 file
-names present, 0x4 compressed by default, 0x100 embedded file names.
-Observed vanilla: Interface 0x3, Misc 0x13, Meshes0 0x87, Textures0 0x107.
+| Offset | Type | Field | Notes |
+| --- | --- | --- | --- |
+| 0x00 | char4 | fileId | `BSA\0` |
+| 0x04 | uint32 | version | 105 |
+| 0x08 | uint32 | folderRecordOffset | 36 |
+| 0x0C | uint32 | archiveFlags | Bits below |
+| 0x10 | uint32 | folderCount | |
+| 0x14 | uint32 | fileCount | |
+| 0x18 | uint32 | totalFolderNameLength | Includes nulls, not the length bytes |
+| 0x1C | uint32 | totalFileNameLength | Includes nulls |
+| 0x20 | uint32 | fileFlags | Content hints. Not used |
 
-## Folder records — folderCount x 24 bytes
+`archiveFlags` bits that OpenSky uses: `0x1` folder names present, `0x2` file names present,
+`0x4` compressed by default, `0x100` file names embedded in the data.
 
-| offset | type   | field    | notes                                     |
-| ------ | ------ | -------- | ----------------------------------------- |
-| 0x00   | uint64 | nameHash | TES4 hash; unused (we key by names)       |
-| 0x08   | uint32 | count    | files in folder                           |
-| 0x0C   | uint32 | padding  |                                           |
-| 0x10   | uint64 | offset   | file-record block + totalFileNameLength ! |
+Vanilla values: Interface `0x3`, Misc `0x13`, Meshes0 `0x87`, Textures0 `0x107`.
 
-Quirk: stored offset includes `totalFileNameLength`; subtract before seeking.
+## Folder records (24 bytes each)
 
-## File record blocks — per folder, in folder-record order
+| Offset | Type | Field | Notes |
+| --- | --- | --- | --- |
+| 0x00 | uint64 | nameHash | Not used. OpenSky looks up by name |
+| 0x08 | uint32 | count | Files in the folder |
+| 0x0C | uint32 | padding | |
+| 0x10 | uint64 | offset | See the note below |
 
-`bzstring` folder name (uint8 length incl. trailing null, chars, null) when
-flag 0x1, then `count` x 16-byte file records:
+The stored offset includes `totalFileNameLength`. Subtract it before you seek.
 
-| offset | type   | field    | notes                                          |
-| ------ | ------ | -------- | ---------------------------------------------- |
-| 0x00   | uint64 | nameHash | unused                                         |
-| 0x08   | uint32 | size     | bit 30 toggles archive default compression;    |
-|        |        |          | real packed size = size & 0x3FFFFFFF           |
-| 0x0C   | uint32 | offset   | absolute, to file data                         |
+## File record blocks
+
+One block per folder, in folder-record order. If flag `0x1` is set, the block starts with the
+folder name as a `bzstring`: a uint8 length (null included), the characters, and a null.
+Then come `count` file records of 16 bytes:
+
+| Offset | Type | Field | Notes |
+| --- | --- | --- | --- |
+| 0x00 | uint64 | nameHash | Not used |
+| 0x08 | uint32 | size | Bit 30 flips the default compression. Size is `size & 0x3FFFFFFF` |
+| 0x0C | uint32 | offset | Absolute offset of the file data |
 
 ## File name block
 
-fileCount zstrings (null-terminated), same order as records across folders.
+`fileCount` zstrings, in the same order as the file records.
 
 ## File data
 
-At each record's offset, `packedSize` bytes total:
+At each record's offset there are `size` bytes:
 
-1. flag 0x100 set -> `bstring` (uint8 length, chars, no null) full path first;
-   counts toward packedSize.
-2. Uncompressed entry -> raw payload.
-3. Compressed entry -> uint32 decompressedSize, then an LZ4 *frame*
-   (magic 0x184D2204). OpenSky parses the frame descriptor and blocks itself
-   (`opensky/Engine/Formats/LZ4.swift`, using the public lz4 Block/Frame format
-   specifications). Independent raw blocks (`FLG` bit 5 set) decode through
-   Apple's `COMPRESSION_LZ4_RAW`; linked blocks retain the clean-room Swift
-   decoder so matches can reach any prior output byte. The `BD` block-maximum
-   code and declared decompressed size bound every system decode. xxHash
-   checksums are skipped; output is validated against decompressedSize instead.
+1. If flag `0x100` is set: the full path as a `bstring` (uint8 length, characters, no null).
+   It counts toward `size`.
+2. An uncompressed file: the raw bytes.
+3. A compressed file: a uint32 decompressed size, then an LZ4 frame (magic `0x184D2204`).
 
-## Not implemented (yet)
+OpenSky parses the LZ4 frame itself, from the public LZ4 block and frame specifications.
+Independent blocks (`FLG` bit 5 set) go to Apple's `COMPRESSION_LZ4_RAW`. Linked blocks,
+where a match can reach back into earlier blocks, use OpenSky's own Swift decoder. xxHash
+checksums are skipped. The output size is checked against the decompressed size instead.
 
-* TES4 name-hash computation — lookups go through a name dictionary; needed
-  only for archives without name tables (none in vanilla SSE).
-* Version 104 (LE, zlib), Fallout 4 BA2.
+In the vanilla mesh and texture archives, every compressed file is an LZ4 frame. About 98%
+use independent blocks (`FLG 0x60`). The rest use linked blocks (`FLG 0x40`).
 
-## Verification
+## Not implemented
 
-Unit tests: synthetic in-code fixtures (`openskyTests/Formats/BSA/BSAArchiveTests.swift`).
-Runtime probe 2026-07-09 against vanilla SSE: Misc/Meshes0/Textures0/Interface
-parse (14032/19443/5891/386 files); extracted NIFs start with
-`Gamebryo File Format`, DDS with `DDS`, interface txt readable.
-
-Runtime probe 2026-07-28 across `Skyrim - Meshes0/1.bsa` and
-`Skyrim - Textures0...8.bsa`: all 65,637 compressed entries carried standard
-LZ4 frame magic; 64,601 used independent blocks (`FLG 0x60`) and 1,036 used
-linked blocks (`FLG 0x40`). The full actor-enabled fly benchmark exercised both
-paths with exact asset and actor accounting. System-decoding independent blocks
-reduced actor build average/p95/max from 577.33/3093.60/7218.41 ms to
-378.44/2224.46/4427.78 ms in Debug.
+- Computing the TES4 name hash. It is only needed for archives without name tables. Vanilla
+  SSE has none.

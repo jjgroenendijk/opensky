@@ -25,9 +25,9 @@
 // `iCrimeGoldStealHorse` and `iCrimeGoldWerewolf` — and UESP's talk pages only
 // say that "Normally a 1000 bounty will cause them to arrest you on sight".
 // `CrimeResponsePolicy.attackOnSightGold` is therefore 1000, the vanilla murder
-// bounty, stated as this engine's choice and flagged in docs/engine/crime.md.
+// bounty, stated as this engine's choice and flagged in docs/engine/guard-response.md.
 //
-// Documented in docs/engine/crime.md.
+// Documented in docs/engine/guard-response.md.
 
 import Foundation
 
@@ -144,7 +144,7 @@ nonisolated enum GuardAction: Equatable, Sendable {
 ///
 /// Session state rather than a component, for the reason `assaultedActors`
 /// is: it answers "what happened in this encounter", and a reloaded save starts
-/// every encounter from the ledger. Recorded in docs/engine/crime.md.
+/// every encounter from the ledger. Recorded in docs/engine/guard-response.md.
 nonisolated struct GuardResponseState: Equatable, Sendable {
     /// How close a guard has to be to open the conversation, in world units.
     /// The interaction ray's reach, so a guard speaks from where the player

@@ -1,267 +1,200 @@
 ---
 type: Subsystem
 title: Perks at runtime
-description: Owning perks on an actor, the entry-point evaluator every combat and magic
-  formula queries, which entry points are covered, the condition-tab subjects the engine can
-  and cannot bind, and the seams perks are wired into.
+description: Owning perks, ranks as record chains, the entry-point evaluator, condition tab
+  subjects, the formulas that ask, and perk abilities.
 tags: [engine, progression, perks, combat, magic, conditions, runtime-state]
-timestamp: 2026-08-19T00:00:00Z
 ---
 
 # Perks at runtime
 
-The record side is [perks](/formats/perks.md): what a PERK is, how its effect sections
-decode, and how `PerkStore` indexes entry points across the load order. This page is the
-runtime half — who owns a perk, and what an owned perk does to a number.
+The record side is on the [perks](/formats/perks.md) page: what a `PERK` is, how its effect
+sections decode, and how entry points are indexed across the load order. This page covers who
+owns a perk, and what an owned perk does to a number.
 
-Two questions, kept apart on purpose:
-
-- **Ownership** is a world-state component and a mutation layer over it (`PerkState`,
-  `PerkRuntime`), the same shape a spellbook has.
-- **Evaluation** is a pure fold over function payloads (`PerkEntryPointEvaluator`) wrapped in
-  a runtime that gathers owned effects and runs their conditions
-  (`PerkRuntimeEvaluation.swift`).
-
-## Contents
-
-- Owning a perk
-- Ranks are chains, not numbers
-- The entry-point evaluator
-- Which entry points are covered
-- Condition tabs and the subjects they run against
-- Wired seams
-- Abilities
-- Scripting and conditions
-- What is deliberately absent
+Ownership is a world state component. Evaluation is a pure calculation, and a runtime around it
+gathers the owned effects and checks their conditions.
 
 ## Owning a perk
 
-`PerkState` stores a flat, ascending list of owned PERK identities and nothing else. Every
-mutation goes through `PerkRuntime`, which writes through `WorldStateStore`, so a grant lands
-in the journal, the dirty counts and the save exactly as learning a spell does
-([runtime state](/engine/runtime-state.md)). The component is dropped once it empties, so an
-actor that owns no perk is not dirty for the slot.
+The perk component stores a sorted list of owned `PERK` identities, and nothing else. Every
+change writes through the world state, so a new perk reaches the change log, the dirty counts,
+and the save exactly like a learned spell ([runtime state](/engine/runtime-state.md)). The
+component is removed when it becomes empty.
 
-Two rules of direction, the same pair the spellbook applies:
+Two rules, as for the spellbook:
 
-- Adding a perk this load order does not carry is **refused** and counted
-  (`PerkRuntimeTally.unresolvedPerks`). A key nothing resolves could never be evaluated.
-- A *stored* key that stops resolving is **kept**. Removing a plugin must not destroy
-  progress; the key is simply invisible to every query that goes through `PerkStore`.
+- Adding a perk this load order does not have is refused and counted. It could never be
+  evaluated.
+- A stored perk that stops resolving is kept. Removing a plugin must not destroy progress. The
+  perk is only invisible to every query.
 
-NPCs are seeded from their own `PRKR` run, resolved through the template chain on the ACBS
-`Use Spell List` flag — UESP names that bit "Use spelllist (both spells and perks)", so an
-actor delegating its spell list delegates its perk list with it
-(`ActorPerkBaselineResolver`). The seed is lazy and idempotent, exactly like the spell grant:
-it happens the first time anything asks about that actor rather than for every resident actor
-at cell build, because a cell of townsfolk who never fight would otherwise write a component
-each to say what their base records already say.
+An NPC gets the perks of its own `PRKR` list. The list comes through the template chain when
+the `ACBS` "Use Spell List" flag is set. UESP names that bit "Use spelllist (both spells and
+perks)", so an actor that takes its spells from a template takes its perks from it too. The seed
+happens the first time something asks about that actor, not at cell build. A cell of townsfolk
+who never fight would otherwise each write a component that only repeats their base record.
 
-The player is seeded **empty** — no component at all. There is no NPC_ record behind the
-player in this engine, and the perks a player has are the ones they took.
+The player starts with no perks, because there is no `NPC_` record behind the player here.
 
-Owned perks travel in the save's `PRKS` chunk, one entry per actor that owns at least one.
-Only identities are written: a rank is derived from the chain and the abilities perks grant
-are re-established on load by the same reconcile that grants them, so nothing here duplicates
-what `AEFF` already carries.
+Owned perks are saved in the `PRKS` chunk, one entry per actor with at least one perk. Only the
+identities are written. The rank is derived from the chain, and the abilities are granted again
+on load ([save chunks](/formats/save-chunks.md)).
 
 ## Ranks are chains, not numbers
 
-Each rank of a vanilla perk is a separate PERK record joined by `NNAM`, and the game adds the
-record for the rank it wants. Taking the second rank of Armsman adds `Armsman20`; `Armsman00`
-then switches *itself* off, because its perk-owner condition tab is
-`HasPerk Armsman20 == 0` — read off this machine's install, and pinned by
-`PerkRuntimeRealDataTests`.
+Each rank of a vanilla perk is its own `PERK` record, joined by `NNAM`. The game adds the record
+for the rank it wants. Example: taking the second rank of Armsman adds `Armsman20`. Then
+`Armsman00` turns itself off, because its perk owner condition is `HasPerk Armsman20 == 0`.
+This was read from the local install.
 
-So there is no stored rank number. `PerkRuntime.rank(inChainFrom:on:)` walks the `NNAM` chain
-and answers the position of the deepest owned record: 0 when none is owned, 1 for the head
-alone, and the deepest position otherwise. Deepest rather than a count, because a script may
-grant a later rank without the earlier ones and reporting "rank 1" for an actor holding the
-fifth record would be wrong.
+So no rank number is stored. The rank is the position of the deepest owned record in the `NNAM`
+chain: 0 when none is owned, 1 for the head alone. The deepest is used, not a count, because a
+script can grant a later rank without the earlier ones.
 
-The `PRKR` rank byte is not stored either. UESP records it as dead: "uint8 Rank (no longer in
-use)".
+The `PRKR` rank byte is not stored. UESP marks it "uint8 Rank (no longer in use)".
 
 ## The entry-point evaluator
 
-`PerkEntryPointEvaluator` is pure: given a value and a list of operands — a function, its
-`EPFD` payload and its `PRKE` priority — it returns the modified value plus a count of what
-applied and a reason for everything that did not. No store, no world, no conditions, so every
-rule below is a plain assertion in a test.
+The evaluator takes a value and a list of operands. Each operand is a function, its `EPFD`
+payload, and its `PRKE` priority. It returns the new value, how many applied, and a reason for
+each one that did not. It uses no store, no world, and no conditions.
 
-The arithmetic is UESP's "Function Types" table, quoted per function:
+The math is UESP's "Function Types" table:
 
-| Id | Function | New value | Implemented |
+| Id | Function | New value | Done |
 | --- | --- | --- | --- |
 | 01 | Set Value | `VALUE` | yes |
 | 02 | Add Value | `Value + AMOUNT` | yes |
 | 03 | Multiply Value | `Value * FACTOR` | yes |
-| 04 | Add Range to Value | `Value + random(MIN, MAX)` | no — see below |
+| 04 | Add Range to Value | `Value + random(MIN, MAX)` | no |
 | 05 | Add Actor Value Mult | `Value + AV * FACTOR` | yes |
 | 06 | Absolute | `Abs(Value)` | yes |
 | 07 | Negative ABS Value | `-Abs(Value)` | yes |
-| 08 | Add Level List | list-valued | no |
-| 09 | Add Activate Choice | button-valued | no |
-| 0A | Select Spell | spell-valued | no |
-| 0B | Select Text | text-valued | no |
+| 08 | Add Level List | a list | no |
+| 09 | Add Activate Choice | a button | no |
+| 0A | Select Spell | a spell | no |
+| 0B | Select Text | a text | no |
 | 0C | Set AV Mult | `AV * FACTOR` | yes |
 | 0D | Multiply AV Mult | `Value * AV * FACTOR` | yes |
 | 0E | Multiply 1 + AV Mult | `Value * (1 + AV * FACTOR)` | yes |
-| 0F | Set Text | text-valued | no |
+| 0F | Set Text | a text | no |
 
-`Add Range to Value` is the one *numeric* function left out. Neither UESP nor xEdit documents
-the distribution or the seed, and inventing one would make a formula that is supposed to be
-reproducible depend on a number this engine made up. It is counted like the others.
+`Add Range to Value` is the only number function left out. Neither UESP nor xEdit gives the
+random distribution or the seed. Inventing one would make a formula that should be repeatable
+depend on a made-up number.
 
-Everything a function cannot do is a counted no-op, never a zero: an unsupported function, a
-missing or mismatched payload, an actor value the caller cannot read, and a result that comes
-out non-finite all leave the value exactly as it arrived. That is the identity rule the whole
-subsystem follows — **an entry point nothing implements never changes a number**.
+Anything a function cannot do leaves the value unchanged and is counted. This covers an
+unsupported function, a missing or wrong payload, an actor value the caller cannot read, and a
+result that is not finite. The rule for the whole system: an entry point nothing implements
+never changes a number.
 
-### Ordering
+### Order
 
-The `PRKE` priority byte is the only ordering a record carries, and UESP is candid about it:
-"Priority - Assumed to be how to order/iterate through perk sections". OpenSky folds operands
-in **descending priority**, ties in the caller's order — which `PerkStore`'s entry-point index
-has already fixed to `(priority, plugin, object id, effect position)`, so the same load order
-always folds the same effects in the same sequence.
+The `PRKE` priority byte is the only order a record gives. UESP says: "Priority - Assumed to be
+how to order/iterate through perk sections". OpenSky applies operands from the highest priority
+down. Ties keep the index order: priority, plugin, object ID, effect position. So one load order
+always applies the same effects in the same order.
 
-Ordering only changes an answer when a `Set Value` competes with something else: addition and
-multiplication over the rest commute. The choice is recorded here rather than presented as
-certain.
+Order matters only when a `Set Value` meets another function. This order is a choice, not a
+known fact.
 
 ## Which entry points are covered
 
-Coverage is a property of the *function*, not of the entry point id. The evaluator answers
-for any of the 92 entry points whose owned effects use one of the nine numeric functions
-above, and every entry point id the name table does not know still evaluates — to identity.
-
-What differs per entry point is whether a formula asks. Wired today:
+Any entry point whose effects use one of the nine number functions can be evaluated. An unknown
+entry point ID evaluates to no change. What differs is whether a formula asks. These ask today:
 
 | Entry point | Id | Asked by |
 | --- | --- | --- |
-| Mod Attack Damage | 35 | melee swing and bow shot damage |
-| Mod Percent Blocked | 39 | the blocked fraction, both directions of a fight |
-| Mod Spell Cost | 38 | every cast's magicka cost |
+| Mod Attack Damage | 35 | melee and bow damage |
+| Mod Percent Blocked | 39 | the blocked fraction, for both sides of a fight |
+| Mod Spell Cost | 38 | the magicka cost of every cast |
 
-Those three are the first, fourth and — for blocking — the entry point vanilla's Shield Wall
-chain hooks; `Mod Attack Damage` alone is 81 of the 622 entry-point effects in the install
-([perks](/formats/perks.md) has the full histogram). Every other entry point is *evaluable*
-and simply has no caller yet: nothing asks about lockpicking, prices, detection, tempering or
-enchanting because those formulas do not exist in this engine.
+Nothing asks about lockpicking, prices, detection, tempering, or enchanting yet, because those
+formulas do not exist.
 
-`Mod Bow Zoom` (20) is the closest near miss: Eagle Eye's zoom is an entry point, and the
-archery graph variables it would drive (`bowZoom`, `bAimActive`) are still absent
-(`ArcheryGraphNames`).
+## Condition tabs and their subjects
 
-## Condition tabs and the subjects they run against
+An entry-point effect has one to three `PRKC` condition tabs. The `PRKC` byte is an index into
+the entry point's own list of condition subjects, not a run-on type. For `Mod Attack Damage` the
+list is (Perk Owner, Weapon, Target), so tab 1 asks about the weapon. OpenSky copies that column
+of UESP's "Perk Effect Types" table for all 92 entry points.
 
-An entry-point effect carries one to three `PRKC` condition tabs. The `PRKC` byte is an index
-into the entry point's own documented condition-type list, not a run-on type: for
-`Mod Attack Damage` the list is (Perk Owner, Weapon, Target), so tab 1 is asked about the
-weapon. `PerkConditionSubject` transcribes that column of UESP's "Perk Effect Types" table for
-all 92 entry points.
+A caller binds the subjects it knows. A melee formula knows the perk owner and the target. It
+cannot bind a weapon, item, enchantment, or spell, because those are forms, not placed
+references that conditions such as `HasKeyword` can run on.
 
-A caller binds the subjects it knows. A melee formula knows the perk owner and the target; it
-cannot bind `weapon`, `item`, `enchantment` or `spell`, because those name inventory and
-record forms rather than placed references the condition machinery can run `HasKeyword`
-against.
+A tab whose subject is not bound is skipped and counted, not failed. This is on purpose, and it
+is knowingly wrong in one direction. Example: `Armsman00`'s weapon tab checks for a one-handed
+weapon. With the tab skipped, the perk also raises two-handed damage. Failing the tab instead
+would turn off every vanilla damage perk, which is a worse and silent error. The counter shows
+how often it happens.
 
-**A tab whose subject the caller did not bind is skipped and counted**
-(`PerkRuntimeTally.unboundConditionSubjects`), not failed. This is a deliberate
-over-application and the one place the subsystem is knowingly wrong: `Armsman00`'s weapon tab
-checks that the weapon is one-handed, so with the tab skipped the perk currently raises
-two-handed damage as well. Failing the tab instead would make every vanilla damage perk inert,
-which is a worse wrong answer and a silent one. The counter is how much of it happened, and to
-what.
+A bound tab is evaluated strictly by the normal
+[condition evaluator](/engine/condition-evaluation.md). An unimplemented function is false with
+a reason, and the effect does not apply.
 
-A tab that *is* bound is evaluated strictly through the ordinary `ConditionEvaluator`
-([conditions](/formats/conditions.md)): an unimplemented function is the usual reason-tagged
-false, and the effect does not apply.
+## Where perks change numbers
 
-## Wired seams
-
-Each seam multiplies the perk term into the same place the fortify term already occupied,
-which is the shape UESP "Skyrim:Weapons" gives:
+Each formula multiplies the perk term in the same place as the fortify term. This follows the
+shape on UESP "Skyrim:Weapons":
 `... * (1 + perk effects) * (1 + item effects) * (1 + potion effect)`.
 
-- **Melee** (`GameViewController.meleeAttackMultiplier`) — `CombatFortifyBonus.melee` times
-  the `Mod Attack Damage` multiplier, into `MeleeDamage`'s `attackMultiplier`
-  ([melee combat](/engine/melee-combat.md)).
-- **Archery** (`archeryAttackMultiplier`) — the same entry point beside
-  `CombatFortifyBonus.archery` ([archery](/engine/archery.md)).
-- **Blocking** (`meleeBlockMultiplier`) — `CombatFortifyBonus.block` times the
-  `Mod Percent Blocked` multiplier, into `MeleeDamage`'s `bonusMultiplier`. Both directions of
-  a fight route through it, so a blow from an NPC and a blow from the player are reduced by
-  one implementation. This also closes the M19 gap where the block fortify term was computed
-  and never supplied.
-- **Spell cost** (`CasterRuntime.cost(of:caster:)`) — the SPIT half-cost perk *when the caster
-  owns it*, then `Mod Spell Cost` over what is left. The SPIT link was decoded in M19 and
-  consumed by nobody; the ownership check is what this item adds
-  ([magic](/engine/magic.md)).
+- Melee and archery: the fortify bonus times the `Mod Attack Damage` result
+  ([melee combat](/engine/melee-combat.md), [archery](/engine/archery.md)).
+- Blocking: the block fortify bonus times the `Mod Percent Blocked` result. A blow from an NPC and
+  a blow from the player use the same code.
+- Spell cost: the `SPIT` half-cost perk, if the caster owns it, then `Mod Spell Cost` on what is
+  left ([magic](/engine/magic.md)).
 
-### One discount, authored twice
+### One discount, written twice
 
-Measured on this machine's install on 2026-08-19: `Flames` costs 24 and names
-`DestructionNovice00` as its SPIT half-cost perk, and that perk's only effect is
-`Mod Spell Cost` x 0.5. The header field and the entry point are the same discount written
-down twice, so applying both would charge 6 where the game charges 12.
+On the local install, `Flames` costs 24 and names `DestructionNovice00` as its half-cost perk.
+That perk's only effect is `Mod Spell Cost` x 0.5. So the header field and the entry point are
+the same discount. Applying both would charge 6, where the game charges 12.
 
-The header halving therefore applies only when the perk it names does **not** hook
-`Mod Spell Cost` itself. Which of the two mechanisms the original engine reads is not
-documented anywhere this project can cite; the number it charges is observable, and this rule
-reproduces it under either reading while still honouring a mod that authors the header field
-alone.
+So the header halving applies only when the named perk does not itself hook `Mod Spell Cost`. No
+source says which one the game reads. This rule gives the observed cost either way, and still
+works for a mod that sets only the header field.
 
-Note the second-order consequence of the unbound `spell` subject: `DestructionNovice00`'s
-condition tab runs against the spell and gates the discount to novice Destruction spells. That
-tab is skipped here, so an owner of the perk currently pays less for every spell, not only for
-that school. Counted like every other unbound subject.
+The unbound spell subject has a side effect here. `DestructionNovice00`'s condition limits the
+discount to novice Destruction spells. That tab is skipped, so an owner currently pays less for
+every spell. It is counted like every other unbound subject.
 
 ## Abilities
 
-An ability-type perk effect grants a SPEL for as long as the perk is owned.
-`PerkAbilityApplication.reconcile` makes the stored perk-sourced effects match the owned set:
-the whole effect list of each granted spell is applied as `constant` effects through the M19
-active-effect runtime, and losing the perk dispels exactly those.
+An ability perk effect grants a `SPEL` while the perk is owned. A reconcile step makes the
+effects from perks match the owned perks. Each granted spell's effects are applied as constant
+[active effects](/engine/magic.md). Losing the perk removes exactly those.
 
-It is a reconcile rather than an add hook for the reason worn enchantments are
-([magic](/engine/magic.md)): perks arrive from a script, a seed and a load, and hanging the
-grant off each door would be one missed call away from an effect that never comes off. Calling
-it twice changes nothing.
+It is a reconcile, not a hook on "add". Perks come from scripts, seeds, and loads, and a hook on
+each path is one missed call away from an effect that never goes away.
 
-`ActiveEffectSourceKind.perk` exists so the reconcile can tell a perk's ability from the same
-spell an actor also knows in its own right. Dispelling by source record alone would take off
-an effect the actor still owns the perk for.
+Effects from perks are marked with a perk source. So the reconcile can tell a perk's ability
+apart from the same spell the actor knows on its own. Removing by spell alone would remove an
+effect the actor still has the perk for.
 
-An entry-point function that *selects* a spell is not an ability: that spell is cast when the
-entry point fires — a combat hit, a bash — not carried. Nothing casts it yet.
+A function that selects a spell is not an ability. That spell is cast when the entry point fires,
+for example on a hit, and is not carried. Nothing casts it yet.
 
-## Scripting and conditions
+## Scripts and conditions
 
-- `Actor.AddPerk`, `Actor.RemovePerk` and `Actor.HasPerk` are registered
-  ([Papyrus VM](/engine/papyrus-vm.md)). A grant goes through `PerkRuntime` and reconciles
-  abilities in the same call, so a scripted perk is saved exactly like a seeded one. A session
-  with no perk data is a reason-tagged failure rather than an actor who has taken nothing.
-- The `HasPerk` condition function is stored index 448, Creation Kit 4544, parameter 1
-  `ptPerk`. It is not an optional extra: it is what makes a rank chain switch itself off. The
-  seam it reads is `PerkConditionResolution` on `ConditionContext`, rebuilt from the store per
-  evaluation so a perk's own condition always sees live ownership.
-- A `HasPerk` parameter naming a perk no loaded plugin defines is `unavailablePerks`, not
-  "this actor does not have it". Plugin-relative resolution would answer with an identity for
-  any FormID whose plugin is loaded, so the record has to exist, not merely resolve — the same
-  rule the keyword seam applies.
+- `Actor.AddPerk`, `Actor.RemovePerk`, and `Actor.HasPerk` are native functions
+  ([Papyrus VM](/engine/papyrus-vm.md)). A grant also updates abilities in the same call, so a
+  perk from a script is saved like any other. A session with no perk data fails with a reason,
+  instead of answering "no perks".
+- The `HasPerk` condition is stored index 448, Creation Kit 4544, with parameter 1 `ptPerk`. It is
+  needed: it is how a rank chain turns itself off. It reads live ownership on every evaluation.
+- A `HasPerk` that names a perk no loaded plugin defines is counted as unavailable. It does not
+  mean "this actor does not have it". The record must exist, not only resolve, like the keyword
+  rule.
 
-## What is deliberately absent
+## Not part of this system
 
-- Perk-point spending and tree prerequisites, which are
-  [character leveling](/engine/character-leveling.md)'s: `PerkTreeSpendValidator` is the only
-  place a tree, a rank order and a skill requirement gate a grant. `AddPerk` still grants
-  without charging anything, which is what the Creation Kit says it does, and that is exactly
-  why the two layers are separate — a quest, a script and a race all hand out perks no tree
-  gates.
-- Skill XP and level-ups ([skill advancement](/engine/skill-advancement.md) and
-  [character leveling](/engine/character-leveling.md)).
-- Any perk UI (item 20.7). The perk tree's layout comes from AVIF
-  ([actor value information](/formats/actor-value-information.md)), not from PERK.
-- A caller for every entry point but the three wired above. They evaluate; nothing asks.
+- Spending perk points and tree requirements belong to
+  [character leveling](/engine/character-leveling.md). `AddPerk` grants without cost, as the
+  Creation Kit says. That is why the two layers are separate: quests, scripts, and races hand
+  out perks that no tree gates.
+- Skill experience: [skill advancement](/engine/skill-advancement.md).
+- The perk tree layout comes from `AVIF`
+  ([actor value information](/formats/actor-value-information.md)), not from `PERK`.

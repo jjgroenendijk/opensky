@@ -3,7 +3,7 @@
 // 17x17 sub-mesh, the BTXT base texture FormID, and the ATXT layers with
 // their VTXT opacities baked dense onto the quadrant grid. Texture
 // resolution (LTEX -> TXST) and GPU upload live in CellSceneBuilder; the
-// splat draw path is documented in docs/rendering/metal4-renderer.md.
+// splat draw path is documented in docs/rendering/scene-drawing.md.
 //
 // Authoring conventions (docs/decisions/coordinates.md): Skyrim Z-up world at
 // native units, +X east, +Y north, +Z up. Triangles wind counter-clockwise

@@ -1,66 +1,47 @@
 ---
 type: File Format
 title: Perks
-description: PERK record layout — the header, the effect sections and their typed payloads,
-  the entry-point enumeration and the EPFD function-data union — plus the store that indexes
-  entry points and the histogram observed on a vanilla install.
+description: PERK layout (header, effect sections, entry points, EPFD function data), the two
+  meanings of DATA, and header bytes that do not mean what they seem.
 tags: [format, esm, progression, perks, conditions, record]
-timestamp: 2026-08-19T00:00:00Z
 ---
 
-# Perks
+# Perks (PERK)
 
-PERK is the record behind every perk the player picks and every passive an actor carries. A
-perk is a header, a run of availability conditions, and a list of typed effects: set a quest
-stage, grant an ability spell, or hook an *entry point* — a named place in a combat, magic or
-world formula where the engine asks "does anything modify this value?".
+A `PERK` record is behind every perk the player picks and every passive bonus an actor has. It
+is a header, availability conditions, and a list of effects. An effect can set a quest stage,
+grant an ability spell, or hook an entry point.
 
-Entry points are the reason decode fidelity here matters. They are the interface between the
-perk system and every other system, so what a perk can do at runtime is bounded by what this
-record decodes.
+An entry point is a named place in a game formula where the engine asks "does anything change
+this value?". Example: Mod Attack Damage. Entry points connect perks to every other system. So
+what a perk can do at runtime depends on how well this record is decoded. The runtime is on the
+[perks](/engine/perks.md) page.
 
-## Contents
+Sources:
 
-- Sources
-- Record fields
-- Effect sections
-- Entry points
-- Function data
-- The two DATA fields
-- Decode policy
-- PerkStore
-- Observed on a vanilla install
-- The EPFD actor-value word is a float
-- What is not decoded here
+- UESP [PERK](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PERK), with its "Perk
+  Sections", "Perk Effect Types", and "Function Types" tables.
+- xEdit `dev-4.1.6` `Core/wbDefinitionsTES5.pas`: `wbRecord(PERK, ...)` at line 5908,
+  `wbPerkDATADecider`, `wbEPFDDecider`, and `wbEntryPointsEnum` at line 2426.
 
-## Sources
-
-- UESP "Skyrim Mod:Mod File Format/PERK",
-  <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PERK>, including its "Perk Sections",
-  "Perk Effect Types" and "Function Types" tables.
-- xEdit dev-4.1.6 `Core/wbDefinitionsTES5.pas`, `wbRecord(PERK, 'Perk', [...])` at line 5908,
-  which gives the field order, the `wbPerkDATADecider` effect union, the `wbEPFDDecider`
-  function-data union, and `wbEntryPointsEnum` at line 2426.
-
-Where the two disagree, xEdit is followed: it enumerates all 92 entry points in index order,
-while UESP lists them by hexadecimal id in an alphabetized table and stops short of the last
-few. The two agree on every id they both name.
+OpenSky follows xEdit where they differ. xEdit lists all 92 entry points in order. UESP sorts
+them by name and misses the last few. They agree on every ID both name.
 
 ## Record fields
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `EDID` | zstring | Editor id. |
-| `VMAD` | struct | Script attachments; PERK is a fragment carrier. See [VMAD](/formats/vmad.md). |
-| `FULL` | lstring | In-game name. |
-| `DESC` | lstring | Description. |
-| `ICON` | zstring | Editor-side image path. |
-| `CTDA` | struct | Availability conditions — whether the perk can be taken. See [conditions](/formats/conditions.md). |
-| `DATA` | uint8[5] | Header, below. |
-| `NNAM` | formid | The next rank of this perk, or NULL on the last one. |
-| effects | section run | Repeated `PRKE`...`PRKF` sections, below. |
+| `EDID` | zstring | Editor ID |
+| `VMAD` | struct | Scripts. See [VMAD](/formats/vmad.md) |
+| `FULL` | lstring | Name |
+| `DESC` | lstring | Description |
+| `ICON` | zstring | Image path for the editor |
+| `CTDA` | struct | Availability conditions. See [conditions](/formats/conditions.md) |
+| `DATA` | uint8 x 5 | Header, below |
+| `NNAM` | FormID | Next rank of this perk. Null on the last rank |
+| effects | sections | `PRKE` ... `PRKF` sections, below |
 
-`DATA` at record level is five bytes, one per field:
+Header `DATA`:
 
 | Offset | Type | Name |
 | --- | --- | --- |
@@ -70,59 +51,64 @@ few. The two agree on every id they both name.
 | 0x03 | uint8 | Is playable |
 | 0x04 | uint8 | Is hidden |
 
-Ranks past the first are separate PERK records, chained through `NNAM`. The rank-count byte
-is *not* the length of that chain and the level byte is not the skill requirement — both are
-measured under "Observed on a vanilla install" below, because the reading matters and neither
-source states it.
+Each rank after the first is its own `PERK` record, linked through `NNAM`.
 
-The engine type is `Perk` (`opensky/Engine/Formats/ESM/Records/Perk.swift`); the effect types
-live in `PerkEffect.swift` and `PerkEntryPoint.swift`, and the field-run state machine in
-`PerkDecoder.swift`.
+## Header bytes that do not mean what they seem
+
+The rank count is not the length of the `NNAM` chain. `Armsman00` says rank count 1, but its
+chain has five records: `Armsman00`, `Armsman20`, `Armsman40`, `Armsman60`, `Armsman80`. Many
+records disagree like this. xEdit shows a matching count only because it recomputes it after
+loading (`wbPERKNumRanksAfterLoad`).
+
+The level byte is 0 on every vanilla record, even `Armsman80`, which the game offers only at
+One-Handed 80. The requirement is a condition (`GetBaseActorValue`), not a header field.
+
+OpenSky keeps both bytes as they are and does not use them for rank or level logic.
 
 ## Effect sections
 
-Every effect opens with `PRKE` and closes with `PRKF`. `PRKE` is three bytes — type, rank,
-priority — and the type byte decides what the `DATA` inside the section means:
+Each effect starts with `PRKE` and ends with `PRKF`. `PRKE` is three bytes: type, rank,
+priority. The rank counts from 0, so 0 is rank 1. The type decides what `DATA` inside the
+section means:
 
-| Type | Section | `DATA` payload |
+| Type | Section | `DATA` |
 | --- | --- | --- |
-| 0 | Quest | formid `QUST`, uint16 stage, two unused bytes carrying junk |
-| 1 | Ability | formid `SPEL` |
-| 2 | Entry point | uint8 entry point, uint8 function, uint8 declared condition-tab count |
+| 0 | Quest | `QUST` FormID, uint16 stage, two unused bytes with random content |
+| 1 | Ability | `SPEL` FormID |
+| 2 | Entry point | uint8 entry point, uint8 function, uint8 condition tab count |
 
-The rank byte counts from zero, so a value of 0 is rank 1.
-
-An entry-point section then carries its conditions and its function parameters:
+An entry-point section then holds:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `PRKC` | int8 | Opens a condition tab; the value is which subject the tab runs against. |
-| `CTDA` | struct | Belongs to the tab the last `PRKC` opened. |
-| `EPFT` | uint8 | Declared shape of the `EPFD` payload. |
-| `EPF2` | lstring | Button label, on the "add activate choice" function only. |
-| `EPF3` | uint16[2] | Script flags (bit 0 run immediately, bit 1 replace default) and a VMAD fragment index. |
-| `EPFD` | variable | The function's parameters. See "Function data". |
+| `PRKC` | int8 | Starts a condition tab. The value says which subject the tab tests |
+| `CTDA` | struct | A condition in the tab the last `PRKC` started |
+| `EPFT` | uint8 | Shape of `EPFD` |
+| `EPF2` | lstring | Button label. Only for "add activate choice" |
+| `EPF3` | uint16 x 2 | Script flags (bit 0 run immediately, bit 1 replace default) and a VMAD fragment index |
+| `EPFD` | varies | Function parameters, below |
 
-The declared tab count and the tabs a record actually authors need not agree: `Armsman40`
-declares three for Mod Attack Damage and authors two. xEdit marks the count ignored on write
-because it is fixed per entry point, so OpenSky keeps both numbers and enforces neither.
+The declared tab count and the real tabs can differ. `Armsman40` declares three tabs for Mod
+Attack Damage and has two. xEdit ignores the count on write, because each entry point has a
+fixed count. OpenSky keeps both numbers.
 
-Which subject each `PRKC` index names depends on the entry point — typically perk owner,
-target, attacker, weapon or spell, and UESP's "Perk Effect Types" table lists them per entry
-point. OpenSky keeps the index raw rather than naming it, because nothing evaluates a tab
-yet.
+The subject of each tab index depends on the entry point: usually perk owner, target, attacker,
+weapon, or spell. UESP's "Perk Effect Types" table lists them.
 
-## Entry points
+## DATA and CTDA have two meanings
 
-`PerkEntryPoint` wraps the raw byte and looks its name up in a 92-entry table taken from
-`wbEntryPointsEnum`. It is deliberately not a 92-case enum: the id is what the runtime index
-keys on, an id outside the table has to survive decoding, and the names exist only for
-inspection surfaces. `isKnown` reports whether the table covers an id.
+Before the first `PRKE`, `DATA` is the five-byte header, and `CTDA` is an availability
+condition. Inside a section, `DATA` is the section's payload, and `CTDA` belongs to a tab. So
+the decoder must track whether a section is open.
 
-The second byte of an entry-point `DATA` is the *function* — how the entry point's value is
-changed:
+## Entry points and functions
 
-| Id | Function | `EPFT` |
+An entry point is kept as its raw ID, with a name from the 92-entry xEdit table. An unknown ID
+survives decoding.
+
+The function says how the value changes:
+
+| ID | Function | Expected `EPFT` |
 | --- | --- | --- |
 | 1 | Set value | 1 |
 | 2 | Add value | 1 |
@@ -140,170 +126,67 @@ changed:
 | 14 | Multiply 1 + actor value mult | 2 |
 | 15 | Set text | 7 |
 
-The `EPFT` column is what each function is expected to declare. OpenSky reads the record's
-own `EPFT` rather than deriving it from the function, so a record that disagrees with the
-table still decodes as authored.
+OpenSky reads the record's own `EPFT`, not the expected one, so a record that disagrees still
+decodes as written.
 
-## Function data
+## EPFD function data
 
-`EPFD` is a union read through `EPFT`, with one tie broken by the function byte:
-
-| `EPFT` | Payload |
+| `EPFT` | Data |
 | --- | --- |
-| 0 | Unknown; kept raw |
+| 0 | Unknown. Kept raw |
 | 1 | float32 |
-| 2 | float32, float32 — *or* uint32 actor value plus float32 factor |
-| 3 | formid `LVLI` |
-| 4 | formid `SPEL`, beside `EPF2` and `EPF3` |
-| 5 | formid `SPEL` |
+| 2 | float32, float32; or actor value, float32 factor |
+| 3 | `LVLI` FormID |
+| 4 | `SPEL` FormID, with `EPF2` and `EPF3` |
+| 5 | `SPEL` FormID |
 | 6 | zstring |
 | 7 | lstring |
 
-The `EPFT` 2 split is `wbEPFDDecider`: under functions 5, 12, 13 and 14 — the four
-actor-value multipliers — the first word is an actor-value index rather than a float. Nothing
-in the payload itself distinguishes the two readings, so the function byte from the section's
-`DATA` is what decides, and it is read out of the already-decoded effect payload rather than
-by looking ahead.
+For `EPFT` 2, the function decides (xEdit `wbEPFDDecider`). Under functions 5, 12, 13, and 14
+the first word is an actor value. The bytes cannot tell. So OpenSky keeps `EPFD` raw until the
+section closes, then reads it using the function from the section's `DATA`.
 
-Because that decision needs a field that precedes `EPFD` in every vanilla record but is not
-guaranteed to, the decoder keeps the `EPFD` field verbatim until the section closes and reads
-it then. A payload whose length does not fit its declared shape decodes to `raw`, which keeps
-the bytes visible instead of dropping them or guessing.
+A payload whose length does not fit its shape stays raw. The bytes stay visible.
 
-## The two DATA fields
+## The EPFD actor value is a float
 
-`DATA` means two different things in one record, and `PRKE` is the only thing separating
-them: before the first `PRKE` it is the five-byte header, and inside a section it is the
-section's typed payload. A `CTDA` run is ambiguous in the same way — the perk's own
-availability conditions before the first `PRKE`, an entry-point condition tab after one. The
-decoder therefore keeps explicit open-section state, exactly as the QUST decoder does
-([records](/formats/records.md)); the bookkeeping is the disambiguation, not an optimization.
+In those four functions, the actor-value word is a float that holds the index, not an integer.
+UESP writes the payload as "float AV, float FACTOR". xEdit's `wbEPFDActorValueToStr`
+(`Core/wbDefinitionsTES5.pas` line 889) reads a uint32, reinterprets it as a float, and rounds
+it before the name lookup.
 
-## Decode policy
+Example: `AlchemySkillBoosts` stores `0x43120000`. Read as an integer that is 1125187584. Read
+as a float it is 146.0, the actor value index 146. OpenSky rounds the float to an index. A value
+outside the int32 range becomes -1, meaning "no actor value".
 
-- A record whose type is not PERK throws. Nothing else does.
-- A malformed or truncated subrecord is skipped and tallied as `malformedField`; the rest of
-  the record still decodes, including the effects, because a perk with an unreadable header
-  is still what a runtime formula queries.
-- An effect-only subrecord (`PRKC`, `EPFT`, `EPF2`, `EPF3`, `EPFD`, `PRKF`) arriving with no
-  section open is tallied as `fieldOutsideEffect`.
-- A `CTDA` inside a section that no `PRKC` opened a tab for is tallied as
-  `conditionOutsideTab`.
-- A section that reaches the end of the record without its `PRKF` is still emitted, with
-  `isTerminated` false, and tallied as `unterminatedEffect`.
-- An unrecognized subrecord is tallied as `unknownField`.
-- Every enumerated value — effect type, entry point, function, `EPFT` — keeps its raw byte
-  when it falls outside the documented set, rather than throwing or being forced onto a
-  neighbour.
+## Bad input
 
-## PerkStore
+- A record that is not `PERK` is an error. Nothing else is.
+- A broken field is skipped and counted. The effects still decode, because formulas still ask
+  about a perk with a broken header.
+- An effect field with no open section is counted.
+- A `CTDA` in a section with no open tab is counted.
+- A section with no `PRKF` at the end of the record is kept and marked unterminated.
+- Unknown fields are counted.
+- Every enum value (effect type, entry point, function, `EPFT`) keeps its raw byte when it is
+  outside the known set.
 
-`opensky/Engine/GameData/PerkStore.swift` indexes PERK across the active load order in the
-same shape as the magic stores ([magic records](/formats/magic-records.md)): the winning
-record per identity, with lookup by `ResolvedFormID` and by editor id (case-insensitively).
-It adds three joins:
+## Lookups
 
-- **Spells.** An ability effect's `DATA` link and a "select spell" function's `EPFD` link both
-  resolve against `SpellStore`, so a caller reads the spell record rather than a raw form.
-- **Rank chains.** `rankChain(from:)` walks `NNAM` from a perk to the last rank, with a
-  visited set and a depth cap so a mod-authored loop yields a short chain instead of hanging.
-- **The entry-point index.** Every entry-point effect in the load order is collected into one
-  dictionary keyed by entry-point id and sorted by `PRKE` priority, so a formula asking
-  "which perk effects hook Mod Attack Damage" does one lookup instead of scanning every perk.
-  `matches(at:)` answers it; `entryPointHistogram` reports the whole distribution.
+Across the load order, OpenSky resolves ability and "select spell" links to `SPEL` records,
+walks rank chains through `NNAM` (with a loop check and a depth limit), and builds one index of
+all entry-point effects keyed by entry-point ID and sorted by `PRKE` priority. A formula that
+asks "which effects hook Mod Attack Damage?" does one lookup.
 
-`openskycli record <editorid>` and the Asset Browser's `PERK — Perks` type print the same
-summary: identity, header, availability conditions, then one block per effect with its typed
-payload, its decoded function data, and its condition tabs rendered in the same
-`<function> <operator> <value>` shape the runtime-state readout uses. The Asset Browser adds a
-resolved rank-chain section. Perk links elsewhere now resolve to names too: a spell's
-half-cost perk, a magic effect's perk to apply, and each box of an AVIF perk tree
-([actor value information](/formats/actor-value-information.md)).
+`openskycli record <editorid>` and the Asset Browser type "PERK - Perks" show the header,
+conditions, and each effect with its data and condition tabs.
 
-## Observed on a vanilla install
+## Vanilla facts
 
-Measured by `PerkRealDataTests` over the active load order (Skyrim.esm plus the four official
-masters):
-
-- 532 PERK definitions across the five masters, all of which decode; 483 distinct
-  identities, the difference being records the DLC masters override.
-- 863 effects between them: 622 entry-point effects, 32 ability effects and 28 quest
-  effects. Every ability link resolves to a SPEL in the same load order.
-- 68 of the 92 entry points are hooked by at least one effect. No unread field, no malformed
-  field, no unknown entry-point id and no unknown function id anywhere in the set.
-- 279 records carry availability conditions, and 13 carry a VMAD script.
-- The header bytes are nearly uniform: no record is a trait, every record leaves the level
-  byte at zero, 46 are hidden, 34 are not playable, and 27 declare a rank count of 5 while
-  the other 456 declare 1.
-
-The entry-point histogram, which is what scopes the perk runtime — the top ten cover more
-than half of every hook in the game:
-
-| Entry point | Id | Effects |
-| --- | --- | --- |
-| Mod Attack Damage | 35 | 81 |
-| Mod Spell Magnitude | 29 | 61 |
-| Apply Combat Hit Spell | 51 | 58 |
-| Mod Spell Cost | 38 | 43 |
-| Mod Armor Rating | 85 | 31 |
-| Mod Incoming Damage | 36 | 23 |
-| Mod Tempering Health | 76 | 21 |
-| Activate | 14 | 19 |
-| Mod Spell Duration | 30 | 17 |
-| Mod Buy Prices | 8 | 15 |
-| Mod Sell Prices | 60 | 15 |
-| Calculate My Critical Hit Chance | 1 | 14 |
-| Mod Pickpocket Chance | 56 | 13 |
-| Mod Lockpick Sweet Spot | 59 | 13 |
-| Filter Activation | 74 | 13 |
-| Mod Enchantment Power | 77 | 13 |
-| Calculate Weapon Damage | 0 | 12 |
-| Mod Alchemy Effectiveness | 66 | 11 |
-| Mod Spell Range (Target Loc.) | 88 | 11 |
-| Mod Armor Weight | 32 | 10 |
-| Mod Detection Sneak Skill | 57 | 10 |
-
-The remaining 47 hooked entry points carry eight effects or fewer each, and 24 are never
-hooked by a vanilla perk at all. `PerkRealDataTests` prints the full histogram on every run.
-
-### The rank count is not the rank chain
-
-`Armsman00` declares a rank count of 1 while its `NNAM` chain is five records long
-(`Armsman00`, `Armsman20`, `Armsman40`, `Armsman60`, `Armsman80`), and the same holds
-across the set: the byte and the chain disagree often enough that neither can be derived from
-the other. xEdit shows a rank count that matches the chain because it recomputes the value
-after load (`wbPERKNumRanksAfterLoad`), not because the bytes say so.
-
-The level byte tells a similar story: it is zero on every vanilla record, including
-`Armsman80`, which the game only offers at One-Handed 80. The requirement is a condition on
-the record (`GetBaseActorValue`), not a header field.
-
-Both are exposed verbatim as `declaredRankCount` and `level`, and
-`PerkRealDataTests.theDeclaredRankCountDoesNotTrackTheRankChain()` pins the finding so
-nothing quietly starts trusting them.
-
-## The EPFD actor-value word is a float
-
-The four actor-value functions (`Add Actor Value Mult`, `Set AV Mult`, `Multiply AV Mult`,
-`Multiply 1 + AV Mult`) take an `EPFT` 2 payload xEdit types as `Actor Value, Float`, and the
-"actor value" word is stored as a **float holding the index** rather than as an integer. UESP
-spells the payload "float AV, float FACTOR", and xEdit's `wbEPFDActorValueToStr`
-(`Core/wbDefinitionsTES5.pas` line 889) reinterprets the `itU32` it read as a `Single` and
-rounds it before looking the name up.
-
-Reading the raw word as an integer therefore produces the bit pattern instead of the index:
-`AlchemySkillBoosts` reports actor value 1125187584 rather than 146 (`0x43120000`).
-`PerkFunctionData.actorValueIndex(fromFloat:)` rounds it to the signed index every other
-actor-value field in the format carries, so a consumer never has to know where the number came
-from. A payload outside `Int32`'s range reads as -1, the "no actor value" index the rest of
-the engine uses.
-
-## What is not decoded here
-
-- Owning perks on an actor, and evaluating an entry point's conditions to fold its function
-  into a formula. That is the perk runtime: [perks at runtime](/engine/perks.md).
-- The perk-tree menu. Where a box is drawn comes from AVIF, not from here
-  ([actor value information](/formats/actor-value-information.md)).
-- The PERK tail of a `VMAD` fragment section. The primary scripts decode; the record-specific
-  fragment tail is still counted and skipped, as it is for PACK and SCEN
-  ([VMAD](/formats/vmad.md)).
+- Every vanilla perk decodes, with no unknown fields, entry points, or functions.
+- No perk is a trait.
+- 68 of the 92 entry points are used. The most used are Mod Attack Damage (35), Mod Spell
+  Magnitude (29), Apply Combat Hit Spell (51), Mod Spell Cost (38), and Mod Armor Rating (85).
+  The ten most used cover more than half of all hooks.
+- Every ability link resolves to a `SPEL`.
+- The `VMAD` fragment tail of a `PERK` is not decoded yet (see [VMAD](/formats/vmad.md)).

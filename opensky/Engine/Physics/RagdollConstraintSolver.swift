@@ -42,7 +42,7 @@
 // visited in list order, for a fixed iteration count, with no early exit that
 // depends on anything but the joint's own numbers.
 //
-// Documented in docs/engine/ragdoll.md.
+// Documented in docs/engine/ragdoll-solver.md.
 
 import simd
 

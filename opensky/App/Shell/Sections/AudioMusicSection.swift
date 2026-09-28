@@ -2,7 +2,7 @@
 // playlist director. An enable toggle, a picker that forces one MUSC playlist
 // past the cell/region/worldspace precedence chain, a stop button, and a readout
 // naming the derived state plus the playlist and track now sounding. Same shape
-// as the other audio sections. Sidebar path and control ids: docs/engine/music.md.
+// as the other audio sections. Sidebar path and controls: docs/engine/music.md.
 
 import AppKit
 

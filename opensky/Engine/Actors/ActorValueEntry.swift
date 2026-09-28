@@ -33,7 +33,7 @@
 // * `damage` — never positive. Damage lowers a value without touching its
 //   base, and restoring puts the damage back toward zero rather than above it.
 //
-// Documented in docs/engine/actor-values.md.
+// Documented in docs/engine/actor-value-store.md.
 
 import Foundation
 

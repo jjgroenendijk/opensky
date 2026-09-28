@@ -9,7 +9,7 @@
 // destination — the live graph, the motion trace, and the two dev controls —
 // without changing that shape.
 //
-// Documented in docs/engine/behavior-runtime.md.
+// Documented in docs/engine/locomotion-graph.md.
 
 import Foundation
 

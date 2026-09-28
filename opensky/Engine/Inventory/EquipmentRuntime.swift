@@ -32,7 +32,7 @@
 // no number. The player has no rendered body this milestone (M14), so there is
 // nothing else for the player path to do.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/inventory-state.md.
 
 import Foundation
 

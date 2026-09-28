@@ -27,7 +27,7 @@
 // An index outside the table is the one answer that is still a miss, and nil is
 // what the condition and Papyrus tallies count.
 //
-// Documented in docs/engine/actor-values.md.
+// Documented in docs/engine/actor-value-store.md.
 
 import Foundation
 

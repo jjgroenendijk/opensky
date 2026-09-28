@@ -35,7 +35,7 @@
 // the floor under that: a release inside it keeps the cast running until it
 // elapses.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spellcasting.md.
 
 import Foundation
 import simd

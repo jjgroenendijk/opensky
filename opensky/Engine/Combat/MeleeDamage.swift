@@ -68,7 +68,7 @@
 // matches WEAP data, blocking reduces it per the pinned formula" a plain
 // arithmetic assertion.
 //
-// Documented in docs/engine/melee-combat.md.
+// Documented in docs/engine/melee-damage.md.
 
 import Foundation
 

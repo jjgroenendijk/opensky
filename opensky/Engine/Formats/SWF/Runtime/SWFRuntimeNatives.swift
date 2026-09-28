@@ -8,7 +8,7 @@
 // The SWF specification stops at the bytecode and defines none of them, so the
 // behavior here is reimplemented from public ActionScript 2 API documentation
 // and from what the vanilla bytecode does with them — a weaker source than a
-// spec, and recorded as such in docs/engine/as2-runtime.md.
+// spec, and recorded as such in docs/engine/as2-display-runtime.md.
 //
 // A method that needs the display tree reaches it through the runtime's host
 // (`AS2Runtime.host` is the `SWFRuntimeHost` that owns the movie runtime),

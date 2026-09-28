@@ -1,114 +1,80 @@
 ---
 type: File Format
 title: FormID and TES4 plugin header
-description: TES4 header layout, master lists, and how raw FormIDs resolve to (plugin, objectID).
+description: TES4 header layout, master lists, and how a raw FormID resolves to a plugin and an
+  object ID.
 tags: [format, plugin, esm, formid, records]
-timestamp: 2026-08-13T00:00:00Z
 ---
 
-# FormID + TES4 plugin header, Skyrim SE
+# FormID and TES4 plugin header
 
-## Contents
+Every record has a 32-bit FormID at offset `0x0C` of its header (see
+[ESM container](/formats/esm.md)). A raw FormID only has meaning inside its own file. Its top
+byte points into that plugin's master list, which is in the `TES4` header.
 
-* TES4 record fields
-* FormID layout
-* Cross-plugin record index
-* Verification
+Sources: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format) (the
+`TES4` record), and UESP [FormIDs](https://en.uesp.net/wiki/Skyrim_Mod:FormIDs).
 
-Every record carries a 32-bit FormID (offset 0x0C of the record header, see
-[ESM container](/formats/esm.md)). Raw FormIDs are file-relative: their top
-byte only means something together with the owning plugin's master list from
-its TES4 header. This page covers both.
+## TES4 record
 
-References: UESP "Skyrim Mod:Mod File Format" — TES4 record
-(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>), UESP "Skyrim Mod:FormIDs"
-(<https://en.uesp.net/wiki/Skyrim_Mod:FormIDs>).
-Impl: `opensky/Engine/Formats/ESM/PluginHeader.swift`, `FormID.swift`, and
-`opensky/Engine/GameData/RecordIndex.swift`.
+The first record of every plugin.
 
-## TES4 record fields
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `HEDR` | 12 bytes, required | File stats, below |
+| `CNAM` | zstring | Author, optional |
+| `SNAM` | zstring | Description, optional |
+| `MAST` | zstring | Master file name. One per master, in order |
+| `DATA` | uint64 | After each `MAST`. Always 0 |
 
-First record of every plugin. Fields OpenSky decodes (`PluginHeader`):
+`HEDR` is a float32 version (1.71 for SSE), an int32 record count, and a uint32 next object
+ID. OpenSky skips `ONAM`, `INTV`, and `INCC`.
 
-| field | type            | meaning                                      |
-| ----- | --------------- | -------------------------------------------- |
-| HEDR  | 12 bytes, req'd | file stats, layout below                     |
-| CNAM  | zstring         | author (opt)                                 |
-| SNAM  | zstring         | description (opt)                            |
-| MAST  | zstring         | master file name; one per master, file order |
-| DATA  | uint64          | follows each MAST, always 0 — skipped        |
+The record flags of `TES4` describe the plugin: `0x1` ESM, `0x80` localized (text lives in
+[string tables](/formats/strings.md)), `0x200` ESL.
 
-HEDR: float32 version (1.71 = SSE), int32 recordCount, uint32 nextObjectID.
-
-Skipped as unneeded: ONAM (overridden-form list), INTV, INCC, modder-added
-fields. Strings are zstrings under the engine-wide lenient text policy
-([string decoding](/decisions/string-decoding.md)). Missing HEDR ->
-`ESMError.malformed`. Record flags of the TES4 record carry plugin-level
-bits: 0x1 ESM, 0x80 localized (lstring tables), 0x200 ESL.
-
-HEDR recordCount is CK bookkeeping and includes groups; traversal never
-trusts it (Skyrim.esm says 920 181; walking finds 869 687 records +
-50 494 groups).
+Do not trust the `HEDR` record count. It counts groups too. `Skyrim.esm` says 920181. A walk
+finds 869687 records and 50494 groups, which add up to it.
 
 ## FormID layout
 
-`0xIIOOOOOO`: top byte II = master index, low 24 bits = object ID.
+`0xIIOOOOOO`: the top byte `II` is a master index. The low 24 bits are the object ID.
 
-Within a plugin file, the master index points into THAT plugin's MAST list:
+The index points into this plugin's own `MAST` list:
 
-* index < masters.count -> record/reference lives in that master.
-* index == masters.count -> defined by this plugin itself (normal encoding
-  for own records).
-* index > masters.count -> malformed; clamped to the plugin itself, matching
-  xEdit's handling.
-* FormID 0x00000000 -> null, "no reference" sentinel, resolves to nil.
+- Index less than the master count: the record belongs to that master.
+- Index equal to the master count: the record belongs to this plugin.
+- Index greater than the master count: malformed. OpenSky treats it as this plugin, as xEdit
+  does.
+- `0x00000000` means "no reference".
 
-Runtime load-order indices (what the game shows in console) are a different
-numbering — they depend on the user's full load order. OpenSky models
-identity load-order-independently as `ResolvedFormID` = (plugin file name,
-objectID); `FormIDResolver(pluginName:masters:)` maps raw file-local IDs to
-it. Plugin-name matching in `FormIDResolver` itself is verbatim-case (vanilla
-masters are spelled consistently); the session-stable `ReferenceKey` built on
-top of `ResolvedFormID` lowercases the plugin name instead, since neither raw
-`FormID` nor `ResolvedFormID` is safe as a persistent identity across a
-session — see [Runtime reference identity](/engine/runtime-state.md).
+Example: `Update.esm` has one master, `Skyrim.esm`. Inside `Update.esm`, a FormID that
+starts with `0x00` names a `Skyrim.esm` record. A FormID that starts with `0x01` names an
+`Update.esm` record.
 
-ESL note: the 0xFE prefix space is a runtime load-order construct — raw
-FormIDs inside a plugin file never use it. ESL-flagged plugins still encode
-master indices as above; only the runtime slotting differs. The
-[plugin load order](/formats/plugins-txt.md) now places light plugins in the
-right sequence, but the 0xFE slotting itself is still undecoded, so the Load
-Order panel shows a plain position rather than a runtime index.
+In vanilla files, the largest master index used equals the master count exactly. There are
+no out-of-range indices.
 
-## Cross-plugin record index
+The index the game console shows is different. It depends on the user's full load order.
+OpenSky names a record by plugin file name plus object ID, which does not depend on load
+order. For identity that must last a whole session, see
+[runtime reference identity](/engine/runtime-state.md).
 
-`RecordIndex` visits the active plugins from low to high priority and walks all
-requested top groups together. It resolves each record's file-relative FormID
-through that plugin's TES4 master list and keys the winner by `ResolvedFormID`.
-Active plugin names supply canonical filesystem spelling, matched
-case-insensitively against MAST entries. A later valid record replaces an
-earlier definition; deleted records, malformed field framing, unreadable groups,
-and unreadable plugins do not erase the last valid record.
+## ESL plugins
 
-The index retains opaque `ESMRecord` candidates and does not interpret
-type-specific bodies. Its decode seam tries candidates from high to low
-priority, so a malformed override falls back to the last decodable definition.
-The result distinguishes an undecodable identity from a missing one;
-`RecordIndexResolution` separately distinguishes null references and unknown
-source plugins. The eight M18 families built over the five masters in 135 ms on
-2026-08-13, collecting 4,093 record headers in one pass before override
-identities were collapsed.
+The `0xFE` prefix exists only at runtime. A FormID inside a plugin file never uses it. An
+ESL-flagged plugin encodes master indices in the normal way. OpenSky does not assign `0xFE`
+slots yet, so the Load Order panel shows a plain position.
 
-## Verification
+## Records across plugins
 
-Unit tests: `openskyTests/Formats/ESM/PluginHeaderTests.swift` and `RecordIndexTests.swift`
-(synthetic fixtures).
-Runtime probe 2026-07-09 against all five vanilla masters: HEDR version 1.71,
-esm+localized flags set everywhere; masters Update.esm -> [Skyrim.esm],
-Dawnguard/HearthFires/Dragonborn -> [Skyrim.esm, Update.esm]; sample records
-resolve to the defining plugin; deep walk shows max master index used ==
-masters.count exactly (Update.esm 1/1, Dawnguard.esm 2/2) — no out-of-range
-indices in vanilla data.
+To find the winning version of a record, OpenSky visits the active plugins from low to high
+priority. It resolves each FormID through the plugin's master list. A later valid record
+replaces an earlier one. A deleted record, a malformed field, or an unreadable plugin never
+removes the last valid version.
 
-`RecordIndexRealDataTests` pins the eight-family collection floors and
-`Skyrim.esm:013794` (`ActorTypeNPC`) against the user's active load order.
+When the winning override cannot be decoded, OpenSky falls back to the last version that
+can. A caller can tell apart "no such record", "a record that does not decode", "a null
+reference", and "an unknown plugin".
+
+Plugin names in `MAST` are matched to files case-insensitively.

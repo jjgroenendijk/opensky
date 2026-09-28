@@ -9,7 +9,7 @@
 // armatures carry neither: only the pieces an arm can show (skin hands, the
 // skin torso, gauntlets, rings) declare one, which is why item 14.7 treats a
 // missing first-person model as "this piece is not on the arms" rather than as
-// a failure. See docs/engine/behavior-runtime.md, "First person".
+// a failure. See docs/engine/first-person.md.
 //
 // DNAM (12 bytes) is decoded for equip-slot priority resolution (issue #178):
 //   00 uint8   male draw priority

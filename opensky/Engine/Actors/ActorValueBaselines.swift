@@ -128,8 +128,7 @@ nonisolated struct ActorValueBaselineResolver {
     /// Every playable vanilla race authors the same level-1 attributes, so the
     /// player's baseline is that triple until character generation exists to
     /// pick a race (M18). Probed rather than remembered — see
-    /// docs/engine/actor-values.md for the `openskycli actor-values --player`
-    /// output this number came from.
+    /// docs/engine/actor-value-store.md for the records this number came from.
     static let vanillaPlayerStartingValues = ActorValues(repeating: 100)
 
     /// The non-primary baselines a subject with no records behind it reads: the

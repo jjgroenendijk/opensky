@@ -17,7 +17,7 @@
 // its record's full charge, and an owner with nothing enchanted has no component
 // at all.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/item-enchantments.md.
 
 import Foundation
 

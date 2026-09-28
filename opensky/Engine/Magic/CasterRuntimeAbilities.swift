@@ -5,7 +5,7 @@
 // cap, and along a real seam: everything else in that file is a cast the player
 // asked for, and nothing here is cast at all.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spellcasting.md.
 
 import Foundation
 

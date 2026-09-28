@@ -42,9 +42,9 @@
 // foot, derived from this engine's own `PlayerCapsule.standard` height of 128
 // units for an adult human, and it is a setting rather than a constant so the
 // number can be corrected without touching the rule. The uncertainty is
-// recorded in docs/engine/magic.md rather than hidden.
+// recorded in docs/engine/spell-delivery.md rather than hidden.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spell-delivery.md.
 
 import Foundation
 import simd

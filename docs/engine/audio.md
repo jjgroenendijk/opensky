@@ -1,33 +1,22 @@
 ---
 type: Subsystem
 title: World audio playback
-description: AVAudioEngine graph with 3D positional sources, non-positional submix
-  playback, gain ramps, streaming WMA decode, vanilla category volumes with mute and
-  solo, source budget, the per-frame audio budget, and the World > Audio surface.
+description: The AVAudioEngine graph with positional sources and category submixes, how gain,
+  mute, and solo combine, world to listener coordinates, threading, the source budget, gain
+  ramps, and the per-frame cost.
 tags: [engine, audio, playback, spatial]
-timestamp: 2026-08-01T00:00:00Z
 ---
 
 # World audio playback
 
-Milestone 9.1.3: the runtime that turns a decoded `.xwm` payload into an
-audible, positioned sound, plus the sidebar surface that verifies it without
-the CLI. Consumes the [xWMA container parser](/formats/xwm.md) and the
-[vendored ffmpeg WMA decoder](/decisions/ffmpeg-audio.md). Implementation:
-`opensky/Engine/Audio/WorldAudioEngine.swift` (graph, volumes),
-`WorldAudioEngineSources.swift` (source lifecycle),
-`WorldAudioEngineFades.swift` (gain ramps),
-`WorldAudioEngineSnapshot.swift` (published UI state),
-`AudioSourceStreamer.swift` (streaming decode), `AudioSpace.swift` (coordinate
-conversion), `AudioCategory.swift` (vanilla menu categories),
-`AudioCodecParametersXWM.swift` (extradata policy),
-`WorldAudioEngineVoice.swift` (voice route + playback clock), and
-`opensky/Engine/Rendering/RendererAudio.swift` (the per-frame tick).
+The audio engine turns decoded sound files into positioned, audible sound. How each file type is
+decoded, and the voice route, are on the [audio decoding](/engine/audio-decoding.md) page. The
+things that start sounds are [world sound effects](/engine/world-sfx.md),
+[music](/engine/music.md), and [footstep sounds](/engine/footstep-sounds.md).
 
-## Graph
+## The graph
 
-One `AVAudioEngine` per app, owned by `GameViewController`, created on first
-enable and handed to the renderer for the per-frame tick:
+There is one `AVAudioEngine` per app. It is created the first time audio is enabled.
 
 ```text
 positional AVAudioPlayerNode (mono, one per source)
@@ -36,564 +25,148 @@ non-positional AVAudioPlayerNode (stereo, one per source)
     --> category submix AVAudioMixerNode (effects/voice/music/footsteps) --->--/
 ```
 
-* The environment node does the 3D mixing. Its inputs must be **mono** — it
-  passes stereo through without spatializing — so streamed stereo sources are
-  downmixed (`AudioSourceStreamer.monoDownmix`, channel average).
-* Per-source rendering algorithm is `.equalPowerPanning`: deterministic and
-  cheap, which is what the offline-render tests need. HRTF selection is a
-  later decision alongside the M9.2 attenuation data.
-* Category submixes carry the **non-positional** path: a source with no world
-  position (music, and any other 2D bed) keeps the file's own channel layout,
-  connects straight into `categoryMixers[category]`, and gets no panning, no
-  distance attenuation and no position. A positional source cannot route
-  through a submix — each needs its own environment-node input — so it carries
-  its category factor at its player node instead.
-* Routing is explicit, not inferred from the category: `AudioRouting`
-  (`.positional` / `.nonPositional`) is recorded on `ActiveAudioSource` by the
-  play call that started it, and surfaces in the snapshot as `isPositional`.
-* Volumes multiply as: **effective gain = master x category x source x fade**.
-  Master is `mainMixerNode.outputVolume`; the fade is the ramp factor below.
-  The category factor is applied **exactly once**: at the player node for a
-  positional source, at the submix for a non-positional one (applying it at
-  both would square it). The player node's `volume` therefore holds
-  `category x source x fade` when positional and `source x fade` when not.
-  Distance attenuation applies after all of it, and only to positional sources.
-* **Mute and solo** (M9.2.4) are two more per-category filters folded into the
-  same category factor, `WorldAudioEngine.audibleVolume(for:)`: it returns the
-  category's volume when the category is audible and zero when the category is
-  muted or when a *different* category is soloed. Every gain path reads that
-  one function — the submix output volumes, the positional player-node volumes,
-  and the snapshot's `effectiveGain` — so the three can never disagree, and
-  changing either filter re-applies them through `applyVolumesToSources()`, so
-  sources that are already playing react on the call.
-  * **Precedence**: mute and solo are independent filters and *both* must pass.
-    Solo overrides nothing about mute, so soloing a category that is explicitly
-    muted leaves it silent; unmuting it is the only way to hear it.
-  * Mute is separate state from the volume (`mutedCategories`, a set, next to
-    `categoryVolumes`), so unmuting restores exactly the level the slider was
-    left at rather than snapping back to full.
-  * Solo is a single optional category (`soloedCategory`), so it is mutually
-    exclusive by construction; nil means nothing is soloed.
-* Engine off by default; enabling it in the panel starts it. A start failure
-  (no output device) is captured as `unavailableReason` and shown in the
-  readout — it never crashes and never blocks the render loop.
+- The environment node does the 3D mixing. Its inputs must be mono: it passes stereo through
+  without placing it. So stereo sources are mixed down to mono by averaging the channels.
+- Each positional source uses `.equalPowerPanning`. It is fixed and cheap, which the offline render
+  tests need.
+- The category submixes carry sources with no world position, such as music and ambience. Such a
+  source keeps its own channel layout and connects straight to its submix. It gets no panning, no
+  distance fade, and no position. A positional source cannot go through a submix, because each
+  needs its own environment input. So it carries its category factor on its own player node.
+- Routing is set by the call that starts the source, not guessed from the category.
 
-## Coordinate conversion (world -> listener)
-
-Skyrim's world is right-handed Z-up in native units (+X east, +Y north, +Z up,
-1 unit = 0.0142875 m, exterior cell = 4096 units ~ 58.5 m —
-[coordinates](/decisions/coordinates.md)). `AVAudioEnvironmentNode` listener
-space is right-handed Y-up, and its distance parameters share the position
-unit, which OpenSky fixes as **meters**. `AudioSpace` implements:
-
-| world (Z-up, units) | listener (Y-up, meters) |
-| ------------------- | ----------------------- |
-| position `(x, y, z)` | `(x, z, -y) * 0.0142875` |
-| direction `(x, y, z)` | `(x, z, -y)` (no scale) |
-| +X east | +X |
-| +Y north | -Z (straight ahead of a default listener) |
-| +Z up | +Y |
-
-This is the same `(x, y, z) -> (x, z, -y)` basis change as
-`MatrixMath.zUpToYUp`. Listener orientation comes from the free-fly pose:
-forward `(cos yaw * cos pitch, sin yaw * cos pitch, sin pitch)` and its
-orthogonal up vector, both mapped through the direction conversion. Pinned by
-`AudioSpaceTests` and, end to end, by the offline-render panning tests
-(`WorldAudioEngineTests`): a source on the listener's right (world -Y when
-facing +X) renders right-channel dominant.
-
-## Threading model
-
-Three domains, with one crossing type each:
-
-1. **Main actor** — `WorldAudioEngine`, `GameViewControllerAudio`, the panel.
-   Owns the graph, volumes, source list and listener pose. The renderer's
-   `updateAudioFromWallClock()` (main thread, `draw(in:)`) pushes the camera
-   pose and runs retirement/purge each frame, gated on `worldSimPaused`
-   through its own `FrameSimClock`.
-2. **Audio decode queue** — one serial `DispatchQueue` owned by the engine.
-   Each `AudioSourceStreamer` confines its `WMADecoder` (not `Sendable` — one
-   queue owns one instance) and all scheduling state here. It decodes
-   16-packet chunks (~0.75 s) into PCM buffers and keeps at most 3 scheduled
-   ahead via `AVAudioPlayerNode.scheduleBuffer`, so a music track never
-   materializes whole (~37 MB of PCM; issue #218). Buffer completion handlers
-   fire on an AVFAudio internal queue and immediately hop back to the decode
-   queue to top up.
-3. **Audio render thread** — runs **no OpenSky code**. `AVAudioPlayerNode`
-   consumes the scheduled buffers there itself. Nothing OpenSky-side
-   allocates, locks or logs on it because nothing OpenSky-side runs on it.
-
-Crossings: main -> queue is `start()`/`requestStop()` (async, no waiting);
-queue -> main is a single `Mutex<Bool>` finished flag the tick polls; engine ->
-panel is the Equatable `AudioStatsSnapshot`, read at 2 Hz by the
-`InspectionTicker`. The main actor never blocks on the decode queue.
-
-## Budget, eviction, cleanup
-
-* **Cap**: `WorldAudioEngine.maxConcurrentSources = 8` (provisional), counting
-  **positional sources only**.
-* **Eviction**: starting a positional source at the cap stops the **oldest**
-  playing positional source first (FIFO by start order). Predictable and
-  matches how one-shot effects naturally expire; a priority scheme waits for
-  game-authored data.
-* **Non-positional exemption**: music and ambience beds are outside the budget
-  and outside the cell purge. They are never evicted by a burst of effects and
-  never stopped because the world streamed away — they have no meaningful cell.
-  Only an explicit stop, a completed fade-out, an unusable stream, or the engine
-  shutting down ends one.
-* **Retirement**: a streamer that played its last buffer sets its finished
-  flag; the next tick stops and detaches the node.
-* **Looping**: `AudioPlayRequest.loops` starts a continuous source (including an
-  [ambience bed](/engine/world-sfx.md)). At end of
-  file its streamer resets the decoder, rewinds to the first packet and keeps
-  scheduling, so it never sets the finished flag and the tick never retires
-  it; only the cleanup rules for its routing path end it. A pass
-  that decoded no PCM ends the source instead of rewinding, so a file the
-  decoder cannot use can never spin the decode queue. The buffer-backed test
-  seam expresses the same request through `AVAudioPlayerNode`'s own `.loops`
-  scheduling option.
-* **Cell unload**: each positional source records the exterior cell of its
-  position; the tick stops sources more than `cellPurgeRadius = 3` Chebyshev
-  rings from the listener's cell (one ring beyond the streamer's default 5x5
-  residency).
-
-## Gain ramps (the crossfade primitive)
-
-Every source carries a **fade gain** in [0, 1], multiplied into its node volume
-on top of the per-source gain. `GainFade` (`WorldAudioEngineFades.swift`) is the
-ramp: a start gain, a target, a duration in seconds, and elapsed time.
-
-* **Time source**: ramps advance only from an explicit `deltaTime` handed to
-  `advanceFades(deltaTime:)` by `tick(listenerCell:deltaTime:)`. No `Date`, no
-  `DispatchTime`. The renderer supplies the delta from its paused-aware
-  `FrameSimClock` and skips the tick entirely while `worldSimPaused`, so a
-  crossfade freezes in menu mode and never jumps on resume. A zero or negative
-  delta advances nothing.
-* **Curve**: linear in amplitude (not decibels). Simple, deterministic and
-  adequate at music crossfade lengths; only `GainFade.currentGain` would change
-  if an equal-power curve is ever wanted.
-* **Retargeting**: a second fade requested mid-ramp replaces the first and
-  starts from the gain the source is at right now, so the audible level never
-  jumps. A duration of zero (or less) applies the target immediately.
-* **Fade out and stop**: `fadeOutAndStopSource(id:overSeconds:)` ramps to
-  silence and retires the source when the ramp completes, so a departing track
-  cleans itself up. With duration zero it stops on the call.
-* **Completion tolerance**: a ramp within `GainFade.completionEpsilon` (1 ms) of
-  its duration counts as done and snaps to the target, because accumulating
-  frame deltas in `Float` never sums exactly (60 additions of 1/60 miss 1).
-  Without it a fade-out could hover just above silence and never retire.
-* **Volume interaction**: the fade is folded into the same node-volume product
-  `applyVolumesToSources()` writes, so moving a category or master slider
-  mid-crossfade re-applies the ramp rather than stomping it.
-* **Engine stop**: fades live on the source, so disabling the engine (which
-  stops every source) discards them with the sources themselves.
-
-## Decode policy (xWMA -> WMADecoder)
-
-Vanilla `.xwm` carries `cbSize == 0`, so the container hands the decoder empty
-extradata, while ffmpeg's WMAv2 decoder wants stream flags from extradata.
-`AudioCodecParameters(xwm:)` applies the policy the parser deliberately does
-not own: empty extradata is replaced with the six-byte block ffmpeg's own xWMA
-demuxer synthesizes (byte 4 = 31, others zero; `libavformat/xwma.c`).
-Verified against the install 2026-07-25 by the decode column of
-`openskycli audio sweep`: all 269 vanilla files decode, each to exactly the
-frame count its `dpds` table declares (0 mismatches, 0 failures).
-
-## Decode policy (RIFF/WAVE -> PCM buffer)
-
-Sound effects are not `.xwm`. Music and voice are; every effect in the install — all 5,978
-of them — is a plain RIFF/WAVE file of uncompressed linear PCM. Until issue #352 the
-engine could only play `.xwm`, so the door and activator SFX the world sound director
-resolved were reaching a player that had no reader for them.
-
-`WorldAudioEngine.playPositional(fileData:)` and its non-positional twin now peek at the
-RIFF form type at byte 8 and pick a path: `XWMA` streams through `AudioSourceStreamer` as
-before, `WAVE` is read whole into one `AVAudioPCMBuffer` by
-[`WAVFile`](/formats/wav.md) and scheduled once. An effect is a fraction of a second — a
-footstep file is around 26 KB — so streaming it would add a decode-queue hop and a
-three-buffer lookahead for nothing. Buffer-backed one-shots retire themselves through the
-scheduling completion handler, so `retireFinishedSources` reclaims them the same frame
-they finish rather than leaving them for FIFO eviction.
-
-## Voice route (.fuz -> positional voice submix)
-
-A dialogue line is a [`.fuz` container](/formats/fuz.md): a lip-sync blob
-followed by a complete RIFF/XWMA stream. `WorldAudioEngine.playVoice(fuzData:
-name:worldPosition:gain:)` frames the container, hands the payload to
-`XWMFile`, and enters the same positional streaming path a `.xwm` effect takes
-(`playPositional(file:request:)`) — same streamer, same decoder, same
-environment node, `AudioCategory.voice`. `AudioSourceStreamer` never learned a
-second container type, because it never had to: the payload really is a whole
-`.xwm` file, at an offset.
-
-The call returns a `VoicePlayback`: the source id to track it by, the declared
-duration from the `dpds` table, and the lip bytes, untouched, for item 17.7. A
-malformed container throws before any source is started, so a line that cannot
-be framed is a reported miss rather than a silent player node.
-
-Vanilla voice is mono 44.1 kHz throughout, which is what the positional path
-needs — the environment node spatializes mono and passes stereo through flat —
-so the downmix the music path uses never engages for a line.
-
-Resolving *which* file to play is the records' job, not the engine's:
-`VoiceLineLocator` turns an INFO plus the speaker's voice type into the archive
-path, and the naming rule it applies is documented and evidenced in
-[the `.fuz` format page](/formats/fuz.md).
-
-## Playback clock and line completion
-
-Two capabilities item 17.5 added for the dialogue work above it.
-
-`WorldAudioEngine.playbackPosition(ofSource:)` reports how far into its
-material a source has played, in seconds, or `nil` when no source has that id or
-nothing has been rendered since it started. It is elapsed-render accounting:
-the engine keeps a monotonic `playbackClockSeconds`, each source remembers the
-clock it was adopted at, and the position is the difference.
-
-The obvious reading — `AVAudioPlayerNode.playerTime(forNodeTime:)` — was written
-first and does not work here: it hangs the app-hosted test host under offline
-manual rendering, deterministically, and it took the pre-existing
-`WorldAudioEngineTests` down with it the moment `statsSnapshot()` started
-calling it. The dated finding is in
-[local environment](/tools/environment.md). Subtraction cannot block, which is
-the second reason to prefer it.
-
-The clock has two halves, and both are the same kind of number:
-
-* offline it is `engine.manualRenderingSampleTime / sampleRate`, so it advances
-  by exactly the frames each `renderOffline(_:to:)` call produced and by nothing
-  else — a test converts a rendered frame count straight into an expected
-  reading, which is what `WorldAudioEngineClockTests` does;
-* live it accumulates the audio tick's paused-aware frame delta, the same delta
-  the gain ramps advance on, so the clock freezes in menu mode instead of
-  jumping on resume.
-
-What this trades away is worth stating plainly: the value is time elapsed since
-the source started, not the sample position that has reached the output. A
-streamed source whose first chunk is still decoding reads a few milliseconds
-ahead of what is audible. Subtitles and lip sync want elapsed line time, so that
-is the right number for them; anything wanting sample-accurate output position
-has to wait for the node query to become usable.
-
-`WorldAudioEngine.onSourceFinished` fires with a source's id once that source
-has played to its end and been retired. It fires from `retireFinishedSources`
-and nowhere else, so it means *played out*: a source stopped by hand, evicted by
-the FIFO budget or purged with its cell does not report. That distinction is the
-whole point — item 17.3's subtitle must clear when the line ends, not when the
-line is cut off.
-
-## Attenuation defaults (provisional)
-
-`ProvisionalAttenuation`: inverse model, reference distance 2 m, maximum
-distance 60 m (~one exterior cell), rolloff 1. Named provisional because the
-game-authored values arrive in M9.2 from `SNDR`/`SDSC`; these exist only to
-make the verification surface audibly distance-dependent.
-
-`AudioCategory` is the four vanilla [SNCT](/formats/sound.md) nodes flagged for menu
-display: Effects, Voice, Music, and Footsteps. The main mixer remains the master stage.
-World sounds follow `SNDR.GNAM -> SNCT.PNAM` to one of those nodes; unresolved or malformed
-metadata falls back to Effects. Music playlists author their own Music route.
-
-## Footstep director (issue #352)
-
-The player's footsteps are played by `WorldAudioFootstepDirector`, the third director
-beside the SFX and music ones. It contains no step timer, and that is the design rather
-than an omission: the vanilla locomotion clips carry their own footstep marks — annotations
-in the animation files, raised as events by the graph, and `0_master.hkx` declares
-`FootLeft` and `FootRight` as the first two of its 1,217 — so the behavior graph already
-says when a foot lands, at the phase the animation actually plants it. A cadence derived
-from speed would drift against the animation the player is watching. See
-[terrain walk mode](/engine/walk-mode.md) for the event source and
-[behavior graph runtime](/engine/behavior-runtime.md#clip-triggers-and-annotations) for
-where the marks live.
-
-The route, once per frame:
-
-1. `LocomotionBridge` queues the third-person graph's fired events as each fixed step runs
-   (`LocomotionGraphEventQueue`). Only the third-person graph feeds it: both graphs run
-   the same locomotion clips and fire the same triggers, so draining both would play every
-   footstep twice.
-2. `Renderer.updateAudio` drains the queue and hands the names to the director with the
-   current gait and the capsule's feet position. Draining happens even outside walk mode
-   and with no director attached, so a queue nobody is listening to cannot flush all at
-   once when audio is switched on. The whole tick is skipped while the world sim is
-   paused, and a paused frame plans no step and fires nothing, so the two agree.
-3. The director offers each name to the current gait's footstep list and plays whatever
-   resolves. Names the list has no tag for — the graph fires plenty, from combat to
-   magic — cost one string comparison and are dropped.
-
-The feet position is not the only thing the tick carries: `WalkController.groundMaterial`
-rides along with it (issue #358), and the impact table is keyed by exactly that. Snow, wood,
-grass and gravel select different `IPCT` records and therefore different sounds. The
-director keeps the last reported material for the readout and lets the panel pin one in its
-place, so a surface can be heard deliberately rather than by walking to it.
-
-Footsteps are positional and placed at the feet, not at the listener, which is what makes
-third person sound right. The set the player walks with comes from `ARMA.SNDD` on the
-armature occupying the feet slot of the assembled body, falling back to
-`DefaultFootstepSet`; worn parts precede skin parts in a resolved visual, so boots outrank
-the bare foot they cover without the director ranking them. Record layouts and the chain
-from tag to sound file are in [footstep records](/formats/footstep.md); how a surface names
-its material is in [material types](/formats/material-type.md).
-
-## World > Audio surface
-
-Sidebar path for acceptance: **World > Audio** (`Destination-audio`).
-`AudioPanelViewController` composes five sections. The two this page owns are
-below, plus **Footsteps** (`PanelSection-audioFootsteps`); **SFX & Ambience**
-(`PanelSection-audioSfx`) is documented in
-[world SFX + ambience](/engine/world-sfx.md) and **Music**
-(`PanelSection-audioMusic`) in [music playlists](/engine/music.md):
-
-* **Output** (`PanelSection-audioOutput`): `AudioEnabledControl` checkbox,
-  `AudioMasterVolumeControl` slider, `AudioEffectsVolumeControl`,
-  `AudioVoiceVolumeControl`, `AudioMusicVolumeControl`,
-  `AudioFootstepsVolumeControl`, and per category a mute checkbox and a solo
-  checkbox — the corresponding `Audio<Category>MuteControl` and
-  `Audio<Category>SoloControl` families. Readout `AudioStatsLabel`:
-
-  ```text
-  Audio: running
-  Output: 48000 Hz, 2 ch
-  Mute: Effects, Music  Solo: Voice
-  ```
-
-  The last line is always present (it reads `Mute: none  Solo: none` at
-  defaults) and lists muted categories by display name, comma separated. Solo
-  is a checkbox rather than a radio group because clicking the category that is
-  already soloed clears solo, which a radio group cannot express; picking a
-  second category moves the solo. A muted or soloed category counts as an
-  override, so `Destination-audio-OverrideIndicator` lights up and the
-  destination reset clears both.
-* **Sources** (`PanelSection-audioSources`): `AudioFileControl` popup listing
-  the install's `.xwm` paths, `AudioPlaySelectedControl`,
-  `AudioStopAllControl`, readout `AudioSourcesStatsLabel` (live source list —
-  file, category, world position, listener distance in meters, effective
-  gain, and the playback clock — plus the cap and any trigger failure). The
-  clock column reads `--` until that source's player node has rendered its
-  first buffer, which is a real state and not a zero.
-
-* **Voice** (`PanelSection-audioVoice`): `AudioVoiceFilterControl` text field,
-  `AudioVoiceFilterApplyControl`, `AudioVoiceFileControl` popup,
-  `AudioVoicePlayControl`, readout `AudioVoiceStatsLabel`:
-
-  ```text
-  Voice files: 200 listed of 34818 matching
-  Line: femaleeventoned\wigreeting__000c7917_1.fuz — 3.10 s, 1728 lip bytes
-  Position: 1.42 / 3.10 s
-  ```
-
-  The picker is a filter rather than a list: the archives hold 75,408 voice
-  files, so the section lists the first 200 matches of the filter and the
-  readout always states how many matched in total — a truncated popup that read
-  as the whole match set would be a lie about the corpus. The filter defaults to
-  a voice-type directory so the picker is useful before anything is typed.
-  Pressing `Play line` starts the file the same way a conversation will: framed
-  as `.fuz`, positional, ahead of the camera, on the voice submix. Nothing here
-  is an override — a one-shot trigger leaves no state to reset.
-
-* **Footsteps** (`PanelSection-audioFootsteps`): `AudioFootstepsEnabledControl`
-  checkbox, `AudioFootstepTagControl` popup listing the tags the current
-  footstep set answers to *for the gait the player is in*,
-  `AudioFootstepMaterialControl` popup, `AudioPlayFootstepControl`, readout
-  `AudioFootstepsStatsLabel`:
-
-  ```text
-  Set: FSTBarefootFootstepSet
-  Material: MaterialSnow
-  Tags: FootScuffRight, FootScuffLeft, JumpUp, JumpDown, FootLeft, FootRight
-  Routed 24, played 24
-  Last: FootLeft: sound\fx\fst\npc\snow\walk\l\fst_npc_snow_walk_01.wav
-  ```
-
-  The tag picker is rebuilt on every sync because the gait changes as the player
-  moves, and a selection that survives the rebuild is kept. Routed and played
-  are reported separately: they differ by the tags the set has no footstep for,
-  which is normal vanilla data rather than a fault. The play button fires one
-  footstep at the player's feet without walking, so the whole chain — set, tag,
-  material, impact, sound file, positional source — is verifiable standing still.
-
-  The material picker's first entry is **Ground contact**, the default: the
-  surface the walk controller reports underfoot. Picking a MATT instead pins it,
-  the readout appends `(forced)`, and both the routed events and the play button
-  resolve against it — which is how a user hears snow while standing on stone.
-  A pinned material counts as an override, so the section's reset clears it.
-
-The trigger places the source 700 units (~10 m) straight ahead of the camera
-under the `effects` category, so turning or strafing immediately pans it.
-Ids are pinned in `AudioPanelTests`, `AudioFootstepsPanelTests` and
-`DestinationRegistryTests`.
-
-### Acceptance record
-
-The M9 milestone gate (issue #157) covers the whole destination, not one
-section, so its record lives here rather than on the SFX or music page. It is
-the record required by the
-[sidebar verification convention](/tools/sidebar-acceptance.md), also carried as
-one row in that page's ledger:
+## Gain
 
 ```text
-Milestone: M9.2.4 (M9 overall acceptance)
-Sidebar path: World > Audio > Output, > Sources, > Music, > SFX & Ambience
-Destination id: Destination-audio
-Controls exercised: AudioEnabledControl, the generated Audio<Category>MuteControl
-  and Audio<Category>SoloControl families (AudioEffectsMuteControl and
-  AudioMusicSoloControl are the two the gate clicks), AudioFileControl,
-  AudioPlaySelectedControl, AudioStopAllControl, AudioMusicTypeControl,
-  AudioStopMusicControl, AudioSfxEnabledControl, AudioStopAmbienceControl
-Readout: AudioStatsLabel, AudioSourcesStatsLabel, AudioMusicStatsLabel,
-  AudioSfxStatsLabel, plus the Destination-audio-OverrideIndicator dot
-Deterministic tests: M9AcceptanceTests, WorldAudioTransitionAcceptanceTests,
-  M9AudioAcceptanceRealDataTests, AudioPanelTests, AudioPanelMuteSoloTests,
-  WorldAudioEngineMuteSoloTests, DestinationRegistryTests, AppSidebarModelTests,
-  MusicRecordStoreTests, WorldMusicDirectorTests, CellStreamingFlyPathTests
-Local A/B (optional, never committed): none
+effective gain = master x category x source x fade
 ```
 
-The two mute and solo ids are generated at runtime as
-`"Audio\(category.identifierFragment)MuteControl"` and `...SoloControl` in
-`opensky/App/Shell/Sections/AudioOutputSection.swift`, so grepping for the full id
-finds nothing; `M9AcceptanceTests` reaches them as
-`outputSection.muteControls[.effects]` and `soloControls[.music]`, which is why
-they are named as a family here. `CellStreamingFlyPathTests` is listed because
-the gate's "frame budget kept" clause is the audio-update budget above, and
-those cases are what enforce it. No A/B capture applies: everything this
-milestone adds is audible rather than visible, so a rendered frame would prove
-nothing.
+Master is the main mixer's output volume. Fade is the ramp factor below. The category factor is
+applied exactly once: on the player node for a positional source, and on the submix for the
+others. Applying it at both would square it. Distance fading comes after all of this, and only for
+positional sources.
 
-`M9AcceptanceTests` asserts these readout substrings verbatim: `Audio:
-disabled`, `Audio: running`, `Output: 44100 Hz, 2 ch`,
-`Mute: Effects  Solo: Music` and `Mute: none  Solo: none` on `AudioStatsLabel`;
-`Sources: 2 / 8`, `Sources: 1 / 8`,
-`doorwoodopen.xwm [effects] 700, 0, 0 | 10.0 m | gain 1.00` and
-`wind.xwm [effects] 0, 0, 0 | 0.0 m | gain 0.50` on `AudioSourcesStatsLabel`,
-with no `Play failed` line; `State: town`,
-`Music: MUSTownWhiterun — music\MUSTownWhiterun.xwm` and `Music: none` on
-`AudioMusicStatsLabel`, with no `Music error` line; and
-`SFX: sound\fx\dor\doorwoodopen.xwm`, `Ambience: 0x0001AABB` and
-`Ambience: none` on `AudioSfxStatsLabel`. The Music picker's first entry is
-pinned to `AudioMusicSection.automaticTitle` (`None (automatic)`). The sample
-rate, the file names and the FormID are invented for the test; no game data is
-read.
+Mute and solo are two more filters inside the category factor. One function gives the category's
+volume when it is audible, and zero when it is muted or another category is soloed. The submix
+volumes, the player node volumes, and the panel's gain column all read that one function, so they
+cannot disagree. Changing a filter applies it again to sources that are already playing.
 
-What the record does **not** claim is that anyone has heard it. The
-deterministic suites prove the control-to-provider-to-readout path and the
-record resolution; the audible half is the human step at the end of this page,
-of [world SFX + ambience](/engine/world-sfx.md) and of
-[music playlists](/engine/music.md), and it has not been performed.
+- Mute and solo are separate filters, and both must pass. Soloing a muted category leaves it
+  silent. Only unmuting makes it audible.
+- Mute is separate from the volume. Unmuting restores the slider level, not full volume.
+- Solo is one optional category, so only one can be soloed at a time.
 
-## Per-frame cost and the frame budget
+The engine is off by default. A start failure, such as no output device, is shown in the readout.
+It never crashes and never blocks rendering.
 
-The audio subsystem's only main-thread per-frame work is
-`Renderer.updateAudio(deltaTime:)`: push the camera pose into the environment
-node, run `WorldAudioEngine.tick` (advance gain ramps, retire finished sources,
-purge sources outside `cellPurgeRadius`), then tick the music director. Decode
-never runs here — it lives on `decodeQueue` — and the AVFAudio render thread
-runs no OpenSky code, so this is the whole cost the frame pays.
+The four categories are the four vanilla `SNCT` nodes marked for menu display: Effects, Voice,
+Music, and Footsteps ([sound records](/formats/sound.md)). A world sound follows `SNDR` `GNAM` to
+`SNCT` `PNAM` to one of them. Missing or broken data falls back to Effects.
 
-The work is bounded by `maxConcurrentSources = 8`: a handful of scalar updates
-per source with no allocation, no I/O and no decode. That is why the budget sits
-an order of magnitude below the animation gate rather than beside it.
+## World to listener coordinates
 
-* **Metric**: `Renderer.lastAudioUpdateMS`, the wall time of one
-  `updateAudio(deltaTime:)` call, sampled per frame into
-  `OffscreenBenchResult.audioUpdateMS` next to the animation and shadow samples.
-  A frame that does no audio work (menu-mode pause, or no engine attached)
-  records exactly zero; with no engine attached the guard returns before the
-  clock is read, so the instrumentation costs one optional test.
-* **Accessors**: `audioUpdateAverageMS` and `audioUpdatePercentileMS(_:)`,
-  mirroring `animationAverageMS` / `animationPercentileMS(_:)`.
-* **Gate**: `CellStreamingFlyBenchmarkConfiguration.audioUpdateBudgetMS`.
-  Average **and** p95 must both stay within it or the fly benchmark throws
-  `CellStreamingFlyBenchmarkError.audioUpdateExceeded`; the walk path enforces
-  the same number in `BenchCommand`.
-* **Budget**: **0.5 ms**, about 1.5% of the 33.33 ms frame at 30 fps. Override
-  with `bench --audio-budget-ms`.
+The world is right-handed and Z-up, in native units: +X east, +Y north, +Z up, and 1 unit is
+0.0142875 m ([coordinates](/decisions/coordinates.md)). The listener space of
+`AVAudioEnvironmentNode` is right-handed and Y-up, and its distance settings use the position
+unit, which OpenSky sets to meters.
 
-Measured 2026-07-26 on `bench --walk-path --size 640x360` (Debug build, 814
-active physics frames, engine attached and ticking every frame, no live
-sources): **avg 0.005 ms, p95 0.014 ms, max 0.028 ms**. That is the fixed
-floor — the listener push plus an empty tick — and it sits roughly 35x under
-the p95 gate. The remaining cost scales with the number of live sources, which
-the FIFO cap holds at 8, so the 0.5 ms ceiling is reasoned headroom over a
-measured floor rather than a measurement of a full source set.
+| World (Z-up, units) | Listener (Y-up, meters) |
+| --- | --- |
+| Position `(x, y, z)` | `(x, z, -y) * 0.0142875` |
+| Direction `(x, y, z)` | `(x, z, -y)`, no scale |
+| +X east | +X |
+| +Y north | -Z, straight ahead of a default listener |
+| +Z up | +Y |
 
-Both `bench --fly-path` and `bench --walk-path` attach a (disabled) world audio
-engine so the tick really runs, and print an `audio update:` line with avg, p95,
-max and budget. `make probe` greps for that line on both paths.
+This is the same basis change the renderer uses. The listener faces
+`(cos yaw * cos pitch, sin yaw * cos pitch, sin pitch)`, with its matching up vector, both mapped
+as directions. Example: facing +X, a source at world -Y is on the listener's right, and renders
+louder in the right channel.
 
-## Verification
+## Threading
 
-* `AudioSpaceTests` — conversion table above.
-* `WorldAudioEngineTests` — offline manual rendering (no device, no audible
-  playback): left/right channel balance for known poses, distance
-  attenuation, the volume product (category 0.25 renders ~0.25x RMS),
-  master-zero silence, FIFO cap eviction, cell purge, snapshot contents.
-* `WorldAudioEngineMuteSoloTests` — offline manual rendering again: a muted
-  category renders silence while another category still sounds, a solo silences
-  the others and clearing it restores them, a soloed but muted category stays
-  silent, unmuting restores the prior category volume, and a source started
-  while its category is muted comes up at zero node volume.
-* `WorldAudioEngineNonPositionalTests` — submix routing, stereo material, the
-  category factor applied once, and both exemptions (purge, FIFO budget).
-* `WorldAudioEngineFadeTests` — ramp arithmetic, fade-out-and-stop retirement,
-  retargeting mid-ramp, a two-source crossfade, tick-driven advance with a
-  zero delta freezing it, and the regression that a slider move mid-fade does
-  not stomp the ramp.
-* `WorldAudioEngineClockTests` — offline manual rendering: no reading before
-  the first render, a clock that advances monotonically with the frames
-  rendered and reaches the material's length, the finished callback firing once
-  and only for a source that played out (a stopped source reports nothing), and
-  the panel snapshot carrying the same reading the engine reports.
-* `WorldAudioEngineVoiceTests` — a `.fuz` line starts positional on the voice
-  submix and hands back its lip data, a line without lip data still plays, and
-  a malformed container or a payload that is not xWMA throws before any source
-  is started.
-* `FUZFileTests`, `VoiceFilePathTests` — container framing against synthetic
-  bytes, and the voice-name budget as a table of real vanilla shapes.
-* `AudioVoicePanelTests` — Voice section geometry, the id contract, the
-  filter/picker round-trip, and the readout stating the true match count beside
-  the truncated one.
-* `VoiceRealDataTests` (env-gated, `make realtest`) — frames all 75,408 `.fuz`
-  entries with zero failures, re-derives every voice file name from the records
-  and gates on the measured coverage, and takes one resolved
-  line end to end: decode under manual rendering, clock advancing monotonically
-  toward the declared duration, a non-silent peak sample out of the offline
-  render (the objective half of "audible" — real PCM reached the output, not a
-  started source that decoded nothing), and the source listed on the voice
-  submix.
-  Reports in gitignored `logs/voice-sweep/`.
-* `openskycli audio voice-sweep` — the same two checks from the CLI, with a
-  `--limit` that states how many entries it skipped.
-* `AudioSourceStreamerTests` — mono downmix + interleaved-to-planar packing.
-* `AudioCodecParametersXWMTests` — extradata substitution.
-* `AudioPanelTests`, `DestinationRegistryTests`, `AppSidebarModelTests` —
-  panel geometry, id contract, registry wiring.
-* `M9AcceptanceTests` — the milestone gate driven through the app shell with no
-  game data: select `Destination-audio`, enable the engine, mute one category
-  and solo another, inspect the source list, trigger the picked file, force a
-  playlist, and switch the SFX toggle, reading every result back out of
-  `AudioStatsLabel`, `AudioSourcesStatsLabel`, `AudioSfxStatsLabel` and
-  `AudioMusicStatsLabel`.
-* `M9AudioAcceptanceRealDataTests` (env-gated, `make realtest`) — the same gate
-  against the user's install: the route exterior cell's regions resolve to an
-  ambient bed, its precedence chain resolves to a playlist whose first track is
-  really in the archives, the interior cell's acoustic space resolves, and the
-  route door's base yields open and close sound descriptors that resolve to
-  files. Report in gitignored `logs/m9-audio-acceptance.log`; no audible
-  assertion, because the vanilla effect and ambience files are `.wav`.
-* `openskycli audio sweep` (gated in `make probe`) — frames **and decodes**
-  the full vanilla corpus, streaming, asserting zero failures and reporting
-  frame-count mismatches against `dpds`.
-* Audible acceptance is a human step (app launches are visible): open
-  **World > Audio**, tick `Enabled`, pick any `music\...` file, press `Play`,
-  then turn (mouse-look) and strafe (A/D) — the sound must pan between ears
-  as the source passes the view axis and fade with distance as you fly away.
-  For the M9 gate the same person also mutes `Effects` and confirms the
-  triggered sound goes silent while music keeps playing, solos `Music` and
-  confirms everything else drops out, then clears both from the sidebar's reset
-  and confirms the mix returns.
+Three places run code, with one crossing each:
 
-Every kind of vanilla audio now reaches this graph: music and voice through the
-xWMA streaming route, sound effects through the PCM buffer route. The `.wav`
-reader landed with issue #352 and the `.fuz` voice route with item 17.5.
+1. The main actor owns the graph, volumes, source list, and listener pose. Each frame, the renderer
+   pushes the camera pose and runs retirement and purge. It is skipped while the world is paused.
+2. One serial decode queue owns each source's decoder, which is not `Sendable`. It decodes chunks
+   of 16 packets (about 0.75 s) into PCM buffers and keeps at most 3 scheduled ahead. So a music
+   track is never decoded whole (about 37 MB of PCM). Buffer completion handlers run on an AVFAudio
+   queue and hop straight back to the decode queue.
+3. The audio render thread runs no OpenSky code. `AVAudioPlayerNode` reads the scheduled buffers
+   there itself. Nothing from OpenSky allocates, locks, or logs on it.
+
+Main to queue is a start or stop request, with no waiting. Queue to main is one locked "finished"
+flag the tick checks. Engine to panel is a snapshot value read twice a second. The main actor never
+waits for the decode queue.
+
+## Budget and cleanup
+
+- At most 8 positional sources play at once. The limit is provisional.
+- Starting a positional source at the limit stops the oldest one first. It is predictable and fits
+  how short effects end anyway. A priority scheme waits for game data.
+- Non-positional sources are outside the limit and the cell purge. A burst of effects never stops
+  the music, and streaming never stops it either: it has no cell. Only an explicit stop, a finished
+  fade-out, a stream that cannot be used, or engine shutdown ends one.
+- A source that played its last buffer sets its finished flag, and the next tick removes it.
+- A looping source, such as an ambience bed, rewinds to its first packet at the end of the file
+  and keeps going. It never sets the finished flag. A pass that decoded no audio ends the source
+  instead of rewinding, so a file the decoder cannot use cannot spin the decode queue.
+- Each positional source remembers the exterior cell of its position. The tick stops sources more
+  than 3 rings from the listener's cell, one ring past the 5x5 loaded grid.
+
+## Gain ramps
+
+Every source has a fade gain from 0 to 1, multiplied into its node volume. A ramp has a start
+gain, a target, a duration in seconds, and elapsed time. This is the crossfade tool.
+
+- Ramps advance only by the frame time the tick passes in. No wall clock is read. The renderer
+  skips the tick while the world is paused, so a crossfade freezes in menu mode and does not jump
+  on resume.
+- The curve is linear in amplitude, not decibels. It is simple and fine for music crossfades.
+- A new ramp during a ramp replaces it, starting from the current gain. So the level never jumps.
+  A duration of zero or less applies the target at once.
+- "Fade out and stop" ramps to silence and removes the source at the end.
+- A ramp within 1 ms of its duration counts as done and snaps to the target. Adding frame times in
+  `Float` never sums exactly (60 additions of 1/60 do not make 1). Without this, a fade-out could
+  stay just above silence and never end.
+- The fade is part of the same volume product, so moving a slider during a crossfade applies the
+  ramp again instead of overwriting it.
+
+## Distance
+
+Distance fading is provisional: the inverse model, reference distance 2 m, maximum distance 60 m
+(about one exterior cell), and rolloff 1. The game's own values come from `SNDR` and `SDSC`. These
+exist so the panel is clearly distance-dependent.
+
+## Per-frame cost
+
+The only per-frame audio work on the main thread is one update: push the camera pose, run the tick
+(ramps, retirement, purge), and tick the music director. Decoding never runs there, and the render
+thread runs no OpenSky code. The work is bounded by the 8-source limit: a few scalar updates per
+source, with no allocation, no file reads, and no decoding.
+
+The budget is 0.5 ms for both the mean and the p95 of this update, about 1.5% of a 33.33 ms frame.
+Both `bench --fly-path` and `bench --walk-path` attach an audio engine so the tick really runs, and
+print an `audio update:` line. The measured floor, with no live sources, is about 35 times under
+the p95 limit. The rest grows with live sources, which the limit caps at 8. So the budget is
+reasoned headroom over a measured floor. A frame that does no audio work records zero.
+
+## Controls
+
+World > Audio has five sections: Output, Sources, Voice, Footsteps, SFX & Ambience, and Music.
+
+- Output: Enabled, master volume, a volume slider per category, and per category a mute and a
+  solo checkbox. Solo is a checkbox, not a radio group, because clicking the soloed category again
+  clears solo, which a radio group cannot do. A muted or soloed category counts as a change, so the
+  sidebar dot lights and the reset clears both. The readout ends with a line like
+  `Mute: Effects, Music  Solo: Voice`, or `Mute: none  Solo: none`.
+- Sources: pick an `.xwm` file and play it, or stop all. The file plays 700 units (about 10 m)
+  ahead of the camera as an effect, so turning or strafing pans it at once. The readout lists live
+  sources with file, category, position, distance, gain, and playback time. The time reads `--`
+  until the source renders its first buffer, which is a real state, not zero.
+
+A manual check: turn on audio, play any `music\...` file, then turn and strafe. The sound must pan
+between ears as it passes the view axis, and fade as you fly away. Mute Effects and check that the
+effect goes silent while music plays. Solo Music and check that everything else stops. Reset, and
+check that the mix returns.

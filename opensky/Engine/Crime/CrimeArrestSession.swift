@@ -3,7 +3,7 @@
 // the guard state, all of which the session owns.
 //
 // Declared in the engine so the Papyrus bridge can reach it, and implemented by
-// the game controller. Documented in docs/engine/crime.md.
+// the game controller. Documented in docs/engine/guard-response.md.
 
 import Foundation
 

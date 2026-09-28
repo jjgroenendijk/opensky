@@ -1,275 +1,131 @@
 ---
 type: Subsystem
-title: World SFX + ambience
-description: World SFX director that wires interaction events to one-shot SFX and
-  per-cell context to a non-positional ambience bed; the M9.2.2 verification surface.
+title: World sound effects and ambience
+description: How use-key and door events play sound effects, and how the current cell's regions
+  or acoustic space choose a looping ambience bed that is not tied to a position.
 tags: [engine, audio, sfx, ambience]
-timestamp: 2026-08-01T00:00:00Z
 ---
 
-# World SFX + ambience
+# World sound effects and ambience
 
-Milestone 9.2.2 (issue #155): wire the [decoded sound records](/formats/sound.md)
-to the [world interaction system](/engine/interaction.md) and the streaming cell
-lifecycle. Door open SFX on use-key activation; per-cell ambient bed under the
-descriptor's authored `SNDR.GNAM` category. Implementation:
-`opensky/Engine/Audio/WorldAudioSoundDirector.swift`
-(director), `opensky/Engine/Audio/AmbienceCatalog.swift` (bed resolution),
-`opensky/Engine/Audio/AcousticSpaceStore.swift` (ASPC index),
-`opensky/Engine/World/Streaming/CellStreamerAmbience.swift` (streamer emission), and the panel
-section `opensky/App/Shell/Sections/AudioSfxSection.swift`.
+The world sound director connects the [sound records](/formats/sound.md) to
+[interaction](/engine/interaction.md) and to cell streaming. It plays one-shot sounds when the
+player uses things, and a looping ambience bed for the current cell. It does nothing until the
+[world audio engine](/engine/audio.md) is turned on.
 
-## Contents
+## Events
 
-* [Subscriptions](#subscriptions)
-* [Threading](#threading)
-* [Sound resolution](#sound-resolution)
-* [Non-positional ambience routing](#non-positional-ambience-routing)
-* [World > Audio > SFX & Ambience surface](#world--audio--sfx--ambience-surface)
-* [Verification](#verification)
-* [Follow-ups filed](#follow-ups-filed)
-
-## Subscriptions
-
-The director subscribes to three `CellStreamer` callbacks. All are no-ops until
-the user enables the [world audio engine](/engine/audio.md).
+The director listens to three events from cell streaming:
 
 ```text
-CellStreamer.onInteraction  -> director.handleInteraction  -> play activation SFX
-CellStreamer.onInteractionAnimation -> director.handleInteractionAnimation
-  motionStarted -> start authored loop
-  closed        -> stop loop + play close SFX
-  cancelled     -> stop loop
-CellStreamer.onAmbienceContextChanged -> director.handleAmbienceContext -> bed swap
+interaction          -> play the activation sound
+interaction phase:
+  motion started     -> start the object's loop sound
+  closed             -> stop the loop, play the close sound
+  cancelled          -> stop the loop
+ambience context     -> change the ambience bed
 ```
 
-`onInteraction` is the typed-event seam M8.4.1 introduced and reserved for "the
-later Papyrus OnActivate subscriber"; that future subscriber will listen
-alongside the director, not replace it.
+Scripts listen to the same interaction event beside the director. Neither replaces the other.
 
-### Activation SFX
+## Activation sounds
 
-A use-key press publishes one `InteractionEvent` carrying the target's
-`PlacedInteraction.sounds` (resolved at cell-build time from
-[ModelBase sound fields](/formats/records.md)). The director resolves the
-`activation` FormID, follows its descriptor's `SNDR.GNAM -> SNCT.PNAM` chain to
-a vanilla menu category, and plays it at the placed reference's position.
-Missing or malformed category metadata falls back to Effects.
+A use-key event carries the target's sounds, resolved when the cell was built from the base
+record's sound fields ([world records](/formats/world-records.md)). The director resolves the
+activation sound. It follows `SNDR` `GNAM` to `SNCT` `PNAM` to find the vanilla menu category,
+and plays the sound at the reference's position. Missing or broken category data falls back to
+Effects.
 
-### Door motion and close SFX
+## Door sounds
 
-An accepted player-driven door transition publishes an
-`InteractionAnimationEvent.motionStarted` boundary and retains the source
-`PlacedInteraction` across the asynchronous destination build. A successful
-build publishes `closed` immediately before replacing the source scene; a
-failed build publishes `cancelled`. Runtime-state rebuild transitions publish
-none of these player-audio events.
+When the player opens a door that leads somewhere, a "motion started" event is sent. The door's
+data is kept while the destination cell builds in the background. Then:
 
-The director starts `sounds.loop` as a positional looping source on
-`motionStarted`. It records that source ID under the placed reference so
-`closed` and `cancelled` retire exactly the movement loop without disturbing
-ambience or other effects. `closed` then resolves and plays `sounds.close` as a
-one-shot. This covers `DOOR BNAM` and `DOOR ANAM`; the same typed event accepts
-`CONT QNAM` when container animation becomes a producer. A future rendered
-door animation moves the existing phase emission to its authored boundaries;
-the audio subscription and resolution path do not change.
+- The build succeeds: "closed" is sent just before the new scene replaces the old one.
+- The build fails: "cancelled" is sent.
 
-### Ambience bed
+A rebuild from a world state change sends none of these, because the player did not move.
 
-The streamer's `emitAmbienceContextIfNeeded` builds an `AmbienceContext` value
-from the current center cell and fires it on `onAmbienceContextChanged`
-whenever the context key changes:
+On "motion started", the director starts the loop sound as a looping sound at the door. It
+remembers that source by the door reference. So "closed" and "cancelled" stop exactly that loop,
+and not the ambience or other effects. "Closed" then plays the close sound once. This covers
+`DOOR` `BNAM` and `ANAM`. The same event also accepts `CONT` `QNAM`, once containers animate.
 
-* exterior center cell -> XCLR regions
-* interior scene -> XCAS acoustic space, plus the interior-cell FormID
+## Choosing the ambience bed
 
-The director's `AmbienceBed.resolve` produces a deterministic ordered list of
-SNDR/SOUN FormIDs from that context:
+Cell streaming sends an ambience context whenever it changes:
 
-* exterior: each region's type-7 RDAT sound area (`RDSA` entries)
-* interior: `ASPC.SNAM` direct plus `ASPC.RDAT`-borrowed region's sound area
+- an exterior center cell sends its `XCLR` regions;
+- an interior sends its `XCAS` acoustic space and its cell FormID.
 
-The bed is diffed against the previous one; only changes retire + restart
-sources. `apply(transition:)` forces a re-emit on scene swaps so an interior
-re-entered with the same key still refreshes.
+The director turns the context into a fixed, ordered list of `SNDR` or `SOUN` FormIDs:
 
-### Bed lifetime and the enable toggle
+- exterior: the `RDSA` entries of each region's sound area (`RDAT` type 7);
+- interior: the acoustic space's `SNAM`, plus the sound area of the region it borrows through
+  its own `RDAT` ([acoustic space](/formats/acoustic-space.md)).
 
-A bed is continuous, so every bed source starts with
-`AudioPlayRequest.loops = true`: at end of file its streamer resets the decoder
-and rewinds to the first packet instead of reporting completion, and the audio
-tick therefore never retires it (see
-[looping in the audio engine](/engine/audio.md)). Without that a "bed" would
-play through exactly once and fall silent until the center cell changed.
+The new bed is compared with the old one, and only the changes stop or start sources. A scene
+swap sends the context again, so an interior entered twice still refreshes.
 
-The director keeps two pieces of state and one path between them:
+## Bed lifetime
 
-* `desiredBed` — the bed the last `AmbienceContext` resolved to, whether or not
-  it is playing. It is what a context change diffs against, and what gets
-  started when ambience is switched back on.
-* `ambienceSourceIDs` — the ids of the bed sources actually started, so
-  `WorldAudioEngine.stopSource(id:)` retires exactly this bed and leaves
-  concurrent one-shot SFX playing.
+A bed is continuous, so every bed source loops. At the end of the file, its stream rewinds to the
+first packet instead of finishing. Without this, a bed would play once and stay silent until the
+cell changed.
 
-Both a context change and the `ambienceEnabled` toggle go through the same
-`applyAmbienceState()`: retire what is playing, then start `desiredBed` when
-ambience is enabled and the engine is running. So unticking the checkbox stops
-the bed immediately, ticking it restarts the bed the last context resolved (no
-waiting for the next cell change), and a context that arrives while ambience is
-off is remembered rather than swallowed.
+The director keeps two things:
 
-The readout is derived from live sources, not from the resolved bed: ids the
-engine already stopped because the graph shut down or a stream could not
-produce audio are pruned first, and `currentAmbienceDescription` reports `none`
-when nothing of this director's is still playing. It therefore cannot claim a
-bed is playing when it is not.
+- The wanted bed: what the last context resolved to, playing or not. A new context is compared
+  with it, and turning ambience on again starts it.
+- The playing sources: the IDs of the bed sources actually started. So stopping the bed stops
+  only these, and a one-shot sound keeps playing.
 
-## Threading
+A context change and the ambience toggle take the same path: stop what plays, then start the
+wanted bed if ambience is on and the engine runs. So turning ambience off stops the bed at once.
+Turning it on starts the last bed without waiting for a cell change. A context that arrives while
+ambience is off is kept, not lost.
 
-Main-actor only, like the rest of the audio engine. Decode work runs inside the
-engine's existing decode queue; nothing OpenSky-side runs on the audio render
-thread. The stores (`SoundRecordStore`, `WeatherStore`, `AcousticSpaceStore`)
-are immutable value-type indices after construction, so the director reads them
-freely from the main thread.
+The readout comes from the live sources, not the wanted bed. Sources the engine already stopped
+are removed first. So the readout never claims a bed plays when it does not.
 
 ## Sound resolution
 
-`SoundRecordStore.resolveAny` follows the SOUN-legacy-marker hop
-(`SOUN.SDSC -> SNDR`) automatically — activator/door/container sound fields
-store raw FormIDs whose target type is not pinned at decode time. A probe
-against Skyrim.esm (2026-07-26) found vanilla SSE ships zero SOUN markers on
-these records: all 497 references target SNDR directly. The hop is supported
-anyway because xEdit allows it.
+Door, activator, and container sound fields store a FormID without a fixed record type. So the
+resolver also follows the old `SOUN` marker to its `SNDR` (`SOUN` `SDSC`). Vanilla SSE has no
+`SOUN` markers on these records: every one points at a `SNDR` directly. The step is kept because
+xEdit allows it.
 
-The resolved descriptor also supplies the runtime category. Skyrim's ambience
-nodes are children of `AudioCategorySFX`, so current vanilla SFX and ambience
-both reach the Effects factor. The same resolver already handles Footsteps,
-Voice, and Music without hardcoded FormIDs.
+The resolved descriptor also gives the category. In Skyrim, the ambience categories are children
+of `AudioCategorySFX`, so vanilla effects and ambience both use the Effects volume. The same
+resolver handles Footsteps, Voice, and Music without fixed FormIDs.
 
-## Non-positional ambience routing
+## Ambience has no position
 
-Each ambience entry starts through `WorldAudioEngine.playNonPositional` and
-connects directly to the submix for its descriptor's resolved vanilla category.
-Vanilla ambience resolves under Effects, but routing follows the record rather
-than hardcoding that category. The submix applies the category volume, mute and
-solo factor once to the complete bed; each player node carries only unity source
-gain and fade gain.
+Each bed sound connects straight to the submix of its resolved category. It has no world
+position, panning, or distance fade. So moving away from where the context started cannot fade
+the bed. The submix applies the category volume, mute, and solo once for the whole bed.
 
-The bed has no world position, panning or distance attenuation. Moving the
-listener therefore cannot make ambience fade away from the position where the
-context began. Non-positional sources are outside the positional FIFO budget
-and cell purge; the director owns their lifetime and retires them on context
-change, through the ambience toggle, or when the user presses Stop ambience.
+Beds are outside the positional source budget and are not purged with cells. The director alone
+stops them: on a context change, through the toggle, or with Stop ambience.
 
-## World > Audio > SFX & Ambience surface
+## Threading
 
-Sidebar path for acceptance: **World > Audio > SFX & Ambience**
-(`PanelSection-audioSfx`). The section carries:
+Everything runs on the main actor, like the rest of the audio engine. Decoding runs on the
+engine's decode queue. Nothing from OpenSky runs on the audio render thread. The sound, weather,
+and acoustic space stores are immutable after they are built.
 
-* `AudioSfxEnabledControl` checkbox — toggles `sfxEnabled` (default on).
-* `AudioAmbienceEnabledControl` checkbox — toggles `ambienceEnabled`
-  (default on).
-* `AudioStopAmbienceControl` button — force-retires the current bed; the next
-  cell change restarts it. A/B inspection helper.
-* `AudioSfxStatsLabel` readout — last SFX description (or "none"), last SFX
-  error, and the current ambience bed (FormIDs joined, or "none").
+## Controls
 
-Override aggregation: the audio destination's `isOverridden` unions
-`AudioOutputSection` and `AudioSfxSection`; reset all clears both.
+World > Audio > SFX & Ambience:
 
-### Acceptance record
+- SFX enabled (on by default).
+- Ambience enabled (on by default).
+- Stop ambience: stops the current bed. The next cell change starts it again.
+- Readout: the last sound played, the last error, and the current bed's FormIDs, or "none".
 
-The record required by the
-[sidebar verification convention](/tools/sidebar-acceptance.md), also carried as
-one row in that page's ledger:
+Reset all on the Audio destination clears this section and the Output section. Nothing sounds
+until World > Audio > Output > Enabled is on.
 
-```text
-Milestone: M9.2.2
-Sidebar path: World > Audio > SFX & Ambience
-Destination id: Destination-audio
-Controls exercised: AudioSfxEnabledControl, AudioAmbienceEnabledControl,
-  AudioStopAmbienceControl, AudioEnabledControl
-Readout: AudioSfxStatsLabel
-Deterministic tests: AudioPanelTests, DestinationRegistryTests,
-  WorldAudioSoundDirectorTests, WorldAudioDirectorAmbienceTests,
-  WorldAudioEngineTests, AudioSourceStreamerTests, AmbienceCatalogTests,
-  CellStreamerTests, RecordDecoderTests, AcousticSpaceRecordTests,
-  RegionRecordTests, CellRecordTests
-Local A/B (optional, never committed): none
-```
-
-`AudioEnabledControl` lives in the Output section of the same destination and is
-listed because nothing in this section produces sound until the world audio
-engine is running. `CellStreamerTests` and `RecordDecoderTests` are the class
-names the ambience and sound-field cases extend; the cases themselves live in
-`openskyTests/World/Streaming/CellStreamerAmbienceTests.swift` and
-`openskyTests/Formats/ESM/Records/ModelBaseSoundTests.swift`, so grepping for the class name finds
-the base file, not the milestone's cases. No A/B capture applies: the behavior
-this milestone adds is audible, not visible, so a rendered frame would prove
-nothing.
-
-## Verification
-
-* `ModelBaseSoundTests`, `CellRecordTests`, `RegionRecordTests`,
-  `AcousticSpaceRecordTests` — synthetic ESM field coverage for every decoded
-  field the director consumes.
-* `AmbienceCatalogTests` — bed resolution for exterior/interior, unknown-region
-  skip, missing-ASPC, ASPC-without-direct-or-borrow.
-* `WorldAudioSoundDirectorTests` — offline-render coverage: interaction plays
-  activation sound (as a non-looping effect), motion starts the authored loop,
-  close retires the loop and plays its one-shot, cancellation retires the loop
-  without a false close, force trigger, and resolve-failure error. Fixtures
-  shared with the ambience suite live in
-  `openskyTests/Audio/WorldAudioDirectorFixtures.swift`.
-* `WorldAudioDirectorAmbienceTests` — offline-render coverage of the bed:
-  category-submix routing with no world position, survival across distant
-  listener-cell movement, retire on context change, no-op when disabled, toggle
-  retires and restarts, a context resolved while disabled starts on enable,
-  bed sources are looping, retiring the bed leaves a concurrent one-shot SFX
-  alive (`stopSource(id:)` selectivity), and the readout falls back to `none`
-  once the engine has retired the bed.
-* `WorldAudioEngineTests.loopingSourceKeepsPlayingPastItsMaterial` — offline
-  render proving a looping request keeps sounding past the end of its material
-  while a one-shot falls silent; `AudioSourceStreamerTests` covers the
-  end-of-file rewind policy itself (pure, because no WMA fixture may enter the
-  repository).
-* `CellStreamerDoorTests` (under `CellStreamerTests`) — accepted player door
-  transitions publish `motionStarted` followed by `closed`; failed transitions
-  end in `cancelled`.
-* `CellStreamerAmbienceTests` (under `CellStreamerTests`) — streamer emits
-  context on cell arrival, deduplicates steady state, regionless center emits
-  empty.
-* `WorldAudioTransitionAcceptanceTests` — the M9 gate's transition sentence as
-  one synthetic sequence: an exterior cell arrives and starts its region bed and
-  exploration playlist, a door interaction plays its activation SFX without
-  disturbing either, `apply(transition:)` swaps in an interior whose acoustic
-  space supplies a new bed and whose cell music switches the state to interior,
-  and the paired transition back restores both. This is the interior coverage
-  `CellStreamerAmbienceTests` explicitly does not claim, because the
-  exterior-center path never flips to interior on its own.
-* `M9AudioAcceptanceRealDataTests` (env-gated, `make realtest`) — the route
-  exterior cell's regions and the route interior's `XCAS` resolve to real beds,
-  and the route door's base yields open and close descriptors resolving to real
-  files. Report in gitignored `logs/m9-audio-acceptance.log`.
-* `AudioPanelTests` — id contract for the new controls + round-trip test
-  through the provider.
-* Env-gated probe (`make probe` 2026-07-26 against Skyrim.esm): 45 ASPC, 53
-  REGN with sound area, 687 RDSA entries, 497 activator/door/container sound
-  references all resolve to SNDR (0 SOUN markers in vanilla); RDSA.Chance range
-  pinned at 0.01-1.0.
-
-Audible acceptance is a human step: open World > Audio, tick Enabled, walk a
-Whiterun exterior cell (regions carry ambient beds), press F on a door (open
-SFX under Effects), enter an interior (XCAS-sourced bed under Effects).
-Toggle `AudioSfxEnabledControl` to confirm SFX mute independently from the bed.
-The M9 gate asks for that route once end to end — exterior bed, door SFX,
-interior bed, and back out through the paired door — with each change confirmed
-by ear while `AudioSfxStatsLabel` names the sound and the bed. Nothing in the
-repository records that anyone has done it: `WorldAudioTransitionAcceptanceTests`
-proves the same sequence drives the directors, and
-`M9AudioAcceptanceRealDataTests` proves the records behind it resolve on the
-install, but the listening itself is still outstanding.
-
-## Follow-ups filed
-
-* #238 — comprehensive Cell decoder unit tests (pre-existing gap, widened by XCAS).
+A manual check: turn on audio, walk through a Whiterun exterior cell (its regions have beds),
+press F on a door (open sound), and enter an interior (a bed from `XCAS`). Turning off SFX must
+mute the door sounds but not the bed.

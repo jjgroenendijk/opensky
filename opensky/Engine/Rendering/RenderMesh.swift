@@ -138,7 +138,7 @@ nonisolated enum StaticVertexLayout {
 /// vertex — up to TerrainConstantMaxLayers (8) ATXT layer opacities. Kept as
 /// a parallel stream instead of forking the 48-byte static layout so
 /// RenderMesh upload and StaticVertexLayout stay untouched
-/// (docs/rendering/metal4-renderer.md, terrain splat section).
+/// (docs/rendering/scene-drawing.md, terrain splat section).
 nonisolated enum TerrainVertexLayout {
     /// Two tightly packed float4 lanes per vertex.
     static let weightsStride = 32

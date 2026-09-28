@@ -1,128 +1,117 @@
 ---
 type: File Format
 title: HKX Packfile Container
-description: Havok packfile container layout (header, sections, fixups, class
-  names) as shipped in Skyrim SE, and how OpenSky enumerates objects.
+description: Havok packfile container layout in Skyrim SE (header, sections, fixups, class
+  names) and how OpenSky lists the objects in it.
 tags: [format, havok, hkx, animation]
-timestamp: 2026-07-20T00:00:00Z
 ---
 
 # HKX packfile container
 
-Havok binary packfile — container for skeletons (`skeleton.hkx`), animations
-(`*.hkx` clips), behavior + ragdoll data. This page covers the container only:
-header, section table, fixup tables, class-name inventory. Object internals are
-separate pages: [hkaSkeleton](/formats/hka-skeleton.md) (bones, parents, bind
-pose — done 6.2); [hkaSplineCompressedAnimation](/formats/hka-animation.md)
-(spline-compressed local-transform tracks — done 6.3).
+An `.hkx` file is a Havok binary packfile. Skyrim SE uses it for skeletons
+(`skeleton.hkx`), animation clips, behaviors, and ragdolls. This page covers only the
+container: the header, the sections, the fixup tables, and the class names. The objects
+inside have their own pages: [hkaSkeleton](/formats/hka-skeleton.md) and
+[hkaSplineCompressedAnimation](/formats/hka-animation.md).
 
-Parser: `opensky/Engine/Formats/HKX/` (`HKXHeader`, `HKXSection`, `HKXFile`). CLI dump:
-`openskycli hkx <key>` ([CLI](/tools/cli.md)). Tests: `HKXFileTests` over
-synthetic `HKXFixture` blobs.
+`openskycli hkx <key>` prints a file's container ([CLI](/tools/cli.md)).
 
-## References
+## Sources
 
-No public Havok spec. Layout reimplemented from independent open parsers +
-community docs, then every field probe-verified against the local SSE install
-(`skeleton.hkx`, `mt_idle.hkx`, `1hm_idle.hkx`, `2hm_idle.hkx` — all
-`Skyrim - Animations.bsa`):
+There is no public Havok specification. The layout comes from open parsers and community
+notes. Every field was then checked against real SSE files (`skeleton.hkx`, `mt_idle.hkx`,
+`1hm_idle.hkx`, `2hm_idle.hkx` in `Skyrim - Animations.bsa`).
 
-* exyorha/hkxparse (MIT) — packfile structs, fixup extents, sentinel rules.
-* ret2end/HKX2Library (MIT) — SSE-specific header values, 48-byte section
-  header quirk, class-name encoding. Most SSE-authoritative.
-* ZeldaMods wiki "Havok" — byte tables for the Havok-2014 (v11) variant;
-  container shape matches, values differ (see variants below).
-* Lukas Cone "Havok middleware" write-up — platform layout-rule table.
+- exyorha/hkxparse (MIT): packfile structs, fixup ranges, end markers.
+- ret2end/HKX2Library (MIT): SSE header values, the 48-byte section header, class-name
+  encoding. The most reliable source for SSE.
+- ZeldaMods wiki "Havok": byte tables for the Havok 2014 (version 11) variant. The shape is
+  the same, but values differ.
+- Lukas Cone, "Havok middleware": the table of layout rules per platform.
 
-No Havok SDK or Bethesda code consulted (AGENTS.md Legal & IP).
+No Havok SDK or Bethesda code was used.
 
-## Observed SSE profile
+## What SSE files look like
 
-Every vanilla SSE file probed: 64-bit little-endian packfile, fileVersion 8,
-version string `hk_2010.2.0-r1`, layout rules `8-1-0-1`, 3 sections
-(`__classnames__`, `__types__`, `__data__`), `__types__` empty, no
-exports/imports tables. Section arithmetic closes exactly on file size.
+Every vanilla SSE file checked is a 64-bit little-endian packfile with file version 8, the
+version string `hk_2010.2.0-r1`, and layout rules `8-1-0-1`. It has three sections:
+`__classnames__`, `__types__` (empty), and `__data__`. There are no export or import tables.
+The section sizes add up exactly to the file size.
 
-## Header (64 bytes, offset 0, all integers LE)
+## Header (64 bytes at offset 0)
 
-| off | size | field | SSE value |
+All integers are little-endian.
+
+| Offset | Size | Field | SSE value |
 | --- | --- | --- | --- |
-| 0x00 | 4 | magic0 | 0x57E0E057 |
-| 0x04 | 4 | magic1 | 0x10C0C010 |
+| 0x00 | 4 | magic0 | `0x57E0E057` |
+| 0x04 | 4 | magic1 | `0x10C0C010` |
 | 0x08 | 4 | userTag | 0 |
-| 0x0C | 4 | fileVersion | 8 (Havok 2010; BotW/2014 files use 11) |
+| 0x0C | 4 | fileVersion | 8 (Havok 2010; 2014 files use 11) |
 | 0x10 | 1 | pointerSize | 8 |
 | 0x11 | 1 | littleEndian | 1 |
 | 0x12 | 1 | reusePaddingOptimization | 0 |
 | 0x13 | 1 | emptyBaseClassOptimization | 1 |
 | 0x14 | 4 | numSections | 3 |
 | 0x18 | 4 | contentsSectionIndex | 2 (`__data__`) |
-| 0x1C | 4 | contentsSectionOffset | 0 (top object at data offset 0) |
+| 0x1C | 4 | contentsSectionOffset | 0 (the root object is at offset 0) |
 | 0x20 | 4 | contentsClassNameSectionIndex | 0 (`__classnames__`) |
-| 0x24 | 4 | contentsClassNameSectionOffset | 0x4B -> "hkRootLevelContainer" |
-| 0x28 | 16 | contentsVersion | "hk_2010.2.0-r1" NUL-terminated, 0xFF fill |
+| 0x24 | 4 | contentsClassNameSectionOffset | `0x4B`, the name `hkRootLevelContainer` |
+| 0x28 | 16 | contentsVersion | `hk_2010.2.0-r1`, null, then `0xFF` fill |
 | 0x38 | 4 | flags | 0 |
-| 0x3C | 4 | pad (2x i16 maxPredicate/sectionOffset) | 0xFFFFFFFF |
+| 0x3C | 4 | padding (two int16) | `0xFFFFFFFF` |
 
-Parser rejects wrong magic, non-8 pointer size, non-LE (typed `HKXError`);
-other fileVersions parse but are surfaced to callers.
+A wrong magic, a pointer size other than 8, or big-endian data is an error. Other file
+versions parse, and the caller sees the version.
 
-## Section headers (48 bytes each, at 0x40, back-to-back)
+## Section headers (48 bytes each, from 0x40)
 
-19-byte NUL-padded ASCII name + 1 separator byte (0xFF) + 7 u32:
-`absoluteDataStart`, then six offsets relative to it — `localFixupsOffset`,
-`globalFixupsOffset`, `virtualFixupsOffset`, `exportsOffset`, `importsOffset`,
-`endOffset`. Region order inside a section:
+Each header is a 19-byte null-padded name, one `0xFF` byte, and seven uint32 values:
+`absoluteDataStart`, then six offsets relative to it: `localFixupsOffset`,
+`globalFixupsOffset`, `virtualFixupsOffset`, `exportsOffset`, `importsOffset`, `endOffset`.
+
+The parts of a section, in order:
 
 ```text
-[object data | local fixups | global fixups | virtual fixups | exp | imp] end
+[object data | local fixups | global fixups | virtual fixups | exports | imports] end
 ```
 
-Data size = `localFixupsOffset` (data ends where fixups begin). SSE:
-`exports == imports == end` everywhere (no tables); `__classnames__` carries
-no fixups (all six equal); `__types__` all-zero with `absoluteDataStart`
-equal to `__data__`'s.
+The object data ends where the local fixups start. In SSE, exports, imports, and end are
+equal (no tables). `__classnames__` has no fixups. `__types__` is all zero, and its
+`absoluteDataStart` equals the one of `__data__`.
 
-Variant flag: Havok-2014 (v11) appends 16 bytes of 0xFF to each section
-header (64-byte headers) + may use an 80-byte file header. SSE never does.
+Havok 2014 files add 16 bytes of `0xFF` to each section header (64 bytes) and can use an
+80-byte file header. SSE files never do.
 
-## `__classnames__` encoding
+## Class names
 
-Packed entries: `u32 signature` (stable per-class type hash) + `0x09`
-separator + NUL-terminated ASCII name. Fixups reference the offset of the
-name string, i.e. entry start + 5. Table ends at a `0xFFFFFFFF` sentinel,
-then 0xFF padding to the section end. Parser also stops on a non-0x09
-separator (HKX2Library rule) — covers files without sentinel.
+`__classnames__` is a packed list. Each entry is a uint32 signature (a hash of the class),
+the byte `0x09`, and a null-terminated ASCII name. A fixup points at the name, which is the
+entry start plus 5. The list ends at `0xFFFFFFFF`, followed by `0xFF` padding. OpenSky also
+stops at a separator that is not `0x09`, as HKX2Library does, for files with no end marker.
 
-Observed: skeleton.hkx 20 classes (hkaSkeleton, hkaSkeletonMapper, ragdoll
-physics set); idle clips 9 classes (hkaSplineCompressedAnimation,
-hkaAnimationBinding, ...). Signatures stable across files (hkClass
-0x75585EF6, hkRootLevelContainer 0x2772C11E).
+Signatures are the same in every file. Examples: `hkClass` is `0x75585EF6`, and
+`hkRootLevelContainer` is `0x2772C11E`.
 
 ## Fixup tables
 
-First u32 == 0xFFFFFFFF -> unused slot, ends the table (regions are 16-byte
-aligned; tails padded — observed: idle virtual table 5 entries in a 64-byte
-region). Entry layouts:
+A first uint32 of `0xFFFFFFFF` marks an unused slot and ends the table. Tables are 16-byte
+aligned, so they often end with padding.
 
-* local (8 B): `fromOffset`, `toOffset` — intra-section pointer patch.
-* global (12 B): `fromOffset`, `toSectionIndex`, `toOffset` — cross-section.
-* virtual (12 B): `objectOffset`, `classNameSectionIndex`, `classNameOffset`
-  — binds an object instance to its class name ("finish" pass).
+- Local fixup (8 bytes): `fromOffset`, `toOffset`. A pointer inside one section.
+- Global fixup (12 bytes): `fromOffset`, `toSectionIndex`, `toOffset`. A pointer to another
+  section.
+- Virtual fixup (12 bytes): `objectOffset`, `classNameSectionIndex`, `classNameOffset`.
+  It gives an object its class.
 
-## Object inventory
+## Listing objects
 
-Walk `__data__` virtual fixups, resolve each `classNameOffset` against the
-class-name table -> `(object offset, class name)` list. Root object:
-contents fields in the header (offset 0, "hkRootLevelContainer"). Observed:
-skeleton.hkx 324 objects (2 hkaSkeleton + 2 hkaSkeletonMapper + ragdoll
-physics + resource containers); idle clips 5 objects each. The container
-gives object starts only — sizes need class reflection (later milestone).
+Walk the virtual fixups of `__data__`. Look up each `classNameOffset` in the class-name
+table. The result is a list of (object offset, class name). The container gives only where
+each object starts. The size of an object needs the class layout.
 
-## Engine mapping
+A class-name offset that does not resolve gives an object with no class name. The file stays
+readable.
 
-`HKXFile` keeps the raw `Data` + parsed tables; `sectionData(at:)` slices a
-section payload for 6.2+ object decoding. Unresolvable class-name offsets
-yield `className == nil` on the `HKXObjectRef` — malformed input stays
-inspectable, never traps. Human idle gotcha: `mt_idle.hkx` is gender-split
-(`animations/male/`, `animations/female/`); no bare `animations/mt_idle.hkx`.
+A clip name to know: `mt_idle.hkx` exists only per sex, under `animations/male/` and
+`animations/female/`. There is no `animations/mt_idle.hkx`.

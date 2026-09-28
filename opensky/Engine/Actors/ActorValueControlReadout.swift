@@ -5,7 +5,7 @@
 // asserts on belongs in the engine target, where a unit test can reach it
 // without a window.
 //
-// Documented in docs/engine/actor-values.md.
+// Documented in docs/engine/actor-value-store.md.
 
 import Foundation
 

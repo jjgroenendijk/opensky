@@ -3,7 +3,7 @@
 //
 // `Math.random` draws from the runtime's seeded generator rather than the
 // system one, so a menu that animates on random values still renders the same
-// frame twice — the rendering layer's determinism contract (docs/rendering/ui.md).
+// frame twice — the rendering layer's determinism contract (docs/rendering/swf-layer.md).
 //
 // Reference: ECMA-262 3rd edition, section 15.7 "Number Objects", section 15.6
 // "Boolean Objects", section 15.8 "The Math Object", and sections 15.1.2.2

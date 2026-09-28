@@ -6,7 +6,7 @@
 // lineage as the byte layouts (hkxparse/HKX2Library, ZeldaMods Havok wiki; see
 // `docs/decisions/havok-behavior-scope.md`), and every bit this file acts on was
 // then checked against the local install by the probe recorded in
-// `docs/engine/behavior-runtime.md`:
+// `docs/engine/behavior-state-machines.md`:
 //
 // * `0x100` is set on 3,340 of the 3,769 transitions and on exactly the
 //   transitions that carry no `m_condition` pointer, which is what

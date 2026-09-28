@@ -27,7 +27,7 @@
 // Headless and AppKit-free: this compiles into `openskycli` and is testable
 // without a window. `@MainActor` only because the store it writes to is.
 //
-// Documented in docs/engine/magic.md and docs/engine/inventory-equipment.md.
+// Documented in docs/engine/spellcasting.md and docs/engine/inventory-equipment.md.
 
 import Foundation
 
@@ -191,7 +191,7 @@ struct SpellbookRuntime {
     /// first time teaches you a spell"
     /// (<https://en.uesp.net/wiki/Skyrim:Books>). Neither source says the tome
     /// leaves the inventory, so this does not take it — see
-    /// docs/engine/magic.md, which records the gap rather than guessing at it.
+    /// docs/engine/spellcasting.md, which records the gap rather than guessing at it.
     ///
     /// - Returns: what the reading did.
     @discardableResult

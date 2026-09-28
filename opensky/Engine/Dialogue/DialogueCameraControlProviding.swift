@@ -12,7 +12,7 @@
 // checked against any actor in the cell, which is what item 17.8's gate has to
 // do.
 //
-// Documented in docs/engine/dialogue.md, "Dialogue camera".
+// Documented in docs/engine/dialogue-camera.md.
 
 import simd
 

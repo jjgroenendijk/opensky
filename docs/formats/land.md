@@ -1,147 +1,118 @@
 ---
 type: File Format
 title: Terrain records (LAND, LTEX, TXST)
-description: Byte layouts of Skyrim SE landscape, land-texture, and texture-set records and OpenSky's terrain types.
+description: Byte layouts of the landscape, land-texture, and texture-set records.
 tags: [format, plugin, records, terrain, land]
-timestamp: 2026-07-22T00:00:00Z
 ---
 
-# Terrain record decoders, Skyrim SE
+# Terrain records (LAND, LTEX, TXST)
 
-Terrain source data over the [ESM container](/formats/esm.md): per-cell height
-field, vertex normals/colors, and the per-quadrant texture splat stack (LAND),
-plus the landscape-texture (LTEX) and texture-set (TXST) records the splat
-references. First half of milestone 3.1 — feeds the terrain mesh + splat build.
+Three records describe the ground:
 
-Reference: UESP "Skyrim Mod:Mod File Format" subpages `/LAND`, `/LTEX`, `/TXST`
-(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>). Cross-checked against
-xEdit dev-4.1.6 `wbDefinitionsCommon.pas` (wbLAND / wbLTEX / wbTXST). Impl:
-`opensky/Engine/Formats/ESM/Records/{Land,LandTexture,TextureSet}.swift`.
+- `LAND` holds one cell's heights, normals, colors, and texture layers.
+- `LTEX` is a landscape texture. It names a texture set, a material, and grass.
+- `TXST` is a texture set. It names the texture files.
 
-Decode policy (same as [other records](/formats/records.md)): loop over fields,
-pick known types, skip the rest — unknown modder fields are never an error.
-Decoders guard the record type and throw `ESMError.malformed` only on
-structurally unusable input (wrong subrecord size). Malformed sizes throw; they
-never crash (callers log + skip, mod-quirk rule).
+Sources: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format), pages
+`LAND`, `LTEX`, and `TXST`. Checked against xEdit `dev-4.1.6` `wbDefinitionsCommon.pas`
+(`wbLAND`, `wbLTEX`, `wbTXST`).
 
-## LAND -> Land
+Unknown fields are skipped. A field with the wrong size is an error.
 
-LAND lives in a cell's temporary-children group (group type 9) that
-`CellSceneBuilder` already walks. Real LAND records are almost always
-zlib-compressed (record flag bit 18); `ESMRecord.fields()` decompresses
-transparently, so the decoder just reads subrecords.
+## LAND
 
-A cell edge is a 33x33 vertex grid: 32 quads at 128 game units each span the
-4096-unit cell. Rows run south->north, columns west->east; grid subrecords are
-row-major in that order. The cell splits into 4 quadrants (0 bottom-left,
-1 bottom-right, 2 top-left, 3 top-right), each a 17x17 sub-grid.
+`LAND` sits in the temporary-children group of its cell (group type 9). It is almost always
+compressed (record flag bit 18).
 
-| field | size (B) | decoded                                            |
-| ----- | -------- | -------------------------------------------------- |
-| DATA  | 4        | `flags` (uint32, kept raw)                         |
-| VHGT  | 1096     | `heightField` — anchor float + accumulated heights |
-| VNML  | 3267     | `normals` — 33x33 int8 (x, y, z)                   |
-| VCLR  | 3267     | `colors` — 33x33 uint8 (r, g, b), optional         |
-| BTXT  | 8        | `baseTextures[]` — base texture per quadrant       |
-| ATXT  | 8        | `layers[].` header — an additional splat layer     |
-| VTXT  | 8*N      | `layers[].alphas` — the preceding ATXT's alpha map |
+A cell is a grid of 33 x 33 vertices. 32 quads of 128 units cover the 4096-unit cell. Rows go
+from south to north, and columns from west to east. Grid fields are stored row by row in that
+order. The cell has four quadrants, each a 17 x 17 sub-grid: 0 bottom-left, 1 bottom-right,
+2 top-left, 3 top-right.
 
-### VHGT height field
+| Field | Size | Meaning |
+| --- | --- | --- |
+| `DATA` | 4 | Flags, uint32 |
+| `VHGT` | 1096 | Heights |
+| `VNML` | 3267 | Normals, 33 x 33 int8 (x, y, z) |
+| `VCLR` | 3267 | Vertex colors, 33 x 33 uint8 (r, g, b). Optional |
+| `BTXT` | 8 | Base texture of one quadrant |
+| `ATXT` | 8 | Header of one extra texture layer |
+| `VTXT` | 8 x N | Alpha values of the `ATXT` before it |
 
-VHGT = float32 anchor + 33x33 int8 deltas + 3 unused bytes (4 + 1089 + 3 =
-1096). Heights are gradient-coded, decoded in this order:
+`MPCD` (multi-pass color data, rare) is not read.
 
-- Column 0 of each row is a delta from the previous row's column-0 value. Row 0
-  column 0 is a delta from the float anchor. This running value seeds each row.
-- Columns 1-32 accumulate west->east from their row's column-0 value.
-- Final game-unit height = accumulated value * 8.
+Neighbor cells share their edge vertices. Row 32 of cell (x, y) equals row 0 of cell
+(x, y+1). Column 32 of (x, y) equals column 0 of (x+1, y). This was confirmed on vanilla
+cells near Whiterun: the shared edges match exactly.
+
+## VHGT heights
+
+`VHGT` is a float32 start value, then 33 x 33 int8 steps, then 3 unused bytes
+(4 + 1089 + 3 = 1096). Each height is a running sum of steps:
+
+- Column 0 of a row is a step from column 0 of the row before. Row 0 steps from the start
+  value.
+- Columns 1 to 32 add their steps from west to east, starting at column 0 of the row.
+- The height in game units is the sum times 8.
 
 ```text
-columnZero = anchor
+columnZero = start
 for row in 0..<33:
-    columnZero += delta[row][0]          # vertical carry (row 0 from anchor)
+    columnZero += step[row][0]
     running = columnZero
     height[row][0] = running * 8
     for col in 1..<33:
-        running += delta[row][col]       # horizontal accumulate
+        running += step[row][col]
         height[row][col] = running * 8
 ```
 
-`heightField.anchor` keeps the raw float (before *8); `heightField.heights` is
-the 1089-entry `[Float]` result, row-major south->north. Ref UESP LAND VHGT +
-xEdit wbLAND decode (same gradient scheme as Oblivion/Morrowind, scale 8).
+Oblivion and Morrowind use the same scheme. In the vanilla Tamriel worldspace, heights run
+from -37032 to 39392 units.
 
-### Texture layers
+## Texture layers
 
-BTXT and ATXT share an 8-byte header: uint32 LTEX FormID, uint8 quadrant (0-3),
-uint8 unused, int16 layer number. BTXT is the quadrant base (layer 0/-1); each
-ATXT is one additional splat layer and is immediately followed by a VTXT alpha
-map. VTXT is an array of 8-byte entries: uint16 position (0-288 on the 17x17
-quadrant grid), uint16 unused, float32 opacity (0.0-1.0). The decoder pairs each
-ATXT with its following VTXT and preserves on-disk order — the layer number
-drives splat blend order. Sparse: only painted vertices appear in VTXT.
+`BTXT` and `ATXT` share an 8-byte header:
 
-## LTEX -> LandTexture
+| Offset | Type | Meaning |
+| --- | --- | --- |
+| 0 | uint32 | `LTEX` FormID |
+| 4 | uint8 | Quadrant, 0 to 3 |
+| 5 | uint8 | Unused |
+| 6 | int16 | Layer number |
 
-| field | type    | decoded                                      |
-| ----- | ------- | -------------------------------------------- |
-| EDID  | zstring | `editorID`                                   |
-| TNAM  | formID  | `textureSet` — the TXST it draws from        |
-| MNAM  | formID  | `materialType` — the MATT ground here is made of |
-| GNAM  | formID  | repeated `grasses` entries — GRAS references |
+`BTXT` is the base texture of a quadrant. Each `ATXT` adds one layer and is followed by its
+`VTXT`. A `VTXT` is a list of 8-byte entries: uint16 position (0 to 288 on the 17 x 17
+quadrant grid), uint16 unused, float32 opacity (0 to 1). Only painted vertices are listed.
+The layer number sets the blend order.
 
-GNAM feeds [procedural grass placement](/engine/grass.md); repeated fields keep
-record order. MNAM is the terrain half of the footstep material chain
-(issue #358): exterior ground is LAND rather than a collision mesh, so it names
-its surface here instead of through a Havok material value. `TerrainSurfaceMaterials`
-resolves the heaviest-weighted texture per terrain vertex into one MATT and the
-height field reports it with each ground sample; see
-[material types](/formats/material-type.md). Skipped for now: HNAM (havok
-friction/restitution), SNAM (specular exponent), and INAM (SSE snow flag).
+In vanilla Tamriel, a cell has up to 23 extra layers across its four quadrants, about 6 per
+quadrant. The largest `VTXT` position is 288, as the grid size predicts.
 
-## TXST -> TextureSet
+## LTEX
 
-| field | type    | decoded                     |
-| ----- | ------- | --------------------------- |
-| EDID  | zstring | `editorID`                  |
-| TX00  | zstring | `diffusePath` (diffuse map) |
-| TX01  | zstring | `normalPath` (normal/gloss) |
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `EDID` | zstring | Editor ID |
+| `TNAM` | FormID | The `TXST` to draw |
+| `MNAM` | FormID | The material (`MATT`) of this ground |
+| `GNAM` | FormID | A `GRAS` record. Repeats, in order |
 
-Paths are relative to `Data/` (`textures\...`), resolved through the
-[VFS](/formats/vfs.md). Skipped for now: TX02-TX07 (specular / environment /
-height / etc. maps), DODT (decal data), DNAM (texture-set flags) — the terrain
-splat needs only diffuse + normal today.
+`GNAM` feeds [grass placement](/engine/grass.md). `MNAM` gives footsteps their material on
+open ground, because `LAND` has no collision mesh to carry one (see
+[material types](/formats/material-type.md)). Each ground point takes the material of its
+heaviest texture.
 
-## Skipped for now
+Not read: `HNAM` (Havok friction and restitution), `SNAM` (specular exponent), `INAM` (snow
+flag).
 
-- LAND MPCD (multi-pass color data, rare) — not read.
-- LTEX/TXST material, decal, snow, and secondary-map fields listed above.
-- Quadrant/position values are kept verbatim (not clamped); the mesh/splat build
-  is responsible for grid placement.
+## TXST
 
-## Verification
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `EDID` | zstring | Editor ID |
+| `TX00` | zstring | Diffuse (color) map |
+| `TX01` | zstring | Normal and gloss map |
 
-Unit tests: `openskyTests/Formats/ESM/Records/TerrainRecordDecoderTests.swift` (synthetic in-code
-fixtures) — VHGT delta accumulation with hand-computed heights incl. the
-column-0 row carry and *8 scaling, VNML/VCLR decode, BTXT/ATXT/VTXT pairing +
-quadrant/position bounds, compressed-LAND round-trip, LTEX->TNAM + repeated
-GNAM, TXST TX00/TX01, wrong-record-type + malformed-size rejection.
-
-Real-data sweep: `openskyRealDataTests/Formats/ESM/Records/LandRealDataTests.swift` (env-gated on
-`OPENSKY_DATA_ROOT`, self-skips when absent). Every LAND in the Tamriel
-worldspace of vanilla Skyrim.esm, 2026-07-18:
-
-- 11186 LAND records decoded, no throws.
-- Height range -37032.0 .. 39392.0 game units.
-- Additional-layer-count histogram (total ATXT across all 4 quadrants per cell,
-  layers:cells): `0:3044 1:176 2:292 3:310 4:719 5:279 6:304 7:296 8:415 9:257
-  10:337 11:350 12:408 13:376 14:379 15:400 16:450 17:439 18:547 19:634 20:665
-  21:94 22:12 23:3` — max 23 additional layers cell-wide (roughly 6/quadrant).
-- Max VTXT position 288 (exactly the documented 17x17 upper bound).
-- Quadrant values seen: {0, 1, 2, 3}.
-
-Neighbor-edge overlap (`LandRealDataTests.adjacentCellEdgesMatch`, groundwork for
-cross-cell stitching in streaming 3.2): spec says a cell's 33x33 grid overlaps its
-neighbors — row 32 of (x,y) equals row 0 of (x,y+1), col 32 equals col 0 of (x+1,y).
-Probed over Whiterun-area adjacent pairs on vanilla Skyrim.esm, 2026-07-18: 4 pairs
-checked, 0 mismatched edge vertices — shared edges match exactly. Overlap confirmed.
+Paths are relative to `Data/`, for example `textures\...`, and go through the
+[VFS](/formats/vfs.md). Not read: `TX02` to `TX07` (other maps), `DODT` (decal data), `DNAM`
+(flags). Terrain needs only the diffuse and normal maps.

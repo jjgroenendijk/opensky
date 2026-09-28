@@ -29,7 +29,7 @@ nonisolated struct TriggerVolumeStats: Equatable {
     /// Volumes contributed by an `XPRM` box or sphere primitive.
     var primitiveVolumeCount = 0
     /// `XPRM` primitives deliberately not made volumes: `none`, `portalBox`
-    /// and `line` (see docs/engine/collision-world.md).
+    /// and `line` (see docs/engine/trigger-volumes.md).
     var excludedPrimitiveCount = 0
     /// Trigger sources whose geometry produced no finite world bounds.
     var degenerateVolumeCount = 0
@@ -182,7 +182,7 @@ nonisolated struct TriggerCapsuleQuery {
             // volumes authored in the Creation Kit are box, sphere, or capsule
             // primitives in practice; a mesh trigger is rare and erring toward
             // firing is the safer failure for OnTriggerEnter. Documented in
-            // docs/engine/collision-world.md.
+            // docs/engine/trigger-volumes.md.
             return volume.bounds.overlaps(bounds)
         }
     }

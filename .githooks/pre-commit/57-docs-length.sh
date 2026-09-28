@@ -1,5 +1,5 @@
 #!/bin/sh
-# Staged docs/ change -> check every page is within the length limit (issue #567).
+# Staged docs/ change -> check every page is within the length limit.
 # Shares its rules with `make docs-length` so the hook and CI agree.
 set -eu
 # shellcheck source=/dev/null

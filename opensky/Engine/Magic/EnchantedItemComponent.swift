@@ -30,7 +30,7 @@
 // they were given, which is per-actor identity the `AEFF` chunk already persists,
 // and unequipping dispels those sequences and no others.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/item-enchantments.md.
 
 import Foundation
 

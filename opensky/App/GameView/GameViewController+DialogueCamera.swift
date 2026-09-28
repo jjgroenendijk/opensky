@@ -18,7 +18,7 @@
 // `ActorPackageRuntime`. None of it is written directly onto the actor, so
 // nothing here can disagree with what the AI does next frame.
 //
-// See docs/engine/dialogue.md, "Dialogue camera".
+// See docs/engine/dialogue-camera.md.
 
 import AppKit
 import simd

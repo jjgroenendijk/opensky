@@ -3,7 +3,7 @@
 // inside one placed collision shape, for every geometry the static world holds,
 // and which way that shape's surface faces (issue #392).
 //
-// Documented in docs/engine/dynamic-bodies.md.
+// Documented in docs/engine/dynamic-narrowphase.md.
 
 import simd
 

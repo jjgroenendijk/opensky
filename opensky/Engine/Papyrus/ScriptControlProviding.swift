@@ -9,7 +9,7 @@
 // `PapyrusWorldRuntime.scriptsSnapshot(target:targetDescription:)` builds the
 // snapshot; `PapyrusWorldScriptsSnapshot.swift` holds that builder.
 //
-// Documented in docs/engine/papyrus-vm.md.
+// Documented in docs/engine/papyrus-world.md.
 
 /// One native function name and how often the session called it.
 nonisolated struct ScriptsNativeCount: Equatable, Sendable {

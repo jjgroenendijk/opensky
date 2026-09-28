@@ -1,136 +1,88 @@
 ---
 type: Subsystem
 title: Procedural grass
-description: Cell-owned GRAS placement, instanced Metal rendering, fade, wind, and controls.
+description: How OpenSky places grass from land textures, keeps it the same on every rebuild,
+  batches it on the GPU, and where it differs from the original game.
 tags: [engine, world, grass, terrain, streaming]
-timestamp: 2026-07-22T00:00:00Z
 ---
 
 # Procedural grass
 
-Milestone 7.5 produces immutable CPU `GrassPlacement` values. Each stores
-GRAS identity/model, world position, terrain normal, yaw, scale, vertex color,
-wave period, and flags. `CellScene` owns the array + `RenderScene` owns matching
-GPU batches -> existing cell load/unload, merge, residency, and cache eviction
-own grass too.
-
-Input chain:
+Grass is not placed by hand in Skyrim. It grows from the land textures:
 
 ```text
-LAND BTXT/ATXT coverage -> LTEX repeated GNAM -> GRAS MODL + DATA
+LAND BTXT/ATXT coverage -> LTEX GNAM (repeats) -> GRAS MODL + DATA
 ```
 
-Record layout + semantic sources: [grass records](/formats/grass.md). Bethesda's
-exact candidate lattice and random-number algorithm are not documented in open
-specs. OpenSky uses the explicit approximation below; no hidden constants are
-claimed as vanilla behavior.
+The records are on the [grass](/formats/grass.md) page. The original game's placement grid and
+random number method are not in any open source. OpenSky uses its own method, described below.
+None of its constants are claimed to match the game.
 
-## Placement algorithm
+## Placement
 
-`GrassPlacementBuilder` is a pure pass over one LAND record + decoded indexes:
+For one `LAND` record:
 
-1. Collect LTEX IDs used by BTXT/ATXT. Resolve their GNAM links and group each
-   GRAS with the texture IDs that select it. Sort every FormID before work.
-2. Build a square candidate lattice. Requested spacing = max(position range,
-   32 game units); axis count = ceil(4096 / spacing), capped at 128. Actual
-   spacing evenly covers the cell. Jitter each center by up to half the lesser
-   of position range and actual spacing, clamped inside its cell.
-3. Seed each candidate from signed cell X/Y, LAND FormID, GRAS FormID, row, and
-   column. SplitMix64 supplies platform-stable random values; Swift `Hasher`
-   never enters persisted geometry.
-4. Sample exact [terrain](/engine/terrain.md) SW-NE triangles for height +
-   normal. Hidden CELL XCLC quadrants reject through `TerrainHeightField`.
-5. Reconstruct each texture's final coverage using terrain renderer's ordered
-   ATXT lerps and triangle interpolation. Accept with probability
-   `clamp(density/100) * matchingCoverage`.
-6. Reject outside min/max slope. If cell resolves a finite water height, apply
-   GRAS water side/distance rule; absent/unknown water policy does not reject.
-7. Apply random yaw, height range around scale 1, optional uniform XYZ scale,
-   interpolated LAND VCLR, and random darkening from color range. Retain normal
-   + fit-to-slope flag for renderer orientation.
+1. Collect the land textures in use, follow their `GNAM` links, and group each grass type with
+   the textures that pick it. Sort all FormIDs first.
+2. Build a square grid of candidate points. Spacing is the grass's position range, at least 32
+   units. Points per side is `ceil(4096 / spacing)`, at most 128. Move each point by a random
+   amount up to half the smaller of the position range and the spacing, inside the cell.
+3. Seed each point from the cell X and Y, the `LAND` FormID, the `GRAS` FormID, the row, and the
+   column. Random numbers come from SplitMix64, which gives the same values on every machine.
+   Swift's `Hasher` is never used, because it changes per run.
+4. Sample the [terrain](/engine/terrain.md) triangle under the point for height and normal. A
+   hidden cell quarter rejects the point.
+5. Rebuild each texture's final coverage the way the terrain shader does. Keep the point with
+   chance `clamp(density / 100) * coverage`.
+6. Reject points outside the slope range. If the cell has a known water height, apply the
+   grass's water rule. With no water information, nothing is rejected.
+7. Add a random turn, a height change around scale 1, optional even scaling, the land's vertex
+   color, and random darkening. Keep the normal and the "fit to slope" flag for drawing.
 
-Invalid/non-finite controls, zero density, reversed slope range, missing DATA,
-or missing MODL produce no placements. Minimum spacing + 128-axis cap bound
-malformed input to 16,384 candidates per grass type per cell.
+Bad values, zero density, a reversed slope range, or a missing `DATA` or model give no grass. The
+32-unit floor and the 128 cap limit bad input to 16,384 points per grass type per cell.
 
-## Determinism + streaming
+## Same result every time
 
-Seed is stateless per candidate. Rebuilding a cell yields byte-equal placement
-order and values regardless of dictionary iteration or neighboring-cell load
-order. Neighbor cell coordinates change seed, preventing repeated local
-patterns. `CellLoadSummary` reports placements, usable GRAS types, and unusable
-GNAM targets. WRLD `No Grass` suppresses the pass. Interiors and LAND-less
-cells retain no grass.
+Each point's seed depends only on the point. So a cell rebuilt later gives exactly the same grass
+in the same order, whatever order cells load in. Neighbor cells get different seeds, so the
+pattern does not repeat. A worldspace with "no grass" gets none. Interiors and cells with no land
+get none.
 
-## GPU batching + runtime policy
+## Drawing
 
-`CellSceneBuilder` groups placements by GRAS FormID, loads each NIF once through
-`MeshLibrary`, then expands its meshes into `GrassDrawGroup` values. Group key =
-shared mesh + diffuse identity. `RenderScene(merging:)` regroups across resident
-cells, so repeated grass types stay one indexed instanced draw per mesh/material.
-Cell eviction removes its instances; shared cache residency remains while any
-resident cell references the allocation.
+Grass is grouped by type. Each model loads once. Groups with the same mesh and texture are merged
+across all loaded cells, so one grass type is one instanced draw. Grass belongs to its cell and
+leaves with it.
 
-Per-instance upload = model/normal matrix, LAND color, stable density key,
-motion phase, and GRAS wave period. Fit To Slope maps local +Z to LAND normal;
-random yaw then rotates in the tangent plane. Vertex shader bends upper mesh
-vertices in weather's published XY wind vector. Wind scale is 0-2. Distance
-fade starts at 70% of selected range and feeds alpha-test coverage to avoid a
-hard pop.
+With "fit to slope", the model's up axis follows the land normal, then the random turn is applied
+around it. The vertex shader bends the top of each blade along the weather's wind. The wind scale
+is 0 to 2. Grass fades from 70% of the draw distance, through alpha test, so it does not pop.
 
-Per-frame filter order:
+Each frame, grass is filtered in this order:
 
-1. Stable density key vs 0-100% user scale.
-2. Camera distance, clamped to 512-16,384 game units.
-3. Frustum against sway-expanded world bounds.
-4. Hard 16,384 mesh-instance upload/draw cap.
+1. The density key against the user's density (0 to 100%).
+2. Camera distance, 512 to 16,384 units.
+3. The view frustum, with bounds grown for sway.
+4. A hard cap of 16,384 instances.
 
-`GrassDrawStats` separates every rejection bucket. Budget overflow skips only
-that frame; fly acceptance requires zero drops. Grass receives sun shadows +
-fog. It does not cast shadows or enter point-light selection: small alpha
-blades are kept out of dominant shadow/local-light costs.
+The cap drops only for that frame, and each reason is counted. Grass receives sun shadows and
+fog. It does not cast shadows and ignores point lights, because small alpha-tested blades would
+cost too much there.
 
-Main app verification path: `World > Environment > Grass`. Controls toggle
-rendering, choose density, draw distance, and wind scale; readout reports
-drawn/scene counts, draw calls, distance/frustum rejects, and budget drops.
+World > Environment > Grass has on and off, density, distance, and wind, and shows draws and
+each drop count.
 
-## Known deviations
+## Differences from the game
 
-+ Candidate lattice, SplitMix64 seed, 32-unit floor, and 128-axis safety cap
-  are OpenSky choices. Vanilla lattice, PRNG, boundary ownership, and draw
-  thinning are unknown.
-+ Position range is treated as spacing + jitter control. Creation Kit explains
-  visual spacing/offset behavior, not exact equations.
-+ Density is a per-candidate percentage multiplied by reconstructed LTEX
-  coverage. Vanilla's coverage sampling/filtering is unknown.
-+ Height/color variance use symmetric scale around 1 and one-sided darkening.
-  Exact vanilla distributions are unknown.
-+ Water enum labels come from xEdit. Boundary comparisons are OpenSky's direct
-  interpretation; unknown values pass through.
-+ Bend normals are not recomputed after vertex displacement; lighting keeps the
-  slope-fitted undeformed mesh normal.
-+ Budget order follows deterministic scene/group order, not nearest-first.
-
-## Verification
-
-Synthetic suites prove fixed decode, repeated GNAM, deterministic rebuilds,
-neighbor seed changes, full + painted texture coverage, density/slope/water/
-hidden-quadrant rejection, variance bounds, WRLD suppression, scene lifetime,
-and exact summary accounting.
-
-Placement probe (`GrassRealDataTests`, vanilla Skyrim.esm, 2026-07-22): 27 GRAS and
-68 LTEX decoded; 39 GNAM links resolve. `Tamriel (6,-2)` produced 126 CPU
-placements across two usable types (56 + 70), zero skipped. Second build was
-identical.
-
-Render acceptance (`GrassRenderingAcceptanceRealDataTests`, 640x360): same 126
-placements became 126 mesh instances, drawn in 2 calls with zero budget drops.
-Grass off/on changed 1,015 pixels; `SkyrimStormSnow` wind 0.698 at 2x scale
-changed 44 pixels between exact times 0 and 0.37. Half density drew 67 and
-culled 59; minimum distance culled all 126.
-
-Cross-cell fly gate `(6,-2) -> (7,-2) -> (7,-1)`: peak scene carried 11,452
-grass mesh instances; 637 visible drew in 3 calls, 9,361 distance-culled, 2,170
-frustum-culled, zero budget-dropped. Full streamed run: 5,420 frames at
-640x360, 15.90 ms avg / 31.50 ms p95 vs 33.33 ms budget; footprint 738 MB final,
-889 MB peak vs 1,024 MB cap. Evidence stays gitignored under `logs/`.
+- The candidate grid, SplitMix64 seeds, the 32-unit floor, and the 128 cap are OpenSky's.
+- Position range is used as spacing and random offset. The Creation Kit describes what it looks
+  like, not the math.
+- Density is a chance per point times the texture coverage. How the game samples coverage is not
+  known.
+- Height and color changes are symmetric around scale 1 and darken only. The game's exact spread
+  is not known.
+- The water rule names come from xEdit. How edges compare is OpenSky's reading. Unknown values
+  pass.
+- Normals are not updated after the wind bends a blade.
+- The instance cap drops in scene order, not nearest first.

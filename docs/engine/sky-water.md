@@ -1,62 +1,43 @@
 ---
 type: Subsystem
-title: Sky + water environment
-description: Procedural exterior sky and flat per-cell water from plugin defaults.
+title: Sky and water
+description: The procedural exterior sky, the flat per-cell water plane built from plugin data,
+  and where both sit in the scene pass.
 tags: [engine, rendering, sky, water, environment]
-timestamp: 2026-07-18T00:00:00Z
 ---
 
-# Sky + water environment
+# Sky and water
 
-Milestone 3.5 adds exterior environment draws to `RenderScene`: one mergeable sky marker
-plus zero/one water item per resident cell. Format rules + sources:
-[exterior water records](/formats/water.md). Rendering details:
-[Metal 4 renderer](/rendering/metal4-renderer.md).
+An exterior scene has one sky and at most one water plane per loaded cell. The record fields
+are on the [water](/formats/water.md) page. The renderer is on the
+[Metal 4 renderer](/rendering/metal4-renderer.md) page.
 
 ## Sky
 
-Exterior WRLD without DATA `no sky` bit emits `SkyParameters`. Scene composition keeps one
-marker if any resident scene has sky. Renderer draws a fullscreen triangle first, before
-depth-tested world geometry. Fragment shader produces hardcoded night/day/twilight upper +
-horizon palettes and a soft sun disc from `FrameUniforms.timeOfDayHours` (default 13:00).
-CLI screenshot accepts `--time-of-day 0...24`; 24 normalizes to 0.
+A worldspace without the "no sky" flag gets a sky. When scenes are merged, one sky is kept if any
+of them has one. The sky is a full-screen triangle drawn first, before any depth-tested geometry.
 
-The hardcoded palette is now the fallback path: when weather is active
-(`FrameUniforms.weatherSkyEnabled`), `skyFragment` uses the CPU-blended WTHR sky palette
-instead — see [weather runtime](/engine/weather.md). Weather off (no data / inactive)
-reproduces this procedural path bit-for-bit.
+With weather active, the sky uses the colors blended from the current weathers (see
+[weather](/engine/weather.md)). With no weather, the shader uses built-in night, day, and
+twilight colors and a soft sun disc, from the time of day (default 13:00). The CLI screenshot
+takes `--time-of-day 0...24`. 24 is the same as 0.
 
-## Water build
+## Water plane
 
-`CellSceneBuilder.buildWater` requires exterior CELL DATA `has water`, a grid, and resolved
-finite height. CELL overrides resolve against recursive WRLD defaults; WATR colors resolve
-through lazy FormID indexes. One cached 4096x4096 CCW quad serves every cell. Model
-translation = `(gridX * 4096, gridY * 4096, waterHeight)`. Plane AABB joins cell bounds, so
-camera framing + frustum culling include it. Explicit no-water sentinel emits nothing.
+A cell gets water only if it is an exterior, its `DATA` has the "has water" flag, it has a grid,
+and its height resolves to a finite number. The cell's own height and water type override the
+worldspace defaults, which come down through parent worldspaces. The special "no water" height
+gives nothing.
 
-`RenderScene(merging:)` concatenates water items; residency dedupes cached vertex/index
-buffers. Streaming ownership remains per cell even though mesh storage is shared.
+One cached 4096 x 4096 quad serves every cell. It is moved to
+`(gridX * 4096, gridY * 4096, waterHeight)`. The plane's box joins the cell's bounds, so camera
+framing and culling include it. Each cell owns its water item, even though the mesh is shared.
 
-## Render pass
+## Draw order
 
-Order: sky -> opaque instances -> terrain -> alpha-test instances -> grass -> water
-(`encodeScenePass`, which then draws particles, precipitation, and overlays). Water has its
-own Metal 4 pipeline: straight-alpha RGB blend (`sourceAlpha`, `oneMinusSourceAlpha`),
-depth compare `.less`, depth writes off, culling off. Shader mixes shallow/deep WATR colors
-by camera distance, reflection color by view-angle Fresnel, then animates low-cost crossed
-sine ripples from frame time. Static NIF alpha-blend support remains separate/deferred.
+Sky, opaque objects, terrain, alpha-tested objects, grass, water, then particles, rain and snow,
+and overlays.
 
-## Verification
-
-Tests render day/night sky into deterministic offscreen targets, assert time changes color,
-and compare water over clear vs sky underlays to prove framebuffer blending. Builder tests
-cover WRLD defaults, CELL overrides, parent inheritance, no-water suppression, no-sky WRLD,
-color propagation, plane placement, bounds, draw count, and residency merge.
-
-Real-install probe 2026-07-18:
-
-* Tamriel (6,-2), 5x5 + distant LOD -> procedural horizon + sun visible.
-* `WhiterunExterior17` (5,-4) -> CELL water detected, one plane rendered with terrain.
-* Same water cell, 120 frames @ 1280x720 -> avg 1.13 ms, p95 2.06 ms; 33.33 ms gate passed.
-
-Both checks use engine output from read-only external game input; captures stay local.
+Water has its own pipeline: straight alpha blending, depth test "less", no depth writes, no
+culling. The shader mixes the shallow and deep water colors by distance, adds the reflection
+color by a Fresnel term from the view angle, and moves cheap crossed sine ripples over time.

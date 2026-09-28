@@ -25,7 +25,7 @@
 // bridge is correct whichever order the session wires, and means a test can
 // supply one subsystem without standing up the other.
 //
-// Documented in docs/engine/papyrus-vm.md.
+// Documented in docs/engine/papyrus-actor-natives.md.
 
 import Foundation
 
@@ -187,7 +187,7 @@ extension PapyrusWorldStateBridge {
     /// is derived from every resident actor rather than stored on one, and
     /// answering it here would mean holding the combat runtime as well.
     /// `Game.GetPlayer().IsInCombat()` therefore reads false in a fight, which
-    /// is a stated gap rather than a hidden one — see docs/engine/papyrus-vm.md.
+    /// is a stated gap rather than a hidden one — see docs/engine/papyrus-actor-natives.md.
     private func isActorInCombat(_ key: ReferenceKey) -> Bool {
         guard worldState.component(ActorDeathState.self, for: key)?.isDead != true
         else { return false }
