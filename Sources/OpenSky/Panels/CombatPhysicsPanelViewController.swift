@@ -15,6 +15,7 @@
 import AppKit
 import OpenSkyActorsInterface
 import OpenSkyEngine
+import OpenSkyMagic
 import OpenSkyPhysics
 
 final class CombatPhysicsPanelViewController: InspectorPanelViewController {

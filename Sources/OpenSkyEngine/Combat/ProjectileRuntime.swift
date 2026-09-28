@@ -21,6 +21,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
 

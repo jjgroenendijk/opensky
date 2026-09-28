@@ -17,6 +17,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyMagic
 
 final class CombatMagicEffectsSection: PanelSectionViewController {
     weak var provider: (any MagicEffectControlProviding)? {

@@ -12,6 +12,8 @@
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
 
 /// The actor-value half of the fake's stored state (issue #194).

@@ -10,6 +10,8 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyGameData
+import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyRendering
 import OSLog
 

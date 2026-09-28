@@ -31,6 +31,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 
 /// One actor's magic as a Papyrus native sees it.
 nonisolated public struct PapyrusSpellState: Equatable, Sendable {

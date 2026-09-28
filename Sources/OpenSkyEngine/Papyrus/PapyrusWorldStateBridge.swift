@@ -13,6 +13,7 @@ import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -61,7 +62,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// built by a later wiring step than this bridge. Nil, or a closure
     /// answering nil, leaves every spell native a tallied failure rather than a
     /// script that believes it taught somebody a spell.
-    public var casterRuntime: (() -> CasterRuntime?)?
+    public var casterRuntime: (() -> (any SpellCasting)?)?
     /// One dispel over the session's `ActiveEffectRuntime`, which is a struct
     /// the controller owns by value: the closure does the read, the removal and
     /// the write-back, and answers how many effects went. Nil in a session with

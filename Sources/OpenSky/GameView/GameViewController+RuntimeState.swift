@@ -19,6 +19,7 @@ import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagic
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

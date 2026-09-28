@@ -10,6 +10,8 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagicInterface
+@testable import OpenSkyPhysics
 import simd
 import Testing
 

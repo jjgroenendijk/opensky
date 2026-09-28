@@ -22,6 +22,8 @@ import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 import Testing
 
@@ -40,7 +42,11 @@ struct GameViewControllerMagicTickTests {
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
         let effects = MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
         let controller = GameViewController()
-        controller.magicEffects.runtime = ActiveEffectRuntime(values: values, effects: effects)
+        controller.magicEffects.runtime = ActiveEffectRuntime(
+            values: values,
+            effects: effects,
+            conditionRegistry: .standard
+        )
         return controller
     }
 

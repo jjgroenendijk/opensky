@@ -10,6 +10,7 @@ import OpenSkyCrime
 import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyMagic
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyProgression

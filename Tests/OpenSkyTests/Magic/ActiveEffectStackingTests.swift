@@ -14,6 +14,9 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
+import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 import Testing
 
@@ -30,7 +33,10 @@ struct ActiveEffectStackingTests {
         let values = ActorValueRuntime(store: store, baselines: baselines)
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
         let effects = MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
-        return (ActiveEffectRuntime(values: values, effects: effects), store)
+        return (
+            ActiveEffectRuntime(values: values, effects: effects, conditionRegistry: .standard),
+            store
+        )
     }
 
     private func entry(
@@ -153,7 +159,8 @@ struct ActiveEffectStackingTests {
         )
         var runtime = ActiveEffectRuntime(
             values: values,
-            effects: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
+            effects: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
+            conditionRegistry: .standard
         )
         apply(&runtime, [entry(0x30, magnitude: 10, duration: 10)])
         apply(&runtime, [entry(0x30, magnitude: 10, duration: 10)])
@@ -224,7 +231,8 @@ struct ActiveEffectStackingTests {
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
         var runtime = ActiveEffectRuntime(
             values: values,
-            effects: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
+            effects: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
+            conditionRegistry: .standard
         )
         values.damage(.health, by: 50, on: .player)
         apply(&runtime, [entry(ActiveEffectFixture.fortifyResistFire, magnitude: 20, duration: 60)])

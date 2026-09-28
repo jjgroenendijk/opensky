@@ -20,6 +20,7 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
 @testable import OpenSkyWorldState
 import Testing
 
@@ -68,7 +69,11 @@ struct AICastingAcceptanceRealDataTests {
             store: store,
             spellbook: spellbook,
             values: values,
-            effects: ActiveEffectRuntime(values: values, effects: effects)
+            effects: ActiveEffectRuntime(
+                values: values,
+                effects: effects,
+                conditionRegistry: .standard
+            )
         )
         let baselines = ActorSpellBaselineResolver(
             actorValues: ActorValueResolver.build(

@@ -20,6 +20,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 import OpenSkyWorldState
 
 /// One actor's saved spellbook, before it is merged back into the delta.

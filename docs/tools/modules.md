@@ -106,15 +106,16 @@ OpenSkyConditions         condition evaluator, function registry, core functions
 OpenSkyWorldInterface     interaction events and rays, placed interactions, reference source
 OpenSkyInventoryInterface inventory state, holders, vendors, baselines, InventoryAccess,
                           EquipmentAccess
-OpenSkyMagicInterface     magic values other features read
   ^
 OpenSkyActorsInterface    actor state components, ActorValueAccess, actor conditions
+OpenSkyMagicInterface     active effects, spell hits, enchantments, SpellCasting, SpellHitApplying
 OpenSkyCrimeInterface     crime events, ledger, arrest state, ownership values, CrimeReporting
 OpenSkyFactionsInterface  membership and relationship state, hostility values, seams
 OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
 OpenSkyProgressionInterface perk and progress state, skill use events, PerkAccess
   ^
 OpenSkyActors             actor value runtime
+OpenSkyMagic              active effect, caster, spellbook, and enchantment runtimes
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
@@ -144,7 +145,7 @@ A lower module never imports a higher one. These patterns keep it that way:
   `ActorValueIdentity` in `OpenSkyFormatsCore` and `OpenSkyFormatsESM`.
 - Behavior that needs a higher layer stays up there as an extension of the lower type, in a file
   named `Type+Feature.swift`. Examples: `Package+Schedule.swift` in the engine over a
-  `OpenSkyFormatsESM` record, and `ItemDefinitionStore+MagicItemUse.swift` in the engine over an
+  `OpenSkyFormatsESM` record, and `ItemDefinitionStore+MagicItemUse.swift` in `OpenSkyMagic` over an
   `OpenSkyGameData` store.
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
@@ -156,11 +157,14 @@ A lower module never imports a higher one. These patterns keep it that way:
   asks `DetectionObserving` which observers saw an act. Magic and progression change actor values
   through `ActorValueAccess`, and scripts change faction ranks through `FactionAccess`. Items
 report theft through `CrimeReporting`, and an arrest takes gold through `InventoryAccess`. The
-spellbook readies a spell in a hand through `EquipmentAccess`. The
+spellbook readies a spell in a hand through `EquipmentAccess`, and scripts cast through
+`SpellCasting`. The
   implementation conforms, and the app hands it over as that protocol.
 - A lower module never names a registry or default that a higher module owns. Example:
-  `PerkRuntime` takes its `ConditionFunctionRegistry` as a parameter, and the caller passes
-  `.standard`, which lives above every feature.
+  `PerkRuntime` and `ActiveEffectRuntime` take their `ConditionFunctionRegistry` as a
+  parameter, and the caller passes `.standard`, which lives above every feature. A package test
+  target builds its own registry from the install functions it can reach, for example
+  `.magicTests` in `OpenSkyMagicTests`.
 - A lower module that stores something for every feature keeps an open set instead of a closed
   enum. `OpenSkyWorldState` stores any `WorldStateComponent`, and each feature declares its own
   `WorldStateComponentKind`. `ConditionContext` stores any `ConditionResolution` by type, and each

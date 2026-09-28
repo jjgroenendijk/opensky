@@ -7,6 +7,7 @@ import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldState

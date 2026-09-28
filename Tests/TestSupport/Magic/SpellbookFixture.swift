@@ -20,6 +20,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
+@testable import OpenSkyMagic
 @testable import OpenSkyWorldState
 
 @MainActor

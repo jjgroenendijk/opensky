@@ -19,6 +19,8 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyWorldState
 import Testing
 
@@ -135,7 +137,11 @@ struct CasterAcceptanceRealDataTests {
                 )
             )
             world = RealCasterWorld(
-                effects: ActiveEffectRuntime(values: values, effects: data.effects)
+                effects: ActiveEffectRuntime(
+                    values: values,
+                    effects: data.effects,
+                    conditionRegistry: .standard
+                )
             )
             spellbook = SpellbookRuntime(
                 store: store,

@@ -22,6 +22,8 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+@testable import OpenSkyMagic
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyWorldState
 import Testing
 
@@ -76,7 +78,8 @@ struct ActiveEffectRealDataTests {
         return Harness(
             effects: ActiveEffectRuntime(
                 values: values,
-                effects: MagicEffectStoreLoader.load(root: root, baseFile: file)
+                effects: MagicEffectStoreLoader.load(root: root, baseFile: file),
+                conditionRegistry: .standard
             ),
             inventory: InventoryRuntime(store: store, baselines: baselines),
             items: baselines.items

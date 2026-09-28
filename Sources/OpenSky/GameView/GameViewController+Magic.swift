@@ -17,6 +17,8 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyRendering
 
 /// Active-effect state the controller owns. Extensions cannot add stored
@@ -57,7 +59,11 @@ extension GameViewController {
         else {
             return
         }
-        magicEffects.runtime = ActiveEffectRuntime(values: values, effects: store)
+        magicEffects.runtime = ActiveEffectRuntime(
+            values: values,
+            effects: store,
+            conditionRegistry: .standard
+        )
         magicEffects.pluginName = pluginName
         // `onWorldUpdate` is a single closure that regeneration and the Papyrus
         // VM already own, so this chains rather than replaces: all three

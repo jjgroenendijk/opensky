@@ -27,6 +27,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import simd
 

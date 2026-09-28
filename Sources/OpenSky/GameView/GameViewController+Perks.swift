@@ -23,6 +23,7 @@ import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagic
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 
