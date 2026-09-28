@@ -89,3 +89,18 @@ extension PerceptionRuntime {
         return DetectionResolution(pairs: pairs, positions: positions)
     }
 }
+
+nonisolated extension DetectionResolution: ConditionResolution {}
+
+nonisolated extension ConditionContext {
+    /// The one seam the perception pass comes through, shaped
+    /// exactly like the four above. Empty in a context with no world running,
+    /// which makes every detection function a reason-tagged false rather than a
+    /// convincing "not detected".
+    public var detection: DetectionResolution {
+        get { self[resolution: DetectionResolution.self] }
+        set {
+            self[resolution: DetectionResolution.self] = newValue
+        }
+    }
+}

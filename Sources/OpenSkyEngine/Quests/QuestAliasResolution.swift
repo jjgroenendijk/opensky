@@ -85,3 +85,18 @@ nonisolated public struct QuestAliasResolution: Sendable {
         tables.values.reduce(0) { $0 + $1.count }
     }
 }
+
+nonisolated extension QuestAliasResolution: ConditionResolution, ConditionAliasResolving {}
+
+nonisolated extension ConditionContext {
+    /// The one seam filled quest aliases come through. Separate
+    /// from `quests` because the two answer different questions and a caller
+    /// may legitimately have one and not the other.
+    public var aliases: QuestAliasResolution {
+        get { self[resolution: QuestAliasResolution.self] }
+        set {
+            self[resolution: QuestAliasResolution.self] = newValue
+            aliasResolver = newValue
+        }
+    }
+}

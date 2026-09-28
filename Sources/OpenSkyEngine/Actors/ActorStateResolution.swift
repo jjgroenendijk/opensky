@@ -187,3 +187,19 @@ nonisolated public struct ActorStateResolution: Sendable {
         states.isEmpty
     }
 }
+
+nonisolated extension ActorStateResolution: ConditionResolution, ConditionCombatTargetResolving {}
+
+nonisolated extension ConditionContext {
+    /// The one seam actor values, death, hostility and the combat target come
+    /// through, shaped exactly like the two above. Empty in a
+    /// context with no world running, which makes every actor function a
+    /// reason-tagged false rather than a convincing zero.
+    public var actors: ActorStateResolution {
+        get { self[resolution: ActorStateResolution.self] }
+        set {
+            self[resolution: ActorStateResolution.self] = newValue
+            combatTargetResolver = newValue
+        }
+    }
+}

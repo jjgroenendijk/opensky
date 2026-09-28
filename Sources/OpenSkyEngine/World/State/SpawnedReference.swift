@@ -49,10 +49,6 @@ nonisolated public struct ReferenceSpawnState: WorldStateComponent, Sendable {
         .spawn
     }
 
-    public var erased: WorldStateComponentValue {
-        .spawn(self)
-    }
-
     /// Normalizes on the way in, because this initializer is also the save
     /// decoder's entry point and a corrupt file must degrade rather than fail
     /// the whole load: a non-positive count becomes one, and a scale that is
@@ -69,11 +65,6 @@ nonisolated public struct ReferenceSpawnState: WorldStateComponent, Sendable {
         self.placement = placement
         self.scale = scale.isFinite && scale > 0 ? scale : 1
         self.count = max(1, count)
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .spawn(value) = erased else { return nil }
-        self = value
     }
 }
 
@@ -109,5 +100,11 @@ nonisolated public enum SpawnedReferenceIdentity: Sendable {
             return nil
         }
         return FormID(modIndex | UInt32(sequence))
+    }
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func spawn(_ value: ReferenceSpawnState) -> Self {
+        Self(value)
     }
 }

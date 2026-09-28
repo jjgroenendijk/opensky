@@ -136,16 +136,12 @@ nonisolated public enum OpenSkySaveEntryDecoder: Sendable {
             try .activation(decodeActivation(&reader))
         case .deletion:
             try .deletion(ReferenceDeletionState(isDeleted: reader.bool("deletion state")))
-        case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
-             .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks,
-             .factions, .relationships, .playerProgress, .crimeLedger:
-            // Unreachable: none of these kinds has an RDLT tag, so `init?(saveTag:)`
-            // never produces these cases and tags past 3 are rejected as
-            // unknown. They are spelled out rather than defaulted so that a
-            // component kind added later fails to compile here instead of
-            // decoding as something else.
+        default:
+            // Unreachable: no other kind has an RDLT tag, so
+            // `init?(saveTag:)` never produces one and tags past 3 are
+            // rejected as unknown.
             throw OpenSkySaveError.invalidValue(
-                context: "\(kind) is carried by its own chunk, not by RDLT"
+                context: "\(kind.rawValue) is carried by its own chunk, not by RDLT"
             )
         }
     }

@@ -15,7 +15,7 @@ import OpenSkyFormatsESM
 /// On-disk tag of a component slot inside `RDLT`.
 ///
 /// The mapping is written out case by case rather than derived from
-/// `allCases.firstIndex(of:)`, because declaration order is a source-level
+/// `WorldStateComponentKind.order`, because that order is a source-level
 /// detail that may change while these byte values may not.
 ///
 /// Optional because not every component slot travels in `RDLT`. `.inventory`,
@@ -37,9 +37,7 @@ nonisolated extension WorldStateComponentKind {
         case .transform: 1
         case .activation: 2
         case .deletion: 3
-        case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
-             .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks,
-             .factions, .relationships, .playerProgress, .crimeLedger: nil
+        default: nil
         }
     }
 

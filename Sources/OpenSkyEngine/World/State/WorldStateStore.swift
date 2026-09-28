@@ -188,7 +188,7 @@ public final class WorldStateStore {
 
     /// Drops every delta for `key`, restoring the whole reference to its plugin
     /// default. One journal entry is written per cleared component, in
-    /// `WorldStateComponentKind.allCases` order so the log stays deterministic.
+    /// `WorldStateComponentKind.order` so the log stays deterministic.
     ///
     /// - Returns: true when the reference was dirty.
     @discardableResult

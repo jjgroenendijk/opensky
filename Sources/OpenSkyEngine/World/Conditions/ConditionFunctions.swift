@@ -14,19 +14,13 @@ import Foundation
 import OpenSkyFormatsESM
 
 nonisolated public enum ConditionFunctions: Sendable {
-    public static func install(into registry: inout ConditionFunctionRegistry) {
+    /// The functions the core answers from state it owns: time, reference
+    /// identity and globals. The record-data family (`installData`) is core
+    /// too; the whole-game registry installs it in its own place.
+    public static func installCore(into registry: inout ConditionFunctionRegistry) {
         installTime(&registry)
         installReference(&registry)
         installGlobals(&registry)
-        installQuest(&registry)
-        installActor(&registry)
-        installDetection(&registry)
-        installDialogue(&registry)
-        installData(&registry)
-        installMagic(&registry)
-        installPerk(&registry)
-        installCrime(&registry)
-        installFaction(&registry)
     }
 
     // MARK: - Reference identity

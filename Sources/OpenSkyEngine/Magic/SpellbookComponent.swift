@@ -84,10 +84,6 @@ nonisolated public struct SpellbookState: WorldStateComponent, Sendable {
         .spellbook
     }
 
-    public var erased: WorldStateComponentValue {
-        .spellbook(self)
-    }
-
     /// Normalizes on the way in, which is what makes this the save decoder's
     /// entry point: a file written under a different load order degrades into a
     /// valid spellbook rather than failing the whole load.
@@ -110,11 +106,6 @@ nonisolated public struct SpellbookState: WorldStateComponent, Sendable {
         self.leftHand = leftHand.flatMap { knownSet.contains($0) ? $0 : nil }
         self.rightHand = rightHand.flatMap { knownSet.contains($0) ? $0 : nil }
         self.powerDays = powerDays.filter { knownSet.contains($0.key) }
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .spellbook(value) = erased else { return nil }
-        self = value
     }
 
     /// True when nothing is recorded at all, which is when the store drops the
@@ -241,5 +232,20 @@ nonisolated public struct SpellbookState: WorldStateComponent, Sendable {
             rightHand: rightHand ?? self.rightHand,
             powerDays: powerDays ?? self.powerDays
         )
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// One actor's known spells, read tomes, readied hands and spent greater
+    /// powers. A slot of its own for the reason `activeEffects` is one: everything
+    /// in it changes on a player action, never per frame. The four fields share the
+    /// slot rather than splitting further because a readied hand must name a known
+    /// spell, and only one component can enforce that in a single write.
+    public static let spellbook = Self(rawValue: "spellbook", order: 13)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func spellbook(_ value: SpellbookState) -> Self {
+        Self(value)
     }
 }

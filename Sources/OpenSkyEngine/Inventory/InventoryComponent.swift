@@ -122,10 +122,6 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
         .inventory
     }
 
-    public var erased: WorldStateComponentValue {
-        .inventory(self)
-    }
-
     /// Normalizes on the way in: duplicate items merge, non-positive counts
     /// drop out, and both arrays come out sorted. A merge that would overflow
     /// `Int32` saturates rather than throwing — this initializer is also the
@@ -159,11 +155,6 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
         static func < (lhs: Self, rhs: Self) -> Bool {
             lhs.item == rhs.item ? (!lhs.stolen && rhs.stolen) : lhs.item < rhs.item
         }
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .inventory(value) = erased else { return nil }
-        self = value
     }
 
     // MARK: - Reading
@@ -362,5 +353,19 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
         }
         result.stacks.insert(stack, at: index ?? result.stacks.endIndex)
         return result
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// Everything one owner holds, plus its equipped set. The value type is
+    /// `ReferenceInventoryState`, which lives in
+    /// `Sources/OpenSkyEngine/Inventory/InventoryComponent.swift` because it
+    /// carries stack arithmetic of its own rather than being a plain field bag.
+    public static let inventory = Self(rawValue: "inventory", order: 4)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func inventory(_ value: ReferenceInventoryState) -> Self {
+        Self(value)
     }
 }

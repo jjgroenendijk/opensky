@@ -38,9 +38,12 @@ component kind, plus the cell of its most recent change. Some examples:
 | Death | Death, the corpse's resting root transform, and whether it was searched |
 | Dialogue | How often one response has been said, keyed by its `INFO` |
 
-Adding a component needs a kind, a value type, and an erased case. Every store operation (set,
-reset, dirty counts, journal, snapshot) is written against the protocol and the erased value, so none
-of it changes.
+The set of components is open. The module that owns a component conforms its value type to
+`WorldStateComponent` and declares its kind, for example
+`static let spellbook = Self(rawValue: "spellbook", order: 13)`. The order fixes where the kind
+sorts, so iteration, the change journal, and a wholesale reset never depend on dictionary order.
+Every store operation (set, reset, dirty counts, journal, snapshot) is written against the protocol
+and the erased value, so none of it changes.
 
 Writes go through the store and never around it, so the journal, the dirty counts, and the save see
 every change, including every script change ([Papyrus

@@ -68,12 +68,6 @@ nonisolated public struct ConditionFunctionRegistry: Sendable {
 
     /// The set the engine evaluates with. Built once; adding to it is an
     /// `install` call in `ConditionFunctions`, never a mutation from a caller.
-    public static let standard: ConditionFunctionRegistry = {
-        var registry = ConditionFunctionRegistry()
-        ConditionFunctions.install(into: &registry)
-        return registry
-    }()
-
     /// Deliberately empty, for tests that need every index to be unknown.
     public static let empty = ConditionFunctionRegistry()
 

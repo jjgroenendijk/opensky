@@ -105,3 +105,13 @@ nonisolated extension ConditionFunctions {
         return call.quest(parameter.asFormID)
     }
 }
+
+nonisolated extension ConditionCall {
+    /// Current state of the quest `id` names, or `.unresolvedQuest`.
+    public func quest(_ id: FormID) -> Result<QuestRuntimeState, ConditionFailure> {
+        guard let state = context.quests.state(for: id) else {
+            return .failure(.unresolvedQuest(id))
+        }
+        return .success(state)
+    }
+}

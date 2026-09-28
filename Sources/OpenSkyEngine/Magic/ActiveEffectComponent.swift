@@ -28,10 +28,6 @@ nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {
         .activeEffects
     }
 
-    public var erased: WorldStateComponentValue {
-        .activeEffects(self)
-    }
-
     /// Normalizes on the way in, which is also what makes this the save
     /// decoder's entry point: a corrupt file degrades into a valid state rather
     /// than failing the whole load.
@@ -46,11 +42,6 @@ nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {
         self.effects = effects
             .filter { !$0.values.isEmpty && ($0.duration > 0 || $0.isConstant) }
             .sorted { $0.sequence < $1.sequence }
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .activeEffects(value) = erased else { return nil }
-        self = value
     }
 
     public var isEmpty: Bool {
@@ -142,5 +133,19 @@ nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {
     /// Every effect whose duration has run out.
     public var expired: [ActiveEffect] {
         effects.filter(\.isExpired)
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// Every magic effect currently acting on one actor. A slot of its own beside
+    /// `actorValues` for the lifetime reason `death` and `combat` are separate
+    /// slots: the values beside it are rewritten sixty times a second, while an
+    /// effect list changes only when something is applied, expires or is dispelled.
+    public static let activeEffects = Self(rawValue: "activeEffects", order: 12)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func activeEffects(_ value: ActiveEffectState) -> Self {
+        Self(value)
     }
 }

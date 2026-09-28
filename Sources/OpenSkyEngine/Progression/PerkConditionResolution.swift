@@ -85,3 +85,18 @@ nonisolated public struct PerkConditionResolution: @unchecked Sendable, Sendable
         owned[actor] ?? []
     }
 }
+
+nonisolated extension PerkConditionResolution: ConditionResolution {}
+
+nonisolated extension ConditionContext {
+    /// Owned perks per actor plus the PERK store `HasPerk`'s parameter resolves
+    /// against. Empty when no perk runtime is wired, which makes
+    /// `HasPerk` a reason-tagged false rather than an actor who has taken
+    /// nothing.
+    public var perks: PerkConditionResolution {
+        get { self[resolution: PerkConditionResolution.self] }
+        set {
+            self[resolution: PerkConditionResolution.self] = newValue
+        }
+    }
+}

@@ -49,10 +49,6 @@ nonisolated public struct ActorFactionState: WorldStateComponent, Sendable {
         .factions
     }
 
-    public var erased: WorldStateComponentValue {
-        .factions(self)
-    }
-
     public var isEmpty: Bool {
         memberships.isEmpty
     }
@@ -87,11 +83,6 @@ nonisolated public struct ActorFactionState: WorldStateComponent, Sendable {
         }
     }
 
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .factions(value) = erased else { return nil }
-        self = value
-    }
-
     public func isMember(of faction: ReferenceKey) -> Bool {
         memberships.contains { $0.faction == faction }
     }
@@ -115,5 +106,21 @@ nonisolated public struct ActorFactionState: WorldStateComponent, Sendable {
     public func leaving(_ faction: ReferenceKey) -> ActorFactionState {
         guard isMember(of: faction) else { return self }
         return ActorFactionState(memberships: memberships.filter { $0.faction != faction })
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// Every faction one actor currently belongs to, and the rank it holds in each.
+    /// A slot of its own for the reason `perks` is one: a membership moves on a
+    /// quest stage or a script call, while the actor values beside it are rewritten
+    /// sixty times a second. It is also the input to the hostility derivation,
+    /// which is why it must be a component and not a re-read of the NPC_ record: an
+    /// actor the player has joined to a faction has to stay joined across a reload.
+    public static let factions = Self(rawValue: "factions", order: 16)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func factions(_ value: ActorFactionState) -> Self {
+        Self(value)
     }
 }

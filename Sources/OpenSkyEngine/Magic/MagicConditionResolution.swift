@@ -174,3 +174,18 @@ nonisolated public struct MagicConditionResolution: @unchecked Sendable, Sendabl
         }
     }
 }
+
+nonisolated extension MagicConditionResolution: ConditionResolution {}
+
+nonisolated extension ConditionContext {
+    /// Known spells, active effects and cast state per actor, plus the SPEL
+    /// and MGEF stores their FormID parameters resolve against.
+    /// Empty when no magic runtime is wired, which makes every magic function
+    /// a reason-tagged false rather than an actor who has learned nothing.
+    public var magic: MagicConditionResolution {
+        get { self[resolution: MagicConditionResolution.self] }
+        set {
+            self[resolution: MagicConditionResolution.self] = newValue
+        }
+    }
+}

@@ -73,10 +73,6 @@ nonisolated public struct ActorRelationshipState: WorldStateComponent, Sendable 
         .relationships
     }
 
-    public var erased: WorldStateComponentValue {
-        .relationships(self)
-    }
-
     public var isEmpty: Bool {
         overrides.isEmpty
     }
@@ -105,11 +101,6 @@ nonisolated public struct ActorRelationshipState: WorldStateComponent, Sendable 
         }
     }
 
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .relationships(value) = erased else { return nil }
-        self = value
-    }
-
     /// The rank toward `other`, or nil when no script has set one — which is not
     /// the same as 0, the Acquaintance rank a script may set deliberately.
     public func rank(toward other: ReferenceKey) -> Int8? {
@@ -122,5 +113,21 @@ nonisolated public struct ActorRelationshipState: WorldStateComponent, Sendable 
         ActorRelationshipState(
             overrides: overrides + [ActorRelationshipOverride(other: other, rank: rank)]
         )
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// Relationship ranks a script has set between one actor and others. A slot of
+    /// its own beside `factions` because the two are different facts with the same
+    /// lifetime: what an actor *belongs to*, and what it *is to somebody else*. The
+    /// Creation Kit says outright that "relationships override factions"
+    /// (<https://ck.uesp.net/wiki/Relationship>), so they cannot share a slot and
+    /// still be resolved in that order.
+    public static let relationships = Self(rawValue: "relationships", order: 17)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func relationships(_ value: ActorRelationshipState) -> Self {
+        Self(value)
     }
 }

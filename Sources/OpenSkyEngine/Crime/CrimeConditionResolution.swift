@@ -106,3 +106,18 @@ nonisolated public struct CrimeConditionResolution: @unchecked Sendable, Sendabl
         return ledgers[actor]?.gold(for: faction, violent: violent) ?? 0
     }
 }
+
+nonisolated extension CrimeConditionResolution: ConditionResolution {}
+
+nonisolated extension ConditionContext {
+    /// Crime ledgers per actor plus the FACT store `GetCrimeGold`'s parameter
+    /// resolves against, and the faction a null parameter means.
+    /// Empty when no crime runtime is wired, which makes `GetCrimeGold` a
+    /// reason-tagged false rather than an actor who owes nothing.
+    public var crime: CrimeConditionResolution {
+        get { self[resolution: CrimeConditionResolution.self] }
+        set {
+            self[resolution: CrimeConditionResolution.self] = newValue
+        }
+    }
+}

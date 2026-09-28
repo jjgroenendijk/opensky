@@ -60,10 +60,6 @@ nonisolated public struct ActorValueState: WorldStateComponent, Sendable {
         .actorValues
     }
 
-    public var erased: WorldStateComponentValue {
-        .actorValues(self)
-    }
-
     /// The flag item 15.6 consumes to start death and ragdoll handling.
     ///
     /// Derived rather than stored: a stored flag and a stored health can
@@ -93,11 +89,6 @@ nonisolated public struct ActorValueState: WorldStateComponent, Sendable {
         self.overrides = overrides.filter { index, override in
             ActorValueIdentity.isVanilla(index: index) && !override.isEmpty
         }
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .actorValues(value) = erased else { return nil }
-        self = value
     }
 
     /// The state an actor has before anything touches it: every value at its
@@ -188,5 +179,19 @@ nonisolated public struct ActorValueState: WorldStateComponent, Sendable {
     /// touched.
     public func override(at index: Int32) -> ActorValueOverride {
         overrides[index] ?? .none
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// One actor's current health, magicka and stamina. Current values only: the
+    /// maximums re-derive from the RACE, CLAS and NPC_ records through
+    /// `ActorValueResolver`, exactly as an inventory baseline re-derives from its
+    /// CNTO list.
+    public static let actorValues = Self(rawValue: "actorValues", order: 8)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func actorValues(_ value: ActorValueState) -> Self {
+        Self(value)
     }
 }
