@@ -35,6 +35,11 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyGameData",
           "name" : "OpenSkyGameData"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyBehavior",
+          "name" : "OpenSkyBehavior"
         }
       ]
     }
@@ -62,6 +67,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyGameDataTests",
         "name" : "OpenSkyGameDataTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyBehaviorTests",
+        "name" : "OpenSkyBehaviorTests"
       }
     }
   ],

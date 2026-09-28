@@ -13,6 +13,7 @@
 // which are measurements rather than content.
 
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData

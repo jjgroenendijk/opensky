@@ -32,6 +32,7 @@
 //
 // Documented in docs/engine/ragdoll.md.
 
+import OpenSkyBehavior
 import OpenSkyFormats
 import simd
 

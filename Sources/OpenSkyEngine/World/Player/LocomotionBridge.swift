@@ -32,6 +32,7 @@
 // capsule a fraction of a unit the wrong way (issue #370).
 // See docs/engine/walk-mode.md.
 
+import OpenSkyBehavior
 import simd
 
 /// One frame of player intent, in the form the bridge consumes. Filled from

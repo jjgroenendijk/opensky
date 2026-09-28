@@ -1,7 +1,7 @@
 // Runtime pose composition tests (milestone 6.4). Synthetic engine values
 // only; no game assets.
 
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 import simd
 import Testing

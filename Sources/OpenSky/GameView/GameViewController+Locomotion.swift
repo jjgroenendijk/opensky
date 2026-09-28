@@ -4,6 +4,7 @@
 // snapshot when there is no renderer (Metal 4 missing).
 
 import AppKit
+import OpenSkyBehavior
 import OpenSkyEngine
 
 extension GameViewController: PlayerLocomotionControlProviding {

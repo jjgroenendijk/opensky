@@ -10,6 +10,7 @@
 //
 // Synthetic names throughout; nothing here needs a graph.
 
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 import Testing
 

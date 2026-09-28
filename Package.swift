@@ -180,10 +180,22 @@ targets += foundation(
     tests: ["FormatsTestSupport"]
 )
 
+targets += foundation(
+    "OpenSkyBehavior",
+    dependencies: ["OpenSkyFormats", "OpenSkyGameData"],
+    tests: ["BehaviorTesting", "FormatsTestSupport"]
+)
+targets += testing(
+    "BehaviorTesting",
+    dependencies: ["OpenSkyBehavior", "OpenSkyFormats", "FormatsTestSupport"]
+)
+
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
     "OpenSkyEngine",
-    dependencies: ["OpenSkyFormats", "OpenSkyGameData", "OpenSkyShaderTypes", "CFFmpeg"]
+    dependencies: [
+        "OpenSkyFormats", "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyShaderTypes", "CFFmpeg"
+    ]
 )
 
 let package = Package(

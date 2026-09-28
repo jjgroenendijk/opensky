@@ -14,6 +14,7 @@
 // or a menu-mode frame, costs one matrix comparison.
 
 import Metal
+import OpenSkyBehavior
 import OpenSkyFormats
 import simd
 

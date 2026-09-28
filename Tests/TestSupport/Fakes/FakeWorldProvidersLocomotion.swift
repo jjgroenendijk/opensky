@@ -5,6 +5,7 @@
 // fake exists now so the aggregate provider protocol stays satisfiable and the
 // registry tests keep compiling.
 
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 

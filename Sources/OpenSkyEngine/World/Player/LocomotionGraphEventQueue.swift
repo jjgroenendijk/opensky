@@ -29,6 +29,8 @@
 // bound is over the *undrained* names, so a slow consumer costs the fast one
 // nothing but its own lost tail.
 
+import OpenSkyBehavior
+
 nonisolated public final class LocomotionGraphEventQueue {
     /// How many undrained names the queue holds before it starts dropping the
     /// oldest. A frame at 60 Hz drives 2 fixed steps and a sprinting vanilla

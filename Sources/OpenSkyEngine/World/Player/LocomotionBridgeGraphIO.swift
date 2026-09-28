@@ -11,6 +11,7 @@
 // its first-person half.
 
 import Foundation
+import OpenSkyBehavior
 
 nonisolated extension LocomotionBridge {
     /// Writes one variable to every attached graph, recording whether each one

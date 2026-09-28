@@ -9,6 +9,7 @@
 // which is how a graph that spells something differently becomes visible.
 
 import Foundation
+import OpenSkyBehavior
 import simd
 
 nonisolated public enum LocomotionGraphNames: Sendable {

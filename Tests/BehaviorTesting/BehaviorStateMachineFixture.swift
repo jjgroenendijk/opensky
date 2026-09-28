@@ -8,42 +8,88 @@
 // carrying any of its data.
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 
 /// One transition of a synthetic machine.
-struct BehaviorTransitionSpec {
-    let eventId: Int
-    let toStateId: Int
-    var flags = BehaviorTransitionFlag.disableCondition
-    var priority = 0
-    var effect: HKXPointerTarget?
-    var condition: HKXPointerTarget?
-    var toNestedStateId = -1
-    var triggerInterval = HKBStateMachineTimeInterval(
+public struct BehaviorTransitionSpec: Sendable {
+    public let eventId: Int
+    public let toStateId: Int
+    public var flags = BehaviorTransitionFlag.disableCondition
+    public var priority = 0
+    public var effect: HKXPointerTarget?
+    public var condition: HKXPointerTarget?
+    public var toNestedStateId = -1
+    public var triggerInterval = HKBStateMachineTimeInterval(
         enterEventId: -1, exitEventId: -1, enterTime: 0, exitTime: 0
     )
-    var initiateInterval = HKBStateMachineTimeInterval(
+    public var initiateInterval = HKBStateMachineTimeInterval(
         enterEventId: -1, exitEventId: -1, enterTime: 0, exitTime: 0
     )
+
+    public init(
+        eventId: Int,
+        toStateId: Int,
+        flags: Int = BehaviorTransitionFlag.disableCondition,
+        priority: Int = 0,
+        effect: HKXPointerTarget? = nil,
+        condition: HKXPointerTarget? = nil,
+        toNestedStateId: Int = -1,
+        triggerInterval: HKBStateMachineTimeInterval = HKBStateMachineTimeInterval(
+            enterEventId: -1, exitEventId: -1, enterTime: 0, exitTime: 0
+        ),
+        initiateInterval: HKBStateMachineTimeInterval = HKBStateMachineTimeInterval(
+            enterEventId: -1, exitEventId: -1, enterTime: 0, exitTime: 0
+        )
+    ) {
+        self.eventId = eventId
+        self.toStateId = toStateId
+        self.flags = flags
+        self.priority = priority
+        self.effect = effect
+        self.condition = condition
+        self.toNestedStateId = toNestedStateId
+        self.triggerInterval = triggerInterval
+        self.initiateInterval = initiateInterval
+    }
 }
 
 /// One state of a synthetic machine.
-struct BehaviorStateSpec {
-    let stateId: Int
-    let name: String
-    var generator: HKXPointerTarget?
-    var transitions: HKXPointerTarget?
-    var enterNotifyEvents: HKXPointerTarget?
-    var exitNotifyEvents: HKXPointerTarget?
-    var probability: Float = 1
-    var enable = true
+public struct BehaviorStateSpec: Sendable {
+    public let stateId: Int
+    public let name: String
+    public var generator: HKXPointerTarget?
+    public var transitions: HKXPointerTarget?
+    public var enterNotifyEvents: HKXPointerTarget?
+    public var exitNotifyEvents: HKXPointerTarget?
+    public var probability: Float = 1
+    public var enable = true
+
+    public init(
+        stateId: Int,
+        name: String,
+        generator: HKXPointerTarget? = nil,
+        transitions: HKXPointerTarget? = nil,
+        enterNotifyEvents: HKXPointerTarget? = nil,
+        exitNotifyEvents: HKXPointerTarget? = nil,
+        probability: Float = 1,
+        enable: Bool = true
+    ) {
+        self.stateId = stateId
+        self.name = name
+        self.generator = generator
+        self.transitions = transitions
+        self.enterNotifyEvents = enterNotifyEvents
+        self.exitNotifyEvents = exitNotifyEvents
+        self.probability = probability
+        self.enable = enable
+    }
 }
 
-enum BehaviorStateMachineFixture {
+public enum BehaviorStateMachineFixture {
     // MARK: - States and transitions
 
-    static func stateInfo(_ spec: BehaviorStateSpec) -> HKBStateMachineStateInfo {
+    public static func stateInfo(_ spec: BehaviorStateSpec) -> HKBStateMachineStateInfo {
         HKBStateMachineStateInfo(
             variableBindingSet: nil,
             enterNotifyEvents: spec.enterNotifyEvents,
@@ -58,7 +104,7 @@ enum BehaviorStateMachineFixture {
         )
     }
 
-    static func transitions(_ specs: [BehaviorTransitionSpec])
+    public static func transitions(_ specs: [BehaviorTransitionSpec])
         -> HKBStateMachineTransitionInfoArray
     {
         HKBStateMachineTransitionInfoArray(
@@ -80,7 +126,7 @@ enum BehaviorStateMachineFixture {
         )
     }
 
-    static func notifyEvents(_ ids: [Int]) -> HKBStateMachineEventPropertyArray {
+    public static func notifyEvents(_ ids: [Int]) -> HKBStateMachineEventPropertyArray {
         HKBStateMachineEventPropertyArray(
             events: ids.map { HKBEventProperty(id: $0, payload: nil) },
             unresolved: []
@@ -89,7 +135,7 @@ enum BehaviorStateMachineFixture {
 
     // MARK: - Machines
 
-    static func machine(
+    public static func machine(
         _ name: String,
         states: [HKXPointerTarget?],
         startStateId: Int = 0,
@@ -128,7 +174,7 @@ enum BehaviorStateMachineFixture {
 
     // MARK: - Transition effects and conditions
 
-    static func blendingEffect(
+    public static func blendingEffect(
         duration: Float,
         blendCurve: Int = BehaviorBlendCurve.smooth,
         flags: Int = 0
@@ -146,7 +192,7 @@ enum BehaviorStateMachineFixture {
         )
     }
 
-    static func condition(_ expression: String) -> HKBExpressionCondition {
+    public static func condition(_ expression: String) -> HKBExpressionCondition {
         HKBExpressionCondition(expression: expression, unresolved: [])
     }
 
@@ -154,7 +200,7 @@ enum BehaviorStateMachineFixture {
 
     /// A blender whose `m_indexOfSyncMasterChild` names one child, which is the
     /// authored signal that the other children follow its playback phase.
-    static func syncedBlender(
+    public static func syncedBlender(
         _ name: String,
         children: [HKXPointerTarget?],
         masterIndex: Int

@@ -14,6 +14,7 @@
 // `make realtest T='LocomotionBridgeRealDataTests/drivesTheVanillaGraphThroughACell()'`.
 
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData

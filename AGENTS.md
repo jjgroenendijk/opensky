@@ -93,15 +93,18 @@ Sources/
   OpenSkyEngine/        package module: the engine not yet split, one folder per domain
   OpenSkyFormats/       package module: format parsers, one folder per format
   OpenSkyGameData/      package module: virtual file system, load order, record stores
+  OpenSkyBehavior/      package module: behavior graph evaluation, skeleton pose math
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
   OpenSkyTests/         synthetic unit suites for the app and engine
   OpenSkyFormatsTests/  package test target: synthetic suites for OpenSkyFormats
   OpenSkyGameDataTests/ package test target: synthetic suites for OpenSkyGameData
+  OpenSkyBehaviorTests/ package test target: synthetic suites for OpenSkyBehavior
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   FormatsTestSupport/   package library: byte-building fixtures every unit test target uses
+  BehaviorTesting/      package library: behavior graph fixtures
   OpenSkyUITests/       XCUITest smoke tests
 ```
 

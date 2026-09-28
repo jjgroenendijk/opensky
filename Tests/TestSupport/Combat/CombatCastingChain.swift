@@ -20,6 +20,7 @@
 // game files (AGENTS.md "Legal & IP boundary").
 
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData

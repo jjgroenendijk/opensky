@@ -22,6 +22,7 @@
 // the data root and the RSS watchdog.
 
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData

@@ -1,8 +1,9 @@
 // Behavior pose math (issue #187) against hand-computed values. Pure
 // arithmetic on invented poses; no packfile, no install.
 
+import BehaviorTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 import simd
 import Testing

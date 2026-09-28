@@ -2,6 +2,7 @@
 // `M15AcceptanceTests.swift` beside the route steps.
 
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 import simd
 import Testing

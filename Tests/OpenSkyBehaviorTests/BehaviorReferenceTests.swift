@@ -6,8 +6,9 @@
 // downstream of it. These run over synthetic graphs built in code — nothing
 // here is extracted from a game file (AGENTS.md "Legal & IP boundary").
 
+import BehaviorTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 import Testing
 

@@ -1,8 +1,9 @@
 // Nested machines, clip synchronization, and determinism across both
 // (issue #330). Synthetic graphs built in code, nothing from the install.
 
+import BehaviorTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 import Testing
 

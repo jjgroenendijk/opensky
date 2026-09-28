@@ -8,6 +8,7 @@
 // left behind.
 
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 import simd
 import Testing

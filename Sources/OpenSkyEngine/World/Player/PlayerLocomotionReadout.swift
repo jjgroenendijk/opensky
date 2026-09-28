@@ -11,6 +11,7 @@
 // target, so it needs no project-membership exception.
 
 import Foundation
+import OpenSkyBehavior
 
 nonisolated public enum PlayerLocomotionReadout: Sendable {
     /// Where the player is and what is moving them.

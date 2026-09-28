@@ -18,6 +18,7 @@
 
 import FormatsTestSupport
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd

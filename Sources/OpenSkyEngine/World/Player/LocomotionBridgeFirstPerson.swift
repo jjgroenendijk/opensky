@@ -24,6 +24,7 @@
 // perspective. It is seeded once at attach and at every reset rather than
 // written per step, because it does not change between steps.
 
+import OpenSkyBehavior
 import simd
 
 nonisolated extension LocomotionBridge {

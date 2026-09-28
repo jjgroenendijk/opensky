@@ -3,6 +3,8 @@
 // once, the queue is bounded, and a reset or a paused frame leaves nothing to
 // replay. Synthetic graph only. See docs/engine/walk-mode.md.
 
+import BehaviorTesting
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 import simd
 import Testing

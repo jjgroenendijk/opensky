@@ -5,8 +5,9 @@
 // Node lifecycle and determinism are in BehaviorLifecycleTests.swift; generator
 // semantics in BehaviorGeneratorTests.swift and BehaviorClipTests.swift.
 
+import BehaviorTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 import simd
 import Testing
