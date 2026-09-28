@@ -67,5 +67,5 @@ human `Signed-off-by:`. Enforced by `.githooks/commit-msg/20-no-ai-trailers.sh`.
 
 `.githooks/`, wired by `make bootstrap`: pre-commit guards, formats, and lints; commit-msg
 runs the Conventional Commit check; pre-push blocks pushes to `main`. No hook builds or
-tests; the `testing-and-verifying` skill covers what to run, including `make dead-code`.
+tests; the `testing-and-verifying` skill covers what to run.
 `--no-verify` is for bootstrap and emergencies only, never routine.

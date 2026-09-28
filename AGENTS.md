@@ -229,12 +229,6 @@ cap, split into a satellite file (`Renderer.swift` -> `RendererScenePass.swift`)
 which members need same-file `private(set)` access before moving them. Past the parameter or
 tuple cap, introduce a struct.
 
-Two whole-program smells are gated against a baseline of existing findings:
-duplicated Swift (`make dup-check`, in `make lint` and pre-commit) and unused code
-(`make dead-code`, on demand, in its own uncached build tree). New code must not add to
-either baseline; regenerate one only after a cleanup removes findings
-(`docs/decisions/code-smell-scans.md`).
-
 ## Conventions
 
 - Swift-to-Metal shared structs go in `Sources/ShaderTypes/ShaderTypes.h`

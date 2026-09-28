@@ -1,8 +1,0 @@
-{
-  "format": ["swift"],
-  "minTokens": 100,
-  "minLines": 10,
-  "reporters": ["console"],
-  "failOnNewClones": 0,
-  "noTips": true
-}
