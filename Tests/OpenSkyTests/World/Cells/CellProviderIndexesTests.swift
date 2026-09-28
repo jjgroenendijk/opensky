@@ -1,7 +1,7 @@
 import FormatsTestSupport
 import Foundation
 import Metal
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyGameData
 import Testing
 

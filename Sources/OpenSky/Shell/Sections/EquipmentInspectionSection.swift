@@ -13,6 +13,7 @@
 // M14, and the nearest NPC is the only owner an equip is visible on.
 
 import AppKit
+import OpenSkyEngine
 
 final class EquipmentInspectionSection: PanelSectionViewController {
     weak var provider: (any InventoryEquipmentControlProviding)? {

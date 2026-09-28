@@ -19,7 +19,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// Raises a state's `m_enterNotifyEvents` or `m_exitNotifyEvents`, in
     /// authored order.
-    func raiseNotifyEvents(of stateId: Int, machine: HKBStateMachine, entering: Bool) {
+    public func raiseNotifyEvents(of stateId: Int, machine: HKBStateMachine, entering: Bool) {
         guard let entry = stateInfo(of: machine, id: stateId) else { return }
         let target = entering
             ? entry.info.enterNotifyEvents
@@ -37,14 +37,14 @@ nonisolated extension BehaviorGraphInstance {
 
     /// Raises one `hkbEventProperty`, payload included. An id of -1 is Havok's
     /// "no event" and is dropped by the queue.
-    func raise(_ event: HKBEventProperty) {
+    public func raise(_ event: HKBEventProperty) {
         events.raise(id: event.id, payload: payload(at: event.payload))
     }
 
     /// The deactivation half of a machine's lifecycle: the state it was in
     /// raises its exit events, and the machine forgets that it was entered
     /// while keeping `currentStateId` for `m_startStateMode` 2.
-    func noteMachineDeactivation(of machine: HKBStateMachine, at target: HKXPointerTarget) {
+    public func noteMachineDeactivation(of machine: HKBStateMachine, at target: HKXPointerTarget) {
         guard var state = machineStates[target], state.isEntered else { return }
         raiseNotifyEvents(of: state.currentStateId, machine: machine, entering: false)
         state.isEntered = false
@@ -61,7 +61,7 @@ nonisolated extension BehaviorGraphInstance {
     /// is a permit rather than a block. A condition that will not parse, or
     /// that names a variable this graph does not declare, blocks and is
     /// tallied.
-    func isConditionMet(_ info: HKBStateMachineTransitionInfo) -> Bool {
+    public func isConditionMet(_ info: HKBStateMachineTransitionInfo) -> Bool {
         guard info.flags & BehaviorTransitionFlag.disableCondition == 0 else { return true }
         guard let target = info.condition else { return true }
         guard let expression = condition(at: target) else {
@@ -100,7 +100,7 @@ nonisolated extension BehaviorGraphInstance {
     /// `m_exitEventId` is. `m_enterTime` and `m_exitTime` are zero on every
     /// transition in the vanilla player graph, so a non-zero one is tallied
     /// rather than acted on.
-    func isIntervalOpen(_ info: HKBStateMachineTransitionInfo) -> Bool {
+    public func isIntervalOpen(_ info: HKBStateMachineTransitionInfo) -> Bool {
         if info.flags & BehaviorTransitionFlag.useTriggerInterval != 0 {
             guard isOpen(info.triggerInterval) else { return false }
         }
@@ -130,7 +130,7 @@ nonisolated extension BehaviorGraphInstance {
     /// The four event ids a machine carries itself, checked only when no
     /// transition-info candidate fired. Each one cuts instantly: none of them
     /// names a transition effect.
-    func selectMachineEventTransition(
+    public func selectMachineEventTransition(
         _ state: inout BehaviorMachineState,
         machine: HKBStateMachine
     ) {
@@ -216,7 +216,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// Publishes what this machine is doing, in names, in the order the walk
     /// reached the machines.
-    func recordActiveState(_ machine: HKBStateMachine, state: BehaviorMachineState) {
+    public func recordActiveState(_ machine: HKBStateMachine, state: BehaviorMachineState) {
         let current = stateInfo(of: machine, id: state.currentStateId)?.info.name
         let outgoing = state.transition
             .flatMap { stateInfo(of: machine, id: $0.fromStateId)?.info.name }

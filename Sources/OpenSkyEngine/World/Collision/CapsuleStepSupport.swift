@@ -6,13 +6,13 @@ import simd
 
 /// A surface the capsule can step up onto: the height it sits at, and what it
 /// is made of (issue #358) so a step onto a wooden stair sounds like one.
-nonisolated struct CapsuleStepSupport: Equatable {
-    let height: Float
-    let material: FormID?
+nonisolated public struct CapsuleStepSupport: Equatable, Sendable {
+    public let height: Float
+    public let material: FormID?
 }
 
 nonisolated extension CapsuleWorldCollider {
-    func stepSupport(
+    public func stepSupport(
         at position: SIMD2<Float>,
         minimumHeight: Float,
         maximumHeight: Float,

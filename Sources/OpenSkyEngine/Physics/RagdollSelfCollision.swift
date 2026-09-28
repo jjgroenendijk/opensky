@@ -66,52 +66,52 @@
 // Documented in docs/engine/ragdoll-solver.md.
 
 /// One unordered pair of bone indices, `first < second`.
-nonisolated struct RagdollBonePair: Hashable, Sendable, Comparable {
-    let first: Int
-    let second: Int
+nonisolated public struct RagdollBonePair: Hashable, Sendable, Comparable {
+    public let first: Int
+    public let second: Int
 
-    init(_ one: Int, _ other: Int) {
+    public init(_ one: Int, _ other: Int) {
         first = min(one, other)
         second = max(one, other)
     }
 
-    static func < (lhs: Self, rhs: Self) -> Bool {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         (lhs.first, lhs.second) < (rhs.first, rhs.second)
     }
 }
 
 /// The bone pairs of one ragdoll that are allowed to collide.
-nonisolated struct RagdollSelfCollision: Sendable, Equatable {
+nonisolated public struct RagdollSelfCollision: Sendable, Equatable {
     /// How many joints apart two bones must be before they may touch. Two hops
     /// is a jointed pair's shared parent, so the first admitted distance is
     /// three.
-    static let minimumJointDistance = 3
+    public static let minimumJointDistance = 3
 
     /// Admitted pairs, ascending. Sorted rather than a bare set so anything that
     /// reports or iterates them is deterministic.
-    let pairs: [RagdollBonePair]
+    public let pairs: [RagdollBonePair]
     private let admitted: Set<RagdollBonePair>
 
     /// Nothing collides with anything: the 15.6 behaviour, and what a ragdoll
     /// whose bodies carry no biped parts falls back to.
-    static let disabled = Self(pairs: [])
+    public static let disabled = Self(pairs: [])
 
     private init(pairs: [RagdollBonePair]) {
         self.pairs = pairs
         admitted = Set(pairs)
     }
 
-    var pairCount: Int {
+    public var pairCount: Int {
         pairs.count
     }
 
-    func admits(_ one: Int, _ other: Int) -> Bool {
+    public func admits(_ one: Int, _ other: Int) -> Bool {
         one != other && admitted.contains(RagdollBonePair(one, other))
     }
 
     /// The admitted set for one ragdoll, from its bones' biped parts and its own
     /// joint graph. See the file header for what each rule is doing.
-    init(bones: [RagdollBoneDefinition], joints: [RagdollJointDefinition]) {
+    public init(bones: [RagdollBoneDefinition], joints: [RagdollJointDefinition]) {
         let neighbours = Self.neighbours(count: bones.count, joints: joints)
         var pairs: [RagdollBonePair] = []
         for first in bones.indices {

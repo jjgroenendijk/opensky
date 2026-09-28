@@ -10,7 +10,7 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated final class DialogueStore: Sendable {
+nonisolated public final class DialogueStore: Sendable {
     private let topicsByFormID: [UInt32: DialogueTopic]
     private let topicFormIDsByEditorID: [String: UInt32]
     private let infosByTopicFormID: [UInt32: [TopicInfo]]
@@ -27,12 +27,12 @@ nonisolated final class DialogueStore: Sendable {
     private let infoFormIDsByKey: [ReferenceKey: UInt32]
     /// Master-list resolver of the plugin these records came from, retained so
     /// a caller can resolve the FormIDs the records *point at*.
-    let resolver: FormIDResolver
+    public let resolver: FormIDResolver
 
     /// DIAL, INFO or VTYP records whose field container could not be decoded.
-    let skippedRecordCount: Int
+    public let skippedRecordCount: Int
 
-    static let empty = DialogueStore(
+    public static let empty = DialogueStore(
         topics: [],
         infosByTopic: [:],
         voiceTypes: [],
@@ -41,7 +41,7 @@ nonisolated final class DialogueStore: Sendable {
 
     /// - Parameter pluginName: file name of `file`, needed because a plugin
     ///   does not record its own name and `ReferenceKey` is built from it.
-    convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
+    public convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
         let header = try? file.pluginHeader()
         let isLocalized = localized ?? (header?.isLocalized ?? false)
         var topics: [DialogueTopic] = []
@@ -91,7 +91,7 @@ nonisolated final class DialogueStore: Sendable {
         )
     }
 
-    init(
+    public init(
         topics: [DialogueTopic],
         infosByTopic: [UInt32: [TopicInfo]],
         voiceTypes: [VoiceType],
@@ -147,67 +147,67 @@ nonisolated final class DialogueStore: Sendable {
         self.skippedRecordCount = skippedRecordCount
     }
 
-    var topicCount: Int {
+    public var topicCount: Int {
         topicsByFormID.count
     }
 
-    var infoCount: Int {
+    public var infoCount: Int {
         infosByFormID.count
     }
 
-    var voiceTypeCount: Int {
+    public var voiceTypeCount: Int {
         voicesByFormID.count
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         topicCount == 0 && infoCount == 0 && voiceTypeCount == 0
     }
 
-    func topic(_ id: FormID) -> DialogueTopic? {
+    public func topic(_ id: FormID) -> DialogueTopic? {
         topicsByFormID[id.rawValue]
     }
 
-    func topic(editorID: String) -> DialogueTopic? {
+    public func topic(editorID: String) -> DialogueTopic? {
         topicFormIDsByEditorID[editorID.lowercased()].flatMap { topicsByFormID[$0] }
     }
 
-    func infos(for topic: FormID) -> [TopicInfo] {
+    public func infos(for topic: FormID) -> [TopicInfo] {
         infosByTopicFormID[topic.rawValue] ?? []
     }
 
-    func info(_ id: FormID) -> TopicInfo? {
+    public func info(_ id: FormID) -> TopicInfo? {
         infosByFormID[id.rawValue]
     }
 
     /// The DIAL record whose child group holds `id`, or nil when no loaded
     /// plugin declares that INFO.
-    func topic(ofInfo id: FormID) -> DialogueTopic? {
+    public func topic(ofInfo id: FormID) -> DialogueTopic? {
         topicFormIDsByInfoFormID[id.rawValue].flatMap { topicsByFormID[$0] }
     }
 
     /// Session-stable key for one INFO, which is how said-state and the save
     /// file address it. Nil for a FormID this plugin does not define.
-    func key(forInfo id: FormID) -> ReferenceKey? {
+    public func key(forInfo id: FormID) -> ReferenceKey? {
         keysByInfoFormID[id.rawValue]
     }
 
     /// The INFO record a session-stable key names, the direction the save
     /// decoder and the fragment dispatcher read.
-    func info(key: ReferenceKey) -> TopicInfo? {
+    public func info(key: ReferenceKey) -> TopicInfo? {
         infoFormIDsByKey[key].flatMap { infosByFormID[$0] }
     }
 
     /// Topics in FormID order, which is the deterministic order selection
     /// walks them in when two topics share a priority.
-    func sortedTopics() -> [DialogueTopic] {
+    public func sortedTopics() -> [DialogueTopic] {
         topicsByFormID.keys.sorted().compactMap { topicsByFormID[$0] }
     }
 
-    func voiceType(_ id: FormID) -> VoiceType? {
+    public func voiceType(_ id: FormID) -> VoiceType? {
         voicesByFormID[id.rawValue]
     }
 
-    func voiceType(editorID: String) -> VoiceType? {
+    public func voiceType(editorID: String) -> VoiceType? {
         voiceFormIDsByEditorID[editorID.lowercased()].flatMap { voicesByFormID[$0] }
     }
 

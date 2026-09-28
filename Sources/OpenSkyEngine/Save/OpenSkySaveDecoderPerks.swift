@@ -18,14 +18,14 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's saved perks, before they are merged back into the delta.
-nonisolated struct SavePerkEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: PerkState
+nonisolated public struct SavePerkEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: PerkState
 }
 
-nonisolated enum OpenSkySavePerkDecoder {
-    static func decodePerks(_ payload: Data) throws -> [SavePerkEntry] {
+nonisolated public enum OpenSkySavePerkDecoder: Sendable {
+    public static func decodePerks(_ payload: Data) throws -> [SavePerkEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PRKS entry count")
         try OpenSkySaveDecoder.validate(
@@ -45,7 +45,7 @@ nonisolated enum OpenSkySavePerkDecoder {
     /// Lays each saved perk list over the matching `RDLT` delta, adding an entry
     /// for an actor that had no other component, and re-sorts the result into
     /// `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ values: [SavePerkEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

@@ -24,10 +24,10 @@ import simd
 
 /// Placed triangle geometry a penetration query runs against, bundled so the
 /// query stays inside the strict parameter cap.
-nonisolated struct PlacedTriangleSoup {
-    let vertices: [SIMD3<Float>]
-    let indices: [UInt32]
-    let transform: float4x4
+nonisolated public struct PlacedTriangleSoup: Sendable {
+    public let vertices: [SIMD3<Float>]
+    public let indices: [UInt32]
+    public let transform: float4x4
 }
 
 /// One body's contact samples moved into a placed shape's own local space,
@@ -40,24 +40,24 @@ nonisolated struct PlacedTriangleSoup {
 /// few triangles that survive are prepared at all. `recovery` is what sizes the
 /// box, which is why it is capped to the body rather than left at a flat
 /// `recoveryDepth` — see `DynamicBodyContacts.recoveryDepth(of:)`.
-nonisolated struct DynamicLocalSamples {
-    let points: [SIMD3<Float>]
+nonisolated public struct DynamicLocalSamples: Sendable {
+    public let points: [SIMD3<Float>]
     /// Each sample's skin, with `contactMargin` added and the shape's scale
     /// divided out, so every length below is in the shape's own units.
-    let radii: [Float]
+    public let radii: [Float]
     /// How this shape's triangles are turned into surface normals, in the same
     /// local space the samples are in.
-    let orientation: DynamicSurfaceOrientation
+    public let orientation: DynamicSurfaceOrientation
     /// `recoveryDepth` in the shape's units.
-    let recovery: Float
+    public let recovery: Float
     /// Sample AABB grown by the largest sample reach.
-    let lower: SIMD3<Float>
-    let upper: SIMD3<Float>
+    public let lower: SIMD3<Float>
+    public let upper: SIMD3<Float>
 
     /// Nil where the shape's placement will not invert or a sample does not
     /// survive the transform, which leaves the shape contributing no contact
     /// rather than a nonsense one.
-    init?(
+    public init?(
         samples: [(point: SIMD3<Float>, radius: Float)],
         shape: StaticCollisionShape,
         recovery worldRecovery: Float
@@ -88,46 +88,46 @@ nonisolated struct DynamicLocalSamples {
 
 /// One body with its contact samples already taken, so the sampling is paid for
 /// once per substep rather than once per query.
-nonisolated struct DynamicBodySamples {
-    let body: DynamicBody
+nonisolated public struct DynamicBodySamples: Sendable {
+    public let body: DynamicBody
     /// The body's index in the solver's array.
-    let index: Int
-    let samples: [(point: SIMD3<Float>, radius: Float)]
+    public let index: Int
+    public let samples: [(point: SIMD3<Float>, radius: Float)]
 }
 
 /// The friction and restitution a pair of bodies contributes to its contacts.
-nonisolated struct DynamicContactMaterial {
-    let friction: Float
-    let restitution: Float
+nonisolated public struct DynamicContactMaterial: Sendable {
+    public let friction: Float
+    public let restitution: Float
 }
 
 /// One resolved touch. `normal` always points away from the obstacle and toward
 /// `body`, so a positive normal impulse separates them.
-nonisolated struct DynamicContact: Sendable {
+nonisolated public struct DynamicContact: Sendable {
     /// Index into the solver's body array.
-    let body: Int
+    public let body: Int
     /// The other dynamic body, or nil for a contact against static geometry.
-    let other: Int?
+    public let other: Int?
     /// World-space contact point.
-    let point: SIMD3<Float>
-    let normal: SIMD3<Float>
+    public let point: SIMD3<Float>
+    public let normal: SIMD3<Float>
     /// Positive overlap along `normal`.
-    let depth: Float
-    let friction: Float
-    let restitution: Float
+    public let depth: Float
+    public let friction: Float
+    public let restitution: Float
 }
 
-nonisolated enum DynamicBodyContacts {
+nonisolated public enum DynamicBodyContacts: Sendable {
     /// Collision margin every contact sample carries on top of its volume's own
     /// skin. A hull vertex has no skin of its own, so without a margin a resting
     /// box would generate contacts only while already interpenetrating and would
     /// jitter between touching and free. Engine units.
-    static let contactMargin: Float = 1.5
+    public static let contactMargin: Float = 1.5
 
     /// How far behind a surface a contact is still believed, in engine units.
     /// Past it the sample is taken to belong to different geometry rather than
     /// to a deep penetration of this one.
-    static let recoveryDepth: Float = 48
+    public static let recoveryDepth: Float = 48
 
     /// The same bound for one body, which is the smaller of `recoveryDepth` and
     /// the body's own reach.
@@ -139,7 +139,7 @@ nonisolated enum DynamicBodyContacts {
     /// the box every triangle of a candidate shape is tested against, and a flat
     /// 48 units around a tankard let nearly half of a room's triangles through
     /// to the exact query.
-    static func recoveryDepth(of body: DynamicBody) -> Float {
+    public static func recoveryDepth(of body: DynamicBody) -> Float {
         min(recoveryDepth, max(contactMargin * 4, body.definition.boundingRadius))
     }
 
@@ -148,7 +148,7 @@ nonisolated enum DynamicBodyContacts {
     /// Shapes are visited in the order the broadphase returned them, which is
     /// source-shape order and therefore stable, so the contact list is
     /// deterministic for a given pose.
-    static func staticContacts(
+    public static func staticContacts(
         body: DynamicBody,
         index: Int,
         samples: [(point: SIMD3<Float>, radius: Float)],
@@ -319,7 +319,7 @@ nonisolated enum DynamicBodyContacts {
     /// neither shape's vertices are the only ones consulted. Friction and
     /// restitution are the geometric and the larger mean respectively, the
     /// usual pairing rules.
-    static func pairContacts(
+    public static func pairContacts(
         first: DynamicBodySamples,
         second: DynamicBodySamples
     ) -> [DynamicContact] {

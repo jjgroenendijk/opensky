@@ -8,7 +8,7 @@
 // creating a folder in the user's home just to read its name.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 /// Redirects `.applicationSupportDirectory` into a caller-owned directory.

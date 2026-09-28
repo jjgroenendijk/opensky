@@ -19,7 +19,7 @@ nonisolated extension InventoryMenuMovieBridge {
     /// - Returns: whether the movie consumed the event.
     @MainActor
     @discardableResult
-    static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
+    public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
         guard let key = key(for: event) else {
             return false
         }

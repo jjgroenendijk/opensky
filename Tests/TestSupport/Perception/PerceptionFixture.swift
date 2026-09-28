@@ -6,7 +6,7 @@
 // boundary"). No renderer, no streamer, no window — the whole point of the
 // `PerceptionWorld` seam.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

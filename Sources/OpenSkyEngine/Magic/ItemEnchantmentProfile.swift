@@ -44,61 +44,61 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// One enchanted item's enchantment, resolved.
-nonisolated struct ItemEnchantmentProfile: Equatable, Sendable {
+nonisolated public struct ItemEnchantmentProfile: Equatable, Sendable {
     /// The WEAP or ARMO base record. What the charge and the worn effects are
     /// keyed by, and what a readout names.
-    let item: FormID
+    public let item: FormID
     /// The winning ENCH identity, which every applied effect is sourced to.
-    let enchantment: ReferenceKey
+    public let enchantment: ReferenceKey
     /// The plugin every `EFID` in `entries` is relative to.
-    let sourcePlugin: String
+    public let sourcePlugin: String
     /// The effect list as authored. Magnitudes are pre-resistance.
-    let entries: [MagicItemEffect]
+    public let entries: [MagicItemEffect]
     /// FULL name or editor ID of the enchantment, for the readout. Never empty.
-    let name: String
-    let castingType: MagicEffectCastingType
-    let delivery: MagicEffectDelivery
-    let type: EnchantmentType
+    public let name: String
+    public let castingType: MagicEffectCastingType
+    public let delivery: MagicEffectDelivery
+    public let type: EnchantmentType
     /// The item's `EAMT`: the fully charged value. Zero on ARMO, which has no
     /// charge field at all.
-    let capacity: Float
+    public let capacity: Float
     /// The enchantment's cost — what one use spends.
-    let costPerUse: Float
+    public let costPerUse: Float
     /// The `FLST` of keywords the enchantment may be applied to, from the
     /// nearest link in the base chain. Carried for inspection only; see the file
     /// header for why it gates nothing here.
-    let wornRestriction: FormID?
+    public let wornRestriction: FormID?
 
     /// The effects a worn item grants for as long as it is worn.
-    var isWorn: Bool {
+    public var isWorn: Bool {
         castingType == .constantEffect
     }
 
     /// The effects a landed hit delivers. Contact delivery, which is the only
     /// delivery a weapon enchantment has.
-    var isContact: Bool {
+    public var isContact: Bool {
         delivery == .touch && !isWorn
     }
 
     /// Whether this is a staff enchantment, which neither of the two paths above
     /// carries out.
-    var isStaff: Bool {
+    public var isStaff: Bool {
         type == .staffEnchantment
     }
 
     /// A fully charged reading, which is what an item nothing has spent yet
     /// reads.
-    var fullCharge: EnchantmentCharge {
+    public var fullCharge: EnchantmentCharge {
         EnchantmentCharge(capacity: capacity, costPerUse: costPerUse)
     }
 
     /// The charge with `remaining` left of it.
-    func charge(remaining: Float) -> EnchantmentCharge {
+    public func charge(remaining: Float) -> EnchantmentCharge {
         EnchantmentCharge(capacity: capacity, remaining: remaining, costPerUse: costPerUse)
     }
 
     /// What the applied effects are sourced to.
-    var source: ActiveEffectSource {
+    public var source: ActiveEffectSource {
         ActiveEffectSource(kind: .enchantment, record: enchantment)
     }
 
@@ -110,14 +110,14 @@ nonisolated struct ItemEnchantmentProfile: Equatable, Sendable {
     ///   or nil when the caller could not resolve the form list. An unresolvable
     ///   list allows everything, on the same reasoning an unresolvable link
     ///   elsewhere in this engine is data rather than a fault.
-    func allowsWearing(keywords: [FormID], listedKeywords: [FormID]?) -> Bool {
+    public func allowsWearing(keywords: [FormID], listedKeywords: [FormID]?) -> Bool {
         guard let listedKeywords, !listedKeywords.isEmpty else { return true }
         let carried = Set(keywords.map(\.rawValue))
         return listedKeywords.contains { carried.contains($0.rawValue) }
     }
 
     /// One line for a readout: what the enchantment is and what it costs.
-    var describedLine: String {
+    public var describedLine: String {
         let shape = isWorn ? "worn" : (isStaff ? "staff" : "on hit")
         return "\(name) (\(shape)): \(fullCharge.describedLine)"
     }
@@ -132,7 +132,7 @@ nonisolated extension ItemEnchantmentProfile {
     ///     already load-order-resolved identity and the `EAMT` charge.
     ///   - store: the ENCH store, which supplies the effect list, the cost and
     ///     the base chain the worn restriction is read from.
-    static func resolve(
+    public static func resolve(
         _ definition: ItemDefinition,
         using store: EnchantmentStore
     ) -> ItemEnchantmentProfile? {

@@ -45,34 +45,34 @@ import OpenSkyGameData
 ///
 /// A plain pair rather than two loose parameters because the two are read
 /// together at every site and a rank without its owner means nothing.
-nonisolated struct RecordOwnership: Equatable, Sendable {
+nonisolated public struct RecordOwnership: Equatable, Sendable {
     /// `XOWN` — the NPC_ or FACT this reference or cell belongs to.
-    let owner: FormID
+    public let owner: FormID
     /// `XRNK` — the rank a faction member needs, or nil when the field is
     /// absent.
-    let requiredRank: Int32?
+    public let requiredRank: Int32?
 
-    init(owner: FormID, requiredRank: Int32? = nil) {
+    public init(owner: FormID, requiredRank: Int32? = nil) {
         self.owner = owner
         self.requiredRank = requiredRank
     }
 
     /// The pair one placed reference authors, or nil when it authors no owner.
-    init?(reference: PlacedReference) {
+    public init?(reference: PlacedReference) {
         guard let owner = reference.owner, !owner.isNull else { return nil }
         self.init(owner: owner, requiredRank: reference.ownerFactionRank)
     }
 
     /// The pair one cell authors, which is what a reference with no `XOWN` of
     /// its own inherits.
-    init?(cell: Cell) {
+    public init?(cell: Cell) {
         guard let owner = cell.owner, !owner.isNull else { return nil }
         self.init(owner: owner, requiredRank: cell.ownerFactionRank)
     }
 }
 
 /// Who a reference belongs to, once the link has been resolved to a record.
-nonisolated enum ReferenceOwner: Equatable, Sendable {
+nonisolated public enum ReferenceOwner: Equatable, Sendable {
     /// An NPC_ base owns it. The key is that base's runtime identity, not a
     /// placed actor's: `XOWN` names the base record, and every ACHR placed from
     /// it is the same owner.
@@ -82,7 +82,7 @@ nonisolated enum ReferenceOwner: Equatable, Sendable {
     case faction(ReferenceKey, requiredRank: Int32)
 
     /// The owning record's identity, whichever kind it is.
-    var key: ReferenceKey {
+    public var key: ReferenceKey {
         switch self {
         case let .actor(key): key
         case let .faction(key, _): key
@@ -91,7 +91,7 @@ nonisolated enum ReferenceOwner: Equatable, Sendable {
 }
 
 /// What one actor may do with one reference.
-nonisolated enum OwnershipVerdict: Equatable, Sendable {
+nonisolated public enum OwnershipVerdict: Equatable, Sendable {
     /// Nothing claims it, so taking it is not theft.
     case unowned
     /// Somebody claims it and this actor is that somebody, or ranks high enough
@@ -101,7 +101,7 @@ nonisolated enum OwnershipVerdict: Equatable, Sendable {
     case forbidden(ReferenceOwner)
 
     /// The owner, or nil when nothing claims the reference.
-    var owner: ReferenceOwner? {
+    public var owner: ReferenceOwner? {
         switch self {
         case .unowned: nil
         case let .permitted(owner), let .forbidden(owner): owner
@@ -109,7 +109,7 @@ nonisolated enum OwnershipVerdict: Equatable, Sendable {
     }
 
     /// Whether taking this reference would be a theft.
-    var isTheft: Bool {
+    public var isTheft: Bool {
         if case .forbidden = self {
             return true
         }
@@ -123,17 +123,17 @@ nonisolated enum OwnershipVerdict: Equatable, Sendable {
 /// two facts — which NPC_ record this actor is, and what it is a member of —
 /// and a caller holding a save-decoded membership list has both without a live
 /// actor behind them.
-nonisolated struct CrimeActor: Equatable, Sendable {
+nonisolated public struct CrimeActor: Equatable, Sendable {
     /// Runtime identity of the acting reference.
-    let key: ReferenceKey
+    public let key: ReferenceKey
     /// The NPC_ base this actor was placed from, or nil for the player, who has
     /// no base record in this engine (`ReferenceKey.player`).
-    let base: ReferenceKey?
+    public let base: ReferenceKey?
     /// Everything the actor currently belongs to, which is what a faction-owned
     /// reference is checked against.
-    let memberships: ActorFactionState
+    public let memberships: ActorFactionState
 
-    init(
+    public init(
         key: ReferenceKey,
         base: ReferenceKey? = nil,
         memberships: ActorFactionState = ActorFactionState()
@@ -145,7 +145,7 @@ nonisolated struct CrimeActor: Equatable, Sendable {
 
     /// The player with no memberships, which is what a synthetic scene and a
     /// fresh session both start from.
-    static let player = CrimeActor(key: .player)
+    public static let player = CrimeActor(key: .player)
 
     /// Whether property owned by `owner` is this actor's to use.
     ///
@@ -156,7 +156,7 @@ nonisolated struct CrimeActor: Equatable, Sendable {
     ///
     /// The one place the rule lives, so `OwnershipResolver` and `CrimeReporter`
     /// cannot drift apart on it.
-    func mayUse(_ owner: ReferenceOwner) -> Bool {
+    public func mayUse(_ owner: ReferenceOwner) -> Bool {
         switch owner {
         case let .actor(base):
             self.base == base
@@ -166,7 +166,7 @@ nonisolated struct CrimeActor: Equatable, Sendable {
     }
 
     /// What this actor may do with a reference owned by `owner`.
-    func verdict(on owner: ReferenceOwner?) -> OwnershipVerdict {
+    public func verdict(on owner: ReferenceOwner?) -> OwnershipVerdict {
         guard let owner else { return .unowned }
         return mayUse(owner) ? .permitted(owner) : .forbidden(owner)
     }
@@ -179,20 +179,20 @@ nonisolated struct CrimeActor: Equatable, Sendable {
 /// record-reading seam in this engine takes: it holds the FACT store and the
 /// plugin the links are spelled against, and answers are pure functions of the
 /// arguments.
-nonisolated struct OwnershipResolver {
+nonisolated public struct OwnershipResolver: Sendable {
     /// Rank an owning faction demands when the record authors no `XRNK`.
     ///
     /// Zero, the lowest rank vanilla authors — `ActorFactionMembership.rank` is
     /// signed precisely so a negative rank can mean "a member the rank titles
     /// do not name", and an ordinary rank-0 member of the owning faction is
     /// exactly who a shop's back room is meant to be open to.
-    static let defaultRequiredRank: Int32 = 0
+    public static let defaultRequiredRank: Int32 = 0
 
     /// Load-order FACT lookup, which is what distinguishes a faction owner from
     /// an actor owner.
-    let factions: FactionStore
+    public let factions: FactionStore
     /// The plugin `XOWN` links are relative to.
-    let pluginName: String
+    public let pluginName: String
 
     /// The owner one `XOWN`/`XRNK` pair names.
     ///
@@ -202,7 +202,7 @@ nonisolated struct OwnershipResolver {
     /// a shop free to loot when a plugin went missing. A link whose *plugin* is
     /// not loaded resolves to nothing at all and is the one case that reports
     /// nil.
-    func owner(of ownership: RecordOwnership) -> ReferenceOwner? {
+    public func owner(of ownership: RecordOwnership) -> ReferenceOwner? {
         guard let resolved = factions.resolvedID(ownership.owner, fromPlugin: pluginName) else {
             return nil
         }
@@ -213,7 +213,7 @@ nonisolated struct OwnershipResolver {
 
     /// The owner in force for a reference, applying the reference-then-cell
     /// precedence.
-    func owner(reference: RecordOwnership?, cell: RecordOwnership?) -> ReferenceOwner? {
+    public func owner(reference: RecordOwnership?, cell: RecordOwnership?) -> ReferenceOwner? {
         if let reference, let owner = owner(of: reference) {
             return owner
         }
@@ -222,16 +222,21 @@ nonisolated struct OwnershipResolver {
     }
 
     /// What `actor` may do with a reference owned by `owner`.
-    func verdict(for actor: CrimeActor, owner: ReferenceOwner?) -> OwnershipVerdict {
+    public func verdict(for actor: CrimeActor, owner: ReferenceOwner?) -> OwnershipVerdict {
         actor.verdict(on: owner)
     }
 
     /// The whole question in one call: the two `XOWN` pairs in, a verdict out.
-    func verdict(
+    public func verdict(
         for actor: CrimeActor,
         reference: RecordOwnership?,
         cell: RecordOwnership?
     ) -> OwnershipVerdict {
         verdict(for: actor, owner: owner(reference: reference, cell: cell))
+    }
+
+    public init(factions: FactionStore, pluginName: String) {
+        self.factions = factions
+        self.pluginName = pluginName
     }
 }

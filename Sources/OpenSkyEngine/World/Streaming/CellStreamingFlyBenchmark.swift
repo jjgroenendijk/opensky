@@ -12,8 +12,8 @@ import simd
 /// Deterministic path: launch center -> one cell east -> one cell north.
 /// Each leg samples a linear camera flight; every waypoint then waits for its
 /// full 5x5 grid to settle before continuing.
-nonisolated enum CellStreamingFlyPath {
-    static func waypoints(start: CellCoordinate) -> [CellCoordinate] {
+nonisolated public enum CellStreamingFlyPath: Sendable {
+    public static func waypoints(start: CellCoordinate) -> [CellCoordinate] {
         [
             start,
             CellCoordinate(x: start.x + 1, y: start.y),
@@ -21,7 +21,7 @@ nonisolated enum CellStreamingFlyPath {
         ]
     }
 
-    static func positions(
+    public static func positions(
         from start: CellCoordinate,
         to end: CellCoordinate,
         samples: Int
@@ -35,7 +35,7 @@ nonisolated enum CellStreamingFlyPath {
         }
     }
 
-    static func expectedCells(start: CellCoordinate, radius: Int32) -> Set<CellCoordinate> {
+    public static func expectedCells(start: CellCoordinate, radius: Int32) -> Set<CellCoordinate> {
         waypoints(start: start).reduce(into: Set<CellCoordinate>()) { result, waypoint in
             let manager = CellGridManager(
                 initialPosition: CellGridManager.cellCenter(of: waypoint),
@@ -49,82 +49,108 @@ nonisolated enum CellStreamingFlyPath {
 /// Per-cell actor accounting surfaced to the CLI: the 5.6 acceptance probe
 /// reports discovered/rendered/intentional-skip/failure counts for each
 /// touched cell, failures carrying their reasons.
-nonisolated struct ActorCellReport: Equatable {
-    let coordinate: CellCoordinate
-    let discovered: Int
-    let rendered: Int
-    let disabledSkips: Int
-    let failures: Int
-    let failureReasons: [String]
-    let animated: Int
-    let animationFailures: Int
-    let animationFailureReasons: [String]
+nonisolated public struct ActorCellReport: Equatable, Sendable {
+    public let coordinate: CellCoordinate
+    public let discovered: Int
+    public let rendered: Int
+    public let disabledSkips: Int
+    public let failures: Int
+    public let failureReasons: [String]
+    public let animated: Int
+    public let animationFailures: Int
+    public let animationFailureReasons: [String]
 }
 
-nonisolated struct CellStreamingFlyBenchmarkResult {
-    let render: OffscreenBenchResult
-    let settledFootprintsMB: [Double]
-    let peakFootprintMB: Double
-    let uniqueBuildCount: Int
-    let unloadedCellCount: Int
-    let finalResidentCellCount: Int
-    let finalVoidCellCount: Int
-    let footprintCapMB: Double
-    let collisionBuildAverageMS: Double
-    let collisionBuildP95MS: Double
-    let collisionBuildMaximumMS: Double
-    let collisionBuildBudgetMS: Double
-    let collisionShapeCount: Int
-    let collisionTriangleCount: Int
-    let actorBuildAverageMS: Double
-    let actorBuildP95MS: Double
-    let actorBuildMaximumMS: Double
-    let actorBuildBudgetMS: Double
-    let actorDiscoveredCount: Int
-    let actorRenderedCount: Int
-    let actorDisabledSkipCount: Int
-    let actorFailureCount: Int
-    let actorAnimatedCount: Int
-    let actorAnimationFailureCount: Int
-    let animationUpdateBudgetMS: Double
-    let shadowUpdateBudgetMS: Double
-    let audioUpdateBudgetMS: Double
-    let scriptUpdateBudgetMS: Double
-    let weatherName: String
-    let windSpeed: Float
-    let animationUpdatedBoneCount: Int
-    let particleSystemCount: Int
-    let particleLiveCount: Int
-    let rainLiveCount: Int
+nonisolated public struct CellStreamingFlyBenchmarkResult: Sendable {
+    public let render: OffscreenBenchResult
+    public let settledFootprintsMB: [Double]
+    public let peakFootprintMB: Double
+    public let uniqueBuildCount: Int
+    public let unloadedCellCount: Int
+    public let finalResidentCellCount: Int
+    public let finalVoidCellCount: Int
+    public let footprintCapMB: Double
+    public let collisionBuildAverageMS: Double
+    public let collisionBuildP95MS: Double
+    public let collisionBuildMaximumMS: Double
+    public let collisionBuildBudgetMS: Double
+    public let collisionShapeCount: Int
+    public let collisionTriangleCount: Int
+    public let actorBuildAverageMS: Double
+    public let actorBuildP95MS: Double
+    public let actorBuildMaximumMS: Double
+    public let actorBuildBudgetMS: Double
+    public let actorDiscoveredCount: Int
+    public let actorRenderedCount: Int
+    public let actorDisabledSkipCount: Int
+    public let actorFailureCount: Int
+    public let actorAnimatedCount: Int
+    public let actorAnimationFailureCount: Int
+    public let animationUpdateBudgetMS: Double
+    public let shadowUpdateBudgetMS: Double
+    public let audioUpdateBudgetMS: Double
+    public let scriptUpdateBudgetMS: Double
+    public let weatherName: String
+    public let windSpeed: Float
+    public let animationUpdatedBoneCount: Int
+    public let particleSystemCount: Int
+    public let particleLiveCount: Int
+    public let rainLiveCount: Int
     /// Peak sun-shadow culling/draw accounting across streamed frames.
-    let shadowDrawStats: ShadowDrawStats
+    public let shadowDrawStats: ShadowDrawStats
     /// Peak per-field grass accounting sampled across rendered fly frames.
-    let grassDrawStats: GrassDrawStats
+    public let grassDrawStats: GrassDrawStats
     /// One entry per touched cell, sorted by coordinate for stable output.
-    let actorCellReports: [ActorCellReport]
+    public let actorCellReports: [ActorCellReport]
 }
 
-nonisolated struct CellStreamingFlyBenchmarkConfiguration {
-    let start: CellCoordinate
-    let size: (width: Int, height: Int)
-    let maxFrames: Int
-    let footprintCapMB: Double
-    let collisionBuildBudgetMS: Double
-    let actorBuildBudgetMS: Double
-    let animationUpdateBudgetMS: Double
-    let shadowUpdateBudgetMS: Double
-    let audioUpdateBudgetMS: Double
-    let scriptUpdateBudgetMS: Double
-    var samplesPerLeg = 60
+nonisolated public struct CellStreamingFlyBenchmarkConfiguration: Sendable {
+    public let start: CellCoordinate
+    public let size: (width: Int, height: Int)
+    public let maxFrames: Int
+    public let footprintCapMB: Double
+    public let collisionBuildBudgetMS: Double
+    public let actorBuildBudgetMS: Double
+    public let animationUpdateBudgetMS: Double
+    public let shadowUpdateBudgetMS: Double
+    public let audioUpdateBudgetMS: Double
+    public let scriptUpdateBudgetMS: Double
+    public var samplesPerLeg = 60
+
+    public init(
+        start: CellCoordinate,
+        size: (width: Int, height: Int),
+        maxFrames: Int,
+        footprintCapMB: Double,
+        collisionBuildBudgetMS: Double,
+        actorBuildBudgetMS: Double,
+        animationUpdateBudgetMS: Double,
+        shadowUpdateBudgetMS: Double,
+        audioUpdateBudgetMS: Double,
+        scriptUpdateBudgetMS: Double,
+        samplesPerLeg: Int = 60
+    ) {
+        self.start = start
+        self.size = size
+        self.maxFrames = maxFrames
+        self.footprintCapMB = footprintCapMB
+        self.collisionBuildBudgetMS = collisionBuildBudgetMS
+        self.actorBuildBudgetMS = actorBuildBudgetMS
+        self.animationUpdateBudgetMS = animationUpdateBudgetMS
+        self.shadowUpdateBudgetMS = shadowUpdateBudgetMS
+        self.audioUpdateBudgetMS = audioUpdateBudgetMS
+        self.scriptUpdateBudgetMS = scriptUpdateBudgetMS
+        self.samplesPerLeg = samplesPerLeg
+    }
 }
 
 @MainActor
-enum CellStreamingFlyBenchmark {
+public enum CellStreamingFlyBenchmark {
     private final class SceneSwapErrorBox {
         var error: (any Error)?
     }
 
-    static func run(
+    public static func run(
         renderer: Renderer,
         provider: any CellSceneProvider,
         configuration: CellStreamingFlyBenchmarkConfiguration

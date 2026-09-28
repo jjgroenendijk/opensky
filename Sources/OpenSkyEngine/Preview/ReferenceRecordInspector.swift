@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct ReferenceRecordInspector {
+nonisolated public struct ReferenceRecordInspector: Sendable {
     private let index: RecordIndex
     private let keywords: KeywordStore
     private let formLists: FormListStore
@@ -22,7 +22,7 @@ nonisolated struct ReferenceRecordInspector {
     private let factions: FactionStore
     private let keywordUsage: [ResolvedFormID: [String]]
 
-    init(index: RecordIndex) {
+    public init(index: RecordIndex) {
         self.index = index
         let keywordStore = KeywordStore(index: index)
         keywords = keywordStore
@@ -43,7 +43,7 @@ nonisolated struct ReferenceRecordInspector {
         keywordUsage = Self.buildKeywordUsage(index: index, keywords: keywordStore)
     }
 
-    func text(for preview: PreviewRecord) -> String {
+    public func text(for preview: PreviewRecord) -> String {
         var sections = [RecordTextDump.dump(
             record: preview.record,
             localized: preview.localized,

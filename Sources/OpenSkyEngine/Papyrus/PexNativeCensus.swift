@@ -3,35 +3,35 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct PexNativeTarget: Equatable, Hashable, Sendable {
-    let scriptName: String
-    let functionName: String
+nonisolated public struct PexNativeTarget: Equatable, Hashable, Sendable {
+    public let scriptName: String
+    public let functionName: String
 
-    var name: String {
+    public var name: String {
         "\(scriptName).\(functionName)"
     }
 
-    var key: PapyrusNativeKey {
+    public var key: PapyrusNativeKey {
         PapyrusNativeKey(scriptName: scriptName, functionName: functionName)
     }
 }
 
-nonisolated struct PexNativeCoverage: Equatable, Sendable {
-    let implemented: Int
-    let referenced: Int
+nonisolated public struct PexNativeCoverage: Equatable, Sendable {
+    public let implemented: Int
+    public let referenced: Int
 
-    var percentage: Double {
+    public var percentage: Double {
         guard referenced > 0 else { return 100 }
         return Double(implemented) / Double(referenced) * 100
     }
 }
 
-nonisolated struct PexNativeCensus: Equatable, Sendable {
-    private(set) var declarationTotal = 0
-    private(set) var declarations: [PapyrusNativeKey: PexNativeTarget] = [:]
-    private(set) var referenceCounts: [PexNativeTarget: Int] = [:]
+nonisolated public struct PexNativeCensus: Equatable, Sendable {
+    public private(set) var declarationTotal = 0
+    public private(set) var declarations: [PapyrusNativeKey: PexNativeTarget] = [:]
+    public private(set) var referenceCounts: [PexNativeTarget: Int] = [:]
 
-    init(files: [PexFile]) {
+    public init(files: [PexFile]) {
         let objects = files.flatMap(\.objects)
         let scripts = Dictionary(
             objects.map { (PapyrusRuntime.key($0.name), $0) },
@@ -43,15 +43,15 @@ nonisolated struct PexNativeCensus: Equatable, Sendable {
         }
     }
 
-    var distinctReferencedTotal: Int {
+    public var distinctReferencedTotal: Int {
         referenceCounts.count
     }
 
-    var referenceTotal: Int {
+    public var referenceTotal: Int {
         referenceCounts.values.reduce(0, +)
     }
 
-    var rankedReferences: [(name: String, count: Int)] {
+    public var rankedReferences: [(name: String, count: Int)] {
         referenceCounts
             .sorted {
                 $0.value == $1.value
@@ -61,7 +61,7 @@ nonisolated struct PexNativeCensus: Equatable, Sendable {
             .map { ($0.key.name, $0.value) }
     }
 
-    func coverage(in registry: PapyrusNativeRegistry) -> PexNativeCoverage {
+    public func coverage(in registry: PapyrusNativeRegistry) -> PexNativeCoverage {
         let implemented = referenceCounts.keys.reduce(into: 0) { count, target in
             if
                 registry.contains(

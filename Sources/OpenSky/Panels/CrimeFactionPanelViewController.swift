@@ -17,6 +17,7 @@
 // or will not buy the proceeds.
 
 import AppKit
+import OpenSkyEngine
 
 final class CrimeFactionPanelViewController: InspectorPanelViewController {
     let bountySection = CrimeBountySection()

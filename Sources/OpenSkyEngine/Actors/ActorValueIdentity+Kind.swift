@@ -6,7 +6,7 @@ import OpenSkyFormats
 
 nonisolated extension ActorValueIdentity {
     /// Index of each value the runtime stores, per `vanillaNames`.
-    static let storedIndices: [ActorValueKind: Int32] = [
+    public static let storedIndices: [ActorValueKind: Int32] = [
         .health: 24, .magicka: 25, .stamina: 26
     ]
 
@@ -16,7 +16,7 @@ nonisolated extension ActorValueIdentity {
     /// Since 19.5 this is a fast-path question, not a can-I-read-it question:
     /// nil means "goes through the general table", and `isVanilla(index:)` is
     /// what says whether the index names an actor value at all.
-    static func kind(at index: Int32) -> ActorValueKind? {
+    public static func kind(at index: Int32) -> ActorValueKind? {
         kindsByIndex[index]
     }
 
@@ -27,12 +27,12 @@ nonisolated extension ActorValueIdentity {
     /// `storedIndices` names all three, so the fallback is unreachable; it is
     /// `noneIndex` rather than a force-unwrap because an index outside the
     /// table is already the documented miss everything here answers with.
-    static func index(of kind: ActorValueKind) -> Int32 {
+    public static func index(of kind: ActorValueKind) -> Int32 {
         storedIndices[kind] ?? noneIndex
     }
 
     /// The stored value `name` spells, by the same rule as `kind(at:)`.
-    static func kind(named name: String) -> ActorValueKind? {
+    public static func kind(named name: String) -> ActorValueKind? {
         guard let index = index(named: name) else { return nil }
         return kind(at: index)
     }

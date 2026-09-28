@@ -4,6 +4,7 @@
 
 import AppKit
 import Metal
+import OpenSkyEngine
 import OpenSkyGameData
 import OSLog
 

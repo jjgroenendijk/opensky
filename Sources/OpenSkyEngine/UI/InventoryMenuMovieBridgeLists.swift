@@ -21,7 +21,7 @@ nonisolated extension InventoryMenuMovieBridge {
     /// nothing-selected sentinel of -1 as it goes, so a selection written
     /// before the rebuild is discarded — measured, not assumed. `select` runs
     /// afterwards instead.
-    static func publish(
+    public static func publish(
         rows: [[String: AS2Value]],
         atPath path: String,
         runtime: SWFMovieRuntime
@@ -37,7 +37,12 @@ nonisolated extension InventoryMenuMovieBridge {
 
     /// Points one list at `index`, after the rebuild. An empty list keeps the
     /// movie's own -1 rather than pointing at a row that is not there.
-    static func select(_ index: Int, count: Int, atPath path: String, runtime: SWFMovieRuntime) {
+    public static func select(
+        _ index: Int,
+        count: Int,
+        atPath path: String,
+        runtime: SWFMovieRuntime
+    ) {
         guard let list = runtime.node(atPath: path, from: runtime.root) else {
             return
         }
@@ -65,7 +70,7 @@ nonisolated extension InventoryMenuMovieBridge {
     /// the player info card, not properties on the bottom bar, so they are
     /// filled with the GFx `SetText` extension rather than assigned. A field
     /// the movie has not built is skipped rather than synthesized.
-    static func publishTotals(_ model: InventoryMenuModel, runtime: SWFMovieRuntime) {
+    public static func publishTotals(_ model: InventoryMenuModel, runtime: SWFMovieRuntime) {
         setText("\(model.gold)", atPath: goldFieldPath, runtime: runtime)
         setText(
             String(format: "%.0f", model.carriedWeight),
@@ -87,7 +92,7 @@ nonisolated extension InventoryMenuMovieBridge {
     /// for itself, so it is invoked by name through the delegate rather than as
     /// a function on a display instance — calling it `atPath:` finds nothing
     /// and lands in the unhandled-invoke count.
-    static func invalidate(runtime: SWFMovieRuntime) {
+    public static func invalidate(runtime: SWFMovieRuntime) {
         runtime.callMovie(invalidateCallback)
     }
 
@@ -97,7 +102,7 @@ nonisolated extension InventoryMenuMovieBridge {
     ///
     /// `EntriesA` is an AS2 array, so its rows are numeric property names and
     /// have to be sorted numerically — lexical order puts row 10 before row 2.
-    static func entryLabels(runtime: SWFMovieRuntime, atPath path: String) -> [String] {
+    public static func entryLabels(runtime: SWFMovieRuntime, atPath path: String) -> [String] {
         guard
             let list = runtime.node(atPath: path, from: runtime.root),
             let entries = list.object.lookup(entryArrayName)?.property.value.objectValue
@@ -118,7 +123,7 @@ nonisolated extension InventoryMenuMovieBridge {
             }
     }
 
-    static func selectedIndex(runtime: SWFMovieRuntime, atPath path: String) -> Int? {
+    public static func selectedIndex(runtime: SWFMovieRuntime, atPath path: String) -> Int? {
         guard
             let list = runtime.node(atPath: path, from: runtime.root),
             case let .number(index) = list.object.lookup(selectedIndexName)?.property.value,
@@ -136,7 +141,7 @@ nonisolated extension InventoryMenuMovieBridge {
     /// The movie passes the row index as its first ordinary argument. A call
     /// that carries none acts on whatever is selected, which is index 0's
     /// meaning here only because the caller re-selects before acting.
-    static func action(named name: String, arguments: [AS2Value]) -> InventoryMenuAction {
+    public static func action(named name: String, arguments: [AS2Value]) -> InventoryMenuAction {
         let index = arguments.lazy.compactMap { value -> Int? in
             guard case let .number(number) = value, number.isFinite, number >= 0 else {
                 return nil
@@ -153,7 +158,7 @@ nonisolated extension InventoryMenuMovieBridge {
     /// Key equivalents for the four navigation directions plus accept and
     /// cancel. Left and right switch category in a vanilla inventory, which is
     /// why they are navigation rather than unmapped.
-    static func key(for event: MenuInputEvent) -> (code: Int, ascii: Int)? {
+    public static func key(for event: MenuInputEvent) -> (code: Int, ascii: Int)? {
         switch event {
         case .move(.up): (SWFKeyCode.up, 0)
         case .move(.down): (SWFKeyCode.down, 0)

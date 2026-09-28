@@ -35,7 +35,7 @@ import OpenSkyGameData
 
 /// Failures readying a spell reports. Like `EquipmentError`, each is a caller
 /// mistake or a data answer, never malformed input.
-nonisolated enum SpellbookError: Error, Equatable {
+nonisolated public enum SpellbookError: Error, Equatable {
     /// The actor does not know the spell it was asked to ready.
     case notKnown(spell: ReferenceKey, actor: ReferenceKey)
     /// No loaded plugin carries the spell at all.
@@ -50,34 +50,34 @@ nonisolated enum SpellbookError: Error, Equatable {
 }
 
 /// What one readying changed.
-nonisolated struct SpellEquipChange: Equatable, Sendable {
-    let spell: ReferenceKey
+nonisolated public struct SpellEquipChange: Equatable, Sendable {
+    public let spell: ReferenceKey
     /// The hands it now fills, which is both for a two-handed spell whichever
     /// hand was asked for.
-    let hands: HandSlots
+    public let hands: HandSlots
     /// Spells displaced out of those hands, in ascending key order.
-    let unequippedSpells: [ReferenceKey]
+    public let unequippedSpells: [ReferenceKey]
     /// Worn items displaced out of those hands, in ascending FormID order.
-    let unequippedItems: [FormID]
+    public let unequippedItems: [FormID]
     /// False when the spell was already readied in exactly these hands and
     /// nothing was displaced, so the stored state is byte-identical.
-    let changed: Bool
+    public let changed: Bool
 }
 
 /// Reads and mutates spellbooks on top of a `WorldStateStore`.
 @MainActor
-struct SpellbookRuntime {
-    let store: WorldStateStore
+public struct SpellbookRuntime {
+    public let store: WorldStateStore
     /// Load-order SPEL and SCRL lookup behind every stored key.
-    let spells: SpellStore
+    public let spells: SpellStore
     /// EQUP graph the ETYP links resolve through.
-    let equipSlots: EquipSlotStore
+    public let equipSlots: EquipSlotStore
     /// The worn-equipment layer, so a readied spell and a weapon cannot claim
     /// the same hand. Nil in a session with no item index, and then readying a
     /// spell arbitrates against other spells only.
-    let equipment: EquipmentRuntime?
+    public let equipment: EquipmentRuntime?
 
-    init(
+    public init(
         store: WorldStateStore,
         spells: SpellStore,
         equipSlots: EquipSlotStore,
@@ -92,17 +92,17 @@ struct SpellbookRuntime {
     // MARK: - Reading
 
     /// `holder`'s spellbook, empty when nothing has ever written one.
-    func state(of holder: ActorValueHolder) -> SpellbookState {
+    public func state(of holder: ActorValueHolder) -> SpellbookState {
         store.component(SpellbookState.self, for: holder.key) ?? SpellbookState()
     }
 
-    func knows(_ spell: ReferenceKey, _ holder: ActorValueHolder) -> Bool {
+    public func knows(_ spell: ReferenceKey, _ holder: ActorValueHolder) -> Bool {
         state(of: holder).knows(spell)
     }
 
     /// The record behind a stored key, or nil when this load order no longer
     /// carries it.
-    func record(_ spell: ReferenceKey) -> ResolvedSpell? {
+    public func record(_ spell: ReferenceKey) -> ResolvedSpell? {
         spells.spell(key: spell)
     }
 
@@ -110,13 +110,13 @@ struct SpellbookRuntime {
     /// key order. A key the load order dropped stays in the component — losing
     /// it would make removing a plugin destroy progress — and is simply absent
     /// from this listing.
-    func knownSpells(of holder: ActorValueHolder) -> [ResolvedSpell] {
+    public func knownSpells(of holder: ActorValueHolder) -> [ResolvedSpell] {
         state(of: holder).known.compactMap(record)
     }
 
     /// What readying `spell` in `hand` would occupy, or nil when it cannot be
     /// readied there at all.
-    func occupancy(of spell: ResolvedSpell, in hand: SpellHand) -> HandSlots? {
+    public func occupancy(of spell: ResolvedSpell, in hand: SpellHand) -> HandSlots? {
         equipSlots
             .handChoice(of: spell.record.equipType, fromPlugin: spell.sourcePlugin)?
             .occupancy(preferring: hand.slots)
@@ -128,7 +128,7 @@ struct SpellbookRuntime {
     ///
     /// - Returns: true when the spell was not already known.
     @discardableResult
-    func learn(_ spell: ReferenceKey, on holder: ActorValueHolder) -> Bool {
+    public func learn(_ spell: ReferenceKey, on holder: ActorValueHolder) -> Bool {
         write(state(of: holder).learning(spell), for: holder)
     }
 
@@ -137,7 +137,7 @@ struct SpellbookRuntime {
     ///
     /// - Returns: how many were not already known.
     @discardableResult
-    func grantStartSpells(
+    public func grantStartSpells(
         to holder: ActorValueHolder,
         additional: [ReferenceKey] = []
     ) -> Int {
@@ -148,7 +148,7 @@ struct SpellbookRuntime {
     ///
     /// - Returns: how many were not already known.
     @discardableResult
-    func grant(_ list: [ReferenceKey], to holder: ActorValueHolder) -> Int {
+    public func grant(_ list: [ReferenceKey], to holder: ActorValueHolder) -> Int {
         var state = state(of: holder)
         var granted = 0
         for spell in list where !state.knows(spell) {
@@ -171,7 +171,7 @@ struct SpellbookRuntime {
     /// kept even when it no longer resolves — removing a plugin must not
     /// destroy progress. The difference is direction: this is reading a link
     /// out of a record now, not restoring one the player earned earlier.
-    func resolve(_ list: [FormID], fromPlugin pluginName: String) -> [ReferenceKey] {
+    public func resolve(_ list: [FormID], fromPlugin pluginName: String) -> [ReferenceKey] {
         list.compactMap { spells.resolve($0, fromPlugin: pluginName)?.key }
     }
 
@@ -179,7 +179,7 @@ struct SpellbookRuntime {
     ///
     /// - Returns: true when the spell was known.
     @discardableResult
-    func forget(_ spell: ReferenceKey, on holder: ActorValueHolder) -> Bool {
+    public func forget(_ spell: ReferenceKey, on holder: ActorValueHolder) -> Bool {
         write(state(of: holder).forgetting(spell), for: holder)
     }
 
@@ -197,7 +197,7 @@ struct SpellbookRuntime {
     ///
     /// - Returns: what the reading did.
     @discardableResult
-    func read(
+    public func read(
         book: ReferenceKey,
         teaching spell: ReferenceKey?,
         on holder: ActorValueHolder
@@ -224,7 +224,7 @@ struct SpellbookRuntime {
     ///   this load order does not carry it, or when its ETYP cannot put it in
     ///   the requested hand.
     @discardableResult
-    func equip(
+    public func equip(
         _ spell: ReferenceKey,
         in hand: SpellHand,
         on holder: ActorValueHolder,
@@ -269,7 +269,7 @@ struct SpellbookRuntime {
     ///
     /// - Returns: the spell that was readied there, or nil when there was none.
     @discardableResult
-    func unequip(_ hand: SpellHand, on holder: ActorValueHolder) -> ReferenceKey? {
+    public func unequip(_ hand: SpellHand, on holder: ActorValueHolder) -> ReferenceKey? {
         let state = state(of: holder)
         guard let spell = state.spell(in: hand) else { return nil }
         write(state.unequipping(hand.slots), for: holder)
@@ -284,7 +284,7 @@ struct SpellbookRuntime {
     /// about spells and would leave a sword and a spell both claiming the right
     /// hand.
     @discardableResult
-    func equipItem(
+    public func equipItem(
         _ item: FormID,
         on holder: ActorValueHolder,
         inventory: InventoryHolder
@@ -305,7 +305,7 @@ struct SpellbookRuntime {
     // MARK: - Powers
 
     /// Marks `power` spent on whole game day `day`.
-    func spendPower(_ power: ReferenceKey, onDay day: Int32, on holder: ActorValueHolder) {
+    public func spendPower(_ power: ReferenceKey, onDay day: Int32, on holder: ActorValueHolder) {
         write(state(of: holder).spendingPower(power, onDay: day), for: holder)
     }
 
@@ -347,13 +347,13 @@ struct SpellbookRuntime {
 }
 
 /// What opening one book did.
-nonisolated struct SpellTomeReading: Equatable, Sendable {
-    let book: ReferenceKey
+nonisolated public struct SpellTomeReading: Equatable, Sendable {
+    public let book: ReferenceKey
     /// The SPEL the book's DATA names, or nil when it teaches no spell.
-    let spell: ReferenceKey?
+    public let spell: ReferenceKey?
     /// True when this reading added the spell to the reader's spellbook.
-    let taught: Bool
+    public let taught: Bool
     /// True when the reader had already opened this book, which is the state
     /// the "Read" mark exists to answer.
-    let alreadyRead: Bool
+    public let alreadyRead: Bool
 }

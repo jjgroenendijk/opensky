@@ -13,15 +13,15 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum InventoryEquipmentReadout {
+nonisolated public enum InventoryEquipmentReadout: Sendable {
     /// Longest inventory listing any of these readouts prints. A full player
     /// inventory is hundreds of stacks and this is a 2 Hz readout, not a menu.
-    static let listedStackLimit = 6
+    public static let listedStackLimit = 6
 
     /// What the player and the open container hold, which is the accounting a
     /// grant moves. Both sides are shown together because a grant to one is
     /// only meaningful against the other.
-    static func grantsText(for snapshot: InventoryEquipmentSnapshot) -> String {
+    public static func grantsText(for snapshot: InventoryEquipmentSnapshot) -> String {
         guard snapshot.isAvailable else {
             return InventoryEquipmentSnapshot.unavailable.lastActionText
         }
@@ -48,7 +48,7 @@ nonisolated enum InventoryEquipmentReadout {
     /// read as two different stated conditions, never as a blank, because
     /// "nothing is highlighted" and "this belongs to nobody" are different
     /// answers to the theft question.
-    static func ownershipText(for snapshot: InventoryEquipmentSnapshot) -> String {
+    public static func ownershipText(for snapshot: InventoryEquipmentSnapshot) -> String {
         guard snapshot.isAvailable else {
             return InventoryEquipmentSnapshot.unavailable.lastActionText
         }
@@ -73,7 +73,7 @@ nonisolated enum InventoryEquipmentReadout {
     /// out. The skips are the point of the section: a piece that occupies a
     /// slot but drew nothing is otherwise indistinguishable from an equip that
     /// silently failed.
-    static func equipmentText(for snapshot: InventoryEquipmentSnapshot) -> String {
+    public static func equipmentText(for snapshot: InventoryEquipmentSnapshot) -> String {
         guard snapshot.isAvailable else {
             return InventoryEquipmentSnapshot.unavailable.lastActionText
         }
@@ -93,7 +93,7 @@ nonisolated enum InventoryEquipmentReadout {
         ].joined(separator: "\n")
     }
 
-    static func label(_ target: EquipmentTargetSelector) -> String {
+    public static func label(_ target: EquipmentTargetSelector) -> String {
         switch target {
         case .player: "Player"
         case .nearestActor: "Nearest NPC"

@@ -12,24 +12,24 @@ import Foundation
 import OpenSkyFormats
 import simd
 
-nonisolated final class SWFTextPlanner {
-    let scene: SWFMovieScene
+nonisolated public final class SWFTextPlanner {
+    public let scene: SWFMovieScene
     /// Movie generation, which namespaces this movie's atlas keys.
-    let generation: Int
+    public let generation: Int
 
     /// Texts that could not be planned in the most recent pass (unresolved
     /// font, or a font with no glyphs).
-    private(set) var skipped = 0
+    public private(set) var skipped = 0
     private var externalFontKeys: [String: Int] = [:]
 
-    init(scene: SWFMovieScene, generation: Int) {
+    public init(scene: SWFMovieScene, generation: Int) {
         self.scene = scene
         self.generation = generation
     }
 
     /// Plans every text draw of a command stream, keyed by command index.
     /// Resets `skipped` so the count always describes the newest stream.
-    func plan(commands: [SWFSceneCommand]) -> [Int: [SWFMovieResources.PlannedTextRun]] {
+    public func plan(commands: [SWFSceneCommand]) -> [Int: [SWFMovieResources.PlannedTextRun]] {
         skipped = 0
         var plans: [Int: [SWFMovieResources.PlannedTextRun]] = [:]
         for (index, command) in commands.enumerated() {
@@ -95,11 +95,11 @@ nonisolated final class SWFTextPlanner {
     }
 
     /// Bit position of the movie generation inside an atlas font key.
-    static let generationShift = 18
+    public static let generationShift = 18
 
     /// The movie generation an atlas font key belongs to. Lets the renderer
     /// evict one released movie's glyphs from the shared atlas (issue #127).
-    static func generation(forFontKey key: Int) -> Int {
+    public static func generation(forFontKey key: Int) -> Int {
         key >> generationShift
     }
 
@@ -126,7 +126,7 @@ nonisolated final class SWFTextPlanner {
         return key
     }
 
-    static func straightColor(_ color: SWFColor) -> SIMD4<Float> {
+    public static func straightColor(_ color: SWFColor) -> SIMD4<Float> {
         SIMD4(
             Float(color.red) / 255,
             Float(color.green) / 255,

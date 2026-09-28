@@ -3,6 +3,7 @@
 // Controls). Renderer policy clamps every value again.
 
 import AppKit
+import OpenSkyEngine
 
 final class GrassSection: PanelSectionViewController {
     weak var provider: (any GrassControlProviding)? {

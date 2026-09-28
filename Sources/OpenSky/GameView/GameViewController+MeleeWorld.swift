@@ -20,6 +20,7 @@
 //   which is the truth rather than a silent no-op.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 import simd

@@ -26,7 +26,7 @@
 import Foundation
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installLevel(into registry: inout PapyrusNativeRegistry) {
+    public static func installLevel(into registry: inout PapyrusNativeRegistry) {
         // "Gets the actor's current level." — "int Function GetLevel() native"
         // (<https://www.creationkit.com/index.php?title=GetLevel_-_Actor>)
         // An NPC answers its derived level, the player answers its character

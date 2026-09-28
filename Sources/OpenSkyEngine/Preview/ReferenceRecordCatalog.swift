@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated enum ReferenceRecordType: String, CaseIterable {
+nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
     case keyword = "KYWD"
     case formList = "FLST"
     case location = "LCTN"
@@ -30,7 +30,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     case relationship = "RELA"
     case associationType = "ASTP"
 
-    var fourCC: FourCC {
+    public var fourCC: FourCC {
         switch self {
         case .keyword: "KYWD"
         case .formList: "FLST"
@@ -57,7 +57,7 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
         }
     }
 
-    var title: String {
+    public var title: String {
         switch self {
         case .keyword: "KYWD — Keywords"
         case .formList: "FLST — Form lists"
@@ -85,16 +85,16 @@ nonisolated enum ReferenceRecordType: String, CaseIterable {
     }
 }
 
-nonisolated struct ReferenceRecordCatalog {
-    static let inspectedItemTypes: Set<FourCC> = [
+nonisolated public struct ReferenceRecordCatalog: Sendable {
+    public static let inspectedItemTypes: Set<FourCC> = [
         "MISC", "BOOK", "ALCH", "INGR", "WEAP", "AMMO", "ARMO"
     ]
 
-    let pluginNames: [String]
-    let index: RecordIndex
+    public let pluginNames: [String]
+    public let index: RecordIndex
     private let itemsByType: [ReferenceRecordType: [PreviewItem]]
 
-    init(index: RecordIndex, pluginNames: [String]) {
+    public init(index: RecordIndex, pluginNames: [String]) {
         self.index = index
         self.pluginNames = pluginNames
         var grouped: [ReferenceRecordType: [PreviewItem]] = [:]
@@ -104,7 +104,7 @@ nonisolated struct ReferenceRecordCatalog {
         itemsByType = grouped
     }
 
-    func items(for type: ReferenceRecordType, winningPlugin: String?) -> [PreviewItem] {
+    public func items(for type: ReferenceRecordType, winningPlugin: String?) -> [PreviewItem] {
         let items = itemsByType[type, default: []]
         guard let winningPlugin else { return items }
         return items.filter { item in
@@ -132,7 +132,7 @@ nonisolated struct ReferenceRecordCatalog {
         .sorted { $0.display.localizedCaseInsensitiveCompare($1.display) == .orderedAscending }
     }
 
-    static func editorID(in record: ESMRecord) -> String? {
+    public static func editorID(in record: ESMRecord) -> String? {
         guard
             let field = try? record.fields().first(where: { $0.type == "EDID" }),
             field.data.last == 0

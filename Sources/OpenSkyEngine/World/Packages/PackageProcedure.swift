@@ -4,12 +4,12 @@
 
 import simd
 
-nonisolated enum PackageLoopClip: String, Equatable, Sendable {
+nonisolated public enum PackageLoopClip: String, Equatable, Sendable {
     case sleep
     case eat
 }
 
-nonisolated enum PackageProcedureState: Equatable, Sendable {
+nonisolated public enum PackageProcedureState: Equatable, Sendable {
     case ready
     case moving
     case idleStop(secondsRemaining: Float)
@@ -18,30 +18,30 @@ nonisolated enum PackageProcedureState: Equatable, Sendable {
     case failed
 }
 
-nonisolated enum PackageProcedureCommand: Equatable, Sendable {
+nonisolated public enum PackageProcedureCommand: Equatable, Sendable {
     case move(to: SIMD3<Float>)
     case playLoop(PackageLoopClip)
     case stopLoop
 }
 
-nonisolated enum PackageProcedureEvent: Equatable, Sendable {
+nonisolated public enum PackageProcedureEvent: Equatable, Sendable {
     case arrived
     case movementFailed
     case tick(Float)
 }
 
-nonisolated struct PackageProcedureMachine: Equatable, Sendable {
+nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     private static let wanderIdleSeconds: Float = 1
     private static let sandboxIdleSeconds: Float = 4
 
-    let kind: PackageProcedureKind
-    let center: SIMD3<Float>
-    let destination: SIMD3<Float>?
-    let radius: Float
-    private(set) var state: PackageProcedureState = .ready
+    public let kind: PackageProcedureKind
+    public let center: SIMD3<Float>
+    public let destination: SIMD3<Float>?
+    public let radius: Float
+    public private(set) var state: PackageProcedureState = .ready
     private var random: ConditionRandom
 
-    init(
+    public init(
         kind: PackageProcedureKind,
         center: SIMD3<Float>,
         destination: SIMD3<Float>? = nil,
@@ -55,7 +55,7 @@ nonisolated struct PackageProcedureMachine: Equatable, Sendable {
         random = ConditionRandom(seed: seed)
     }
 
-    mutating func start() -> [PackageProcedureCommand] {
+    public mutating func start() -> [PackageProcedureCommand] {
         guard state == .ready else { return [] }
         switch kind {
         case .travel, .sleep, .eat:
@@ -70,7 +70,7 @@ nonisolated struct PackageProcedureMachine: Equatable, Sendable {
         }
     }
 
-    mutating func handle(_ event: PackageProcedureEvent) -> [PackageProcedureCommand] {
+    public mutating func handle(_ event: PackageProcedureEvent) -> [PackageProcedureCommand] {
         switch event {
         case .movementFailed:
             state = .failed

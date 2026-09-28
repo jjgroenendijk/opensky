@@ -15,6 +15,7 @@
 // which is what item 15.4 promoted the queue to allow.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import simd
 

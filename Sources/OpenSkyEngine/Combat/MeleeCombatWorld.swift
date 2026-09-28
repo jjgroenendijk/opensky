@@ -21,19 +21,19 @@ import OpenSkyFormats
 import simd
 
 /// Who is swinging, and from where.
-nonisolated struct MeleeAttacker: Equatable, Sendable {
+nonisolated public struct MeleeAttacker: Equatable, Sendable {
     /// The attacker's reference, so a swing can never hit its own owner.
-    let key: ReferenceKey
+    public let key: ReferenceKey
     /// Capsule bottom, world space.
-    let feet: SIMD3<Float>
-    let capsule: PlayerCapsule
+    public let feet: SIMD3<Float>
+    public let capsule: PlayerCapsule
     /// Facing yaw in radians, in the locomotion bridge's convention.
-    let facing: Float
+    public let facing: Float
     /// The actor's scale, which multiplies reach. 1 for the player, whose XSCL
     /// this engine does not read.
-    let scale: Float
+    public let scale: Float
 
-    init(
+    public init(
         key: ReferenceKey,
         feet: SIMD3<Float>,
         capsule: PlayerCapsule = .standard,
@@ -50,35 +50,35 @@ nonisolated struct MeleeAttacker: Equatable, Sendable {
 
 /// One frame of melee intent, filled from the drained camera input beside
 /// `LocomotionIntent` and held across the fixed steps that frame drives.
-nonisolated struct MeleeIntent: Equatable, Sendable {
+nonisolated public struct MeleeIntent: Equatable, Sendable {
     /// One attack press, consumed by the first step that can act on it.
-    var attack = false
+    public var attack = false
     /// Block key held. A level, not an edge, exactly like sprint.
-    var block = false
+    public var block = false
     /// One draw/sheath press, consumed the same way as an attack.
-    var toggleWeaponDrawn = false
+    public var toggleWeaponDrawn = false
 
-    static let still = MeleeIntent()
+    public static let still = MeleeIntent()
 }
 
 /// One landed hit, kept for the panel's last-hit trace.
-nonisolated struct MeleeHitRecord: Equatable, Sendable {
-    let target: ReferenceKey
+nonisolated public struct MeleeHitRecord: Equatable, Sendable {
+    public let target: ReferenceKey
     /// How far along the swing contact was found, world units.
-    let distance: Float
-    let position: SIMD3<Float>
-    let damage: MeleeDamageResult
+    public let distance: Float
+    public let position: SIMD3<Float>
+    public let damage: MeleeDamageResult
     /// The impact sound that played, or nil where the chain named none.
-    let sound: FormID?
+    public let sound: FormID?
     /// Whether the target's graph was told to stagger.
-    let staggered: Bool
+    public let staggered: Bool
     /// Which swing landed it, so two hits from one swing are visibly one swing.
-    let swingID: Int
+    public let swingID: Int
     /// What the weapon's enchantment did, or nil when the weapon carries none
     /// and when this session cannot apply one (issue #472).
-    let enchantment: WeaponEnchantmentReport?
+    public let enchantment: WeaponEnchantmentReport?
 
-    init(
+    public init(
         target: ReferenceKey,
         distance: Float,
         position: SIMD3<Float>,
@@ -105,7 +105,7 @@ nonisolated struct MeleeHitRecord: Equatable, Sendable {
 /// blade and an enchanted arrow apply through one implementation, exactly as
 /// `reportScriptHit` is implemented once for melee, archery and the combat loop.
 @MainActor
-protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponEnchantmentApplying {
+public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponEnchantmentApplying {
     /// Where the player is standing and which way they face, this frame.
     var meleeAttacker: MeleeAttacker { get }
 
@@ -167,7 +167,7 @@ protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponEnchantm
 nonisolated extension MeleeCombatWorld {
     /// A session with no fortify and no perk surface blocks by the base
     /// formula, which is the value the term had before either existed.
-    func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
+    public func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
         1
     }
 }

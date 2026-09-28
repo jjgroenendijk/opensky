@@ -9,7 +9,7 @@
 
 import Foundation
 
-nonisolated enum OpenSkySaveError: Error, Equatable {
+nonisolated public enum OpenSkySaveError: Error, Equatable {
     /// The first four bytes are not ASCII "OSAV".
     case badMagic
     /// The file declares a layout version this build does not implement.

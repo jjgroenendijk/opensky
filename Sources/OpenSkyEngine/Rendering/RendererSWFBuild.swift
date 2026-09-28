@@ -11,18 +11,18 @@ import simd
 
 /// CPU-side shape build: tessellates every dictionary shape into one shared
 /// vertex list and resolves its fills, collecting gradient rows as it goes.
-nonisolated struct SWFMovieShapeBuilder {
-    let scene: SWFMovieScene
-    var vertices: [SWFVertex] = []
-    var shapes: [UInt16: SWFMovieResources.ShapeEntry] = [:]
-    var gradientRows: [SWFGradient] = []
-    var skipped = 0
+nonisolated public struct SWFMovieShapeBuilder {
+    public let scene: SWFMovieScene
+    public var vertices: [SWFVertex] = []
+    public var shapes: [UInt16: SWFMovieResources.ShapeEntry] = [:]
+    public var gradientRows: [SWFGradient] = []
+    public var skipped = 0
     private let shapeCache = SWFShapeCache()
 
     /// Gradient square half-extent in twips (spec chapter 7, p. 134).
     private static let gradientSquareHalfExtent: Float = 16384
 
-    mutating func buildShapes() {
+    public mutating func buildShapes() {
         let movie = scene.movie
         for id in movie.characters.keys.sorted() {
             guard case let .shape(shape) = movie.characters[id] else { continue }
@@ -102,8 +102,8 @@ nonisolated struct SWFMovieShapeBuilder {
 }
 
 /// Bitmap and gradient texture uploads.
-nonisolated enum SWFMovieTextures {
-    static func makeBitmaps(
+nonisolated public enum SWFMovieTextures: Sendable {
+    public static func makeBitmaps(
         device: MTLDevice,
         movie: SWFMovie
     ) throws -> [UInt16: SWFMovieResources.BitmapEntry] {
@@ -143,7 +143,7 @@ nonisolated enum SWFMovieTextures {
     /// One 256-texel row per gradient fill, colors linearly interpolated
     /// between the GRADRECORD stops (pad at the ends). The linearRGB
     /// interpolation mode is treated as normal RGB (documented deferral).
-    static func makeGradientRamp(
+    public static func makeGradientRamp(
         device: MTLDevice,
         rows: [SWFGradient]
     ) throws -> MTLTexture? {

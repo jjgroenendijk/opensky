@@ -2,7 +2,7 @@
 // (issue #330). Synthetic graphs built in code, nothing from the install.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

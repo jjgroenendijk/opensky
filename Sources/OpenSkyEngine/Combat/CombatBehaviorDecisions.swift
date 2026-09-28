@@ -23,12 +23,12 @@ import simd
 nonisolated extension CombatBehaviorInputs {
     /// How close the actor wants to be before it swings: its own reach, less
     /// the stated margin, and never negative.
-    func strikingDistance(settings: CombatBehaviorSettings) -> Float {
+    public func strikingDistance(settings: CombatBehaviorSettings) -> Float {
         max(0, reach - settings.reachSlack)
     }
 
     /// Whether the actor is hurt enough to break off.
-    func shouldFlee(settings: CombatBehaviorSettings) -> Bool {
+    public func shouldFlee(settings: CombatBehaviorSettings) -> Bool {
         healthFraction.isFinite && healthFraction <= settings.fleeHealthFraction
     }
 
@@ -42,7 +42,7 @@ nonisolated extension CombatBehaviorInputs {
     /// thing it buys, then falls back down the list as the bar drains. Nil when
     /// nothing is affordable, in range, or known at all — which is every actor
     /// that fights with its hands.
-    var castableSpell: CombatSpellOption? {
+    public var castableSpell: CombatSpellOption? {
         casting.options
             .filter { $0.cost <= casting.magicka && distance <= $0.range }
             .sorted { ($0.cost, $1.spell) > ($1.cost, $0.spell) }
@@ -57,7 +57,7 @@ nonisolated extension CombatBehaviorInputs {
     /// angle per draw means the retry after a failed path is a different
     /// request. Two actors fleeing the same swing scatter, which is also what a
     /// player expects to see.
-    func fleePoint(turnedBy turn: Float, settings: CombatBehaviorSettings) -> SIMD3<Float> {
+    public func fleePoint(turnedBy turn: Float, settings: CombatBehaviorSettings) -> SIMD3<Float> {
         let offset = actorPosition - targetPosition
         let planar = SIMD2(offset.x, offset.y)
         let base = simd_length(planar) > 0 ? simd_normalize(planar) : SIMD2<Float>(1, 0)
@@ -76,7 +76,7 @@ nonisolated extension CombatBehaviorMachine {
     /// Swift seeds `String` hashing per process: a `hashValue` seed would make
     /// two runs of the same fight differ, which is exactly what the determinism
     /// tests exist to catch.
-    static func seed(for key: ReferenceKey) -> UInt64 {
+    public static func seed(for key: ReferenceKey) -> UInt64 {
         var state = ConditionRandom.defaultSeed
         for byte in key.description.utf8 {
             state = (state ^ UInt64(byte)) &* 0x0000_0100_0000_01B3

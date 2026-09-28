@@ -10,6 +10,7 @@
 // voice submix still reports here, in the Sources section.
 
 import AppKit
+import OpenSkyEngine
 
 final class AudioPanelViewController: InspectorPanelViewController {
     let outputSection = AudioOutputSection()

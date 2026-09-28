@@ -10,7 +10,7 @@
 // still synthetic — boxes and quads described in code — but they are shaped
 // like the real cases now.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

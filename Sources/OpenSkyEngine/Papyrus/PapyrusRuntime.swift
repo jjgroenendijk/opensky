@@ -3,26 +3,26 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum PapyrusRuntimeError: Error, Equatable {
+nonisolated public enum PapyrusRuntimeError: Error, Equatable {
     case missingScript(String)
     case duplicateHandle(PapyrusObjectHandle)
     case unknownInitialValue(String)
     case invalidInitialValue(name: String, expected: String, actual: String)
 }
 
-nonisolated final class PapyrusRuntime {
-    let limits: PapyrusLimits
-    let nativeDispatch: PapyrusNativeDispatch
-    let tally: PapyrusTally
-    let coercion = PapyrusCoercion()
+nonisolated public final class PapyrusRuntime {
+    public let limits: PapyrusLimits
+    public let nativeDispatch: PapyrusNativeDispatch
+    public let tally: PapyrusTally
+    public let coercion = PapyrusCoercion()
 
-    var scripts: [String: PexObject] = [:]
-    var instances: [PapyrusObjectHandle: PapyrusInstance] = [:]
+    public var scripts: [String: PexObject] = [:]
+    public var instances: [PapyrusObjectHandle: PapyrusInstance] = [:]
 
     private var nextHandleValue: UInt64 = 1
     private var nextSuspensionValue: UInt64 = 1
 
-    init(
+    public init(
         files: [PexFile],
         nativeDispatch: PapyrusNativeDispatch = PapyrusNativeRegistry.standard,
         limits: PapyrusLimits = .standard
@@ -38,14 +38,14 @@ nonisolated final class PapyrusRuntime {
     /// Adds a decoded file's objects to the script library, last writer wins,
     /// which is how a lazily loaded script joins a runtime built with an empty
     /// (or partial) file list (issue #171).
-    func register(_ file: PexFile) {
+    public func register(_ file: PexFile) {
         for object in file.objects {
             scripts[Self.key(object.name)] = object
         }
     }
 
     @discardableResult
-    func makeInstance(
+    public func makeInstance(
         scriptName: String,
         handle requestedHandle: PapyrusObjectHandle? = nil,
         initialValues: [String: PapyrusValue] = [:]
@@ -91,7 +91,7 @@ nonisolated final class PapyrusRuntime {
         return handle
     }
 
-    func invoke(
+    public func invoke(
         _ functionName: String,
         on handle: PapyrusObjectHandle,
         arguments: [PapyrusValue] = []
@@ -102,7 +102,7 @@ nonisolated final class PapyrusRuntime {
         )
     }
 
-    func invokeStatic(
+    public func invokeStatic(
         _ functionName: String,
         on scriptName: String,
         arguments: [PapyrusValue] = []
@@ -113,7 +113,7 @@ nonisolated final class PapyrusRuntime {
         )
     }
 
-    func resume(
+    public func resume(
         _ suspendedCall: SuspendedCall,
         returning value: PapyrusValue? = nil
     ) -> PapyrusRunOutcome {
@@ -123,15 +123,15 @@ nonisolated final class PapyrusRuntime {
         )
     }
 
-    func script(named name: String) -> PexObject? {
+    public func script(named name: String) -> PexObject? {
         scripts[Self.key(name)]
     }
 
-    func instance(for handle: PapyrusObjectHandle) -> PapyrusInstance? {
+    public func instance(for handle: PapyrusObjectHandle) -> PapyrusInstance? {
         instances[handle]
     }
 
-    func scriptChain(from scriptName: String) throws(PapyrusFault) -> [PexObject] {
+    public func scriptChain(from scriptName: String) throws(PapyrusFault) -> [PexObject] {
         var result: [PexObject] = []
         var visited: Set<String> = []
         var currentName = scriptName
@@ -146,7 +146,7 @@ nonisolated final class PapyrusRuntime {
         return result
     }
 
-    func resolvesObject(_ handle: PapyrusObjectHandle, as typeName: String) -> Bool {
+    public func resolvesObject(_ handle: PapyrusObjectHandle, as typeName: String) -> Bool {
         guard let instance = instance(for: handle) else {
             return false
         }
@@ -156,7 +156,7 @@ nonisolated final class PapyrusRuntime {
         return chain.contains { Self.matches($0.name, typeName) }
     }
 
-    func accepts(_ value: PapyrusValue, as type: PapyrusType) -> Bool {
+    public func accepts(_ value: PapyrusValue, as type: PapyrusType) -> Bool {
         switch (value, type) {
         case (.none, .none), (.none, .object), (.none, .array):
             true
@@ -172,7 +172,7 @@ nonisolated final class PapyrusRuntime {
         }
     }
 
-    func runtimeValue(_ value: PexValue, typeName: String? = nil) -> PapyrusValue {
+    public func runtimeValue(_ value: PexValue, typeName: String? = nil) -> PapyrusValue {
         switch value {
         case .null:
             typeName.map { PapyrusType(name: $0).defaultValue } ?? .none
@@ -189,16 +189,16 @@ nonisolated final class PapyrusRuntime {
         }
     }
 
-    func allocateSuspensionID() -> UInt64 {
+    public func allocateSuspensionID() -> UInt64 {
         defer { nextSuspensionValue &+= 1 }
         return nextSuspensionValue
     }
 
-    static func key(_ value: String) -> String {
+    public static func key(_ value: String) -> String {
         value.lowercased()
     }
 
-    static func matches(_ left: String, _ right: String) -> Bool {
+    public static func matches(_ left: String, _ right: String) -> Bool {
         key(left) == key(right)
     }
 

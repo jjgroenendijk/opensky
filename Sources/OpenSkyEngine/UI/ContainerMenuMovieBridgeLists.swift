@@ -18,7 +18,7 @@ nonisolated extension ContainerMenuMovieBridge {
     /// extension; the merchant's purse goes through `SetBarterInfo`, which is
     /// also what moves the player info card onto its `Barter` frame so that
     /// `VendorGoldValue` exists at all.
-    static func publishTotals(_ model: ContainerMenuModel, runtime: SWFMovieRuntime) {
+    public static func publishTotals(_ model: ContainerMenuModel, runtime: SWFMovieRuntime) {
         if model.mode == .barter {
             publishBarterInfo(model, runtime: runtime)
         }
@@ -37,7 +37,7 @@ nonisolated extension ContainerMenuMovieBridge {
     /// The gold delta is what the pending transaction would move, which is zero
     /// here: quantity selection and the confirm step are not driven, so nothing
     /// is ever pending. See docs/engine/barter.md.
-    static func publishBarterInfo(_ model: ContainerMenuModel, runtime: SWFMovieRuntime) {
+    public static func publishBarterInfo(_ model: ContainerMenuModel, runtime: SWFMovieRuntime) {
         runtime.callMovie(
             barterInfoCallback,
             atPath: bottomBarPath,
@@ -71,25 +71,25 @@ nonisolated extension ContainerMenuMovieBridge {
 
     /// Faults, distinct unresolved names and unhandled bridge calls. Reuses
     /// #289's shape so the two acceptance gates report the same three numbers.
-    static func diagnostics(runtime: SWFMovieRuntime) -> InventoryMenuDiagnostics {
+    public static func diagnostics(runtime: SWFMovieRuntime) -> InventoryMenuDiagnostics {
         InventoryMenuMovieBridge.diagnostics(runtime: runtime)
     }
 
     /// The row labels the movie holds, read back out of its own list. These
     /// prove the engine's rows crossed the bridge.
-    static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
         InventoryMenuMovieBridge.entryLabels(runtime: runtime, atPath: itemListPath)
     }
 
-    static func categoryLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func categoryLabels(runtime: SWFMovieRuntime) -> [String] {
         InventoryMenuMovieBridge.entryLabels(runtime: runtime, atPath: categoryListPath)
     }
 
-    static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
+    public static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
         InventoryMenuMovieBridge.selectedIndex(runtime: runtime, atPath: itemListPath)
     }
 
-    static func selectedCategoryIndex(runtime: SWFMovieRuntime) -> Int? {
+    public static func selectedCategoryIndex(runtime: SWFMovieRuntime) -> Int? {
         InventoryMenuMovieBridge.selectedIndex(runtime: runtime, atPath: categoryListPath)
     }
 
@@ -97,7 +97,7 @@ nonisolated extension ContainerMenuMovieBridge {
     /// field's own drawn text. Nil when the player info card is not on its
     /// `Barter` frame, which is what a container-mode movie looks like — the
     /// field is placed by that frame and does not exist before it.
-    static func vendorGoldText(runtime: SWFMovieRuntime) -> String? {
+    public static func vendorGoldText(runtime: SWFMovieRuntime) -> String? {
         guard let field = runtime.node(atPath: vendorGoldFieldPath, from: runtime.root) else {
             return nil
         }
@@ -111,7 +111,7 @@ nonisolated extension ContainerMenuMovieBridge {
     /// The row index is the first numeric argument, as it is for
     /// `inventorymenu.swf`. A call carrying none acts on the selected row, which
     /// index 0 stands for only because the caller re-selects before acting.
-    static func action(named name: String, arguments: [AS2Value]) -> ContainerMenuAction {
+    public static func action(named name: String, arguments: [AS2Value]) -> ContainerMenuAction {
         let index = arguments.lazy.compactMap { value -> Int? in
             guard case let .number(number) = value, number.isFinite, number >= 0 else {
                 return nil
@@ -131,7 +131,7 @@ nonisolated extension ContainerMenuMovieBridge {
     /// Routes an engine menu event into the Flash key model so the movie's own
     /// CLIK focus path moves the selection.
     @discardableResult
-    static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
+    public static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
         guard let key = InventoryMenuMovieBridge.key(for: event) else {
             return false
         }
@@ -145,7 +145,7 @@ nonisolated extension ContainerMenuMovieBridge {
     /// movie's input any other way repaints late; see #300.
     @MainActor
     @discardableResult
-    static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
+    public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
         try InventoryMenuMovieBridge.send(event, renderer: renderer)
     }
 }

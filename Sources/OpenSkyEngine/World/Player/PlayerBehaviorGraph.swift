@@ -14,13 +14,13 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated enum PlayerBehaviorGraphError: LocalizedError, Equatable {
+nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable {
     case missing(String)
     case invalid(String)
     case noGraph(String)
     case noSkeleton(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case let .missing(path): "behavior asset missing: \(path)"
         case let .invalid(path): "unreadable Havok packfile: \(path)"
@@ -32,9 +32,9 @@ nonisolated enum PlayerBehaviorGraphError: LocalizedError, Equatable {
 
 /// The player's running graph and the rig it poses, loaded together because a
 /// pose is meaningless without the skeleton whose parent chain composes it.
-nonisolated struct PlayerBehaviorGraph {
-    static let behaviorPath = "meshes\\actors\\character\\behaviors\\0_master.hkx"
-    static let skeletonPath = "meshes\\actors\\character\\character assets\\skeleton.hkx"
+nonisolated public struct PlayerBehaviorGraph {
+    public static let behaviorPath = "meshes\\actors\\character\\behaviors\\0_master.hkx"
+    public static let skeletonPath = "meshes\\actors\\character\\character assets\\skeleton.hkx"
     /// The first-person set (issue #190). A peer of the third-person one rather
     /// than a subset: its own `0_master.hkx` over its own 17 behavior files,
     /// its own 99-bone rig, and its own NIF skeleton for the arm meshes to skin
@@ -42,24 +42,24 @@ nonisolated struct PlayerBehaviorGraph {
     /// (`openskycli vfs ls _1stperson`), never spelled from memory, and the
     /// folder is `characterassets` with no space where the third-person one is
     /// `character assets` with one.
-    static let firstPersonBehaviorPath =
+    public static let firstPersonBehaviorPath =
         "meshes\\actors\\character\\_1stperson\\behaviors\\0_master.hkx"
-    static let firstPersonSkeletonPath =
+    public static let firstPersonSkeletonPath =
         "meshes\\actors\\character\\_1stperson\\characterassets\\skeletonfirst.hkx"
     /// The NIF rig the first-person arm meshes skin against. RACE names only
     /// the third-person skeleton (ANAM), so this one is a constant here — the
     /// install ships exactly one and no record points at it.
-    static let firstPersonRigPath = "meshes\\actors\\character\\_1stperson\\skeleton.nif"
+    public static let firstPersonRigPath = "meshes\\actors\\character\\_1stperson\\skeleton.nif"
 
-    let instance: BehaviorGraphInstance
+    public let instance: BehaviorGraphInstance
     /// The Havok rig, kept rather than only its `BehaviorSkeleton` projection:
     /// composing a pose to world matrices needs the parent chain, which
     /// `BehaviorSkeleton` deliberately does not carry.
-    let skeleton: HKASkeleton
-    let clips: InstallBehaviorClipSource
+    public let skeleton: HKASkeleton
+    public let clips: InstallBehaviorClipSource
     /// Where the graph's `hkbBehaviorReferenceGenerator` names resolve. Held so
     /// a readout can report how many behavior files the folder offered.
-    let referenceSource: InstallBehaviorReferenceSource
+    public let referenceSource: InstallBehaviorReferenceSource
 
     /// Loads a player graph and the rig it poses. Defaults name the
     /// third-person set; item 14.7 passes the `_1stperson` pair, and the two
@@ -69,7 +69,7 @@ nonisolated struct PlayerBehaviorGraph {
     /// fact about the install the caller has to report, and silently running
     /// with no graph would look like an animation bug rather than a load
     /// failure (AGENTS.md "Missing -> fail loud").
-    static func load(
+    public static func load(
         fileSystem: VirtualFileSystem,
         behaviorPath: String = Self.behaviorPath,
         skeletonPath: String = Self.skeletonPath

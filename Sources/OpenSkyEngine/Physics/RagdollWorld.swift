@@ -28,38 +28,66 @@ import OpenSkyFormats
 import simd
 
 /// Counts one refresh of the ragdoll panel shows.
-nonisolated struct RagdollStatsSnapshot: Equatable, Sendable {
-    var ragdollCount = 0
-    var activeRagdollCount = 0
-    var settledRagdollCount = 0
+nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
+    public var ragdollCount = 0
+    public var activeRagdollCount = 0
+    public var settledRagdollCount = 0
     /// Bone bodies across every live ragdoll.
-    var boneBodyCount = 0
+    public var boneBodyCount = 0
     /// Joints across every live ragdoll.
-    var jointCount = 0
+    public var jointCount = 0
     /// Joint limits still violated after the last solve, summed over every
     /// ragdoll. Zero once they have all converged.
-    var jointViolationCount = 0
+    public var jointViolationCount = 0
     /// Constraint solver iterations one substep runs, which is a constant the
     /// panel shows beside the violation count so the two read together.
-    var solverIterationCount = RagdollConstraintSolver.iterationCount
+    public var solverIterationCount: Int = RagdollConstraintSolver.iterationCount
     /// Bodies whose integrated pose came back non-finite. Always zero; a
     /// non-zero value is the stability gate failing in the open.
-    var recoveredBodyCount = 0
+    public var recoveredBodyCount = 0
     /// Bone pairs the biped filter admits, summed over every live ragdoll: the
     /// size of the set self-collision is allowed to work over (issue #413).
-    var selfCollisionPairCount = 0
+    public var selfCollisionPairCount = 0
     /// Bone-against-bone contacts at the last solve, summed the same way. Zero
     /// on a vanilla humanoid standing at its bind pose, and non-zero once a limb
     /// has fallen across the torso.
-    var selfContactCount = 0
-    var isSelfCollisionEnabled = true
-    var isFrozen = false
+    public var selfContactCount = 0
+    public var isSelfCollisionEnabled = true
+    public var isFrozen = false
+
+    public init(
+        ragdollCount: Int = 0,
+        activeRagdollCount: Int = 0,
+        settledRagdollCount: Int = 0,
+        boneBodyCount: Int = 0,
+        jointCount: Int = 0,
+        jointViolationCount: Int = 0,
+        solverIterationCount: Int = RagdollConstraintSolver.iterationCount,
+        recoveredBodyCount: Int = 0,
+        selfCollisionPairCount: Int = 0,
+        selfContactCount: Int = 0,
+        isSelfCollisionEnabled: Bool = true,
+        isFrozen: Bool = false
+    ) {
+        self.ragdollCount = ragdollCount
+        self.activeRagdollCount = activeRagdollCount
+        self.settledRagdollCount = settledRagdollCount
+        self.boneBodyCount = boneBodyCount
+        self.jointCount = jointCount
+        self.jointViolationCount = jointViolationCount
+        self.solverIterationCount = solverIterationCount
+        self.recoveredBodyCount = recoveredBodyCount
+        self.selfCollisionPairCount = selfCollisionPairCount
+        self.selfContactCount = selfContactCount
+        self.isSelfCollisionEnabled = isSelfCollisionEnabled
+        self.isFrozen = isFrozen
+    }
 }
 
 /// The panel seam for the ragdoll controls under `World > Combat & Physics`
 /// (issue #197 scope point 7).
 @MainActor
-protocol RagdollControlProviding: AnyObject {
+public protocol RagdollControlProviding: AnyObject {
     var ragdollStatsSnapshot: RagdollStatsSnapshot { get }
     /// Kills the selected actor and hands its skeleton to the physics, which is
     /// the dev trigger the item's acceptance drives.
@@ -78,9 +106,9 @@ protocol RagdollControlProviding: AnyObject {
     func clearRagdolls()
 }
 
-nonisolated struct RagdollWorld {
+nonisolated public struct RagdollWorld: Sendable {
     /// Ragdolls in ascending `ReferenceKey` order.
-    private(set) var ragdolls: [(key: ReferenceKey, instance: RagdollInstance)] = []
+    public private(set) var ragdolls: [(key: ReferenceKey, instance: RagdollInstance)] = []
     /// Which cell each ragdoll's actor belongs to, so streaming can drop a
     /// cell's corpses wholesale.
     private var cells: [ReferenceKey: CellSceneLocation] = [:]
@@ -96,11 +124,11 @@ nonisolated struct RagdollWorld {
     /// the thing whose order is load-bearing (issue #374).
     private var spawnOrder: [ReferenceKey] = []
     private var accumulatedTime: Float = 0
-    var isFrozen = false
+    public var isFrozen = false
     /// Whether a ragdoll's bones may touch each other at all. The admitted pairs
     /// are per-definition; this is the one switch over all of them, so a viewer
     /// can watch the same collapse both ways (issue #413).
-    var isSelfCollisionEnabled = true {
+    public var isSelfCollisionEnabled = true {
         didSet {
             guard isSelfCollisionEnabled != oldValue else { return }
             for index in ragdolls.indices {
@@ -113,11 +141,11 @@ nonisolated struct RagdollWorld {
         }
     }
 
-    var ragdollCount: Int {
+    public var ragdollCount: Int {
         ragdolls.count
     }
 
-    var statsSnapshot: RagdollStatsSnapshot {
+    public var statsSnapshot: RagdollStatsSnapshot {
         var snapshot = RagdollStatsSnapshot(
             isSelfCollisionEnabled: isSelfCollisionEnabled, isFrozen: isFrozen
         )
@@ -141,7 +169,7 @@ nonisolated struct RagdollWorld {
     // MARK: - Lifecycle
 
     /// Registers one ragdoll, replacing any the same actor already had.
-    mutating func add(
+    public mutating func add(
         _ instance: RagdollInstance,
         for key: ReferenceKey,
         in cell: CellSceneLocation
@@ -157,7 +185,7 @@ nonisolated struct RagdollWorld {
         spawnOrder.append(key)
     }
 
-    mutating func remove(_ key: ReferenceKey) {
+    public mutating func remove(_ key: ReferenceKey) {
         ragdolls.removeAll { $0.key == key }
         cells.removeValue(forKey: key)
         wasSettled.remove(key)
@@ -175,7 +203,7 @@ nonisolated struct RagdollWorld {
     ///
     /// - Returns: how many stopped simulating.
     @discardableResult
-    mutating func trim(to limit: Int) -> Int {
+    public mutating func trim(to limit: Int) -> Int {
         let excess = ragdolls.count - max(0, limit)
         guard excess > 0 else { return 0 }
         for key in Array(spawnOrder.prefix(excess)) {
@@ -185,14 +213,14 @@ nonisolated struct RagdollWorld {
     }
 
     /// Drops every ragdoll a cell owns. Called when the cell leaves residency.
-    mutating func removeCell(_ location: CellSceneLocation) {
+    public mutating func removeCell(_ location: CellSceneLocation) {
         let departing = cells.filter { $0.value == location }.map(\.key)
         for key in departing {
             remove(key)
         }
     }
 
-    mutating func removeAll() {
+    public mutating func removeAll() {
         ragdolls.removeAll()
         cells.removeAll()
         wasSettled.removeAll()
@@ -201,11 +229,11 @@ nonisolated struct RagdollWorld {
         accumulatedTime = 0
     }
 
-    func instance(for key: ReferenceKey) -> RagdollInstance? {
+    public func instance(for key: ReferenceKey) -> RagdollInstance? {
         ragdolls.first { $0.key == key }?.instance
     }
 
-    func isRagdolling(_ key: ReferenceKey) -> Bool {
+    public func isRagdolling(_ key: ReferenceKey) -> Bool {
         ragdolls.contains { $0.key == key }
     }
 
@@ -215,7 +243,7 @@ nonisolated struct RagdollWorld {
     /// of `WalkController.fixedTimeStep`. Leftover time carries forward and an
     /// over-long frame contributes only `WalkController.maximumFrameTime`,
     /// exactly as the dynamic body registry's clock does.
-    mutating func advance(by frameTime: Float, world: DynamicStepWorld) {
+    public mutating func advance(by frameTime: Float, world: DynamicStepWorld) {
         guard !isFrozen, !ragdolls.isEmpty else { return }
         accumulatedTime += min(max(frameTime, 0), WalkController.maximumFrameTime)
         while accumulatedTime + Float.ulpOfOne >= WalkController.fixedTimeStep {
@@ -251,7 +279,7 @@ nonisolated struct RagdollWorld {
 
     /// Hands over the resting transforms recorded since the last call, in key
     /// order, so the caller can write them into `ActorDeathState`.
-    mutating func drainSettledTransforms() -> [(
+    public mutating func drainSettledTransforms() -> [(
         key: ReferenceKey,
         transform: ReferenceTransformOverride
     )] {
@@ -265,7 +293,7 @@ nonisolated struct RagdollWorld {
 
     /// The pose one ragdoll writes into the skinning path this frame, or nil
     /// when that actor is not ragdolling.
-    func boneMatrices(
+    public func boneMatrices(
         for key: ReferenceKey,
         blending animated: [String: float4x4],
         worldToActor: float4x4
@@ -275,7 +303,7 @@ nonisolated struct RagdollWorld {
     }
 
     /// Applies an impulse to one ragdoll, waking it.
-    mutating func applyImpulse(
+    public mutating func applyImpulse(
         _ impulse: SIMD3<Float>,
         at point: SIMD3<Float>,
         to key: ReferenceKey

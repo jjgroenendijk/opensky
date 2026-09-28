@@ -1,7 +1,7 @@
 // Texture-preview quad math: geometry, winding toward the camera, DDS UV
 // orientation, flat-light camera framing. Pure values — no GPU needed.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

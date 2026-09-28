@@ -25,7 +25,7 @@ extension CasterRuntime {
     ///
     /// - Returns: how many timed effects were stored.
     @discardableResult
-    func applyAbilities(on holder: ActorValueHolder) -> Int {
+    public func applyAbilities(on holder: ActorValueHolder) -> Int {
         guard let world else { return 0 }
         var stored = 0
         for spell in spellbook.knownSpells(of: holder) where spell.spellType == .ability {

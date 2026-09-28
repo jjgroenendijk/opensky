@@ -5,10 +5,10 @@ nonisolated extension RagdollConstraintSolver {
     /// Accumulated impulses shared by the velocity iterations of one substep.
     /// The dynamic solver owns this state when contacts and joints are
     /// interleaved, so neither constraint family has to restart from zero.
-    struct VelocityState {
+    public struct VelocityState: Sendable {
         fileprivate var limits: [RagdollLimitImpulses]
 
-        init(jointCount: Int) {
+        public init(jointCount: Int) {
             limits = [RagdollLimitImpulses](
                 repeating: RagdollLimitImpulses(), count: jointCount
             )
@@ -17,7 +17,7 @@ nonisolated extension RagdollConstraintSolver {
 
     /// Runs one velocity iteration. Internal so the dynamic solver can place a
     /// contact iteration before or after it inside the same fixed-point solve.
-    static func solveVelocityIteration(
+    public static func solveVelocityIteration(
         joints: [RagdollJointDefinition],
         bodies: inout [DynamicBody],
         iterationTime: Float,
@@ -38,7 +38,7 @@ nonisolated extension RagdollConstraintSolver {
 
     /// Applies position and orientation recovery after every velocity
     /// constraint has converged for the substep.
-    static func correctPoses(
+    public static func correctPoses(
         joints: [RagdollJointDefinition],
         bodies: inout [DynamicBody],
         includeSleeping: Bool = false

@@ -11,9 +11,14 @@ import simd
 /// Streaming unions these over resident cells to know what to keep when a cell
 /// unloads (eviction — docs/engine/cell-streaming.md). Empty for cells built
 /// without eviction tracking (tests) — an empty keep-set simply evicts more.
-nonisolated struct CellAssets: Equatable {
-    var meshKeys: Set<String> = []
-    var textureKeys: Set<String> = []
+nonisolated public struct CellAssets: Equatable, Sendable {
+    public var meshKeys: Set<String> = []
+    public var textureKeys: Set<String> = []
+
+    public init(meshKeys: Set<String> = [], textureKeys: Set<String> = []) {
+        self.meshKeys = meshKeys
+        self.textureKeys = textureKeys
+    }
 }
 
 /// Stable identity of one built cell. Exterior cells drive grid streaming;
@@ -22,101 +27,101 @@ nonisolated struct CellAssets: Equatable {
 /// `Hashable` because runtime state that outlives a cell — `WorldStateStore`'s
 /// per-cell dirty counts — keys dictionaries by the cell a mutation happened
 /// in, long after that cell was evicted.
-nonisolated enum CellSceneLocation: Hashable, Sendable {
+nonisolated public enum CellSceneLocation: Hashable, Sendable {
     case exterior(CellCoordinate)
     case interior(FormID)
 }
 
 /// Teleport-capable DOOR placement retained beside render data so main-thread
 /// interaction can select a nearby door without touching plugin bytes.
-nonisolated struct PlacedDoor: Equatable {
-    let reference: FormID
-    let position: SIMD3<Float>
-    let destination: PlacedReference.TeleportDestination
+nonisolated public struct PlacedDoor: Equatable, Sendable {
+    public let reference: FormID
+    public let position: SIMD3<Float>
+    public let destination: PlacedReference.TeleportDestination
 }
 
 /// One built exterior cell, ready to render.
-nonisolated struct CellScene {
-    let renderScene: RenderScene
-    let summary: CellLoadSummary
+nonisolated public struct CellScene {
+    public let renderScene: RenderScene
+    public let summary: CellLoadSummary
     /// World-space AABB over every drawn instance — nil when nothing drew.
     /// Downstream camera placement frames this box.
-    let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?
-    let location: CellSceneLocation?
-    let doors: [PlacedDoor]
+    public let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?
+    public let location: CellSceneLocation?
+    public let doors: [PlacedDoor]
     /// REFR -> resolved record text/action for view-ray interaction.
-    let interactions: [FormID: PlacedInteraction]
+    public let interactions: [FormID: PlacedInteraction]
     /// XCLR REGN regions overlapping this exterior cell (empty on interiors +
     /// cells without XCLR). The streamer pushes the center cell's set into the
     /// weather runtime so region-weighted selection runs live (M7.2.3).
-    let regions: [FormID]
+    public let regions: [FormID]
     /// XCAS acoustic space (ASPC) reference for interior ambience (M9.2.2);
     /// nil on exteriors or interiors without one. The streamer pushes the
     /// current cell's value into the world sound director so its ambient bed
     /// resolves against the right ASPC record.
-    let acousticSpace: FormID?
+    public let acousticSpace: FormID?
     /// XCMO music-type override authored on this CELL (M9.2.3); nil when the
     /// cell authors none. First link in the music selection precedence chain.
-    let musicType: FormID?
+    public let musicType: FormID?
     /// CELL `XOWN`/`XRNK` (issue #504); nil when the cell is unowned. What a
     /// reference standing here inherits when it authors no owner of its own,
     /// and what a trespass is judged against.
-    let owner: RecordOwnership?
+    public let owner: RecordOwnership?
     /// CELL `XLCN` — the LCTN this cell belongs to; nil when it names none.
     /// Carried rather than resolved because resolving it needs the load-order
     /// LCTN and FACT stores, which the cell builder has no business holding:
     /// the crime faction is `CrimeFactionResolver`'s answer, walking this
     /// link's parent chain (issue #504).
-    let locationLink: FormID?
+    public let locationLink: FormID?
     /// The plugin `owner` and `locationLink` are spelled against, which is the
     /// plugin the cell record was read from.
-    let ownerPluginName: String?
+    public let ownerPluginName: String?
     /// ZNAM music type of the worldspace this cell belongs to; nil on
     /// interiors and worldspaces without one. Last link in the chain.
-    let worldspaceMusicType: FormID?
+    public let worldspaceMusicType: FormID?
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
-    let terrainHeightField: TerrainHeightField?
+    public let terrainHeightField: TerrainHeightField?
     /// Flat water-surface height for this cell, resolved from CELL XCLW over
     /// the worldspace default the same way the drawn plane is (issue #188).
     /// nil where the cell has no water. One height per cell, because vanilla
     /// authors one plane per cell.
-    let waterHeight: Float?
+    public let waterHeight: Float?
     /// Deterministic cell-owned CPU instances retained for inspection +
     /// accounting; matching GPU grass batches live in renderScene.
-    let grassPlacements: [GrassPlacement]
+    public let grassPlacements: [GrassPlacement]
     /// Immutable mesh collision + per-cell broadphase. Empty for cells built
     /// without a collision VFS (legacy synthetic tests).
-    let staticCollision: StaticCollisionSet
+    public let staticCollision: StaticCollisionSet
     /// Immutable authored trigger volumes for this cell (issue #173):
     /// SkyrimLayer 12 NIF bodies plus `XPRM` box and sphere primitives, over
     /// the same broadphase the solid set uses. Empty for cells built without a
     /// collision VFS or without reference retention.
-    let triggerVolumes: TriggerVolumeSet
+    public let triggerVolumes: TriggerVolumeSet
     /// Rigid bodies this cell places into the dynamic world (issue #193): the
     /// movable clutter its references carry, already inertially described and
     /// posed. Empty for a cell built without a collision VFS or without
     /// reference retention, because a simulated body is registered under a
     /// `ReferenceKey`.
-    let dynamicBodies: [DynamicBodyPlacement]
+    public let dynamicBodies: [DynamicBodyPlacement]
     /// Immutable authored walkable surfaces for this cell (issue #200).
     /// The streamer installs them into its resident navigation graph and
     /// removes them with the scene; an empty array means the cell has no
     /// usable NAVM records.
-    let navmeshes: [Navmesh]
+    public let navmeshes: [Navmesh]
     /// Decoded REFR/ACHR records of this cell, addressable by session-stable
     /// `ReferenceKey` and by raw FormID (issue #158). Empty for cells built
     /// without reference retention (synthetic render tests).
-    let references: RuntimeReferenceIndex
+    public let references: RuntimeReferenceIndex
     /// Journal sequence of the `WorldStateSnapshot` this cell was built from
     /// (issue #160). 0 means the build applied no runtime state. Comparing it
     /// against the store's current sequence is how the streamer will tell a
     /// stale scene from a current one.
-    let stateSequence: UInt64
+    public let stateSequence: UInt64
     /// Mesh + texture cache keys this cell uses, for unload eviction.
-    var assets = CellAssets()
+    public var assets = CellAssets()
 
-    init(
+    public init(
         renderScene: RenderScene,
         summary: CellLoadSummary,
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)?,
@@ -170,90 +175,90 @@ nonisolated struct CellScene {
 /// Load accounting for one cell build. Per-ref failures never abort the build
 /// (AGENTS.md mod-quirk rule) — each lands in a skip bucket instead. Skip
 /// taxonomy: docs/engine/cell-scene.md.
-nonisolated struct CellLoadSummary: Equatable {
+nonisolated public struct CellLoadSummary: Equatable, Sendable {
     /// Cell editor ID when present, else "cell <FormID>".
-    let cellName: String
-    let gridX: Int32
-    let gridY: Int32
+    public let cellName: String
+    public let gridX: Int32
+    public let gridY: Int32
     /// Non-deleted REFR records seen in the cell's persistent + temporary
     /// children groups.
-    let totalRefCount: Int
-    let drawnRefCount: Int
+    public let totalRefCount: Int
+    public let drawnRefCount: Int
     /// REFR whose base FormID resolves to neither the STAT nor the
     /// ModelBase (MSTT/TREE/FURN/ACTI/CONT/DOOR) index — an unsupported
     /// base type (NPC_, ACHR, ...) or a malformed base record.
-    let unsupportedBaseSkipCount: Int
+    public let unsupportedBaseSkipCount: Int
     /// Resolved base carries no MODL — editor marker, nothing to draw.
-    let markerSkipCount: Int
+    public let markerSkipCount: Int
     /// Mesh load failed: missing file, parse error, or empty model.
-    let modelFailureSkipCount: Int
+    public let modelFailureSkipCount: Int
     /// The REFR record itself failed to decode.
-    let malformedRefSkipCount: Int
+    public let malformedRefSkipCount: Int
     /// Distinct models loaded (MeshLibrary.loadedCount).
-    let modelCount: Int
+    public let modelCount: Int
     /// Distinct texture paths loaded / unresolved (TextureLibrary counters).
-    let textureCount: Int
-    let missingTextureCount: Int
+    public let textureCount: Int
+    public let missingTextureCount: Int
     /// Terrain sub-meshes drawn for the cell: one per painted, non-hidden
     /// quadrant (0-4), or the single fallback-plane mesh, else 0 (no terrain).
-    var terrainQuadrantCount = 0
+    public var terrainQuadrantCount = 0
     /// ATXT splat layers drawn across all terrain quadrants.
-    var terrainLayerCount = 0
+    public var terrainLayerCount = 0
     /// Splat layers dropped: unresolvable LTEX/TXST chain or over the
     /// 8-layer format cap (TerrainConstant.maxLayers).
-    var terrainLayerSkipCount = 0
+    public var terrainLayerSkipCount = 0
     /// Procedural GRAS instances/types retained by this cell.
-    var grassPlacementCount = 0
-    var grassTypeCount = 0
+    public var grassPlacementCount = 0
+    public var grassTypeCount = 0
     /// LTEX GNAM references with no usable GRAS DATA/MODL record.
-    var grassTypeSkipCount = 0
+    public var grassTypeSkipCount = 0
     /// Flat water planes drawn for this cell (0 or 1).
-    var waterPlaneCount = 0
+    public var waterPlaneCount = 0
     /// Supported LIGH/XEMI placements available to forward draws.
-    var pointLightCount = 0
+    public var pointLightCount = 0
     /// References the runtime disabled since load (issue #160) — the same
     /// intentional skip an initially-disabled record gets, arrived at from
     /// world state rather than from the plugin.
-    var runtimeDisabledSkipCount = 0
+    public var runtimeDisabledSkipCount = 0
     /// References the runtime deleted since load. Not the record header's
     /// `deleted` flag, which is filtered before a reference is ever counted.
-    var runtimeDeletedSkipCount = 0
+    public var runtimeDeletedSkipCount = 0
     /// Objects the running game placed in this cell (issue #177): dropped
     /// items today. They are outside `totalRefCount`, which counts what the
     /// plugin authored, and inside `drawnRefCount`, which counts what the cell
     /// drew — so the accounting identity is
     /// `totalRefCount + spawnedRefCount == drawnRefCount + skippedRefCount`.
-    var spawnedRefCount = 0
+    public var spawnedRefCount = 0
     /// Spawned objects with no FormID left to be addressed by. Always zero
     /// short of 16.7 million spawns in one session; counted so that the
     /// identity above still holds if it ever is not.
-    var spawnedUnaddressableSkipCount = 0
+    public var spawnedUnaddressableSkipCount = 0
     /// Non-deleted ACHRs owned by this cell (local + position-mapped
     /// worldspace-persistent). Buckets below must account for each exactly
     /// once (5.5 exact-accounting rule).
-    var actorCount = 0
-    var actorDrawnCount = 0
+    public var actorCount = 0
+    public var actorDrawnCount = 0
     /// Initially-disabled ACHRs — explicit intentional skip (no script state).
-    var actorDisabledSkipCount = 0
+    public var actorDisabledSkipCount = 0
     /// Malformed ACHR, unresolved template/visual chain, or no core geometry.
-    var actorFailureCount = 0
+    public var actorFailureCount = 0
     /// One reason per counted failure ("ACHR <id>: <why>"). 5.6 acceptance:
     /// a failure without a reason is unexplained -> gate failure.
-    var actorFailureReasons: [String] = []
+    public var actorFailureReasons: [String] = []
     /// Wall time of the cell's actor collect+resolve+assemble phase.
-    var actorBuildDurationMS = 0.0
+    public var actorBuildDurationMS = 0.0
     /// Rendered actors split into live idle playback + reason-tagged static fallback.
-    var actorAnimatedCount = 0
-    var actorAnimationFailureCount = 0
-    var actorAnimationFailureReasons: [String] = []
+    public var actorAnimatedCount = 0
+    public var actorAnimationFailureCount = 0
+    public var actorAnimationFailureReasons: [String] = []
     /// Reason-tagged appearance skips, per actor, as
     /// "ACHR <id>: <reason> (<subject>)" (issue #180). A rendered actor can
     /// carry these — a masked skin part is a resolution decision, not a
     /// failure — so this list is outside the accounting identities above and
     /// is read by the `World > Inventory & Equipment` equipment inspection.
-    var actorAppearanceSkipReasons: [String] = []
+    public var actorAppearanceSkipReasons: [String] = []
 
-    var skippedRefCount: Int {
+    public var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount
             + malformedRefSkipCount + runtimeDisabledSkipCount + runtimeDeletedSkipCount
             + spawnedUnaddressableSkipCount
@@ -261,25 +266,25 @@ nonisolated struct CellLoadSummary: Equatable {
 
     /// Every reference the build saw — authored or spawned — landed in exactly
     /// one bucket, drawn or skipped.
-    var referenceAccountingIsExact: Bool {
+    public var referenceAccountingIsExact: Bool {
         totalRefCount + spawnedRefCount == drawnRefCount + skippedRefCount
     }
 
     /// Every discovered actor landed in exactly one bucket.
-    var actorAccountingIsExact: Bool {
+    public var actorAccountingIsExact: Bool {
         actorCount == actorDrawnCount + actorDisabledSkipCount + actorFailureCount
     }
 
     /// Every counted actor failure carries a reason (5.6 zero-unexplained rule).
-    var actorFailuresAreExplained: Bool {
+    public var actorFailuresAreExplained: Bool {
         actorFailureCount == actorFailureReasons.count
     }
 
-    var actorAnimationAccountingIsExact: Bool {
+    public var actorAnimationAccountingIsExact: Bool {
         actorDrawnCount == actorAnimatedCount + actorAnimationFailureCount
     }
 
-    var actorAnimationFailuresAreExplained: Bool {
+    public var actorAnimationFailuresAreExplained: Bool {
         actorAnimationFailureCount == actorAnimationFailureReasons.count
     }
 
@@ -287,7 +292,7 @@ nonisolated struct CellLoadSummary: Equatable {
     /// "[INFO] WhiterunExterior06 (6,-2): 16 refs, 16 drawn, 0 skipped,
     /// 8 models, 24 textures (0 missing)". The parenthetical lists only
     /// non-zero skip reasons and disappears when nothing skipped.
-    var summaryLine: String {
+    public var summaryLine: String {
         var reasons: [String] = []
         if unsupportedBaseSkipCount > 0 {
             reasons.append("\(unsupportedBaseSkipCount) unsupported-base")

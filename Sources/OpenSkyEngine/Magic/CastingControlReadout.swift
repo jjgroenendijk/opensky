@@ -7,10 +7,10 @@
 
 import Foundation
 
-nonisolated enum CastingControlReadout {
+nonisolated public enum CastingControlReadout: Sendable {
     /// The player's known spells, one line per spell, or the honest absence of
     /// any.
-    static func spellsText(for snapshot: CastingControlSnapshot) -> String {
+    public static func spellsText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Known spells: unavailable" }
         guard !snapshot.knownSpells.isEmpty else {
             return "Known spells: none — Learn start spells grants the flagged ones"
@@ -20,7 +20,7 @@ nonisolated enum CastingControlReadout {
     }
 
     /// What the hands are doing and what is left to pay for it.
-    static func handsText(for snapshot: CastingControlSnapshot) -> String {
+    public static func handsText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Hands: unavailable" }
         return String(
             format: "Hands: left %@, right %@ — magicka %.0f / %.0f, selected %@",
@@ -33,7 +33,7 @@ nonisolated enum CastingControlReadout {
     }
 
     /// The tome side: what is carried and how many books have been opened.
-    static func tomesText(for snapshot: CastingControlSnapshot) -> String {
+    public static func tomesText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Tomes: unavailable" }
         let carried = snapshot.carriedTomeNames.isEmpty
             ? "none carried"
@@ -42,7 +42,7 @@ nonisolated enum CastingControlReadout {
     }
 
     /// What the cast loop has done this session.
-    static func activityText(for snapshot: CastingControlSnapshot) -> String {
+    public static func activityText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Casts: unavailable" }
         return "Casts: \(snapshot.castCount) completed, "
             + "\(snapshot.concentrationSeconds) second(s) maintained"
@@ -50,7 +50,7 @@ nonisolated enum CastingControlReadout {
 
     /// What it declined to do, which is the point of the tally: unimplemented
     /// ground is measured rather than silent.
-    static func coverageText(for snapshot: CastingControlSnapshot) -> String {
+    public static func coverageText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Coverage: unavailable" }
         var text = if snapshot.failureCount > 0 {
             "Coverage: \(snapshot.failureCount) refusal(s) — "
@@ -71,7 +71,7 @@ nonisolated enum CastingControlReadout {
     /// The adjustment lines are the readout the resistance rule is verified
     /// through, in the app and in the panel test alike — a health bar moving is
     /// not evidence that the multiplier was the documented one.
-    static func deliveryText(for snapshot: CastingControlSnapshot) -> String {
+    public static func deliveryText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Delivery: unavailable" }
         let deliveries = snapshot.deliveryLines.isEmpty
             ? "nothing cast yet"
@@ -91,7 +91,7 @@ nonisolated enum CastingControlReadout {
     /// What the magic condition functions say about the player right now
     /// (issue #474), which is what makes the registrations verifiable from the
     /// app rather than only from a test.
-    static func conditionsText(for snapshot: CastingControlSnapshot) -> String {
+    public static func conditionsText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Conditions: unavailable" }
         guard !snapshot.conditionLines.isEmpty else {
             return "Conditions: no magic condition function could be evaluated"
@@ -100,12 +100,12 @@ nonisolated enum CastingControlReadout {
         return "Conditions (player):\n\(lines)"
     }
 
-    static func lastActionText(for snapshot: CastingControlSnapshot) -> String {
+    public static func lastActionText(for snapshot: CastingControlSnapshot) -> String {
         "Last action: \(snapshot.lastActionText)"
     }
 
     /// Every line the section shows, in order.
-    static func text(for snapshot: CastingControlSnapshot) -> String {
+    public static func text(for snapshot: CastingControlSnapshot) -> String {
         [
             spellsText(for: snapshot),
             handsText(for: snapshot),

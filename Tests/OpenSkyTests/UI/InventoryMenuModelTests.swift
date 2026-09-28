@@ -6,7 +6,7 @@
 // synthetic plugin, so nothing here reads a real game file.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

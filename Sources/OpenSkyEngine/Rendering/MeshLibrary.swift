@@ -18,7 +18,7 @@ import OpenSkyFormats
 import OpenSkyGameData
 import simd
 
-nonisolated enum MeshLibraryError: Error, Equatable {
+nonisolated public enum MeshLibraryError: Error, Equatable {
     /// VFS could not resolve the mesh path (missing loose file + archive entry).
     case fileNotFound(path: String)
     /// NIF container/scene-graph parse or GPU upload failed.
@@ -28,23 +28,23 @@ nonisolated enum MeshLibraryError: Error, Equatable {
     case emptyModel(path: String)
 }
 
-nonisolated final class MeshLibrary {
-    let fileSystem: VirtualFileSystem
-    let device: MTLDevice
-    let textures: TextureLibrary
+nonisolated public final class MeshLibrary {
+    public let fileSystem: VirtualFileSystem
+    public let device: MTLDevice
+    public let textures: TextureLibrary
     private var cache: [String: RenderModel] = [:]
     /// Per-path count of shapes the flattener dropped (unsupported or empty), so
     /// scene build can report skips without re-parsing.
     private var skippedShapes: [String: Int] = [:]
     /// Model-space AABB per loaded path — captured at parse time because the
     /// vertex data is gone from the CPU after upload (see ModelBounds).
-    var modelBounds: [String: ModelBounds] = [:]
+    public var modelBounds: [String: ModelBounds] = [:]
     /// Texture keys captured when each cached model was first uploaded.
     private var modelTextureKeys: [String: Set<String>] = [:]
     /// Immutable particle definitions decoded beside each normal model. A
     /// placed ref gets fresh playback state while sharing cached texture/GPU
     /// resources through TextureLibrary.
-    var particleDefinitions: [String: [ParticleSystemDefinition]] = [:]
+    public var particleDefinitions: [String: [ParticleSystemDefinition]] = [:]
     /// Mesh keys resolved since the last drain, so a cell build can record its
     /// mesh working set (for eviction keep-sets). Build-queue confined.
     private var touchedKeys: Set<String> = []
@@ -52,14 +52,14 @@ nonisolated final class MeshLibrary {
     // MeshLibraryActors.swift (split for the type-body length cap) and a Swift
     // extension in another file cannot reach `private` members. Still
     // build-queue confined; nothing outside this type writes them.
-    var cachedCharacterSkeleton: NIFSkeleton?
-    var triedCharacterSkeleton = false
-    var actorSkeletons: [String: NIFSkeleton] = [:]
+    public var cachedCharacterSkeleton: NIFSkeleton?
+    public var triedCharacterSkeleton = false
+    public var actorSkeletons: [String: NIFSkeleton] = [:]
 
     /// Distinct mesh paths successfully parsed + uploaded.
-    private(set) var loadedCount = 0
+    public private(set) var loadedCount = 0
 
-    init(fileSystem: VirtualFileSystem, device: MTLDevice, textures: TextureLibrary) {
+    public init(fileSystem: VirtualFileSystem, device: MTLDevice, textures: TextureLibrary) {
         self.fileSystem = fileSystem
         self.device = device
         self.textures = textures
@@ -70,13 +70,13 @@ nonisolated final class MeshLibrary {
     /// via VirtualFileSystem.normalize. Records may omit the "meshes\\" root,
     /// so it is prepended when absent. Same normalized key -> identical
     /// RenderModel instance (shared across every placing ref).
-    func model(path: String) throws -> RenderModel {
+    public func model(path: String) throws -> RenderModel {
         try loadModel(path: path, terrainLODClipMask: nil)
     }
 
     /// Loads one terrain LOD variant with geometry clipped to exact visible
     /// cells. Variants cache independently from full BTR models.
-    func model(
+    public func model(
         path: String,
         terrainLODClipMask: TerrainLODClipMask
     ) throws -> RenderModel {
@@ -112,7 +112,7 @@ nonisolated final class MeshLibrary {
         }
     }
 
-    func loadModel(
+    public func loadModel(
         path: String,
         terrainLODClipMask: TerrainLODClipMask?,
         actorSkeleton: ActorSkeletonAsset? = nil,
@@ -176,7 +176,7 @@ nonisolated final class MeshLibrary {
     /// TerrainVertexLayout) — terrain from LAND (todo 3.1). Shares the
     /// library's device so terrain draws through the same residency set. Not
     /// cached: terrain patches are per-cell and unique, unlike shared NIFs.
-    func terrainMesh(
+    public func terrainMesh(
         _ mesh: Mesh,
         weights: [SIMD4<Float>]
     ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
@@ -195,7 +195,7 @@ nonisolated final class MeshLibrary {
 
     /// Uploads small engine-built geometry that needs only the shared static
     /// vertex stream. Callers cache reusable meshes at their semantic level.
-    func renderMesh(_ mesh: Mesh) throws -> RenderMesh {
+    public func renderMesh(_ mesh: Mesh) throws -> RenderMesh {
         try RenderMesh(device: device, mesh: mesh)
     }
 
@@ -203,7 +203,7 @@ nonisolated final class MeshLibrary {
     /// Tree LOD uses this for one crossed-quad model per LST atlas type, then
     /// instances it for every BTT reference. Generated keys join normal
     /// touched-key eviction + texture liveness accounting.
-    func generatedModel(key: String, model: Model) throws -> RenderModel {
+    public func generatedModel(key: String, model: Model) throws -> RenderModel {
         let cacheKey = "generated|\(key)"
         touchedKeys.insert(cacheKey)
         if let hit = cache[cacheKey] {
@@ -236,23 +236,23 @@ nonisolated final class MeshLibrary {
 
     /// Shapes dropped during flatten for an already-loaded path (nil if the
     /// path was never successfully loaded).
-    func skippedShapeCount(forPath path: String) -> Int? {
+    public func skippedShapeCount(forPath path: String) -> Int? {
         guard let key = try? meshKey(for: path) else { return nil }
         return skippedShapes[key]
     }
 
     /// Total shapes dropped across every loaded model.
-    var totalSkippedShapeCount: Int {
+    public var totalSkippedShapeCount: Int {
         skippedShapes.values.reduce(0, +)
     }
 
     /// Model-space bounds for an already-loaded path (nil if the path never
     /// loaded or the model carried no vertex positions).
-    func bounds(forPath path: String) -> ModelBounds? {
+    public func bounds(forPath path: String) -> ModelBounds? {
         bounds(forPath: path, terrainLODClipMask: nil)
     }
 
-    func bounds(
+    public func bounds(
         forPath path: String,
         terrainLODClipMask: TerrainLODClipMask?
     ) -> ModelBounds? {
@@ -266,7 +266,7 @@ nonisolated final class MeshLibrary {
     /// Returns and clears the mesh keys touched since the last drain -- one
     /// cell's mesh working set, recorded onto its CellScene so unload can
     /// compute which models are still needed. Build-queue confined.
-    func drainTouchedKeys() -> Set<String> {
+    public func drainTouchedKeys() -> Set<String> {
         let out = touchedKeys
         touchedKeys.removeAll(keepingCapacity: true)
         return out
@@ -281,7 +281,7 @@ nonisolated final class MeshLibrary {
     /// frees the GPU buffers when in-flight frames drain. Reloads on demand if
     /// the cell returns. Runs on the build queue. Returns freed model count.
     @discardableResult
-    func evict(dropping keys: Set<String>) -> Int {
+    public func evict(dropping keys: Set<String>) -> Int {
         var freed = 0
         for key in keys {
             if cache.removeValue(forKey: key) != nil {
@@ -297,14 +297,14 @@ nonisolated final class MeshLibrary {
 
     /// Normalizes a MODL-style path and prepends the "meshes\\" root when the
     /// record omitted it. Rejects empty/escaping paths as not-found.
-    func meshKey(for path: String) throws -> String {
+    public func meshKey(for path: String) throws -> String {
         guard let normalized = try? VirtualFileSystem.normalize(path) else {
             throw MeshLibraryError.fileNotFound(path: path)
         }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
     }
 
-    func cacheKey(
+    public func cacheKey(
         path: String,
         terrainLODClipMask: TerrainLODClipMask?,
         actorSkeletonKey: String? = nil,

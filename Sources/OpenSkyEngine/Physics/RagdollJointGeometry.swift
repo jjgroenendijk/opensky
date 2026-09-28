@@ -32,10 +32,10 @@
 import simd
 
 /// One body's end of a joint, in world space at the current pose.
-nonisolated struct RagdollWorldFrame: Sendable {
-    let pivot: SIMD3<Float>
-    let primaryAxis: SIMD3<Float>
-    let secondaryAxis: SIMD3<Float>
+nonisolated public struct RagdollWorldFrame: Sendable {
+    public let pivot: SIMD3<Float>
+    public let primaryAxis: SIMD3<Float>
+    public let secondaryAxis: SIMD3<Float>
 }
 
 /// One angular limit found violated: which way it is violated and by how much.
@@ -43,18 +43,18 @@ nonisolated struct RagdollWorldFrame: Sendable {
 /// `axis` is the direction for which `dot(angularVelocityB - angularVelocityA,
 /// axis)` is the rate `error` grows at. The solver's whole sign convention rests
 /// on that sentence.
-nonisolated struct RagdollJointLimitPass: Sendable {
-    let axis: SIMD3<Float>
+nonisolated public struct RagdollJointLimitPass: Sendable {
+    public let axis: SIMD3<Float>
     /// Radians past the limit. Zero or below means the limit is satisfied and
     /// the solver skips it.
-    let error: Float
+    public let error: Float
 
-    static let satisfied = RagdollJointLimitPass(axis: SIMD3(0, 0, 1), error: 0)
+    public static let satisfied = RagdollJointLimitPass(axis: SIMD3(0, 0, 1), error: 0)
 
     /// Every limit slot of one joint, in a fixed order so that a slot's
     /// accumulated impulse means the same thing on every iteration. Always four
     /// entries; unused and satisfied slots come back with a zero error.
-    static func passes(
+    public static func passes(
         of joint: RagdollJointDefinition,
         frames: (a: RagdollWorldFrame, b: RagdollWorldFrame)
     ) -> [RagdollJointLimitPass] {
@@ -210,12 +210,12 @@ nonisolated struct RagdollJointLimitPass: Sendable {
 nonisolated extension RagdollJointDefinition {
     /// Both bodies exist in `bodies`. Checked once per visit rather than
     /// trusted, because a definition and a body list are assembled separately.
-    func isResolvable(in bodies: [DynamicBody]) -> Bool {
+    public func isResolvable(in bodies: [DynamicBody]) -> Bool {
         bodies.indices.contains(bodyA) && bodies.indices.contains(bodyB)
     }
 
     /// Both anchors in world space at the current pose.
-    func anchors(in bodies: [DynamicBody]) -> (a: SIMD3<Float>, b: SIMD3<Float>) {
+    public func anchors(in bodies: [DynamicBody]) -> (a: SIMD3<Float>, b: SIMD3<Float>) {
         (
             a: bodies[bodyA].position + bodies[bodyA].orientation.act(frameA.pivot),
             b: bodies[bodyB].position + bodies[bodyB].orientation.act(frameB.pivot)
@@ -223,7 +223,7 @@ nonisolated extension RagdollJointDefinition {
     }
 
     /// Both frames in world space at the current pose.
-    func worldFrames(
+    public func worldFrames(
         in bodies: [DynamicBody]
     ) -> (a: RagdollWorldFrame, b: RagdollWorldFrame) {
         (a: frameA.world(in: bodies[bodyA]), b: frameB.world(in: bodies[bodyB]))
@@ -231,7 +231,7 @@ nonisolated extension RagdollJointDefinition {
 }
 
 nonisolated extension RagdollJointFrame {
-    func world(in body: DynamicBody) -> RagdollWorldFrame {
+    public func world(in body: DynamicBody) -> RagdollWorldFrame {
         RagdollWorldFrame(
             pivot: body.position + body.orientation.act(pivot),
             primaryAxis: body.orientation.act(primaryAxis),
@@ -242,9 +242,9 @@ nonisolated extension RagdollJointFrame {
 
 /// Small vector routines the joint solver needs and `simd` does not supply, each
 /// written to return nothing rather than a NaN on degenerate input.
-nonisolated enum RagdollMath {
+nonisolated public enum RagdollMath: Sendable {
     /// The cross-product matrix of `vector`, so that `skew(v) * w == cross(v, w)`.
-    static func skew(_ vector: SIMD3<Float>) -> float3x3 {
+    public static func skew(_ vector: SIMD3<Float>) -> float3x3 {
         float3x3(
             SIMD3(0, vector.z, -vector.y),
             SIMD3(-vector.z, 0, vector.x),
@@ -253,7 +253,7 @@ nonisolated enum RagdollMath {
     }
 
     /// A unit vector, or nil when there is no direction to extract.
-    static func unit(_ vector: SIMD3<Float>) -> SIMD3<Float>? {
+    public static func unit(_ vector: SIMD3<Float>) -> SIMD3<Float>? {
         let lengthSquared = simd_length_squared(vector)
         guard lengthSquared.isFinite, lengthSquared > 1e-12 else { return nil }
         return vector / lengthSquared.squareRoot()
@@ -261,7 +261,7 @@ nonisolated enum RagdollMath {
 
     /// Unsigned angle between two directions, in radians. Zero for anything
     /// degenerate, which reads as "no violation" everywhere it is used.
-    static func angle(between first: SIMD3<Float>, and second: SIMD3<Float>) -> Float {
+    public static func angle(between first: SIMD3<Float>, and second: SIMD3<Float>) -> Float {
         guard let lhs = unit(first), let rhs = unit(second) else { return 0 }
         let angle = acos(min(max(simd_dot(lhs, rhs), -1), 1))
         return angle.isFinite ? angle : 0
@@ -271,7 +271,7 @@ nonisolated enum RagdollMath {
     /// over `-pi ... pi`. Both inputs are projected perpendicular to the axis
     /// first, because a roll is only defined for the components that are free to
     /// roll.
-    static func signedAngle(
+    public static func signedAngle(
         from first: SIMD3<Float>,
         to second: SIMD3<Float>,
         about axis: SIMD3<Float>
@@ -287,7 +287,7 @@ nonisolated enum RagdollMath {
 
     /// Some unit vector perpendicular to `axis`, for the antiparallel case where
     /// a cross product carries no direction at all.
-    static func anyPerpendicular(_ axis: SIMD3<Float>) -> SIMD3<Float>? {
+    public static func anyPerpendicular(_ axis: SIMD3<Float>) -> SIMD3<Float>? {
         guard let normal = unit(axis) else { return nil }
         let reference = abs(normal.z) < 0.9
             ? SIMD3<Float>(0, 0, 1) : SIMD3<Float>(1, 0, 0)

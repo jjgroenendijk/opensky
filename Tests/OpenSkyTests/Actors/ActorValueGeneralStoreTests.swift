@@ -7,7 +7,7 @@
 // Format" RACE, CLAS and NPC_ pages; see docs/formats/actors.md.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

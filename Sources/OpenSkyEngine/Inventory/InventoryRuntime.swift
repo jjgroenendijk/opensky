@@ -33,24 +33,24 @@ import OpenSkyFormats
 /// attributed to the wrong cell. `cell` is optional for the same reason the
 /// store's is: a script may empty a container in a cell that has never been
 /// loaded.
-nonisolated struct InventoryHolder: Equatable, Sendable {
-    let key: ReferenceKey
-    let owner: InventoryOwner
-    let cell: CellSceneLocation?
+nonisolated public struct InventoryHolder: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let owner: InventoryOwner
+    public let cell: CellSceneLocation?
 
-    init(key: ReferenceKey, owner: InventoryOwner, cell: CellSceneLocation? = nil) {
+    public init(key: ReferenceKey, owner: InventoryOwner, cell: CellSceneLocation? = nil) {
         self.key = key
         self.owner = owner
         self.cell = cell
     }
 
     /// The player, whose baseline is empty and who belongs to no cell.
-    static let player = InventoryHolder(key: .player, owner: .player, cell: nil)
+    public static let player = InventoryHolder(key: .player, owner: .player, cell: nil)
 }
 
 /// Reads and mutates inventories on top of a `WorldStateStore`.
 @MainActor
-struct InventoryRuntime {
+public struct InventoryRuntime {
     /// Vanilla gold, `Gold001`.
     ///
     /// Gold is an ordinary `MISC` item and an ordinary stack — there is no
@@ -59,16 +59,16 @@ struct InventoryRuntime {
     /// from memory: `openskycli record Gold001` reports
     /// `MISC 0000000F — decoded MISC: editorID Gold001, value 1, weight 0.00`.
     /// Cross-checked against UESP "Skyrim:Gold".
-    nonisolated static let vanillaGoldFormID = FormID(0x0000_000F)
+    nonisolated public static let vanillaGoldFormID = FormID(0x0000_000F)
 
-    let store: WorldStateStore
-    let baselines: InventoryBaselineResolver
+    public let store: WorldStateStore
+    public let baselines: InventoryBaselineResolver
     /// Which form counts as money. A settable property rather than a hardcoded
     /// constant, because a total-conversion load order need not use
     /// `Skyrim.esm`'s gold and the engine has no business assuming it does.
-    let goldFormID: FormID
+    public let goldFormID: FormID
 
-    init(
+    public init(
         store: WorldStateStore,
         baselines: InventoryBaselineResolver,
         goldFormID: FormID = InventoryRuntime.vanillaGoldFormID
@@ -82,24 +82,24 @@ struct InventoryRuntime {
 
     /// `holder`'s effective inventory: its runtime component when it has one,
     /// its re-derived plugin baseline when it does not.
-    func inventory(of holder: InventoryHolder) -> ReferenceInventoryState {
+    public func inventory(of holder: InventoryHolder) -> ReferenceInventoryState {
         store.component(ReferenceInventoryState.self, for: holder.key)
             ?? baselines.baseline(for: holder.owner)
     }
 
     /// Whether `holder` has been touched at runtime, as opposed to still
     /// reading straight from plugin data.
-    func hasRuntimeInventory(_ holder: InventoryHolder) -> Bool {
+    public func hasRuntimeInventory(_ holder: InventoryHolder) -> Bool {
         store.component(ReferenceInventoryState.self, for: holder.key) != nil
     }
 
     /// How many of `item` `holder` holds, honest and stolen copies together.
-    func count(of item: FormID, in holder: InventoryHolder) -> Int32 {
+    public func count(of item: FormID, in holder: InventoryHolder) -> Int32 {
         inventory(of: holder).count(of: item)
     }
 
     /// How many stolen copies of `item` `holder` holds (issue #504).
-    func stolenCount(of item: FormID, in holder: InventoryHolder) -> Int32 {
+    public func stolenCount(of item: FormID, in holder: InventoryHolder) -> Int32 {
         inventory(of: holder).stolenCount(of: item)
     }
 
@@ -110,7 +110,7 @@ struct InventoryRuntime {
     /// number the data never authored into an encumbrance check. Weight is
     /// summed in `Double` and returned as `Float` so a large stack does not
     /// accumulate rounding error one addition at a time.
-    func carriedWeight(of holder: InventoryHolder) -> Float {
+    public func carriedWeight(of holder: InventoryHolder) -> Float {
         let inventory = inventory(of: holder)
         let total = inventory.stacks.reduce(0.0) { running, stack in
             let weight = baselines.items.definition(stack.item)?.weight ?? 0
@@ -121,7 +121,7 @@ struct InventoryRuntime {
 
     /// Total gold value of everything `holder` carries, before any barter
     /// adjustment. Merchant pricing is issue #179.
-    func carriedValue(of holder: InventoryHolder) -> Int64 {
+    public func carriedValue(of holder: InventoryHolder) -> Int64 {
         inventory(of: holder).stacks.reduce(0) { running, stack in
             let value = baselines.items.definition(stack.item)?.value ?? 0
             return running + Int64(value) * Int64(stack.count)
@@ -129,7 +129,7 @@ struct InventoryRuntime {
     }
 
     /// How much money `holder` has, which is just the size of its gold stack.
-    func goldCount(of holder: InventoryHolder) -> Int32 {
+    public func goldCount(of holder: InventoryHolder) -> Int32 {
         count(of: goldFormID, in: holder)
     }
 
@@ -144,7 +144,7 @@ struct InventoryRuntime {
     /// - Returns: the inventory as stored afterwards.
     /// - Throws: `InventoryError.nonPositiveCount`, `InventoryError.countOverflow`.
     @discardableResult
-    func add(
+    public func add(
         _ item: FormID,
         count: Int32,
         to holder: InventoryHolder,
@@ -162,7 +162,7 @@ struct InventoryRuntime {
     ///
     /// - Returns: true when the stored state changed.
     @discardableResult
-    func markStolen(_ item: FormID, count: Int32, in holder: InventoryHolder) -> Bool {
+    public func markStolen(_ item: FormID, count: Int32, in holder: InventoryHolder) -> Bool {
         store.set(
             inventory(of: holder).markingStolen(item, count: count),
             for: holder.key,
@@ -180,7 +180,7 @@ struct InventoryRuntime {
     /// - Returns: the inventory as stored afterwards.
     /// - Throws: `InventoryError.nonPositiveCount`, `InventoryError.insufficientCount`.
     @discardableResult
-    func remove(_ item: FormID, count: Int32, from holder: InventoryHolder) throws
+    public func remove(_ item: FormID, count: Int32, from holder: InventoryHolder) throws
         -> ReferenceInventoryState
     {
         let updated = try inventory(of: holder).removing(item, count: count, owner: holder.key)
@@ -203,7 +203,7 @@ struct InventoryRuntime {
     /// (<https://en.uesp.net/wiki/Skyrim:Crime>). `markingStolen` marks the
     /// whole movement stolen on arrival instead, which is what taking out of a
     /// container somebody else owns does (issue #504).
-    func transfer(
+    public func transfer(
         _ item: FormID,
         count: Int32,
         from source: InventoryHolder,
@@ -245,7 +245,7 @@ struct InventoryRuntime {
     ///
     /// - Throws: `InventoryError.sameHolder`, plus everything the inventory
     ///   arithmetic throws. Nothing is written on any failure.
-    func exchange(
+    public func exchange(
         giving given: (item: FormID, amount: Int32),
         taking taken: (item: FormID, amount: Int32),
         from first: InventoryHolder,
@@ -285,7 +285,7 @@ struct InventoryRuntime {
     /// - Returns: the stacks that moved, empty when nothing was stolen.
     /// - Throws: `InventoryError.sameHolder`, `InventoryError.countOverflow`.
     @discardableResult
-    func confiscateStolen(
+    public func confiscateStolen(
         from source: InventoryHolder,
         to destination: InventoryHolder
     ) throws -> [InventoryStack] {
@@ -312,7 +312,7 @@ struct InventoryRuntime {
     ///
     /// - Returns: true when the stored state changed.
     @discardableResult
-    func equip(_ item: FormID, on holder: InventoryHolder) -> Bool {
+    public func equip(_ item: FormID, on holder: InventoryHolder) -> Bool {
         store.set(inventory(of: holder).equipping(item), for: holder.key, in: holder.cell)
     }
 
@@ -320,7 +320,7 @@ struct InventoryRuntime {
     ///
     /// - Returns: true when the stored state changed.
     @discardableResult
-    func unequip(_ item: FormID, on holder: InventoryHolder) -> Bool {
+    public func unequip(_ item: FormID, on holder: InventoryHolder) -> Bool {
         store.set(inventory(of: holder).unequipping(item), for: holder.key, in: holder.cell)
     }
 
@@ -328,7 +328,7 @@ struct InventoryRuntime {
     ///
     /// - Returns: true when the stored state changed.
     @discardableResult
-    func setEquipped(_ items: [FormID], on holder: InventoryHolder) -> Bool {
+    public func setEquipped(_ items: [FormID], on holder: InventoryHolder) -> Bool {
         store.set(inventory(of: holder).settingEquipped(items), for: holder.key, in: holder.cell)
     }
 
@@ -339,7 +339,7 @@ struct InventoryRuntime {
     ///
     /// - Returns: true when a runtime inventory was actually removed.
     @discardableResult
-    func reset(_ holder: InventoryHolder) -> Bool {
+    public func reset(_ holder: InventoryHolder) -> Bool {
         store.reset(.inventory, for: holder.key)
     }
 }

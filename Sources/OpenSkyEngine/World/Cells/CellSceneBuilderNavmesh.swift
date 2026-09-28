@@ -21,7 +21,7 @@ nonisolated extension CellSceneBuilder {
     ///
     /// Static because it reads nothing but the group handed to it; tests and
     /// probes can decode a synthetic cell without a mesh library or device.
-    nonisolated static func collectNavmeshes(in cellChildren: ESMGroup?) -> [Navmesh] {
+    nonisolated public static func collectNavmeshes(in cellChildren: ESMGroup?) -> [Navmesh] {
         guard let cellChildren, let children = try? cellChildren.children() else {
             if cellChildren != nil {
                 logger.warning("malformed cell-children group skipped")

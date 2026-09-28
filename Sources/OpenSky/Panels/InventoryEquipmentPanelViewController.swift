@@ -18,6 +18,7 @@
 // both.
 
 import AppKit
+import OpenSkyEngine
 
 final class InventoryEquipmentPanelViewController: InspectorPanelViewController {
     let grantsSection = InventoryGrantsSection()

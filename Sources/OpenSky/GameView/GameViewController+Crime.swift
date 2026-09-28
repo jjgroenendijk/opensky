@@ -19,6 +19,7 @@
 // rather than recomputed, so a take costs no raycast.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

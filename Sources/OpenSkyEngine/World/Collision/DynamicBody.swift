@@ -18,59 +18,59 @@ nonisolated extension simd_quatf {
     /// The no-rotation quaternion. `simd` supplies `matrix_identity_float4x4`
     /// but no quaternion equivalent, and a body placed by an unrotated
     /// reference needs one at every construction site.
-    static let identityRotation = simd_quatf(real: 1, imag: .zero)
+    public static let identityRotation = simd_quatf(real: 1, imag: .zero)
 }
 
 /// One decoded shape kept in its original form, so a moving body can be handed
 /// to the player capsule's narrowphase as an ordinary placed collision shape.
 /// The transform is centre-of-mass-local; composing it with the body's world
 /// pose gives the same matrix a static placement would carry.
-nonisolated struct DynamicBodyColliderShape: Sendable {
-    let transform: float4x4
-    let geometry: NIFCollisionGeometry
-    let material: FormID?
+nonisolated public struct DynamicBodyColliderShape: Sendable {
+    public let transform: float4x4
+    public let geometry: NIFCollisionGeometry
+    public let material: FormID?
 }
 
 /// The unchanging half of a body: its collider, its inertia, and the material
 /// constants the solver reads. One definition per placed reference, shared by
 /// every step it lives through.
-nonisolated struct DynamicBodyDefinition: Sendable {
+nonisolated public struct DynamicBodyDefinition: Sendable {
     /// Convex volumes in centre-of-mass-local space. More than one where the
     /// source `bhkRigidBody` carried several shapes.
-    let volumes: [DynamicCollisionVolume]
+    public let volumes: [DynamicCollisionVolume]
     /// The same shapes undigested, for queries that want placed geometry rather
     /// than a convex volume: the player capsule, the interaction ray, and the
     /// shape sweeps.
-    let colliderShapes: [DynamicBodyColliderShape]
+    public let colliderShapes: [DynamicBodyColliderShape]
     /// Kilograms; always positive and finite.
-    let mass: Float
-    let inverseMass: Float
+    public let mass: Float
+    public let inverseMass: Float
     /// Body-local inverse inertia about the centre of mass, in 1/(kg unit^2).
-    let inverseInertia: float3x3
+    public let inverseInertia: float3x3
     /// Where the centre of mass sits relative to the reference's own origin, in
     /// engine units. Persisting a resting transform needs it, because the store
     /// records the origin and the solver tracks the centre of mass.
-    let centerOfMass: SIMD3<Float>
+    public let centerOfMass: SIMD3<Float>
     /// Fraction of velocity shed per second.
-    let linearDamping: Float
-    let angularDamping: Float
-    let friction: Float
-    let restitution: Float
-    let gravityFactor: Float
+    public let linearDamping: Float
+    public let angularDamping: Float
+    public let friction: Float
+    public let restitution: Float
+    public let gravityFactor: Float
     /// Engine units per second.
-    let maximumLinearSpeed: Float
+    public let maximumLinearSpeed: Float
     /// Radians per second.
-    let maximumAngularSpeed: Float
+    public let maximumAngularSpeed: Float
     /// Farthest surface point from the centre of mass, over every volume.
-    let boundingRadius: Float
+    public let boundingRadius: Float
 
     /// Vanilla clutter leaves the velocity ceilings at Havok's defaults, which
     /// are large enough that a body accelerating unchecked between two walls
     /// could still tunnel. These are the ceilings a body is held to when its
     /// own are absent or implausible; both are generous next to anything a fall
     /// or a shove produces.
-    static let defaultMaximumLinearSpeed: Float = 8000
-    static let defaultMaximumAngularSpeed: Float = 40
+    public static let defaultMaximumLinearSpeed: Float = 8000
+    public static let defaultMaximumAngularSpeed: Float = 40
 
     /// One simulated rigid body for a whole placed reference, from every
     /// simulated `bhkRigidBody` its model carries, at the reference's uniform
@@ -93,7 +93,7 @@ nonisolated struct DynamicBodyDefinition: Sendable {
     ///
     /// Nil where nothing is simulable: no body has a known simulated motion
     /// system with a positive finite mass, or no convex volume survived.
-    init?(
+    public init?(
         bodies: [NIFCollisionBody],
         referenceScale: Float,
         materials: MaterialTypeIndex? = nil
@@ -189,7 +189,7 @@ nonisolated struct DynamicBodyDefinition: Sendable {
 
     /// A definition assembled directly, for tests and for the dropped-item path
     /// that has a shape and a mass but no decoded `bhkRigidBody` behind it.
-    init(
+    public init(
         volumes: [DynamicCollisionVolume],
         mass: Float,
         colliderShapes: [DynamicBodyColliderShape] = [],
@@ -281,30 +281,30 @@ nonisolated struct DynamicBodyDefinition: Sendable {
 /// A body's pose and motion. Position is the centre of mass, because that is
 /// the point every impulse is measured against; `originPosition` recovers the
 /// reference's own origin for rendering and for persistence.
-nonisolated struct DynamicBody: Sendable {
+nonisolated public struct DynamicBody: Sendable {
     /// Session-stable identity, and the solver's iteration order: bodies step
     /// in ascending key so that two runs of the same scene produce the same
     /// trajectories.
-    let key: ReferenceKey
+    public let key: ReferenceKey
     /// The placed reference this body stands for, for query attribution.
-    let reference: FormID
+    public let reference: FormID
     /// The cell whose record placed this reference. It remains authoritative
     /// for rebuilds and persistence even after the body crosses a boundary.
-    let placingCell: CellSceneLocation
+    public let placingCell: CellSceneLocation
     /// The cell containing the live origin. Exterior integration updates this
     /// at the end of every fixed step; interiors never re-bin.
-    var occupiedCell: CellSceneLocation
-    let definition: DynamicBodyDefinition
-    var position: SIMD3<Float>
-    var orientation: simd_quatf
-    var linearVelocity: SIMD3<Float> = .zero
-    var angularVelocity: SIMD3<Float> = .zero
+    public var occupiedCell: CellSceneLocation
+    public let definition: DynamicBodyDefinition
+    public var position: SIMD3<Float>
+    public var orientation: simd_quatf
+    public var linearVelocity: SIMD3<Float> = .zero
+    public var angularVelocity: SIMD3<Float> = .zero
     /// True once the body has been still long enough to stop being integrated.
-    var isSleeping = false
+    public var isSleeping = false
     /// Consecutive steps spent below the sleep thresholds.
-    var restingSteps = 0
+    public var restingSteps = 0
 
-    init(
+    public init(
         key: ReferenceKey,
         reference: FormID,
         cell: CellSceneLocation,
@@ -323,20 +323,20 @@ nonisolated struct DynamicBody: Sendable {
 
     /// Where the reference's own origin sits, which is what a transform
     /// override records and what a draw call places the mesh by.
-    var originPosition: SIMD3<Float> {
+    public var originPosition: SIMD3<Float> {
         position - orientation.act(definition.centerOfMass)
     }
 
     /// World AABB of every volume at the current pose, inflated by the
     /// bounding-sphere radius so it stays valid through one step's rotation.
-    var worldBounds: ModelBounds {
+    public var worldBounds: ModelBounds {
         let extent = SIMD3<Float>(repeating: definition.boundingRadius)
         return ModelBounds(min: position - extent, max: position + extent)
     }
 
     /// Pose as a matrix: the frame every centre-of-mass-local shape transform
     /// composes with to land in the world.
-    var worldMatrix: float4x4 {
+    public var worldMatrix: float4x4 {
         MatrixMath.translation(position) * float4x4(orientation)
     }
 
@@ -350,7 +350,7 @@ nonisolated struct DynamicBody: Sendable {
     /// transform the mesh carries, and no draw call has to know which is which.
     /// Nil when nothing has moved, which is the resting case and keeps the map
     /// the renderer consults empty in a world that is standing still.
-    func instanceDelta(
+    public func instanceDelta(
         fromPlacedPosition placed: SIMD3<Float>,
         orientation placedOrientation: simd_quatf
     ) -> float4x4? {
@@ -366,7 +366,7 @@ nonisolated struct DynamicBody: Sendable {
     /// pose, so the player capsule, the interaction ray, and the shape sweeps
     /// see moving clutter through exactly the query they already use for the
     /// static world.
-    func placedShapes() -> [StaticCollisionShape] {
+    public func placedShapes() -> [StaticCollisionShape] {
         let matrix = worldMatrix
         return definition.colliderShapes.compactMap { shape in
             let transform = matrix * shape.transform
@@ -382,20 +382,20 @@ nonisolated struct DynamicBody: Sendable {
     }
 
     /// Velocity of the material point currently at `worldPoint`.
-    func velocity(at worldPoint: SIMD3<Float>) -> SIMD3<Float> {
+    public func velocity(at worldPoint: SIMD3<Float>) -> SIMD3<Float> {
         linearVelocity + simd_cross(angularVelocity, worldPoint - position)
     }
 
     /// World-space inverse inertia, which is the body-local tensor rotated into
     /// the pose the impulse is applied at.
-    var worldInverseInertia: float3x3 {
+    public var worldInverseInertia: float3x3 {
         let rotation = float3x3(orientation)
         return rotation * definition.inverseInertia * rotation.transpose
     }
 
     /// Applies an impulse at a world point, waking the body. Kilogram engine
     /// units per second, the same units `linearVelocity` is in times the mass.
-    mutating func applyImpulse(_ impulse: SIMD3<Float>, at worldPoint: SIMD3<Float>) {
+    public mutating func applyImpulse(_ impulse: SIMD3<Float>, at worldPoint: SIMD3<Float>) {
         guard impulse.isFiniteVector, simd_length_squared(impulse) > Float.ulpOfOne else {
             return
         }
@@ -404,13 +404,13 @@ nonisolated struct DynamicBody: Sendable {
         angularVelocity += worldInverseInertia * simd_cross(worldPoint - position, impulse)
     }
 
-    mutating func wake() {
+    public mutating func wake() {
         isSleeping = false
         restingSteps = 0
     }
 
     /// Contact samples of every volume, paired with the skin each carries.
-    func contactSamples() -> [(point: SIMD3<Float>, radius: Float)] {
+    public func contactSamples() -> [(point: SIMD3<Float>, radius: Float)] {
         definition.volumes.flatMap { volume in
             volume.contactSamples(position: position, orientation: orientation)
                 .map { (point: $0, radius: volume.skinRadius) }
@@ -419,7 +419,7 @@ nonisolated struct DynamicBody: Sendable {
 
     /// How deep a world-space sphere sits inside this body, taking the deepest
     /// of its volumes. The normal points out of the body.
-    func penetration(of worldPoint: SIMD3<Float>, radius: Float) -> DynamicPenetration? {
+    public func penetration(of worldPoint: SIMD3<Float>, radius: Float) -> DynamicPenetration? {
         let inverse = orientation.inverse
         let local = inverse.act(worldPoint - position)
         var deepest: DynamicPenetration?

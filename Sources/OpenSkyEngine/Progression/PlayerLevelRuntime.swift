@@ -39,22 +39,22 @@ import Foundation
 import OpenSkyFormats
 
 /// What one award of character experience did.
-nonisolated struct PlayerLevelUpReport: Equatable, Sendable {
+nonisolated public struct PlayerLevelUpReport: Equatable, Sendable {
     /// The level before and after.
-    let previousLevel: Int
-    let level: Int
+    public let previousLevel: Int
+    public let level: Int
     /// Experience left banked toward the next level.
-    let carriedExperience: Float
+    public let carriedExperience: Float
     /// Perk points owned after the award.
-    let perkPoints: Int
+    public let perkPoints: Int
     /// Attribute picks owed after the award.
-    let pendingAttributePicks: Int
+    public let pendingAttributePicks: Int
 
-    var levelsGained: Int {
+    public var levelsGained: Int {
         max(0, level - previousLevel)
     }
 
-    var didLevel: Bool {
+    public var didLevel: Bool {
         level > previousLevel
     }
 }
@@ -64,7 +64,7 @@ nonisolated struct PlayerLevelUpReport: Equatable, Sendable {
 /// Typed and exhaustive rather than a bool, because every case is something a
 /// level-up screen has to say out loud: item 20.7 turns each of these into the
 /// reason a button is disabled.
-nonisolated enum PlayerProgressError: Error, Equatable, Sendable {
+nonisolated public enum PlayerProgressError: Error, Equatable, Sendable {
     /// No attribute pick is owed.
     case noAttributePickOwed
     /// The perk-point pool is empty.
@@ -74,18 +74,18 @@ nonisolated enum PlayerProgressError: Error, Equatable, Sendable {
 }
 
 /// What a refused or accepted progress write answers with.
-typealias PlayerProgressResult = Result<PlayerProgressState, PlayerProgressError>
+public typealias PlayerProgressResult = Result<PlayerProgressState, PlayerProgressError>
 
 /// Reads and mutates the player's character-level progress.
 @MainActor
-struct PlayerLevelRuntime {
+public struct PlayerLevelRuntime {
     /// The read and write surface for the attribute pick and the carry-weight
     /// bonus that rides with a stamina pick.
-    let values: ActorValueRuntime
+    public let values: ActorValueRuntime
     /// The resolved level curve and level-up rewards.
-    var settings: CharacterLevelSettings
+    public var settings: CharacterLevelSettings
 
-    init(
+    public init(
         values: ActorValueRuntime,
         settings: CharacterLevelSettings = .documentedDefaults
     ) {
@@ -102,32 +102,32 @@ struct PlayerLevelRuntime {
     /// the one that scales a `PC Level Mult` actor against it are the same
     /// value, so there is no wiring step that can connect one and forget the
     /// other.
-    var levelSource: PlayerLevelSource {
+    public var levelSource: PlayerLevelSource {
         values.baselines.playerLevel
     }
 
     /// The player's holder, which is the only character this runtime levels.
-    var holder: ActorValueHolder {
+    public var holder: ActorValueHolder {
         .player
     }
 
     // MARK: - Reading
 
-    var state: PlayerProgressState {
+    public var state: PlayerProgressState {
         values.store.component(PlayerProgressState.self, for: ReferenceKey.player)
             ?? PlayerProgressState()
     }
 
-    var level: Int {
+    public var level: Int {
         state.level
     }
 
-    var perkPoints: Int {
+    public var perkPoints: Int {
         state.perkPoints
     }
 
     /// What the next level costs from where the player stands.
-    var experienceForNextLevel: Float {
+    public var experienceForNextLevel: Float {
         CharacterLeveling.experienceForNextLevel(atLevel: level, settings: settings)
     }
 
@@ -138,7 +138,7 @@ struct PlayerLevelRuntime {
     /// - Returns: what happened, including the no-op shape when the award did
     ///   not reach the threshold.
     @discardableResult
-    func award(characterExperience amount: Float) -> PlayerLevelUpReport {
+    public func award(characterExperience amount: Float) -> PlayerLevelUpReport {
         let banked = state.banking(experience: amount)
         let outcome = CharacterLeveling.advance(
             experience: banked.experience,
@@ -150,7 +150,7 @@ struct PlayerLevelRuntime {
 
     /// Notes `count` skill points gained, which the level-up screen counts
     /// separately from the experience they banked.
-    func noteSkillIncreases(_ count: Int) {
+    public func noteSkillIncreases(_ count: Int) {
         write(state.notingSkillIncreases(count))
     }
 
@@ -173,7 +173,7 @@ struct PlayerLevelRuntime {
     /// - Returns: the state afterwards, or `.noAttributePickOwed` when nothing
     ///   is owed. Never traps and never hands out an unpaid-for ten points.
     @discardableResult
-    func chooseAttribute(_ kind: ActorValueKind) -> PlayerProgressResult {
+    public func chooseAttribute(_ kind: ActorValueKind) -> PlayerProgressResult {
         guard let chosen = state.choosing(kind) else {
             return .failure(.noAttributePickOwed)
         }
@@ -198,7 +198,7 @@ struct PlayerLevelRuntime {
     ///
     /// - Returns: the state afterwards, or `.noPerkPoints`.
     @discardableResult
-    func spendPerkPoint() -> PlayerProgressResult {
+    public func spendPerkPoint() -> PlayerProgressResult {
         guard let spent = state.spendingPerkPoint() else {
             return .failure(.noPerkPoints)
         }
@@ -208,7 +208,7 @@ struct PlayerLevelRuntime {
 
     /// Adds or removes perk points outright, which is `Game.ModPerkPoints`.
     @discardableResult
-    func modifyPerkPoints(by delta: Int) -> PlayerProgressState {
+    public func modifyPerkPoints(by delta: Int) -> PlayerProgressState {
         let modified = state.modifyingPerkPoints(by: delta)
         write(modified)
         return modified

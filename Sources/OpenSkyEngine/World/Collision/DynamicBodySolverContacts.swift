@@ -15,7 +15,7 @@ import simd
 nonisolated extension DynamicBodySolver {
     /// Internal rather than private because `step` lives in the other half of
     /// this enum; the split is for the type-length limit, not for encapsulation.
-    static func resolve(
+    public static func resolve(
         contacts: [DynamicContact],
         bodies: inout [DynamicBody]
     ) {
@@ -34,7 +34,7 @@ nonisolated extension DynamicBodySolver {
     /// Alternating their order avoids giving either family the last word on
     /// every iteration, while the shared accumulated impulses let both
     /// converge across the entire substep.
-    static func resolveRagdoll(
+    public static func resolveRagdoll(
         contacts: [DynamicContact],
         joints: [RagdollJointDefinition],
         bodies: inout [DynamicBody],

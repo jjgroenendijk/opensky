@@ -3,7 +3,7 @@
 // corrupt stored value falls back to .high without crashing.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct ShadowQualitySettingsTests {

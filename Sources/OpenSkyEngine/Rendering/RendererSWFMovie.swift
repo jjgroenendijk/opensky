@@ -19,9 +19,9 @@ import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 
-nonisolated final class SWFMovieResources {
+nonisolated public final class SWFMovieResources {
     /// A shape fill resolved to renderer terms at build time.
-    enum ResolvedFill {
+    public enum ResolvedFill: Sendable {
         case solid(SIMD4<Float>)
         /// `toUV` maps shape-local twips to normalized texture coordinates.
         case bitmap(characterId: UInt16, toUV: SWFTransform, tiled: Bool)
@@ -29,67 +29,67 @@ nonisolated final class SWFMovieResources {
         case gradient(row: Int, toSquare: SWFTransform, radial: Bool, spread: SWFGradientSpread)
     }
 
-    struct RunEntry {
-        let vertexStart: Int
-        let vertexCount: Int
-        let fill: ResolvedFill
+    public struct RunEntry: Sendable {
+        public let vertexStart: Int
+        public let vertexCount: Int
+        public let fill: ResolvedFill
     }
 
     /// One shape's slice of the shared vertex buffer. The whole range backs
     /// mask draws; the runs back per-fill content draws.
-    struct ShapeEntry {
-        let vertexStart: Int
-        let vertexCount: Int
-        let runs: [RunEntry]
+    public struct ShapeEntry: Sendable {
+        public let vertexStart: Int
+        public let vertexCount: Int
+        public let runs: [RunEntry]
     }
 
-    struct BitmapEntry {
-        let texture: MTLTexture
-        let premultiplied: Bool
+    public struct BitmapEntry {
+        public let texture: MTLTexture
+        public let premultiplied: Bool
     }
 
     /// One text draw planned for the current command stream: resolved font,
     /// atlas key, and the twip-space glyph placements (viewport-independent).
-    struct PlannedTextRun {
-        let font: SWFFontDefinition
-        let fontKey: Int
-        let emTwips: Float
-        let color: SIMD4<Float>
-        let glyphs: [SWFGlyphPlacement]
+    public struct PlannedTextRun: Sendable {
+        public let font: SWFFontDefinition
+        public let fontKey: Int
+        public let emTwips: Float
+        public let color: SIMD4<Float>
+        public let glyphs: [SWFGlyphPlacement]
     }
 
-    let scene: SWFMovieScene
+    public let scene: SWFMovieScene
     /// Namespaces this package's glyph-atlas font keys, so releasing the
     /// package can evict exactly its glyphs from the shared atlas.
-    let generation: Int
+    public let generation: Int
     /// The current draw-command stream: frame 1 at build, then whatever the AS2
     /// runtime last produced.
-    private(set) var commands: [SWFSceneCommand]
-    let shapes: [UInt16: ShapeEntry]
-    let bitmaps: [UInt16: BitmapEntry]
+    public private(set) var commands: [SWFSceneCommand]
+    public let shapes: [UInt16: ShapeEntry]
+    public let bitmaps: [UInt16: BitmapEntry]
     /// nil when the movie has no gradient fills (fallback ramp binds instead).
-    let gradientTexture: MTLTexture?
-    let gradientRowCount: Int
+    public let gradientTexture: MTLTexture?
+    public let gradientRowCount: Int
     /// Command index -> planned text runs for text draws.
-    private(set) var textPlans: [Int: [PlannedTextRun]]
-    let vertexBuffer: MTLBuffer
-    private(set) var glyphVertexBuffer: MTLBuffer
-    private(set) var uniformBuffer: MTLBuffer
+    public private(set) var textPlans: [Int: [PlannedTextRun]]
+    public let vertexBuffer: MTLBuffer
+    public private(set) var glyphVertexBuffer: MTLBuffer
+    public private(set) var uniformBuffer: MTLBuffer
     /// Per-frame draw slots in the uniform ring. Headroomed over the current
     /// stream so an ordinary display-list change needs no reallocation; encode
     /// counts anything beyond it as skipped.
-    private(set) var drawCapacity: Int
-    private(set) var glyphQuadCapacity: Int
+    public private(set) var drawCapacity: Int
+    public private(set) var glyphQuadCapacity: Int
     /// Fills/texts unresolvable when the current stream was planned (missing
     /// fonts, degenerate matrices) plus the flattener's own skips; folded into
     /// the per-frame skipped stat.
-    private(set) var buildSkipped: Int
+    public private(set) var buildSkipped: Int
 
     /// Skips owned by the static shape build, which updates never revisit.
     private let shapeSkipped: Int
     private let planner: SWFTextPlanner
 
-    var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [MTLAllocation] {
         var allocations: [MTLAllocation] = [vertexBuffer, glyphVertexBuffer, uniformBuffer]
         allocations.append(contentsOf: bitmaps.values.map(\.texture))
         if let gradientTexture {
@@ -98,7 +98,7 @@ nonisolated final class SWFMovieResources {
         return allocations
     }
 
-    init(device: MTLDevice, scene: SWFMovieScene, generation: Int) throws {
+    public init(device: MTLDevice, scene: SWFMovieScene, generation: Int) throws {
         self.scene = scene
         self.generation = generation
         let flattened = SWFScene.build(movie: scene.movie)
@@ -131,7 +131,7 @@ nonisolated final class SWFMovieResources {
     /// the new stream needs more slots than the old one. Returns the buffers
     /// the caller must retire (empty when nothing grew), so the renderer can
     /// keep them alive until in-flight frames drain.
-    func update(scene newScene: SWFScene, device: MTLDevice) throws -> [MTLAllocation] {
+    public func update(scene newScene: SWFScene, device: MTLDevice) throws -> [MTLAllocation] {
         let plans = planner.plan(commands: newScene.commands)
         let needed = Self.capacities(
             commands: newScene.commands, shapes: shapes, plans: plans
@@ -159,12 +159,12 @@ nonisolated final class SWFMovieResources {
 
     /// Ring slots for a stream that needs `count`: half again, never below a
     /// floor, so ordinary display-list churn never reallocates.
-    static func headroom(_ count: Int) -> Int {
+    public static func headroom(_ count: Int) -> Int {
         max(64, count + count / 2)
     }
 
     /// Exact per-frame draw + glyph-quad upper bounds for a command stream.
-    static func capacities(
+    public static func capacities(
         commands: [SWFSceneCommand],
         shapes: [UInt16: ShapeEntry],
         plans: [Int: [PlannedTextRun]]

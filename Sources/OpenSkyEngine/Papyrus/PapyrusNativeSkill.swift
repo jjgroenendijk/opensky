@@ -27,7 +27,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installSkill(into registry: inout PapyrusNativeRegistry) {
+    public static func installSkill(into registry: inout PapyrusNativeRegistry) {
         // "Function AdvanceSkill(string asSkillName, float afMagnitude) native
         // global". The page requires a positive magnitude; a zero or negative
         // one is refused here rather than quietly treated as a use, which is

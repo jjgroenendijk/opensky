@@ -33,44 +33,44 @@ import OpenSkyFormats
 /// One frame of archery intent. Filled beside `MeleeIntent` from the same
 /// drained camera input, because it is the same button: with a bow equipped the
 /// attack press draws instead of swinging.
-nonisolated struct ArcheryIntent: Equatable, Sendable {
+nonisolated public struct ArcheryIntent: Equatable, Sendable {
     /// Attack button held. A level, not an edge — a bow is drawn for as long as
     /// it is held, which is what the draw-time damage curve measures.
-    var drawing = false
+    public var drawing = false
     /// Whether a bow is what is equipped. False routes the same button to
     /// melee and leaves this runtime idle.
-    var hasBowEquipped = false
+    public var hasBowEquipped = false
     /// Seconds since the previous frame, for the hold clock.
-    var deltaTime: Float = 0
+    public var deltaTime: Float = 0
 
-    static let still = ArcheryIntent()
+    public static let still = ArcheryIntent()
 }
 
 @MainActor
-final class ArcheryRuntime {
-    let settings: ArcherySettings
+public final class ArcheryRuntime {
+    public let settings: ArcherySettings
     /// The projectile side, which owns everything already in the air.
-    let projectiles: ProjectileRuntime
+    public let projectiles: ProjectileRuntime
 
-    private(set) var state = ArcheryState()
+    public private(set) var state = ArcheryState()
     /// How long the attack button has been held on the current draw, seconds.
-    private(set) var heldSeconds: Float = 0
+    public private(set) var heldSeconds: Float = 0
     /// The hold time of the last shot that was loosed, so a readout can explain
     /// a damage number after the button has already come back up.
-    private(set) var lastHeldSeconds: Float = 0
+    public private(set) var lastHeldSeconds: Float = 0
     /// Draws the engine asked for, and shots the graph actually loosed. The two
     /// differ by every draw that was cancelled.
-    private(set) var drawRequestCount = 0
+    public private(set) var drawRequestCount = 0
 
     /// The bow the player is holding, as a swing profile — the same value melee
     /// resolves, because a bow is a WEAP and its `damage` and `speed` are the
     /// two numbers the archery formulas need. The unarmed profile until
     /// equipment resolves, and then no shot can be taken.
-    var bow = MeleeWeaponProfile.unarmed
+    public var bow = MeleeWeaponProfile.unarmed
     /// The arrow the player has selected: its AMMO damage, the PROJ it
     /// launches, and the FormID the inventory consumes. Nil with an empty
     /// quiver, and then a draw is allowed and a loose does nothing.
-    var arrow: ArcheryAmmunition?
+    public var arrow: ArcheryAmmunition?
     /// The shooter's fortify multiplier — `ArcheryDamage`'s `bonusMultiplier`
     /// (issue #472).
     ///
@@ -79,12 +79,12 @@ final class ArcheryRuntime {
     /// same equipment, and a runtime that asked for it would need an actor-value
     /// surface it otherwise has no use for. 1 until something writes it, which is
     /// what the formula reduces to for a shooter with no fortify effect.
-    var attackMultiplier: Float = 1
+    public var attackMultiplier: Float = 1
 
     private weak var world: (any ProjectileWorld)?
     private var wasDrawing = false
 
-    init(
+    public init(
         settings: ArcherySettings,
         projectiles: ProjectileRuntime,
         world: (any ProjectileWorld)? = nil
@@ -95,7 +95,7 @@ final class ArcheryRuntime {
     }
 
     /// Attaches (or detaches) the world both halves resolve against.
-    func attach(world: (any ProjectileWorld)?) {
+    public func attach(world: (any ProjectileWorld)?) {
         self.world = world
         projectiles.attach(world: world)
         reset()
@@ -104,7 +104,7 @@ final class ArcheryRuntime {
     // MARK: - Intent
 
     /// Takes one frame of archery intent and raises the events its edges imply.
-    func acceptFrame(_ intent: ArcheryIntent) {
+    public func acceptFrame(_ intent: ArcheryIntent) {
         let drawing = intent.drawing && intent.hasBowEquipped
         if drawing {
             heldSeconds += max(0, intent.deltaTime.isFinite ? intent.deltaTime : 0)
@@ -116,7 +116,7 @@ final class ArcheryRuntime {
 
     /// Abandons the draw in progress, raising `bowReset`. What a sheath or a
     /// stagger calls, and what the panel's cancel control calls.
-    func cancelDraw() {
+    public func cancelDraw() {
         guard state.phase.isDrawing || wasDrawing else { return }
         wasDrawing = false
         heldSeconds = 0
@@ -131,7 +131,7 @@ final class ArcheryRuntime {
     /// - Returns: the projectiles this frame launched, in the order the graph
     ///   released them.
     @discardableResult
-    func handleGraphEvents(_ names: [String]) -> [LiveProjectile] {
+    public func handleGraphEvents(_ names: [String]) -> [LiveProjectile] {
         var launched: [LiveProjectile] = []
         for change in state.handle(names) where change.loosedArrow {
             if let projectile = loose() {
@@ -154,7 +154,7 @@ final class ArcheryRuntime {
     /// - Parameter consumesArrow: false spawns without touching the quiver,
     ///   which is what the dev control wants and what a real shot must never do.
     @discardableResult
-    func loose(consumesArrow: Bool = true) -> LiveProjectile? {
+    public func loose(consumesArrow: Bool = true) -> LiveProjectile? {
         guard let arrow else { return nil }
         lastHeldSeconds = heldSeconds
         let shot = ProjectileShot.arrow(
@@ -177,14 +177,14 @@ final class ArcheryRuntime {
 
     /// One frame of flight for everything already in the air.
     @discardableResult
-    func advanceProjectiles(by frameTime: Float) -> [ProjectileTrace] {
+    public func advanceProjectiles(by frameTime: Float) -> [ProjectileTrace] {
         projectiles.advance(by: frameTime)
     }
 
     /// Forgets the draw and everything in the air. Called when the bridge
     /// resets, so a teleport cannot land an arrow fired in the cell that was
     /// just left.
-    func reset() {
+    public func reset() {
         state.reset()
         heldSeconds = 0
         lastHeldSeconds = 0
@@ -215,22 +215,22 @@ final class ArcheryRuntime {
 }
 
 /// The selected arrow, reduced to what a shot needs from it.
-nonisolated struct ArcheryAmmunition: Equatable, Sendable {
+nonisolated public struct ArcheryAmmunition: Equatable, Sendable {
     /// The AMMO itself, which is what the inventory consumes.
-    let item: FormID
+    public let item: FormID
     /// AMMO DATA base damage.
-    let damage: Float
+    public let damage: Float
     /// The PROJ it launches, already decoded into a flight profile.
-    let profile: ProjectileProfile
+    public let profile: ProjectileProfile
 
-    init(item: FormID, damage: Float, profile: ProjectileProfile) {
+    public init(item: FormID, damage: Float, profile: ProjectileProfile) {
         self.item = item
         self.damage = damage.isFinite ? max(0, damage) : 0
         self.profile = profile
     }
 
     /// One decoded AMMO plus the PROJ it names.
-    init(ammunition: Ammunition, projectile: Projectile) {
+    public init(ammunition: Ammunition, projectile: Projectile) {
         self.init(
             item: ammunition.formID,
             damage: ammunition.damage,

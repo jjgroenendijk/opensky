@@ -11,7 +11,7 @@
 // speed 1000 units/s and a gravity factor that makes the acceleration 1400
 // units/s^2 — `WalkController.gravity` itself.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

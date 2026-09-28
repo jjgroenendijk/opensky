@@ -1,6 +1,6 @@
 // Finite interaction raycast over synthetic engine collision values only.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

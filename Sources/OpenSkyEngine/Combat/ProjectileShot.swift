@@ -25,18 +25,18 @@ import Foundation
 import OpenSkyFormats
 
 /// What a projectile carries, and therefore what it does when it lands.
-nonisolated enum ProjectilePayload: Equatable, Sendable {
+nonisolated public enum ProjectilePayload: Equatable, Sendable {
     case arrow(ArrowPayload)
     case spell(SpellPayload)
 
     /// The arrow half, or nil for anything a quiver did not fire.
-    var arrow: ArrowPayload? {
+    public var arrow: ArrowPayload? {
         guard case let .arrow(payload) = self else { return nil }
         return payload
     }
 
     /// The spell half, or nil for anything a hand did not cast.
-    var spell: SpellPayload? {
+    public var spell: SpellPayload? {
         guard case let .spell(payload) = self else { return nil }
         return payload
     }
@@ -44,7 +44,7 @@ nonisolated enum ProjectilePayload: Equatable, Sendable {
     /// Whether a hit by this payload should make its target hostile. An arrow
     /// always; a spell only when its effects are hostile, so a healing spell
     /// cast at a follower does not start a fight.
-    var provokes: Bool {
+    public var provokes: Bool {
         switch self {
         case .arrow: true
         case let .spell(payload): payload.isHostile
@@ -54,25 +54,25 @@ nonisolated enum ProjectilePayload: Equatable, Sendable {
 
 /// What an arrow carries: the damage the draw earned, the bow that fired it,
 /// and the ammunition to spend and to leave standing in the target.
-nonisolated struct ArrowPayload: Equatable, Sendable {
+nonisolated public struct ArrowPayload: Equatable, Sendable {
     /// The resolved damage this shot carries. Fixed at launch: the draw is over
     /// by then, and re-deriving it at impact would let a weapon swap mid-flight
     /// change what an arrow already in the air does.
-    let damage: ArcheryDamageResult
+    public let damage: ArcheryDamageResult
     /// The WEAP that fired it; nil for a shot with no bow behind it.
-    let weapon: FormID?
+    public let weapon: FormID?
     /// The AMMO consumed. Nil means "consume nothing", which is what the dev
     /// spawn control fires with so that a developer inspecting a trajectory
     /// does not have to keep a quiver stocked.
-    let ammunition: FormID?
+    public let ammunition: FormID?
     /// The bow's resolved enchantment, or nil when it carries none (issue #472).
     ///
     /// Fixed at launch for the same reason `damage` is: an arrow in the air must
     /// apply the enchantment the bow that fired it was carrying, not whatever the
     /// shooter has equipped by the time it lands.
-    let enchantment: ItemEnchantmentProfile?
+    public let enchantment: ItemEnchantmentProfile?
 
-    init(
+    public init(
         damage: ArcheryDamageResult,
         weapon: FormID? = nil,
         ammunition: FormID? = nil,
@@ -92,13 +92,13 @@ nonisolated struct ArrowPayload: Equatable, Sendable {
 /// the same moment — the frame the graph fired `arrowRelease`, or the frame a
 /// cast was released — and splitting them would let a caller mix one shot's
 /// damage with another shot's profile.
-nonisolated struct ProjectileShot: Equatable, Sendable {
-    let profile: ProjectileProfile
-    let payload: ProjectilePayload
+nonisolated public struct ProjectileShot: Equatable, Sendable {
+    public let profile: ProjectileProfile
+    public let payload: ProjectilePayload
 
     /// A bow's shot: the launch speed scales with the draw and the archery
     /// tilt-up angle applies.
-    static func arrow(
+    public static func arrow(
         profile: ProjectileProfile,
         damage: ArcheryDamageResult,
         weapon: FormID? = nil,
@@ -117,24 +117,24 @@ nonisolated struct ProjectileShot: Equatable, Sendable {
     }
 
     /// A cast spell's shot: full launch speed, straight down the aim ray.
-    static func spell(profile: ProjectileProfile, payload: SpellPayload) -> ProjectileShot {
+    public static func spell(profile: ProjectileProfile, payload: SpellPayload) -> ProjectileShot {
         ProjectileShot(profile: profile, payload: .spell(payload))
     }
 
     /// The AMMO this shot spends, or nil when it spends none. Only an arrow
     /// ever does.
-    var consumedAmmunition: FormID? {
+    public var consumedAmmunition: FormID? {
         payload.arrow?.ammunition
     }
 
     /// What the profile's launch speed is multiplied by. A partial draw slows
     /// an arrow; a spell always leaves at the PROJ's own speed.
-    var speedScale: Float {
+    public var speedScale: Float {
         payload.arrow?.damage.drawFraction ?? 1
     }
 
     /// Whether the archery tilt-up angle applies to this shot's aim ray.
-    var usesArcheryTilt: Bool {
+    public var usesArcheryTilt: Bool {
         payload.arrow != nil
     }
 }

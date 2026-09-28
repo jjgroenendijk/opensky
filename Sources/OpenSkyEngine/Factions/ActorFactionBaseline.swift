@@ -18,29 +18,29 @@ import Foundation
 import OpenSkyFormats
 
 /// What plugin data authors about one actor's social standing.
-nonisolated struct ActorFactionBaseline: Equatable {
-    let memberships: [ActorBase.FactionMembership]
-    let aiData: ActorAIData
+nonisolated public struct ActorFactionBaseline: Equatable, Sendable {
+    public let memberships: [ActorBase.FactionMembership]
+    public let aiData: ActorAIData
     /// The authored `CRIF`, as a raw link in the resolver's plugin (issue
     /// #505). Nil for an actor that reports crimes to nobody.
-    var crimeFaction: FormID?
+    public var crimeFaction: FormID?
 
     /// An actor no record describes: the player, and any generated actor.
-    static let none = ActorFactionBaseline(memberships: [], aiData: .absent)
+    public static let none = ActorFactionBaseline(memberships: [], aiData: .absent)
 }
 
 /// Re-derives actor faction lists and AI attributes from plugin data.
-nonisolated struct ActorFactionBaselineResolver {
+nonisolated public struct ActorFactionBaselineResolver: Sendable {
     /// Template-chain resolution, which supplies both field groups.
-    let templates: ActorTemplateResolver
+    public let templates: ActorTemplateResolver
 
-    init(templates: ActorTemplateResolver) {
+    public init(templates: ActorTemplateResolver) {
         self.templates = templates
     }
 
     /// Built from the indexes the actor-value side already loaded, rather than
     /// walking the plugin a second time for records that are already in memory.
-    init(actorValues: ActorValueResolver) {
+    public init(actorValues: ActorValueResolver) {
         templates = actorValues.templates
     }
 
@@ -51,7 +51,7 @@ nonisolated struct ActorFactionBaselineResolver {
     /// rule every baseline resolver here states. An actor whose chain cannot be
     /// walked then belongs to nothing and starts no fights, which is the safe
     /// direction for a failure to fall.
-    func baseline(for base: FormID) -> ActorFactionBaseline {
+    public func baseline(for base: FormID) -> ActorFactionBaseline {
         guard let resolved = try? templates.resolveFactions(base: base) else { return .none }
         return ActorFactionBaseline(
             memberships: resolved.factions.value,
@@ -66,7 +66,7 @@ nonisolated struct ActorFactionBaselineResolver {
     /// The player has no NPC_ record in this engine and therefore no authored
     /// memberships: every faction the player is in was joined at runtime, which
     /// is exactly what the component records.
-    func baseline(for subject: ActorValueSubject) -> ActorFactionBaseline {
+    public func baseline(for subject: ActorValueSubject) -> ActorFactionBaseline {
         switch subject {
         case let .actor(base): baseline(for: base)
         case .player, .generated: .none

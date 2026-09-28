@@ -6,7 +6,7 @@
 // behavior census and is spelled the way `0_master.hkx` spells it; see
 // `ArcheryGraphNames`.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct ArcheryStateTests {

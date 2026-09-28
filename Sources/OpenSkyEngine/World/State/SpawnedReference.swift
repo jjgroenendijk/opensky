@@ -28,27 +28,27 @@ import OpenSkyFormats
 /// Every field is what a cell build needs to synthesize a `PlacedReference`:
 /// the base record to resolve a model and collision from, where it stands, and
 /// how many of it there are when the base is a carryable item.
-nonisolated struct ReferenceSpawnState: WorldStateComponent {
+nonisolated public struct ReferenceSpawnState: WorldStateComponent, Sendable {
     /// The base record this reference places — a MISC, WEAP, ALCH and so on
     /// for a dropped item.
-    let base: FormID
+    public let base: FormID
     /// The cell the object exists in. Non-optional: an object with no cell is
     /// not in the world, and a build has no way to draw it.
-    let location: CellSceneLocation
+    public let location: CellSceneLocation
     /// Position and rotation, in the same game units and radians REFR DATA
     /// uses.
-    let placement: PlacedReference.Placement
+    public let placement: PlacedReference.Placement
     /// Uniform scale, matching XSCL semantics.
-    let scale: Float
+    public let scale: Float
     /// How many of `base` the pile holds, mirroring REFR XCNT. Always at least
     /// one: a spawned reference that places nothing should not exist.
-    let count: Int32
+    public let count: Int32
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .spawn
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .spawn(self)
     }
 
@@ -56,7 +56,7 @@ nonisolated struct ReferenceSpawnState: WorldStateComponent {
     /// decoder's entry point and a corrupt file must degrade rather than fail
     /// the whole load: a non-positive count becomes one, and a scale that is
     /// not a positive finite number becomes one.
-    init(
+    public init(
         base: FormID,
         location: CellSceneLocation,
         placement: PlacedReference.Placement,
@@ -70,7 +70,7 @@ nonisolated struct ReferenceSpawnState: WorldStateComponent {
         self.count = max(1, count)
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .spawn(value) = erased else { return nil }
         self = value
     }
@@ -90,11 +90,11 @@ nonisolated struct ReferenceSpawnState: WorldStateComponent {
 /// ever carry it. (Bethesda's own save format uses the same index for
 /// save-created references, which is a corroboration of the reasoning and not
 /// its source.)
-nonisolated enum SpawnedReferenceIdentity {
+nonisolated public enum SpawnedReferenceIdentity: Sendable {
     /// High byte of every spawned reference's FormID.
-    static let modIndex: UInt32 = 0xFF00_0000
+    public static let modIndex: UInt32 = 0xFF00_0000
     /// Largest sequence number that still fits in the 24-bit object ID.
-    static let maximumSequence: UInt64 = 0x00FF_FFFF
+    public static let maximumSequence: UInt64 = 0x00FF_FFFF
 
     /// The FormID `key` is placed under, or nil when `key` is not a generated
     /// key or its sequence has outrun the 24-bit object ID.
@@ -103,7 +103,7 @@ nonisolated enum SpawnedReferenceIdentity {
     /// distinct objects onto one FormID, so the build drops the reference and
     /// counts it instead. Reaching the cap needs 16.7 million spawns in one
     /// session, which no play session produces.
-    static func formID(for key: ReferenceKey) -> FormID? {
+    public static func formID(for key: ReferenceKey) -> FormID? {
         guard case let .generated(sequence) = key, sequence <= maximumSequence else {
             return nil
         }

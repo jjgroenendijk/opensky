@@ -8,35 +8,47 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// What one sidebar row selects.
-nonisolated enum PreviewSelection {
+nonisolated public enum PreviewSelection: Sendable {
     case file(VFSEntry)
     case record(PreviewRecord)
 }
 
 /// Record plus the plugin metadata needed to resolve its file-relative links.
-nonisolated struct PreviewRecord {
-    let record: ESMRecord
-    let sourcePlugin: String
-    let localized: Bool
-    let resolvedID: ResolvedFormID?
+nonisolated public struct PreviewRecord: Sendable {
+    public let record: ESMRecord
+    public let sourcePlugin: String
+    public let localized: Bool
+    public let resolvedID: ResolvedFormID?
+
+    public init(
+        record: ESMRecord,
+        sourcePlugin: String,
+        localized: Bool,
+        resolvedID: ResolvedFormID?
+    ) {
+        self.record = record
+        self.sourcePlugin = sourcePlugin
+        self.localized = localized
+        self.resolvedID = resolvedID
+    }
 }
 
 /// One sidebar row. `searchKey` is the lowercase haystack the filter matches
 /// (files: the canonical VFS key itself; records: lowercased display text).
-nonisolated struct PreviewItem {
-    let display: String
-    let searchKey: String
-    let selection: PreviewSelection
+nonisolated public struct PreviewItem: Sendable {
+    public let display: String
+    public let searchKey: String
+    public let selection: PreviewSelection
 }
 
-nonisolated enum PreviewCategory: CaseIterable {
+nonisolated public enum PreviewCategory: CaseIterable, Sendable {
     case meshes
     case textures
     case records
     case referenceRecords
     case allFiles
 
-    var title: String {
+    public var title: String {
         switch self {
         case .meshes: "Meshes (.nif)"
         case .textures: "Textures (.dds)"
@@ -47,18 +59,18 @@ nonisolated enum PreviewCategory: CaseIterable {
     }
 }
 
-nonisolated struct PreviewCatalog {
-    let fileCount: Int
-    let recordCount: Int
+nonisolated public struct PreviewCatalog: Sendable {
+    public let fileCount: Int
+    public let recordCount: Int
     /// Load problems worth surfacing in the UI (missing esm, ...).
-    let notes: [String]
+    public let notes: [String]
 
     private let meshes: [PreviewItem]
     private let textures: [PreviewItem]
     private let records: [PreviewItem]
     private let allFiles: [PreviewItem]
 
-    init(
+    public init(
         files: [VFSEntry],
         records: [ESMRecord],
         recordSourcePlugin: String = "Skyrim.esm",
@@ -92,11 +104,11 @@ nonisolated struct PreviewCatalog {
     }
 
     /// "STAT 0001A2B3" — record type + zero-padded hex FormID.
-    static func recordDisplay(_ record: ESMRecord) -> String {
+    public static func recordDisplay(_ record: ESMRecord) -> String {
         "\(record.type) \(FormID(record.formID))"
     }
 
-    func items(for category: PreviewCategory) -> [PreviewItem] {
+    public func items(for category: PreviewCategory) -> [PreviewItem] {
         switch category {
         case .meshes: meshes
         case .textures: textures
@@ -109,7 +121,7 @@ nonisolated struct PreviewCatalog {
     /// Case-insensitive substring filter; "/" in the query matches the
     /// canonical "\" separator so either spelling finds a path. Empty or
     /// whitespace query -> everything.
-    static func filter(_ items: [PreviewItem], query: String) -> [PreviewItem] {
+    public static func filter(_ items: [PreviewItem], query: String) -> [PreviewItem] {
         let needle = query.lowercased()
             .replacingOccurrences(of: "/", with: "\\")
             .trimmingCharacters(in: .whitespaces)
@@ -122,7 +134,7 @@ nonisolated struct PreviewCatalog {
     /// thread) plus a headers-only walk of every Skyrim.esm record. A
     /// missing/unreadable esm degrades to file browsing with a note, never
     /// a crash. Returns the plugin's localized flag for record decoding.
-    static func load(
+    public static func load(
         fileSystem: VirtualFileSystem,
         esmURL: URL
     ) -> (catalog: PreviewCatalog, localized: Bool) {

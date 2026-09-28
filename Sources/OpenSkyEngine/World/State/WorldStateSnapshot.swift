@@ -15,18 +15,18 @@ import Foundation
 import OpenSkyFormats
 
 /// One dirty reference in a snapshot: its key and the deltas recorded for it.
-nonisolated struct WorldStateSnapshotEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let delta: ReferenceStateDelta
+nonisolated public struct WorldStateSnapshotEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let delta: ReferenceStateDelta
 }
 
 /// One global variable whose runtime value deviates from its plugin default
 /// (issue #165). Globals with no override never appear, for the same reason
 /// clean references do not: the default is re-derived from `GlobalStore`.
-nonisolated struct WorldStateGlobalSnapshotEntry: Equatable, Sendable {
+nonisolated public struct WorldStateGlobalSnapshotEntry: Equatable, Sendable {
     /// The GLOB record's session-stable key.
-    let key: ReferenceKey
-    let value: GlobalValue
+    public let key: ReferenceKey
+    public let value: GlobalValue
 }
 
 /// Immutable, order-independent view of every runtime deviation in a store.
@@ -42,27 +42,27 @@ nonisolated struct WorldStateGlobalSnapshotEntry: Equatable, Sendable {
 /// from equality for the same reason: it says when the snapshot was taken, not
 /// what state it describes, and two stores that reached the same end state
 /// through different numbers of mutations are still equal.
-nonisolated struct WorldStateSnapshot: Equatable, Sendable {
+nonisolated public struct WorldStateSnapshot: Equatable, Sendable {
     /// Dirty references in `ReferenceKey` total order.
-    let entries: [WorldStateSnapshotEntry]
+    public let entries: [WorldStateSnapshotEntry]
     /// Overridden global variables, also in `ReferenceKey` total order
     /// (issue #165). Part of equality: two sessions whose globals differ are
     /// not in the same end state.
-    let globals: [WorldStateGlobalSnapshotEntry]
+    public let globals: [WorldStateGlobalSnapshotEntry]
     /// The store's generated-key allocator position at snapshot time. Included
     /// because a restored session must resume allocating where this one left
     /// off, and because two stores that allocated different numbers of
     /// generated keys are not in the same end state.
-    let nextGeneratedSequence: UInt64
+    public let nextGeneratedSequence: UInt64
     /// The store's journal sequence at snapshot time, which is monotonic across
     /// the session (issue #160). A cell built from this snapshot records the
     /// value on its `CellScene`, so a later comparison against the store's
     /// current sequence tells the streamer whether the built scene is stale.
-    let sequence: UInt64
+    public let sequence: UInt64
 
-    static let empty = WorldStateSnapshot(entries: [], nextGeneratedSequence: 1, sequence: 0)
+    public static let empty = WorldStateSnapshot(entries: [], nextGeneratedSequence: 1, sequence: 0)
 
-    init(
+    public init(
         entries: [WorldStateSnapshotEntry],
         nextGeneratedSequence: UInt64,
         globals: [WorldStateGlobalSnapshotEntry] = [],
@@ -74,39 +74,39 @@ nonisolated struct WorldStateSnapshot: Equatable, Sendable {
         self.sequence = sequence
     }
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.entries == rhs.entries
             && lhs.globals == rhs.globals
             && lhs.nextGeneratedSequence == rhs.nextGeneratedSequence
     }
 
     /// Number of dirty references.
-    var dirtyCount: Int {
+    public var dirtyCount: Int {
         entries.count
     }
 
     /// Number of overridden globals.
-    var dirtyGlobalCount: Int {
+    public var dirtyGlobalCount: Int {
         globals.count
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         entries.isEmpty && globals.isEmpty
     }
 
     /// Dirty keys, in the same total order as `entries`.
-    var keys: [ReferenceKey] {
+    public var keys: [ReferenceKey] {
         entries.map(\.key)
     }
 
-    subscript(key: ReferenceKey) -> ReferenceStateDelta? {
+    public subscript(key: ReferenceKey) -> ReferenceStateDelta? {
         entries.first { $0.key == key }?.delta
     }
 
     /// Runtime override recorded for a global, nil when it still matches the
     /// plugin. A linear scan, like `subscript(key:)`; a consumer resolving many
     /// globals builds a `GlobalResolution` from this snapshot instead.
-    func globalValue(for key: ReferenceKey) -> GlobalValue? {
+    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
         globals.first { $0.key == key }?.value
     }
 
@@ -115,7 +115,7 @@ nonisolated struct WorldStateSnapshot: Equatable, Sendable {
     /// `subscript(key:)` is a linear scan, which is the right shape for the odd
     /// single probe and the wrong shape for a cell build, which asks once per
     /// reference. A build materializes this once and looks up from it instead.
-    func deltasByKey() -> [ReferenceKey: ReferenceStateDelta] {
+    public func deltasByKey() -> [ReferenceKey: ReferenceStateDelta] {
         var result: [ReferenceKey: ReferenceStateDelta] = [:]
         result.reserveCapacity(entries.count)
         for entry in entries {
@@ -125,19 +125,19 @@ nonisolated struct WorldStateSnapshot: Equatable, Sendable {
     }
 
     /// Dirty references last mutated under `cell`.
-    func entries(in cell: CellSceneLocation) -> [WorldStateSnapshotEntry] {
+    public func entries(in cell: CellSceneLocation) -> [WorldStateSnapshotEntry] {
         entries.filter { $0.delta.cell == cell }
     }
 
     /// Dirty reference count for `cell`.
-    func dirtyCount(in cell: CellSceneLocation) -> Int {
+    public func dirtyCount(in cell: CellSceneLocation) -> Int {
         entries.count { $0.delta.cell == cell }
     }
 
     /// `entry`'s plugin baseline with this snapshot's delta applied. The
     /// baseline is re-derived from the record on every call, so a snapshot can
     /// never hand back a stale placement.
-    func resolvedState(for entry: RuntimeReferenceEntry) -> ReferenceState {
+    public func resolvedState(for entry: RuntimeReferenceEntry) -> ReferenceState {
         ReferenceState(baseline: entry).applying(self[entry.key])
     }
 }

@@ -4,8 +4,8 @@
 import OpenSkyFormats
 import simd
 
-nonisolated enum TreeLODBillboard {
-    static func model(type: TreeLODType, atlasPath: String) -> Model {
+nonisolated public enum TreeLODBillboard: Sendable {
+    public static func model(type: TreeLODType, atlasPath: String) -> Model {
         let halfWidth = type.width * 0.5
         let bottom = type.uvMax.y
         let top = type.uvMin.y

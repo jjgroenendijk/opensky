@@ -13,19 +13,19 @@ import simd
 /// deterministic and adequate for the crossfade lengths music uses. If a fade
 /// curve ever needs to sound equal-power, that is a change to `gain(atElapsed:)`
 /// alone.
-nonisolated struct GainFade: Equatable {
+nonisolated public struct GainFade: Equatable, Sendable {
     /// Fade gain when the ramp started.
-    let start: Float
+    public let start: Float
     /// Fade gain the ramp is heading for, clamped to [0, 1].
-    let target: Float
+    public let target: Float
     /// Ramp length in seconds. Never negative; zero completes immediately.
-    let duration: Float
+    public let duration: Float
     /// Seconds advanced so far.
-    private(set) var elapsed: Float = 0
+    public private(set) var elapsed: Float = 0
     /// Retire the source once the ramp completes (fade out and stop).
-    let stopsAtEnd: Bool
+    public let stopsAtEnd: Bool
 
-    init(start: Float, target: Float, duration: Float, stopsAtEnd: Bool) {
+    public init(start: Float, target: Float, duration: Float, stopsAtEnd: Bool) {
         self.start = simd_clamp(start, 0, 1)
         self.target = simd_clamp(target, 0, 1)
         self.duration = max(duration, 0)
@@ -37,14 +37,14 @@ nonisolated struct GainFade: Equatable {
     /// that lands within a millisecond of its duration counts as done and snaps
     /// to the target — otherwise a fade-out could hover just above silence and
     /// never retire its source.
-    static let completionEpsilon: Float = 1e-3
+    public static let completionEpsilon: Float = 1e-3
 
-    var isComplete: Bool {
+    public var isComplete: Bool {
         elapsed + Self.completionEpsilon >= duration
     }
 
     /// Fade gain at the current elapsed time; exactly `target` once complete.
-    var currentGain: Float {
+    public var currentGain: Float {
         guard duration > 0, !isComplete else { return target }
         let progress = simd_clamp(elapsed / duration, 0, 1)
         return start + (target - start) * progress
@@ -52,7 +52,7 @@ nonisolated struct GainFade: Equatable {
 
     /// Advances the ramp. A negative or zero delta is ignored, so a stalled or
     /// rewound clock can never run a fade backwards.
-    mutating func advance(by deltaTime: Float) {
+    public mutating func advance(by deltaTime: Float) {
         guard deltaTime > 0 else { return }
         elapsed = min(elapsed + deltaTime, duration)
     }
@@ -66,7 +66,7 @@ extension WorldAudioEngine {
     /// duration of zero (or less) applies the target immediately. Returns false
     /// when no source carries that id.
     @discardableResult
-    func fadeSource(id: Int, to target: Float, overSeconds duration: Float) -> Bool {
+    public func fadeSource(id: Int, to target: Float, overSeconds duration: Float) -> Bool {
         startFade(id: id, target: target, duration: duration, stopsAtEnd: false)
     }
 
@@ -75,18 +75,18 @@ extension WorldAudioEngine {
     /// duration of zero the source stops on this call. Returns false when no
     /// source carries that id.
     @discardableResult
-    func fadeOutAndStopSource(id: Int, overSeconds duration: Float) -> Bool {
+    public func fadeOutAndStopSource(id: Int, overSeconds duration: Float) -> Bool {
         startFade(id: id, target: 0, duration: duration, stopsAtEnd: true)
     }
 
     /// True while a ramp is in flight on that source.
-    func isFading(id: Int) -> Bool {
+    public func isFading(id: Int) -> Bool {
         sources.first { $0.id == id }?.activeFade != nil
     }
 
     /// Current fade multiplier of a source, or nil when there is no such
     /// source. 1 means "not faded".
-    func fadeGain(of id: Int) -> Float? {
+    public func fadeGain(of id: Int) -> Float? {
         sources.first { $0.id == id }?.fadeGain
     }
 
@@ -95,7 +95,7 @@ extension WorldAudioEngine {
     /// `tick(listenerCell:deltaTime:)`, which the renderer only calls on
     /// unpaused frames — so a paused world freezes fades without a time jump on
     /// resume.
-    func advanceFades(deltaTime: Float) {
+    public func advanceFades(deltaTime: Float) {
         guard deltaTime > 0 else { return }
         var finished: [ActiveAudioSource] = []
         for source in sources {

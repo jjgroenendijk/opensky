@@ -13,19 +13,19 @@ import OpenSkyFormats
 
 /// Cheap identity for diff: only the fields that drive `AmbienceBed.resolve`.
 /// The director's bed cache means equal keys never re-resolve.
-nonisolated struct AmbienceKey: Equatable, Sendable {
-    let isInterior: Bool
-    let interiorFormID: UInt32?
-    let exteriorCenter: CellCoordinate?
-    let regions: [UInt32]
-    let acousticSpace: UInt32?
+nonisolated public struct AmbienceKey: Equatable, Sendable {
+    public let isInterior: Bool
+    public let interiorFormID: UInt32?
+    public let exteriorCenter: CellCoordinate?
+    public let regions: [UInt32]
+    public let acousticSpace: UInt32?
 }
 
 extension CellStreamer {
     /// Resolves the streamer's current center cell into an ambience key, and
     /// emits a fresh `AmbienceContext` when it differs from the previous one.
     /// Called from update() and apply(transition:).
-    func emitAmbienceContextIfNeeded() {
+    public func emitAmbienceContextIfNeeded() {
         let key = currentAmbienceKey()
         guard key != lastEmittedAmbienceKey else { return }
         lastEmittedAmbienceKey = key
@@ -35,7 +35,7 @@ extension CellStreamer {
     /// Forces a re-emit on the next call. Used after a transition that swaps
     /// scenes without changing the key (e.g. an interior re-entered with the
     /// same FormID and a fresh ASPC resolution).
-    func invalidateAmbienceContext() {
+    public func invalidateAmbienceContext() {
         lastEmittedAmbienceKey = nil
     }
 

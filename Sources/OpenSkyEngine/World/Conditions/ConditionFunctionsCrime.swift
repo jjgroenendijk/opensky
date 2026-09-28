@@ -28,7 +28,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
-    static func installCrime(_ registry: inout ConditionFunctionRegistry) {
+    public static func installCrime(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the amount of crime gold the player owes the specified
         // faction." The run-on names the actor whose ledger is read, and
         // parameter 1 names the FACT.

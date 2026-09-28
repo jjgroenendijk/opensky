@@ -7,40 +7,62 @@ import OpenSkyShaderTypes
 import simd
 
 /// Result of applying the per-frame quad budget to a draw list.
-nonisolated struct UIBudgetResult {
-    let vertices: [UIVertex]
-    let quads: Int
-    let dropped: Int
+nonisolated public struct UIBudgetResult: Sendable {
+    public let vertices: [UIVertex]
+    public let quads: Int
+    public let dropped: Int
 }
 
 /// Last-frame UI accounting, mirrored to Renderer.lastUIDrawStats.
-nonisolated struct UIDrawStats: Equatable {
-    var drawCalls = 0
-    var quads = 0
-    var glyphs = 0
-    var dropped = 0
-    var atlasWidth = 0
-    var atlasHeight = 0
+nonisolated public struct UIDrawStats: Equatable, Sendable {
+    public var drawCalls = 0
+    public var quads = 0
+    public var glyphs = 0
+    public var dropped = 0
+    public var atlasWidth = 0
+    public var atlasHeight = 0
     /// Glyph cells the shared atlas currently holds (system + SWF fonts).
-    var atlasGlyphs = 0
+    public var atlasGlyphs = 0
     /// Occupied fraction of the atlas, 0...1.
-    var atlasOccupancy: Float = 0
+    public var atlasOccupancy: Float = 0
     /// Glyphs dropped because the atlas was full, since the last eviction.
     /// Non-zero means text is missing from the frame (issue #127).
-    var atlasPackFailures = 0
+    public var atlasPackFailures = 0
+
+    public init(
+        drawCalls: Int = 0,
+        quads: Int = 0,
+        glyphs: Int = 0,
+        dropped: Int = 0,
+        atlasWidth: Int = 0,
+        atlasHeight: Int = 0,
+        atlasGlyphs: Int = 0,
+        atlasOccupancy: Float = 0,
+        atlasPackFailures: Int = 0
+    ) {
+        self.drawCalls = drawCalls
+        self.quads = quads
+        self.glyphs = glyphs
+        self.dropped = dropped
+        self.atlasWidth = atlasWidth
+        self.atlasHeight = atlasHeight
+        self.atlasGlyphs = atlasGlyphs
+        self.atlasOccupancy = atlasOccupancy
+        self.atlasPackFailures = atlasPackFailures
+    }
 }
 
-nonisolated struct UIDrawList {
+nonisolated public struct UIDrawList: Sendable {
     /// Six vertices per quad (two triangles), no index buffer.
-    static let verticesPerQuad = 6
+    public static let verticesPerQuad = 6
 
-    private(set) var vertices: [UIVertex] = []
-    private(set) var quadCount = 0
-    private(set) var glyphCount = 0
-    let whiteUV: SIMD2<Float>
+    public private(set) var vertices: [UIVertex] = []
+    public private(set) var quadCount = 0
+    public private(set) var glyphCount = 0
+    public let whiteUV: SIMD2<Float>
 
     /// Appends one axis-aligned quad in pixel space with the given uv corners.
-    mutating func addQuad(
+    public mutating func addQuad(
         rect: UIRect,
         uvMin: SIMD2<Float>,
         uvMax: SIMD2<Float>,
@@ -64,13 +86,13 @@ nonisolated struct UIDrawList {
     }
 
     /// Filled rect: samples the white texel for full coverage.
-    mutating func fillRect(_ rect: UIRect, color: SIMD4<Float>) {
+    public mutating func fillRect(_ rect: UIRect, color: SIMD4<Float>) {
         guard rect.width > 0, rect.height > 0, color.w > 0 else { return }
         addQuad(rect: rect, uvMin: whiteUV, uvMax: whiteUV, color: color)
     }
 
     /// Inset border: four filled edge rects of `lineWidth` pixels.
-    mutating func strokeRect(_ rect: UIRect, lineWidth: Float, color: SIMD4<Float>) {
+    public mutating func strokeRect(_ rect: UIRect, lineWidth: Float, color: SIMD4<Float>) {
         guard lineWidth > 0, color.w > 0, rect.width > 0, rect.height > 0 else { return }
         let line = min(lineWidth, min(rect.width, rect.height) / 2)
         fillRect(UIRect(x: rect.minX, y: rect.minY, width: rect.width, height: line), color: color)
@@ -89,7 +111,7 @@ nonisolated struct UIDrawList {
     }
 
     /// Text glyph quad: samples its coverage cell.
-    mutating func addGlyphQuad(
+    public mutating func addGlyphQuad(
         rect: UIRect,
         uvMin: SIMD2<Float>,
         uvMax: SIMD2<Float>,
@@ -103,7 +125,7 @@ nonisolated struct UIDrawList {
     /// Applies a hard per-frame quad budget. Returns the kept vertices, kept
     /// quad count, and the number of quads dropped past the cap (exact drop
     /// accounting, house style).
-    func budgeted(maxQuads: Int) -> UIBudgetResult {
+    public func budgeted(maxQuads: Int) -> UIBudgetResult {
         guard quadCount > maxQuads else {
             return UIBudgetResult(vertices: vertices, quads: quadCount, dropped: 0)
         }

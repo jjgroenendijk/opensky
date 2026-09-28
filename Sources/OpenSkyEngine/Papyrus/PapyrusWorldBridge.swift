@@ -30,15 +30,15 @@ import OpenSkyFormats
 /// `PapyrusWorldBridge.activate(_:by:togglesOpen:)` and
 /// `PapyrusWorldRuntime.queueOnActivate(target:activator:)`. The queue-only
 /// caller always reports `recorded == false`, because it writes no state.
-nonisolated struct PapyrusActivationOutcome: Equatable, Sendable {
+nonisolated public struct PapyrusActivationOutcome: Equatable, Sendable {
     /// True when the `ReferenceActivationState` write changed stored state.
-    let recorded: Bool
+    public let recorded: Bool
     /// `OnActivate` events enqueued on the target's script instances.
-    let queuedEvents: Int
+    public let queuedEvents: Int
     /// True when the recursion cap refused to queue anything.
-    let cappedByRecursion: Bool
+    public let cappedByRecursion: Bool
 
-    static let none = PapyrusActivationOutcome(
+    public static let none = PapyrusActivationOutcome(
         recorded: false, queuedEvents: 0, cappedByRecursion: false
     )
 }
@@ -47,7 +47,7 @@ nonisolated struct PapyrusActivationOutcome: Equatable, Sendable {
 ///
 /// Nonisolated because `CellStreamer` is: the bridge only ever calls it from
 /// the main actor, on the same thread that drives `draw(in:)`.
-nonisolated protocol PapyrusWorldReferenceSource: AnyObject {
+nonisolated public protocol PapyrusWorldReferenceSource: AnyObject {
     func referenceEntry(formID: FormID) -> RuntimeReferenceEntry?
     func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry?
     /// Cell the reference is currently resident in, or nil when nothing
@@ -75,7 +75,7 @@ nonisolated protocol PapyrusWorldReferenceSource: AnyObject {
 /// are refined in here so a native reaches all of it through the one
 /// `context.world` façade.
 @MainActor
-protocol PapyrusWorldBridge:
+public protocol PapyrusWorldBridge:
     PapyrusWorldQuestBridge, PapyrusWorldActorBridge, PapyrusWorldMagicBridge,
     PapyrusWorldCrimeBridge, PapyrusWorldFactionBridge, PapyrusWorldGuardBridge,
     PapyrusWorldBarterBridge
@@ -162,62 +162,62 @@ protocol PapyrusWorldBridge:
 /// `MainActor.assumeIsolated`, which is an assertion, not a suppression: it
 /// traps if a native ever runs off the main actor, and only a world-aware
 /// runtime installs one of these.
-nonisolated final class PapyrusWorldAccess: Sendable {
+nonisolated public final class PapyrusWorldAccess: Sendable {
     /// Internal rather than private so the quest hops can live in
     /// `PapyrusWorldQuestBridge.swift` beside the protocol they mirror. Only
     /// this type's own extensions touch it.
-    let bridge: any PapyrusWorldBridge
+    public let bridge: any PapyrusWorldBridge
 
-    init(bridge: any PapyrusWorldBridge) {
+    public init(bridge: any PapyrusWorldBridge) {
         self.bridge = bridge
     }
 
-    var playerKey: ReferenceKey {
+    public var playerKey: ReferenceKey {
         MainActor.assumeIsolated { bridge.playerKey }
     }
 
-    func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey? {
+    public func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey? {
         MainActor.assumeIsolated { bridge.referenceKey(for: handle) }
     }
 
-    func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
+    public func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
         MainActor.assumeIsolated { bridge.objectHandle(for: key) }
     }
 
-    func referenceState(for key: ReferenceKey) -> ReferenceState? {
+    public func referenceState(for key: ReferenceKey) -> ReferenceState? {
         MainActor.assumeIsolated { bridge.referenceState(for: key) }
     }
 
-    func referenceKey(forFormID formID: FormID) -> ReferenceKey? {
+    public func referenceKey(forFormID formID: FormID) -> ReferenceKey? {
         MainActor.assumeIsolated { bridge.referenceKey(forFormID: formID) }
     }
 
-    func placedReference(for key: ReferenceKey) -> PlacedReference? {
+    public func placedReference(for key: ReferenceKey) -> PlacedReference? {
         MainActor.assumeIsolated { bridge.placedReference(for: key) }
     }
 
-    func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+    public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
         MainActor.assumeIsolated { bridge.cellLocation(of: key) }
     }
 
     @discardableResult
-    func write(
+    public func write(
         _ component: WorldStateComponentValue, for key: ReferenceKey
     ) -> Bool {
         MainActor.assumeIsolated { bridge.write(component, for: key) }
     }
 
-    func globalValue(for key: ReferenceKey) -> GlobalValue? {
+    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
         MainActor.assumeIsolated { bridge.globalValue(for: key) }
     }
 
     @discardableResult
-    func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
+    public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
         MainActor.assumeIsolated { bridge.setGlobal(raw, for: key) }
     }
 
     @discardableResult
-    func activate(
+    public func activate(
         _ target: ReferenceKey,
         by activator: ReferenceKey,
         togglesOpen: Bool
@@ -227,7 +227,7 @@ nonisolated final class PapyrusWorldAccess: Sendable {
         }
     }
 
-    func registerUpdateTimer(
+    public func registerUpdateTimer(
         handle: PapyrusObjectHandle,
         slot: PapyrusUpdateTimerSlot,
         interval: Double
@@ -239,7 +239,7 @@ nonisolated final class PapyrusWorldAccess: Sendable {
         }
     }
 
-    func unregisterUpdateTimers(
+    public func unregisterUpdateTimers(
         handle: PapyrusObjectHandle,
         family: PapyrusUpdateTimerFamily
     ) {

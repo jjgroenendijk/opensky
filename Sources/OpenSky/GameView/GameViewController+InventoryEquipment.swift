@@ -20,6 +20,7 @@
 // reports as unavailable instead of showing a convincing empty inventory.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension GameViewController: InventoryEquipmentControlProviding {

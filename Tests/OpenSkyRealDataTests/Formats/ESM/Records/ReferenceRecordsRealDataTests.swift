@@ -2,7 +2,6 @@
 // read-only install. No game-derived bytes leave the run.
 
 import Foundation
-@testable import OpenSky
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

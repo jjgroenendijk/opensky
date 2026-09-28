@@ -23,7 +23,7 @@ import OpenSkyFormats
 @MainActor
 extension PapyrusWorldStateBridge: DialogueFragmentDispatching {
     @discardableResult
-    func runTopicInfoFragments(
+    public func runTopicInfoFragments(
         of info: TopicInfo,
         key: ReferenceKey,
         phase: TopicInfoFragmentPhase

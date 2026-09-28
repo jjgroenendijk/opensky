@@ -6,7 +6,7 @@
 // docs/engine/menu-mode.md.
 
 /// Where an input event goes this frame.
-nonisolated enum InputRoute: Equatable {
+nonisolated public enum InputRoute: Equatable, Sendable {
     /// Gameplay: keyboard movement and mouse look drive the free-fly/walk
     /// camera.
     case world
@@ -17,9 +17,9 @@ nonisolated enum InputRoute: Equatable {
 /// A menu event forwarded while menu mode is active. Deliberately small and
 /// toolkit-free: directional focus moves, accept/cancel, and raw pointer motion
 /// cover Scaleform menu navigation without binding to AppKit or a widget tree.
-nonisolated enum MenuInputEvent: Equatable {
-    enum Direction { case up, down, left, right }
-    enum Button { case accept, cancel }
+nonisolated public enum MenuInputEvent: Equatable, Sendable {
+    public enum Direction: Sendable { case up, down, left, right }
+    public enum Button: Sendable { case accept, cancel }
 
     case move(Direction)
     case button(Button)
@@ -27,7 +27,7 @@ nonisolated enum MenuInputEvent: Equatable {
 }
 
 /// Implemented by the menu layer (none yet) to receive routed input.
-protocol MenuInputConsumer: AnyObject {
+public protocol MenuInputConsumer: AnyObject {
     func handleMenuInput(_ event: MenuInputEvent)
 }
 
@@ -48,7 +48,7 @@ protocol MenuInputConsumer: AnyObject {
 /// A policy per menu rather than a flag on the controller because the two can
 /// be open at once: the system menu over an open conversation still pauses,
 /// and closing it hands the running world back to the dialogue underneath.
-nonisolated enum MenuWorldPolicy: Equatable, Sendable {
+nonisolated public enum MenuWorldPolicy: Equatable, Sendable {
     /// The world sim stops while this menu is open. Every menu before item
     /// 17.3, and the default, so a caller that does not think about it gets
     /// the behaviour it had.
@@ -62,13 +62,15 @@ nonisolated enum MenuWorldPolicy: Equatable, Sendable {
 /// `isWorldSimPaused` each frame. Reference type: the view, the renderer, and
 /// the menu layer share one instance, all on the main thread, so it needs no
 /// internal locking (same threading contract as `Renderer`).
-final class MenuModeController {
-    private(set) var stack = MenuStack()
+public final class MenuModeController {
+    public init() {}
+
+    public private(set) var stack = MenuStack()
 
     /// The menu layer receiving routed events; nil until a menu layer exists, so
     /// menu-mode input is simply swallowed. World input stays suppressed in menu
     /// mode regardless of whether a consumer is attached.
-    weak var inputConsumer: MenuInputConsumer?
+    public weak var inputConsumer: MenuInputConsumer?
 
     /// World policy of each menu that declared one, keyed by name. A menu
     /// absent from the table pauses, which is what every menu before item 17.3
@@ -83,30 +85,30 @@ final class MenuModeController {
     /// non-pausing menu flips the route without flipping the pause, and a
     /// pausing menu opened over it flips the pause without flipping the route.
     /// Pushes and pops that change neither do not fire it.
-    var onModeChange: ((_ route: InputRoute, _ worldSimPaused: Bool) -> Void)?
+    public var onModeChange: ((_ route: InputRoute, _ worldSimPaused: Bool) -> Void)?
 
-    var isMenuMode: Bool {
+    public var isMenuMode: Bool {
         stack.isMenuMode
     }
 
     /// The renderer's world-sim pause gate: true while any open menu declares
     /// `pausesWorld`. An open conversation alone leaves it false.
-    var isWorldSimPaused: Bool {
+    public var isWorldSimPaused: Bool {
         stack.identifiers.contains { policy(of: $0) == .pausesWorld }
     }
 
     /// The world policy one menu is open under, or the default for a menu that
     /// is not open.
-    func policy(of identifier: MenuIdentifier) -> MenuWorldPolicy {
+    public func policy(of identifier: MenuIdentifier) -> MenuWorldPolicy {
         policies[identifier] ?? .pausesWorld
     }
 
-    var topMenu: MenuIdentifier? {
+    public var topMenu: MenuIdentifier? {
         stack.top
     }
 
     /// The routing decision for the AppKit input layer.
-    var currentRoute: InputRoute {
+    public var currentRoute: InputRoute {
         stack.isMenuMode ? .menu : .world
     }
 
@@ -115,7 +117,7 @@ final class MenuModeController {
     /// push (name already open) is rejected and returns false without firing
     /// the callback or rewriting the open menu's policy.
     @discardableResult
-    func present(
+    public func present(
         _ identifier: MenuIdentifier,
         policy: MenuWorldPolicy = .pausesWorld
     ) -> Bool {
@@ -130,7 +132,7 @@ final class MenuModeController {
     /// mode or hands a running world back to a non-pausing menu underneath.
     /// Returns the removed identifier, or nil in gameplay.
     @discardableResult
-    func dismissTop() -> MenuIdentifier? {
+    public func dismissTop() -> MenuIdentifier? {
         let previous = state
         guard let removed = stack.pop() else { return nil }
         policies[removed] = nil
@@ -140,7 +142,7 @@ final class MenuModeController {
 
     /// Closes a specific menu by name regardless of stack position.
     @discardableResult
-    func dismiss(_ identifier: MenuIdentifier) -> Bool {
+    public func dismiss(_ identifier: MenuIdentifier) -> Bool {
         let previous = state
         guard stack.remove(identifier) else { return false }
         policies[identifier] = nil
@@ -149,7 +151,7 @@ final class MenuModeController {
     }
 
     /// Closes every menu, returning to gameplay mode. No-op in gameplay.
-    func dismissAll() {
+    public func dismissAll() {
         guard stack.isMenuMode else { return }
         let previous = state
         stack.removeAll()
@@ -161,7 +163,7 @@ final class MenuModeController {
     /// returns false in gameplay, so the caller can fall through to world input.
     /// The event is swallowed when no consumer is attached yet.
     @discardableResult
-    func routeMenuInput(_ event: MenuInputEvent) -> Bool {
+    public func routeMenuInput(_ event: MenuInputEvent) -> Bool {
         guard stack.isMenuMode else { return false }
         inputConsumer?.handleMenuInput(event)
         return true

@@ -26,38 +26,38 @@
 
 import Foundation
 
-nonisolated enum RagdollGraphNames {
+nonisolated public enum RagdollGraphNames: Sendable {
     // MARK: - Events raised into the graph
 
     /// Entry to the bleedout behavior, which is the state a vanilla actor
     /// reaches at zero health before the death clip plays.
-    static let bleedOutStart = "bleedOutStart"
+    public static let bleedOutStart = "bleedOutStart"
     /// The death animation itself.
-    static let deathAnim = "DeathAnim"
+    public static let deathAnim = "DeathAnim"
     /// Leaving the death state, which nothing but a resurrection raises.
-    static let deathStop = "deathStop"
+    public static let deathStop = "deathStop"
 
     /// Every event the ragdoll runtime raises when an actor dies, in the order
     /// it raises them. Bleedout first, then the death clip: an actor that
     /// crosses zero health enters bleedout and the death animation follows from
     /// it, which is the order the census's own state names imply.
-    static let deathEvents = [bleedOutStart, deathAnim]
+    public static let deathEvents = [bleedOutStart, deathAnim]
 
     // MARK: - Events observed coming back out
 
     /// The clip annotation that marks the frame the physics takes the skeleton
     /// over. This is the hand-off the runtime spawns a ragdoll on.
-    static let addRagdollToWorld = "AddRagdollToWorld"
+    public static let addRagdollToWorld = "AddRagdollToWorld"
     /// The NPC-side spelling of the same annotation.
-    static let npcAddRagdollToWorld = "NPCAddRagdollToWorld"
+    public static let npcAddRagdollToWorld = "NPCAddRagdollToWorld"
     /// The plain hand-off, which blends over the controlling modifier's
     /// `m_durationToBlend`.
-    static let ragdoll = "Ragdoll"
+    public static let ragdoll = "Ragdoll"
     /// The hand-off that asks for no blend at all.
-    static let ragdollInstant = "RagdollInstant"
+    public static let ragdollInstant = "RagdollInstant"
 
     /// Every event that hands the skeleton to the physics.
-    static let handOffEvents = [
+    public static let handOffEvents = [
         addRagdollToWorld, npcAddRagdollToWorld, ragdoll, ragdollInstant
     ]
 
@@ -65,7 +65,7 @@ nonisolated enum RagdollGraphNames {
     ///
     /// - Returns: nil when the name is not a hand-off at all; otherwise true
     ///   when the hand-off must skip the blend.
-    static func handOff(_ name: String) -> Bool? {
+    public static func handOff(_ name: String) -> Bool? {
         guard handOffEvents.contains(name) else { return nil }
         return name == ragdollInstant
     }

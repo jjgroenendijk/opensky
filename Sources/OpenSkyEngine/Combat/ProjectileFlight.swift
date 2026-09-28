@@ -53,29 +53,29 @@ import simd
 /// itself: the runtime holds one of these per live projectile and must never
 /// re-derive a number mid-flight, and every field here has already had its
 /// non-finite and negative cases resolved.
-nonisolated struct ProjectileProfile: Equatable, Sendable {
+nonisolated public struct ProjectileProfile: Equatable, Sendable {
     /// The PROJ this came from, for the readout. Nil in a synthetic profile.
-    let projectile: FormID?
+    public let projectile: FormID?
     /// Launch speed, world units per second.
-    let speed: Float
+    public let speed: Float
     /// PROJ `gravity`, a dimensionless multiplier over world gravity.
-    let gravityFactor: Float
+    public let gravityFactor: Float
     /// PROJ `range`, world units. Zero means the record bounds nothing and only
     /// the caller's own cap applies.
-    let range: Float
+    public let range: Float
     /// PROJ `lifetime`, seconds. Zero means the record bounds nothing.
-    let lifetime: Float
+    public let lifetime: Float
     /// PROJ `collisionRadius`, world units. The radius the impact sweep uses;
     /// zero flies as a point and is a supported case, not a degraded one.
-    let collisionRadius: Float
+    public let collisionRadius: Float
     /// PROJ `impactForce`, carried for whatever pushes a dynamic body with it.
-    let impactForce: Float
+    public let impactForce: Float
     /// PROJ flight SNDR; nil where the record names none.
-    let sound: FormID?
+    public let sound: FormID?
     /// PROJ MODL, so a stuck arrow can be drawn from the same mesh that flew.
-    let modelPath: String?
+    public let modelPath: String?
 
-    init(
+    public init(
         projectile: FormID? = nil,
         speed: Float,
         gravityFactor: Float,
@@ -98,7 +98,7 @@ nonisolated struct ProjectileProfile: Equatable, Sendable {
     }
 
     /// One decoded PROJ as a flight profile.
-    init(record: Projectile) {
+    public init(record: Projectile) {
         self.init(
             projectile: record.formID,
             speed: record.speed,
@@ -113,7 +113,7 @@ nonisolated struct ProjectileProfile: Equatable, Sendable {
     }
 
     /// Whether this profile describes something the flight model can integrate.
-    var isFlyable: Bool {
+    public var isFlyable: Bool {
         speed > 0
     }
 
@@ -126,26 +126,26 @@ nonisolated struct ProjectileProfile: Equatable, Sendable {
 }
 
 /// Where a projectile is, right now.
-nonisolated struct ProjectileFlightState: Equatable, Sendable {
-    var position: SIMD3<Float>
-    var velocity: SIMD3<Float>
+nonisolated public struct ProjectileFlightState: Equatable, Sendable {
+    public var position: SIMD3<Float>
+    public var velocity: SIMD3<Float>
     /// Path length travelled since launch, world units. This is what `range` is
     /// compared against, not the straight-line distance from the muzzle: an
     /// arrow lobbed in an arc has travelled further than it has displaced, and
     /// `range` bounds the flight rather than the reach.
-    var travelled: Float = 0
+    public var travelled: Float = 0
     /// Seconds since launch, what `lifetime` is compared against.
-    var age: Float = 0
+    public var age: Float = 0
 }
 
-nonisolated enum ProjectileFlight {
+nonisolated public enum ProjectileFlight: Sendable {
     /// Engine units per second squared. The same constant the player capsule
     /// and every dynamic body fall under.
-    static let worldGravity = WalkController.gravity
+    public static let worldGravity = WalkController.gravity
 
     /// The downward acceleration this profile flies under, world units per
     /// second squared.
-    static func acceleration(of profile: ProjectileProfile) -> SIMD3<Float> {
+    public static func acceleration(of profile: ProjectileProfile) -> SIMD3<Float> {
         SIMD3(0, 0, -worldGravity * profile.gravityFactor)
     }
 
@@ -159,7 +159,7 @@ nonisolated enum ProjectileFlight {
     ///   - profile: the PROJ's flight numbers.
     ///   - speedScale: what the launch speed is multiplied by, for a draw that
     ///     did not reach full. 1 is a full draw.
-    static func launch(
+    public static func launch(
         from origin: SIMD3<Float>,
         along direction: SIMD3<Float>,
         profile: ProjectileProfile,
@@ -175,7 +175,7 @@ nonisolated enum ProjectileFlight {
     /// One step of flight. Exact for the constant acceleration this model
     /// carries, so the result does not depend on how the caller subdivided the
     /// frame.
-    static func step(
+    public static func step(
         _ state: ProjectileFlightState,
         profile: ProjectileProfile,
         dt: Float
@@ -194,7 +194,10 @@ nonisolated enum ProjectileFlight {
     /// The greatest height a shot reaches above its launch point, world units.
     /// Zero for a level or descending shot. Closed form, for the readout and
     /// for the trajectory the acceptance test pins.
-    static func apexHeight(of launch: ProjectileFlightState, profile: ProjectileProfile) -> Float {
+    public static func apexHeight(
+        of launch: ProjectileFlightState,
+        profile: ProjectileProfile
+    ) -> Float {
         let acceleration = -acceleration(of: profile).z
         guard acceleration > 0, launch.velocity.z > 0 else { return 0 }
         return launch.velocity.z * launch.velocity.z / (2 * acceleration)
@@ -203,7 +206,7 @@ nonisolated enum ProjectileFlight {
     /// How far a shot has fallen below the straight line it was aimed along,
     /// after `time` seconds. Closed form: the whole of the deviation is the
     /// `½at²` term, because the launch velocity *is* the aim line.
-    static func drop(of profile: ProjectileProfile, after time: Float) -> Float {
+    public static func drop(of profile: ProjectileProfile, after time: Float) -> Float {
         guard time.isFinite, time > 0 else { return 0 }
         return 0.5 * worldGravity * profile.gravityFactor * time * time
     }
@@ -214,7 +217,7 @@ nonisolated enum ProjectileFlight {
     /// Reported against the horizontal component so that "drop at 1000 units"
     /// means what an archer means by it — how far below the reticle the arrow
     /// lands on a level shot — rather than how far it fell along its own arc.
-    static func drop(
+    public static func drop(
         of profile: ProjectileProfile,
         atHorizontalDistance distance: Float,
         launchDirection: SIMD3<Float>
@@ -226,7 +229,7 @@ nonisolated enum ProjectileFlight {
     }
 
     /// A unit vector, with a documented answer for the degenerate input.
-    static func normalized(_ direction: SIMD3<Float>) -> SIMD3<Float> {
+    public static func normalized(_ direction: SIMD3<Float>) -> SIMD3<Float> {
         let length = simd_length(direction)
         guard length.isFinite, length > Float.ulpOfOne else { return SIMD3(1, 0, 0) }
         return direction / length
@@ -238,7 +241,7 @@ nonisolated enum ProjectileFlight {
     /// The tilt is a rotation of the whole ray rather than an addition to its
     /// pitch, so a shot aimed straight down is tilted by the same angle as one
     /// aimed level instead of wrapping past vertical.
-    static func aimDirection(
+    public static func aimDirection(
         cameraForward: SIMD3<Float>,
         tiltDegrees: Float
     ) -> SIMD3<Float> {

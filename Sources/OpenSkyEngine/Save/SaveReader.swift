@@ -11,22 +11,22 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct SaveReader {
+nonisolated public struct SaveReader: Sendable {
     private var reader: BinaryReader
 
-    init(_ data: Data) {
+    public init(_ data: Data) {
         reader = BinaryReader(data)
     }
 
-    var bytesRemaining: Int {
+    public var bytesRemaining: Int {
         reader.bytesRemaining
     }
 
-    var isAtEnd: Bool {
+    public var isAtEnd: Bool {
         reader.bytesRemaining == 0
     }
 
-    mutating func bytes(_ count: Int, _ context: String) throws -> Data {
+    public mutating func bytes(_ count: Int, _ context: String) throws -> Data {
         guard count >= 0, count <= reader.bytesRemaining else {
             throw OpenSkySaveError.truncated(context: context)
         }
@@ -37,7 +37,7 @@ nonisolated struct SaveReader {
         }
     }
 
-    mutating func uint8(_ context: String) throws -> UInt8 {
+    public mutating func uint8(_ context: String) throws -> UInt8 {
         do {
             return try reader.readUInt8()
         } catch {
@@ -45,7 +45,7 @@ nonisolated struct SaveReader {
         }
     }
 
-    mutating func uint16(_ context: String) throws -> UInt16 {
+    public mutating func uint16(_ context: String) throws -> UInt16 {
         do {
             return try reader.readUInt16()
         } catch {
@@ -53,7 +53,7 @@ nonisolated struct SaveReader {
         }
     }
 
-    mutating func uint32(_ context: String) throws -> UInt32 {
+    public mutating func uint32(_ context: String) throws -> UInt32 {
         do {
             return try reader.readUInt32()
         } catch {
@@ -61,7 +61,7 @@ nonisolated struct SaveReader {
         }
     }
 
-    mutating func uint64(_ context: String) throws -> UInt64 {
+    public mutating func uint64(_ context: String) throws -> UInt64 {
         do {
             return try reader.readUInt64()
         } catch {
@@ -69,7 +69,7 @@ nonisolated struct SaveReader {
         }
     }
 
-    mutating func float32(_ context: String) throws -> Float {
+    public mutating func float32(_ context: String) throws -> Float {
         do {
             return try reader.readFloat32()
         } catch {
@@ -79,7 +79,7 @@ nonisolated struct SaveReader {
 
     /// UInt16 byte length + UTF-8 bytes. A length past the end of the data is
     /// a truncation, not an allocation: the bytes are never reserved first.
-    mutating func string(_ context: String) throws -> String {
+    public mutating func string(_ context: String) throws -> String {
         let length = try Int(uint16(context))
         let raw = try bytes(length, context)
         guard let text = String(data: raw, encoding: .utf8) else {
@@ -91,7 +91,7 @@ nonisolated struct SaveReader {
     /// A byte the format defines as 0 or 1. Anything else is corruption, not
     /// a truthy value: silently treating 0x7F as `true` would hide a decoder
     /// or writer bug behind a plausible-looking world.
-    mutating func bool(_ context: String) throws -> Bool {
+    public mutating func bool(_ context: String) throws -> Bool {
         let value = try uint8(context)
         switch value {
         case 0:

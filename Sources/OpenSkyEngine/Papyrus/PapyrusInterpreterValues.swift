@@ -4,7 +4,10 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusInterpreter {
-    func read(_ operand: PexValue, frame: PapyrusFrame) throws(PapyrusFault) -> PapyrusValue {
+    public func read(
+        _ operand: PexValue,
+        frame: PapyrusFrame
+    ) throws(PapyrusFault) -> PapyrusValue {
         switch operand {
         case .null:
             .none
@@ -21,7 +24,7 @@ nonisolated extension PapyrusInterpreter {
         }
     }
 
-    func write(
+    public func write(
         _ value: PapyrusValue,
         to destination: PexValue,
         frame: PapyrusFrame
@@ -60,7 +63,7 @@ nonisolated extension PapyrusInterpreter {
         )
     }
 
-    func destinationType(
+    public func destinationType(
         _ destination: PexValue,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusType {
@@ -86,7 +89,10 @@ nonisolated extension PapyrusInterpreter {
         )
     }
 
-    func cast(_ value: PapyrusValue, to type: PapyrusType) throws(PapyrusFault) -> PapyrusValue {
+    public func cast(
+        _ value: PapyrusValue,
+        to type: PapyrusType
+    ) throws(PapyrusFault) -> PapyrusValue {
         do {
             switch type {
             case .none:
@@ -137,7 +143,7 @@ nonisolated extension PapyrusInterpreter {
         throw .unsupported(source: value.typeName, destination: type.name)
     }
 
-    func declaredType(
+    public func declaredType(
         of operand: PexValue,
         frame: PapyrusFrame
     ) -> PapyrusType? {
@@ -155,7 +161,7 @@ nonisolated extension PapyrusInterpreter {
         }).map { PapyrusType(name: $0.typeName) }
     }
 
-    func resolveMethod(
+    public func resolveMethod(
         _ name: String,
         instance: PapyrusInstance,
         startingAt scriptName: String? = nil
@@ -175,7 +181,7 @@ nonisolated extension PapyrusInterpreter {
         return nil
     }
 
-    func resolveProperty(
+    public func resolveProperty(
         _ name: String,
         instance: PapyrusInstance
     ) throws(PapyrusFault) -> PapyrusResolvedProperty? {
@@ -191,7 +197,7 @@ nonisolated extension PapyrusInterpreter {
         return nil
     }
 
-    func function(named name: String, state: String, script: PexObject) -> PexFunction? {
+    public func function(named name: String, state: String, script: PexObject) -> PexFunction? {
         script.states.first(where: { PapyrusRuntime.matches($0.name, state) })?
             .functions.first(where: { PapyrusRuntime.matches($0.name, name) })?
             .function

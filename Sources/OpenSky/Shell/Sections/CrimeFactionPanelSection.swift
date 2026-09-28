@@ -8,6 +8,7 @@
 // tickers would build it four times for one identical reading.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 /// One section of the Crime & Factions panel.

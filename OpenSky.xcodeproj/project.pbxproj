@@ -71,14 +71,9 @@
 			path = OpenSky;
 			sourceTree = "<group>";
 		};
-		5A3BAE033000109100177F95 /* OpenSkyEngine */ = {
+		5A3BAE033000109100177F95 /* Shaders */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = OpenSkyEngine;
-			sourceTree = "<group>";
-		};
-		5A3BAE033000109100177F97 /* ShaderTypes */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ShaderTypes;
+			path = Shaders;
 			sourceTree = "<group>";
 		};
 		5AC1000130001093001700A5 /* OpenSkyCLI */ = {
@@ -116,14 +111,13 @@
 		5A3BADFE3000109100177F95 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				5AF000033000109300170013 /* OpenSkyGameData in Frameworks */,
-				5AF000033000109300170011 /* OpenSkyFormats in Frameworks */,
+				5AF000033000109300170011 /* OpenSkyModules in Frameworks */,
 			);
 		};
 		5A3BAE163000109300177F95 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				5AF000033000109300170019 /* FormatsTestSupport in Frameworks */,
+				5AF000033000109300170019 /* OpenSkyTestSupport in Frameworks */,
 			);
 		};
 		5A3BAE203000109300177F95 /* Frameworks */ = {
@@ -134,14 +128,13 @@
 		5AC1000130001093001700A4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				5AF000033000109300170017 /* OpenSkyGameData in Frameworks */,
-				5AF000033000109300170015 /* OpenSkyFormats in Frameworks */,
+				5AF000033000109300170015 /* OpenSkyModules in Frameworks */,
 			);
 		};
 		5AD1000130001093001700A4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				5AF00003300010930017001B /* FormatsTestSupport in Frameworks */,
+				5AF00003300010930017001B /* OpenSkyTestSupport in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -176,9 +169,8 @@
 			isa = PBXGroup;
 			children = (
 				5A3BAE033000109100177F96 /* OpenSky */,
-				5A3BAE033000109100177F95 /* OpenSkyEngine */,
+				5A3BAE033000109100177F95 /* Shaders */,
 				5AC1000130001093001700A5 /* OpenSkyCLI */,
-				5A3BAE033000109100177F97 /* ShaderTypes */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -225,13 +217,11 @@
 			);
 			fileSystemSynchronizedGroups = (
 				5A3BAE033000109100177F96 /* OpenSky */,
-				5A3BAE033000109100177F95 /* OpenSkyEngine */,
-				5A3BAE033000109100177F97 /* ShaderTypes */,
+				5A3BAE033000109100177F95 /* Shaders */,
 			);
 			name = OpenSky;
 			packageProductDependencies = (
-				5AF000033000109300170010 /* OpenSkyFormats */,
-				5AF000033000109300170012 /* OpenSkyGameData */,
+				5AF000033000109300170010 /* OpenSkyModules */,
 			);
 			productName = OpenSky;
 			productReference = 5A3BAE013000109100177F95 /* OpenSky.app */;
@@ -256,7 +246,7 @@
 			);
 			name = OpenSkyTests;
 			packageProductDependencies = (
-				5AF000033000109300170018 /* FormatsTestSupport */,
+				5AF000033000109300170018 /* OpenSkyTestSupport */,
 			);
 			productName = OpenSkyTests;
 			productReference = 5A3BAE193000109300177F95 /* OpenSkyTests.xctest */;
@@ -302,7 +292,7 @@
 			);
 			name = OpenSkyRealDataTests;
 			packageProductDependencies = (
-				5AF00003300010930017001A /* FormatsTestSupport */,
+				5AF00003300010930017001A /* OpenSkyTestSupport */,
 			);
 			productName = OpenSkyRealDataTests;
 			productReference = 5AD1000130001093001700A2 /* OpenSkyRealDataTests.xctest */;
@@ -321,14 +311,12 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				5A3BAE033000109100177F95 /* OpenSkyEngine */,
-				5A3BAE033000109100177F97 /* ShaderTypes */,
+				5A3BAE033000109100177F95 /* Shaders */,
 				5AC1000130001093001700A5 /* OpenSkyCLI */,
 			);
 			name = OpenSkyCLI;
 			packageProductDependencies = (
-				5AF000033000109300170014 /* OpenSkyFormats */,
-				5AF000033000109300170016 /* OpenSkyGameData */,
+				5AF000033000109300170014 /* OpenSkyModules */,
 			);
 			productName = openskycli;
 			productReference = 5AC1000130001093001700A2 /* openskycli */;
@@ -670,39 +658,29 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		5AF000033000109300170010 /* OpenSkyFormats */ = {
+		5AF000033000109300170010 /* OpenSkyModules */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = OpenSkyFormats;
+			productName = OpenSkyModules;
 		};
-		5AF000033000109300170012 /* OpenSkyGameData */ = {
+		5AF000033000109300170014 /* OpenSkyModules */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = OpenSkyGameData;
+			productName = OpenSkyModules;
 		};
-		5AF000033000109300170014 /* OpenSkyFormats */ = {
+		5AF000033000109300170018 /* OpenSkyTestSupport */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = OpenSkyFormats;
+			productName = OpenSkyTestSupport;
 		};
-		5AF000033000109300170016 /* OpenSkyGameData */ = {
+		5AF00003300010930017001A /* OpenSkyTestSupport */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = OpenSkyGameData;
-		};
-		5AF000033000109300170018 /* FormatsTestSupport */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = FormatsTestSupport;
-		};
-		5AF00003300010930017001A /* FormatsTestSupport */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = FormatsTestSupport;
+			productName = OpenSkyTestSupport;
 		};
 /* End XCSwiftPackageProductDependency section */
 
 /* Begin PBXBuildFile section */
-		5AF000033000109300170011 /* OpenSkyFormats in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170010 /* OpenSkyFormats */; };
-		5AF000033000109300170013 /* OpenSkyGameData in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170012 /* OpenSkyGameData */; };
-		5AF000033000109300170015 /* OpenSkyFormats in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170014 /* OpenSkyFormats */; };
-		5AF000033000109300170017 /* OpenSkyGameData in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170016 /* OpenSkyGameData */; };
-		5AF000033000109300170019 /* FormatsTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170018 /* FormatsTestSupport */; };
-		5AF00003300010930017001B /* FormatsTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF00003300010930017001A /* FormatsTestSupport */; };
+		5AF000033000109300170011 /* OpenSkyModules in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170010 /* OpenSkyModules */; };
+		5AF000033000109300170015 /* OpenSkyModules in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170014 /* OpenSkyModules */; };
+		5AF000033000109300170019 /* OpenSkyTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170018 /* OpenSkyTestSupport */; };
+		5AF00003300010930017001B /* OpenSkyTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF00003300010930017001A /* OpenSkyTestSupport */; };
 /* End PBXBuildFile section */
 	};
 	rootObject = 5A3BADF93000109100177F95 /* Project object */;

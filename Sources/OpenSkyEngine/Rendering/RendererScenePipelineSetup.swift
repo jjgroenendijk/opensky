@@ -12,25 +12,25 @@ import OpenSkyShaderTypes
 /// `alphaThreshold: material.alphaTestThreshold ?? 0`, and a threshold of zero
 /// discards nothing, so the alpha-testing static variant serves the opaque
 /// groups too.
-nonisolated struct DebugRenderPipelines {
-    let staticMesh: MTLRenderPipelineState
-    let skinned: MTLRenderPipelineState
-    let morphedSkinned: MTLRenderPipelineState
-    let terrain: MTLRenderPipelineState
-    let grass: MTLRenderPipelineState
-    let water: MTLRenderPipelineState
+nonisolated public struct DebugRenderPipelines: Sendable {
+    public let staticMesh: MTLRenderPipelineState
+    public let skinned: MTLRenderPipelineState
+    public let morphedSkinned: MTLRenderPipelineState
+    public let terrain: MTLRenderPipelineState
+    public let grass: MTLRenderPipelineState
+    public let water: MTLRenderPipelineState
 }
 
 /// One debug pipeline's recipe: the two function names, the vertex layout, and
 /// whether its fragment declares the alpha-test constant. `alphaTest` is nil for
 /// the fragment functions that declare no such constant (terrain, grass, water);
 /// setting one there would fail specialization.
-nonisolated struct DebugPipelineRecipe {
-    let label: String
-    let vertex: String
-    let fragment: String
-    let alphaTest: Bool?
-    let layout: MTLVertexDescriptor
+nonisolated public struct DebugPipelineRecipe {
+    public let label: String
+    public let vertex: String
+    public let fragment: String
+    public let alphaTest: Bool?
+    public let layout: MTLVertexDescriptor
 }
 
 extension Renderer {
@@ -45,7 +45,7 @@ extension Renderer {
     ///
     /// `alphaTest` is nil for the fragments that declare no alpha-test constant
     /// (terrain, grass, water); setting one there would fail specialization.
-    static func specializedFragment(
+    public static func specializedFragment(
         _ name: String,
         library: MTLLibrary,
         debugView: Bool,
@@ -73,7 +73,7 @@ extension Renderer {
     /// Builds the five debug pipelines. Each specializes its fragment function
     /// with `FunctionConstantDebugView` defined as true; the shipping pipelines
     /// leave it undefined, which is what keeps their compiled code unchanged.
-    static func makeDebugPipelines(
+    public static func makeDebugPipelines(
         library: MTLLibrary,
         compiler: MTL4Compiler,
         view: MTKView
@@ -142,7 +142,7 @@ extension Renderer {
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
-    static func makeGrassPipeline(
+    public static func makeGrassPipeline(
         library: MTLLibrary,
         compiler: MTL4Compiler,
         view: MTKView
@@ -162,7 +162,7 @@ extension Renderer {
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
-    static func makeTerrainPipeline(
+    public static func makeTerrainPipeline(
         library: MTLLibrary,
         compiler: MTL4Compiler,
         view: MTKView

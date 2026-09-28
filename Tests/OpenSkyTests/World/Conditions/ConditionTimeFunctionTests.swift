@@ -4,7 +4,7 @@
 // builds, and `GetRandomPercent` draws from a seeded `ConditionRandom`.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct ConditionTimeFunctionTests {

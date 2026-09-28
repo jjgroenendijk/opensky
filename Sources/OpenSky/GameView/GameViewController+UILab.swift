@@ -6,6 +6,7 @@
 // inert controls, matching the other `*ControlProviding` bridges.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyGameData
 
 extension GameViewController {

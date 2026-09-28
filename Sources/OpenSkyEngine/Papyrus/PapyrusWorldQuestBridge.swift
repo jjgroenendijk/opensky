@@ -23,7 +23,7 @@ import OpenSkyFormats
 
 /// Failures the seam itself reports, as opposed to the `QuestError`s the quest
 /// layer throws once a quest has been named.
-nonisolated enum PapyrusQuestBridgeError: Error, Equatable {
+nonisolated public enum PapyrusQuestBridgeError: Error, Equatable {
     /// The session has no quest index behind it — a synthetic scene, or an
     /// install whose plugins carry no QUST group. Distinct from
     /// `QuestError.unknownQuest`, which means the index exists and does not
@@ -37,7 +37,7 @@ nonisolated enum PapyrusQuestBridgeError: Error, Equatable {
 /// `MainActor.assumeIsolated` hops. Every conformer is a `@MainActor` class and
 /// is therefore already `Sendable`; only the existential needed to say so.
 @MainActor
-protocol PapyrusWorldQuestBridge: AnyObject, Sendable {
+public protocol PapyrusWorldQuestBridge: AnyObject, Sendable {
     /// Effective state of the quest `key` names: its runtime component when it
     /// has one, its plugin baseline when it does not.
     func questState(for key: ReferenceKey) throws -> QuestRuntimeState
@@ -83,29 +83,29 @@ protocol PapyrusWorldQuestBridge: AnyObject, Sendable {
 /// assertion that natives run on the main actor rather than a suppression of
 /// the check.
 nonisolated extension PapyrusWorldAccess {
-    func questState(for key: ReferenceKey) throws -> QuestRuntimeState {
+    public func questState(for key: ReferenceKey) throws -> QuestRuntimeState {
         try MainActor.assumeIsolated { try bridge.questState(for: key) }
     }
 
     @discardableResult
-    func startQuest(for key: ReferenceKey) throws -> Bool {
+    public func startQuest(for key: ReferenceKey) throws -> Bool {
         try MainActor.assumeIsolated { try bridge.startQuest(for: key) }
     }
 
-    func stopQuest(for key: ReferenceKey) throws {
+    public func stopQuest(for key: ReferenceKey) throws {
         try MainActor.assumeIsolated { try bridge.stopQuest(for: key) }
     }
 
-    func completeQuest(for key: ReferenceKey) throws {
+    public func completeQuest(for key: ReferenceKey) throws {
         try MainActor.assumeIsolated { try bridge.completeQuest(for: key) }
     }
 
     @discardableResult
-    func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
+    public func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
         try MainActor.assumeIsolated { try bridge.setQuestStage(stage, for: key) }
     }
 
-    func setQuestObjectiveDisplayed(
+    public func setQuestObjectiveDisplayed(
         _ objective: UInt16, _ isDisplayed: Bool, for key: ReferenceKey
     ) throws {
         try MainActor.assumeIsolated {
@@ -113,7 +113,7 @@ nonisolated extension PapyrusWorldAccess {
         }
     }
 
-    func setQuestObjectiveCompleted(
+    public func setQuestObjectiveCompleted(
         _ objective: UInt16, _ isCompleted: Bool, for key: ReferenceKey
     ) throws {
         try MainActor.assumeIsolated {
@@ -121,7 +121,7 @@ nonisolated extension PapyrusWorldAccess {
         }
     }
 
-    func setQuestObjectiveFailed(
+    public func setQuestObjectiveFailed(
         _ objective: UInt16, _ isFailed: Bool, for key: ReferenceKey
     ) throws {
         try MainActor.assumeIsolated {

@@ -18,7 +18,7 @@ import OpenSkyGameData
 import OSLog
 import simd
 
-nonisolated enum CellSceneError: Error, Equatable {
+nonisolated public enum CellSceneError: Error, Equatable {
     /// No WRLD record carries the requested editor ID.
     case worldspaceNotFound(editorID: String)
     /// The worldspace holds no CELL at the requested grid slot.
@@ -30,84 +30,84 @@ nonisolated enum CellSceneError: Error, Equatable {
 }
 
 /// Per-build skip accounting; folded into CellLoadSummary at the end.
-nonisolated struct BuildCounts {
-    var totalRefs = 0
-    var malformedRefs = 0
-    var unsupportedBases = 0
-    var markers = 0
-    var modelFailures = 0
+nonisolated public struct BuildCounts: Sendable {
+    public var totalRefs = 0
+    public var malformedRefs = 0
+    public var unsupportedBases = 0
+    public var markers = 0
+    public var modelFailures = 0
     /// References the runtime disabled since load (issue #160): dropped from
     /// this build exactly as an initially-disabled record is.
-    var runtimeDisabled = 0
+    public var runtimeDisabled = 0
     /// References the runtime deleted since load. Distinct from the record
     /// header's `deleted` flag, which never reaches a build at all.
-    var runtimeDeleted = 0
+    public var runtimeDeleted = 0
     /// Objects the running game placed in this cell (issue #177): dropped
     /// items today. Counted apart from `totalRefs`, which is the plugin's own
     /// reference count and must stay comparable across builds.
-    var spawnedRefs = 0
+    public var spawnedRefs = 0
     /// Spawned objects dropped because their generated sequence has outrun the
     /// 24-bit object ID a FormID can hold. Always zero in practice; counted so
     /// that it is visible rather than silent if it ever is not.
-    var unaddressableSpawns = 0
+    public var unaddressableSpawns = 0
 }
 
 /// One base record resolved to its drawable model path, regardless of
 /// whether it came from the STAT or ModelBase (MSTT/TREE/FURN/ACTI/CONT/DOOR)
 /// index — resolveInstances treats both the same past this point.
-nonisolated struct ResolvedBase {
-    let formID: FormID
-    let recordType: FourCC
+nonisolated public struct ResolvedBase: Sendable {
+    public let formID: FormID
+    public let recordType: FourCC
     /// Nil = marker base (no MODL), nothing to draw.
-    let modelPath: String?
+    public let modelPath: String?
 }
 
 /// One resolved placement, sortable into instancing-ready order.
-nonisolated struct ResolvedInstance {
+nonisolated public struct ResolvedInstance {
     /// Normalized mesh path — primary grouping key.
-    let sortKey: String
+    public let sortKey: String
     /// REFR FormID — deterministic tie-break within one model.
-    let formID: UInt32
+    public let formID: UInt32
     /// Raw MODL path, for the bounds lookup in MeshLibrary.
-    let modelPath: String
-    let model: RenderModel
-    let transform: float4x4
+    public let modelPath: String
+    public let model: RenderModel
+    public let transform: float4x4
 }
 
 /// A located CELL record plus the cell-children group that follows it
 /// (nil children = cell without references). Internal: the terrain half of
 /// the build (CellSceneBuilderTerrain.swift) consumes it cross-file.
-nonisolated struct FoundCell {
-    let cell: Cell
-    let formID: UInt32
-    let children: ESMGroup?
+nonisolated public struct FoundCell: Sendable {
+    public let cell: Cell
+    public let formID: UInt32
+    public let children: ESMGroup?
 }
 
 /// The world-children group plus the decoded WRLD it belongs to (DNAM default
 /// land height feeds the LAND-less terrain fallback).
-nonisolated struct FoundWorld {
-    let children: ESMGroup
-    let worldspace: Worldspace?
+nonisolated public struct FoundWorld: Sendable {
+    public let children: ESMGroup
+    public let worldspace: Worldspace?
 }
 
 /// Builds a CellScene from a plugin + asset libraries. Class (not struct)
 /// because the STAT index is cached across builds. Single-threaded like the
 /// libraries it drives: scene build runs once at startup.
-nonisolated final class CellSceneBuilder {
+nonisolated public final class CellSceneBuilder {
     /// Members below stay internal (not private) where
     /// CellSceneBuilderTerrain.swift extends the build cross-file; the
     /// module boundary still hides them from callers.
-    static let logger = Logger(
+    public static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellScene"
     )
 
-    let file: ESMFile
-    let meshes: MeshLibrary
-    let textures: TextureLibrary
-    let fileSystem: VirtualFileSystem?
-    let collisionModels: NIFCollisionLibrary?
-    var collisionPartitionCache = CellCollisionPartitionCache()
+    public let file: ESMFile
+    public let meshes: MeshLibrary
+    public let textures: TextureLibrary
+    public let fileSystem: VirtualFileSystem?
+    public let collisionModels: NIFCollisionLibrary?
+    public var collisionPartitionCache = CellCollisionPartitionCache()
     /// Whether movable clutter leaves the immutable collision set and joins the
     /// dynamic world (issues #193 and #392).
     ///
@@ -119,50 +119,50 @@ nonisolated final class CellSceneBuilder {
     /// sinks through a shelf is a worse world than one that never moves. It
     /// remains a setting rather than a constant so a build that only wants the
     /// immutable collision set, such as `openskycli collision`, can say so.
-    var simulatesDynamicBodies = true
-    let distantLODBuilder: DistantLODBuilder?
+    public var simulatesDynamicBodies = true
+    public let distantLODBuilder: DistantLODBuilder?
     /// FormID -> STAT over the STAT top group, built on first use.
-    var statIndex: [UInt32: StaticObject]?
+    public var statIndex: [UInt32: StaticObject]?
     /// FormID -> ModelBase over MSTT/TREE/FURN/ACTI/CONT/DOOR top groups,
     /// built on first use. Checked when a ref's base is not a STAT.
-    var modelBaseIndex: [UInt32: ModelBase]?
+    public var modelBaseIndex: [UInt32: ModelBase]?
     /// XTEL refs stored in each WRLD persistent CELL, keyed by WRLD FormID.
     /// Physical placement decides which streamed exterior scene owns them.
-    var exteriorPersistentTeleportRefs: [UInt32: [PlacedReference]] = [:]
+    public var exteriorPersistentTeleportRefs: [UInt32: [PlacedReference]] = [:]
     /// ACHRs stored in each WRLD persistent CELL, keyed by WRLD FormID —
     /// same ownership rule as the teleport refs above (5.5 actor streaming).
-    var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
+    public var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     /// Template + visual actor resolvers, built on the first actor-bearing
     /// cell and cached like statIndex. Build-queue confined.
-    var actorTemplateResolver: ActorTemplateResolver?
-    var actorVisualResolver: ActorVisualResolver?
+    public var actorTemplateResolver: ActorTemplateResolver?
+    public var actorVisualResolver: ActorVisualResolver?
     /// Immutable decoded rig/idle assets; playback objects remain cell-owned.
-    var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
+    public var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
     /// Plugin file name feeding FaceGen path resolution (FormIDResolver).
-    let pluginName: String
+    public let pluginName: String
     /// Master-list resolver for this plugin, built once here because
     /// `ESMFile.pluginHeader()` re-decodes the header on every call and every
     /// indexed reference needs a resolution.
-    let formIDResolver: FormIDResolver
+    public let formIDResolver: FormIDResolver
     /// TES4 0x80 selects table-ID lstrings instead of inline zstrings.
-    let pluginLocalized: Bool
+    public let pluginLocalized: Bool
     /// Resolves FULL/RNAM interaction text when the builder has a VFS.
-    let localizedStrings: LocalizedStrings?
+    public let localizedStrings: LocalizedStrings?
     /// Water/environment indexes + reusable plane mesh. Build-queue confined
     /// like the existing record indexes and asset libraries.
-    var worldspaceIndex: [UInt32: Worldspace]?
-    var waterTypeIndex: [UInt32: WaterType]?
-    var waterPlaneMesh: RenderMesh?
-    var landTextureIndex: [UInt32: LandTexture]?
-    var grassIndex: [UInt32: Grass]?
-    var lightingTemplateIndex: [UInt32: LightingTemplate]?
-    var lightIndex: [UInt32: LightRecord]?
+    public var worldspaceIndex: [UInt32: Worldspace]?
+    public var waterTypeIndex: [UInt32: WaterType]?
+    public var waterPlaneMesh: RenderMesh?
+    public var landTextureIndex: [UInt32: LandTexture]?
+    public var grassIndex: [UInt32: Grass]?
+    public var lightingTemplateIndex: [UInt32: LightingTemplate]?
+    public var lightIndex: [UInt32: LightRecord]?
     /// MATT materials plus the Havok-hash and LTEX lookups into them
     /// (issue #358), built on first use like the indexes above. Collision and
     /// terrain both resolve their surface material through it at build time.
-    var materialTypeIndex: MaterialTypeIndex?
+    public var materialTypeIndex: MaterialTypeIndex?
 
-    init(
+    public init(
         file: ESMFile,
         meshes: MeshLibrary,
         textures: TextureLibrary,
@@ -199,7 +199,7 @@ nonisolated final class CellSceneBuilder {
     /// - Parameter state: runtime deviations to lay over the plugin's data
     ///   (issue #160). `.empty` builds exactly what the plugin authored, which
     ///   is what a build with no session state behind it wants.
-    func buildScene(
+    public func buildScene(
         worldspaceEditorID: String,
         gridX: Int32,
         gridY: Int32,
@@ -276,7 +276,7 @@ nonisolated extension CellSceneBuilder {
     /// labeled by the owning record's FormID. EDID match is exact (editor IDs
     /// are stable identifiers). A malformed WRLD is skipped — another
     /// worldspace may still match.
-    nonisolated func worldChildrenGroup(
+    nonisolated public func worldChildrenGroup(
         editorID: String,
         localized: Bool
     ) throws -> FoundWorld {
@@ -309,7 +309,7 @@ nonisolated extension CellSceneBuilder {
     /// Depth-first over exterior block/sub-block groups. Match is by decoded
     /// XCLC grid, never by block labels (unreliable in CK-ignored groups —
     /// see ESMGroup).
-    nonisolated func findCell(
+    nonisolated public func findCell(
         in group: ESMGroup,
         gridX: Int32,
         gridY: Int32,
@@ -350,7 +350,7 @@ nonisolated extension CellSceneBuilder {
 
     /// The cell-children group for a CELL record sits after it among the same
     /// siblings, labeled with the cell's FormID.
-    nonisolated func cellChildrenGroup(
+    nonisolated public func cellChildrenGroup(
         following index: Int,
         in children: [ESMGroup.Child],
         cellFormID: UInt32
@@ -370,7 +370,7 @@ nonisolated extension CellSceneBuilder {
     /// mesh load error -> model failure. Output is sorted by (normalized
     /// mesh path, FormID) so instances sharing a RenderModel are adjacent
     /// (instancing-ready) and the order is deterministic across runs.
-    nonisolated func resolveInstances(
+    nonisolated public func resolveInstances(
         refs: [PlacedReference],
         counts: inout BuildCounts
     ) -> [ResolvedInstance] {

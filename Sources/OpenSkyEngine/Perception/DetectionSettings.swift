@@ -36,94 +36,94 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct DetectionSettings: Equatable {
+nonisolated public struct DetectionSettings: Equatable, Sendable {
     // MARK: - Read from the load order
 
     /// `fSneakBaseValue` — the constant every detection value starts from. It
     /// is negative, which is what makes a distant, silent, unseen target
     /// undetected rather than marginally detected.
-    let sneakBaseValue: MovementSetting
+    public let sneakBaseValue: MovementSetting
     /// `fSneakMaxDistance` — the range past which sight and hearing both
     /// attenuate to nothing, world units.
-    let maxDistance: MovementSetting
+    public let maxDistance: MovementSetting
     /// `fSneakExteriorDistanceMult` — what that range is multiplied by outdoors,
     /// where there are no walls to stop either sense.
-    let exteriorDistanceMult: MovementSetting
+    public let exteriorDistanceMult: MovementSetting
     /// `fSneakSoundsMult` — what the whole sound term is multiplied by.
-    let soundsMult: MovementSetting
+    public let soundsMult: MovementSetting
     /// `fSneakSoundLosMult` — what the sound term is multiplied by when nothing
     /// can see through to the target. Sound reaches around a corner; it just
     /// reaches less.
-    let soundLosMult: MovementSetting
+    public let soundLosMult: MovementSetting
     /// `fSneakRunningMult` — how much louder a running target is than a walking
     /// one.
-    let runningMult: MovementSetting
+    public let runningMult: MovementSetting
     /// `fSneakActionMult` — what an action sound is multiplied by. OpenSky feeds
     /// no action sounds yet, so this multiplies a pinned zero; it is resolved
     /// anyway so the term is wired rather than absent.
-    let actionMult: MovementSetting
+    public let actionMult: MovementSetting
     /// `fSneakSkillMult` — what a skill level is multiplied by to become a skill
     /// factor. Both skills are pinned (see `DetectionFormula`), so this weights
     /// a documented constant rather than a stored actor value.
-    let skillMult: MovementSetting
+    public let skillMult: MovementSetting
     /// `fSneakPerceptionSkillMin` and `fSneakPerceptionSkillMax` — the range a
     /// skill level is clamped to before it is weighted.
-    let perceptionSkillMin: MovementSetting
-    let perceptionSkillMax: MovementSetting
+    public let perceptionSkillMin: MovementSetting
+    public let perceptionSkillMax: MovementSetting
 
     // MARK: - OpenSky's own
 
     /// The exponent the distance attenuation is raised to. UESP names an
     /// `fSneakDistanceAttenuationExponent` of 2; no GMST of that editor ID
     /// exists on the install, so the exponent is ours and says so.
-    let distanceAttenuationExponent: MovementSetting
+    public let distanceAttenuationExponent: MovementSetting
     /// The `fSneakEquippedWeightBase` term of the movement-noise formula — what
     /// a target counts as wearing before anything is equipped. UESP names it as
     /// a setting; the install carries no GMST by that editor ID.
-    let equippedWeightBase: MovementSetting
+    public let equippedWeightBase: MovementSetting
     /// The `fSneakEquippedWeightMult` term, noise per point of equipped weight,
     /// on the same terms.
-    let equippedWeightMult: MovementSetting
+    public let equippedWeightMult: MovementSetting
     /// What movement noise is multiplied by while the target is sneaking.
     /// Vanilla's own movement term has no crouch factor at all — it spends the
     /// Sneak skill on the observer's side of the formula instead — and OpenSky
     /// has no skills to spend, so the gait is where sneaking has to pay.
-    let sneakMovementMult: MovementSetting
+    public let sneakMovementMult: MovementSetting
     /// The same for a sprinting target, one step above `fSneakRunningMult`.
-    let sprintMovementMult: MovementSetting
+    public let sprintMovementMult: MovementSetting
     /// Half-angle of an observer's view cone, degrees off its facing. 90 makes
     /// the cone a forward hemisphere: a target directly beside an observer is on
     /// the edge of sight and one behind it is not seen at all.
-    let viewConeHalfAngleDegrees: MovementSetting
+    public let viewConeHalfAngleDegrees: MovementSetting
     /// The visual term a lit, upright target in plain sight contributes. Scaled
     /// to sit alongside the sound term, whose vanilla base is 12.
-    let visualBaseValue: MovementSetting
+    public let visualBaseValue: MovementSetting
     /// What the visual term is multiplied by while the target is sneaking.
-    let sneakVisualMult: MovementSetting
+    public let sneakVisualMult: MovementSetting
     /// Detection value at which the level climbs at its full rate. A stronger
     /// signal than this does not climb faster.
-    let fullDetectionValue: MovementSetting
+    public let fullDetectionValue: MovementSetting
     /// Detection level gained per second at a full-rate signal, out of 100.
-    let gainPerSecond: MovementSetting
+    public let gainPerSecond: MovementSetting
     /// Detection level lost per second while nothing is perceived.
-    let decayPerSecond: MovementSetting
+    public let decayPerSecond: MovementSetting
     /// Level at or above which an observer is suspicious and has somewhere to
     /// investigate.
-    let suspiciousLevel: MovementSetting
+    public let suspiciousLevel: MovementSetting
     /// Level at which an observer has detected the target outright. The top of
     /// the scale, so "detected" and "certain" are the same state.
-    let detectedLevel: MovementSetting
+    public let detectedLevel: MovementSetting
 
     /// Values for synthetic scenes and tests: the numbers the install carries
     /// plus OpenSky's own, stated explicitly so a test never depends on an
     /// install being present.
-    static let synthetic = make(loadOrderSource: "OpenSky synthetic") { _ in nil }
+    public static let synthetic = make(loadOrderSource: "OpenSky synthetic") { _ in nil }
 
     /// Reads every load-order setting out of `store`, falling back to the value
     /// observed in vanilla `Skyrim.esm` and saying so when the load order
     /// carries none. OpenSky's own constants are the same either way, because no
     /// plugin authors them.
-    static func resolve(store: GameSettingStore) -> DetectionSettings {
+    public static func resolve(store: GameSettingStore) -> DetectionSettings {
         make(loadOrderSource: "vanilla Skyrim.esm value") { editorID in
             guard
                 let resolved = store.setting(editorID: editorID),
@@ -136,7 +136,7 @@ nonisolated struct DetectionSettings: Equatable {
 
     /// The cosine the view-cone test compares a facing dot against, computed
     /// once here rather than per pair per step.
-    var viewConeCosine: Float {
+    public var viewConeCosine: Float {
         cosf(min(max(viewConeHalfAngleDegrees.value, 0), 180) * .pi / 180)
     }
 

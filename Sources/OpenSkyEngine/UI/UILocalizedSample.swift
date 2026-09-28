@@ -16,7 +16,7 @@ nonisolated extension LocalizedLabels {
     /// Synthetic sample provider for the UI Lab preview. Goes through the real
     /// merge path so the preview exercises the same provider the SWF menus
     /// (issue #99) will consume.
-    static let uiLabSample = LocalizedLabels(
+    public static let uiLabSample = LocalizedLabels(
         language: "english",
         files: [TranslationFile(entries: [
             "$OPENSKY_UILAB_TITLE": "Localized strings",
@@ -34,18 +34,18 @@ nonisolated extension LocalizedLabels {
 
 nonisolated extension UIScene {
     /// The deliberately-unresolved token the preview renders verbatim.
-    static let localizedSampleMissingToken = "$OPENSKY_UILAB_MISSING"
+    public static let localizedSampleMissingToken = "$OPENSKY_UILAB_MISSING"
 
     /// Wrap width (points) of the long-paragraph case.
-    static let localizedSampleWrapWidth: Float = 312
+    public static let localizedSampleWrapWidth: Float = 312
 
     /// The preview scene over the built-in synthetic sample labels.
-    static let localizedSample = UIScene.localizedSample(labels: .uiLabSample)
+    public static let localizedSample = UIScene.localizedSample(labels: .uiLabSample)
 
     /// Localized preview scene: every visible string passes through
     /// `LocalizedLabels.label(for:)`. Parametrized over the provider so tests
     /// can substitute their own fixtures.
-    static func localizedSample(labels: LocalizedLabels) -> UIScene {
+    public static func localizedSample(labels: LocalizedLabels) -> UIScene {
         UIScene(nodes: [
             UINode(
                 anchor: .topLeft,

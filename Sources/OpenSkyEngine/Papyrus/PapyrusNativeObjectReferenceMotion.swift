@@ -14,7 +14,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// Read from the resolved `ReferenceState`, so a script that moved the
     /// reference earlier reads back what it wrote, and one that never moved it
     /// reads the plugin's DATA placement.
-    static func installPositionReads(into registry: inout PapyrusNativeRegistry) {
+    public static func installPositionReads(into registry: inout PapyrusNativeRegistry) {
         for (axis, name) in ["X", "Y", "Z"].enumerated() {
             registry.register(PapyrusNativeFunction(
                 scriptName: "ObjectReference",
@@ -42,7 +42,7 @@ nonisolated extension PapyrusNativeFunctions {
     ///
     /// An argument that is present but is not a number, or is not finite, is a
     /// failure — a NaN coordinate would poison every later distance comparison.
-    static func installSetPosition(into registry: inout PapyrusNativeRegistry) {
+    public static func installSetPosition(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference",
             functionName: "SetPosition"

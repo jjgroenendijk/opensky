@@ -29,12 +29,12 @@
 // bound is over the *undrained* names, so a slow consumer costs the fast one
 // nothing but its own lost tail.
 
-nonisolated final class LocomotionGraphEventQueue {
+nonisolated public final class LocomotionGraphEventQueue {
     /// How many undrained names the queue holds before it starts dropping the
     /// oldest. A frame at 60 Hz drives 2 fixed steps and a sprinting vanilla
     /// graph fires a handful of events per step, so 64 is several frames of
     /// headroom while staying a fixed, small bound.
-    static let limit = 64
+    public static let limit = 64
 
     /// One consumer's place in the stream.
     ///
@@ -43,7 +43,7 @@ nonisolated final class LocomotionGraphEventQueue {
     /// bridge does. It carries no behavior and no identity beyond its cursor:
     /// there is deliberately no unregister, because every consumer here is
     /// wired once at setup and lives as long as the session does.
-    final class Consumer {
+    public final class Consumer {
         /// Sequence number of the next name this consumer has not seen.
         fileprivate var next: Int
 
@@ -60,7 +60,7 @@ nonisolated final class LocomotionGraphEventQueue {
 
     /// How many consumers are registered. Tests assert on it; the engine does
     /// not branch on it.
-    var consumerCount: Int {
+    public var consumerCount: Int {
         consumers.count
     }
 
@@ -69,7 +69,7 @@ nonisolated final class LocomotionGraphEventQueue {
     /// A consumer registered mid-session starts empty rather than inheriting a
     /// backlog it has no context for — the same reasoning that makes a newly
     /// attached graph miss the transitions that happened before it existed.
-    func addConsumer() -> Consumer {
+    public func addConsumer() -> Consumer {
         let consumer = Consumer(next: base + names.count)
         consumers.append(consumer)
         return consumer
@@ -78,7 +78,7 @@ nonisolated final class LocomotionGraphEventQueue {
     /// Appends this step's fired events, oldest dropped first past the cap.
     /// Events the graph reports with no name carry nothing a consumer could
     /// match a footstep tag or a hit frame against, so they are not queued.
-    func enqueue(_ events: [BehaviorEvent]) {
+    public func enqueue(_ events: [BehaviorEvent]) {
         guard !events.isEmpty else { return }
         names += events.compactMap(\.name)
         trim()
@@ -86,7 +86,7 @@ nonisolated final class LocomotionGraphEventQueue {
 
     /// Hands `consumer` everything fired since its last drain and advances its
     /// cursor. Every other consumer's view is untouched.
-    func drain(_ consumer: Consumer) -> [String] {
+    public func drain(_ consumer: Consumer) -> [String] {
         let start = min(max(consumer.next - base, 0), names.count)
         consumer.next = base + names.count
         let drained = start < names.count ? Array(names[start...]) : []
@@ -97,7 +97,7 @@ nonisolated final class LocomotionGraphEventQueue {
     /// Forgets everything queued, for every consumer. Called when the bridge
     /// resets, so a teleport does not play the footsteps of the place the
     /// player just left or land a hit the swing before it was cancelled.
-    func clear() {
+    public func clear() {
         base += names.count
         names.removeAll(keepingCapacity: true)
         for consumer in consumers {

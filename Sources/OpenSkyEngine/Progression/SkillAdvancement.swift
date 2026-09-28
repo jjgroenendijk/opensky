@@ -59,22 +59,22 @@ import OpenSkyGameData
 /// `ActorValueLevelSettings` is: a fight that lands sixty blows must not walk
 /// the GMST table sixty times, and a test must be able to state both numbers
 /// without building a plugin.
-nonisolated struct SkillAdvancementSettings: Equatable, Sendable {
+nonisolated public struct SkillAdvancementSettings: Equatable, Sendable {
     /// `fSkillUseCurve` — the exponent the level-up threshold curves by,
     /// global to every skill.
-    var useCurve: Float
+    public var useCurve: Float
     /// `fXPPerSkillRank` — character experience banked per point of skill
     /// gained, multiplied by the skill level reached.
-    var characterExperiencePerRank: Float
+    public var characterExperiencePerRank: Float
 
     /// What UESP documents when no loaded plugin defines the setting.
     /// `fXPPerSkillRank` is in that position on this machine's install.
-    static let documentedDefaults = SkillAdvancementSettings(
+    public static let documentedDefaults = SkillAdvancementSettings(
         useCurve: 1.95,
         characterExperiencePerRank: 1
     )
 
-    static func resolve(store: GameSettingStore) -> SkillAdvancementSettings {
+    public static func resolve(store: GameSettingStore) -> SkillAdvancementSettings {
         var settings = SkillAdvancementSettings.documentedDefaults
         if
             case let .float(curve)? = store.setting(editorID: "fSkillUseCurve")?.setting.value,
@@ -94,37 +94,37 @@ nonisolated struct SkillAdvancementSettings: Equatable, Sendable {
 }
 
 /// What crossing one or more thresholds did to a skill.
-nonisolated struct SkillAdvanceOutcome: Equatable, Sendable {
+nonisolated public struct SkillAdvanceOutcome: Equatable, Sendable {
     /// Whole skill points gained, zero when the experience did not reach the
     /// next threshold.
-    let levelsGained: Int
+    public let levelsGained: Int
     /// The skill level afterwards.
-    let level: Float
+    public let level: Float
     /// The experience left over, which stays on the skill toward its next
     /// level. Never negative.
-    let carriedExperience: Float
+    public let carriedExperience: Float
     /// What the level-ups banked toward the character's own level, summed over
     /// every point gained.
-    let characterExperience: Float
+    public let characterExperience: Float
 
-    var didAdvance: Bool {
+    public var didAdvance: Bool {
         levelsGained > 0
     }
 }
 
-nonisolated enum SkillAdvancement {
+nonisolated public enum SkillAdvancement: Sendable {
     /// The level a skill stops at. Not a game setting: no active plugin on this
     /// machine authors one, and UESP states the ceiling in prose instead —
     /// "Perks can be reset by reaching 100 in the appropriate skill and making
     /// it legendary", and its per-skill table totals the experience "needed for
     /// 15 -> 100" (<https://en.uesp.net/wiki/Skyrim:Leveling>). Legendary
     /// resets are item 20.6's and above.
-    static let skillCeiling: Float = 100
+    public static let skillCeiling: Float = 100
 
     /// Most whole levels one advance may cross, so a script that hands over a
     /// preposterous magnitude cannot spin. Well above the 85 points a skill can
     /// actually gain, so it never truncates a legitimate advance.
-    static let maximumLevelsPerAdvance = 100
+    public static let maximumLevelsPerAdvance = 100
 
     /// Skill experience one use is worth:
     /// `Skill Use Mult * amount + Skill Use Offset`.
@@ -139,7 +139,7 @@ nonisolated enum SkillAdvancement {
     /// all, offset included: the offset is what a *use* adds on top of itself,
     /// and awarding it for a non-use would let a stream of zero-damage hits
     /// level Lockpicking at ten experience a swing.
-    static func experience(
+    public static func experience(
         forUse amount: Float,
         parameters: SkillUseParameters
     ) -> Float {
@@ -156,7 +156,7 @@ nonisolated enum SkillAdvancement {
     ///   non-finite result, or one at or below zero. A caller reads that as "no
     ///   advancement", which is the safe answer: treating it as "free" would
     ///   advance a skill to its ceiling on the first blow.
-    static func threshold(
+    public static func threshold(
         atSkillLevel level: Float,
         parameters: SkillUseParameters,
         settings: SkillAdvancementSettings = .documentedDefaults
@@ -172,7 +172,7 @@ nonisolated enum SkillAdvancement {
 
     /// What reaching skill level `level` banks toward the character's own
     /// level: `Skill level acquired * fXPPerSkillRank`.
-    static func characterExperience(
+    public static func characterExperience(
         forSkillLevel level: Float,
         settings: SkillAdvancementSettings = .documentedDefaults
     ) -> Float {
@@ -194,7 +194,7 @@ nonisolated enum SkillAdvancement {
     /// A skill at the ceiling gains nothing and carries nothing: there is no
     /// next level for the experience to be spent on, and banking it would make
     /// a legendary reset instantly refund every point.
-    static func advance(
+    public static func advance(
         experience: Float,
         from level: Float,
         parameters: SkillUseParameters,

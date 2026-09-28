@@ -4,7 +4,7 @@
 // are synthetic rectangle paths — no game content, no CoreText dependency.
 
 import CoreGraphics
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct UIGlyphAtlasEvictionTests {

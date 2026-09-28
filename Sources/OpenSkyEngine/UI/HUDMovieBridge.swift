@@ -6,15 +6,15 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct HUDMeterValues: Equatable, Sendable {
-    var health: Float
-    var magicka: Float
-    var stamina: Float
+nonisolated public struct HUDMeterValues: Equatable, Sendable {
+    public var health: Float
+    public var magicka: Float
+    public var stamina: Float
 
-    static let full = HUDMeterValues(health: 1, magicka: 1, stamina: 1)
+    public static let full = HUDMeterValues(health: 1, magicka: 1, stamina: 1)
 }
 
-nonisolated enum HUDCompassMarkerKind: Equatable, Sendable {
+nonisolated public enum HUDCompassMarkerKind: Equatable, Sendable {
     case location
     case quest
     case questDoor
@@ -22,7 +22,7 @@ nonisolated enum HUDCompassMarkerKind: Equatable, Sendable {
     case undiscovered
     case playerSet
 
-    var movieProperty: String {
+    public var movieProperty: String {
         switch self {
         case .location: "CompassMarkerLocations"
         case .quest: "CompassMarkerQuest"
@@ -34,13 +34,13 @@ nonisolated enum HUDCompassMarkerKind: Equatable, Sendable {
     }
 }
 
-nonisolated struct HUDCompassMarker: Equatable, Sendable {
-    let headingDegrees: Float
-    let opacityPercent: Float
-    let kind: HUDCompassMarkerKind
-    let scalePercent: Float
+nonisolated public struct HUDCompassMarker: Equatable, Sendable {
+    public let headingDegrees: Float
+    public let opacityPercent: Float
+    public let kind: HUDCompassMarkerKind
+    public let scalePercent: Float
 
-    init(
+    public init(
         headingDegrees: Float,
         opacityPercent: Float = 100,
         kind: HUDCompassMarkerKind,
@@ -53,16 +53,16 @@ nonisolated struct HUDCompassMarker: Equatable, Sendable {
     }
 }
 
-nonisolated enum HUDMovieError: Error, Equatable {
+nonisolated public enum HUDMovieError: Error, Equatable {
     case movieLoaderUnavailable
     case missingDisplayObject(String)
     case missingEntryPoint(String)
 }
 
-nonisolated enum HUDMovieBridge {
-    static let moviePath = "interface\\hudmenu.swf"
-    static let targetPath = "/HUDMovieBaseInstance"
-    static let requiredEntryPoints = [
+nonisolated public enum HUDMovieBridge: Sendable {
+    public static let moviePath = "interface\\hudmenu.swf"
+    public static let targetPath = "/HUDMovieBaseInstance"
+    public static let requiredEntryPoints = [
         "SetCompassAngle",
         "SetCompassMarkers",
         "SetCrosshairEnabled",
@@ -81,7 +81,7 @@ nonisolated enum HUDMovieBridge {
         "/HUDMovieBaseInstance/SubtitleTextHolder"
     ]
 
-    static func validate(runtime: SWFMovieRuntime) throws {
+    public static func validate(runtime: SWFMovieRuntime) throws {
         guard let target = runtime.node(atPath: targetPath, from: runtime.root) else {
             throw HUDMovieError.missingDisplayObject(targetPath)
         }
@@ -92,7 +92,7 @@ nonisolated enum HUDMovieBridge {
         }
     }
 
-    static func initialize(
+    public static func initialize(
         runtime: SWFMovieRuntime,
         meters: HUDMeterValues = .full,
         headingDegrees: Float = 0,
@@ -107,17 +107,17 @@ nonisolated enum HUDMovieBridge {
         setAuthoredPlaceholderTextEnabled(false, runtime: runtime)
     }
 
-    static func setCrosshairEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
+    public static func setCrosshairEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
         call("SetCrosshairEnabled", [.boolean(enabled)], runtime: runtime)
     }
 
-    static func setMeters(_ meters: HUDMeterValues, runtime: SWFMovieRuntime) {
+    public static func setMeters(_ meters: HUDMeterValues, runtime: SWFMovieRuntime) {
         meter("SetHealthMeterPercent", value: meters.health, runtime: runtime)
         meter("SetMagickaMeterPercent", value: meters.magicka, runtime: runtime)
         meter("SetStaminaMeterPercent", value: meters.stamina, runtime: runtime)
     }
 
-    static func setMetersEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
+    public static func setMetersEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
         for path in meterPaths {
             guard let meter = runtime.node(atPath: path, from: runtime.root) else {
                 continue
@@ -129,7 +129,7 @@ nonisolated enum HUDMovieBridge {
     /// The vanilla movie ships visible authoring samples in two otherwise
     /// engine-driven fields. Keep them inspectable without leaking them into
     /// normal gameplay before OpenSky publishes item info and subtitles.
-    static func setAuthoredPlaceholderTextEnabled(
+    public static func setAuthoredPlaceholderTextEnabled(
         _ enabled: Bool,
         runtime: SWFMovieRuntime
     ) {
@@ -141,7 +141,7 @@ nonisolated enum HUDMovieBridge {
         }
     }
 
-    static func setActivationPrompt(_ prompt: String?, runtime: SWFMovieRuntime) {
+    public static func setActivationPrompt(_ prompt: String?, runtime: SWFMovieRuntime) {
         let visible = prompt?.isEmpty == false
         call(
             "SetCrosshairTarget",
@@ -161,7 +161,7 @@ nonisolated enum HUDMovieBridge {
         )
     }
 
-    static func setCompassMarkers(
+    public static func setCompassMarkers(
         _ markers: [HUDCompassMarker],
         runtime: SWFMovieRuntime
     ) {
@@ -186,7 +186,7 @@ nonisolated enum HUDMovieBridge {
         call("SetCompassMarkers", runtime: runtime)
     }
 
-    static func setCompassHeading(
+    public static func setCompassHeading(
         _ headingDegrees: Float,
         visible: Bool = true,
         runtime: SWFMovieRuntime
@@ -199,7 +199,7 @@ nonisolated enum HUDMovieBridge {
         )
     }
 
-    static func normalizedDegrees(_ degrees: Float) -> Float {
+    public static func normalizedDegrees(_ degrees: Float) -> Float {
         guard degrees.isFinite else {
             return 0
         }

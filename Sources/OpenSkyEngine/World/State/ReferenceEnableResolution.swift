@@ -4,22 +4,22 @@
 
 import OpenSkyFormats
 
-nonisolated struct ReferenceEnableResolution: Sendable {
-    static let empty = ReferenceEnableResolution(states: [:])
+nonisolated public struct ReferenceEnableResolution: Sendable {
+    public static let empty = ReferenceEnableResolution(states: [:])
 
     private let states: [ReferenceKey: ReferenceEnableState]
 
-    init(states: [ReferenceKey: ReferenceEnableState]) {
+    public init(states: [ReferenceKey: ReferenceEnableState]) {
         self.states = states
     }
 
-    init(snapshot: WorldStateSnapshot) {
+    public init(snapshot: WorldStateSnapshot) {
         states = Dictionary(uniqueKeysWithValues: snapshot.entries.compactMap { entry in
             entry.delta.component(ReferenceEnableState.self).map { (entry.key, $0) }
         })
     }
 
-    subscript(key: ReferenceKey) -> ReferenceEnableState? {
+    public subscript(key: ReferenceKey) -> ReferenceEnableState? {
         states[key]
     }
 }

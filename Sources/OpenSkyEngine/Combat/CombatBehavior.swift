@@ -22,7 +22,7 @@ import OpenSkyFormats
 import simd
 
 /// Where one actor is in a fight.
-nonisolated enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIterable {
     /// Not fighting. Hostile perhaps, but nothing perceived, so nothing to do.
     case idle
     /// Closing on the target through 16.4 movement.
@@ -65,7 +65,7 @@ nonisolated enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIterable 
     /// Searching counts and disengaged does not: an actor hunting for a player
     /// who broke line of sight is still fighting, and one that gave up and went
     /// back to its schedule is not.
-    var isEngaged: Bool {
+    public var isEngaged: Bool {
         self != .idle && self != .disengaged
     }
 
@@ -73,7 +73,7 @@ nonisolated enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIterable 
     ///
     /// A cast counts: a blow that interrupts a swing interrupts a charge too,
     /// and the runtime drops the charging spell when it staggers the actor.
-    var isAttacking: Bool {
+    public var isAttacking: Bool {
         self == .windup || self == .contact || self == .recovery || self == .casting
     }
 }
@@ -85,25 +85,30 @@ nonisolated enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIterable 
 /// the combat machine needs the level read as a state and the position to walk
 /// to, and handing it the whole pair state would let it act on a raw detection
 /// level the perception pass owns the meaning of.
-nonisolated struct CombatAwareness: Equatable, Sendable {
+nonisolated public struct CombatAwareness: Equatable, Sendable {
     /// How aware the observer is.
-    var state: DetectionState
+    public var state: DetectionState
     /// Where the target was when it was last perceived, or nil when nothing has
     /// been perceived or everything perceived has decayed away. This is what a
     /// searching actor walks to.
-    var lastKnownPosition: SIMD3<Float>?
+    public var lastKnownPosition: SIMD3<Float>?
 
     /// Nothing perceived.
-    static let unaware = CombatAwareness(state: .unaware, lastKnownPosition: nil)
+    public static let unaware = CombatAwareness(state: .unaware, lastKnownPosition: nil)
 
     /// Perceived outright, at `position`.
-    static func detected(at position: SIMD3<Float>) -> CombatAwareness {
+    public static func detected(at position: SIMD3<Float>) -> CombatAwareness {
         CombatAwareness(state: .detected, lastKnownPosition: position)
     }
 
     /// Whether the observer has the target right now.
-    var isDetected: Bool {
+    public var isDetected: Bool {
         state == .detected
+    }
+
+    public init(state: DetectionState, lastKnownPosition: SIMD3<Float>? = nil) {
+        self.state = state
+        self.lastKnownPosition = lastKnownPosition
     }
 }
 
@@ -114,22 +119,22 @@ nonisolated struct CombatAwareness: Equatable, Sendable {
 /// numbers below come from SPIT and from the load order's own aimed-cast
 /// ceiling, and a decision layer that read records could disagree with the cast
 /// loop about what a spell costs.
-nonisolated struct CombatSpellOption: Equatable, Sendable {
+nonisolated public struct CombatSpellOption: Equatable, Sendable {
     /// The SPEL this option casts.
-    let spell: ReferenceKey
+    public let spell: ReferenceKey
     /// Magicka one cast takes, from `ResolvedSpell.cost`.
-    let cost: Float
+    public let cost: Float
     /// How far it reaches, world units, already resolved: SPIT's range, or the
     /// session's own aimed ceiling for a record that bounds nothing.
-    let range: Float
+    public let range: Float
     /// SPIT's charge time, which is how long the actor holds the cast before it
     /// leaves the hand.
-    let chargeSeconds: Float
+    public let chargeSeconds: Float
     /// True for a concentration spell, which is maintained rather than
     /// released the instant it finishes charging.
-    let isConcentration: Bool
+    public let isConcentration: Bool
 
-    init(
+    public init(
         spell: ReferenceKey,
         cost: Float,
         range: Float,
@@ -145,17 +150,22 @@ nonisolated struct CombatSpellOption: Equatable, Sendable {
 }
 
 /// What one actor can pay for and what it could cast.
-nonisolated struct CombatCastingProfile: Equatable, Sendable {
+nonisolated public struct CombatCastingProfile: Equatable, Sendable {
     /// Magicka available right now, which is what affordability is checked
     /// against.
-    var magicka: Float = 0
+    public var magicka: Float = 0
     /// The hostile spells the actor knows that this build can actually deliver,
     /// in ascending spell order.
-    var options: [CombatSpellOption] = []
+    public var options: [CombatSpellOption] = []
 
     /// An actor that knows nothing castable — every actor before 19.10, and
     /// every warrior after it.
-    static let none = CombatCastingProfile()
+    public static let none = CombatCastingProfile()
+
+    public init(magicka: Float = 0, options: [CombatSpellOption] = []) {
+        self.magicka = magicka
+        self.options = options
+    }
 }
 
 /// Everything one machine is told about the world for one fixed step.
@@ -163,27 +173,27 @@ nonisolated struct CombatCastingProfile: Equatable, Sendable {
 /// A flat value rather than a world handle, for the reason
 /// `CombatActorObservation` is one: the machine cannot then reach past what it
 /// was given, and a test hands it a literal.
-nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
+nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
     /// Where the acting actor is standing, world space.
-    var actorPosition: SIMD3<Float>
+    public var actorPosition: SIMD3<Float>
     /// Where its target is standing, world space.
-    var targetPosition: SIMD3<Float>
+    public var targetPosition: SIMD3<Float>
     /// What the actor currently makes of that target.
-    var awareness: CombatAwareness
+    public var awareness: CombatAwareness
     /// The actor's own weapon reach, world units, already scaled.
-    var reach: Float
+    public var reach: Float
     /// Current health over maximum, 0 through 1.
-    var healthFraction: Float
+    public var healthFraction: Float
     /// False once the target is dead, which ends the fight whatever else is
     /// true.
-    var isTargetAlive: Bool
+    public var isTargetAlive: Bool
     /// True when a script called `StartCombat`, which engages the actor without
     /// waiting for it to perceive anything and keeps it engaged while it cannot.
-    var isForced: Bool
+    public var isForced: Bool
     /// What the actor could cast and what it can pay for (issue #473).
-    var casting: CombatCastingProfile
+    public var casting: CombatCastingProfile
 
-    init(
+    public init(
         actorPosition: SIMD3<Float>,
         targetPosition: SIMD3<Float>,
         awareness: CombatAwareness = .unaware,
@@ -208,7 +218,7 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
     /// Planar rather than solid, because reach is compared against it and an
     /// actor standing on a table is not out of sword range for being two
     /// metres up.
-    var distance: Float {
+    public var distance: Float {
         let offset = targetPosition - actorPosition
         return simd_length(SIMD2(offset.x, offset.y))
     }
@@ -219,7 +229,7 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
 /// Positions rather than directions, because `MoveToPointControl` takes a point
 /// and paths to it: a direction would need a second authority to turn it into
 /// somewhere the navmesh actually reaches.
-nonisolated enum CombatMovementCommand: Equatable, Sendable {
+nonisolated public enum CombatMovementCommand: Equatable, Sendable {
     /// Close on the target.
     case approach(SIMD3<Float>)
     /// Go and look at the last place the target was perceived.
@@ -230,7 +240,7 @@ nonisolated enum CombatMovementCommand: Equatable, Sendable {
     case hold
 
     /// The point this command paths to, or nil for `hold`.
-    var destination: SIMD3<Float>? {
+    public var destination: SIMD3<Float>? {
         switch self {
         case let .approach(point), let .investigate(point), let .flee(point): point
         case .hold: nil
@@ -239,38 +249,38 @@ nonisolated enum CombatMovementCommand: Equatable, Sendable {
 }
 
 /// What one advanced step of one machine did.
-nonisolated struct CombatBehaviorStep: Equatable, Sendable {
+nonisolated public struct CombatBehaviorStep: Equatable, Sendable {
     /// The phase after the step.
-    var phase = CombatBehaviorPhase.idle
+    public var phase = CombatBehaviorPhase.idle
     /// True on the step the fight began, which is the step combat entry is
     /// recorded on.
-    var startedFight = false
+    public var startedFight = false
     /// True on the step an attack began, which is the step the attack clip is
     /// asked for.
-    var startedAttack = false
+    public var startedAttack = false
     /// True on the contact step, which is the step the hit volume runs on.
-    var reachedContact = false
+    public var reachedContact = false
     /// True on the step a guard went up.
-    var raisedBlock = false
+    public var raisedBlock = false
     /// True on the step a search began.
-    var startedSearch = false
+    public var startedSearch = false
     /// The spell whose cast began this step, or nil when none did. Carries the
     /// option rather than a flag so the runtime casts what the machine chose
     /// rather than re-choosing for itself.
-    var startedCast: CombatSpellOption?
+    public var startedCast: CombatSpellOption?
     /// The spell whose cast the machine let go of this step, which is the step
     /// the magicka is spent and the delivery happens on.
-    var releasedCast: CombatSpellOption?
+    public var releasedCast: CombatSpellOption?
     /// True on the step a cast in flight was dropped without being released —
     /// the actor broke off, lost its target or gave up mid-charge.
-    var cancelledCast = false
+    public var cancelledCast = false
     /// True on the step pursuit ended, which is the step the 16.5 package is
     /// resumed on.
-    var endedPursuit = false
+    public var endedPursuit = false
     /// Where the actor should be heading, or nil when this step asked for no
     /// change in movement.
-    var command: CombatMovementCommand?
+    public var command: CombatMovementCommand?
 
     /// The step a machine that did nothing reports.
-    static let idle = CombatBehaviorStep()
+    public static let idle = CombatBehaviorStep()
 }

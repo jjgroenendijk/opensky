@@ -19,14 +19,14 @@ import OpenSkyFormats
 
 /// One actor's saved character-level progress, before it is merged back into
 /// the delta.
-nonisolated struct SavePlayerProgressEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: PlayerProgressState
+nonisolated public struct SavePlayerProgressEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: PlayerProgressState
 }
 
-nonisolated enum OpenSkySaveProgressDecoder {
-    static func decodePlayerProgress(_ payload: Data) throws -> [SavePlayerProgressEntry] {
+nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
+    public static func decodePlayerProgress(_ payload: Data) throws -> [SavePlayerProgressEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PLVL entry count")
         try OpenSkySaveDecoder.validate(
@@ -46,7 +46,7 @@ nonisolated enum OpenSkySaveProgressDecoder {
     /// Lays each saved record over the matching `RDLT` delta, adding an entry
     /// for a key that had no other component, and re-sorts the result into
     /// `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ values: [SavePlayerProgressEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

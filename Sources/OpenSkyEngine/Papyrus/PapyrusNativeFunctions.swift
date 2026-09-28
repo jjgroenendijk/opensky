@@ -2,8 +2,8 @@
 
 import Foundation
 
-nonisolated enum PapyrusNativeFunctions {
-    static func install(into registry: inout PapyrusNativeRegistry) {
+nonisolated public enum PapyrusNativeFunctions: Sendable {
+    public static func install(into registry: inout PapyrusNativeRegistry) {
         installDebug(into: &registry)
         installUtility(into: &registry)
         installMath(into: &registry)
@@ -24,14 +24,14 @@ nonisolated enum PapyrusNativeFunctions {
         installFaction(into: &registry)
     }
 
-    static func failure(
+    public static func failure(
         _ call: PapyrusNativeCall,
         _ detail: String
     ) -> PapyrusNativeResult {
         .failed(.invalidArguments(function: call.qualifiedName, detail: detail))
     }
 
-    static func float(
+    public static func float(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> Float? {
@@ -46,7 +46,7 @@ nonisolated enum PapyrusNativeFunctions {
         }
     }
 
-    static func integer(
+    public static func integer(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> Int32? {
@@ -58,7 +58,7 @@ nonisolated enum PapyrusNativeFunctions {
     /// An optional Bool argument, `fallback` when the call left it off. An
     /// integer reads as its truth value, which is what the compiler's implicit
     /// cast of an int literal produces.
-    static func boolean(
+    public static func boolean(
         _ call: PapyrusNativeCall,
         at index: Int,
         default fallback: Bool
@@ -71,7 +71,7 @@ nonisolated enum PapyrusNativeFunctions {
         }
     }
 
-    static func string(
+    public static func string(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> String? {

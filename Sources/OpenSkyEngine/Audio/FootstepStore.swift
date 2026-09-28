@@ -24,35 +24,35 @@ import Foundation
 import OpenSkyFormats
 
 /// What a resolved footstep event turns into.
-nonisolated struct ResolvedFootstep: Equatable, Sendable {
+nonisolated public struct ResolvedFootstep: Equatable, Sendable {
     /// The FSTP that matched the tag.
-    let footstep: Footstep
+    public let footstep: Footstep
     /// The IPCT chosen for the surface.
-    let impact: Impact
+    public let impact: Impact
     /// The SNDR to play. Never null: a resolution with no sound is reported as
     /// nil instead.
-    let sound: FormID
+    public let sound: FormID
 }
 
-nonisolated final class FootstepStore {
+nonisolated public final class FootstepStore {
     /// Editor ID of the set an actor with no boot armature walks with. Vanilla
     /// names exactly one FSTS this way (`00012F16`); a load order that does not
     /// leaves `defaultSet` nil and the player silent until an armature
     /// resolves, which is visible in the readout rather than guessed around.
-    static let defaultSetEditorID = "DefaultFootstepSet"
+    public static let defaultSetEditorID = "DefaultFootstepSet"
 
-    let sets: [UInt32: FootstepSet]
-    let footsteps: [UInt32: Footstep]
-    let impactDataSets: [UInt32: ImpactDataSet]
-    let impacts: [UInt32: Impact]
+    public let sets: [UInt32: FootstepSet]
+    public let footsteps: [UInt32: Footstep]
+    public let impactDataSets: [UInt32: ImpactDataSet]
+    public let impacts: [UInt32: Impact]
     /// ARMA FormID -> FSTS FormID, from ARMA.SNDD. Only the armatures that
     /// declare a footstep set appear.
-    let armatureSets: [UInt32: FormID]
+    public let armatureSets: [UInt32: FormID]
 
     /// The set named by `defaultSetEditorID`, or nil when the plugin has none.
-    private(set) var defaultSet: FootstepSet?
+    public private(set) var defaultSet: FootstepSet?
 
-    init(file: ESMFile) {
+    public init(file: ESMFile) {
         sets = Self.index(file, type: "FSTS") { try? FootstepSet(record: $0) }
         footsteps = Self.index(file, type: "FSTP") { try? Footstep(record: $0) }
         impactDataSets = Self.index(file, type: "IPDS") { try? ImpactDataSet(record: $0) }
@@ -64,7 +64,7 @@ nonisolated final class FootstepStore {
     }
 
     /// Test seam: an index built from decoded values rather than from a file.
-    init(
+    public init(
         sets: [FootstepSet],
         footsteps: [Footstep],
         impactDataSets: [ImpactDataSet],
@@ -89,7 +89,7 @@ nonisolated final class FootstepStore {
         defaultSet = sets.first { $0.editorID == Self.defaultSetEditorID }
     }
 
-    func set(_ id: FormID) -> FootstepSet? {
+    public func set(_ id: FormID) -> FootstepSet? {
         sets[id.rawValue]
     }
 
@@ -97,7 +97,7 @@ nonisolated final class FootstepStore {
     /// order given, falling back to `defaultSet`. Callers pass the armatures on
     /// the actor's feet slot; passing several keeps the choice between a boot
     /// and the skin under it out of this type.
-    func set(forArmatures armatures: [FormID]) -> FootstepSet? {
+    public func set(forArmatures armatures: [FormID]) -> FootstepSet? {
         for armature in armatures {
             if let id = armatureSets[armature.rawValue], let set = set(id) {
                 return set
@@ -113,7 +113,7 @@ nonisolated final class FootstepStore {
     /// surface names none — an airborne player, a mesh with no Havok material,
     /// a landscape texture with no MNAM — and then the impact table answers
     /// with its representative entry (`ImpactDataSet.impact(for:)`).
-    func resolve(
+    public func resolve(
         tag: String,
         gait: FootstepGait,
         in set: FootstepSet,
@@ -143,7 +143,7 @@ nonisolated final class FootstepStore {
     /// Every tag one gait of a set can answer to, in record order. Drives the
     /// panel readout and lets the director drop an event without walking the
     /// whole chain for it.
-    func tags(for gait: FootstepGait, in set: FootstepSet) -> [String] {
+    public func tags(for gait: FootstepGait, in set: FootstepSet) -> [String] {
         set.footsteps(for: gait).compactMap { footsteps[$0.rawValue]?.tag }
     }
 

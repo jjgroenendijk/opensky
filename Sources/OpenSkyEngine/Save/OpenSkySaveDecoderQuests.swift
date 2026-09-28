@@ -13,24 +13,24 @@ import Foundation
 import OpenSkyFormats
 
 /// One quest's saved state, before it is merged back into its delta.
-nonisolated struct SaveQuestEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let state: QuestRuntimeState
+nonisolated public struct SaveQuestEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let state: QuestRuntimeState
 }
 
 /// One quest's saved alias table (issue #183), likewise pre-merge.
-nonisolated struct SaveQuestAliasEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let state: QuestAliasState
+nonisolated public struct SaveQuestAliasEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let state: QuestAliasState
 }
 
-nonisolated struct SaveQuestLocationAliasEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let fills: [QuestLocationAliasFill]
+nonisolated public struct SaveQuestLocationAliasEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let fills: [QuestLocationAliasFill]
 }
 
-nonisolated enum OpenSkySaveQuestDecoder {
-    static func decodeQuestStates(_ payload: Data) throws -> [SaveQuestEntry] {
+nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
+    public static func decodeQuestStates(_ payload: Data) throws -> [SaveQuestEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("QSTS entry count")
         try OpenSkySaveDecoder.validate(
@@ -51,7 +51,7 @@ nonisolated enum OpenSkySaveQuestDecoder {
     /// entry for a quest that had no other component, and re-sorts the result
     /// into `ReferenceKey` total order — the order `WorldStateSnapshot`
     /// promises, which a chunk-order insertion would otherwise break.
-    static func merge(
+    public static func merge(
         _ quests: [SaveQuestEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
@@ -74,7 +74,7 @@ nonisolated enum OpenSkySaveQuestDecoder {
 
     /// `QALS` (issue #183): the filled alias tables, decoded on their own and
     /// merged the same way the quest states are.
-    static func decodeQuestAliases(_ payload: Data) throws -> [SaveQuestAliasEntry] {
+    public static func decodeQuestAliases(_ payload: Data) throws -> [SaveQuestAliasEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("QALS entry count")
         try OpenSkySaveDecoder.validate(
@@ -93,7 +93,7 @@ nonisolated enum OpenSkySaveQuestDecoder {
 
     /// Lays each saved alias table over the matching delta, exactly as
     /// `merge(_:into:)` does for quest state.
-    static func mergeAliases(
+    public static func mergeAliases(
         _ aliases: [SaveQuestAliasEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
@@ -114,7 +114,7 @@ nonisolated enum OpenSkySaveQuestDecoder {
         }
     }
 
-    static func decodeQuestLocationAliases(
+    public static func decodeQuestLocationAliases(
         _ payload: Data
     ) throws -> [SaveQuestLocationAliasEntry] {
         var reader = SaveReader(payload)
@@ -154,7 +154,7 @@ nonisolated enum OpenSkySaveQuestDecoder {
         return entries
     }
 
-    static func mergeLocationAliases(
+    public static func mergeLocationAliases(
         _ aliases: [SaveQuestLocationAliasEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

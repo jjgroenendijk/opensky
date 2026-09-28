@@ -52,34 +52,34 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct ArcherySettings: Equatable {
+nonisolated public struct ArcherySettings: Equatable, Sendable {
     /// `f1PArrowTiltUpAngle` — degrees the aim ray is tilted up by in first
     /// person. UESP gives the default as 2.
-    let firstPersonTiltUpAngle: MovementSetting
+    public let firstPersonTiltUpAngle: MovementSetting
     /// `f3PArrowTiltUpAngle` — the same in third person. UESP gives 2.5.
-    let thirdPersonTiltUpAngle: MovementSetting
+    public let thirdPersonTiltUpAngle: MovementSetting
     /// `fVisibleNavmeshMoveDist` — the distance past which a shot stops being
     /// able to hit anything, world units. UESP gives 4096 and notes the
     /// Unofficial Patch triples it, which is exactly the kind of load-order
     /// difference a resolved-with-source setting exists to make visible.
-    let visibleMoveDistance: MovementSetting
+    public let visibleMoveDistance: MovementSetting
 
     /// Values for synthetic scenes and tests: the documented defaults, stated
     /// explicitly so a test never depends on an install being present.
-    static let synthetic = ArcherySettings(
+    public static let synthetic = ArcherySettings(
         firstPersonTiltUpAngle: MovementSetting(value: 2, source: "OpenSky synthetic"),
         thirdPersonTiltUpAngle: MovementSetting(value: 2.5, source: "OpenSky synthetic"),
         visibleMoveDistance: MovementSetting(value: 4096, source: "OpenSky synthetic")
     )
 
     /// The tilt for one perspective, in degrees.
-    func tiltUpAngle(firstPerson: Bool) -> MovementSetting {
+    public func tiltUpAngle(firstPerson: Bool) -> MovementSetting {
         firstPerson ? firstPersonTiltUpAngle : thirdPersonTiltUpAngle
     }
 
     /// Reads every setting out of `store`, falling back to the UESP-documented
     /// default and saying so when the load order carries none.
-    static func resolve(store: GameSettingStore) -> ArcherySettings {
+    public static func resolve(store: GameSettingStore) -> ArcherySettings {
         ArcherySettings(
             firstPersonTiltUpAngle: float("f1PArrowTiltUpAngle", store: store, fallback: 2),
             thirdPersonTiltUpAngle: float("f3PArrowTiltUpAngle", store: store, fallback: 2.5),
@@ -89,7 +89,7 @@ nonisolated struct ArcherySettings: Equatable {
 
     /// Every setting paired with its editor ID, for the CLI report and the
     /// panel readout.
-    var report: [(editorID: String, setting: MovementSetting)] {
+    public var report: [(editorID: String, setting: MovementSetting)] {
         [
             ("f1PArrowTiltUpAngle", firstPersonTiltUpAngle),
             ("f3PArrowTiltUpAngle", thirdPersonTiltUpAngle),

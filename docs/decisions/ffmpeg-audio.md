@@ -21,7 +21,7 @@ linked, and what happens when it is missing.
 - Configure it decode-only and LGPL-only. The result is three libraries, `libavutil`,
   `libavcodec`, and `libswresample`, about 1.2 MB, with one decoder (`wmav2`), no external libraries,
   and nothing outside `libSystem` and the OS frameworks.
-- Link it through a system-library module map, `tools/ffmpeg/module.modulemap`, so the few files
+- Link it through a system-library module map, `Sources/CFFmpeg/module.modulemap`, so the few files
   that need it write `import CFFmpeg`.
 - ffmpeg is a hard build requirement. A missing prefix fails the build with a message naming
   `make bootstrap`, and the app bundle carries its own copies of the dylibs.
@@ -84,8 +84,8 @@ text and this notice, which is a packaging task for when binaries first ship.
 
 ## Linkage
 
-The module map declares a `[system]` module `CFFmpeg` over `tools/ffmpeg/shim.h`, which includes the
-few headers the decoder uses. `SWIFT_INCLUDE_PATHS` lists `tools/ffmpeg` and
+The module map declares a `[system]` module `CFFmpeg` over `Sources/CFFmpeg/shim.h`, which
+includes the few headers the decoder uses. `SWIFT_INCLUDE_PATHS` lists `Sources/CFFmpeg` and
 `.vendor/ffmpeg/include`, so every target that compiles the audio sources finds the module, including
 the unit test bundle through `@testable import OpenSky`. The app and CLI carry the link settings
 themselves: `LIBRARY_SEARCH_PATHS` into the prefix and `-lavcodec -lavutil -lswresample`.

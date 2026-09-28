@@ -13,6 +13,7 @@
 // seams.
 
 import AppKit
+import OpenSkyEngine
 
 final class UILabControlsSection: PanelSectionViewController {
     /// Discrete scale presets surfaced by the popup (points -> pixels factor).

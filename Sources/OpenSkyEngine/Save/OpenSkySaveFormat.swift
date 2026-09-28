@@ -24,32 +24,32 @@
 import Foundation
 
 /// Names and version constants of the OpenSky native save container.
-nonisolated enum OpenSkySaveFormat {
+nonisolated public enum OpenSkySaveFormat: Sendable {
     /// File magic: ASCII "OSAV", four bytes, first in the file.
-    static let magic = Data("OSAV".utf8)
+    public static let magic = Data("OSAV".utf8)
     /// Version of the layout this build writes and is the only one it reads.
-    static let currentVersion: UInt32 = 1
+    public static let currentVersion: UInt32 = 1
     /// File extension for saves written by this engine.
-    static let fileExtension = "osav"
+    public static let fileExtension = "osav"
 
     /// Four-character chunk tags defined in version 1.
-    enum ChunkTag {
+    public enum ChunkTag: Sendable {
         /// Generated-reference allocator position. Payload is exactly one
         /// `UInt64`.
-        static let allocator = "GALC"
+        public static let allocator = "GALC"
         /// Runtime reference deltas, one entry per dirty reference.
-        static let referenceDeltas = "RDLT"
+        public static let referenceDeltas = "RDLT"
         /// Runtime global-variable overrides, one entry per overridden global
         /// (issue #165). Added after version 1 shipped and deliberately did not
         /// bump `currentVersion`: it is a new chunk, so an older build skips it
         /// by its declared length and loads the rest of the save, which is the
         /// tolerance the chunk stream exists to provide.
-        static let globalValues = "GVAR"
+        public static let globalValues = "GVAR"
         /// Game clock state (issue #164). Payload is exactly one `Float64`
         /// bit pattern: `GameClock.totalGameSeconds`. Additive like `GVAR` —
         /// an older build skips it, and a file without it restores the
         /// vanilla-start clock.
-        static let clock = "CLOK"
+        public static let clock = "CLOK"
         /// Papyrus script instance state (issue #171): one entry per live
         /// script instance, with its variables. Additive like `GVAR` and
         /// `CLOK` and deliberately does not bump `currentVersion` — an older
@@ -59,7 +59,7 @@ nonisolated enum OpenSkySaveFormat {
         /// than a new component kind inside `RDLT` for exactly this reason: a
         /// component kind is versioned by `formatVersion`, so putting it there
         /// would force every older build to refuse the file.
-        static let papyrusScripts = "PSCR"
+        public static let papyrusScripts = "PSCR"
         /// Pending Papyrus update timers (issue #277): one entry per armed
         /// timer slot of a persistent script instance. Additive for the same
         /// reasons `PSCR` is and likewise does not bump `currentVersion` — an
@@ -67,7 +67,7 @@ nonisolated enum OpenSkySaveFormat {
         /// restores a world where no script has a pending `OnUpdate`. An empty
         /// timer list writes no chunk at all, so a session that armed no timer
         /// produces the bytes it produced before this chunk existed.
-        static let papyrusTimers = "PTMR"
+        public static let papyrusTimers = "PTMR"
         /// Runtime inventories (issue #176): one entry per owner whose items
         /// deviate from plugin data, with its stacks and its equipped set.
         ///
@@ -83,7 +83,7 @@ nonisolated enum OpenSkySaveFormat {
         /// bytes it would have written itself. The decoder merges the two back
         /// into one delta per reference. An owner with no runtime inventory
         /// writes nothing, and a session that touched none writes no chunk.
-        static let inventories = "INVN"
+        public static let inventories = "INVN"
         /// Spawned references (issue #177): one entry per object the running
         /// game placed in the world, such as a dropped item.
         ///
@@ -92,7 +92,7 @@ nonisolated enum OpenSkySaveFormat {
         /// `formatVersion`, so an older build would refuse every save that
         /// contained one instead of loading the rest of the world without the
         /// dropped items. A session that spawned nothing writes no chunk.
-        static let spawnedReferences = "SPWN"
+        public static let spawnedReferences = "SPWN"
         /// Quest runtime state (issue #182): one entry per quest whose running,
         /// stage or objective state deviates from plugin data.
         ///
@@ -102,7 +102,7 @@ nonisolated enum OpenSkySaveFormat {
         /// save containing quest state instead of loading the rest of the
         /// world. A session that touched no quest writes no chunk, so its bytes
         /// match what this encoder produced before the chunk existed.
-        static let questStates = "QSTS"
+        public static let questStates = "QSTS"
         /// Filled quest aliases (issue #183): one entry per quest whose alias
         /// table is non-empty, and inside it one fill per filled alias.
         ///
@@ -115,10 +115,10 @@ nonisolated enum OpenSkySaveFormat {
         /// `SPWN`: an older build skips them by the declared length and
         /// restores a world whose quests run with empty aliases, and a session
         /// that filled none writes no chunk at all.
-        static let questAliases = "QALS"
+        public static let questAliases = "QALS"
         /// Filled location aliases. Separate from QALS so old readers skip
         /// location targets instead of misparsing QALS's flat entries.
-        static let questLocationAliases = "QLOC"
+        public static let questLocationAliases = "QLOC"
         /// Actor values (issue #194): one entry per actor whose current
         /// health, magicka or stamina deviates from a full baseline.
         ///
@@ -132,7 +132,7 @@ nonisolated enum OpenSkySaveFormat {
         /// Current values only. The maximums are a pure function of the RACE,
         /// CLAS and NPC_ records, so writing them would let a save carry a
         /// number a changed load order no longer authors.
-        static let actorValues = "AVAL"
+        public static let actorValues = "AVAL"
 
         /// Actor-value overrides (issue #496, roadmap item 20.3): one entry
         /// per actor holding one or more of the 164 actor values away from the
@@ -162,7 +162,7 @@ nonisolated enum OpenSkySaveFormat {
         /// magic effect's contribution, and the effect that established it is
         /// what re-establishes it on load (issue 19.6); persisting it as well
         /// would double the buff every time the save was reloaded.
-        static let actorValueOverrides = "AVOV"
+        public static let actorValueOverrides = "AVOV"
 
         /// Death states (issue #197, roadmap item 15.6): one entry per actor
         /// recorded dead, with the resting root transform its ragdoll settled
@@ -176,7 +176,7 @@ nonisolated enum OpenSkySaveFormat {
         /// choice item 15.6 declined and documented, so a reloaded corpse lies
         /// where it fell in the skeleton's rest pose rather than in the tangle
         /// it died in (see docs/engine/ragdoll.md).
-        static let deaths = "DETH"
+        public static let deaths = "DETH"
 
         /// Hostility (issue #374, roadmap item 15.7): one entry per actor whose
         /// regard for the player deviates from neutral.
@@ -189,7 +189,7 @@ nonisolated enum OpenSkySaveFormat {
         /// Hostility only. Whether the *player* is in combat is derived from
         /// which resident actors are hostile and alive, so writing it would let
         /// a save carry a fact that contradicts the world it was loaded into.
-        static let combatStates = "CBTS"
+        public static let combatStates = "CBTS"
 
         /// Dialogue said-state (issue #426, roadmap item 17.2): one entry per
         /// INFO a speaker has actually said.
@@ -203,7 +203,7 @@ nonisolated enum OpenSkySaveFormat {
         /// the plugin records, the quest state `QSTS` already carries and this
         /// chunk, so writing the offered list would let a save carry a menu a
         /// changed load order no longer authors.
-        static let dialogueStates = "DLGS"
+        public static let dialogueStates = "DLGS"
 
         /// Active magic effects (issue #469, roadmap item 19.6): one entry per
         /// actor carrying a timed effect, each listing the effects with their
@@ -222,7 +222,7 @@ nonisolated enum OpenSkySaveFormat {
         /// Instant effects are not here and cannot be: a zero-duration effect
         /// moved an actor value once and the moved value is what `AVAL` and
         /// `AVOV` already carry.
-        static let activeEffects = "AEFF"
+        public static let activeEffects = "AEFF"
 
         /// Spellbooks (issue #470, roadmap item 19.7): one entry per actor that
         /// knows a spell, has read a book, or has spent a greater power.
@@ -235,7 +235,7 @@ nonisolated enum OpenSkySaveFormat {
         /// loadout the player chose and has to survive a reload; a charge in
         /// progress is frame state, and restoring one would put the player back
         /// mid-cast with magicka already committed.
-        static let spellbooks = "SPLB"
+        public static let spellbooks = "SPLB"
 
         /// Enchanted items (issue #472, roadmap item 19.9): one entry per owner
         /// whose enchanted weapons have spent charge or whose worn items
@@ -253,7 +253,7 @@ nonisolated enum OpenSkySaveFormat {
         /// which of the `AEFF` effects each worn item is responsible for — and
         /// splitting the two would let a reload restore effects nothing could
         /// take back off.
-        static let enchantedItems = "ECHG"
+        public static let enchantedItems = "ECHG"
 
         /// Owned perks (issue #497, roadmap item 20.4): one entry per actor
         /// that owns at least one perk.
@@ -268,7 +268,7 @@ nonisolated enum OpenSkySaveFormat {
         /// constant abilities perks grant are re-established from the owned set
         /// on load exactly as a worn enchantment's are — which is why nothing
         /// here duplicates what `AEFF` already carries.
-        static let perks = "PRKS"
+        public static let perks = "PRKS"
 
         /// Faction memberships (issue #503, roadmap item 21.3): one entry per
         /// actor that belongs to at least one faction.
@@ -284,7 +284,7 @@ nonisolated enum OpenSkySaveFormat {
         /// explicit override alone. Writing a derived answer into the save
         /// would freeze a decision the next load should be making again — a
         /// plugin that changes a faction relation has to change who is angry.
-        static let factions = "FCTN"
+        public static let factions = "FCTN"
 
         /// Scripted relationship ranks (issue #508, roadmap item 21.4): one
         /// entry per actor a script has given a relationship rank, and inside
@@ -299,7 +299,7 @@ nonisolated enum OpenSkySaveFormat {
         /// writes it into both actors so either one can answer alone. The
         /// duplication is two rows of eight bytes and it keeps the decoder from
         /// having to reconstruct a direction the encoder threw away.
-        static let relationships = "RELS"
+        public static let relationships = "RELS"
 
         /// The player's character-level progress (issue #499, roadmap item
         /// 20.6): one entry, and only when the player has left level 1 behind.
@@ -313,7 +313,7 @@ nonisolated enum OpenSkySaveFormat {
         /// the ten points it added are a base override and ride in `AVOV`,
         /// which is where every session-made deviation from a derived baseline
         /// already lives.
-        static let playerProgress = "PLVL"
+        public static let playerProgress = "PLVL"
 
         /// Crime ledgers (issue #504, roadmap item 21.5): one entry per actor
         /// that owes a crime faction gold or has offended one, and inside it
@@ -328,7 +328,7 @@ nonisolated enum OpenSkySaveFormat {
         /// (<https://en.uesp.net/wiki/Skyrim:Crime>), so a save that carried
         /// only the gold would restore a world that had forgotten what the
         /// player did.
-        static let crimeLedgers = "CRIM"
+        public static let crimeLedgers = "CRIM"
 
         /// Stolen goods (issue #504): for every owner holding stolen items,
         /// one row per item saying how many of its copies are stolen.
@@ -342,7 +342,7 @@ nonisolated enum OpenSkySaveFormat {
         /// a complete inventory that has simply forgotten which copies were
         /// stolen — and this chunk carries the split. A session in which
         /// nothing was stolen writes no chunk at all.
-        static let stolenGoods = "STOL"
+        public static let stolenGoods = "STOL"
 
         /// Violent crime gold (issue #563): for every actor with a ledger, one
         /// row per faction whose bounty has a violent part, saying how much of
@@ -355,20 +355,20 @@ nonisolated enum OpenSkySaveFormat {
         /// writing the combined total — an older build restores the right
         /// bounty and simply reads all of it as non-violent — and this chunk
         /// carries the split. A session with no violent bounty writes no chunk.
-        static let violentCrimeGold = "CRVG"
+        public static let violentCrimeGold = "CRVG"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.
-    enum KeyTag {
-        static let plugin: UInt8 = 0
-        static let generated: UInt8 = 1
+    public enum KeyTag: Sendable {
+        public static let plugin: UInt8 = 0
+        public static let generated: UInt8 = 1
     }
 
     /// Discriminator byte in front of a serialized `CellSceneLocation`.
-    enum CellTag {
-        static let absent: UInt8 = 0
-        static let exterior: UInt8 = 1
-        static let interior: UInt8 = 2
+    public enum CellTag: Sendable {
+        public static let absent: UInt8 = 0
+        public static let exterior: UInt8 = 1
+        public static let interior: UInt8 = 2
     }
 
     /// Discriminator byte in front of a serialized `PapyrusValue` in `PSCR`.
@@ -377,27 +377,27 @@ nonisolated enum OpenSkySaveFormat {
     /// `.array` hold runtime-allocated identity with no world meaning, so the
     /// encoder writes them as `none` rather than inventing a wire shape for a
     /// handle that means nothing after a reload.
-    enum ValueTag {
-        static let none: UInt8 = 0
-        static let boolean: UInt8 = 1
-        static let integer: UInt8 = 2
-        static let float: UInt8 = 3
-        static let string: UInt8 = 4
+    public enum ValueTag: Sendable {
+        public static let none: UInt8 = 0
+        public static let boolean: UInt8 = 1
+        public static let integer: UInt8 = 2
+        public static let float: UInt8 = 3
+        public static let string: UInt8 = 4
     }
 
     /// Bits of a `QSTS` entry's quest-level flag byte. Ours, not Bethesda's:
     /// the DNAM bits a QUST record carries describe what the plugin authored,
     /// while these two describe what the session did.
-    enum QuestFlag {
-        static let running: UInt8 = 1 << 0
-        static let completed: UInt8 = 1 << 1
+    public enum QuestFlag: Sendable {
+        public static let running: UInt8 = 1 << 0
+        public static let completed: UInt8 = 1 << 1
     }
 
     /// Bits of a `QSTS` objective's flag byte, in the order the three Papyrus
     /// natives are usually called: displayed, completed, failed.
-    enum QuestObjectiveFlag {
-        static let displayed: UInt8 = 1 << 0
-        static let completed: UInt8 = 1 << 1
-        static let failed: UInt8 = 1 << 2
+    public enum QuestObjectiveFlag: Sendable {
+        public static let displayed: UInt8 = 1 << 0
+        public static let completed: UInt8 = 1 << 1
+        public static let failed: UInt8 = 1 << 2
     }
 }

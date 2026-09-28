@@ -2,7 +2,7 @@
 // `FakeWorldProviders.swift` for the same reason its AI half is: that file is
 // at the strict-lint size cap, and only its stored state has to live there.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 
 extension FakeWorldProviders {
     var renderDebugMode: RenderDebugMode {

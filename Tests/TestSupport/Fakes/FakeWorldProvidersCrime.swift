@@ -5,7 +5,7 @@
 // performed, which lets a panel test drive `World > Crime & Factions` with no
 // renderer, no window and no game data.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// The crime and faction half of the fake's stored state.

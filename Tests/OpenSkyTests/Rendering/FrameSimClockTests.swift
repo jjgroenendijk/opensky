@@ -3,7 +3,7 @@
 // resuming after any pause length yields one frame of delta rather than the
 // whole paused span (the no-time-jump proof). Synthetic times, no wall clock.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct FrameSimClockTests {

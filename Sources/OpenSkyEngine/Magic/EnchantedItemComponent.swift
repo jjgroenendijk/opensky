@@ -37,20 +37,20 @@ import OpenSkyFormats
 
 /// One owner's enchanted-item bookkeeping: charge left per weapon, and the
 /// constant effects each worn item established.
-nonisolated struct EnchantedItemState: WorldStateComponent {
+nonisolated public struct EnchantedItemState: WorldStateComponent, Sendable {
     /// Remaining charge per item, keyed by base FormID. Absent means "as the
     /// record authored it" — a full weapon writes nothing, exactly as an
     /// undamaged actor writes no actor values.
-    private(set) var charges: [UInt32: Float]
+    public private(set) var charges: [UInt32: Float]
     /// The `ActiveEffect` sequences each worn item's enchantment established,
     /// keyed by base FormID and kept ascending so re-encoding is stable.
-    private(set) var wornEffects: [UInt32: [UInt64]]
+    public private(set) var wornEffects: [UInt32: [UInt64]]
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .enchantedItems
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .enchantedItems(self)
     }
 
@@ -58,50 +58,50 @@ nonisolated struct EnchantedItemState: WorldStateComponent {
     /// entry point too: a non-finite charge becomes zero, a negative one
     /// becomes zero, and an item recorded as wearing no effects at all is
     /// dropped rather than kept as an empty list.
-    init(charges: [UInt32: Float] = [:], wornEffects: [UInt32: [UInt64]] = [:]) {
+    public init(charges: [UInt32: Float] = [:], wornEffects: [UInt32: [UInt64]] = [:]) {
         self.charges = charges.mapValues { $0.isFinite ? max(0, $0) : 0 }
         self.wornEffects = wornEffects
             .filter { !$0.value.isEmpty }
             .mapValues { $0.sorted() }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .enchantedItems(value) = erased else { return nil }
         self = value
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         charges.isEmpty && wornEffects.isEmpty
     }
 
     // MARK: - Queries
 
     /// The charge recorded for `item`, or nil when nothing has spent any.
-    func charge(of item: FormID) -> Float? {
+    public func charge(of item: FormID) -> Float? {
         charges[item.rawValue]
     }
 
     /// The effects `item` established while worn, ascending. Empty when it
     /// established none or is not worn.
-    func wornEffects(of item: FormID) -> [UInt64] {
+    public func wornEffects(of item: FormID) -> [UInt64] {
         wornEffects[item.rawValue] ?? []
     }
 
     /// Every item recorded as wearing effects, in ascending FormID order.
-    var wornItems: [FormID] {
+    public var wornItems: [FormID] {
         wornEffects.keys.sorted().map(FormID.init(_:))
     }
 
     /// Every sequence any worn item established, which is what a wholesale
     /// removal — an `unequipAll`, a load — dispels.
-    var allWornSequences: Set<UInt64> {
+    public var allWornSequences: Set<UInt64> {
         Set(wornEffects.values.joined())
     }
 
     // MARK: - Mutations
 
     /// This state with `item`'s charge recorded as `amount`.
-    func setting(charge amount: Float, of item: FormID) -> EnchantedItemState {
+    public func setting(charge amount: Float, of item: FormID) -> EnchantedItemState {
         var updated = charges
         updated[item.rawValue] = amount
         return EnchantedItemState(charges: updated, wornEffects: wornEffects)
@@ -109,7 +109,7 @@ nonisolated struct EnchantedItemState: WorldStateComponent {
 
     /// This state with `item`'s charge forgotten, so it reads as the record
     /// authored it again.
-    func clearingCharge(of item: FormID) -> EnchantedItemState {
+    public func clearingCharge(of item: FormID) -> EnchantedItemState {
         var updated = charges
         updated.removeValue(forKey: item.rawValue)
         return EnchantedItemState(charges: updated, wornEffects: wornEffects)
@@ -117,7 +117,7 @@ nonisolated struct EnchantedItemState: WorldStateComponent {
 
     /// This state recording that `item` established `sequences` while worn.
     /// An empty list removes the record, which is what unequipping means.
-    func setting(wornEffects sequences: [UInt64], of item: FormID) -> EnchantedItemState {
+    public func setting(wornEffects sequences: [UInt64], of item: FormID) -> EnchantedItemState {
         var updated = wornEffects
         if sequences.isEmpty {
             updated.removeValue(forKey: item.rawValue)
@@ -129,7 +129,7 @@ nonisolated struct EnchantedItemState: WorldStateComponent {
 
     /// This state with every worn-effect record dropped, leaving the charges
     /// alone.
-    func clearingWornEffects() -> EnchantedItemState {
+    public func clearingWornEffects() -> EnchantedItemState {
         EnchantedItemState(charges: charges)
     }
 }

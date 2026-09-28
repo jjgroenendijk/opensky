@@ -12,58 +12,76 @@
 import Foundation
 
 /// One landed hit as a panel spells it.
-nonisolated struct MeleeHitReadout: Equatable, Sendable {
+nonisolated public struct MeleeHitReadout: Equatable, Sendable {
     /// The target reference, as its `ReferenceKey` description.
-    let target: String
+    public let target: String
     /// Contact distance along the swing, world units.
-    let distance: Float
+    public let distance: Float
     /// WEAP base damage before the block term.
-    let baseDamage: Float
+    public let baseDamage: Float
     /// Percentage the block absorbed; zero when unblocked. Converted from the
     /// engine's fraction here, because a percentage is what a reader wants and
     /// a fraction is what the formula works in.
-    let blockedPercent: Float
+    public let blockedPercent: Float
     /// What actually came off health.
-    let appliedDamage: Float
+    public let appliedDamage: Float
     /// The SNDR that played, or nil when the chain named none.
-    let sound: String?
+    public let sound: String?
     /// Whether the target's graph took the stagger event.
-    let staggered: Bool
+    public let staggered: Bool
+
+    public init(
+        target: String,
+        distance: Float,
+        baseDamage: Float,
+        blockedPercent: Float,
+        appliedDamage: Float,
+        sound: String?,
+        staggered: Bool
+    ) {
+        self.target = target
+        self.distance = distance
+        self.baseDamage = baseDamage
+        self.blockedPercent = blockedPercent
+        self.appliedDamage = appliedDamage
+        self.sound = sound
+        self.staggered = staggered
+    }
 }
 
 /// One observation of the melee runtime.
-nonisolated struct MeleeCombatSnapshot: Equatable, Sendable {
+nonisolated public struct MeleeCombatSnapshot: Equatable, Sendable {
     /// False when no melee runtime is attached — no game data, or a demo
     /// scene. Every other field is then empty and the panel says so rather
     /// than showing a convincing zero.
-    let isAvailable: Bool
-    let drawState: WeaponDrawState
-    let attackPhase: MeleeAttackPhase
-    let isBlocking: Bool
-    let isStaggering: Bool
+    public let isAvailable: Bool
+    public let drawState: WeaponDrawState
+    public let attackPhase: MeleeAttackPhase
+    public let isBlocking: Bool
+    public let isStaggering: Bool
     /// The equipped weapon's editor name, or "unarmed".
-    let weaponName: String
+    public let weaponName: String
     /// WEAP base damage, DNAM reach multiplier and DNAM speed.
-    let weaponDamage: Float
-    let weaponReachMultiplier: Float
-    let weaponSpeed: Float
+    public let weaponDamage: Float
+    public let weaponReachMultiplier: Float
+    public let weaponSpeed: Float
     /// What each hand is holding, as the graph counts it. These are the two
     /// numbers `iRightHandType` and `iLeftHandType` carry, shown so a wrong
     /// animation set can be traced to the hand it came from (issue #403).
-    let rightHandType: CombatHandType
-    let leftHandType: CombatHandType
+    public let rightHandType: CombatHandType
+    public let leftHandType: CombatHandType
     /// The resolved reach in world units, after `fCombatDistance` and scale.
-    let reach: Float
+    public let reach: Float
     /// Swings that reached a contact frame, and hits those swings landed.
-    let swingCount: Int
-    let hitCount: Int
+    public let swingCount: Int
+    public let hitCount: Int
     /// The last-hit trace, oldest first.
-    let trace: [MeleeHitReadout]
+    public let trace: [MeleeHitReadout]
     /// Every combat GMST with its resolved value and where it came from.
-    let settings: [String]
+    public let settings: [String]
 
     /// The reading with no runtime attached.
-    static let unavailable = MeleeCombatSnapshot(
+    public static let unavailable = MeleeCombatSnapshot(
         isAvailable: false,
         drawState: .sheathed,
         attackPhase: .idle,
@@ -81,10 +99,46 @@ nonisolated struct MeleeCombatSnapshot: Equatable, Sendable {
         trace: [],
         settings: []
     )
+
+    public init(
+        isAvailable: Bool,
+        drawState: WeaponDrawState,
+        attackPhase: MeleeAttackPhase,
+        isBlocking: Bool,
+        isStaggering: Bool,
+        weaponName: String,
+        weaponDamage: Float,
+        weaponReachMultiplier: Float,
+        weaponSpeed: Float,
+        rightHandType: CombatHandType,
+        leftHandType: CombatHandType,
+        reach: Float,
+        swingCount: Int,
+        hitCount: Int,
+        trace: [MeleeHitReadout],
+        settings: [String]
+    ) {
+        self.isAvailable = isAvailable
+        self.drawState = drawState
+        self.attackPhase = attackPhase
+        self.isBlocking = isBlocking
+        self.isStaggering = isStaggering
+        self.weaponName = weaponName
+        self.weaponDamage = weaponDamage
+        self.weaponReachMultiplier = weaponReachMultiplier
+        self.weaponSpeed = weaponSpeed
+        self.rightHandType = rightHandType
+        self.leftHandType = leftHandType
+        self.reach = reach
+        self.swingCount = swingCount
+        self.hitCount = hitCount
+        self.trace = trace
+        self.settings = settings
+    }
 }
 
 @MainActor
-protocol MeleeCombatControlProviding: AnyObject {
+public protocol MeleeCombatControlProviding: AnyObject {
     var meleeCombatSnapshot: MeleeCombatSnapshot { get }
 
     /// Whether the weapon is out. Setting it raises the census-named draw or

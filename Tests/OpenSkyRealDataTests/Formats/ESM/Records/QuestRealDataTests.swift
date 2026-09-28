@@ -19,7 +19,7 @@
 // `wbRecord(QUST, ...)` line 8759 and `wbVMADFragmentedQUST` line 2929.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

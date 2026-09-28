@@ -7,10 +7,10 @@
 
 import Foundation
 
-nonisolated enum ArcheryReadout {
+nonisolated public enum ArcheryReadout: Sendable {
     /// The state line: where the shot is, whether an arrow is nocked, and how
     /// long the draw has been held.
-    static func stateText(for snapshot: ArcherySnapshot) -> String {
+    public static func stateText(for snapshot: ArcherySnapshot) -> String {
         guard snapshot.isAvailable else {
             return "Archery: unavailable (no game data loaded)"
         }
@@ -31,7 +31,7 @@ nonisolated enum ArcheryReadout {
     }
 
     /// The equipment line: the bow, the arrow, and the flight the PROJ gives.
-    static func equipmentText(for snapshot: ArcherySnapshot) -> String {
+    public static func equipmentText(for snapshot: ArcherySnapshot) -> String {
         guard snapshot.isAvailable else { return "Bow: unavailable" }
         return String(
             format: "Bow: %@ — damage %.0f, speed %.2f\nArrow: %@ — damage %.0f",
@@ -44,7 +44,7 @@ nonisolated enum ArcheryReadout {
     }
 
     /// The flight line: the PROJ numbers a shot inherits.
-    static func flightText(for snapshot: ArcherySnapshot) -> String {
+    public static func flightText(for snapshot: ArcherySnapshot) -> String {
         guard snapshot.isAvailable else { return "Projectile: unavailable" }
         return String(
             format: "Projectile: %@ — speed %.0f, gravity x%.3f, range %.0f",
@@ -57,7 +57,7 @@ nonisolated enum ArcheryReadout {
 
     /// The trace line: the counts plus the newest finished shot, which is the
     /// one a user has just taken and wants to read.
-    static func traceText(for snapshot: ArcherySnapshot) -> String {
+    public static func traceText(for snapshot: ArcherySnapshot) -> String {
         guard snapshot.isAvailable else { return "Shots: unavailable" }
         let header = String(
             format: "Shots: %d fired, %d impacts, %d in flight, %d stuck",
@@ -73,7 +73,7 @@ nonisolated enum ArcheryReadout {
     }
 
     /// One trace entry as a line: spawn point, impact point, flight time.
-    static func describe(_ shot: ProjectileTraceReadout) -> String {
+    public static func describe(_ shot: ProjectileTraceReadout) -> String {
         var line = String(
             format: "#%d %@: %@ -> %@ in %.2fs, %.0f units, drop %.0f",
             shot.id,
@@ -97,7 +97,7 @@ nonisolated enum ArcheryReadout {
     /// The GMST line: every archery setting with its value and its source, so
     /// a surprising trajectory can be traced to the plugin that set it rather
     /// than guessed at.
-    static func settingsText(for snapshot: ArcherySnapshot) -> String {
+    public static func settingsText(for snapshot: ArcherySnapshot) -> String {
         guard snapshot.isAvailable, !snapshot.settings.isEmpty else {
             return "Settings: unavailable"
         }
@@ -106,7 +106,7 @@ nonisolated enum ArcheryReadout {
 
     /// One world position, rounded — a trajectory readout wants to be read,
     /// not to carry seven significant figures.
-    static func point(_ value: SIMD3<Float>) -> String {
+    public static func point(_ value: SIMD3<Float>) -> String {
         String(format: "(%.0f, %.0f, %.0f)", value.x, value.y, value.z)
     }
 }

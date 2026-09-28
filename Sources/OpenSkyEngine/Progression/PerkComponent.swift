@@ -32,24 +32,24 @@ import OpenSkyFormats
 ///
 /// Ordered rather than a set so the save writes the same bytes twice for the
 /// same state, which is the rule `SpellbookState.known` already follows.
-nonisolated struct PerkState: WorldStateComponent {
-    private(set) var owned: [ReferenceKey]
+nonisolated public struct PerkState: WorldStateComponent, Sendable {
+    public private(set) var owned: [ReferenceKey]
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .perks
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .perks(self)
     }
 
     /// True when the actor owns nothing, which is when the store drops the slot
     /// rather than keeping an empty component around.
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         owned.isEmpty
     }
 
-    var count: Int {
+    public var count: Int {
         owned.count
     }
 
@@ -61,25 +61,25 @@ nonisolated struct PerkState: WorldStateComponent {
     /// removing a plugin destroy progress, and it is invisible to every query
     /// that goes through `PerkStore` anyway — the same rule `SpellbookState`
     /// applies to a known spell.
-    init(owned: [ReferenceKey] = []) {
+    public init(owned: [ReferenceKey] = []) {
         self.owned = Set(owned).sorted()
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .perks(value) = erased else { return nil }
         self = value
     }
 
-    func owns(_ perk: ReferenceKey) -> Bool {
+    public func owns(_ perk: ReferenceKey) -> Bool {
         owned.contains(perk)
     }
 
-    func adding(_ perk: ReferenceKey) -> PerkState {
+    public func adding(_ perk: ReferenceKey) -> PerkState {
         guard !owns(perk) else { return self }
         return PerkState(owned: owned + [perk])
     }
 
-    func removing(_ perk: ReferenceKey) -> PerkState {
+    public func removing(_ perk: ReferenceKey) -> PerkState {
         guard owns(perk) else { return self }
         return PerkState(owned: owned.filter { $0 != perk })
     }

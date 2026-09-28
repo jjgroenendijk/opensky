@@ -45,20 +45,20 @@ import OpenSkyFormats
 /// the same type, each item considered stolen is tracked separately when
 /// dropped" (<https://en.uesp.net/wiki/Skyrim:Crime>). Ten honest arrows and
 /// one stolen arrow are therefore two stacks of the same base (issue #504).
-nonisolated struct InventoryStack: Equatable, Sendable {
+nonisolated public struct InventoryStack: Equatable, Sendable {
     /// Base item record: MISC, BOOK, ALCH, INGR, WEAP, AMMO or ARMO.
-    let item: FormID
+    public let item: FormID
     /// How many. Always strictly positive inside a `ReferenceInventoryState`.
-    let count: Int32
+    public let count: Int32
     /// Whether these copies were taken from somebody who owned them. "Stolen
     /// items in your inventory will be marked with the word 'Stolen', even if
     /// you were able to steal the item without being detected" (same page), so
     /// the flag follows the goods rather than the bounty.
-    let stolen: Bool
+    public let stolen: Bool
 
     /// Defaulted so every call site that predates crime still reads as honest
     /// goods, which is what an item nothing marked actually is.
-    init(item: FormID, count: Int32, stolen: Bool = false) {
+    public init(item: FormID, count: Int32, stolen: Bool = false) {
         self.item = item
         self.count = count
         self.stolen = stolen
@@ -71,17 +71,17 @@ nonisolated struct InventoryStack: Equatable, Sendable {
 /// division back down on the other side: moving three arrows out of a stack of
 /// two honest and two stolen has to arrive as two honest and one stolen, not as
 /// three of whichever the destination happened to hold.
-nonisolated struct StolenSplit: Equatable, Sendable {
-    let clean: Int32
-    let stolen: Int32
+nonisolated public struct StolenSplit: Equatable, Sendable {
+    public let clean: Int32
+    public let stolen: Int32
 
-    static let none = StolenSplit(clean: 0, stolen: 0)
+    public static let none = StolenSplit(clean: 0, stolen: 0)
 
-    var total: Int32 {
+    public var total: Int32 {
         clean + stolen
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         total <= 0
     }
 }
@@ -89,7 +89,7 @@ nonisolated struct StolenSplit: Equatable, Sendable {
 /// Failures the inventory layer reports. Every one of them is a caller mistake
 /// rather than malformed input, which is why they are distinct from
 /// `ESMError` — there is no file being parsed here.
-nonisolated enum InventoryError: Error, Equatable {
+nonisolated public enum InventoryError: Error, Equatable {
     /// A count that is zero or negative was passed to `add` or `remove`.
     /// Moving "minus three" items is never what a caller meant.
     case nonPositiveCount(Int32)
@@ -104,25 +104,25 @@ nonisolated enum InventoryError: Error, Equatable {
 }
 
 /// Every item one owner holds, plus which of them are equipped.
-nonisolated struct ReferenceInventoryState: WorldStateComponent {
+nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable {
     /// Stacks sorted by item FormID and then by the stolen flag, one per
     /// (item, stolen) pair, counts positive.
-    private(set) var stacks: [InventoryStack]
+    public private(set) var stacks: [InventoryStack]
     /// Equipped base FormIDs, sorted ascending and unique.
     ///
     /// Storage only. Slot conflicts and ARMA arbitration are issue #178's; this
     /// issue journals the set and puts it in the save so that work has
     /// somewhere to land.
-    private(set) var equipped: [FormID]
+    public private(set) var equipped: [FormID]
 
     /// Nothing held and nothing equipped, which is also the player's baseline.
-    static let empty = ReferenceInventoryState()
+    public static let empty = ReferenceInventoryState()
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .inventory
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .inventory(self)
     }
 
@@ -132,7 +132,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     /// save decoder's entry point, and a corrupt file must degrade rather than
     /// fail the whole load, while the mutation API above refuses the same
     /// arithmetic outright.
-    init(stacks: [InventoryStack] = [], equipped: [FormID] = []) {
+    public init(stacks: [InventoryStack] = [], equipped: [FormID] = []) {
         var merged: [StackKey: Int32] = [:]
         // `signum()` rather than a comparison against zero: a stack count is a
         // quantity, not a collection size, so the lint rule that rewrites
@@ -161,14 +161,14 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
         }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .inventory(value) = erased else { return nil }
         self = value
     }
 
     // MARK: - Reading
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         stacks.isEmpty && equipped.isEmpty
     }
 
@@ -178,24 +178,24 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     /// The total rather than one flavour, because that is what every question
     /// that predates crime means by "how many do I have" — a quest that wants
     /// five ingots does not care where they came from.
-    func count(of item: FormID) -> Int32 {
+    public func count(of item: FormID) -> Int32 {
         Int32(clamping: stacks.reduce(Int64(0)) { $0 + ($1.item == item ? Int64($1.count) : 0) })
     }
 
     /// How many of `item` the owner holds with exactly this stolen flag.
-    func count(of item: FormID, stolen: Bool) -> Int32 {
+    public func count(of item: FormID, stolen: Bool) -> Int32 {
         stacks.first { $0.item == item && $0.stolen == stolen }?.count ?? 0
     }
 
     /// How many stolen copies of `item` the owner holds, which is what a
     /// merchant refusing hot goods and a "Stolen" marker both read.
-    func stolenCount(of item: FormID) -> Int32 {
+    public func stolenCount(of item: FormID) -> Int32 {
         count(of: item, stolen: true)
     }
 
     /// Whether any copy of `item` here is stolen, which is what an inventory
     /// row's marker shows.
-    func isStolen(_ item: FormID) -> Bool {
+    public func isStolen(_ item: FormID) -> Bool {
         stolenCount(of: item) > 0
     }
 
@@ -206,7 +206,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     /// that carry no consequence before the ones that do. The split is clamped
     /// to what is actually held, so a caller that asks for more than there is
     /// sees a smaller `total` rather than a negative flavour.
-    func split(taking count: Int32, of item: FormID) -> StolenSplit {
+    public func split(taking count: Int32, of item: FormID) -> StolenSplit {
         guard count > 0 else { return .none }
         let clean = min(count, self.count(of: item, stolen: false))
         let stolen = min(count - clean, self.count(of: item, stolen: true))
@@ -218,11 +218,11 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     /// `Int` rather than `Int32`, because a conservation test sums this across
     /// owners and the sum of two valid inventories can exceed a single stack's
     /// range.
-    var totalCount: Int {
+    public var totalCount: Int {
         stacks.reduce(0) { $0 + Int($1.count) }
     }
 
-    func isEquipped(_ item: FormID) -> Bool {
+    public func isEquipped(_ item: FormID) -> Bool {
         equipped.contains(item)
     }
 
@@ -233,7 +233,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     ///
     /// - Throws: `InventoryError.nonPositiveCount` for a count of zero or less,
     ///   `InventoryError.countOverflow` when the stack would leave `Int32`.
-    func adding(
+    public func adding(
         _ item: FormID,
         count: Int32,
         owner: ReferenceKey,
@@ -252,7 +252,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     ///
     /// The counterpart of `split(taking:of:)`, so a transfer puts down exactly
     /// the division it picked up.
-    func adding(_ item: FormID, split: StolenSplit, owner: ReferenceKey) throws -> Self {
+    public func adding(_ item: FormID, split: StolenSplit, owner: ReferenceKey) throws -> Self {
         var result = self
         if split.clean > 0 {
             result = try result.adding(item, count: split.clean, owner: owner, stolen: false)
@@ -268,7 +268,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     ///
     /// - Throws: `InventoryError.nonPositiveCount` for a count of zero or less,
     ///   `InventoryError.insufficientCount` when the owner holds fewer.
-    func removing(_ item: FormID, count: Int32, owner: ReferenceKey) throws -> Self {
+    public func removing(_ item: FormID, count: Int32, owner: ReferenceKey) throws -> Self {
         guard count > 0 else { throw InventoryError.nonPositiveCount(count) }
         let available = self.count(of: item)
         guard available >= count else {
@@ -297,7 +297,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     /// already in hand and what changes is their standing. More than the owner
     /// holds marks everything it holds rather than throwing — this is a
     /// bookkeeping correction, not a movement, and there is nothing to conserve.
-    func markingStolen(_ item: FormID, count: Int32) -> Self {
+    public func markingStolen(_ item: FormID, count: Int32) -> Self {
         let moved = min(max(0, count), self.count(of: item, stolen: false))
         guard moved > 0 else { return self }
         return replacing(item, stolen: false, with: self.count(of: item, stolen: false) - moved)
@@ -309,7 +309,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     ///
     /// An equipped item whose every copy was stolen is unequipped with it; one
     /// the owner also holds honestly stays equipped.
-    func removingStolen() -> (remaining: Self, taken: [InventoryStack]) {
+    public func removingStolen() -> (remaining: Self, taken: [InventoryStack]) {
         let taken = stacks.filter(\.stolen)
         guard !taken.isEmpty else { return (self, []) }
         let kept = stacks.filter { !$0.stolen }
@@ -325,7 +325,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
 
     /// This inventory with `item` marked equipped. Equipping something already
     /// equipped changes nothing.
-    func equipping(_ item: FormID) -> Self {
+    public func equipping(_ item: FormID) -> Self {
         var result = self
         result.equipped = Set(equipped.map(\.rawValue))
             .union([item.rawValue])
@@ -335,7 +335,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
     }
 
     /// This inventory with `item` no longer equipped.
-    func unequipping(_ item: FormID) -> Self {
+    public func unequipping(_ item: FormID) -> Self {
         var result = self
         result.equipped = equipped.filter { $0 != item }
         return result
@@ -343,7 +343,7 @@ nonisolated struct ReferenceInventoryState: WorldStateComponent {
 
     /// This inventory with the whole equipped set replaced, normalized the same
     /// way `init` normalizes it.
-    func settingEquipped(_ items: [FormID]) -> Self {
+    public func settingEquipped(_ items: [FormID]) -> Self {
         ReferenceInventoryState(stacks: stacks, equipped: items)
     }
 

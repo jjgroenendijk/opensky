@@ -11,7 +11,7 @@ nonisolated extension PapyrusNativeFunctions {
         )
     }
 
-    static func installDebug(into registry: inout PapyrusNativeRegistry) {
+    public static func installDebug(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Debug",
             functionName: "Trace"

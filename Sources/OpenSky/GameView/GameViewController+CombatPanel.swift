@@ -15,6 +15,7 @@
 // think about two different notions of "this one".
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import simd
 

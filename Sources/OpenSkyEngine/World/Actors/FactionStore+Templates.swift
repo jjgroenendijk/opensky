@@ -14,7 +14,7 @@ nonisolated extension FactionStore {
     /// leveled list — yields an empty list rather than throwing: a caller
     /// asking who an actor sides with wants an answer it can act on, and the
     /// resolver's own suites cover the failure modes.
-    func memberships(
+    public func memberships(
         ofBase base: FormID,
         resolver: ActorTemplateResolver,
         fromPlugin sourcePlugin: String

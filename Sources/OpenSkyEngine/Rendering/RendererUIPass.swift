@@ -12,23 +12,23 @@ import simd
 /// The UI pass's long-lived objects, built together at init: GPU pipeline +
 /// state + rings + atlas texture, plus the CPU shelf-packed glyph atlas that
 /// backs the texture.
-nonisolated struct UIResources {
-    let pipeline: MTLRenderPipelineState
-    let depthState: MTLDepthStencilState
-    let sampler: MTLSamplerState
-    let atlasTexture: MTLTexture
-    let vertexBuffer: MTLBuffer
-    let uniformBuffer: MTLBuffer
-    let glyphAtlas: UIGlyphAtlas
+nonisolated public struct UIResources {
+    public let pipeline: MTLRenderPipelineState
+    public let depthState: MTLDepthStencilState
+    public let sampler: MTLSamplerState
+    public let atlasTexture: MTLTexture
+    public let vertexBuffer: MTLBuffer
+    public let uniformBuffer: MTLBuffer
+    public let glyphAtlas: UIGlyphAtlas
 }
 
 extension Renderer {
     /// Hard per-frame quad cap: overflow is dropped + counted (house style).
-    static let uiQuadBudget = 4096
+    public static let uiQuadBudget = 4096
     /// 256-byte-aligned per-frame UIFrameUniforms slot.
-    static let alignedUIUniformsSize = (MemoryLayout<UIFrameUniforms>.size + 0xFF) & -0x100
+    public static let alignedUIUniformsSize = (MemoryLayout<UIFrameUniforms>.size + 0xFF) & -0x100
 
-    static func makeUIResources(device: MTLDevice, view: MTKView) throws -> UIResources {
+    public static func makeUIResources(device: MTLDevice, view: MTKView) throws -> UIResources {
         let atlas = UIGlyphAtlas()
         let vertexCapacity = uiQuadBudget * UIDrawList.verticesPerQuad * maxFramesInFlight
         let vertexBuffer = try makeUniformBuffer(
@@ -147,7 +147,7 @@ extension Renderer {
     /// scene's first frame, so steady-state frames skip this entirely and no
     /// in-flight frame races a re-upload of identical bytes. Internal because
     /// the SWF layer packs its glyphs into the same atlas (encodeSWF).
-    func uploadUIAtlasIfNeeded() {
+    public func uploadUIAtlasIfNeeded() {
         let atlas = uiResources.glyphAtlas
         guard atlas.revision != uiUploadedAtlasRevision else { return }
         atlas.pixels.withUnsafeBytes { bytes in
@@ -165,7 +165,7 @@ extension Renderer {
     /// Encodes the UI overlay as the final draws of the scene pass. Viewport
     /// pixel size comes from the pass's color attachment (drawable or offscreen
     /// target), so both render paths get the overlay automatically.
-    func encodeUI(descriptor: MTL4RenderPassDescriptor, state: inout ScenePassState) {
+    public func encodeUI(descriptor: MTL4RenderPassDescriptor, state: inout ScenePassState) {
         let atlas = uiResources.glyphAtlas
         let colorTexture = descriptor.colorAttachments[0].texture
         let viewportPixels = SIMD2<Float>(

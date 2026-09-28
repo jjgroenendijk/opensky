@@ -4,27 +4,27 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct FogParameters: Equatable {
-    let nearColor: SIMD3<Float>
-    let farColor: SIMD3<Float>
-    let nearDistance: Float
-    let farDistance: Float
-    let power: Float
-    let maximum: Float
+nonisolated public struct FogParameters: Equatable, Sendable {
+    public let nearColor: SIMD3<Float>
+    public let farColor: SIMD3<Float>
+    public let nearDistance: Float
+    public let farDistance: Float
+    public let power: Float
+    public let maximum: Float
 }
 
-nonisolated struct RenderLighting: Equatable {
-    let ambientColor: SIMD3<Float>
-    let directionalAmbient: DirectionalAmbientColors
+nonisolated public struct RenderLighting: Equatable, Sendable {
+    public let ambientColor: SIMD3<Float>
+    public let directionalAmbient: DirectionalAmbientColors
     /// Unit vector: direction the cell directional light travels.
-    let directionalDirection: SIMD3<Float>
-    let directionalColor: SIMD3<Float>
-    let fog: FogParameters?
+    public let directionalDirection: SIMD3<Float>
+    public let directionalColor: SIMD3<Float>
+    public let fog: FogParameters?
 }
 
-nonisolated struct RenderPointLight: Equatable {
-    let position: SIMD3<Float>
-    let radius: Float
-    let color: SIMD3<Float>
-    let falloffExponent: Float
+nonisolated public struct RenderPointLight: Equatable, Sendable {
+    public let position: SIMD3<Float>
+    public let radius: Float
+    public let color: SIMD3<Float>
+    public let falloffExponent: Float
 }

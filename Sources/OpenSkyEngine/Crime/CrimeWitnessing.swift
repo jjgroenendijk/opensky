@@ -30,7 +30,7 @@ import OpenSkyFormats
 
 /// Where the crime runtime asks whether anybody is watching.
 @MainActor
-protocol CrimeWitnessSource {
+public protocol CrimeWitnessSource {
     /// Actors that detect `perpetrator` right now, in a deterministic order.
     ///
     /// Detection only — an observer that is merely suspicious has not seen a
@@ -41,7 +41,7 @@ protocol CrimeWitnessSource {
 
 extension CrimeWitnessSource {
     /// Whether anybody is watching, which is all a bounty decision needs.
-    func isWitnessed(_ perpetrator: ReferenceKey) -> Bool {
+    public func isWitnessed(_ perpetrator: ReferenceKey) -> Bool {
         !witnesses(of: perpetrator).isEmpty
     }
 }
@@ -53,29 +53,31 @@ extension CrimeWitnessSource {
 /// with no perception pass must not accrue bounty it cannot justify, and an
 /// unwitnessed theft still marks the item stolen, so nothing is silently lost.
 @MainActor
-struct NoCrimeWitnesses: CrimeWitnessSource {
-    func witnesses(of perpetrator: ReferenceKey) -> [ReferenceKey] {
+public struct NoCrimeWitnesses: CrimeWitnessSource {
+    public func witnesses(of perpetrator: ReferenceKey) -> [ReferenceKey] {
         []
     }
+
+    public init() {}
 }
 
 /// A fixed set of watchers, for tests and for a caller that resolved witnesses
 /// some other way.
 @MainActor
-struct FixedCrimeWitnesses: CrimeWitnessSource {
+public struct FixedCrimeWitnesses: CrimeWitnessSource {
     /// Watchers per perpetrator. An actor with no entry is unobserved.
-    var observers: [ReferenceKey: [ReferenceKey]]
+    public var observers: [ReferenceKey: [ReferenceKey]]
 
-    init(observers: [ReferenceKey: [ReferenceKey]] = [:]) {
+    public init(observers: [ReferenceKey: [ReferenceKey]] = [:]) {
         self.observers = observers
     }
 
     /// Everybody in `observers` watches `perpetrator`.
-    init(watching perpetrator: ReferenceKey, by observers: [ReferenceKey]) {
+    public init(watching perpetrator: ReferenceKey, by observers: [ReferenceKey]) {
         self.init(observers: [perpetrator: observers])
     }
 
-    func witnesses(of perpetrator: ReferenceKey) -> [ReferenceKey] {
+    public func witnesses(of perpetrator: ReferenceKey) -> [ReferenceKey] {
         observers[perpetrator] ?? []
     }
 }
@@ -88,14 +90,14 @@ struct FixedCrimeWitnesses: CrimeWitnessSource {
 /// the dead from the living passes nothing and every detected observer counts,
 /// which is the pre-death behaviour rather than a new wrong answer.
 @MainActor
-struct PerceptionCrimeWitnesses: CrimeWitnessSource {
+public struct PerceptionCrimeWitnesses: CrimeWitnessSource {
     /// The pass whose converged pairs are read. Weak because the controller
     /// that owns the crime runtime owns this too.
-    weak var perception: PerceptionRuntime?
+    public weak var perception: PerceptionRuntime?
     /// Whether one observer is still alive to report. Nil accepts everybody.
-    var isAlive: ((ReferenceKey) -> Bool)?
+    public var isAlive: ((ReferenceKey) -> Bool)?
 
-    init(
+    public init(
         perception: PerceptionRuntime?,
         isAlive: ((ReferenceKey) -> Bool)? = nil
     ) {
@@ -103,7 +105,7 @@ struct PerceptionCrimeWitnesses: CrimeWitnessSource {
         self.isAlive = isAlive
     }
 
-    func witnesses(of perpetrator: ReferenceKey) -> [ReferenceKey] {
+    public func witnesses(of perpetrator: ReferenceKey) -> [ReferenceKey] {
         guard let perception else { return [] }
         return perception.observersDetecting(perpetrator).filter { isAlive?($0) ?? true }
     }

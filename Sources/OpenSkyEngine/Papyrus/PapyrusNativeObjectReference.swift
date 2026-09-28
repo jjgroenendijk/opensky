@@ -31,7 +31,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installObjectReference(into registry: inout PapyrusNativeRegistry) {
+    public static func installObjectReference(into registry: inout PapyrusNativeRegistry) {
         installEnableState(into: &registry)
         installDeletion(into: &registry)
         installPositionReads(into: &registry)
@@ -42,7 +42,7 @@ nonisolated extension PapyrusNativeFunctions {
 
     /// The world façade plus the world identity of `self`, or nil when either
     /// is missing. Every world-touching native starts with this.
-    static func worldTarget(
+    public static func worldTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext
     ) -> (world: PapyrusWorldAccess, key: ReferenceKey)? {
@@ -56,7 +56,7 @@ nonisolated extension PapyrusNativeFunctions {
 
     /// The single failure a world native returns when it has no world to talk
     /// to, or no world identity for its receiver.
-    static func needsWorld(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
+    public static func needsWorld(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         failure(
             call,
             "\(call.functionName) needs a world runtime and a reference receiver"
@@ -65,7 +65,7 @@ nonisolated extension PapyrusNativeFunctions {
 
     /// The failure for a reference whose plugin baseline no resident cell can
     /// supply, which is what stops a read from inventing a position.
-    static func needsResidentReference(
+    public static func needsResidentReference(
         _ call: PapyrusNativeCall
     ) -> PapyrusNativeResult {
         failure(

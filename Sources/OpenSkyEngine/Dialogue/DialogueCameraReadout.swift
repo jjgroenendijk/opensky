@@ -8,11 +8,11 @@
 import OpenSkyFormats
 import simd
 
-nonisolated enum DialogueCameraReadout {
+nonisolated public enum DialogueCameraReadout: Sendable {
     /// Who the camera is framing, from where, and what it hands back when it
     /// lets go — the three things the acceptance question "did entering and
     /// leaving a conversation restore the previous camera" is answered from.
-    static func cameraText(for snapshot: DialogueCameraSnapshot) -> String {
+    public static func cameraText(for snapshot: DialogueCameraSnapshot) -> String {
         guard snapshot.isAvailable else {
             return "Dialogue camera: unavailable (no renderer)"
         }
@@ -47,7 +47,7 @@ nonisolated enum DialogueCameraReadout {
     }
 
     /// What the speaker focus did: the turn, and the package it is holding.
-    static func speakerText(for snapshot: DialogueCameraSnapshot) -> String {
+    public static func speakerText(for snapshot: DialogueCameraSnapshot) -> String {
         guard snapshot.isAvailable else {
             return "Speaker focus: unavailable (no renderer)"
         }
@@ -69,7 +69,7 @@ nonisolated enum DialogueCameraReadout {
 
     /// Result of the last control, or the standing instruction when none has
     /// run.
-    static func outcomeText(for snapshot: DialogueCameraSnapshot) -> String {
+    public static func outcomeText(for snapshot: DialogueCameraSnapshot) -> String {
         snapshot.lastOutcome
             ?? "Open a conversation, or force the camera onto the selected actor."
     }

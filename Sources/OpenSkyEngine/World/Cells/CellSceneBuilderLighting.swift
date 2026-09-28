@@ -5,13 +5,13 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct InteriorLightingBuild {
-    let lighting: RenderLighting
-    let pointLights: [RenderPointLight]
+nonisolated public struct InteriorLightingBuild: Sendable {
+    public let lighting: RenderLighting
+    public let pointLights: [RenderPointLight]
 }
 
 nonisolated extension CellSceneBuilder {
-    nonisolated func buildInteriorLighting(
+    nonisolated public func buildInteriorLighting(
         cell: Cell,
         references: [PlacedReference]
     ) -> InteriorLightingBuild? {
@@ -58,7 +58,7 @@ nonisolated extension CellSceneBuilder {
     /// Per-field source selection. An inherited field prefers LGTM; a
     /// cell-local field prefers XCLL. Missing optional tails fall back to
     /// whichever source exists instead of manufacturing values.
-    nonisolated static func resolvedLighting(
+    nonisolated public static func resolvedLighting(
         cell: CellLightingValues?,
         template: CellLightingValues?
     ) -> CellLightingValues? {
@@ -115,7 +115,7 @@ nonisolated extension CellSceneBuilder {
         )
     }
 
-    nonisolated func resolvePointLights(
+    nonisolated public func resolvePointLights(
         _ references: [PlacedReference]
     ) -> [RenderPointLight] {
         let lights = lightIndexBuildingIfNeeded()
@@ -134,7 +134,7 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    nonisolated func lightingTemplateIndexBuildingIfNeeded() -> [UInt32: LightingTemplate] {
+    nonisolated public func lightingTemplateIndexBuildingIfNeeded() -> [UInt32: LightingTemplate] {
         if let lightingTemplateIndex {
             return lightingTemplateIndex
         }
@@ -150,7 +150,7 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
-    nonisolated func lightIndexBuildingIfNeeded() -> [UInt32: LightRecord] {
+    nonisolated public func lightIndexBuildingIfNeeded() -> [UInt32: LightRecord] {
         if let lightIndex {
             return lightIndex
         }

@@ -21,7 +21,7 @@ import simd
 /// FormID field, for the reason `ActorValueTargetSelector` has two: the
 /// question a session asks is "this one in front of me" or "whoever is
 /// closest", and a typed FormID is a third thing that can be wrong.
-nonisolated enum DialogueCameraTarget: String, CaseIterable, Equatable, Sendable {
+nonisolated public enum DialogueCameraTarget: String, CaseIterable, Equatable, Sendable {
     /// The actor the crosshair is on, which is the one a conversation would
     /// open with.
     case crosshair
@@ -29,7 +29,7 @@ nonisolated enum DialogueCameraTarget: String, CaseIterable, Equatable, Sendable
     /// crosshair is on a wall.
     case nearestActor
 
-    var label: String {
+    public var label: String {
         switch self {
         case .crosshair: "Crosshair target"
         case .nearestActor: "Nearest actor"
@@ -38,22 +38,38 @@ nonisolated enum DialogueCameraTarget: String, CaseIterable, Equatable, Sendable
 }
 
 /// What the speaker focus did to one actor: the turn and the suspended package.
-nonisolated struct DialogueSpeakerFocusRow: Equatable, Sendable {
+nonisolated public struct DialogueSpeakerFocusRow: Equatable, Sendable {
     /// `NPCMovementState` as the movement authority reports it.
-    let movementState: String
+    public let movementState: String
     /// Where the actor is pointing and where it is turning to, in degrees.
-    let yawDegrees: Float
-    let targetYawDegrees: Float
-    let isSettled: Bool
-    let isPackageSuspended: Bool
+    public let yawDegrees: Float
+    public let targetYawDegrees: Float
+    public let isSettled: Bool
+    public let isPackageSuspended: Bool
     /// The package the actor holds while suspended, which is what it goes back
     /// to re-selecting from when the conversation ends.
-    let packageEditorID: String?
+    public let packageEditorID: String?
+
+    public init(
+        movementState: String,
+        yawDegrees: Float,
+        targetYawDegrees: Float,
+        isSettled: Bool,
+        isPackageSuspended: Bool,
+        packageEditorID: String?
+    ) {
+        self.movementState = movementState
+        self.yawDegrees = yawDegrees
+        self.targetYawDegrees = targetYawDegrees
+        self.isSettled = isSettled
+        self.isPackageSuspended = isPackageSuspended
+        self.packageEditorID = packageEditorID
+    }
 }
 
 /// One sample of everything the dialogue-camera readout shows.
-nonisolated struct DialogueCameraSnapshot: Equatable, Sendable {
-    static let empty = DialogueCameraSnapshot(
+nonisolated public struct DialogueCameraSnapshot: Equatable, Sendable {
+    public static let empty = DialogueCameraSnapshot(
         isAvailable: false,
         isEngaged: false,
         isForced: false,
@@ -70,28 +86,56 @@ nonisolated struct DialogueCameraSnapshot: Equatable, Sendable {
 
     /// False without a live renderer, which is the one case the readout states
     /// rather than reporting a camera that is disengaged.
-    let isAvailable: Bool
-    let isEngaged: Bool
-    let isForced: Bool
-    let target: DialogueCameraTarget
-    let speakerName: String?
-    let speakerKey: ReferenceKey?
+    public let isAvailable: Bool
+    public let isEngaged: Bool
+    public let isForced: Bool
+    public let target: DialogueCameraTarget
+    public let speakerName: String?
+    public let speakerKey: ReferenceKey?
     /// The last resolved framing, nil before the first one.
-    let pose: DialogueCameraPose?
+    public let pose: DialogueCameraPose?
     /// The camera mode still live underneath the override, which the view goes
     /// back to looking through when the conversation ends.
-    let restoreMode: CameraMovementMode
+    public let restoreMode: CameraMovementMode
     /// The field of view that mode projects with, which the projection is
     /// rebuilt to on release.
-    let restoreFOVYDegrees: Float
-    let overlayEnabled: Bool
-    let speakerFocus: DialogueSpeakerFocusRow?
-    let lastOutcome: String?
+    public let restoreFOVYDegrees: Float
+    public let overlayEnabled: Bool
+    public let speakerFocus: DialogueSpeakerFocusRow?
+    public let lastOutcome: String?
+
+    public init(
+        isAvailable: Bool,
+        isEngaged: Bool,
+        isForced: Bool,
+        target: DialogueCameraTarget,
+        speakerName: String?,
+        speakerKey: ReferenceKey?,
+        pose: DialogueCameraPose?,
+        restoreMode: CameraMovementMode,
+        restoreFOVYDegrees: Float,
+        overlayEnabled: Bool,
+        speakerFocus: DialogueSpeakerFocusRow?,
+        lastOutcome: String?
+    ) {
+        self.isAvailable = isAvailable
+        self.isEngaged = isEngaged
+        self.isForced = isForced
+        self.target = target
+        self.speakerName = speakerName
+        self.speakerKey = speakerKey
+        self.pose = pose
+        self.restoreMode = restoreMode
+        self.restoreFOVYDegrees = restoreFOVYDegrees
+        self.overlayEnabled = overlayEnabled
+        self.speakerFocus = speakerFocus
+        self.lastOutcome = lastOutcome
+    }
 }
 
 /// Live-renderer seam for the dialogue-camera section.
 @MainActor
-protocol DialogueCameraControlProviding: AnyObject {
+public protocol DialogueCameraControlProviding: AnyObject {
     var dialogueCameraSnapshot: DialogueCameraSnapshot { get }
 
     /// Engages the camera on the selected actor without a conversation, or

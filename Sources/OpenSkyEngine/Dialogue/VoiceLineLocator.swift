@@ -16,50 +16,50 @@ import Foundation
 import OpenSkyFormats
 
 /// One recorded response of one INFO.
-nonisolated struct VoiceLine: Equatable {
+nonisolated public struct VoiceLine: Equatable, Sendable {
     /// TRDT response number, one-based; the trailing `_1`, `_2` of the name.
-    let responseNumber: Int
+    public let responseNumber: Int
     /// Canonical VFS key of the `.fuz` file.
-    let path: String
+    public let path: String
 }
 
 /// One derived voice file name beside the editor IDs it came from. The pair is
 /// what makes a name-derivation sweep's mismatch report actionable: a name that
 /// does not match tells you nothing on its own about which half of the rule is
 /// wrong.
-nonisolated struct VoiceFileNameDerivation: Equatable {
-    let name: String
-    let questEditorID: String?
-    let topicEditorID: String?
+nonisolated public struct VoiceFileNameDerivation: Equatable, Sendable {
+    public let name: String
+    public let questEditorID: String?
+    public let topicEditorID: String?
 }
 
-nonisolated struct VoiceLineLocator {
-    let dialogue: DialogueStore
+nonisolated public struct VoiceLineLocator: Sendable {
+    public let dialogue: DialogueStore
     /// Lowercased plugin file name -> that plugin's QUST index. A topic's
     /// owning quest is looked up here by session-stable key.
     private let questStores: [String: QuestStore]
 
-    init(dialogue: DialogueStore, quests: QuestStore?) {
+    public init(dialogue: DialogueStore, quests: QuestStore?) {
         self.init(
             dialogue: dialogue,
             questStores: quests.map { [$0.resolver.pluginName.lowercased(): $0] } ?? [:]
         )
     }
 
-    init(dialogue: DialogueStore, questStores: [String: QuestStore]) {
+    public init(dialogue: DialogueStore, questStores: [String: QuestStore]) {
         self.dialogue = dialogue
         self.questStores = questStores
     }
 
     /// File name of the plugin whose records these are, which is also the
     /// directory name under `sound\voice\`.
-    var pluginName: String {
+    public var pluginName: String {
         dialogue.resolver.pluginName
     }
 
     /// Editor ID of the quest that owns `topic`, or nil when the topic names
     /// no quest or the owning plugin is not loaded.
-    func questEditorID(ofTopic topic: DialogueTopic) -> String? {
+    public func questEditorID(ofTopic topic: DialogueTopic) -> String? {
         guard
             let owner = topic.owningQuest,
             let key = ReferenceKey.resolve(owner, using: dialogue.resolver),
@@ -73,7 +73,7 @@ nonisolated struct VoiceLineLocator {
 
     /// Every recorded line one INFO holds for one voice type, in response
     /// order. Empty when the INFO belongs to no loaded topic.
-    func lines(info: TopicInfo, voiceType: String) -> [VoiceLine] {
+    public func lines(info: TopicInfo, voiceType: String) -> [VoiceLine] {
         guard let topic = dialogue.topic(ofInfo: info.formID) else { return [] }
         let quest = questEditorID(ofTopic: topic)
         let objectID = VoiceFilePath.exportedFormID(
@@ -101,7 +101,7 @@ nonisolated struct VoiceLineLocator {
     /// is what a name-derivation sweep compares against the archive listing,
     /// because the archive holds one copy per voice type and the records do not
     /// say which voice types recorded a line.
-    func fileNames(info: TopicInfo) -> [VoiceFileNameDerivation] {
+    public func fileNames(info: TopicInfo) -> [VoiceFileNameDerivation] {
         guard let topic = dialogue.topic(ofInfo: info.formID) else { return [] }
         let quest = questEditorID(ofTopic: topic)
         let objectID = VoiceFilePath.exportedFormID(

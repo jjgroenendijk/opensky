@@ -14,6 +14,7 @@
 // provider live rather than a value from the last tick.
 
 import AppKit
+import OpenSkyEngine
 
 /// One section of the Progression panel.
 class ProgressionPanelSection: PanelSectionViewController {

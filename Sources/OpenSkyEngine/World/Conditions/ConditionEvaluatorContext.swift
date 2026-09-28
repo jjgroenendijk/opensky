@@ -20,61 +20,61 @@ import OpenSkyFormats
 /// A value type on purpose. Building one is cheap, so a caller evaluating
 /// against a snapshot off the main actor builds its own rather than reaching
 /// into live stores.
-nonisolated struct ConditionContext: Sendable {
+nonisolated public struct ConditionContext: Sendable {
     /// The one seam global values come through (`GlobalResolution`).
-    var globals: GlobalResolution
+    public var globals: GlobalResolution
     /// The one seam quest state comes through (issue #182), shaped exactly like
     /// the globals seam: a value resolving overrides over plugin baselines, so
     /// the quest functions never reach into `WorldStateStore`.
-    var quests: QuestResolution
+    public var quests: QuestResolution
     /// The one seam filled quest aliases come through (issue #183). Separate
     /// from `quests` because the two answer different questions and a caller
     /// may legitimately have one and not the other.
-    var aliases: QuestAliasResolution
+    public var aliases: QuestAliasResolution
     /// The one seam actor values, death, hostility and the combat target come
     /// through (issue #375), shaped exactly like the two above. Empty in a
     /// context with no world running, which makes every actor function a
     /// reason-tagged false rather than a convincing zero.
-    var actors: ActorStateResolution
+    public var actors: ActorStateResolution
     /// The one seam the perception pass comes through (issue #202), shaped
     /// exactly like the four above. Empty in a context with no world running,
     /// which makes every detection function a reason-tagged false rather than a
     /// convincing "not detected".
-    var detection: DetectionResolution
+    public var detection: DetectionResolution
     /// The one seam dialogue facts come through (issue #426), shaped exactly
     /// like the five above: an actor's voice type and who the player is talking
     /// to. Empty in a context with no world running, which makes every dialogue
     /// function a reason-tagged false rather than a convincing "no voice type".
-    var dialogue: DialogueResolution
+    public var dialogue: DialogueResolution
     /// Load-order keyword, form-list and location stores plus the current and
     /// editor location facts for references (issue #455). Empty when no data
     /// snapshot is available, so M18 functions report an honest unavailable
     /// result rather than a convincing zero.
-    var data: ConditionDataResolution
+    public var data: ConditionDataResolution
     /// Known spells, active effects and cast state per actor, plus the SPEL
     /// and MGEF stores their FormID parameters resolve against (issue #474).
     /// Empty when no magic runtime is wired, which makes every magic function
     /// a reason-tagged false rather than an actor who has learned nothing.
-    var magic: MagicConditionResolution
+    public var magic: MagicConditionResolution
     /// Owned perks per actor plus the PERK store `HasPerk`'s parameter resolves
     /// against (issue #497). Empty when no perk runtime is wired, which makes
     /// `HasPerk` a reason-tagged false rather than an actor who has taken
     /// nothing.
-    var perks: PerkConditionResolution
+    public var perks: PerkConditionResolution
     /// Crime ledgers per actor plus the FACT store `GetCrimeGold`'s parameter
     /// resolves against, and the faction a null parameter means (issue #504).
     /// Empty when no crime runtime is wired, which makes `GetCrimeGold` a
     /// reason-tagged false rather than an actor who owes nothing.
-    var crime: CrimeConditionResolution
+    public var crime: CrimeConditionResolution
     /// Faction memberships, relationship ranks and the hostility derivation over
     /// them, plus the FACT store the `ptFaction` parameters resolve against
     /// (issue #508). Empty when no faction runtime is wired, which makes every
     /// faction and relationship function a reason-tagged false rather than an
     /// actor who belongs to nothing and is friendly with everybody.
-    var factions: FactionConditionResolution
+    public var factions: FactionConditionResolution
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
-    var referenceEnable: ReferenceEnableResolution
+    public var referenceEnable: ReferenceEnableResolution
     /// Quest whose alias table a `questAlias` run-on and a CIS1/CIS2 name
     /// override are resolved against.
     ///
@@ -84,20 +84,20 @@ nonisolated struct ConditionContext: Sendable {
     /// dialogue or package condition is evaluated with the quest that owns the
     /// topic. Nil means the caller had no quest scope, which makes every alias
     /// path a reason-tagged failure rather than a wrong answer.
-    var aliasQuest: FormID?
+    public var aliasQuest: FormID?
     /// Game clock the time functions read. Nil in a context with no world
     /// running, which makes those functions reason-tagged false rather than
     /// wrong.
-    var clock: GameClock?
+    public var clock: GameClock?
     /// References the Subject/Target/Reference run-ons resolve against.
-    var references: RuntimeReferenceIndex
+    public var references: RuntimeReferenceIndex
     /// The object the condition is being asked about (run-on 0).
-    var subject: ReferenceKey?
+    public var subject: ReferenceKey?
     /// The other party in the interaction (run-on 1).
-    var target: ReferenceKey?
-    var random: ConditionRandom
+    public var target: ReferenceKey?
+    public var random: ConditionRandom
 
-    init(
+    public init(
         globals: GlobalResolution = .empty,
         quests: QuestResolution = .empty,
         aliases: QuestAliasResolution = .empty,
@@ -141,9 +141,9 @@ nonisolated struct ConditionContext: Sendable {
 /// One function invocation: the condition being evaluated plus the context it
 /// runs against. Passed `inout` so a function that consumes randomness advances
 /// the caller's stream.
-nonisolated struct ConditionCall: Sendable {
-    let condition: Condition
-    var context: ConditionContext
+nonisolated public struct ConditionCall: Sendable {
+    public let condition: Condition
+    public var context: ConditionContext
 
     /// Parameter #1, with CIS1 taking precedence when the record carried one.
     ///
@@ -153,25 +153,25 @@ nonisolated struct ConditionCall: Sendable {
     /// asks `aliasReference(_:)`. A name that matches no alias of the context's
     /// quest, or one nothing has filled, reports nil, and the function turns
     /// that into `ConditionFailure.unresolvedParameter` (issue #183).
-    var parameter1: Condition.Parameter? {
+    public var parameter1: Condition.Parameter? {
         guard let name = condition.parameter1Name else { return condition.parameter1 }
         return aliasParameter(named: name)
     }
 
-    var parameter2: Condition.Parameter? {
+    public var parameter2: Condition.Parameter? {
         guard let name = condition.parameter2Name else { return condition.parameter2 }
         return aliasParameter(named: name)
     }
 
     /// Reference filling the alias `parameter` names on the context's quest, or
     /// nil when there is no quest scope, no such alias, or nothing in it.
-    func aliasReference(_ parameter: Condition.Parameter) -> ReferenceKey? {
+    public func aliasReference(_ parameter: Condition.Parameter) -> ReferenceKey? {
         guard let quest = context.aliasQuest else { return nil }
         return context.aliases.reference(alias: parameter.rawValue, in: quest)
     }
 
     /// Location filling the alias `parameter` names on the context's quest.
-    func aliasLocation(_ parameter: Condition.Parameter) -> ResolvedFormID? {
+    public func aliasLocation(_ parameter: Condition.Parameter) -> ResolvedFormID? {
         guard let quest = context.aliasQuest else { return nil }
         return context.aliases.location(alias: parameter.rawValue, in: quest)
     }
@@ -202,7 +202,7 @@ nonisolated struct ConditionCall: Sendable {
     /// Its alias number is parameter #3 at CTDA offset 28, "the quest-alias /
     /// package-data index" — see `Condition` — and the quest it belongs to is
     /// the context's `aliasQuest`, because a CTDA does not name one.
-    func reference() -> Result<RuntimeReferenceEntry, ConditionFailure> {
+    public func reference() -> Result<RuntimeReferenceEntry, ConditionFailure> {
         referenceKey().flatMap { key in
             guard let entry = context.references[key] else {
                 return .failure(.unresolvedReference(condition.runOn))
@@ -214,7 +214,7 @@ nonisolated struct ConditionCall: Sendable {
     /// Whether this condition's run-on reference is disabled right now.
     /// Runtime state wins; otherwise the REFR/ACHR header's initial flag is the
     /// plugin baseline. A missing placement is not treated as disabled.
-    func referenceIsDisabled() -> Result<Bool, ConditionFailure> {
+    public func referenceIsDisabled() -> Result<Bool, ConditionFailure> {
         referenceKey().flatMap { key in
             if let state = context.referenceEnable[key] {
                 return .success(!state.isEnabled)
@@ -240,7 +240,7 @@ nonisolated struct ConditionCall: Sendable {
     /// `ReferenceKey` and no plugin record at all. Asking for the record first
     /// would have made every actor condition about the player an unresolved
     /// reference — a failure with nothing wrong behind it.
-    func referenceKey() -> Result<ReferenceKey, ConditionFailure> {
+    public func referenceKey() -> Result<ReferenceKey, ConditionFailure> {
         let runOn = condition.runOn
         let swapped = condition.flags.contains(.swapSubjectAndTarget)
         switch runOn {
@@ -286,7 +286,7 @@ nonisolated struct ConditionCall: Sendable {
     /// `.unresolvedReference` and stays that way, because "the run-on named
     /// nothing" and "the named thing is not an actor this session tracks" are
     /// different gaps and only one of them is about actors.
-    func actorState() -> Result<ActorConditionState, ConditionFailure> {
+    public func actorState() -> Result<ActorConditionState, ConditionFailure> {
         referenceKey().flatMap { key in
             guard let state = context.actors.state(for: key) else {
                 return .failure(.unavailableActorState)
@@ -312,13 +312,13 @@ nonisolated struct ConditionCall: Sendable {
     }
 
     /// The game clock, or `.unavailableClock`.
-    func clock() -> Result<GameClock, ConditionFailure> {
+    public func clock() -> Result<GameClock, ConditionFailure> {
         guard let clock = context.clock else { return .failure(.unavailableClock) }
         return .success(clock)
     }
 
     /// Current value of the global `id` names, or `.unresolvedGlobal`.
-    func global(_ id: FormID) -> Result<Float, ConditionFailure> {
+    public func global(_ id: FormID) -> Result<Float, ConditionFailure> {
         guard let value = context.globals.floatValue(for: id) else {
             return .failure(.unresolvedGlobal(id))
         }
@@ -326,14 +326,14 @@ nonisolated struct ConditionCall: Sendable {
     }
 
     /// Current state of the quest `id` names, or `.unresolvedQuest`.
-    func quest(_ id: FormID) -> Result<QuestRuntimeState, ConditionFailure> {
+    public func quest(_ id: FormID) -> Result<QuestRuntimeState, ConditionFailure> {
         guard let state = context.quests.state(for: id) else {
             return .failure(.unresolvedQuest(id))
         }
         return .success(state)
     }
 
-    mutating func randomPercent() -> Int {
+    public mutating func randomPercent() -> Int {
         context.random.percent()
     }
 

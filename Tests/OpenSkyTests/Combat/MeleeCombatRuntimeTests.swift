@@ -14,7 +14,7 @@
 // that produces them, and the env-gated `MeleeCombatRealDataTests` closes the
 // loop on the vanilla player graph.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

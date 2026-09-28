@@ -4,7 +4,7 @@
 // so the runtime's cases live in two files — the entry-and-attack half and the
 // breaking-off half — and the session both build lives here.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

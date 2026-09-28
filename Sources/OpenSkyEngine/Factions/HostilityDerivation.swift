@@ -54,28 +54,28 @@ import OpenSkyGameData
 /// A flat value rather than a lookup closure so the whole derivation is
 /// testable without a world-state store, and so a caller that already has the
 /// memberships in hand does not pay for them twice.
-nonisolated struct ActorSocialProfile: Equatable, Sendable {
-    let key: ReferenceKey
+nonisolated public struct ActorSocialProfile: Equatable, Sendable {
+    public let key: ReferenceKey
     /// The actor's NPC_ base identity, which is what a RELA record names. Nil
     /// for the player, who has no base record in this engine, and for a
     /// generated actor no plugin describes.
-    let base: ResolvedFormID?
-    let memberships: ActorFactionState
+    public let base: ResolvedFormID?
+    public let memberships: ActorFactionState
     /// Relationship ranks a script has set on this actor (issue #508). Consulted
     /// ahead of the `RELA` records, because that is what setting one means, and
     /// because it is the only layer that can name the player.
-    let relationshipOverrides: ActorRelationshipState
+    public let relationshipOverrides: ActorRelationshipState
     /// The AI attributes behind the aggression check. `ActorAIData.absent` for
     /// an actor whose record authors no AIDT, which never attacks unprovoked.
-    let aiData: ActorAIData
+    public let aiData: ActorAIData
     /// The session's explicit answer for this actor, when something already
     /// wrote one.
-    let hostilityOverride: ActorHostility?
+    public let hostilityOverride: ActorHostility?
     /// The crime faction this actor reports crimes to — its authored `CRIF`
     /// (issue #505). Nil for the player and for an actor that authors none.
-    var crimeFaction: ReferenceKey?
+    public var crimeFaction: ReferenceKey?
 
-    init(
+    public init(
         key: ReferenceKey,
         base: ResolvedFormID? = nil,
         memberships: ActorFactionState = ActorFactionState(),
@@ -95,14 +95,14 @@ nonisolated struct ActorSocialProfile: Equatable, Sendable {
 }
 
 /// Which term of the precedence list produced the answer.
-nonisolated enum HostilitySource: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum HostilitySource: String, Equatable, Sendable, CaseIterable {
     case runtimeOverride
     case crime
     case relationship
     case faction
     case defaultNeutral
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .runtimeOverride: "runtime override"
         case .crime: "crime"
@@ -120,12 +120,12 @@ nonisolated enum HostilitySource: String, Equatable, Sendable, CaseIterable {
 /// An unaggressive actor regards a bandit as an enemy and still does not attack
 /// it, and a panel that showed only the hostility would make that look like the
 /// records were being ignored.
-nonisolated struct HostilityDecision: Equatable, Sendable {
-    let hostility: ActorHostility
-    let reaction: ActorReaction
-    let source: HostilitySource
+nonisolated public struct HostilityDecision: Equatable, Sendable {
+    public let hostility: ActorHostility
+    public let reaction: ActorReaction
+    public let source: HostilitySource
 
-    var isHostile: Bool {
+    public var isHostile: Bool {
         hostility == .hostile
     }
 }
@@ -135,7 +135,7 @@ nonisolated struct HostilityDecision: Equatable, Sendable {
 /// A protocol with one question rather than a closure so the bounty runtime can
 /// carry its own state, and so this file names the seam in a way a reader can
 /// find. `NoCrimeHostility` is what the engine runs with until #504 lands.
-nonisolated protocol CrimeHostilitySource {
+nonisolated public protocol CrimeHostilitySource {
     /// What `observer`'s crime bookkeeping makes of `target`, or nil when crime
     /// has no opinion — which is the answer for every pair until a bounty, a
     /// witnessed theft or an assault gives it one.
@@ -146,27 +146,29 @@ nonisolated protocol CrimeHostilitySource {
 }
 
 /// The crime term before crime exists.
-nonisolated struct NoCrimeHostility: CrimeHostilitySource {
-    func crimeReaction(
+nonisolated public struct NoCrimeHostility: CrimeHostilitySource, Sendable {
+    public func crimeReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction? {
         nil
     }
+
+    public init() {}
 }
 
 /// Resolves what one actor makes of another from factions, relationships,
 /// crime and explicit overrides.
-nonisolated struct HostilityDerivation {
-    let relations: FactionRelationIndex
-    let relationships: RelationshipStore
+nonisolated public struct HostilityDerivation {
+    public let relations: FactionRelationIndex
+    public let relationships: RelationshipStore
     /// The crime seam. Assignable rather than injected at init so the session
     /// can hand the derivation a real bounty source once #504 exists, without
     /// rebuilding the relation index behind it.
-    var crime: any CrimeHostilitySource = NoCrimeHostility()
+    public var crime: any CrimeHostilitySource = NoCrimeHostility()
 
     /// The whole answer for one ordered pair.
-    func decide(
+    public func decide(
         _ observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> HostilityDecision {
@@ -190,7 +192,7 @@ nonisolated struct HostilityDerivation {
     /// The reaction alone, for a caller that wants what the records say without
     /// the aggression table over it — a condition function asking
     /// `GetFactionReaction`, or a panel explaining a decision.
-    func reaction(
+    public func reaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction {
@@ -211,7 +213,7 @@ nonisolated struct HostilityDerivation {
     /// Both directions are consulted because an XNAM is authored on one side
     /// and vanilla does not always author the mirror; a relation naming the
     /// pair at all is an opinion about the pair.
-    func factionReaction(
+    public func factionReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction? {
@@ -234,7 +236,7 @@ nonisolated struct HostilityDerivation {
     /// change to what the record started the pair at. It is also what lets a
     /// relationship with the player count at all, since the player has no `NPC_`
     /// base for a `RELA` record to name.
-    func relationshipReaction(
+    public func relationshipReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction? {
@@ -253,7 +255,7 @@ nonisolated struct HostilityDerivation {
     /// sides are written by `RelationshipRuntime`, so the second lookup covers a
     /// component an older build wrote one-sided rather than a disagreement this
     /// one can produce.
-    func scriptedRank(
+    public func scriptedRank(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> Int8? {
@@ -287,5 +289,15 @@ nonisolated struct HostilityDerivation {
             return (declared, .faction)
         }
         return (.neutral, .defaultNeutral)
+    }
+
+    public init(
+        relations: FactionRelationIndex,
+        relationships: RelationshipStore,
+        crime: any CrimeHostilitySource = NoCrimeHostility()
+    ) {
+        self.relations = relations
+        self.relationships = relationships
+        self.crime = crime
     }
 }

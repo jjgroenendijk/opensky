@@ -9,6 +9,7 @@
 // there is".
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 import OSLog

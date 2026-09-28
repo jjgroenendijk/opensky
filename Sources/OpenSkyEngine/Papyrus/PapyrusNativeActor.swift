@@ -31,7 +31,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installActor(into registry: inout PapyrusNativeRegistry) {
+    public static func installActor(into registry: inout PapyrusNativeRegistry) {
         installActorValueReads(into: &registry)
         installActorValueWrites(into: &registry)
         installActorValueWriteNatives(into: &registry)
@@ -256,7 +256,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// The world façade plus the world identity of `self`, for an `Actor`
     /// method. Identical in shape to `worldTarget(_:_:)`; named separately so
     /// the failure it produces can say "actor" rather than "reference".
-    static func actorTarget(
+    public static func actorTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext
     ) -> (world: PapyrusWorldAccess, key: ReferenceKey)? {
@@ -265,7 +265,7 @@ nonisolated extension PapyrusNativeFunctions {
 
     /// The single failure an `Actor` native returns when it has no world, no
     /// world identity for its receiver, or no actor behind that identity.
-    static func needsActor(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
+    public static func needsActor(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         failure(
             call,
             "\(call.functionName) needs a world runtime and an actor receiver"
@@ -280,7 +280,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// them is stored. A nil is now a name no vanilla actor value carries —
     /// a typo, a mod's invented value, or one of the Papyrus synonyms the table
     /// deliberately does not alias (`Marksman` for `Archery`).
-    static func actorValueIndex(
+    public static func actorValueIndex(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> Int32? {
@@ -294,7 +294,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// per-function counts can be read alongside a log that says *which* name
     /// the corpus keeps asking for — which is the number that decides whether
     /// the table is missing an alias.
-    static func unknownActorValue(
+    public static func unknownActorValue(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> PapyrusNativeResult {
@@ -307,7 +307,7 @@ nonisolated extension PapyrusNativeFunctions {
 
     /// Argument `index` as an object handle, or nil for a missing argument and
     /// for Papyrus `None` alike — which `Kill(akKiller = None)` relies on.
-    static func objectArgument(
+    public static func objectArgument(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> PapyrusObjectHandle? {

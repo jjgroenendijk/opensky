@@ -33,7 +33,7 @@ nonisolated extension DialogueMenuModel {
     /// Never empty: an unlabelled row cannot be chosen on purpose, so a topic
     /// whose text resolves to nothing falls back to its editor ID and then to
     /// its FormID.
-    static func rowText(
+    public static func rowText(
         topic: DialogueTopic,
         info: TopicInfo?,
         strings: LocalizedStrings?
@@ -57,7 +57,7 @@ nonisolated extension DialogueMenuModel {
     /// A run whose text does not resolve becomes an empty string rather than
     /// being dropped, because the runs are also the count a readout reports and
     /// silently shortening a three-line response to two would misreport it.
-    static func responseRuns(_ info: TopicInfo, strings: LocalizedStrings?) -> [String] {
+    public static func responseRuns(_ info: TopicInfo, strings: LocalizedStrings?) -> [String] {
         info.responses.map { text($0.text, kind: .ilstrings, strings: strings) ?? "" }
     }
 
@@ -69,7 +69,7 @@ nonisolated extension DialogueMenuModel {
     /// copy rather than a shared one: the two menus resolve different fields
     /// out of different tables, and a shared entry point would invite passing
     /// the wrong kind.
-    static func text(
+    public static func text(
         _ value: LString?,
         kind: StringTable.Kind,
         strings: LocalizedStrings?
@@ -89,7 +89,7 @@ extension DialogueMenuModel {
     /// The selection's order is kept as it arrives: `DialogueRuntime` already
     /// sorts by descending DIAL priority and ascending FormID, and re-sorting
     /// here would be a second ordering rule to keep in step with that one.
-    static func rows(
+    public static func rows(
         _ selection: DialogueSelection,
         runtime: DialogueRuntime,
         strings: LocalizedStrings?
@@ -114,7 +114,7 @@ extension DialogueMenuModel {
     /// A speaker with no greeting opens straight on the list, which is also
     /// what a speaker with no topics at all does — the menu then shows an empty
     /// list and says so rather than refusing to open.
-    static func build(
+    public static func build(
         speaker: ReferenceKey,
         name: String,
         runtime: DialogueRuntime,

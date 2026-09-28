@@ -46,61 +46,61 @@ import simd
 /// What one frame of the dialogue camera is computed from. Everything here is
 /// world space and sampled by the caller, so the framing math needs no streamer,
 /// no renderer and no game data to be tested.
-nonisolated struct DialogueCameraSubject: Equatable, Sendable {
+nonisolated public struct DialogueCameraSubject: Equatable, Sendable {
     /// The speaker's head, world space: the `NPC Head [Head]` bone of its own
     /// posed rig where one is sampled, its capsule eye height otherwise.
-    let headPosition: SIMD3<Float>
+    public let headPosition: SIMD3<Float>
     /// Where the player's eye is — the capsule's eye height above its feet,
     /// which is where `.walk` puts the first-person eye, and *not* wherever the
     /// third-person orbit happens to have put the camera this frame.
-    let playerEyePosition: SIMD3<Float>
+    public let playerEyePosition: SIMD3<Float>
     /// The capsule the framing distance is derived from. A parameter rather
     /// than a constant so the derivation can be tested against a capsule other
     /// than the standard one, which is the only capsule this engine resolves.
-    var capsule: PlayerCapsule = .standard
+    public var capsule: PlayerCapsule = .standard
 }
 
 /// One resolved frame: where to look from, what to look at, and what the
 /// collision sweep did about it.
-nonisolated struct DialogueCameraPose: Equatable, Sendable {
-    let eye: SIMD3<Float>
+nonisolated public struct DialogueCameraPose: Equatable, Sendable {
+    public let eye: SIMD3<Float>
     /// The point the camera is aimed at, which is the speaker's head.
-    let target: SIMD3<Float>
-    let yaw: Float
-    let pitch: Float
+    public let target: SIMD3<Float>
+    public let yaw: Float
+    public let pitch: Float
     /// Eye-to-target distance after the collision pull-in.
-    let distance: Float
+    public let distance: Float
     /// True when world geometry, rather than the framing rule, decided that
     /// distance.
-    let isCollisionLimited: Bool
+    public let isCollisionLimited: Bool
 }
 
-nonisolated struct DialogueCamera: Equatable {
+nonisolated public struct DialogueCamera: Equatable, Sendable {
     /// The vertical field of view a conversation is projected with: the shared
     /// world value, so engaging the camera in first person also takes the
     /// first-person comfort setting off the world for the duration and gives
     /// every conversation the same framing. Asserted against the renderer by
     /// `DialogueCameraTests`.
-    static let fovYRadians = FirstPersonCamera.defaultFOVYRadians
+    public static let fovYRadians = FirstPersonCamera.defaultFOVYRadians
 
     /// How much of the frame's height the framed span occupies. Deliberately
     /// the third-person camera's fraction rather than a second taste decision:
     /// the two cameras frame different spans, and that is the only thing that
     /// should differ between them.
-    static let framingFillFraction = ThirdPersonCamera.framingFillFraction
+    public static let framingFillFraction = ThirdPersonCamera.framingFillFraction
 
     /// The rig bone the camera aims at. Present in the third-person skeleton
     /// (`meshes/actors/character/character assets/skeleton.hkx`, bone list read
     /// with `openskycli skeleton`), which is the rig every resident actor is
     /// animated on.
-    static let headBoneName = "NPC Head [Head]"
+    public static let headBoneName = "NPC Head [Head]"
 
     /// The vertical span the shot frames: the head at its centre, reaching down
     /// to the capsule's own midpoint and as far above the head as that is
     /// below it. Head and chest for the standard capsule, 96 units, which is
     /// what makes this a conversation shot rather than the full-body shot
     /// `ThirdPersonCamera` frames.
-    static func framedHeight(capsule: PlayerCapsule = .standard) -> Float {
+    public static func framedHeight(capsule: PlayerCapsule = .standard) -> Float {
         max(capsule.radius, 2 * (capsule.eyeHeight - capsule.height / 2))
     }
 
@@ -108,7 +108,7 @@ nonisolated struct DialogueCamera: Equatable {
     /// `framingFillFraction` of the view height:
     /// `(height / 2 / fill) / tan(fov / 2)`. About 126 units for the standard
     /// capsule and a 65-degree vertical field of view.
-    static func framingDistance(capsule: PlayerCapsule = .standard) -> Float {
+    public static func framingDistance(capsule: PlayerCapsule = .standard) -> Float {
         (framedHeight(capsule: capsule) / 2 / framingFillFraction) / tanf(fovYRadians / 2)
     }
 
@@ -116,20 +116,20 @@ nonisolated struct DialogueCamera: Equatable {
     /// shot three-quarter rather than flat head-on. One capsule radius, and the
     /// same side `ThirdPersonCamera` offsets to, so the player's body stays on
     /// the side of the frame it was already on when the conversation started.
-    static let shoulderOffset = ThirdPersonCamera.shoulderOffset
+    public static let shoulderOffset = ThirdPersonCamera.shoulderOffset
 
     /// How far behind the player's own eye the camera stands when the player is
     /// further from the speaker than the framing distance. The third-person
     /// camera's own minimum, which is one capsule radius: enough to put the
     /// lens outside the player's silhouette and no more.
-    static let clearanceBehindPlayer = ThirdPersonCamera.minimumDistance
+    public static let clearanceBehindPlayer = ThirdPersonCamera.minimumDistance
 
     /// The pull-in. A conversation happens indoors as often as not, so the
     /// camera has to be able to end up tight against a wall; it collides with
     /// the same probe and through the same seam third person does, and may
     /// never be pushed closer to the speaker than one capsule radius, which is
     /// the point at which it would be inside their head.
-    static let collisionProbe = CameraCollisionProbe(
+    public static let collisionProbe = CameraCollisionProbe(
         radius: ThirdPersonCamera.collisionRadius,
         minimumDistance: PlayerCapsule.standard.radius
     )
@@ -137,14 +137,14 @@ nonisolated struct DialogueCamera: Equatable {
     /// The last resolved frame, or nil before the first one. Kept so the panel
     /// can report where the camera is and what it is looking at, and so the
     /// debug overlay can draw the pivot without resolving a second time.
-    private(set) var pose: DialogueCameraPose?
+    public private(set) var pose: DialogueCameraPose?
 
     /// Resolves this frame's pose from the speaker's head and the player's eye.
     ///
     /// The ideal eye is placed in the horizontal plane through the *player's*
     /// eye rather than through the speaker's head, so a conversation with
     /// somebody taller looks up at them instead of levelling the shot out.
-    mutating func resolve(
+    public mutating func resolve(
         subject: DialogueCameraSubject,
         collisionQuery: WalkController.CollisionQuery
     ) -> DialogueCameraPose {
@@ -189,7 +189,7 @@ nonisolated struct DialogueCamera: Equatable {
 
     /// Forgets the last frame, so a conversation does not open reporting where
     /// the previous one's camera stood.
-    mutating func reset() {
+    public mutating func reset() {
         pose = nil
     }
 }

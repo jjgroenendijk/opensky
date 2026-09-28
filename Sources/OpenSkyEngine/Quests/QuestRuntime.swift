@@ -35,14 +35,14 @@ import OpenSkyGameData
 
 /// Reads and mutates quest state on top of a `WorldStateStore`.
 @MainActor
-struct QuestRuntime {
-    let store: WorldStateStore
+public struct QuestRuntime {
+    public let store: WorldStateStore
     /// Plugin-side index every mutation validates against and takes its
     /// session-stable keys from.
-    let quests: QuestStore
-    let locations: LocationStore?
+    public let quests: QuestStore
+    public let locations: LocationStore?
 
-    init(store: WorldStateStore, quests: QuestStore, locations: LocationStore? = nil) {
+    public init(store: WorldStateStore, quests: QuestStore, locations: LocationStore? = nil) {
         self.store = store
         self.quests = quests
         self.locations = locations
@@ -55,21 +55,21 @@ struct QuestRuntime {
     ///
     /// - Throws: `QuestError.unknownQuest` when no loaded plugin defines it,
     ///   `QuestError.unresolvedQuestKey` when its FormID does not resolve.
-    func state(of id: FormID) throws -> QuestRuntimeState {
+    public func state(of id: FormID) throws -> QuestRuntimeState {
         let resolved = try resolve(id)
         return state(of: resolved)
     }
 
     /// Whether the quest has been touched at runtime, as opposed to still
     /// reading straight from plugin data.
-    func hasRuntimeState(_ id: FormID) -> Bool {
+    public func hasRuntimeState(_ id: FormID) -> Bool {
         guard let key = quests.key(for: id) else { return false }
         return store.component(QuestRuntimeState.self, for: key) != nil
     }
 
     /// Convenience for a caller holding an editor ID rather than a FormID,
     /// which is what a console line and a sidebar field carry.
-    func state(editorID: String) throws -> QuestRuntimeState {
+    public func state(editorID: String) throws -> QuestRuntimeState {
         guard let quest = quests.quest(editorID: editorID) else {
             throw QuestError.unknownQuest(FormID(0))
         }
@@ -79,7 +79,7 @@ struct QuestRuntime {
     /// Every quest with runtime state, in `ReferenceKey` total order, paired
     /// with the record it belongs to. For inspection surfaces and for the
     /// journal UI (#184).
-    func runtimeQuests() -> [(quest: Quest, state: QuestRuntimeState)] {
+    public func runtimeQuests() -> [(quest: Quest, state: QuestRuntimeState)] {
         quests.sortedQuests().compactMap { quest in
             guard
                 let key = quests.key(for: quest.formID),
@@ -98,7 +98,7 @@ struct QuestRuntime {
     /// This is the set the Papyrus side instantiates scripts for (issue #322):
     /// at session wire-up it is the start-game-enabled quests, and after a
     /// save is restored it is whatever that save recorded.
-    func runningQuests() -> [(quest: Quest, key: ReferenceKey)] {
+    public func runningQuests() -> [(quest: Quest, key: ReferenceKey)] {
         quests.sortedQuests().compactMap { quest in
             guard let key = quests.key(for: quest.formID) else { return nil }
             let state = store.component(QuestRuntimeState.self, for: key)
@@ -109,7 +109,7 @@ struct QuestRuntime {
 
     /// The seam condition functions read quest state through: this session's
     /// runtime states over the plugin baselines.
-    func resolution() -> QuestResolution {
+    public func resolution() -> QuestResolution {
         var overrides: [ReferenceKey: QuestRuntimeState] = [:]
         for quest in quests.sortedQuests() {
             guard
@@ -138,7 +138,7 @@ struct QuestRuntime {
     ///   empty, in which case neither the table nor the running flag is written.
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func startQuest(_ id: FormID) throws -> QuestRuntimeState {
+    public func startQuest(_ id: FormID) throws -> QuestRuntimeState {
         let resolved = try resolve(id)
         try fillAliases(of: resolved.quest, key: resolved.key)
         return try apply(to: id) { $0.starting() }
@@ -153,7 +153,7 @@ struct QuestRuntime {
     ///
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func stopQuest(_ id: FormID) throws -> QuestRuntimeState {
+    public func stopQuest(_ id: FormID) throws -> QuestRuntimeState {
         let resolved = try resolve(id)
         clearAliases(key: resolved.key)
         return try apply(to: id) { $0.stopping() }
@@ -167,7 +167,7 @@ struct QuestRuntime {
     /// - Throws: `QuestError.questNotRunning` for a quest that is not running.
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func completeQuest(_ id: FormID) throws -> QuestRuntimeState {
+    public func completeQuest(_ id: FormID) throws -> QuestRuntimeState {
         try apply(to: id, requiringRunning: true) { $0.completing() }
     }
 
@@ -193,7 +193,7 @@ struct QuestRuntime {
     ///   stage is not a start-up stage.
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func setStage(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
+    public func setStage(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
         let resolved = try resolve(id)
         let matching = resolved.quest.stages.filter { $0.index == index }
         guard !matching.isEmpty else {
@@ -225,7 +225,7 @@ struct QuestRuntime {
     /// - Throws: `QuestError.unknownObjective`, `QuestError.questNotRunning`.
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func setObjectiveDisplayed(
+    public func setObjectiveDisplayed(
         _ index: UInt16,
         _ isDisplayed: Bool = true,
         on id: FormID
@@ -238,7 +238,7 @@ struct QuestRuntime {
     /// - Throws: `QuestError.unknownObjective`, `QuestError.questNotRunning`.
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func setObjectiveCompleted(
+    public func setObjectiveCompleted(
         _ index: UInt16,
         _ isCompleted: Bool = true,
         on id: FormID
@@ -251,7 +251,7 @@ struct QuestRuntime {
     /// - Throws: `QuestError.unknownObjective`, `QuestError.questNotRunning`.
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func setObjectiveFailed(
+    public func setObjectiveFailed(
         _ index: UInt16,
         _ isFailed: Bool = true,
         on id: FormID
@@ -269,7 +269,7 @@ struct QuestRuntime {
     ///
     /// - Returns: true when runtime state was actually removed.
     @discardableResult
-    func reset(_ id: FormID) -> Bool {
+    public func reset(_ id: FormID) -> Bool {
         guard let key = quests.key(for: id) else { return false }
         let clearedAliases = clearAliases(key: key)
         return store.reset(.quest, for: key) || clearedAliases

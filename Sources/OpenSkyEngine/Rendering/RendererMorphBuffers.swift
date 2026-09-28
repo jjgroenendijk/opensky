@@ -5,11 +5,11 @@ import Metal
 import OpenSkyShaderTypes
 
 extension Renderer {
-    func bindFaceMorph(_ morph: FaceMorphBuffer?, slot: Int) {
+    public func bindFaceMorph(_ morph: FaceMorphBuffer?, slot: Int) {
         bindMorph(morph, slot: slot)
     }
 
-    func bindShadowMorph(_ morph: FaceMorphBuffer?, slot: Int) {
+    public func bindShadowMorph(_ morph: FaceMorphBuffer?, slot: Int) {
         bindMorph(morph, slot: slot)
     }
 

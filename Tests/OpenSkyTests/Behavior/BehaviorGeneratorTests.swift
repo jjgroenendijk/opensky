@@ -5,7 +5,7 @@
 // Clip evaluation is in BehaviorClipTests.swift.
 
 import Foundation
-@testable import OpenSky
+import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

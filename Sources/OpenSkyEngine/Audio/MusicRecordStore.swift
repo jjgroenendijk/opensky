@@ -9,36 +9,36 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated enum MusicResolveError: Error, Equatable {
+nonisolated public enum MusicResolveError: Error, Equatable {
     case musicTypeNotFound(FormID)
 }
 
-nonisolated struct ResolvedMusicType {
-    let musicType: MusicType
+nonisolated public struct ResolvedMusicType: Sendable {
+    public let musicType: MusicType
     /// MUST records named by TNAM, in authored order. FormIDs that resolve to
     /// nothing (null separators, records from an absent master) are dropped
     /// without reordering the survivors.
-    let tracks: [MusicTrack]
+    public let tracks: [MusicTrack]
 }
 
-nonisolated final class MusicRecordStore {
-    let musicTypes: [UInt32: MusicType]
-    let musicTracks: [UInt32: MusicTrack]
+nonisolated public final class MusicRecordStore {
+    public let musicTypes: [UInt32: MusicType]
+    public let musicTracks: [UInt32: MusicTrack]
 
-    init(file: ESMFile) {
+    public init(file: ESMFile) {
         musicTypes = Self.index(file, type: "MUSC") { try? MusicType(record: $0) }
         musicTracks = Self.index(file, type: "MUST") { try? MusicTrack(record: $0) }
     }
 
-    func musicType(_ id: FormID) -> MusicType? {
+    public func musicType(_ id: FormID) -> MusicType? {
         musicTypes[id.rawValue]
     }
 
-    func musicTrack(_ id: FormID) -> MusicTrack? {
+    public func musicTrack(_ id: FormID) -> MusicTrack? {
         musicTracks[id.rawValue]
     }
 
-    func resolve(musicType id: FormID) throws -> ResolvedMusicType {
+    public func resolve(musicType id: FormID) throws -> ResolvedMusicType {
         guard let musicType = musicType(id) else {
             throw MusicResolveError.musicTypeNotFound(id)
         }
@@ -51,7 +51,7 @@ nonisolated final class MusicRecordStore {
     /// Canonical VFS keys for a track's audio files: the ANAM stream first,
     /// then the BNAM finale when present. Entries that fail the path rules are
     /// dropped rather than substituted.
-    func audioPaths(for track: MusicTrack) -> [String] {
+    public func audioPaths(for track: MusicTrack) -> [String] {
         [track.trackFileName, track.finaleFileName]
             .compactMap(\.self)
             .compactMap(Self.canonicalMusicPath)
@@ -84,7 +84,7 @@ nonisolated final class MusicRecordStore {
     /// playlists. A path still carrying a `:` after normalization names a
     /// drive or volume and is rejected outright; `VirtualFileSystem.normalize`
     /// rejects `.` and `..` components, so nothing can leave the data root.
-    static func canonicalMusicPath(_ track: String) -> String? {
+    public static func canonicalMusicPath(_ track: String) -> String? {
         guard let normalized = try? VirtualFileSystem.normalize(track) else {
             return nil
         }
@@ -101,13 +101,13 @@ nonisolated final class MusicRecordStore {
     }
 
     /// Extension every music asset in the shipped archives actually uses.
-    static let shippedMusicExtension = "xwm"
+    public static let shippedMusicExtension = "xwm"
 
     /// Same directory and stem as `path` with the extension replaced by `.xwm`,
     /// or nil when `path` already names an `.xwm` or carries no extension at
     /// all. Only the final component is considered, so a directory containing a
     /// dot cannot be mistaken for an extension.
-    static func shippedAudioSibling(of path: String) -> String? {
+    public static func shippedAudioSibling(of path: String) -> String? {
         guard let dot = path.lastIndex(of: ".") else { return nil }
         let ext = path[path.index(after: dot)...]
         guard !ext.isEmpty, !ext.contains("\\") else { return nil }
@@ -132,7 +132,7 @@ nonisolated final class MusicRecordStore {
     /// name never resolves for vanilla music (issue #246). A track that exists
     /// under neither name rethrows the authored path's own error, so a
     /// genuinely missing file is still reported as missing.
-    static func loadAudioFile(
+    public static func loadAudioFile(
         at path: String,
         load: (String) throws -> Data
     ) throws -> (key: String, data: Data) {

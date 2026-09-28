@@ -30,16 +30,16 @@ import simd
 ///
 /// A value type over two dictionaries: cheap to build, cheap to copy, and
 /// unable to go stale mid-evaluation the way a live read could.
-nonisolated struct DetectionResolution: Sendable {
+nonisolated public struct DetectionResolution: Sendable {
     /// No perception at all, which is what a context with no world running
     /// carries. Every detection function is then a reason-tagged false and a
     /// tally bucket rather than a convincing zero.
-    static let empty = DetectionResolution()
+    public static let empty = DetectionResolution()
 
     private let pairs: [DetectionPairKey: DetectionPairState]
     private let positions: [ReferenceKey: SIMD3<Float>]
 
-    init(
+    public init(
         pairs: [DetectionPairKey: DetectionPairState] = [:],
         positions: [ReferenceKey: SIMD3<Float>] = [:]
     ) {
@@ -49,28 +49,28 @@ nonisolated struct DetectionResolution: Sendable {
 
     /// `observer`'s regard for `target`, or nil when the pass tracks no such
     /// pair.
-    func pair(observer: ReferenceKey, target: ReferenceKey) -> DetectionPairState? {
+    public func pair(observer: ReferenceKey, target: ReferenceKey) -> DetectionPairState? {
         pairs[DetectionPairKey(observer: observer, target: target)]
     }
 
     /// Where `key` stands, or nil when nothing in this resolution places it.
-    func position(of key: ReferenceKey) -> SIMD3<Float>? {
+    public func position(of key: ReferenceKey) -> SIMD3<Float>? {
         positions[key]
     }
 
     /// Distance between two references, or nil when either is unplaced.
-    func distance(from first: ReferenceKey, to second: ReferenceKey) -> Float? {
+    public func distance(from first: ReferenceKey, to second: ReferenceKey) -> Float? {
         guard let start = positions[first], let end = positions[second] else { return nil }
         let separation = simd_distance(start, end)
         return separation.isFinite ? separation : nil
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         pairs.isEmpty && positions.isEmpty
     }
 
     /// Pairs this resolution knows about.
-    var pairCount: Int {
+    public var pairCount: Int {
         pairs.count
     }
 }
@@ -78,7 +78,7 @@ nonisolated struct DetectionResolution: Sendable {
 extension PerceptionRuntime {
     /// This pass as a condition seam: every tracked pair plus every roster
     /// member's position.
-    func resolution() -> DetectionResolution {
+    public func resolution() -> DetectionResolution {
         var positions: [ReferenceKey: SIMD3<Float>] = [:]
         for observer in observers {
             positions[observer.key] = observer.feet

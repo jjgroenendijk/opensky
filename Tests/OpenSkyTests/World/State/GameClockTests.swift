@@ -3,7 +3,7 @@
 // cited in Sources/OpenSkyEngine/World/State/GameClock.swift. See docs/engine/game-clock.md.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct GameClockTests {

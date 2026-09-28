@@ -5,7 +5,7 @@
 import OpenSkyFormats
 
 nonisolated extension PlacedReference {
-    init(spawn: ReferenceSpawnState, formID: FormID) {
+    public init(spawn: ReferenceSpawnState, formID: FormID) {
         self.init(
             spawnedBase: spawn.base,
             placement: spawn.placement,

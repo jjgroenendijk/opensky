@@ -9,6 +9,7 @@
 // thief is actually asking.
 
 import AppKit
+import OpenSkyEngine
 
 final class CrimeTheftSection: CrimeFactionPanelSection {
     private let statsLabel = PanelComponents.statsLabel(identifier: "CrimeTheftStatsLabel")

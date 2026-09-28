@@ -28,25 +28,25 @@ import OpenSkyFormats
 
 /// Resolves one quest alias to the display name of whatever fills it, and
 /// substitutes those names into journal text.
-nonisolated struct QuestAliasNaming: Sendable {
+nonisolated public struct QuestAliasNaming: Sendable {
     /// Opening delimiter of a replacement tag.
-    static let tagOpen: Character = "<"
-    static let tagClose: Character = ">"
+    public static let tagOpen: Character = "<"
+    public static let tagClose: Character = ">"
     /// Tag body prefix, matched case-insensitively because the Creation Kit
     /// has never treated authored names as case-sensitive.
-    static let aliasKeyword = "alias"
+    public static let aliasKeyword = "alias"
 
     /// Naming that resolves nothing, so every tag survives as written.
-    static let none = QuestAliasNaming { _, _ in nil }
+    public static let none = QuestAliasNaming { _, _ in nil }
 
     private let name: @Sendable (FormID, UInt32) -> String?
 
-    init(name: @escaping @Sendable (FormID, UInt32) -> String?) {
+    public init(name: @escaping @Sendable (FormID, UInt32) -> String?) {
         self.name = name
     }
 
     /// Display name filling one alias of one quest, or nil when nothing does.
-    func name(ofAlias aliasID: UInt32, in quest: FormID) -> String? {
+    public func name(ofAlias aliasID: UInt32, in quest: FormID) -> String? {
         name(quest, aliasID)
     }
 
@@ -54,7 +54,7 @@ nonisolated struct QuestAliasNaming: Sendable {
     ///
     /// Scans rather than uses a regular expression so an unterminated `<` costs
     /// nothing: it is copied through with the rest of the sentence.
-    func substituting(_ text: String, in quest: Quest) -> String {
+    public func substituting(_ text: String, in quest: Quest) -> String {
         guard text.contains(Self.tagOpen) else { return text }
         var result = ""
         result.reserveCapacity(text.count)

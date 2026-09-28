@@ -10,9 +10,9 @@
 // No AppKit import on purpose: the file compiles into both the app and the CLI
 // target, so it needs no project-membership exception.
 
-nonisolated enum JournalReadout {
+nonisolated public enum JournalReadout: Sendable {
     /// What the session's quests are doing, plus the rows the panel lists.
-    static func questsText(for snapshot: JournalControlSnapshot) -> String {
+    public static func questsText(for snapshot: JournalControlSnapshot) -> String {
         guard snapshot.hasQuestIndex else {
             return "Quests: unavailable (no plugin loaded)"
         }
@@ -40,7 +40,7 @@ nonisolated enum JournalReadout {
 
     /// The selected quest as the page would show it: its objectives and the
     /// journal paragraphs of every stage it has reached.
-    static func selectionText(for snapshot: JournalControlSnapshot) -> String {
+    public static func selectionText(for snapshot: JournalControlSnapshot) -> String {
         guard !snapshot.selectedEditorID.isEmpty else {
             return "No quest selected."
         }
@@ -73,7 +73,7 @@ nonisolated enum JournalReadout {
     /// The three tallies are stated even when they are zero: "0 faults" is the
     /// gate passing, and hiding a zero would make a passing gate look like a
     /// missing readout.
-    static func movieText(for snapshot: JournalControlSnapshot) -> String {
+    public static func movieText(for snapshot: JournalControlSnapshot) -> String {
         let stack = snapshot.openMenus.isEmpty
             ? "none"
             : snapshot.openMenus.joined(separator: " > ")

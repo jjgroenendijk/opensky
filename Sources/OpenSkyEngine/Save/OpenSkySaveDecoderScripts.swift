@@ -10,10 +10,10 @@
 
 import Foundation
 
-nonisolated enum OpenSkySaveScriptDecoder {
+nonisolated public enum OpenSkySaveScriptDecoder: Sendable {
     /// `PSCR` chunk: an instance count, then one entry per live script
     /// instance.
-    static func decodeScripts(_ payload: Data) throws -> [PapyrusInstanceState] {
+    public static func decodeScripts(_ payload: Data) throws -> [PapyrusInstanceState] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PSCR instance count")
         try OpenSkySaveDecoder.validate(

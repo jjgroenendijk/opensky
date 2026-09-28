@@ -30,7 +30,7 @@ import Foundation
 import OpenSkyFormats
 
 /// One kind of crime the engine can witness happening.
-nonisolated enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparable {
+nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparable {
     /// Taking a reference somebody else owns, whether off the ground or out of
     /// their container.
     case theft
@@ -42,7 +42,7 @@ nonisolated enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparabl
     case trespass
 
     /// Report ordering, which is also the order the save writes counts in.
-    static func < (lhs: Self, rhs: Self) -> Bool {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         guard
             let left = allCases.firstIndex(of: lhs),
             let right = allCases.firstIndex(of: rhs)
@@ -54,7 +54,7 @@ nonisolated enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparabl
     ///
     /// Bit names and values are xEdit's `wbFACT` DATA flags, which UESP's FACT
     /// page spells identically; `Faction.Flags` carries them.
-    var ignoreFlag: Faction.Flags {
+    public var ignoreFlag: Faction.Flags {
         switch self {
         case .theft: .ignoreStealing
         case .assault: .ignoreAssault
@@ -71,7 +71,7 @@ nonisolated enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparabl
     /// murder, escape (<https://ck.uesp.net/wiki/Crime>, read through the
     /// Wayback Machine). The violent half is the major one; escape has no case
     /// here yet.
-    var isViolent: Bool {
+    public var isViolent: Bool {
         switch self {
         case .assault, .murder: true
         case .theft, .trespass: false
@@ -79,7 +79,7 @@ nonisolated enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparabl
     }
 
     /// How a readout names it.
-    var label: String {
+    public var label: String {
         rawValue.capitalized
     }
 }
@@ -92,32 +92,32 @@ nonisolated enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparabl
 /// crime faction is already resolved: only the caller knows which cell the act
 /// happened in, and `CrimeFactionResolver` turns that into a faction once
 /// rather than at every consumer.
-nonisolated struct CrimeEvent: Equatable, Sendable {
-    let kind: CrimeKind
+nonisolated public struct CrimeEvent: Equatable, Sendable {
+    public let kind: CrimeKind
     /// Who committed it. The player in every path this milestone builds; the
     /// field is general because a follower commanded to steal is the same event
     /// with a different perpetrator.
-    let perpetrator: ReferenceKey
+    public let perpetrator: ReferenceKey
     /// The owner robbed or the actor struck, or nil for a crime with no
     /// individual victim — a trespass against a faction-owned building.
-    let victim: ReferenceKey?
+    public let victim: ReferenceKey?
     /// The crime faction that answers for the place this happened, or nil where
     /// none does. A crime in the wilderness accrues no bounty for exactly this
     /// reason, which is why a bandit killed on the road costs nothing.
-    let crimeFaction: ReferenceKey?
+    public let crimeFaction: ReferenceKey?
     /// Cell the act happened in, so the ledger write is attributed to the cell
     /// whose rebuild made it visible.
-    let cell: CellSceneLocation?
+    public let cell: CellSceneLocation?
     /// Whether a live witness detected the perpetrator as it happened.
     ///
     /// Resolved by the caller through `CrimeWitnessSource` rather than here,
     /// because witnessing is a perception question and this is a value type.
-    let witnessed: Bool
+    public let witnessed: Bool
     /// Total gold value of what was taken, before the steal multiplier. Zero
     /// for every kind but theft.
-    let stolenValue: Int64
+    public let stolenValue: Int64
 
-    init(
+    public init(
         kind: CrimeKind,
         perpetrator: ReferenceKey,
         victim: ReferenceKey? = nil,
@@ -137,7 +137,7 @@ nonisolated struct CrimeEvent: Equatable, Sendable {
 }
 
 /// The bounty one faction charges for one crime, from its `CRVA` block.
-nonisolated struct CrimeGoldTable: Equatable, Sendable {
+nonisolated public struct CrimeGoldTable: Equatable, Sendable {
     /// Multiplier used when the record's `CRVA` is too short to carry one.
     ///
     /// `Faction.CrimeValues.stealMultiplier` is optional because the field
@@ -146,19 +146,19 @@ nonisolated struct CrimeGoldTable: Equatable, Sendable {
     /// plugin writing a 12-byte `CRVA` charges the item's full value rather
     /// than nothing. Zero was the alternative and is the damaging one — it
     /// would make every theft from such a faction free.
-    static let defaultStealMultiplier: Float = 1
+    public static let defaultStealMultiplier: Float = 1
 
-    let values: Faction.CrimeValues?
+    public let values: Faction.CrimeValues?
 
     /// Nothing priced, which is what a faction with no `CRVA` charges: zero for
     /// every kind, and the crime is still counted.
-    static let unpriced = CrimeGoldTable(values: nil)
+    public static let unpriced = CrimeGoldTable(values: nil)
 
-    init(values: Faction.CrimeValues?) {
+    public init(values: Faction.CrimeValues?) {
         self.values = values
     }
 
-    init(faction: Faction) {
+    public init(faction: Faction) {
         self.init(values: faction.crimeValues)
     }
 
@@ -172,7 +172,7 @@ nonisolated struct CrimeGoldTable: Equatable, Sendable {
     /// nothing here invents a floor.
     ///
     /// The other three are flat `CRVA` amounts.
-    func bounty(for event: CrimeEvent) -> Int32 {
+    public func bounty(for event: CrimeEvent) -> Int32 {
         guard let values else { return 0 }
         return switch event.kind {
         case .theft: Self.stealBounty(of: event.stolenValue, multiplier: values.stealMultiplier)
@@ -188,7 +188,7 @@ nonisolated struct CrimeGoldTable: Equatable, Sendable {
     /// Computed in `Double` and clamped into `Int32`: a mod may author a large
     /// multiplier, and a stack of a thousand jewels times it must saturate
     /// rather than wrap into a negative bounty.
-    static func stealBounty(of value: Int64, multiplier: Float?) -> Int32 {
+    public static func stealBounty(of value: Int64, multiplier: Float?) -> Int32 {
         let factor = multiplier ?? defaultStealMultiplier
         guard value > 0, factor.isFinite, factor > 0 else { return 0 }
         return Int32(clamping: Int64((Double(value) * Double(factor)).rounded(.down)))

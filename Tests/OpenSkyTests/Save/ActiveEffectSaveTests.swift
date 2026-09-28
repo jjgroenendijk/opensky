@@ -4,7 +4,7 @@
 // A save is OpenSky's own format, so nothing here touches game data at all.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

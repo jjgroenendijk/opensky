@@ -6,16 +6,16 @@ import OpenSkyFormats
 import simd
 
 /// One point on rendered terrain in world space.
-nonisolated struct TerrainGroundSample: Equatable {
-    let height: Float
-    let normal: SIMD3<Float>
+nonisolated public struct TerrainGroundSample: Equatable, Sendable {
+    public let height: Float
+    public let normal: SIMD3<Float>
     /// The MATT material of the ground here (issue #358), from the landscape
     /// texture painted heaviest at the nearest terrain vertex. Nil where the
     /// cell carries no resolved material — a LAND-less fallback plane, or a
     /// texture whose LTEX names no MATT.
-    let material: FormID?
+    public let material: FormID?
 
-    init(height: Float, normal: SIMD3<Float>, material: FormID? = nil) {
+    public init(height: Float, normal: SIMD3<Float>, material: FormID? = nil) {
         self.height = height
         self.normal = normal
         self.material = material
@@ -24,14 +24,14 @@ nonisolated struct TerrainGroundSample: Equatable {
 
 /// Immutable height field retained beside one streamed exterior CellScene.
 /// Cell load/unload therefore controls render + collision lifetime together.
-nonisolated struct TerrainHeightField: Equatable {
-    let coordinate: CellCoordinate
-    let heights: [Float]
-    let hiddenQuadrants: UInt32
+nonisolated public struct TerrainHeightField: Equatable, Sendable {
+    public let coordinate: CellCoordinate
+    public let heights: [Float]
+    public let hiddenQuadrants: UInt32
     /// Per-vertex ground material, or nil when the cell resolved none.
-    let surfaceMaterials: TerrainSurfaceMaterials?
+    public let surfaceMaterials: TerrainSurfaceMaterials?
 
-    init?(
+    public init?(
         coordinate: CellCoordinate,
         heights: [Float],
         hiddenQuadrants: UInt32 = 0,
@@ -48,7 +48,7 @@ nonisolated struct TerrainHeightField: Equatable {
     /// like TerrainMeshBuilder.gridMesh: south triangle SW/SE/NE, north
     /// triangle SW/NE/NW. Barycentric interpolation stays on those planes;
     /// it is intentionally not bilinear.
-    func sample(at worldPosition: SIMD2<Float>) -> TerrainGroundSample? {
+    public func sample(at worldPosition: SIMD2<Float>) -> TerrainGroundSample? {
         let origin = SIMD2<Float>(
             Float(coordinate.x) * TerrainMeshBuilder.cellSize,
             Float(coordinate.y) * TerrainMeshBuilder.cellSize

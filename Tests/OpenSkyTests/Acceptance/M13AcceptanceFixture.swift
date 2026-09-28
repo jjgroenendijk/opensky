@@ -18,7 +18,7 @@
 
 import FormatsTestSupport
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// Main-actor isolated only because it reads `M13AcceptanceChain`'s constants,

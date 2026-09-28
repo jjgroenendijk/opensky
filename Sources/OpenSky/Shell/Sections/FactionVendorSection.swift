@@ -8,6 +8,7 @@
 // and the section reports it as an override.
 
 import AppKit
+import OpenSkyEngine
 
 final class FactionVendorSection: CrimeFactionPanelSection {
     static let resolvedTitle = "Resolved from memberships"

@@ -17,6 +17,7 @@
 // Documented in docs/engine/audio-decoding.md.
 
 import AppKit
+import OpenSkyEngine
 
 final class AudioVoiceSection: PanelSectionViewController {
     weak var provider: (any AudioControlProviding)? {

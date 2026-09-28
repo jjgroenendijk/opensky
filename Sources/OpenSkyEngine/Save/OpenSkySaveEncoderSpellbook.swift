@@ -26,7 +26,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `SPLB` chunk: every snapshot entry carrying a spellbook, in the
     /// snapshot's `ReferenceKey` order. A session in which nobody learned
     /// anything writes no chunk.
-    static func writeSpellbooks(
+    public static func writeSpellbooks(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

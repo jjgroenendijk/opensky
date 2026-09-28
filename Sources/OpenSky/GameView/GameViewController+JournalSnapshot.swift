@@ -7,6 +7,7 @@
 // sample and two sections can never show a half-updated session.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension GameViewController {

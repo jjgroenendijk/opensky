@@ -25,7 +25,7 @@ extension PapyrusWorldRuntime {
     ///     holds instances for.
     ///   - questAliasFillFailures: quests whose alias fill failed at wire-up,
     ///     which the bridge counts rather than the VM (issue #183).
-    func scriptsSnapshot(
+    public func scriptsSnapshot(
         target: ReferenceKey? = nil,
         targetDescription: String? = nil,
         runningQuestCount: Int = 0,
@@ -70,7 +70,7 @@ extension PapyrusWorldRuntime {
     /// Runs `ticks` fixed steps now, whether or not the VM is paused. The
     /// count is clamped to `maximumBurstTicks` so a stray value from
     /// a control cannot stall the frame.
-    func burst(ticks: Int, gameClock: GameClock? = nil) {
+    public func burst(ticks: Int, gameClock: GameClock? = nil) {
         for _ in 0 ..< min(max(0, ticks), Self.maximumBurstTicks) {
             stepFixed(gameClock: gameClock)
         }
@@ -79,7 +79,7 @@ extension PapyrusWorldRuntime {
     /// Upper bound on one `burst(ticks:gameClock:)` call. Sixty steps is two
     /// seconds at the 1/30 s fixed step: long enough to walk a latent
     /// `Utility.Wait` through, short enough to stay imperceptible.
-    static let maximumBurstTicks = 60
+    public static let maximumBurstTicks = 60
 
     /// Sorted script names attached to `key`, empty when it is nil or carries
     /// no instances.

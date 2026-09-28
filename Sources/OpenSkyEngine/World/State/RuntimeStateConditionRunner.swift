@@ -22,10 +22,10 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum RuntimeStateConditionRunner {
+nonisolated public enum RuntimeStateConditionRunner: Sendable {
     /// Evaluates `conditions` against `context`, accumulating into `tally` so a
     /// session's counters span every evaluation the panel has run.
-    static func report(
+    public static func report(
         source: String,
         conditions: [Condition],
         context: ConditionContext,
@@ -59,7 +59,7 @@ nonisolated enum RuntimeStateConditionRunner {
     /// The list verdict, reproducing `ConditionEvaluator.evaluate(_ conditions:)`
     /// exactly: an empty list is true, a block closes on the first condition
     /// without the OR flag, and a trailing OR flag closes the last block.
-    static func combine(conditions: [Condition], outcomes: [Bool]) -> Bool {
+    public static func combine(conditions: [Condition], outcomes: [Bool]) -> Bool {
         guard let last = conditions.last, conditions.count == outcomes.count else {
             return true
         }
@@ -83,7 +83,7 @@ nonisolated enum RuntimeStateConditionRunner {
     /// `<function> <operator> <right-hand side>` with an `(or)` marker, which
     /// is enough to recognise a condition without reproducing the Creation
     /// Kit's whole parameter vocabulary.
-    static func describe(
+    public static func describe(
         _ condition: Condition,
         registry: ConditionFunctionRegistry
     ) -> String {
@@ -92,7 +92,7 @@ nonisolated enum RuntimeStateConditionRunner {
         return condition.flags.contains(.or) ? text + " (or)" : text
     }
 
-    static func symbol(_ comparison: Condition.ComparisonOperator) -> String {
+    public static func symbol(_ comparison: Condition.ComparisonOperator) -> String {
         switch comparison {
         case .equal: "=="
         case .notEqual: "!="
@@ -104,21 +104,21 @@ nonisolated enum RuntimeStateConditionRunner {
         }
     }
 
-    static func rightHandSide(_ condition: Condition) -> String {
+    public static func rightHandSide(_ condition: Condition) -> String {
         switch condition.comparisonValue {
         case let .value(literal): RuntimeStateNumberText.text(literal)
         case let .global(id): "global \(id)"
         }
     }
 
-    static func reason(for outcome: ConditionOutcome) -> String {
+    public static func reason(for outcome: ConditionOutcome) -> String {
         guard let failure = outcome.failures.first else {
             return outcome.isTrue ? "true" : "false"
         }
         return describe(failure)
     }
 
-    static func describe(_ failure: ConditionFailure) -> String {
+    public static func describe(_ failure: ConditionFailure) -> String {
         switch failure {
         case let .unknownFunction(index):
             "unimplemented function \(Int(index) + ConditionFunctionRegistry.creationKitOffset)"
@@ -175,7 +175,7 @@ nonisolated enum RuntimeStateConditionRunner {
     /// The tally counters as readout lines. Buckets that never fired are
     /// omitted so a clean run reads as two lines rather than as a wall of
     /// zeroes.
-    static func tallyLines(_ tally: ConditionTally) -> [String] {
+    public static func tallyLines(_ tally: ConditionTally) -> [String] {
         var lines = [
             "Conditions evaluated: \(tally.conditionsEvaluated)"
                 + "  Lists: \(tally.listsEvaluated)",

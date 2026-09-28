@@ -27,7 +27,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `ECHG` chunk: every snapshot entry carrying enchanted-item state, in
     /// the snapshot's `ReferenceKey` order. A session in which nothing enchanted
     /// fired and nothing enchanted was worn writes no chunk.
-    static func writeEnchantedItems(
+    public static func writeEnchantedItems(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

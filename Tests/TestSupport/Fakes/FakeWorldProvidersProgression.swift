@@ -6,7 +6,7 @@
 // performed, which is what lets a panel test drive the whole `World >
 // Progression` destination with no renderer, no window and no game data.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 
 /// The progression half of the fake's stored state.
 struct FakeProgressionState {

@@ -17,33 +17,33 @@ import Foundation
 import simd
 
 /// What the first-person readout shows for one refresh.
-nonisolated struct FirstPersonSnapshot: Equatable, Sendable {
-    let rendererAvailable: Bool
+nonisolated public struct FirstPersonSnapshot: Equatable, Sendable {
+    public let rendererAvailable: Bool
     /// True while the camera is the first-person one, so the arms are drawn.
-    let active: Bool
+    public let active: Bool
     /// Whether the `_1stperson` behavior graph is attached to the bridge.
-    let graphAttached: Bool
+    public let graphAttached: Bool
     /// Whether an assembled arms rig is attached to the renderer.
-    let rigAttached: Bool
+    public let rigAttached: Bool
     /// Why there are no arms, when there are none.
-    let failureReason: String?
+    public let failureReason: String?
     /// Arm meshes the assembly produced, and pieces dropped for declaring no
     /// first-person model.
-    let armModelCount: Int
-    let droppedPieceCount: Int
+    public let armModelCount: Int
+    public let droppedPieceCount: Int
     /// Whether the rig declares `Camera1st [Cam1]`, and where that bone is in
     /// rig space right now.
-    let hasCameraBone: Bool
-    let cameraBoneHeight: Float?
+    public let hasCameraBone: Bool
+    public let cameraBoneHeight: Float?
     /// Graph updates the first-person instance has run, and the variable and
     /// event names it declares no home for.
-    let graphUpdates: Int
-    let missingVariables: [String]
-    let missingEvents: [String]
+    public let graphUpdates: Int
+    public let missingVariables: [String]
+    public let missingEvents: [String]
     /// Vertical field of view, degrees.
-    let fovYDegrees: Float
+    public let fovYDegrees: Float
 
-    static let unavailable = FirstPersonSnapshot(
+    public static let unavailable = FirstPersonSnapshot(
         rendererAvailable: false,
         active: false,
         graphAttached: false,
@@ -58,10 +58,40 @@ nonisolated struct FirstPersonSnapshot: Equatable, Sendable {
         missingEvents: [],
         fovYDegrees: 0
     )
+
+    public init(
+        rendererAvailable: Bool,
+        active: Bool,
+        graphAttached: Bool,
+        rigAttached: Bool,
+        failureReason: String?,
+        armModelCount: Int,
+        droppedPieceCount: Int,
+        hasCameraBone: Bool,
+        cameraBoneHeight: Float?,
+        graphUpdates: Int,
+        missingVariables: [String],
+        missingEvents: [String],
+        fovYDegrees: Float
+    ) {
+        self.rendererAvailable = rendererAvailable
+        self.active = active
+        self.graphAttached = graphAttached
+        self.rigAttached = rigAttached
+        self.failureReason = failureReason
+        self.armModelCount = armModelCount
+        self.droppedPieceCount = droppedPieceCount
+        self.hasCameraBone = hasCameraBone
+        self.cameraBoneHeight = cameraBoneHeight
+        self.graphUpdates = graphUpdates
+        self.missingVariables = missingVariables
+        self.missingEvents = missingEvents
+        self.fovYDegrees = fovYDegrees
+    }
 }
 
 @MainActor
-protocol FirstPersonControlProviding: AnyObject {
+public protocol FirstPersonControlProviding: AnyObject {
     var firstPersonSnapshot: FirstPersonSnapshot { get }
     /// Vertical field of view in degrees, clamped by the engine to
     /// `FirstPersonCamera.fovYRange`.

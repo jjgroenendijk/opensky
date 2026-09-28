@@ -23,10 +23,10 @@ import OpenSkyFormats
 import simd
 
 @MainActor
-final class ProjectileRuntime {
+public final class ProjectileRuntime {
     /// How many finished shots the trace keeps. A handful, because the panel
     /// shows the newest and a reader is looking at the last thing they did.
-    static let traceLimit = 16
+    public static let traceLimit = 16
     /// How many arrows may be left standing in the world at once.
     ///
     /// UESP "Skyrim:Archery" states vanilla's own cap — "Only 15 missed arrows
@@ -35,45 +35,45 @@ final class ProjectileRuntime {
     /// used here. It applies to every stuck arrow rather than to missed ones
     /// alone, because this engine does not model arrow retrieval from a corpse
     /// (M18+) and so has no second category to count separately.
-    static let stuckLimit = 15
+    public static let stuckLimit = 15
     /// Ceiling on fixed steps run for one frame, so a long stall costs bounded
     /// time. The same bound `WalkController.maximumFrameTime` puts on the
     /// capsule.
-    static let maximumFrameTime = WalkController.maximumFrameTime
+    public static let maximumFrameTime = WalkController.maximumFrameTime
 
-    let settings: ArcherySettings
+    public let settings: ArcherySettings
     /// How an EFIT area becomes a radius in world units (issue #471). A
     /// settable property rather than a constructor argument because the
     /// conversion is uncertain and a panel or a test may want to move it; see
     /// `MagicAreaSettings`.
-    var areaSettings = MagicAreaSettings.documentedDefaults
+    public var areaSettings = MagicAreaSettings.documentedDefaults
     /// Projectiles in the air, in id order.
-    private(set) var live: [LiveProjectile] = []
+    public private(set) var live: [LiveProjectile] = []
     /// The most recent finished shots, oldest first.
-    private(set) var trace: [ProjectileTrace] = []
+    public private(set) var trace: [ProjectileTrace] = []
     /// Arrows standing in the world, oldest first, with the key each was
     /// spawned under.
-    private(set) var stuck: [(arrow: StuckProjectile, key: ReferenceKey?)] = []
-    private(set) var firedCount = 0
-    private(set) var impactCount = 0
+    public private(set) var stuck: [(arrow: StuckProjectile, key: ReferenceKey?)] = []
+    public private(set) var firedCount = 0
+    public private(set) var impactCount = 0
 
     /// Resolves the IPCT chain for a landed arrow. Nil in a synthetic session,
     /// and then impacts are silent rather than absent.
-    var impacts: MeleeImpactResolver?
+    public var impacts: MeleeImpactResolver?
 
     /// `private(set)` rather than `private` so the satellite files can read it
     /// while only `attach(world:)` in this file can write it.
-    private(set) weak var world: (any ProjectileWorld)?
+    public private(set) weak var world: (any ProjectileWorld)?
     private var nextID = 1
     private var accumulatedTime: Float = 0
 
-    init(settings: ArcherySettings, world: (any ProjectileWorld)? = nil) {
+    public init(settings: ArcherySettings, world: (any ProjectileWorld)? = nil) {
         self.settings = settings
         self.world = world
     }
 
     /// Attaches (or detaches) the world this runtime resolves against.
-    func attach(world: (any ProjectileWorld)?) {
+    public func attach(world: (any ProjectileWorld)?) {
         self.world = world
         reset()
     }
@@ -89,7 +89,7 @@ final class ProjectileRuntime {
     ///
     /// - Returns: the projectile, or nil when the shot could not be taken.
     @discardableResult
-    func fire(_ shot: ProjectileShot) -> LiveProjectile? {
+    public func fire(_ shot: ProjectileShot) -> LiveProjectile? {
         guard let world else { return nil }
         return fire(shot, from: world.projectileShooter)
     }
@@ -103,7 +103,7 @@ final class ProjectileRuntime {
     /// what keeps that true — the alternative, a second flight path for actors,
     /// is exactly what item 15.5 refused to write for spells.
     @discardableResult
-    func fire(_ shot: ProjectileShot, from shooter: ProjectileShooter) -> LiveProjectile? {
+    public func fire(_ shot: ProjectileShot, from shooter: ProjectileShooter) -> LiveProjectile? {
         guard let world, shot.profile.isFlyable else { return nil }
         if let ammunition = shot.consumedAmmunition, !world.consumeArrow(ammunition) {
             return nil
@@ -144,7 +144,7 @@ final class ProjectileRuntime {
     ///
     /// - Returns: the traces of every projectile that ended this frame.
     @discardableResult
-    func advance(by frameTime: Float) -> [ProjectileTrace] {
+    public func advance(by frameTime: Float) -> [ProjectileTrace] {
         evictUnloadedStuckArrows()
         guard !live.isEmpty else {
             accumulatedTime = 0
@@ -164,7 +164,7 @@ final class ProjectileRuntime {
     /// carry an arrow through a door and land it in the wrong cell — and on a
     /// world-state reload, which is what makes an in-flight projectile a thing
     /// that does not survive a save/load.
-    func despawnAll() {
+    public func despawnAll() {
         for projectile in live {
             record(projectile, outcome: .cancelled, at: projectile.position, impact: nil)
         }
@@ -173,7 +173,7 @@ final class ProjectileRuntime {
     }
 
     /// Everything: live projectiles, stuck arrows, trace, counts.
-    func reset() {
+    public func reset() {
         despawnAll()
         clearStuckArrows()
         clearTrace()
@@ -181,7 +181,7 @@ final class ProjectileRuntime {
 
     /// Empties the trace and both counts without disturbing anything in the
     /// world, which is what the panel's own clear control means.
-    func clearTrace() {
+    public func clearTrace() {
         trace = []
         firedCount = 0
         impactCount = 0
@@ -189,14 +189,14 @@ final class ProjectileRuntime {
 
     /// Pulls every stuck arrow back out of the world. The panel's clean-up
     /// control, and what a full reset runs.
-    func clearStuckArrows() {
+    public func clearStuckArrows() {
         removeStuckArrows(Array(stuck.indices))
     }
 
     /// Drops the first `count` live projectiles without recording anything.
     /// Internal for `ProjectileRuntimeBounds.swift`, which records them itself
     /// before calling this; `live` stays `private(set)` so nothing else can.
-    func removeOldestLive(_ count: Int) {
+    public func removeOldestLive(_ count: Int) {
         live.removeFirst(min(max(0, count), live.count))
     }
 
@@ -323,7 +323,7 @@ final class ProjectileRuntime {
     /// Internal rather than private so `ProjectileRuntimeBounds.swift` can
     /// reach it: the transient caps live there because this type is at its
     /// body-length limit (issue #374).
-    func removeStuckArrows(_ indices: [Int]) {
+    public func removeStuckArrows(_ indices: [Int]) {
         guard !indices.isEmpty else { return }
         let doomed = Set(indices)
         for index in indices.sorted() {
@@ -336,7 +336,7 @@ final class ProjectileRuntime {
     /// Files one finished projectile in the trace.
     /// Internal for the same reason `removeStuckArrows(_:)` is.
     @discardableResult
-    func record(
+    public func record(
         _ projectile: LiveProjectile,
         outcome: ProjectileOutcome,
         at position: SIMD3<Float>,

@@ -6,7 +6,7 @@
 // the nearest of those — because every consumer downstream, the music edge and
 // 15.8's combat-target condition among them, reads exactly that answer.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

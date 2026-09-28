@@ -4,7 +4,7 @@
 // a committed test: no game audio enters this repository.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct WMADecoderTests {

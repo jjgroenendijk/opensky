@@ -20,7 +20,7 @@ import simd
 /// field. The FormID case carries the user's raw text rather than a parsed
 /// `FormID`, because parsing and reporting a bad entry is the provider's job —
 /// the panel has no plugin context to resolve a load-order-relative ID with.
-nonisolated enum RuntimeStateTargetSelector: Equatable, Sendable {
+nonisolated public enum RuntimeStateTargetSelector: Equatable, Sendable {
     /// The reference the interaction ray currently targets, if any.
     case currentTarget
     /// A FormID as typed by the user, in hexadecimal with or without a `0x`
@@ -30,12 +30,12 @@ nonisolated enum RuntimeStateTargetSelector: Equatable, Sendable {
 
 /// Fixed magnitudes the sidebar mutations use, so the panel label and the
 /// engine implementation cannot drift apart.
-nonisolated enum RuntimeStateTuning {
+nonisolated public enum RuntimeStateTuning: Sendable {
     /// Offset applied by `nudgeReferenceTransform(target:)`, in game units
     /// (roughly 0.014 metres each), along world +X. Ten units is large enough
     /// to be visible on any object the player can look at and small enough
     /// that it never moves a reference out of its cell.
-    static let transformNudge = SIMD3<Float>(10, 0, 0)
+    public static let transformNudge = SIMD3<Float>(10, 0, 0)
 }
 
 /// Everything the runtime-state readout shows, captured in one value.
@@ -44,12 +44,12 @@ nonisolated enum RuntimeStateTuning {
 /// refreshes all of these together, and a single snapshot makes the readout a
 /// pure function of one engine sample instead of several taken at slightly
 /// different times.
-nonisolated struct RuntimeStateSnapshot: Equatable {
+nonisolated public struct RuntimeStateSnapshot: Equatable, Sendable {
     /// Journal lines a snapshot carries at most. The panel shows recent
     /// history, not the whole bounded window, which is thousands of entries.
-    static let journalTailLimit = 8
+    public static let journalTailLimit = 8
 
-    static let empty = RuntimeStateSnapshot(
+    public static let empty = RuntimeStateSnapshot(
         residentReferenceCount: 0,
         dirtyReferenceCount: 0,
         journalTail: [],
@@ -59,31 +59,31 @@ nonisolated struct RuntimeStateSnapshot: Equatable {
     )
 
     /// Runtime references retained by the currently resident cell scenes.
-    let residentReferenceCount: Int
+    public let residentReferenceCount: Int
     /// References in the store deviating from plugin data.
-    let dirtyReferenceCount: Int
+    public let dirtyReferenceCount: Int
     /// Globals carrying a runtime override (issue #166). Trails the other
     /// members and defaults to zero so the call sites written for M10.1 keep
     /// compiling unchanged.
-    let overriddenGlobalCount: Int
+    public let overriddenGlobalCount: Int
     /// Preformatted journal lines, most recent last, at most
     /// `journalTailLimit` of them. Preformatted because the panel must not
     /// have to know how to render a `WorldStateJournalEntry`.
-    let journalTail: [String]
+    public let journalTail: [String]
     /// Journal entries dropped because the retained window filled up.
-    let droppedJournalEntryCount: Int
+    public let droppedJournalEntryCount: Int
     /// Sequence number the next journalled mutation will carry.
-    let nextJournalSequence: UInt64
+    public let nextJournalSequence: UInt64
     /// `ReferenceKey.description` of the current interaction target, or nil
     /// when nothing is targeted. A `String` rather than a `ReferenceKey` so the
     /// panel can display it without formatting logic; `.currentTarget` is how
     /// it mutates that reference.
-    let currentTargetDescription: String?
+    public let currentTargetDescription: String?
 
     /// Written out rather than left to the memberwise initializer so
     /// `overriddenGlobalCount` can trail the list with a default: the M10.1
     /// call sites keep compiling while the M10.2 globals surface fills it in.
-    init(
+    public init(
         residentReferenceCount: Int,
         dirtyReferenceCount: Int,
         journalTail: [String],
@@ -108,7 +108,7 @@ nonisolated struct RuntimeStateSnapshot: Equatable {
 /// a friendlier paraphrase: a save that fails is a data-loss event, and the
 /// exact `OpenSkySaveError` or `OpenSkySaveStoreError` text is what makes it
 /// diagnosable from a screenshot.
-nonisolated enum RuntimeStateSaveOutcome: Equatable {
+nonisolated public enum RuntimeStateSaveOutcome: Equatable, Sendable {
     /// Nothing has been saved or loaded this session.
     case none
     case saved(slot: String)
@@ -124,7 +124,7 @@ nonisolated enum RuntimeStateSaveOutcome: Equatable {
 /// declares it and the panel reaches it through the composed
 /// `WorldControlProviders`.
 @MainActor
-protocol RuntimeStateControlProviding: AnyObject {
+public protocol RuntimeStateControlProviding: AnyObject {
     /// One sample of everything the readout shows.
     var runtimeStateSnapshot: RuntimeStateSnapshot { get }
     /// Result of the most recent save or load, `.none` before the first one.

@@ -12,23 +12,23 @@
 import Foundation
 
 /// One active effect as a panel spells it.
-nonisolated struct ActiveEffectReadout: Equatable, Sendable {
+nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
     /// FULL name of the MGEF when the index resolves one, else its editor ID,
     /// else its key. Never empty, so a line always names something.
-    let name: String
+    public let name: String
     /// Where it came from, spelled for a reader: "potion", "ingredient".
-    let sourceName: String
+    public let sourceName: String
     /// Which of the two documented timed behaviours it follows.
-    let mode: ActiveEffectMode
-    let isDetrimental: Bool
-    let magnitude: Float
-    let duration: Float
-    let remaining: Float
+    public let mode: ActiveEffectMode
+    public let isDetrimental: Bool
+    public let magnitude: Float
+    public let duration: Float
+    public let remaining: Float
     /// Vanilla names of the actor values it acts on, in the MGEF's order.
-    let valueNames: [String]
+    public let valueNames: [String]
 
     /// One line, the shape the readout joins with newlines.
-    var line: String {
+    public var line: String {
         let direction = isDetrimental ? "damages" : "restores"
         let behaviour = mode == .modifier ? "held" : "per second"
         let values = valueNames.joined(separator: ", ")
@@ -37,46 +37,66 @@ nonisolated struct ActiveEffectReadout: Equatable, Sendable {
             name, sourceName, direction, values, magnitude, behaviour, remaining, duration
         )
     }
+
+    public init(
+        name: String,
+        sourceName: String,
+        mode: ActiveEffectMode,
+        isDetrimental: Bool,
+        magnitude: Float,
+        duration: Float,
+        remaining: Float,
+        valueNames: [String]
+    ) {
+        self.name = name
+        self.sourceName = sourceName
+        self.mode = mode
+        self.isDetrimental = isDetrimental
+        self.magnitude = magnitude
+        self.duration = duration
+        self.remaining = remaining
+        self.valueNames = valueNames
+    }
 }
 
 /// One observation of the active-effect runtime.
-nonisolated struct MagicEffectControlSnapshot: Equatable, Sendable {
+nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
     /// False when no active-effect runtime is attached — no game data, or a
     /// synthetic scene. Every other field is then empty and the panel says so
     /// rather than showing a convincing zero.
-    let isAvailable: Bool
+    public let isAvailable: Bool
     /// Every effect currently acting on the player, in application order.
-    let playerEffects: [ActiveEffectReadout]
+    public let playerEffects: [ActiveEffectReadout]
     /// The nearest resident actor the panel can name, or nil when no actor is
     /// resident. The same actor `ActorValueControlSnapshot.nearestActor`
     /// describes, so the effects list and the resistance values below it are
     /// read about the same body (issue #475, roadmap item 19.12).
-    let nearestActorName: String?
+    public let nearestActorName: String?
     /// Every effect currently acting on that actor, in application order.
     /// Empty both when the actor carries none and when there is no actor; the
     /// name above is what tells those two apart.
-    let nearestActorEffects: [ActiveEffectReadout]
+    public let nearestActorEffects: [ActiveEffectReadout]
     /// How many references carry an active-effect component, across every cell
     /// whether resident or not.
-    let runtimeActorCount: Int
+    public let runtimeActorCount: Int
     /// Timed effects stored this session.
-    let appliedCount: Int
+    public let appliedCount: Int
     /// Zero-duration effects applied this session.
-    let instantCount: Int
+    public let instantCount: Int
     /// Effects that ran out this session.
-    let expiredCount: Int
+    public let expiredCount: Int
     /// Effects removed by an explicit dispel this session.
-    let dispelledCount: Int
+    public let dispelledCount: Int
     /// Everything the runtime declined to do, for any reason.
-    let skippedCount: Int
+    public let skippedCount: Int
     /// The unimplemented archetypes seen, most frequent first, already spelled
     /// as `name x count`.
-    let unimplementedLines: [String]
+    public let unimplementedLines: [String]
     /// Human-readable result of the last panel action.
-    let lastActionText: String
+    public let lastActionText: String
 
     /// The reading with no runtime attached.
-    static let unavailable = MagicEffectControlSnapshot(
+    public static let unavailable = MagicEffectControlSnapshot(
         isAvailable: false,
         playerEffects: [],
         nearestActorName: nil,
@@ -90,10 +110,38 @@ nonisolated struct MagicEffectControlSnapshot: Equatable, Sendable {
         unimplementedLines: [],
         lastActionText: "Magic effects unavailable: no game data loaded."
     )
+
+    public init(
+        isAvailable: Bool,
+        playerEffects: [ActiveEffectReadout],
+        nearestActorName: String?,
+        nearestActorEffects: [ActiveEffectReadout],
+        runtimeActorCount: Int,
+        appliedCount: Int,
+        instantCount: Int,
+        expiredCount: Int,
+        dispelledCount: Int,
+        skippedCount: Int,
+        unimplementedLines: [String],
+        lastActionText: String
+    ) {
+        self.isAvailable = isAvailable
+        self.playerEffects = playerEffects
+        self.nearestActorName = nearestActorName
+        self.nearestActorEffects = nearestActorEffects
+        self.runtimeActorCount = runtimeActorCount
+        self.appliedCount = appliedCount
+        self.instantCount = instantCount
+        self.expiredCount = expiredCount
+        self.dispelledCount = dispelledCount
+        self.skippedCount = skippedCount
+        self.unimplementedLines = unimplementedLines
+        self.lastActionText = lastActionText
+    }
 }
 
 @MainActor
-protocol MagicEffectControlProviding: AnyObject {
+public protocol MagicEffectControlProviding: AnyObject {
     var magicEffectControlSnapshot: MagicEffectControlSnapshot { get }
 
     /// Drinks or eats the first ALCH or INGR the player carries.

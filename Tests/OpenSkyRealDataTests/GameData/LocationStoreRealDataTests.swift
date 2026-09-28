@@ -2,7 +2,7 @@
 // the user's read-only load order. No game bytes leave the run.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

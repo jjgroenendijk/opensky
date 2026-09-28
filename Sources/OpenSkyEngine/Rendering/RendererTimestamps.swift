@@ -7,7 +7,7 @@ import Metal
 import MetalKit
 
 extension Renderer {
-    static func configure(view: MTKView) {
+    public static func configure(view: MTKView) {
         view.colorPixelFormat = .bgra8Unorm_srgb
         // Combined depth + stencil: the SWF layer's clip masks (M8.2.4) need
         // a stencil attachment in the scene pass; the 3D passes ignore it.
@@ -17,7 +17,7 @@ extension Renderer {
 
     /// Two timestamp entries (frame start/end) per in-flight slot; nil when the
     /// device cannot allocate one — stats then report CPU time only.
-    static func makeTimestampHeap(device: MTLDevice) -> MTL4CounterHeap? {
+    public static func makeTimestampHeap(device: MTLDevice) -> MTL4CounterHeap? {
         let heapDescriptor = MTL4CounterHeapDescriptor()
         heapDescriptor.type = .timestamp
         heapDescriptor.count = 2 * maxFramesInFlight
@@ -27,7 +27,7 @@ extension Renderer {
     /// Reads a slot's timestamp pair straight from the counter heap. Only
     /// valid when the caller proved (shared-event wait) that the frame which
     /// wrote the slot finished.
-    func readTimestampPair(slot: Int) -> (start: UInt64, end: UInt64)? {
+    public func readTimestampPair(slot: Int) -> (start: UInt64, end: UInt64)? {
         guard
             let heap = timestampHeap,
             let data = try? heap.resolveCounterRange(slot * 2 ..< slot * 2 + 2),
@@ -42,7 +42,7 @@ extension Renderer {
     /// Resolves the timestamp pair the slot's previous frame wrote; safe
     /// because the shared-event wait guarantees that frame finished. The
     /// depth guard skips the first ring lap, before any slot was written.
-    func resolveTimestamps(slot: Int) -> (start: UInt64, end: UInt64)? {
+    public func resolveTimestamps(slot: Int) -> (start: UInt64, end: UInt64)? {
         guard frameIndex >= 2 * Self.maxFramesInFlight else { return nil }
         return readTimestampPair(slot: slot)
     }

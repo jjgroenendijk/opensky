@@ -1,7 +1,7 @@
 import CoreGraphics
 import Metal
 import MetalKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 
 /// Readback and A/B comparison for offscreen frames in the real-data render
 /// checks, shared so each suite does not carry its own copy.

@@ -4,7 +4,7 @@ import OpenSkyFormats
 import simd
 
 nonisolated extension CapsuleWorldCollider {
-    func capsuleBounds(at feet: SIMD3<Float>) -> ModelBounds {
+    public func capsuleBounds(at feet: SIMD3<Float>) -> ModelBounds {
         let radius = SIMD3<Float>(repeating: capsule.radius)
         return ModelBounds(
             min: feet + SIMD3<Float>(0, 0, capsule.radius) - radius,

@@ -26,7 +26,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `CBTS` chunk: every snapshot entry carrying a combat component, in
     /// the snapshot's `ReferenceKey` order. A session in which nothing was
     /// provoked writes no chunk.
-    static func writeCombatStates(
+    public static func writeCombatStates(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

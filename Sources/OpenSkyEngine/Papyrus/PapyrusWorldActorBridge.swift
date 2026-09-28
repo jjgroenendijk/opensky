@@ -38,7 +38,7 @@ import OpenSkyFormats
 /// the death path — is shared. The semantics of each case are quoted at
 /// `ActorValueRuntime.setBase(at:to:on:)`, `addModifier(_:to:at:on:)` and
 /// `forceValue(at:to:on:)`.
-nonisolated enum PapyrusActorValueWrite: String, CaseIterable, Equatable, Sendable {
+nonisolated public enum PapyrusActorValueWrite: String, CaseIterable, Equatable, Sendable {
     /// `SetActorValue`: sets the base value, leaving every modifier intact.
     case setBase = "SetActorValue"
     /// `ModActorValue`: adds to the permanent modifier, which moves the
@@ -55,7 +55,7 @@ nonisolated enum PapyrusActorValueWrite: String, CaseIterable, Equatable, Sendab
 /// two differ only in the direction and every other step — find the actor, write
 /// through `PerkRuntime`, reconcile the abilities the change granted or revoked
 /// — is shared.
-nonisolated enum PapyrusPerkMutation: String, CaseIterable, Equatable, Sendable {
+nonisolated public enum PapyrusPerkMutation: String, CaseIterable, Equatable, Sendable {
     case add = "AddPerk"
     case remove = "RemovePerk"
 }
@@ -68,7 +68,7 @@ nonisolated enum PapyrusPerkMutation: String, CaseIterable, Equatable, Sendable 
 /// parameters, write the skill — is shared. The semantics of each are quoted at
 /// `SkillAdvancementRuntime.advance(skill:byUse:on:)` and
 /// `increment(skill:on:)`.
-nonisolated enum PapyrusSkillAdvance: String, CaseIterable, Equatable, Sendable {
+nonisolated public enum PapyrusSkillAdvance: String, CaseIterable, Equatable, Sendable {
     /// `Game.AdvanceSkill`: the magnitude is a skill *use* amount.
     case advance = "AdvanceSkill"
     /// `Game.IncrementSkill`: one whole skill point, and the magnitude is
@@ -77,37 +77,37 @@ nonisolated enum PapyrusSkillAdvance: String, CaseIterable, Equatable, Sendable 
 }
 
 /// One actor as a Papyrus native sees it.
-nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
+nonisolated public struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
     /// Current health, magicka and stamina.
-    let current: ActorValues
+    public let current: ActorValues
     /// Re-derived maximums, which is what `GetBaseActorValue` reports.
-    let maximums: ActorValues
+    public let maximums: ActorValues
     /// Whether `ActorDeathState` has latched.
-    let isDead: Bool
+    public let isDead: Bool
     /// Whether the actor is actually in a fight, per 16.7's behavior phase.
     /// Searching counts; being hostile without having noticed anybody does not.
-    let isInCombat: Bool
+    public let isInCombat: Bool
     /// The same answer at `GetCombatState`'s three-value resolution.
-    let combatActivity: ActorCombatActivity
+    public let combatActivity: ActorCombatActivity
     /// Where the actor's weapon is, or nil when nothing in this session
     /// observes a draw state for it. Only the player carries a behavior graph
     /// that tracks one today, so every other actor answers nil and
     /// `IsWeaponDrawn` fails with a reason rather than claiming sheathed.
-    let weaponDrawState: WeaponDrawState?
+    public let weaponDrawState: WeaponDrawState?
     /// Non-primary actor values this actor has moved off its baseline
     /// (issue #468), which is what lets `GetActorValue("Resist Fire")` answer
     /// rather than fail with "no store for actor value".
-    let general: [Int32: ActorValueEntry]
+    public let general: [Int32: ActorValueEntry]
     /// Non-primary base values this actor's records author, which is what
     /// `GetBaseActorValue` reports for them.
-    let generalBaseline: [Int32: Float]
+    public let generalBaseline: [Int32: Float]
     /// Whether this actor is the player, which is what the resistance cap
     /// depends on.
-    let isPlayer: Bool
+    public let isPlayer: Bool
     /// The actor's level, which is what `Actor.GetLevel` reports (issue #499).
-    let level: Int
+    public let level: Int
 
-    init(
+    public init(
         current: ActorValues,
         maximums: ActorValues,
         isDead: Bool = false,
@@ -138,7 +138,7 @@ nonisolated struct PapyrusActorState: ActorValueReadable, Equatable, Sendable {
 /// `@MainActor` class, and the existential only needed to say so before
 /// `PapyrusWorldAccess` can carry it across its hops.
 @MainActor
-protocol PapyrusWorldActorBridge: AnyObject, Sendable {
+public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     /// One observation of the actor `key` names, or nil when this session
     /// tracks no actor there — no actor-value runtime attached, or a key no
     /// resident cell resolves to a placed actor.
@@ -267,12 +267,12 @@ protocol PapyrusWorldActorBridge: AnyObject, Sendable {
 /// assertion that natives run on the main actor rather than a suppression of
 /// the check.
 nonisolated extension PapyrusWorldAccess {
-    func actorState(for key: ReferenceKey) -> PapyrusActorState? {
+    public func actorState(for key: ReferenceKey) -> PapyrusActorState? {
         MainActor.assumeIsolated { bridge.actorState(for: key) }
     }
 
     @discardableResult
-    func damageActorValue(
+    public func damageActorValue(
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
         MainActor.assumeIsolated {
@@ -281,7 +281,7 @@ nonisolated extension PapyrusWorldAccess {
     }
 
     @discardableResult
-    func restoreActorValue(
+    public func restoreActorValue(
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
         MainActor.assumeIsolated {
@@ -290,7 +290,7 @@ nonisolated extension PapyrusWorldAccess {
     }
 
     @discardableResult
-    func writeActorValue(
+    public func writeActorValue(
         _ write: PapyrusActorValueWrite,
         at index: Int32,
         to value: Float,
@@ -302,36 +302,36 @@ nonisolated extension PapyrusWorldAccess {
     }
 
     @discardableResult
-    func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
+    public func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
         MainActor.assumeIsolated { bridge.startActorCombat(key, target: target) }
     }
 
     @discardableResult
-    func stopActorCombat(_ key: ReferenceKey) -> Bool {
+    public func stopActorCombat(_ key: ReferenceKey) -> Bool {
         MainActor.assumeIsolated { bridge.stopActorCombat(key) }
     }
 
     @discardableResult
-    func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
+    public func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
         MainActor.assumeIsolated { bridge.killActor(key, killer: killer) }
     }
 
     @discardableResult
-    func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool {
+    public func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool {
         MainActor.assumeIsolated { bridge.addPerk(perk, to: key) }
     }
 
     @discardableResult
-    func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool {
+    public func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool {
         MainActor.assumeIsolated { bridge.removePerk(perk, from: key) }
     }
 
-    func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
+    public func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
         MainActor.assumeIsolated { bridge.hasPerk(perk, on: key) }
     }
 
     @discardableResult
-    func advancePlayerSkill(
+    public func advancePlayerSkill(
         _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
     ) -> Bool {
         MainActor.assumeIsolated {
@@ -339,12 +339,12 @@ nonisolated extension PapyrusWorldAccess {
         }
     }
 
-    func playerPerkPoints() -> Int? {
+    public func playerPerkPoints() -> Int? {
         MainActor.assumeIsolated { bridge.playerPerkPoints() }
     }
 
     @discardableResult
-    func modifyPlayerPerkPoints(by delta: Int) -> Int? {
+    public func modifyPlayerPerkPoints(by delta: Int) -> Int? {
         MainActor.assumeIsolated { bridge.modifyPlayerPerkPoints(by: delta) }
     }
 }

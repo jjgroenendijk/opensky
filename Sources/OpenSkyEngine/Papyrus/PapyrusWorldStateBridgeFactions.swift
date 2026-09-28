@@ -24,7 +24,7 @@ import OpenSkyFormats
 
 extension PapyrusWorldStateBridge {
     @discardableResult
-    func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+    public func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
         guard let runtime = factionRuntime?(actor) else { return nil }
         // "If the Actor is already in the faction, this function does nothing."
         guard !runtime.isMember(actor, of: faction) else { return false }
@@ -32,23 +32,23 @@ extension PapyrusWorldStateBridge {
     }
 
     @discardableResult
-    func removeFromFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+    public func removeFromFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
         guard let runtime = factionRuntime?(actor) else { return nil }
         return runtime.leave(actor, from: faction, in: cellLocation(of: actor))
     }
 
-    func isInFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+    public func isInFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
         guard let runtime = factionRuntime?(actor) else { return nil }
         return runtime.isMember(actor, of: faction)
     }
 
-    func factionRank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8?? {
+    public func factionRank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8?? {
         guard let runtime = factionRuntime?(actor) else { return nil }
         return runtime.rank(of: actor, in: faction)
     }
 
     @discardableResult
-    func setFactionRank(
+    public func setFactionRank(
         _ rank: Int8,
         of actor: ReferenceKey,
         in faction: ReferenceKey
@@ -57,13 +57,13 @@ extension PapyrusWorldStateBridge {
         return runtime.join(actor, to: faction, rank: rank, in: cellLocation(of: actor))
     }
 
-    func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8?? {
+    public func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8?? {
         guard let runtime = relationshipRuntime?() else { return nil }
         return runtime.rank(of: actor, toward: other, bases: actorBaseIdentity)
     }
 
     @discardableResult
-    func setRelationshipRank(
+    public func setRelationshipRank(
         _ rank: Int8,
         of actor: ReferenceKey,
         toward other: ReferenceKey
@@ -78,16 +78,16 @@ extension PapyrusWorldStateBridge {
         )
     }
 
-    func factionReaction(of actor: ReferenceKey, toward other: ReferenceKey) -> Int? {
+    public func factionReaction(of actor: ReferenceKey, toward other: ReferenceKey) -> Int? {
         guard let reaction = socialDecision?(actor, other)?.factionReaction else { return nil }
         return ConditionFunctions.factionRelationValue(of: reaction)
     }
 
-    func isHostile(_ actor: ReferenceKey, toward other: ReferenceKey) -> Bool? {
+    public func isHostile(_ actor: ReferenceKey, toward other: ReferenceKey) -> Bool? {
         socialDecision?(actor, other)?.isHostile
     }
 
-    func factionRelation(of faction: ReferenceKey, toward other: ReferenceKey) -> Int? {
+    public func factionRelation(of faction: ReferenceKey, toward other: ReferenceKey) -> Int? {
         guard
             let relations = factionRelationIndex?(),
             let reaction = relations.reaction(of: faction, toward: other)
@@ -111,7 +111,12 @@ extension PapyrusWorldStateBridge {
 /// `GetFactionReaction` is explicitly "the faction-based reaction"
 /// (<https://ck.uesp.net/wiki/GetFactionReaction_-_Actor>), which is the faction
 /// term of the precedence list and not the answer that came out of it.
-nonisolated struct PapyrusSocialDecision: Equatable, Sendable {
-    let isHostile: Bool
-    let factionReaction: ActorReaction
+nonisolated public struct PapyrusSocialDecision: Equatable, Sendable {
+    public let isHostile: Bool
+    public let factionReaction: ActorReaction
+
+    public init(isHostile: Bool, factionReaction: ActorReaction) {
+        self.isHostile = isHostile
+        self.factionReaction = factionReaction
+    }
 }

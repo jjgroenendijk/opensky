@@ -8,9 +8,9 @@ import OpenSkyFormats
 import OSLog
 import simd
 
-nonisolated struct WaterBuild {
-    let item: WaterDrawItem
-    let height: Float
+nonisolated public struct WaterBuild {
+    public let item: WaterDrawItem
+    public let height: Float
 }
 
 nonisolated private struct ResolvedWorldWater {
@@ -18,9 +18,9 @@ nonisolated private struct ResolvedWorldWater {
     let type: FormID?
 }
 
-nonisolated enum WaterMeshBuilder {
+nonisolated public enum WaterMeshBuilder: Sendable {
     /// Reusable local-space 4096x4096 quad, CCW from +Z.
-    static func cellPlane() -> Mesh {
+    public static func cellPlane() -> Mesh {
         Mesh(
             name: "cell-water",
             transform: matrix_identity_float4x4,
@@ -44,7 +44,7 @@ nonisolated enum WaterMeshBuilder {
 nonisolated extension CellSceneBuilder {
     /// Builds at most one water plane. CELL DATA has-water gates the feature;
     /// an explicit XCLW sentinel wins over every WRLD default.
-    nonisolated func buildWater(found: FoundCell, worldspace: Worldspace?) -> WaterBuild? {
+    nonisolated public func buildWater(found: FoundCell, worldspace: Worldspace?) -> WaterBuild? {
         guard
             found.cell.flags.contains(.hasWater),
             let grid = found.cell.grid,

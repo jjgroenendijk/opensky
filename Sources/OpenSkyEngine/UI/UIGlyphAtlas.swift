@@ -18,75 +18,75 @@ import simd
 /// Cache key: glyph source namespace + font discriminator + glyph id + integer
 /// pixel size. The namespace keeps SWF-font glyphs from colliding with system
 /// glyphs that happen to share the same numeric `fontKey`.
-nonisolated struct UIGlyphKey: Hashable {
-    enum Source: Hashable {
+nonisolated public struct UIGlyphKey: Hashable, Sendable {
+    public enum Source: Hashable, Sendable {
         case system
         case swf
     }
 
-    let source: Source
-    let fontKey: Int
-    let glyphID: UInt16
-    let pixelSize: Int
+    public let source: Source
+    public let fontKey: Int
+    public let glyphID: UInt16
+    public let pixelSize: Int
 }
 
 /// A packed glyph's atlas placement + placement metrics, all in pixels.
-nonisolated struct UIGlyphEntry: Equatable {
+nonisolated public struct UIGlyphEntry: Equatable, Sendable {
     /// Atlas UV of the coverage cell (top-left, bottom-right), normalized.
-    let uvMin: SIMD2<Float>
-    let uvMax: SIMD2<Float>
+    public let uvMin: SIMD2<Float>
+    public let uvMax: SIMD2<Float>
     /// Coverage cell pixel size.
-    let size: SIMD2<Float>
+    public let size: SIMD2<Float>
     /// x: left side bearing; y: height of the cell above the baseline.
-    let bearing: SIMD2<Float>
+    public let bearing: SIMD2<Float>
 
-    static let empty = UIGlyphEntry(uvMin: .zero, uvMax: .zero, size: .zero, bearing: .zero)
+    public static let empty = UIGlyphEntry(uvMin: .zero, uvMax: .zero, size: .zero, bearing: .zero)
 
     /// Whitespace / zero-area glyph -> emits no quad.
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         size.x <= 0 || size.y <= 0
     }
 }
 
-nonisolated final class UIGlyphAtlas {
-    static let dimension = 512
-    static let padding = 1
-    static let whiteBlock = 4
+nonisolated public final class UIGlyphAtlas {
+    public static let dimension = 512
+    public static let padding = 1
+    public static let whiteBlock = 4
 
     /// A cached glyph: its placement plus the coverage bytes that produced it.
     /// Coverage is retained so an eviction can repack the survivors without
     /// re-rasterizing them; empty (whitespace, unpackable) glyphs carry none.
-    struct PackedGlyph {
-        let entry: UIGlyphEntry
-        let coverage: [UInt8]?
+    public struct PackedGlyph: Sendable {
+        public let entry: UIGlyphEntry
+        public let coverage: [UInt8]?
 
-        static let empty = PackedGlyph(entry: .empty, coverage: nil)
+        public static let empty = PackedGlyph(entry: .empty, coverage: nil)
     }
 
-    let width = dimension
-    let height = dimension
+    public let width = dimension
+    public let height = dimension
     /// Coverage bytes, row-major, top-left origin (matches Metal texture v-down).
     /// Only the packing extension writes it.
-    private(set) var pixels: [UInt8]
+    public private(set) var pixels: [UInt8]
     /// Bumped whenever the atlas image changes — new glyphs packed, or survivors
     /// repacked by an eviction -> the renderer re-uploads the texture.
-    var revision = 0
+    public var revision = 0
     /// UV of a fully-opaque texel; solid fills sample it for coverage == 1.
-    let whiteUV: SIMD2<Float>
+    public let whiteUV: SIMD2<Float>
     /// Glyphs dropped because the atlas was full, counted since the last
     /// eviction. Non-zero means text is missing from the rendered frame.
-    var packFailures = 0
+    public var packFailures = 0
     /// Atlas texels occupied by packed glyph cells (the white block excluded).
-    var usedTexels = 0
+    public var usedTexels = 0
 
     /// Internal, not private: the packing extension lives in another file so
     /// this type stays inside the strict-lint type-body limit.
-    var cache: [UIGlyphKey: PackedGlyph] = [:]
-    var shelfX = 0
-    var shelfY: Int
-    var shelfHeight = 0
+    public var cache: [UIGlyphKey: PackedGlyph] = [:]
+    public var shelfX = 0
+    public var shelfY: Int
+    public var shelfHeight = 0
 
-    init() {
+    public init() {
         pixels = [UInt8](repeating: 0, count: Self.dimension * Self.dimension)
         whiteUV = SIMD2(
             Float(Self.whiteBlock) / 2 / Float(Self.dimension),
@@ -97,19 +97,24 @@ nonisolated final class UIGlyphAtlas {
     }
 
     /// Glyph cells currently occupying the atlas (empty glyphs excluded).
-    var packedGlyphCount: Int {
+    public var packedGlyphCount: Int {
         cache.values.count { $0.coverage != nil }
     }
 
     /// Occupied fraction of the atlas, 0...1, for diagnostics readouts.
-    var occupancy: Float {
+    public var occupancy: Float {
         Float(usedTexels) / Float(width * height)
     }
 
     /// Returns the cached entry for a system-font glyph, rasterizing + packing
     /// on first use. `ctFont` must be built at `pixelSize` (same font `fontKey`
     /// identifies).
-    func entry(fontKey: Int, glyphID: CGGlyph, pixelSize: Int, ctFont: CTFont) -> UIGlyphEntry {
+    public func entry(
+        fontKey: Int,
+        glyphID: CGGlyph,
+        pixelSize: Int,
+        ctFont: CTFont
+    ) -> UIGlyphEntry {
         let key = UIGlyphKey(
             source: .system, fontKey: fontKey, glyphID: UInt16(glyphID), pixelSize: pixelSize
         )
@@ -133,7 +138,7 @@ nonisolated final class UIGlyphAtlas {
     /// caches as `.empty`. `fontKey` must be unique per (movie, font id) so two
     /// fonts' glyph indices never collide; the `.swf` namespace already
     /// separates these from system glyphs.
-    func swfEntry(
+    public func swfEntry(
         fontKey: Int,
         glyphIndex: Int,
         emPixelSize: Int,
@@ -161,7 +166,7 @@ nonisolated final class UIGlyphAtlas {
 
     /// Clears the image to its initial state: everything transparent except the
     /// reserved solid-white block top-left that backs untextured quads.
-    func clearImage() {
+    public func clearImage() {
         for index in pixels.indices {
             pixels[index] = 0
         }
@@ -173,7 +178,13 @@ nonisolated final class UIGlyphAtlas {
     }
 
     /// Writes one packed cell's coverage into the atlas image.
-    func blit(coverage: [UInt8], cellWidth: Int, cellHeight: Int, originX: Int, originY: Int) {
+    public func blit(
+        coverage: [UInt8],
+        cellWidth: Int,
+        cellHeight: Int,
+        originX: Int,
+        originY: Int
+    ) {
         for row in 0 ..< cellHeight {
             let destRow = (originY + row) * width + originX
             for col in 0 ..< cellWidth {

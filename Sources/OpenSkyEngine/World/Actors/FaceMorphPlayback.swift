@@ -8,18 +8,18 @@ import Metal
 import OpenSkyFormats
 import simd
 
-nonisolated enum FaceMorphError: Error, Equatable {
+nonisolated public enum FaceMorphError: Error, Equatable {
     case vertexCountMismatch(tri: Int, mesh: Int)
     case bufferAllocationFailed
 }
 
-nonisolated struct FaceMorphTarget {
-    let name: String
-    let deltas: [MorphVertexDelta]
+nonisolated public struct FaceMorphTarget: Sendable {
+    public let name: String
+    public let deltas: [MorphVertexDelta]
 }
 
-nonisolated enum FaceMorphComposer {
-    static func targets(from tri: TRIFile) -> [FaceMorphTarget] {
+nonisolated public enum FaceMorphComposer: Sendable {
+    public static func targets(from tri: TRIFile) -> [FaceMorphTarget] {
         let baseNormals = normals(vertices: tri.baseVertices, triangles: tri.triangles)
         return tri.morphTargets.map { target in
             let positions = zip(tri.baseVertices, target.scaledDeltas).map(+)
@@ -33,7 +33,7 @@ nonisolated enum FaceMorphComposer {
         }
     }
 
-    static func compose(
+    public static func compose(
         targets: [FaceMorphTarget],
         weights: [String: Float],
         vertexCount: Int
@@ -69,13 +69,13 @@ nonisolated enum FaceMorphComposer {
     }
 }
 
-nonisolated final class FaceMorphBuffer {
-    let buffer: MTLBuffer
-    let vertexCount: Int
-    let targets: [FaceMorphTarget]
-    private(set) var currentDeltas: [MorphVertexDelta]
+nonisolated public final class FaceMorphBuffer {
+    public let buffer: MTLBuffer
+    public let vertexCount: Int
+    public let targets: [FaceMorphTarget]
+    public private(set) var currentDeltas: [MorphVertexDelta]
 
-    init(device: MTLDevice, tri: TRIFile, mesh: RenderMesh) throws {
+    public init(device: MTLDevice, tri: TRIFile, mesh: RenderMesh) throws {
         guard tri.baseVertices.count == mesh.vertexCount else {
             throw FaceMorphError.vertexCountMismatch(
                 tri: tri.baseVertices.count, mesh: mesh.vertexCount
@@ -97,30 +97,30 @@ nonisolated final class FaceMorphBuffer {
         }
     }
 
-    func update(weights: [String: Float]) {
+    public func update(weights: [String: Float]) {
         currentDeltas = FaceMorphComposer.compose(
             targets: targets, weights: weights, vertexCount: vertexCount
         )
     }
 
-    func prepare(slot: Int) {
+    public func prepare(slot: Int) {
         buffer.contents().advanced(by: byteOffset(slot: slot)).copyMemory(
             from: currentDeltas,
             byteCount: vertexCount * MorphVertexLayout.stride
         )
     }
 
-    func byteOffset(slot: Int) -> Int {
+    public func byteOffset(slot: Int) -> Int {
         slot * vertexCount * MorphVertexLayout.stride
     }
 }
 
-nonisolated struct FaceMorphAssociationMiss: Equatable {
-    let headPart: FormID
-    let reason: String
+nonisolated public struct FaceMorphAssociationMiss: Equatable, Sendable {
+    public let headPart: FormID
+    public let reason: String
 }
 
-nonisolated protocol LipMorphWeightApplying: AnyObject {
+nonisolated public protocol LipMorphWeightApplying: AnyObject {
     var actor: FormID { get }
     var targetNames: [String] { get }
 
@@ -131,17 +131,17 @@ nonisolated protocol LipMorphWeightApplying: AnyObject {
     func clearLipWeights() -> Int
 }
 
-nonisolated final class FaceMorphPlayback: RenderAnimation, LipMorphWeightApplying {
-    let actor: FormID
-    let bindings: [ObjectIdentifier: FaceMorphBuffer]
-    let pairedPaths: [String]
-    let misses: [FaceMorphAssociationMiss]
-    let worldBounds: ModelBounds?
+nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeightApplying {
+    public let actor: FormID
+    public let bindings: [ObjectIdentifier: FaceMorphBuffer]
+    public let pairedPaths: [String]
+    public let misses: [FaceMorphAssociationMiss]
+    public let worldBounds: ModelBounds?
     private var manualWeights: [String: Float] = [:]
     private var lipWeights: [String: Float] = [:]
-    private(set) var unknownTargetCount = 0
+    public private(set) var unknownTargetCount = 0
 
-    var weights: [String: Float] {
+    public var weights: [String: Float] {
         var combined = manualWeights
         for (target, value) in lipWeights {
             combined[target] = min(max((combined[target] ?? 0) + value, 0), 1)
@@ -149,11 +149,11 @@ nonisolated final class FaceMorphPlayback: RenderAnimation, LipMorphWeightApplyi
         return combined
     }
 
-    var targetNames: [String] {
+    public var targetNames: [String] {
         Array(Set(bindings.values.flatMap { $0.targets.map(\.name) })).sorted()
     }
 
-    init(
+    public init(
         actor: FormID,
         bindings: [ObjectIdentifier: FaceMorphBuffer],
         pairedPaths: [String],
@@ -168,7 +168,7 @@ nonisolated final class FaceMorphPlayback: RenderAnimation, LipMorphWeightApplyi
     }
 
     @discardableResult
-    func setWeight(_ weight: Float, for target: String) -> Bool {
+    public func setWeight(_ weight: Float, for target: String) -> Bool {
         guard targetNames.contains(target) else {
             unknownTargetCount += 1
             return false
@@ -179,26 +179,26 @@ nonisolated final class FaceMorphPlayback: RenderAnimation, LipMorphWeightApplyi
     }
 
     @discardableResult
-    func setLipWeights(_ weights: [String: Float]) -> Int {
+    public func setLipWeights(_ weights: [String: Float]) -> Int {
         let targets = Set(targetNames)
         lipWeights = weights.filter { targets.contains($0.key) }
         return applyWeights()
     }
 
     @discardableResult
-    func clearLipWeights() -> Int {
+    public func clearLipWeights() -> Int {
         guard !lipWeights.isEmpty else { return 0 }
         lipWeights.removeAll(keepingCapacity: true)
         return applyWeights()
     }
 
     @discardableResult
-    func update(at _: Float) -> Int {
+    public func update(at _: Float) -> Int {
         0
     }
 
     @discardableResult
-    func resetToBindPose() -> Int {
+    public func resetToBindPose() -> Int {
         manualWeights.removeAll(keepingCapacity: true)
         lipWeights.removeAll(keepingCapacity: true)
         return applyWeights()

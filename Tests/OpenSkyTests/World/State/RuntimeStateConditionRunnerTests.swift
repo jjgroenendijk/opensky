@@ -11,7 +11,7 @@
 // Every condition is a real 32-byte CTDA payload from `ConditionEvaluatorFixture`,
 // synthetic and built in code; no game data is read.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

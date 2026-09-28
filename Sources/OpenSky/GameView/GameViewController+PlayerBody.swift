@@ -9,6 +9,7 @@
 // knows the archives and the plugin.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 import OSLog

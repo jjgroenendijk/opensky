@@ -18,6 +18,7 @@
 // "Reset all" that sheathed it would undo something the user did on purpose.
 
 import AppKit
+import OpenSkyEngine
 
 final class CombatMeleeSection: PanelSectionViewController {
     weak var provider: (any MeleeCombatControlProviding)? {

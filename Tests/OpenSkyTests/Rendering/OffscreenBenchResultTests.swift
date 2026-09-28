@@ -2,7 +2,7 @@
 // synthetic frame times — the numbers the `bench` fps gate asserts on, so
 // the arithmetic itself is pinned here (no Metal, no game data).
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct OffscreenBenchResultTests {

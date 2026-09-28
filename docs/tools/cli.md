@@ -13,10 +13,11 @@ app, so a parse failure or skip in the CLI is exactly what the renderer would do
 
 ## Sharing code with the app
 
-Target membership follows the folders under `Sources/`. The app builds `OpenSky/`,
-`OpenSkyEngine/`, and `ShaderTypes/`. The CLI builds `OpenSkyEngine/`, `ShaderTypes/`, and
-`OpenSkyCLI/`. So app-only code is invisible to the CLI with no exception lists to maintain. Metal
-structs come through the `OpenSkyShaderTypes` module ([build system](/tools/build-system.md)).
+Target membership follows the folders under `Sources/`. The app builds `OpenSky/` and
+`Shaders/`. The CLI builds `OpenSkyCLI/` and `Shaders/`. Both link the engine modules of the
+Swift package through the `OpenSkyModules` product ([Swift modules](/tools/modules.md)). So
+app-only code is invisible to the CLI with no exception lists to maintain. Metal structs come
+through the `OpenSkyShaderTypes` module ([build system](/tools/build-system.md)).
 `Shaders.metal` compiles into `default.metallib` next to the binary, so
 `device.makeDefaultLibrary()` works without an app bundle. Build it with `make cli`.
 

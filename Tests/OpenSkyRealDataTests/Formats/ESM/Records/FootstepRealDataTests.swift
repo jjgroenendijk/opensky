@@ -11,7 +11,7 @@
 // `make realtest T='FootstepRealDataTests/vanillaGraphFiresTagsTheVanillaSetAnswers()'`.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import simd

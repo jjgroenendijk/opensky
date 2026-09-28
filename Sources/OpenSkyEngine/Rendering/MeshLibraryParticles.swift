@@ -5,7 +5,7 @@ import OpenSkyFormats
 import simd
 
 nonisolated extension MeshLibrary {
-    nonisolated func particlePlaybacks(
+    nonisolated public func particlePlaybacks(
         path: String,
         placementTransform: float4x4,
         formID: UInt32

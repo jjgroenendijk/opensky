@@ -7,6 +7,7 @@
 // Documented in docs/engine/footstep-sounds.md.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 final class AudioFootstepsSection: PanelSectionViewController {

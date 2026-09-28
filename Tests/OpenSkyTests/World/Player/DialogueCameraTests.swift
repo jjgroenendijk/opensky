@@ -2,7 +2,7 @@
 // (issue #427, roadmap item 17.4, scope point 6). Synthetic transforms only —
 // no install, no device, no window.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

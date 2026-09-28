@@ -13,19 +13,19 @@ import Foundation
 import OpenSkyFormats
 
 /// One stack as the panel spells it: what it is, how many, and what to call it.
-nonisolated struct ItemStackReadout: Equatable, Sendable {
-    let item: FormID
-    let count: Int32
+nonisolated public struct ItemStackReadout: Equatable, Sendable {
+    public let item: FormID
+    public let count: Int32
     /// FULL name when the item index resolves one, else the editor ID, else the
     /// FormID. Never empty, so a readout line always names something.
-    let name: String
+    public let name: String
     /// Whether these copies were taken from somebody who owned them (issue
     /// #504). One row per stack, and a stack is keyed by (form, stolen), so an
     /// owner holding honest and stolen copies of one form shows two rows — the
     /// marker is what tells them apart.
-    let stolen: Bool
+    public let stolen: Bool
 
-    init(item: FormID, count: Int32, name: String, stolen: Bool = false) {
+    public init(item: FormID, count: Int32, name: String, stolen: Bool = false) {
         self.item = item
         self.count = count
         self.name = name
@@ -39,25 +39,25 @@ nonisolated struct ItemStackReadout: Equatable, Sendable {
 /// player is where state and carry-weight accounting are checked; the nearest
 /// actor is where the *visual* is checked, because the player has no rendered
 /// body until M14 and an NPC is the only thing an equip can be seen on.
-nonisolated enum EquipmentTargetSelector: Equatable, Sendable {
+nonisolated public enum EquipmentTargetSelector: Equatable, Sendable {
     case player
     /// The resident ACHR closest to the player.
     case nearestActor
 }
 
 /// One equipped item as the panel spells it.
-nonisolated struct EquippedItemReadout: Equatable, Sendable {
-    let item: FormID
-    let name: String
+nonisolated public struct EquippedItemReadout: Equatable, Sendable {
+    public let item: FormID
+    public let name: String
     /// Biped slots and hands it occupies, preformatted — the panel has no
     /// business knowing how to render a `BodySlots` bitfield.
-    let occupancy: String
+    public let occupancy: String
     /// The item's enchantment and what it has left, preformatted, or nil when it
     /// carries none and when the session has no ENCH index (issue #472). The
     /// panel has no business knowing the charge model either.
-    let enchantment: String?
+    public let enchantment: String?
 
-    init(item: FormID, name: String, occupancy: String, enchantment: String? = nil) {
+    public init(item: FormID, name: String, occupancy: String, enchantment: String? = nil) {
         self.item = item
         self.name = name
         self.occupancy = occupancy
@@ -66,44 +66,44 @@ nonisolated struct EquippedItemReadout: Equatable, Sendable {
 }
 
 /// One observation of the world-item runtime.
-nonisolated struct ItemControlSnapshot: Equatable, Sendable {
+nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
     /// False when no inventory runtime is attached — no game data, or a demo
     /// scene. Every other field is then empty and the panel says so rather than
     /// showing a convincing zero.
-    let isAvailable: Bool
+    public let isAvailable: Bool
     /// The crosshair target's name, when it has one.
-    let targetName: String?
+    public let targetName: String?
     /// Whether activating the current target would take it.
-    let targetIsTakeable: Bool
+    public let targetIsTakeable: Bool
     /// Whether activating the current target would open a container.
-    let targetIsContainer: Bool
+    public let targetIsContainer: Bool
     /// The player's stacks, in the component's FormID order.
-    let playerStacks: [ItemStackReadout]
+    public let playerStacks: [ItemStackReadout]
     /// Total carried weight from #175's per-item weights.
-    let playerWeight: Float
+    public let playerWeight: Float
     /// Gold, which is an ordinary stack of the vanilla gold form.
-    let playerGold: Int32
+    public let playerGold: Int32
     /// The open container's name, or nil when no session is live.
-    let containerName: String?
+    public let containerName: String?
     /// The open container's contents, re-read every observation.
-    let containerStacks: [ItemStackReadout]
+    public let containerStacks: [ItemStackReadout]
     /// Objects the running game has spawned and not yet taken back — dropped
     /// items, across every cell whether resident or not.
-    let spawnedObjectCount: Int
+    public let spawnedObjectCount: Int
     /// What the player is wearing (issue #178). State only: the player has no
     /// rendered body this milestone.
-    let playerEquipped: [EquippedItemReadout]
+    public let playerEquipped: [EquippedItemReadout]
     /// How the nearest resident ACHR is named, or nil when none is loaded.
-    let nearestActorName: String?
+    public let nearestActorName: String?
     /// What that actor is wearing — the set an equip is actually visible on.
-    let nearestActorEquipped: [EquippedItemReadout]
+    public let nearestActorEquipped: [EquippedItemReadout]
     /// Human-readable result of the last panel action.
-    let lastActionText: String
+    public let lastActionText: String
 
     /// Written out rather than left to the memberwise initializer so the
     /// equipment members can trail the list with defaults, keeping the M12.1.3
     /// call sites compiling unchanged.
-    init(
+    public init(
         isAvailable: Bool,
         targetName: String?,
         targetIsTakeable: Bool,
@@ -136,7 +136,7 @@ nonisolated struct ItemControlSnapshot: Equatable, Sendable {
     }
 
     /// The reading with no runtime attached.
-    static let unavailable = ItemControlSnapshot(
+    public static let unavailable = ItemControlSnapshot(
         isAvailable: false,
         targetName: nil,
         targetIsTakeable: false,
@@ -152,7 +152,7 @@ nonisolated struct ItemControlSnapshot: Equatable, Sendable {
 }
 
 @MainActor
-protocol ItemControlProviding: AnyObject {
+public protocol ItemControlProviding: AnyObject {
     var itemControlSnapshot: ItemControlSnapshot { get }
 
     /// Takes the crosshair target into the player's inventory.

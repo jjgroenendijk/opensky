@@ -18,20 +18,20 @@ nonisolated extension LocomotionBridge {
     /// including its effect on the status tallies, which is what makes the
     /// control evidence rather than a side channel.
     @discardableResult
-    func raiseGraphEvent(named name: String) -> Bool {
+    public func raiseGraphEvent(named name: String) -> Bool {
         raise(name)
         return status.raisedEvents.contains(name)
     }
 
     /// Empties the root-motion trace and its running totals.
-    func clearMotionTrace() {
+    public func clearMotionTrace() {
         updateStatus { $0.clearMotionTrace() }
     }
 
     /// Whether the current step counts as sneaking for the graph. A forced gait
     /// wins, so the dev control raises the same `SneakStart` the key does; with
     /// nothing forced this is the sneak toggle, unchanged.
-    var isSneakingNow: Bool {
+    public var isSneakingNow: Bool {
         forcedGait.map { $0 == .sneak } ?? intent.sneak
     }
 }

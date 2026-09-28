@@ -24,7 +24,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
-    static func installQuest(_ registry: inout ConditionFunctionRegistry) {
+    public static func installQuest(_ registry: inout ConditionFunctionRegistry) {
         // "Gets the highest completed quest stage. For example, if stages 10,
         // 30, and 75 were completed, GetStage would return 75."
         // (<https://ck.uesp.net/wiki/GetStage>) A quest that has reached no
@@ -94,7 +94,7 @@ nonisolated extension ConditionFunctions {
     /// that names no filled alias of the context's quest leaves the parameter
     /// unreadable (`unresolvedParameter`, issue #183), while a readable FormID
     /// that names no quest is `unresolvedQuest`.
-    static func questState(
+    public static func questState(
         _ call: ConditionCall,
         index: UInt16
     ) -> Result<QuestRuntimeState, ConditionFailure> {

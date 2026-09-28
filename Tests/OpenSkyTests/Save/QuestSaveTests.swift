@@ -8,7 +8,7 @@
 // leaves no entry there for an older build to restore as an empty reference.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

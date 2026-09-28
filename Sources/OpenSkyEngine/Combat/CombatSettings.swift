@@ -40,38 +40,38 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct CombatSettings: Equatable {
+nonisolated public struct CombatSettings: Equatable, Sendable {
     /// `fCombatDistance` — the base melee reach in world units, which WEAP
     /// `reach` and the actor's scale multiply. UESP "Skyrim Mod:Mod File
     /// Format/WEAP" describes DNAM `reach` as a multiplier in
     /// `fCombatDistance * NPCScale * reach`, and the same reading is what
     /// xEdit's `wbDefinitionsTES5.pas` names the field.
-    let combatDistance: MovementSetting
+    public let combatDistance: MovementSetting
 
     /// `fBlockWeaponBase` — the fraction a weapon block starts from. 0.300 on
     /// the install; UESP writes the same term as 30 percentage points.
-    let blockWeaponBase: MovementSetting
+    public let blockWeaponBase: MovementSetting
     /// `fBlockWeaponScaling` — percentage points added per point of the
     /// *attacker's* base weapon damage. 0.200.
-    let blockWeaponScaling: MovementSetting
+    public let blockWeaponScaling: MovementSetting
     /// `fShieldBaseFactor` — the fraction a shield block starts from. 0.450.
-    let shieldBaseFactor: MovementSetting
+    public let shieldBaseFactor: MovementSetting
     /// `fShieldScalingFactor` — percentage points added per point of the
     /// shield's base armour rating. 0.200.
-    let shieldScalingFactor: MovementSetting
+    public let shieldScalingFactor: MovementSetting
     /// The Block-skill term's weight, in `(1 + skill * mult / 100)`. 2.000 on
     /// the install, where UESP's worked examples carry 1.5.
-    let blockSkillMult: MovementSetting
+    public let blockSkillMult: MovementSetting
     /// `fBlockMax` — the cap, as a fraction. 0.700 on the install, where UESP
     /// states an 85% cap.
-    let blockMax: MovementSetting
+    public let blockMax: MovementSetting
     /// `fBlockPowerAttackMult` — what a blocked power attack multiplies the
     /// result by. 0.660, which is the one value both sources agree on.
-    let blockPowerAttackMult: MovementSetting
+    public let blockPowerAttackMult: MovementSetting
 
     /// Values for synthetic scenes and tests: the numbers the install carries,
     /// stated explicitly so a test never depends on an install being present.
-    static let synthetic = CombatSettings(
+    public static let synthetic = CombatSettings(
         combatDistance: MovementSetting(value: 141, source: "OpenSky synthetic"),
         blockWeaponBase: MovementSetting(value: 0.3, source: "OpenSky synthetic"),
         blockWeaponScaling: MovementSetting(value: 0.2, source: "OpenSky synthetic"),
@@ -84,7 +84,7 @@ nonisolated struct CombatSettings: Equatable {
 
     /// Reads every setting out of `store`, falling back to the value observed
     /// in vanilla `Skyrim.esm` and saying so when the load order carries none.
-    static func resolve(store: GameSettingStore) -> CombatSettings {
+    public static func resolve(store: GameSettingStore) -> CombatSettings {
         CombatSettings(
             combatDistance: float("fCombatDistance", store: store, fallback: 141),
             blockWeaponBase: float("fBlockWeaponBase", store: store, fallback: 0.3),
@@ -99,7 +99,7 @@ nonisolated struct CombatSettings: Equatable {
 
     /// Every setting paired with its editor ID, for the CLI report and the
     /// panel readout. Ordered as the formulas use them.
-    var report: [(editorID: String, setting: MovementSetting)] {
+    public var report: [(editorID: String, setting: MovementSetting)] {
         [
             ("fCombatDistance", combatDistance),
             ("fBlockWeaponBase", blockWeaponBase),

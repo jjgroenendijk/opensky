@@ -38,7 +38,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
-    static func installDetection(_ registry: inout ConditionFunctionRegistry) {
+    public static func installDetection(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the distance between the calling reference and the specified
         // reference." (<https://ck.uesp.net/wiki/GetDistance>) World units, the
         // same units every other distance in this engine is in.
@@ -89,7 +89,7 @@ nonisolated extension ConditionFunctions {
     ///
     /// A nil from `read` is `.unavailableDetection` — the two references
     /// resolved and the perception pass simply carries nothing about them.
-    static func detectionPair(
+    public static func detectionPair(
         _ call: ConditionCall,
         index: UInt16,
         read: (ConditionContext, ReferenceKey, ReferenceKey) -> Float?
@@ -111,14 +111,14 @@ nonisolated extension ConditionFunctions {
     /// honours a CIS1 name override: with the flag set the word is a quest-alias
     /// index and the reference is whatever fills it, and without it the word is
     /// a FormID the runtime index resolves.
-    static func parameterReference(_ call: ConditionCall) -> ReferenceKey? {
+    public static func parameterReference(_ call: ConditionCall) -> ReferenceKey? {
         parameterReference(call, call.parameter1)
     }
 
     /// The same resolution for either parameter word, which is what
     /// `GetFactionRankDifference` needs: its actor is parameter #2 and its
     /// faction is parameter #1 (issue #508).
-    static func parameterReference(
+    public static func parameterReference(
         _ call: ConditionCall,
         _ parameter: Condition.Parameter?
     ) -> ReferenceKey? {

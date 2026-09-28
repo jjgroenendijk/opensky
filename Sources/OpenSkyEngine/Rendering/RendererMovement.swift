@@ -6,7 +6,7 @@ extension Renderer {
     /// Seeds the walk controller from the camera pose during `init`, before
     /// `super.init()` runs, which is why it is a static factory rather than a
     /// method. Lives here rather than in `Renderer.swift` for the file cap.
-    static func makeMovement(
+    public static func makeMovement(
         _ camera: FreeFlyCamera,
         _ configuration: PlayerMovementConfiguration
     ) -> (WalkController, LocomotionBridge) {
@@ -16,7 +16,7 @@ extension Renderer {
         )
     }
 
-    func reseedMovement(camera newCamera: SceneCamera) {
+    public func reseedMovement(camera newCamera: SceneCamera) {
         // A held dialogue pose describes a place the player is no longer in,
         // and restoring it after the reseed would undo the teleport.
         restorePlayerCameraPose()
@@ -36,7 +36,7 @@ extension Renderer {
 
     /// Advances active movement mode by one input frame. First frame makes no
     /// move. dt clamps to 100 ms; WalkController further uses fixed substeps.
-    func advanceCamera() {
+    public func advanceCamera() {
         guard let input else { return }
         // The dialogue camera stands in for the player's view between frames
         // (RendererDialogueCamera.swift). Everything below simulates the
@@ -66,7 +66,7 @@ extension Renderer {
     /// Switches camera mode, re-seating the capsule under the current eye when
     /// the new mode simulates a player. Shared by the camera key and the
     /// `World > Camera` selector so the two cannot drift apart.
-    func setMovementMode(_ mode: CameraMovementMode) {
+    public func setMovementMode(_ mode: CameraMovementMode) {
         guard mode != movementMode else { return }
         // Re-seating the capsule reads the view pose, which a live conversation
         // is standing in for; the mode change happens to the player's own pose

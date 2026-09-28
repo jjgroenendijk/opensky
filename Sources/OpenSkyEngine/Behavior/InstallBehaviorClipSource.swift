@@ -23,10 +23,10 @@ import OpenSkyGameData
 /// `@unchecked Sendable` because the mutable cache is guarded by use rather than
 /// by a lock: one instance belongs to one graph instance, and a graph instance
 /// is stepped from one thread (the main thread, for the player).
-nonisolated final class InstallBehaviorClipSource: BehaviorClipSource, @unchecked Sendable {
+nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource, @unchecked Sendable {
     /// Where clips live in the archives. The player graph names its animations
     /// relative to this folder.
-    static let animationPrefix = "meshes\\actors\\character\\animations\\"
+    public static let animationPrefix = "meshes\\actors\\character\\animations\\"
 
     private let fileSystem: VirtualFileSystem
     /// Lowercased file name -> archive path, for every clip under the character
@@ -34,10 +34,10 @@ nonisolated final class InstallBehaviorClipSource: BehaviorClipSource, @unchecke
     private let pathsByName: [String: String]
     private let limit: Int
     private var cache: [String: (any BehaviorClip)?] = [:]
-    private(set) var loadedCount = 0
-    private(set) var missCount = 0
+    public private(set) var loadedCount = 0
+    public private(set) var missCount = 0
 
-    init(fileSystem: VirtualFileSystem, paths: [String], limit: Int = 512) {
+    public init(fileSystem: VirtualFileSystem, paths: [String], limit: Int = 512) {
         self.fileSystem = fileSystem
         self.limit = limit
         var byName: [String: String] = [:]
@@ -53,7 +53,7 @@ nonisolated final class InstallBehaviorClipSource: BehaviorClipSource, @unchecke
 
     /// Indexes every archived character animation, which is the path list the
     /// running player graph needs when nothing narrower is supplied.
-    convenience init(fileSystem: VirtualFileSystem, limit: Int = 512) {
+    public convenience init(fileSystem: VirtualFileSystem, limit: Int = 512) {
         self.init(
             fileSystem: fileSystem,
             paths: Self.animationPaths(in: fileSystem),
@@ -62,13 +62,13 @@ nonisolated final class InstallBehaviorClipSource: BehaviorClipSource, @unchecke
     }
 
     /// Every archived character animation, by archive path.
-    static func animationPaths(in fileSystem: VirtualFileSystem) -> [String] {
+    public static func animationPaths(in fileSystem: VirtualFileSystem) -> [String] {
         fileSystem.archiveEntries()
             .map(\.path)
             .filter { $0.hasPrefix(animationPrefix) && $0.hasSuffix(".hkx") }
     }
 
-    func clip(named name: String?, bindingIndex _: Int) -> (any BehaviorClip)? {
+    public func clip(named name: String?, bindingIndex _: Int) -> (any BehaviorClip)? {
         guard let name else { return nil }
         let key = (name.split(separator: "\\").last.map(String.init) ?? name).lowercased()
         if let cached = cache[key] {

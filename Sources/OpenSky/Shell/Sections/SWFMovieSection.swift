@@ -5,6 +5,7 @@
 // the engine only through SWFLabControlProviding.
 
 import AppKit
+import OpenSkyEngine
 
 final class SWFMovieSection: PanelSectionViewController {
     /// First popup entry: clears the assigned movie (`setSWFMovie(nil)`).

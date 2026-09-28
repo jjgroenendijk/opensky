@@ -13,9 +13,9 @@
 
 import Foundation
 
-nonisolated enum OpenSkySaveIO {
+nonisolated public enum OpenSkySaveIO: Sendable {
     /// `~/Library/Application Support/OpenSky/Saves/`, created if absent.
-    static func defaultSavesDirectory(fileManager: FileManager = .default) throws -> URL {
+    public static func defaultSavesDirectory(fileManager: FileManager = .default) throws -> URL {
         let base = try fileManager.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
@@ -35,7 +35,7 @@ nonisolated enum OpenSkySaveIO {
     /// The temp file is created beside the destination, because a rename only
     /// replaces atomically within one filesystem. Any failure removes it, so a
     /// failed save leaves neither a damaged destination nor litter behind.
-    static func writeAtomically(_ data: Data, to destination: URL) throws {
+    public static func writeAtomically(_ data: Data, to destination: URL) throws {
         let fileManager = FileManager.default
         let directory = destination.deletingLastPathComponent()
         let temporary = directory.appending(

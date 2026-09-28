@@ -7,6 +7,7 @@
 // it outgrows a collapsible group (docs/tools/app-ui.md).
 
 import AppKit
+import OpenSkyEngine
 
 final class EnvironmentPanelViewController: InspectorPanelViewController {
     let shadowSection = ShadowSection()

@@ -57,24 +57,24 @@
 import Foundation
 
 /// The caps a resistance query applies.
-nonisolated struct ActorResistanceSettings: Equatable, Sendable {
+nonisolated public struct ActorResistanceSettings: Equatable, Sendable {
     /// Largest fraction of damage the *player* may resist through a capped
     /// resistance. 0.85 per the two UESP pages quoted above.
-    var playerCapFraction: Float
+    public var playerCapFraction: Float
     /// Largest fraction anyone may resist through an uncapped resistance —
     /// total immunity, which is what a 100% NPC resistance grants.
-    var immunityFraction: Float
+    public var immunityFraction: Float
 
-    static let documentedDefaults = ActorResistanceSettings(
+    public static let documentedDefaults = ActorResistanceSettings(
         playerCapFraction: 0.85,
         immunityFraction: 1
     )
 }
 
-nonisolated enum ActorResistance {
+nonisolated public enum ActorResistance: Sendable {
     /// The resistance actor values that hold a percentage, and are therefore
     /// readable as a fraction by the query below.
-    static let percentageIndices: Set<Int32> = [
+    public static let percentageIndices: Set<Int32> = [
         ActorValueIndex.poisonResist,
         ActorValueIndex.resistFire,
         ActorValueIndex.resistShock,
@@ -84,13 +84,13 @@ nonisolated enum ActorResistance {
     ]
 
     /// Whether `index` names a percentage resistance.
-    static func isPercentage(index: Int32) -> Bool {
+    public static func isPercentage(index: Int32) -> Bool {
         percentageIndices.contains(index)
     }
 
     /// Whether the 85% cap applies to `index`, which every percentage
     /// resistance but disease answers yes to.
-    static func isCapped(index: Int32) -> Bool {
+    public static func isCapped(index: Int32) -> Bool {
         isPercentage(index: index) && index != ActorValueIndex.resistDisease
     }
 
@@ -109,7 +109,7 @@ nonisolated enum ActorResistance {
     /// - Parameter isPlayer: whether the actor is the player. The 85% cap
     ///   applies to nobody else, so an atronach's 100% fire resistance really
     ///   is immunity.
-    static func fraction(
+    public static func fraction(
         percentagePoints: Float,
         at index: Int32,
         isPlayer: Bool,
@@ -132,7 +132,7 @@ extension ActorValueRuntime {
     ///   caller that gets nil has an effect whose resistance the armor formula
     ///   or no formula at all answers, and must not treat it as zero
     ///   resistance without saying so.
-    func resistanceFraction(
+    public func resistanceFraction(
         at index: Int32,
         on holder: ActorValueHolder,
         settings: ActorResistanceSettings = .documentedDefaults
@@ -161,7 +161,7 @@ extension ActorValueRuntime {
     ///   weaknesses compound, which is what UESP's "Weakness to fire is
     ///   strengthened by weakness to magic" describes
     ///   (<https://en.uesp.net/wiki/Skyrim:Weakness_to_Fire>).
-    func magicDamageMultiplier(
+    public func magicDamageMultiplier(
         element: Int32?,
         on holder: ActorValueHolder,
         settings: ActorResistanceSettings = .documentedDefaults

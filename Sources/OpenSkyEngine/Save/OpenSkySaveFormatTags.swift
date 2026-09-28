@@ -31,7 +31,7 @@ import OpenSkyFormats
 /// is what keeps the decoder's "an unknown component kind in `RDLT` is an
 /// error" rule intact.
 nonisolated extension WorldStateComponentKind {
-    var saveTag: UInt8? {
+    public var saveTag: UInt8? {
         switch self {
         case .enableState: 0
         case .transform: 1
@@ -43,7 +43,7 @@ nonisolated extension WorldStateComponentKind {
         }
     }
 
-    init?(saveTag: UInt8) {
+    public init?(saveTag: UInt8) {
         switch saveTag {
         case 0: self = .enableState
         case 1: self = .transform
@@ -60,7 +60,7 @@ nonisolated extension WorldStateComponentKind {
 /// characters are Bethesda's and the byte values here are ours, and neither
 /// side should drift when the other changes.
 nonisolated extension Global.ValueType {
-    var saveTag: UInt8 {
+    public var saveTag: UInt8 {
         switch self {
         case .short: 0
         case .long: 1
@@ -68,7 +68,7 @@ nonisolated extension Global.ValueType {
         }
     }
 
-    init?(saveTag: UInt8) {
+    public init?(saveTag: UInt8) {
         switch saveTag {
         case 0: self = .short
         case 1: self = .long
@@ -84,11 +84,16 @@ nonisolated extension Global.ValueType {
 /// something the encoder reads from the clock, because determinism tests must
 /// be able to produce the same bytes twice, and because a replayed or migrated
 /// save should keep its original creation time.
-nonisolated struct SaveCreationMetadata: Equatable, Sendable {
+nonisolated public struct SaveCreationMetadata: Equatable, Sendable {
     /// Seconds since the unix epoch, injected by the caller.
-    let creationTimestamp: UInt64
+    public let creationTimestamp: UInt64
     /// Human-readable version of the build that wrote the file.
-    let appVersion: String
+    public let appVersion: String
+
+    public init(creationTimestamp: UInt64, appVersion: String) {
+        self.creationTimestamp = creationTimestamp
+        self.appVersion = appVersion
+    }
 }
 
 /// One plugin's identity in the load order a save was written against.
@@ -99,24 +104,24 @@ nonisolated struct SaveCreationMetadata: Equatable, Sendable {
 /// archives. The name is stored with the case it has on disk; comparison is
 /// case-insensitive, because the game's original platform treated plugin file
 /// names that way and `ReferenceKey` already normalizes to lowercase.
-nonisolated struct SavePluginFingerprint: Equatable, Sendable {
+nonisolated public struct SavePluginFingerprint: Equatable, Sendable {
     /// Plugin file name, spelled as it appears on disk.
-    let name: String
+    public let name: String
     /// HEDR version float (0.94 / 1.7 / 1.71).
-    let hedrVersion: Float
+    public let hedrVersion: Float
     /// HEDR record + group count.
-    let recordCount: Int32
+    public let recordCount: Int32
     /// HEDR next object ID.
-    let nextObjectID: UInt32
+    public let nextObjectID: UInt32
 
-    init(name: String, hedrVersion: Float, recordCount: Int32, nextObjectID: UInt32) {
+    public init(name: String, hedrVersion: Float, recordCount: Int32, nextObjectID: UInt32) {
         self.name = name
         self.hedrVersion = hedrVersion
         self.recordCount = recordCount
         self.nextObjectID = nextObjectID
     }
 
-    init(pluginName: String, stats: PluginHeader.Stats) {
+    public init(pluginName: String, stats: PluginHeader.Stats) {
         self.init(
             name: pluginName,
             hedrVersion: stats.version,
@@ -126,13 +131,13 @@ nonisolated struct SavePluginFingerprint: Equatable, Sendable {
     }
 
     /// Whether two fingerprints name the same plugin, ignoring file-name case.
-    func namesSamePlugin(as other: Self) -> Bool {
+    public func namesSamePlugin(as other: Self) -> Bool {
         name.lowercased() == other.name.lowercased()
     }
 
     /// Whether the three HEDR stats are identical, which is the "the plugin
     /// has not been edited since the save" test.
-    func hasSameStats(as other: Self) -> Bool {
+    public func hasSameStats(as other: Self) -> Bool {
         hedrVersion.bitPattern == other.hedrVersion.bitPattern
             && recordCount == other.recordCount
             && nextObjectID == other.nextObjectID

@@ -4,7 +4,7 @@ import simd
 
 @MainActor
 extension CellStreamingWalkDriver {
-    func waitInterior() throws {
+    public func waitInterior() throws {
         updateController(moveForward: 0)
         streamer.update(cameraPosition: renderer.freeFlyCamera.position)
         try validateController()
@@ -21,7 +21,7 @@ extension CellStreamingWalkDriver {
         changePhase(.settleInterior)
     }
 
-    func settleInterior() throws {
+    public func settleInterior() throws {
         updateController(moveForward: 0)
         streamer.update(cameraPosition: renderer.freeFlyCamera.position)
         try validateController()
@@ -39,7 +39,7 @@ extension CellStreamingWalkDriver {
         changePhase(.crossInterior)
     }
 
-    func crossInterior() throws {
+    public func crossInterior() throws {
         guard
             interiorRoute.indices.contains(interiorRouteIndex),
             let arrival = interiorArrival
@@ -64,7 +64,7 @@ extension CellStreamingWalkDriver {
         }
     }
 
-    func returnInterior() throws {
+    public func returnInterior() throws {
         guard let arrival = interiorArrival else {
             throw CellStreamingWalkBenchmarkError.wrongDestination("missing arrival pose")
         }
@@ -86,7 +86,7 @@ extension CellStreamingWalkDriver {
         }
     }
 
-    func requestExit() throws {
+    public func requestExit() throws {
         let door = streamer.interiorScene.flatMap {
             streamer.nearestDoor(in: $0, to: renderer.freeFlyCamera.position)
         }
@@ -116,7 +116,7 @@ extension CellStreamingWalkDriver {
         changePhase(.waitExterior)
     }
 
-    func waitExterior() throws {
+    public func waitExterior() throws {
         updateController(moveForward: 0)
         streamer.update(cameraPosition: renderer.freeFlyCamera.position)
         try validateController()
@@ -137,7 +137,7 @@ extension CellStreamingWalkDriver {
         changePhase(.settleExteriorReturn)
     }
 
-    func settleExteriorReturn() throws -> Bool {
+    public func settleExteriorReturn() throws -> Bool {
         updateController(moveForward: 0)
         streamer.update(cameraPosition: renderer.freeFlyCamera.position)
         try validateController()

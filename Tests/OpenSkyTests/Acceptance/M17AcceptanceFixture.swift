@@ -28,7 +28,7 @@
 
 import FormatsTestSupport
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 enum M17AcceptanceFixture {

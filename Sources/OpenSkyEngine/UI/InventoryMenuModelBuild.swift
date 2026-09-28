@@ -20,7 +20,7 @@ nonisolated extension InventoryMenuModel {
     /// The gold stack is excluded from the rows: vanilla shows money as a
     /// readout, not as a takeable row, and `InventoryRuntime` models it as an
     /// ordinary `MISC` stack, so it would otherwise appear twice.
-    static func build(
+    public static func build(
         inventory: ReferenceInventoryState,
         items: ItemDefinitionStore,
         goldFormID: FormID = InventoryRuntime.vanillaGoldFormID,
@@ -62,7 +62,7 @@ nonisolated extension InventoryMenuModel {
 
     /// FULL name, else editor ID, else the FormID — never empty, matching how
     /// `GameViewControllerItems.name(of:)` names a row.
-    static func name(of item: FormID, in items: ItemDefinitionStore) -> String {
+    public static func name(of item: FormID, in items: ItemDefinitionStore) -> String {
         guard let definition = items.definition(item) else {
             return item.description
         }
@@ -85,7 +85,7 @@ nonisolated extension InventoryMenuModel {
 extension InventoryMenuModel {
     /// The live model for `holder`, read through the runtime that owns both the
     /// stored inventory and the definitions behind it.
-    static func build(
+    public static func build(
         holder: InventoryHolder,
         runtime: InventoryRuntime,
         categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder

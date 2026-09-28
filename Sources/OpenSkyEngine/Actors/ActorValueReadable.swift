@@ -19,7 +19,7 @@ import Foundation
 import OpenSkyFormats
 
 /// An observation of one actor's values that can answer for any actor value.
-nonisolated protocol ActorValueReadable {
+nonisolated public protocol ActorValueReadable {
     /// Current health, magicka and stamina.
     var current: ActorValues { get }
     /// Re-derived maximums for the three primaries.
@@ -37,7 +37,7 @@ nonisolated protocol ActorValueReadable {
 nonisolated extension ActorValueReadable {
     /// What `GetActorValue` reports for `index`, or nil for an index outside
     /// the vanilla table.
-    func value(at index: Int32) -> Float? {
+    public func value(at index: Int32) -> Float? {
         if let kind = ActorValueIdentity.kind(at: index) {
             return current[kind]
         }
@@ -47,7 +47,7 @@ nonisolated extension ActorValueReadable {
     /// What `GetBaseActorValue` reports for `index`: the base value, which is
     /// what the records author until something writes one, and never a
     /// modifier.
-    func baseValue(at index: Int32) -> Float? {
+    public func baseValue(at index: Int32) -> Float? {
         entry(at: index)?.base
     }
 
@@ -58,7 +58,7 @@ nonisolated extension ActorValueReadable {
     /// for it, because an actor with nothing written is at its derived maximum
     /// by definition — which is what keeps a snapshot built before item 20.3
     /// answering the same numbers it always did.
-    func entry(at index: Int32) -> ActorValueEntry? {
+    public func entry(at index: Int32) -> ActorValueEntry? {
         guard let fallback = ActorValueIdentity.defaultValue(at: index) else { return nil }
         let baseline = if let kind = ActorValueIdentity.kind(at: index) {
             generalBaseline[index] ?? maximums[kind]
@@ -75,7 +75,7 @@ nonisolated extension ActorValueReadable {
     /// drawn against; everything else divides by its base, which is the only
     /// ceiling it has. A zero or negative denominator reads as 0 rather than
     /// dividing.
-    func fraction(at index: Int32) -> Float? {
+    public func fraction(at index: Int32) -> Float? {
         guard let value = value(at: index) else { return nil }
         let ceiling: Float? = if let kind = ActorValueIdentity.kind(at: index) {
             maximums[kind]
@@ -91,7 +91,7 @@ nonisolated extension ActorValueReadable {
     /// removes, capped — the read-only half of
     /// `ActorValueRuntime.resistanceFraction(at:on:settings:)`, for a caller
     /// that already holds an observation.
-    func resistanceFraction(
+    public func resistanceFraction(
         at index: Int32,
         settings: ActorResistanceSettings = .documentedDefaults
     ) -> Float? {

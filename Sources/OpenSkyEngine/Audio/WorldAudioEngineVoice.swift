@@ -18,20 +18,20 @@ import simd
 
 /// What a started voice line hands back: the source to track, how long the
 /// line runs, and the lip-sync bytes that came with it.
-nonisolated struct VoicePlayback: Equatable {
+nonisolated public struct VoicePlayback: Equatable, Sendable {
     /// Source id, for `playbackPosition(ofSource:)`, `stopSource(id:)` and the
     /// `onSourceFinished` callback.
-    let sourceID: Int
+    public let sourceID: Int
     /// Playing time in seconds from the xWMA packet table, or nil when the
     /// stream carries no `dpds` chunk.
-    let duration: Double?
+    public let duration: Double?
     /// `.lip` bytes from the container, or nil when the line ships without
     /// them. Not decoded here — item 17.7 owns that.
-    let lipData: Data?
+    public let lipData: Data?
     /// Nonisolated snapshot of this source's authoritative playback position.
     /// Starts at zero, advances on the audio tick, and becomes nil when the
     /// source is retired or stopped.
-    let clock: VoicePlaybackClock
+    public let clock: VoicePlaybackClock
 }
 
 extension WorldAudioEngine {
@@ -43,7 +43,7 @@ extension WorldAudioEngine {
     ///   - worldPosition: the speaker's head in native Skyrim units.
     ///   - gain: per-source gain on top of the voice category volume.
     @discardableResult
-    func playVoice(
+    public func playVoice(
         fuzData: Data,
         name: String,
         worldPosition: SIMD3<Float>,
@@ -89,7 +89,7 @@ extension WorldAudioEngine {
     /// actually reached the output. Subtitles and lip sync want elapsed line
     /// time, which is exactly this; sample-accurate output position is not
     /// available without the node query.
-    func playbackPosition(ofSource id: Int) -> Double? {
+    public func playbackPosition(ofSource id: Int) -> Double? {
         guard let source = sources.first(where: { $0.id == id }) else { return nil }
         let elapsed = playbackClockSeconds - source.startClockSeconds
         return elapsed > 0 ? elapsed : nil
@@ -103,7 +103,7 @@ extension WorldAudioEngine {
     /// it is the accumulated frame delta the renderer's audio tick feeds in,
     /// which is paused-aware, so the clock freezes in menu mode along with the
     /// fades rather than jumping on resume.
-    var playbackClockSeconds: Double {
+    public var playbackClockSeconds: Double {
         guard engine.manualRenderingMode == .offline else { return liveClockSeconds }
         let sampleRate = engine.manualRenderingFormat.sampleRate
         guard sampleRate > 0 else { return liveClockSeconds }

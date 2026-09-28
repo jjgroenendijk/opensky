@@ -16,19 +16,19 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's violent gold per faction, before it splits the `CRIM` totals.
-nonisolated struct SaveViolentCrimeGoldEntry: Equatable, Sendable {
-    struct Row: Equatable, Sendable {
-        let faction: ReferenceKey
-        let violentGold: Int32
+nonisolated public struct SaveViolentCrimeGoldEntry: Equatable, Sendable {
+    public struct Row: Equatable, Sendable {
+        public let faction: ReferenceKey
+        public let violentGold: Int32
     }
 
-    let key: ReferenceKey
-    let rows: [Row]
+    public let key: ReferenceKey
+    public let rows: [Row]
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// The `CRVG` chunk, in the snapshot's `ReferenceKey` order.
-    static func writeViolentCrimeGold(
+    public static func writeViolentCrimeGold(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -53,7 +53,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveCrimeDecoder {
-    static func decodeViolentGold(_ payload: Data) throws -> [SaveViolentCrimeGoldEntry] {
+    public static func decodeViolentGold(_ payload: Data) throws -> [SaveViolentCrimeGoldEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CRVG entry count")
         try OpenSkySaveDecoder.validate(
@@ -92,7 +92,7 @@ nonisolated extension OpenSkySaveCrimeDecoder {
     /// rejected, and a row naming a faction `CRIM` has no row for is dropped:
     /// `CRIM` says what is owed and this chunk only says how it divides, the
     /// rule `STOL` follows over `INVN`.
-    static func splittingViolent(
+    public static func splittingViolent(
         _ values: [SaveViolentCrimeGoldEntry],
         in ledgers: [SaveCrimeLedgerEntry]
     ) -> [SaveCrimeLedgerEntry] {

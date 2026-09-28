@@ -4,7 +4,7 @@ import OpenSkyFormats
 import simd
 
 nonisolated extension WalkController {
-    mutating func moveHorizontal(
+    public mutating func moveHorizontal(
         from start: SIMD3<Float>,
         displacement: SIMD3<Float>,
         collider: CapsuleWorldCollider,
@@ -63,7 +63,7 @@ nonisolated extension WalkController {
         )
     }
 
-    func maintainedStepSupport(
+    public func maintainedStepSupport(
         from start: SIMD3<Float>,
         displacement: SIMD3<Float>,
         collider: CapsuleWorldCollider,
@@ -88,7 +88,7 @@ nonisolated extension WalkController {
         )
     }
 
-    func stepSupport(
+    public func stepSupport(
         from start: SIMD3<Float>,
         displacement: SIMD3<Float>,
         collider: CapsuleWorldCollider,
@@ -107,7 +107,7 @@ nonisolated extension WalkController {
         )
     }
 
-    func isHorizontallyBlocked(
+    public func isHorizontallyBlocked(
         _ result: CapsuleMoveResult,
         start: SIMD3<Float>,
         desired: SIMD3<Float>
@@ -118,14 +118,14 @@ nonisolated extension WalkController {
             < desiredLength - 0.05
     }
 
-    func horizontalProgress(_ delta: SIMD3<Float>, along desired: SIMD3<Float>) -> Float {
+    public func horizontalProgress(_ delta: SIMD3<Float>, along desired: SIMD3<Float>) -> Float {
         let horizontal = SIMD2<Float>(desired.x, desired.y)
         let length = simd_length(horizontal)
         guard length > Float.ulpOfOne else { return 0 }
         return simd_dot(SIMD2<Float>(delta.x, delta.y), horizontal / length)
     }
 
-    func hasWalkableContact(_ contacts: [CapsuleCollisionContact]) -> Bool {
+    public func hasWalkableContact(_ contacts: [CapsuleCollisionContact]) -> Bool {
         contacts.contains { isWalkable($0.normal) }
     }
 
@@ -134,19 +134,19 @@ nonisolated extension WalkController {
     /// the wall beside it — and only the floor is what is being stood on.
     /// Contacts that name no material are skipped rather than winning, so a
     /// material-less decoration touching the foot does not silence the step.
-    func walkableMaterial(_ contacts: [CapsuleCollisionContact]) -> FormID? {
+    public func walkableMaterial(_ contacts: [CapsuleCollisionContact]) -> FormID? {
         contacts
             .filter { isWalkable($0.normal) && $0.material != nil }
             .max { $0.normal.z < $1.normal.z }?
             .material
     }
 
-    func isWalkable(_ normal: SIMD3<Float>) -> Bool {
+    public func isWalkable(_ normal: SIMD3<Float>) -> Bool {
         let minimumUp = cosf(MatrixMath.radians(fromDegrees: Self.maximumSlopeDegrees))
         return normal.z >= minimumUp
     }
 
-    func isBlockedSlope(
+    public func isBlockedSlope(
         at position: SIMD2<Float>,
         direction: SIMD2<Float>,
         sampleGround: GroundSampler

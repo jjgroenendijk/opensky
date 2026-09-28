@@ -6,13 +6,13 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum LipSyncClockMode: String, Equatable {
+nonisolated public enum LipSyncClockMode: String, Equatable, Sendable {
     case audio
     case wallClock
 }
 
-nonisolated struct LipSyncSnapshot: Equatable {
-    static let empty = LipSyncSnapshot(
+nonisolated public struct LipSyncSnapshot: Equatable, Sendable {
+    public static let empty = LipSyncSnapshot(
         actor: nil,
         activeLine: nil,
         trackTime: 0,
@@ -23,22 +23,22 @@ nonisolated struct LipSyncSnapshot: Equatable {
         layout: nil
     )
 
-    let actor: FormID?
-    let activeLine: String?
-    let trackTime: Double
-    let clockMode: LipSyncClockMode
-    let liveWeights: [String: Float]
-    let unmappedActiveSlots: [Int]
-    let isDecaying: Bool
+    public let actor: FormID?
+    public let activeLine: String?
+    public let trackTime: Double
+    public let clockMode: LipSyncClockMode
+    public let liveWeights: [String: Float]
+    public let unmappedActiveSlots: [Int]
+    public let isDecaying: Bool
     /// How the active track's own bytes framed themselves: header size, tuple
     /// width, vocabulary and slot stride. The corpus carries more than one of
     /// each (issue #449), so the panel shows which one this line used.
-    let layout: String?
+    public let layout: String?
 }
 
 nonisolated extension LIPFile {
     /// One line naming the layout this track decoded as.
-    var layoutDescription: String {
+    public var layoutDescription: String {
         "header \(header.headerSize) B · tuple \(header.tupleWidth) · "
             + "vocab \(header.targetCount) · \(header.slotsPerFrame) slots/frame"
     }
@@ -54,16 +54,16 @@ nonisolated private struct LipSyncSession {
     var lastWeights: [String: Float] = [:]
 }
 
-nonisolated final class LipSyncPlayback: RenderAnimation {
+nonisolated public final class LipSyncPlayback: RenderAnimation {
     /// Short enough to avoid a held mouth after audio, long enough to keep the
     /// last open shape from snapping to bind pose on one frame.
-    static let decayDuration: Float = 0.15
+    public static let decayDuration: Float = 0.15
 
-    let actor: FormID
+    public let actor: FormID
     private let faceMorph: any LipMorphWeightApplying
     private var session: LipSyncSession?
-    private(set) var snapshot = LipSyncSnapshot.empty
-    var isEnabled = true {
+    public private(set) var snapshot = LipSyncSnapshot.empty
+    public var isEnabled = true {
         didSet {
             if !isEnabled {
                 _ = faceMorph.clearLipWeights()
@@ -71,7 +71,7 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
         }
     }
 
-    init(faceMorph: any LipMorphWeightApplying) {
+    public init(faceMorph: any LipMorphWeightApplying) {
         actor = faceMorph.actor
         self.faceMorph = faceMorph
         snapshot = LipSyncSnapshot(
@@ -86,7 +86,7 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
         )
     }
 
-    func start(
+    public func start(
         track: LIPFile,
         clock: VoicePlaybackClock,
         line: String,
@@ -110,13 +110,13 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
         )
     }
 
-    func finish(at animationTime: Float) {
+    public func finish(at animationTime: Float) {
         guard session != nil else { return }
         session?.finishAnimationTime = animationTime
     }
 
     @discardableResult
-    func update(at time: Float) -> Int {
+    public func update(at time: Float) -> Int {
         guard isEnabled, var current = session else { return 0 }
         if let finish = current.finishAnimationTime {
             return updateDecay(session: current, elapsed: max(0, time - finish))
@@ -152,7 +152,7 @@ nonisolated final class LipSyncPlayback: RenderAnimation {
     }
 
     @discardableResult
-    func resetToBindPose() -> Int {
+    public func resetToBindPose() -> Int {
         session = nil
         snapshot = LipSyncSnapshot(
             actor: actor,

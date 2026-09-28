@@ -5,7 +5,7 @@ extension WalkController {
     /// Advances a non-player capsule on the same accumulator and fixed clock
     /// as walk mode. The temporary camera contributes facing only; all input
     /// axes are zero and the path follower supplies the displacement planner.
-    mutating func update(
+    public mutating func update(
         frameTime: Float,
         yaw: Float,
         sampleGround: GroundSampler,

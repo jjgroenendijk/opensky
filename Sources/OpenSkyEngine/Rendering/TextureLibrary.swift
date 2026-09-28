@@ -15,7 +15,7 @@ import Foundation
 import Metal
 import OpenSkyGameData
 
-nonisolated final class TextureLibrary {
+nonisolated public final class TextureLibrary {
     /// Cache identity: same path + usage -> same MTLTexture. A path may be
     /// sampled sRGB (color) and linear (data) by different materials, so
     /// usage is part of the key — two distinct GPU textures, one file.
@@ -50,16 +50,16 @@ nonisolated final class TextureLibrary {
     private var capturedKeys: Set<String>?
 
     /// Distinct paths whose bytes were found and handed to the loader.
-    private(set) var loadedCount = 0
+    public private(set) var loadedCount = 0
     /// Distinct paths the VFS could not resolve (each fell back to placeholder).
-    private(set) var missingCount = 0
+    public private(set) var missingCount = 0
 
-    init(fileSystem: VirtualFileSystem, loader: TextureLoader) {
+    public init(fileSystem: VirtualFileSystem, loader: TextureLoader) {
         self.fileSystem = fileSystem
         self.loader = loader
     }
 
-    convenience init(fileSystem: VirtualFileSystem, device: MTLDevice) {
+    public convenience init(fileSystem: VirtualFileSystem, device: MTLDevice) {
         self.init(fileSystem: fileSystem, loader: TextureLoader(device: device))
     }
 
@@ -69,7 +69,7 @@ nonisolated final class TextureLibrary {
     /// and uploads, or falls back to the loader's placeholder when the file
     /// is absent. First resolution of any key populates the cache, so both
     /// the counters and the once-only logging count distinct keys.
-    func texture(key: String?, usage: TextureUsage) -> MTLTexture {
+    public func texture(key: String?, usage: TextureUsage) -> MTLTexture {
         guard let key else {
             return cachedPlaceholder(path: Self.untexturedPath, usage: usage, label: "(untextured)")
         }
@@ -96,7 +96,7 @@ nonisolated final class TextureLibrary {
 
     /// TextureProvider closure for RenderModel construction. Captures self —
     /// used synchronously during RenderModel.init, never stored or escaped.
-    var provider: TextureProvider {
+    public var provider: TextureProvider {
         { [self] key, usage in texture(key: key, usage: usage) }
     }
 
@@ -122,7 +122,7 @@ nonisolated final class TextureLibrary {
     /// Returns and clears the keys touched since the last drain -- one cell's
     /// texture working set, recorded onto its CellScene so unload can compute
     /// which textures are still needed. Confined to the build queue.
-    func drainTouchedKeys() -> Set<String> {
+    public func drainTouchedKeys() -> Set<String> {
         let out = touchedKeys
         touchedKeys.removeAll(keepingCapacity: true)
         return out
@@ -130,17 +130,17 @@ nonisolated final class TextureLibrary {
 
     /// Captures texture keys resolved by one model upload. MeshLibrary stores
     /// the result so a later mesh-cache hit can reproduce texture liveness.
-    func beginKeyCapture() {
+    public func beginKeyCapture() {
         capturedKeys = []
     }
 
-    func endKeyCapture() -> Set<String> {
+    public func endKeyCapture() -> Set<String> {
         let out = capturedKeys ?? []
         capturedKeys = nil
         return out
     }
 
-    func markTouched(_ keys: Set<String>) {
+    public func markTouched(_ keys: Set<String>) {
         touchedKeys.formUnion(keys)
     }
 
@@ -158,7 +158,7 @@ nonisolated final class TextureLibrary {
     /// cell returns, so over-eviction only costs a reload, never correctness.
     /// Runs on the build queue (confinement). Returns freed entry count.
     @discardableResult
-    func evict(dropping keys: Set<String>) -> Int {
+    public func evict(dropping keys: Set<String>) -> Int {
         guard !keys.isEmpty else { return 0 }
         let before = cache.count
         cache = cache.filter { !keys.contains(Self.keyString($0.key)) }

@@ -36,7 +36,7 @@ import OpenSkyFormats
 /// Which kind of record handed an effect to an actor.
 ///
 /// The raw values are the save encoding and must not be renumbered.
-nonisolated enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, Sendable {
+nonisolated public enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, Sendable {
     /// An ALCH ingestible — a potion, a poison, food or drink.
     case potion = 0
     /// An INGR ingredient eaten raw.
@@ -51,7 +51,7 @@ nonisolated enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, Sendabl
     /// stored list for that to be possible.
     case perk = 4
 
-    var describedName: String {
+    public var describedName: String {
         switch self {
         case .potion: "potion"
         case .ingredient: "ingredient"
@@ -68,17 +68,17 @@ nonisolated enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, Sendabl
 /// `QuestRuntimeState` keys a QUST that way — the key is already load-order
 /// resolved and already has a save encoding, and a base record that belongs to
 /// no cell is exactly what it addresses.
-nonisolated struct ActiveEffectSource: Equatable, Hashable, Sendable {
-    let kind: ActiveEffectSourceKind
+nonisolated public struct ActiveEffectSource: Equatable, Hashable, Sendable {
+    public let kind: ActiveEffectSourceKind
     /// The ALCH, INGR, SPEL or ENCH record the effect list came from.
-    let record: ReferenceKey
+    public let record: ReferenceKey
 }
 
 /// How a timed effect maintains itself over its duration. See the file header
 /// for the cited rule that selects between the first two.
 ///
 /// The raw values are the save encoding and must not be renumbered.
-nonisolated enum ActiveEffectMode: UInt32, CaseIterable, Hashable, Sendable {
+nonisolated public enum ActiveEffectMode: UInt32, CaseIterable, Hashable, Sendable {
     /// Recover set: the magnitude is held in the temporary modifier slot for
     /// the whole duration and handed back on expiry.
     case modifier = 0
@@ -101,7 +101,7 @@ nonisolated enum ActiveEffectMode: UInt32, CaseIterable, Hashable, Sendable {
 
     /// Whether this mode owns a slice of its actor values' temporary modifier
     /// slot for as long as the effect exists.
-    var ownsModifierSlot: Bool {
+    public var ownsModifierSlot: Bool {
         self != .perSecond
     }
 }
@@ -111,25 +111,25 @@ nonisolated enum ActiveEffectMode: UInt32, CaseIterable, Hashable, Sendable {
 /// A Value Modifier or Peak Value Modifier effect has exactly one of these; a
 /// Dual Value Modifier has two, the second already scaled by the MGEF's second
 /// actor-value weight.
-nonisolated struct ActiveEffectValue: Equatable, Sendable {
+nonisolated public struct ActiveEffectValue: Equatable, Sendable {
     /// Vanilla actor-value table index, as `ActorValueIdentity` numbers it.
-    let index: Int32
+    public let index: Int32
     /// EFIT magnitude for this value, always non-negative. Which direction it
     /// moves the value is the effect's `isDetrimental` flag, not this number's
     /// sign, because that is how the record spells it.
-    let magnitude: Float
+    public let magnitude: Float
     /// How much of `index`'s temporary modifier slot this effect currently
     /// owns, signed. Always zero for a `perSecond` effect, which owns no slot.
-    private(set) var applied: Float
+    public private(set) var applied: Float
 
-    init(index: Int32, magnitude: Float, applied: Float = 0) {
+    public init(index: Int32, magnitude: Float, applied: Float = 0) {
         self.index = index
         self.magnitude = magnitude.isFinite ? max(0, magnitude) : 0
         self.applied = applied.isFinite ? applied : 0
     }
 
     /// This value recorded as owning `amount` of the modifier slot.
-    func owning(_ amount: Float) -> ActiveEffectValue {
+    public func owning(_ amount: Float) -> ActiveEffectValue {
         ActiveEffectValue(index: index, magnitude: magnitude, applied: amount)
     }
 }
@@ -139,7 +139,7 @@ nonisolated struct ActiveEffectValue: Equatable, Sendable {
 /// A value type: the component stores an array of them and every mutation
 /// returns a new one, which is what lets the runtime compute a whole tick and
 /// write the result once.
-nonisolated struct ActiveEffect: Equatable, Sendable {
+nonisolated public struct ActiveEffect: Equatable, Sendable {
     /// Per-actor application number, assigned by `ActiveEffectState` in
     /// ascending order.
     ///
@@ -148,34 +148,34 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
     /// the MGEF nor the source record. Assigned by the component rather than by
     /// a global allocator so it survives a save round trip without the save
     /// having to carry an allocator of its own.
-    let sequence: UInt64
-    let source: ActiveEffectSource
+    public let sequence: UInt64
+    public let source: ActiveEffectSource
     /// The MGEF this is an application of.
-    let effect: ReferenceKey
+    public let effect: ReferenceKey
     /// The actor that applied it, where one is known. Nil for a potion the
     /// player drank, which nobody cast.
-    let caster: ReferenceKey?
-    let mode: ActiveEffectMode
+    public let caster: ReferenceKey?
+    public let mode: ActiveEffectMode
     /// MGEF Detrimental: the magnitude is taken off the actor value rather than
     /// added to it.
-    let isDetrimental: Bool
+    public let isDetrimental: Bool
     /// EFIT duration in seconds. Always above zero for a timed effect — a
     /// zero-duration one applies once and is never stored — and normally zero
     /// for a `constant` effect, which no duration bounds.
-    let duration: Float
+    public let duration: Float
     /// Seconds since application, capped at `duration`.
-    private(set) var elapsed: Float
+    public private(set) var elapsed: Float
     /// Whole seconds a `perSecond` effect has already paid out, so a tick that
     /// crosses two second boundaries pays twice and one that crosses none pays
     /// nothing.
-    private(set) var paidSeconds: UInt32
+    public private(set) var paidSeconds: UInt32
     /// The actor values this effect acts on, in the order the MGEF names them.
-    private(set) var values: [ActiveEffectValue]
+    public private(set) var values: [ActiveEffectValue]
     /// Peak Value Modifier's second associated item: the keyword two effects
     /// must share before the weaker of them is dispelled.
-    let stackKeyword: ReferenceKey?
+    public let stackKeyword: ReferenceKey?
 
-    init(
+    public init(
         sequence: UInt64,
         source: ActiveEffectSource,
         effect: ReferenceKey,
@@ -202,23 +202,23 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
     }
 
     /// Whether nothing but an explicit removal ends this effect.
-    var isConstant: Bool {
+    public var isConstant: Bool {
         mode == .constant
     }
 
     /// Seconds left before the effect expires. Zero for a constant effect,
     /// which has no remaining duration to report; ask `isConstant` first.
-    var remaining: Float {
+    public var remaining: Float {
         max(0, duration - elapsed)
     }
 
-    var isExpired: Bool {
+    public var isExpired: Bool {
         !isConstant && elapsed >= duration
     }
 
     /// The largest magnitude the effect carries, which is what the Peak Value
     /// Modifier stacking rule compares.
-    var peakMagnitude: Float {
+    public var peakMagnitude: Float {
         values.map(\.magnitude).max() ?? 0
     }
 
@@ -231,7 +231,7 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
     /// pay-out — a real failure the suites caught, not a theoretical one. A
     /// millisecond is far below anything a player can observe and far above the
     /// accumulated error, which is on the order of a microsecond per second.
-    static let secondTolerance: Float = 1e-3
+    public static let secondTolerance: Float = 1e-3
 
     /// This effect advanced by `seconds`, clamped at its duration.
     ///
@@ -239,7 +239,7 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
     /// rather than left a microsecond short: it cannot survive another step
     /// either way, and the snap is what makes expiry land on the step the
     /// duration names instead of the one after it.
-    func advanced(by seconds: Float) -> ActiveEffect {
+    public func advanced(by seconds: Float) -> ActiveEffect {
         guard !isConstant, seconds.isFinite, seconds > 0 else { return self }
         var copy = self
         let next = elapsed + seconds
@@ -254,14 +254,14 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
     /// it was applied. The pay-out count is stored rather than derived from
     /// `elapsed` alone so that repeated small ticks cannot round into an extra
     /// payment.
-    var unpaidSeconds: UInt32 {
+    public var unpaidSeconds: UInt32 {
         guard mode == .perSecond else { return 0 }
         let whole = UInt32(clamping: Int((elapsed + Self.secondTolerance).rounded(.down)))
         return whole > paidSeconds ? whole - paidSeconds : 0
     }
 
     /// This effect with `count` more whole seconds recorded as paid.
-    func paying(_ count: UInt32) -> ActiveEffect {
+    public func paying(_ count: UInt32) -> ActiveEffect {
         var copy = self
         copy.paidSeconds = paidSeconds &+ count
         return copy
@@ -269,7 +269,7 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
 
     /// This effect recording that it now owns `amounts[index]` of each named
     /// value's temporary modifier slot.
-    func owningModifiers(_ amounts: [Int32: Float]) -> ActiveEffect {
+    public func owningModifiers(_ amounts: [Int32: Float]) -> ActiveEffect {
         var copy = self
         copy.values = values.map { value in
             guard let amount = amounts[value.index] else { return value }
@@ -279,7 +279,7 @@ nonisolated struct ActiveEffect: Equatable, Sendable {
     }
 
     /// The signed change one application of `value` makes to an actor value.
-    func delta(of value: ActiveEffectValue) -> Float {
+    public func delta(of value: ActiveEffectValue) -> Float {
         isDetrimental ? -value.magnitude : value.magnitude
     }
 }

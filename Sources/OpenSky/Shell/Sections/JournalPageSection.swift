@@ -11,6 +11,7 @@
 // listed control rather than an unadvertised keystroke.
 
 import AppKit
+import OpenSkyEngine
 
 final class JournalPageSection: PanelSectionViewController {
     weak var provider: (any JournalControlProviding)? {

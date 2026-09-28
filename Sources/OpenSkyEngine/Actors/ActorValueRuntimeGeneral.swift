@@ -40,7 +40,7 @@ extension ActorValueRuntime {
     ///
     /// - Returns: nil only for an index outside the vanilla table. Every value
     ///   the table names answers, falling back to its documented baseline.
-    func value(at index: Int32, on holder: ActorValueHolder) -> Float? {
+    public func value(at index: Int32, on holder: ActorValueHolder) -> Float? {
         if let kind = ActorValueIdentity.kind(at: index) {
             return current(of: holder)[kind]
         }
@@ -50,7 +50,7 @@ extension ActorValueRuntime {
     /// What `GetBaseActorValue` reports for `index`: the base value, which is
     /// what the records author plus whatever an explicit base write moved it
     /// by, and never a modifier.
-    func baseValue(at index: Int32, on holder: ActorValueHolder) -> Float? {
+    public func baseValue(at index: Int32, on holder: ActorValueHolder) -> Float? {
         entry(at: index, on: holder)?.base
     }
 
@@ -64,7 +64,7 @@ extension ActorValueRuntime {
     ///
     /// A zero or negative denominator reads as 0 rather than dividing, which is
     /// the rule `ActorValues.fractions(of:)` already applies to the HUD meters.
-    func fraction(at index: Int32, on holder: ActorValueHolder) -> Float? {
+    public func fraction(at index: Int32, on holder: ActorValueHolder) -> Float? {
         guard let value = value(at: index, on: holder) else { return nil }
         let ceiling: Float? = if let kind = ActorValueIdentity.kind(at: index) {
             maximums(of: holder)[kind]
@@ -78,7 +78,7 @@ extension ActorValueRuntime {
 
     /// `index`'s whole entry — base and all three modifiers — or nil for an
     /// index outside the table.
-    func entry(at index: Int32, on holder: ActorValueHolder) -> ActorValueEntry? {
+    public func entry(at index: Int32, on holder: ActorValueHolder) -> ActorValueEntry? {
         guard let base = baseline(of: holder).base(at: index) else { return nil }
         return state(of: holder).entry(at: index, baseline: base)
     }
@@ -86,7 +86,7 @@ extension ActorValueRuntime {
     /// Every value `holder` has moved off its baseline, resolved against that
     /// baseline — the shape `ActorConditionState` and `PapyrusActorState`
     /// carry, so a snapshot answers exactly what a live read would.
-    func resolvedEntries(of holder: ActorValueHolder) -> [Int32: ActorValueEntry] {
+    public func resolvedEntries(of holder: ActorValueHolder) -> [Int32: ActorValueEntry] {
         let baseline = baseline(of: holder)
         return state(of: holder).overrides.reduce(into: [:]) { table, stored in
             guard let base = baseline.base(at: stored.key) else { return }
@@ -104,7 +104,7 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false only for an index outside the table.
     @discardableResult
-    func damage(at index: Int32, by amount: Float, on holder: ActorValueHolder) -> Bool {
+    public func damage(at index: Int32, by amount: Float, on holder: ActorValueHolder) -> Bool {
         if let kind = ActorValueIdentity.kind(at: index) {
             damage(kind, by: amount, on: holder)
             return true
@@ -117,7 +117,7 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false only for an index outside the table.
     @discardableResult
-    func restore(at index: Int32, by amount: Float, on holder: ActorValueHolder) -> Bool {
+    public func restore(at index: Int32, by amount: Float, on holder: ActorValueHolder) -> Bool {
         if let kind = ActorValueIdentity.kind(at: index) {
             restore(kind, by: amount, on: holder)
             return true
@@ -134,7 +134,7 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false only for an index outside the table.
     @discardableResult
-    func setValue(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
+    public func setValue(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
         if let kind = ActorValueIdentity.kind(at: index) {
             set(kind, to: value, on: holder)
             return true
@@ -153,7 +153,7 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false only for an index outside the table.
     @discardableResult
-    func setBase(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
+    public func setBase(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
         update(index, on: holder) { $0.settingBase(value) }
     }
 
@@ -167,7 +167,11 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false only for an index outside the table.
     @discardableResult
-    func incrementBase(at index: Int32, by delta: Float, on holder: ActorValueHolder) -> Bool {
+    public func incrementBase(
+        at index: Int32,
+        by delta: Float,
+        on holder: ActorValueHolder
+    ) -> Bool {
         guard ActorValueIdentity.isVanilla(index: index) else { return false }
         // A zero or non-finite delta is a write that says nothing, not a miss:
         // the index named an actor value, so the caller is not the one to fix.
@@ -185,7 +189,11 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false for every index that is not one of the eighteen skills.
     @discardableResult
-    func advanceSkill(at index: Int32, by delta: Float, on holder: ActorValueHolder) -> Bool {
+    public func advanceSkill(
+        at index: Int32,
+        by delta: Float,
+        on holder: ActorValueHolder
+    ) -> Bool {
         guard ActorValueIdentity.isSkill(index: index) else { return false }
         return incrementBase(at: index, by: delta, on: holder)
     }
@@ -198,7 +206,7 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false only for an index outside the table.
     @discardableResult
-    func addModifier(
+    public func addModifier(
         _ delta: Float,
         to modifier: ActorValueModifier,
         at index: Int32,
@@ -211,7 +219,7 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false by the same rule `addModifier` answers false.
     @discardableResult
-    func setModifier(
+    public func setModifier(
         _ value: Float,
         for modifier: ActorValueModifier,
         at index: Int32,
@@ -238,7 +246,7 @@ extension ActorValueRuntime {
     ///
     /// - Returns: false only for an index outside the table.
     @discardableResult
-    func forceValue(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
+    public func forceValue(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
         // A non-finite target changes nothing, by the rule `incrementBase`
         // states: the index was fine, the number was not.
         guard value.isFinite else { return ActorValueIdentity.isVanilla(index: index) }

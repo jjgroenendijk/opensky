@@ -20,7 +20,7 @@
 // of the gate is `M15AcceptanceRealDataTests`, which is env-gated.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

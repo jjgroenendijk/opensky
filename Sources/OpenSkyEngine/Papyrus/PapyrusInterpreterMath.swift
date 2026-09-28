@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusInterpreter {
-    func mathOp(
+    public func mathOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {
@@ -86,7 +86,7 @@ nonisolated extension PapyrusInterpreter {
         }
     }
 
-    func comparisonOp(
+    public func comparisonOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {
@@ -211,7 +211,7 @@ nonisolated extension PapyrusInterpreter {
         return float
     }
 
-    func equal(_ left: PapyrusValue, _ right: PapyrusValue) -> Bool {
+    public func equal(_ left: PapyrusValue, _ right: PapyrusValue) -> Bool {
         switch (left, right) {
         case let (.integer(leftValue), .float(rightValue)):
             approximatelyEqual(Float(leftValue), rightValue)

@@ -23,19 +23,19 @@ import Foundation
 import OpenSkyFormats
 
 @MainActor
-struct EnchantmentLedger {
-    let store: WorldStateStore
+public struct EnchantmentLedger {
+    public let store: WorldStateStore
 
     // MARK: - Reading
 
     /// `holder`'s enchanted-item state, empty when it has none.
-    func state(of holder: ActorValueHolder) -> EnchantedItemState {
+    public func state(of holder: ActorValueHolder) -> EnchantedItemState {
         store.component(EnchantedItemState.self, for: holder.key) ?? EnchantedItemState()
     }
 
     /// What `profile`'s item has left on `holder`: the stored charge where
     /// something has spent some, and the record's own full charge otherwise.
-    func charge(of profile: ItemEnchantmentProfile, on holder: ActorValueHolder)
+    public func charge(of profile: ItemEnchantmentProfile, on holder: ActorValueHolder)
         -> EnchantmentCharge
     {
         guard let remaining = state(of: holder).charge(of: profile.item) else {
@@ -51,7 +51,7 @@ struct EnchantmentLedger {
     /// - Returns: the charge after the hit, or nil when it could not pay — which
     ///   is what an empty weapon is, and the caller then applies nothing.
     @discardableResult
-    func spend(_ profile: ItemEnchantmentProfile, on holder: ActorValueHolder)
+    public func spend(_ profile: ItemEnchantmentProfile, on holder: ActorValueHolder)
         -> EnchantmentCharge?
     {
         let before = charge(of: profile, on: holder)
@@ -70,13 +70,13 @@ struct EnchantmentLedger {
     /// Not a soul gem: recharging is out of item 19.9's scope and an empty weapon
     /// stays empty. This exists for the dev control and for a test that needs a
     /// fresh weapon.
-    func recharge(_ profile: ItemEnchantmentProfile, on holder: ActorValueHolder) {
+    public func recharge(_ profile: ItemEnchantmentProfile, on holder: ActorValueHolder) {
         write(state(of: holder).clearingCharge(of: profile.item), for: holder)
     }
 
     /// Records that `item` established `sequences` while worn on `holder`. An
     /// empty list forgets the item.
-    func setWornEffects(
+    public func setWornEffects(
         _ sequences: [UInt64],
         of item: FormID,
         on holder: ActorValueHolder
@@ -87,11 +87,15 @@ struct EnchantmentLedger {
     /// Stores `state`, dropping the whole component once it is empty so an owner
     /// whose weapons are full and whose worn items grant nothing stops being
     /// dirty for this slot.
-    func write(_ state: EnchantedItemState, for holder: ActorValueHolder) {
+    public func write(_ state: EnchantedItemState, for holder: ActorValueHolder) {
         if state.isEmpty {
             store.reset(.enchantedItems, for: holder.key)
         } else {
             store.set(state, for: holder.key, in: holder.cell)
         }
+    }
+
+    public init(store: WorldStateStore) {
+        self.store = store
     }
 }

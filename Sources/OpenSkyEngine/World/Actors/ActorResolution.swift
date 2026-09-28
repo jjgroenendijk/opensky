@@ -15,7 +15,7 @@ import OpenSkyFormats
 
 /// Terminal resolution failures. Per-field fallbacks never throw; only a
 /// broken chain (dangling FormID, cycle, unusable list) does.
-nonisolated enum ActorResolveError: Error, Equatable {
+nonisolated public enum ActorResolveError: Error, Equatable {
     /// Base or template FormID matches no NPC_ / LVLN record.
     case missingTarget(FormID, referencedBy: FormID?)
     /// TPLT/LVLN graph revisited a record; chain in visit order.
@@ -25,29 +25,29 @@ nonisolated enum ActorResolveError: Error, Equatable {
 }
 
 /// One hop in a resolved template chain, base first.
-nonisolated enum ActorChainLink: Equatable {
+nonisolated public enum ActorChainLink: Equatable, Sendable {
     case npc(FormID)
     /// A leveled list hop plus the entry the deterministic policy chose.
     case leveled(list: FormID, chosen: FormID)
 }
 
 /// An appearance field paired with the NPC_ record that provided it.
-nonisolated struct ActorSourcedField<Value: Equatable>: Equatable {
-    let value: Value
-    let source: FormID
+nonisolated public struct ActorSourcedField<Value: Equatable>: Equatable {
+    public let value: Value
+    public let source: FormID
 }
 
 /// Appearance-relevant fields of one actor after template resolution.
-nonisolated struct ResolvedActorAppearance: Equatable {
-    let base: FormID
-    let chain: [ActorChainLink]
-    let isFemale: ActorSourcedField<Bool>
-    let race: ActorSourcedField<FormID?>
+nonisolated public struct ResolvedActorAppearance: Equatable {
+    public let base: FormID
+    public let chain: [ActorChainLink]
+    public let isFemale: ActorSourcedField<Bool>
+    public let race: ActorSourcedField<FormID?>
     /// VTCK, inherited through `useTraits` with the other Traits-tab fields.
-    let voiceType: ActorSourcedField<FormID?>
-    let wornArmor: ActorSourcedField<FormID?>
-    let headParts: ActorSourcedField<[FormID]>
-    let defaultOutfit: ActorSourcedField<FormID?>
+    public let voiceType: ActorSourcedField<FormID?>
+    public let wornArmor: ActorSourcedField<FormID?>
+    public let headParts: ActorSourcedField<[FormID]>
+    public let defaultOutfit: ActorSourcedField<FormID?>
 }
 
 /// Stat-relevant fields of one actor after template resolution (issue #194).
@@ -59,12 +59,12 @@ nonisolated struct ResolvedActorAppearance: Equatable {
 /// through `useTraits` exactly as the appearance resolves it, because the
 /// starting attributes come from the race and the derivation would otherwise
 /// have to reach back into the appearance for one field.
-nonisolated struct ResolvedActorStats: Equatable {
-    let base: FormID
-    let chain: [ActorChainLink]
+nonisolated public struct ResolvedActorStats: Equatable {
+    public let base: FormID
+    public let chain: [ActorChainLink]
     /// RNAM, resolved through `useTraits` — the Creation Kit puts race on the
     /// Traits tab, not the Stats tab.
-    let race: ActorSourcedField<FormID?>
+    public let race: ActorSourcedField<FormID?>
     /// RNAM of the record that supplies the stats, which is the race the
     /// *starting attributes* come from.
     ///
@@ -82,22 +82,22 @@ nonisolated struct ResolvedActorStats: Equatable {
     ///
     /// The renderer still skins an actor with `race`. This field only feeds
     /// `ActorValueDerivation`.
-    let statsRace: ActorSourcedField<FormID?>
+    public let statsRace: ActorSourcedField<FormID?>
     /// ACBS stat words plus CNAM, resolved through `useStats`: "Use stats
     /// (Stats tab, including level, autocalc, skills, health/magicka/stamina,
     /// speed, bleedout, class)" (UESP NPC_ ACBS template data flags).
-    let stats: ActorSourcedField<ActorBase.Stats>
+    public let stats: ActorSourcedField<ActorBase.Stats>
     /// The ACBS auto-calc and PC-level-mult bits, which sit on the Stats tab
     /// and therefore ride `useStats` with the words beside them.
-    let autoCalculatesStats: ActorSourcedField<Bool>
-    let usesPlayerLevelMultiplier: ActorSourcedField<Bool>
+    public let autoCalculatesStats: ActorSourcedField<Bool>
+    public let usesPlayerLevelMultiplier: ActorSourcedField<Bool>
 }
 
 /// Ordered AI package stack after `useAIPackages` template inheritance.
-nonisolated struct ResolvedActorPackages: Equatable {
-    let base: FormID
-    let chain: [ActorChainLink]
-    let packages: ActorSourcedField<[FormID]>
+nonisolated public struct ResolvedActorPackages: Equatable {
+    public let base: FormID
+    public let chain: [ActorChainLink]
+    public let packages: ActorSourcedField<[FormID]>
 }
 
 /// Authored spell list after `useSpellList` template inheritance (issue #473).
@@ -106,18 +106,18 @@ nonisolated struct ResolvedActorPackages: Equatable {
 /// appearance or the stats, for the reason those two are separate: the list
 /// answers to its own ACBS template-data bit, and its consumer is the spellbook
 /// rather than the renderer or the actor-value derivation.
-nonisolated struct ResolvedActorSpells: Equatable {
-    let base: FormID
-    let chain: [ActorChainLink]
+nonisolated public struct ResolvedActorSpells: Equatable {
+    public let base: FormID
+    public let chain: [ActorChainLink]
     /// SPLO, resolved through `useSpellList`.
-    let spells: ActorSourcedField<[FormID]>
+    public let spells: ActorSourcedField<[FormID]>
     /// PRKR, resolved through the same flag: UESP names it "Use spelllist
     /// (both spells and perks)", so an actor delegating its spell list
     /// delegates its perk list with it (issue #497).
-    let perks: ActorSourcedField<[FormID]>
+    public let perks: ActorSourcedField<[FormID]>
     /// RNAM, resolved through `useTraits` — the race whose own `SPLO` run every
     /// member of it carries.
-    let race: ActorSourcedField<FormID?>
+    public let race: ActorSourcedField<FormID?>
 }
 
 /// Faction memberships and AI attributes after template inheritance
@@ -132,31 +132,31 @@ nonisolated struct ResolvedActorSpells: Equatable {
 /// run: the hostility derivation reads the memberships and the aggression
 /// together, and two walks of the same template chain would only be a second
 /// chance for the two answers to disagree.
-nonisolated struct ResolvedActorFactions: Equatable {
-    let base: FormID
-    let chain: [ActorChainLink]
+nonisolated public struct ResolvedActorFactions: Equatable {
+    public let base: FormID
+    public let chain: [ActorChainLink]
     /// SNAM, resolved through `useFactions`.
-    let factions: ActorSourcedField<[ActorBase.FactionMembership]>
+    public let factions: ActorSourcedField<[ActorBase.FactionMembership]>
     /// AIDT, resolved through `useAIData` — the flag UESP names "Use AI Data
     /// (AI Data tab, including aggression, confidence, morality, combat style
     /// and gift filter)". Nil when the providing record authors none.
-    let aiData: ActorSourcedField<ActorAIData?>
+    public let aiData: ActorSourcedField<ActorAIData?>
     /// CRIF, resolved through `useFactions` beside SNAM (issue #505). The
     /// Creation Kit puts the crime faction on the same Factions tab the flag
     /// names, so the record that supplies an actor's memberships supplies the
     /// faction it reports crimes to.
-    var crimeFaction: FormID? {
+    public var crimeFaction: FormID? {
         crimeFactionField.value
     }
 
-    let crimeFactionField: ActorSourcedField<FormID?>
+    public let crimeFactionField: ActorSourcedField<FormID?>
 }
 
 /// Resolves template chains against pre-built single-plugin record indexes
 /// (raw-FormID keys, matching CellSceneBuilder's convention).
-nonisolated struct ActorTemplateResolver {
-    let actors: [UInt32: ActorBase]
-    let leveledActors: [UInt32: LeveledList]
+nonisolated public struct ActorTemplateResolver: Sendable {
+    public let actors: [UInt32: ActorBase]
+    public let leveledActors: [UInt32: LeveledList]
     /// LVSP decodes by raw FormID (issue #473). An actor's `SPLO` run names
     /// leveled *spell* lists as freely as it names SPEL records — every vanilla
     /// caster's offensive spells arrive that way, observed against
@@ -164,9 +164,9 @@ nonisolated struct ActorTemplateResolver {
     ///
     /// Defaulted, so the fixtures that build a resolver by hand for the
     /// appearance and package paths are untouched by a field they do not use.
-    let leveledSpells: [UInt32: LeveledList]
+    public let leveledSpells: [UInt32: LeveledList]
 
-    init(
+    public init(
         actors: [UInt32: ActorBase],
         leveledActors: [UInt32: LeveledList],
         leveledSpells: [UInt32: LeveledList] = [:]
@@ -178,7 +178,7 @@ nonisolated struct ActorTemplateResolver {
 
     /// Indexes every decodable NPC_ + LVLN top-group record. Undecodable
     /// records drop out of the index and later resolve as missing targets.
-    static func build(from file: ESMFile, localized: Bool) -> ActorTemplateResolver {
+    public static func build(from file: ESMFile, localized: Bool) -> ActorTemplateResolver {
         var actors: [UInt32: ActorBase] = [:]
         if let top = file.topGroup(of: "NPC_"), let children = try? top.children() {
             for case let .record(record) in children {
@@ -209,7 +209,7 @@ nonisolated struct ActorTemplateResolver {
         return lists
     }
 
-    func resolve(base: FormID) throws -> ResolvedActorAppearance {
+    public func resolve(base: FormID) throws -> ResolvedActorAppearance {
         let (npcs, chain) = try resolveChain(base: base)
         return ResolvedActorAppearance(
             base: base,
@@ -237,7 +237,7 @@ nonisolated struct ActorTemplateResolver {
 
     /// The same chain walk as `resolve(base:)`, resolving the stat fields
     /// instead of the appearance fields (issue #194).
-    func resolveStats(base: FormID) throws -> ResolvedActorStats {
+    public func resolveStats(base: FormID) throws -> ResolvedActorStats {
         let (npcs, chain) = try resolveChain(base: base)
         return ResolvedActorStats(
             base: base,
@@ -262,7 +262,7 @@ nonisolated struct ActorTemplateResolver {
 
     /// Resolves only the package-list field group. A local empty list remains
     /// authoritative unless `useAIPackages` explicitly delegates it.
-    func resolvePackages(base: FormID) throws -> ResolvedActorPackages {
+    public func resolvePackages(base: FormID) throws -> ResolvedActorPackages {
         let (npcs, chain) = try resolveChain(base: base)
         return ResolvedActorPackages(
             base: base,
@@ -276,7 +276,7 @@ nonisolated struct ActorTemplateResolver {
     /// Resolves only the spell-list field group (issue #473). A local empty
     /// list stays authoritative unless `useSpellList` delegates it, which is
     /// the rule every other field group here follows.
-    func resolveSpells(base: FormID) throws -> ResolvedActorSpells {
+    public func resolveSpells(base: FormID) throws -> ResolvedActorSpells {
         let (npcs, chain) = try resolveChain(base: base)
         return ResolvedActorSpells(
             base: base,
@@ -297,7 +297,7 @@ nonisolated struct ActorTemplateResolver {
     /// beside it (issues #501 and #503). A local empty list stays authoritative
     /// unless `useFactions` delegates it, the rule every other field group here
     /// follows, and the AIDT delegates on its own `useAIData` flag.
-    func resolveFactions(base: FormID) throws -> ResolvedActorFactions {
+    public func resolveFactions(base: FormID) throws -> ResolvedActorFactions {
         let (npcs, chain) = try resolveChain(base: base)
         return ResolvedActorFactions(
             base: base,

@@ -7,7 +7,7 @@
 // engine wearing the first one's name.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

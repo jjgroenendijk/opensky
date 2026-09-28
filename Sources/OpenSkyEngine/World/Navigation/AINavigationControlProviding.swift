@@ -27,55 +27,62 @@ import OpenSkyFormats
 import simd
 
 /// One resident actor as the gate panel's selector offers it.
-nonisolated struct AIActorOption: Equatable, Sendable {
-    let key: ReferenceKey
+nonisolated public struct AIActorOption: Equatable, Sendable {
+    public let key: ReferenceKey
     /// The same display name `CombatLoopReadout` prints, so the two panels
     /// cannot disagree about what an actor is called.
-    let name: String
+    public let name: String
     /// Distance from the camera, world units, which is what makes a popup of a
     /// dozen identical guards navigable.
-    let distance: Float
+    public let distance: Float
     /// True when the world state records this actor dead. A corpse still
     /// appears in the list: selecting one and seeing every section say so is
     /// how a user finds out why nothing is moving.
-    let isDead: Bool
+    public let isDead: Bool
+
+    public init(key: ReferenceKey, name: String, distance: Float, isDead: Bool) {
+        self.key = key
+        self.name = name
+        self.distance = distance
+        self.isDead = isDead
+    }
 }
 
 /// One observation of everything the gate panel's non-combat sections show.
-nonisolated struct AINavigationSnapshot: Equatable, Sendable {
+nonisolated public struct AINavigationSnapshot: Equatable, Sendable {
     /// False when no cell is streamed — no game data, or a synthetic scene.
     /// Every other field is then empty and the panel says so rather than
     /// showing a convincing zero.
-    let isAvailable: Bool
+    public let isAvailable: Bool
     /// Every resident actor, nearest first.
-    let actors: [AIActorOption]
+    public let actors: [AIActorOption]
     /// The actor every section acts on, or nil when none is resident.
-    let selectedActor: ReferenceKey?
-    let selectedActorName: String
+    public let selectedActor: ReferenceKey?
+    public let selectedActorName: String
     /// The selected actor's mover, or nil when it is standing still.
-    let movement: NPCMovementReadout?
+    public let movement: NPCMovementReadout?
     /// Movers running right now, across every actor, against the runtime cap.
-    let moverCount: Int
-    let moverLimit: Int
+    public let moverCount: Int
+    public let moverLimit: Int
     /// The selected actor's package selection, or nil when the runtime has not
     /// registered it.
-    let package: PackageActorReadout?
+    public let package: PackageActorReadout?
     /// Actors the package runtime has registered, which is how many of the
     /// residents above are keeping a schedule at all.
-    let packagedActorCount: Int
+    public let packagedActorCount: Int
     /// Where the crosshair is pointing, world space, or nil when it is not on
     /// anything. This is what the move control paths to.
-    let crosshairPoint: SIMD3<Float>?
+    public let crosshairPoint: SIMD3<Float>?
     /// Whether the selected actor regards the player as an enemy. Where it is
     /// in a fight comes from `CombatLoopSnapshot.actors`, which already carries
     /// one line per actor with a behavior machine; duplicating the phase here
     /// would give the same question two answers taken a tick apart.
-    let selectedActorIsHostile: Bool
+    public let selectedActorIsHostile: Bool
     /// Human-readable result of the last panel action.
-    let lastActionText: String
+    public let lastActionText: String
 
     /// The reading with no streamed cell attached.
-    static let unavailable = AINavigationSnapshot(
+    public static let unavailable = AINavigationSnapshot(
         isAvailable: false,
         actors: [],
         selectedActor: nil,
@@ -89,10 +96,38 @@ nonisolated struct AINavigationSnapshot: Equatable, Sendable {
         selectedActorIsHostile: false,
         lastActionText: "AI unavailable: no cell is streamed."
     )
+
+    public init(
+        isAvailable: Bool,
+        actors: [AIActorOption],
+        selectedActor: ReferenceKey?,
+        selectedActorName: String,
+        movement: NPCMovementReadout?,
+        moverCount: Int,
+        moverLimit: Int,
+        package: PackageActorReadout?,
+        packagedActorCount: Int,
+        crosshairPoint: SIMD3<Float>?,
+        selectedActorIsHostile: Bool,
+        lastActionText: String
+    ) {
+        self.isAvailable = isAvailable
+        self.actors = actors
+        self.selectedActor = selectedActor
+        self.selectedActorName = selectedActorName
+        self.movement = movement
+        self.moverCount = moverCount
+        self.moverLimit = moverLimit
+        self.package = package
+        self.packagedActorCount = packagedActorCount
+        self.crosshairPoint = crosshairPoint
+        self.selectedActorIsHostile = selectedActorIsHostile
+        self.lastActionText = lastActionText
+    }
 }
 
 @MainActor
-protocol AINavigationControlProviding: AnyObject {
+public protocol AINavigationControlProviding: AnyObject {
     var aiNavigationSnapshot: AINavigationSnapshot { get }
 
     /// The actor the whole destination acts on. Setting nil returns the panel

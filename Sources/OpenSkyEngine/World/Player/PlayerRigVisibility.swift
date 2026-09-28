@@ -16,16 +16,16 @@
 // so their shadow would be a disembodied pair of arms sliding over the terrain.
 // Recorded in docs/engine/first-person.md.
 
-nonisolated struct PlayerRigVisibility: Equatable {
+nonisolated public struct PlayerRigVisibility: Equatable, Sendable {
     /// The third-person body is drawn to the camera.
-    let drawsBody: Bool
+    public let drawsBody: Bool
     /// The third-person body is rasterized into the shadow map.
-    let castsBodyShadow: Bool
+    public let castsBodyShadow: Bool
     /// The first-person arms are drawn to the camera.
-    let drawsArms: Bool
+    public let drawsArms: Bool
     /// The first-person arms are rasterized into the shadow map. Always false;
     /// carried as a field so the matrix is complete and the test can pin it.
-    let castsArmShadow: Bool
+    public let castsArmShadow: Bool
 
     /// - Parameters:
     ///   - mode: the active camera.
@@ -39,7 +39,7 @@ nonisolated struct PlayerRigVisibility: Equatable {
     /// who starts a conversation therefore sees their own body, and does not
     /// see a pair of arms hanging in front of a camera that is no longer
     /// theirs.
-    static func resolve(
+    public static func resolve(
         mode: CameraMovementMode,
         hasBody: Bool,
         hasArms: Bool,

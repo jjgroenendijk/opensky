@@ -45,26 +45,26 @@ import simd
 /// A flat value rather than the two actors plus the geometry, because the
 /// formula genuinely takes only these numbers, and a test that has to build a
 /// world to check an exponent is a test of the wrong thing.
-nonisolated struct DetectionInputs: Equatable, Sendable {
+nonisolated public struct DetectionInputs: Equatable, Sendable {
     /// Straight-line distance between the pair, world units.
-    let distance: Float
+    public let distance: Float
     /// Whether static collision leaves the sight line clear. Gates the visual
     /// term outright and attenuates the sound term.
-    let hasLineOfSight: Bool
+    public let hasLineOfSight: Bool
     /// Whether the target lies inside the observer's view cone. Gates the
     /// visual term and nothing else — you can hear what is behind you.
-    let isInViewCone: Bool
+    public let isInViewCone: Bool
     /// Whether the observer stands outdoors, which extends the range both
     /// senses attenuate over.
-    let isExterior: Bool
+    public let isExterior: Bool
     /// Whether the target is crouched.
-    let isSneaking: Bool
+    public let isSneaking: Bool
     /// How the target is moving, or nil when it is standing still.
-    let gait: LocomotionGait?
+    public let gait: LocomotionGait?
     /// Combined weight of everything the target has equipped.
-    let equippedWeight: Float
+    public let equippedWeight: Float
 
-    init(
+    public init(
         distance: Float,
         hasLineOfSight: Bool = true,
         isInViewCone: Bool = true,
@@ -85,21 +85,21 @@ nonisolated struct DetectionInputs: Equatable, Sendable {
 
 /// One detection value with every term that produced it, so a readout and a
 /// failing test can both say *why* a number is what it is.
-nonisolated struct DetectionBreakdown: Equatable, Sendable {
-    let soundFactor: Float
-    let visualFactor: Float
-    let skillFactor: Float
-    let distanceAttenuation: Float
+nonisolated public struct DetectionBreakdown: Equatable, Sendable {
+    public let soundFactor: Float
+    public let visualFactor: Float
+    public let skillFactor: Float
+    public let distanceAttenuation: Float
     /// The detection value itself. Positive means the observer is picking the
     /// target up right now; zero or negative means it is not.
-    let value: Float
+    public let value: Float
 
     /// Whether anything is being perceived at all this instant.
-    var isPerceiving: Bool {
+    public var isPerceiving: Bool {
         value > 0
     }
 
-    static let none = DetectionBreakdown(
+    public static let none = DetectionBreakdown(
         soundFactor: 0,
         visualFactor: 0,
         skillFactor: 0,
@@ -108,17 +108,17 @@ nonisolated struct DetectionBreakdown: Equatable, Sendable {
     )
 }
 
-nonisolated enum DetectionFormula {
+nonisolated public enum DetectionFormula: Sendable {
     /// How lit the target is, 1 being fully lit. Pinned: nothing samples scene
     /// light per actor yet. `fSneakLightMult`, `fSneakLightExteriorMult` and
     /// `fDetectionSneakLightMod` are the settings a real light term would read.
-    static let pinnedLightFactor: Float = 1
+    public static let pinnedLightFactor: Float = 1
     /// The Muffle magnitude on the target, 1 being unmuffled. Pinned: no magic
     /// effects exist yet.
-    static let pinnedMuffle: Float = 1
+    public static let pinnedMuffle: Float = 1
     /// The target's action sound this instant. Pinned: no attack, cast or shout
     /// reports one to perception yet.
-    static let pinnedActionSound: Float = 0
+    public static let pinnedActionSound: Float = 0
     /// Both skill levels. `ActorValueIdentity` names Sneak as vanilla actor
     /// value 15, and item 15.3 stores three of the 164 — health, magicka and
     /// stamina — so neither the sneaker's Sneak nor the noticer's perception is
@@ -129,10 +129,10 @@ nonisolated enum DetectionFormula {
     /// Pinning both at the same number is what makes the formula's trailing
     /// `(Noticer - Sneaker)` term exactly zero, so the one place a skill still
     /// shows up is the attenuated noticer term.
-    static let pinnedSkillLevel: Float = 15
+    public static let pinnedSkillLevel: Float = 15
 
     /// The range this pair's senses attenuate over, world units.
-    static func maximumDistance(settings: DetectionSettings, isExterior: Bool) -> Float {
+    public static func maximumDistance(settings: DetectionSettings, isExterior: Bool) -> Float {
         let base = max(0, settings.maxDistance.value)
         return isExterior ? base * max(0, settings.exteriorDistanceMult.value) : base
     }
@@ -142,7 +142,7 @@ nonisolated enum DetectionFormula {
     /// Zero at and beyond the maximum distance, and 1 at zero distance. A
     /// non-finite or negative distance attenuates to nothing rather than
     /// producing a NaN that would poison every comparison downstream.
-    static func attenuation(
+    public static func attenuation(
         distance: Float,
         settings: DetectionSettings,
         isExterior: Bool
@@ -162,7 +162,7 @@ nonisolated enum DetectionFormula {
     /// side of walking are OpenSky's — see `DetectionSettings`. Swimming is
     /// deliberately given walking's multiplier rather than a fourth constant
     /// nothing measured.
-    static func movementMultiplier(
+    public static func movementMultiplier(
         gait: LocomotionGait?,
         settings: DetectionSettings
     ) -> Float {
@@ -176,7 +176,7 @@ nonisolated enum DetectionFormula {
     }
 
     /// The sound term, before distance attenuation.
-    static func soundFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+    public static func soundFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
         let weight = inputs.equippedWeight.isFinite ? max(0, inputs.equippedWeight) : 0
         let carried = max(0, settings.equippedWeightBase.value)
             + max(0, settings.equippedWeightMult.value) * weight
@@ -191,14 +191,14 @@ nonisolated enum DetectionFormula {
     /// The visual term, before distance attenuation. Zero without a clear sight
     /// line or outside the cone; there is no partial seeing in this model, and
     /// the docs page says so.
-    static func visualFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+    public static func visualFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
         guard inputs.hasLineOfSight, inputs.isInViewCone else { return 0 }
         let crouch = inputs.isSneaking ? max(0, settings.sneakVisualMult.value) : 1
         return max(0, settings.visualBaseValue.value) * pinnedLightFactor * crouch
     }
 
     /// The observer's skill term, from the pinned skill level.
-    static func skillFactor(settings: DetectionSettings) -> Float {
+    public static func skillFactor(settings: DetectionSettings) -> Float {
         let clamped = min(
             max(pinnedSkillLevel, settings.perceptionSkillMin.value),
             settings.perceptionSkillMax.value
@@ -207,7 +207,7 @@ nonisolated enum DetectionFormula {
     }
 
     /// The whole formula, with its terms.
-    static func breakdown(
+    public static func breakdown(
         inputs: DetectionInputs,
         settings: DetectionSettings
     ) -> DetectionBreakdown {
@@ -242,7 +242,7 @@ nonisolated enum DetectionFormula {
     /// Nothing in the pass consumes this — the attenuated sound term already
     /// produces the behaviour. It exists because "a gait-based noise radius" is
     /// what the milestone asks for in world units, and this is that number.
-    static func noiseRadius(
+    public static func noiseRadius(
         gait: LocomotionGait?,
         settings: DetectionSettings,
         isExterior: Bool,

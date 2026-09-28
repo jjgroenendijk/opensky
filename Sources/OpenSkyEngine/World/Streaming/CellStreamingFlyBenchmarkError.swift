@@ -3,7 +3,7 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
+nonisolated public enum CellStreamingFlyBenchmarkError: LocalizedError {
     case memoryMeasurementFailed
     case footprintExceeded(megabytes: Double, cap: Double)
     case footprintDidNotPlateau(initial: Double, final: Double)
@@ -36,7 +36,7 @@ nonisolated enum CellStreamingFlyBenchmarkError: LocalizedError {
     case grassBudgetExceeded(dropped: Int)
     case noCellsUnloaded
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .memoryMeasurementFailed:
             "cannot read task_vm_info.phys_footprint"

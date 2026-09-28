@@ -29,11 +29,11 @@ nonisolated private final class FFmpegDecodeResources {
     }
 }
 
-nonisolated final class WMADecoder {
+nonisolated public final class WMADecoder {
     /// `WAVEFORMATEX.wFormatTag` for Windows Media Audio 2, the codec xWMA carries.
-    static let wmaV2FormatTag: UInt16 = 0x0161
+    public static let wmaV2FormatTag: UInt16 = 0x0161
     /// Above this the decoder rejects the header rather than trusting a wild channel count.
-    static let maximumChannelCount = 8
+    public static let maximumChannelCount = 8
 
     /// ffmpeg reports "send me more input" and "fully drained" as negative status values.
     private enum Status {
@@ -42,7 +42,7 @@ nonisolated final class WMADecoder {
         static let endOfFile = -0x2046_4F45
     }
 
-    let parameters: AudioCodecParameters
+    public let parameters: AudioCodecParameters
 
     private let resources: FFmpegDecodeResources
     private let context: UnsafeMutablePointer<AVCodecContext>
@@ -51,16 +51,16 @@ nonisolated final class WMADecoder {
     private var resampler: FFmpegResampler?
 
     /// Sample rate of the PCM this decoder produces, equal to the container's rate.
-    var outputSampleRate: Int {
+    public var outputSampleRate: Int {
         parameters.sampleRate
     }
 
     /// Channel count of the PCM this decoder produces, equal to the container's count.
-    var outputChannelCount: Int {
+    public var outputChannelCount: Int {
         parameters.channelCount
     }
 
-    init(parameters: AudioCodecParameters) throws {
+    public init(parameters: AudioCodecParameters) throws {
         try WMADecoder.validate(parameters)
         let owned = FFmpegDecodeResources()
         let context = try WMADecoder.makeContext(parameters)
@@ -83,14 +83,14 @@ nonisolated final class WMADecoder {
 
     /// Decodes one compressed packet. The result may be empty: the decoder buffers input
     /// and only emits a frame once it has enough.
-    func decode(packet data: Data) throws -> [Float] {
+    public func decode(packet data: Data) throws -> [Float] {
         try send(data)
         return try drainFrames()
     }
 
     /// Flushes the decoder and returns the PCM it was still holding. Hand it no further
     /// packets without calling `reset()` first.
-    func flush() throws -> [Float] {
+    public func flush() throws -> [Float] {
         let status = avcodec_send_packet(context, nil)
         guard status >= 0 || status == Status.endOfFile else {
             throw WMADecoderError.decodeFailed(code: status)
@@ -99,7 +99,7 @@ nonisolated final class WMADecoder {
     }
 
     /// Drops buffered state so the same decoder can restart at another packet.
-    func reset() {
+    public func reset() {
         avcodec_flush_buffers(context)
     }
 
@@ -108,7 +108,10 @@ nonisolated final class WMADecoder {
     /// one-file inspection paths but materializes the whole track: a vanilla music
     /// file decodes to roughly 37 MB. Whole-corpus sweeps and playback should use the
     /// streaming overload below instead (issue #218).
-    static func decode(packets: [Data], parameters: AudioCodecParameters) throws -> DecodedAudio {
+    public static func decode(
+        packets: [Data],
+        parameters: AudioCodecParameters
+    ) throws -> DecodedAudio {
         var samples: [Float] = []
         try decode(packets: packets, parameters: parameters) { chunk in
             samples.append(contentsOf: chunk)
@@ -130,7 +133,7 @@ nonisolated final class WMADecoder {
     /// stays flat in memory across a whole-corpus sweep or a long playback session
     /// (issue #218). The callback receives interleaved float at the source sample
     /// rate and channel count, matching the accumulating overload's output.
-    static func decode(
+    public static func decode(
         packets: [Data],
         parameters: AudioCodecParameters,
         onChunk: (_ samples: [Float]) throws -> Void

@@ -30,12 +30,12 @@ import OpenSkyFormats
 
 /// One actor's current primary values, plus whatever it has stored for the
 /// rest of the actor-value table.
-nonisolated struct ActorValueState: WorldStateComponent {
+nonisolated public struct ActorValueState: WorldStateComponent, Sendable {
     /// Current health, magicka and stamina. Never negative, never NaN, and
     /// never above the maximums the runtime clamped it against — though this
     /// type cannot enforce that last one on its own, because it does not know
     /// the maximums.
-    private(set) var current: ActorValues
+    public private(set) var current: ActorValues
 
     /// Every actor value this actor has moved off its derived baseline, keyed
     /// by vanilla table index (issue #468, roadmap item 19.5; primaries added
@@ -54,13 +54,13 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// where a primary *is*; an override is what the session did to the
     /// ceiling above it, and the maximum is still re-derived from records on
     /// every read.
-    private(set) var overrides: [Int32: ActorValueOverride]
+    public private(set) var overrides: [Int32: ActorValueOverride]
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .actorValues
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .actorValues(self)
     }
 
@@ -71,7 +71,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// of the two was right. Zero exactly, not a small epsilon — every path
     /// that lowers health clamps at zero, so an actor at zero health arrived
     /// there by the clamp.
-    var hasZeroHealth: Bool {
+    public var hasZeroHealth: Bool {
         current.health <= 0
     }
 
@@ -83,7 +83,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// than stored, because it names no actor value; so is one that says
     /// nothing, because an override that deviates from nothing is not a
     /// deviation.
-    init(current: ActorValues, overrides: [Int32: ActorValueOverride] = [:]) {
+    public init(current: ActorValues, overrides: [Int32: ActorValueOverride] = [:]) {
         var normalized = ActorValues.zero
         for kind in ActorValueKind.allCases {
             let value = current[kind]
@@ -95,7 +95,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
         }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .actorValues(value) = erased else { return nil }
         self = value
     }
@@ -107,7 +107,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// half health" actor — the Creation Kit's Stats tab has no such field —
     /// so a partially depleted actor is always something the session did, and
     /// therefore always a component rather than a baseline.
-    static func baseline(maximums: ActorValues) -> ActorValueState {
+    public static func baseline(maximums: ActorValues) -> ActorValueState {
         ActorValueState(current: maximums)
     }
 
@@ -116,7 +116,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// A non-positive or non-finite `amount` changes nothing rather than
     /// healing: "damage" that restores is a caller bug, and letting it through
     /// would make a negative weapon damage into a heal.
-    func damaging(_ kind: ActorValueKind, by amount: Float) -> Self {
+    public func damaging(_ kind: ActorValueKind, by amount: Float) -> Self {
         guard amount.isFinite, amount > 0 else { return self }
         var updated = current
         updated[kind] = max(0, updated[kind] - amount)
@@ -127,7 +127,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
     ///
     /// A non-positive or non-finite `amount` changes nothing, mirroring
     /// `damaging`.
-    func restoring(_ kind: ActorValueKind, by amount: Float, maximum: Float) -> Self {
+    public func restoring(_ kind: ActorValueKind, by amount: Float, maximum: Float) -> Self {
         guard amount.isFinite, amount > 0 else { return self }
         var updated = current
         let limit = maximum.isFinite ? max(0, maximum) : 0
@@ -141,7 +141,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// The override table is untouched: an override is a delta on a derived
     /// baseline, and a shrinking maximum does not make the session's own
     /// contribution to it any smaller.
-    func clamped(to maximums: ActorValues) -> Self {
+    public func clamped(to maximums: ActorValues) -> Self {
         ActorValueState(current: current.clamped(to: maximums), overrides: overrides)
     }
 
@@ -152,7 +152,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
     ///
     /// Answers for every vanilla index, primaries included. Only an index
     /// outside the table is nil, because only that names no actor value.
-    func entry(at index: Int32, baseline: Float) -> ActorValueEntry? {
+    public func entry(at index: Int32, baseline: Float) -> ActorValueEntry? {
         guard ActorValueIdentity.isVanilla(index: index) else { return nil }
         return (overrides[index] ?? .none).resolved(baseline: baseline)
     }
@@ -163,7 +163,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
     /// Dropping rather than storing a baseline-equal entry is what keeps the
     /// save and the dirty counts honest: an actor whose fire resistance was
     /// raised and then lowered again is an actor nothing happened to.
-    func setting(
+    public func setting(
         _ entry: ActorValueEntry,
         at index: Int32,
         baseline: Float
@@ -173,7 +173,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
 
     /// This state with `index`'s override replaced outright, or dropped when it
     /// says nothing.
-    func setting(_ override: ActorValueOverride, at index: Int32) -> Self {
+    public func setting(_ override: ActorValueOverride, at index: Int32) -> Self {
         guard ActorValueIdentity.isVanilla(index: index) else { return self }
         var updated = overrides
         if override.isEmpty {
@@ -186,7 +186,7 @@ nonisolated struct ActorValueState: WorldStateComponent {
 
     /// `index`'s stored override, which is `.none` for a value nothing has
     /// touched.
-    func override(at index: Int32) -> ActorValueOverride {
+    public func override(at index: Int32) -> ActorValueOverride {
         overrides[index] ?? .none
     }
 }

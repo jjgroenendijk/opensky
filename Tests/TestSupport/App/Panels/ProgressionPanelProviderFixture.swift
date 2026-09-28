@@ -6,7 +6,7 @@
 // would otherwise have to spell out the other fifteen.
 
 import AppKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 nonisolated func makeProgressionSnapshot(

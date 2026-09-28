@@ -30,30 +30,30 @@ import OpenSkyFormats
 import simd
 
 /// One actor's death, and where its corpse ended up.
-nonisolated struct ActorDeathState: WorldStateComponent, Equatable {
+nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Sendable {
     /// Set once the actor's health reached zero and the death events were
     /// raised. Never cleared by damage or regeneration.
-    var isDead: Bool
+    public var isDead: Bool
     /// Where the ragdoll came to rest, in world space, or nil while it is still
     /// falling. A corpse that is still moving when its cell unloads keeps the
     /// last resting transform it recorded, exactly as a dynamic body does.
-    var restingTransform: ReferenceTransformOverride?
+    public var restingTransform: ReferenceTransformOverride?
     /// Whether the corpse has been searched at least once, so a looted body can
     /// be told from an untouched one without reading its inventory.
-    var wasLooted: Bool
+    public var wasLooted: Bool
 
     /// The value an actor takes the moment it dies, before anything has settled.
-    static let justDied = ActorDeathState(isDead: true)
+    public static let justDied = ActorDeathState(isDead: true)
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .death
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .death(self)
     }
 
-    init(
+    public init(
         isDead: Bool,
         restingTransform: ReferenceTransformOverride? = nil,
         wasLooted: Bool = false
@@ -63,13 +63,13 @@ nonisolated struct ActorDeathState: WorldStateComponent, Equatable {
         self.wasLooted = wasLooted
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .death(value) = erased else { return nil }
         self = value
     }
 
     /// This state with the ragdoll's settled root pose recorded.
-    func settled(at position: SIMD3<Float>, orientation: simd_quatf) -> Self {
+    public func settled(at position: SIMD3<Float>, orientation: simd_quatf) -> Self {
         ActorDeathState(
             isDead: isDead,
             restingTransform: ReferenceTransformOverride(
@@ -81,7 +81,7 @@ nonisolated struct ActorDeathState: WorldStateComponent, Equatable {
     }
 
     /// This state marked as searched.
-    var looted: Self {
+    public var looted: Self {
         ActorDeathState(
             isDead: isDead, restingTransform: restingTransform, wasLooted: true
         )

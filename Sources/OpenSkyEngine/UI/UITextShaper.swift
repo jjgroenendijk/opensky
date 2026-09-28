@@ -8,37 +8,37 @@ import Foundation
 
 /// One positioned glyph from a shaped line. `x`/`y` are baseline-relative
 /// positions in the shaping font's coordinate space.
-nonisolated struct UIShapedGlyph: Equatable {
-    let glyphID: CGGlyph
-    let x: Float
-    let y: Float
+nonisolated public struct UIShapedGlyph: Equatable, Sendable {
+    public let glyphID: CGGlyph
+    public let x: Float
+    public let y: Float
 }
 
 /// Vertical typographic metrics of a font, in the font's size units.
-nonisolated struct UIFontMetrics {
-    let ascent: Float
-    let descent: Float
-    let leading: Float
+nonisolated public struct UIFontMetrics: Sendable {
+    public let ascent: Float
+    public let descent: Float
+    public let leading: Float
 
-    var lineHeight: Float {
+    public var lineHeight: Float {
         ascent + descent + leading
     }
 }
 
 /// A shaped single line: its glyphs plus typographic metrics.
-nonisolated struct UIShapedLine {
-    let glyphs: [UIShapedGlyph]
-    let width: Float
-    let metrics: UIFontMetrics
+nonisolated public struct UIShapedLine: Sendable {
+    public let glyphs: [UIShapedGlyph]
+    public let width: Float
+    public let metrics: UIFontMetrics
 
-    var height: Float {
+    public var height: Float {
         metrics.lineHeight
     }
 }
 
-nonisolated enum UITextShaper {
+nonisolated public enum UITextShaper: Sendable {
     /// Shapes one line with `font` (already at the desired size).
-    static func shape(_ text: String, font: CTFont) -> UIShapedLine {
+    public static func shape(_ text: String, font: CTFont) -> UIShapedLine {
         // kCTFontAttributeName avoids an AppKit/UIKit import for NSAttributedString.Key.font.
         let fontKey = NSAttributedString.Key(kCTFontAttributeName as String)
         let attributed = NSAttributedString(string: text, attributes: [fontKey: font])
@@ -74,7 +74,7 @@ nonisolated enum UITextShaper {
     }
 
     /// Ascent/descent/leading of `font`, independent of any string.
-    static func lineMetrics(_ font: CTFont) -> UIFontMetrics {
+    public static func lineMetrics(_ font: CTFont) -> UIFontMetrics {
         UIFontMetrics(
             ascent: Float(CTFontGetAscent(font)),
             descent: Float(CTFontGetDescent(font)),
@@ -83,7 +83,7 @@ nonisolated enum UITextShaper {
     }
 
     /// Width + height of `text` on one line at `font.pointSize`, in points.
-    static func measure(_ text: String, font: UIFont) -> UISize {
+    public static func measure(_ text: String, font: UIFont) -> UISize {
         let line = shape(text, font: font.makeCTFont(size: CGFloat(font.pointSize)))
         return UISize(width: line.width, height: line.height)
     }
@@ -91,7 +91,7 @@ nonisolated enum UITextShaper {
     /// Greedy word wrap to `maxWidth` points. Words split on spaces + newlines
     /// (explicit breaks are treated as spaces); a single word wider than the
     /// limit still occupies its own line rather than being dropped.
-    static func wrap(_ text: String, font: UIFont, maxWidth: Float) -> [String] {
+    public static func wrap(_ text: String, font: UIFont, maxWidth: Float) -> [String] {
         let words = text.split(whereSeparator: { $0 == " " || $0 == "\n" }).map(String.init)
         guard !words.isEmpty else { return [] }
         let ctFont = font.makeCTFont(size: CGFloat(font.pointSize))

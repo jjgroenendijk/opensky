@@ -4,7 +4,7 @@
 // contribution caps at 24 game hours, and a capped scrub fires each due
 // timer at most once.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 @MainActor

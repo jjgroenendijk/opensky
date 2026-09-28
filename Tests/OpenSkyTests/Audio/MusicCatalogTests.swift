@@ -4,7 +4,7 @@
 // device. Fixtures are synthetic plugins built in code
 // (Tests/OpenSkyTests/Audio/WorldMusicFixtures.swift).
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

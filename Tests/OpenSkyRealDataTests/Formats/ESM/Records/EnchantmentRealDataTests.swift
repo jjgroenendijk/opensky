@@ -4,7 +4,6 @@
 // how many of those links resolve.
 
 import Foundation
-@testable import OpenSky
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

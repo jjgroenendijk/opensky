@@ -16,6 +16,7 @@
 // distinguishable from a zero.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

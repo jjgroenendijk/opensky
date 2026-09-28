@@ -15,7 +15,7 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated final class QuestStore: Sendable {
+nonisolated public final class QuestStore: Sendable {
     /// Raw FormID -> decoded record.
     private let questsByFormID: [UInt32: Quest]
     /// Lowercased editor ID -> raw FormID.
@@ -33,19 +33,19 @@ nonisolated final class QuestStore: Sendable {
     /// because alias filling (issue #183) has to resolve FormIDs the QUST
     /// records *point at* — an ALFR reference — and not only the quest
     /// FormIDs the index already keyed.
-    let resolver: FormIDResolver
+    public let resolver: FormIDResolver
     /// QUST records in the top group that failed to decode. Zero in vanilla
     /// data; a sweep asserts it rather than silently indexing fewer quests.
-    let skippedRecordCount: Int
+    public let skippedRecordCount: Int
 
-    static let empty = QuestStore(
+    public static let empty = QuestStore(
         quests: [],
         resolver: FormIDResolver(pluginName: "", masters: [])
     )
 
     /// - Parameter pluginName: file name of `file`, needed because a plugin
     ///   does not record its own name and `ReferenceKey` is built from it.
-    convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
+    public convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
         let header = try? file.pluginHeader()
         let masters = header?.masters ?? []
         let isLocalized = localized ?? (header?.isLocalized ?? false)
@@ -67,7 +67,7 @@ nonisolated final class QuestStore: Sendable {
         )
     }
 
-    init(quests: [Quest], resolver: FormIDResolver, skippedRecordCount: Int = 0) {
+    public init(quests: [Quest], resolver: FormIDResolver, skippedRecordCount: Int = 0) {
         var byFormID: [UInt32: Quest] = [:]
         var byEditorID: [String: UInt32] = [:]
         var keys: [UInt32: ReferenceKey] = [:]
@@ -97,53 +97,53 @@ nonisolated final class QuestStore: Sendable {
         self.skippedRecordCount = skippedRecordCount
     }
 
-    var count: Int {
+    public var count: Int {
         questsByFormID.count
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         questsByFormID.isEmpty
     }
 
-    func quest(_ id: FormID) -> Quest? {
+    public func quest(_ id: FormID) -> Quest? {
         questsByFormID[id.rawValue]
     }
 
-    func quest(editorID: String) -> Quest? {
+    public func quest(editorID: String) -> Quest? {
         guard let raw = formIDsByEditorID[editorID.lowercased()] else { return nil }
         return questsByFormID[raw]
     }
 
-    func formID(editorID: String) -> FormID? {
+    public func formID(editorID: String) -> FormID? {
         formIDsByEditorID[editorID.lowercased()].map(FormID.init)
     }
 
     /// Session-stable key for a quest, which is how the runtime layer and the
     /// save file address it. Nil for a FormID this plugin does not define.
-    func key(for id: FormID) -> ReferenceKey? {
+    public func key(for id: FormID) -> ReferenceKey? {
         keysByFormID[id.rawValue]
     }
 
     /// FormID behind a session-stable key, the direction the Papyrus natives
     /// read (issue #322). Nil for a key that names no quest this session
     /// loaded.
-    func formID(for key: ReferenceKey) -> FormID? {
+    public func formID(for key: ReferenceKey) -> FormID? {
         formIDsByKey[key].map(FormID.init)
     }
 
     /// The QUST record a session-stable key names, or nil when it names none.
-    func quest(key: ReferenceKey) -> Quest? {
+    public func quest(key: ReferenceKey) -> Quest? {
         formIDsByKey[key].flatMap { questsByFormID[$0] }
     }
 
-    func key(editorID: String) -> ReferenceKey? {
+    public func key(editorID: String) -> ReferenceKey? {
         guard let raw = formIDsByEditorID[editorID.lowercased()] else { return nil }
         return keysByFormID[raw]
     }
 
     /// Records in editor-ID order, for inspection surfaces. Records without an
     /// editor ID sort by FormID under their hex spelling.
-    func sortedQuests() -> [Quest] {
+    public func sortedQuests() -> [Quest] {
         questsByFormID.values.sorted {
             ($0.editorID ?? $0.formID.description) < ($1.editorID ?? $1.formID.description)
         }
@@ -151,7 +151,7 @@ nonisolated final class QuestStore: Sendable {
 
     /// Quests that would appear in the journal — everything except type
     /// `none`, which the journal never lists.
-    func journalQuests() -> [Quest] {
+    public func journalQuests() -> [Quest] {
         sortedQuests().filter { $0.kind != .none }
     }
 }

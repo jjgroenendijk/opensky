@@ -16,15 +16,15 @@ import simd
 /// Built terrain ready to fold into the scene: splat draw items for the
 /// terrain pipeline, world-space bounds, and the layer accounting the
 /// summary reports.
-nonisolated struct TerrainBuild {
-    let items: [TerrainDrawItem]
-    let bounds: ModelBounds?
-    let heightField: TerrainHeightField
-    let quadrantCount: Int
+nonisolated public struct TerrainBuild {
+    public let items: [TerrainDrawItem]
+    public let bounds: ModelBounds?
+    public let heightField: TerrainHeightField
+    public let quadrantCount: Int
     /// ATXT layers drawn across all quadrants.
-    let layerCount: Int
+    public let layerCount: Int
     /// Layers dropped: unresolvable LTEX/TXST chain or over the format cap.
-    let layerSkipCount: Int
+    public let layerSkipCount: Int
 }
 
 /// Post-resolution splat layers for one patch: textures + aligned opacity
@@ -50,7 +50,10 @@ nonisolated extension CellSceneBuilder {
     /// cell's south-west corner at (gridX*4096, gridY*4096), matching REFR world
     /// coordinates (docs/decisions/coordinates.md) so vertex local (col*128,
     /// row*128, height) lands at absolute world position.
-    nonisolated func buildTerrain(found: FoundCell, worldspace: Worldspace?) -> TerrainBuild? {
+    nonisolated public func buildTerrain(
+        found: FoundCell,
+        worldspace: Worldspace?
+    ) -> TerrainBuild? {
         guard let grid = found.cell.grid else { return nil }
         let coordinate = CellCoordinate(x: grid.x, y: grid.y)
         let source = terrainSource(
@@ -198,7 +201,7 @@ nonisolated extension CellSceneBuilder {
 
     /// First LAND record in the cell's temporary-children group (type 9), where
     /// landscape lives (UESP Groups). Malformed decode -> nil (log + skip).
-    nonisolated func landRecord(in cellChildren: ESMGroup?) -> Land? {
+    nonisolated public func landRecord(in cellChildren: ESMGroup?) -> Land? {
         guard let cellChildren, let children = try? cellChildren.children() else { return nil }
         for case let .group(group) in children where group.kind == .cellTemporaryChildren {
             guard let records = try? group.children() else { continue }

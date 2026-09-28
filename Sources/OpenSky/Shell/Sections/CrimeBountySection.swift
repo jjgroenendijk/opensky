@@ -7,6 +7,7 @@
 // exists to demonstrate rather than restore a knob.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 final class CrimeBountySection: CrimeFactionPanelSection {

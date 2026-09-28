@@ -2,7 +2,7 @@
 // native-unit world maps into AVAudioEnvironmentNode's Y-up meter space as
 // (x, y, z) -> (x, z, -y) with positions scaled by metersPerUnit.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

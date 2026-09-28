@@ -6,23 +6,23 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct NIFCollisionAssetReport {
-    let path: String
-    let collisionRootCount: Int
-    let bodyCount: Int
-    let shapeCount: Int
-    let triangleCount: Int
-    let filteredBodyCount: Int
-    let unsupportedReachableBlocks: [String: Int]
+nonisolated public struct NIFCollisionAssetReport: Sendable {
+    public let path: String
+    public let collisionRootCount: Int
+    public let bodyCount: Int
+    public let shapeCount: Int
+    public let triangleCount: Int
+    public let filteredBodyCount: Int
+    public let unsupportedReachableBlocks: [String: Int]
     /// Havok material value -> how many shapes name it (issue #358). Shapes
     /// carrying no material are absent rather than counted under zero.
-    let shapeMaterials: [UInt32: Int]
-    let decodeFailures: [NIFCollisionFailure]
-    let collisionBounds: ModelBounds?
-    let renderBounds: ModelBounds?
-    let loadFailure: String?
+    public let shapeMaterials: [UInt32: Int]
+    public let decodeFailures: [NIFCollisionFailure]
+    public let collisionBounds: ModelBounds?
+    public let renderBounds: ModelBounds?
+    public let loadFailure: String?
 
-    var passesAcceptance: Bool {
+    public var passesAcceptance: Bool {
         loadFailure == nil
             && unsupportedReachableBlocks.isEmpty
             && decodeFailures.isEmpty
@@ -30,21 +30,21 @@ nonisolated struct NIFCollisionAssetReport {
     }
 }
 
-nonisolated struct NIFCollisionSweepResult {
-    let modelPaths: [String]
-    let reports: [NIFCollisionAssetReport]
+nonisolated public struct NIFCollisionSweepResult: Sendable {
+    public let modelPaths: [String]
+    public let reports: [NIFCollisionAssetReport]
 
-    var passesAcceptance: Bool {
+    public var passesAcceptance: Bool {
         !reports.isEmpty && reports.allSatisfy(\.passesAcceptance)
     }
 
-    var collisionBearingModelCount: Int {
+    public var collisionBearingModelCount: Int {
         reports.count(where: { $0.collisionRootCount > 0 })
     }
 }
 
-nonisolated enum NIFCollisionSweep {
-    static func run(
+nonisolated public enum NIFCollisionSweep: Sendable {
+    public static func run(
         file: ESMFile,
         fileSystem: VirtualFileSystem,
         worldspaceEditorID: String,

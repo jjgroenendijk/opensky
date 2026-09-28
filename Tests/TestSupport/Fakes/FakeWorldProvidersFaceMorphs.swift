@@ -1,7 +1,7 @@
 // FaceMorphControlProviding half of the shared panel fake (issue #207).
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 
 extension FakeWorldProviders {
     func setFaceMorphWeight(_ weight: Float, target: String) {

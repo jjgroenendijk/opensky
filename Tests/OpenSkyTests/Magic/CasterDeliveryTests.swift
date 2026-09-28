@@ -11,7 +11,7 @@
 // it. `SpellHitTests` asks the second question against a real effect runtime.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import simd

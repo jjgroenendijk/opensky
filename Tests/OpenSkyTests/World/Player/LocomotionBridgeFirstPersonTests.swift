@@ -2,7 +2,7 @@
 // perspective variable that differs, and two instances that cannot perturb
 // each other. Synthetic graphs only — no install.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

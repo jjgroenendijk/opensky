@@ -9,6 +9,7 @@
 // screenshot.
 
 import AppKit
+import OpenSkyEngine
 
 final class RuntimeStateSaveSection: PanelSectionViewController {
     /// Slot the field starts on, so the acceptance round trip needs no typing.

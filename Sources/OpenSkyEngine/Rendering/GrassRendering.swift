@@ -7,30 +7,30 @@ import Metal
 import OpenSkyFormats
 import simd
 
-nonisolated enum GrassRenderPolicy {
+nonisolated public enum GrassRenderPolicy: Sendable {
     /// Hard per-frame upload/draw cap. Scene data remains resident; overflow
     /// is skipped for that frame and reported through GrassDrawStats.
-    static let maximumInstancesPerFrame = 16384
-    static let defaultDrawDistance: Float = 8192
-    static let minimumDrawDistance: Float = 512
-    static let maximumDrawDistance: Float = 16384
-    static let maximumWindScale: Float = 2
+    public static let maximumInstancesPerFrame = 16384
+    public static let defaultDrawDistance: Float = 8192
+    public static let minimumDrawDistance: Float = 512
+    public static let maximumDrawDistance: Float = 16384
+    public static let maximumWindScale: Float = 2
     /// Shader displacement at full weather wind + maximum UI wind scale.
-    static let maximumSwayDisplacement: Float = 192
+    public static let maximumSwayDisplacement: Float = 192
 }
 
 /// One loaded GRAS model placement before it expands into mesh draw groups.
-nonisolated struct GrassRenderPlacement {
-    let model: RenderModel
-    let transform: float4x4
-    let bounds: ModelBounds?
-    let position: SIMD3<Float>
-    let color: SIMD3<Float>
-    let wavePeriod: Float
-    let phase: Float
-    let densityKey: Float
+nonisolated public struct GrassRenderPlacement {
+    public let model: RenderModel
+    public let transform: float4x4
+    public let bounds: ModelBounds?
+    public let position: SIMD3<Float>
+    public let color: SIMD3<Float>
+    public let wavePeriod: Float
+    public let phase: Float
+    public let densityKey: Float
 
-    init(placement: GrassPlacement, model: RenderModel, modelBounds: ModelBounds?) {
+    public init(placement: GrassPlacement, model: RenderModel, modelBounds: ModelBounds?) {
         let resolvedTransform = GrassTransform.matrix(for: placement)
         transform = resolvedTransform
         self.model = model
@@ -57,34 +57,34 @@ nonisolated struct GrassRenderPlacement {
 /// Grass-specific per-mesh instance. Matrix already includes mesh-local ->
 /// model-root, matching static DrawInstance; placement metadata feeds wind,
 /// density, distance fade, and runtime accounting.
-nonisolated struct GrassDrawInstance {
-    let modelMatrix: float4x4
-    let normalMatrix: float4x4
-    let bounds: ModelBounds?
-    let position: SIMD3<Float>
-    let color: SIMD3<Float>
-    let wavePeriod: Float
-    let phase: Float
-    let densityKey: Float
+nonisolated public struct GrassDrawInstance: Sendable {
+    public let modelMatrix: float4x4
+    public let normalMatrix: float4x4
+    public let bounds: ModelBounds?
+    public let position: SIMD3<Float>
+    public let color: SIMD3<Float>
+    public let wavePeriod: Float
+    public let phase: Float
+    public let densityKey: Float
 }
 
-nonisolated struct GrassDrawGroup {
-    let mesh: RenderMesh
-    let material: RenderMaterial
-    fileprivate(set) var instances: [GrassDrawInstance]
+nonisolated public struct GrassDrawGroup {
+    public let mesh: RenderMesh
+    public let material: RenderMaterial
+    public fileprivate(set) var instances: [GrassDrawInstance]
 }
 
 /// Same deterministic first-appearance grouping policy as static geometry.
-nonisolated struct GrassGroupAccumulator {
+nonisolated public struct GrassGroupAccumulator {
     private struct Key: Hashable {
         let mesh: ObjectIdentifier
         let diffuse: ObjectIdentifier
     }
 
     private var indexByKey: [Key: Int] = [:]
-    private(set) var groups: [GrassDrawGroup] = []
+    public private(set) var groups: [GrassDrawGroup] = []
 
-    mutating func add(_ placement: GrassRenderPlacement) {
+    public mutating func add(_ placement: GrassRenderPlacement) {
         for mesh in placement.model.meshes {
             guard mesh.materialSlot < placement.model.materials.count else { continue }
             let material = placement.model.materials[mesh.materialSlot]
@@ -106,7 +106,7 @@ nonisolated struct GrassGroupAccumulator {
         }
     }
 
-    mutating func add(_ group: GrassDrawGroup) {
+    public mutating func add(_ group: GrassDrawGroup) {
         for instance in group.instances {
             add(mesh: group.mesh, material: group.material, instance: instance)
         }
@@ -129,8 +129,8 @@ nonisolated struct GrassGroupAccumulator {
 
 /// Pure placement orientation. Fit-to-slope maps local +Z to LAND normal;
 /// yaw rotates within that tangent plane. Without flag, grass remains upright.
-nonisolated enum GrassTransform {
-    static func matrix(for placement: GrassPlacement) -> float4x4 {
+nonisolated public enum GrassTransform: Sendable {
+    public static func matrix(for placement: GrassPlacement) -> float4x4 {
         let up = placement.flags.contains(.fitToSlope)
             ? normalizedOrUp(placement.normal) : SIMD3<Float>(0, 0, 1)
         let reference = abs(up.y) < 0.99
@@ -147,7 +147,7 @@ nonisolated enum GrassTransform {
         ))
     }
 
-    static func swayBounds(_ bounds: ModelBounds) -> ModelBounds {
+    public static func swayBounds(_ bounds: ModelBounds) -> ModelBounds {
         let padding = GrassRenderPolicy.maximumSwayDisplacement
         return ModelBounds(
             min: bounds.min - SIMD3(padding, padding, 0),

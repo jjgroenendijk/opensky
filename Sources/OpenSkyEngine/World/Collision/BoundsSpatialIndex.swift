@@ -7,10 +7,10 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct BoundsSpatialIndex {
+nonisolated public struct BoundsSpatialIndex: Sendable {
     /// Elements per leaf. Small enough that a leaf test is cheap, large enough
     /// that a cell with a handful of shapes does not build a deep tree.
-    static let maximumElementsPerLeaf = 4
+    public static let maximumElementsPerLeaf = 4
 
     private struct Node {
         let bounds: ModelBounds
@@ -22,20 +22,20 @@ nonisolated struct BoundsSpatialIndex {
     private var nodes: [Node] = []
     private let root: Int?
 
-    init(bounds: [ModelBounds]) {
+    public init(bounds: [ModelBounds]) {
         var builder = Builder(bounds: bounds)
         root = builder.build(Array(bounds.indices))
         nodes = builder.nodes
     }
 
-    var nodeCount: Int {
+    public var nodeCount: Int {
         nodes.count
     }
 
     /// Indices of every element whose leaf node bounds overlap `bounds`,
     /// ascending. Node bounds prune; the caller still filters exact element
     /// AABBs.
-    func query(overlapping bounds: ModelBounds) -> [Int] {
+    public func query(overlapping bounds: ModelBounds) -> [Int] {
         guard let root else { return [] }
         var result: [Int] = []
         var stack = [root]

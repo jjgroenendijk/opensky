@@ -69,19 +69,19 @@ import OpenSkyFormats
 /// Pure arithmetic over a value reader, with no store and no world, so every
 /// number below is a plain assertion in a test rather than something only a running
 /// session can show.
-nonisolated enum CombatFortifyBonus {
+nonisolated public enum CombatFortifyBonus: Sendable {
     /// Percentage points per unit of multiplier. The magnitudes are percentages;
     /// see the file header for the quoted descriptions.
-    static let pointsPerWhole: Float = 100
+    public static let pointsPerWhole: Float = 100
 
     /// One-Handed Modifier and One-Handed Power Modifier.
-    static let oneHandedIndices = indices("One-Handed Modifier", "One-Handed Power Modifier")
+    public static let oneHandedIndices = indices("One-Handed Modifier", "One-Handed Power Modifier")
     /// Two-Handed Modifier and Two-Handed Power Modifier.
-    static let twoHandedIndices = indices("Two-Handed Modifier", "Two-Handed Power Modifier")
+    public static let twoHandedIndices = indices("Two-Handed Modifier", "Two-Handed Power Modifier")
     /// Marksman Modifier and Marksman Power Modifier, which is what a bow reads.
-    static let archeryIndices = indices("Marksman Modifier", "Marksman Power Modifier")
+    public static let archeryIndices = indices("Marksman Modifier", "Marksman Power Modifier")
     /// Block Modifier and Block Power Modifier.
-    static let blockIndices = indices("Block Modifier", "Block Power Modifier")
+    public static let blockIndices = indices("Block Modifier", "Block Power Modifier")
 
     /// The multiplier a melee swing with `handType` earns.
     ///
@@ -90,7 +90,7 @@ nonisolated enum CombatFortifyBonus {
     /// distinguishes one-handed from two-handed. An empty hand reads neither: an
     /// unarmed hit is neither a one-handed nor a two-handed attack, and `Unarmed
     /// Damage` is the value vanilla moves for it (see the file header).
-    static func melee(handType: CombatHandType, reading value: (Int32) -> Float?) -> Float {
+    public static func melee(handType: CombatHandType, reading value: (Int32) -> Float?) -> Float {
         switch handType {
         case .sword, .dagger, .axe, .mace: multiplier(of: oneHandedIndices, reading: value)
         case .greatsword, .battleaxe: multiplier(of: twoHandedIndices, reading: value)
@@ -100,12 +100,12 @@ nonisolated enum CombatFortifyBonus {
     }
 
     /// The multiplier a bow shot earns.
-    static func archery(reading value: (Int32) -> Float?) -> Float {
+    public static func archery(reading value: (Int32) -> Float?) -> Float {
         multiplier(of: archeryIndices, reading: value)
     }
 
     /// The multiplier a block earns, which multiplies the blocked fraction.
-    static func block(reading value: (Int32) -> Float?) -> Float {
+    public static func block(reading value: (Int32) -> Float?) -> Float {
         multiplier(of: blockIndices, reading: value)
     }
 
@@ -114,7 +114,7 @@ nonisolated enum CombatFortifyBonus {
     /// Floored rather than allowed negative because the formulas it feeds treat
     /// their bonus as a non-negative multiplier: a detrimental effect big enough to
     /// take the sum below -100 points would otherwise turn a hit into a heal.
-    static func multiplier(of indices: [Int32], reading value: (Int32) -> Float?) -> Float {
+    public static func multiplier(of indices: [Int32], reading value: (Int32) -> Float?) -> Float {
         let points = indices.reduce(into: Float(0)) { total, index in
             guard let read = value(index), read.isFinite else { return }
             total += read

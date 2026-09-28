@@ -5,40 +5,82 @@
 
 import Foundation
 
-nonisolated struct SystemMenuControlSnapshot: Equatable {
-    let isOpen: Bool
-    let entryTitles: [String]
-    let selectedIndex: Int
-    let lastOutcome: String?
-    let settingsRevealed: Bool
+nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
+    public let isOpen: Bool
+    public let entryTitles: [String]
+    public let selectedIndex: Int
+    public let lastOutcome: String?
+    public let settingsRevealed: Bool
     /// Menu-stack identifiers currently open, top last. Proves the menu drives
     /// the engine's own stack rather than a private flag.
-    let openMenus: [String]
-    let worldSimPaused: Bool
+    public let openMenus: [String]
+    public let worldSimPaused: Bool
 
     /// Settings placeholders. Read-only for the data root (Settings owns
     /// changing it, Cmd+,); the volume is live and writes through the same
     /// audio seam as World > Audio.
-    let dataRootPath: String?
-    let dataRootSource: String?
-    let masterVolume: Float
-    let audioEnabled: Bool
+    public let dataRootPath: String?
+    public let dataRootSource: String?
+    public let masterVolume: Float
+    public let audioEnabled: Bool
 
     /// Vanilla presentation layer.
-    let movieEnabled: Bool
-    let movieLoaded: Bool
-    let movieError: String?
-    let movieDrawStats: SWFDrawStats
-    let movieFaults: Int
-    let movieMissingNames: Int
+    public let movieEnabled: Bool
+    public let movieLoaded: Bool
+    public let movieError: String?
+    public let movieDrawStats: SWFDrawStats
+    public let movieFaults: Int
+    public let movieMissingNames: Int
     /// Row labels the vanilla movie's `SystemPage` built for itself.
-    let movieEntryTitles: [String]
+    public let movieEntryTitles: [String]
     /// The movie page driven to the front (`System`).
-    let movieState: String?
+    public let movieState: String?
+
+    public init(
+        isOpen: Bool,
+        entryTitles: [String],
+        selectedIndex: Int,
+        lastOutcome: String?,
+        settingsRevealed: Bool,
+        openMenus: [String],
+        worldSimPaused: Bool,
+        dataRootPath: String?,
+        dataRootSource: String?,
+        masterVolume: Float,
+        audioEnabled: Bool,
+        movieEnabled: Bool,
+        movieLoaded: Bool,
+        movieError: String?,
+        movieDrawStats: SWFDrawStats,
+        movieFaults: Int,
+        movieMissingNames: Int,
+        movieEntryTitles: [String],
+        movieState: String?
+    ) {
+        self.isOpen = isOpen
+        self.entryTitles = entryTitles
+        self.selectedIndex = selectedIndex
+        self.lastOutcome = lastOutcome
+        self.settingsRevealed = settingsRevealed
+        self.openMenus = openMenus
+        self.worldSimPaused = worldSimPaused
+        self.dataRootPath = dataRootPath
+        self.dataRootSource = dataRootSource
+        self.masterVolume = masterVolume
+        self.audioEnabled = audioEnabled
+        self.movieEnabled = movieEnabled
+        self.movieLoaded = movieLoaded
+        self.movieError = movieError
+        self.movieDrawStats = movieDrawStats
+        self.movieFaults = movieFaults
+        self.movieMissingNames = movieMissingNames
+        self.movieEntryTitles = movieEntryTitles
+        self.movieState = movieState
+    }
 }
 
 @MainActor
-protocol SystemMenuControlProviding: AnyObject {
+public protocol SystemMenuControlProviding: AnyObject {
     var systemMenuIsOpen: Bool { get }
     /// Drives the vanilla `Interface\quest_journal.swf` presentation layer. Off
     /// keeps the engine-side selector working with the gameplay HUD on screen.

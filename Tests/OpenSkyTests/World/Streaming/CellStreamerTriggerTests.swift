@@ -5,7 +5,7 @@
 // Synthetic cell scenes through a manual build runner — no Metal, no game
 // data, no Papyrus VM (the VM half lives in PapyrusWorldTriggerTests).
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

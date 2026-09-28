@@ -3,7 +3,7 @@
 import QuartzCore
 
 extension Renderer {
-    func updateAnimations(deltaTime: Float) {
+    public func updateAnimations(deltaTime: Float) {
         animationTime += max(deltaTime, 0)
         let started = DispatchTime.now().uptimeNanoseconds
         let sceneBones = if actorAnimationsEnabled {
@@ -22,7 +22,7 @@ extension Renderer {
     }
 
     @discardableResult
-    func updateAnimationsFromWallClock() -> Float {
+    public func updateAnimationsFromWallClock() -> Float {
         // Returned delta also drives particles + precipitation this frame, so a
         // paused (zero) delta freezes all three together.
         let delta = animationClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
@@ -30,7 +30,7 @@ extension Renderer {
         return delta
     }
 
-    func updateParticles(deltaTime: Float) {
+    public func updateParticles(deltaTime: Float) {
         guard particlesEnabled, !particlesFrozen else { return }
         for playback in scene.particles {
             playback.advance(
@@ -41,7 +41,7 @@ extension Renderer {
         }
     }
 
-    func seekParticles(to time: Float) {
+    public func seekParticles(to time: Float) {
         guard particlesEnabled else { return }
         for playback in scene.particles {
             playback.seek(

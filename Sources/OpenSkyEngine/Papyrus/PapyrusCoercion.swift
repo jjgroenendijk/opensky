@@ -6,13 +6,13 @@
 
 import Foundation
 
-nonisolated enum PapyrusCoercionError: Error, Equatable {
+nonisolated public enum PapyrusCoercionError: Error, Equatable {
     case unsupported(source: String, destination: String)
     case invalidNumber(String)
 }
 
-nonisolated struct PapyrusCoercion {
-    func toBoolean(_ value: PapyrusValue) -> Bool {
+nonisolated public struct PapyrusCoercion: Sendable {
+    public func toBoolean(_ value: PapyrusValue) -> Bool {
         switch value {
         case .none:
             false
@@ -31,7 +31,7 @@ nonisolated struct PapyrusCoercion {
         }
     }
 
-    func toInteger(_ value: PapyrusValue) throws(PapyrusCoercionError) -> Int32 {
+    public func toInteger(_ value: PapyrusValue) throws(PapyrusCoercionError) -> Int32 {
         switch value {
         case let .integer(value):
             value
@@ -46,7 +46,7 @@ nonisolated struct PapyrusCoercion {
         }
     }
 
-    func toFloat(_ value: PapyrusValue) throws(PapyrusCoercionError) -> Float {
+    public func toFloat(_ value: PapyrusValue) throws(PapyrusCoercionError) -> Float {
         switch value {
         case let .float(value):
             return value
@@ -64,7 +64,7 @@ nonisolated struct PapyrusCoercion {
         }
     }
 
-    func toString(_ value: PapyrusValue) -> String {
+    public func toString(_ value: PapyrusValue) -> String {
         switch value {
         case .none:
             "None"

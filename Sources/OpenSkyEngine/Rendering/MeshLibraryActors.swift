@@ -10,7 +10,7 @@ import OpenSkyGameData
 import simd
 
 nonisolated extension MeshLibrary {
-    func loadActorSkeleton(path: String) -> Result<ActorSkeletonAsset, ActorAssetFailure> {
+    public func loadActorSkeleton(path: String) -> Result<ActorSkeletonAsset, ActorAssetFailure> {
         let pathKey: String
         do {
             pathKey = try meshKey(for: path)
@@ -32,7 +32,7 @@ nonisolated extension MeshLibrary {
         }
     }
 
-    func loadActorModel(
+    public func loadActorModel(
         path: String,
         skeleton: ActorSkeletonAsset?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
@@ -60,7 +60,7 @@ nonisolated extension MeshLibrary {
     /// A rigid model rewritten to ride `bone`, cached separately from the same
     /// path loaded as ordinary static geometry: the same sword is a different
     /// mesh in a hand than it is lying on a table (issue #178).
-    func loadActorAttachment(
+    public func loadActorAttachment(
         path: String,
         bone: String,
         skeleton: ActorSkeletonAsset?
@@ -87,7 +87,7 @@ nonisolated extension MeshLibrary {
         }
     }
 
-    func characterSkeleton() -> NIFSkeleton? {
+    public func characterSkeleton() -> NIFSkeleton? {
         if triedCharacterSkeleton {
             return cachedCharacterSkeleton
         }

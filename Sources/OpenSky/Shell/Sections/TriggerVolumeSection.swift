@@ -9,6 +9,7 @@
 // behind, so the section deliberately inherits the base no-override hooks.
 
 import AppKit
+import OpenSkyEngine
 
 final class TriggerVolumeSection: PanelSectionViewController {
     weak var provider: (any TriggerControlProviding)? {

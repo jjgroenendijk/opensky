@@ -15,46 +15,46 @@ import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 
-nonisolated enum TerrainMeshBuilder {
+nonisolated public enum TerrainMeshBuilder: Sendable {
     /// One exterior cell spans 4096 game units per edge (docs/decisions/
     /// coordinates.md), 32 quads at 128 units each -> a 33x33 vertex grid.
-    static let cellSize: Float = 4096
-    static let quadSize: Float = 128
+    public static let cellSize: Float = 4096
+    public static let quadSize: Float = 128
     /// 33x33 vertices, matching Land.dimension.
-    static let gridDimension = Land.dimension
+    public static let gridDimension = Land.dimension
     /// Each cell splits into four 17x17 quadrants sharing the center row/col
     /// (col/row 16). Quadrant q owns cols/rows [origin, origin+16].
-    static let quadrantDimension = 17
+    public static let quadrantDimension = 17
     /// 289 vertices per quadrant — the VTXT position space (UESP LAND).
-    static let quadrantVertexCount = quadrantDimension * quadrantDimension
+    public static let quadrantVertexCount = quadrantDimension * quadrantDimension
 
     /// UV density: grid position in quads scaled by this reciprocal, so one
     /// texture repeat spans `uvQuadsPerRepeat` quads. The exact vanilla tiling
     /// density is UNCONFIRMED (community lore varies) — this constant is a
     /// verifiable starting point, tuned visually against real data.
-    static let uvQuadsPerRepeat: Float = 2
+    public static let uvQuadsPerRepeat: Float = 2
 
     /// One ATXT splat layer of a quadrant, opacities baked dense.
-    struct Layer {
+    public struct Layer: Sendable {
         /// LTEX FormID this layer's texture resolves to.
-        let texture: FormID
+        public let texture: FormID
         /// Dense 17x17 opacities (quadrant-grid row-major, clamped [0, 1])
         /// baked from the sparse VTXT samples.
-        let opacities: [Float]
+        public let opacities: [Float]
     }
 
     /// One drawable terrain patch: a quadrant sub-mesh (or the LAND-less
     /// fallback plane) plus its splat inputs, pre-resolution.
-    struct Patch {
+    public struct Patch: Sendable {
         /// Quadrant index 0-3; nil for the fallback plane.
-        let quadrant: UInt8?
-        let mesh: Mesh
+        public let quadrant: UInt8?
+        public let mesh: Mesh
         /// BTXT LTEX FormID; nil -> quadrant painted with no base (fallback
         /// material downstream).
-        let baseTexture: FormID?
+        public let baseTexture: FormID?
         /// ATXT layers sorted by layer number — the splat blend order
         /// (UESP LAND: the layer number drives stacking above the base).
-        let layers: [Layer]
+        public let layers: [Layer]
     }
 
     /// Builds the terrain patches for a decoded LAND: one per painted,
@@ -64,7 +64,7 @@ nonisolated enum TerrainMeshBuilder {
     ///
     /// - Parameter hiddenQuadrants: XCLC quad-flags; bit `1 << q` hides
     ///   quadrant q.
-    static func patches(land: Land, hiddenQuadrants: UInt32) -> [Patch] {
+    public static func patches(land: Land, hiddenQuadrants: UInt32) -> [Patch] {
         guard let heights = land.heightField?.heights, heights.count == Land.vertexCount else {
             return []
         }
@@ -95,7 +95,7 @@ nonisolated enum TerrainMeshBuilder {
     /// no LAND record. Height comes from the worldspace WRLD DNAM default land
     /// height (Tamriel -27000); the caller supplies it. No base texture, no
     /// layers — draws with the fallback material and zero weights.
-    static func fallbackPatch(defaultLandHeight: Float) -> Patch {
+    public static func fallbackPatch(defaultLandHeight: Float) -> Patch {
         let field = Field(
             heights: [Float](repeating: defaultLandHeight, count: Land.vertexCount),
             normals: nil,
@@ -116,7 +116,7 @@ nonisolated enum TerrainMeshBuilder {
     /// `position` maps straight to the quadrant-local vertex. Out-of-range
     /// positions are dropped (external data, mod-quirk rule); opacities are
     /// clamped to [0, 1].
-    static func denseOpacities(_ alphas: [Land.AlphaSample]) -> [Float] {
+    public static func denseOpacities(_ alphas: [Land.AlphaSample]) -> [Float] {
         var dense = [Float](repeating: 0, count: quadrantVertexCount)
         for sample in alphas where Int(sample.position) < quadrantVertexCount {
             dense[Int(sample.position)] = min(max(sample.opacity, 0), 1)
@@ -129,7 +129,7 @@ nonisolated enum TerrainMeshBuilder {
     /// blend order, layers beyond TerrainConstant.maxLayers ignored (callers
     /// cap + count first). A layer shorter than `vertexCount` contributes 0
     /// past its end (defensive; bake always emits full arrays).
-    static func packWeights(layers: [[Float]], vertexCount: Int) -> [SIMD4<Float>] {
+    public static func packWeights(layers: [[Float]], vertexCount: Int) -> [SIMD4<Float>] {
         var packed = [SIMD4<Float>](repeating: .zero, count: vertexCount * 2)
         let capped = layers.prefix(TerrainConstant.maxLayers.rawValue)
         for (layerIndex, opacities) in capped.enumerated() {

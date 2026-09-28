@@ -23,6 +23,7 @@
 // the deliberate way back.
 
 import AppKit
+import OpenSkyEngine
 
 final class CombatLoopSection: PanelSectionViewController {
     weak var provider: (any CombatLoopControlProviding)? {

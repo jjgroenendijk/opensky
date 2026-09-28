@@ -2,16 +2,16 @@
 
 import simd
 
-nonisolated enum NavigationGeometry {
-    static let epsilon: Float = 0.0001
+nonisolated public enum NavigationGeometry: Sendable {
+    public static let epsilon: Float = 0.0001
 
-    static func cross(_ lhs: SIMD2<Float>, _ rhs: SIMD2<Float>) -> Float {
+    public static func cross(_ lhs: SIMD2<Float>, _ rhs: SIMD2<Float>) -> Float {
         lhs.x * rhs.y - lhs.y * rhs.x
     }
 
     /// Closest XY point with Z reconstructed from barycentric weights on the
     /// triangle plane. Degenerate triangles are filtered by the caller.
-    static func closestPoint(
+    public static func closestPoint(
         on triangle: RuntimeNavigationTriangle,
         to point: SIMD3<Float>
     ) -> SIMD3<Float> {

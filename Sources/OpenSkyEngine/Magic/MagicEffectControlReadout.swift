@@ -7,10 +7,10 @@
 
 import Foundation
 
-nonisolated enum MagicEffectControlReadout {
+nonisolated public enum MagicEffectControlReadout: Sendable {
     /// The player's effect list, one line per effect, or the honest absence of
     /// one.
-    static func effectsText(for snapshot: MagicEffectControlSnapshot) -> String {
+    public static func effectsText(for snapshot: MagicEffectControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Player effects: unavailable" }
         guard !snapshot.playerEffects.isEmpty else {
             return "Player effects: none running"
@@ -26,7 +26,7 @@ nonisolated enum MagicEffectControlReadout {
     /// "no actor resident" and "an actor with nothing running" are different
     /// states and are spelled differently: an NPC that just took a hostile
     /// spell and an empty cell must not read the same.
-    static func nearestActorEffectsText(for snapshot: MagicEffectControlSnapshot) -> String {
+    public static func nearestActorEffectsText(for snapshot: MagicEffectControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Nearest actor effects: unavailable" }
         guard let name = snapshot.nearestActorName else {
             return "Nearest actor effects: none resident"
@@ -40,7 +40,7 @@ nonisolated enum MagicEffectControlReadout {
     }
 
     /// What the runtime has done this session.
-    static func activityText(for snapshot: MagicEffectControlSnapshot) -> String {
+    public static func activityText(for snapshot: MagicEffectControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Applied: unavailable" }
         return "Applied: \(snapshot.appliedCount) timed, \(snapshot.instantCount) instant — "
             + "\(snapshot.expiredCount) expired, \(snapshot.dispelledCount) dispelled, "
@@ -49,7 +49,7 @@ nonisolated enum MagicEffectControlReadout {
 
     /// What it declined to do, which is the point of the tally: unimplemented
     /// ground is measured rather than silent.
-    static func coverageText(for snapshot: MagicEffectControlSnapshot) -> String {
+    public static func coverageText(for snapshot: MagicEffectControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Coverage: unavailable" }
         guard snapshot.skippedCount > 0 else {
             return "Coverage: every effect entry applied"
@@ -61,12 +61,12 @@ nonisolated enum MagicEffectControlReadout {
             + "unimplemented archetypes: \(unimplemented)"
     }
 
-    static func lastActionText(for snapshot: MagicEffectControlSnapshot) -> String {
+    public static func lastActionText(for snapshot: MagicEffectControlSnapshot) -> String {
         "Last action: \(snapshot.lastActionText)"
     }
 
     /// Every line the section shows, in order.
-    static func text(for snapshot: MagicEffectControlSnapshot) -> String {
+    public static func text(for snapshot: MagicEffectControlSnapshot) -> String {
         [
             effectsText(for: snapshot),
             nearestActorEffectsText(for: snapshot),

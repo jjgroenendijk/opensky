@@ -11,7 +11,7 @@ import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 
-nonisolated enum ParticleBlendMode: Equatable, Hashable {
+nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
     /// Source alpha over destination (SRC_ALPHA / INV_SRC_ALPHA).
     case alpha
     /// Emissive accumulation (SRC_ALPHA / ONE).
@@ -21,7 +21,7 @@ nonisolated enum ParticleBlendMode: Equatable, Hashable {
     /// Destination modulation (DEST_COLOR / ZERO).
     case multiply
 
-    init(alpha: NIFAlphaProperty?) {
+    public init(alpha: NIFAlphaProperty?) {
         guard alpha?.blendEnabled == true else {
             self = .alpha
             return
@@ -37,15 +37,15 @@ nonisolated enum ParticleBlendMode: Equatable, Hashable {
 
 /// One active particle, wholly CPU-owned. Position + velocity are world-space
 /// after birth, so static placed emitters need no later transform work.
-nonisolated struct SimulatedParticle: Equatable {
-    var position: SIMD3<Float>
-    var velocity: SIMD3<Float>
-    let color: SIMD4<Float>
-    let initialRadius: Float
-    var radius: Float
-    var age: Float
-    let lifetime: Float
-    let atlasIndex: Int
+nonisolated public struct SimulatedParticle: Equatable, Sendable {
+    public var position: SIMD3<Float>
+    public var velocity: SIMD3<Float>
+    public let color: SIMD4<Float>
+    public let initialRadius: Float
+    public var radius: Float
+    public var age: Float
+    public let lifetime: Float
+    public let atlasIndex: Int
 }
 
 /// Deterministic generator: stable frames/tests across processes and machines.
@@ -74,18 +74,18 @@ nonisolated private struct ParticleRandom {
 /// until they land, a bounded runtime policy fills roughly one quarter of the
 /// system capacity per average lifetime. This is an OpenSky fallback, not a
 /// claimed Creation Engine constant.
-nonisolated struct ParticleSimulator {
-    static let maximumCapacity = 2048
+nonisolated public struct ParticleSimulator: Sendable {
+    public static let maximumCapacity = 2048
 
-    let definition: ParticleSystemDefinition
-    private(set) var placementTransform: float4x4
-    let capacity: Int
-    private(set) var particles: [SimulatedParticle] = []
+    public let definition: ParticleSystemDefinition
+    public private(set) var placementTransform: float4x4
+    public let capacity: Int
+    public private(set) var particles: [SimulatedParticle] = []
     private var random: ParticleRandom
     private var birthAccumulator: Float = 0
     private var nextEmitter = 0
 
-    init(definition: ParticleSystemDefinition, placementTransform: float4x4, seed: UInt64) {
+    public init(definition: ParticleSystemDefinition, placementTransform: float4x4, seed: UInt64) {
         self.definition = definition
         self.placementTransform = placementTransform
         capacity = min(max(definition.maxParticles, 0), Self.maximumCapacity)
@@ -93,7 +93,7 @@ nonisolated struct ParticleSimulator {
         particles.reserveCapacity(capacity)
     }
 
-    mutating func reset(seed: UInt64) {
+    public mutating func reset(seed: UInt64) {
         particles.removeAll(keepingCapacity: true)
         random = ParticleRandom(seed: seed)
         birthAccumulator = 0
@@ -102,14 +102,14 @@ nonisolated struct ParticleSimulator {
 
     /// Re-centers a camera-following emitter and its existing particles by
     /// the same world-space delta. Placed NIF emitters never call this path.
-    mutating func translate(by delta: SIMD3<Float>) {
+    public mutating func translate(by delta: SIMD3<Float>) {
         placementTransform.columns.3 += SIMD4(delta, 0)
         for index in particles.indices {
             particles[index].position += delta
         }
     }
 
-    mutating func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
+    public mutating func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
         let deltaTime = simd_clamp(deltaTime, 0, 0.1)
         guard deltaTime > 0 else { return }
         updateExisting(deltaTime: deltaTime, wind: wind)
@@ -241,29 +241,29 @@ nonisolated struct ParticleSimulator {
 }
 
 /// Layout mirrored by ParticleInstance in ShaderTypes.h.
-nonisolated struct ParticleGPUInstance {
-    let positionSize: SIMD4<Float>
-    let color: SIMD4<Float>
-    let uvRect: SIMD4<Float>
+nonisolated public struct ParticleGPUInstance: Sendable {
+    public let positionSize: SIMD4<Float>
+    public let color: SIMD4<Float>
+    public let uvRect: SIMD4<Float>
 }
 
-nonisolated final class ParticlePlayback {
-    let name: String
-    let sourcePath: String
-    let texture: MTLTexture
-    let blendMode: ParticleBlendMode
-    let instanceBuffer: MTLBuffer
-    let capacity: Int
-    let emitterCount: Int
+nonisolated public final class ParticlePlayback {
+    public let name: String
+    public let sourcePath: String
+    public let texture: MTLTexture
+    public let blendMode: ParticleBlendMode
+    public let instanceBuffer: MTLBuffer
+    public let capacity: Int
+    public let emitterCount: Int
     private let seed: UInt64
-    private(set) var simulator: ParticleSimulator
-    private(set) var simulationTime: Float = 0
+    public private(set) var simulator: ParticleSimulator
+    public private(set) var simulationTime: Float = 0
 
-    var liveCount: Int {
+    public var liveCount: Int {
         simulator.particles.count
     }
 
-    init(
+    public init(
         device: MTLDevice,
         definition: ParticleSystemDefinition,
         placementTransform: float4x4,
@@ -293,21 +293,21 @@ nonisolated final class ParticlePlayback {
         instanceBuffer = buffer
     }
 
-    func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
+    public func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
         simulator.advance(deltaTime: deltaTime, wind: wind, emissionScale: emissionScale)
         simulationTime += max(deltaTime, 0)
     }
 
-    func translate(by delta: SIMD3<Float>) {
+    public func translate(by delta: SIMD3<Float>) {
         simulator.translate(by: delta)
     }
 
-    func reset() {
+    public func reset() {
         simulator.reset(seed: seed)
         simulationTime = 0
     }
 
-    func seek(to time: Float, wind: WindState, emissionScale: Float) {
+    public func seek(to time: Float, wind: WindState, emissionScale: Float) {
         let target = max(time, 0)
         simulator.reset(seed: seed)
         simulationTime = 0
@@ -320,7 +320,7 @@ nonisolated final class ParticlePlayback {
         simulationTime = target
     }
 
-    func prepareBuffer(slot: Int) -> (offset: Int, count: Int) {
+    public func prepareBuffer(slot: Int) -> (offset: Int, count: Int) {
         let particles = simulator.particles
         let offset = slot * max(capacity, 1) * MemoryLayout<ParticleGPUInstance>.stride
         guard !particles.isEmpty else { return (offset, 0) }

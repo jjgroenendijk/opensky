@@ -18,22 +18,22 @@ import OpenSkyFormats
 
 /// One actor's saved current values, before they are merged back into the
 /// delta.
-nonisolated struct SaveActorValueEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: ActorValueState
+nonisolated public struct SaveActorValueEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: ActorValueState
 }
 
 /// One actor's saved actor-value overrides (issue #496), before they are merged
 /// onto that actor's `AVAL` entry.
-nonisolated struct SaveActorValueOverrideEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let overrides: [Int32: ActorValueOverride]
+nonisolated public struct SaveActorValueOverrideEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let overrides: [Int32: ActorValueOverride]
 }
 
-nonisolated enum OpenSkySaveActorValueDecoder {
-    static func decodeActorValues(_ payload: Data) throws -> [SaveActorValueEntry] {
+nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
+    public static func decodeActorValues(_ payload: Data) throws -> [SaveActorValueEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("AVAL entry count")
         try OpenSkySaveDecoder.validate(
@@ -54,7 +54,7 @@ nonisolated enum OpenSkySaveActorValueDecoder {
     /// for an actor that had no other component, and re-sorts the result into
     /// `ReferenceKey` total order — the order `WorldStateSnapshot` promises,
     /// which a chunk-order insertion would otherwise break.
-    static func merge(
+    public static func merge(
         _ values: [SaveActorValueEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
@@ -77,7 +77,7 @@ nonisolated enum OpenSkySaveActorValueDecoder {
 
     /// `AVOV` (issue #496): one entry per actor holding actor-value overrides,
     /// each a list of `(index, base offset, permanent, damage)` records.
-    static func decodeActorValueOverrides(
+    public static func decodeActorValueOverrides(
         _ payload: Data
     ) throws -> [SaveActorValueOverrideEntry] {
         var reader = SaveReader(payload)
@@ -103,7 +103,7 @@ nonisolated enum OpenSkySaveActorValueDecoder {
     /// turned into a state of its own. The encoder writes both together, so an
     /// orphan means a hand-edited or truncated file, and the alternative would
     /// be inventing a health for an actor whose health the save never carried.
-    static func mergeOverrides(
+    public static func mergeOverrides(
         _ overrides: [SaveActorValueOverrideEntry],
         into values: [SaveActorValueEntry]
     ) -> [SaveActorValueEntry] {

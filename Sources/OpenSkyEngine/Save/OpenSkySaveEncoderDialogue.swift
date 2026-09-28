@@ -20,7 +20,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// zero. It is the state every INFO has before anything says it, and the
     /// decoder restores exactly that for an INFO the chunk does not mention, so
     /// writing it would only make the file bigger and two equal worlds differ.
-    static func writeDialogueStates(
+    public static func writeDialogueStates(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

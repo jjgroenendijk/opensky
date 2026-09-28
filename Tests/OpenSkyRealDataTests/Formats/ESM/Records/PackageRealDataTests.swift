@@ -2,7 +2,7 @@
 // no bytes, dumps, or rendered game content leave the gitignored run output.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

@@ -1,7 +1,7 @@
 // Terrain walk sampling over synthetic heights only. Topology must match
 // TerrainMeshBuilder's SW->NE rendered triangles, never a bilinear patch.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

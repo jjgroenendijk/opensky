@@ -5,7 +5,7 @@
 
 import Foundation
 import Metal
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct FrameStatsTests {

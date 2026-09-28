@@ -5,7 +5,7 @@
 // Mutating calls are made before `#expect` because the macro captures its
 // argument as an immutable value, which forbids a mutating member inside it.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct MenuStackTests {

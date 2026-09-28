@@ -4,7 +4,7 @@
 // obstacle, an already-overlapping start says so, and equidistant shapes break
 // the tie the same way `InteractionRaycaster` does.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

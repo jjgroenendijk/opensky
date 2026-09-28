@@ -8,6 +8,7 @@
 // readout says that too rather than letting silence imply enforcement.
 
 import AppKit
+import OpenSkyEngine
 
 final class ItemOwnershipSection: PanelSectionViewController {
     weak var provider: (any InventoryEquipmentControlProviding)? {

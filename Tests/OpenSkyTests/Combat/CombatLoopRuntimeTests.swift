@@ -15,7 +15,7 @@
 // swing, `ProjectileRuntimeTests` the arrow, `RagdollRuntimeTests` the hand-off
 // and the corpse's inventory. The milestone gates run all of them as one route.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

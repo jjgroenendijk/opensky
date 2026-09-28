@@ -4,26 +4,26 @@
 
 import simd
 
-nonisolated struct NavigationPulledPath: Sendable {
-    var waypoints: [SIMD3<Float>]
-    var doorCrossings: [NavigationDoorCrossing]
+nonisolated public struct NavigationPulledPath: Sendable {
+    public var waypoints: [SIMD3<Float>]
+    public var doorCrossings: [NavigationDoorCrossing]
 }
 
-nonisolated struct NavigationOrientedPortal: Sendable {
-    let left: SIMD3<Float>
-    let right: SIMD3<Float>
+nonisolated public struct NavigationOrientedPortal: Sendable {
+    public let left: SIMD3<Float>
+    public let right: SIMD3<Float>
 }
 
-nonisolated struct NavigationFunnelInput: Sendable {
-    let corridor: [NavigationTriangleID]
-    let transitions: [NavigationTransition]
-    let start: SIMD3<Float>
-    let target: SIMD3<Float>
-    let radius: Float
+nonisolated public struct NavigationFunnelInput: Sendable {
+    public let corridor: [NavigationTriangleID]
+    public let transitions: [NavigationTransition]
+    public let start: SIMD3<Float>
+    public let target: SIMD3<Float>
+    public let radius: Float
 }
 
-nonisolated enum NavigationFunnel {
-    static func pull(
+nonisolated public enum NavigationFunnel: Sendable {
+    public static func pull(
         _ input: NavigationFunnelInput,
         graph: RuntimeNavigationGraph
     ) -> NavigationPulledPath {

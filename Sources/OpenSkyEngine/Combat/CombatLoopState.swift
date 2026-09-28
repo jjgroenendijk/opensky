@@ -26,7 +26,7 @@ import OpenSkyFormats
 import simd
 
 /// The player's combat situation as of one step.
-nonisolated struct CombatLoopState: Equatable, Sendable {
+nonisolated public struct CombatLoopState: Equatable, Sendable {
     /// True while at least one resident actor is *engaged* — fighting the
     /// player or searching for them.
     ///
@@ -37,28 +37,28 @@ nonisolated struct CombatLoopState: Equatable, Sendable {
     /// the fight. Deriving from engagement rather than from hostility is what
     /// makes the combat music stop when the fight actually ends instead of when
     /// the actor is finally killed or calmed from the panel.
-    var isPlayerInCombat = false
+    public var isPlayerInCombat = false
     /// The nearest hostile living actor, or nil when there is none.
     ///
     /// Nearest *hostile*, unchanged from 15.7 and deliberately not narrowed to
     /// the engaged ones: "who am I fighting" from the player's side is answered
     /// by turning to face somebody, and an actor that is hostile but has not
     /// noticed the player yet is still the thing the player is about to fight.
-    var target: ReferenceKey?
+    public var target: ReferenceKey?
     /// Its name, for the readout. Empty when there is no target.
-    var targetName = ""
+    public var targetName = ""
     /// How far away it is, world units. Zero when there is no target.
-    var targetDistance: Float = 0
+    public var targetDistance: Float = 0
     /// Resident actors that are hostile and alive.
-    var hostileCount = 0
+    public var hostileCount = 0
     /// Resident actors currently engaged, which is a subset of those.
-    var engagedCount = 0
+    public var engagedCount = 0
     /// Resident actors currently searching, which is a subset of the engaged.
-    var searchingCount = 0
+    public var searchingCount = 0
     /// Resident actors recorded dead.
-    var deadCount = 0
+    public var deadCount = 0
 
-    static let calm = CombatLoopState()
+    public static let calm = CombatLoopState()
 
     /// Derives the state from one observation of the resident actors.
     ///
@@ -69,7 +69,7 @@ nonisolated struct CombatLoopState: Equatable, Sendable {
     ///     machine running.
     ///   - playerFeet: where the player is standing, for the nearest-target
     ///     comparison.
-    static func derive(
+    public static func derive(
         actors: [CombatActorObservation],
         hostility: (ReferenceKey) -> ActorHostility,
         phase: (ReferenceKey) -> CombatBehaviorPhase?,
@@ -110,13 +110,13 @@ nonisolated struct CombatLoopState: Equatable, Sendable {
 }
 
 /// One blow an actor landed on the player, kept for the panel's trace.
-nonisolated struct CombatIncomingHit: Equatable, Sendable {
+nonisolated public struct CombatIncomingHit: Equatable, Sendable {
     /// Who swung.
-    let aggressor: ReferenceKey
-    let damage: MeleeDamageResult
+    public let aggressor: ReferenceKey
+    public let damage: MeleeDamageResult
     /// Whether the player's own graph took the hit-react event.
-    let playedReaction: Bool
+    public let playedReaction: Bool
     /// Which of the aggressor's attacks it was, so two hits from one attack
     /// read as one attack.
-    let attackID: Int
+    public let attackID: Int
 }

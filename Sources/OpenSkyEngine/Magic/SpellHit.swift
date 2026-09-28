@@ -57,44 +57,44 @@ import simd
 /// apply the spell that was cast, not whatever the caster has readied by the
 /// time it lands — the same rule `LiveProjectile` already follows for a bow's
 /// damage.
-nonisolated struct SpellPayload: Equatable, Sendable {
+nonisolated public struct SpellPayload: Equatable, Sendable {
     /// The SPEL or SCRL that was cast, which is what the applied effects are
     /// sourced to.
-    let spell: ReferenceKey
+    public let spell: ReferenceKey
     /// The plugin every EFID in `entries` is relative to.
-    let sourcePlugin: String
+    public let sourcePlugin: String
     /// Who cast it, so an applied effect names its caster.
-    let caster: ReferenceKey
+    public let caster: ReferenceKey
     /// The effect list as authored. Magnitudes here are pre-resistance.
-    let entries: [MagicItemEffect]
+    public let entries: [MagicItemEffect]
     /// Whether any entry's MGEF carries the Hostile flag, resolved at cast time.
     /// What decides whether a landed spell provokes its target.
-    let isHostile: Bool
+    public let isHostile: Bool
     /// SPEL's "Ignore Resistance" flag: true skips the resistance step entirely.
-    let ignoresResistance: Bool
+    public let ignoresResistance: Bool
     /// The PROJ the MGEF names, for an aimed delivery. Nil for every delivery
     /// that launches nothing.
-    let projectile: FormID?
+    public let projectile: FormID?
     /// FULL name or editor ID, for the readout. Never empty.
-    let name: String
+    public let name: String
 
-    var source: ActiveEffectSource {
+    public var source: ActiveEffectSource {
         ActiveEffectSource(kind: .spell, record: spell)
     }
 }
 
 /// One actor a landed spell reached, and how far from the impact point it was.
-nonisolated struct SpellHitTarget: Equatable, Sendable {
-    let key: ReferenceKey
+nonisolated public struct SpellHitTarget: Equatable, Sendable {
+    public let key: ReferenceKey
     /// Distance from the impact point to the actor's capsule, world units.
     /// Zero for the actor a projectile struck directly.
-    let distance: Float
+    public let distance: Float
     /// Whether this actor is the one the delivery named, as opposed to a
     /// bystander an area caught. A direct target receives every entry; a
     /// bystander receives only the entries whose area reaches it.
-    let isDirect: Bool
+    public let isDirect: Bool
 
-    init(key: ReferenceKey, distance: Float = 0, isDirect: Bool = true) {
+    public init(key: ReferenceKey, distance: Float = 0, isDirect: Bool = true) {
         self.key = key
         self.distance = distance.isFinite ? max(0, distance) : 0
         self.isDirect = isDirect
@@ -102,37 +102,37 @@ nonisolated struct SpellHitTarget: Equatable, Sendable {
 }
 
 /// One landed spell, as the world seam receives it.
-nonisolated struct SpellHit: Equatable, Sendable {
-    let payload: SpellPayload
+nonisolated public struct SpellHit: Equatable, Sendable {
+    public let payload: SpellPayload
     /// Where it landed, world space. The caster's own position for a delivery
     /// that never travelled.
-    let position: SIMD3<Float>
+    public let position: SIMD3<Float>
     /// Every actor it reached, direct target first.
-    let targets: [SpellHitTarget]
+    public let targets: [SpellHitTarget]
 }
 
 /// How one entry's magnitude was moved by the target's resistances, so a test
 /// and the sidebar panel can assert the adjustment rather than infer it from a
 /// health bar.
-nonisolated struct SpellMagnitudeAdjustment: Equatable, Sendable {
-    let target: ReferenceKey
+nonisolated public struct SpellMagnitudeAdjustment: Equatable, Sendable {
+    public let target: ReferenceKey
     /// The MGEF the entry names.
-    let effect: FormID
+    public let effect: FormID
     /// Its display name, for the readout.
-    let name: String
+    public let name: String
     /// MGEF DATA "Resistance Actor Value", or nil where the record names none.
-    let resistance: Int32?
-    let baseMagnitude: Float
+    public let resistance: Int32?
+    public let baseMagnitude: Float
     /// What the base magnitude was multiplied by. 1 when nothing resisted,
     /// 0 for immunity, above 1 for a weakness.
-    let multiplier: Float
+    public let multiplier: Float
 
-    var adjustedMagnitude: Float {
+    public var adjustedMagnitude: Float {
         baseMagnitude * multiplier
     }
 
     /// One line, the shape the readout joins with newlines.
-    var line: String {
+    public var line: String {
         String(
             format: "%@ on %@: %.1f x %.3f = %.1f",
             name, target.description, baseMagnitude, multiplier, adjustedMagnitude
@@ -141,24 +141,28 @@ nonisolated struct SpellMagnitudeAdjustment: Equatable, Sendable {
 }
 
 /// What applying one landed spell did.
-nonisolated struct SpellHitReport: Equatable, Sendable {
+nonisolated public struct SpellHitReport: Equatable, Sendable {
     /// Actors the spell was actually applied to.
-    private(set) var targetCount = 0
+    public private(set) var targetCount = 0
     /// Timed effects stored across every target.
-    private(set) var storedCount = 0
+    public private(set) var storedCount = 0
     /// Effect entries handed to the effect runtime, before it decided what it
     /// could carry out.
-    private(set) var entryCount = 0
+    public private(set) var entryCount = 0
     /// Every hostile entry's resistance adjustment, in application order.
-    private(set) var adjustments: [SpellMagnitudeAdjustment] = []
+    public private(set) var adjustments: [SpellMagnitudeAdjustment] = []
 
-    static let none = SpellHitReport()
+    public static let none = SpellHitReport()
 
-    var didApply: Bool {
+    public var didApply: Bool {
         targetCount > 0
     }
 
-    mutating func note(target adjustments: [SpellMagnitudeAdjustment], entries: Int, stored: Int) {
+    public mutating func note(
+        target adjustments: [SpellMagnitudeAdjustment],
+        entries: Int,
+        stored: Int
+    ) {
         targetCount += 1
         entryCount += entries
         storedCount += stored
@@ -168,16 +172,16 @@ nonisolated struct SpellHitReport: Equatable, Sendable {
 
 /// The area conversion, as a setting rather than a constant. See the file
 /// comment for why the number is uncertain and what would settle it.
-nonisolated struct MagicAreaSettings: Equatable, Sendable {
+nonisolated public struct MagicAreaSettings: Equatable, Sendable {
     /// World units one authored area unit spans. EFIT's area is in feet.
-    var worldUnitsPerAreaUnit: Float
+    public var worldUnitsPerAreaUnit: Float
 
-    static let documentedDefaults = MagicAreaSettings(
+    public static let documentedDefaults = MagicAreaSettings(
         worldUnitsPerAreaUnit: PlayerCapsule.standard.height / 6
     )
 
     /// The radius an EFIT area covers, world units. Zero for a point effect.
-    func radius(ofArea area: UInt32) -> Float {
+    public func radius(ofArea area: UInt32) -> Float {
         max(0, Float(area) * max(0, worldUnitsPerAreaUnit))
     }
 }
@@ -187,10 +191,10 @@ nonisolated struct MagicAreaSettings: Equatable, Sendable {
 /// Pure functions over values — no world, no clock — so the area rule is a
 /// plain arithmetic assertion in a test rather than something only a running
 /// session can show.
-nonisolated enum SpellHitTargeting {
+nonisolated public enum SpellHitTargeting: Sendable {
     /// The widest radius any entry of `payload` covers, world units. Zero when
     /// every entry is a point effect.
-    static func widestRadius(
+    public static func widestRadius(
         of payload: SpellPayload,
         settings: MagicAreaSettings = .documentedDefaults
     ) -> Float {
@@ -207,7 +211,7 @@ nonisolated enum SpellHitTargeting {
     /// - Parameter excluding: the caster, which its own spell never catches.
     ///   Matched on key for the reason a shot never hits its own shooter: the
     ///   caster is often the nearest actor to a spell that detonated close by.
-    static func targets(
+    public static func targets(
         of payload: SpellPayload,
         at position: SIMD3<Float>,
         struck: ReferenceKey?,
@@ -236,7 +240,7 @@ nonisolated enum SpellHitTargeting {
     }
 
     /// Distance from `position` to `target`'s capsule surface, never negative.
-    static func distance(from position: SIMD3<Float>, to target: MeleeTarget) -> Float {
+    public static func distance(from position: SIMD3<Float>, to target: MeleeTarget) -> Float {
         let segment = target.segment
         let axis = segment.second - segment.first
         let lengthSquared = simd_length_squared(axis)
@@ -258,7 +262,7 @@ nonisolated enum SpellHitTargeting {
 /// value over a shared store whose tally advances as it works, and a copy held
 /// here would grow a tally the panel never sees.
 @MainActor
-enum SpellHitApplication {
+public enum SpellHitApplication {
     /// Applies `hit` to every actor it reached, scaling hostile magnitudes by
     /// that actor's own resistances.
     ///
@@ -266,7 +270,7 @@ enum SpellHitApplication {
     ///   with no holder is an actor that stopped being resident between the
     ///   impact and this call, and is skipped rather than guessed at.
     @discardableResult
-    static func apply(
+    public static func apply(
         _ hit: SpellHit,
         holders: [ReferenceKey: ActorValueHolder],
         using runtime: inout ActiveEffectRuntime,
@@ -307,7 +311,7 @@ enum SpellHitApplication {
     /// entries whose authored area covers the distance between them, so one
     /// spell can damage everything in a blast while staggering only what it
     /// actually struck — which is the shape vanilla `Fireball` is authored in.
-    static func entries(
+    public static func entries(
         of payload: SpellPayload,
         reaching target: SpellHitTarget,
         settings: MagicAreaSettings = .documentedDefaults
@@ -320,7 +324,7 @@ enum SpellHitApplication {
 
     /// Scales every hostile entry by `holder`'s resistances, reporting what it
     /// moved.
-    static func scale(
+    public static func scale(
         _ entries: [MagicItemEffect],
         of payload: SpellPayload,
         on holder: ActorValueHolder,
@@ -342,7 +346,7 @@ enum SpellHitApplication {
     /// A weapon enchantment's contact effects pay the same resistances a landed
     /// spell's do and are not a payload (issue #472), so the two meet here rather
     /// than in a second copy of the formula.
-    static func scale(
+    public static func scale(
         _ entries: [MagicItemEffect],
         fromPlugin pluginName: String,
         ignoresResistance: Bool,

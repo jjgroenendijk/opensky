@@ -7,9 +7,9 @@
 
 import Foundation
 
-nonisolated enum RagdollReadout {
+nonisolated public enum RagdollReadout: Sendable {
     /// How many corpses are simulating, and how many have stopped.
-    static func ragdollText(for snapshot: RagdollStatsSnapshot) -> String {
+    public static func ragdollText(for snapshot: RagdollStatsSnapshot) -> String {
         guard snapshot.ragdollCount > 0 else {
             return "Ragdolls: none" + (snapshot.isFrozen ? " (frozen)" : "")
         }
@@ -20,14 +20,14 @@ nonisolated enum RagdollReadout {
     }
 
     /// The bone-body readout item 15.6 scope point 7 asks for.
-    static func boneBodyText(for snapshot: RagdollStatsSnapshot) -> String {
+    public static func boneBodyText(for snapshot: RagdollStatsSnapshot) -> String {
         "Bone bodies: \(snapshot.boneBodyCount) over \(snapshot.jointCount) joints"
     }
 
     /// The constraint-iteration readout, with the violation count beside it so
     /// the two read together: iterations are what the solver spends, violations
     /// are what it had left when it stopped spending.
-    static func solverText(for snapshot: RagdollStatsSnapshot) -> String {
+    public static func solverText(for snapshot: RagdollStatsSnapshot) -> String {
         let violations = snapshot.jointViolationCount
         let converged = violations == 0 ? "converged" : "\(violations) limits still violated"
         return "Solver: \(snapshot.solverIterationCount) iterations/substep, \(converged)"
@@ -37,7 +37,7 @@ nonisolated enum RagdollReadout {
     /// #413). The pair count is the size of the set self-collision may work
     /// over, so a reader can tell "nothing is touching" from "nothing was ever
     /// allowed to".
-    static func selfCollisionText(for snapshot: RagdollStatsSnapshot) -> String {
+    public static func selfCollisionText(for snapshot: RagdollStatsSnapshot) -> String {
         guard snapshot.isSelfCollisionEnabled else {
             return "Self-collision: off"
         }
@@ -47,7 +47,7 @@ nonisolated enum RagdollReadout {
 
     /// Non-finite recoveries. Always zero on a healthy run, so the line names
     /// the healthy case rather than printing a bare zero.
-    static func recoveryText(for snapshot: RagdollStatsSnapshot) -> String {
+    public static func recoveryText(for snapshot: RagdollStatsSnapshot) -> String {
         snapshot.recoveredBodyCount == 0
             ? "Stability: no pose recovery needed"
             : "Stability: \(snapshot.recoveredBodyCount) bodies recovered — this is a bug"

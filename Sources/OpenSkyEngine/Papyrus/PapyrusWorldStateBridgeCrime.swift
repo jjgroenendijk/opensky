@@ -14,18 +14,18 @@ import Foundation
 import OpenSkyFormats
 
 extension PapyrusWorldStateBridge {
-    func crimeGold(of faction: ReferenceKey) -> Int? {
+    public func crimeGold(of faction: ReferenceKey) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
         return Int(reporter.runtime.crimeGold(of: faction))
     }
 
-    func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
+    public func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
         return Int(reporter.runtime.crimeGold(of: faction, violent: violent))
     }
 
     @discardableResult
-    func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
+    public func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
         return Int(reporter.runtime.modifyCrimeGold(
             by: Int32(clamping: amount), violent: violent, of: faction
@@ -33,7 +33,7 @@ extension PapyrusWorldStateBridge {
     }
 
     @discardableResult
-    func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
+    public func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
         return Int(reporter.runtime.setCrimeGold(
             Int32(clamping: gold), violent: violent, of: faction
@@ -41,12 +41,12 @@ extension PapyrusWorldStateBridge {
     }
 
     @discardableResult
-    func sendAssaultAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int? {
+    public func sendAssaultAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int? {
         alarm(.assault, witness: witness, criminal: criminal)
     }
 
     @discardableResult
-    func sendTrespassAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int? {
+    public func sendTrespassAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int? {
         alarm(.trespass, witness: witness, criminal: criminal)
     }
 

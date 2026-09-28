@@ -18,10 +18,10 @@ nonisolated private struct InteractionTriangle {
     let third: SIMD3<Float>
 }
 
-nonisolated enum InteractionRaycaster {
+nonisolated public enum InteractionRaycaster: Sendable {
     private static let epsilon: Float = 1e-5
 
-    static func nearestHit(
+    public static func nearestHit(
         ray: InteractionRay,
         shapes: [StaticCollisionShape]
     ) -> InteractionRayHit? {

@@ -12,6 +12,7 @@
 // do — and that native lands in `openBarter(with:)`.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

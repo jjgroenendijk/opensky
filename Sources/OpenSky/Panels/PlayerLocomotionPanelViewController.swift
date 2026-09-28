@@ -23,6 +23,7 @@
 // `World > Combat & Physics` and this panel is locomotion again.
 
 import AppKit
+import OpenSkyEngine
 
 final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
     let stateSection = LocomotionStateSection()

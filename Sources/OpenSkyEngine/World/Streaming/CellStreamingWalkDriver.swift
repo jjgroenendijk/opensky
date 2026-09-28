@@ -3,27 +3,27 @@
 import simd
 
 @MainActor
-final class CellStreamingWalkDriver {
-    static let inputTimeStep: Float = 1 / 30
-    let renderer: Renderer
-    let runner: SerialCellBuildRunner
-    let streamer: CellStreamer
-    let swapError = WalkBenchmarkSceneSwapErrorBox()
-    let configuration: CellStreamingWalkBenchmarkConfiguration
-    var phase = WalkBenchmarkPhase.loadExterior
-    var phaseFrames = 0
-    var physicsFrameMask: [Bool] = []
-    var routeFrameCount = 0
-    var controllerState = WalkBenchmarkControllerState()
-    var stepStartHeight: Float?
-    var maximumStepHeight: Float?
-    var interiorArrival: SIMD2<Float>?
-    var interiorRoute: [SIMD2<Float>] = []
-    var interiorRouteIndex = 0
-    var interiorDistance: Float = 0
-    var navigationState = WalkBenchmarkNavigationState()
+public final class CellStreamingWalkDriver {
+    public static let inputTimeStep: Float = 1 / 30
+    public let renderer: Renderer
+    public let runner: SerialCellBuildRunner
+    public let streamer: CellStreamer
+    public let swapError = WalkBenchmarkSceneSwapErrorBox()
+    public let configuration: CellStreamingWalkBenchmarkConfiguration
+    public var phase = WalkBenchmarkPhase.loadExterior
+    public var phaseFrames = 0
+    public var physicsFrameMask: [Bool] = []
+    public var routeFrameCount = 0
+    public var controllerState = WalkBenchmarkControllerState()
+    public var stepStartHeight: Float?
+    public var maximumStepHeight: Float?
+    public var interiorArrival: SIMD2<Float>?
+    public var interiorRoute: [SIMD2<Float>] = []
+    public var interiorRouteIndex = 0
+    public var interiorDistance: Float = 0
+    public var navigationState = WalkBenchmarkNavigationState()
 
-    init(
+    public init(
         renderer: Renderer,
         provider: any CellSceneProvider,
         configuration: CellStreamingWalkBenchmarkConfiguration
@@ -44,7 +44,7 @@ final class CellStreamingWalkDriver {
         renderer.movementMode = .walk
     }
 
-    func step() throws -> Bool {
+    public func step() throws -> Bool {
         physicsFrameMask.append(phase.physicsActive)
         if phase.physicsActive {
             routeFrameCount += 1
@@ -78,7 +78,7 @@ final class CellStreamingWalkDriver {
         return false
     }
 
-    func result(render: OffscreenBenchResult) throws -> CellStreamingWalkBenchmarkResult {
+    public func result(render: OffscreenBenchResult) throws -> CellStreamingWalkBenchmarkResult {
         let stepGain = (maximumStepHeight ?? 0) - (stepStartHeight ?? 0)
         guard stepGain >= WalkPathRoute.minimumExteriorStepGain else {
             throw CellStreamingWalkBenchmarkError.stepNotClimbed(stepGain)
@@ -99,7 +99,7 @@ final class CellStreamingWalkDriver {
         )
     }
 
-    func loadExterior() throws {
+    public func loadExterior() throws {
         let center = CellGridManager.cellCenter(of: WalkPathRoute.startCell)
         streamer.update(cameraPosition: center)
         guard Self.isSettled(streamer) else {
@@ -123,7 +123,7 @@ final class CellStreamingWalkDriver {
         changePhase(.settleStart)
     }
 
-    func settleStart() throws {
+    public func settleStart() throws {
         updateController(moveForward: 0)
         streamer.update(cameraPosition: renderer.freeFlyCamera.position)
         try validateController()
@@ -134,7 +134,7 @@ final class CellStreamingWalkDriver {
         }
     }
 
-    func walkExterior(index: Int) throws {
+    public func walkExterior(index: Int) throws {
         let target = WalkPathRoute.exteriorWaypoints[index]
         drive(toward: target, routeIndex: index)
         streamer.update(cameraPosition: renderer.freeFlyCamera.position)
@@ -156,7 +156,7 @@ final class CellStreamingWalkDriver {
         }
     }
 
-    func requestEntry() throws {
+    public func requestEntry() throws {
         let door = streamer.composition.nearestDoor(
             to: renderer.freeFlyCamera.position,
             within: CellStreamer.doorActivationRadius

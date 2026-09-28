@@ -19,16 +19,16 @@ import Foundation
 import OpenSkyFormats
 
 /// Every magic effect currently acting on one actor.
-nonisolated struct ActiveEffectState: WorldStateComponent {
+nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {
     /// The effects, in ascending `sequence` order — the order they were
     /// applied, which is also the order the save writes and a readout lists.
-    private(set) var effects: [ActiveEffect]
+    public private(set) var effects: [ActiveEffect]
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .activeEffects
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .activeEffects(self)
     }
 
@@ -42,18 +42,18 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
     /// an instantaneous effect that somehow persisted. A constant effect is the
     /// exception and is kept whatever its duration says, because no duration
     /// bounds it (issue #472).
-    init(effects: [ActiveEffect] = []) {
+    public init(effects: [ActiveEffect] = []) {
         self.effects = effects
             .filter { !$0.values.isEmpty && ($0.duration > 0 || $0.isConstant) }
             .sorted { $0.sequence < $1.sequence }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .activeEffects(value) = erased else { return nil }
         self = value
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         effects.isEmpty
     }
 
@@ -62,7 +62,7 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
     /// One past the highest in use rather than a count, so dispelling the only
     /// effect and applying another cannot reuse a number a save still refers
     /// to.
-    var nextSequence: UInt64 {
+    public var nextSequence: UInt64 {
         (effects.map(\.sequence).max() ?? 0) &+ 1
     }
 
@@ -72,19 +72,19 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
     ///
     /// The shape `HasMagicEffect` needs (issue 19.11 registers the condition
     /// function and the Papyrus native; this answers them).
-    func hasEffect(_ effect: ReferenceKey) -> Bool {
+    public func hasEffect(_ effect: ReferenceKey) -> Bool {
         effects.contains { $0.effect == effect }
     }
 
     /// Every effect applied by one source record — what a script asking
     /// "is this potion still working" needs.
-    func effects(from source: ActiveEffectSource) -> [ActiveEffect] {
+    public func effects(from source: ActiveEffectSource) -> [ActiveEffect] {
         effects.filter { $0.source == source }
     }
 
     /// Every effect acting on one actor value, which is what a readout of a
     /// single value's contributors lists.
-    func effects(affecting index: Int32) -> [ActiveEffect] {
+    public func effects(affecting index: Int32) -> [ActiveEffect] {
         effects.filter { effect in effect.values.contains { $0.index == index } }
     }
 
@@ -94,7 +94,7 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
     /// This is the authority the save relies on: `AVOV` deliberately does not
     /// persist the temporary modifier, so after a load the slot is re-derived
     /// from here rather than read back off disk twice.
-    var ownedModifiers: [Int32: Float] {
+    public var ownedModifiers: [Int32: Float] {
         effects.reduce(into: [:]) { totals, effect in
             for value in effect.values where value.applied != 0 {
                 totals[value.index, default: 0] += value.applied
@@ -110,7 +110,7 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
     /// whose sequence is already in use replaces the one that had it, which is
     /// what makes a per-tick rewrite of one effect an ordinary update rather
     /// than a duplicate.
-    func adding(_ effect: ActiveEffect) -> ActiveEffectState {
+    public func adding(_ effect: ActiveEffect) -> ActiveEffectState {
         var updated = effects.filter { $0.sequence != effect.sequence }
         updated.append(effect)
         return ActiveEffectState(effects: updated)
@@ -118,7 +118,7 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
 
     /// This state with every effect in `replacements` written over the effect
     /// that shares its sequence, and everything else left alone.
-    func replacing(_ replacements: [ActiveEffect]) -> ActiveEffectState {
+    public func replacing(_ replacements: [ActiveEffect]) -> ActiveEffectState {
         guard !replacements.isEmpty else { return self }
         var bySequence: [UInt64: ActiveEffect] = [:]
         for effect in replacements {
@@ -128,19 +128,19 @@ nonisolated struct ActiveEffectState: WorldStateComponent {
     }
 
     /// This state without the effects whose sequences `sequences` names.
-    func removing(sequences: Set<UInt64>) -> ActiveEffectState {
+    public func removing(sequences: Set<UInt64>) -> ActiveEffectState {
         guard !sequences.isEmpty else { return self }
         return ActiveEffectState(effects: effects.filter { !sequences.contains($0.sequence) })
     }
 
     /// This state without every effect `predicate` selects — the general shape
     /// `Dispel` and the cure archetypes both take.
-    func removing(where predicate: (ActiveEffect) -> Bool) -> ActiveEffectState {
+    public func removing(where predicate: (ActiveEffect) -> Bool) -> ActiveEffectState {
         ActiveEffectState(effects: effects.filter { !predicate($0) })
     }
 
     /// Every effect whose duration has run out.
-    var expired: [ActiveEffect] {
+    public var expired: [ActiveEffect] {
         effects.filter(\.isExpired)
     }
 }

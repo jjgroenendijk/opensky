@@ -52,11 +52,11 @@ import OpenSkyGameData
 /// `SkillAdvancementSettings` is: a test must be able to state every number
 /// without building a plugin, and a session must not walk the GMST table to
 /// answer what the next level costs.
-nonisolated struct CharacterLevelSettings: Equatable, Sendable {
+nonisolated public struct CharacterLevelSettings: Equatable, Sendable {
     /// `fXPLevelUpBase` — the constant term of the level-up threshold.
-    var levelUpBase: Float
+    public var levelUpBase: Float
     /// `fXPLevelUpMult` — what each level already held adds to the threshold.
-    var levelUpMultiplier: Float
+    public var levelUpMultiplier: Float
     /// `iAVDhmsLevelUp` — points one attribute pick adds to the chosen value.
     /// "One attribute (Health, Magicka, Stamina) can be increased by 10 points"
     /// (<https://en.uesp.net/wiki/Skyrim:Leveling>).
@@ -65,23 +65,23 @@ nonisolated struct CharacterLevelSettings: Equatable, Sendable {
     /// NPC, where it is the number of points a *class* spreads across the three
     /// rather than the number one pick puts into one. Two readings of one
     /// setting, both stated by the sources, and neither derived from the other.
-    var attributeIncrement: Float
+    public var attributeIncrement: Float
     /// `fLevelUpCarryWeightMod` — carry weight a stamina pick adds on top of
     /// the stamina itself. "Adding to your base stamina when you level up
     /// increases your carry weight by 5"
     /// (<https://en.uesp.net/wiki/Skyrim:Stamina>).
-    var carryWeightPerStaminaPick: Float
+    public var carryWeightPerStaminaPick: Float
 
     /// What UESP documents for vanilla, which is also what this machine's
     /// `Skyrim.esm` authors for all four.
-    static let documentedDefaults = CharacterLevelSettings(
+    public static let documentedDefaults = CharacterLevelSettings(
         levelUpBase: 75,
         levelUpMultiplier: 25,
         attributeIncrement: 10,
         carryWeightPerStaminaPick: 5
     )
 
-    static func resolve(store: GameSettingStore) -> CharacterLevelSettings {
+    public static func resolve(store: GameSettingStore) -> CharacterLevelSettings {
         var settings = CharacterLevelSettings.documentedDefaults
         if let base = Self.number(store, "fXPLevelUpBase"), base >= 0 {
             settings.levelUpBase = base
@@ -112,26 +112,26 @@ nonisolated struct CharacterLevelSettings: Equatable, Sendable {
 }
 
 /// What spending character experience against the curve did.
-nonisolated struct CharacterLevelOutcome: Equatable, Sendable {
+nonisolated public struct CharacterLevelOutcome: Equatable, Sendable {
     /// Whole character levels gained, zero when the experience did not reach
     /// the next threshold.
-    let levelsGained: Int
+    public let levelsGained: Int
     /// The character level afterwards.
-    let level: Int
+    public let level: Int
     /// The experience left over, which stays banked toward the next level.
     /// Never negative.
-    let carriedExperience: Float
+    public let carriedExperience: Float
 
-    var didAdvance: Bool {
+    public var didAdvance: Bool {
         levelsGained > 0
     }
 }
 
-nonisolated enum CharacterLeveling {
+nonisolated public enum CharacterLeveling: Sendable {
     /// Most whole levels one award may cross, so a script handing over a
     /// preposterous magnitude cannot spin. Far above the level any documented
     /// play reaches, so it never truncates a legitimate award.
-    static let maximumLevelsPerAward = 1000
+    public static let maximumLevelsPerAward = 1000
 
     /// The experience needed to leave `level` for the next one:
     /// `fXPLevelUpBase + level * fXPLevelUpMult`.
@@ -140,7 +140,7 @@ nonisolated enum CharacterLeveling {
     ///   non-finite result, or one at or below zero. A caller reads that as "no
     ///   leveling", which is the safe answer: treating it as free would run the
     ///   player to the level cap on the first skill point.
-    static func experienceForNextLevel(
+    public static func experienceForNextLevel(
         atLevel level: Int,
         settings: CharacterLevelSettings = .documentedDefaults
     ) -> Float {
@@ -161,7 +161,7 @@ nonisolated enum CharacterLeveling {
     /// either setting moves the sum with it. `CharacterLevelingTests` checks
     /// this against `12.5 * N^2 + 62.5 * N - 75` at the vanilla settings, which
     /// is what makes the two readings one fact rather than two.
-    static func cumulativeExperience(
+    public static func cumulativeExperience(
         toLevel level: Int,
         settings: CharacterLevelSettings = .documentedDefaults
     ) -> Float {
@@ -186,7 +186,7 @@ nonisolated enum CharacterLeveling {
     /// to Illusion level 44 you will be level 6 once you choose to level up)"
     /// (<https://en.uesp.net/wiki/Skyrim:Leveling>). Experience exactly equal
     /// to the threshold levels the character and carries nothing.
-    static func advance(
+    public static func advance(
         experience: Float,
         from level: Int,
         settings: CharacterLevelSettings = .documentedDefaults

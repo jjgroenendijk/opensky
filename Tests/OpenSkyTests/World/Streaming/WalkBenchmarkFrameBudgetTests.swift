@@ -1,7 +1,7 @@
 // Walk-route timing policy and active-frame filtering over synthetic samples.
 // No Metal device or game data is required.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct WalkBenchmarkFrameBudgetTests {

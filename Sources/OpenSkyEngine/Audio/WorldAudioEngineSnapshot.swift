@@ -5,12 +5,12 @@ import AVFAudio
 
 extension WorldAudioEngine {
     /// Output device format line for the panel readout.
-    var outputFormatDescription: String {
+    public var outputFormatDescription: String {
         let format = engine.outputNode.outputFormat(forBus: 0)
         return "\(Int(format.sampleRate)) Hz, \(format.channelCount) ch"
     }
 
-    func statsSnapshot() -> AudioStatsSnapshot {
+    public func statsSnapshot() -> AudioStatsSnapshot {
         let output: String = if let unavailableReason {
             "failed: \(unavailableReason)"
         } else if isRunning {

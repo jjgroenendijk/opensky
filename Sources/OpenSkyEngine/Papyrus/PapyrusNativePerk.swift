@@ -17,7 +17,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installPerk(into registry: inout PapyrusNativeRegistry) {
+    public static func installPerk(into registry: inout PapyrusNativeRegistry) {
         // "Adds the specified perk to this actor."
         // (<https://ck.uesp.net/wiki/AddPerk_-_Actor>) The page notes the
         // function does not spend a perk point, which is what makes it the

@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormats
 import simd
 
-nonisolated enum CellStreamingWalkBenchmarkError: LocalizedError {
+nonisolated public enum CellStreamingWalkBenchmarkError: LocalizedError {
     case sceneSwapFailed(any Error)
     case cellBuildFailed(Int)
     case doorBuildFailed(Int)
@@ -19,7 +19,7 @@ nonisolated enum CellStreamingWalkBenchmarkError: LocalizedError {
     case stepNotClimbed(Float)
     case interiorNotCrossed(Float)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case let .sceneSwapFailed(error):
             "walk-path scene swap failed: \(String(describing: error))"
@@ -47,18 +47,23 @@ nonisolated enum CellStreamingWalkBenchmarkError: LocalizedError {
     }
 }
 
-nonisolated struct CellStreamingWalkBenchmarkConfiguration {
-    let size: (width: Int, height: Int)
-    let maxFrames: Int
+nonisolated public struct CellStreamingWalkBenchmarkConfiguration: Sendable {
+    public let size: (width: Int, height: Int)
+    public let maxFrames: Int
+
+    public init(size: (width: Int, height: Int), maxFrames: Int) {
+        self.size = size
+        self.maxFrames = maxFrames
+    }
 }
 
-nonisolated struct CellStreamingWalkBenchmarkResult {
-    let render: OffscreenBenchResult
-    let physicsRender: OffscreenBenchResult
-    let routeFrameCount: Int
-    let exteriorStepGain: Float
-    let interiorDistance: Float
-    let finalFeetPosition: SIMD3<Float>
+nonisolated public struct CellStreamingWalkBenchmarkResult: Sendable {
+    public let render: OffscreenBenchResult
+    public let physicsRender: OffscreenBenchResult
+    public let routeFrameCount: Int
+    public let exteriorStepGain: Float
+    public let interiorDistance: Float
+    public let finalFeetPosition: SIMD3<Float>
 }
 
 /// Active-physics frame-time policy for the walk route.
@@ -67,30 +72,30 @@ nonisolated struct CellStreamingWalkBenchmarkResult {
 /// variance that the shipping build does not. The average still has to sustain
 /// the requested frame interval, while Debug may spend up to two intervals at
 /// p95. An explicit CLI budget remains strict for both metrics.
-nonisolated struct WalkBenchmarkFrameBudget: Equatable {
-    let averageMS: Double
-    let percentile95MS: Double
+nonisolated public struct WalkBenchmarkFrameBudget: Equatable, Sendable {
+    public let averageMS: Double
+    public let percentile95MS: Double
 
-    static func buildDefault(frameIntervalMS: Double, debugBuild: Bool) -> Self {
+    public static func buildDefault(frameIntervalMS: Double, debugBuild: Bool) -> Self {
         Self(
             averageMS: frameIntervalMS,
             percentile95MS: debugBuild ? frameIntervalMS * 2 : frameIntervalMS
         )
     }
 
-    static func strict(frameIntervalMS: Double) -> Self {
+    public static func strict(frameIntervalMS: Double) -> Self {
         Self(averageMS: frameIntervalMS, percentile95MS: frameIntervalMS)
     }
 
-    func contains(_ result: OffscreenBenchResult) -> Bool {
+    public func contains(_ result: OffscreenBenchResult) -> Bool {
         result.averageMS <= averageMS
             && result.percentileMS(95) <= percentile95MS
     }
 }
 
 @MainActor
-enum CellStreamingWalkBenchmark {
-    static func run(
+public enum CellStreamingWalkBenchmark {
+    public static func run(
         renderer: Renderer,
         provider: any CellSceneProvider,
         configuration: CellStreamingWalkBenchmarkConfiguration
@@ -114,7 +119,7 @@ enum CellStreamingWalkBenchmark {
     /// Applies the driver's frame mask to every per-frame metric. FrameStats
     /// summaries cover fixed full-run windows and cannot be remapped to the
     /// filtered sample, so the derived result deliberately carries none.
-    nonisolated static func activePhysicsResult(
+    nonisolated public static func activePhysicsResult(
         render: OffscreenBenchResult,
         frameMask: [Bool]
     ) -> OffscreenBenchResult {

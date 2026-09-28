@@ -29,7 +29,7 @@ import Foundation
 import simd
 
 /// How aware one observer is of one target.
-nonisolated enum DetectionState: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum DetectionState: String, Equatable, Sendable, CaseIterable {
     /// Nothing perceived, or everything perceived has decayed away.
     case unaware
     /// Something was perceived and there is a position worth investigating.
@@ -39,31 +39,31 @@ nonisolated enum DetectionState: String, Equatable, Sendable, CaseIterable {
 }
 
 /// One observer's regard for one target, and the evidence behind it.
-nonisolated struct DetectionPairState: Equatable, Sendable {
+nonisolated public struct DetectionPairState: Equatable, Sendable {
     /// Accumulated awareness, 0 through `detectedLevel`.
-    var level: Float = 0
+    public var level: Float = 0
     /// `level` read against the two thresholds.
-    var state: DetectionState = .unaware
+    public var state: DetectionState = .unaware
     /// The detection value the last evaluation produced, with its terms.
-    var breakdown: DetectionBreakdown = .none
+    public var breakdown: DetectionBreakdown = .none
     /// Distance at the last evaluation, world units.
-    var distance: Float = 0
+    public var distance: Float = 0
     /// Whether static collision left the sight line clear at the last
     /// evaluation.
-    var hasLineOfSight = false
+    public var hasLineOfSight = false
     /// Whether the target was inside the view cone at the last evaluation.
-    var isInViewCone = false
+    public var isInViewCone = false
     /// Where the target was when it was last perceived — the investigate
     /// position. Held while the observer is suspicious or worse and dropped when
     /// the level decays to nothing, so a stale position can never be walked to.
     /// This is what 16.7 sends an actor to, and what the searching combat state
     /// derives from.
-    var lastKnownPosition: SIMD3<Float>?
+    public var lastKnownPosition: SIMD3<Float>?
 
-    static let unaware = DetectionPairState()
+    public static let unaware = DetectionPairState()
 
     /// Whether the observer has detected the target outright.
-    var isDetected: Bool {
+    public var isDetected: Bool {
         state == .detected
     }
 
@@ -76,7 +76,7 @@ nonisolated struct DetectionPairState: Equatable, Sendable {
     ///   - seconds: elapsed simulated time since this pair was last advanced.
     ///     Zero or non-finite leaves the state alone rather than dividing by it.
     ///   - settings: rates and thresholds.
-    func advanced(
+    public func advanced(
         inputs: DetectionInputs,
         targetPosition: SIMD3<Float>,
         by seconds: Float,
@@ -108,7 +108,7 @@ nonisolated struct DetectionPairState: Equatable, Sendable {
 
     /// The state a level reads as. `detected` needs the full level, so an
     /// observer is only ever certain at the top of the scale.
-    static func classify(level: Float, settings: DetectionSettings) -> DetectionState {
+    public static func classify(level: Float, settings: DetectionSettings) -> DetectionState {
         if level >= max(0, settings.detectedLevel.value) {
             return .detected
         }

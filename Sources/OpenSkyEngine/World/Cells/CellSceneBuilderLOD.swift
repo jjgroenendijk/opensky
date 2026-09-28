@@ -3,7 +3,7 @@
 import OpenSkyFormats
 
 nonisolated extension CellSceneBuilder {
-    nonisolated func buildDistantLOD(
+    nonisolated public func buildDistantLOD(
         worldspaceEditorID: String,
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>

@@ -22,29 +22,29 @@ import Metal
 import OpenSkyFormats
 import simd
 
-nonisolated final class PlayerBody {
+nonisolated public final class PlayerBody {
     /// The vanilla player base record: `Skyrim.esm` `NPC_ 00000007`, editor ID
     /// `Player`. Probed rather than remembered — `openskycli actor --npc
     /// 00000007` resolves it through the same template and visual chains a
     /// streamed ACHR uses and reports a skeleton, an outfit, and a FaceGen head.
     /// A load order without that record leaves the player bodiless and says so,
     /// exactly as a missing mesh does.
-    static let baseFormID = FormID(0x0000_0007)
+    public static let baseFormID = FormID(0x0000_0007)
 
     /// The identity the body renders under. The player is not a plugin
     /// reference (`ReferenceKey.player`), so it carries the null FormID here and
     /// the assembly's reason-tagged skips name it as "player" in the readout.
-    static let actorFormID = FormID(0)
+    public static let actorFormID = FormID(0)
 
-    let assembly: ActorAssembly<ActorRenderAsset>
-    let animation: PlayerAnimationPlayback
+    public let assembly: ActorAssembly<ActorRenderAsset>
+    public let animation: PlayerAnimationPlayback
 
     /// Where the body stands, rebuilt from the capsule every frame.
-    private(set) var transform = matrix_identity_float4x4
+    public private(set) var transform = matrix_identity_float4x4
     /// The draw lists for the current transform.
-    private(set) var render: RenderScene
+    public private(set) var render: RenderScene
 
-    init(assembly: ActorAssembly<ActorRenderAsset>, animation: PlayerAnimationPlayback) {
+    public init(assembly: ActorAssembly<ActorRenderAsset>, animation: PlayerAnimationPlayback) {
         self.assembly = assembly
         self.animation = animation
         render = RenderScene(instances: assembly.renderPlacements(at: matrix_identity_float4x4))
@@ -60,13 +60,13 @@ nonisolated final class PlayerBody {
     /// +Y. Walk-mode yaw is measured the other way, counterclockwise from +X
     /// (`docs/decisions/coordinates.md`), so turning the mesh's +Y onto the
     /// camera's `(cos yaw, sin yaw)` is a rotation of `yaw - pi/2`.
-    static func transform(feetPosition: SIMD3<Float>, yaw: Float) -> float4x4 {
+    public static func transform(feetPosition: SIMD3<Float>, yaw: Float) -> float4x4 {
         MatrixMath.translation(feetPosition) * MatrixMath.rotationZ(radians: yaw - .pi / 2)
     }
 
     /// Moves the body. Draw groups are rebuilt only when the transform actually
     /// changed, so a standing player costs one matrix comparison per frame.
-    func place(feetPosition: SIMD3<Float>, yaw: Float) {
+    public func place(feetPosition: SIMD3<Float>, yaw: Float) {
         let wanted = Self.transform(feetPosition: feetPosition, yaw: yaw)
         guard !Self.isEqual(wanted, transform) else { return }
         transform = wanted
@@ -76,7 +76,7 @@ nonisolated final class PlayerBody {
     /// GPU allocations the body keeps alive. Added to the renderer's residency
     /// set once, at attach, and never removed: unlike a cell's, they are live
     /// for the whole session.
-    var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [MTLAllocation] {
         render.residencyAllocations
     }
 

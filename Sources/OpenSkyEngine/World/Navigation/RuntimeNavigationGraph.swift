@@ -5,28 +5,28 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct RuntimeNavigationTriangle: Sendable {
-    let vertices: NavigationTriangleVertices
-    let centroid: SIMD3<Float>
-    let neighbors: SIMD3<Int16>
-    let flags: NavmeshGeometry.TriangleFlags
-    let isDegenerate: Bool
+nonisolated public struct RuntimeNavigationTriangle: Sendable {
+    public let vertices: NavigationTriangleVertices
+    public let centroid: SIMD3<Float>
+    public let neighbors: SIMD3<Int16>
+    public let flags: NavmeshGeometry.TriangleFlags
+    public let isDegenerate: Bool
 }
 
-nonisolated struct NavigationTriangleVertices: Sendable {
-    let first: SIMD3<Float>
-    let second: SIMD3<Float>
-    let third: SIMD3<Float>
+nonisolated public struct NavigationTriangleVertices: Sendable {
+    public let first: SIMD3<Float>
+    public let second: SIMD3<Float>
+    public let third: SIMD3<Float>
 }
 
-nonisolated struct RuntimeNavigationMesh: Sendable {
-    let formID: FormID
-    let cell: CellSceneLocation
-    let triangles: [RuntimeNavigationTriangle]
-    let edgeLinks: [NavmeshGeometry.EdgeLink]
-    let doorLinksByTriangle: [Int: [FormID]]
+nonisolated public struct RuntimeNavigationMesh: Sendable {
+    public let formID: FormID
+    public let cell: CellSceneLocation
+    public let triangles: [RuntimeNavigationTriangle]
+    public let edgeLinks: [NavmeshGeometry.EdgeLink]
+    public let doorLinksByTriangle: [Int: [FormID]]
 
-    init(navmesh: Navmesh, cell: CellSceneLocation) {
+    public init(navmesh: Navmesh, cell: CellSceneLocation) {
         formID = navmesh.formID
         self.cell = cell
         edgeLinks = navmesh.geometry.edgeLinks
@@ -56,19 +56,19 @@ nonisolated struct RuntimeNavigationMesh: Sendable {
         ).mapValues { links in links.map(\.door).sorted { $0.rawValue < $1.rawValue } }
     }
 
-    func triangle(_ index: Int) -> RuntimeNavigationTriangle? {
+    public func triangle(_ index: Int) -> RuntimeNavigationTriangle? {
         guard triangles.indices.contains(index) else { return nil }
         return triangles[index]
     }
 }
 
-nonisolated struct RuntimeNavigationDoor: Sendable {
-    let position: SIMD3<Float>
-    let destination: FormID?
+nonisolated public struct RuntimeNavigationDoor: Sendable {
+    public let position: SIMD3<Float>
+    public let destination: FormID?
 }
 
-nonisolated struct RuntimeNavigationGraph: Sendable {
-    private(set) var installedCells: [CellSceneLocation: UInt64] = [:]
+nonisolated public struct RuntimeNavigationGraph: Sendable {
+    public private(set) var installedCells: [CellSceneLocation: UInt64] = [:]
     private var cellNavmeshes: [CellSceneLocation: [UInt32]] = [:]
     private var navmeshes: [UInt32: RuntimeNavigationMesh] = [:]
     private var doors: [UInt32: RuntimeNavigationDoor] = [:]
@@ -76,19 +76,19 @@ nonisolated struct RuntimeNavigationGraph: Sendable {
     private var doorTriangles: [UInt32: [NavigationTriangleID]] = [:]
     private var scratch = NavigationQueryScratch()
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         navmeshes.isEmpty
     }
 
-    var triangleCount: Int {
+    public var triangleCount: Int {
         navmeshes.values.reduce(0) { $0 + $1.triangles.count }
     }
 
-    var hasTeleportDoors: Bool {
+    public var hasTeleportDoors: Bool {
         doors.values.contains { $0.destination != nil }
     }
 
-    mutating func setCell(_ location: CellSceneLocation, scene: CellScene) {
+    public mutating func setCell(_ location: CellSceneLocation, scene: CellScene) {
         removeCell(location)
         installedCells[location] = scene.stateSequence
         let meshIDs = scene.navmeshes.map(\.formID.rawValue)
@@ -107,7 +107,7 @@ nonisolated struct RuntimeNavigationGraph: Sendable {
         installDoors(from: scene, at: location)
     }
 
-    mutating func removeCell(_ location: CellSceneLocation) {
+    public mutating func removeCell(_ location: CellSceneLocation) {
         installedCells.removeValue(forKey: location)
         for meshID in cellNavmeshes.removeValue(forKey: location) ?? [] {
             guard let removed = navmeshes.removeValue(forKey: meshID) else { continue }
@@ -126,13 +126,13 @@ nonisolated struct RuntimeNavigationGraph: Sendable {
         }
     }
 
-    mutating func retainCells(_ locations: Set<CellSceneLocation>) {
+    public mutating func retainCells(_ locations: Set<CellSceneLocation>) {
         for location in Array(installedCells.keys) where !locations.contains(location) {
             removeCell(location)
         }
     }
 
-    func projection(
+    public func projection(
         of point: SIMD3<Float>,
         searchRadius: Float = NavigationPathQuery.defaultProjectionRadius
     ) -> NavigationProjectionResult {
@@ -158,7 +158,7 @@ nonisolated struct RuntimeNavigationGraph: Sendable {
         return nearest.map(NavigationProjectionResult.hit) ?? .miss
     }
 
-    func pathIsCurrent(
+    public func pathIsCurrent(
         _ path: NavigationPath,
         target: SIMD3<Float>,
         targetMoveTolerance: Float = NavigationPathQuery.defaultTargetMoveTolerance
@@ -170,24 +170,24 @@ nonisolated struct RuntimeNavigationGraph: Sendable {
             && simd_distance(path.target, target) <= max(0, targetMoveTolerance)
     }
 
-    func mesh(containing node: NavigationTriangleID) -> RuntimeNavigationMesh? {
+    public func mesh(containing node: NavigationTriangleID) -> RuntimeNavigationMesh? {
         navmeshes[node.navmesh.rawValue]
     }
 
-    func door(_ reference: FormID) -> RuntimeNavigationDoor? {
+    public func door(_ reference: FormID) -> RuntimeNavigationDoor? {
         doors[reference.rawValue]
     }
 
-    func triangles(atDoor reference: FormID) -> [NavigationTriangleID] {
+    public func triangles(atDoor reference: FormID) -> [NavigationTriangleID] {
         doorTriangles[reference.rawValue] ?? []
     }
 
-    func cell(at point: SIMD3<Float>) -> CellSceneLocation? {
+    public func cell(at point: SIMD3<Float>) -> CellSceneLocation? {
         guard case let .hit(projection) = projection(of: point) else { return nil }
         return mesh(containing: projection.triangle)?.cell
     }
 
-    mutating func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
+    public mutating func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
         var workspace = NavigationQueryScratch()
         swap(&workspace, &scratch)
         let result = NavigationPathfinder.findPath(query, in: self, scratch: &workspace)
@@ -225,13 +225,31 @@ nonisolated struct RuntimeNavigationGraph: Sendable {
         }
         return candidate.triangle < current.triangle
     }
+
+    public init(
+        installedCells: [CellSceneLocation: UInt64] = [:],
+        cellNavmeshes: [CellSceneLocation: [UInt32]] = [:],
+        navmeshes: [UInt32: RuntimeNavigationMesh] = [:],
+        doors: [UInt32: RuntimeNavigationDoor] = [:],
+        cellDoors: [CellSceneLocation: [UInt32]] = [:],
+        doorTriangles: [UInt32: [NavigationTriangleID]] = [:],
+        scratch: NavigationQueryScratch = NavigationQueryScratch()
+    ) {
+        self.installedCells = installedCells
+        self.cellNavmeshes = cellNavmeshes
+        self.navmeshes = navmeshes
+        self.doors = doors
+        self.cellDoors = cellDoors
+        self.doorTriangles = doorTriangles
+        self.scratch = scratch
+    }
 }
 
 nonisolated extension RuntimeNavigationGraph {
     /// Appends the resident navmesh fill and latest valid path using the same
     /// graph the pathfinder queries. A small Z lift prevents coplanar floor
     /// geometry from producing unstable depth ties.
-    func appendWorldOverlay(
+    public func appendWorldOverlay(
         context: WorldOverlayFrameContext,
         path: NavigationPath?,
         to list: inout WorldOverlayDrawList

@@ -29,17 +29,17 @@ import Foundation
 import OpenSkyFormats
 
 /// One session's per-skill perk-tree counts.
-nonisolated struct PerkTreeCountCache {
+nonisolated public struct PerkTreeCountCache: Sendable {
     /// How much of one skill's tree the player owns.
-    struct Counts: Equatable, Sendable {
+    public struct Counts: Equatable, Sendable {
         /// Boxes of the tree whose perk the player owns.
-        let owned: Int
+        public let owned: Int
         /// Boxes the tree has a resolvable perk for, which is what `owned`
         /// counts out of.
-        let total: Int
+        public let total: Int
 
         /// What a skill with no AVIF record reads.
-        static let none = Counts(owned: 0, total: 0)
+        public static let none = Counts(owned: 0, total: 0)
     }
 
     /// Every resolvable perk of one skill's tree, in node order, for each skill
@@ -55,20 +55,20 @@ nonisolated struct PerkTreeCountCache {
     private var ownedLookup: Set<ReferenceKey> = []
 
     /// Trees walked out of the records since the stores were last wired.
-    private(set) var treeCount = 0
+    public private(set) var treeCount = 0
     /// Counts taken since then, which is one per skill per ownership change.
-    private(set) var countCount = 0
+    public private(set) var countCount = 0
     /// Asks served from a standing count, which is the whole point of the cache
     /// and what the Skills section shows growing per tick.
-    private(set) var reuseCount = 0
+    public private(set) var reuseCount = 0
 
     /// How many skills the cache holds a resolved tree for.
-    var skillCount: Int {
+    public var skillCount: Int {
         keys.count
     }
 
     /// Whether nothing has been asked for since the last wiring.
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         keys.isEmpty
     }
 
@@ -84,7 +84,7 @@ nonisolated struct PerkTreeCountCache {
     ///   - tree: what to do when the skill's tree has not been resolved yet.
     ///     Called at most once per skill per wiring, so a caller may do the full
     ///     record walk in it.
-    mutating func counts(
+    public mutating func counts(
         forSkill index: Int32,
         owned: [ReferenceKey],
         tree: (Int32) -> [ReferenceKey]
@@ -114,7 +114,7 @@ nonisolated struct PerkTreeCountCache {
     /// The tallies reset with them: they count what this wiring has done, and
     /// carrying them across a rewire would describe entries that no longer
     /// exist.
-    mutating func invalidate() {
+    public mutating func invalidate() {
         keys.removeAll(keepingCapacity: true)
         counts.removeAll(keepingCapacity: true)
         ownedWhenCounted = []
@@ -126,7 +126,7 @@ nonisolated struct PerkTreeCountCache {
 
     /// What the Skills section shows, which is the reading that makes the reuse
     /// visible without a profiler.
-    var readout: PerkTreeCacheReadout {
+    public var readout: PerkTreeCacheReadout {
         PerkTreeCacheReadout(
             skillCount: skillCount,
             treeCount: treeCount,
@@ -147,23 +147,41 @@ nonisolated struct PerkTreeCountCache {
         treeCount += 1
         return resolved
     }
+
+    public init(
+        keys: [Int32: [ReferenceKey]] = [:],
+        counts: [Int32: Counts] = [:],
+        ownedWhenCounted: [ReferenceKey] = [],
+        ownedLookup: Set<ReferenceKey> = [],
+        treeCount: Int = 0,
+        countCount: Int = 0,
+        reuseCount: Int = 0
+    ) {
+        self.keys = keys
+        self.counts = counts
+        self.ownedWhenCounted = ownedWhenCounted
+        self.ownedLookup = ownedLookup
+        self.treeCount = treeCount
+        self.countCount = countCount
+        self.reuseCount = reuseCount
+    }
 }
 
 /// One reading of the perk-tree count cache.
-nonisolated struct PerkTreeCacheReadout: Equatable, Sendable {
-    let skillCount: Int
-    let treeCount: Int
-    let countCount: Int
-    let reuseCount: Int
+nonisolated public struct PerkTreeCacheReadout: Equatable, Sendable {
+    public let skillCount: Int
+    public let treeCount: Int
+    public let countCount: Int
+    public let reuseCount: Int
 
     /// Nothing asked for yet, which is also what a session with no game data
     /// reads.
-    static let empty = PerkTreeCacheReadout(
+    public static let empty = PerkTreeCacheReadout(
         skillCount: 0, treeCount: 0, countCount: 0, reuseCount: 0
     )
 
     /// One line for a readout.
-    var describedLine: String {
+    public var describedLine: String {
         "Perk tree cache: \(skillCount) skill(s), \(treeCount) tree(s) resolved, "
             + "\(countCount) counted, \(reuseCount) reused"
     }

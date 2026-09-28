@@ -1,47 +1,79 @@
 ---
 type: Tool
 title: Swift modules
-description: How the engine splits into Swift modules through the root Swift package, which way the
-  modules depend on each other, and the access and import rules that follow.
+description: How the engine splits into Swift modules through the root Swift package, the layout
+  rules of The Modular Architecture, and the access and import rules that follow.
 tags: [tool, build, swift, modules, swiftpm]
 ---
 
 # Swift modules
 
-The lower layers of the engine are library modules in a Swift package. `Package.swift` at the
-repository root declares them. The app and `OpenSkyCLI` link the package products through
-`OpenSky.xcodeproj`. `OpenSky.xcworkspace` holds the project and the package side by side, and
-`make` builds through it. The rest of the engine, under `Sources/OpenSkyEngine/`, still compiles into
-the app and into `OpenSkyCLI`. The split goes bottom-up, one layer at a time.
+The engine is a set of library modules in a Swift package. `Package.swift` at the repository
+root declares them. `OpenSky.xcworkspace` holds the Xcode project and the package side by side,
+and `make` builds through it.
+
+The app and `OpenSkyCLI` link one product, `OpenSkyModules`, which holds every library module.
+The Xcode test bundles link one product, `OpenSkyTestSupport`, which holds every shared test
+fixture library. `Package.swift` builds both lists itself, so a new module needs no edit to
+`OpenSky.xcodeproj`.
 
 ## Why a module boundary
 
-Swift recompiles a file when a declaration it uses changes. Inside one module, "uses" is wide. A
-test file that imports the whole engine depends on most of it. So adding one method to a runtime
-type recompiled every file in the unit-test bundle, parser tests included.
+A module boundary makes the architecture visible and lets the compiler enforce it.
+`Package.swift` lists what each module depends on, and the compiler rejects an `import` of a
+module that is not listed. So an upward dependency fails the build instead of slipping in.
 
-A module boundary stops that. A file in another module sees only the module's public interface.
-A change to engine code never changes the interface of `OpenSkyFormats`, so the parser tests do
-not rebuild when engine code changes.
+A module can also be built and tested alone: `make test-fast T='OpenSkyFormatsTests'` builds
+only the package and runs one test target, without the app.
 
-The boundary costs something in the other direction. A change to a module's interface, for
-example a new public method on `BinaryReader`, recompiles every file that imports the module. A
-change inside a function body does not change the interface, so it stays cheap. Lower layers
-change less often than runtime types, so the trade is worth it.
+## The layout: The Modular Architecture
 
-## Why a Swift package
+The layout follows [The Modular Architecture](https://tuist.dev/en/docs/guides/features/projects/tma-architecture)
+(TMA) from Tuist. There are two kinds of module.
 
-A Swift package is the standard way to split Swift code into modules:
+A **foundation module** is a library with a stable public API. Every module above it may import
+it directly. Formats, game data, and the other low layers are foundation modules.
 
-- `Package.swift` lists what each module depends on. The compiler rejects an import that is not
-  listed, so an upward dependency fails the build instead of slipping in.
-- A new module is a few lines in `Package.swift`. It needs no project-file edit, no xcconfig, and
-  no framework embedding.
-- The layout is the SwiftPM default: `Sources/<Module>/` and `Tests/<Module>Tests/`.
-- `swift build --build-tests` builds the modules and their tests without Xcode.
+A **feature module** has up to four targets:
 
-Package products link statically into the app and the CLI. There is no framework to embed and no
-run path to set.
+| Target | Holds | Exists when |
+| --- | --- | --- |
+| `X` | the implementation | always |
+| `XInterface` | the protocols and value types other modules use | another module uses the feature |
+| `XTesting` | fakes and fixtures other modules' tests share | another module's tests need them |
+| `XTests` | the unit tests of `X` | `X` has tests |
+
+A module that uses a feature imports its `XInterface`, never `X`. Only the composition roots,
+the app and `OpenSkyCLI`, import feature implementations. They build the object graph at startup
+and hand each module what it needs through its initializer. There is no dependency-injection
+framework.
+
+An `XInterface` holds protocols and value types only, with no runtime logic beyond small value
+helpers. A declaration goes there only when another module uses it.
+
+## How Package.swift enforces the rules
+
+`Package.swift` declares modules bottom-up with two helpers:
+
+```swift
+targets += foundation("OpenSkyGameData", dependencies: ["OpenSkyFormats"], tests: [...])
+targets += feature("OpenSkyMagic", dependencies: [...], interface: [...], tests: [...])
+```
+
+`foundation` declares `X` and, when `tests` is given, `XTests`. `feature` declares `X` and, on
+request, `XInterface`, `XTesting`, and `XTests`, with the dependencies wired as the table above
+says. Both helpers check each dependency before the package loads:
+
+- The dependency must be declared earlier. A module never depends on a module on its own layer
+  or above.
+- The dependency must not be a feature implementation.
+
+A broken rule stops the manifest with a message that names both modules.
+
+The helpers also give every target the same settings: the language settings of
+`Config/Build/Base.xcconfig`, `MainActor` default isolation for library code, and the header
+path of the vendored ffmpeg. Test targets also link ffmpeg, because a package test executable
+has no `OTHER_LDFLAGS`. Change the settings in `Package.swift` and the xcconfig together.
 
 ## Modules
 
@@ -50,22 +82,17 @@ OpenSkyFormats            parsers, binary readers, compression, geometry values
   ^
 OpenSkyGameData           virtual file system, load order, record index, record stores
   ^
-OpenSky app, OpenSkyCLI   also compile Sources/OpenSkyEngine/
+OpenSkyEngine             the rest of the engine, until it is split
+  ^
+OpenSky app, OpenSkyCLI   composition roots
 ```
 
-| Target | Folder | Depends on |
-| --- | --- | --- |
-| `OpenSkyFormats` | `Sources/OpenSkyFormats/` | nothing |
-| `OpenSkyGameData` | `Sources/OpenSkyGameData/` | `OpenSkyFormats` |
-| `FormatsTestSupport` | `Tests/FormatsTestSupport/` | `OpenSkyFormats` |
-| `OpenSkyFormatsTests` | `Tests/OpenSkyFormatsTests/` | `OpenSkyFormats`, `FormatsTestSupport` |
-| `OpenSkyGameDataTests` | `Tests/OpenSkyGameDataTests/` | `OpenSkyGameData`, `FormatsTestSupport` |
+Two more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared with Metal
+([build system](/tools/build-system.md)). `CFFmpeg` is the clang module over the vendored ffmpeg
+([ffmpeg](/decisions/ffmpeg-audio.md)).
 
-The Metal shared structs in `Sources/ShaderTypes/` stay with the engine. A parser returns plain
-values, and the engine packs them into GPU layouts.
-
-`FormatsTestSupport` holds fixtures that build format bytes in code. It is a library, so the
-package test targets and the Xcode test bundles share one copy.
+`Sources/Shaders/Shaders.metal` is not in the package. The app and the CLI each compile it,
+because `device.makeDefaultLibrary()` reads the main bundle.
 
 ## Keeping the lines clean
 
@@ -77,8 +104,7 @@ A lower module never imports a higher one. Three patterns keep it that way:
   named `Type+Feature.swift`. Examples: `Package+Schedule.swift` in the engine over a
   `OpenSkyFormats` record, and `EquipSlotStore+Hands.swift` and `FactionStore+Templates.swift` in
   the engine over `OpenSkyGameData` stores.
-- A test that checks engine behavior over a lower type stays in `OpenSkyTests`. The record-dump
-  tests are an example: they live in `Tests/OpenSkyTests/Preview/`, not with the store tests.
+- A lower module that must call up defines a protocol, and the higher module conforms to it.
 
 ## Access and imports
 
@@ -86,7 +112,8 @@ A declaration another module uses is `public`. The rules that follow are the sta
 rules:
 
 - A struct's implicit memberwise initializer is `internal`. A struct another module builds needs
-  an explicit `public init(...)`. An `OptionSet` needs `public init(rawValue:)`.
+  an explicit `public init(...)`. So does a type whose `init()` is a default argument value. An
+  `OptionSet` needs `public init(rawValue:)`.
 - Swift does not infer `Sendable` for a public type. A public value type that crosses isolation
   states `Sendable` in its declaration. A type that holds a class reference or a closure, such as
   the AS2 interpreter values, does not. A generic type conforms conditionally, for example
@@ -96,17 +123,16 @@ rules:
   appear in an expression".
 - Tests write `@testable import` to reach `internal` members.
 
-The package sets the same language settings as the Xcode targets: Swift 6 mode, `MainActor`
-default isolation, `MemberImportVisibility`, approachable concurrency, and warnings as errors.
-Change both places together.
-
 ## Tests
 
 The package test targets run in the `UnitTests` and `Sanitizers` plans next to `OpenSkyTests`. A
 test plan names a package test target with `"containerPath" : "container:."`, the package at the
 repository root. Only a workspace shows a scheme the test targets of a local package. Through
 `-project OpenSky.xcodeproj`, xcodebuild reports that the target "isn't a member of the specified
-test plan or scheme". `swift test` runs them without Xcode.
+test plan or scheme".
 
-A test that needs only one module goes in that module's test target. A test that also builds
-engine state stays in `Tests/OpenSkyTests/`.
+`make test-fast T='<Target>Tests/...'` runs one package test target through `swift test`
+(`tools/test-package.sh`). It builds only the package, into `.build/`, and needs no app host.
+
+A test that needs only one module goes in that module's test target. A test that needs the app,
+the shader library in the app bundle, or the whole object graph stays in `Tests/OpenSkyTests/`.

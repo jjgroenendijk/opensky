@@ -15,13 +15,13 @@ import simd
 nonisolated extension UIGlyphAtlas {
     /// A glyph's tight coverage cell: pixel size + the draw origin (offset that
     /// shifts the baseline-relative bbox into the cell) + the left/top bearings.
-    struct GlyphBox {
-        let width: Int
-        let height: Int
-        let drawX: Int
-        let drawY: Int
-        let bearingX: Int
-        let bearingY: Int
+    public struct GlyphBox: Sendable {
+        public let width: Int
+        public let height: Int
+        public let drawX: Int
+        public let drawY: Int
+        public let bearingX: Int
+        public let bearingY: Int
     }
 
     /// Drops every SWF glyph whose `fontKey` satisfies `isReleased` and repacks
@@ -33,7 +33,7 @@ nonisolated extension UIGlyphAtlas {
     /// keep their metrics but move, so their UVs change. Consumers re-query per
     /// frame, and the bumped `revision` re-uploads the texture.
     @discardableResult
-    func releaseSWFGlyphs(where isReleased: (Int) -> Bool) -> Int {
+    public func releaseSWFGlyphs(where isReleased: (Int) -> Bool) -> Int {
         let released = cache.filter { key, _ in
             key.source == .swf && isReleased(key.fontKey)
         }
@@ -115,7 +115,7 @@ nonisolated extension UIGlyphAtlas {
     /// grayscale context, and shelf-pack the coverage. `draw` positions its
     /// content using the box's draw origin (system glyphs via the draw
     /// position, SWF paths via a context translate).
-    func rasterize(
+    public func rasterize(
         bounds: CGRect,
         draw: (CGContext, GlyphBox) -> Void
     ) -> PackedGlyph {

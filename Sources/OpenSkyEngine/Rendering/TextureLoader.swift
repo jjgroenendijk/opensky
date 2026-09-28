@@ -12,7 +12,7 @@ import OpenSkyFormats
 import os
 
 /// How a texture is consumed — decides color space and the placeholder pixel.
-nonisolated enum TextureUsage {
+nonisolated public enum TextureUsage: Sendable {
     /// Color data (diffuse/albedo): sRGB pixel format, mid-gray placeholder.
     case color
     /// Non-color data (normal, specular, masks): linear format, flat-normal
@@ -20,7 +20,7 @@ nonisolated enum TextureUsage {
     case data
 }
 
-nonisolated enum TextureLoaderError: Error, Equatable {
+nonisolated public enum TextureLoaderError: Error, Equatable {
     /// Device cannot sample BCn (never on Apple Silicon; paravirtual CI GPUs).
     case bcTextureCompressionUnsupported
     case textureAllocationFailed
@@ -28,7 +28,7 @@ nonisolated enum TextureLoaderError: Error, Equatable {
 
 /// Uploads DDS bytes to `MTLTexture`s. One per device; placeholders are
 /// created once and shared across every failed load.
-nonisolated final class TextureLoader {
+nonisolated public final class TextureLoader {
     private static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "TextureLoader"
@@ -36,13 +36,13 @@ nonisolated final class TextureLoader {
 
     private let device: MTLDevice
 
-    init(device: MTLDevice) {
+    public init(device: MTLDevice) {
         self.device = device
     }
 
     /// Never fails: parse/upload errors log once and yield the usage's 1x1
     /// placeholder so scene build keeps going (todo 2.5 fallback rule).
-    func texture(dds data: Data, usage: TextureUsage, label: String) -> MTLTexture {
+    public func texture(dds data: Data, usage: TextureUsage, label: String) -> MTLTexture {
         do {
             return try upload(dds: DDSFile(data: data), usage: usage, label: label)
         } catch {
@@ -57,13 +57,13 @@ nonisolated final class TextureLoader {
     }
 
     /// Missing file (VFS lookup failed upstream): log + placeholder.
-    func missingTexture(usage: TextureUsage, label: String) -> MTLTexture {
+    public func missingTexture(usage: TextureUsage, label: String) -> MTLTexture {
         Self.logger.error("texture \(label, privacy: .public) missing, using placeholder")
         return placeholder(usage: usage)
     }
 
     /// Throwing core — exercised directly by unit tests.
-    func upload(dds: DDSFile, usage: TextureUsage, label: String) throws -> MTLTexture {
+    public func upload(dds: DDSFile, usage: TextureUsage, label: String) throws -> MTLTexture {
         guard !dds.format.isBlockCompressed || device.supportsBCTextureCompression else {
             throw TextureLoaderError.bcTextureCompressionUnsupported
         }
@@ -115,7 +115,10 @@ nonisolated final class TextureLoader {
 
     /// BCn -> MTLPixelFormat. `usage == .color` picks the sRGB view; BC4/BC5
     /// have no sRGB variants (single/dual channel data formats).
-    static func pixelFormat(for format: DDSPixelFormat, usage: TextureUsage) -> MTLPixelFormat {
+    public static func pixelFormat(
+        for format: DDSPixelFormat,
+        usage: TextureUsage
+    ) -> MTLPixelFormat {
         let srgb = usage == .color
         switch format {
         case .bc1: return srgb ? .bc1_rgba_srgb : .bc1_rgba

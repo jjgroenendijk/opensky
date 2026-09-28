@@ -17,7 +17,7 @@ import OpenSkyGameData
 /// Optional weather runtime a provider can expose (M7.2.2). GameViewController
 /// pulls it off the provider to hand the renderer. Built once at setup from the
 /// same ESM data, then read-only value types — safe to share to the main thread.
-nonisolated protocol WeatherProviding {
+nonisolated public protocol WeatherProviding {
     var weatherSystem: WeatherSystem? { get }
 }
 
@@ -25,7 +25,7 @@ nonisolated protocol WeatherProviding {
 /// pairs it with the session's `WorldStateStore` to build the
 /// `GlobalResolution` conditions, the clock and weather-chance selection read
 /// global values through.
-nonisolated protocol GlobalDataProviding {
+nonisolated public protocol GlobalDataProviding {
     var globalStore: GlobalStore? { get }
 }
 
@@ -33,25 +33,25 @@ nonisolated protocol GlobalDataProviding {
 /// pairs it with the session's `WorldStateStore` to build the `QuestRuntime`
 /// the `Quest` natives mutate and the quest script instances are started from.
 /// Immutable after `init` like every other `*Store` here.
-nonisolated protocol QuestDataProviding {
+nonisolated public protocol QuestDataProviding {
     var questStore: QuestStore? { get }
 }
 
 /// Optional load-order-wide LCTN index used while filling direct location
 /// aliases and resolving CELL XLCN links.
-nonisolated protocol LocationDataProviding {
+nonisolated public protocol LocationDataProviding {
     var locationStore: LocationStore? { get }
 }
 
 /// Optional DIAL/INFO/VTYP index a provider can expose (issue #204). The
 /// dialogue runtime consumes this in 17.2; synthetic scenes leave it nil.
-nonisolated protocol DialogueDataProviding {
+nonisolated public protocol DialogueDataProviding {
     var dialogueStore: DialogueStore? { get }
 }
 
 /// Optional PACK/NPC_ schedule index (issue #201). The M16 gate panel pulls
 /// this seam from the real provider; synthetic scenes leave it nil.
-nonisolated protocol PackageDataProviding {
+nonisolated public protocol PackageDataProviding {
     var packageStore: PackageStore? { get }
 }
 
@@ -61,7 +61,7 @@ nonisolated protocol PackageDataProviding {
 /// container sessions run on. Immutable after `init` like every other `*Store`
 /// here, so reading it from the main thread does not break the builder's queue
 /// confinement.
-nonisolated protocol ItemDataProviding {
+nonisolated public protocol ItemDataProviding {
     var inventoryBaselines: InventoryBaselineResolver? { get }
     /// Slot and model data for equippable items (issue #178), paired with the
     /// baselines above to build the session's `EquipmentRuntime`. Separate
@@ -75,7 +75,7 @@ nonisolated protocol ItemDataProviding {
 /// to build the `ActorValueRuntime` that damage, restore and regeneration run
 /// on. Immutable after `init` like every other `*Resolver` here, so reading it
 /// from the main thread does not break the builder's queue confinement.
-nonisolated protocol ActorValueDataProviding {
+nonisolated public protocol ActorValueDataProviding {
     var actorValueBaselines: ActorValueBaselineResolver? { get }
 }
 
@@ -84,7 +84,7 @@ nonisolated protocol ActorValueDataProviding {
 /// what those links are relative to — the base plugin the item indexes were
 /// built from. Both nil on a synthetic scene, and then the magic panel reports
 /// itself unavailable rather than showing a convincing nothing.
-nonisolated protocol MagicDataProviding {
+nonisolated public protocol MagicDataProviding {
     var magicEffectStore: MagicEffectStore? { get }
     var magicItemPluginName: String? { get }
     /// Load-order SPEL and SCRL index (issue #470), which the spellbook keys
@@ -107,7 +107,7 @@ nonisolated protocol MagicDataProviding {
 /// progression is its own subsystem — perks reach combat, magic, prices and
 /// detection alike — and a session that wants perks should not have to claim it
 /// carries spells.
-nonisolated protocol ProgressionDataProviding {
+nonisolated public protocol ProgressionDataProviding {
     /// Load-order PERK index, or nil on a synthetic scene, where the perk
     /// runtime reports itself unavailable rather than showing an actor who owns
     /// nothing.
@@ -142,7 +142,7 @@ nonisolated protocol ProgressionDataProviding {
 /// as combat, and a session that wants factions should not have to claim it
 /// carries perks. Both nil on a synthetic scene, and then every actor derives
 /// as neutral and the panel toggle is the only hostility there is.
-nonisolated protocol FactionDataProviding {
+nonisolated public protocol FactionDataProviding {
     /// Load-order FACT index (issue #501), which every stored membership is
     /// looked up through and which the interfaction relation index is built
     /// from.
@@ -166,13 +166,13 @@ nonisolated protocol FactionDataProviding {
 /// Both values are immutable and thread-safe (`VirtualFileSystem` is
 /// `Sendable`; `FormIDResolver` is a value), so reading them from the main
 /// thread does not break the builder's queue confinement.
-nonisolated protocol ScriptDataProviding {
+nonisolated public protocol ScriptDataProviding {
     var scriptFileSystem: VirtualFileSystem? { get }
     var scriptFormIDResolver: FormIDResolver { get }
 }
 
 /// Optional immutable player-movement tuning resolved from active GMST data.
-nonisolated protocol MovementConfigurationProviding {
+nonisolated public protocol MovementConfigurationProviding {
     var movementConfiguration: PlayerMovementConfiguration { get }
 }
 
@@ -181,7 +181,7 @@ nonisolated protocol MovementConfigurationProviding {
 /// indexes are separate from the audio ones: a synthetic scene has no load
 /// order to read `fBarterMin` and `fBarterMax` out of, and the merchant menu
 /// then falls back to the documented vanilla defaults rather than to nothing.
-nonisolated protocol BarterDataProviding {
+nonisolated public protocol BarterDataProviding {
     var barterPricing: BarterPricing { get }
 }
 
@@ -191,7 +191,7 @@ nonisolated protocol BarterDataProviding {
 /// `BarterDataProviding` is: a synthetic scene has no load order to read
 /// `fCombatDistance` and the block settings out of, and melee then falls back
 /// to the UESP-documented numbers rather than to nothing.
-nonisolated protocol CombatDataProviding {
+nonisolated public protocol CombatDataProviding {
     var combatSettings: CombatSettings { get }
     /// The archery GMSTs (issue #196), on the same terms. Same protocol rather
     /// than a second one because both are resolved from one GMST load and both
@@ -208,7 +208,7 @@ nonisolated protocol CombatDataProviding {
 /// GameViewController pulls these off the provider to construct the world
 /// sound director alongside the audio engine. WeatherStore arrives via
 /// `WeatherProviding.weatherSystem?.store`.
-nonisolated protocol AudioDataProviding {
+nonisolated public protocol AudioDataProviding {
     var soundStore: SoundRecordStore? { get }
     var aspcStore: AcousticSpaceStore? { get }
     /// Footstep record index (FSTS/FSTP/IPDS/IPCT), added in issue #352 for

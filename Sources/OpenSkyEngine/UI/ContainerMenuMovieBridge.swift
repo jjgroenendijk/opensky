@@ -22,7 +22,7 @@ import Foundation
 import OpenSkyFormats
 
 /// What the movie asked the engine to do.
-nonisolated enum ContainerMenuAction: Equatable, Sendable {
+nonisolated public enum ContainerMenuAction: Equatable, Sendable {
     /// Move the row at this index across: take, store, buy or sell, according
     /// to the model's mode and side.
     case transfer(index: Int)
@@ -34,13 +34,13 @@ nonisolated enum ContainerMenuAction: Equatable, Sendable {
     case close
 }
 
-nonisolated enum ContainerMenuMovieBridge {
+nonisolated public enum ContainerMenuMovieBridge: Sendable {
     // MARK: - Movies
 
-    static let containerMoviePath = "interface\\containermenu.swf"
-    static let barterMoviePath = "interface\\bartermenu.swf"
+    public static let containerMoviePath = "interface\\containermenu.swf"
+    public static let barterMoviePath = "interface\\bartermenu.swf"
 
-    static func moviePath(for mode: ContainerMenuModel.Mode) -> String {
+    public static func moviePath(for mode: ContainerMenuModel.Mode) -> String {
         mode == .barter ? barterMoviePath : containerMoviePath
     }
 
@@ -50,24 +50,24 @@ nonisolated enum ContainerMenuMovieBridge {
     /// of these movies after the cross-movie import merge: 374 display nodes for
     /// the container menu and 369 for the barter menu, each with 0 unresolved
     /// placeholders.
-    static let menuPath = "/Menu_mc"
-    static let listsPath = "\(menuPath)/InventoryLists_mc"
-    static let categoryListPath = "\(listsPath)/CategoriesListHolder/List_mc"
-    static let itemListPath = "\(listsPath)/ItemsListHolder/List_mc"
-    static let bottomBarPath = "\(menuPath)/BottomBar_mc"
-    static let playerInfoPath = "\(bottomBarPath)/PlayerInfoCard_mc"
-    static let goldFieldPath = "\(playerInfoPath)/PlayerGoldValue"
-    static let carryWeightFieldPath = "\(playerInfoPath)/CarryWeightValue"
+    public static let menuPath = "/Menu_mc"
+    public static let listsPath = "\(menuPath)/InventoryLists_mc"
+    public static let categoryListPath = "\(listsPath)/CategoriesListHolder/List_mc"
+    public static let itemListPath = "\(listsPath)/ItemsListHolder/List_mc"
+    public static let bottomBarPath = "\(menuPath)/BottomBar_mc"
+    public static let playerInfoPath = "\(bottomBarPath)/PlayerInfoCard_mc"
+    public static let goldFieldPath = "\(playerInfoPath)/PlayerGoldValue"
+    public static let carryWeightFieldPath = "\(playerInfoPath)/CarryWeightValue"
     /// The merchant's purse. It lives on the player info card's `Barter` frame,
     /// so it does not exist until `SetBarterInfo` has moved the card there.
-    static let vendorGoldFieldPath = "\(playerInfoPath)/VendorGoldValue"
+    public static let vendorGoldFieldPath = "\(playerInfoPath)/VendorGoldValue"
 
     /// `PLATFORM_PC_KBMOUSE`, the same constant the other two menus pass.
-    static let pcPlatform = 0.0
+    public static let pcPlatform = 0.0
 
-    static let entryArrayName = InventoryMenuMovieBridge.entryArrayName
-    static let selectedIndexName = InventoryMenuMovieBridge.selectedIndexName
-    static let invalidateCallback = InventoryMenuMovieBridge.invalidateCallback
+    public static let entryArrayName = InventoryMenuMovieBridge.entryArrayName
+    public static let selectedIndexName = InventoryMenuMovieBridge.selectedIndexName
+    public static let invalidateCallback = InventoryMenuMovieBridge.invalidateCallback
 
     // MARK: - The barter contract
 
@@ -82,18 +82,18 @@ nonisolated enum ContainerMenuMovieBridge {
     /// from the names and from the shape of `SetBarterMultipliers(afBuyMult,
     /// afSellMult)`, not measured against a priced row on screen — the engine's
     /// own prices come from `BarterPricing` and never from the movie.
-    static let buyMultiplierName = "fBuyMult"
-    static let sellMultiplierName = "fSellMult"
-    static let playerGoldName = "iPlayerGold"
-    static let vendorGoldName = "iVendorGold"
+    public static let buyMultiplierName = "fBuyMult"
+    public static let sellMultiplierName = "fSellMult"
+    public static let playerGoldName = "iPlayerGold"
+    public static let vendorGoldName = "iVendorGold"
     /// `BarterMenu.SetBarterMultipliers(afBuyMult, afSellMult)`, a method on the
     /// menu instance rather than a `GameDelegate` callback, so it is invoked
     /// with a path.
-    static let barterMultiplierCallback = "SetBarterMultipliers"
+    public static let barterMultiplierCallback = "SetBarterMultipliers"
     /// `BottomBar.SetBarterInfo(aiPlayerGold, aiVendorGold, aiGoldDelta,
     /// astrVendorName)` — the call that moves the player info card onto its
     /// `Barter` frame and fills the vendor purse.
-    static let barterInfoCallback = "SetBarterInfo"
+    public static let barterInfoCallback = "SetBarterInfo"
 
     // MARK: - Host functions
 
@@ -102,32 +102,32 @@ nonisolated enum ContainerMenuMovieBridge {
     /// and `myLog` are in both movies, and bring-up alone makes 20 unanswered
     /// `myLog` calls, which is why this list is installed by `prepare` rather
     /// than by `activate`.
-    static let sinkHostFunctions = [
+    public static let sinkHostFunctions = [
         "myLog", "PlaySound", "RequestItemCardInfo", "UpdateItem3D", "ShowRawDealWarning"
     ]
     /// `GetRawDealWarningString` is the barter menu's "are you sure" text. Its
     /// only vanilla string is `sNotEnoughVendorGold` — the sell-for-less
     /// warning — and this engine refuses such a sale instead, so it answers the
     /// empty string rather than being left unanswered (docs/engine/barter.md).
-    static let emptyStringHostFunctions = ["GetRawDealWarningString"]
+    public static let emptyStringHostFunctions = ["GetRawDealWarningString"]
 
     /// The calls that reach an engine action, per mode. `ItemTransfer`,
     /// `TakeAllItems` and `EquipItem` are in `containermenu.swf`'s pool and not
     /// in `bartermenu.swf`'s; `ItemSelect` and `CloseMenu` are in both.
-    static func actionHostFunctions(for mode: ContainerMenuModel.Mode) -> [String] {
+    public static func actionHostFunctions(for mode: ContainerMenuModel.Mode) -> [String] {
         let shared = ["CloseMenu", "ItemSelect"]
         guard mode == .container else { return shared }
         return shared + ["ItemTransfer", "TakeAllItems", "EquipItem"]
     }
 
     /// Scaleform's UI-sound hook, reached as a plain `_global` function.
-    static let globalSinkFunctions = ["gfxProcessSound"]
+    public static let globalSinkFunctions = ["gfxProcessSound"]
 
     // MARK: - Bring-up
 
     /// Installs what the movie reaches for during `start()`, so it must run
     /// before the runtime is started.
-    static func prepare(runtime: SWFMovieRuntime) {
+    public static func prepare(runtime: SWFMovieRuntime) {
         for name in sinkHostFunctions {
             runtime.registerHostFunction(name) { _ in .undefined }
         }
@@ -143,7 +143,7 @@ nonisolated enum ContainerMenuMovieBridge {
     /// Registers the outbound calls that mutate inventory and brings the movie's
     /// own menu object up. Runs after `start()`, because the entry points belong
     /// to the placed `ContainerMenuObj` or `BarterMenuObj` instance.
-    static func activate(
+    public static func activate(
         runtime: SWFMovieRuntime,
         mode: ContainerMenuModel.Mode,
         onAction: @escaping @MainActor @Sendable (ContainerMenuAction) -> Void
@@ -165,7 +165,7 @@ nonisolated enum ContainerMenuMovieBridge {
     /// Points the movie's focus at the item list, which is the list up and down
     /// move. The same step `inventorymenu.swf` needs, and for the same reason:
     /// there is no live `InputDelegate`, so nothing else routes a key into CLIK.
-    static func focusItemList(runtime: SWFMovieRuntime) {
+    public static func focusItemList(runtime: SWFMovieRuntime) {
         runtime.focusTarget = runtime.node(atPath: itemListPath, from: runtime.root)
     }
 
@@ -177,7 +177,7 @@ nonisolated enum ContainerMenuMovieBridge {
     /// list at a time and swap which owner it belongs to. The bottom bar always
     /// shows the player's own gold and carry weight; the merchant's purse goes
     /// through `SetBarterInfo`.
-    static func publish(_ model: ContainerMenuModel, runtime: SWFMovieRuntime) {
+    public static func publish(_ model: ContainerMenuModel, runtime: SWFMovieRuntime) {
         let pane = model.active
         let categories = pane.categoryLabels
         let entries = pane.entries
@@ -212,7 +212,7 @@ nonisolated enum ContainerMenuMovieBridge {
     /// The base `value` stays as the movie's own price factors expect to find
     /// it, and `price` carries what OpenSky charges, so the engine's arithmetic
     /// is what a test compares against rather than the movie's.
-    static func row(
+    public static func row(
         for entry: InventoryMenuEntry,
         index: Int,
         model: ContainerMenuModel

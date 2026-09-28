@@ -26,6 +26,7 @@
 // entry clip's own `SetEntryText`.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

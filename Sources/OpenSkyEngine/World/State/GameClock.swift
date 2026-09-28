@@ -34,9 +34,9 @@ import Foundation
 /// vanilla start moment alone is about 6.3e9 seconds past that epoch, where a
 /// `Float`'s granularity is already ~512 seconds; a `Double` keeps
 /// sub-microsecond resolution for the life of any session.
-nonisolated struct GameClock: Equatable, Sendable {
+nonisolated public struct GameClock: Equatable, Sendable {
     /// Month names, 1-based order per UESP `Lore:Calendar`.
-    static let monthNames = [
+    public static let monthNames = [
         "Morning Star", "Sun's Dawn", "First Seed", "Rain's Hand",
         "Second Seed", "Midyear", "Sun's Height", "Last Seed",
         "Hearthfire", "Frostfall", "Sun's Dusk", "Evening Star"
@@ -44,41 +44,41 @@ nonisolated struct GameClock: Equatable, Sendable {
     /// Days per month per UESP `Lore:Calendar` (Sun's Dawn has 28; the lore
     /// note about an occasional 29th day is not modelled — the game has no
     /// leap years).
-    static let monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    static let daysPerYear = monthLengths.reduce(0, +) // 365
-    static let secondsPerDay: Double = 86400
-    static let secondsPerHour: Double = 3600
+    public static let monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    public static let daysPerYear = monthLengths.reduce(0, +) // 365
+    public static let secondsPerDay: Double = 86400
+    public static let secondsPerHour: Double = 3600
 
     /// Vanilla `TimeScale` default per UESP `Skyrim:Console`.
-    static let defaultTimescale: Float = 20
+    public static let defaultTimescale: Float = 20
     /// Accepted timescale range. The floor is vanilla's own (0 freezes game
     /// time; negative time never runs backwards). The ceiling is an OpenSky
     /// safety bound: at 10 000 one clamped 0.1 s frame delta advances game
     /// time by at most ~16.7 game-minutes, so a runaway global cannot skip
     /// months in a frame. Documented in docs/engine/game-clock.md.
-    static let timescaleRange: ClosedRange<Float> = 0 ... 10000
+    public static let timescaleRange: ClosedRange<Float> = 0 ... 10000
 
     /// Vanilla start date: 17th of Last Seed, 4E 201 (UESP `Skyrim:Time`).
-    static let vanillaStartYear = 201
-    static let vanillaStartMonth = 8
-    static let vanillaStartDay = 17
+    public static let vanillaStartYear = 201
+    public static let vanillaStartMonth = 8
+    public static let vanillaStartDay = 17
     /// OpenSky's default start hour (see the header note on GameHour).
-    static let defaultStartHour: Float = 13
+    public static let defaultStartHour: Float = 13
 
     /// Editor ID of the timescale global, which stays a real global read
     /// through `GlobalResolution` — unlike the five projected time globals.
-    static let timescaleEditorID = "TimeScale"
+    public static let timescaleEditorID = "TimeScale"
 
     /// Game seconds since 4E 0, 1st of Morning Star, 00:00. Never negative.
-    private(set) var totalGameSeconds: Double
+    public private(set) var totalGameSeconds: Double
 
     /// Vanilla start moment at the default hour.
-    init() {
+    public init() {
         self.init(hour: Self.defaultStartHour)
     }
 
     /// Vanilla start date at `hour`.
-    init(hour: Float) {
+    public init(hour: Float) {
         self.init(
             year: Self.vanillaStartYear,
             month: Self.vanillaStartMonth,
@@ -88,7 +88,7 @@ nonisolated struct GameClock: Equatable, Sendable {
     }
 
     /// Clock at an explicit calendar moment. Out-of-range fields clamp.
-    init(year: Int, month: Int, day: Int, hour: Float) {
+    public init(year: Int, month: Int, day: Int, hour: Float) {
         let clampedYear = max(0, year)
         let clampedMonth = min(max(month, 1), Self.monthNames.count)
         let clampedDay = min(max(day, 1), Self.monthLengths[clampedMonth - 1])
@@ -100,7 +100,7 @@ nonisolated struct GameClock: Equatable, Sendable {
 
     /// Restores a clock from persisted state (the save file's CLOK chunk).
     /// Negative or non-finite input clamps to the epoch.
-    init(totalGameSeconds: Double) {
+    public init(totalGameSeconds: Double) {
         self.totalGameSeconds = totalGameSeconds.isFinite ? max(0, totalGameSeconds) : 0
     }
 
@@ -110,7 +110,7 @@ nonisolated struct GameClock: Equatable, Sendable {
     /// seconds per real second. Negative deltas are ignored; timescale clamps
     /// into `timescaleRange`. Pure arithmetic — pausing is the caller feeding
     /// a zero delta (`FrameSimClock` already does while paused).
-    mutating func advance(wallDelta: Float, timescale: Float) {
+    public mutating func advance(wallDelta: Float, timescale: Float) {
         let clampedScale = min(
             max(
                 timescale.isFinite ? timescale : Self.defaultTimescale,
@@ -129,27 +129,27 @@ nonisolated struct GameClock: Equatable, Sendable {
     }
 
     /// Fractional hour of day in [0, 24).
-    var hourOfDay: Float {
+    public var hourOfDay: Float {
         Float(totalGameSeconds.truncatingRemainder(dividingBy: Self.secondsPerDay)
             / Self.secondsPerHour)
     }
 
     /// 1-based day of month.
-    var day: Int {
+    public var day: Int {
         dayAndMonth().day
     }
 
     /// 1-based month (1 = Morning Star ... 12 = Evening Star).
-    var month: Int {
+    public var month: Int {
         dayAndMonth().month
     }
 
-    var monthName: String {
+    public var monthName: String {
         Self.monthNames[month - 1]
     }
 
     /// 4th-era year number (201 = 4E 201).
-    var year: Int {
+    public var year: Int {
         totalDays / Self.daysPerYear
     }
 
@@ -157,39 +157,39 @@ nonisolated struct GameClock: Equatable, Sendable {
     /// reference is fixed so no extra state is needed; UESP documents only
     /// "days passed since starting the game", so 0-at-vanilla-start-midnight
     /// is OpenSky's documented choice.
-    var daysPassed: Float {
+    public var daysPassed: Float {
         Float((totalGameSeconds - Self.vanillaStartMidnightSeconds) / Self.secondsPerDay)
     }
 
     // MARK: - Scrubbing
 
     /// Sets the hour of day, keeping the date. 24 wraps to 0 of the same day.
-    mutating func setHour(_ hour: Float) {
+    public mutating func setHour(_ hour: Float) {
         totalGameSeconds = Double(totalDays) * Self.secondsPerDay
             + Self.wrappedHourSeconds(hour)
     }
 
     /// Sets the day of month, keeping month, year and hour. Clamps into the
     /// current month's length.
-    mutating func setDay(_ newDay: Int) {
+    public mutating func setDay(_ newDay: Int) {
         setDate(year: year, month: month, day: newDay)
     }
 
     /// Sets the month, keeping year and hour and clamping the day into the
     /// new month's length.
-    mutating func setMonth(_ newMonth: Int) {
+    public mutating func setMonth(_ newMonth: Int) {
         setDate(year: year, month: newMonth, day: day)
     }
 
     /// Sets the 4th-era year, keeping month, day and hour.
-    mutating func setYear(_ newYear: Int) {
+    public mutating func setYear(_ newYear: Int) {
         setDate(year: newYear, month: month, day: day)
     }
 
     /// Moves the clock to `days` past the vanilla start date at 00:00, the
     /// inverse of `daysPassed`. Adding a whole number therefore keeps the
     /// hour, matching how the console global is used to wait days.
-    mutating func setDaysPassed(_ days: Float) {
+    public mutating func setDaysPassed(_ days: Float) {
         guard days.isFinite else { return }
         totalGameSeconds = max(
             0, Self.vanillaStartMidnightSeconds + Double(days) * Self.secondsPerDay
@@ -244,10 +244,10 @@ nonisolated extension GameClock {
     /// from the clock on read and a write to one of them moves the clock —
     /// one source of truth, no drift (docs/engine/game-clock.md). `TimeScale`
     /// is deliberately absent: it stays an ordinary global override.
-    enum TimeGlobal: CaseIterable, Sendable {
+    public enum TimeGlobal: CaseIterable, Sendable {
         case gameHour, gameDaysPassed, gameDay, gameMonth, gameYear
 
-        var editorID: String {
+        public var editorID: String {
             switch self {
             case .gameHour: "GameHour"
             case .gameDaysPassed: "GameDaysPassed"
@@ -258,7 +258,7 @@ nonisolated extension GameClock {
         }
 
         /// Case-insensitive, matching how globals are addressed everywhere.
-        init?(editorID: String) {
+        public init?(editorID: String) {
             let lowered = editorID.lowercased()
             guard
                 let match = Self.allCases.first(
@@ -269,7 +269,7 @@ nonisolated extension GameClock {
     }
 
     /// The value the named time global reads as right now.
-    func projectedValue(_ global: TimeGlobal) -> Float {
+    public func projectedValue(_ global: TimeGlobal) -> Float {
         switch global {
         case .gameHour: hourOfDay
         case .gameDaysPassed: daysPassed
@@ -282,7 +282,7 @@ nonisolated extension GameClock {
     /// Applies a write to a time global by moving the clock. Non-finite
     /// values are ignored; integer-valued globals round half away from zero,
     /// matching `GlobalValue`'s coercion rule.
-    mutating func setProjectedValue(_ value: Float, for global: TimeGlobal) {
+    public mutating func setProjectedValue(_ value: Float, for global: TimeGlobal) {
         guard value.isFinite else { return }
         switch global {
         case .gameHour: setHour(value)

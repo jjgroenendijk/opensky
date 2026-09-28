@@ -4,6 +4,7 @@
 // cannot diverge from live input.
 
 import AppKit
+import OpenSkyEngine
 
 final class InventoryMenuSection: PanelSectionViewController {
     weak var provider: (any InventoryMenuControlProviding)? {

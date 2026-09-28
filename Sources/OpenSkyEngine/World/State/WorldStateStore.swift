@@ -33,7 +33,7 @@ import OpenSkyFormats
 /// record every time, so a reset genuinely restores whatever the record now
 /// says.
 @MainActor
-final class WorldStateStore {
+public final class WorldStateStore {
     /// Per-reference deltas. Only dirty references have an entry: clearing the
     /// last component removes the key entirely, which is what keeps
     /// `dirtyCount` honest.
@@ -59,7 +59,7 @@ final class WorldStateStore {
     /// cells from plugin bytes plus a fresh snapshot rather than patching
     /// individual instances, so it needs to know only that something changed
     /// and how recently.
-    var onMutation: ((CellSceneLocation?, UInt64) -> Void)?
+    public var onMutation: ((CellSceneLocation?, UInt64) -> Void)?
 
     /// Fires once per journalled global mutation with the journal sequence a
     /// snapshot taken immediately afterwards would carry.
@@ -70,7 +70,7 @@ final class WorldStateStore {
     /// every frame. Consumers of global values — the weather chance selection
     /// (issue #165), conditions (#251), the clock (#164) — refresh their
     /// `GlobalResolution` from here instead.
-    var onGlobalMutation: ((UInt64) -> Void)?
+    public var onGlobalMutation: ((UInt64) -> Void)?
 
     /// Redirect for writes to the five clock-owned time globals (issue #164).
     ///
@@ -83,14 +83,14 @@ final class WorldStateStore {
     /// Redirected writes journal through the globals ring but do not fire
     /// `onGlobalMutation`: the clock's motion is already continuous for its
     /// consumers, and firing would reroll the weather on every scrub tick.
-    var onTimeGlobalWrite: ((GameClock.TimeGlobal, Float) -> Float?)?
+    public var onTimeGlobalWrite: ((GameClock.TimeGlobal, Float) -> Float?)?
 
     /// - Parameters:
     ///   - journalCapacity: retained change-journal entries; see
     ///     `WorldStateJournal.defaultCapacity`.
     ///   - allocator: generated-key allocator to adopt, for a restored session
     ///     that must resume its sequence.
-    init(
+    public init(
         journalCapacity: Int = WorldStateJournal.defaultCapacity,
         allocator: GeneratedReferenceAllocator = GeneratedReferenceAllocator()
     ) {
@@ -102,7 +102,7 @@ final class WorldStateStore {
 
     /// The runtime override in `type`'s slot for `key`, or nil when that slot
     /// still matches the plugin.
-    func component<Component: WorldStateComponent>(
+    public func component<Component: WorldStateComponent>(
         _ type: Component.Type,
         for key: ReferenceKey
     ) -> Component? {
@@ -110,12 +110,12 @@ final class WorldStateStore {
     }
 
     /// Every delta recorded for `key`, or nil when the reference is clean.
-    func delta(for key: ReferenceKey) -> ReferenceStateDelta? {
+    public func delta(for key: ReferenceKey) -> ReferenceStateDelta? {
         deltas[key]
     }
 
     /// `entry`'s plugin baseline with this store's deltas applied.
-    func resolvedState(for entry: RuntimeReferenceEntry) -> ReferenceState {
+    public func resolvedState(for entry: RuntimeReferenceEntry) -> ReferenceState {
         ReferenceState(baseline: entry).applying(deltas[entry.key])
     }
 
@@ -131,7 +131,7 @@ final class WorldStateStore {
     ///
     /// - Returns: true when the stored state changed.
     @discardableResult
-    func set(
+    public func set(
         _ component: some WorldStateComponent,
         for key: ReferenceKey,
         in cell: CellSceneLocation? = nil
@@ -165,7 +165,7 @@ final class WorldStateStore {
     ///
     /// - Returns: true when a delta was actually removed.
     @discardableResult
-    func reset(_ kind: WorldStateComponentKind, for key: ReferenceKey) -> Bool {
+    public func reset(_ kind: WorldStateComponentKind, for key: ReferenceKey) -> Bool {
         guard var delta = deltas[key], let previous = delta.clear(kind) else { return false }
         let cell = delta.cell
         if delta.isEmpty {
@@ -191,7 +191,7 @@ final class WorldStateStore {
     ///
     /// - Returns: true when the reference was dirty.
     @discardableResult
-    func reset(_ key: ReferenceKey) -> Bool {
+    public func reset(_ key: ReferenceKey) -> Bool {
         guard let delta = deltas[key] else { return false }
         for kind in delta.sortedKinds {
             reset(kind, for: key)
@@ -201,7 +201,7 @@ final class WorldStateStore {
 
     /// Drops every delta in the store. Journal sequence numbering continues,
     /// because these resets did happen.
-    func resetAll() {
+    public func resetAll() {
         for key in sortedDirtyKeys() {
             reset(key)
         }
@@ -212,7 +212,7 @@ final class WorldStateStore {
     /// Runtime override for a global, or nil when it still holds its plugin
     /// default. Callers wanting the effective value — default included — go
     /// through `globalResolution(defaults:)` instead.
-    func globalValue(for key: ReferenceKey) -> GlobalValue? {
+    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
         globalValues[key]
     }
 
@@ -227,7 +227,7 @@ final class WorldStateStore {
     ///
     /// - Returns: true when the stored value changed.
     @discardableResult
-    func setGlobal(_ value: GlobalValue, for key: ReferenceKey) -> Bool {
+    public func setGlobal(_ value: GlobalValue, for key: ReferenceKey) -> Bool {
         guard globalValues[key] != value else { return false }
         let previous = globalValues[key]
         globalValues[key] = value
@@ -238,7 +238,7 @@ final class WorldStateStore {
 
     /// Writes a raw number to a global of declared type `type`.
     @discardableResult
-    func setGlobal(_ raw: Float, type: Global.ValueType, for key: ReferenceKey) -> Bool {
+    public func setGlobal(_ raw: Float, type: Global.ValueType, for key: ReferenceKey) -> Bool {
         setGlobal(GlobalValue(type: type, rawValue: raw), for: key)
     }
 
@@ -250,7 +250,7 @@ final class WorldStateStore {
     /// - Returns: false when `defaults` defines no such global, as well as when
     ///   the write is a no-op.
     @discardableResult
-    func setGlobal(_ raw: Float, formID id: FormID, defaults: GlobalStore) -> Bool {
+    public func setGlobal(_ raw: Float, formID id: FormID, defaults: GlobalStore) -> Bool {
         guard let global = defaults.global(id), let key = defaults.key(for: id) else {
             return false
         }
@@ -272,7 +272,7 @@ final class WorldStateStore {
     ///
     /// - Returns: true when an override was actually removed.
     @discardableResult
-    func resetGlobal(for key: ReferenceKey) -> Bool {
+    public func resetGlobal(for key: ReferenceKey) -> Bool {
         guard let previous = globalValues.removeValue(forKey: key) else { return false }
         changeJournal.recordGlobal(key: key, oldValue: previous, newValue: nil)
         onGlobalMutation?(changeJournal.nextSequence)
@@ -281,29 +281,29 @@ final class WorldStateStore {
 
     /// Drops every global override, in `ReferenceKey` total order so the
     /// journal stays deterministic.
-    func resetAllGlobals() {
+    public func resetAllGlobals() {
         for key in sortedOverriddenGlobalKeys() {
             resetGlobal(for: key)
         }
     }
 
     /// Number of globals deviating from plugin data.
-    var overriddenGlobalCount: Int {
+    public var overriddenGlobalCount: Int {
         globalValues.count
     }
 
     /// Overridden global keys in `ReferenceKey` total order.
-    func sortedOverriddenGlobalKeys() -> [ReferenceKey] {
+    public func sortedOverriddenGlobalKeys() -> [ReferenceKey] {
         globalValues.keys.sorted()
     }
 
     /// Retained global journal entries, oldest first.
-    var globalJournalEntries: [WorldStateGlobalJournalEntry] {
+    public var globalJournalEntries: [WorldStateGlobalJournalEntry] {
         changeJournal.globalEntries
     }
 
     /// Global journal entries dropped because the window was full.
-    var droppedGlobalJournalEntryCount: Int {
+    public var droppedGlobalJournalEntryCount: Int {
         changeJournal.droppedGlobalCount
     }
 
@@ -312,7 +312,7 @@ final class WorldStateStore {
     /// over `defaults`' plugin values. Passing `clock` projects the five
     /// time globals from it; a consumer reading time builds a fresh
     /// resolution, because the projection captures the clock at this moment.
-    func globalResolution(
+    public func globalResolution(
         defaults: GlobalStore?, clock: GameClock? = nil
     ) -> GlobalResolution {
         GlobalResolution(defaults: defaults, overrides: globalValues, clock: clock)
@@ -340,7 +340,7 @@ final class WorldStateStore {
     /// a rebuild for each resident cell on an unattributed mutation regardless
     /// of sequence, so the world catches up even though the sequence did not
     /// move.
-    func restore(from snapshot: WorldStateSnapshot) {
+    public func restore(from snapshot: WorldStateSnapshot) {
         deltas = [:]
         dirtyCountsByCell = [:]
         for entry in snapshot.entries {
@@ -360,71 +360,71 @@ final class WorldStateStore {
     // MARK: - Dirty tracking
 
     /// Number of references deviating from plugin data.
-    var dirtyCount: Int {
+    public var dirtyCount: Int {
         deltas.count
     }
 
-    func isDirty(_ key: ReferenceKey) -> Bool {
+    public func isDirty(_ key: ReferenceKey) -> Bool {
         deltas[key] != nil
     }
 
     /// Dirty references last mutated under `cell`.
-    func dirtyCount(in cell: CellSceneLocation) -> Int {
+    public func dirtyCount(in cell: CellSceneLocation) -> Int {
         dirtyCountsByCell[cell] ?? 0
     }
 
     /// Every cell with at least one dirty reference, and its count.
-    var dirtyCountsByCellLocation: [CellSceneLocation: Int] {
+    public var dirtyCountsByCellLocation: [CellSceneLocation: Int] {
         dirtyCountsByCell
     }
 
     /// Dirty references not attributed to any cell, which is the difference
     /// between `dirtyCount` and the sum of the per-cell counts.
-    var unattributedDirtyCount: Int {
+    public var unattributedDirtyCount: Int {
         dirtyCount - dirtyCountsByCell.values.reduce(0, +)
     }
 
     /// Dirty keys in `ReferenceKey` total order.
-    func sortedDirtyKeys() -> [ReferenceKey] {
+    public func sortedDirtyKeys() -> [ReferenceKey] {
         deltas.keys.sorted()
     }
 
     /// Dirty keys last mutated under `cell`, in `ReferenceKey` total order.
-    func sortedDirtyKeys(in cell: CellSceneLocation) -> [ReferenceKey] {
+    public func sortedDirtyKeys(in cell: CellSceneLocation) -> [ReferenceKey] {
         deltas.filter { $0.value.cell == cell }.keys.sorted()
     }
 
     // MARK: - Journal
 
     /// Retained journal entries, oldest first.
-    var journalEntries: [WorldStateJournalEntry] {
+    public var journalEntries: [WorldStateJournalEntry] {
         changeJournal.entries
     }
 
     /// Retained entry cap, as configured at construction.
-    var journalCapacity: Int {
+    public var journalCapacity: Int {
         changeJournal.capacity
     }
 
     /// Entries dropped because the window was full.
-    var droppedJournalEntryCount: Int {
+    public var droppedJournalEntryCount: Int {
         changeJournal.droppedCount
     }
 
     /// Sequence number the next journalled mutation will carry.
-    var nextJournalSequence: UInt64 {
+    public var nextJournalSequence: UInt64 {
         changeJournal.nextSequence
     }
 
     /// Journal entries at or after `sequence`, for a consumer that processed
     /// everything below it. Entries already dropped are simply absent, which
     /// `droppedJournalEntryCount` lets the caller detect.
-    func journalEntries(since sequence: UInt64) -> [WorldStateJournalEntry] {
+    public func journalEntries(since sequence: UInt64) -> [WorldStateJournalEntry] {
         changeJournal.entries.filter { $0.sequence >= sequence }
     }
 
     /// Empties the retained window without touching state or sequence numbers.
-    func clearJournal() {
+    public func clearJournal() {
         changeJournal.removeAll()
     }
 
@@ -433,12 +433,12 @@ final class WorldStateStore {
     /// Mints the next `ReferenceKey.generated` value. The store owns the
     /// allocator because generated identity outlives every cell, exactly like
     /// the deltas beside it.
-    func allocateGeneratedKey() -> ReferenceKey {
+    public func allocateGeneratedKey() -> ReferenceKey {
         allocator.allocate()
     }
 
     /// The allocator's next sequence number, which is the whole of its state.
-    var nextGeneratedSequence: UInt64 {
+    public var nextGeneratedSequence: UInt64 {
         allocator.nextSequence
     }
 
@@ -454,7 +454,7 @@ final class WorldStateStore {
     /// The journal sequence travels with it as `WorldStateSnapshot.sequence`,
     /// so a cell built off this value can be compared against later state
     /// without the builder ever touching the store.
-    func snapshot() -> WorldStateSnapshot {
+    public func snapshot() -> WorldStateSnapshot {
         WorldStateSnapshot(
             entries: sortedDirtyKeys().compactMap { key in
                 guard let delta = deltas[key] else { return nil }

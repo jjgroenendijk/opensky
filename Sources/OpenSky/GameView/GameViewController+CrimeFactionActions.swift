@@ -7,6 +7,7 @@
 // where `Actor.ShowBarterMenu` lands.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

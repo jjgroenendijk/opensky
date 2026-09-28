@@ -39,7 +39,7 @@ extension CellStreamer {
     ///     conservatively: every resident cell is rebuilt, because the streamer
     ///     has no cheaper way to tell which one the reference lives in.
     ///   - sequence: the journal sequence a snapshot taken now would carry.
-    func noteStateMutation(in location: CellSceneLocation?, sequence: UInt64) {
+    public func noteStateMutation(in location: CellSceneLocation?, sequence: UInt64) {
         switch location {
         case let .exterior(coordinate):
             noteExteriorMutation(coordinate, sequence: sequence)
@@ -105,7 +105,7 @@ extension CellStreamer {
     /// place the in-flight race is resolved, and it covers both directions of
     /// it: a mutation that arrived while the first build ran, and a mutation
     /// that arrived while an earlier rebuild ran.
-    func requeueRebuildIfStateMoved(_ coordinate: CellCoordinate, scene: CellScene) {
+    public func requeueRebuildIfStateMoved(_ coordinate: CellCoordinate, scene: CellScene) {
         guard let wanted = cellMutationSequence[coordinate], scene.stateSequence < wanted else {
             return
         }
@@ -119,7 +119,7 @@ extension CellStreamer {
     /// plugin bytes plus the current snapshot, which reapplies the delta on
     /// its own. Dropping the pending rebuild is therefore the cancellation
     /// the issue asks for, with no ghost dispatch left behind.
-    func pruneRebuildState() {
+    public func pruneRebuildState() {
         let accounted = core.accountedCells
         rebuildRequests.removeAll { !accounted.contains($0) }
         cellMutationSequence = cellMutationSequence.filter { accounted.contains($0.key) }
@@ -138,7 +138,7 @@ extension CellStreamer {
     /// is that `apply(transition:sourceDoor:isRebuild:)` passes no camera for a
     /// rebuild, so the swap leaves the player exactly where they are standing
     /// instead of teleporting them back to the door.
-    func dispatchInteriorRebuildIfNeeded() {
+    public func dispatchInteriorRebuildIfNeeded() {
         guard transitionInFlight == nil, let scene = interiorScene, let door = interiorSourceDoor
         else { return }
         guard scene.stateSequence < interiorMutationSequence else { return }
@@ -150,12 +150,12 @@ extension CellStreamer {
     // MARK: - Inspection (tests + streaming verification)
 
     /// Rebuild requests queued but not yet dispatched.
-    var queuedRebuildCount: Int {
+    public var queuedRebuildCount: Int {
         rebuildRequests.count
     }
 
     /// Resident cells with a rebuild currently in flight.
-    var rebuildingCellCount: Int {
+    public var rebuildingCellCount: Int {
         core.rebuilding.count
     }
 
@@ -163,7 +163,7 @@ extension CellStreamer {
     /// (issue #162). An interior owns the view alone when one is loaded, which
     /// is the same precedence `referenceEntry(key:)` uses, so a lookup that
     /// succeeds is always counted here.
-    var residentReferenceCount: Int {
+    public var residentReferenceCount: Int {
         if let interiorScene {
             return interiorScene.references.count
         }
@@ -171,7 +171,7 @@ extension CellStreamer {
     }
 
     /// The world state the next dispatched build would run against.
-    var currentStateSnapshot: WorldStateSnapshot {
+    public var currentStateSnapshot: WorldStateSnapshot {
         stateSource()
     }
 
@@ -180,7 +180,7 @@ extension CellStreamer {
     /// loaded, matching the precedence every other lookup here uses;
     /// otherwise it is the exterior grid center. Nil only before the first
     /// cell has streamed in, when there is nowhere to put anything.
-    var currentCellLocation: CellSceneLocation? {
+    public var currentCellLocation: CellSceneLocation? {
         if let interiorScene {
             return interiorScene.location
         }

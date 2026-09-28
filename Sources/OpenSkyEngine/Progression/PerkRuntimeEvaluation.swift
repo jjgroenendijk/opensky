@@ -45,10 +45,10 @@ import os
 /// The caller binds what it knows. A melee formula knows the perk owner and the
 /// target; nothing in this engine can bind `weapon`, `item` or `enchantment`,
 /// because those name inventory records rather than placed references.
-nonisolated struct PerkEvaluationSubjects: Equatable, Sendable {
+nonisolated public struct PerkEvaluationSubjects: Equatable, Sendable {
     private var references: [PerkConditionSubject: ReferenceKey]
 
-    init(
+    public init(
         owner: ReferenceKey,
         target: ReferenceKey? = nil,
         attacker: ReferenceKey? = nil
@@ -58,22 +58,22 @@ nonisolated struct PerkEvaluationSubjects: Equatable, Sendable {
         references[.attacker] = attacker
     }
 
-    subscript(subject: PerkConditionSubject) -> ReferenceKey? {
+    public subscript(subject: PerkConditionSubject) -> ReferenceKey? {
         references[subject]
     }
 
-    var owner: ReferenceKey? {
+    public var owner: ReferenceKey? {
         references[.perkOwner]
     }
 
     /// Every bound reference, which is what the condition seam is built for.
-    var boundReferences: [ReferenceKey] {
+    public var boundReferences: [ReferenceKey] {
         Array(Set(references.values))
     }
 }
 
 extension PerkRuntime {
-    static let logger = Logger(
+    public static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Perks"
     )
@@ -84,7 +84,7 @@ extension PerkRuntime {
     /// with the value it was handed. That is the identity rule the whole
     /// subsystem follows: an unimplemented entry point never zeroes a formula.
     @discardableResult
-    mutating func modify(
+    public mutating func modify(
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
@@ -123,7 +123,7 @@ extension PerkRuntime {
     /// UESP "Skyrim:Weapons" — and a vanilla damage perk is authored as
     /// `Multiply Value 1.2` on `Mod Attack Damage`, so evaluating the identity
     /// element is exactly the factor those formulas want.
-    mutating func multiplier(
+    public mutating func multiplier(
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
         subjects: PerkEvaluationSubjects? = nil,
@@ -134,7 +134,7 @@ extension PerkRuntime {
 
     /// The owned, condition-passing effects hooking `entryPoint`, in the order
     /// the evaluator folds them.
-    mutating func operands(
+    public mutating func operands(
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
         subjects: PerkEvaluationSubjects

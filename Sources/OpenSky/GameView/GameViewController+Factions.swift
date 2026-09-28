@@ -27,6 +27,7 @@
 // of an actor.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

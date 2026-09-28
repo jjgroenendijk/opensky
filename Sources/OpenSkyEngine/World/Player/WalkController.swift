@@ -8,7 +8,7 @@ import simd
 /// unconstrained view; `walk` and `thirdPerson` are the same simulated player —
 /// one capsule, one locomotion bridge, one behavior graph — seen from the eye
 /// and from behind (issue #189).
-nonisolated enum CameraMovementMode: Equatable, CaseIterable {
+nonisolated public enum CameraMovementMode: Equatable, CaseIterable, Sendable {
     case fly
     case walk
     case thirdPerson
@@ -17,12 +17,12 @@ nonisolated enum CameraMovementMode: Equatable, CaseIterable {
     /// being simulated. Everything gated on "the player exists" reads this
     /// rather than comparing against `.walk`, so a third-person session keeps
     /// its interaction ray, its trigger volumes, and its readouts.
-    var isPlayerControlled: Bool {
+    public var isPlayerControlled: Bool {
         self != .fly
     }
 
     /// The next mode in the cycle the camera key and the panel selector share.
-    var next: CameraMovementMode {
+    public var next: CameraMovementMode {
         switch self {
         case .fly: .walk
         case .walk: .thirdPerson
@@ -31,72 +31,72 @@ nonisolated enum CameraMovementMode: Equatable, CaseIterable {
     }
 }
 
-nonisolated struct PlayerCapsule: Equatable {
+nonisolated public struct PlayerCapsule: Equatable, Sendable {
     /// Capsule radius in native Skyrim world units.
-    let radius: Float
+    public let radius: Float
     /// Bottom-to-top extent.
-    let height: Float
+    public let height: Float
     /// Camera offset above capsule bottom.
-    let eyeHeight: Float
+    public let eyeHeight: Float
 
-    static let standard = PlayerCapsule(radius: 24, height: 128, eyeHeight: 112)
+    public static let standard = PlayerCapsule(radius: 24, height: 128, eyeHeight: 112)
 }
 
-nonisolated struct WalkController {
-    typealias GroundSampler = (SIMD2<Float>) -> TerrainGroundSample?
-    typealias CollisionQuery = CapsuleWorldCollider.CandidateQuery
+nonisolated public struct WalkController: Sendable {
+    public typealias GroundSampler = (SIMD2<Float>) -> TerrainGroundSample?
+    public typealias CollisionQuery = CapsuleWorldCollider.CandidateQuery
     /// Asked once per fixed step for that step's displacement (issue #188).
     /// Nil leaves the controller on its own input-derived movement, which is
     /// what walk mode did before a behavior graph existed.
-    typealias StepPlanner = (LocomotionStepState) -> LocomotionStepPlan
+    public typealias StepPlanner = (LocomotionStepState) -> LocomotionStepPlan
 
     /// The world queries and the planner one fixed step runs against, bundled
     /// so the step signature stays inside the parameter cap.
-    struct StepWorld {
-        let sampleGround: GroundSampler
-        let collisionQuery: CollisionQuery
-        let plan: StepPlanner?
+    public struct StepWorld {
+        public let sampleGround: GroundSampler
+        public let collisionQuery: CollisionQuery
+        public let plan: StepPlanner?
     }
 
-    static let gravity: Float = 1400
-    static let maximumSlopeDegrees: Float = 50
-    static let fixedTimeStep: Float = 1 / 120
-    static let maximumFrameTime: Float = 0.1
-    static let groundSnapDistance: Float = 24
+    public static let gravity: Float = 1400
+    public static let maximumSlopeDegrees: Float = 50
+    public static let fixedTimeStep: Float = 1 / 120
+    public static let maximumFrameTime: Float = 0.1
+    public static let groundSnapDistance: Float = 24
     /// How fast a swimmer may rise or sink, units per second. The capsule is
     /// held at the surface by a clamped correction rather than by buoyancy
     /// integration, so a swimmer cannot be launched by a deep step.
-    static let maximumSwimVerticalSpeed: Float = 200
+    public static let maximumSwimVerticalSpeed: Float = 200
 
-    let capsule: PlayerCapsule
-    let configuration: PlayerMovementConfiguration
-    private(set) var feetPosition: SIMD3<Float>
-    private(set) var verticalVelocity: Float = 0
-    private(set) var isGrounded = false
-    private(set) var hasUnresolvedPenetration = false
+    public let capsule: PlayerCapsule
+    public let configuration: PlayerMovementConfiguration
+    public private(set) var feetPosition: SIMD3<Float>
+    public private(set) var verticalVelocity: Float = 0
+    public private(set) var isGrounded = false
+    public private(set) var hasUnresolvedPenetration = false
     /// True while the last step resolved in water deep enough to swim. Gravity,
     /// ground snap, and step support are all suspended there.
-    private(set) var isSwimming = false
+    public private(set) var isSwimming = false
     /// The MATT material of whatever the capsule is currently standing on
     /// (issue #358): the terrain texture under the feet, or the material of the
     /// collision shape it rests against. Nil while airborne, and nil on a
     /// surface that names no material. This is the argument the footstep chain
     /// was missing — the impact table is keyed by it.
-    private(set) var groundMaterial: FormID?
+    public private(set) var groundMaterial: FormID?
     private var accumulatedTime: Float = 0
-    var activeStepSupport: CapsuleStepSupport?
+    public var activeStepSupport: CapsuleStepSupport?
 
     /// The height the capsule is held at while stepping up, when it is.
-    var activeStepSupportHeight: Float? {
+    public var activeStepSupportHeight: Float? {
         activeStepSupport?.height
     }
 
-    struct HorizontalMove {
-        let result: CapsuleMoveResult
-        let support: CapsuleStepSupport?
+    public struct HorizontalMove: Sendable {
+        public let result: CapsuleMoveResult
+        public let support: CapsuleStepSupport?
     }
 
-    init(
+    public init(
         cameraPosition: SIMD3<Float>,
         capsule: PlayerCapsule = .standard,
         configuration: PlayerMovementConfiguration = .synthetic
@@ -106,11 +106,11 @@ nonisolated struct WalkController {
         feetPosition = cameraPosition - SIMD3<Float>(0, 0, capsule.eyeHeight)
     }
 
-    var cameraPosition: SIMD3<Float> {
+    public var cameraPosition: SIMD3<Float> {
         feetPosition + SIMD3<Float>(0, 0, capsule.eyeHeight)
     }
 
-    mutating func reset(cameraPosition: SIMD3<Float>) {
+    public mutating func reset(cameraPosition: SIMD3<Float>) {
         feetPosition = cameraPosition - SIMD3<Float>(0, 0, capsule.eyeHeight)
         verticalVelocity = 0
         isGrounded = false
@@ -124,7 +124,7 @@ nonisolated struct WalkController {
     /// Integrates look once per frame, then translation through fixed 120 Hz
     /// steps. Frame contribution clamps to 100 ms; stalls cannot teleport or
     /// inject an unbounded gravity impulse. Residual time carries forward.
-    mutating func update(
+    public mutating func update(
         camera: inout FreeFlyCamera,
         input: CameraInput,
         sampleGround: GroundSampler,

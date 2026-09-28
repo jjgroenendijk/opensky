@@ -33,19 +33,19 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// One actor's magic as a condition sees it.
-nonisolated struct MagicConditionState: Equatable, Sendable {
+nonisolated public struct MagicConditionState: Equatable, Sendable {
     /// SPEL and SCRL records this actor knows.
-    var knownSpells: Set<ReferenceKey>
+    public var knownSpells: Set<ReferenceKey>
     /// The MGEF behind every effect currently acting on this actor.
-    var activeEffects: Set<ReferenceKey>
+    public var activeEffects: Set<ReferenceKey>
     /// The SPEL, ALCH, INGR or ENCH record each of those effects came from.
-    var effectSources: Set<ReferenceKey>
+    public var effectSources: Set<ReferenceKey>
     /// The spell readied in each hand, absent for a hand holding none.
-    var handSpells: [SpellHand: ReferenceKey]
+    public var handSpells: [SpellHand: ReferenceKey]
     /// Hands with a cast in flight — charging, ready or concentrating.
-    var castingHands: Set<SpellHand>
+    public var castingHands: Set<SpellHand>
 
-    init(
+    public init(
         knownSpells: Set<ReferenceKey> = [],
         activeEffects: Set<ReferenceKey> = [],
         effectSources: Set<ReferenceKey> = [],
@@ -62,7 +62,7 @@ nonisolated struct MagicConditionState: Equatable, Sendable {
     /// This actor's state built from the three components the runtime stores,
     /// so the app-side builder and a test agree on how a component becomes a
     /// condition fact.
-    init(
+    public init(
         spellbook: SpellbookState,
         effects: ActiveEffectState,
         castingHands: Set<SpellHand> = []
@@ -78,7 +78,7 @@ nonisolated struct MagicConditionState: Equatable, Sendable {
         )
     }
 
-    var isCasting: Bool {
+    public var isCasting: Bool {
         !castingHands.isEmpty
     }
 }
@@ -91,7 +91,7 @@ nonisolated struct MagicConditionState: Equatable, Sendable {
 /// the Papyrus side — "0: Left hand, 1: Right hand, 2: Voice (use this for
 /// Powers)" — so one type serves the condition parameter and the native
 /// argument.
-nonisolated enum CastingSource: Int32, CaseIterable, Sendable {
+nonisolated public enum CastingSource: Int32, CaseIterable, Sendable {
     case left = 0
     case right = 1
     case voice = 2
@@ -102,7 +102,7 @@ nonisolated enum CastingSource: Int32, CaseIterable, Sendable {
     /// `SpellbookState` has no such slot; an instant source is not an equip
     /// slot at all. Both report the gap rather than answering "nothing
     /// equipped", which is a different fact.
-    var hand: SpellHand? {
+    public var hand: SpellHand? {
         switch self {
         case .left: .left
         case .right: .right
@@ -117,19 +117,19 @@ nonisolated enum CastingSource: Int32, CaseIterable, Sendable {
 /// `@unchecked Sendable` for the reason `ConditionDataResolution` is: the two
 /// stores are immutable value snapshots built once at load, and only their
 /// `RecordIndex` back-reference keeps them from being checked automatically.
-nonisolated struct MagicConditionResolution: @unchecked Sendable {
+nonisolated public struct MagicConditionResolution: @unchecked Sendable, Sendable {
     /// Load-order SPEL and SCRL lookup, for the readied spell's SPIT header.
-    let spells: SpellStore?
+    public let spells: SpellStore?
     /// Load-order MGEF lookup, for an effect's keyword list.
-    let effects: MagicEffectStore?
+    public let effects: MagicEffectStore?
     /// The plugin a condition's FormID parameters are spelled against.
-    let sourcePlugin: String?
+    public let sourcePlugin: String?
 
     private let states: [ReferenceKey: MagicConditionState]
 
-    static let empty = MagicConditionResolution()
+    public static let empty = MagicConditionResolution()
 
-    init(
+    public init(
         spells: SpellStore? = nil,
         effects: MagicEffectStore? = nil,
         sourcePlugin: String? = nil,
@@ -141,7 +141,7 @@ nonisolated struct MagicConditionResolution: @unchecked Sendable {
         self.states = states
     }
 
-    func state(of reference: ReferenceKey) -> MagicConditionState? {
+    public func state(of reference: ReferenceKey) -> MagicConditionState? {
         states[reference]
     }
 
@@ -151,7 +151,7 @@ nonisolated struct MagicConditionResolution: @unchecked Sendable {
     /// both wrap the same `RecordIndex` master-list machinery and a parameter
     /// may legitimately name a record neither store holds — `IsSpellTarget`
     /// names potions and enchantments as readily as spells.
-    func key(of formID: FormID) -> ReferenceKey? {
+    public func key(of formID: FormID) -> ReferenceKey? {
         guard let sourcePlugin else { return nil }
         if let resolved = spells?.resolvedID(formID, fromPlugin: sourcePlugin) {
             return ReferenceKey(resolved: resolved)
@@ -166,7 +166,7 @@ nonisolated struct MagicConditionResolution: @unchecked Sendable {
     ///
     /// Nil when no effect store is wired, which keeps "OpenSky has no MGEF
     /// records" apart from "no effect on this actor carries that keyword".
-    func hasEffectKeyword(_ keyword: ReferenceKey, on state: MagicConditionState) -> Bool? {
+    public func hasEffectKeyword(_ keyword: ReferenceKey, on state: MagicConditionState) -> Bool? {
         guard let effects else { return nil }
         return state.activeEffects.contains { effect in
             guard let record = effects.effect(key: effect) else { return false }

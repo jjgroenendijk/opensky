@@ -6,10 +6,10 @@
 import OpenSkyFormats
 import simd
 
-nonisolated enum PrecipitationRoofOcclusion {
-    static let maximumDistance: Float = 4096
+nonisolated public enum PrecipitationRoofOcclusion: Sendable {
+    public static let maximumDistance: Float = 4096
 
-    static func isOccluded(
+    public static func isOccluded(
         above origin: SIMD3<Float>,
         maximumDistance: Float = maximumDistance,
         query: WalkController.CollisionQuery

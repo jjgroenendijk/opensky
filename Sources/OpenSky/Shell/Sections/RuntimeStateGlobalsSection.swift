@@ -16,6 +16,7 @@
 // deviations from it are what the indicator reports.
 
 import AppKit
+import OpenSkyEngine
 
 final class RuntimeStateGlobalsSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

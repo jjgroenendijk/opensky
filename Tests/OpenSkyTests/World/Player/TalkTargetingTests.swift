@@ -2,7 +2,7 @@
 // view ray picks up, and which it does not. Pure geometry over the melee
 // narrowphase, so no world, no streamer and no install.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

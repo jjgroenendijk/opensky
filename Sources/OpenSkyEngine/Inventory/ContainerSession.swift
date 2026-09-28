@@ -20,11 +20,11 @@ import OpenSkyFormats
 
 /// A live transfer session between one container and the player.
 @MainActor
-final class ContainerSession {
+public final class ContainerSession {
     /// The container being searched.
-    let container: InventoryHolder
+    public let container: InventoryHolder
     /// Whoever is doing the searching, which is the player today.
-    let player: InventoryHolder
+    public let player: InventoryHolder
 
     private let runtime: WorldItemRuntime
 
@@ -32,7 +32,7 @@ final class ContainerSession {
         runtime.inventory
     }
 
-    init(runtime: WorldItemRuntime, container: InventoryHolder) {
+    public init(runtime: WorldItemRuntime, container: InventoryHolder) {
         self.runtime = runtime
         self.container = container
         player = runtime.player
@@ -42,21 +42,21 @@ final class ContainerSession {
 
     /// What the container holds right now: its runtime inventory when anything
     /// has touched it, its re-derived CNTO baseline when nothing has.
-    var contents: [InventoryStack] {
+    public var contents: [InventoryStack] {
         inventory.inventory(of: container).stacks
     }
 
     /// Total number of individual items in the container.
-    var totalCount: Int {
+    public var totalCount: Int {
         inventory.inventory(of: container).totalCount
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         contents.isEmpty
     }
 
     /// Whether the store currently reads this container as open.
-    var isOpen: Bool {
+    public var isOpen: Bool {
         runtime.store.component(ReferenceActivationState.self, for: container.key)?.isOpen ?? false
     }
 
@@ -68,7 +68,7 @@ final class ContainerSession {
     /// Read once per call rather than cached for the session's lifetime, for
     /// the reason `contents` is not cached: a quest that hands the player the
     /// key to a house while the chest is open must change the answer.
-    var ownership: OwnershipVerdict {
+    public var ownership: OwnershipVerdict {
         runtime.crime?.verdict(on: container.key) ?? .unowned
     }
 
@@ -87,7 +87,7 @@ final class ContainerSession {
     /// - Throws: `InventoryError.insufficientCount` when the container holds
     ///   fewer, which writes nothing.
     @discardableResult
-    func take(_ item: FormID, count: Int32 = 1) throws -> Int32 {
+    public func take(_ item: FormID, count: Int32 = 1) throws -> Int32 {
         let verdict = ownership
         try inventory.transfer(
             item, count: count, from: container, to: player, markingStolen: verdict.isTheft
@@ -108,7 +108,7 @@ final class ContainerSession {
     ///
     /// - Returns: the stacks that moved, in the order they moved.
     @discardableResult
-    func takeAll() throws -> [InventoryStack] {
+    public func takeAll() throws -> [InventoryStack] {
         let moving = contents
         for stack in moving {
             try take(stack.item, count: stack.count)
@@ -120,7 +120,7 @@ final class ContainerSession {
     ///
     /// - Throws: `InventoryError.insufficientCount` when the player holds
     ///   fewer, which writes nothing.
-    func deposit(_ item: FormID, count: Int32 = 1) throws {
+    public func deposit(_ item: FormID, count: Int32 = 1) throws {
         try inventory.transfer(item, count: count, from: player, to: container)
     }
 
@@ -133,7 +133,7 @@ final class ContainerSession {
     /// container's open state is the lifetime of a session, and only the
     /// session knows when that starts and ends. An activation that opens a
     /// session therefore records the state here and not there.
-    func setOpen(_ open: Bool) {
+    public func setOpen(_ open: Bool) {
         let current = runtime.store
             .component(ReferenceActivationState.self, for: container.key)
             ?? .untouched
@@ -151,7 +151,7 @@ final class ContainerSession {
 
     /// Ends the session. Idempotent, so a caller that closes twice — a menu
     /// dismissed and then torn down — writes once.
-    func close() {
+    public func close() {
         setOpen(false)
     }
 }

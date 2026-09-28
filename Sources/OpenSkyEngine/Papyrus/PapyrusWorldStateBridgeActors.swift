@@ -33,7 +33,7 @@ import OpenSkyFormats
 extension PapyrusWorldStateBridge {
     // MARK: - Reading
 
-    func actorState(for key: ReferenceKey) -> PapyrusActorState? {
+    public func actorState(for key: ReferenceKey) -> PapyrusActorState? {
         guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
             return nil
         }
@@ -55,7 +55,7 @@ extension PapyrusWorldStateBridge {
     // MARK: - Writing
 
     @discardableResult
-    func damageActorValue(
+    public func damageActorValue(
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
         guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
@@ -76,7 +76,7 @@ extension PapyrusWorldStateBridge {
     }
 
     @discardableResult
-    func restoreActorValue(
+    public func restoreActorValue(
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState? {
         guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
@@ -87,7 +87,7 @@ extension PapyrusWorldStateBridge {
     }
 
     @discardableResult
-    func writeActorValue(
+    public func writeActorValue(
         _ write: PapyrusActorValueWrite,
         at index: Int32,
         to value: Float,
@@ -115,17 +115,17 @@ extension PapyrusWorldStateBridge {
     }
 
     @discardableResult
-    func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
+    public func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
         combatRuntime?()?.startCombat(key, with: target) ?? false
     }
 
     @discardableResult
-    func stopActorCombat(_ key: ReferenceKey) -> Bool {
+    public func stopActorCombat(_ key: ReferenceKey) -> Bool {
         combatRuntime?()?.stopCombat(key) ?? false
     }
 
     @discardableResult
-    func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
+    public func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
         guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
             return false
         }
@@ -141,16 +141,16 @@ extension PapyrusWorldStateBridge {
     // MARK: - Perks
 
     @discardableResult
-    func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool {
+    public func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool {
         mutatePerks?(.add, perk, key) ?? false
     }
 
     @discardableResult
-    func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool {
+    public func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool {
         mutatePerks?(.remove, perk, key) ?? false
     }
 
-    func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
+    public func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
         guard let owned = perkOwnership?(key) else { return nil }
         return owned.contains(perk)
     }
@@ -158,7 +158,7 @@ extension PapyrusWorldStateBridge {
     // MARK: - Skills
 
     @discardableResult
-    func advancePlayerSkill(
+    public func advancePlayerSkill(
         _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
     ) -> Bool {
         advanceSkill?(advance, index, magnitude) ?? false
@@ -166,12 +166,12 @@ extension PapyrusWorldStateBridge {
 
     // MARK: - Perk points
 
-    func playerPerkPoints() -> Int? {
+    public func playerPerkPoints() -> Int? {
         modifyPerkPoints.flatMap { $0(0) }
     }
 
     @discardableResult
-    func modifyPlayerPerkPoints(by delta: Int) -> Int? {
+    public func modifyPlayerPerkPoints(by delta: Int) -> Int? {
         modifyPerkPoints.flatMap { $0(delta) }
     }
 
@@ -199,7 +199,7 @@ extension PapyrusWorldStateBridge {
     /// ACHR resolved through the reference source. Nil for anything that is not
     /// an actor, which is what makes an `Actor` native called on a crate a
     /// tallied failure rather than a write to a crate's health.
-    func actorHolder(for key: ReferenceKey) -> ActorValueHolder? {
+    public func actorHolder(for key: ReferenceKey) -> ActorValueHolder? {
         if key == playerKey {
             return .player
         }

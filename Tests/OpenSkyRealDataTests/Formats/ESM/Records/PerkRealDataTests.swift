@@ -4,7 +4,6 @@
 // first (issue 20.4). Counts and editor IDs only — no game bytes leave the run.
 
 import Foundation
-@testable import OpenSky
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

@@ -3,7 +3,7 @@
 // here at file scope, away from that file's size cap.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// Test build runner: the test stages completions and controls their order,

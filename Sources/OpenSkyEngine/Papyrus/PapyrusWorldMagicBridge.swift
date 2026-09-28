@@ -33,19 +33,19 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's magic as a Papyrus native sees it.
-nonisolated struct PapyrusSpellState: Equatable, Sendable {
+nonisolated public struct PapyrusSpellState: Equatable, Sendable {
     /// SPEL and SCRL records this actor knows.
-    let knownSpells: Set<ReferenceKey>
+    public let knownSpells: Set<ReferenceKey>
     /// The MGEF behind every effect currently acting on this actor.
-    let activeEffects: Set<ReferenceKey>
+    public let activeEffects: Set<ReferenceKey>
     /// Every keyword those effects carry, resolved once so
     /// `HasMagicEffectWithKeyword` is a set membership test rather than a walk
     /// back through the record store.
-    let effectKeywords: Set<ReferenceKey>
+    public let effectKeywords: Set<ReferenceKey>
     /// The spell readied in each hand, absent for a hand holding none.
-    let handSpells: [SpellHand: ReferenceKey]
+    public let handSpells: [SpellHand: ReferenceKey]
 
-    init(
+    public init(
         knownSpells: Set<ReferenceKey> = [],
         activeEffects: Set<ReferenceKey> = [],
         effectKeywords: Set<ReferenceKey> = [],
@@ -64,7 +64,7 @@ nonisolated struct PapyrusSpellState: Equatable, Sendable {
 /// `@MainActor` class, and the existential only needed to say so before
 /// `PapyrusWorldAccess` can carry it across its hops.
 @MainActor
-protocol PapyrusWorldMagicBridge: AnyObject, Sendable {
+public protocol PapyrusWorldMagicBridge: AnyObject, Sendable {
     /// One observation of the magic acting on and known to `key`, or nil when
     /// this session runs no spellbook — a synthetic session with no SPEL index.
     func spellState(for key: ReferenceKey) -> PapyrusSpellState?
@@ -128,46 +128,46 @@ protocol PapyrusWorldMagicBridge: AnyObject, Sendable {
 /// assertion that natives run on the main actor rather than a suppression of
 /// the check.
 nonisolated extension PapyrusWorldAccess {
-    func spellState(for key: ReferenceKey) -> PapyrusSpellState? {
+    public func spellState(for key: ReferenceKey) -> PapyrusSpellState? {
         MainActor.assumeIsolated { bridge.spellState(for: key) }
     }
 
     @discardableResult
-    func addSpell(_ spell: ReferenceKey, to actor: ReferenceKey) -> Bool {
+    public func addSpell(_ spell: ReferenceKey, to actor: ReferenceKey) -> Bool {
         MainActor.assumeIsolated { bridge.addSpell(spell, to: actor) }
     }
 
     @discardableResult
-    func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool {
+    public func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool {
         MainActor.assumeIsolated { bridge.removeSpell(spell, from: actor) }
     }
 
     @discardableResult
-    func equipSpell(
+    public func equipSpell(
         _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
     ) -> Bool {
         MainActor.assumeIsolated { bridge.equipSpell(spell, source: source, on: actor) }
     }
 
     @discardableResult
-    func unequipSpell(
+    public func unequipSpell(
         _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
     ) -> Bool {
         MainActor.assumeIsolated { bridge.unequipSpell(spell, source: source, on: actor) }
     }
 
     @discardableResult
-    func dispelSpell(_ spell: ReferenceKey, on actor: ReferenceKey) -> Int {
+    public func dispelSpell(_ spell: ReferenceKey, on actor: ReferenceKey) -> Int {
         MainActor.assumeIsolated { bridge.dispelSpell(spell, on: actor) }
     }
 
     @discardableResult
-    func dispelAllSpells(on actor: ReferenceKey) -> Int {
+    public func dispelAllSpells(on actor: ReferenceKey) -> Int {
         MainActor.assumeIsolated { bridge.dispelAllSpells(on: actor) }
     }
 
     @discardableResult
-    func castSpell(
+    public func castSpell(
         _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
     ) -> Bool {
         MainActor.assumeIsolated { bridge.castSpell(spell, from: source, at: target) }

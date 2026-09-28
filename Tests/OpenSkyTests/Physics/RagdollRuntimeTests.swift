@@ -5,7 +5,7 @@
 // them, which is the one bit that decides whether a death waits for the graph's
 // hand-off or falls back to an immediate one.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

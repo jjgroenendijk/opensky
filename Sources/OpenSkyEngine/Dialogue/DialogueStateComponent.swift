@@ -44,7 +44,7 @@ import OpenSkyFormats
 /// are distinct from `ESMError`, and every one is thrown rather than clamped:
 /// choosing an INFO no loaded plugin declares is a bug that a silent no-op
 /// would hide behind a conversation that simply never advances.
-nonisolated enum DialogueError: Error, Equatable {
+nonisolated public enum DialogueError: Error, Equatable {
     /// No loaded plugin declares an INFO with this FormID.
     case unknownInfo(FormID)
     /// The INFO record exists but its FormID does not resolve to a
@@ -55,30 +55,30 @@ nonisolated enum DialogueError: Error, Equatable {
 }
 
 /// Everything the runtime records about one INFO.
-nonisolated struct DialogueRuntimeState: WorldStateComponent {
+nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
     /// How often this response has been said. A counter rather than a flag
     /// because the say-once rule needs "ever said" while a repeatable line
     /// still benefits from an honest count in the trace readout, and because a
     /// counter costs the same four bytes a flag would have been padded to.
-    private(set) var saidCount: UInt32
+    public private(set) var saidCount: UInt32
 
     /// The state an INFO has before anything says it, which is the baseline of
     /// every INFO in every plugin: a response nothing has spoken.
-    static let unsaid = DialogueRuntimeState()
+    public static let unsaid = DialogueRuntimeState()
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .dialogue
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .dialogue(self)
     }
 
-    init(saidCount: UInt32 = 0) {
+    public init(saidCount: UInt32 = 0) {
         self.saidCount = saidCount
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .dialogue(value) = erased else { return nil }
         self = value
     }
@@ -87,33 +87,33 @@ nonisolated struct DialogueRuntimeState: WorldStateComponent {
     /// this baseline reads nothing off the record: an INFO carries no authored
     /// "already said" bit, so the baseline is the same for all of them and the
     /// parameter-free `unsaid` is it.
-    static func baseline(for _: TopicInfo) -> DialogueRuntimeState {
+    public static func baseline(for _: TopicInfo) -> DialogueRuntimeState {
         .unsaid
     }
 
     /// Whether this response has ever been said, which is what the say-once
     /// rule tests.
-    var hasBeenSaid: Bool {
+    public var hasBeenSaid: Bool {
         saidCount > 0
     }
 
     /// True when nothing has said this response, which is the state that must
     /// never be written: storing it would make two equal worlds compare unequal
     /// and would put an entry in the save for every INFO a session considered.
-    var isUntouched: Bool {
+    public var isUntouched: Bool {
         saidCount == 0
     }
 
     /// True when the state still equals the plugin baseline, which is what
     /// makes a reset back to plugin data meaningful.
-    func matchesBaseline(of info: TopicInfo) -> Bool {
+    public func matchesBaseline(of info: TopicInfo) -> Bool {
         self == Self.baseline(for: info)
     }
 
     /// This state with one more saying recorded. Saturating rather than
     /// wrapping: a conversation repeated four billion times is not a reason for
     /// a say-once line to become sayable again.
-    func said() -> Self {
+    public func said() -> Self {
         DialogueRuntimeState(saidCount: saidCount == .max ? .max : saidCount + 1)
     }
 }

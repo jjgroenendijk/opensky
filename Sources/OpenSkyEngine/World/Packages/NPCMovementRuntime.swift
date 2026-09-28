@@ -4,45 +4,45 @@
 import OpenSkyFormats
 import simd
 
-struct NPCMovementWorld {
-    let sampleGround: WalkController.GroundSampler
-    let collisionQuery: WalkController.CollisionQuery
-    let repath: (NavigationPathQuery) -> NavigationPathResult
-    let cellAt: (SIMD3<Float>) -> CellSceneLocation?
-    let triggersAt: (PlayerCapsuleState) -> Set<ReferenceKey>
+public struct NPCMovementWorld {
+    public let sampleGround: WalkController.GroundSampler
+    public let collisionQuery: WalkController.CollisionQuery
+    public let repath: (NavigationPathQuery) -> NavigationPathResult
+    public let cellAt: (SIMD3<Float>) -> CellSceneLocation?
+    public let triggersAt: (PlayerCapsuleState) -> Set<ReferenceKey>
 }
 
-struct NPCMoveStart {
-    let actor: ReferenceKey
-    let formID: FormID
-    let placement: PlacedReference.Placement
-    let scale: Float
-    let capsule: PlayerCapsule
-    let configuration: PlayerMovementConfiguration
-    let path: NavigationPath
+public struct NPCMoveStart {
+    public let actor: ReferenceKey
+    public let formID: FormID
+    public let placement: PlacedReference.Placement
+    public let scale: Float
+    public let capsule: PlayerCapsule
+    public let configuration: PlayerMovementConfiguration
+    public let path: NavigationPath
 }
 
-struct NPCMovementRuntime {
+public struct NPCMovementRuntime {
     /// Named crowd cap. Only actors with an active request own a controller.
-    static let maximumSimultaneousMovers = 8
+    public static let maximumSimultaneousMovers = 8
     /// CPU slice reserved for all NPC locomotion at the cap in a 16.67 ms
     /// frame. The optimized real-data measurement decides the drive against
     /// this number; item 16.8 consumes it in the complete frame ledger.
-    static let maximumCPUTimeMillisecondsAtCap: Double = 2
-    static let waypointTolerance: Float = 12
-    static let stuckTimeout: Float = 2
-    static let progressTolerance: Float = 1
-    static let runDistance: Float = 512
+    public static let maximumCPUTimeMillisecondsAtCap: Double = 2
+    public static let waypointTolerance: Float = 12
+    public static let stuckTimeout: Float = 2
+    public static let progressTolerance: Float = 1
+    public static let runDistance: Float = 512
     /// How fast an actor may turn, in radians per second. Explicitly
     /// `nonisolated` so the in-place turn (`NPCFacingHold`, issue #427) can
     /// corner at the same rate a mover does without becoming main-actor
     /// isolated itself.
-    nonisolated static let maximumYawSpeed: Float = .pi * 2
+    nonisolated public static let maximumYawSpeed: Float = .pi * 2
 
-    var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
-    var onPersist: ((NPCMovementPersistence) -> Void)?
-    var onTriggerTransition: ((TriggerTransitionEvent) -> Void)?
-    var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
+    public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
+    public var onPersist: ((NPCMovementPersistence) -> Void)?
+    public var onTriggerTransition: ((TriggerTransitionEvent) -> Void)?
+    public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
 
     private var movers: [ReferenceKey: NPCMover] = [:]
     private var parked: [ReferenceKey: NPCParkedMovement] = [:]
@@ -51,15 +51,15 @@ struct NPCMovementRuntime {
     /// budget the cap protects does not apply to it.
     private var facings: [ReferenceKey: NPCFacingHold] = [:]
 
-    var activeMoverCount: Int {
+    public var activeMoverCount: Int {
         movers.count
     }
 
-    var activeFacingCount: Int {
+    public var activeFacingCount: Int {
         facings.count
     }
 
-    mutating func start(_ start: NPCMoveStart) -> Bool {
+    public mutating func start(_ start: NPCMoveStart) -> Bool {
         guard movers[start.actor] != nil || movers.count < Self.maximumSimultaneousMovers else {
             return false
         }
@@ -77,7 +77,7 @@ struct NPCMovementRuntime {
     /// away: one owner of a yaw at a time. A hold that is already running is
     /// re-aimed rather than restarted, so a player circling a speaker mid
     /// conversation is followed smoothly instead of snapping on every update.
-    mutating func face(_ start: NPCFaceStart) {
+    public mutating func face(_ start: NPCFaceStart) {
         if var hold = facings[start.actor] {
             hold.aim(at: start.target)
             facings[start.actor] = hold
@@ -96,7 +96,7 @@ struct NPCMovementRuntime {
     ///
     /// - Returns: true when there was a hold to release.
     @discardableResult
-    mutating func releaseFacing(_ actor: ReferenceKey) -> Bool {
+    public mutating func releaseFacing(_ actor: ReferenceKey) -> Bool {
         guard let hold = facings.removeValue(forKey: actor) else { return false }
         parked[actor] = NPCParkedMovement(
             readout: hold.readout, transform: hold.transform
@@ -114,7 +114,7 @@ struct NPCMovementRuntime {
     ///
     /// - Returns: true when there was a live mover to stop.
     @discardableResult
-    mutating func stop(_ actor: ReferenceKey) -> Bool {
+    public mutating func stop(_ actor: ReferenceKey) -> Bool {
         guard let mover = movers.removeValue(forKey: actor) else { return false }
         parked[actor] = NPCParkedMovement(
             readout: mover.readout(as: .halted), transform: mover.transform
@@ -128,7 +128,7 @@ struct NPCMovementRuntime {
         return true
     }
 
-    mutating func advance(by frameTime: Float, world: NPCMovementWorld) {
+    public mutating func advance(by frameTime: Float, world: NPCMovementWorld) {
         for key in facings.keys.sorted() {
             guard var hold = facings[key] else { continue }
             let drive = hold.advance(by: frameTime)
@@ -151,7 +151,7 @@ struct NPCMovementRuntime {
         }
     }
 
-    mutating func persistForSave() {
+    public mutating func persistForSave() {
         for key in movers.keys.sorted() {
             guard let mover = movers[key] else { continue }
             onPersist?(mover.persistence(reason: .save))
@@ -162,22 +162,22 @@ struct NPCMovementRuntime {
         }
     }
 
-    func transform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
+    public func transform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
         movers[actor]?.transform ?? facings[actor]?.transform ?? parked[actor]?.transform
     }
 
     /// What one actor is turning towards, when it is turning.
-    func facing(for actor: ReferenceKey) -> NPCFacingHold? {
+    public func facing(for actor: ReferenceKey) -> NPCFacingHold? {
         facings[actor]
     }
 
-    func readouts() -> [NPCMovementReadout] {
+    public func readouts() -> [NPCMovementReadout] {
         let live = movers.values.map(\.readout) + facings.values.map(\.readout)
         let held = parked.filter { facings[$0.key] == nil }.values.map(\.readout)
         return (live + held).sorted { $0.actor < $1.actor }
     }
 
-    func instanceDeltas() -> [UInt32: float4x4] {
+    public func instanceDeltas() -> [UInt32: float4x4] {
         let moving = movers.values.map { ($0.formID.rawValue, $0.instanceDelta) }
         let turning = facings.values.map { ($0.formID.rawValue, $0.instanceDelta) }
         return Dictionary(moving + turning) { _, turned in turned }
@@ -204,14 +204,14 @@ private struct NPCParkedMovement {
     let transform: ReferenceTransformOverride
 }
 
-struct NPCMoverEmissions {
-    var drive: NPCLocomotionDriveUpdate?
-    var persistence: [NPCMovementPersistence] = []
-    var triggers: [TriggerTransitionEvent] = []
-    var doors: [(actor: ReferenceKey, reference: FormID)] = []
+public struct NPCMoverEmissions {
+    public var drive: NPCLocomotionDriveUpdate?
+    public var persistence: [NPCMovementPersistence] = []
+    public var triggers: [TriggerTransitionEvent] = []
+    public var doors: [(actor: ReferenceKey, reference: FormID)] = []
 }
 
-struct NPCMoverAdvanceOutcome {
-    let emissions: NPCMoverEmissions
-    let isFinished: Bool
+public struct NPCMoverAdvanceOutcome {
+    public let emissions: NPCMoverEmissions
+    public let isFinished: Bool
 }

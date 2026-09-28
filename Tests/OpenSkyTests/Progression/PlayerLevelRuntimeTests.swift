@@ -6,7 +6,7 @@
 // threshold and a stored component, not where the settings came from.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

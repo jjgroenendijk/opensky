@@ -3,6 +3,7 @@
 // CLI command.
 
 import AppKit
+import OpenSkyEngine
 
 final class SceneStatsSection: PanelSectionViewController {
     weak var provider: (any SceneStatsProviding)? {

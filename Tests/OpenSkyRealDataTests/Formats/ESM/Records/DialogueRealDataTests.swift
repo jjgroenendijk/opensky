@@ -8,7 +8,7 @@
 // sweep counts the decoded result scripts instead.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

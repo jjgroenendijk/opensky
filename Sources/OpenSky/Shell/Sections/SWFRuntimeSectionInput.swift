@@ -8,6 +8,7 @@
 // malformed movie from taking a control action down with it.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension SWFRuntimeSection {

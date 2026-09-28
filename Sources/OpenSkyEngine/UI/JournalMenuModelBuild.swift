@@ -32,7 +32,7 @@ nonisolated extension JournalMenuModel {
     /// then there is no table to consult and none is needed. That is not only
     /// the synthetic-fixture case: an unlocalized mod plugin reaches the
     /// journal the same way.
-    static func text(
+    public static func text(
         _ value: LString?,
         kind: StringTable.Kind,
         strings: LocalizedStrings?
@@ -47,7 +47,7 @@ nonisolated extension JournalMenuModel {
     /// Fallback text a row shows when the plugin's string tables answer
     /// nothing, so a missing table degrades into a labelled row rather than
     /// into a blank list.
-    static func fallbackTitle(for quest: Quest) -> String {
+    public static func fallbackTitle(for quest: Quest) -> String {
         if let editorID = quest.editorID, !editorID.isEmpty {
             return editorID
         }
@@ -68,7 +68,7 @@ extension JournalMenuModel {
     ///   - showsCompleted: which of the two lists to select into.
     ///   - selectedIndex: the row to keep selected, clamped into the list.
     @MainActor
-    static func build(
+    public static func build(
         runtime: QuestRuntime,
         strings: LocalizedStrings?,
         aliases: QuestAliasNaming = .none,
@@ -97,7 +97,7 @@ extension JournalMenuModel {
     }
 
     /// One row, with its objectives and its reached-stage log entries.
-    static func makeEntry(
+    public static func makeEntry(
         quest: Quest,
         state: QuestRuntimeState,
         strings: LocalizedStrings?,

@@ -8,7 +8,7 @@
 // (CI has no game data). Summary printed + written to logs/.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

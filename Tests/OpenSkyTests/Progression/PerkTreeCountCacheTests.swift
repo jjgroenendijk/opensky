@@ -6,7 +6,7 @@
 // under test is when the cache goes back to the records and what it counts, and
 // a synthetic tree states both without a load order.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

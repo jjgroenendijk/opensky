@@ -72,30 +72,30 @@ import OpenSkyGameData
 
 /// What one fill pass produced: the table, why each empty alias is empty, and
 /// whether the quest is allowed to start with it.
-nonisolated struct QuestAliasFillResult: Equatable, Sendable {
+nonisolated public struct QuestAliasFillResult: Equatable, Sendable {
     /// The filled table, ready to be stored as a component.
-    let state: QuestAliasState
+    public let state: QuestAliasState
     /// Reason-tagged count of every alias left empty.
-    let skipped: QuestAliasTally
+    public let skipped: QuestAliasTally
     /// Non-optional aliases that an implemented fill type failed to fill, in
     /// alias-list order. Non-empty means the quest must not start.
-    let unfilledRequired: [UInt32]
+    public let unfilledRequired: [UInt32]
 
     /// Whether the quest may start with this table, which is the documented
     /// meaning of the Optional checkbox.
-    var canStartQuest: Bool {
+    public var canStartQuest: Bool {
         unfilledRequired.isEmpty
     }
 }
 
 /// Fills one quest's reference aliases. See the file header for the rules and
 /// the deviations.
-nonisolated enum QuestAliasFiller {
+nonisolated public enum QuestAliasFiller: Sendable {
     /// Runs the pass over `quest.aliases` in file order.
     ///
     /// - Parameter resolver: master-list resolver of the plugin that defines
     ///   `quest`, which is what turns an ALFR FormID into a session-stable key.
-    static func fill(
+    public static func fill(
         _ quest: Quest,
         resolver: FormIDResolver,
         locations: LocationStore? = nil

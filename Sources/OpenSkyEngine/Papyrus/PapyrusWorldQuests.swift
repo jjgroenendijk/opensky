@@ -56,7 +56,7 @@ extension PapyrusWorldRuntime {
     ///   also the identity its script handles resolve to.
     /// - Returns: instances created by this call.
     @discardableResult
-    func attachQuest(
+    public func attachQuest(
         _ quest: Quest,
         key: ReferenceKey,
         formIDResolver: FormIDResolver,
@@ -97,7 +97,7 @@ extension PapyrusWorldRuntime {
     ///
     /// - Returns: instances retired.
     @discardableResult
-    func detachQuest(key: ReferenceKey) -> Int {
+    public func detachQuest(key: ReferenceKey) -> Int {
         var keys = questInstanceKeys.filter { $0.reference == key }
         let aliasKeys = questAliasInstanceKeys.removeValue(forKey: key) ?? []
         keys.formUnion(aliasKeys)
@@ -120,7 +120,7 @@ extension PapyrusWorldRuntime {
     ///
     /// - Returns: events enqueued.
     @discardableResult
-    func queueQuestFragments(
+    public func queueQuestFragments(
         of quest: Quest,
         stage: UInt16,
         key: ReferenceKey
@@ -147,12 +147,12 @@ extension PapyrusWorldRuntime {
     }
 
     /// Quests holding at least one live script instance.
-    var questCount: Int {
+    public var questCount: Int {
         Set(questInstanceKeys.map(\.reference)).count
     }
 
     /// Alias script instances live across every running quest.
-    var questAliasInstanceCount: Int {
+    public var questAliasInstanceCount: Int {
         questAliasInstanceKeys.values.reduce(0) { $0 + $1.count }
     }
 

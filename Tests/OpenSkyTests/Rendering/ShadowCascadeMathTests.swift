@@ -1,7 +1,7 @@
 // Unit tests for ShadowCascadeMath + MatrixMath.orthographic (AGENTS.md
 // "Testing": every math routine tested with synthetic in-code fixtures).
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

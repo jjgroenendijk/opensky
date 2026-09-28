@@ -18,7 +18,7 @@ import OpenSkyFormats
 
 /// Crime operations a Papyrus native may perform.
 @MainActor
-protocol PapyrusWorldCrimeBridge {
+public protocol PapyrusWorldCrimeBridge {
     /// Crime gold the player owes `faction`, or nil when this session runs no
     /// crime runtime — a synthetic scene with no FACT index, where answering
     /// zero would read as a player who owes nothing.
@@ -87,35 +87,35 @@ protocol PapyrusWorldCrimeBridge {
 /// assertion that natives run on the main actor rather than a suppression of
 /// the check.
 nonisolated extension PapyrusWorldAccess {
-    func crimeGold(of faction: ReferenceKey) -> Int? {
+    public func crimeGold(of faction: ReferenceKey) -> Int? {
         MainActor.assumeIsolated { bridge.crimeGold(of: faction) }
     }
 
-    func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
+    public func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
         MainActor.assumeIsolated { bridge.crimeGold(of: faction, violent: violent) }
     }
 
     @discardableResult
-    func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
+    public func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
         MainActor.assumeIsolated {
             bridge.modifyCrimeGold(of: faction, by: amount, violent: violent)
         }
     }
 
     @discardableResult
-    func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
+    public func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
         MainActor.assumeIsolated { bridge.setCrimeGold(of: faction, to: gold, violent: violent) }
     }
 
     @discardableResult
-    func sendAssaultAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int? {
+    public func sendAssaultAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int? {
         MainActor.assumeIsolated {
             bridge.sendAssaultAlarm(witness: witness, criminal: criminal)
         }
     }
 
     @discardableResult
-    func sendTrespassAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int? {
+    public func sendTrespassAlarm(witness: ReferenceKey, criminal: ReferenceKey) -> Int? {
         MainActor.assumeIsolated {
             bridge.sendTrespassAlarm(witness: witness, criminal: criminal)
         }

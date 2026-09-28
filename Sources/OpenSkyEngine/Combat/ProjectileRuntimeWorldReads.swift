@@ -15,7 +15,7 @@ extension ProjectileRuntime {
     /// The IPCT chain for a hit, played where the world can play it.
     /// Internal rather than private so it can live here while `resolve` in the
     /// main file calls it.
-    func playImpact(at position: SIMD3<Float>) -> FormID? {
+    public func playImpact(at position: SIMD3<Float>) -> FormID? {
         guard let world, let impacts else { return nil }
         // An arrow resolves its impact through the *ammunition's* chain rather
         // than a bow's: item 15.4 built the resolver around a
@@ -34,7 +34,7 @@ extension ProjectileRuntime {
 
     /// Drops stuck arrows whose cell is no longer resident, so an unloading
     /// cell takes them with it.
-    func evictUnloadedStuckArrows() {
+    public func evictUnloadedStuckArrows() {
         guard let world, !stuck.isEmpty else { return }
         let resident = world.residentProjectileCells()
         guard !resident.isEmpty else { return }

@@ -2,6 +2,7 @@
 // HUD layer. Every override feeds the same bridge used by gameplay.
 
 import AppKit
+import OpenSkyEngine
 
 final class HUDElementsSection: PanelSectionViewController {
     nonisolated static let scalePresets: [(title: String, value: Float)] = [

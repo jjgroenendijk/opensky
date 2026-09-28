@@ -2,7 +2,7 @@
 // arithmetic on invented poses; no packfile, no install.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

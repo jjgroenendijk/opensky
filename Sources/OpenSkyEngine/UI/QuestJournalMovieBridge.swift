@@ -43,45 +43,45 @@ import OpenSkyFormats
 /// The three tallies a Quests-page bring-up is gated on. Zero of each is the
 /// gate passing; the panel and the CLI probe print all three even at zero, so a
 /// passing gate cannot be mistaken for a missing readout.
-nonisolated struct QuestJournalDiagnostics: Equatable, Sendable {
-    let faults: Int
-    let missingNames: Int
-    let unhandledInvokes: Int
+nonisolated public struct QuestJournalDiagnostics: Equatable, Sendable {
+    public let faults: Int
+    public let missingNames: Int
+    public let unhandledInvokes: Int
 }
 
-nonisolated enum QuestJournalMovieBridge {
+nonisolated public enum QuestJournalMovieBridge: Sendable {
     /// The Quests page is `PageArray[0]`, read off `QuestJournalBase`'s own
     /// `PAGE_QUEST` constant rather than assumed from tab order.
-    static let questsTabIndex = 0
+    public static let questsTabIndex = 0
     /// Name of that constant on the registered class, so the index above can be
     /// asserted against the movie instead of trusted.
-    static let questPageConstantName = "PAGE_QUEST"
+    public static let questPageConstantName = "PAGE_QUEST"
 
-    static let moviePath = SystemMenuMovieBridge.moviePath
-    static let menuPath = SystemMenuMovieBridge.menuPath
-    static let questsFaderPath = SystemMenuMovieBridge.questsFaderPath
-    static let pagePath = "\(questsFaderPath)/Page_mc"
-    static let titleListPath = "\(pagePath)/TitleList_mc/List_mc"
-    static let objectiveListPath = "\(pagePath)/objectiveList"
-    static let titleTextPath = "\(pagePath)/questTitleText"
-    static let descriptionTextPath = "\(pagePath)/questDescriptionText"
-    static let noQuestsTextPath = "\(pagePath)/NoQuestsText"
-    static let endpiecesPath = "\(pagePath)/questTitleEndpieces"
+    public static let moviePath = SystemMenuMovieBridge.moviePath
+    public static let menuPath = SystemMenuMovieBridge.menuPath
+    public static let questsFaderPath = SystemMenuMovieBridge.questsFaderPath
+    public static let pagePath = "\(questsFaderPath)/Page_mc"
+    public static let titleListPath = "\(pagePath)/TitleList_mc/List_mc"
+    public static let objectiveListPath = "\(pagePath)/objectiveList"
+    public static let titleTextPath = "\(pagePath)/questTitleText"
+    public static let descriptionTextPath = "\(pagePath)/questDescriptionText"
+    public static let noQuestsTextPath = "\(pagePath)/NoQuestsText"
+    public static let endpiecesPath = "\(pagePath)/questTitleEndpieces"
 
     /// The list base's backing array and selection, shared by both lists.
-    static let entryArrayName = SystemMenuMovieBridge.entryArrayName
-    static let selectedIndexName = "iSelectedIndex"
+    public static let entryArrayName = SystemMenuMovieBridge.entryArrayName
+    public static let selectedIndexName = "iSelectedIndex"
     /// Method on the list base that rebuilds entry clips from `EntriesA`.
-    static let invalidateMethod = "InvalidateData"
+    public static let invalidateMethod = "InvalidateData"
     /// Method on the list base that empties every entry clip.
-    static let clearMethod = "ClearList"
+    public static let clearMethod = "ClearList"
 
     /// Frame labels of an objective entry clip, measured off the clip's own
     /// timeline. `Active` marks the player's tracked objective, which OpenSky
     /// does not model yet, so it is listed but never selected.
-    static let objectiveNormalFrame = "Normal"
-    static let objectiveCompletedFrame = "Completed"
-    static let objectiveFailedFrame = "Failed"
+    public static let objectiveNormalFrame = "Normal"
+    public static let objectiveCompletedFrame = "Completed"
+    public static let objectiveFailedFrame = "Failed"
 
     // MARK: - Bring-up
 
@@ -90,7 +90,7 @@ nonisolated enum QuestJournalMovieBridge {
     /// `SystemMenuMovieBridge.activate(runtime:onClose:)` runs first and owns
     /// the movie's lifecycle calls; this only switches pages, so the two can be
     /// called in either order without the journal opening twice.
-    static func activate(runtime: SWFMovieRuntime) {
+    public static func activate(runtime: SWFMovieRuntime) {
         runtime.callMovie(
             "SwitchPageToFront",
             atPath: menuPath,
@@ -102,7 +102,7 @@ nonisolated enum QuestJournalMovieBridge {
     /// The tab index the movie's own `QuestJournalBase.PAGE_QUEST` constant
     /// carries, or nil when the class did not register. Used to assert the
     /// pinned `questsTabIndex` against the live movie.
-    static func measuredQuestsTabIndex(runtime: SWFMovieRuntime) -> Int? {
+    public static func measuredQuestsTabIndex(runtime: SWFMovieRuntime) -> Int? {
         guard
             let base = runtime.runtime.registeredClass(named: "QuestJournalBase"),
             case let .number(index) = base.lookup(questPageConstantName)?.property.value,
@@ -115,7 +115,7 @@ nonisolated enum QuestJournalMovieBridge {
 
     /// Whether the Quests page is the one at the front, derived from the
     /// fader's own frame the way the System page's state is.
-    static func isFrontmost(runtime: SWFMovieRuntime) -> Bool {
+    public static func isFrontmost(runtime: SWFMovieRuntime) -> Bool {
         guard
             let fader = runtime.node(atPath: questsFaderPath, from: runtime.root),
             let index = fader.timeline?.frameIndex(forLabel: "forceFade")

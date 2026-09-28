@@ -2,6 +2,7 @@
 // playback readout (issue #98 decomposition).
 
 import AppKit
+import OpenSkyEngine
 
 final class AnimationSection: PanelSectionViewController {
     weak var provider: (any AnimationControlProviding)? {

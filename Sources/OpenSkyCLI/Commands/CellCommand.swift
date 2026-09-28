@@ -5,6 +5,7 @@
 // cell (docs/decisions/first-render-cell.md).
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 
 enum CellCommand {

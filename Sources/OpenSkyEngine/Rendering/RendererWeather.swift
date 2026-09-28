@@ -9,7 +9,7 @@ import simd
 extension Renderer {
     /// Published wind for precipitation/grass/particles/audio (M7.3-7.5). Calm
     /// when no weather is active.
-    var currentWind: WindState {
+    public var currentWind: WindState {
         weatherEnabled ? weather?.currentWind ?? .calm : .calm
     }
 
@@ -19,7 +19,7 @@ extension Renderer {
     /// camera lighting). Cheap: two resolves + one blend. Reroll cadence is
     /// fed real elapsed game hours off the game clock (issue #164); a fixed
     /// clock — offscreen renders, CLI — therefore elapses none.
-    func updateWeather(deltaTime: Float) {
+    public func updateWeather(deltaTime: Float) {
         guard weatherEnabled, let weather else {
             currentResolvedWeather = nil
             return
@@ -32,21 +32,24 @@ extension Renderer {
         currentResolvedWeather = weather.resolvedWeather?.applyingStormSkyDarkening()
     }
 
-    func updateWeatherFromWallClock() {
+    public func updateWeatherFromWallClock() {
         let delta = weatherClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
         updateWeather(deltaTime: delta)
     }
 
     /// The frame's fog uniforms: active exterior weather fog wins, else the
     /// interior CELL/LGTM fog, else disabled (matches the pre-weather default).
-    struct FrameFog {
-        let nearColor: SIMD3<Float>
-        let farColor: SIMD3<Float>
-        let distances: SIMD4<Float>
-        let enabled: UInt32
+    public struct FrameFog {
+        public let nearColor: SIMD3<Float>
+        public let farColor: SIMD3<Float>
+        public let distances: SIMD4<Float>
+        public let enabled: UInt32
     }
 
-    static func resolvedFog(weatherLight: ResolvedWeather?, interior: FogParameters?) -> FrameFog {
+    public static func resolvedFog(
+        weatherLight: ResolvedWeather?,
+        interior: FogParameters?
+    ) -> FrameFog {
         if let weather = weatherLight, weather.fogEnabled {
             return FrameFog(
                 nearColor: weather.fogNearColor,

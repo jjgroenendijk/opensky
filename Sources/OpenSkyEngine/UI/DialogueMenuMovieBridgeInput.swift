@@ -17,7 +17,7 @@ nonisolated extension DialogueMenuMovieBridge {
     /// - Returns: whether the movie consumed the event.
     @MainActor
     @discardableResult
-    static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
+    public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
         guard let key = key(for: event) else { return false }
         let down = try renderer.sendSWFInput(.keyDown(code: key.code, ascii: key.ascii))
         let up = try renderer.sendSWFInput(.keyUp(code: key.code))
@@ -30,7 +30,7 @@ nonisolated extension DialogueMenuMovieBridge {
     /// and each read walks the display tree by path; batching them keeps that
     /// to one walk per field instead of one per refresh per caller.
     @MainActor
-    static func readback(renderer: Renderer) -> DialogueMenuReadback {
+    public static func readback(renderer: Renderer) -> DialogueMenuReadback {
         guard let runtime = renderer.swfRuntime else { return .empty }
         return DialogueMenuReadback(
             rows: topicLabels(runtime: runtime).count,
@@ -43,14 +43,14 @@ nonisolated extension DialogueMenuMovieBridge {
 }
 
 /// What the live movie answers about itself.
-nonisolated struct DialogueMenuReadback: Equatable, Sendable {
-    let rows: Int
-    let selection: Int?
-    let subtitle: String?
-    let menuState: Int?
-    let diagnostics: DialogueMenuDiagnostics
+nonisolated public struct DialogueMenuReadback: Equatable, Sendable {
+    public let rows: Int
+    public let selection: Int?
+    public let subtitle: String?
+    public let menuState: Int?
+    public let diagnostics: DialogueMenuDiagnostics
 
-    static let empty = DialogueMenuReadback(
+    public static let empty = DialogueMenuReadback(
         rows: 0, selection: nil, subtitle: nil, menuState: nil, diagnostics: .none
     )
 }

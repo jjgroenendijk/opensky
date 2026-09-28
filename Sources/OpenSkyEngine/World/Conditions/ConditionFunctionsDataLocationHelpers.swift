@@ -5,11 +5,11 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
-    typealias ConditionLocationLookup = @Sendable (ConditionCall) -> Result<
+    public typealias ConditionLocationLookup = @Sendable (ConditionCall) -> Result<
         (LocationStore, ResolvedFormID), ConditionFailure
     >
 
-    static func currentLocation(
+    public static func currentLocation(
         _ call: ConditionCall
     ) -> Result<(LocationStore, ResolvedFormID), ConditionFailure> {
         guard let store = call.context.data.locations else {
@@ -24,7 +24,7 @@ nonisolated extension ConditionFunctions {
         }
     }
 
-    static func editorLocation(
+    public static func editorLocation(
         _ call: ConditionCall
     ) -> Result<(LocationStore, ResolvedFormID), ConditionFailure> {
         guard let store = call.context.data.locations else {
@@ -39,7 +39,7 @@ nonisolated extension ConditionFunctions {
         }
     }
 
-    static func locationParameterFunction(
+    public static func locationParameterFunction(
         index: UInt16,
         name: String,
         location: @escaping ConditionLocationLookup = { call in currentLocation(call) },
@@ -63,7 +63,7 @@ nonisolated extension ConditionFunctions {
         }
     }
 
-    static func locationAliasFunction(
+    public static func locationAliasFunction(
         index: UInt16,
         name: String,
         location: @escaping ConditionLocationLookup = { call in currentLocation(call) },
@@ -83,7 +83,7 @@ nonisolated extension ConditionFunctions {
         }
     }
 
-    static func installSameLocation(_ registry: inout ConditionFunctionRegistry) {
+    public static func installSameLocation(_ registry: inout ConditionFunctionRegistry) {
         // xEdit indices 180 and 181: `HasSameEditorLocAsRef` takes a reference
         // and keyword, while `HasSameEditorLocAsRefAlias` takes a reference
         // alias and keyword. Both compare editor locations at the keyword's

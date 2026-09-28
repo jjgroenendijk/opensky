@@ -5,7 +5,7 @@
 // same rich snapshot the container round-trip tests use. Nothing here reads a
 // file or touches game data.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

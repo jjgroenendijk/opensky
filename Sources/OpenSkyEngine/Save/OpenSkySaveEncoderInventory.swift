@@ -25,7 +25,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// not contain the item is not a layout worth having. A session that
     /// touched no inventory writes no chunk, so its bytes match what this
     /// encoder produced before the chunk existed.
-    static func writeInventories(
+    public static func writeInventories(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

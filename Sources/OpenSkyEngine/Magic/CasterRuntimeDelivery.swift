@@ -46,13 +46,13 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// Which deliveries this build carries out.
-nonisolated enum SpellDelivery {
+nonisolated public enum SpellDelivery: Sendable {
     /// Whether a cast of `delivery` runs rather than being refused.
     ///
     /// `castingType` decides for the deliveries whose two casting shapes are
     /// not equally implementable; a nil header reads as self delivery, which is
     /// the same fallback the cost calculation takes.
-    static func isImplemented(
+    public static func isImplemented(
         _ delivery: MagicEffectDelivery,
         castingType: MagicEffectCastingType?
     ) -> Bool {
@@ -73,7 +73,7 @@ nonisolated extension ResolvedSpell {
     /// Everything is resolved once, here, and never re-derived downstream: a
     /// projectile in the air has to apply the spell that was cast rather than
     /// whatever the caster has readied by the time it lands.
-    func payload(caster: ReferenceKey) -> SpellPayload {
+    public func payload(caster: ReferenceKey) -> SpellPayload {
         SpellPayload(
             spell: key,
             sourcePlugin: sourcePlugin,
@@ -100,7 +100,7 @@ extension CasterRuntime {
     ///
     /// - Returns: how many timed effects were stored, which is zero for a
     ///   projectile — the effects land when it does, not when it is fired.
-    func deliverAway(
+    public func deliverAway(
         _ spell: ResolvedSpell,
         delivery: MagicEffectDelivery,
         caster: ActorValueHolder,

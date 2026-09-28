@@ -5,6 +5,7 @@
 // per-category volumes behind this master.
 
 import AppKit
+import OpenSkyEngine
 
 final class SystemMenuSettingsSection: PanelSectionViewController {
     weak var provider: (any SystemMenuControlProviding)? {

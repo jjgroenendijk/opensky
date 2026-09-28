@@ -31,33 +31,33 @@ import OpenSkyFormats
 
 /// What a resolved hit impact turns into. The melee counterpart of
 /// `ResolvedFootstep`, and deliberately the same shape.
-nonisolated struct ResolvedMeleeImpact: Equatable, Sendable {
+nonisolated public struct ResolvedMeleeImpact: Equatable, Sendable {
     /// The IPDS the weapon named.
-    let dataSet: FormID
+    public let dataSet: FormID
     /// The IPCT chosen for the struck material.
-    let impact: Impact
+    public let impact: Impact
     /// The SNDR to play. Never null: a resolution with no sound is reported as
     /// nil instead.
-    let sound: FormID
+    public let sound: FormID
 }
 
 /// Walks a weapon's INAM to the sound one hit plays.
 ///
 /// A thin reader over the record indexes `FootstepStore` already builds, so a
 /// session that can play footsteps can play hit impacts with no second load.
-nonisolated struct MeleeImpactResolver {
+nonisolated public struct MeleeImpactResolver: Sendable {
     private let impactDataSets: [UInt32: ImpactDataSet]
     private let impacts: [UInt32: Impact]
 
     /// Reads the indexes straight off the footstep store, which is where IPDS
     /// and IPCT already live.
-    init(footsteps: FootstepStore) {
+    public init(footsteps: FootstepStore) {
         impactDataSets = footsteps.impactDataSets
         impacts = footsteps.impacts
     }
 
     /// Test seam: indexes built from decoded values rather than from a file.
-    init(impactDataSets: [ImpactDataSet], impacts: [Impact]) {
+    public init(impactDataSets: [ImpactDataSet], impacts: [Impact]) {
         self.impactDataSets = Dictionary(
             uniqueKeysWithValues: impactDataSets.map { ($0.formID.rawValue, $0) }
         )
@@ -74,7 +74,7 @@ nonisolated struct MeleeImpactResolver {
     ///   - material: the MATT type of what was struck, or nil when it names
     ///     none — the impact table then answers with its representative entry,
     ///     exactly as it does for a footstep on an unnamed surface.
-    func resolve(weapon: MeleeWeaponProfile, material: FormID?) -> ResolvedMeleeImpact? {
+    public func resolve(weapon: MeleeWeaponProfile, material: FormID?) -> ResolvedMeleeImpact? {
         guard
             let dataSetID = weapon.impactDataSet,
             let dataSet = impactDataSets[dataSetID.rawValue],

@@ -5,7 +5,7 @@
 import OpenSkyFormats
 import simd
 
-nonisolated enum InteractionAction: Equatable, Sendable {
+nonisolated public enum InteractionAction: Equatable, Sendable {
     case activate
     case open
     case search
@@ -25,7 +25,7 @@ nonisolated enum InteractionAction: Equatable, Sendable {
     /// need no second path.
     case talk
 
-    var defaultLabel: String {
+    public var defaultLabel: String {
         switch self {
         case .activate: "Activate"
         case .open: "Open"
@@ -43,33 +43,33 @@ nonisolated enum InteractionAction: Equatable, Sendable {
 }
 
 /// Immutable record metadata retained beside a streamed cell.
-nonisolated struct PlacedInteraction: Equatable, Sendable {
-    let reference: FormID
-    let base: FormID
-    let position: SIMD3<Float>
-    let name: String
-    let action: InteractionAction
-    let actionLabel: String
+nonisolated public struct PlacedInteraction: Equatable, Sendable {
+    public let reference: FormID
+    public let base: FormID
+    public let position: SIMD3<Float>
+    public let name: String
+    public let action: InteractionAction
+    public let actionLabel: String
     /// Sound links resolved off the base record (DOOR/ACTI/CONT) at cell-build
     /// time. Nil when the base carries no decoded sound fields. The audio
     /// director consumes `activation` on use-key events and `close`/`loop` on
     /// interaction-animation boundaries. They ride together so the cell build
     /// remains the single resolution point.
-    let sounds: ModelBase.Sounds?
+    public let sounds: ModelBase.Sounds?
 }
 
 /// Current crosshair target. Distance and hit position come from exact
 /// collision geometry rather than the placed reference's origin.
-nonisolated struct InteractionTarget: Equatable, Sendable {
-    let interaction: PlacedInteraction
-    let hitPosition: SIMD3<Float>
-    let distance: Float
+nonisolated public struct InteractionTarget: Equatable, Sendable {
+    public let interaction: PlacedInteraction
+    public let hitPosition: SIMD3<Float>
+    public let distance: Float
 }
 
 /// One use-key activation. M11 Papyrus OnActivate can subscribe to this
 /// engine event without changing the raycast or door transition path.
-nonisolated struct InteractionEvent: Equatable, Sendable {
-    let target: InteractionTarget
+nonisolated public struct InteractionEvent: Equatable, Sendable {
+    public let target: InteractionTarget
 }
 
 /// One use-key activation of an actor (issue #205): the event the dialogue
@@ -83,11 +83,11 @@ nonisolated struct InteractionEvent: Equatable, Sendable {
 /// The plain `InteractionEvent` is still published beside this one, so the
 /// audio director and the Papyrus `OnActivate` subscribers see an activated
 /// actor exactly as they see an activated door.
-nonisolated struct TalkActivationEvent: Equatable, Sendable {
+nonisolated public struct TalkActivationEvent: Equatable, Sendable {
     /// The actor being spoken to.
-    let speaker: ReferenceKey
+    public let speaker: ReferenceKey
     /// The crosshair target it was picked from, for the readouts.
-    let target: InteractionTarget
+    public let target: InteractionTarget
 }
 
 /// Motion lifecycle for an activated interaction.
@@ -95,7 +95,7 @@ nonisolated struct TalkActivationEvent: Equatable, Sendable {
 /// Door transitions publish these phases today. A future rendered door or
 /// container animation can publish the same event at its authored animation
 /// boundaries without changing the audio director.
-nonisolated enum InteractionAnimationPhase: Equatable, Sendable {
+nonisolated public enum InteractionAnimationPhase: Equatable, Sendable {
     case motionStarted
     case closed
     case cancelled
@@ -104,21 +104,21 @@ nonisolated enum InteractionAnimationPhase: Equatable, Sendable {
 /// One animation boundary for a placed interaction. The whole placement rides
 /// along because a scene transition may evict the source cell before the close
 /// boundary fires.
-nonisolated struct InteractionAnimationEvent: Equatable, Sendable {
-    let interaction: PlacedInteraction
-    let phase: InteractionAnimationPhase
+nonisolated public struct InteractionAnimationEvent: Equatable, Sendable {
+    public let interaction: PlacedInteraction
+    public let phase: InteractionAnimationPhase
 }
 
 /// Finite normalized world-space ray. A nil ray means the current camera mode
 /// does not participate in interaction targeting (fly mode today).
-nonisolated struct InteractionRay: Equatable, Sendable {
-    static let defaultMaximumDistance: Float = 192
+nonisolated public struct InteractionRay: Equatable, Sendable {
+    public static let defaultMaximumDistance: Float = 192
 
-    let origin: SIMD3<Float>
-    let direction: SIMD3<Float>
-    let maximumDistance: Float
+    public let origin: SIMD3<Float>
+    public let direction: SIMD3<Float>
+    public let maximumDistance: Float
 
-    init?(
+    public init?(
         origin: SIMD3<Float>,
         direction: SIMD3<Float>,
         maximumDistance: Float = defaultMaximumDistance
@@ -132,7 +132,7 @@ nonisolated struct InteractionRay: Equatable, Sendable {
         self.maximumDistance = maximumDistance
     }
 
-    var bounds: ModelBounds {
+    public var bounds: ModelBounds {
         let end = origin + direction * maximumDistance
         let padding = SIMD3<Float>(repeating: 0.01)
         return ModelBounds(
@@ -142,8 +142,8 @@ nonisolated struct InteractionRay: Equatable, Sendable {
     }
 }
 
-nonisolated struct InteractionRayHit: Equatable {
-    let reference: FormID
-    let position: SIMD3<Float>
-    let distance: Float
+nonisolated public struct InteractionRayHit: Equatable, Sendable {
+    public let reference: FormID
+    public let position: SIMD3<Float>
+    public let distance: Float
 }

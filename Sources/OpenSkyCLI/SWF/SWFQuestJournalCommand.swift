@@ -16,6 +16,7 @@
 // property the movie reads off a row it was handed lands in that tally.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

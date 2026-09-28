@@ -27,7 +27,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// Each entry repeats its key and cell rather than referring back to an
     /// `RDLT` entry by index, because an actor whose only delta is its values
     /// has no `RDLT` entry at all.
-    static func writeActorValues(
+    public static func writeActorValues(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -60,7 +60,7 @@ nonisolated extension OpenSkySaveEncoder {
     ///
     /// Offsets, not values — see `ChunkTag.actorValueOverrides` for what that
     /// buys and why the temporary modifier is not written.
-    static func writeActorValueOverrides(
+    public static func writeActorValueOverrides(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

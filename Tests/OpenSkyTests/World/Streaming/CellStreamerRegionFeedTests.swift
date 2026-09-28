@@ -4,7 +4,7 @@
 // CellStreamerTests to reuse its synthetic runner + CellScene helpers without
 // growing that file past the length limit. No Metal, no game data.
 
-@testable import OpenSky
+import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

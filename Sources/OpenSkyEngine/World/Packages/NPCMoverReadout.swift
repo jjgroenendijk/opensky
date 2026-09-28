@@ -5,7 +5,7 @@ import OpenSkyFormats
 import simd
 
 extension NPCMover {
-    var transform: ReferenceTransformOverride {
+    public var transform: ReferenceTransformOverride {
         ReferenceTransformOverride(
             position: controller.feetPosition,
             rotation: SIMD3(authoredPlacement.rotation.x, authoredPlacement.rotation.y, yaw),
@@ -13,7 +13,7 @@ extension NPCMover {
         )
     }
 
-    var instanceDelta: float4x4 {
+    public var instanceDelta: float4x4 {
         let authored = MatrixMath.placement(
             position: authoredPlacement.position,
             rotation: authoredPlacement.rotation,
@@ -27,13 +27,13 @@ extension NPCMover {
         return current * authored.inverse
     }
 
-    var readout: NPCMovementReadout {
+    public var readout: NPCMovementReadout {
         readout(as: state)
     }
 
     /// The same readout with the state overridden, for a mover the crowd
     /// registry stopped rather than one that ran to its own conclusion.
-    func readout(as state: NPCMovementState) -> NPCMovementReadout {
+    public func readout(as state: NPCMovementState) -> NPCMovementReadout {
         NPCMovementReadout(
             actor: actor,
             state: state,
@@ -46,7 +46,7 @@ extension NPCMover {
         )
     }
 
-    func persistence(reason: NPCMovementSettleReason) -> NPCMovementPersistence {
+    public func persistence(reason: NPCMovementSettleReason) -> NPCMovementPersistence {
         NPCMovementPersistence(
             actor: actor, transform: transform, cell: currentCell, reason: reason
         )

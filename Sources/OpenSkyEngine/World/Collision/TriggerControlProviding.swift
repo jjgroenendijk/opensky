@@ -4,28 +4,28 @@
 // invoke. Nothing here reaches into the streamer directly.
 
 /// What the trigger readout shows for one refresh.
-nonisolated struct TriggerStatsSnapshot: Equatable {
+nonisolated public struct TriggerStatsSnapshot: Equatable, Sendable {
     /// False when there is no streamer at all (missing game data, or the
     /// synthetic DemoScene). Reported rather than shown as a row of zeros,
     /// which would read as "this cell authored no triggers".
-    let streamerAvailable: Bool
+    public let streamerAvailable: Bool
     /// Trigger accounting summed over whatever is resident, including the
     /// dropped-source counters that would otherwise truncate silently.
-    let stats: TriggerVolumeStats
+    public let stats: TriggerVolumeStats
     /// Volumes the player capsule is inside as of the last walk-mode frame.
-    let occupiedCount: Int
+    public let occupiedCount: Int
     /// True while the camera is in walk mode. Occupancy is only tested there,
     /// and leaving walk mode freezes the set instead of clearing it, so a
     /// non-zero occupancy in fly mode is correct rather than a bug — the
     /// readout has to say which state produced the number.
-    let walkModeActive: Bool
+    public let walkModeActive: Bool
     /// Recent transition lines, oldest first (`TriggerEventLog.lines`).
-    let recentTransitions: [String]
+    public let recentTransitions: [String]
     /// Transitions recorded since the log was last cleared, including any the
     /// bounded ring has already dropped.
-    let recordedTransitionCount: Int
+    public let recordedTransitionCount: Int
 
-    static let unavailable = TriggerStatsSnapshot(
+    public static let unavailable = TriggerStatsSnapshot(
         streamerAvailable: false,
         stats: TriggerVolumeStats(),
         occupiedCount: 0,
@@ -33,10 +33,26 @@ nonisolated struct TriggerStatsSnapshot: Equatable {
         recentTransitions: [],
         recordedTransitionCount: 0
     )
+
+    public init(
+        streamerAvailable: Bool,
+        stats: TriggerVolumeStats,
+        occupiedCount: Int,
+        walkModeActive: Bool,
+        recentTransitions: [String],
+        recordedTransitionCount: Int
+    ) {
+        self.streamerAvailable = streamerAvailable
+        self.stats = stats
+        self.occupiedCount = occupiedCount
+        self.walkModeActive = walkModeActive
+        self.recentTransitions = recentTransitions
+        self.recordedTransitionCount = recordedTransitionCount
+    }
 }
 
 @MainActor
-protocol TriggerControlProviding: AnyObject {
+public protocol TriggerControlProviding: AnyObject {
     var triggerStatsSnapshot: TriggerStatsSnapshot { get }
     /// Empties the rolling transition log so the next walk produces a readable
     /// tail. Action-only: it leaves no provider state behind, so it is not an

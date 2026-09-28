@@ -7,65 +7,65 @@ import OpenSkyFormats
 
 extension CellStreamer {
     /// Grid slots that reached a terminal state: resident + void + failed.
-    var resolvedCellCount: Int {
+    public var resolvedCellCount: Int {
         core.resident.count + core.void.count + core.failed.count
     }
 
-    var residentCellCount: Int {
+    public var residentCellCount: Int {
         core.resident.count
     }
 
-    var residentCoordinates: Set<CellCoordinate> {
+    public var residentCoordinates: Set<CellCoordinate> {
         core.resident
     }
 
-    var voidCellCount: Int {
+    public var voidCellCount: Int {
         core.void.count
     }
 
-    var failedCellCount: Int {
+    public var failedCellCount: Int {
         core.failed.count
     }
 
-    var inFlightCellCount: Int {
+    public var inFlightCellCount: Int {
         core.inFlight.count
     }
 
-    var pendingCompletionCount: Int {
+    public var pendingCompletionCount: Int {
         pending.count
     }
 
-    var queuedRequestCount: Int {
+    public var queuedRequestCount: Int {
         requests.count
     }
 
     /// The full grid the manager currently wants around its center.
-    var desiredCellCount: Int {
+    public var desiredCellCount: Int {
         grid.desiredCells.count
     }
 
     /// Snapshot of the currently composed multi-cell scene.
-    var composedScene: RenderScene {
+    public var composedScene: RenderScene {
         composition.composedScene()
     }
 
-    var distantLODBlockCount: Int {
+    public var distantLODBlockCount: Int {
         composition.distantLOD?.blockCount ?? 0
     }
 
-    var composedCellCount: Int {
+    public var composedCellCount: Int {
         composition.cellCount
     }
 
-    var isCoverageTransitionActive: Bool {
+    public var isCoverageTransitionActive: Bool {
         coverageTransitionActive
     }
 
-    var isInterior: Bool {
+    public var isInterior: Bool {
         interiorScene != nil
     }
 
-    var residentCollisionStats: StaticCollisionStats {
+    public var residentCollisionStats: StaticCollisionStats {
         if let interiorScene {
             return interiorScene.staticCollision.stats
         }

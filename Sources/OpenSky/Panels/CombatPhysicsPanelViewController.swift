@@ -13,6 +13,7 @@
 // what the physics is carrying while all of it runs.
 
 import AppKit
+import OpenSkyEngine
 
 final class CombatPhysicsPanelViewController: InspectorPanelViewController {
     let actorValuesSection = CombatActorValuesSection()

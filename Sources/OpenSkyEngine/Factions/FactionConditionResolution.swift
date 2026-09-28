@@ -32,22 +32,22 @@ import OpenSkyGameData
 /// is an immutable value snapshot built once at load, and only its `RecordIndex`
 /// back-reference keeps it from being checked automatically. `HostilityDerivation`
 /// carries a `CrimeHostilitySource` existential for the same reason.
-nonisolated struct FactionConditionResolution: @unchecked Sendable {
+nonisolated public struct FactionConditionResolution: @unchecked Sendable, Sendable {
     /// Load-order FACT lookup, for the `ptFaction` parameters. Nil in a session
     /// with no faction data, which is what makes the faction functions report a
     /// gap rather than answering "belongs to nothing" for every actor.
-    let factions: FactionStore?
+    public let factions: FactionStore?
     /// The plugin a condition's FormID parameters are spelled against.
-    let sourcePlugin: String?
+    public let sourcePlugin: String?
     /// Factions, relationships and crime over the aggression table — the same
     /// value the combat loop derives hostility from. Nil beside a nil store.
-    let derivation: HostilityDerivation?
+    public let derivation: HostilityDerivation?
 
     private let profiles: [ReferenceKey: ActorSocialProfile]
 
-    static let empty = FactionConditionResolution()
+    public static let empty = FactionConditionResolution()
 
-    init(
+    public init(
         factions: FactionStore? = nil,
         sourcePlugin: String? = nil,
         derivation: HostilityDerivation? = nil,
@@ -61,7 +61,7 @@ nonisolated struct FactionConditionResolution: @unchecked Sendable {
 
     /// Whether the seam can answer at all: a session with no FACT store and no
     /// derivation cannot, and says so rather than answering zero everywhere.
-    var isAvailable: Bool {
+    public var isAvailable: Bool {
         factions != nil && derivation != nil
     }
 
@@ -74,7 +74,7 @@ nonisolated struct FactionConditionResolution: @unchecked Sendable {
     /// faction no plugin defines would otherwise come back as an ordinary key and
     /// read as "not a member", which is a different answer from "this engine has
     /// no such faction".
-    func key(of formID: FormID) -> ReferenceKey? {
+    public func key(of formID: FormID) -> ReferenceKey? {
         guard
             let sourcePlugin,
             let factions,
@@ -87,20 +87,20 @@ nonisolated struct FactionConditionResolution: @unchecked Sendable {
     /// Everything the derivation knows about one actor, or nil when this session
     /// carries no profile for it — an actor no cell has streamed, or a key that
     /// names no actor at all.
-    func profile(of key: ReferenceKey) -> ActorSocialProfile? {
+    public func profile(of key: ReferenceKey) -> ActorSocialProfile? {
         guard isAvailable else { return nil }
         return profiles[key]
     }
 
     /// Whether `actor` is in `faction` right now.
-    func isMember(_ actor: ReferenceKey, of faction: ReferenceKey) -> Bool? {
+    public func isMember(_ actor: ReferenceKey, of faction: ReferenceKey) -> Bool? {
         profile(of: actor)?.memberships.isMember(of: faction)
     }
 
     /// The rank `actor` holds in `faction`, or nil when it is not a member —
     /// which the two callers spell differently, because the condition function
     /// and the Papyrus native disagree about the number and both are documented.
-    func rank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8? {
+    public func rank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8? {
         profile(of: actor)?.memberships.rank(in: faction)
     }
 
@@ -112,7 +112,7 @@ nonisolated struct FactionConditionResolution: @unchecked Sendable {
     /// Kit calls Neutral the relation two factions hold "even if you don't
     /// specify it" and `GetFactionRelation` has no fifth value to say "unrelated"
     /// with.
-    func factionReaction(
+    public func factionReaction(
         of observer: ReferenceKey,
         toward target: ReferenceKey
     ) -> ActorReaction? {
@@ -127,7 +127,7 @@ nonisolated struct FactionConditionResolution: @unchecked Sendable {
     /// The signed Creation Kit relationship rank between two actors, or nil when
     /// either has no profile and when neither a script nor a `RELA` record names
     /// the pair.
-    func relationshipRank(of observer: ReferenceKey, toward target: ReferenceKey) -> Int8? {
+    public func relationshipRank(of observer: ReferenceKey, toward target: ReferenceKey) -> Int8? {
         guard
             let derivation,
             let mine = profile(of: observer),
@@ -147,7 +147,7 @@ nonisolated struct FactionConditionResolution: @unchecked Sendable {
 
     /// Whether `observer` is hostile to `target` right now, through the whole
     /// precedence list the combat loop uses.
-    func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool? {
+    public func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool? {
         guard
             let derivation,
             let mine = profile(of: observer),

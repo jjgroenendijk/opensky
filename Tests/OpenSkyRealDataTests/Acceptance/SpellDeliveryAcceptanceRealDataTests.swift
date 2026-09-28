@@ -14,7 +14,7 @@
 // until M26 and there would be nothing in a frame to look at.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import simd

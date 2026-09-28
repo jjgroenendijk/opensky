@@ -21,7 +21,7 @@ import Foundation
 /// tab, the order the CLAS weight bytes appear in, and the order the derivation
 /// resolves rounding ties in. `CaseIterable` iteration is therefore meaningful
 /// rather than incidental.
-nonisolated enum ActorValueKind: String, CaseIterable, Hashable, Sendable {
+nonisolated public enum ActorValueKind: String, CaseIterable, Hashable, Sendable {
     case health
     case magicka
     case stamina
@@ -34,14 +34,14 @@ nonisolated enum ActorValueKind: String, CaseIterable, Hashable, Sendable {
 /// a fraction. The derivation rounds to whole numbers where the documented
 /// formula does, but the type itself does not force integers — a healing effect
 /// that restores 2.5 per second must not quantize away.
-nonisolated struct ActorValues: Equatable, Sendable {
-    var health: Float
-    var magicka: Float
-    var stamina: Float
+nonisolated public struct ActorValues: Equatable, Sendable {
+    public var health: Float
+    public var magicka: Float
+    public var stamina: Float
 
-    static let zero = ActorValues(health: 0, magicka: 0, stamina: 0)
+    public static let zero = ActorValues(health: 0, magicka: 0, stamina: 0)
 
-    init(health: Float, magicka: Float, stamina: Float) {
+    public init(health: Float, magicka: Float, stamina: Float) {
         self.health = health
         self.magicka = magicka
         self.stamina = stamina
@@ -49,11 +49,11 @@ nonisolated struct ActorValues: Equatable, Sendable {
 
     /// Every kind set to the same number, which is what a fixture and a
     /// full-restore both want.
-    init(repeating value: Float) {
+    public init(repeating value: Float) {
         self.init(health: value, magicka: value, stamina: value)
     }
 
-    subscript(kind: ActorValueKind) -> Float {
+    public subscript(kind: ActorValueKind) -> Float {
         get {
             switch kind {
             case .health: health
@@ -74,7 +74,7 @@ nonisolated struct ActorValues: Equatable, Sendable {
     /// enforces before storing anything: one NaN in a maximum would make every
     /// later clamp produce NaN and the HUD meter would go blank rather than
     /// empty.
-    var isFinite: Bool {
+    public var isFinite: Bool {
         health.isFinite && magicka.isFinite && stamina.isFinite
     }
 
@@ -83,7 +83,7 @@ nonisolated struct ActorValues: Equatable, Sendable {
     /// A non-finite value clamps to 0 rather than propagating: it can only come
     /// from corrupt data or a divide that should not have happened, and a dead
     /// actor is a far more debuggable outcome than a NaN that spreads.
-    func clamped(to limits: ActorValues) -> ActorValues {
+    public func clamped(to limits: ActorValues) -> ActorValues {
         var result = ActorValues.zero
         for kind in ActorValueKind.allCases {
             let limit = limits[kind].isFinite ? max(0, limits[kind]) : 0
@@ -96,7 +96,7 @@ nonisolated struct ActorValues: Equatable, Sendable {
     /// Each value as a fraction of the matching maximum, which is the shape the
     /// HUD meters take. A zero or negative maximum reads as empty rather than
     /// dividing.
-    func fractions(of maximums: ActorValues) -> ActorValues {
+    public func fractions(of maximums: ActorValues) -> ActorValues {
         var result = ActorValues.zero
         for kind in ActorValueKind.allCases {
             let maximum = maximums[kind]

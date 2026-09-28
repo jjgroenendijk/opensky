@@ -12,6 +12,7 @@
 // two is exactly what a separate path prevents.
 
 import AppKit
+import OpenSkyEngine
 
 final class ScriptsPanelViewController: InspectorPanelViewController {
     let instancesSection = ScriptInstancesSection()

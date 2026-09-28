@@ -3,7 +3,7 @@
 // line judges the window at the game hour.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct CrimeFactionReadoutTests {

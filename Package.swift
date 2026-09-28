@@ -1,58 +1,198 @@
 // swift-tools-version: 6.2
-// The engine libraries below the runtime, one module per layer. The app and openskycli
-// link these products through OpenSky.xcodeproj; OpenSky.xcworkspace holds both. A
-// module lists every module it uses, so the compiler rejects an upward import
-// (docs/tools/modules.md).
+// The engine, one module per layer, laid out by The Modular Architecture
+// (docs/tools/modules.md). The app and OpenSkyCLI link one umbrella product,
+// OpenSkyModules, and the Xcode test bundles link OpenSkyTestSupport, so a new
+// module never edits the project file. OpenSky.xcworkspace holds the project and
+// this package side by side.
+//
+// Modules are declared bottom-up. A module may depend only on modules declared
+// before it, and a feature module never depends on another feature's
+// implementation, only on its interface. The helpers below stop the manifest from
+// loading when either rule breaks, and the compiler rejects an import a target
+// does not list.
 
 import PackageDescription
 
 /// The same language settings as Config/Build/Base.xcconfig. Change both together.
-let testSettings: [SwiftSetting] = [
+let languageSettings: [SwiftSetting] = [
     .enableUpcomingFeature("MemberImportVisibility"),
     .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
     .enableUpcomingFeature("InferIsolatedConformances"),
     .treatAllWarnings(as: .error)
 ]
 
-/// Library code keeps the engine's main-actor default, so moving a file between modules
-/// never changes its isolation. Test code keeps the nonisolated default of the test bundles.
-let librarySettings: [SwiftSetting] = testSettings + [.defaultIsolation(MainActor.self)]
+/// The vendored decode-only ffmpeg (make ffmpeg). Its headers are on every module's
+/// search path because a module that imports OpenSkyAudio also loads CFFmpeg.
+let ffmpeg = Context.packageDirectory + "/.vendor/ffmpeg"
+let ffmpegHeaders: SwiftSetting = .unsafeFlags(["-Xcc", "-I\(ffmpeg)/include"])
+
+/// Test code keeps the nonisolated default of the Xcode test bundles.
+let testSettings = languageSettings + [ffmpegHeaders]
+
+/// Library code keeps the engine's main-actor default, so moving a file between
+/// modules never changes its isolation.
+let librarySettings = testSettings + [.defaultIsolation(MainActor.self)]
+
+/// The app and openskycli link ffmpeg through OTHER_LDFLAGS. A package test
+/// executable has no such setting, so the test targets link it here.
+let testLinkerSettings: [LinkerSetting] = [
+    .unsafeFlags(["-L\(ffmpeg)/lib", "-Xlinker", "-rpath", "-Xlinker", "\(ffmpeg)/lib"]),
+    .linkedLibrary("avcodec"),
+    .linkedLibrary("avutil"),
+    .linkedLibrary("swresample")
+]
+
+// MARK: - Module helpers
+
+/// Every declared module, in declaration order. The layering checks read it.
+nonisolated(unsafe) var declared: [String] = []
+/// Feature implementations. Nothing but the composition roots may depend on one.
+nonisolated(unsafe) var featureImplementations: Set<String> = []
+/// Targets the umbrella products export.
+nonisolated(unsafe) var libraryTargets: [String] = []
+nonisolated(unsafe) var testingTargets: [String] = []
+
+/// Rejects a dependency on a module declared later (the same layer or above) and a
+/// dependency on another feature's implementation.
+func checked(_ module: String, _ dependencies: [String]) -> [Target.Dependency] {
+    for dependency in dependencies {
+        precondition(
+            declared.contains(dependency),
+            "\(module) depends on \(dependency), which is not declared below it"
+        )
+        precondition(
+            !featureImplementations.contains(dependency),
+            "\(module) depends on the feature implementation \(dependency); use its interface"
+        )
+    }
+    return dependencies.map { .target(name: $0) }
+}
+
+func testTarget(_ name: String, dependencies: [String]) -> Target {
+    .testTarget(
+        name: name,
+        dependencies: dependencies.map { .target(name: $0) },
+        swiftSettings: testSettings,
+        linkerSettings: testLinkerSettings
+    )
+}
+
+/// A foundation module: a library with a stable public API that every module above
+/// may import directly. No interface split. `tests` adds `<name>Tests`.
+func foundation(
+    _ name: String,
+    dependencies: [String] = [],
+    exclude: [String] = [],
+    tests: [String]? = nil
+) -> [Target] {
+    let library = Target.target(
+        name: name,
+        dependencies: checked(name, dependencies),
+        exclude: exclude,
+        swiftSettings: librarySettings
+    )
+    declared.append(name)
+    libraryTargets.append(name)
+    guard let tests else { return [library] }
+    return [library, testTarget("\(name)Tests", dependencies: [name] + tests)]
+}
+
+/// Fakes and fixtures other modules' tests share: `Tests/<name>/`.
+func testing(_ name: String, dependencies: [String]) -> [Target] {
+    let target = Target.target(
+        name: name,
+        dependencies: checked(name, dependencies),
+        path: "Tests/\(name)",
+        exclude: ["AGENTS.md", "CLAUDE.md"],
+        swiftSettings: testSettings
+    )
+    declared.append(name)
+    testingTargets.append(name)
+    return [target]
+}
+
+/// A feature module, by The Modular Architecture:
+/// - `<name>`: the implementation. Only the composition roots import it.
+/// - `<name>Interface`: the protocols and value types other modules use. Declared
+///   when `interface` is non-nil; its dependencies are the list given.
+/// - `<name>Testing`: fakes and fixtures other modules' tests share. Declared when
+///   `testing` is non-nil.
+/// - `<name>Tests`: the unit tests of `<name>`. Declared when `tests` is non-nil;
+///   its extra dependencies are the list given.
+func feature(
+    _ name: String,
+    dependencies: [String] = [],
+    interface: [String]? = nil,
+    testing testingDependencies: [String]? = nil,
+    tests: [String]? = nil
+) -> [Target] {
+    var targets: [Target] = []
+    let interfaceName = "\(name)Interface"
+    if let interface {
+        targets.append(.target(
+            name: interfaceName,
+            dependencies: checked(interfaceName, interface),
+            swiftSettings: librarySettings
+        ))
+        declared.append(interfaceName)
+        libraryTargets.append(interfaceName)
+    }
+    let ownInterface = interface == nil ? [] : [interfaceName]
+    targets.append(.target(
+        name: name,
+        dependencies: checked(name, ownInterface + dependencies),
+        swiftSettings: librarySettings
+    ))
+    declared.append(name)
+    libraryTargets.append(name)
+    featureImplementations.insert(name)
+    if let testingDependencies {
+        targets += testing("\(name)Testing", dependencies: ownInterface + testingDependencies)
+    }
+    if let tests {
+        let testingTarget = testingDependencies == nil ? [] : ["\(name)Testing"]
+        targets.append(testTarget("\(name)Tests", dependencies: [name] + testingTarget + tests))
+    }
+    return targets
+}
+
+// MARK: - Modules, bottom-up
+
+/// The structs shared with Metal. Shaders.metal includes the same header.
+let shaderTypes = Target.target(
+    name: "OpenSkyShaderTypes",
+    publicHeadersPath: "."
+)
+/// The vendored ffmpeg as a clang module (Sources/CFFmpeg/module.modulemap).
+let cffmpeg = Target.systemLibrary(name: "CFFmpeg")
+declared += ["OpenSkyShaderTypes", "CFFmpeg"]
+
+var targets: [Target] = [shaderTypes, cffmpeg]
+
+// Foundation
+targets += foundation("OpenSkyFormats", tests: ["FormatsTestSupport"])
+targets += testing("FormatsTestSupport", dependencies: ["OpenSkyFormats"])
+// The test target above names FormatsTestSupport before the helper declares it;
+// SwiftPM resolves target names lazily, so only the layering check needs the order.
+targets += foundation(
+    "OpenSkyGameData",
+    dependencies: ["OpenSkyFormats"],
+    tests: ["FormatsTestSupport"]
+)
+
+// The rest of the engine, until it is split into the modules above it.
+targets += foundation(
+    "OpenSkyEngine",
+    dependencies: ["OpenSkyFormats", "OpenSkyGameData", "OpenSkyShaderTypes", "CFFmpeg"]
+)
 
 let package = Package(
     name: "OpenSky",
     platforms: [.macOS(.v26)],
     products: [
-        .library(name: "OpenSkyFormats", targets: ["OpenSkyFormats"]),
-        .library(name: "OpenSkyGameData", targets: ["OpenSkyGameData"]),
-        .library(name: "FormatsTestSupport", targets: ["FormatsTestSupport"])
+        .library(name: "OpenSkyModules", targets: ["OpenSkyShaderTypes"] + libraryTargets),
+        .library(name: "OpenSkyTestSupport", targets: testingTargets)
     ],
-    targets: [
-        .target(
-            name: "OpenSkyFormats",
-            swiftSettings: librarySettings
-        ),
-        .target(
-            name: "OpenSkyGameData",
-            dependencies: ["OpenSkyFormats"],
-            swiftSettings: librarySettings
-        ),
-        .target(
-            name: "FormatsTestSupport",
-            dependencies: ["OpenSkyFormats"],
-            path: "Tests/FormatsTestSupport",
-            exclude: ["AGENTS.md", "CLAUDE.md"],
-            swiftSettings: testSettings
-        ),
-        .testTarget(
-            name: "OpenSkyFormatsTests",
-            dependencies: ["OpenSkyFormats", "FormatsTestSupport"],
-            swiftSettings: testSettings
-        ),
-        .testTarget(
-            name: "OpenSkyGameDataTests",
-            dependencies: ["OpenSkyGameData", "FormatsTestSupport"],
-            swiftSettings: testSettings
-        )
-    ],
+    targets: targets,
     swiftLanguageModes: [.v6]
 )

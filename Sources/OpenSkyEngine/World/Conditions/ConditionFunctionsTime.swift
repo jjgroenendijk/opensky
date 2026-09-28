@@ -7,7 +7,7 @@
 import Foundation
 
 nonisolated extension ConditionFunctions {
-    static func installTime(_ registry: inout ConditionFunctionRegistry) {
+    public static func installTime(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 18,
             name: "GetCurrentTime"
@@ -30,7 +30,7 @@ nonisolated extension ConditionFunctions {
     /// when the plugin's `GameHour` global is readable, because
     /// `GlobalResolution` projects that global from a clock when it has one and
     /// falls back to the plugin default when it does not.
-    static func currentTime(_ call: ConditionCall) -> Result<Float, ConditionFailure> {
+    public static func currentTime(_ call: ConditionCall) -> Result<Float, ConditionFailure> {
         if case let .success(clock) = call.clock() {
             return .success(clock.hourOfDay)
         }
@@ -52,7 +52,7 @@ nonisolated extension ConditionFunctions {
     /// one exception, which OpenSky does not model: loading an existing save
     /// before starting a new game carries that save's weekday over instead. A
     /// fresh game is the case the engine answers.
-    static let vanillaStartWeekday = 0
+    public static let vanillaStartWeekday = 0
 
     /// Day of the week, 0 = Sundas (Sunday) through 6 = Loredas (Saturday),
     /// which is the Creation Kit's own return table for this function
@@ -65,13 +65,13 @@ nonisolated extension ConditionFunctions {
     /// epoch (4E 0, 1st of Morning Star) is what makes the answer absolute:
     /// no source documents the epoch's own weekday, but `GameClock.daysPassed`
     /// already measures from the start date, whose weekday is documented.
-    static func dayOfWeek(of clock: GameClock) -> Int {
+    public static func dayOfWeek(of clock: GameClock) -> Int {
         let days = Int(clock.daysPassed.rounded(.down))
         return (((days + vanillaStartWeekday) % 7) + 7) % 7
     }
 
     /// The seven day names, in `dayOfWeek(of:)` order (UESP `Lore:Calendar`).
-    static let weekdayNames = [
+    public static let weekdayNames = [
         "Sundas", "Morndas", "Tirdas", "Middas", "Turdas", "Fredas", "Loredas"
     ]
 }

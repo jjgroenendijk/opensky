@@ -4,6 +4,7 @@
 // mode, so the panel cannot diverge from live input.
 
 import AppKit
+import OpenSkyEngine
 
 final class ContainerMenuSection: PanelSectionViewController {
     weak var provider: (any ContainerMenuControlProviding)? {

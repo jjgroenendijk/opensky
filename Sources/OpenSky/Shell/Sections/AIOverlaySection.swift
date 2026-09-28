@@ -11,6 +11,7 @@
 // otherwise reads as a rendering bug rather than as a control someone left on.
 
 import AppKit
+import OpenSkyEngine
 
 final class AIOverlaySection: PanelSectionViewController {
     weak var provider: (any AIOverlayControlProviding)? {

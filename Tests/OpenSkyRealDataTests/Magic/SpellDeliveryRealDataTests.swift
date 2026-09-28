@@ -10,7 +10,7 @@
 // EFIT area a vanilla area spell carries — are what the code assumes.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import simd

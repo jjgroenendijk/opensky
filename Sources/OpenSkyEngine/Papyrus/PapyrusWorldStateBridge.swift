@@ -11,29 +11,29 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 @MainActor
-final class PapyrusWorldStateBridge: PapyrusWorldBridge {
-    let worldState: WorldStateStore
+public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
+    public let worldState: WorldStateStore
     /// Set immediately after the world runtime is built — it cannot be an init
     /// parameter, because the runtime is constructed with the native registry
     /// this bridge already lives inside.
-    weak var world: PapyrusWorldRuntime?
-    weak var references: (any PapyrusWorldReferenceSource)?
+    public weak var world: PapyrusWorldRuntime?
+    public weak var references: (any PapyrusWorldReferenceSource)?
     /// Plugin GLOB defaults. Nil in a synthetic session, where only overrides
     /// already recorded in the store are visible.
-    var globals: GlobalStore?
+    public var globals: GlobalStore?
     /// Quest mutation API the `Quest` natives run through (issue #322). Nil in
     /// a session with no QUST index, where every quest native fails with
     /// `PapyrusQuestBridgeError.noQuestData` rather than inventing state.
     /// Conformance lives in `PapyrusWorldStateBridgeQuests.swift`.
-    var questRuntime: QuestRuntime?
+    public var questRuntime: QuestRuntime?
     /// Quests whose alias fill failed while their scripts were being attached
     /// at session wire-up (issue #183). Counted rather than thrown, because a
     /// quest that reads as running straight off its DNAM flag was never
     /// `Start`ed and so has no call to refuse; see `attachRunningQuestScripts`.
-    var questAliasFillFailures = 0
+    public var questAliasFillFailures = 0
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
-    var clockSource: (() -> GameClock?)?
+    public var clockSource: (() -> GameClock?)?
     /// The collaborators the `Actor` natives run through (issues #375 and
     /// #424),
     /// held as closures rather than as references so the session may wire them
@@ -41,57 +41,57 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// closure answering nil, makes every actor native a tallied failure rather
     /// than a convincing zero. Conformance lives in
     /// `PapyrusWorldStateBridgeActors.swift`.
-    var actorValueRuntime: (() -> ActorValueRuntime?)?
-    var ragdollRuntime: (() -> RagdollRuntime?)?
+    public var actorValueRuntime: (() -> ActorValueRuntime?)?
+    public var ragdollRuntime: (() -> RagdollRuntime?)?
     /// The combat loop, which `StartCombat`, `StopCombat` and `IsInCombat` reach
     /// through (issue #424). Nil leaves all three tallied failures rather than
     /// letting a script claim it started a fight nothing simulates.
-    var combatRuntime: (() -> CombatLoopRuntime?)?
+    public var combatRuntime: (() -> CombatLoopRuntime?)?
     /// Where one actor's weapon is, or nil when this session observes no draw
     /// state for it — which is every actor but the player today.
-    var weaponDrawState: ((ReferenceKey) -> WeaponDrawState?)?
+    public var weaponDrawState: ((ReferenceKey) -> WeaponDrawState?)?
     /// The spellbook and cast loop the spell natives run through (issue #474),
     /// held as a closure for the reason the actor collaborators are: it is
     /// built by a later wiring step than this bridge. Nil, or a closure
     /// answering nil, leaves every spell native a tallied failure rather than a
     /// script that believes it taught somebody a spell.
-    var casterRuntime: (() -> CasterRuntime?)?
+    public var casterRuntime: (() -> CasterRuntime?)?
     /// One dispel over the session's `ActiveEffectRuntime`, which is a struct
     /// the controller owns by value: the closure does the read, the removal and
     /// the write-back, and answers how many effects went. Nil in a session with
     /// no effect runtime.
-    var dispelEffects: ((ActorValueHolder, @escaping (ActiveEffect) -> Bool) -> Int)?
+    public var dispelEffects: ((ActorValueHolder, @escaping (ActiveEffect) -> Bool) -> Int)?
     /// The one seam a landed spell applies through, shared with projectiles and
     /// enchantments, so `Spell.Cast` at a named target resists exactly as a
     /// fireball does. Nil in a session with no effect runtime.
-    var applySpellHit: ((SpellHit) -> SpellHitReport)?
+    public var applySpellHit: ((SpellHit) -> SpellHitReport)?
     /// One perk grant or removal over the session's `PerkRuntime`, which is a
     /// struct the controller owns by value (issue #497): the closure does the
     /// read, the write and the ability reconcile, and answers whether the set
     /// changed. Held as a closure for the reason `dispelEffects` is. Nil in a
     /// session with no perk data.
-    var mutatePerks: ((PapyrusPerkMutation, ReferenceKey, ReferenceKey) -> Bool)?
+    public var mutatePerks: ((PapyrusPerkMutation, ReferenceKey, ReferenceKey) -> Bool)?
     /// The perks one actor owns, or nil when this session runs no perk runtime.
-    var perkOwnership: ((ReferenceKey) -> Set<ReferenceKey>?)?
+    public var perkOwnership: ((ReferenceKey) -> Set<ReferenceKey>?)?
     /// One scripted skill advance over the session's `SkillAdvancementRuntime`,
     /// which is a struct the controller owns by value (issue #498): the closure
     /// does the read, the write and the write-back, and answers whether the
     /// skill took it. Held as a closure for the reason `mutatePerks` is. Nil in
     /// a session with no progression data.
-    var advanceSkill: ((PapyrusSkillAdvance, Int32, Float) -> Bool)?
+    public var advanceSkill: ((PapyrusSkillAdvance, Int32, Float) -> Bool)?
     /// One read or write of the player's perk-point pool over the session's
     /// `PlayerLevelRuntime`, which is a struct the controller owns by value
     /// (issue #499): the closure applies the delta and answers the pool
     /// afterwards, so a zero delta is the read. Held as a closure for the
     /// reason `advanceSkill` is. Nil in a session with no character leveling,
     /// and both perk-point natives then refuse rather than answering zero.
-    var modifyPerkPoints: ((Int) -> Int?)?
+    public var modifyPerkPoints: ((Int) -> Int?)?
     /// The session's crime reporter, which every crime native goes through
     /// (issue #504). Held as a getter closure for the reason `mutatePerks` is:
     /// the controller owns it and builds it after this bridge exists. Nil in a
     /// session with no crime runtime, and every crime native then refuses
     /// rather than answering zero.
-    var crimeReporter: (() -> CrimeReporter?)?
+    public var crimeReporter: (() -> CrimeReporter?)?
     /// The session's faction runtime, which every membership native goes through
     /// (issue #508). Held as a getter closure taking the actor it is about, for
     /// two reasons: the controller owns it and builds it after this bridge
@@ -100,47 +100,47 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// before handing the runtime over. Nil in a session with no faction data,
     /// and every membership native then refuses rather than reporting "not a
     /// member".
-    var factionRuntime: ((ReferenceKey) -> FactionRuntime?)?
+    public var factionRuntime: ((ReferenceKey) -> FactionRuntime?)?
     /// The session's relationship runtime, which the two relationship natives go
     /// through (issue #508). No actor argument, because nothing here has to be
     /// seeded: a relationship override exists only once a script writes one.
-    var relationshipRuntime: (() -> RelationshipRuntime?)?
+    public var relationshipRuntime: (() -> RelationshipRuntime?)?
     /// What one actor makes of another, derived by the session rather than here
     /// (issue #508). A closure because the derivation needs profiles the
     /// controller assembles from the streamer, the records and the store.
-    var socialDecision: ((ReferenceKey, ReferenceKey) -> PapyrusSocialDecision?)?
+    public var socialDecision: ((ReferenceKey, ReferenceKey) -> PapyrusSocialDecision?)?
     /// The `NPC_` identity behind one reference, as a `RELA` record spells it.
     /// Nil for the player, who has no base record in this engine.
-    var actorSocialBase: ((ReferenceKey) -> ResolvedFormID?)?
+    public var actorSocialBase: ((ReferenceKey) -> ResolvedFormID?)?
     /// The load order's flattened `XNAM` table, which `Faction.GetReaction`
     /// reads. Separate from `factionRuntime` because it is asked about two
     /// factions rather than about an actor, so there is nothing to seed.
-    var factionRelationIndex: (() -> FactionRelationIndex?)?
+    public var factionRelationIndex: (() -> FactionRelationIndex?)?
     /// One actor's social profile, seeded first — what `GetCrimeFaction` and
     /// `IsGuard` read (issue #505). Nil in a session with no faction data.
-    var socialProfile: ((ReferenceKey) -> ActorSocialProfile?)?
+    public var socialProfile: ((ReferenceKey) -> ActorSocialProfile?)?
     /// The session's arrest outcomes, which `CanPayCrimeGold`,
     /// `PlayerPayCrimeGold` and `SendPlayerToJail` go through (issue #505).
     /// A session rather than the engine's `CrimeArrest` alone because serving a
     /// sentence moves the clock and the player, which only the session owns.
-    var arrestSession: (() -> (any CrimeArrestSession)?)?
+    public var arrestSession: (() -> (any CrimeArrestSession)?)?
     /// Opens the barter menu against one merchant actor, for
     /// `Actor.ShowBarterMenu` (issue #506), answering the readout line and
     /// whether the menu opened. Nil in a session with no vendor data.
-    var showBarterMenu: ((ReferenceKey) -> (opened: Bool, text: String)?)?
+    public var showBarterMenu: ((ReferenceKey) -> (opened: Bool, text: String)?)?
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
-    var magicEffectStore: MagicEffectStore?
+    public var magicEffectStore: MagicEffectStore?
     /// Master-list resolver for the FormIDs written inside decoded records —
     /// XLKR links and their keywords. Nil in a synthetic session, which falls
     /// back to the reference index.
-    var formIDResolver: FormIDResolver?
+    public var formIDResolver: FormIDResolver?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.
     private var globalFormIDsByKey: [ReferenceKey: FormID]?
 
-    init(
+    public init(
         worldState: WorldStateStore,
         world: PapyrusWorldRuntime? = nil,
         references: (any PapyrusWorldReferenceSource)? = nil,
@@ -152,23 +152,23 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         self.globals = globals
     }
 
-    var playerKey: ReferenceKey {
+    public var playerKey: ReferenceKey {
         .player
     }
 
     // MARK: - Identity
 
-    func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey? {
+    public func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey? {
         world?.referenceKey(for: handle)
     }
 
-    func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
+    public func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
         world?.objectHandle(for: key)
     }
 
     // MARK: - Reading
 
-    func referenceState(for key: ReferenceKey) -> ReferenceState? {
+    public func referenceState(for key: ReferenceKey) -> ReferenceState? {
         guard let entry = references?.referenceEntry(key: key) else { return nil }
         return worldState.resolvedState(for: entry)
     }
@@ -182,25 +182,25 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// by a plugin other than the one it was built for resolves against the
     /// wrong master list. That is the same single-resolver assumption the cell
     /// builder already makes, not a new one.
-    func referenceKey(forFormID formID: FormID) -> ReferenceKey? {
+    public func referenceKey(forFormID formID: FormID) -> ReferenceKey? {
         if let formIDResolver, let key = ReferenceKey.resolve(formID, using: formIDResolver) {
             return key
         }
         return references?.referenceEntry(formID: formID)?.key
     }
 
-    func placedReference(for key: ReferenceKey) -> PlacedReference? {
+    public func placedReference(for key: ReferenceKey) -> PlacedReference? {
         references?.referenceEntry(key: key)?.placedReference
     }
 
-    func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+    public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
         references?.cellLocation(of: key)
     }
 
     // MARK: - Writing
 
     @discardableResult
-    func write(
+    public func write(
         _ component: WorldStateComponentValue, for key: ReferenceKey
     ) -> Bool {
         let cell = cellLocation(of: key)
@@ -301,7 +301,7 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     // MARK: - Globals
 
-    func globalValue(for key: ReferenceKey) -> GlobalValue? {
+    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
         guard let globals, let id = globalFormID(for: key) else {
             return worldState.globalValue(for: key)
         }
@@ -315,7 +315,7 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// override declared and otherwise treats the value as a float, rather
     /// than inventing a `short`/`long` rounding rule the plugin never stated.
     @discardableResult
-    func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
+    public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
         if let globals, let id = globalFormID(for: key) {
             return worldState.setGlobal(raw, formID: id, defaults: globals)
         }
@@ -344,7 +344,7 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// state either, so a script pair activating each other cannot keep
     /// incrementing `activationCount` forever.
     @discardableResult
-    func activate(
+    public func activate(
         _ target: ReferenceKey,
         by activator: ReferenceKey,
         togglesOpen: Bool
@@ -368,7 +368,7 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     // MARK: - Update timers
 
-    func registerUpdateTimer(
+    public func registerUpdateTimer(
         handle: PapyrusObjectHandle,
         slot: PapyrusUpdateTimerSlot,
         interval: Double
@@ -376,7 +376,7 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         world?.registerUpdateTimer(handle: handle, slot: slot, interval: interval)
     }
 
-    func unregisterUpdateTimers(
+    public func unregisterUpdateTimers(
         handle: PapyrusObjectHandle,
         family: PapyrusUpdateTimerFamily
     ) {
@@ -393,7 +393,7 @@ final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// identity. A door-style `open` action is what sets `togglesOpen`, which
     /// is how `ReferenceActivationState.isOpen` tracks doors and containers.
     @discardableResult
-    func handleInteraction(_ event: InteractionEvent) -> PapyrusActivationOutcome {
+    public func handleInteraction(_ event: InteractionEvent) -> PapyrusActivationOutcome {
         let interaction = event.target.interaction
         guard
             let entry = references?.referenceEntry(formID: interaction.reference)

@@ -12,6 +12,7 @@
 // `menuMode` itself.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 /// Active-effect state the controller owns. Extensions cannot add stored

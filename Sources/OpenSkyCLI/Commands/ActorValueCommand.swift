@@ -11,6 +11,7 @@
 // arguments and prints.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

@@ -12,8 +12,8 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum OpenSkySaveDecoder {
-    static func decode(_ data: Data) throws -> OpenSkySaveFile {
+nonisolated public enum OpenSkySaveDecoder: Sendable {
+    public static func decode(_ data: Data) throws -> OpenSkySaveFile {
         var reader = SaveReader(data)
         let magic = try reader.bytes(OpenSkySaveFormat.magic.count, "magic")
         guard magic == OpenSkySaveFormat.magic else {
@@ -294,7 +294,7 @@ nonisolated enum OpenSkySaveDecoder {
     /// Rejects a declared element count that cannot possibly fit in the bytes
     /// left, before anything reserves storage for it. Without this a corrupt
     /// four-byte count is an out-of-memory crash rather than a thrown error.
-    static func validate(
+    public static func validate(
         count: UInt32,
         minimumElementSize: Int,
         remaining: Int,

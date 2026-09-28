@@ -16,6 +16,7 @@
 // Not overridden: a trained skill is world state, not a panel setting.
 
 import AppKit
+import OpenSkyEngine
 
 final class ProgressionSkillsSection: ProgressionPanelSection {
     /// What the amount field starts at: one use, which is what a single swing

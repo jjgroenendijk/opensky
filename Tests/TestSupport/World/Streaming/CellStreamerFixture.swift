@@ -7,7 +7,7 @@
 // of this type under Tests/OpenSkyTests/. See Tests/TestSupport/AGENTS.md.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

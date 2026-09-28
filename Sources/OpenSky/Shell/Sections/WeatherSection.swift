@@ -2,6 +2,7 @@
 // weather + wind readout (issue #98 decomposition of EnvironmentWeatherControls).
 
 import AppKit
+import OpenSkyEngine
 
 final class WeatherSection: PanelSectionViewController {
     weak var provider: (any WeatherControlProviding)? {

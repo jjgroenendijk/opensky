@@ -222,12 +222,17 @@ test: vendor-link cache-link ## Build and run the unit tests through the build s
 # Build once, then rerun against the cached .xctestrun without touching the build
 # system: seconds instead of the ~80 of `make test` (issue #417). It rebuilds on
 # its own when a source, Config/, or project file is newer; B=1 forces that. The
-# default for every unit run, filtered or whole plan.
+# default for every unit run, filtered or whole plan. A selector that names a
+# package test target, T='OpenSkyFormatsTests/...', runs that target alone through
+# `swift test`, without the app host (issue #582).
 test-fast: vendor-link cache-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
 	@case "$(T)" in \
 		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
-		OpenSky*Tests/*) ./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
-		*) ./tools/test-fast.sh $(if $(B),-B,) -t "OpenSkyTests/$(T)" ;; \
+		OpenSkyTests/* | OpenSkyRealDataTests/* | OpenSkyUITests/*) \
+			./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
+		*) target="$$(printf '%s' "$(T)" | cut -d/ -f1)"; \
+			if [ -d "Tests/$$target" ]; then ./tools/test-package.sh "$(T)"; \
+			else ./tools/test-fast.sh $(if $(B),-B,) -t "OpenSkyTests/$(T)"; fi ;; \
 	esac
 
 # A selector under OpenSkyUITests switches to the UI plan; anything else runs in

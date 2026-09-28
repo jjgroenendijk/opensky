@@ -29,19 +29,19 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum ActorAnimationClipLoader {
+nonisolated public enum ActorAnimationClipLoader: Sendable {
     /// Where every character animation and skeleton lives.
-    static let characterRoot = "meshes\\actors\\character\\"
+    public static let characterRoot = "meshes\\actors\\character\\"
 
     /// The gendered idle locomotion clip, which is what an NPC plays when
     /// nothing has asked for anything else.
-    static func idleAnimationPath(female: Bool) -> String {
+    public static func idleAnimationPath(female: Bool) -> String {
         characterRoot + "animations\\\(female ? "female" : "male")\\mt_idle.hkx"
     }
 
     /// Direct gait clips named by the vanilla behavior graph census. They are
     /// in-place; the NPC capsule remains the sole movement authority.
-    static func gaitAnimationPath(_ gait: LocomotionGait, female: Bool) -> String? {
+    public static func gaitAnimationPath(_ gait: LocomotionGait, female: Bool) -> String? {
         let fileName: String
         switch gait {
         case .walk:
@@ -55,7 +55,7 @@ nonisolated enum ActorAnimationClipLoader {
     }
 
     /// The clip one combat reaction plays, as a canonical VFS path.
-    static func animationPath(for clip: CombatActorClip) -> String {
+    public static func animationPath(for clip: CombatActorClip) -> String {
         characterRoot + "animations\\" + fileName(for: clip)
     }
 
@@ -67,7 +67,7 @@ nonisolated enum ActorAnimationClipLoader {
     /// `CombatBehaviorSettings.standard`, so the animation and the hit land
     /// together. The shipping settings rather than a live machine's, because a
     /// clip is decoded once per skeleton and held for every actor that plays it.
-    static func holdSeconds(for clip: CombatActorClip) -> Float {
+    public static func holdSeconds(for clip: CombatActorClip) -> Float {
         let combat = CombatBehaviorSettings.standard
         switch clip {
         case .attack: return combat.windupSeconds + combat.recoverySeconds
@@ -94,7 +94,7 @@ nonisolated enum ActorAnimationClipLoader {
     ///   - readHKX: how the caller reads a file. Injected rather than taken
     ///     from a stored file system so the cell builder and the combat wiring
     ///     can each supply their own.
-    static func clip(
+    public static func clip(
         skeletonMeshPath: String,
         animationPath: String,
         readHKX: (String) throws -> HKXFile

@@ -8,6 +8,7 @@
 // keyboard focus returns to the game view.
 
 import AppKit
+import OpenSkyEngine
 
 extension ScriptSchedulerSection {
     /// Wires target, action, and identifier for every control. Called once from

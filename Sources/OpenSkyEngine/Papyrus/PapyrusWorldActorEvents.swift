@@ -48,7 +48,7 @@ extension PapyrusWorldRuntime {
     ///
     /// - Returns: how many events were queued.
     @discardableResult
-    func queueOnHit(_ hit: ScriptHitEvent) -> Int {
+    public func queueOnHit(_ hit: ScriptHitEvent) -> Int {
         queueActorEvent(
             Self.onHitEventName,
             on: hit.target,
@@ -78,7 +78,7 @@ extension PapyrusWorldRuntime {
     ///
     /// - Returns: how many events were queued, across both names.
     @discardableResult
-    func queueActorDeath(actor: ReferenceKey, killer: ReferenceKey?) -> Int {
+    public func queueActorDeath(actor: ReferenceKey, killer: ReferenceKey?) -> Int {
         let arguments: [PapyrusValue] = [
             killer.map { .object(objectHandle(for: $0)) } ?? .none
         ]

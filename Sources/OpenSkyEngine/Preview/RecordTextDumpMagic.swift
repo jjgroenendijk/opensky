@@ -6,18 +6,18 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
-    struct MagicInspectorContext {
-        let keywordStore: KeywordStore
-        let formListStore: FormListStore
-        let magicEffectStore: MagicEffectStore
-        let spellStore: SpellStore
-        let enchantmentStore: EnchantmentStore
-        let shoutStore: ShoutStore
-        let equipSlotStore: EquipSlotStore
-        let sourcePlugin: String
+    public struct MagicInspectorContext: Sendable {
+        public let keywordStore: KeywordStore
+        public let formListStore: FormListStore
+        public let magicEffectStore: MagicEffectStore
+        public let spellStore: SpellStore
+        public let enchantmentStore: EnchantmentStore
+        public let shoutStore: ShoutStore
+        public let equipSlotStore: EquipSlotStore
+        public let sourcePlugin: String
         /// Optional: a caller that has not built a PERK store still gets every
         /// other line, with perk links printed as raw FormIDs.
-        var perkStore: PerkStore?
+        public var perkStore: PerkStore?
     }
 
     /// The stores a summary needs to name what a record points at: MGEF for
@@ -25,17 +25,17 @@ nonisolated extension RecordTextDump {
     /// critical applies, ENCH for the enchantment on a weapon or a piece of
     /// armor, PERK for the half-cost perk on a spell and the perk a magic
     /// effect applies.
-    struct MagicContext {
-        let effects: MagicEffectStore
-        let spells: SpellStore
-        let enchantments: EnchantmentStore
-        let shouts: ShoutStore
-        let equipSlots: EquipSlotStore
-        let sourcePlugin: String
-        let perks: PerkStore?
+    public struct MagicContext: Sendable {
+        public let effects: MagicEffectStore
+        public let spells: SpellStore
+        public let enchantments: EnchantmentStore
+        public let shouts: ShoutStore
+        public let equipSlots: EquipSlotStore
+        public let sourcePlugin: String
+        public let perks: PerkStore?
     }
 
-    static func dump(
+    public static func dump(
         record: ESMRecord,
         localized: Bool,
         magicInspectorContext context: MagicInspectorContext
@@ -63,7 +63,7 @@ nonisolated extension RecordTextDump {
         )
     }
 
-    static func magicSummary(
+    public static func magicSummary(
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,
@@ -129,7 +129,7 @@ nonisolated extension RecordTextDump {
     /// A PERK link as text. Named through the store when the dump was given
     /// one, and printed raw otherwise, so a caller without a PERK store still
     /// sees the link rather than nothing.
-    static func perkText(_ id: FormID?, _ context: MagicContext?) -> String {
+    public static func perkText(_ id: FormID?, _ context: MagicContext?) -> String {
         guard let id else { return "-" }
         guard let perks = context?.perks else { return id.description }
         return perks.displayString(for: id, fromPlugin: context?.sourcePlugin ?? "")

@@ -10,7 +10,7 @@ import simd
 
 /// How a source reaches the main mixer. Explicit rather than inferred from the
 /// category, so a caller can see which path it asked for.
-nonisolated enum AudioRouting: String, Sendable {
+nonisolated public enum AudioRouting: String, Sendable {
     /// Mono player node spatialized by the environment node.
     case positional
     /// Stereo player node wired straight into the category submix, with no
@@ -21,52 +21,52 @@ nonisolated enum AudioRouting: String, Sendable {
 /// One playing source. Reference type: identity is what the eviction,
 /// retirement and panel rows track.
 @MainActor
-final class ActiveAudioSource {
-    let id: Int
+public final class ActiveAudioSource {
+    public let id: Int
     /// Display name (the VFS path of the file being played).
-    let name: String
-    let category: AudioCategory
-    let routing: AudioRouting
+    public let name: String
+    public let category: AudioCategory
+    public let routing: AudioRouting
     /// World position in native Skyrim units. Meaningless (and always zero)
     /// for a non-positional source.
-    let worldPosition: SIMD3<Float>
+    public let worldPosition: SIMD3<Float>
     /// Exterior cell the position falls in — the purge key for cell unload.
-    let cell: CellCoordinate
+    public let cell: CellCoordinate
     /// Per-source gain, multiplied with the category, master and fade gains.
-    let gain: Float
+    public let gain: Float
     /// Continuous source: it restarts at the beginning instead of ending.
-    let loops: Bool
-    let node: AVAudioPlayerNode
+    public let loops: Bool
+    public let node: AVAudioPlayerNode
     /// nil for buffer-backed sources; streamed sources own their decoder
     /// through this.
-    let streamer: AudioSourceStreamer?
+    public let streamer: AudioSourceStreamer?
     /// Engine playback clock at the moment this source started, which is what
     /// `playbackPosition(ofSource:)` subtracts from. Written by `adoptSource`
     /// rather than by `init`, because the clock belongs to the engine.
-    var startClockSeconds: Double = 0
+    public var startClockSeconds: Double = 0
     /// Set when a buffer-backed source's scheduled buffer has played out.
     /// Buffer sources have no streamer to report completion, so without this
     /// a one-shot `.wav` effect would sit in `sources` until the FIFO budget
     /// evicted it — a leak the moment footsteps started arriving twice a
     /// second (issue #352). Written from the main actor by the completion
     /// handler's hop; read by `retireFinishedSources`.
-    var bufferFinished = false
+    public var bufferFinished = false
     /// Fade multiplier in [0, 1], folded into the node volume on top of `gain`.
     /// Owned by WorldAudioEngineFades.swift (internal because that file is a
     /// satellite of this one).
-    var fadeGain: Float = 1
+    public var fadeGain: Float = 1
     /// Ramp in flight, or nil when the fade gain is holding steady. Also owned
     /// by WorldAudioEngineFades.swift.
-    var activeFade: GainFade?
+    public var activeFade: GainFade?
     /// Nonisolated snapshot read by one actor's LipSyncPlayback. Voice sources
     /// attach it after adoption; every other audio source leaves it nil.
-    var voiceClock: VoicePlaybackClock?
+    public var voiceClock: VoicePlaybackClock?
 
-    var isPositional: Bool {
+    public var isPositional: Bool {
         routing == .positional
     }
 
-    init(
+    public init(
         id: Int,
         request: AudioPlayRequest,
         routing: AudioRouting,
@@ -90,19 +90,19 @@ final class ActiveAudioSource {
 /// Everything a playback request needs, as one value (the 5-parameter limit
 /// and call-site readability both want a struct here). `worldPosition` is
 /// ignored by the non-positional path.
-nonisolated struct AudioPlayRequest {
-    let name: String
-    let category: AudioCategory
-    let worldPosition: SIMD3<Float>
-    var gain: Float = 1
+nonisolated public struct AudioPlayRequest: Sendable {
+    public let name: String
+    public let category: AudioCategory
+    public let worldPosition: SIMD3<Float>
+    public var gain: Float = 1
     /// Continuous playback: the source restarts at the beginning instead of
     /// ending. Ambience beds and music tracks set this; one-shot effects do
     /// not.
-    var loops = false
+    public var loops = false
 
     /// Request for a source with no world position — music, ambience and other
     /// 2D material routed straight into a category submix.
-    static func nonPositional(
+    public static func nonPositional(
         name: String,
         category: AudioCategory,
         gain: Float = 1,
@@ -112,6 +112,20 @@ nonisolated struct AudioPlayRequest {
             name: name, category: category, worldPosition: .zero, gain: gain, loops: loops
         )
     }
+
+    public init(
+        name: String,
+        category: AudioCategory,
+        worldPosition: SIMD3<Float>,
+        gain: Float = 1,
+        loops: Bool = false
+    ) {
+        self.name = name
+        self.category = category
+        self.worldPosition = worldPosition
+        self.gain = gain
+        self.loops = loops
+    }
 }
 
 extension WorldAudioEngine {
@@ -119,7 +133,7 @@ extension WorldAudioEngine {
     /// runs on the decode queue; this only builds and wires the player node.
     /// Returns the new source's id so the caller can retire exactly it later.
     @discardableResult
-    func playPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
+    public func playPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         if Self.isWAV(fileData) {
             // Sound effects — footsteps, doors, activators — ship as plain
@@ -138,7 +152,7 @@ extension WorldAudioEngine {
     /// line and a positional `.xwm` effect share one code path from the player
     /// node down.
     @discardableResult
-    func playPositional(file: XWMFile, request: AudioPlayRequest) throws -> Int {
+    public func playPositional(file: XWMFile, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         // Positional inputs must be mono: the environment node spatializes
         // mono and passes stereo through flat.
@@ -176,7 +190,7 @@ extension WorldAudioEngine {
     /// queue timing is involved. A looping request re-plays the buffer through
     /// the player node's own loop option.
     @discardableResult
-    func playPositional(buffer: AVAudioPCMBuffer, request: AudioPlayRequest) throws -> Int {
+    public func playPositional(buffer: AVAudioPCMBuffer, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         let node = makePositionalNode(request: request, format: buffer.format)
         let source = ActiveAudioSource(
@@ -198,7 +212,7 @@ extension WorldAudioEngine {
     /// never pans, never attenuates with distance, and is exempt from both the
     /// concurrent-source cap and the cell purge.
     @discardableResult
-    func playNonPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
+    public func playNonPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         if Self.isWAV(fileData) {
             return try playNonPositional(
@@ -241,7 +255,10 @@ extension WorldAudioEngine {
     /// Non-positional playback from an already-built PCM buffer. Test seam,
     /// mirroring `playPositional(buffer:request:)`.
     @discardableResult
-    func playNonPositional(buffer: AVAudioPCMBuffer, request: AudioPlayRequest) throws -> Int {
+    public func playNonPositional(
+        buffer: AVAudioPCMBuffer,
+        request: AudioPlayRequest
+    ) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         let node = try makeNonPositionalNode(request: request, format: buffer.format)
         let source = ActiveAudioSource(
@@ -281,7 +298,7 @@ extension WorldAudioEngine {
         }
     }
 
-    func stopAllSources() {
+    public func stopAllSources() {
         while let source = sources.first {
             stop(source)
         }
@@ -291,7 +308,7 @@ extension WorldAudioEngine {
     /// the world sound director to retire ambience beds without losing
     /// unrelated one-shot SFX (issue #155).
     @discardableResult
-    func stopSource(id: Int) -> Bool {
+    public func stopSource(id: Int) -> Bool {
         guard let source = sources.first(where: { $0.id == id }) else { return false }
         stop(source)
         return true
@@ -305,7 +322,7 @@ extension WorldAudioEngine {
     /// purged with its cell does not report. That distinction is what lets the
     /// dialogue subtitle clear on the line ending rather than on the line
     /// being cut off (item 17.3).
-    func retireFinishedSources() {
+    public func retireFinishedSources() {
         for source in sources where source.streamer?.isFinished == true || source.bufferFinished {
             let id = source.id
             stop(source)
@@ -317,7 +334,7 @@ extension WorldAudioEngine {
     /// ring distance beyond `radius`). Non-positional sources have no
     /// meaningful cell, so they are exempt: music and ambience beds must
     /// survive the world streaming around them.
-    func purgeSources(fartherThan radius: Int32, fromCell center: CellCoordinate) {
+    public func purgeSources(fartherThan radius: Int32, fromCell center: CellCoordinate) {
         for source in sources where source.isPositional {
             let distance = max(
                 abs(source.cell.x - center.x), abs(source.cell.y - center.y)
@@ -331,7 +348,7 @@ extension WorldAudioEngine {
     /// Re-applies the node-level gain product to every player node. Folding the
     /// fade in here is what keeps a volume-slider move from stomping an
     /// in-flight ramp.
-    func applyVolumesToSources() {
+    public func applyVolumesToSources() {
         for source in sources {
             applyVolume(to: source)
         }
@@ -345,7 +362,7 @@ extension WorldAudioEngine {
     /// passes through the category submix, which carries it. Master volume
     /// lives on the main mixer and is never part of this product. The category
     /// factor is `audibleVolume(for:)`, so mute and solo apply on both paths.
-    func applyVolume(to source: ActiveAudioSource) {
+    public func applyVolume(to source: ActiveAudioSource) {
         let categoryFactor = source.isPositional ? audibleVolume(for: source.category) : 1
         source.node.volume = categoryFactor * source.gain * source.fadeGain
     }
@@ -353,7 +370,7 @@ extension WorldAudioEngine {
     /// Effective gain of one source as the listener hears it before distance
     /// attenuation: master x category x source x fade, where the category
     /// factor is zero while the category is muted or another one is soloed.
-    func effectiveGain(of source: ActiveAudioSource) -> Float {
+    public func effectiveGain(of source: ActiveAudioSource) -> Float {
         masterVolume * audibleVolume(for: source.category) * source.gain * source.fadeGain
     }
 

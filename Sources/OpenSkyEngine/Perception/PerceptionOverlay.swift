@@ -26,22 +26,22 @@
 import Foundation
 import simd
 
-nonisolated enum PerceptionOverlay {
+nonisolated public enum PerceptionOverlay: Sendable {
     /// Triangles the cone fan is built from. Twenty-four across 180 degrees is
     /// one triangle per 7.5 degrees, which reads as a smooth wedge without
     /// spending the overlay budget on a single actor.
-    static let coneSegmentCount = 24
+    public static let coneSegmentCount = 24
     /// How far above the feet the fan sits, world units.
-    static let coneHeight: Float = 4
+    public static let coneHeight: Float = 4
     /// Colours per state, alpha-blended over the world. Unaware is a dim grey
     /// so a room full of idle actors does not wash the scene out.
-    static let unawareColor = SIMD4<Float>(0.55, 0.55, 0.6, 0.10)
-    static let suspiciousColor = SIMD4<Float>(0.95, 0.75, 0.2, 0.18)
-    static let detectedColor = SIMD4<Float>(0.9, 0.2, 0.2, 0.26)
+    public static let unawareColor = SIMD4<Float>(0.55, 0.55, 0.6, 0.10)
+    public static let suspiciousColor = SIMD4<Float>(0.95, 0.75, 0.2, 0.18)
+    public static let detectedColor = SIMD4<Float>(0.9, 0.2, 0.2, 0.26)
     /// The memory line's colour, opaque so it reads against its own cone.
-    static let memoryColor = SIMD4<Float>(1, 1, 1, 0.9)
+    public static let memoryColor = SIMD4<Float>(1, 1, 1, 0.9)
 
-    static func color(for state: DetectionState) -> SIMD4<Float> {
+    public static func color(for state: DetectionState) -> SIMD4<Float> {
         switch state {
         case .unaware: unawareColor
         case .suspicious: suspiciousColor
@@ -56,7 +56,7 @@ nonisolated enum PerceptionOverlay {
     ///   - state: the strongest regard this observer holds about anything.
     ///   - investigatePosition: where it would go and look, or nil.
     ///   - settings: supplies the cone's half-angle and range.
-    static func append(
+    public static func append(
         observer: PerceptionObserver,
         state: DetectionState,
         investigatePosition: SIMD3<Float>?,
@@ -95,7 +95,7 @@ extension PerceptionRuntime {
     ///
     /// Nothing is appended while the toggle is off, so an unenabled overlay
     /// costs one boolean per frame rather than a build that is thrown away.
-    func appendWorldOverlay(
+    public func appendWorldOverlay(
         context: WorldOverlayFrameContext,
         to list: inout WorldOverlayDrawList
     ) {

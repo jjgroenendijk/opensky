@@ -10,31 +10,31 @@
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct MovementSetting: Equatable {
-    let value: Float
-    let source: String
+nonisolated public struct MovementSetting: Equatable, Sendable {
+    public let value: Float
+    public let source: String
 }
 
-nonisolated struct PlayerMovementConfiguration: Equatable {
-    let walkSpeed: MovementSetting
-    let runSpeed: MovementSetting
+nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
+    public let walkSpeed: MovementSetting
+    public let runSpeed: MovementSetting
     /// Sprint gait, `NPC_Sprinting_MT` forward run in vanilla (issue #188).
-    let sprintSpeed: MovementSetting
+    public let sprintSpeed: MovementSetting
     /// Sneak gait, `NPC_Sneaking_MT` forward run.
-    let sneakSpeed: MovementSetting
+    public let sneakSpeed: MovementSetting
     /// Swim gait, `NPC_Swimming_MT` forward run.
-    let swimSpeed: MovementSetting
-    let stepHeight: MovementSetting
+    public let swimSpeed: MovementSetting
+    public let stepHeight: MovementSetting
     /// Upward velocity a jump takes off at, derived from the jump height
     /// `fJumpHeightMin` states and the controller's own gravity.
-    let jumpTakeoffSpeed: MovementSetting
+    public let jumpTakeoffSpeed: MovementSetting
 
     /// The gaits added in item 14.5 default to ratios of the two that came
     /// before them, so a caller that only knows about walk and run — a
     /// synthetic scene, a benchmark — still builds a complete configuration.
     /// Nothing resolving from real data uses these defaults; `resolve` passes
     /// every field.
-    init(
+    public init(
         walkSpeed: MovementSetting,
         runSpeed: MovementSetting,
         stepHeight: MovementSetting,
@@ -60,7 +60,7 @@ nonisolated struct PlayerMovementConfiguration: Equatable {
     }
 
     /// Historic explicit values for synthetic scenes, tests, and benchmarks.
-    static let synthetic = PlayerMovementConfiguration(
+    public static let synthetic = PlayerMovementConfiguration(
         walkSpeed: MovementSetting(value: 180, source: "OpenSky synthetic"),
         runSpeed: MovementSetting(value: 360, source: "OpenSky synthetic"),
         stepHeight: MovementSetting(value: 32, source: "OpenSky synthetic"),
@@ -70,7 +70,7 @@ nonisolated struct PlayerMovementConfiguration: Equatable {
         jumpTakeoffSpeed: MovementSetting(value: 460, source: "OpenSky synthetic")
     )
 
-    static func resolve(
+    public static func resolve(
         store: GameSettingStore,
         movementTypes: MovementTypeStore = .empty
     ) -> PlayerMovementConfiguration {

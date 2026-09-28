@@ -3,6 +3,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct SystemMenuPanelTests {

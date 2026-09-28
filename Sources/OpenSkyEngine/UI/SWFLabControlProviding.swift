@@ -13,31 +13,51 @@ import OpenSkyFormats
 
 /// UI Lab SWF readout: what is selected, what decoding produced, and what the
 /// last encoded frame drew.
-nonisolated struct SWFLabControlSnapshot: Equatable {
+nonisolated public struct SWFLabControlSnapshot: Equatable, Sendable {
     /// Archive path of the assigned movie (`interface\console.swf`); nil when
     /// no movie is assigned.
-    let selectedPath: String?
+    public let selectedPath: String?
     /// Mirror of `Renderer.swfEnabled`.
-    let layerEnabled: Bool
+    public let layerEnabled: Bool
     /// Message from the last failed load or GPU package build; nil when the
     /// last selection succeeded. A failure never crashes the panel.
-    let loadError: String?
+    public let loadError: String?
     /// Frame-1 tag accounting from the decoded movie; nil when none is loaded.
-    let tally: SWFMovieTally?
+    public let tally: SWFMovieTally?
     /// Font names the movie references that fontconfig could not resolve.
-    let unresolvedFontNames: [String]
+    public let unresolvedFontNames: [String]
     /// `Renderer.lastSWFDrawStats` from the most recently encoded frame.
-    let drawStats: SWFDrawStats
+    public let drawStats: SWFDrawStats
     /// True when an install was located and its movies could be enumerated.
-    let installLoaded: Bool
+    public let installLoaded: Bool
     /// AS2 runtime state (M8.3.3), or nil while the layer is on the static
     /// frame-1 path. Read on the main thread between frames, like every other
     /// renderer seam.
-    let runtime: SWFLabRuntimeSnapshot?
+    public let runtime: SWFLabRuntimeSnapshot?
+
+    public init(
+        selectedPath: String?,
+        layerEnabled: Bool,
+        loadError: String?,
+        tally: SWFMovieTally?,
+        unresolvedFontNames: [String],
+        drawStats: SWFDrawStats,
+        installLoaded: Bool,
+        runtime: SWFLabRuntimeSnapshot?
+    ) {
+        self.selectedPath = selectedPath
+        self.layerEnabled = layerEnabled
+        self.loadError = loadError
+        self.tally = tally
+        self.unresolvedFontNames = unresolvedFontNames
+        self.drawStats = drawStats
+        self.installLoaded = installLoaded
+        self.runtime = runtime
+    }
 }
 
 @MainActor
-protocol SWFLabControlProviding: AnyObject {
+public protocol SWFLabControlProviding: AnyObject {
     /// Sorted `interface\*.swf` paths from the located install; empty when no
     /// install is present, which the section degrades to gracefully.
     var swfMoviePaths: [String] { get }
@@ -82,13 +102,13 @@ protocol SWFLabControlProviding: AnyObject {
 
 /// Builds the UI Lab SWF readout text from a snapshot. Pure formatting, kept
 /// out of the section view controller so the wording is asserted directly.
-nonisolated enum SWFLabReadout {
+nonisolated public enum SWFLabReadout: Sendable {
     /// Display name for a movie path (`interface\console.swf` -> `console.swf`).
-    static func displayName(for path: String) -> String {
+    public static func displayName(for path: String) -> String {
         path.split(separator: "\\").last.map(String.init) ?? path
     }
 
-    static func text(for snapshot: SWFLabControlSnapshot) -> String {
+    public static func text(for snapshot: SWFLabControlSnapshot) -> String {
         var lines = [
             movieLine(snapshot), tagLine(snapshot), spriteLine(snapshot),
             actionLine(snapshot)

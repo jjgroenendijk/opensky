@@ -17,7 +17,7 @@ import OpenSkyFormats
 /// and knows nothing about record types — so the caller holding the placement
 /// says which kind of subject it has. The shape mirrors `InventoryOwner`
 /// deliberately: the two travel together at every call site that has an ACHR.
-nonisolated enum ActorValueSubject: Equatable, Sendable {
+nonisolated public enum ActorValueSubject: Equatable, Sendable {
     /// The player. No record in this engine describes the player
     /// (`ReferenceKey.player`), so its baseline comes from the configured
     /// player race rather than from an NPC_.
@@ -34,36 +34,36 @@ nonisolated enum ActorValueSubject: Equatable, Sendable {
 /// The three travel together for the same reason `InventoryHolder`'s do: every
 /// mutation needs all three, and passing them separately is how a mutation ends
 /// up attributed to the wrong cell.
-nonisolated struct ActorValueHolder: Equatable, Sendable {
-    let key: ReferenceKey
-    let subject: ActorValueSubject
-    let cell: CellSceneLocation?
+nonisolated public struct ActorValueHolder: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let subject: ActorValueSubject
+    public let cell: CellSceneLocation?
 
-    init(key: ReferenceKey, subject: ActorValueSubject, cell: CellSceneLocation? = nil) {
+    public init(key: ReferenceKey, subject: ActorValueSubject, cell: CellSceneLocation? = nil) {
         self.key = key
         self.subject = subject
         self.cell = cell
     }
 
     /// The player, who belongs to no cell.
-    static let player = ActorValueHolder(key: .player, subject: .player, cell: nil)
+    public static let player = ActorValueHolder(key: .player, subject: .player, cell: nil)
 }
 
 /// One subject's maximums and regeneration rates.
-nonisolated struct ActorValueBaseline: Equatable, Sendable {
-    let maximums: ActorValues
+nonisolated public struct ActorValueBaseline: Equatable, Sendable {
+    public let maximums: ActorValues
     /// Percent of each maximum restored per second, from RACE DATA.
-    let regenPercentPerSecond: ActorValues
+    public let regenPercentPerSecond: ActorValues
     /// Base values for the non-primary actor values the subject's records
     /// author, keyed by vanilla table index (issue #468). Sparse: an index
     /// absent here reads `ActorValueIdentity.defaultValue(at:)`.
-    let general: [Int32: Float]
+    public let general: [Int32: Float]
     /// The level the derivation used (issue #499): the ACBS word or its
     /// `PC Level Mult` scaling for an NPC, and the player's own character level
     /// for the player. What `GetLevel` and `Actor.GetLevel` report.
-    let level: Int
+    public let level: Int
 
-    init(
+    public init(
         maximums: ActorValues,
         regenPercentPerSecond: ActorValues,
         general: [Int32: Float] = [:],
@@ -83,7 +83,7 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
     /// number a primary's base override is an offset from, and answering it
     /// here is what lets one index-keyed table cover all 164 values instead of
     /// two tables with two chances to disagree.
-    func base(at index: Int32) -> Float? {
+    public func base(at index: Int32) -> Float? {
         if let kind = ActorValueIdentity.kind(at: index) {
             return maximums[kind]
         }
@@ -94,7 +94,7 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
     /// Every actor value's derived base keyed by vanilla index, primaries
     /// included — the shape a snapshot carries so a condition and a Papyrus
     /// native can resolve an override without reaching the runtime.
-    var basesByIndex: [Int32: Float] {
+    public var basesByIndex: [Int32: Float] {
         var values = general
         for kind in ActorValueKind.allCases {
             values[ActorValueIdentity.index(of: kind)] = maximums[kind]
@@ -105,7 +105,7 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
     /// The same baseline reported at a different level, which is what the
     /// player's fallback needs: the numbers come from nowhere, but the level is
     /// the character's own and is known even before chargen picks a race.
-    func atLevel(_ level: Int) -> ActorValueBaseline {
+    public func atLevel(_ level: Int) -> ActorValueBaseline {
         ActorValueBaseline(
             maximums: maximums,
             regenPercentPerSecond: regenPercentPerSecond,
@@ -114,7 +114,7 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
         )
     }
 
-    static let empty = ActorValueBaseline(
+    public static let empty = ActorValueBaseline(
         maximums: .zero,
         regenPercentPerSecond: .zero
     )
@@ -125,38 +125,38 @@ nonisolated struct ActorValueBaseline: Equatable, Sendable {
 /// Immutable and buildable once per load order, matching the `*Resolver`
 /// convention: nothing here mutates after `init`, so it is freely readable from
 /// the cell-build queue.
-nonisolated struct ActorValueBaselineResolver {
+nonisolated public struct ActorValueBaselineResolver: Sendable {
     /// Every playable vanilla race authors the same level-1 attributes, so the
     /// player's baseline is that triple until character generation exists to
     /// pick a race (M18). Probed rather than remembered — see
     /// docs/engine/actor-value-store.md for the records this number came from.
-    static let vanillaPlayerStartingValues = ActorValues(repeating: 100)
+    public static let vanillaPlayerStartingValues = ActorValues(repeating: 100)
 
     /// The non-primary baselines a subject with no records behind it reads: the
     /// documented skill floor and the Creation Kit's default speed multiplier,
     /// and nothing else. A summon has no race to carry a mass or a carry
     /// weight, so both stay at the table default rather than borrowing a
     /// number from an actor it is not.
-    static let recordlessGeneralValues = ActorValueDerivation
+    public static let recordlessGeneralValues = ActorValueDerivation
         .generalBaseValues(inputs: ActorValueInputs())
 
     /// Record-side derivation. Optional so a synthetic scene, a benchmark and a
     /// unit test can drive the runtime without loading a plugin: with no
     /// resolver every actor baseline is `fallback`.
-    let resolver: ActorValueResolver?
+    public let resolver: ActorValueResolver?
     /// Race whose starting attributes the player uses. Nil until character
     /// generation exists, which is why `playerValues` has a fallback at all.
-    let playerRace: FormID?
+    public let playerRace: FormID?
     /// Baseline handed to a subject nothing can be derived for: the player
     /// before chargen, a summon, an NPC_ whose chain will not walk.
-    let fallback: ActorValueBaseline
+    public let fallback: ActorValueBaseline
     /// Where the player's own level is published (issue #499). The same
     /// reference the resolver reads for `PC Level Mult` scaling when the two
     /// are built together, so an NPC scaled against the player and the player's
     /// own reported level cannot disagree.
-    let playerLevel: PlayerLevelSource
+    public let playerLevel: PlayerLevelSource
 
-    init(
+    public init(
         resolver: ActorValueResolver? = nil,
         playerRace: FormID? = nil,
         fallback: ActorValueBaseline = ActorValueBaseline(
@@ -179,7 +179,7 @@ nonisolated struct ActorValueBaselineResolver {
     /// asked: a cycle in someone else's plugin must not make an actor
     /// unhittable. `ActorValueResolver.resolve(base:)` is the surface that
     /// reports the failure to a caller that wants to know.
-    func baseline(for subject: ActorValueSubject) -> ActorValueBaseline {
+    public func baseline(for subject: ActorValueSubject) -> ActorValueBaseline {
         switch subject {
         case .player:
             playerBaseline()

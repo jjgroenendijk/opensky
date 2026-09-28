@@ -2,7 +2,7 @@
 // the real driver's fall-through, avoidance, and timeout thresholds without
 // Metal or game data.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

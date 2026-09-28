@@ -5,28 +5,28 @@
 
 import CoreText
 
-nonisolated struct UIFont: Equatable {
-    enum Weight: Int, Equatable {
+nonisolated public struct UIFont: Equatable, Sendable {
+    public enum Weight: Int, Equatable, Sendable {
         case regular = 0
         case bold = 1
     }
 
-    var pointSize: Float
-    var weight: Weight
+    public var pointSize: Float
+    public var weight: Weight
 
-    init(pointSize: Float, weight: Weight = .regular) {
+    public init(pointSize: Float, weight: Weight = .regular) {
         self.pointSize = pointSize
         self.weight = weight
     }
 
     /// Atlas cache discriminator so two weights of one glyph id never collide.
-    var fontKey: Int {
+    public var fontKey: Int {
         weight.rawValue
     }
 
     /// A CTFont for this face at `size` (points for measurement, pixels for
     /// rasterization). Helvetica backstops a platform without a system UI font.
-    func makeCTFont(size: CGFloat) -> CTFont {
+    public func makeCTFont(size: CGFloat) -> CTFont {
         let base = CTFontCreateUIFontForLanguage(.system, size, nil)
             ?? CTFontCreateWithName("Helvetica" as CFString, size, nil)
         guard weight == .bold else { return base }

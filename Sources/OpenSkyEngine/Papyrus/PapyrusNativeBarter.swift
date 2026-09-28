@@ -17,27 +17,27 @@ import OpenSkyFormats
 
 /// The barter operation a Papyrus native may perform.
 @MainActor
-protocol PapyrusWorldBarterBridge {
+public protocol PapyrusWorldBarterBridge {
     /// Opens the barter menu against `actor`'s vendor stock, or nil for a
     /// session with no vendor data.
     func showBarterMenu(for actor: ReferenceKey) -> (opened: Bool, text: String)?
 }
 
 extension PapyrusWorldStateBridge {
-    func showBarterMenu(for actor: ReferenceKey) -> (opened: Bool, text: String)? {
+    public func showBarterMenu(for actor: ReferenceKey) -> (opened: Bool, text: String)? {
         guard let showBarterMenu else { return nil }
         return showBarterMenu(actor)
     }
 }
 
 nonisolated extension PapyrusWorldAccess {
-    func showBarterMenu(for actor: ReferenceKey) -> (opened: Bool, text: String)? {
+    public func showBarterMenu(for actor: ReferenceKey) -> (opened: Bool, text: String)? {
         MainActor.assumeIsolated { bridge.showBarterMenu(for: actor) }
     }
 }
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installBarter(into registry: inout PapyrusNativeRegistry) {
+    public static func installBarter(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "ShowBarterMenu"

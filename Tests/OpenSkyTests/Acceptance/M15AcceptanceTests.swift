@@ -17,7 +17,6 @@
 // everything here runs on a device-less runner with no install.
 
 import Foundation
-@testable import OpenSky
 import simd
 import Testing
 

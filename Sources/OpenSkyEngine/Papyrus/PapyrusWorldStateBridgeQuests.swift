@@ -52,7 +52,7 @@ import OpenSkyFormats
 
 @MainActor
 extension PapyrusWorldStateBridge {
-    func questState(for key: ReferenceKey) throws -> QuestRuntimeState {
+    public func questState(for key: ReferenceKey) throws -> QuestRuntimeState {
         let resolved = try resolveQuest(key)
         return try resolved.runtime.state(of: resolved.quest.formID)
     }
@@ -61,7 +61,7 @@ extension PapyrusWorldStateBridge {
     /// fires once ever. A quest that is already running keeps the instances
     /// and the variables it has.
     @discardableResult
-    func startQuest(for key: ReferenceKey) throws -> Bool {
+    public func startQuest(for key: ReferenceKey) throws -> Bool {
         let resolved = try resolveQuest(key)
         let state = try resolved.runtime.startQuest(resolved.quest.formID)
         attachQuestScripts(resolved.quest, key: key)
@@ -72,7 +72,7 @@ extension PapyrusWorldStateBridge {
     /// stages and the completed flag — item 13.2's rule — while the script
     /// instances and their variables go, so a later `Start` runs `OnInit`
     /// again on fresh ones.
-    func stopQuest(for key: ReferenceKey) throws {
+    public func stopQuest(for key: ReferenceKey) throws {
         let resolved = try resolveQuest(key)
         try resolved.runtime.stopQuest(resolved.quest.formID)
         world?.detachQuest(key: key)
@@ -81,7 +81,7 @@ extension PapyrusWorldStateBridge {
         world?.aliasResolution = resolved.runtime.aliasResolution()
     }
 
-    func completeQuest(for key: ReferenceKey) throws {
+    public func completeQuest(for key: ReferenceKey) throws {
         let resolved = try resolveQuest(key)
         try resolved.runtime.completeQuest(resolved.quest.formID)
     }
@@ -98,7 +98,7 @@ extension PapyrusWorldStateBridge {
     /// delete the fragment this very call just queued, since fragments run on a
     /// later tick. `Stop` is what retires a quest's instances.
     @discardableResult
-    func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
+    public func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
         let resolved = try resolveQuest(key)
         let id = resolved.quest.formID
         let wasDone = try resolved.runtime.state(of: id).isStageDone(stage)
@@ -112,7 +112,7 @@ extension PapyrusWorldStateBridge {
         return true
     }
 
-    func setQuestObjectiveDisplayed(
+    public func setQuestObjectiveDisplayed(
         _ objective: UInt16, _ isDisplayed: Bool, for key: ReferenceKey
     ) throws {
         let resolved = try resolveQuest(key)
@@ -121,7 +121,7 @@ extension PapyrusWorldStateBridge {
         )
     }
 
-    func setQuestObjectiveCompleted(
+    public func setQuestObjectiveCompleted(
         _ objective: UInt16, _ isCompleted: Bool, for key: ReferenceKey
     ) throws {
         let resolved = try resolveQuest(key)
@@ -130,7 +130,7 @@ extension PapyrusWorldStateBridge {
         )
     }
 
-    func setQuestObjectiveFailed(
+    public func setQuestObjectiveFailed(
         _ objective: UInt16, _ isFailed: Bool, for key: ReferenceKey
     ) throws {
         let resolved = try resolveQuest(key)
@@ -155,7 +155,7 @@ extension PapyrusWorldStateBridge {
     ///
     /// - Returns: instances created.
     @discardableResult
-    func attachRunningQuestScripts() -> Int {
+    public func attachRunningQuestScripts() -> Int {
         guard let questRuntime else { return 0 }
         var created = 0
         for entry in questRuntime.runningQuests() {

@@ -26,21 +26,27 @@ import Foundation
 
 /// One frame of cast intent, filled from the same drained camera input
 /// `MeleeIntent` and `ArcheryIntent` are.
-nonisolated struct CastingIntent: Equatable, Sendable {
+nonisolated public struct CastingIntent: Equatable, Sendable {
     /// Block button held, which the left hand takes when it holds a spell.
-    var leftHeld = false
+    public var leftHeld = false
     /// Attack button held, which the right hand takes when it holds a spell.
-    var rightHeld = false
+    public var rightHeld = false
     /// Seconds since the previous frame, for the charge and drain clocks.
-    var deltaTime: Float = 0
+    public var deltaTime: Float = 0
 
-    static let still = CastingIntent()
+    public static let still = CastingIntent()
 
-    func isHeld(_ hand: SpellHand) -> Bool {
+    public func isHeld(_ hand: SpellHand) -> Bool {
         switch hand {
         case .left: leftHeld
         case .right: rightHeld
         }
+    }
+
+    public init(leftHeld: Bool = false, rightHeld: Bool = false, deltaTime: Float = 0) {
+        self.leftHeld = leftHeld
+        self.rightHeld = rightHeld
+        self.deltaTime = deltaTime
     }
 }
 
@@ -51,7 +57,7 @@ extension CasterRuntime {
     /// that came up releases it, so a held button does not restart the charge
     /// sixty times a second. A hand holding no spell is left alone entirely,
     /// which is what leaves its button to melee.
-    func acceptFrame(_ intent: CastingIntent, on caster: ActorValueHolder) {
+    public func acceptFrame(_ intent: CastingIntent, on caster: ActorValueHolder) {
         let readied = spellbook.state(of: caster)
         for hand in SpellHand.allCases {
             guard readied.spell(in: hand) != nil else {

@@ -7,7 +7,7 @@
 // the same object with the same two collaborators.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

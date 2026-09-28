@@ -3,7 +3,7 @@
 // snapshot, and restore. See docs/engine/global-variables.md.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

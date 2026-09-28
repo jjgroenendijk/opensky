@@ -4,7 +4,7 @@
 // Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 /// Forwards the journal seam to the panel tests' recorder rather than

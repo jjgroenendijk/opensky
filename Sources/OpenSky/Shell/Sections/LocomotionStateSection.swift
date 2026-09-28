@@ -13,6 +13,7 @@
 // for one setting.
 
 import AppKit
+import OpenSkyEngine
 
 final class LocomotionStateSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

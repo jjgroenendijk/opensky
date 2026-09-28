@@ -34,21 +34,21 @@ import Foundation
 /// on the sheathed node for `sheathed` and `drawing`: the weapon stays where it
 /// was until `BeginWeaponDraw` or `BeginWeaponSheathe` says the hand has
 /// reached it.
-nonisolated enum WeaponDrawState: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum WeaponDrawState: String, Equatable, Sendable, CaseIterable {
     case sheathed
     case drawing
     case drawn
     case sheathing
 
     /// Whether the attachment rides the hand node in this state.
-    var isWeaponInHand: Bool {
+    public var isWeaponInHand: Bool {
         self == .drawn || self == .sheathing
     }
 
     /// Whether a swing is allowed to start. Vanilla will not attack from a
     /// sheathed weapon; it draws first, which is the engine's job to sequence
     /// and not this type's.
-    var canAttack: Bool {
+    public var canAttack: Bool {
         self == .drawn
     }
 }
@@ -60,7 +60,7 @@ nonisolated enum WeaponDrawState: String, Equatable, Sendable, CaseIterable {
 /// is `contact` alone: `preHitFrame` exists to say a hit is imminent, so a
 /// consumer that wants to pre-resolve something has a frame to do it in, and
 /// the sweep still runs on the contact frame itself.
-nonisolated enum MeleeAttackPhase: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum MeleeAttackPhase: String, Equatable, Sendable, CaseIterable {
     case idle
     case windup
     case swinging
@@ -69,38 +69,38 @@ nonisolated enum MeleeAttackPhase: String, Equatable, Sendable, CaseIterable {
 
     /// Whether a swing is in progress at all, which is what `IsAttacking`
     /// reports to the graph.
-    var isAttacking: Bool {
+    public var isAttacking: Bool {
         self != .idle
     }
 }
 
 /// What one observed event did to the state.
-nonisolated struct MeleeStateChange: Equatable, Sendable {
+nonisolated public struct MeleeStateChange: Equatable, Sendable {
     /// The event name that produced it.
-    let event: String
-    let drawState: WeaponDrawState
-    let attackPhase: MeleeAttackPhase
+    public let event: String
+    public let drawState: WeaponDrawState
+    public let attackPhase: MeleeAttackPhase
     /// True on the event that moved the weapon between the sheathed node and
     /// the hand node, which is the frame the attachment is rebuilt on.
-    let movedAttachment: Bool
+    public let movedAttachment: Bool
     /// True on the contact frame, which is the frame the sweep runs on.
-    let openedHitWindow: Bool
+    public let openedHitWindow: Bool
 }
 
 /// The melee half of the player's graph state, advanced by fired event names.
-nonisolated struct MeleeCombatState: Equatable, Sendable {
-    private(set) var drawState = WeaponDrawState.sheathed
-    private(set) var attackPhase = MeleeAttackPhase.idle
+nonisolated public struct MeleeCombatState: Equatable, Sendable {
+    public private(set) var drawState = WeaponDrawState.sheathed
+    public private(set) var attackPhase = MeleeAttackPhase.idle
     /// Whether the guard is up, from `blockStart` and `blockStop`.
-    private(set) var isBlocking = false
+    public private(set) var isBlocking = false
     /// Whether a stagger is playing, from `staggerStart` and `staggerStop`.
-    private(set) var isStaggering = false
+    public private(set) var isStaggering = false
     /// How many swings have reached their contact frame since construction.
-    private(set) var contactCount = 0
+    public private(set) var contactCount = 0
     /// Monotonic id of the swing in progress, so a hit filter can say "this
     /// target has already been hit by *this* swing". Zero before the first
     /// swing; rises on every `attackStart`.
-    private(set) var swingID = 0
+    public private(set) var swingID = 0
 
     /// Advances the state by one fired event name, answering with what changed
     /// or nil when the name is not one this machine acts on.
@@ -115,7 +115,7 @@ nonisolated struct MeleeCombatState: Equatable, Sendable {
     /// things the graph actually reports: where the weapon is, where the swing
     /// is, and which flags are up.
     @discardableResult
-    mutating func handle(_ event: String) -> MeleeStateChange? {
+    public mutating func handle(_ event: String) -> MeleeStateChange? {
         if let change = handleWeapon(event) {
             return change
         }
@@ -227,14 +227,14 @@ nonisolated struct MeleeCombatState: Equatable, Sendable {
 
     /// Advances by a whole drained batch, answering with the changes in order.
     @discardableResult
-    mutating func handle(_ events: [String]) -> [MeleeStateChange] {
+    public mutating func handle(_ events: [String]) -> [MeleeStateChange] {
         events.compactMap { handle($0) }
     }
 
     /// Closes the contact frame, so a swing that fires `HitFrame` and nothing
     /// else does not sit in the hit window forever. Called once per frame after
     /// the batch has been handled.
-    mutating func endFrame() {
+    public mutating func endFrame() {
         if attackPhase == .contact {
             attackPhase = .recovery
         }
@@ -242,7 +242,7 @@ nonisolated struct MeleeCombatState: Equatable, Sendable {
 
     /// Forgets everything, for a teleport or a graph re-attach. The weapon goes
     /// back to sheathed because the newly attached graph starts there.
-    mutating func reset() {
+    public mutating func reset() {
         self = MeleeCombatState()
     }
 }

@@ -10,7 +10,7 @@ extension PapyrusWorldRuntime {
     ///
     /// `PapyrusValue.object` and `.array` are not persistable (their identity
     /// is runtime-allocated with no world meaning) and snapshot as `.none`.
-    func instanceStates() -> [PapyrusInstanceState] {
+    public func instanceStates() -> [PapyrusInstanceState] {
         instancesByKey.keys.sorted().compactMap { key in
             guard
                 let handle = instancesByKey[key],
@@ -32,7 +32,7 @@ extension PapyrusWorldRuntime {
     /// Restoring into a fresh runtime that has attached no cell yet works —
     /// missing instances are created from the script library on demand — and
     /// the `OnInit`-fired set is repopulated from `hasFiredOnInit`.
-    func restore(instanceStates: [PapyrusInstanceState]) {
+    public func restore(instanceStates: [PapyrusInstanceState]) {
         for state in instanceStates {
             restoreInstance(state)
         }
@@ -42,7 +42,7 @@ extension PapyrusWorldRuntime {
     /// instance key then slot order so the output is byte-deterministic input
     /// for stage B's `PTMR` save chunk. Non-persistent instances lose their
     /// timers on cell unload, so a save never carries them.
-    func timerStates() -> [PapyrusTimerState] {
+    public func timerStates() -> [PapyrusTimerState] {
         updateTimers.states(for: persistentKeys, stepSeconds: fixedStepSeconds)
     }
 
@@ -51,7 +51,7 @@ extension PapyrusWorldRuntime {
     /// counted (`unknownSaveTimerTarget`), never a fault. Each restored slot
     /// re-anchors to now with its saved remaining delay, so the game-time
     /// difference between save and load never counts toward a timer.
-    func restore(timerStates: [PapyrusTimerState]) {
+    public func restore(timerStates: [PapyrusTimerState]) {
         for state in timerStates {
             guard instancesByKey[state.key] != nil else {
                 skips.note(.unknownSaveTimerTarget)

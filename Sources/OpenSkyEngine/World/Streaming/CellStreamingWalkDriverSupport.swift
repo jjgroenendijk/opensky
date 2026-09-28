@@ -3,11 +3,11 @@
 import simd
 
 @MainActor
-final class WalkBenchmarkSceneSwapErrorBox {
-    var error: (any Error)?
+public final class WalkBenchmarkSceneSwapErrorBox {
+    public var error: (any Error)?
 }
 
-nonisolated enum WalkBenchmarkPhase: CustomStringConvertible {
+nonisolated public enum WalkBenchmarkPhase: CustomStringConvertible, Sendable {
     case loadExterior
     case settleStart
     case walkExterior(Int)
@@ -20,7 +20,7 @@ nonisolated enum WalkBenchmarkPhase: CustomStringConvertible {
     case waitExterior
     case settleExteriorReturn
 
-    var description: String {
+    public var description: String {
         switch self {
         case .loadExterior: "initial exterior settlement"
         case .settleStart: "start grounding"
@@ -36,7 +36,7 @@ nonisolated enum WalkBenchmarkPhase: CustomStringConvertible {
         }
     }
 
-    var physicsActive: Bool {
+    public var physicsActive: Bool {
         if case .loadExterior = self {
             return false
         }
@@ -44,19 +44,19 @@ nonisolated enum WalkBenchmarkPhase: CustomStringConvertible {
     }
 }
 
-nonisolated struct WalkBenchmarkControllerSnapshot {
-    let position: SIMD3<Float>
-    let isGrounded: Bool
-    let hasUnresolvedPenetration: Bool
+nonisolated public struct WalkBenchmarkControllerSnapshot: Sendable {
+    public let position: SIMD3<Float>
+    public let isGrounded: Bool
+    public let hasUnresolvedPenetration: Bool
 }
 
-nonisolated struct WalkBenchmarkControllerState {
+nonisolated public struct WalkBenchmarkControllerState: Sendable {
     private static let maximumAirborneFrames = 15
 
-    var lastGroundedHeight: Float?
-    private(set) var airborneFrames = 0
+    public var lastGroundedHeight: Float?
+    public private(set) var airborneFrames = 0
 
-    mutating func validate(
+    public mutating func validate(
         phase: WalkBenchmarkPhase,
         snapshot: WalkBenchmarkControllerSnapshot,
         capsule: PlayerCapsule = .standard
@@ -85,18 +85,18 @@ nonisolated struct WalkBenchmarkControllerState {
     }
 }
 
-nonisolated struct WalkBenchmarkNavigationState {
+nonisolated public struct WalkBenchmarkNavigationState: Sendable {
     private static let minimumProgress: Float = 2
     private static let maximumStalledFrames = 20
     private static let avoidanceDurationFrames = 36
 
-    private(set) var bestDistance = Float.greatestFiniteMagnitude
-    private(set) var stalledFrames = 0
-    var avoidanceFrames = 0
-    private(set) var avoidanceAttempt = 0
-    private(set) var avoidanceDirection: Float = 1
+    public private(set) var bestDistance = Float.greatestFiniteMagnitude
+    public private(set) var stalledFrames = 0
+    public var avoidanceFrames = 0
+    public private(set) var avoidanceAttempt = 0
+    public private(set) var avoidanceDirection: Float = 1
 
-    mutating func update(distance: Float, routeIndex: Int) {
+    public mutating func update(distance: Float, routeIndex: Int) {
         if distance < bestDistance - Self.minimumProgress {
             bestDistance = distance
             stalledFrames = 0
@@ -113,8 +113,8 @@ nonisolated struct WalkBenchmarkNavigationState {
     }
 }
 
-nonisolated enum WalkBenchmarkStateMachine {
-    static func validateTimeout(
+nonisolated public enum WalkBenchmarkStateMachine: Sendable {
+    public static func validateTimeout(
         phaseFrames: Int,
         limit: Int,
         phase: WalkBenchmarkPhase,
@@ -131,7 +131,7 @@ nonisolated enum WalkBenchmarkStateMachine {
 
 @MainActor
 extension CellStreamingWalkDriver {
-    func drive(toward target: SIMD2<Float>, routeIndex: Int) {
+    public func drive(toward target: SIMD2<Float>, routeIndex: Int) {
         updateNavigationProgress(distance: distance(to: target), routeIndex: routeIndex)
         renderer.freeFlyCamera.yaw = WalkPathRoute.yaw(from: currentXY, to: target)
         if navigationState.avoidanceFrames > 0 {
@@ -142,11 +142,11 @@ extension CellStreamingWalkDriver {
         }
     }
 
-    func updateNavigationProgress(distance: Float, routeIndex: Int) {
+    public func updateNavigationProgress(distance: Float, routeIndex: Int) {
         navigationState.update(distance: distance, routeIndex: routeIndex)
     }
 
-    func updateController(moveForward: Float, moveRight: Float = 0) {
+    public func updateController(moveForward: Float, moveRight: Float = 0) {
         renderer.walkController.update(
             camera: &renderer.freeFlyCamera,
             input: CameraInput(
@@ -160,7 +160,7 @@ extension CellStreamingWalkDriver {
         )
     }
 
-    func validateController() throws {
+    public func validateController() throws {
         let position = renderer.walkController.feetPosition
         try controllerState.validate(
             phase: phase,
@@ -173,7 +173,7 @@ extension CellStreamingWalkDriver {
         )
     }
 
-    func validateBuildsAndSwap() throws {
+    public func validateBuildsAndSwap() throws {
         if let error = swapError.error {
             throw CellStreamingWalkBenchmarkError.sceneSwapFailed(error)
         }
@@ -187,7 +187,7 @@ extension CellStreamingWalkDriver {
         }
     }
 
-    func timeout(limit: Int) throws {
+    public func timeout(limit: Int) throws {
         try WalkBenchmarkStateMachine.validateTimeout(
             phaseFrames: phaseFrames,
             limit: limit,
@@ -196,22 +196,22 @@ extension CellStreamingWalkDriver {
         )
     }
 
-    func changePhase(_ next: WalkBenchmarkPhase) {
+    public func changePhase(_ next: WalkBenchmarkPhase) {
         phase = next
         phaseFrames = 0
         navigationState = WalkBenchmarkNavigationState()
     }
 
-    var currentXY: SIMD2<Float> {
+    public var currentXY: SIMD2<Float> {
         let position = renderer.walkController.feetPosition
         return SIMD2(position.x, position.y)
     }
 
-    func distance(to target: SIMD2<Float>) -> Float {
+    public func distance(to target: SIMD2<Float>) -> Float {
         simd_distance(currentXY, target)
     }
 
-    static func isSettled(_ streamer: CellStreamer) -> Bool {
+    public static func isSettled(_ streamer: CellStreamer) -> Bool {
         streamer.resolvedCellCount == streamer.desiredCellCount
             && streamer.inFlightCellCount == 0
             && streamer.pendingCompletionCount == 0

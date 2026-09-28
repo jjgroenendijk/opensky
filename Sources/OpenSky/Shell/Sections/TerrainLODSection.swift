@@ -3,6 +3,7 @@
 // former Environment panel LOD controls).
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyGameData
 
 final class TerrainLODSection: PanelSectionViewController {

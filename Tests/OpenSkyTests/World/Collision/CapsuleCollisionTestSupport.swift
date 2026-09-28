@@ -1,6 +1,6 @@
 // Shared synthetic-shape helper for capsule response tests.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

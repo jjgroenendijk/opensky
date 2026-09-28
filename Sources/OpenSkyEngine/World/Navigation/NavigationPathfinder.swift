@@ -7,27 +7,27 @@
 import OpenSkyFormats
 import simd
 
-nonisolated enum NavigationPortal: Equatable, Sendable {
+nonisolated public enum NavigationPortal: Equatable, Sendable {
     case edge(SIMD3<Float>, SIMD3<Float>)
     case door(reference: FormID, source: SIMD3<Float>, destination: SIMD3<Float>)
 }
 
-nonisolated struct NavigationTransition: Equatable, Sendable {
-    let target: NavigationTriangleID
-    let portal: NavigationPortal
+nonisolated public struct NavigationTransition: Equatable, Sendable {
+    public let target: NavigationTriangleID
+    public let portal: NavigationPortal
 }
 
-nonisolated struct NavigationCameFrom: Sendable {
-    let node: NavigationTriangleID
-    let portal: NavigationPortal
+nonisolated public struct NavigationCameFrom: Sendable {
+    public let node: NavigationTriangleID
+    public let portal: NavigationPortal
 }
 
-nonisolated struct NavigationOpenEntry: Sendable {
-    let node: NavigationTriangleID
-    let cost: Float
-    let heuristic: Float
+nonisolated public struct NavigationOpenEntry: Sendable {
+    public let node: NavigationTriangleID
+    public let cost: Float
+    public let heuristic: Float
 
-    static func precedes(_ lhs: Self, _ rhs: Self) -> Bool {
+    public static func precedes(_ lhs: Self, _ rhs: Self) -> Bool {
         if lhs.cost != rhs.cost {
             return lhs.cost < rhs.cost
         }
@@ -38,16 +38,18 @@ nonisolated struct NavigationOpenEntry: Sendable {
     }
 }
 
-nonisolated struct NavigationQueryScratch: Sendable {
-    var openHeap: [NavigationOpenEntry] = []
-    var transitions: [NavigationTransition] = []
-    var cameFrom: [NavigationTriangleID: NavigationCameFrom] = [:]
-    var costs: [NavigationTriangleID: Float] = [:]
-    var closed: Set<NavigationTriangleID> = []
-    var corridor: [NavigationTriangleID] = []
-    var corridorTransitions: [NavigationTransition] = []
+nonisolated public struct NavigationQueryScratch: Sendable {
+    public var openHeap: [NavigationOpenEntry] = []
+    public var transitions: [NavigationTransition] = []
+    public var cameFrom: [NavigationTriangleID: NavigationCameFrom] = [:]
+    public var costs: [NavigationTriangleID: Float] = [:]
+    public var closed: Set<NavigationTriangleID> = []
+    public var corridor: [NavigationTriangleID] = []
+    public var corridorTransitions: [NavigationTransition] = []
 
-    mutating func reset() {
+    public init() {}
+
+    public mutating func reset() {
         openHeap.removeAll(keepingCapacity: true)
         transitions.removeAll(keepingCapacity: true)
         cameFrom.removeAll(keepingCapacity: true)
@@ -57,7 +59,7 @@ nonisolated struct NavigationQueryScratch: Sendable {
         corridorTransitions.removeAll(keepingCapacity: true)
     }
 
-    mutating func push(_ entry: NavigationOpenEntry) {
+    public mutating func push(_ entry: NavigationOpenEntry) {
         openHeap.append(entry)
         var child = openHeap.count - 1
         while child > 0 {
@@ -68,7 +70,7 @@ nonisolated struct NavigationQueryScratch: Sendable {
         }
     }
 
-    mutating func pop() -> NavigationOpenEntry? {
+    public mutating func pop() -> NavigationOpenEntry? {
         guard !openHeap.isEmpty else { return nil }
         if openHeap.count == 1 {
             return openHeap.removeLast()
@@ -90,8 +92,8 @@ nonisolated struct NavigationQueryScratch: Sendable {
     }
 }
 
-nonisolated enum NavigationPathfinder {
-    static func findPath(
+nonisolated public enum NavigationPathfinder: Sendable {
+    public static func findPath(
         _ query: NavigationPathQuery,
         in graph: RuntimeNavigationGraph,
         scratch: inout NavigationQueryScratch
@@ -244,11 +246,11 @@ nonisolated private struct NavigationProjectedEndpoints {
 }
 
 nonisolated extension RuntimeNavigationGraph {
-    func triangle(_ node: NavigationTriangleID) -> RuntimeNavigationTriangle? {
+    public func triangle(_ node: NavigationTriangleID) -> RuntimeNavigationTriangle? {
         mesh(containing: node)?.triangle(node.triangle)
     }
 
-    func transitions(
+    public func transitions(
         from node: NavigationTriangleID,
         into result: inout [NavigationTransition]
     ) {

@@ -12,9 +12,9 @@
 
 import Foundation
 
-nonisolated enum PlayerLocomotionReadout {
+nonisolated public enum PlayerLocomotionReadout: Sendable {
     /// Where the player is and what is moving them.
-    static func stateText(for snapshot: PlayerLocomotionSnapshot) -> String {
+    public static func stateText(for snapshot: PlayerLocomotionSnapshot) -> String {
         guard snapshot.rendererAvailable else {
             return "Locomotion: unavailable (no renderer)"
         }
@@ -56,7 +56,7 @@ nonisolated enum PlayerLocomotionReadout {
 
     /// What the behavior graph is doing: the state path, the variables the
     /// bridge wrote, and the events that came back.
-    static func graphText(for snapshot: PlayerLocomotionSnapshot) -> String {
+    public static func graphText(for snapshot: PlayerLocomotionSnapshot) -> String {
         let status = snapshot.status
         guard status.graphAvailable else {
             return "Behavior graph: not attached\n"
@@ -78,7 +78,7 @@ nonisolated enum PlayerLocomotionReadout {
 
     /// The bindings the milestone added, and whether each input is asserted
     /// right now.
-    static func bindingsText(for snapshot: PlayerLocomotionSnapshot) -> String {
+    public static func bindingsText(for snapshot: PlayerLocomotionSnapshot) -> String {
         guard !snapshot.bindings.isEmpty else {
             return "No binding is published."
         }
@@ -91,7 +91,7 @@ nonisolated enum PlayerLocomotionReadout {
 
     /// Where each motion source has carried the capsule, and the steps at which
     /// the answer changed.
-    static func motionText(for snapshot: PlayerLocomotionSnapshot) -> String {
+    public static func motionText(for snapshot: PlayerLocomotionSnapshot) -> String {
         let status = snapshot.status
         var header = "Travel: root motion \(format(status.rootMotionDistance)) u"
         header += "  configured speed \(format(status.configuredSpeedDistance)) u"
@@ -119,7 +119,10 @@ nonisolated enum PlayerLocomotionReadout {
 
     /// What the two dev controls have done, stated even when they have done
     /// nothing: "no gait forced" is the default the sidebar's reset restores.
-    static func devText(for snapshot: PlayerLocomotionSnapshot, lastEvent: String?) -> String {
+    public static func devText(
+        for snapshot: PlayerLocomotionSnapshot,
+        lastEvent: String?
+    ) -> String {
         let forced: String = snapshot.forcedGait
             .map { "Forced gait: \($0.rawValue)" }
             ?? "Forced gait: none (player input resolves it)"
@@ -196,7 +199,7 @@ nonisolated enum PlayerLocomotionReadout {
         names.isEmpty ? "none" : names.joined(separator: ", ")
     }
 
-    static func name(of source: LocomotionMotionSource) -> String {
+    public static func name(of source: LocomotionMotionSource) -> String {
         switch source {
         case .rootMotion: "root motion"
         case .configuredSpeed: "configured speed"

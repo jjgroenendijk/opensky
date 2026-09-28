@@ -18,12 +18,12 @@ import OpenSkyFormats
 nonisolated extension AudioCodecParameters {
     /// The six-byte WMAv2 extradata block ffmpeg's xWMA demuxer synthesizes when
     /// the container carries none (byte 4 = 31, all others zero).
-    static let synthesizedWMAv2Extradata = Data([0, 0, 0, 0, 31, 0])
+    public static let synthesizedWMAv2Extradata = Data([0, 0, 0, 0, 31, 0])
 
     /// Decoder parameters for a framed `.xwm` file. Empty container extradata is
     /// replaced with the synthesized WMAv2 block; explicit extradata passes
     /// through untouched.
-    init(xwm codec: XWMCodecParameters) {
+    public init(xwm codec: XWMCodecParameters) {
         self.init(
             formatTag: codec.formatTag,
             channelCount: codec.channelCount,

@@ -9,24 +9,24 @@
 
 import Foundation
 
-nonisolated struct InventoryMenuControlSnapshot: Equatable {
-    let isOpen: Bool
+nonisolated public struct InventoryMenuControlSnapshot: Equatable, Sendable {
+    public let isOpen: Bool
     /// Menu-stack identifiers currently open, top last. Proves the menu drives
     /// the engine's own stack rather than a private flag.
-    let openMenus: [String]
-    let worldSimPaused: Bool
+    public let openMenus: [String]
+    public let worldSimPaused: Bool
 
     /// Engine-side list. Present whether or not the movie is up, so the menu
     /// is verifiable with no install-side movie at all.
-    let categoryLabels: [String]
-    let selectedCategoryIndex: Int
+    public let categoryLabels: [String]
+    public let selectedCategoryIndex: Int
     /// One line per row of the selected category, already formatted.
-    let entryLines: [String]
-    let selectedIndex: Int
-    let carriedWeight: Float
-    let gold: Int32
+    public let entryLines: [String]
+    public let selectedIndex: Int
+    public let carriedWeight: Float
+    public let gold: Int32
     /// What the last equip, unequip or drop did, for the readout.
-    let lastActionText: String?
+    public let lastActionText: String?
     /// One line per equipped item that carries an enchantment: what it is and how
     /// much charge is left (issue #472). Empty when nothing equipped is enchanted
     /// and when the session has no ENCH index.
@@ -34,24 +34,68 @@ nonisolated struct InventoryMenuControlSnapshot: Equatable {
     /// Beside the row list rather than inside it, because charge is a fact about
     /// the *equipped* item and the rows list everything carried; a stack of five
     /// unenchanted iron swords has no charge to show.
-    let enchantmentLines: [String]
+    public let enchantmentLines: [String]
 
     /// Vanilla presentation layer.
-    let movieEnabled: Bool
-    let movieLoaded: Bool
-    let movieError: String?
-    let movieDrawStats: SWFDrawStats
-    let movieFaults: Int
-    let movieMissingNames: Int
-    let movieUnhandledInvokes: Int
+    public let movieEnabled: Bool
+    public let movieLoaded: Bool
+    public let movieError: String?
+    public let movieDrawStats: SWFDrawStats
+    public let movieFaults: Int
+    public let movieMissingNames: Int
+    public let movieUnhandledInvokes: Int
     /// Row labels the movie's own list built for itself, read back out of
     /// `EntriesA`. These prove the engine's rows actually reached the movie.
-    let movieEntryTitles: [String]
-    let movieCategoryTitles: [String]
+    public let movieEntryTitles: [String]
+    public let movieCategoryTitles: [String]
+
+    public init(
+        isOpen: Bool,
+        openMenus: [String],
+        worldSimPaused: Bool,
+        categoryLabels: [String],
+        selectedCategoryIndex: Int,
+        entryLines: [String],
+        selectedIndex: Int,
+        carriedWeight: Float,
+        gold: Int32,
+        lastActionText: String?,
+        enchantmentLines: [String],
+        movieEnabled: Bool,
+        movieLoaded: Bool,
+        movieError: String?,
+        movieDrawStats: SWFDrawStats,
+        movieFaults: Int,
+        movieMissingNames: Int,
+        movieUnhandledInvokes: Int,
+        movieEntryTitles: [String],
+        movieCategoryTitles: [String]
+    ) {
+        self.isOpen = isOpen
+        self.openMenus = openMenus
+        self.worldSimPaused = worldSimPaused
+        self.categoryLabels = categoryLabels
+        self.selectedCategoryIndex = selectedCategoryIndex
+        self.entryLines = entryLines
+        self.selectedIndex = selectedIndex
+        self.carriedWeight = carriedWeight
+        self.gold = gold
+        self.lastActionText = lastActionText
+        self.enchantmentLines = enchantmentLines
+        self.movieEnabled = movieEnabled
+        self.movieLoaded = movieLoaded
+        self.movieError = movieError
+        self.movieDrawStats = movieDrawStats
+        self.movieFaults = movieFaults
+        self.movieMissingNames = movieMissingNames
+        self.movieUnhandledInvokes = movieUnhandledInvokes
+        self.movieEntryTitles = movieEntryTitles
+        self.movieCategoryTitles = movieCategoryTitles
+    }
 }
 
 @MainActor
-protocol InventoryMenuControlProviding: AnyObject {
+public protocol InventoryMenuControlProviding: AnyObject {
     var inventoryMenuIsOpen: Bool { get }
     /// Drives the vanilla `Interface\inventorymenu.swf` presentation layer. Off
     /// keeps the engine-side row list working with the gameplay HUD on screen.

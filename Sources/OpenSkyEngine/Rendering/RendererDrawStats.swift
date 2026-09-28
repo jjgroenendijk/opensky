@@ -2,23 +2,29 @@
 // streaming acceptance gates.
 
 /// Per-frame culling + draw accounting from the most recently encoded frame.
-nonisolated struct SceneDrawStats: Equatable {
-    var drawCalls = 0
-    var drawnInstances = 0
-    var culledInstances = 0
+nonisolated public struct SceneDrawStats: Equatable, Sendable {
+    public var drawCalls = 0
+    public var drawnInstances = 0
+    public var culledInstances = 0
+
+    public init(drawCalls: Int = 0, drawnInstances: Int = 0, culledInstances: Int = 0) {
+        self.drawCalls = drawCalls
+        self.drawnInstances = drawnInstances
+        self.culledInstances = culledInstances
+    }
 }
 
 /// Separates intentional grass policy from ordinary frustum culling.
-nonisolated struct GrassDrawStats: Equatable {
-    var sceneInstances = 0
-    var drawCalls = 0
-    var drawnInstances = 0
-    var densityCulledInstances = 0
-    var distanceCulledInstances = 0
-    var frustumCulledInstances = 0
-    var budgetDroppedInstances = 0
+nonisolated public struct GrassDrawStats: Equatable, Sendable {
+    public var sceneInstances = 0
+    public var drawCalls = 0
+    public var drawnInstances = 0
+    public var densityCulledInstances = 0
+    public var distanceCulledInstances = 0
+    public var frustumCulledInstances = 0
+    public var budgetDroppedInstances = 0
 
-    mutating func formMaximum(_ other: GrassDrawStats) {
+    public mutating func formMaximum(_ other: GrassDrawStats) {
         sceneInstances = max(sceneInstances, other.sceneInstances)
         drawCalls = max(drawCalls, other.drawCalls)
         drawnInstances = max(drawnInstances, other.drawnInstances)
@@ -26,5 +32,23 @@ nonisolated struct GrassDrawStats: Equatable {
         distanceCulledInstances = max(distanceCulledInstances, other.distanceCulledInstances)
         frustumCulledInstances = max(frustumCulledInstances, other.frustumCulledInstances)
         budgetDroppedInstances = max(budgetDroppedInstances, other.budgetDroppedInstances)
+    }
+
+    public init(
+        sceneInstances: Int = 0,
+        drawCalls: Int = 0,
+        drawnInstances: Int = 0,
+        densityCulledInstances: Int = 0,
+        distanceCulledInstances: Int = 0,
+        frustumCulledInstances: Int = 0,
+        budgetDroppedInstances: Int = 0
+    ) {
+        self.sceneInstances = sceneInstances
+        self.drawCalls = drawCalls
+        self.drawnInstances = drawnInstances
+        self.densityCulledInstances = densityCulledInstances
+        self.distanceCulledInstances = distanceCulledInstances
+        self.frustumCulledInstances = frustumCulledInstances
+        self.budgetDroppedInstances = budgetDroppedInstances
     }
 }

@@ -5,43 +5,63 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct PackageActorReadout: Equatable, Sendable {
-    let actor: ReferenceKey
-    let actorBase: FormID
-    let currentPackage: FormID?
-    let editorID: String?
-    let schedule: Package.Schedule?
-    let procedure: PackageProcedureKind?
-    let lastEvaluationGameSeconds: Double?
+nonisolated public struct PackageActorReadout: Equatable, Sendable {
+    public let actor: ReferenceKey
+    public let actorBase: FormID
+    public let currentPackage: FormID?
+    public let editorID: String?
+    public let schedule: Package.Schedule?
+    public let procedure: PackageProcedureKind?
+    public let lastEvaluationGameSeconds: Double?
     /// True while something outside the schedule is holding this actor — a
     /// conversation, as of issue #427. A suspended actor keeps the package it
     /// had, so the readout can say what it will go back to, and is not
     /// re-evaluated until it is released.
-    var isSuspended = false
+    public var isSuspended = false
+
+    public init(
+        actor: ReferenceKey,
+        actorBase: FormID,
+        currentPackage: FormID?,
+        editorID: String?,
+        schedule: Package.Schedule?,
+        procedure: PackageProcedureKind?,
+        lastEvaluationGameSeconds: Double?,
+        isSuspended: Bool = false
+    ) {
+        self.actor = actor
+        self.actorBase = actorBase
+        self.currentPackage = currentPackage
+        self.editorID = editorID
+        self.schedule = schedule
+        self.procedure = procedure
+        self.lastEvaluationGameSeconds = lastEvaluationGameSeconds
+        self.isSuspended = isSuspended
+    }
 }
 
-nonisolated struct ActorPackageRuntime {
-    static let maximumReevaluationGameMinutes: Float = 15
+nonisolated public struct ActorPackageRuntime {
+    public static let maximumReevaluationGameMinutes: Float = 15
 
-    var onSelectionChanged: ((PackageActorReadout) -> Void)?
+    public var onSelectionChanged: ((PackageActorReadout) -> Void)?
 
     private let store: PackageStore
     private var actors: [ReferenceKey: ActorState] = [:]
 
-    init(store: PackageStore) {
+    public init(store: PackageStore) {
         self.store = store
     }
 
-    mutating func register(actor: ReferenceKey, base: FormID) throws {
+    public mutating func register(actor: ReferenceKey, base: FormID) throws {
         let stack = try store.packageStack(for: base).value
         actors[actor] = ActorState(base: base, stack: stack)
     }
 
-    mutating func unregister(actor: ReferenceKey) {
+    public mutating func unregister(actor: ReferenceKey) {
         actors.removeValue(forKey: actor)
     }
 
-    mutating func advance(
+    public mutating func advance(
         clock: GameClock,
         context: (ReferenceKey) -> ConditionContext
     ) {
@@ -63,16 +83,16 @@ nonisolated struct ActorPackageRuntime {
     /// it needs on release is the package the schedule names *now*, which is
     /// what `forceReevaluate(actor:clock:context:)` answers — the same
     /// reasoning combat's own resume follows.
-    mutating func setSuspended(_ suspended: Bool, actor: ReferenceKey) {
+    public mutating func setSuspended(_ suspended: Bool, actor: ReferenceKey) {
         actors[actor]?.isSuspended = suspended
     }
 
-    func isSuspended(_ actor: ReferenceKey) -> Bool {
+    public func isSuspended(_ actor: ReferenceKey) -> Bool {
         actors[actor]?.isSuspended ?? false
     }
 
     /// On-demand seam for the M16 gate panel.
-    mutating func forceReevaluate(
+    public mutating func forceReevaluate(
         actor: ReferenceKey,
         clock: GameClock,
         context: ConditionContext
@@ -80,11 +100,11 @@ nonisolated struct ActorPackageRuntime {
         reevaluate(actor: actor, clock: clock, context: context)
     }
 
-    func currentPackage(for actor: ReferenceKey) -> ResolvedPackage? {
+    public func currentPackage(for actor: ReferenceKey) -> ResolvedPackage? {
         actors[actor]?.current
     }
 
-    func readouts() -> [PackageActorReadout] {
+    public func readouts() -> [PackageActorReadout] {
         actors.keys.sorted().compactMap { actors[$0]?.readout(actor: $0) }
     }
 

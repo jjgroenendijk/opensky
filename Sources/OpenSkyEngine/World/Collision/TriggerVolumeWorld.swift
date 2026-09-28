@@ -10,54 +10,68 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct TriggerVolume {
+nonisolated public struct TriggerVolume: Sendable {
     /// The REFR that authored this volume.
-    let reference: ReferenceKey
-    let formID: FormID
-    let transform: float4x4
-    let geometry: NIFCollisionGeometry
+    public let reference: ReferenceKey
+    public let formID: FormID
+    public let transform: float4x4
+    public let geometry: NIFCollisionGeometry
     /// World-space AABB.
-    let bounds: ModelBounds
+    public let bounds: ModelBounds
 }
 
 /// Trigger accounting for one cell, or summed over resident cells. Kept
 /// separate from `StaticCollisionStats` rather than folded into it because
 /// `filteredBodyCount` there has a pinned meaning the CLI grid acceptance
 /// asserts on, and a trigger tally is a different question.
-nonisolated struct TriggerVolumeStats: Equatable {
+nonisolated public struct TriggerVolumeStats: Equatable, Sendable {
     /// Volumes contributed by SkyrimLayer 12 shapes inside a placed NIF.
-    var meshVolumeCount = 0
+    public var meshVolumeCount = 0
     /// Volumes contributed by an `XPRM` box or sphere primitive.
-    var primitiveVolumeCount = 0
+    public var primitiveVolumeCount = 0
     /// `XPRM` primitives deliberately not made volumes: `none`, `portalBox`
     /// and `line` (see docs/engine/trigger-volumes.md).
-    var excludedPrimitiveCount = 0
+    public var excludedPrimitiveCount = 0
     /// Trigger sources whose geometry produced no finite world bounds.
-    var degenerateVolumeCount = 0
+    public var degenerateVolumeCount = 0
     /// Trigger sources dropped because no runtime index entry supplied a
     /// `ReferenceKey`, so no script instance could ever be addressed.
-    var unkeyedReferenceCount = 0
+    public var unkeyedReferenceCount = 0
 
-    var volumeCount: Int {
+    public var volumeCount: Int {
         meshVolumeCount + primitiveVolumeCount
     }
 
-    mutating func add(_ other: TriggerVolumeStats) {
+    public mutating func add(_ other: TriggerVolumeStats) {
         meshVolumeCount += other.meshVolumeCount
         primitiveVolumeCount += other.primitiveVolumeCount
         excludedPrimitiveCount += other.excludedPrimitiveCount
         degenerateVolumeCount += other.degenerateVolumeCount
         unkeyedReferenceCount += other.unkeyedReferenceCount
     }
+
+    public init(
+        meshVolumeCount: Int = 0,
+        primitiveVolumeCount: Int = 0,
+        excludedPrimitiveCount: Int = 0,
+        degenerateVolumeCount: Int = 0,
+        unkeyedReferenceCount: Int = 0
+    ) {
+        self.meshVolumeCount = meshVolumeCount
+        self.primitiveVolumeCount = primitiveVolumeCount
+        self.excludedPrimitiveCount = excludedPrimitiveCount
+        self.degenerateVolumeCount = degenerateVolumeCount
+        self.unkeyedReferenceCount = unkeyedReferenceCount
+    }
 }
 
-nonisolated struct TriggerVolumeSet {
-    let location: CellSceneLocation?
-    let volumes: [TriggerVolume]
-    let stats: TriggerVolumeStats
+nonisolated public struct TriggerVolumeSet: Sendable {
+    public let location: CellSceneLocation?
+    public let volumes: [TriggerVolume]
+    public let stats: TriggerVolumeStats
     private let index: BoundsSpatialIndex
 
-    init(
+    public init(
         location: CellSceneLocation?,
         volumes: [TriggerVolume],
         stats: TriggerVolumeStats = TriggerVolumeStats()
@@ -68,15 +82,15 @@ nonisolated struct TriggerVolumeSet {
         index = BoundsSpatialIndex(bounds: volumes.map(\.bounds))
     }
 
-    static let empty = TriggerVolumeSet(location: nil, volumes: [])
+    public static let empty = TriggerVolumeSet(location: nil, volumes: [])
 
-    var indexNodeCount: Int {
+    public var indexNodeCount: Int {
         index.nodeCount
     }
 
     /// Broadphase: volumes whose world AABB overlaps `bounds`, in ascending
     /// source order so repeated queries are deterministic.
-    func candidates(overlapping bounds: ModelBounds) -> [TriggerVolume] {
+    public func candidates(overlapping bounds: ModelBounds) -> [TriggerVolume] {
         index.query(overlapping: bounds)
             .map { volumes[$0] }
             .filter { $0.bounds.overlaps(bounds) }
@@ -91,7 +105,7 @@ nonisolated extension TriggerVolume {
     /// geometry case's local bounds) pushed through `transform` by 8-corner
     /// reboxing. Nil when the geometry yields no finite bounds — a degenerate
     /// soup with no in-range indices, or a non-finite transform.
-    static func placed(
+    public static func placed(
         reference: ReferenceKey,
         formID: FormID,
         transform: float4x4,
@@ -120,7 +134,7 @@ nonisolated extension TriggerVolumeSet {
     ///
     /// Broadphase on the capsule's world AABB, then a per-geometry narrowphase.
     /// Source order is preserved from `candidates(overlapping:)`.
-    func volumes(
+    public func volumes(
         intersecting capsule: PlayerCapsule,
         at feetPosition: SIMD3<Float>
     ) -> [TriggerVolume] {
@@ -130,7 +144,7 @@ nonisolated extension TriggerVolumeSet {
 }
 
 /// One capsule pose resolved into the values every narrowphase case needs.
-nonisolated struct TriggerCapsuleQuery {
+nonisolated public struct TriggerCapsuleQuery: Sendable {
     /// Matches `CapsuleWorldCollider.contactTolerance`, so a capsule the solid
     /// narrowphase treats as touching a surface also counts as inside a
     /// coincident trigger.
@@ -140,13 +154,13 @@ nonisolated struct TriggerCapsuleQuery {
     /// dozen steps is far past the precision a trigger boolean needs.
     private static let boxSolveIterations = 12
 
-    let capsule: PlayerCapsule
+    public let capsule: PlayerCapsule
     /// Capsule axis segment: the two sphere centers, bottom then top.
-    let segment: (first: SIMD3<Float>, second: SIMD3<Float>)
+    public let segment: (first: SIMD3<Float>, second: SIMD3<Float>)
     /// World AABB of the capsule, grown by the contact tolerance.
-    let bounds: ModelBounds
+    public let bounds: ModelBounds
 
-    init(capsule: PlayerCapsule, feetPosition: SIMD3<Float>) {
+    public init(capsule: PlayerCapsule, feetPosition: SIMD3<Float>) {
         self.capsule = capsule
         segment = (
             feetPosition + SIMD3<Float>(0, 0, capsule.radius),
@@ -158,7 +172,7 @@ nonisolated struct TriggerCapsuleQuery {
         bounds = ModelBounds(min: low, max: high)
     }
 
-    func intersects(_ volume: TriggerVolume) -> Bool {
+    public func intersects(_ volume: TriggerVolume) -> Bool {
         switch volume.geometry {
         case let .box(halfExtents):
             return intersectsBox(halfExtents: halfExtents, transform: volume.transform)
@@ -216,13 +230,13 @@ nonisolated struct TriggerCapsuleQuery {
 /// Boolean-only segment math. `CapsuleWorldCollider` owns the equivalent
 /// contact-producing routines for solid collision; these stay separate because
 /// they answer a distance question and never build a normal or a depth.
-nonisolated enum TriggerVolumeMath {
-    static func transform(_ point: SIMD3<Float>, by matrix: float4x4) -> SIMD3<Float> {
+nonisolated public enum TriggerVolumeMath: Sendable {
+    public static func transform(_ point: SIMD3<Float>, by matrix: float4x4) -> SIMD3<Float> {
         let transformed = matrix * SIMD4<Float>(point, 1)
         return SIMD3(transformed.x, transformed.y, transformed.z)
     }
 
-    static func maximumScale(of matrix: float4x4) -> Float {
+    public static func maximumScale(of matrix: float4x4) -> Float {
         max(
             simd_length(SIMD3(matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z)),
             simd_length(SIMD3(matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z)),
@@ -230,7 +244,7 @@ nonisolated enum TriggerVolumeMath {
         )
     }
 
-    static func closestPoint(
+    public static func closestPoint(
         on segment: (SIMD3<Float>, SIMD3<Float>),
         to point: SIMD3<Float>
     ) -> SIMD3<Float> {
@@ -244,7 +258,7 @@ nonisolated enum TriggerVolumeMath {
     /// Closest point pair between two segments, clamped to both endpoints.
     /// Closed form over the two parameters, with the degenerate zero-length
     /// cases handled before the divide.
-    static func closestSegments(
+    public static func closestSegments(
         _ first: (SIMD3<Float>, SIMD3<Float>),
         _ second: (SIMD3<Float>, SIMD3<Float>)
     ) -> (first: SIMD3<Float>, second: SIMD3<Float>) {

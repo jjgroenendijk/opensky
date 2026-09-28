@@ -18,7 +18,7 @@
 // `logs/` and names counts and editor IDs only.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

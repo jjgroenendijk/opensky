@@ -15,6 +15,7 @@
 // registry edit and no control id changes.
 
 import AppKit
+import OpenSkyEngine
 
 final class DialogueSection: PanelSectionViewController {
     weak var provider: (any DialogueControlProviding)? {

@@ -16,7 +16,7 @@
 // it (AGENTS.md Legal & IP), and it is written only to gitignored `logs/`.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// How one raw function index is actually used across every CTDA seen.

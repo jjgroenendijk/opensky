@@ -2,6 +2,7 @@
 // and object LOD NIF for one worldspace through production decoders.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

@@ -3,7 +3,7 @@
 import Foundation
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installUtility(into registry: inout PapyrusNativeRegistry) {
+    public static func installUtility(into registry: inout PapyrusNativeRegistry) {
         installWaits(into: &registry)
         installRandom(into: &registry)
     }

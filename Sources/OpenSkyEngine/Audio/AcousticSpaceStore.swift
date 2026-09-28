@@ -7,14 +7,14 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated final class AcousticSpaceStore {
-    let spaces: [UInt32: AcousticSpace]
+nonisolated public final class AcousticSpaceStore {
+    public let spaces: [UInt32: AcousticSpace]
 
-    init(file: ESMFile) {
+    public init(file: ESMFile) {
         spaces = Self.index(file, type: "ASPC") { try? AcousticSpace(record: $0) }
     }
 
-    func acousticSpace(_ id: FormID) -> AcousticSpace? {
+    public func acousticSpace(_ id: FormID) -> AcousticSpace? {
         spaces[id.rawValue]
     }
 

@@ -4,7 +4,7 @@
 
 import FormatsTestSupport
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// Standard scenario: one race (skin torso+feet), an alternate skin, clothes

@@ -10,33 +10,33 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct OpenSkySaveFile: Equatable, Sendable {
+nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
     /// Layout version the file declared.
-    let formatVersion: UInt32
-    let metadata: SaveCreationMetadata
+    public let formatVersion: UInt32
+    public let metadata: SaveCreationMetadata
     /// Load order the save was written against, in load order.
-    let fingerprint: [SavePluginFingerprint]
+    public let fingerprint: [SavePluginFingerprint]
     /// World state at save time. Its `sequence` is 0: the journal position is
     /// session-local bookkeeping and is not saved.
-    let snapshot: WorldStateSnapshot
+    public let snapshot: WorldStateSnapshot
     /// Allocator resumed at the saved position, so a restored session hands
     /// out generated keys that cannot collide with saved ones.
-    let allocator: GeneratedReferenceAllocator
+    public let allocator: GeneratedReferenceAllocator
     /// Game clock at save time (issue #164), nil when the file carries no
     /// `CLOK` chunk — a pre-clock save — which restores the vanilla-start
     /// clock.
-    let clock: GameClock?
+    public let clock: GameClock?
     /// Papyrus script instance state at save time (issue #171), empty when the
     /// file carries no `PSCR` chunk — a pre-script save, or a session that ran
     /// no VM — which restores scripts at their compiled defaults.
-    let scripts: [PapyrusInstanceState]
+    public let scripts: [PapyrusInstanceState]
     /// Pending Papyrus update timers at save time (issue #277), empty when the
     /// file carries no `PTMR` chunk — a pre-timer save, or a session in which
     /// no persistent instance had a timer armed — which restores a world where
     /// no script has a pending `OnUpdate`.
-    let timers: [PapyrusTimerState]
+    public let timers: [PapyrusTimerState]
 
-    init(
+    public init(
         formatVersion: UInt32,
         metadata: SaveCreationMetadata,
         fingerprint: [SavePluginFingerprint],
@@ -66,7 +66,7 @@ nonisolated struct OpenSkySaveFile: Equatable, Sendable {
     ///
     /// - Throws: `OpenSkySaveError.fingerprintMismatch` naming the first
     ///   difference.
-    func verifyFingerprint(against current: [SavePluginFingerprint]) throws {
+    public func verifyFingerprint(against current: [SavePluginFingerprint]) throws {
         for index in 0 ..< max(fingerprint.count, current.count) {
             try Self.compare(
                 saved: Self.element(fingerprint, at: index),

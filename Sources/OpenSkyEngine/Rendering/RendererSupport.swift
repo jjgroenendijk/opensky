@@ -7,13 +7,13 @@ import Metal
 /// frames in flight when they were retired. The strong references here keep
 /// the allocations alive; residency-set removal waits until
 /// `endFrameEvent.signaledValue` proves `lastFrameIndex` drained.
-nonisolated struct RetiredAllocations {
+nonisolated public struct RetiredAllocations {
     /// Highest frame index that may still reference these allocations.
-    let lastFrameIndex: UInt64
-    let allocations: [MTLAllocation]
+    public let lastFrameIndex: UInt64
+    public let allocations: [MTLAllocation]
 }
 
-nonisolated enum RendererError: Error {
+nonisolated public enum RendererError: Error {
     case deviceUnavailable
     case commandQueueUnavailable
     case commandBufferUnavailable

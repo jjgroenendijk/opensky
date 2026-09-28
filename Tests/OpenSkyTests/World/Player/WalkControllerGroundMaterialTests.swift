@@ -2,7 +2,7 @@
 // This is the argument the footstep chain was missing: the collision world
 // carries a per-shape material, and the controller says which one is underfoot.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

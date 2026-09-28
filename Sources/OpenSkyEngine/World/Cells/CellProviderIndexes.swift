@@ -5,7 +5,7 @@ import Metal
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct CellProviderIndexes {
+nonisolated public struct CellProviderIndexes {
     /// The four load-order magic stores, decoded off one shared `RecordIndex`
     /// rather than one load-order scan each: MGEF, SPEL, SCRL, EQUP and ENCH come
     /// off the same index and the plugin files are walked once (issues #470 and
@@ -74,66 +74,66 @@ nonisolated struct CellProviderIndexes {
         }
     }
 
-    let builder: CellSceneBuilder
-    let weatherSystem: WeatherSystem?
-    let soundStore: SoundRecordStore
-    let footstepStore: FootstepStore
-    let materialTypes: MaterialTypeIndex
+    public let builder: CellSceneBuilder
+    public let weatherSystem: WeatherSystem?
+    public let soundStore: SoundRecordStore
+    public let footstepStore: FootstepStore
+    public let materialTypes: MaterialTypeIndex
     /// NAVI decoded once (issue #199). Not passed to the provider: nothing in
     /// the scene build reads a navmesh yet, and the pathing graph that will
     /// (16.2, issue #200) takes it from here directly.
-    let navmeshes: NavmeshIndex
-    let aspcStore: AcousticSpaceStore
-    let musicStore: MusicRecordStore
-    let globalStore: GlobalStore
-    let questStore: QuestStore
-    let locationStore: LocationStore
-    let dialogueStore: DialogueStore
-    let packageStore: PackageStore
-    let inventoryBaselines: InventoryBaselineResolver
-    let equipmentCatalog: EquipmentCatalog
-    let actorValueBaselines: ActorValueBaselineResolver
+    public let navmeshes: NavmeshIndex
+    public let aspcStore: AcousticSpaceStore
+    public let musicStore: MusicRecordStore
+    public let globalStore: GlobalStore
+    public let questStore: QuestStore
+    public let locationStore: LocationStore
+    public let dialogueStore: DialogueStore
+    public let packageStore: PackageStore
+    public let inventoryBaselines: InventoryBaselineResolver
+    public let equipmentCatalog: EquipmentCatalog
+    public let actorValueBaselines: ActorValueBaselineResolver
     /// Load-order MGEF index (issue #469), behind every EFID an applied effect
     /// resolves.
-    let magicEffectStore: MagicEffectStore
+    public let magicEffectStore: MagicEffectStore
     /// Load-order SPEL and SCRL index (issue #470), which the spellbook keys
     /// its known spells against.
-    let spellStore: SpellStore
+    public let spellStore: SpellStore
     /// Load-order EQUP index (issue #470), which answers which hands a readied
     /// spell takes.
-    let equipSlotStore: EquipSlotStore
+    public let equipSlotStore: EquipSlotStore
     /// Load-order ENCH index (issue #472), behind every enchanted weapon's charge
     /// and every worn item's constant effects.
-    let enchantmentStore: EnchantmentStore
+    public let enchantmentStore: EnchantmentStore
     /// Load-order PERK index (issue #497), which the perk runtime owns perks
     /// out of.
-    let perkStore: PerkStore
+    public let perkStore: PerkStore
     /// Load-order AVIF index (issue #498), which skill advancement reads each
     /// skill's `AVSK` parameters out of.
-    let actorValueInformation: ActorValueInformationStore
+    public let actorValueInformation: ActorValueInformationStore
     /// Load-order FACT index (issue #501), which every runtime membership is
     /// resolved through.
-    let factionStore: FactionStore
+    public let factionStore: FactionStore
     /// Load-order RELA and ASTP index (issue #502), which the hostility
     /// derivation asks about one specific pair of actors.
-    let relationshipStore: RelationshipStore
+    public let relationshipStore: RelationshipStore
     /// Load-order FLST index (issue #506), which a vendor faction's buy/sell
     /// keyword list is flattened through.
-    let formListStore: FormListStore
+    public let formListStore: FormListStore
     /// GMST-derived `fSkillUseCurve` and `fXPPerSkillRank` (issue #498).
-    let skillAdvancementSettings: SkillAdvancementSettings
+    public let skillAdvancementSettings: SkillAdvancementSettings
     /// GMST-derived level curve and level-up rewards (issue #499).
-    let characterLevelSettings: CharacterLevelSettings
+    public let characterLevelSettings: CharacterLevelSettings
     /// Plugin the item indexes were built from, which magic-item EFID links are
     /// relative to.
-    let magicItemPluginName: String
-    let movementConfiguration: PlayerMovementConfiguration
-    let barterPricing: BarterPricing
-    let combatSettings: CombatSettings
-    let archerySettings: ArcherySettings
-    let detectionSettings: DetectionSettings
+    public let magicItemPluginName: String
+    public let movementConfiguration: PlayerMovementConfiguration
+    public let barterPricing: BarterPricing
+    public let combatSettings: CombatSettings
+    public let archerySettings: ArcherySettings
+    public let detectionSettings: DetectionSettings
 
-    init(
+    public init(
         root: GameDataRoot,
         fileSystem: VirtualFileSystem,
         device: MTLDevice,
@@ -227,7 +227,7 @@ nonisolated struct CellProviderIndexes {
         )
     }
 
-    func makeProvider() -> BuilderCellSceneProvider {
+    public func makeProvider() -> BuilderCellSceneProvider {
         BuilderCellSceneProvider(
             builder: builder,
             worldspaceEditorID: FirstRenderCell.worldspaceEditorID,

@@ -16,58 +16,70 @@ import Foundation
 /// One key binding as the panel presents it. `label` is what the control shows;
 /// `isActive` is whether that input is asserted right now, so a user can press
 /// the key and watch the row light up rather than trusting the label.
-nonisolated struct LocomotionBindingSnapshot: Equatable, Sendable {
-    let id: String
-    let label: String
-    let key: String
-    let isActive: Bool
+nonisolated public struct LocomotionBindingSnapshot: Equatable, Sendable {
+    public let id: String
+    public let label: String
+    public let key: String
+    public let isActive: Bool
+
+    public init(id: String, label: String, key: String, isActive: Bool) {
+        self.id = id
+        self.label = label
+        self.key = key
+        self.isActive = isActive
+    }
 }
 
 /// One graph variable as the readout lists it: the name the bridge writes, the
 /// value the graph currently holds, and whether the graph declared it at all.
 /// A name the graph does not declare is listed rather than dropped, because a
 /// missing binding is the failure the readout exists to make visible.
-nonisolated struct LocomotionVariableSnapshot: Equatable, Sendable {
-    let name: String
+nonisolated public struct LocomotionVariableSnapshot: Equatable, Sendable {
+    public let name: String
     /// The live value, formatted by the graph's own type, or nil when the graph
     /// declares no variable of that name.
-    let value: String?
+    public let value: String?
 
-    var isBound: Bool {
+    public var isBound: Bool {
         value != nil
+    }
+
+    public init(name: String, value: String?) {
+        self.name = name
+        self.value = value
     }
 }
 
 /// What the locomotion readout shows for one refresh.
-nonisolated struct PlayerLocomotionSnapshot: Equatable, Sendable {
+nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
     /// False when there is no renderer at all (no Metal 4 device). Reported
     /// rather than shown as a row of zeros.
-    let rendererAvailable: Bool
+    public let rendererAvailable: Bool
     /// True while the camera is in walk or third-person mode. Everything below
     /// only advances there; fly mode freezes the values instead of clearing
     /// them.
-    let walkModeActive: Bool
-    let status: LocomotionStatus
-    let bindings: [LocomotionBindingSnapshot]
+    public let walkModeActive: Bool
+    public let status: LocomotionStatus
+    public let bindings: [LocomotionBindingSnapshot]
     /// Resolved gait speeds and their provenance, so the panel can say which
     /// number came from the install and which is an OpenSky fallback.
-    let configuration: PlayerMovementConfiguration
+    public let configuration: PlayerMovementConfiguration
     /// The state path the third-person graph resolved on its last update, from
     /// the outermost state machine inward.
-    let activeStates: [BehaviorActiveState]
+    public let activeStates: [BehaviorActiveState]
     /// The same for the first-person graph (issue #190), kept apart so a
     /// perspective that diverges is visible rather than averaged.
-    let firstPersonActiveStates: [BehaviorActiveState]
+    public let firstPersonActiveStates: [BehaviorActiveState]
     /// Every variable the bridge writes, with the value the graph holds.
-    let variables: [LocomotionVariableSnapshot]
+    public let variables: [LocomotionVariableSnapshot]
     /// The gait held by the dev control, or nil while the player's own input
     /// resolves it.
-    let forcedGait: LocomotionGait?
+    public let forcedGait: LocomotionGait?
     /// What the third-person graph could not evaluate, which is the honest
     /// coverage number this destination publishes.
-    let tally: BehaviorTally?
+    public let tally: BehaviorTally?
 
-    static let unavailable = PlayerLocomotionSnapshot(
+    public static let unavailable = PlayerLocomotionSnapshot(
         rendererAvailable: false,
         walkModeActive: false,
         status: LocomotionStatus(),
@@ -79,10 +91,34 @@ nonisolated struct PlayerLocomotionSnapshot: Equatable, Sendable {
         forcedGait: nil,
         tally: nil
     )
+
+    public init(
+        rendererAvailable: Bool,
+        walkModeActive: Bool,
+        status: LocomotionStatus,
+        bindings: [LocomotionBindingSnapshot],
+        configuration: PlayerMovementConfiguration,
+        activeStates: [BehaviorActiveState],
+        firstPersonActiveStates: [BehaviorActiveState],
+        variables: [LocomotionVariableSnapshot],
+        forcedGait: LocomotionGait?,
+        tally: BehaviorTally?
+    ) {
+        self.rendererAvailable = rendererAvailable
+        self.walkModeActive = walkModeActive
+        self.status = status
+        self.bindings = bindings
+        self.configuration = configuration
+        self.activeStates = activeStates
+        self.firstPersonActiveStates = firstPersonActiveStates
+        self.variables = variables
+        self.forcedGait = forcedGait
+        self.tally = tally
+    }
 }
 
 @MainActor
-protocol PlayerLocomotionControlProviding: AnyObject {
+public protocol PlayerLocomotionControlProviding: AnyObject {
     var playerLocomotionSnapshot: PlayerLocomotionSnapshot { get }
     /// Sneak is a toggle, so the panel offers it as one. Sprint and jump are
     /// momentary and are exercised by pressing their keys, which the snapshot

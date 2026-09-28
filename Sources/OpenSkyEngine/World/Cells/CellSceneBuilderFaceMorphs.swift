@@ -13,7 +13,7 @@ nonisolated private struct FaceMorphAssociationState {
 }
 
 nonisolated extension CellSceneBuilder {
-    func makeFaceMorphPlayback(
+    public func makeFaceMorphPlayback(
         assembly: ActorAssembly<ActorRenderAsset>
     ) -> FaceMorphPlayback? {
         guard let resolver = actorVisualResolver, let fileSystem else { return nil }

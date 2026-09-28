@@ -20,7 +20,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// The returned handle names the player but resolves to no `Actor` script,
     /// so an `Actor`-only method called on it dispatches as an unimplemented
     /// native and is tallied — visibly missing rather than silently wrong.
-    static func installGame(into registry: inout PapyrusNativeRegistry) {
+    public static func installGame(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Game",
             functionName: "GetPlayer"

@@ -5,6 +5,7 @@
 // by full-file EDID scan.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

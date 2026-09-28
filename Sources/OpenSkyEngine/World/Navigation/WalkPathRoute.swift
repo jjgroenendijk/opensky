@@ -5,16 +5,16 @@
 import OpenSkyFormats
 import simd
 
-nonisolated enum WalkPathRoute {
-    static let startCell = CellCoordinate(x: 6, y: -2)
-    static let farmCell = CellCoordinate(x: 7, y: -3)
-    static let farmDoor = FormID(0x0001_633D)
-    static let interiorDoor = FormID(0x0001_63A8)
-    static let farmInterior = FormID(0x0001_6204)
-    static let exteriorReturn = SIMD2<Float>(31233.666, -9784.47)
+nonisolated public enum WalkPathRoute: Sendable {
+    public static let startCell = CellCoordinate(x: 6, y: -2)
+    public static let farmCell = CellCoordinate(x: 7, y: -3)
+    public static let farmDoor = FormID(0x0001_633D)
+    public static let interiorDoor = FormID(0x0001_63A8)
+    public static let farmInterior = FormID(0x0001_6204)
+    public static let exteriorReturn = SIMD2<Float>(31233.666, -9784.47)
 
     /// Road-biased route from M2 target cell to farm's exterior stair approach.
-    static let exteriorWaypoints: [SIMD2<Float>] = [
+    public static let exteriorWaypoints: [SIMD2<Float>] = [
         SIMD2(28600, -7600),
         SIMD2(29400, -7600),
         SIMD2(30000, -8400),
@@ -28,28 +28,28 @@ nonisolated enum WalkPathRoute {
         exteriorReturn
     ]
 
-    static let waypointTolerance: Float = 40
-    static let interiorCrossingDistance: Float = 192
-    static let interiorOpeningLateralOffset: Float = 240
-    static let interiorOpeningApproachDistance: Float = 80
-    static let interiorOpeningExitDistance: Float = 176
-    static let minimumExteriorStepGain: Float = 16
-    static let maximumWaypointFrames = 600
-    static let maximumTransitionFrames = 1800
+    public static let waypointTolerance: Float = 40
+    public static let interiorCrossingDistance: Float = 192
+    public static let interiorOpeningLateralOffset: Float = 240
+    public static let interiorOpeningApproachDistance: Float = 80
+    public static let interiorOpeningExitDistance: Float = 176
+    public static let minimumExteriorStepGain: Float = 16
+    public static let maximumWaypointFrames = 600
+    public static let maximumTransitionFrames = 1800
 
-    static func yaw(from position: SIMD2<Float>, to target: SIMD2<Float>) -> Float {
+    public static func yaw(from position: SIMD2<Float>, to target: SIMD2<Float>) -> Float {
         let delta = target - position
         return atan2f(delta.y, delta.x)
     }
 
-    static func interiorTarget(
+    public static func interiorTarget(
         from position: SIMD2<Float>,
         yaw: Float
     ) -> SIMD2<Float> {
         position + SIMD2(cosf(yaw), sinf(yaw)) * interiorCrossingDistance
     }
 
-    static func interiorWaypoints(
+    public static func interiorWaypoints(
         from position: SIMD2<Float>,
         yaw: Float
     ) -> [SIMD2<Float>] {

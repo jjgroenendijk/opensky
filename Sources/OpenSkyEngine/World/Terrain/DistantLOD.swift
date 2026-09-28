@@ -7,21 +7,21 @@ import OpenSkyFormats
 import OpenSkyGameData
 import simd
 
-nonisolated struct DistantLODBlock: Equatable, Hashable {
-    enum Kind: String {
+nonisolated public struct DistantLODBlock: Equatable, Hashable, Sendable {
+    public enum Kind: String, Sendable {
         case terrain
         case objects
     }
 
-    let kind: Kind
-    let level: Int32
-    let origin: CellCoordinate
-    let path: String
+    public let kind: Kind
+    public let level: Int32
+    public let origin: CellCoordinate
+    public let path: String
     /// nil means every cell in terrain block is visible. Object LOD never
     /// carries a mask: partial object-atlas blocks remain excluded.
-    let clipMask: TerrainLODClipMask?
+    public let clipMask: TerrainLODClipMask?
 
-    func coversTerrain(_ cell: CellCoordinate) -> Bool {
+    public func coversTerrain(_ cell: CellCoordinate) -> Bool {
         guard kind == .terrain else { return false }
         let inside = cell.x >= origin.x && cell.x < origin.x + level
             && cell.y >= origin.y && cell.y < origin.y + level
@@ -30,13 +30,13 @@ nonisolated struct DistantLODBlock: Equatable, Hashable {
     }
 }
 
-nonisolated struct DistantLODBand: Equatable {
-    let level: Int32
-    let innerRadius: Int32
-    let outerRadius: Int32
+nonisolated public struct DistantLODBand: Equatable, Sendable {
+    public let level: Int32
+    public let innerRadius: Int32
+    public let outerRadius: Int32
 }
 
-nonisolated enum DistantLODSelection {
+nonisolated public enum DistantLODSelection: Sendable {
     private struct Band {
         let level: Int32
         let innerRadius: Int32
@@ -51,7 +51,7 @@ nonisolated enum DistantLODSelection {
         let band: Band
     }
 
-    static func blocks(
+    public static func blocks(
         worldspace: String,
         settings: LODSettings,
         configuration: TerrainLODConfiguration = .fallback,
@@ -84,7 +84,7 @@ nonisolated enum DistantLODSelection {
     /// exposes explicit L4, L8, and maximum thresholds. OpenSky splits the
     /// remaining L16/L32 interval at 2x L8 (clamped to maximum), preserving
     /// the source format's power-of-two coarsening without gaps.
-    static func bands(
+    public static func bands(
         settings: LODSettings,
         configuration: TerrainLODConfiguration
     ) -> [DistantLODBand] {
@@ -243,16 +243,16 @@ nonisolated enum DistantLODSelection {
     }
 }
 
-nonisolated struct DistantLODScene {
-    let renderScene: RenderScene
-    let assets: CellAssets
-    let blockCount: Int
-    let missingBlockCount: Int
-    let treeBlockCount: Int
-    let missingTreeBlockCount: Int
-    let treeInstanceCount: Int
+nonisolated public struct DistantLODScene {
+    public let renderScene: RenderScene
+    public let assets: CellAssets
+    public let blockCount: Int
+    public let missingBlockCount: Int
+    public let treeBlockCount: Int
+    public let missingTreeBlockCount: Int
+    public let treeInstanceCount: Int
 
-    init(
+    public init(
         renderScene: RenderScene,
         assets: CellAssets,
         blockCount: Int,
@@ -271,15 +271,15 @@ nonisolated struct DistantLODScene {
     }
 }
 
-nonisolated final class DistantLODBuilder {
-    let fileSystem: VirtualFileSystem
-    let meshes: MeshLibrary
+nonisolated public final class DistantLODBuilder {
+    public let fileSystem: VirtualFileSystem
+    public let meshes: MeshLibrary
     private let textures: TextureLibrary
     private let configurationStore: TerrainLODConfigurationStore
     private var settingsByWorldspace: [String: LODSettings] = [:]
-    var treeListByWorldspace: [String: TreeLODList] = [:]
+    public var treeListByWorldspace: [String: TreeLODList] = [:]
 
-    init(
+    public init(
         fileSystem: VirtualFileSystem,
         meshes: MeshLibrary,
         textures: TextureLibrary,
@@ -291,7 +291,7 @@ nonisolated final class DistantLODBuilder {
         self.configurationStore = configurationStore
     }
 
-    func build(
+    public func build(
         worldspace: String,
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>

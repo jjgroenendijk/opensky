@@ -31,7 +31,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installQuest(into registry: inout PapyrusNativeRegistry) {
+    public static func installQuest(into registry: inout PapyrusNativeRegistry) {
         installQuestReads(into: &registry)
         installQuestRunState(into: &registry)
         installQuestStages(into: &registry)

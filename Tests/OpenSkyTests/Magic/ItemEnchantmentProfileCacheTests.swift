@@ -5,7 +5,7 @@
 // Asserted through the same synthetic plugin the runtime suites use, so what is
 // cached is a real resolution rather than a stand-in.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

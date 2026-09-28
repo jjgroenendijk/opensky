@@ -12,52 +12,66 @@ import OpenSkyShaderTypes
 
 /// Draw accounting for the most recently encoded SWF layer, mirrored to
 /// `Renderer.lastSWFDrawStats` (house style: exact counts, written per frame).
-nonisolated struct SWFDrawStats: Equatable {
-    var drawCalls = 0
-    var triangles = 0
-    var glyphs = 0
+nonisolated public struct SWFDrawStats: Equatable, Sendable {
+    public var drawCalls = 0
+    public var triangles = 0
+    public var glyphs = 0
     /// Stencil-only clip draws (increments + decrements).
-    var maskDraws = 0
+    public var maskDraws = 0
     /// Items that could not draw: unresolved fonts, missing characters,
     /// degenerate fill matrices, characters skipped by the scene flattener.
-    var skippedItems = 0
+    public var skippedItems = 0
+
+    public init(
+        drawCalls: Int = 0,
+        triangles: Int = 0,
+        glyphs: Int = 0,
+        maskDraws: Int = 0,
+        skippedItems: Int = 0
+    ) {
+        self.drawCalls = drawCalls
+        self.triangles = triangles
+        self.glyphs = glyphs
+        self.maskDraws = maskDraws
+        self.skippedItems = skippedItems
+    }
 }
 
 /// The SWF layer's long-lived state: static GPU objects plus the swappable
 /// movie package. A class so renderer extensions can mutate movie/enable
 /// state without adding stored properties to Renderer itself.
-nonisolated final class SWFPassResources {
-    let contentPipeline: MTLRenderPipelineState
-    let maskPipeline: MTLRenderPipelineState
+nonisolated public final class SWFPassResources {
+    public let contentPipeline: MTLRenderPipelineState
+    public let maskPipeline: MTLRenderPipelineState
     /// Content draws: depth always/no write, stencil pass where the value
     /// equals the active-clip count (reference set per draw).
-    let contentDepthState: MTLDepthStencilState
+    public let contentDepthState: MTLDepthStencilState
     /// Mask draws: stencil increment/decrement-clamp, color left untouched by
     /// the mask fragment's zero premultiplied output.
-    let maskIncrementState: MTLDepthStencilState
-    let maskDecrementState: MTLDepthStencilState
-    let repeatSampler: MTLSamplerState
+    public let maskIncrementState: MTLDepthStencilState
+    public let maskDecrementState: MTLDepthStencilState
+    public let repeatSampler: MTLSamplerState
     /// 1x1 opaque white rgba8 — bound at TextureIndexSWFBitmap when a draw
     /// has no bitmap fill so the argument stays valid.
-    let whiteTexture: MTLTexture
+    public let whiteTexture: MTLTexture
     /// 1x1 fallback ramp — bound at TextureIndexSWFGradient when the movie
     /// has no gradient fills.
-    let fallbackRamp: MTLTexture
+    public let fallbackRamp: MTLTexture
 
     /// A/B toggle mirrored by `Renderer.swfEnabled`.
-    var enabled = true
+    public var enabled = true
     /// Centered scale multiplier over the fit-to-viewport mapping.
-    var scale: Float = 1
-    var movie: SWFMovieResources?
+    public var scale: Float = 1
+    public var movie: SWFMovieResources?
     /// The AS2 runtime driving `movie`, when one was started. nil keeps the
     /// layer on the static frame-1 path.
-    var runtime: SWFMovieRuntime?
-    var lastDrawStats = SWFDrawStats()
+    public var runtime: SWFMovieRuntime?
+    public var lastDrawStats = SWFDrawStats()
     /// Bumped per setSWFMovie: namespaces glyph-atlas font keys so two loaded
     /// movies (or reloads) never collide in the shared atlas cache.
-    var generation = 0
+    public var generation = 0
 
-    init(
+    public init(
         contentPipeline: MTLRenderPipelineState,
         maskPipeline: MTLRenderPipelineState,
         contentDepthState: MTLDepthStencilState,
@@ -80,10 +94,11 @@ nonisolated final class SWFPassResources {
 
 extension Renderer {
     /// 256-byte-aligned per-draw slot in the SWF uniform ring.
-    nonisolated static let alignedSWFUniformsSize = (MemoryLayout<SWFDrawUniforms>.size + 0xFF) &
+    nonisolated public static let alignedSWFUniformsSize = (MemoryLayout<SWFDrawUniforms>
+        .size + 0xFF) &
         -0x100
 
-    static func makeSWFPassResources(
+    public static func makeSWFPassResources(
         device: MTLDevice,
         view: MTKView
     ) throws -> SWFPassResources {

@@ -3,7 +3,7 @@
 // turns a reaction into a drawn weapon. No game-derived bytes.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

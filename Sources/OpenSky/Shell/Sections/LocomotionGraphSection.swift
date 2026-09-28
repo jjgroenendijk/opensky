@@ -8,6 +8,7 @@
 // make "what the graph did" and "what the panel did to it" hard to separate.
 
 import AppKit
+import OpenSkyEngine
 
 final class LocomotionGraphSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

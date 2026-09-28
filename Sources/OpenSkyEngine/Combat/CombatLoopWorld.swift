@@ -24,24 +24,24 @@ import simd
 ///
 /// A flat observation rather than a live handle, so the runtime cannot reach
 /// past what it was given and a test can hand it a literal.
-nonisolated struct CombatActorObservation: Equatable, Sendable {
-    let key: ReferenceKey
+nonisolated public struct CombatActorObservation: Equatable, Sendable {
+    public let key: ReferenceKey
     /// Capsule bottom, world space.
-    let feet: SIMD3<Float>
-    let capsule: PlayerCapsule
+    public let feet: SIMD3<Float>
+    public let capsule: PlayerCapsule
     /// Facing yaw in radians, in the locomotion bridge's convention. Used to
     /// aim its own hit volume.
-    let facing: Float
+    public let facing: Float
     /// The actor's scale, which multiplies its reach.
-    let scale: Float
+    public let scale: Float
     /// Whether `ActorDeathState` has latched. A dead actor is never a combat
     /// target and never attacks.
-    let isDead: Bool
+    public let isDead: Bool
     /// FULL name when one resolves, else the editor ID, else the FormID. Never
     /// empty, so a readout line always names something.
-    let name: String
+    public let name: String
 
-    init(
+    public init(
         key: ReferenceKey,
         feet: SIMD3<Float>,
         capsule: PlayerCapsule = .standard,
@@ -61,7 +61,7 @@ nonisolated struct CombatActorObservation: Equatable, Sendable {
 
     /// This actor as a melee target, so an NPC's swing runs through the same
     /// 15.4 detector the player's does.
-    var meleeTarget: MeleeTarget {
+    public var meleeTarget: MeleeTarget {
         MeleeTarget(key: key, feet: feet, capsule: capsule)
     }
 }
@@ -71,25 +71,37 @@ nonisolated struct CombatActorObservation: Equatable, Sendable {
 /// Three cases rather than a free-form clip name because NPC playback in this
 /// milestone is one clip at a time (`ActorAnimationPlayback`) and the engine
 /// picks which; a name would let a caller ask for something no rig carries.
-nonisolated enum CombatActorClip: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum CombatActorClip: String, Equatable, Sendable, CaseIterable {
     case attack
     case stagger
     case hitReaction
 }
 
 /// How many of each transient combat object are live right now.
-nonisolated struct CombatTransientCounts: Equatable, Sendable {
-    var liveProjectiles = 0
-    var stuckProjectiles = 0
-    var activeRagdolls = 0
-    var awakeBodies = 0
+nonisolated public struct CombatTransientCounts: Equatable, Sendable {
+    public var liveProjectiles = 0
+    public var stuckProjectiles = 0
+    public var activeRagdolls = 0
+    public var awakeBodies = 0
 
-    static let none = CombatTransientCounts()
+    public static let none = CombatTransientCounts()
+
+    public init(
+        liveProjectiles: Int = 0,
+        stuckProjectiles: Int = 0,
+        activeRagdolls: Int = 0,
+        awakeBodies: Int = 0
+    ) {
+        self.liveProjectiles = liveProjectiles
+        self.stuckProjectiles = stuckProjectiles
+        self.activeRagdolls = activeRagdolls
+        self.awakeBodies = awakeBodies
+    }
 }
 
 /// Everything `CombatLoopRuntime` needs from the session around it.
 @MainActor
-protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
+public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// Where the player is standing and which way they face, this frame.
     var combatPlayer: MeleeAttacker { get }
 
@@ -239,7 +251,7 @@ protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
 nonisolated extension CombatLoopWorld {
     /// A session with no fortify and no perk surface blocks by the base
     /// formula, which is the value the term had before either existed.
-    func combatBlockMultiplier(of key: ReferenceKey) -> Float {
+    public func combatBlockMultiplier(of key: ReferenceKey) -> Float {
         1
     }
 }

@@ -18,14 +18,14 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated final class InstallBehaviorReferenceSource: BehaviorReferenceSource {
+nonisolated public final class InstallBehaviorReferenceSource: BehaviorReferenceSource {
     private let fileSystem: VirtualFileSystem
     /// Lowercased file name -> archive path, for every behavior file in the
     /// folder the root behavior came from.
     private let pathsByName: [String: String]
 
     /// Indexes the behavior folder `rootPath` lives in.
-    init(fileSystem: VirtualFileSystem, rootPath: String) {
+    public init(fileSystem: VirtualFileSystem, rootPath: String) {
         self.fileSystem = fileSystem
         let folder = Self.folder(of: rootPath)
         var byName: [String: String] = [:]
@@ -46,11 +46,11 @@ nonisolated final class InstallBehaviorReferenceSource: BehaviorReferenceSource 
 
     /// How many behavior files the folder offered, so a run can report that the
     /// index is empty rather than that every reference happened to miss.
-    var indexedCount: Int {
+    public var indexedCount: Int {
         pathsByName.count
     }
 
-    func behavior(
+    public func behavior(
         named name: String,
         skeleton: BehaviorSkeleton,
         clips: any BehaviorClipSource

@@ -23,7 +23,7 @@ import Foundation
 import OpenSkyFormats
 
 /// Why a transaction did not happen.
-nonisolated enum BarterError: Error, Equatable {
+nonisolated public enum BarterError: Error, Equatable {
     /// The player asked to buy more than the merchant stocks.
     case notStocked(item: FormID, wanted: Int32, available: Int32)
     /// The player asked to sell more than they carry.
@@ -47,56 +47,62 @@ nonisolated enum BarterError: Error, Equatable {
 }
 
 /// The vendor rules one session trades under (issue #506).
-nonisolated struct BarterRules {
+nonisolated public struct BarterRules {
     /// The faction vendor, or nil for a nominated container, which trades
     /// anything at any hour and keeps stolen goods stolen.
-    let vendor: Vendor?
+    public let vendor: Vendor?
     /// The game hour the session trades at, or nil with no clock — which
     /// leaves the hours ungated rather than guessing a time.
-    let hour: Float?
+    public let hour: Float?
     /// An item's keywords as `Vendor.trades(keywords:)` compares them.
-    let keywords: (FormID) -> Set<ReferenceKey>
+    public let keywords: (FormID) -> Set<ReferenceKey>
 
-    static var unrestricted: BarterRules {
+    public static var unrestricted: BarterRules {
         BarterRules(vendor: nil, hour: nil) { _ in [] }
     }
 
     /// Why this vendor will not trade `item` at all, or nil when it will.
-    func refusal(for item: FormID) -> BarterError? {
+    public func refusal(for item: FormID) -> BarterError? {
         guard let vendor else { return nil }
         if let hour, let hours = vendor.hours, !hours.isOpen(atHour: hour) {
             return .vendorClosed(opens: hours.start, closes: hours.end)
         }
         return vendor.trades(keywords: keywords(item)) ? nil : .vendorDoesNotTrade(item: item)
     }
+
+    public init(vendor: Vendor?, hour: Float?, keywords: @escaping (FormID) -> Set<ReferenceKey>) {
+        self.vendor = vendor
+        self.hour = hour
+        self.keywords = keywords
+    }
 }
 
 /// What one completed transaction moved.
-nonisolated struct BarterTransaction: Equatable, Sendable {
-    enum Kind: String, Equatable, Sendable {
+nonisolated public struct BarterTransaction: Equatable, Sendable {
+    public enum Kind: String, Equatable, Sendable {
         /// Gold player to merchant, item merchant to player.
         case buy
         /// Item player to merchant, gold merchant to player.
         case sell
     }
 
-    let kind: Kind
-    let item: FormID
-    let count: Int32
+    public let kind: Kind
+    public let item: FormID
+    public let count: Int32
     /// Total gold that changed hands, already multiplied by `count`.
-    let gold: Int32
+    public let gold: Int32
 }
 
 /// A live buy-and-sell session between the player and one merchant container.
 @MainActor
-final class BarterSession {
+public final class BarterSession {
     /// The container standing in as the merchant's stock and purse.
-    let merchant: InventoryHolder
-    let player: InventoryHolder
+    public let merchant: InventoryHolder
+    public let player: InventoryHolder
     /// The price factors in force. Resolved from the load order's own GMSTs by
     /// the caller, so a plugin that retunes barter retunes this session.
-    let pricing: BarterPricing
-    let rules: BarterRules
+    public let pricing: BarterPricing
+    public let rules: BarterRules
 
     private let runtime: WorldItemRuntime
 
@@ -104,7 +110,7 @@ final class BarterSession {
         runtime.inventory
     }
 
-    init(
+    public init(
         runtime: WorldItemRuntime,
         merchant: InventoryHolder,
         pricing: BarterPricing,
@@ -121,25 +127,25 @@ final class BarterSession {
 
     /// What the merchant has for sale right now, read through the runtime on
     /// every access rather than cached, like `ContainerSession.contents`.
-    var stock: [InventoryStack] {
+    public var stock: [InventoryStack] {
         inventory.inventory(of: merchant).stacks
     }
 
-    var merchantGold: Int32 {
+    public var merchantGold: Int32 {
         inventory.goldCount(of: merchant)
     }
 
-    var playerGold: Int32 {
+    public var playerGold: Int32 {
         inventory.goldCount(of: player)
     }
 
     /// What the player would pay for one of `item`.
-    func buyPrice(of item: FormID) -> Int32 {
+    public func buyPrice(of item: FormID) -> Int32 {
         pricing.buyPrice(value: value(of: item))
     }
 
     /// What the merchant would pay for one of `item`.
-    func sellPrice(of item: FormID) -> Int32 {
+    public func sellPrice(of item: FormID) -> Int32 {
         pricing.sellPrice(value: value(of: item))
     }
 
@@ -163,7 +169,7 @@ final class BarterSession {
     ///   `BarterError.playerCannotAfford` when the price exceeds the player's
     ///   gold, and the vendor refusals `BarterRules` names. All write nothing.
     @discardableResult
-    func buy(_ item: FormID, count: Int32 = 1) throws -> BarterTransaction {
+    public func buy(_ item: FormID, count: Int32 = 1) throws -> BarterTransaction {
         try requirePositive(count)
         if let refusal = rules.refusal(for: item) {
             throw refusal
@@ -198,7 +204,7 @@ final class BarterSession {
     ///   cover the offer, and the vendor refusals `BarterRules` names. All
     ///   write nothing.
     @discardableResult
-    func sell(_ item: FormID, count: Int32 = 1) throws -> BarterTransaction {
+    public func sell(_ item: FormID, count: Int32 = 1) throws -> BarterTransaction {
         try requirePositive(count)
         if let refusal = rules.refusal(for: item) {
             throw refusal

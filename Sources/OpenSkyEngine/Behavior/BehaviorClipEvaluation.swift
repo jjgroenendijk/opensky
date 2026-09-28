@@ -45,7 +45,7 @@ nonisolated private struct BehaviorClipWindow {
 
 nonisolated extension BehaviorGraphInstance {
     /// Advances one clip generator and returns its pose.
-    func evaluateClip(
+    public func evaluateClip(
         _ generator: HKBClipGenerator,
         at target: HKXPointerTarget,
         bound: [String: BehaviorVariableValue],
@@ -357,7 +357,7 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// The string an event payload carries, if it carries one.
-    func payload(at target: HKXPointerTarget?) -> String? {
+    public func payload(at target: HKXPointerTarget?) -> String? {
         guard let target else { return nil }
         return object(at: target, as: HKBStringEventPayload.self)?.data
     }

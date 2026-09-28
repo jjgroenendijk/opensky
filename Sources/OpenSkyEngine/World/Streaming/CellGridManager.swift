@@ -12,9 +12,9 @@ import simd
 /// whatever the caller reports as currently resident (`CellGridManager`
 /// tracks no loaded state of its own — see that type's doc comment). Both
 /// sets empty never surfaces: `CellGridManager.update` returns nil instead.
-nonisolated struct CellGridDiff: Equatable {
-    let loads: Set<CellCoordinate>
-    let unloads: Set<CellCoordinate>
+nonisolated public struct CellGridDiff: Equatable, Sendable {
+    public let loads: Set<CellCoordinate>
+    public let unloads: Set<CellCoordinate>
 }
 
 /// Camera position -> desired streaming grid, with hysteresis against
@@ -33,12 +33,12 @@ nonisolated struct CellGridDiff: Equatable {
 /// `loads` on the next call. No separate confirm/cancel/retry API needed —
 /// the loaded set the caller passes in next frame is the only state that
 /// matters.
-nonisolated struct CellGridManager {
+nonisolated public struct CellGridManager: Sendable {
     /// uGridsToLoad default = 5 (full grid side length, always odd) -> 2
     /// rings around the center cell. Ref: UESP "Skyrim:INI Settings" (Grid
     /// section, `uGridsToLoad`); community SKSE/CK docs describe the same
     /// odd-side-length, center-plus-N-rings convention.
-    static let defaultRadius: Int32 = 2
+    public static let defaultRadius: Int32 = 2
 
     /// Camera must sit at least this far inside a newly-crossed cell border
     /// before the grid re-centers. Rationale: floor-division alone
@@ -50,24 +50,24 @@ nonisolated struct CellGridManager {
     /// this really" purposes -- but comfortably larger than positional
     /// noise, so a border crossed once decisively still re-centers on the
     /// very next `update`.
-    static let hysteresisMargin: Float = 128
+    public static let hysteresisMargin: Float = 128
 
     /// One exterior cell edge, world units. Shares `TerrainMeshBuilder`'s
     /// constant (docs/decisions/coordinates.md) instead of redefining it.
     private static let cellSize = TerrainMeshBuilder.cellSize
 
     /// Rings around center; 0 = just the center cell, `defaultRadius` = 5x5.
-    let radius: Int32
+    public let radius: Int32
 
     /// Current desired grid center. Only this type's own recenter
     /// hysteresis mutates it — never set directly by the caller.
-    private(set) var center: CellCoordinate
+    public private(set) var center: CellCoordinate
 
     /// - Parameters:
     ///   - initialPosition: camera world position at construction; seeds
     ///     `center` directly, no hysteresis on the first frame.
     ///   - radius: rings around center; negative values clamp to 0.
-    init(initialPosition: SIMD3<Float>, radius: Int32 = CellGridManager.defaultRadius) {
+    public init(initialPosition: SIMD3<Float>, radius: Int32 = CellGridManager.defaultRadius) {
         self.radius = Swift.max(0, radius)
         center = Self.cellCoordinate(for: initialPosition)
     }
@@ -76,7 +76,7 @@ nonisolated struct CellGridManager {
     /// division, never truncation -- a camera at X=-1 belongs to cell -1,
     /// not cell 0 (docs/decisions/coordinates.md: cell (x,y) covers world
     /// X in [x*4096, (x+1)*4096), same for Y).
-    static func cellCoordinate(for position: SIMD3<Float>) -> CellCoordinate {
+    public static func cellCoordinate(for position: SIMD3<Float>) -> CellCoordinate {
         CellCoordinate(
             x: Int32((position.x / cellSize).rounded(.down)),
             y: Int32((position.y / cellSize).rounded(.down))
@@ -87,7 +87,7 @@ nonisolated struct CellGridManager {
     /// `cellCoordinate(for:)` up to the half-cell offset. Seeds the grid on a
     /// known target coordinate (streaming launch centers on FirstRenderCell)
     /// so `cellCoordinate(for:)` maps it straight back to that cell.
-    static func cellCenter(of coordinate: CellCoordinate) -> SIMD3<Float> {
+    public static func cellCenter(of coordinate: CellCoordinate) -> SIMD3<Float> {
         SIMD3<Float>(
             (Float(coordinate.x) + 0.5) * cellSize,
             (Float(coordinate.y) + 0.5) * cellSize,
@@ -98,7 +98,7 @@ nonisolated struct CellGridManager {
     /// The full (2*radius+1)^2 square of cells wanted around `center`.
     /// Unordered — a Set, since load ordering/priority is the streaming
     /// controller's concern, not this type's.
-    var desiredCells: Set<CellCoordinate> {
+    public var desiredCells: Set<CellCoordinate> {
         let side = Int(2 * radius + 1)
         var cells: Set<CellCoordinate> = []
         cells.reserveCapacity(side * side)
@@ -115,7 +115,7 @@ nonisolated struct CellGridManager {
     /// resident). Returns nil when there is nothing to do: center held
     /// (hysteresis) or moved but `loaded` already matches the new desired
     /// grid exactly.
-    mutating func update(
+    public mutating func update(
         cameraPosition: SIMD3<Float>,
         loaded: Set<CellCoordinate>
     ) -> CellGridDiff? {

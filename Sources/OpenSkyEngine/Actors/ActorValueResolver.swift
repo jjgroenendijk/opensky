@@ -21,70 +21,70 @@ import OpenSkyGameData
 /// zero starting attributes and zero class weights, which is what a record that
 /// names neither should produce. Only a chain that cannot be walked at all
 /// fails, and that failure already has a type.
-nonisolated enum ActorValueResolveError: Error, Equatable {
+nonisolated public enum ActorValueResolveError: Error, Equatable {
     /// The template chain could not be walked; carries the underlying failure.
     case unresolvedChain(ActorResolveError)
 }
 
 /// One actor's derived baseline plus the records it came from, so an inspector
 /// can say *why* a number is what it is rather than only what it is.
-nonisolated struct ResolvedActorValues: Equatable {
-    let base: FormID
+nonisolated public struct ResolvedActorValues: Equatable, Sendable {
+    public let base: FormID
     /// Base maximums: what `ActorValueState` starts full at.
-    let maximums: ActorValues
+    public let maximums: ActorValues
     /// Percent of each maximum restored per second, from the race.
-    let regenPercentPerSecond: ActorValues
+    public let regenPercentPerSecond: ActorValues
     /// Base values for the non-primary actor values this actor's records
     /// author, keyed by vanilla table index (issue #468). An index absent here
     /// reads `ActorValueIdentity.defaultValue(at:)`.
-    let generalBaseValues: [Int32: Float]
+    public let generalBaseValues: [Int32: Float]
     /// The level the derivation used.
-    let level: Int
+    public let level: Int
     /// RACE the starting attributes came from, nil when the chain names none.
     ///
     /// This is the *stats*-resolved race, not the traits-resolved one the
     /// renderer skins the actor with; see `ResolvedActorStats.statsRace`.
-    let race: FormID?
+    public let race: FormID?
     /// CLAS the attribute weights came from, nil when the chain names none.
-    let characterClass: FormID?
+    public let characterClass: FormID?
     /// NPC_ that supplied the stat words, which is where an unexpected offset
     /// is actually authored.
-    let statsSource: FormID
+    public let statsSource: FormID
     /// Whether the per-level spread applied at all.
-    let autoCalculatesStats: Bool
+    public let autoCalculatesStats: Bool
     /// Whether the level was scaled against the player's.
-    let usesPlayerLevelMultiplier: Bool
+    public let usesPlayerLevelMultiplier: Bool
     /// DNAM's baked attributes, when the record carried them. Never an input —
     /// see `ActorBase.Stats.bakedHealth`.
-    let bakedValues: ActorValues?
+    public let bakedValues: ActorValues?
 }
 
 /// Derives actor values from pre-built single-plugin record indexes, the same
 /// raw-`UInt32` keying `ActorTemplateResolver` and `ActorVisualResolver` use.
-nonisolated struct ActorValueResolver {
-    let templates: ActorTemplateResolver
-    let races: [UInt32: Race]
+nonisolated public struct ActorValueResolver: Sendable {
+    public let templates: ActorTemplateResolver
+    public let races: [UInt32: Race]
     /// Load-order-wide CLAS lookup (issue #496). Cross-plugin since item 20.3,
     /// which is why the plugin the NPC_ records came from travels beside it:
     /// a class link resolves relative to the plugin carrying it.
-    let classes: CharacterClassStore
+    public let classes: CharacterClassStore
     /// Plugin the NPC_ and RACE indexes were built from, which is what a CLAS
     /// link in one of those records resolves against.
-    let pluginName: String
-    let settings: ActorValueLevelSettings
+    public let pluginName: String
+    public let settings: ActorValueLevelSettings
     /// Where the level a `PC Level Mult` actor scales against is published
     /// (issue #499). Shared by reference, so a level-up moves every derivation
     /// on its next read rather than needing this value rebuilt; a session with
     /// no progression leaves it at 1 and every scaled actor resolves at the
     /// bottom of its range, which is what it did before item 20.6.
-    let playerLevelSource: PlayerLevelSource
+    public let playerLevelSource: PlayerLevelSource
 
     /// The level as of right now.
-    var playerLevel: Int {
+    public var playerLevel: Int {
         playerLevelSource.level
     }
 
-    init(
+    public init(
         templates: ActorTemplateResolver,
         races: [UInt32: Race],
         classes: CharacterClassStore = CharacterClassStore(),
@@ -108,7 +108,7 @@ nonisolated struct ActorValueResolver {
     /// one more — a caller with the whole load order hands over a store built
     /// across it, so a patch plugin's CLAS override is seen; a caller with one
     /// file gets a store over that file alone.
-    static func build(
+    public static func build(
         from file: ESMFile,
         localized: Bool,
         pluginName: String,
@@ -137,7 +137,7 @@ nonisolated struct ActorValueResolver {
     ///
     /// The one place a caller outside this type turns a CLAS link into a
     /// record, so nothing has to know which plugin the link resolves against.
-    func characterClass(_ id: FormID?) -> CharacterClass? {
+    public func characterClass(_ id: FormID?) -> CharacterClass? {
         classes.resolve(id, fromPlugin: pluginName)?.characterClass
     }
 
@@ -145,13 +145,13 @@ nonisolated struct ActorValueResolver {
     ///
     /// - Throws: `ActorValueResolveError.unresolvedChain` when the TPLT walk
     ///   fails — a cycle, a dangling target, an empty leveled list.
-    func inputs(base: FormID) throws -> ActorValueInputs {
+    public func inputs(base: FormID) throws -> ActorValueInputs {
         let resolved = try resolveStats(base: base)
         return inputs(from: resolved)
     }
 
     /// The full derived baseline for one NPC_.
-    func resolve(base: FormID) throws -> ResolvedActorValues {
+    public func resolve(base: FormID) throws -> ResolvedActorValues {
         let resolved = try resolveStats(base: base)
         let gathered = inputs(from: resolved)
         let stats = resolved.stats.value

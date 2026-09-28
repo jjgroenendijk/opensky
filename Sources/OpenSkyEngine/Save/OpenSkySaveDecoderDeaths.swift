@@ -12,14 +12,14 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's saved death, before it is merged back into the delta.
-nonisolated struct SaveDeathEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: ActorDeathState
+nonisolated public struct SaveDeathEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: ActorDeathState
 }
 
-nonisolated enum OpenSkySaveDeathDecoder {
-    static func decodeDeaths(_ payload: Data) throws -> [SaveDeathEntry] {
+nonisolated public enum OpenSkySaveDeathDecoder: Sendable {
+    public static func decodeDeaths(_ payload: Data) throws -> [SaveDeathEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("DETH entry count")
         try OpenSkySaveDecoder.validate(
@@ -39,7 +39,7 @@ nonisolated enum OpenSkySaveDeathDecoder {
     /// Lays each saved death over the matching `RDLT` delta, adding an entry
     /// for an actor that had no other component, and re-sorts the result into
     /// `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ deaths: [SaveDeathEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

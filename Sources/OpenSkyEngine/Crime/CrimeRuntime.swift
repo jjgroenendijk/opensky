@@ -37,9 +37,9 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// What reporting one crime did, and why.
-nonisolated struct CrimeOutcome: Equatable, Sendable {
+nonisolated public struct CrimeOutcome: Equatable, Sendable {
     /// Why a crime accrued no gold, when it accrued none.
-    enum Refusal: String, Equatable, Sendable {
+    public enum Refusal: String, Equatable, Sendable {
         /// The place belongs to no crime faction, so there is nobody to charge.
         case noCrimeFaction
         /// This load order carries no FACT for the resolved crime faction.
@@ -56,17 +56,17 @@ nonisolated struct CrimeOutcome: Equatable, Sendable {
     }
 
     /// Gold added to the ledger, which is zero for every refusal.
-    let gold: Int32
+    public let gold: Int32
     /// The faction charged, or nil when nothing was charged.
-    let faction: ReferenceKey?
+    public let faction: ReferenceKey?
     /// Whether the crime was counted at all, which is false only when there was
     /// no faction to count it against.
-    let recorded: Bool
+    public let recorded: Bool
     /// Why no gold was charged, or nil when some was.
-    let refusal: Refusal?
+    public let refusal: Refusal?
 
     /// Nothing happened, for a crime that reached no faction.
-    static func refused(_ refusal: Refusal, faction: ReferenceKey? = nil) -> CrimeOutcome {
+    public static func refused(_ refusal: Refusal, faction: ReferenceKey? = nil) -> CrimeOutcome {
         CrimeOutcome(
             gold: 0,
             faction: faction,
@@ -79,18 +79,18 @@ nonisolated struct CrimeOutcome: Equatable, Sendable {
 /// Reads and mutates crime ledgers on top of a `WorldStateStore`, and decides
 /// what one reported crime costs.
 @MainActor
-struct CrimeRuntime {
+public struct CrimeRuntime {
     /// Load-order FACT lookup, for the flags and the `CRVA` block behind every
     /// bounty.
-    let factions: FactionStore
+    public let factions: FactionStore
     /// Where "did anybody see?" is answered. Assignable rather than injected at
     /// init so a session can attach the perception pass once it exists, exactly
     /// as `HostilityDerivation.crime` is assignable.
-    var witnesses: any CrimeWitnessSource = NoCrimeWitnesses()
+    public var witnesses: any CrimeWitnessSource = NoCrimeWitnesses()
 
     private let worldState: WorldStateStore
 
-    init(
+    public init(
         store: WorldStateStore,
         factions: FactionStore,
         witnesses: any CrimeWitnessSource = NoCrimeWitnesses()
@@ -100,36 +100,39 @@ struct CrimeRuntime {
         self.witnesses = witnesses
     }
 
-    var store: WorldStateStore {
+    public var store: WorldStateStore {
         worldState
     }
 
     // MARK: - Reading
 
     /// `key`'s ledger, empty when nothing has ever written one.
-    func ledger(of key: ReferenceKey = .player) -> CrimeLedgerState {
+    public func ledger(of key: ReferenceKey = .player) -> CrimeLedgerState {
         worldState.component(CrimeLedgerState.self, for: key) ?? .empty
     }
 
     /// Crime gold `key` owes `faction`.
-    func crimeGold(of faction: ReferenceKey, on key: ReferenceKey = .player) -> Int32 {
+    public func crimeGold(of faction: ReferenceKey, on key: ReferenceKey = .player) -> Int32 {
         ledger(of: key).gold(for: faction)
     }
 
     /// How many crimes of each kind `key` has committed against `faction`.
-    func crimeCounts(of faction: ReferenceKey, on key: ReferenceKey = .player) -> CrimeCounts {
+    public func crimeCounts(
+        of faction: ReferenceKey,
+        on key: ReferenceKey = .player
+    ) -> CrimeCounts {
         ledger(of: key).counts(for: faction)
     }
 
     /// Total gold owed everywhere, which is UESP's "Total Lifetime Bounty".
-    func totalCrimeGold(on key: ReferenceKey = .player) -> Int64 {
+    public func totalCrimeGold(on key: ReferenceKey = .player) -> Int64 {
         ledger(of: key).totalGold
     }
 
     /// Every faction `key` owes something to or has offended, joined to the
     /// records, in ledger order. A row whose faction this load order dropped is
     /// kept in the ledger and simply absent here.
-    func resolvedFactions(on key: ReferenceKey = .player) -> [ResolvedFaction] {
+    public func resolvedFactions(on key: ReferenceKey = .player) -> [ResolvedFaction] {
         ledger(of: key).factions.compactMap { factions.faction(key: $0) }
     }
 
@@ -139,7 +142,7 @@ struct CrimeRuntime {
     ///
     /// - Returns: what was charged and, when nothing was, why not.
     @discardableResult
-    func report(_ event: CrimeEvent) -> CrimeOutcome {
+    public func report(_ event: CrimeEvent) -> CrimeOutcome {
         guard let faction = event.crimeFaction else {
             return .refused(.noCrimeFaction)
         }
@@ -166,7 +169,7 @@ struct CrimeRuntime {
     /// member charges nothing — so the panel cannot promise a bounty the take
     /// would not charge. The one rule it skips is witnessing, because "if
     /// witnessed" is exactly what the quote is answering.
-    func quote(_ event: CrimeEvent) -> Int32 {
+    public func quote(_ event: CrimeEvent) -> Int32 {
         guard
             let faction = event.crimeFaction,
             let resolved = factions.faction(key: faction),
@@ -180,14 +183,14 @@ struct CrimeRuntime {
     /// which is what every hook in the engine actually wants: it holds the act,
     /// not the answer to "was anybody looking".
     @discardableResult
-    func reportWitnessed(_ event: CrimeEvent) -> CrimeOutcome {
+    public func reportWitnessed(_ event: CrimeEvent) -> CrimeOutcome {
         report(event.witnessed(by: witnesses))
     }
 
     // MARK: - Mutating the ledger
 
     /// One half of `key`'s bounty with `faction`.
-    func crimeGold(
+    public func crimeGold(
         of faction: ReferenceKey,
         violent: Bool,
         on key: ReferenceKey = .player
@@ -201,7 +204,7 @@ struct CrimeRuntime {
     ///
     /// - Returns: the combined bounty afterwards.
     @discardableResult
-    func modifyCrimeGold(
+    public func modifyCrimeGold(
         by delta: Int32,
         violent: Bool = false,
         of faction: ReferenceKey,
@@ -222,7 +225,7 @@ struct CrimeRuntime {
     ///
     /// - Returns: the combined bounty afterwards.
     @discardableResult
-    func setCrimeGold(
+    public func setCrimeGold(
         _ gold: Int32,
         violent: Bool = false,
         of faction: ReferenceKey,
@@ -242,7 +245,7 @@ struct CrimeRuntime {
     ///
     /// - Returns: the gold that was owed.
     @discardableResult
-    func clearCrimeGold(
+    public func clearCrimeGold(
         of faction: ReferenceKey,
         on key: ReferenceKey = .player,
         in cell: CellSceneLocation? = nil
@@ -257,7 +260,7 @@ struct CrimeRuntime {
     ///
     /// - Returns: true when there was a ledger to drop.
     @discardableResult
-    func reset(on key: ReferenceKey = .player) -> Bool {
+    public func reset(on key: ReferenceKey = .player) -> Bool {
         worldState.reset(.crimeLedger, for: key)
     }
 
@@ -340,7 +343,7 @@ struct CrimeRuntime {
 nonisolated extension CrimeEvent {
     /// This event with `witnessed` set from a witness source.
     @MainActor
-    func witnessed(by source: any CrimeWitnessSource) -> CrimeEvent {
+    public func witnessed(by source: any CrimeWitnessSource) -> CrimeEvent {
         guard !witnessed else { return self }
         return CrimeEvent(
             kind: kind,

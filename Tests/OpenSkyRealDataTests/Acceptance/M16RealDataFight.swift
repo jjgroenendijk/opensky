@@ -12,7 +12,7 @@
 // Nothing here reads the install directly. It is handed the resolved settings
 // and the arrival position, which is what keeps the record-reading in one place.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

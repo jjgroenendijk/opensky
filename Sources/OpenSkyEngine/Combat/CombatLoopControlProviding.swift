@@ -22,50 +22,50 @@
 import Foundation
 
 /// One observation of the combat loop.
-nonisolated struct CombatLoopSnapshot: Equatable, Sendable {
+nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
     /// False when no combat runtime is attached — no game data, or a demo
     /// scene. Every other field is then empty and the panel says so rather than
     /// showing a convincing zero.
-    let isAvailable: Bool
+    public let isAvailable: Bool
     /// Whether the player is in combat, and with whom.
-    let isPlayerInCombat: Bool
+    public let isPlayerInCombat: Bool
     /// The current target's name, or "—" when there is none.
-    let targetName: String
-    let targetDistance: Float
+    public let targetName: String
+    public let targetDistance: Float
     /// Resident actors that are hostile and alive, and those recorded dead.
-    let hostileCount: Int
-    let deadCount: Int
+    public let hostileCount: Int
+    public let deadCount: Int
     /// Resident actors currently engaged, and how many of those are searching.
-    let engagedCount: Int
-    let searchingCount: Int
+    public let engagedCount: Int
+    public let searchingCount: Int
     /// One line's worth of state per actor with a combat machine, nearest
     /// first.
-    let actors: [CombatActorReadout]
+    public let actors: [CombatActorReadout]
     /// Hostile living actors the engagement cap refused a machine.
-    let crowdedOutCount: Int
+    public let crowdedOutCount: Int
     /// Whether the *selected* actor — the one the hostility toggle acts on — is
     /// hostile right now, and what it is called.
-    let selectedActorName: String
-    let selectedActorIsHostile: Bool
+    public let selectedActorName: String
+    public let selectedActorIsHostile: Bool
     /// Blows the player has taken, and the newest few spelled out.
-    let incomingHitCount: Int
-    let incomingTrace: [String]
+    public let incomingHitCount: Int
+    public let incomingTrace: [String]
     /// The HUD's damage-flash hook, `0...1`.
-    let damageFlash: Float
+    public let damageFlash: Float
     /// Live transient counts, their ceilings, and how many have been trimmed.
-    let transients: CombatTransientCounts
-    let limits: CombatTransientLimits
-    let trimmedTransients: CombatTransientCounts
+    public let transients: CombatTransientCounts
+    public let limits: CombatTransientLimits
+    public let trimmedTransients: CombatTransientCounts
     /// Whether fighters are allowed to cast at all, which is the panel's own
     /// switch rather than anything the world holds (issue #473).
-    let isActorCastingEnabled: Bool
+    public let isActorCastingEnabled: Bool
     /// Spells NPCs have finished casting this session.
-    let actorCastCount: Int
+    public let actorCastCount: Int
     /// Human-readable result of the last panel action.
-    let lastActionText: String
+    public let lastActionText: String
 
     /// The reading with no runtime attached.
-    static let unavailable = CombatLoopSnapshot(
+    public static let unavailable = CombatLoopSnapshot(
         isAvailable: false,
         isPlayerInCombat: false,
         targetName: "—",
@@ -88,10 +88,56 @@ nonisolated struct CombatLoopSnapshot: Equatable, Sendable {
         actorCastCount: 0,
         lastActionText: "Combat unavailable: no game data loaded."
     )
+
+    public init(
+        isAvailable: Bool,
+        isPlayerInCombat: Bool,
+        targetName: String,
+        targetDistance: Float,
+        hostileCount: Int,
+        deadCount: Int,
+        engagedCount: Int,
+        searchingCount: Int,
+        actors: [CombatActorReadout],
+        crowdedOutCount: Int,
+        selectedActorName: String,
+        selectedActorIsHostile: Bool,
+        incomingHitCount: Int,
+        incomingTrace: [String],
+        damageFlash: Float,
+        transients: CombatTransientCounts,
+        limits: CombatTransientLimits,
+        trimmedTransients: CombatTransientCounts,
+        isActorCastingEnabled: Bool,
+        actorCastCount: Int,
+        lastActionText: String
+    ) {
+        self.isAvailable = isAvailable
+        self.isPlayerInCombat = isPlayerInCombat
+        self.targetName = targetName
+        self.targetDistance = targetDistance
+        self.hostileCount = hostileCount
+        self.deadCount = deadCount
+        self.engagedCount = engagedCount
+        self.searchingCount = searchingCount
+        self.actors = actors
+        self.crowdedOutCount = crowdedOutCount
+        self.selectedActorName = selectedActorName
+        self.selectedActorIsHostile = selectedActorIsHostile
+        self.incomingHitCount = incomingHitCount
+        self.incomingTrace = incomingTrace
+        self.damageFlash = damageFlash
+        self.transients = transients
+        self.limits = limits
+        self.trimmedTransients = trimmedTransients
+        self.isActorCastingEnabled = isActorCastingEnabled
+        self.actorCastCount = actorCastCount
+        self.lastActionText = lastActionText
+    }
 }
 
 @MainActor
-protocol CombatLoopControlProviding: AnyObject {
+public protocol CombatLoopControlProviding: AnyObject {
     var combatLoopSnapshot: CombatLoopSnapshot { get }
 
     /// Whether the selected actor — the crosshair target, else the nearest

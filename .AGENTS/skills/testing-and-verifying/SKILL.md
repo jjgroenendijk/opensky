@@ -24,7 +24,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Hook, Makefile, or `tools/` script | `make check`, then run the changed target or script once |
 | Parser or math routine | New or updated synthetic-fixture tests, `make test-fast T='Suite'` for the suites that cover it |
 | Engine logic in one subsystem | `make test-fast T='Suite'` for its suites, then `make test-fast` (whole unit plan) once before pushing |
-| Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and `OpenSkyEngine/` | `make verify-build`, then `make test-fast` |
+| Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and a package module | `make verify-build`, then `make test-fast` |
 | Rendering or shaders | Unit tests plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make realtest T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill; `make test-ui` when a smoke-test path changed |

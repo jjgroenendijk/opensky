@@ -3,19 +3,19 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct PapyrusLimits: Equatable, Sendable {
-    var instructionBudget = 1_000_000
-    var callDepth = 256
-    var inheritanceDepth = 64
-    var arrayLength = 100_000
-    var tallyNames = 256
-    var faultRecords = 64
-    var nativeCallRecords = 1024
+nonisolated public struct PapyrusLimits: Equatable, Sendable {
+    public var instructionBudget = 1_000_000
+    public var callDepth = 256
+    public var inheritanceDepth = 64
+    public var arrayLength = 100_000
+    public var tallyNames = 256
+    public var faultRecords = 64
+    public var nativeCallRecords = 1024
 
-    static let standard = PapyrusLimits()
+    public static let standard = PapyrusLimits()
 }
 
-nonisolated enum PapyrusFault: Error, Equatable, Sendable {
+nonisolated public enum PapyrusFault: Error, Equatable, Sendable {
     case budgetExhausted(instruction: Int)
     case callDepthExceeded(instruction: Int)
     case invalidJump(instruction: Int, target: Int)
@@ -31,7 +31,7 @@ nonisolated enum PapyrusFault: Error, Equatable, Sendable {
     case inheritanceDepthExceeded(script: String)
     case invalidResume
 
-    var kind: String {
+    public var kind: String {
         switch self {
         case .budgetExhausted: "budgetExhausted"
         case .callDepthExceeded: "callDepthExceeded"
@@ -51,75 +51,75 @@ nonisolated enum PapyrusFault: Error, Equatable, Sendable {
     }
 }
 
-nonisolated enum PapyrusRunOutcome {
+nonisolated public enum PapyrusRunOutcome {
     case completed(PapyrusValue)
     case faulted(PapyrusFault)
     case suspended(SuspendedCall)
 }
 
-nonisolated struct PapyrusTallySnapshot: Equatable, Sendable {
-    let runs: Int
-    let instructionsExecuted: Int
-    let nativeCallCounts: [String: Int]
-    let nativeCallTotal: Int
-    let unnamedNativeCalls: Int
-    let unimplementedNativeCounts: [String: Int]
-    let unimplementedNativeTotal: Int
-    let unnamedUnimplementedNatives: Int
-    let nativeFailureCounts: [String: Int]
-    let nativeFailureTotal: Int
-    let deferredAnimationTotal: Int
-    let activationRecursionCappedTotal: Int
-    let suspensionTotal: Int
-    let faultTotal: Int
-    let faultKindCounts: [String: Int]
-    let faults: [PapyrusFault]
+nonisolated public struct PapyrusTallySnapshot: Equatable, Sendable {
+    public let runs: Int
+    public let instructionsExecuted: Int
+    public let nativeCallCounts: [String: Int]
+    public let nativeCallTotal: Int
+    public let unnamedNativeCalls: Int
+    public let unimplementedNativeCounts: [String: Int]
+    public let unimplementedNativeTotal: Int
+    public let unnamedUnimplementedNatives: Int
+    public let nativeFailureCounts: [String: Int]
+    public let nativeFailureTotal: Int
+    public let deferredAnimationTotal: Int
+    public let activationRecursionCappedTotal: Int
+    public let suspensionTotal: Int
+    public let faultTotal: Int
+    public let faultKindCounts: [String: Int]
+    public let faults: [PapyrusFault]
 }
 
-nonisolated final class PapyrusTally {
-    let limits: PapyrusLimits
+nonisolated public final class PapyrusTally {
+    public let limits: PapyrusLimits
 
-    private(set) var runs = 0
-    private(set) var instructionsExecuted = 0
-    private(set) var opcodeCounts: [PexOpcode: Int] = [:]
-    private(set) var nativeCallCounts: [String: Int] = [:]
-    private(set) var nativeCallTotal = 0
-    private(set) var unnamedNativeCalls = 0
-    private(set) var unimplementedNativeCounts: [String: Int] = [:]
-    private(set) var unimplementedNativeTotal = 0
-    private(set) var unnamedUnimplementedNatives = 0
-    private(set) var nativeFailureCounts: [String: Int] = [:]
-    private(set) var nativeFailureTotal = 0
-    private(set) var deferredAnimationTotal = 0
+    public private(set) var runs = 0
+    public private(set) var instructionsExecuted = 0
+    public private(set) var opcodeCounts: [PexOpcode: Int] = [:]
+    public private(set) var nativeCallCounts: [String: Int] = [:]
+    public private(set) var nativeCallTotal = 0
+    public private(set) var unnamedNativeCalls = 0
+    public private(set) var unimplementedNativeCounts: [String: Int] = [:]
+    public private(set) var unimplementedNativeTotal = 0
+    public private(set) var unnamedUnimplementedNatives = 0
+    public private(set) var nativeFailureCounts: [String: Int] = [:]
+    public private(set) var nativeFailureTotal = 0
+    public private(set) var deferredAnimationTotal = 0
     /// Activations refused because the chain reached
     /// `PapyrusWorldRuntime.maximumActivationDepth` (issue #172).
-    private(set) var activationRecursionCappedTotal = 0
-    private(set) var suspensionTotal = 0
-    private(set) var faultTotal = 0
-    private(set) var faultKindCounts: [String: Int] = [:]
-    private(set) var faults: [PapyrusFault] = []
+    public private(set) var activationRecursionCappedTotal = 0
+    public private(set) var suspensionTotal = 0
+    public private(set) var faultTotal = 0
+    public private(set) var faultKindCounts: [String: Int] = [:]
+    public private(set) var faults: [PapyrusFault] = []
 
-    init(limits: PapyrusLimits = .standard) {
+    public init(limits: PapyrusLimits = .standard) {
         self.limits = limits
     }
 
-    var rankedNativeCalls: [(name: String, count: Int)] {
+    public var rankedNativeCalls: [(name: String, count: Int)] {
         Self.ranked(nativeCallCounts)
     }
 
-    var rankedUnimplementedNatives: [(name: String, count: Int)] {
+    public var rankedUnimplementedNatives: [(name: String, count: Int)] {
         Self.ranked(unimplementedNativeCounts)
     }
 
-    var rankedNativeFailures: [(name: String, count: Int)] {
+    public var rankedNativeFailures: [(name: String, count: Int)] {
         Self.ranked(nativeFailureCounts)
     }
 
-    var rankedFaultKinds: [(name: String, count: Int)] {
+    public var rankedFaultKinds: [(name: String, count: Int)] {
         Self.ranked(faultKindCounts)
     }
 
-    var snapshot: PapyrusTallySnapshot {
+    public var snapshot: PapyrusTallySnapshot {
         PapyrusTallySnapshot(
             runs: runs,
             instructionsExecuted: instructionsExecuted,
@@ -140,16 +140,16 @@ nonisolated final class PapyrusTally {
         )
     }
 
-    func noteRun() {
+    public func noteRun() {
         runs += 1
     }
 
-    func noteInstruction(_ opcode: PexOpcode) {
+    public func noteInstruction(_ opcode: PexOpcode) {
         instructionsExecuted += 1
         opcodeCounts[opcode, default: 0] += 1
     }
 
-    func noteNative(_ call: PapyrusNativeCall) {
+    public func noteNative(_ call: PapyrusNativeCall) {
         nativeCallTotal += 1
         let name = call.qualifiedName
         if nativeCallCounts[name] != nil || nativeCallCounts.count < limits.tallyNames {
@@ -159,7 +159,7 @@ nonisolated final class PapyrusTally {
         }
     }
 
-    func noteNativeFailure(
+    public func noteNativeFailure(
         _ failure: PapyrusNativeFailure,
         call: PapyrusNativeCall
     ) {
@@ -184,7 +184,7 @@ nonisolated final class PapyrusTally {
         }
     }
 
-    func noteDeviation(_ deviation: PapyrusNativeDeviation) {
+    public func noteDeviation(_ deviation: PapyrusNativeDeviation) {
         switch deviation {
         case .deferredAnimation:
             deferredAnimationTotal += 1
@@ -192,15 +192,15 @@ nonisolated final class PapyrusTally {
     }
 
     /// One `Activate` refused because the activation chain hit its depth cap.
-    func noteActivationRecursionCapped() {
+    public func noteActivationRecursionCapped() {
         activationRecursionCappedTotal += 1
     }
 
-    func noteSuspension() {
+    public func noteSuspension() {
         suspensionTotal += 1
     }
 
-    func noteFault(_ fault: PapyrusFault) {
+    public func noteFault(_ fault: PapyrusFault) {
         faultTotal += 1
         faultKindCounts[fault.kind, default: 0] += 1
         if faults.count < limits.faultRecords {

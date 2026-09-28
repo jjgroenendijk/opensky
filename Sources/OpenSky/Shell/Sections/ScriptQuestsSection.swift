@@ -9,6 +9,7 @@
 // it is never overridden and its reset is a no-op.
 
 import AppKit
+import OpenSkyEngine
 
 final class ScriptQuestsSection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

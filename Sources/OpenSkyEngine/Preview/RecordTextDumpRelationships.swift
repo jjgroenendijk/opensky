@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension RecordTextDump {
-    static func relationshipSummary(_ record: ESMRecord) -> String? {
+    public static func relationshipSummary(_ record: ESMRecord) -> String? {
         switch record.type {
         case "RELA": relationSummary(record)
         case "ASTP": associationTypeSummary(record)

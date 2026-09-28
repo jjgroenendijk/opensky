@@ -10,22 +10,22 @@ import simd
 
 /// Resolves a material's texture key to a ready MTLTexture. `key` nil means
 /// the material has no texture — implementations return a placeholder.
-typealias TextureProvider = (_ key: String?, _ usage: TextureUsage) -> MTLTexture
+public typealias TextureProvider = (_ key: String?, _ usage: TextureUsage) -> MTLTexture
 
 /// GPU-side material: resolved diffuse texture + the scalar parameters the
 /// shader consumes. Static NIF alpha blending remains deferred; milestone
 /// 3.5 water uses its dedicated blend pipeline instead.
-nonisolated struct RenderMaterial {
-    let diffuse: MTLTexture
-    let uvOffset: SIMD2<Float>
-    let uvScale: SIMD2<Float>
-    let alpha: Float
+nonisolated public struct RenderMaterial {
+    public let diffuse: MTLTexture
+    public let uvOffset: SIMD2<Float>
+    public let uvScale: SIMD2<Float>
+    public let alpha: Float
     /// nil -> opaque pipeline; set -> alpha-test pipeline variant.
-    let alphaTestThreshold: Float?
+    public let alphaTestThreshold: Float?
     /// Render both faces (cull mode none for this draw).
-    let doubleSided: Bool
+    public let doubleSided: Bool
 
-    init(material: Material, textureProvider: TextureProvider) {
+    public init(material: Material, textureProvider: TextureProvider) {
         diffuse = textureProvider(material.diffuseTexture, .color)
         uvOffset = material.uvOffset
         uvScale = material.uvScale
@@ -37,11 +37,11 @@ nonisolated struct RenderMaterial {
 
 /// One engine Model uploaded: GPU meshes + resolved materials, shareable
 /// across many instances (todo 2.7 mesh library keys these by VFS path).
-nonisolated final class RenderModel {
-    let meshes: [RenderMesh]
-    let materials: [RenderMaterial]
+nonisolated public final class RenderModel {
+    public let meshes: [RenderMesh]
+    public let materials: [RenderMaterial]
 
-    init(device: MTLDevice, model: Model, textureProvider: TextureProvider) throws {
+    public init(device: MTLDevice, model: Model, textureProvider: TextureProvider) throws {
         meshes = try model.meshes.map { try RenderMesh(device: device, mesh: $0) }
         materials = model.materials.map {
             RenderMaterial(material: $0, textureProvider: textureProvider)
@@ -52,25 +52,25 @@ nonisolated final class RenderModel {
 /// One placed model going into a RenderScene: instance transform plus the
 /// world-space AABB used for frustum culling (model bounds pushed through
 /// the transform). nil bounds -> the instance is never culled.
-nonisolated struct RenderPlacement {
-    let model: RenderModel
-    let transform: float4x4
-    let bounds: ModelBounds?
+nonisolated public struct RenderPlacement {
+    public let model: RenderModel
+    public let transform: float4x4
+    public let bounds: ModelBounds?
     /// Distant LOD stays outside sun-shadow caster set. Default true keeps
     /// regular cell geometry + actors unchanged.
-    let castsShadows: Bool
+    public let castsShadows: Bool
     /// Distant geometry uses world lighting only. Skipping local lights keeps
     /// large billboard batches out of the per-fragment point-light loop.
-    let receivesPointLights: Bool
-    let receivesShadows: Bool
+    public let receivesPointLights: Bool
+    public let receivesShadows: Bool
     /// The REFR this placement draws, but only when a simulated rigid body
     /// moves it every frame (issue #193). Zero everywhere else, which is every
     /// placement the world has ever had: `transform` is then the whole answer
     /// and nothing looks the reference up. See `DrawInstance.referenceFormID`.
-    let referenceFormID: UInt32
+    public let referenceFormID: UInt32
     /// Per-mesh actor-local FaceGen expression buffers. Empty for every
     /// placement except a face model with an associated expression TRI.
-    let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
+    public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
     /// Which scene role this placement plays, for the dev shell's layer
     /// isolation (issue #144). It belongs here rather than on `RenderMesh`
     /// because meshes are shared and cached by VFS path in `MeshLibrary`, so
@@ -78,9 +78,9 @@ nonisolated struct RenderPlacement {
     /// one cell and a distant-LOD billboard in the block above it. The
     /// `.statics` default is what leaves every ordinary construction site
     /// unchanged; only the actor and distant-LOD builders pass anything else.
-    let layer: RenderLayer
+    public let layer: RenderLayer
 
-    init(
+    public init(
         model: RenderModel,
         transform: float4x4,
         bounds: ModelBounds? = nil,
@@ -104,17 +104,17 @@ nonisolated struct RenderPlacement {
 }
 
 /// One instance within a DrawGroup: world-space matrices + culling AABB.
-nonisolated struct DrawInstance {
-    let modelMatrix: float4x4
+nonisolated public struct DrawInstance: Sendable {
+    public let modelMatrix: float4x4
     /// Inverse-transpose of modelMatrix (world-space normals).
-    let normalMatrix: float4x4
+    public let normalMatrix: float4x4
     /// World-space AABB for frustum culling. Model-level bounds pushed
     /// through the instance transform — shared by every mesh of the
     /// instance, so conservative per mesh. nil -> never culled.
-    let bounds: ModelBounds?
-    let castsShadows: Bool
-    let receivesPointLights: Bool
-    let receivesShadows: Bool
+    public let bounds: ModelBounds?
+    public let castsShadows: Bool
+    public let receivesPointLights: Bool
+    public let receivesShadows: Bool
     /// The REFR a simulated rigid body moves, or zero for the ordinary case of
     /// a placement that stays where its cell build put it (issue #193).
     ///
@@ -126,10 +126,10 @@ nonisolated struct DrawInstance {
     /// (`Renderer.drawn(_:)`), which is cheaper and far less invasive than
     /// rebuilding draw groups every frame: the grouping key is mesh plus
     /// material, and moving an instance changes neither.
-    var referenceFormID: UInt32 = 0
+    public var referenceFormID: UInt32 = 0
     /// The placement's scene role, carried through so the encode-level layer
     /// filter and the `layerCategory` debug channel agree (issue #144).
-    var layer: RenderLayer = .statics
+    public var layer: RenderLayer = .statics
 }
 
 /// One instanced draw call (todo 3.2): every instance shares the mesh +
@@ -138,24 +138,24 @@ nonisolated struct DrawInstance {
 /// to exactly one RenderModel whose materials array pins one material per
 /// slot, so identical meshes imply identical material scalars — the diffuse
 /// ObjectIdentifier rides along defensively.
-nonisolated struct DrawGroup {
-    let mesh: RenderMesh
-    let material: RenderMaterial
-    let faceMorph: FaceMorphBuffer?
+nonisolated public struct DrawGroup {
+    public let mesh: RenderMesh
+    public let material: RenderMaterial
+    public let faceMorph: FaceMorphBuffer?
     /// Mutable only during scene construction (GroupAccumulator).
-    fileprivate(set) var instances: [DrawInstance]
+    public fileprivate(set) var instances: [DrawInstance]
 
-    var castsShadows: Bool {
+    public var castsShadows: Bool {
         instances.first?.castsShadows == true
     }
 
-    var receivesShadows: Bool {
+    public var receivesShadows: Bool {
         instances.first?.receivesShadows == true
     }
 
     /// The group's scene role. Every instance shares it: the layer is part of
     /// the grouping key, so a group never mixes roles.
-    var layer: RenderLayer {
+    public var layer: RenderLayer {
         instances.first?.layer ?? .statics
     }
 }
@@ -217,33 +217,33 @@ nonisolated private struct GroupAccumulator {
 /// per-vertex splat-weight stream (TerrainVertexLayout), the BTXT base
 /// material, and the ATXT layer diffuses in blend order. Terrain always
 /// draws opaque (docs/rendering/scene-drawing.md, terrain splat section).
-nonisolated struct TerrainDrawItem {
-    let mesh: RenderMesh
+nonisolated public struct TerrainDrawItem {
+    public let mesh: RenderMesh
     /// Two float4 weight lanes per vertex, vertex-count sized.
-    let weightsBuffer: MTLBuffer
+    public let weightsBuffer: MTLBuffer
     /// Base diffuse + UV params; alpha fields unused (terrain is opaque).
-    let material: RenderMaterial
+    public let material: RenderMaterial
     /// ATXT layer diffuses, <= TerrainConstant.maxLayers, blend order.
-    let layerTextures: [MTLTexture]
-    let modelMatrix: float4x4
-    let normalMatrix: float4x4
+    public let layerTextures: [MTLTexture]
+    public let modelMatrix: float4x4
+    public let normalMatrix: float4x4
     /// World-space AABB for frustum culling; nil -> never culled.
-    let bounds: ModelBounds?
+    public let bounds: ModelBounds?
 }
 
 /// Exterior sky marker. Colors are procedural in the shader for now; this
 /// value makes sky presence explicit per worldspace and mergeable per scene.
-nonisolated struct SkyParameters: Equatable {}
+nonisolated public struct SkyParameters: Equatable, Sendable {}
 
 /// One exterior-cell water plane. Geometry is a reusable 4096-unit quad;
 /// modelMatrix places it at CELL/WRLD water height. Colors come from WATR.
-nonisolated struct WaterDrawItem {
-    let mesh: RenderMesh
-    let modelMatrix: float4x4
-    let shallowColor: SIMD3<Float>
-    let deepColor: SIMD3<Float>
-    let reflectionColor: SIMD3<Float>
-    let bounds: ModelBounds?
+nonisolated public struct WaterDrawItem {
+    public let mesh: RenderMesh
+    public let modelMatrix: float4x4
+    public let shallowColor: SIMD3<Float>
+    public let deepColor: SIMD3<Float>
+    public let reflectionColor: SIMD3<Float>
+    public let bounds: ModelBounds?
 }
 
 /// Draw lists for one frame's scene. Each placement's meshes become
@@ -252,21 +252,21 @@ nonisolated struct WaterDrawItem {
 /// alpha-tested ones. Terrain items carry their own layer
 /// textures + weight streams and draw through the terrain splat pipeline,
 /// one non-instanced draw each.
-nonisolated struct RenderScene {
-    let opaque: [DrawGroup]
-    let alphaTested: [DrawGroup]
-    let terrain: [TerrainDrawItem]
-    let water: [WaterDrawItem]
-    let sky: SkyParameters?
-    let lighting: RenderLighting?
-    let pointLights: [RenderPointLight]
+nonisolated public struct RenderScene {
+    public let opaque: [DrawGroup]
+    public let alphaTested: [DrawGroup]
+    public let terrain: [TerrainDrawItem]
+    public let water: [WaterDrawItem]
+    public let sky: SkyParameters?
+    public let lighting: RenderLighting?
+    public let pointLights: [RenderPointLight]
     /// Cell-owned GRAS meshes grouped across placements/cells for one
     /// instanced draw per mesh/material after runtime visibility filtering.
-    let grass: [GrassDrawGroup]
+    public let grass: [GrassDrawGroup]
     /// Cell-owned CPU particle systems + their texture/instance buffers.
-    let particles: [ParticlePlayback]
+    public let particles: [ParticlePlayback]
     /// Cell-owned actor playback objects; references disappear on cell eviction.
-    let animations: [any RenderAnimation]
+    public let animations: [any RenderAnimation]
     /// Simulated bone poses, keyed by the ACHR each ragdoll stands for (issue
     /// #197, roadmap item 15.6).
     ///
@@ -276,9 +276,9 @@ nonisolated struct RenderScene {
     /// the call an idle animation does, and the renderer needs to know nothing
     /// about physics. Bones the ragdoll does not simulate keep the animated
     /// pose, which is why a corpse still has hands.
-    var ragdollPoses: [UInt32: [String: float4x4]] = [:]
+    public var ragdollPoses: [UInt32: [String: float4x4]] = [:]
 
-    init(
+    public init(
         instances: [RenderPlacement],
         animations: [any RenderAnimation] = [],
         terrain: [TerrainDrawItem] = [],
@@ -348,7 +348,7 @@ nonisolated struct RenderScene {
     /// needs no re-transform. Groups with the same mesh + material fold
     /// together (adjacent cells placing the same model share one instanced
     /// draw); `residencyAllocations` still dedups across the merged lists.
-    init(merging scenes: [RenderScene]) {
+    public init(merging scenes: [RenderScene]) {
         var opaque = GroupAccumulator()
         var alphaTested = GroupAccumulator()
         var grass = GrassGroupAccumulator()
@@ -378,7 +378,7 @@ nonisolated struct RenderScene {
     /// Samples every resident actor at one shared world clock. A malformed
     /// runtime sample freezes only that actor; validated clips normally update.
     @discardableResult
-    func updateAnimations(at time: Float) -> Int {
+    public func updateAnimations(at time: Float) -> Int {
         var poses: [ObjectIdentifier: [String: float4x4]] = [:]
         var failedClips = Set<ObjectIdentifier>()
         var updatedMeshes = Set<ObjectIdentifier>()
@@ -412,13 +412,13 @@ nonisolated struct RenderScene {
 
     /// Restores all resident actor meshes to their NIF bind palettes.
     @discardableResult
-    func resetAnimationsToBindPose() -> Int {
+    public func resetAnimationsToBindPose() -> Int {
         animations.reduce(0) { $0 + $1.resetToBindPose() }
     }
 
     /// CPU light culling: stable distance order, original scene order as
     /// tie-break. The renderer calls this once per visible draw.
-    func nearestPointLights(to position: SIMD3<Float>, limit: Int) -> [RenderPointLight] {
+    public func nearestPointLights(to position: SIMD3<Float>, limit: Int) -> [RenderPointLight] {
         guard limit > 0, pointLights.count > limit else { return Array(pointLights.prefix(limit)) }
         return pointLights.enumerated().sorted { lhs, rhs in
             let lhsDistance = simd_length_squared(lhs.element.position - position)
@@ -429,14 +429,14 @@ nonisolated struct RenderScene {
 
     /// Per-draw uniform ring slots one frame can need: one per group +
     /// terrain item.
-    var drawCount: Int {
+    public var drawCount: Int {
         opaque.count + alphaTested.count + terrain.count + water.count + grass.count
             + particles.count
     }
 
     /// Static instances across all groups — sizes the renderer's
     /// per-instance transform ring.
-    var instanceCount: Int {
+    public var instanceCount: Int {
         opaque.reduce(0) { $0 + $1.instances.count }
             + alphaTested.reduce(0) { $0 + $1.instances.count }
             + grass.reduce(0) { $0 + $1.instances.count }
@@ -444,7 +444,7 @@ nonisolated struct RenderScene {
 
     /// Every GPU allocation the scene touches, deduplicated — feeds the
     /// renderer's residency set (todo 2.6 residency rule).
-    var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [MTLAllocation] {
         var seen = Set<ObjectIdentifier>()
         var allocations: [MTLAllocation] = []
         func add(_ resources: [MTLAllocation]) {

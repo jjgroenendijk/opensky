@@ -9,9 +9,9 @@
 import Darwin
 import Foundation
 
-nonisolated enum MemoryFootprint {
+nonisolated public enum MemoryFootprint: Sendable {
     /// Physical footprint in bytes, or nil if the mach call fails.
-    static func physFootprintBytes() -> UInt64? {
+    public static func physFootprintBytes() -> UInt64? {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(
             MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size
@@ -26,7 +26,7 @@ nonisolated enum MemoryFootprint {
     }
 
     /// Physical footprint in megabytes (1 MB = 1024*1024 B), or nil on failure.
-    static func physFootprintMB() -> Double? {
+    public static func physFootprintMB() -> Double? {
         physFootprintBytes().map { Double($0) / (1024 * 1024) }
     }
 }

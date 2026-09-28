@@ -15,29 +15,29 @@ import Foundation
 import OpenSkyFormats
 
 /// One fighting actor as the panel shows it.
-nonisolated struct CombatActorReadout: Equatable, Sendable {
-    let key: ReferenceKey
+nonisolated public struct CombatActorReadout: Equatable, Sendable {
+    public let key: ReferenceKey
     /// FULL name when one resolves, else the editor ID, else the FormID.
-    let name: String
-    let phase: CombatBehaviorPhase
+    public let name: String
+    public let phase: CombatBehaviorPhase
     /// How aware it is of the player right now.
-    let awareness: DetectionState
+    public let awareness: DetectionState
     /// Distance to the player, world units.
-    let distance: Float
+    public let distance: Float
     /// Its health over its maximum, 0 through 1.
-    let healthFraction: Float
+    public let healthFraction: Float
     /// Attacks started, contact steps reached, guards raised and searches begun
     /// since it first fought.
-    let attackCount: Int
-    let contactCount: Int
-    let blockCount: Int
-    let searchCount: Int
+    public let attackCount: Int
+    public let contactCount: Int
+    public let blockCount: Int
+    public let searchCount: Int
     /// Casts begun since it first fought, and how many spells it could cast
     /// from where it is standing right now (issue #473).
-    let castCount: Int
-    let spellOptionCount: Int
+    public let castCount: Int
+    public let spellOptionCount: Int
 
-    init(
+    public init(
         key: ReferenceKey,
         name: String,
         phase: CombatBehaviorPhase,
@@ -66,9 +66,9 @@ nonisolated struct CombatActorReadout: Equatable, Sendable {
     }
 }
 
-nonisolated enum CombatLoopReadout {
+nonisolated public enum CombatLoopReadout: Sendable {
     /// Whether the player is fighting, and whom.
-    static func stateText(for snapshot: CombatLoopSnapshot) -> String {
+    public static func stateText(for snapshot: CombatLoopSnapshot) -> String {
         guard snapshot.isAvailable else { return "Combat: unavailable" }
         guard snapshot.isPlayerInCombat else {
             return "Combat: out of combat"
@@ -81,7 +81,7 @@ nonisolated enum CombatLoopReadout {
     }
 
     /// One line per actor with a combat machine, newest state each frame.
-    static func actorsText(for snapshot: CombatLoopSnapshot) -> String {
+    public static func actorsText(for snapshot: CombatLoopSnapshot) -> String {
         guard snapshot.isAvailable else { return "Fighters: unavailable" }
         guard !snapshot.actors.isEmpty else { return "Fighters: none" }
         let crowded = snapshot.crowdedOutCount > 0
@@ -93,7 +93,7 @@ nonisolated enum CombatLoopReadout {
     }
 
     /// One fighting actor as a readout line.
-    static func actorLine(for actor: CombatActorReadout) -> String {
+    public static func actorLine(for actor: CombatActorReadout) -> String {
         let situation = String(
             format: "%.0f u, health %.0f%%", actor.distance, actor.healthFraction * 100
         )
@@ -105,7 +105,7 @@ nonisolated enum CombatLoopReadout {
     }
 
     /// Whether fighters may cast, and what casting they have done (issue #473).
-    static func castingText(for snapshot: CombatLoopSnapshot) -> String {
+    public static func castingText(for snapshot: CombatLoopSnapshot) -> String {
         guard snapshot.isAvailable else { return "AI casting: unavailable" }
         guard snapshot.isActorCastingEnabled else {
             return "AI casting: off — fighters swing only"
@@ -116,14 +116,14 @@ nonisolated enum CombatLoopReadout {
     }
 
     /// What the hostility toggle acts on, and where it stands.
-    static func hostilityText(for snapshot: CombatLoopSnapshot) -> String {
+    public static func hostilityText(for snapshot: CombatLoopSnapshot) -> String {
         guard snapshot.isAvailable else { return "Hostility: unavailable" }
         let regard = snapshot.selectedActorIsHostile ? "hostile" : "neutral"
         return "Hostility: \(snapshot.selectedActorName) is \(regard)"
     }
 
     /// Blows the player has taken, newest last.
-    static func incomingText(for snapshot: CombatLoopSnapshot) -> String {
+    public static func incomingText(for snapshot: CombatLoopSnapshot) -> String {
         guard snapshot.isAvailable else { return "Hits taken: unavailable" }
         guard snapshot.incomingHitCount > 0 else { return "Hits taken: none" }
         let flash = String(format: "%.2f", snapshot.damageFlash)
@@ -133,7 +133,7 @@ nonisolated enum CombatLoopReadout {
     }
 
     /// One incoming hit as a trace line.
-    static func traceLine(for hit: CombatIncomingHit) -> String {
+    public static func traceLine(for hit: CombatIncomingHit) -> String {
         let blocked = hit.damage.wasBlocked
             ? String(format: ", blocked %.0f%%", hit.damage.blockedFraction * 100)
             : ""
@@ -144,7 +144,7 @@ nonisolated enum CombatLoopReadout {
     }
 
     /// Live transients against their ceilings, and what the caps have removed.
-    static func transientText(for snapshot: CombatLoopSnapshot) -> String {
+    public static func transientText(for snapshot: CombatLoopSnapshot) -> String {
         guard snapshot.isAvailable else { return "Transients: unavailable" }
         let live = snapshot.transients
         let caps = snapshot.limits

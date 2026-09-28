@@ -5,13 +5,13 @@ import MetalKit
 import QuartzCore
 
 extension Renderer: MTKViewDelegate {
-    func mtkView(_: MTKView, drawableSizeWillChange size: CGSize) {
+    public func mtkView(_: MTKView, drawableSizeWillChange size: CGSize) {
         guard size.height > 0 else { return }
         drawableAspectRatio = Float(size.width) / Float(size.height)
         rebuildProjection()
     }
 
-    func draw(in view: MTKView) {
+    public func draw(in view: MTKView) {
         guard
             let drawable = view.currentDrawable,
             let passDescriptor = view.currentMTL4RenderPassDescriptor,

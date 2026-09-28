@@ -17,8 +17,8 @@ import OpenSkyGameData
 import OSLog
 
 @MainActor
-final class WorldMusicDirector {
-    static let logger = Logger(
+public final class WorldMusicDirector {
+    public static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldMusicDirector"
     )
@@ -32,7 +32,7 @@ final class WorldMusicDirector {
 
     /// Music playback. Toggling takes effect immediately: off fades the current
     /// track out, on restarts the selection the last context resolved.
-    var musicEnabled = true {
+    public var musicEnabled = true {
         didSet {
             guard musicEnabled != oldValue else { return }
             applyMusicState()
@@ -56,12 +56,12 @@ final class WorldMusicDirector {
     private var retiringSourceIDs: [Int] = []
     /// Seconds the current track has been sounding, advanced from the frame
     /// delta so it freezes with the world sim.
-    private(set) var currentTrackElapsedSeconds: Float = 0
+    public private(set) var currentTrackElapsedSeconds: Float = 0
 
     /// Most recent failure reason; nil when the last start succeeded.
-    private(set) var lastMusicError: String?
+    public private(set) var lastMusicError: String?
 
-    init(
+    public init(
         engine: WorldAudioEngine,
         musicStore: MusicRecordStore?,
         weatherStore: WeatherStore?,
@@ -80,7 +80,7 @@ final class WorldMusicDirector {
 
     /// Test seam: same shape as the production init but takes a file loader
     /// closure directly so tests need no VirtualFileSystem.
-    init(
+    public init(
         engine: WorldAudioEngine,
         musicStore: MusicRecordStore?,
         weatherStore: WeatherStore?,
@@ -99,7 +99,7 @@ final class WorldMusicDirector {
     /// that resolves to the same selection is a no-op (the track keeps playing
     /// across a cell boundary); one that arrives while music is off is
     /// remembered but not started.
-    func handleMusicContext(_ context: MusicContext) {
+    public func handleMusicContext(_ context: MusicContext) {
         let selection = MusicSelection.resolve(
             context: context, musicStore: musicStore, weatherStore: weatherStore
         )
@@ -116,7 +116,7 @@ final class WorldMusicDirector {
     /// paused world neither advances the elapsed readout nor rolls the playlist
     /// over. Playlist advance is detected by the current source having left the
     /// engine: `WorldAudioEngine.tick` retires a stream that reached its end.
-    func tick(deltaTime: Float) {
+    public func tick(deltaTime: Float) {
         pruneRetiringSources()
         guard let sourceID = currentSourceID else { return }
         guard engine.sources.contains(where: { $0.id == sourceID }) else {
@@ -132,7 +132,7 @@ final class WorldMusicDirector {
     // MARK: - Panel entry points (stage 4 verification surface)
 
     /// MUSC editor ids the panel can offer, sorted. Empty without music data.
-    var selectableMusicTypeNames: [String] {
+    public var selectableMusicTypeNames: [String] {
         guard let musicStore else { return [] }
         return musicStore.musicTypes.values
             .compactMap(\.editorID)
@@ -144,7 +144,7 @@ final class WorldMusicDirector {
     /// forced selection becomes the remembered one, so toggling music off and
     /// on restarts it. Returns nil on success or a short failure reason.
     @discardableResult
-    func forcePlayMusicType(named name: String) -> String? {
+    public func forcePlayMusicType(named name: String) -> String? {
         guard let musicStore else {
             lastMusicError = "no music data"
             return lastMusicError
@@ -161,7 +161,7 @@ final class WorldMusicDirector {
     /// Forces a crossfade to a MUSC by FormID. Mirrors
     /// `WorldAudioSoundDirector.forcePlaySound(formID:position:)`.
     @discardableResult
-    func forcePlayMusicType(formID: FormID) -> String? {
+    public func forcePlayMusicType(formID: FormID) -> String? {
         guard let musicStore else {
             lastMusicError = "no music data"
             return lastMusicError
@@ -177,7 +177,7 @@ final class WorldMusicDirector {
 
     /// Force-stops music by adopting the empty context. The next cell change
     /// resolves a fresh selection and starts it again.
-    func stopMusic() {
+    public func stopMusic() {
         handleMusicContext(.empty)
     }
 
@@ -198,7 +198,7 @@ final class WorldMusicDirector {
     /// - Returns: nil on success, or a short reason the selection did not
     ///   change.
     @discardableResult
-    func setCombatActive(_ active: Bool) -> String? {
+    public func setCombatActive(_ active: Bool) -> String? {
         guard active else { return leaveCombat() }
         guard preCombatSelection == nil else { return nil }
         guard let musicStore else {
@@ -223,7 +223,7 @@ final class WorldMusicDirector {
     }
 
     /// Whether the combat playlist is the current selection.
-    var isCombatMusicActive: Bool {
+    public var isCombatMusicActive: Bool {
         preCombatSelection != nil
     }
 
@@ -249,30 +249,30 @@ final class WorldMusicDirector {
     /// What the panel readout shows. Derived from live engine sources: the id
     /// is dropped first if the engine already retired it, so the readout can
     /// never claim music that stopped. "none" when nothing of ours is playing.
-    var currentMusicDescription: String {
+    public var currentMusicDescription: String {
         guard let name = currentTrackName else { return "none" }
         return "\(desiredSelection.displayName) — \(name)"
     }
 
     /// VFS path of the track currently sounding, or nil when silent.
-    var currentTrackName: String? {
+    public var currentTrackName: String? {
         guard let currentSourceID else { return nil }
         return engine.sources.first { $0.id == currentSourceID }?.name
     }
 
     /// Name of the derived state (`exploration`, `town`, `interior`).
-    var currentStateName: String {
+    public var currentStateName: String {
         desiredSelection.state.displayName
     }
 
     /// Crossfade the current selection uses, for the readout.
-    var currentCrossfadeSeconds: Float {
+    public var currentCrossfadeSeconds: Float {
         desiredSelection.crossfadeSeconds
     }
 
     /// Position in the current playlist, as `index + 1` of `count`. Zero-based
     /// index and a zero count when silent.
-    var playlistPosition: (index: Int, count: Int) {
+    public var playlistPosition: (index: Int, count: Int) {
         (desiredSelection.isSilent ? 0 : trackIndex, desiredSelection.tracks.count)
     }
 

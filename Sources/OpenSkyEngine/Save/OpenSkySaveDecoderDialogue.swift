@@ -13,13 +13,13 @@ import Foundation
 import OpenSkyFormats
 
 /// One INFO's saved said-state, before it is merged back into its delta.
-nonisolated struct SaveDialogueEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let state: DialogueRuntimeState
+nonisolated public struct SaveDialogueEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let state: DialogueRuntimeState
 }
 
-nonisolated enum OpenSkySaveDialogueDecoder {
-    static func decodeDialogueStates(_ payload: Data) throws -> [SaveDialogueEntry] {
+nonisolated public enum OpenSkySaveDialogueDecoder: Sendable {
+    public static func decodeDialogueStates(_ payload: Data) throws -> [SaveDialogueEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("DLGS entry count")
         try OpenSkySaveDecoder.validate(
@@ -49,7 +49,7 @@ nonisolated enum OpenSkySaveDialogueDecoder {
     /// encoder never writes one, so it can only come from a corrupt or
     /// hand-built file, and storing the baseline as a delta would make a
     /// restored world compare unequal to the one that was saved.
-    static func merge(
+    public static func merge(
         _ dialogue: [SaveDialogueEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
