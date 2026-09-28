@@ -20,6 +20,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Everything about the running session a crime needs to know.
 @MainActor

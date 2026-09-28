@@ -12,4 +12,15 @@ nonisolated public struct CellCoordinate: Hashable, Sendable {
         self.x = x
         self.y = y
     }
+
+    /// The edge length of one exterior cell, in game units.
+    public static let cellSize: Float = 4096
+
+    /// The exterior cell whose square holds `position`.
+    public init(containing position: SIMD3<Float>) {
+        self.init(
+            x: Int32((position.x / Self.cellSize).rounded(.down)),
+            y: Int32((position.y / Self.cellSize).rounded(.down))
+        )
+    }
 }

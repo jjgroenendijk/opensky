@@ -5,6 +5,7 @@
 // The split is along a real seam: the other half is about what an observer
 // perceives, and this half is about what the pass costs and what it hands out.
 
+@testable import OpenSkyDiagnostics
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import OpenSkyShaderTypes

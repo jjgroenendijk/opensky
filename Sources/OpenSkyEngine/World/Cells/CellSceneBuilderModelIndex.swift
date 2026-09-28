@@ -3,6 +3,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OSLog
 
 nonisolated public struct ExteriorBuildSource: Sendable {

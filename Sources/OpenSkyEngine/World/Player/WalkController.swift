@@ -2,6 +2,7 @@
 // mesh collide-and-slide, slope limit, and bounded step response.
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 /// Which camera the world is viewed through. `fly` is the developer's
@@ -31,17 +32,6 @@ nonisolated public enum CameraMovementMode: Equatable, CaseIterable, Sendable {
     }
 }
 
-nonisolated public struct PlayerCapsule: Equatable, Sendable {
-    /// Capsule radius in native Skyrim world units.
-    public let radius: Float
-    /// Bottom-to-top extent.
-    public let height: Float
-    /// Camera offset above capsule bottom.
-    public let eyeHeight: Float
-
-    public static let standard = PlayerCapsule(radius: 24, height: 128, eyeHeight: 112)
-}
-
 nonisolated public struct WalkController: Sendable {
     public typealias GroundSampler = (SIMD2<Float>) -> TerrainGroundSample?
     public typealias CollisionQuery = CapsuleWorldCollider.CandidateQuery
@@ -58,10 +48,10 @@ nonisolated public struct WalkController: Sendable {
         public let plan: StepPlanner?
     }
 
-    public static let gravity: Float = 1400
-    public static let maximumSlopeDegrees: Float = 50
-    public static let fixedTimeStep: Float = 1 / 120
-    public static let maximumFrameTime: Float = 0.1
+    public static let gravity = PhysicsStep.gravity
+    public static let maximumSlopeDegrees = PhysicsStep.maximumSlopeDegrees
+    public static let fixedTimeStep = PhysicsStep.fixedTimeStep
+    public static let maximumFrameTime = PhysicsStep.maximumFrameTime
     public static let groundSnapDistance: Float = 24
     /// How fast a swimmer may rise or sink, units per second. The capsule is
     /// held at the surface by a clamped correction rather than by buoyancy

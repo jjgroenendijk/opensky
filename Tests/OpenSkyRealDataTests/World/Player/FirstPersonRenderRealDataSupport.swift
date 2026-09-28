@@ -9,6 +9,7 @@ import ImageIO
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
+@testable import OpenSkyPhysics
 import simd
 import Testing
 import UniformTypeIdentifiers

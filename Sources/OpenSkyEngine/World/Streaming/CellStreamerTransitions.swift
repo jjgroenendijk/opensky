@@ -2,6 +2,7 @@
 // from CellStreamer so exterior grid scheduling stays readable.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OSLog
 import simd
 

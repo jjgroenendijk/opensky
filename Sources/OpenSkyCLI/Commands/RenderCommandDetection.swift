@@ -14,6 +14,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 /// A `PerceptionWorld` over one render's built cells. Line of sight goes

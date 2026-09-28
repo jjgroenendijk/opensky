@@ -10,6 +10,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyPhysics
 
 final class TriggerVolumeSection: PanelSectionViewController {
     weak var provider: (any TriggerControlProviding)? {

@@ -12,6 +12,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated public struct DoorTransition {
     public let sourceDoor: FormID

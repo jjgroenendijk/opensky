@@ -7,6 +7,7 @@ import Metal
 import MetalKit
 import OpenSkyEngine
 import OpenSkyFormatsCore
+import OpenSkyGameData
 import simd
 
 enum InteriorCommand {

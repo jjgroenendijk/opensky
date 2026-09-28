@@ -22,6 +22,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One object the running game placed in the world.
 ///

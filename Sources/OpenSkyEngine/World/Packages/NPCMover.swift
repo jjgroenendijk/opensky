@@ -2,6 +2,8 @@
 // the crowd registry and one mover remain independently readable.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 private struct NPCMoverStepPlan {

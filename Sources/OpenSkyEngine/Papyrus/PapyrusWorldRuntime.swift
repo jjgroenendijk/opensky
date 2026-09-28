@@ -18,6 +18,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
+import OpenSkyGameData
 
 @MainActor
 public final class PapyrusWorldRuntime {

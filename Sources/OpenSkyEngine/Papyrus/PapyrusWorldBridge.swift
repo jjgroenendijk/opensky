@@ -25,6 +25,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// What one activation did, returned by both
 /// `PapyrusWorldBridge.activate(_:by:togglesOpen:)` and

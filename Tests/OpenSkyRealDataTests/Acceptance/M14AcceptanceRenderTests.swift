@@ -23,6 +23,7 @@ import Metal
 import MetalKit
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyPhysics
 import simd
 import Testing
 

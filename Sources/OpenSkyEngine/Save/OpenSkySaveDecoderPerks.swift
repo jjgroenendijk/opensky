@@ -16,6 +16,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One actor's saved perks, before they are merged back into the delta.
 nonisolated public struct SavePerkEntry: Equatable, Sendable {

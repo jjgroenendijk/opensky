@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 
 extension PapyrusWorldRuntime {
     /// Queues `OnTriggerEnter(akActionRef)` on every script instance attached

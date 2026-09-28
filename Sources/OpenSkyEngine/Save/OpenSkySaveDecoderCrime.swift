@@ -19,6 +19,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One actor's saved ledger, before it is merged back into the delta.
 nonisolated public struct SaveCrimeLedgerEntry: Equatable, Sendable {

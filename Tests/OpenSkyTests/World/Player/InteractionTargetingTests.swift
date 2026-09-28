@@ -2,6 +2,7 @@
 // streamed scenes. A nil interaction ray represents fly mode.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyGameData
 import simd
 import Testing
 

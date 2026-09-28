@@ -17,6 +17,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One actor's saved relationship overrides, before they are merged back into
 /// the delta.

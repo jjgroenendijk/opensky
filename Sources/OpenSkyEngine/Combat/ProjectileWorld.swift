@@ -21,6 +21,8 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyPhysics
 import simd
 
 /// Who is shooting, and from where.

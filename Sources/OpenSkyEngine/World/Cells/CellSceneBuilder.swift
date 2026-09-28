@@ -16,6 +16,7 @@ import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPhysics
 import OSLog
 import simd
 

@@ -14,6 +14,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyPhysics
 
 final class CombatPhysicsPanelViewController: InspectorPanelViewController {
     let actorValuesSection = CombatActorValuesSection()

@@ -13,6 +13,7 @@
 import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 
 enum FootstepCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

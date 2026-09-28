@@ -15,6 +15,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPhysics
 import OSLog
 import simd
 

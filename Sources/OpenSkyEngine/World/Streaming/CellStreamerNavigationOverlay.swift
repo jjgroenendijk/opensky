@@ -2,6 +2,8 @@
 // satellite: residency and the latest path already live here, while the
 // renderer only owns the generic source registry and toggles.
 
+import OpenSkyDiagnostics
+
 extension CellStreamer {
     public func appendNavigationWorldOverlay(
         context: WorldOverlayFrameContext,

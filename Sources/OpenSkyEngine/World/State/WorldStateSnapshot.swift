@@ -13,6 +13,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One dirty reference in a snapshot: its key and the deltas recorded for it.
 nonisolated public struct WorldStateSnapshotEntry: Equatable, Sendable {

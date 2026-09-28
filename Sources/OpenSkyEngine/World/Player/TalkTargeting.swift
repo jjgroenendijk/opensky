@@ -30,6 +30,7 @@
 // coupling the split above avoids.
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 /// The streamer's Talk seam: who is a candidate, who is currently picked, and

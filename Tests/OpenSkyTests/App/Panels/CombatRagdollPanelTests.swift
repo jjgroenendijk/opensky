@@ -7,6 +7,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
+@testable import OpenSkyPhysics
 import Testing
 
 struct CombatRagdollPanelTests {

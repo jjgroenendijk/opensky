@@ -32,6 +32,7 @@
 // Documented in docs/engine/melee-combat.md.
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 /// Everything a swing needs to know about the weapon making it.
