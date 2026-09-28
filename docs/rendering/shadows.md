@@ -1,183 +1,100 @@
 ---
 type: Subsystem
 title: Cascaded sun shadows
-description: Depth-only cascade pre-pass with per-cascade caster culling clamped to
-  resident cells, off/low/high quality, PCF in mesh + terrain fragment paths,
-  fly-bench CPU budget, offscreen A/B verification.
+description: The depth-only cascade pre-pass - cascade fitting and texel snapping, the clamp to
+  resident casters, per-cascade caster culling, the hazard barrier, PCF sampling of the sun term
+  only, quality levels, and the fly-bench budget.
 tags: [rendering, metal, shadows, engine]
-timestamp: 2026-07-21T00:00:00Z
 ---
 
 # Cascaded sun shadows
 
-M7.1.1 + M7.1.2. Depth-only pre-pass renders casters into a shadow-map array; scene pass
-samples it with PCF and darkens only the direct sun term. Standard cascaded
-shadow maps ([LearnOpenGL CSM](https://learnopengl.com/Guest-Articles/2021/CSM),
-Microsoft "Cascaded Shadow Maps" technique article) — no Bethesda code consulted.
+A depth-only pre-pass draws shadow casters into a shadow map array. The scene pass samples it with
+percentage-closer filtering (PCF: several depth comparisons averaged) and darkens only the direct sun
+term. This is standard cascaded shadow mapping, as described in
+[LearnOpenGL CSM](https://learnopengl.com/Guest-Articles/2021/CSM) and Microsoft's "Cascaded Shadow
+Maps" technique article.
 
-## Cascade fit — `ShadowCascadeMath` (`opensky/Engine/Rendering/ShadowCascadeMath.swift`)
+## Fitting the cascades
 
-* `splitDistances(near:far:count:lambda:)` — practical split scheme:
-  `lambda * log + (1 - lambda) * uniform` per split, strictly increasing, last
-  pinned to `far`.
-* `makeCascades(...)` per cascade slice: 8 world-space frustum corners from
-  `cameraToWorld` + fovY/aspect -> light view (`MatrixMath.lookAt` along
-  `sunDirection`, up `(0,0,1)`, switches to `(1,0,0)` when sun near vertical) ->
-  square ortho extent from slice bounding sphere (rotation-invariant, one-texel
-  border) -> origin snapped to texel grid (sub-texel camera motion cannot shimmer)
-  -> near plane extended back by `casterBackup` so off-slice casters toward the
-  sun still write depth. Returns `ortho * lightView` per cascade.
-* `cascadeIndex(viewDepth:splits:cascadeCount:)` — first cascade whose far bound
-  contains the fragment's view depth; mirrored verbatim in MSL
-  (`sunShadowFactor`, `Shaders.metal`). Padding entries carry the last real bound.
-* `MatrixMath.orthographic` added: RH, z to Metal [0, 1], matches `perspective`
-  conventions.
-* Resident clamp (7.1.2): `makeCascades(... residentBounds:)` limits the
-  `casterBackup` near-plane extension to the resident caster set.
-  `residentNearLightZ(_:lightView:)` projects the resident world-AABB union into
-  light space; `clampedShadowNearZ(sliceNearZ:fullBackupNearZ:residentNearZ:)`
-  = `min(sliceNearZ, max(fullBackupNearZ, residentNearZ))` — covers the frustum
-  slice, never reaches past resident casters, never exceeds the 7.1.1 backup.
-  nil bounds (any unbounded caster) -> unclamped. Streamed cells ARE the caster
-  source, so the light volume tracks residency; precision/cost win, no visual
-  change.
+- Split distances use the practical scheme: `lambda * log + (1 - lambda) * uniform` per split, with
+  lambda 0.7. Splits increase strictly, and the last one is the far distance.
+- For each slice, the eight world corners of the camera frustum slice go into light view space. The
+  light looks along the sun direction with up `(0, 0, 1)`, or `(1, 0, 0)` when the sun is near
+  vertical.
+- The extent is a square taken from the slice's bounding sphere, so it does not change when the
+  camera turns, with a one-texel border.
+- The origin snaps to the texel grid, so camera motion smaller than a texel cannot make shadows
+  shimmer.
+- The near plane moves back toward the sun, so casters outside the slice still write depth. It moves
+  back at most 12,288 units, and never past the box around the resident cells. The loaded cells are
+  the only casters, so a longer reach only wastes depth precision. This clamp does not change the
+  image. Any caster with no bounds turns the clamp off.
 
-## Depth pre-pass — `RendererShadowPass.swift`
+The cascade for a fragment is the first whose far bound holds its view depth. The shader repeats the
+same rule. Unused cascade entries carry the last real bound. The orthographic projection is
+right-handed and maps z to Metal's 0 to 1, like the perspective projection.
 
-* Runs on the same reused `MTL4CommandBuffer` before `encodeScenePass`, both call
-  sites (`draw(in:)`, `renderOffscreenFrame`). One depth-only encoder per cascade,
-  target = slice of a `depth32Float` 2048x2048 x 3 `type2DArray` texture
-  (`ShadowConstantCascadeCount`, `ShadowConstantMapResolution`), clear 1, store.
-* Casters: opaque + alpha-tested groups (static + skinned) + terrain. Water, sky,
-  distant LOD never cast. Alpha-tested groups keep their cutout via
-  `shadowAlphaTestFragment` (diffuse sample + discard); skinned cutouts cast
-  solid (conservative — see Out of scope).
-* Per-cascade per-instance caster culling (7.1.2): for each cascade, only
-  instances whose world AABB intersects that cascade's
-  `Frustum(viewProjection:)` are drawn (nil bounds -> conservatively drawn).
-  Survivors write contiguous runs into a dedicated shadow instance ring sized
-  `cascadeCount x` scene instance capacity — one instanced draw per group per
-  cascade; the scene pass resets its own cursors to 0 per frame, so sharing its
-  ring would collide. `ShadowDrawUniforms` (light view-projection, model
-  matrix, cutout params) go to a `cascadeCount x drawCapacity` shadow draw
-  ring. `RendererRings.swift` sizes both at build time; they regrow on the
-  scene-pass triggers in `Renderer.swift`'s scene-swap extension
-  (`regrownDrawRing`/`regrownInstanceRing`, adopted by
-  `adoptDrawRing`/`adoptInstanceRing`).
-* Per-frame accounting: `Renderer.lastShadowDrawStats`
-  (`ShadowDrawStats`: draw calls, drawn instances, culled instances, cascades
-  rendered) and `Renderer.lastShadowUpdateMS` (CPU wall time of
-  `encodeShadowPass`, `lastAnimationUpdateMS` pattern) — culling evidence + the
-  fly-bench budget input.
-* MTL4 hazard barrier: MTL4 does not auto-track cross-encoder hazards; without
-  a barrier the scene pass intermittently sampled the shadow array before depth
-  writes landed (~52% of pixels flipped between identical consecutive frames in
-  ~half of runs, found by the 7.1.2 determinism test). The final cascade encoder
-  issues `barrier(afterStages: .fragment, beforeQueueStages: .fragment,
-  visibilityOptions: .device)`, covering all prior cascade encoders.
-* Skinned casters bind the same bone-palette slot as the scene pass;
-  `frameBonePrepared` guard keeps `prepareBoneMatrices(slot:)` at once per frame
-  across both passes.
-* Acne control: raster `setDepthBias(2, slopeScale: 3, clamp: 0)`, cull `.back`,
-  receiver-side NDC bias 0.0015 in the shader.
+## The pre-pass
 
-## Scene-pass sampling
+The shadow map is a `depth32Float` 2048 by 2048 array with 3 slices. Each cascade gets one
+depth-only encoder, cleared to 1. The pre-pass runs on the same command buffer before the scene
+pass, in the window and offscreen alike.
 
-* `FrameUniforms` gains `shadowViewProjections[3]`, `shadowCascadeSplits`,
-  `cameraForward`, `shadowsEnabled`, `shadowInverseResolution`. The shadow pass
-  claims one texture slot (`TextureIndexShadowMap` = 9, after the terrain layer
-  array) and one sampler (`SamplerIndexShadowCompare` = 1, `compareFunction
-  .less`, linear, clamp); current argument-table totals live in
-  [Metal 4 renderer](/rendering/metal4-renderer.md).
-* `sunShadowFactor` (`Shaders.metal`): view depth = `dot(worldPos - cameraPosition,
-  cameraForward)` -> cascade pick (mirror of `cascadeIndex`) -> light-clip
-  transform; outside [0, 1] or beyond last split -> lit. PCF via
-  `depth2d_array.sample_compare`, tap count driven by
-  `FrameUniforms.shadowSampleRadius` (0 = single tap, r > 0 = (2r+1)^2 box; high
-  quality = radius 1 -> 3x3). Factor multiplies ONLY the sun lambert term;
-  ambient, directional ambient, point lights untouched. Both
-  `staticMeshFragment` + `terrainFragment` consume it.
+Casters are opaque and alpha-test groups, static and skinned, and terrain. Water, sky, and distant
+LOD never cast. Alpha-test groups keep their cutout in the shadow (sample the texture, discard).
+Skinned cutouts cast solid, which is safe but not exact.
 
-## Quality levels + constants (`RendererSetup.swift`)
+Each cascade draws only the instances whose box meets that cascade's frustum. An instance with no
+box is drawn. The survivors go in the shadow pass's own instance ring, sized cascades times the
+scene's instance capacity. It cannot share the scene's ring, because the scene pass restarts its
+cursor at 0 each frame. Shadow draw uniforms have their own ring too. Both grow when the scene rings
+grow. Skinned casters use the same bone palette slot as the scene pass, computed once per frame.
 
-`Renderer.shadowQuality` (`ShadowQuality`: `off` / `low` / `high`, default
-high):
+Metal 4 does not track hazards between encoders. Without a barrier, the scene pass sometimes sampled
+the shadow array before the depth writes landed: about half of all pixels changed between identical
+frames, in about half of the runs. A determinism test found it. The last cascade encoder now issues
+`barrier(afterStages: .fragment, beforeQueueStages: .fragment, visibilityOptions: .device)`, which
+covers every cascade encoder before it.
 
-* high — 3 cascades, `shadowDistance` 12288 (3 exterior cells), 3x3 PCF.
-* low — 2 cascades, `shadowDistanceLow` 8192, 1-tap PCF. No shadow-map realloc:
-  all 3 slices of the 2048x2048 array stay allocated, low renders fewer; the
-  shader's split padding already handles 2 cascades.
-* off — pre-pass skipped entirely (zero shadow draw calls).
+Acne control is a raster depth bias of 2 with slope scale 3, back-face culling, and a receiver-side
+bias of 0.0015 in normalized device coordinates.
 
-`casterBackup` 12288 (now clamped to resident bounds), split `lambda` 0.7.
-`Renderer.sunShadowsEnabled` stays the independent dev A/B toggle (`H` in the
-game view): `shadowRenders = sunShadowsEnabled && shadowQuality != .off`, so `H`
-flips shadows without losing the selected quality.
+## Sampling
 
-## App surface — `World > Environment`
+The scene shader computes view depth as `dot(worldPos - cameraPosition, cameraForward)`, picks the
+cascade, and moves the point into light clip space. A point outside 0 to 1, or past the last split,
+is lit. PCF uses `depth2d_array.sample_compare` with a radius: 0 is one tap, and r gives a
+(2r + 1) squared box, so radius 1 is 3 by 3. The result multiplies only the sun Lambert term.
+Ambient, directional ambient, and point lights are not touched. Static meshes and terrain both use
+it.
 
-First sidebar verification surface (AGENTS.md contract): the app shell hosts one
-unified sidebar (`AppSidebarViewController`, destinations declared in
-`DestinationRegistry` — later panels append there). Environment panel:
-`Sun shadows` popup (Off/Low/High -> `Renderer.shadowQuality`, applied live),
-2 Hz stats readout (`lastShadowDrawStats` + `lastShadowUpdateMS`), `H`-toggle
-note. Choice persists via UserDefaults key `ShadowQualitySetting`
-(`ShadowQualitySettings`; corrupt/missing -> high), applied on renderer
-creation incl. the Settings reload path. Accessibility ids tests + later
-milestones rely on: `AppSidebar`, `Destination-<id>`,
-`ShadowQualityControl`, `ShadowStatsLabel`. After a popup change the game view
-retakes first responder, so WASD/mouse-look resume without a manual click.
+## Quality levels
 
-## Fly-bench budget (`openskycli bench --fly-path`)
+| Quality | Cascades | Distance | PCF |
+| --- | --- | --- | --- |
+| High (default) | 3 | 12,288 units (3 exterior cells) | 3 by 3 |
+| Low | 2 | 8,192 units | One tap |
+| Off | 0 | | The pre-pass is skipped |
 
-`CellStreamingFlyBenchmarkConfiguration.shadowUpdateBudgetMS` gates shadow avg
-AND p95 per frame (`shadowUpdateExceeded` mirror of the animation gate);
-`OffscreenBenchResult.shadowMS` collects `lastShadowUpdateMS`. CLI flag
-`--shadow-budget-ms`, default 14 ms: original shadow-only Whiterun fly @ 640x360 Debug
-measured avg 3.26 / p95 6.52 / max 9.72 ms. M7.6 full-probe warm-process runs measured
-p95 12.13/12.19/13.20 ms; 14 keeps 6% measured headroom while staying below half the
-33.33 ms total-frame budget.
-Report prints `shadow update` + `shadow culling` lines; `tools/probe.sh`
-asserts culled casters are reported.
+Low keeps all 3 slices allocated and draws fewer, so changing quality allocates nothing. The shader's
+padding already handles 2 cascades. The on and off switch is separate from quality, so turning shadows
+back on keeps the chosen quality.
 
-## Verification (2026-07-21)
+## Where to see it
 
-7.1.1:
+`World > Environment > Sun shadows` turns shadows on and off and sets the quality. The readout shows
+the shadow draw calls, drawn and culled instances, cascades, and the CPU time of the shadow pass. The
+quality is saved in user defaults, and a bad or missing value means high.
 
-* `ShadowCascadeMathTests` (20): splits monotonic/endpoints/lambda blend, ortho
-  NDC mapping, slice corners inside cascade NDC, caster-backup depth range,
-  texel-grid snapping, up-vector switch, cascade-index boundaries + padding.
-* `RendererShadowTests`: synthetic caster/receiver A/B — receiver darkens
-  monotonically with shadows on, sky band bit-identical, shadows-off frame
-  matches never-enabled baseline.
-* Real-data probe (WhiterunExterior06, 1280x720): 5,194 px differ on/off
-  (0.56%), 3,370 darker, 0 brighter (no light leak), max luma-sum delta 196,
-  shadows-on frame deterministic across renders. 5x5 `screenshot --neighbors`:
-  building/wall shadows visible, no acne striping on open terrain.
+## Fly-bench budget
 
-7.1.2:
+`openskycli bench --fly-path` holds both the average and the 95th percentile shadow pass time to
+`--shadow-budget-ms`, 14 ms by default. That is below half of a 30 frames per second frame (33.33 ms)
+with some room over measured Whiterun runs. The report prints the shadow update time and the culling
+counts ([CLI](/tools/cli.md)).
 
-* `ShadowResidentClampTests` (7): clamp reduces Z range, never cuts casters
-  inside bounds, nil/degenerate bounds safe. `RendererShadowQualityTests` (5):
-  off == never-enabled baseline, low + high both darken, each quality
-  deterministic across renders (exposed + regression-guards the MTL4 barrier).
-  `RendererShadowTests` culling: synthetic in/out-of-frustum instances ->
-  culled > 0, drawn < total, image unchanged. `OffscreenBenchResultTests` +
-  `CellStreamingFlyPathTests`: shadow metric math + budget error path.
-* Real-data quality deltas (WhiterunExterior06, 1280x720): off-vs-high 5,879 px,
-  off-vs-low 2,449 px, low-vs-high 5,131 px; off-vs-off and high-vs-high
-  bit-identical (0 px). Stats: off 0 draw calls / 0 cascades; low 32 draws /
-  53 culled / 2 cascades; high 32 draws / 106 culled / 3 cascades.
-* Whiterun fly bench (640x360 Debug, default budgets): shadow update avg
-  3.28 ms / p95 6.55 ms / max 17.63 ms vs 12 ms budget; shadow culling 547 draw
-  calls, 1,250 drawn, 6,766 culled, 3 cascades; animation avg 1.02 ms vs 4 ms;
-  35 unique builds, 9 unloaded, footprint peak 790/1024 MB — all gates green.
-* App path recorded at acceptance: `World > Environment > Sun shadows`
-  (Off/Low/High). `make test-ui` on the dev machine currently aborts at harness
-  init (TCC automation-mode timeout, all UI tests, environment-level); the
-  sidebar UI test exists and unit/offscreen coverage stands in.
+## Not done
 
-## Out of scope
-
-Interior point-light shadows (noted for a later milestone), skinned-cutout
-alpha discard in the depth pass (still conservative solid).
+- Shadows from interior point lights.
+- Alpha cutouts on skinned casters in the depth pass.

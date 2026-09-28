@@ -34,7 +34,7 @@
 // `ActorFactionState` is, so an actor with no overrides stops being dirty for
 // this slot.
 //
-// Documented in docs/engine/combat.md and docs/formats/relationships.md.
+// Documented in docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
 

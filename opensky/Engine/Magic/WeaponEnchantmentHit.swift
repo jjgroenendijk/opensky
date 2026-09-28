@@ -24,7 +24,7 @@
 // `ItemEnchantmentProfile` for the measured reason), and it does not scale the
 // charge cost by the wielder's skill (see `EnchantmentCharge`).
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/item-enchantments.md.
 
 import Foundation
 import simd

@@ -13,7 +13,7 @@
 // two consumers this seam exists for, and the climate weather-chance selection
 // in `WeatherSelection` is the first one wired up.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/global-variables.md.
 
 import Foundation
 

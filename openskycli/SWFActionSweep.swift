@@ -1,8 +1,8 @@
-// `swf action-sweep`: the milestone 8.3.1 stage-2 gate. Parses every vanilla
+// `swf action-sweep`: parses every vanilla
 // `interface\*.swf` movie, decodes its full action side (main timeline,
 // sprites, DoInitAction, CLIPACTIONS) through `SWFActionInventory`, and prints
-// the opcode/host-API/clip-event/structure inventory the 8.3.1 decision doc
-// (`docs/decisions/swf-as2-scope.md`) draws its numbers from. This command
+// the opcode/host-API/clip-event/structure inventory the census page
+// (`docs/decisions/swf-as2-census.md`) draws its numbers from. This command
 // only parses args and prints; the tallying lives in
 // `opensky/Formats/SWF/SWFActionInventory.swift` and is unit-tested there.
 

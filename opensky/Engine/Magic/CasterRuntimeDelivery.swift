@@ -39,7 +39,7 @@
 // what "repeated short-interval application to whatever the aim ray hits"
 // means.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spell-delivery.md.
 
 import Foundation
 

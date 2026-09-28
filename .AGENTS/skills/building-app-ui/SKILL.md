@@ -8,7 +8,7 @@ description: Adds or changes OpenSky main-app UI - sidebar destinations, control
 # Main-app UI framework
 
 The OpenSky app's own dev and verification UI: sidebar destinations and the control panels
-under them. Not the in-game Scaleform UI (issue #99). The framework lives in
+under them. Not the in-game Scaleform UI. The framework lives in
 `opensky/App/Shell/`, destination view controllers in `opensky/App/Panels/`, and the
 `GameViewController` extensions that feed them in `opensky/App/GameView/`, one
 `GameViewController+Feature.swift` file per feature. The panel seam the view controller
@@ -46,10 +46,8 @@ direct-content panels" in `docs/tools/app-ui.md`.
   `DestinationDescriptor`. Sidebar aggregation and Reset all use those actions and never
   construct an unopened panel. Details in "Override provenance and reset" in
   `docs/tools/app-ui.md`.
-- Add every new `Shell/` file to the `openskycli` membership-exception set in
-  `opensky.xcodeproj/project.pbxproj` (app-only AppKit, excluded from the CLI), then build
-  BOTH targets (`make build && make cli`). A hand-edited `project.pbxproj` is easy to get
-  wrong.
+- Put app-only AppKit code under `opensky/App/`, which only the app target builds. No
+  project file edit is needed. `make cli-boundary` fails if it lands under `Engine/`.
 
 ## Invariants you cannot break
 

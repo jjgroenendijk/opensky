@@ -77,7 +77,7 @@ One entry per armed timer slot: the instance's reference key, then:
 Real-time slots use seconds; game-time slots use game hours. `remaining` is relative to the
 save, not an absolute time, so time between saving and loading does not count. The slot
 byte is the raw value of `PapyrusUpdateTimerSlot`
-([Papyrus VM](/engine/papyrus-vm.md#update-timers)). A slot above 3 is `invalidValue`. An
+([Papyrus VM](/engine/papyrus-timers.md)). A slot above 3 is `invalidValue`. An
 interval or remaining time that is negative or not finite is read as 0.0, so the timer fires
 on the next step. Minimum entry size: 26 bytes.
 

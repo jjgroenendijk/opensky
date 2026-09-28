@@ -27,7 +27,7 @@
 // execution are issue #322 (item 13.3); this layer is the state they will
 // mutate, not the script side.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/quest-state.md.
 
 import Foundation
 

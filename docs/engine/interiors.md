@@ -1,85 +1,63 @@
 ---
 type: Subsystem
 title: Interior door transitions
-description: Interior CELL build, DOOR/XTEL resolution, view-ray activation, camera
-  teleport, suspended exterior streaming, return flow.
+description: How an interior cell is built, how a door's teleport target is resolved, and how
+  exterior streaming pauses and resumes around a transition.
 tags: [engine, world, interior, door, streaming]
-timestamp: 2026-07-26T00:00:00Z
 ---
 
 # Interior door transitions
 
-M3.6. One transition path covers exterior -> interior + interior -> exterior. Format
-facts: [record decoders](/formats/world-records.md). Impl:
-`CellSceneBuilderInteriors.swift`, `CellStreamerTransitions.swift`.
+One path covers both directions: outside to inside, and inside to outside. The record fields
+(`CELL`, `REFR` `XTEL`) are on the [world records](/formats/world-records.md) page.
 
-## Interior build
+## Building an interior
 
-`buildInteriorScene(cellFormID:)` walks CELL top group, type-2 block, type-3 sub-block,
-then matching CELL + following type-6 children. Expected block/sub-block labels come from
-FormID object ID decimal ones/tens digits. Matching labels run first; full legal-group
-fallback handles stale CK labels. CELL record identity wins. DATA 0x01 must mark interior.
+The builder finds the interior `CELL` through its block and sub-block groups (see
+[finding an interior cell](/formats/world-records.md#cell)), then reads its
+persistent and temporary children the same way as an exterior cell. The `DATA` interior flag
+must be set.
 
-Persistent type-8 + temporary type-9 children reuse exterior ref walk. STAT + shared
-ModelBase index resolve objects, now including DOOR MODL. Interior `CellScene` carries no
-LAND, procedural sky, exterior water plane, or distant LOD. `location = .interior(FormID)`
-replaces XCLC identity. Interior lighting resolves XCLL against LTMP -> LGTM, then adds
-supported direct LIGH + XEMI placements. Interior water + portals remain later work.
+An interior scene has no terrain, no sky, no exterior water plane, and no distant LOD. Its
+lighting comes from `XCLL` and the lighting template, plus its own lights (see
+[lighting](/formats/lighting.md)). Interior water and portals are not done yet.
 
-## Door resolution
+## Finding the target
 
-Scene build retains each drawable DOOR REFR with XTEL as `PlacedDoor`: source FormID,
-position, destination payload. Renderer receives normal DOOR model placement. Main thread
-can select a door without reading plugin bytes.
+When a scene is built, each drawable `DOOR` reference with an `XTEL` is kept with its position
+and target. So the main thread can pick a door without reading plugin bytes.
 
-Exterior teleport refs are persistent: Skyrim.esm stores them under WRLD persistent CELL
-`(0,0)`, not physical grid cell. Builder caches that persistent ref set, maps each XTEL
-REFR position through 4096-unit cell floor division, then merges it into physical streamed
-cell. Storage cell drops out-of-grid teleport refs. Same position rule chooses exterior
-destination scene on return.
+Exterior teleport doors are persistent. `Skyrim.esm` stores them under the worldspace's
+persistent cell at (0, 0), not in the grid cell where they stand. The builder takes each such
+door's position, finds its real cell by dividing by 4096 and rounding down, and adds the door to
+that cell. The same rule picks the exterior cell to return to.
 
-Transition build runs on existing serial cache-confined runner:
+The transition is built on the same serial queue as cells:
 
-1. Resolve source REFR + exact 32-byte XTEL.
-2. Resolve destination REFR; require its NAME base record type DOOR.
-3. Find destination interior CELL owner, or derive exterior cell from REFR position.
-4. Build exact owner cell; return scene + XTEL position/rotation.
+1. Read the source `REFR` and its exact 32-byte `XTEL`.
+2. Read the target `REFR`. Its base must be a `DOOR`.
+3. Find the target's interior `CELL`, or work out the exterior cell from its position.
+4. Build that cell, and return the scene with the `XTEL` position and rotation.
 
-Current engine loads Skyrim.esm only -> transition FormIDs resolve within that plugin.
-Load-order override support waits for multi-plugin world loading.
+Transitions resolve inside the plugin being loaded. Doors across plugins wait for multi-plugin
+world loading.
 
-## Activation + streaming
+## Activation and streaming
 
-`F` latches one activation request. In walk mode, the streamer resolves the nearest exact
-collision hit on the camera view ray within 192 world units and activates it only when the
-hit maps to interaction metadata. Fly mode publishes no ray, clears any target, and ignores
-the activation request. Details: [interaction targeting](/engine/interaction.md).
+A door is activated through the normal [interaction](/engine/interaction.md) target. Only an
+"Open" target starts a transition, and it passes the exact door that was looked at. The same path
+works for the return door.
 
-Doors use the same typed target/event path as other interactables. Only an `Open` target
-requests a transition, and it passes the exact selected REFR rather than repeating a
-nearest-door search. The same path works inside for the return door.
+While the transition builds, the current scene stays live. On arrival in an interior:
 
-While transition builds, current scene stays live. On interior arrival renderer swaps to
-one interior scene; camera eye becomes XTEL position, pitch = rotation X, yaw = rotation Z
-(roll ignored by free-fly pose). Exterior resident grid stays retained but grid diffs,
-cell builds, LOD builds, unloads stop. Return arrival replaces/seeds exact exterior
-destination cell, resumes grid streaming around new camera position, then normal 5x5
-settlement evicts old cells/assets.
+- The renderer swaps to the one interior scene.
+- The camera moves to the `XTEL` position, with pitch from rotation X and yaw from rotation Z.
+  Roll is ignored.
+- The exterior cells stay in memory, but streaming stops: no grid changes, builds, LOD builds,
+  or unloads.
 
-## Verification
+On return, the target exterior cell is built or reused, streaming resumes around the new
+position, and the normal grid rules remove old cells.
 
-Synthetic tests cover wrong interior labels, type-2/type-3 traversal, no terrain/sky,
-DOOR draw + XTEL metadata, exact 32-byte XTEL rejection, two-way destination-cell
-resolution including persistent `(0,0)` storage, selected view-ray activation, suspended
-exterior
-requests, exact camera pose, return
-resume. `openskycli interior --out logs/interior-probe.png` selects nearest persistent
-door within configured cell radius, requires exterior -> interior -> same exterior door
-round trip, renders
-interior arrival pose. `make probe` runs it when local install exists.
-
-Real probe updated 2026-07-19: Chillfurrow Farm source door 0001633D at physical cell
-`(7,-3)` -> destination 000163A8, interior CELL 00016204; 232 refs, 118 static draws, 69
-models, 49 textures, 4 supported point lights. Reverse XTEL returned to 0001633D +
-exterior `(7,-3)`, not persistent storage cell `(0,0)`. 1280x720 lit/unlit frames from exact
-arrival pose show cell ambient/fog change; exterior return retains procedural sun/sky path.
+`openskycli interior` walks out, in, and back through the nearest door, and draws the arrival
+view ([CLI](/tools/cli.md)).

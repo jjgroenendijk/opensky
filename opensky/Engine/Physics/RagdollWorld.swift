@@ -16,7 +16,7 @@
 // between two constraint sets at once, and the honest version of that is more
 // than this item takes on. Each ragdoll collides with the static world, and with
 // those of its own bones that `RagdollSelfCollision` admits; the limitation is
-// stated in docs/engine/ragdoll.md rather than hidden.
+// stated in docs/engine/ragdoll-solver.md rather than hidden.
 //
 // Ordering is by `ReferenceKey` throughout, for the reason the dynamic body
 // registry sorts: the solver's iteration order, and therefore the trajectories,

@@ -5,7 +5,6 @@ description: Where a script's transcripts, captures, and result bundles go - one
   timestamped run directory per run with a latest symlink - and how make prune deletes
   stale worktree caches and aged-out run output without touching sources.
 tags: [tool, make, logs, disk, retention]
-timestamp: 2026-08-04T00:00:00Z
 ---
 
 # Run output layout and make prune
@@ -15,22 +14,14 @@ transcripts and captures, `build/test-results/` for `.xcresult` bundles. Both gr
 bound and neither is anybody's job to clean, which fills the data volume mid-session — one
 `DerivedData/` per linked worktree already runs to tens of gigabytes, and the worktree for
 a merged branch leaves its cache behind. The convention below makes each run a single
-directory, and `make prune` deletes the runs and caches nothing needs any more
-(issue #347).
-
-## Contents
-
-* The run directory convention
-* Which scripts write where
-* make prune
-* What prune will not touch
+directory, and `make prune` deletes the runs and caches nothing needs any more.
 
 ## The run directory convention
 
 Every script that writes output a human reads later allocates one directory per run:
 
 ```text
-logs/<script>/<UTC timestamp>/          e.g. logs/probe/20260804T191739Z/
+logs/<script>/<UTC timestamp>/          for example logs/probe/<YYYYMMDDTHHMMSSZ>/
 logs/<script>/latest -> <UTC timestamp>
 build/test-results/<name>/<UTC timestamp>/<name>.xcresult
 ```
@@ -58,7 +49,7 @@ Two rules follow from this and matter when adding a script:
 
 Collisions inside the same second get a `-1`, `-2` suffix rather than sharing a directory.
 The allocation is a bare `mkdir` retried on failure, not a `[ -e ]` test followed by
-`mkdir -p` (issue #306). Creating a directory is atomic, so exactly one racing caller can
+`mkdir -p`. Creating a directory is atomic, so exactly one racing caller can
 win a name; testing first and creating after lets two callers both see the name free and
 both succeed, which hands them the same directory. That matters because concurrent runs in
 one checkout are normal here — two agents running targeted tests used to collide on

@@ -10,7 +10,7 @@
 // whose merchant conditions fail; this engine refuses instead and says why,
 // because an empty shop reads as a vendor with nothing to sell.
 //
-// Documented in docs/engine/barter.md and docs/engine/papyrus-vm.md.
+// Documented in docs/engine/vendor-factions.md and docs/engine/papyrus-activation.md.
 
 import Foundation
 

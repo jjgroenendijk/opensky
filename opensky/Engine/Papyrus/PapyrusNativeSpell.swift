@@ -11,7 +11,7 @@
 // actually call, not by taste: `PexNativeCensus` over the vanilla corpus ranks
 // `Actor.RemoveSpell` at 311 call sites, `Actor.AddSpell` at 278 and
 // `Spell.Cast` at 277, and the per-native counts are in
-// docs/engine/papyrus-vm.md.
+// docs/engine/papyrus-spell-natives.md.
 //
 // ## Latency
 //

@@ -14,7 +14,7 @@
 // it. The draw is the machine's, because the generator is the machine's and a
 // fight has to replay exactly; the geometry is not.
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/combat-behavior.md.
 
 import Foundation
 import simd

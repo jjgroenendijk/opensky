@@ -17,7 +17,7 @@
 // and `SetCrimeGoldViolent`, with `ModCrimeGold`'s `abViolent` choosing the
 // half and `SetCrimeGold` documented as setting the non-violent one.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/crime.md.
+// Documented in docs/engine/papyrus-activation.md and docs/engine/crime.md.
 
 import Foundation
 

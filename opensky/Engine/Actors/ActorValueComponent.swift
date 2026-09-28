@@ -23,7 +23,7 @@
 // than checked at use sites: every value is finite and not negative. That is
 // what lets the runtime, the HUD and the save each assume it separately.
 //
-// Documented in docs/engine/actor-values.md.
+// Documented in docs/engine/actor-value-store.md.
 
 import Foundation
 

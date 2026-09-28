@@ -14,7 +14,7 @@
 // `WorldAudioEngine.statsSnapshot()` the Audio destination's Sources section
 // reads, narrowed to voice: a line that is playing has a source, a distance and
 // a clock, and a line that is silent has none.
-// Exact sidebar path and control ids: docs/engine/audio.md.
+// Documented in docs/engine/audio-decoding.md.
 
 import AppKit
 

@@ -14,7 +14,7 @@
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(GLOB, 'Global', ...)`
 //     https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
 // Layout + runtime policy documented in docs/formats/records.md and
-// docs/engine/runtime-state.md.
+// docs/engine/global-variables.md.
 
 import Foundation
 
@@ -60,7 +60,7 @@ nonisolated struct Global: Equatable {
         /// toward zero, makes `set(x + 0.6)` repeated ten times land on 0
         /// instead of 6. Nothing in an open spec states which rule the original
         /// engine used, so this is OpenSky's documented choice
-        /// (docs/engine/runtime-state.md). Non-finite input becomes 0 rather
+        /// (docs/engine/global-variables.md). Non-finite input becomes 0 rather
         /// than propagating a NaN through comparisons that must be total.
         /// Nothing is clamped to 16 or 32 bits: the value lives in a float on
         /// disk, and clamping would discard mod data the file can represent.

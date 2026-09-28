@@ -26,7 +26,7 @@
 //   stores that reached the same end state byte-identical.
 // * `equipped` is sorted ascending and free of duplicates, for the same reason.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/inventory-state.md.
 
 import Foundation
 

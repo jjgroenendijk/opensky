@@ -23,7 +23,7 @@
 // longer decides occupancy.
 //
 // Documented in docs/formats/shouts-equip-slots.md,
-// docs/engine/inventory-equipment.md and docs/engine/runtime-state.md.
+// docs/engine/inventory-equipment.md and docs/engine/inventory-state.md.
 
 import Foundation
 

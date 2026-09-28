@@ -21,7 +21,7 @@
 // is a failure with a reason rather than a silent no-op, and the interpreter
 // substitutes the call's declared default so the script keeps running.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/skill-advancement.md.
+// Documented in docs/engine/papyrus-activation.md and docs/engine/skill-advancement.md.
 
 import Foundation
 

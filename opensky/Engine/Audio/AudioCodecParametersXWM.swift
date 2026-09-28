@@ -10,7 +10,7 @@
 // OpenSky applies the same substitution here, at the decode boundary. Verified
 // against the real install 2026-07-25: with the synthesized block every vanilla
 // file decodes to exactly the frame count its `dpds` table declares; see
-// docs/engine/audio.md.
+// docs/engine/audio-decoding.md.
 
 import Foundation
 

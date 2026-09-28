@@ -12,7 +12,7 @@
 // view — the winning FACT per identity and the joins a dump needs — and this is
 // a derived index that only the runtime wants.
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/hostility.md.
 
 import Foundation
 

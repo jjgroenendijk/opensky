@@ -22,7 +22,7 @@
 // (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>) The first sentence is
 // `concentrating`, the second is `charging` then `ready` then the release.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spellcasting.md.
 
 import Foundation
 

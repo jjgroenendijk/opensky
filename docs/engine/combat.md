@@ -1,865 +1,200 @@
 ---
 type: Subsystem
 title: Combat loop
-description: Hostility derived from factions, relationships and aggression, derived
-  combat state, the per-actor combat behavior machine that
-  approaches, attacks, blocks, flees, searches and gives up, hit reactions in both
-  directions, transient caps, and the combat-music edge.
+description: How a fight starts and ends - who is hostile, what makes an actor engage, derived
+  combat state, how many fight at once, the script natives and events, transient caps, combat
+  music, what a save keeps, the panel, and the known limits.
 tags: [engine, combat, hostility, combat-ai, npc, music, persistence]
-timestamp: 2026-08-22T00:00:00Z
 ---
 
 # Combat loop
 
-Roadmap items 15.7 (issue #374) and 16.7 (issue #424). Items 15.3 to 15.6 built
-the pieces of a fight — values that can be taken off, a swing that takes them, an
-arrow that flies, a corpse that falls and can be looted. Item 15.7 made a loop of
-them around a stand-in opponent that was honestly a clock. Item 16.7 deleted the
-clock and put a mind in its place. This page is that decision layer.
+The combat loop ties the pieces of a fight together: [melee combat](/engine/melee-combat.md),
+[archery](/engine/archery.md), [death and ragdoll](/engine/ragdoll.md),
+[actor values](/engine/actor-values.md), [detection](/engine/detection.md),
+[navigation](/engine/navigation.md), [package schedules](/engine/package-schedules.md),
+[dynamic bodies](/engine/dynamic-bodies.md), and [music](/engine/music.md).
 
-Impl: `opensky/Engine/Combat/CombatLoop*.swift`,
-`opensky/Engine/Combat/CombatBehavior*.swift`,
-`opensky/Engine/Combat/CombatTransientLimits.swift`,
-`opensky/Engine/Actors/ActorCombatComponent.swift`, plus
-`opensky/App/GameView/GameViewController+Combat.swift` and its satellites.
+Related pages:
 
-The pieces it ties together: [melee combat](/engine/melee-combat.md),
-[archery and projectiles](/engine/archery.md),
-[death and ragdoll](/engine/ragdoll.md), [actor values](/engine/actor-values.md),
-[detection](/engine/detection.md), [navigation](/engine/navigation.md),
-[package schedules](/engine/package-schedules.md),
-[dynamic rigid bodies](/engine/dynamic-bodies.md), [music](/engine/music.md).
-
-## Contents
-
-* [The mind that replaced the clock](#the-mind-that-replaced-the-clock)
-* [Hostility](#hostility)
-* [Deriving hostility from the records](#deriving-hostility-from-the-records)
-* [Entering a fight](#entering-a-fight)
-* [Combat state is derived](#combat-state-is-derived)
-* [The behavior machine](#the-behavior-machine)
-* [The numbers, all of them ours](#the-numbers-all-of-them-ours)
-* [Blocking, both ways](#blocking-both-ways)
-* [Breaking off](#breaking-off)
-* [Losing the player, searching, giving up](#losing-the-player-searching-giving-up)
-* [How many fight at once](#how-many-fight-at-once)
-* [Starting and stopping a fight from a script](#starting-and-stopping-a-fight-from-a-script)
-* [Reactions in both directions](#reactions-in-both-directions)
-* [Reaction clips](#reaction-clips)
-* [Script events from a fight](#script-events-from-a-fight)
-* [Transient caps](#transient-caps)
-* [Combat music](#combat-music)
-* [Measured cost](#measured-cost)
-* [Persistence](#persistence)
-* [Panel seam](#panel-seam)
-* [Verification surface](#verification-surface)
-* [Limits](#limits)
-
-## The mind that replaced the clock
-
-Through M15 the opponent was a **clock**, and the code said so at length. It
-attacked on a fixed interval, from wherever it was standing, at whatever was in
-front of it. It did not chase, it did not choose, and it did not give up. What it
-*did* do was go through the shipping paths — the 15.4 hit volume, the 15.4 damage
-formula, the 15.3 actor-value store — so everything downstream of "an opponent
-hit the player" was already the real thing.
-
-Item 16.7 collected the debt. `DevTargetDriver` and `CombatLoopRuntimeTarget` are
-deleted; `CombatBehaviorMachine` decides instead, one machine per actor. What it
-can now do that the clock could not:
-
-| Capability | Reached through |
-| --- | --- |
-| Notice the player and start the fight unhit | [detection](/engine/detection.md) (16.6) |
-| Walk to weapon range and chase a retreating player | [navigation](/engine/navigation.md) (16.4) |
-| Raise a guard, so the player's hit is blocked | the 15.4 damage formula, unchanged |
-| Break off at low health and run along a path | 16.4 again, away from the target |
-| Hunt for a player who broke line of sight | 16.6's remembered investigate position |
-| Give up and go back to work | [package schedules](/engine/package-schedules.md) (16.5) |
-
-Everything the clock did through the shipping paths is still done through them.
-The blow, the block, the stagger, the death and the ragdoll are the same code;
-what changed is who decides to swing, and when, and from where.
+- [Hostility](/engine/hostility.md): how records decide whether one actor attacks another.
+- [Combat behavior](/engine/combat-behavior.md): the per-actor machine that approaches, attacks,
+  blocks, flees, searches, and gives up, and the hit reactions.
 
 ## Hostility
 
-One enum per actor, `ActorHostility`, stored as the `ActorCombatState` component
-and therefore journalled, dirty-counted and saved like every other world-state
-write ([runtime state](/engine/runtime-state.md)).
+Each actor has one hostility value: `neutral` (the start) or `hostile`, meaning it has a quarrel
+with the player. It is stored as a world state component, so it is logged, counted, and saved like
+every other write ([runtime state](/engine/runtime-state.md)). There is no `dead` value. Death is
+its own component, and a second copy of the same fact would have to be kept in step.
 
-| Case | Meaning |
-| --- | --- |
-| `neutral` | The actor has no quarrel with the player. Every actor starts here. |
-| `hostile` | The actor has a quarrel with the player. |
+The stored value is the session's explicit override: a record of something that already happened.
+Three things write it:
 
-There is deliberately no `dead` case: death is `ActorDeathState.isDead`, and a
-second spelling of the same fact is a second thing to keep in agreement.
+1. The player hurt the actor. The melee hit and the projectile impact call the same function, so a
+   swing and an arrow anger a target the same way. Calling it twice is safe.
+2. The panel's hostility checkbox.
+3. A script's `StartCombat`.
 
-Through M16 the component *was* the whole answer, entered exactly three ways:
-
-1. **The player hurt it.** `CombatLoopRuntime.provoke(_:)` is called from the
-   melee hit path and from the projectile impact path, so a swing and an arrow
-   anger a target identically. It is idempotent, so each caller can call it
-   without checking first.
-2. **The panel toggle.** `CombatLoopControlProviding.selectedActorIsHostile`.
-3. **A script.** `StartCombat`, which writes hostility on its way through
-   (issue #424).
-
-Item 21.3 (issue #503) demoted all three to one term of five. The component is
-now the session's **explicit override** — the record of something that already
-happened — and everything else is derived from the records each time it is
-asked. `combatHostility(of:)` answers from the derivation, and falls back to the
-stored override alone on a session with no game data, where there are no
-relations to derive anything from.
-
-## Deriving hostility from the records
-
-`HostilityDerivation` (`opensky/Engine/Factions/`) answers what one actor makes
-of another. Two facts come out of it and they are different: the **reaction**,
-which is what the records say about the pair, and the **hostility**, which is
-whether that reaction plus this actor's own aggression means a drawn weapon.
-
-### The precedence order
-
-Asked what `observer` makes of `target`, the derivation takes the first term
-that answers and stops.
-
-| # | Term | Source of the answer |
-| --- | --- | --- |
-| 1 | Runtime override | `ActorCombatState` — the panel, `StartCombat`, or the player's own blow |
-| 2 | Crime | `CrimeHostilitySource`, the named seam issue #505 joins through; issue #504 built the bounty ledger behind it and left this term empty |
-| 3 | Relationship | A rank a script set (`ActorRelationshipState`), else the `RELA` rank between the two `NPC_` bases |
-| 4 | Faction | The `FACT` interfaction relations between the two actors' memberships |
-| 5 | Default | Neutral |
-
-Only row 3's position comes from a source: the Creation Kit wiki states flatly
-that "relationships override factions"
-(<https://ck.uesp.net/wiki/Relationship>). Rows 1, 2 and 4-over-5 are this
-engine's ordering. The override is first because it records something that
-already happened in this session — an actor the player stabbed does not calm
-down because the records say the two are friends — and crime sits directly under
-it because a bounty is a thing the player did, like a blow.
-
-A decision carries the term that produced it (`HostilitySource`), so a panel or a
-test can say *why* an actor is angry rather than only that it is.
-
-### The four reactions
-
-`ActorReaction` has the four values the Creation Kit authors, ordered
-friendliest to most hostile: `ally`, `friend`, `neutral`, `enemy`. A `FACT`
-`XNAM` carries one directly. A `RELA` rank collapses onto them in the groups the
-wiki spells out:
-
-| Reaction | Relationship ranks |
-| --- | --- |
-| `ally` | Lover, Ally |
-| `friend` | Confidant, Friend |
-| `neutral` | Acquaintance, Rival, Foe |
-| `enemy` | Enemy, Archnemesis |
-
-Note where that line falls: **Rival and Foe are Neutral**, not Enemy. Two actors
-who dislike each other do not attack on sight unless one of them is Very
-Aggressive, which is the same treatment strangers get.
-
-A raw value outside either named range yields no reaction at all rather than a
-guessed one, and `FactionRelationIndex` counts the `XNAM` entries it had to drop
-for that reason. This install carries none.
-
-When an actor's several memberships disagree about the same target, **the most
-hostile of them wins**. That is our rule rather than a documented one: neither
-source says what an actor in both an allied and an enemy faction makes of
-somebody. Erring toward the enemy reading keeps a quest faction that marks
-somebody an enemy from being silently cancelled by an unrelated friendly
-membership, which is the failure that would be invisible in play. Both
-directions of a pair are consulted, because vanilla does not always author the
-mirror `XNAM` and a relation naming the pair at all is an opinion about it.
-
-### Aggression is what draws the weapon
-
-The reaction alone decides nothing: the Creation Kit puts that on the actor, in
-the `AIDT` Aggression value, "in conjunction with Faction Relationships"
-(<https://ck.uesp.net/wiki/AI_Data_Tab>). `ActorReaction.provokesAttack(at:)`
-carries the table verbatim.
-
-| Aggression | Attacks on sight |
-| --- | --- |
-| Unaggressive | nobody |
-| Aggressive | enemies |
-| Very Aggressive | enemies and neutrals |
-| Frenzied | everybody |
-
-An aggression value the spec does not name attacks nobody, and an actor whose
-record authors no readable `AIDT` reads `ActorAIData.absent`, which is
-unaggressive. Guessing upward — into a drawn weapon — is the damaging direction
-to guess.
-
-This table is why a vanilla bandit is hostile to the player with nobody touching
-the panel. No `FACT` relation and no `RELA` record names the pair, so the
-reaction is the documented default of Neutral; the bandit is Very Aggressive, and
-Very Aggressive attacks neutrals. A Whiterun guard standing beside it derives the
-same Neutral reaction and stays calm, because a guard is only Aggressive. Both
-are asserted against the install in `DerivedHostilityRealDataTests`.
-
-Confidence is decoded and deliberately not consumed. "Cowardly actors NEVER
-engage in combat" is about *engaging*, and `ActorHostility` records regard;
-whoever wires fleeing reads the value off `ActorAIData` rather than re-decoding
-the byte.
-
-A scripted rank wins over the authored one inside row 3, which is what
-`Actor.SetRelationshipRank` means and is also the only way a relationship with
-the *player* can count at all — the player has no `NPC_` base for a `RELA` record
-to name. Layering, keying and the `RELS` save chunk are in
-[relationships](/formats/relationships.md).
-
-### Memberships at runtime
-
-The derivation reads `ActorFactionState`, the world-state component described
-under [factions](/formats/factions.md#runtime-membership), not the `NPC_` record.
-That is the point of the component: an actor a quest joined to the Companions has
-to stay joined across a reload, and an actor the player was never near costs
-nothing until something asks about it.
-
-Seeding walks the actor's template chain, so it happens once per actor per
-session, guarded by a set membership test. The derivation itself is not cached:
-it is two component reads, a pair lookup and a walk of two short membership
-lists, and a cache would have to be invalidated by every world-state write while
-actor values are rewritten sixty times a second.
+Everything else is derived from the records each time it is asked
+([hostility](/engine/hostility.md)). With no game data loaded, there is nothing to derive from, and
+the stored override alone answers.
 
 ## Entering a fight
 
-Hostility is how an actor *feels*. Starting to fight is a separate edge, and
-16.7 widened it by exactly one source.
+Hostility is how an actor feels. Starting to fight is a separate step, with three causes:
 
-| Entry | Since | What it does |
-| --- | --- | --- |
-| The player struck it | 15.7 | Provokes it and staggers it; the machine is engaged for the step it takes to turn around |
-| A script called `StartCombat` | 16.7 | Engages it at once, without waiting for it to perceive anything |
-| **It perceived the player** | **16.7** | A hostile actor whose 16.6 detection level reaches `detected` starts fighting, unhit |
+| Cause | What happens |
+| --- | --- |
+| The player struck it | It is angered and staggered. It is in the fight for the step it takes to turn around |
+| A script called `StartCombat` | It fights at once, without needing to perceive anything |
+| It perceived the player | A hostile actor whose detection level reaches `detected` starts fighting, unhit |
 
-That third row is the whole of scope point 5. It is why the panel's hostility
-checkbox no longer starts a fight on its own: an actor made hostile from the
-sidebar stands there until it notices the player, which is what a bandit in a
-cave does.
+So the panel's hostility checkbox does not start a fight by itself. An actor made hostile from the
+sidebar stands there until it notices the player, like a bandit in a cave.
 
-Being *suspicious* is not enough. A detection level between the two thresholds
-means the observer has something worth investigating, not a target — and
-committing to a fight on a half-seen shape would make every guard in Whiterun
-attack a passing shadow.
+Being suspicious is not enough. A level between the two thresholds means something to investigate,
+not a target.
 
 ## Combat state is derived
 
-"Is the player in combat" is **not stored**. It is derived every fixed step from
-the resident actor list: in combat means *some resident actor is engaged* —
-fighting the player or searching for them — and the current target is the nearest
-hostile living actor, ties broken on the lower `ReferenceKey`.
+"Is the player in combat?" is not stored. It is derived every fixed step from the actors in loaded
+cells: the player is in combat when some actor is engaged, meaning fighting the player or searching
+for them.
 
-Item 16.7 moved that edge from "somebody is angry" to "somebody is fighting".
-While the opponent was a clock the two were the same thing, because a hostile
-actor had nothing else it could be doing. They are not the same now: an actor
-that has not noticed the player, and one that searched and gave up and walked
-back to its schedule, are both hostile and both out of the fight. Deriving from
-engagement is what makes the combat music stop when the fight ends rather than
-when the actor is finally killed or calmed.
+This is not the same as "some actor is hostile". An actor that has not noticed the player, and one
+that searched, gave up, and went back to work, are both hostile and both out of the fight. Deriving
+from engagement is why the combat music stops when the fight ends, not when the actor is killed or
+calmed.
 
-The *target* is deliberately still the nearest hostile, engaged or not: "who am I
-fighting" from the player's side is answered by turning to face somebody, and an
-actor that is hostile but has not noticed the player is still the thing the
-player is about to fight.
+The current target is the nearest hostile living actor, engaged or not, with ties going to the lower
+`ReferenceKey`. From the player's side, "who am I fighting?" is answered by turning to face someone.
+Nearest, not last hit, because a player who turned to a second attacker has answered by turning.
 
-Deriving it is what keeps it honest. A target that died, a cell that unloaded,
-and a hostility cleared from the panel all change the answer on the next step
-with nothing to invalidate. A stored flag would have to be cleared from each of
-those places, and the one that was forgotten would leave the player permanently
-in combat with a corpse.
-
-Nearest rather than most-recently-hit, because both consumers — the music edge
-and the combat-target condition run-on — want "who am I fighting", and a player
-who turned to face a second attacker has answered that by turning.
-
-## The behavior machine
-
-`CombatBehaviorMachine` is a pure value advanced by one fixed step at a time, so
-a run at 60 frames a second and a run at 144 produce the same fight. One machine
-per actor, seeded from that actor's own `ReferenceKey`.
-
-| Phase | Leaves it when | What it asks the world for |
-| --- | --- | --- |
-| `idle` | it perceives the target, or a script or a blow puts it in the fight | nothing |
-| `approaching` | it is inside its own weapon reach, less the slack | a path to the target, re-issued on the command interval |
-| `spacing` | the attack interval is up | a stop |
-| `blocking` | the block duration is up | a stop |
-| `casting` | the spell's charge time is up, plus the hold for a maintained one | a stop, and a cast begun and released through the 19.7 loop |
-| `windup` | the windup duration is up | nothing |
-| `contact` | one step | nothing — the hit volume runs here, once |
-| `recovery` | the recovery duration is up | nothing |
-| `staggered` | the stagger duration is up | nothing |
-| `fleeing` | it is further from the target than the break distance | a path away from the target |
-| `searching` | it perceives the target again, or the search time is up | a path to the remembered position |
-| `disengaged` | it perceives the target again | a stop, and a package re-selection |
-
-**Casting is a phase, not a kind of attack.** A swing is timed by this layer's
-own cadence and lands at the contact step; a cast is timed by the SPIT charge
-time the record states and lands wherever the [19.8 delivery](/engine/magic.md)
-takes it. What the two share is *when* they are chosen, so the choice lives in
-one place (`startAttackOrCast`) and the execution does not. The rule is:
-
-* an actor that cannot reach its target with a weapon casts whenever it can
-  afford a spell that reaches — otherwise it would walk toward somebody while
-  holding something it could have thrown;
-* an actor already inside weapon reach casts with probability `castChance` and
-  swings otherwise, drawn from the same seeded generator the block roll uses;
-* the spell chosen is the **most expensive one it can both afford and reach
-  with**, ties broken by spell order. Cost as a proxy for strength is a
-  documented choice, not an observation: no record states how a caster ranks its
-  own spells, and this spends a full bar on the strongest thing it buys and
-  falls back down the list as the bar drains;
-* a caster that can afford nothing falls straight back to closing and swinging,
-  which is what keeps an out-of-magicka mage in the fight rather than stalled.
-
-A charge is dropped in exactly one place — the step that left the casting phase
-without releasing — so fleeing, losing the target, giving up, staggering and
-dying all clean up after a cast none of them started. The full picture of what
-happens after the release is in [magic](/engine/magic.md#ai-spell-use).
-
-The attack phases mirror the player's own (`MeleeCombatState`) on purpose, so the
-two sides of a fight are legible against each other, and a stagger takes the
-attack away exactly as the graph's own stagger transition does for the player.
-
-**The machine asks for movement; it never performs it.** It emits a
-`CombatMovementCommand` and the runtime hands it to 16.4's `MoveToPointControl`,
-which owns the capsule, the navmesh path, the stuck recovery and the persistence.
-A combat layer that wrote positions would be a second movement authority that
-disagreed with the first. This is why fleeing is "ask for a point away from the
-target" rather than "walk backwards", and why a point no navmesh reaches is a
-refused request the machine retries rather than a slide through a wall.
-
-Where a decision is not determined by its inputs — the block roll and the flee
-angle — the draw comes from a `ConditionRandom` seeded per actor from that
-actor's `ReferenceKey`, the same splitmix generator `GetRandomPercent` uses. The
-seed is folded from the key's own spelling rather than from `hashValue`, because
-Swift seeds `String` hashing per process and a `hashValue` seed would make two
-runs of the same fight differ.
-
-## The numbers, all of them ours
-
-Every constant the machine runs on is **OpenSky's, not Bethesda's**. No record
-states an attack cadence, a block probability, a flee threshold, a search
-duration or how often a caster prefers a spell to a sword; vanilla's live in the
-combat-AI binary and in CSTY records this engine does not decode. They are chosen in the open, in
-`CombatBehaviorSettings`, with the reason written beside each.
-
-| Setting | Value | Why that one |
-| --- | --- | --- |
-| `attackIntervalSeconds` | 1.6 s | Slow enough to block, draw a bow, and watch what happened between blows |
-| `windupSeconds` | 0.45 s | Roughly where the vanilla one-handed attack clip puts its `HitFrame` |
-| `recoverySeconds` | 0.35 s | Follow-through during which no new attack starts |
-| `staggerSeconds` | 0.7 s | How long a hit holds the attack away |
-| `blockChance` | 0.35 | Roughly one gap in three: often enough to learn, rare enough that attacking still ends fights |
-| `blockSeconds` | 1.6 s | Deliberately equal to the interval, so blocking replaces the wait rather than shortening or lengthening the cadence |
-| `reachSlack` | 24 u | Larger than the mover's 12-unit waypoint tolerance, so a target at the reach boundary does not oscillate |
-| `commandIntervalSeconds` | 0.5 s | Sixteen path queries a second at the engagement cap, inside 16.4's budget |
-| `fleeHealthFraction` | 0.2 | Visible before the kill, not triggered by the first blow |
-| `fleeDistance` | 1400 u | About twenty metres per flee request |
-| `fleeBreakDistance` | 1800 u | Larger than one flee hop, so a path the navmesh cut short is retried |
-| `searchSeconds` | 8 s | Long enough to hear it end, short enough not to pin a hidden player |
-| `castChance` | 0.5 | Even odds inside weapon reach: a caster that never swings is pinned by an opponent who closes, one that always swings never reads as a mage |
-| `concentrationSeconds` | 1.5 s | Two applications of a once-a-second effect — long enough to see a beam, short enough to re-decide while the fight moves |
-
-## Blocking, both ways
-
-`CombatLoopWorld.combatBlock(of:)` used to answer for the player alone, because
-only the player had a guard to raise. It now answers for everybody: the player
-from the melee runtime's own graph state, every other actor from its machine's
-`blocking` phase. A blocked hit in either direction goes through the same pinned
-15.4 damage formula, and neither side has a damage path of its own.
-
-An NPC's block always reports `.weapon`, never `.shield`. Telling the two apart
-needs the equipment resolution this engine does not do for an NPC's *combat*
-(only for drawing it), and reporting `.shield` on a guess would move the
-reduction to a different pinned constant on no evidence. Stated, not hidden.
-
-The roll happens once per attack cycle, on entering the gap, rather than once per
-step — so `blockChance` means what it says, per attack, and not per sixtieth of
-a second.
-
-## Breaking off
-
-At or below `fleeHealthFraction` of its maximum health an actor stops fighting
-and runs: it asks 16.4 for a point `fleeDistance` away along the line from the
-target through itself, turned by a seeded angle so a straight line into whatever
-is behind it is not the only thing tried and two actors fleeing one swing
-scatter. It keeps asking on the command interval until it is further from the
-target than `fleeBreakDistance`, and then leaves the fight.
-
-A fleeing actor is still **engaged**, which is what keeps the combat music
-playing while it runs and stops as soon as it is away. Health recovering above
-the threshold does not bring it back: nothing in this engine heals an NPC
-mid-fight, and an actor that turned and ran and then turned around again would be
-a decision the player cannot read. An actor still under the threshold will not
-start a fight at all, which is what stops the one it just ran from restarting the
-moment it looks back.
-
-## Losing the player, searching, giving up
-
-When 16.6 detection stops reporting `detected`, the actor goes to the position
-detection remembered — the investigate position, which that page drops as soon as
-the level decays to nothing, so a stale position can never be walked to — and
-looks around for `searchSeconds`.
-
-* While searching, `GetCombatState` returns **2**. That is the third documented
-  return, and 16.7 is what makes it reachable; see
-  [conditions](/engine/condition-functions.md).
-* A searching actor is still engaged, so the player is still in combat and the
-  music still plays. That is the searching seam the music runtime has held open.
-* Perceiving the target again mid-search resumes the chase.
-* The search timing out ends the pursuit: the actor stops, and its 16.5 package
-  is re-selected immediately.
-* Losing the target with *nothing* remembered gives up outright rather than
-  searching where the actor happens to be standing.
-
-Giving up leaves **hostility untouched**. The actor still has its quarrel, so
-walking back into its view starts the fight again — with a second entry in its
-own fight count, which the panel shows.
-
-Resuming a package is a fresh `forceReevaluate`, not a resume of a saved
-procedure: the world has moved on by however long the fight lasted, and the
-package the schedule names *now* is the one the actor should be doing.
+Deriving keeps it correct. A target that died, a cell that unloaded, and hostility cleared from the
+panel all change the answer on the next step. A stored flag would need clearing in each place, and a
+forgotten one would leave the player in combat with a corpse.
 
 ## How many fight at once
 
-`CombatLoopRuntime.maximumEngagedActors` is deliberately
-`NPCMovementRuntime.maximumSimultaneousMovers` — eight. Every engaged actor asks
-the mover for a path, so a ninth fighter would be one whose approach silently
-never started.
+At most eight actors are engaged, the same as the most simultaneous movers. Every engaged actor asks
+the mover for a path, so a ninth would be a fighter whose approach never starts. Past the limit the
+nearest actors win, and the panel shows how many were crowded out. A silent cut would read as
+"nobody else was fighting".
 
-Past the cap the nearest actors win and `crowdedOutCount` records how many did
-not, because a silent truncation would read as "nobody else was fighting". The
-panel prints the number.
+## Starting and stopping from a script
 
-The player's own current target is unchanged by any of this: it is still the
-nearest hostile living actor, engaged or not.
+`StartCombat(Actor akTarget)` and `StopCombat()` are `Actor` natives
+([Papyrus actor natives](/engine/papyrus-actor-natives.md)). Both go through the combat loop, not
+straight to the component, so a script's fight enters by the same door as the player's.
 
-## Starting and stopping a fight from a script
+- `StartCombat` engages the actor at once and records the target.
+- Only the player is accepted as the target. Naming anyone else is a counted failure that says why.
+- `StopCombat` ends the fight and leaves the stored hostility alone. The wiki's `StopCombat` stops
+  the fighting. Changing how someone feels is a different function.
 
-`StartCombat(Actor akTarget)` and `StopCombat()` are installed as `Actor` natives
-(see [the Papyrus VM](/engine/papyrus-vm.md)). Both route through
-`CombatLoopRuntime` rather than writing `ActorCombatState` directly, so a
-script's fight enters by the same door the player's does: hostility through the
-world-state store, the same machine engaged, and the same hand-back to the
-package when it stops.
+So an actor stopped mid-fight is still hostile and still in front of the player, and the next step
+starts the fight again. A vanilla script that means it also calls `SetRelationshipRank`. The two are
+separate calls.
 
-* `StartCombat` engages the actor at once, without waiting for it to perceive
-  anything, and records the target the script named.
-* Only the player is accepted as that target. Actor-versus-actor combat is out of
-  scope — `ActorHostility` has two cases and both are about the player — so a
-  script naming anybody else takes a tallied failure that says why, rather than a
-  fight that silently does not happen.
-* `StopCombat` ends the fight and leaves stored hostility alone. The wiki's
-  `StopCombat` stops the fighting; changing how somebody *feels* is a different
-  function, and this engine has no relationship store for it.
+## Script events
 
-That last point has a consequence worth stating: an actor stopped mid-fight is
-still hostile and still standing in front of the player, so the next step
-perceives them and the fight starts again. That is the same reason a vanilla
-script that means it also changes the relationship rank. Making it stick here
-means clearing hostility as well, which the panel checkbox does and no native
-does.
+The melee, projectile, and combat loop paths all report hits the same way. A hit event carries
+exactly the seven `OnHit` parameters the Creation Kit documents. Each path reports after the damage
+is applied, so a handler that reads the target's health sees the blow. Three of the seven are always
+false, because power attacks, sneak attacks, and bashing do not exist yet. The `akSource` and
+`akProjectile` handles name base records with no script instance: a handler can compare and log
+them, but cannot call a method on them.
 
-## Reactions in both directions
+Deaths come from the death latch in the ragdoll runtime. So `OnDying` and `OnDeath` fire exactly
+once, whether a sword, an arrow, a sidebar control, or a script's `Kill` made the corpse. The death
+panel counts these beside the graph-driven and fallback deaths, so "the scripts were told" and "the
+graph drove it" are two numbers, not one guess.
 
-The target staggers, the player recoils.
-
-* **Target staggered.** A landed player hit calls
-  `CombatLoopRuntime.noteStagger(of:)`, which interrupts that actor's machine and
-  plays the stagger clip. An actor that was not fighting at all is in the fight
-  afterwards: being struck is being told where somebody is, and that is the
-  *existing* combat entry rather than a second perception rule. The 15.4 path
-  also raises `staggerStart` on the target's graph, which answers false
-  because NPCs have none — the readout records that rather
-  than assuming a reaction played.
-* **Player recoiled.** A landed opponent blow writes `recoilMagnitude` and then
-  raises `recoilStart` on the player's graph, in that order, so the recoil
-  behavior reads this blow's number rather than the previous one's. The same
-  write-then-raise order the melee runtime uses for a stagger.
-
-`recoilStart`, `recoilStop`, `recoilLargeStart`, `IsRecoiling` and
-`recoilMagnitude` are all quoted from the behavior census over the user's own
-install, not from memory: the third-person `0_master.hkx` declares all five.
-`recoilLargeStart` is deliberately left unraised — which magnitude selects the
-heavier variant is a threshold no open source states, and guessing it would play
-the wrong reaction.
-
-The HUD's damage flash is a hook, not a drawn effect:
-`CombatLoopRuntime.playerDamageFlash` is 1 on the step a blow lands and decays to
-0 over 0.35 s, another OpenSky number because no record states one.
-
-## Reaction clips
-
-An NPC plays one clip at a time, which is all `ActorAnimationPlayback` supported
-before this item; it now takes a bounded override and returns to idle when the
-override expires. `ActorAnimationClipLoader` decodes one, cached per skeleton and
-kind.
-
-| Reaction | Clip |
-| --- | --- |
-| attack | `meshes\actors\character\animations\h2h_attackright.hkx` |
-| stagger | `meshes\actors\character\animations\1hm_staggerbacksmall.hkx` |
-| hit reaction | `meshes\actors\character\animations\h2h_recoilright.hkx` |
-
-Every path is a file name the vanilla behavior graphs themselves reference,
-quoted from the census. Two things about that listing look inconsistent and are
-not: the idle locomotion clips are gendered (`animations\male\mt_idle.hkx`) while
-the combat clips are not, and **there is no unarmed stagger clip** — the census
-carries `h2h_attackleft`, `h2h_attackright`, `h2h_recoilleft`, `h2h_recoilright`
-and `h2h_recoiltimed`, but every `staggerback` variant is prefixed by a weapon
-class. The one-handed small stagger is therefore what an unarmed stand-in plays.
-All of these ride the same character rig, so the clip binds. It is a
-substitution, and it is written down rather than silently made.
-
-## Script events from a fight
-
-Issue #375 (roadmap item 15.8) gives a fight its scripting surface. Three seams —
-`MeleeCombatWorld`, `ProjectileWorld` and `CombatLoopWorld` — all refine
-`ScriptHitReporting`, whose single `reportScriptHit(_:)` method carries a
-do-nothing default so every acceptance fake keeps compiling and a session with no
-script VM honestly reports zero queued events.
-
-`ScriptHitEvent` carries exactly the seven `OnHit` parameters the Creation Kit
-documents, in its vocabulary rather than the melee runtime's, so the world
-runtime turns it straight into event arguments. Each runtime reports *after*
-applying the damage, so a script that reads the target's health inside its
-handler sees the blow that caused the event. Three of the seven are always false:
-power attacks, sneak attacks and bashing do not exist in this engine yet.
-
-Deaths take the same shape from the other end.
-`RagdollWorldSeam.queueActorDeathEvents(for:killer:)` is called from inside
-`RagdollRuntime`'s death latch, which is what makes `OnDying` and `OnDeath` fire
-exactly once whether the corpse was made by a sword, an arrow, a sidebar control
-or a script's `Kill`. `RagdollRuntime.deathEventsQueued` counts them beside the
-graph-driven and fallback death counts, so "the scripts were told" and "the graph
-drove it" are two readable numbers rather than one assumption.
-
-The condition side of the same state is
-[conditions](/engine/condition-functions.md): `GetCombatState`, `GetDead`, `IsWeaponOut`
-and the two actor-value functions read a snapshot of exactly this, and CTDA
-run-on type 3 resolves against the fight described in
-[combat state is derived](#combat-state-is-derived) — the player fights the
-nearest hostile living actor and every *engaged* living actor fights the player.
-`GetCombatState` reads the behavior phase rather than stored hostility, so it
-returns 0 for an actor that hates the player and has not noticed them, 1 while it
-is fighting, and 2 while it is searching.
+The condition side reads the same state ([conditions](/formats/conditions.md)). `GetCombatState`
+reads the behavior phase, not stored hostility: 0 for an actor that hates the player but has not
+noticed them, 1 while fighting, and 2 while searching. Run-on type 3 (combat target) resolves as
+above: the player fights the nearest hostile living actor, and every engaged living actor fights the
+player.
 
 ## Transient caps
 
-Four populations grow while a fight runs and none shrinks on its own. Left alone,
-a long session in one room ends with a thousand of each and the milestone's frame
-budget stops meaning anything.
+Four groups grow during a fight and none shrinks by itself. Without limits, a long session in one
+room ends with a thousand of each.
 
-| Population | Ceiling | Trim order | What a trim costs |
+| Group | Limit | Trim order | What a trim costs |
 | --- | --- | --- | --- |
-| Arrows in flight | 12 | oldest first | Recorded `.cancelled` in the trace |
-| Arrows stuck in the world | 32 | oldest first | Pulled back out |
-| Corpses simulating | 8 | oldest first | Stops stepping, keeps its resting transform |
-| Dynamic bodies awake | 64 | ascending `ReferenceKey` | Sleeps where it stands |
+| Arrows in flight | 12 | Oldest first | Recorded as `.cancelled` in the trace |
+| Arrows stuck in the world | 32 | Oldest first | Pulled back out |
+| Corpses simulating | 8 | Oldest first | Stops stepping, keeps its resting pose |
+| Dynamic bodies awake | 64 | Ascending `ReferenceKey` | Sleeps where it is |
 
-The numbers are OpenSky's. Vanilla's own caps live in its code rather than in any
-record this engine reads, and no open source states them, so each is picked from
-what the engine can carry at frame rate — the 15.2 clutter stress and the 15.6
-repeated-collapse stress are the measurements behind them.
-
-Trim order differs per population because only two of the three registries know
-what "oldest" means. Projectiles and ragdolls are appended to in spawn order;
-dynamic bodies are placed by their cell build and carry no spawn time, so the
-awake cap sleeps them in the registry's own `ReferenceKey` order. Nothing here
-deletes what a player is looking at: **the cap costs motion, not position.**
+The numbers are OpenSky's. Vanilla's caps are in its code, and no open source states them. Each was
+picked from what the engine can carry at frame rate. Dynamic bodies are placed by the cell build and
+have no spawn time, so they sleep in key order. Nothing is deleted from view: the cap costs motion,
+not position.
 
 ## Combat music
 
-The seam [music](/engine/music.md) has been holding open since M9. `MusicState`
-gains a `combat` case, and unlike the other three it is not derived from the
-streamer's context at all — combat is a game-system state, so
-`WorldMusicDirector.setCombatActive(_:)` selects a MUSC directly and the
-precedence chain below it is untouched.
+Combat is a game system state, not a location. So entering combat selects a `MUSC` directly and
+leaves the [music](/engine/music.md) precedence chain below it alone.
 
-* **Entering combat** picks the first MUSC whose editor id starts with
-  `MUSCombat` (case-insensitive), by FormID so the choice is the same on every
-  run, and remembers the selection it interrupted.
-* **Leaving combat** restores exactly that selection rather than re-resolving, so
-  a fight that started in a town ends back in the town's playlist even if the
-  streamer never published a context in between.
-* **A cell crossed mid-fight** updates what leaving combat will return to instead
-  of interrupting the fight's music.
-* **A load order with no combat playlist** leaves the music where it was and says
-  why. Nothing to select is not a reason to go silent mid-fight.
+- Entering combat picks the first `MUSC` whose editor ID starts with `MUSCombat` (ignoring case),
+  ordered by form ID so it is the same on every run. It remembers what it interrupted.
+- Leaving combat restores exactly that, so a fight that started in a town ends in the town's
+  playlist.
+- Crossing a cell mid-fight updates what leaving will return to, and does not interrupt the fight
+  music.
+- A load order with no combat playlist leaves the music as it was and says why.
 
-The `MUSCombat` prefix is a naming convention, not data — the same limit the
-`town` state carries.
+## What a save keeps
 
-## Persistence
+Hostility goes in `CBTS` and faction memberships in `FCTN` ([actor chunks](/formats/opensky-save-actor-chunks.md)).
+`CBTS` holds only the explicit override, never the derived answer. Saving a derived answer would
+freeze a decision the next load should make again: a plugin that changes a faction relation must
+change who is angry. An unknown hostility byte loads as neutral.
 
-Faction memberships travel in their own additive chunk, `FCTN`, one entry per
-actor that belongs to at least one faction (issue #503). Hostility does *not*
-travel with them even though the two are read together: hostility is derived
-from these memberships plus the records, and the `CBTS` byte beside them is the
-explicit override alone. Writing a derived answer into the save would freeze a
-decision the next load should be making again — a plugin that changes a faction
-relation has to change who is angry.
+Before a save, and after a load, the loop drops what a reload cannot rebuild: arrows in the air,
+falling corpses, attack phases, and the damage flash. What stays is what a component holds:
+hostility, actor values, and death. A fight saved mid-swing loads as a fight, without the swing.
 
-Hostility travels in its own additive save chunk, `CBTS`, for the reason `AVAL`
-and `DETH` have their own: a component kind inside `RDLT` is versioned by
-`formatVersion`, so putting it there would make an older build refuse every save
-containing a fight instead of loading the rest of the world. A session in which
-nothing was provoked writes no chunk at all. See
-[the OpenSky save container](/formats/opensky-save-actor-chunks.md).
+## Controls
 
-An unknown hostility byte decodes as neutral rather than throwing: a future third
-regard should load with that actor calm, not refuse the file.
+World > Combat & Physics > Combat Loop:
 
-`CombatLoopRuntime.prepareForPersistence()` runs on both sides of a save and
-drops what a reload cannot reproduce — arrows in the air, corpses still falling,
-the opponent's attack phase, the damage flash. What survives is what a component
-carries: hostility, actor values, death. So a fight saved mid-swing reloads as a
-fight, with the swing itself gone.
+- Selected actor is hostile: reads the derived answer for the nearest actor, so a bandit shows
+  hostile with nothing ticked, and a guard shows calm. Writing it sets the explicit override, which
+  beats every record. Unticking a bandit keeps it calm. Clearing it also ends any fight and returns
+  the actor to its package.
+- AI casting: lets actors cast spells ([combat behavior](/engine/combat-behavior.md)).
+- Clear hit trace.
+- Readout: combat state and target, one line per fighting actor (phase, awareness, distance, health,
+  and attack, contact, block, search, and cast counts, with how many spells it could cast from where
+  it stands), the number crowded out, hits taken, the damage flash, and transients against their
+  limits.
 
-## Measured cost
+World > AI & Navigation > Combat Behavior has a second hostility checkbox for the actor selected
+there. The first one follows the nearest actor, which is useless for following one guard through a
+market. Both write the same component, so they never disagree.
 
-`CombatLoopRealDataTests.theLoopStepStaysInsideItsBudgetWithACrowd()` runs the
-loop over the install's own combat GMSTs with 32 resident actors — more than a
-room holds, so the number is a ceiling rather than a typical case — and measures
-one fixed step.
-
-| Measurement | Value |
-| --- | --- |
-| Per fixed step, 32 actors, one fight | 0.0334 ms (2026-08-09, local install) |
-| Per fixed step, 32 clocks (M15, for comparison) | 0.0380 ms (2026-08-08) |
-| Budget | 0.1 ms |
-
-The mind costs less per step than the clock did, which reads oddly until the
-engagement cap is remembered: 32 hostile actors produce 8 machines and 24 that
-are counted and skipped, where 15.7 derived a state over all 32 and stepped one
-clock. The cap is what keeps the number flat as a room fills.
-
-The budget is an OpenSky number chosen the way the 15.2 step budget was: the loop
-runs beside physics, animation and the Papyrus VM on the same fixed step, and a
-tenth of a millisecond leaves the frame to the systems that draw. It is
-deliberately generous — the loop derives a state over a small array and advances
-one clock — so a regression that trips it is a real one.
-
-`CombatLoopRealDataTests.aWhiterunHostileRunsTheWholeLoopAgainstThePlayer()` is
-item 16.7's own acceptance: a real `GuardWhiterun*` ACHR, made hostile, running
-the whole loop against a player walking in across the real city's collision and
-then hiding, offscreen and with no mover attached.
-
-```text
-GuardWhiterunImperialPostNight1 (skyrim.esm:03704B) at (26884.4, 1744.9, -1425.7)
-phases idle -> approaching -> blocking -> windup -> contact -> recovery
-       -> spacing -> windup -> searching -> disengaged
-2600 fixed steps, 0.0334 ms per step offscreen
-10.0 damage taken, 9 path requests refused
-```
-
-The refused path requests are the honest half: that harness has no 16.4 mover
-under it, so the guard fought from where the level designer put it while the
-player walked in, and the requests it made are counted rather than hidden.
-
-The same suite pins the two claims a synthetic test cannot make: the vanilla
-player graph declares `recoilStart`, `recoilStop`, `IsRecoiling` and
-`recoilMagnitude`, and all three reaction clips decode against a real character
-skeleton — including the substituted one-handed stagger, which is what proves the
-substitution binds to the same rig rather than merely naming a plausible path.
-
-## Panel seam
-
-`CombatLoopControlProviding` (`opensky/Engine/Combat/CombatLoopControlProviding.swift`),
-conformed by `GameViewController+CombatPanel.swift`: one `Equatable` snapshot out,
-plain actions in, matching every other panel bridge.
-
-It carries the hostility toggle, the AI-casting switch, the combat-state and
-current-target readouts, one
-`CombatActorReadout` per actor with a behavior machine — name, phase, awareness,
-distance, health fraction, and the attack, contact, block, search and cast
-counts beside how many spells it could cast from where it stands — the
-number the engagement cap refused, the incoming-hit trace, the damage-flash value,
-and the live transient counts against their ceilings. The readout lines are
-formatted by `CombatLoopReadout` in the engine target, where a unit test can reach
-them without a window.
-
-Item 16.7 removed `spawnCombatDevTarget()` and `resetCombatDevTarget()` from this
-protocol along with the clock they drove. There is nothing to spawn: making an
-actor hostile and letting it notice the player *is* the fight.
-
-## Verification surface
-
-`World > Combat & Physics` (`Destination-combatPhysics`) is the M15 milestone's
-verification surface, and the gate's own record. Six sections, in the order a
-fight happens in: what the actors are worth, what the player swings, what the
-player shoots, what dies, who is angry, and what the physics is carrying while
-all of it runs. Melee, Archery and Death & Ragdoll moved here from
-`World > Player & Locomotion` with item 15.9, which is what items 15.4, 15.5 and
-15.6 each said would decide their home once the combat surface outgrew that
-panel.
-
-The Combat Loop section is this page's own:
-
-| Control | Id | Does |
-| --- | --- | --- |
-| Selected actor is hostile | `CombatHostilityControl` | writes the nearest resident actor's regard for the player; clearing it ends any fight it is in and hands it back to its package |
-| Clear hit trace | `CombatClearTraceControl` | empties the incoming trace and its count |
-| Readout | `CombatLoopStatsLabel` | combat state and target, one line per fighting actor (phase, awareness, distance, health, counts), hostility, hits taken, live transients against their ceilings |
-
-Both hostility checkboxes changed meaning with item 21.3 without changing shape.
-What they *read* is the derived answer, so walking up to a bandit shows it
-hostile with nobody having ticked anything, and walking up to a guard shows it
-calm. What they *write* is the explicit override, the first term of the
-precedence list — so ticking one still wins over every record, and unticking one
-on a bandit keeps it calm rather than handing it back to the derivation. A
-dedicated faction inspector, which is what would show *which* term answered and
-let a membership be edited, is issue #507's.
-
-Hostility alone no longer starts a fight — the actor has to notice the player
-first, which is [detection](/engine/detection.md)'s job and is inspectable under
-`World > AI & Navigation > Detection`. That is the shipping path rather than a
-developer shortcut into it, which is why the shortcut is gone.
-
-The other five sections are documented on their own pages:
-[actor values](/engine/actor-values.md), [melee combat](/engine/melee-combat.md),
-[archery](/engine/archery.md), [ragdoll](/engine/ragdoll.md) and
-[dynamic bodies](/engine/dynamic-bodies.md).
-
-A frozen physics simulation is the destination's one overridden-ness — the
-sidebar dot lights for it and "Reset all" releases it. A damaged actor, an angry
-opponent, a corpse on the floor and a shoved crate are world state a user made on
-purpose, so none of them lights the dot and no reset undoes them.
-
-`World > AI & Navigation > Combat Behavior` (`Destination-aiNavigation`) is the
-second surface over the same machine, added by the M16 gate. It carries a second
-hostility checkbox, `AIHostilityControl`, and that is deliberate rather than an
-oversight: the one above acts on the nearest resident actor, which is right when
-one opponent is standing in front of you and useless when the point is to follow
-one named guard through a market. Both drive the same `ActorCombatState`
-component, so the two panels never disagree about who is angry — they disagree
-only about whom the checkbox is aimed at, and each says so. Its readout,
-`AICombatStatsLabel`, lifts the selected actor's own line out of the fighter list
-so the actor that destination is following is legible without reading a crowd.
-
-### The M15 acceptance record
-
-The record `docs/tools/sidebar-acceptance.md` requires, in the shape it fixes:
-
-```text
-Milestone: M15
-Sidebar path: World > Combat & Physics > Actor Values, > Melee, > Archery,
-  > Death & Ragdoll, > Combat Loop, > Physics
-Destination id: Destination-combatPhysics
-Controls exercised: ActorValueTargetControl, ActorValueKindControl,
-  ActorValueAmountControl, ActorValueDamageControl, MeleeWeaponDrawnControl,
-  MeleeAttackControl, ArcherySpawnControl, RagdollTriggerControl,
-  CombatHostilityControl, CombatClearTraceControl, PhysicsFreezeControl,
-  PhysicsResetControl
-Readout: CombatLoopStatsLabel (plus CombatActorValuesStatsLabel,
-  CombatMeleeStatsLabel, CombatArcheryStatsLabel, CombatRagdollStatsLabel,
-  CombatPhysicsStatsLabel)
-Deterministic tests: M15AcceptanceTests, M15AcceptancePanelTests,
-  M15AcceptanceBudgetTests, M15AcceptanceRealDataTests (env-gated),
-  M15AcceptanceRenderTests (env-gated and device-gated), CombatPhysicsPanelTests,
-  DestinationRegistryTests, AppSidebarModelTests
-Local A/B (optional, never committed): logs/m15-weapon-drawn.png,
-  logs/m15-mid-swing.png
-```
-
-Item 16.7 edited that record rather than leaving it standing: the two dev-target
-controls it named no longer exist, so the record now names the two the same
-section actually exposes. The M15 gate still passes — the fight it drives is the
-same fight, with a mind rather than a clock swinging.
-
-### The M16 acceptance record
-
-Item 16.7's own record, in the same shape. The M16 gate's whole-destination
-record is the ledger row in `docs/tools/sidebar-acceptance.md`; this one is the
-combat slice of it.
-
-```text
-Milestone: M16.7
-Sidebar path: World > AI & Navigation > Combat Behavior, and
-  World > Combat & Physics > Combat Loop
-Destination id: Destination-aiNavigation, Destination-combatPhysics
-Controls exercised: AIActorSelectControl, AIHostilityControl,
-  CombatHostilityControl, CombatClearTraceControl
-Readout: AICombatStatsLabel, CombatLoopStatsLabel
-Deterministic tests: CombatBehaviorMachineTests, CombatBehaviorRetreatTests,
-  CombatLoopRuntimeTests, CombatLoopDisengageTests, CombatLoopStateTests,
-  M16AcceptanceTests, M16AcceptancePanelTests, CombatPhysicsPanelTests,
-  DestinationRegistryTests, CombatLoopRealDataTests (env-gated),
-  M16AcceptanceRealDataTests (env-gated)
-Local A/B (optional, never committed): none
-```
-
-### The M19.10 acceptance record
-
-Item 19.10's record: AI spell use, in the same shape.
-
-```text
-Milestone: M19.10
-Sidebar path: World > Combat & Physics > Combat Loop
-Destination id: Destination-combatPhysics
-Controls exercised: CombatActorCastingControl, CombatHostilityControl
-Readout: CombatLoopStatsLabel ("AI casting:" line, and the per-fighter
-  "N casts (M castable)" counts)
-Deterministic tests: CombatCastingBehaviorTests, CombatLoopCastingTests,
-  ActorSpellBaselineTests, CombatPhysicsPanelTests, CombatBehaviorMachineTests,
-  ActorSpellBaselineRealDataTests (env-gated),
-  AICastingAcceptanceRealDataTests (env-gated)
-Local A/B (optional, never committed): logs/ai-casting-acceptance/summary.txt
-```
+A frozen physics simulation is the Combat & Physics destination's one change from default. A damaged
+actor, an angry opponent, a corpse, and a shoved crate are world state, so they do not light the
+sidebar dot and no reset undoes them.
 
 ## Limits
 
-Everything below is a known gap with a home, not an oversight:
-
-* **No power attacks, bashing or dodging.** M18, with perks. The census names
-  all three.
-* **No shouts, summons or reanimation.** An actor casts (item 19.10, below), but
-  only the deliveries [magic](/engine/magic.md) carries out, and only a spell —
-  a power, a lesser power and a shout are all skipped, and the archetypes that
-  would place a second actor in the world have nowhere to place it yet.
-* **No crime, group tactics or morale.** Item 21.3 added factions and
-  relationships, and item 21.4 the condition functions and Papyrus natives over
-  them ([Papyrus VM](/engine/papyrus-vm.md), [conditions](/engine/condition-functions.md));
-  crime gold is #504 and #505 and joins through the named seam in
-  the precedence list above. Assistance is decoded and unread, so there is still
-  no coordination between two actors fighting the same player beyond both of them
-  fighting it, and no morale.
-* **Derived hostility is still about the player.** The derivation itself takes
-  any two actors, but `combatHostility(of:)` asks it about the player alone,
-  because everything downstream of it — the engagement predicate, the perception
-  pair state, the dialogue filter — is player-relative. Actor-versus-actor
-  fighting is not simulated.
-* **No ranged-weapon AI.** An actor closes to melee reach whatever it is
-  holding. The archery runtime is the player's alone; giving an actor a bow is a
-  follow-up issue rather than something this item half-did.
-* **Every actor swings unarmed.** `combatWeapon(of:)` answers
-  `MeleeWeaponProfile.unarmed` for everybody: item 15.5 equips the *player* from
-  the inventory layer, and an NPC's equipment is resolved for *drawing* only
-  (`ActorVisualResolutionEquipment`). Reporting the model's sword as a swing
-  profile would be inventing a damage number from a mesh.
-* **An NPC's block is always `.weapon`, never `.shield`**, for the same missing
-  resolution. The reduction therefore always uses the weapon constants.
-* **NPCs have no behavior graph**, so a graph event raised on one answers false
-  and the trace records that it did not play. NPC reactions are single-clip
-  playback (`playCombatClip(_:on:)`), which is what
-  [actor animation](/engine/actor-animation.md) supports.
-* **Eight actors fight at once.** The cap is the mover's, the nearest win, and
-  what was refused is counted rather than dropped silently.
-* **`StopCombat` alone does not keep an actor calm** while it is still hostile
-  and can still see the player, for the reason above. Item 21.4 added the
-  `SetRelationshipRank` to pair it with, but the two are separate calls and a
-  script has to make both.
-* **`StartCombat` accepts only the player as a target.** Actor-versus-actor
-  combat is not simulated, and a script naming a third party takes a tallied
-  failure that says so.
-* **`OnHit` never reports a power, sneak or bash attack**, and its `akSource`
-  and `akProjectile` handles name base records that resolve to no script
-  instance: a handler may compare and log them but cannot call a method on one.
-* **Combat perception is one-directional.** 16.6 tracks observers against the
-  player only, so an actor cannot lose a target that is not the player, and the
-  search state is about the player alone.
+- No power attacks, bashing, or dodging.
+- Actors cast only spells, and only the deliveries [magic](/engine/magic.md) carries out. Powers,
+  lesser powers, and shouts are skipped. Summons and reanimation have nowhere to place a second
+  actor.
+- No group tactics or morale. Assistance is decoded and unread.
+- Derived hostility is only asked about the player. The derivation takes any two actors, but
+  engagement, perception, and the dialogue filter are all relative to the player.
+- No ranged weapon AI. An actor closes to melee reach whatever it holds.
+- Every actor swings unarmed. An NPC's equipment is resolved for drawing only, and turning a sword
+  mesh into a damage number would be invented.
+- An NPC's block is always `.weapon`, never `.shield`, for the same reason.
+- NPCs have no behavior graph. A graph event raised on one returns false, and the trace says it did
+  not play. Reactions are single clips ([actor animation](/engine/actor-animation.md)).
+- Detection tracks observers against the player only, so an actor cannot lose a target that is not
+  the player.

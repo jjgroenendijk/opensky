@@ -23,7 +23,7 @@
 // say what their base records already say. `seed(_:)` is idempotent per actor
 // per session, so the caller can do it lazily on every query.
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/hostility.md.
 
 import Foundation
 

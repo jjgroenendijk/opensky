@@ -43,7 +43,7 @@
 // Cycles are impossible to rule out in modded data, so a child that references
 // its own ancestor is refused by name rather than by recursion depth.
 //
-// See docs/engine/behavior-runtime.md.
+// See docs/engine/behavior-clips.md.
 
 import Foundation
 

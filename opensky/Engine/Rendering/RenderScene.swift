@@ -215,7 +215,7 @@ nonisolated private struct GroupAccumulator {
 /// One terrain quadrant draw for the splat pipeline: quadrant mesh, its
 /// per-vertex splat-weight stream (TerrainVertexLayout), the BTXT base
 /// material, and the ATXT layer diffuses in blend order. Terrain always
-/// draws opaque (docs/rendering/metal4-renderer.md, terrain splat section).
+/// draws opaque (docs/rendering/scene-drawing.md, terrain splat section).
 nonisolated struct TerrainDrawItem {
     let mesh: RenderMesh
     /// Two float4 weight lanes per vertex, vertex-count sized.

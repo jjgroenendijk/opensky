@@ -1,7 +1,7 @@
 // World > Scripts destination panel (issue #278): the sidebar verification
 // surface for the Papyrus VM. Thin composition of self-contained sections on
 // the shared panel framework, the same shape as RuntimeStatePanelViewController.
-// Exact sidebar path and control ids: docs/engine/papyrus-vm.md.
+// Exact sidebar path and controls: docs/engine/papyrus-world.md.
 //
 // Section order follows the order a session reaches for them: what is loaded,
 // then what it did, then how to drive it by hand, then what it could not do.

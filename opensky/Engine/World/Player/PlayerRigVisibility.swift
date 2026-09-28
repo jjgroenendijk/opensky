@@ -14,7 +14,7 @@
 // would be an artefact of the camera, and nothing else in this world is. The
 // arms never cast. They hang off the camera rather than standing in the world,
 // so their shadow would be a disembodied pair of arms sliding over the terrain.
-// Recorded in docs/engine/behavior-runtime.md, "First person".
+// Recorded in docs/engine/first-person.md.
 
 nonisolated struct PlayerRigVisibility: Equatable {
     /// The third-person body is drawn to the camera.

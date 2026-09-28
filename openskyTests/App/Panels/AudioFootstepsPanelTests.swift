@@ -1,7 +1,7 @@
 // World > Audio > Footsteps section (issue #352): accessibility-id pins,
 // layout, the enable round trip, the tag picker, and the readout. Satellite of
 // AudioPanelTests.swift, which is at the strict-lint type-body cap. Sidebar
-// path and control ids: docs/engine/audio.md.
+// path and controls: docs/engine/audio.md.
 
 import AppKit
 @testable import opensky

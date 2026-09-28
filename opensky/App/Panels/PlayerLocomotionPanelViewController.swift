@@ -1,8 +1,8 @@
 // World > Player & Locomotion destination panel (issue #191): the sidebar
 // verification surface for the M14 player. Thin composition of self-contained
 // sections on the shared panel framework, the same shape as
-// JournalPanelViewController. Exact sidebar path and control ids:
-// docs/engine/behavior-runtime.md.
+// JournalPanelViewController. Exact sidebar path and controls:
+// docs/engine/locomotion-graph.md.
 //
 // Section order follows the order a session reaches for them: where the player
 // is, what the graph made of it, which keys drive it, where the motion came

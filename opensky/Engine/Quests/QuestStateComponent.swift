@@ -53,7 +53,7 @@
 //   stopping it, so completing leaves the running flag alone here.
 //   (<https://ck.uesp.net/wiki/CompleteQuest_-_Quest>)
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/quest-state.md.
 
 import Foundation
 
@@ -176,7 +176,7 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
     /// Only the DNAM `startGameEnabled` flag feeds the baseline. The `completed`
     /// and `failed` bits in the same field are authoring state the Creation Kit
     /// writes about the quest's design, not about a session, so a fresh game
-    /// starts every quest uncompleted; see docs/engine/runtime-state.md for the
+    /// starts every quest uncompleted; see docs/engine/quest-state.md for the
     /// vanilla start machinery this v1 leaves out.
     static func baseline(for quest: Quest) -> QuestRuntimeState {
         QuestRuntimeState(isRunning: quest.flags.contains(.startGameEnabled))

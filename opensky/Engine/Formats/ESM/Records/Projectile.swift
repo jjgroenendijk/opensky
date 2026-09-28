@@ -69,7 +69,7 @@
 // re-derives the wrong conclusion from them: a handful of `missile` records
 // carry gravity values into the thousands, so lumping every type together
 // gives a mean of 149 and hides the band the arrows are actually in. The
-// finding is about arrows, and it is recorded per type in docs/engine/archery.md
+// finding is about arrows, and it is recorded per type in docs/engine/projectiles.md
 // and pinned by `ProjectileRealDataTests`.
 //
 // So `ProjectileFlight` multiplies it by the engine's own world gravity. The

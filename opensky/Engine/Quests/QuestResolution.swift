@@ -8,7 +8,7 @@
 // read quest state from a snapshot just as easily as the main actor reads it
 // from the live store.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/quest-state.md.
 
 import Foundation
 

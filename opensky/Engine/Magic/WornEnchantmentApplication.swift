@@ -25,7 +25,7 @@
 // detrimental constant effect on a worn item — vanilla has a few, on cursed rings
 // — therefore lands at its authored magnitude, which is what the record says.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/item-enchantments.md.
 
 import Foundation
 

@@ -32,9 +32,9 @@
 // the jail outfit, escaping, and the skill-progress loss UESP describes are
 // not modelled; the gear round trip nets out to nothing once the sentence is
 // served, so skipping it changes no end state. Recorded in
-// docs/engine/crime.md.
+// docs/engine/guard-response.md.
 //
-// Documented in docs/engine/crime.md.
+// Documented in docs/engine/guard-response.md.
 
 import Foundation
 
@@ -166,7 +166,7 @@ struct CrimeArrest {
     /// stops reading its `CNTO` list. Harmless on vanilla data: every `STOL`
     /// in `Skyrim.esm` places `EvidenceChestStolenGoods` or
     /// `EvidenceChestPlayerInventory`, neither of which authors a `CNTO`.
-    /// Recorded in docs/engine/crime.md.
+    /// Recorded in docs/engine/guard-response.md.
     func unresidentEvidence(of faction: ReferenceKey) -> InventoryHolder? {
         evidenceChest(of: faction).map { InventoryHolder(key: $0, owner: .generated) }
     }

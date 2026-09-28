@@ -17,7 +17,7 @@
 // believed, so a body standing above a floor in one room is not dragged by a
 // triangle in the room below.
 //
-// Documented in docs/engine/dynamic-bodies.md.
+// Documented in docs/engine/dynamic-narrowphase.md.
 
 import simd
 

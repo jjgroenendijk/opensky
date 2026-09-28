@@ -24,7 +24,7 @@
 // which is the same page's reading of a spell paid for by the second ("1 base
 // XP per Magicka used on non-healing spells").
 //
-// Documented in docs/engine/skill-advancement.md and docs/engine/magic.md.
+// Documented in docs/engine/skill-advancement.md and docs/engine/spellcasting.md.
 
 import Foundation
 

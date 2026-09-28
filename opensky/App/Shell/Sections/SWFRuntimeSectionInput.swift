@@ -70,7 +70,7 @@ extension SWFRuntimeSection {
     /// A key press and its release, in one action. Both edges are injected
     /// because a movie tracks held keys through `Key.isDown`, but only the
     /// press is routed to `handleInput` — acting on both would move a menu
-    /// selection twice per keystroke (see docs/engine/as2-runtime.md).
+    /// selection twice per keystroke (see docs/engine/as2-input.md).
     @objc func sendKeyPressed() {
         let index = keyControl.indexOfSelectedItem
         guard SWFRuntimeSection.keyChoices.indices.contains(index) else {

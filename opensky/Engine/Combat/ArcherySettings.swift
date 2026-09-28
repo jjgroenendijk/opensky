@@ -46,7 +46,7 @@
 // item 15.5's scope, and a setting nothing reads is a setting that can go stale
 // unnoticed.
 //
-// Documented in docs/engine/archery.md.
+// Documented in docs/engine/projectiles.md.
 
 import Foundation
 

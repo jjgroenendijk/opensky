@@ -7,7 +7,7 @@
 // substitutes the declared default. Every signature is quoted from the Creation
 // Kit wiki at the registration site.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/crime.md.
+// Documented in docs/engine/papyrus-activation.md and docs/engine/guard-response.md.
 
 import Foundation
 
@@ -89,7 +89,7 @@ nonisolated extension PapyrusNativeFunctions {
         // parameters are accepted and not yet read: the sentence here is
         // served at once with no jail cell and no belongings chest, so there
         // is no inventory to hold and no fake jail to choose instead
-        // (docs/engine/crime.md).
+        // (docs/engine/guard-response.md).
         registry.register(PapyrusNativeFunction(
             scriptName: "Faction",
             functionName: "SendPlayerToJail"

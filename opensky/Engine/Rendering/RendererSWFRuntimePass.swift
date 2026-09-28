@@ -11,7 +11,7 @@
 // The layer is driven by an explicit tick and nothing else. `advanceSWFRuntime`
 // is the only thing that moves a playhead; a renderer that never calls it
 // produces byte-identical frames forever, which is the determinism contract in
-// docs/rendering/ui.md.
+// docs/rendering/swf-layer.md.
 
 import Metal
 

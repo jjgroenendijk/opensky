@@ -18,7 +18,7 @@
 // The one input that deliberately *differs* is `IsFirstPerson`. Both vanilla
 // `0_master.hkx` files declare it as a bool initialised to false, and it is the
 // variable the graphs' own conditions read to tell the two perspectives apart
-// (`docs/engine/behavior-runtime.md`, transition conditions). Writing it true
+// (`docs/engine/behavior-state-machines.md`, "Transition conditions"). Writing it true
 // on the first-person instance and false on the third-person one is therefore
 // not a deviation but the whole point of running two: same state, different
 // perspective. It is seeded once at attach and at every reset rather than

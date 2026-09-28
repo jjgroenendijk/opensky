@@ -24,7 +24,7 @@
 // script kill and a sword kill reach `RagdollRuntime.noteZeroHealth` by one
 // path and the death events fire exactly once from the death latch.
 //
-// Documented in docs/engine/papyrus-vm.md.
+// Documented in docs/engine/papyrus-actor-natives.md.
 
 import Foundation
 

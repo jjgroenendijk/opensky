@@ -106,7 +106,7 @@ left), then a uint32 worn count with groups (uint32 item FormID, uint32 sequence
 uint64 `AEFF` sequence numbers). All lists ascend.
 
 The item is its base FormID, as in `INVN`. So two copies of one enchanted weapon share one
-charge ([magic](/engine/magic.md#item-enchantments)). The worn groups say which `AEFF`
+charge ([magic](/engine/item-enchantments.md)). The worn groups say which `AEFF`
 effects each worn item owns, so taking it off removes them. A charge that is negative or not
 finite becomes 0. A sequence that names no effect removes nothing. Sizes: 16 bytes minimum
 per entry, 8 per charge, 8 minimum per worn group, 8 per sequence.

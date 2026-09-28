@@ -24,7 +24,7 @@
 // A value is a float; a bare variable is true when it is non-zero, which is how
 // `!bBlendOutSlow` reads. A name the graph does not declare makes evaluation
 // fail rather than default, because a wrong answer here fires a wrong
-// transition — see `docs/engine/behavior-runtime.md`.
+// transition — see `docs/engine/behavior-state-machines.md`.
 
 import Foundation
 

@@ -1,76 +1,52 @@
 ---
 type: Subsystem
 title: Perception and detection
-description: The fixed-step observer-target perception pass — view cone, line of sight,
-  gait-based noise, the detection value and its accumulation into unaware, suspicious and
-  detected states — with the formula's citations and its stated gaps.
+description: How an observer sees and hears a target - view cone, line of sight, gait noise,
+  the detection value, and how it builds into unaware, suspicious, and detected - with the
+  source of every constant and the inputs still missing.
 tags: [engine, ai, perception, detection, stealth, sneak]
-timestamp: 2026-08-09T00:00:00Z
 ---
 
 # Perception and detection
 
-Issue #202 gives resident actors senses. Before it, hostility was entered exactly two ways —
-the player damaged an actor, or the panel toggle did it — and nothing in the engine saw or
-heard anything. This page covers what one observer makes of one target: how the two terms of
-the detection value are computed, how that value accumulates into a state, and which inputs
-are still missing.
+This page covers what one observer makes of one target: how the detection value is computed,
+how it builds up into a state, and which inputs are still missing. What an alerted actor then
+does is on the [combat](/engine/combat.md) page.
 
-What an alerted actor *does* is not here. That is item 16.7, and it reads
-`DetectionPairState.lastKnownPosition` to do it.
+Sources:
 
-## Contents
+- UESP, "Skyrim:Sneak", section "Remaining Undetected"
+  (<https://en.uesp.net/wiki/Skyrim:Sneak>): the detection value, the attenuation, and the sound
+  factor with its settings.
+- UESP, "Skyrim:Skills" (<https://en.uesp.net/wiki/Skyrim:Skills>): the starting skill level.
+- xEdit `Core/wbDefinitionsTES5.pas`: the condition function indices.
+- Creation Kit wiki: what `GetDistance`, `GetLineOfSight`, and `GetDetected` return.
 
-* [The pass](#the-pass)
-* [The formula](#the-formula)
-* [Where each constant came from](#where-each-constant-came-from)
-* [Stated gaps](#stated-gaps)
-* [Detection level and states](#detection-level-and-states)
-* [Bounds and determinism](#bounds-and-determinism)
-* [Condition functions](#condition-functions)
-* [Surfaces](#surfaces)
-* [Tests](#tests)
-* [References](#references)
-* [See also](#see-also)
+## One evaluation
 
-Engine: `PerceptionRuntime`, `PerceptionWorld`, `DetectionFormula`, `PerceptionSight`,
-`DetectionPairState`, `DetectionSettings`, `PerceptionReadout`, `PerceptionOverlay` and
-`DetectionResolution`, all in `opensky/Engine/Perception/`. App wiring:
-`opensky/App/GameView/GameViewController+Perception.swift`.
+Perception runs on the same 1/60 s fixed step as combat and actor values, and stops when the
+world is paused. One evaluation of an observer and a target:
 
-## The pass
+1. Distance, feet to feet.
+2. View cone: a wedge of `viewConeHalfAngleDegrees` on each side of the observer's facing. It is
+   flat in XY, because no actor tilts its head here.
+3. Line of sight: one ray from the observer's eye to the target's eye, against fixed collision.
+   Actors do not block it. A guard behind another guard can still see the player. Interaction
+   targeting makes the same choice.
+4. The detection value, from the three above plus the target's gait and crouch.
+5. The pair's level goes up or down, and the level gives a state.
 
-`PerceptionRuntime` advances on the same 1/60 s fixed step and the same paused-aware world
-delta as the combat loop and the actor-value runtime, and reaches the world only through
-`PerceptionWorld`. One step evaluates a slice of observer-target pairs; each evaluation is:
+The ray uses the exact ray test, not the swept shape a projectile uses, because a sight line has
+no thickness. A pair beyond the range of both senses is skipped before the ray, because the
+attenuation would make everything zero anyway.
 
-1. **Distance**, feet to feet.
-2. **View cone**, a yaw wedge of `viewConeHalfAngleDegrees` about the observer's facing.
-   Flattened into the XY plane, because nothing in this engine pitches an actor's head.
-3. **Line of sight**, one exact ray from the observer's eye to the target's eye against
-   static collision. Actors do not block it — a guard standing behind a guard can still see
-   you — which is the same choice [interaction targeting](/engine/interaction.md) makes.
-4. **The detection value**, from those three plus the target's gait and crouch.
-5. **Accumulation or decay** of the pair's level, and the state that level reads as.
-
-The ray is `InteractionRaycaster.nearestHit` over the streamer's
-`staticCollisionCandidates(overlapping:)` broadphase — the exact caster rather than the
-`ShapeSweeper` a projectile uses, because a sight line has no thickness and there is no
-`collisionRadius` to put in a sweep. A pair already past the range where either sense could
-reach is skipped before the ray is cast, since the attenuation would multiply everything by
-zero anyway.
-
-**Who observes.** The session's filter, not the runtime's: an actor is an observer when it
-is hostile to the player, when its 16.7 combat behavior machine has it engaged, or when
-the package runtime has selected a package for it. Those are exactly the actors something
-in this engine is already simulating. **Who is observed** is the player and nobody else —
-NPC-versus-NPC perception is out of 16.6's scope beyond what 16.7's combat needs, and the
-target seam is a list precisely
-so 16.7 can widen it without touching the pass.
+Observers are actors something already simulates: hostile to the player, engaged by the combat
+behavior, or running a package. The only target is the player. The target list is a list so it
+can grow later without changing the evaluation.
 
 ## The formula
 
-UESP "Skyrim:Sneak" states the whole shape, and it is implemented as written:
+UESP gives the whole shape, and it is used as written:
 
 ```text
 Detection Value = fSneakBaseValue
@@ -85,250 +61,112 @@ Movement     = (equippedWeightBase + equippedWeightMult * weight)
 Action       = ActionSound * fSneakActionMult
 ```
 
-The trailing `(Noticer - Sneaker)` term is omitted from the code rather than added as a
-literal zero: both skills are pinned to one constant, so it is exactly zero by construction
-and writing it out would suggest otherwise.
+The last term, `(Noticer - Sneaker)`, is left out of the code. Both skills use the same pinned
+value, so it is always zero, and writing it out would suggest it is not.
 
-Outdoors the attenuation range is multiplied by `fSneakExteriorDistanceMult`, so the same
-distance attenuates less in the open than in a corridor.
+Outdoors, the attenuation range is multiplied by `fSneakExteriorDistanceMult`. So the same
+distance counts for less in the open than in a corridor.
 
-The **visual factor** is the one term UESP describes only qualitatively — it names light
-level as the driver, and light level is a gap here — so its shape is OpenSky's:
+UESP describes the visual factor only in words: light level drives it. Light level is not
+available here, so this shape is OpenSky's own:
 
 ```text
 Visual Factor = 0 without a sight line, or outside the view cone
               = visualBaseValue * lightFactor * (sneakVisualMult while crouched)
 ```
 
-There is no partial seeing: a target outside the cone or behind a wall contributes nothing
-visually and can only be heard.
+There is no partial seeing. A target outside the cone or behind a wall can only be heard.
 
 ### Gait multipliers
 
-| gait | multiplier | source |
+| Gait | Multiplier | Source |
 | --- | --- | --- |
-| standing still | 0 | vanilla's own rule, no constant attached |
-| sneak | `sneakMovementMult` = 0.75 | OpenSky |
-| walk, swim | 1 | vanilla's implicit base |
-| run | `fSneakRunningMult` = 2 | `Skyrim.esm` |
-| sprint | `sprintMovementMult` = 3 | OpenSky |
+| Standing still | 0 | Vanilla rule |
+| Sneak | `sneakMovementMult` = 0.75 | OpenSky |
+| Walk, swim | 1 | Vanilla base |
+| Run | `fSneakRunningMult` = 2 | `Skyrim.esm` |
+| Sprint | `sprintMovementMult` = 3 | OpenSky |
 
-Vanilla's movement term has no crouch factor at all — it spends the Sneak skill on the
-*observer's* side of the formula instead — and OpenSky has no skills to spend, so the gait
-is where sneaking has to pay. Swimming is deliberately given walking's multiplier rather
-than a fourth constant nothing measured.
+Vanilla's movement term has no crouch factor. Vanilla uses the Sneak skill on the other side of
+the formula instead. OpenSky has no skills yet, so sneaking has to lower the gait term. Swimming
+uses the walking value instead of a new unmeasured constant.
 
-### The noise radius
+### Noise radius
 
-`DetectionFormula.noiseRadius(gait:settings:isExterior:hasLineOfSight:)` inverts the
-attenuation to report how far a target moving at one gait can be heard, in world units — the
-distance at which the sound and skill terms alone exactly cancel `fSneakBaseValue`. Nothing
-in the pass consumes it; the attenuated sound term already produces the behaviour. It exists
-because "a gait-based noise radius" is what the milestone asks for in world units, and this
-is that number. Zero is a real answer: a target too quiet to notice even while touching the
-observer has no radius.
+The noise radius is how far a target at one gait can be heard, in world units. It is the
+distance where the sound and skill terms exactly cancel `fSneakBaseValue`. The evaluation does
+not use it. The readout shows it, because a radius in world units is easy to check. Zero is a
+real answer: a target too quiet to notice even up close has no radius.
 
-## Where each constant came from
+Where each constant comes from, and which inputs are still fixed at a neutral value, is on the
+[detection constants](/engine/detection-constants.md) page.
 
-Two kinds of number, kept apart on purpose, and every one of them carries its own source
-string into `openskycli gmst detection` and the panel readout.
+## Level and state
 
-**Read from the load order.** Ten settings the shipped game carries. Values below are what
-`openskycli gmst list --prefix fsneak` reported on the local install on 2026-08-09.
+UESP describes detection as "an entire system of Stealth Points, like hit points but for
+stealth". The visible behavior depends on that: the eye opens slowly, and a guard looks over and
+goes back to work. A yes or no answer per frame would flicker at every doorway. So each pair has
+a level from 0 to 100:
 
-| editor ID | value | what it does |
-| --- | --- | --- |
-| `fSneakBaseValue` | -15 | the constant every detection value starts from |
-| `fSneakMaxDistance` | 2500 | the range both senses attenuate over |
-| `fSneakExteriorDistanceMult` | 2.1 | what that range is multiplied by outdoors |
-| `fSneakSoundsMult` | 1 | scales the whole sound term |
-| `fSneakSoundLosMult` | 0.3 | scales the sound term through a wall |
-| `fSneakRunningMult` | 2 | how much louder running is than walking |
-| `fSneakActionMult` | 2 | scales an action sound |
-| `fSneakSkillMult` | 0.5 | turns a skill level into a skill factor |
-| `fSneakPerceptionSkillMin` | 0 | bottom of the skill clamp |
-| `fSneakPerceptionSkillMax` | 100 | top of the skill clamp |
+- A positive detection value adds `min(1, value / fullDetectionValue) * gainPerSecond` per
+  second, and stores the target's position as the place to investigate.
+- A value of zero or less removes `decayPerSecond` per second. At zero the stored position is
+  forgotten, so an old position is never visited.
 
-**OpenSky's own.** Numbers vanilla keeps in AI internals that no record documents. There is
-no GMST for a view cone, for how loud a crouching target is, for how fast an alerted guard
-makes up its mind, or for how long it takes to forget.
+| Level | State |
+| --- | --- |
+| Below `suspiciousLevel` | Unaware |
+| From `suspiciousLevel` | Suspicious |
+| At `detectedLevel` | Detected |
 
-| name | value | what it does |
-| --- | --- | --- |
-| `distanceAttenuationExponent` | 2 | the attenuation exponent |
-| `equippedWeightBase` | 12 | noise before anything is equipped |
-| `equippedWeightMult` | 0.5 | noise per point of equipped weight |
-| `sneakMovementMult` | 0.75 | movement noise while crouched |
-| `sprintMovementMult` | 3 | movement noise while sprinting |
-| `viewConeHalfAngleDegrees` | 90 | half-angle of the view cone |
-| `visualBaseValue` | 40 | the visual term for a lit, upright target in the open |
-| `sneakVisualMult` | 0.5 | the visual term while crouched |
-| `fullDetectionValue` | 25 | detection value at which the level climbs at full rate |
-| `gainPerSecond` | 100 | level gained per second at a full-rate signal |
-| `decayPerSecond` | 20 | level lost per second while nothing is perceived |
-| `suspiciousLevel` | 25 | level at which an observer has somewhere to investigate |
-| `detectedLevel` | 100 | level at which an observer has the target |
+`GetDetected` is true only in the detected state. A suspicious observer has detected nothing. It
+has a place to look.
 
-Three of these are named by UESP as settings and are still ours, because the install carries
-no GMST by those editor IDs: `fSneakDistanceAttenuationExponent`,
-`fSneakEquippedWeightBase` and `fSneakEquippedWeightMult`. That is a real disagreement
-between a secondary source and the shipped game, and the shipped game wins — the same rule
-[melee combat](/engine/melee-combat.md) applies to the block factors.
+With these values, a target at full signal is detected in 1 second. A target that disappears
+from a full level drops below suspicious at 3.75 seconds and is forgotten at 5 seconds.
 
-## Stated gaps
+## Limits and repeatability
 
-Four inputs the engine cannot supply yet. Each is a named constant on `DetectionFormula`
-pinned at a documented neutral value, never approximated with a plausible-looking
-substitute: a wrong number that moves is worse than a stated constant that does not, because
-only one of the two is visible.
+Every observer against every target, with a ray per pair, grows fast with the world. Three
+limits keep it bounded, and each reports what it cut:
 
-| input | pinned at | what fills it |
-| --- | --- | --- |
-| light level | `pinnedLightFactor` = 1 | per-actor scene light sampling. The install carries `fSneakLightMult`, `fSneakLightExteriorMult` and `fDetectionSneakLightMod` for exactly this term, and they are deliberately left unresolved until there is a light level to multiply |
-| muffle | `pinnedMuffle` = 1 | magic effects |
-| action sounds | `pinnedActionSound` = 0 | attacks, casts and shouts reporting to perception |
-| both skill levels | `pinnedSkillLevel` = 15 | stored skills. `ActorValueIdentity` names Sneak as vanilla actor value 15, and [actor values](/engine/actor-values.md) stores three of the 164 — health, magicka and stamina — so neither the sneaker's Sneak nor the noticer's perception is readable through `ActorValueRuntime` today. 15 is the vanilla starting level for every skill before racial bonuses |
+- At most 64 pairs. The nearest pairs win, and a counter shows how many were dropped. A silent cut
+  would read as "nothing else was near".
+- At most 8 pairs evaluated per step, in turn, in a fixed order. A pair gets the time since its
+  last evaluation. So slicing changes when a level is computed, not where it ends up.
+- At most 8 steps per frame, like combat and actor values.
 
-Equipped weight is wired through the seam but the app supplies zero, because nothing sums
-the weight of what an actor has equipped yet; a target therefore counts as
-`equippedWeightBase` alone and is quieter than a vanilla armoured one.
-
-Pinning both skills at the same number is what makes the formula's trailing
-`(Noticer - Sneaker)` term exactly zero, so the one place a skill still shows up is the
-attenuated noticer term.
-
-## Detection level and states
-
-Detection in vanilla is described as "an entire system of Stealth Points, like hit points
-but for stealth", and every visible behaviour depends on that continuity: the eye opening
-gradually, a guard glancing over and going back to work. A boolean recomputed per frame
-gives none of that and flickers on every doorway a sight line clips. So each pair carries a
-level from 0 to 100:
-
-* a positive detection value gains `min(1, value / fullDetectionValue) * gainPerSecond` per
-  second and records the target's position as the **investigate position**;
-* a zero or negative value loses `decayPerSecond` per second, and dropping to zero forgets
-  the investigate position, so a stale position can never be walked to.
-
-The level reads as three states: **unaware** below `suspiciousLevel`, **suspicious** at or
-above it, and **detected** at `detectedLevel` — the top of the scale, so "detected" and
-"certain" are the same state. `GetDetected` is the detected state alone; a suspicious
-observer has not detected anything, it has somewhere to go and look.
-
-At the shipped rates a full-signal target is detected in one second, and a target that
-vanishes from a full level crosses back under suspicion at 3.75 s and is forgotten at 5 s.
-
-## Bounds and determinism
-
-Perception is the first subsystem in this engine whose cost is quadratic in the world rather
-than linear: every observer against every target, with a raycast per pair. Three named
-bounds, all reported rather than silent:
-
-* `maximumPairs` (64) caps how many pairs exist. Past it the nearest pairs win and
-  `droppedPairCount` says how many were refused — a silent truncation would read as "nothing
-  else was nearby".
-* `pairsPerStep` (8) caps how many are re-evaluated per fixed step, round-robin over a
-  stable order. A pair evaluated every eighth step is advanced by the elapsed time since it
-  was last looked at, so slicing changes *when* a level is recomputed and not what it
-  converges to.
-* `maximumStepsPerAdvance` (8) caps how much simulated time one frame may spend, exactly as
-  the combat loop and the actor-value runtime cap theirs.
-
-The roster is refreshed once per frame rather than once per step, sorted by `ReferenceKey`
-before it is paired, and every accumulation is a pure function of the elapsed seconds. Two
-runs over the same recorded inputs produce the same levels.
+The list of actors is refreshed once per frame and sorted by `ReferenceKey`. Every change is a
+pure function of the elapsed time. So two runs with the same inputs give the same levels.
 
 ## Condition functions
 
-Three functions register additively into `ConditionFunctionRegistry`, reading a
-`DetectionResolution` snapshot on `ConditionContext` and nothing else. Indices are the raw
-on-disk numbers from xEdit's condition table; the Creation Kit spells each 4096 higher.
+Three functions read a detection snapshot. Indices are the stored numbers from xEdit. The
+Creation Kit adds 4096 to each.
 
-| stored | Creation Kit | name | parameters | returns |
+| Stored | Creation Kit | Name | Parameter | Returns |
 | --- | --- | --- | --- | --- |
-| 1 | 4097 | `GetDistance` | #1 reference | world units between the run-on and the parameter |
-| 27 | 4123 | `GetLineOfSight` | #1 reference | 1 when the run-on's sight line to the parameter is clear |
-| 45 | 4141 | `GetDetected` | #1 actor | 1 when the run-on actor has detected the parameter actor |
+| 1 | 4097 | `GetDistance` | a reference | World units between run-on and parameter |
+| 27 | 4123 | `GetLineOfSight` | a reference | 1 if the run-on's sight line to it is clear |
+| 45 | 4141 | `GetDetected` | an actor | 1 if the run-on actor has detected it |
 
-All three are asked of the run-on reference *about* the parameter reference —
-`[Observer].GetDetected Target`. That direction matters, because detection is not symmetric:
-a guard may have you while you have no idea it is there. Asking the reversed pair, which the
-pass does not track, is `ConditionFailure.unavailableDetection` rather than a "not
-detected" — an untracked pair is not an undetected one, and only one of those is a real
-answer. The failure has its own `ConditionTally` bucket. See
-[conditions](/engine/conditions.md).
+The run-on reference asks about the parameter: `[Observer].GetDetected Target`. Detection is not
+symmetric. A guard may see the player while the player does not know it is there. Asking about a
+reversed pair, which is not tracked, fails as unavailable. An untracked pair is not an undetected
+one. See [condition evaluation](/engine/conditions.md).
 
-`GetCombatState`'s third return, 2 "Searching", is produced as of item 16.7 (issue #424):
-losing a target this pass was tracking is what sends a fighting actor to the remembered
-investigate position, and that phase is what the condition reads. The music runtime's
-matching seam came with it — a searching actor is still in the fight, so the combat playlist
-keeps playing until it gives up. See [the combat loop](/engine/combat.md).
+When an actor in combat loses a target that perception was tracking, it goes to the stored
+position. `GetCombatState` then returns 2, "Searching". Combat music keeps playing while an actor
+searches.
 
-## Surfaces
+## Controls
 
-* **World overlay.** `PerceptionOverlay` contributes to the
-  [world debug overlay](/engine/navigation.md#world-space-debug-overlay) registry under the
-  `detection` identifier, behind `Renderer.detectionOverlayEnabled`. Per observer it draws a
-  flat cone fan at the feet — the full view angle, out to the range that observer's senses
-  actually reach, coloured grey, amber or red by the strongest state it holds — and a white
-  line to its investigate position, so "it heard something over there" is visible as a thing
-  pointing somewhere rather than as a state name. The pass is depth-tested, so a cone
-  disappears behind the wall that blocks it.
-* **Panel.** `World > AI & Navigation > Detection` (`Destination-aiNavigation`) prints the
-  pass's own totals and then one line per tracked pair the selected actor is on either side
-  of, under `DetectionStatsLabel`. `DetectionPairReadout.summaryLine` *is* that line, so the
-  panel prints one string rather than re-deriving a format the tests would then have to know
-  twice. Beneath it, `DetectionSettingsStatsLabel` lists every resolved constant beside the
-  plugin, documented fallback, or OpenSky constant it came from, so no number in the formula
-  is unattributed. The section is read-only by design: a level accumulates from distance,
-  light, sound and line of sight on a fixed step, and a control that set one directly would
-  show a number the formula never produced. The way to be noticed is to walk into a cone,
-  and the cones are drawn by `AIDetectionOverlayControl` in the same destination's Overlays
-  section. The acceptance record for item 16.6 is a row in
-  [the sidebar acceptance ledger](/tools/sidebar-acceptance.md).
-* **CLI.** `openskycli gmst detection` prints every resolved setting with its source, and
-  `openskycli gmst list --prefix <s>` prints any GMST family — the probe the tables above
-  were read with. See [the CLI reference](/tools/cli.md).
-
-## Tests
-
-* `DetectionFormulaTests` — the attenuation including its exterior multiplier and its
-  non-finite input, each of the three terms, the gait table, the pinned constants, sneaking
-  against standing at the same pose, a blocked sight line at two gaits, and the ordering of
-  the four noise radii.
-* `PerceptionRuntimeTests` — a target behind a wall, a target outside the cone that is still
-  heard, the cone as a yaw wedge, sneaking versus standing accumulation rates, the decay
-  schedule, the investigate position surviving the target moving on, repeatability over the
-  same inputs, the pair cap and its dropped count, the ray cost of slicing, a pair past
-  every range costing no ray, the paused frame, the readout line, the condition seam and the
-  overlay.
-* `ConditionDetectionFunctionTests` — the three functions at their xEdit indices, both
-  directions of a pair, an empty seam, a parameter naming no reference, and an unplaced
-  reference.
-* `PerceptionRealDataTests` (env-gated) — every load-order setting resolving from
-  `Skyrim.esm` rather than from a fallback, and a real `GuardWhiterun*` ACHR moving through
-  unaware, suspicious and detected as the player walks 2800 units toward it across the real
-  Whiterun collision geometry.
-
-Every synthetic fixture is built in code (`PerceptionFixture`, `FakePerceptionWorld`); no
-game bytes are committed.
-
-## References
-
-* UESP, "Skyrim:Sneak", section "Remaining Undetected" —
-  <https://en.uesp.net/wiki/Skyrim:Sneak>. The detection-value shape, the attenuation, and
-  the sound factor with its named settings.
-* UESP, "Skyrim:Skills" — <https://en.uesp.net/wiki/Skyrim:Skills>. The vanilla starting
-  skill level the pinned skill constant uses.
-* xEdit dev-4.1.6, `Core/wbDefinitionsTES5.pas` —
-  <https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas>. The
-  condition-function index table.
-* Creation Kit wiki, `GetDistance`, `GetLineOfSight` and `GetDetected` return semantics.
-
-## See also
-
-* [Conditions](/engine/conditions.md) — the CTDA payload, the registry and the tally.
-* [Actor package schedules](/engine/package-schedules.md) — what makes an actor an observer.
-* [Combat loop](/engine/combat.md) — where hostility lives, and what 16.7 will drive.
-* [Runtime navigation](/engine/navigation.md) — the world overlay registry this draws into.
-* [Actor values](/engine/actor-values.md) — why no skill is readable yet.
+- World > AI & Navigation > Overlays > Detection: draws, for each observer, a flat cone at its
+  feet out to the range its senses reach. The color is grey, amber, or red for the strongest
+  state. A white line points to the place it will investigate. The overlay uses depth, so a wall
+  hides the cone behind it ([navigation](/engine/navigation.md)).
+- World > AI & Navigation > Detection: the totals, one line per tracked pair of the selected
+  actor, and every constant with its source. This section has no controls on purpose. A control
+  that set a level directly would show a number the formula never made.
+- `openskycli gmst detection` prints every setting with its source, and
+  `openskycli gmst list --prefix <s>` prints any group of game settings ([CLI](/tools/cli.md)).

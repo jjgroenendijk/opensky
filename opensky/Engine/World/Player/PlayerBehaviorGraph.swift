@@ -98,7 +98,7 @@ nonisolated struct PlayerBehaviorGraph {
         )
         // `0_master.hkx` is a shell: the locomotion states live in the behavior
         // files it references by name, so without this the graph can only reach
-        // its jump branch (docs/engine/behavior-runtime.md).
+        // its jump branch (docs/engine/behavior-clips.md, "Behavior references").
         instance.references = references
         instance.activate()
         return PlayerBehaviorGraph(

@@ -19,7 +19,7 @@ nonisolated final class LocalizedLabels: Sendable {
     )
 
     /// Language segment of the translation file names. "english" is the default
-    /// until a language setting exists (see docs/todo.md); vanilla ships ten.
+    /// until a language setting exists; vanilla ships ten.
     let language: String
     /// Number of translation files merged into this provider.
     let fileCount: Int

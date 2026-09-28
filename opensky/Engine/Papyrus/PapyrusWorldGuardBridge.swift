@@ -8,7 +8,7 @@
 // so a scripted payment and one chosen in the arrest conversation reach the
 // store by one path.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/crime.md.
+// Documented in docs/engine/papyrus-activation.md and docs/engine/guard-response.md.
 
 import Foundation
 

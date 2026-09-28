@@ -39,7 +39,7 @@
 // documented engine behaviour are stated in `PapyrusWorldQuestBridge.swift`,
 // beside the call that decides when a fragment runs.
 //
-// Documented in docs/engine/papyrus-vm.md.
+// Documented in docs/engine/papyrus-quests.md.
 
 import Foundation
 

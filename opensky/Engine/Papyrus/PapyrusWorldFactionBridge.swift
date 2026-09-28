@@ -11,7 +11,7 @@
 // counts and the save see a scripted membership exactly as they see one an actor
 // was seeded with.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/combat.md.
+// Documented in docs/engine/papyrus-actor-natives.md and docs/engine/hostility.md.
 
 import Foundation
 

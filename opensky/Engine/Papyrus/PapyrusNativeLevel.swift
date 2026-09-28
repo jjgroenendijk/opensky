@@ -21,7 +21,7 @@
 // is a record lookup rather than a progression question, and it belongs with
 // whichever item gives `Game` a form lookup.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/character-leveling.md.
+// Documented in docs/engine/papyrus-activation.md and docs/engine/character-leveling.md.
 
 import Foundation
 

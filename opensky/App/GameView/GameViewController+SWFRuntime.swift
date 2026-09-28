@@ -11,7 +11,7 @@
 // (AGENTS.md "Reverse-engineering discipline").
 //
 // Nothing here reads a clock. A tick happens because the user pressed a tick
-// button, which is the determinism contract in docs/rendering/ui.md restated at
+// button, which is the determinism contract in docs/rendering/swf-layer.md restated at
 // the app surface.
 
 import AppKit

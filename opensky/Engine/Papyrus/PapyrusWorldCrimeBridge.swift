@@ -11,7 +11,7 @@
 // `CrimeRuntime` call, so the journal, the dirty counts and the save see a
 // scripted bounty exactly as they see a witnessed theft.
 //
-// Documented in docs/engine/papyrus-vm.md and docs/engine/crime.md.
+// Documented in docs/engine/papyrus-activation.md and docs/engine/crime.md.
 
 import Foundation
 

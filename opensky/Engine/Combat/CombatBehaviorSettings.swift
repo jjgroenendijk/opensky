@@ -11,7 +11,7 @@
 // and in `GameSettings` this engine has no decoded consumer for, and inventing a
 // citation for a number that was chosen would be worse than choosing it in the
 // open. So every value below is OpenSky's, chosen for a reason written beside
-// it, and `docs/engine/combat.md` repeats the list so a reader who never opens
+// it, and `docs/engine/combat-behavior.md` repeats the list so a reader who never opens
 // this file still sees which numbers are ours.
 //
 // A struct rather than static constants on the machine, for one reason: a test
@@ -19,7 +19,7 @@
 // thousand shortens the durations here instead of running for sixteen simulated
 // seconds per assertion. The shipping values are `standard`.
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/combat-behavior.md.
 
 import Foundation
 

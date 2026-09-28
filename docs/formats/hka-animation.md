@@ -110,7 +110,7 @@ annotations still animates.
 
 This is the only way a Skyrim footstep fires. The walk and run clip generators in
 `mt_behavior.hkx` have empty `m_triggers`. See
-[behavior graph runtime](/engine/behavior-runtime.md#clip-triggers-and-annotations).
+[behavior graph runtime](/engine/behavior-clips.md#clip-triggers-and-annotations).
 
 ## Binding layout: 72 bytes
 

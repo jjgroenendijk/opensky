@@ -14,7 +14,7 @@
 // ahead of the machine's wildcards at equal priority, and array order ahead of
 // everything at equal priority and kind. Havok's own tie-break is not documented
 // in any source consulted here, so this is a decision, recorded in
-// `docs/engine/behavior-runtime.md`.
+// `docs/engine/behavior-state-machines.md`.
 
 import Foundation
 

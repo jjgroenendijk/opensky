@@ -136,7 +136,7 @@ nonisolated extension CellSceneBuilder {
     /// room-portal geometry and `line` is not a volume at all, so treating
     /// either as a trigger would fire `OnTriggerEnter` for scripts that never
     /// asked; `none` describes no shape. All three are counted as exclusions
-    /// rather than silently dropped (docs/engine/collision-world.md).
+    /// rather than silently dropped (docs/engine/trigger-volumes.md).
     ///
     /// A sphere's radius is `halfExtents.x`: neither UESP's REFR page nor
     /// xEdit's `wbStruct(XPRM, ...)` names an axis, but every one of the 137

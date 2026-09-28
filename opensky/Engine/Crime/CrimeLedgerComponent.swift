@@ -27,7 +27,7 @@
 // The component is dropped once it empties, as `PerkState` and
 // `ActorFactionState` are, so a law-abiding session stays clean.
 //
-// Documented in docs/engine/crime.md.
+// Documented in docs/engine/bounty-ledger.md.
 
 import Foundation
 

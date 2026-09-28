@@ -42,7 +42,7 @@
 // none is the same open question there and is answered in one place when it is
 // answered at all.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/ai-spell-use.md.
 
 import Foundation
 

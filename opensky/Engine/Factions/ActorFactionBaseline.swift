@@ -12,7 +12,7 @@
 // `useFactions`, the AI data on `useAIData` — and the hostility derivation
 // needs both at once.
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/hostility.md.
 
 import Foundation
 

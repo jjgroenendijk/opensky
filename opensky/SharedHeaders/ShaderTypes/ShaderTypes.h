@@ -170,7 +170,7 @@ typedef NS_ENUM(EnumBackingType, RenderLayerBit)
     RenderLayerBitParticles = 128,
 };
 
-// Static-mesh path (docs/todo.md 2.6). World space is Skyrim Z-up
+// Static-mesh path. World space is Skyrim Z-up
 // right-handed at native units (docs/decisions/coordinates.md); view +
 // projection fold into viewProjectionMatrix.
 typedef struct
@@ -301,7 +301,7 @@ typedef struct
     vector_float4 grassParameters;
 } InstanceTransform;
 
-/// Terrain splat path (docs/todo.md 3.1): one draw per quadrant blends the
+/// Terrain splat path (docs/rendering/scene-drawing.md): one draw per quadrant blends the
 /// BTXT base with up to TerrainConstantMaxLayers ATXT diffuses by per-vertex
 /// VTXT weights. Shares the DrawUniforms ring (both fit one 256-byte slot).
 typedef struct

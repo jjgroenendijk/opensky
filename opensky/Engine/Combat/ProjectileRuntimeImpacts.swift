@@ -10,7 +10,7 @@
 // outside the two files calls either, because `resolve(_:impact:)` in
 // `ProjectileRuntime.swift` is the only caller.
 //
-// Documented in docs/engine/archery.md and docs/engine/magic.md.
+// Documented in docs/engine/projectiles.md and docs/engine/spell-delivery.md.
 
 import Foundation
 import simd

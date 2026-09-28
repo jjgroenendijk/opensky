@@ -4,7 +4,6 @@ title: Metal shader formatter + linter
 description: clang-format (via Xcode) formats .metal; Metal compiler warnings-as-errors
   is the linter. Resolves the AGENTS.md every-language-tooling rule for Metal.
 tags: [decision, tooling, metal, lint, format]
-timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Metal shader formatter + linter

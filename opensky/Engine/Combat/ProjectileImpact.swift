@@ -34,7 +34,7 @@
 //
 // Pure functions over values. No world, no clock, no mutation.
 //
-// Documented in docs/engine/archery.md.
+// Documented in docs/engine/projectiles.md.
 
 import simd
 

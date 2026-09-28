@@ -16,7 +16,7 @@
 // Everything it touches the world with goes through `ProjectileWorld`, so the
 // whole runtime is testable against a fake with no renderer and no game data.
 //
-// Documented in docs/engine/archery.md.
+// Documented in docs/engine/projectiles.md.
 
 import Foundation
 import simd

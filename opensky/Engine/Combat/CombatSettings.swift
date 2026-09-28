@@ -34,7 +34,7 @@
 // Every fallback below is therefore the value observed on the install rather
 // than the value UESP prints, and says so in its source string.
 //
-// Documented in docs/engine/melee-combat.md.
+// Documented in docs/engine/melee-damage.md.
 
 import Foundation
 

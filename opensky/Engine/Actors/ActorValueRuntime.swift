@@ -20,7 +20,7 @@
 // input to reject, and an actor that cannot be hit because a mutation threw is
 // a worse outcome than one that takes a clamped hit.
 //
-// Documented in docs/engine/actor-values.md.
+// Documented in docs/engine/actor-value-store.md.
 
 import Foundation
 

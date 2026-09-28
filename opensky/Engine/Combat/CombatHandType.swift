@@ -36,7 +36,7 @@
 // (spell, shield, torch) that no WEAP record can hold at all. `init(weapon:)`
 // is that conversion and is the only place the two enums meet.
 //
-// Documented in docs/engine/melee-combat.md.
+// Documented in docs/engine/combat-graph-names.md.
 
 import Foundation
 

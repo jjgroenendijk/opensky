@@ -42,7 +42,7 @@
 // gravity means an arrow and a dropped crate fall at rates that stay in step if
 // the constant ever changes.
 //
-// Documented in docs/engine/archery.md.
+// Documented in docs/engine/projectiles.md.
 
 import simd
 

@@ -23,7 +23,7 @@
 // The component is dropped entirely once it empties, so an actor that knows no
 // spells stops being dirty for this slot.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spellcasting.md.
 
 import Foundation
 

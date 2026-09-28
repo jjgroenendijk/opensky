@@ -21,7 +21,7 @@
 // graph. It is preferred here over the blender flag bits precisely because it
 // is unambiguous: an index into a child array cannot mean anything else, while
 // the flag bit map is still unconfirmed (see the flagged assumptions in
-// `docs/engine/behavior-runtime.md`).
+// `docs/engine/behavior-clips.md`).
 
 import Foundation
 

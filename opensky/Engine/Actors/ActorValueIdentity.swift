@@ -46,7 +46,7 @@
 // those *are* mapped, in `recordNameAliases` behind the separate
 // `index(recordName:)` entry point (issue #494, roadmap item 20.1).
 //
-// Documented in docs/engine/actor-values.md.
+// Documented in docs/engine/actor-value-names.md.
 
 import Foundation
 
@@ -200,7 +200,7 @@ nonisolated enum ActorValueIdentity {
     /// 0x0E and `Mass` (36) from RACE DATA 0x34, both through
     /// `ActorValueDerivation.generalBaseValues(inputs:)`. An actor with no
     /// record behind it — a summon — therefore reads 0 for both, which is a
-    /// stated gap rather than an invented number; see docs/engine/actor-values.md.
+    /// stated gap rather than an invented number; see docs/engine/actor-value-names.md.
     static func defaultValue(at index: Int32) -> Float? {
         guard isVanilla(index: index) else { return nil }
         return isSkill(index: index) ? skillFloor : 0
@@ -242,7 +242,7 @@ nonisolated enum ActorValueIdentity {
     /// Deliberately a separate entry point rather than a widening of
     /// `index(named:)`: condition parameters and Papyrus natives carry the
     /// table's own vocabulary, and their measured miss buckets
-    /// (docs/engine/actor-values.md) should not move because AVIF needed three
+    /// (docs/engine/actor-value-names.md) should not move because AVIF needed three
     /// extra spellings.
     static func index(recordName name: String) -> Int32? {
         if let index = index(named: name) {

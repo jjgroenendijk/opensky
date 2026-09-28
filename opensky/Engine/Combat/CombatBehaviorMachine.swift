@@ -40,7 +40,7 @@
 // it. This is the same split 16.4 established for packages, and it is why
 // fleeing is "ask for a point away from the target" rather than "walk backwards".
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/combat-behavior.md.
 
 import Foundation
 import simd
@@ -90,7 +90,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     /// Always `.weapon`: an actor blocking with a shield needs the equipment
     /// resolution that would tell it apart from a raised sword, and reporting
     /// `.shield` without one would move the damage reduction to a different
-    /// pinned constant on a guess. Stated in docs/engine/combat.md.
+    /// pinned constant on a guess. Stated in docs/engine/combat-behavior.md.
     var blockKind: MeleeBlockKind? {
         phase == .blocking ? .weapon : nil
     }
@@ -261,7 +261,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
 
     /// The one place a swing and a cast are chosen between.
     ///
-    /// The rule, stated in docs/engine/combat.md and deliberately simple: an
+    /// The rule, stated in docs/engine/combat-behavior.md and deliberately simple: an
     /// actor that cannot reach its target with a weapon casts whenever it can
     /// afford something that reaches, and one that *is* in weapon reach casts
     /// with probability `castChance` and swings otherwise. Drawn from the same

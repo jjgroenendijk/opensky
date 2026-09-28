@@ -64,7 +64,7 @@
 //   that item 13.4 does not reach. All four are recorded here rather than
 //   guessed at.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/quest-state.md.
 
 import Foundation
 

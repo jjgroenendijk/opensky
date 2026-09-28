@@ -1,103 +1,55 @@
 ---
 type: Subsystem
-title: Living environment integration
-description: M7 integrated runtime gate, app A/B controls, exterior/interior evidence,
-  and combined frame/build/footprint budgets.
-tags: [engine, environment, acceptance, rendering, benchmark]
-timestamp: 2026-07-22T00:00:00Z
+title: Living environment
+description: How animation, shadows, weather, particles, rain and snow, and grass run together,
+  their separate on and off switches, and the combined fly benchmark.
+tags: [engine, environment, rendering, benchmark]
 ---
 
-# Living environment integration
+# Living environment
 
-M7.6 closes living-environment work by running actor animation, cascaded sun shadows,
-selected data-driven weather, world particles, precipitation, and grass together. No new
-game format or game content lands here. Production render, streaming, app-control, and CLI
-paths compose earlier M6/M7 subsystems.
+The living environment is several systems running together in the same frame: actor animation,
+sun shadows, weather, world particles, rain and snow, and grass. This page covers how they fit.
+Each system has its own page.
 
-## Runtime seams
+## Separate switches
 
-Renderer owns independent master A/B switches for animation and weather alongside existing
-shadow, particle, precipitation, and grass controls. Disabling animation resets each skinned
-mesh palette to its verified bind pose; re-enabling resumes clip playback from renderer time.
-Weather off resolves no WTHR snapshot and publishes calm wind. Global renderer time still
-advances while animation is off because grass and particle effects share that clock.
+Each system has its own on and off switch in the renderer. Turning one off must not change
+another. This makes each one easy to test by comparing frames with it on and off.
 
-World-particle and precipitation enable flags are independent. World particles can be hidden
-while WTHR rain/snow remains live, or precipitation can be hidden while cell-owned effects
-continue. This separation is both a debugging surface and a deterministic A/B seam.
+- Animation off puts each skinned mesh back in its bind pose. Animation on resumes from the
+  renderer clock. The clock keeps running while animation is off, because grass and particles
+  use it too.
+- Weather off uses no weather and sets the wind to calm.
+- World particles and rain or snow have separate switches. Rain can run with cell particles
+  hidden, and the other way round.
 
-## App verification surface
+## Controls
 
-Exact sidebar path: `World > Environment`. Durable controls:
+World > Environment has one section per system:
 
-* Actor animation: `Enabled`; live playback + updated-bone readout.
-* Shadows: `Off / Low / High`; live cascade/caster/update readout.
-* Weather: `Enabled`, Auto/forced weather, Clear/Rain/Snow, transition pause, time slider;
-  current weather/blend/wind readout.
-* Particles: `Enabled`, freeze, emission scale; system/emitter/live readout.
-* Precipitation: `Enabled`; rain/snow/intensity/roof readout.
-* Grass: `Enabled`, density/distance/wind; scene/draw/cull/drop readout.
-
-Panel remains scrollable. Layout tests pin all controls inside document bounds; UI tests pin
-their accessibility identifiers. Enable is the consistent top-level A/B operation. Force,
-freeze, tuning, and reset remain separate operations so inspection does not silently mutate
-another subsystem.
-
-## Exterior + interior evidence
-
-`LivingEnvironmentAcceptanceRealDataTests` uses the read-only local install and production
-builders/renderers. Exterior gate targets Chillfurrow Farm, Tamriel `(7,-3)`, forces
-`SkyrimOvercastRainFF` at 13:00, renders each system's A/B plus all-on/all-off, then writes
-ignored evidence under `logs/`. Observed:
-
-* 4 animated actors, 408 bind-pose bones after animation A/B;
-* 1 world-particle system, 568 grass placements;
-* 292 live rain particles, 350 shadow casters, 450 drawn grass instances;
-* changed pixels: animation 2, shadows 2, weather 230393, world particles 0,
-  precipitation 3082, grass 0, all-on/all-off 230400.
-
-Zero wide-frame pixel delta for world particles/grass means their pixels were not visible in
-this distant acceptance camera. Live production counters prove both paths ran; focused
-synthetic/real gates in [particle playback](/rendering/particles.md) and
-[procedural grass](/engine/grass.md) retain visible A/B evidence.
-
-Interior gate targets Chillfurrow Farm `00016204`. Production build found 1 animated actor +
-1 applicable particle system; 12 particles were live, no precipitation ran, and exact-time
-animation frames differed by 5 pixels without crash. Local PNG inspection confirmed exterior
-rain/overcast vs clear all-off frames and the interior actor pose change. Captures remain
-gitignored because they contain game-derived pixels.
-
-## Combined fly budget
-
-`bench --fly-path` now requires a rainy preset and collects peak live-system evidence while
-driving production 5x5 streaming. It fails when selected weather, updated actor bones, live
-world particles, live rain, shadow casters, or drawn grass is absent. Existing exact actor,
-stream, collision, grass-drop, and footprint gates stay active.
-
-Observed Debug gate, 640x360, 2026-07-22:
-
-| gate | observed | budget |
+| System | Controls | Live readout |
 | --- | --- | --- |
-| frame | 13.62 ms avg / 23.64 ms p95 | 33.33 ms avg + p95 |
-| collision build | 129.83 ms avg / 551.25 ms p95 | 750 ms p95 |
-| actor build | 550.55 ms avg / 3014.79 ms p95 | 4500 ms p95 |
-| animation update | 1.43 ms avg / 3.20 ms p95 | 4 ms avg + p95 |
-| shadow update | 3.87 ms avg / 7.53 ms p95 | 14 ms avg + p95 |
-| footprint | 927 MiB peak | 1024 MiB cap + plateau |
+| Actor animation | Enabled | Playback, updated bones |
+| Shadows | Off, Low, High | Cascades, casters, updates |
+| Weather | Enabled, auto or forced weather, Clear, Rain, Snow, pause transition, time | Weather, blend, wind |
+| Particles | Enabled, freeze, emission scale | Systems, emitters, live particles |
+| Rain and snow | Enabled | Type, intensity, roof |
+| Grass | Enabled, density, distance, wind | Scenes, draws, culled, dropped |
 
-Live peaks: `SkyrimOvercastRainFF`, wind 0.098, 445 animated bones, 1305 particles in
-58 systems, 306 rain particles, 847 shadow draws/2280 casters, 637 of 12593 grass instances
-drawn in 3 calls, zero grass budget drops. Route built exact 35-cell union once, unloaded
-9 initial cells, retained 25, and completed 5530 frames.
+"Enabled" is the same on and off action in every section. Force, freeze, tuning, and reset are
+separate actions, so looking at one system never changes another. This rule came from an early
+single switch that hid which system was in which state. See
+[app UI](/tools/app-ui.md) for the panel rules.
 
-Full-probe warm-process repeats measured shadow p95 12.13, 12.19, and 13.20 ms. Integrated
-cap is 14 ms: 6% above observed worst, below half the 33.33 ms total frame budget.
-One warm-process collision repeat reached 723.09 ms p95; 750 ms keeps a measured ceiling
-with 3.7% headroom.
+## Combined benchmark
 
-## M8 carry-forward
+`openskycli bench --fly-path` flies through the 5 x 5 streamed world with a rainy weather forced.
+It fails if any system is missing: no weather, no updated bones, no live particles, no rain, no
+shadow casters, or no drawn grass. It also checks frame time, collision build time, actor build
+time, animation and shadow update time, and memory against fixed budgets. The budgets are in
+the benchmark code. See [CLI](/tools/cli.md).
 
-M7 showed one overloaded toggle obscures subsystem state. M8 sidebar convention therefore
-requires distinct enable, force, freeze/pause, inspect, and reset actions; live numeric state;
-stable accessibility identifiers; scroll/layout tests; deterministic state + pixel-delta
-evidence. Milestones extend existing destinations before adding top-level sidebar items.
+In a wide exterior view, grass and cell particles can change no pixels, because they are too far
+away. Their live counters show they ran. The [particles](/rendering/particles.md) and
+[grass](/engine/grass.md) pages have close-up checks.

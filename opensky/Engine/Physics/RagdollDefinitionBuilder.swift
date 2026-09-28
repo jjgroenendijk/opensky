@@ -6,7 +6,7 @@
 // the animation skeleton's bone names with the bind-pose world matrix of each.
 // Nothing here reads a file.
 //
-// Documented in docs/engine/ragdoll.md.
+// Documented in docs/engine/ragdoll-solver.md.
 
 import simd
 

@@ -7,7 +7,7 @@
 // `alphaTestedDrawGroups`), which both the scene pass and the shadow pass read,
 // and its GPU allocations join the residency set once and stay.
 //
-// See docs/engine/behavior-runtime.md for the clock split: the pose the body
+// See docs/engine/actor-animation.md for the clock split: the pose the body
 // draws comes from the behavior graph stepped on the simulation clock, and this
 // file only publishes it.
 

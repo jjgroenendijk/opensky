@@ -15,7 +15,7 @@
 // so an actor in no faction stops being dirty for this slot. That is also why
 // seeding an actor whose record authors no membership writes nothing.
 //
-// Documented in docs/engine/combat.md and docs/formats/factions.md.
+// Documented in docs/engine/hostility.md and docs/formats/factions.md.
 
 import Foundation
 

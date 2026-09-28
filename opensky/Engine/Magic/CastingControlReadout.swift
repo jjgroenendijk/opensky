@@ -3,7 +3,7 @@
 // a string a milestone gate asserts on belongs in the engine target, where a
 // unit test can reach it without a window.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spellcasting.md.
 
 import Foundation
 

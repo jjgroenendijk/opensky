@@ -27,7 +27,7 @@
 // save to say what their base records already say. The grant is idempotent, so
 // an actor that fights, gives up and fights again is granted once.
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/ai-spell-use.md.
 
 import AppKit
 import simd

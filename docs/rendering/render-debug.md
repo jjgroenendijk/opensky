@@ -1,159 +1,101 @@
 ---
 type: Subsystem
 title: Render debug views and layer isolation
-description: Function-constant-gated debug channels for the scene pass, an OptionSet layer
-  mask honoured by both the scene and shadow passes, the composition rule against the
-  subsystem enables, and the World > Render Debug surface.
+description: Debug channels gated by a function constant, a layer mask honored by the scene and
+  shadow passes, how the mask combines with the subsystem switches, and why neither setting is
+  saved or reaches an offscreen frame.
 tags: [rendering, metal, debugging, engine, app-ui]
-timestamp: 2026-08-10T00:00:00Z
 ---
 
 # Render debug views and layer isolation
 
-Issue #144. The app's stated purpose is finding visual bugs, and before this there was no
-way to bisect one: the only tools were reading code and staring at the frame. Two
-capabilities cover most of the gap — switch the scene pass's output channel, and switch
-layers off one at a time.
-
-Both are pure OpenSky diagnostics over OpenSky's own renderer. No Bethesda code or data is
-involved.
-
-## Contents
-
-* Debug channels — the function-constant gate, the seven modes, the five pipelines
-* Layer isolation — the `RenderLayer` mask, where the tag lives, solo
-* The composition rule against the subsystem enables
-* Why neither persists, and why neither reaches an offscreen frame
-* Surface and verification
+Finding a visual bug needs a way to cut the problem in half. Two tools do that: change the scene
+pass's output channel, and turn layers off one at a time. Both are in the Render Debug section of
+`World > World`.
 
 ## Debug channels
 
-Wiring is **function constant to gate, uniform field to select**, not one or the other.
+A function constant gates the debug code, and a frame uniform picks the channel. Every shipping
+pipeline defines the constant as false, and the five debug pipelines as true. So in a shipping
+pipeline the whole debug block folds away at compile time. Changing the channel builds no new
+pipeline.
 
-* `FunctionConstantDebugView` (`ShaderTypes.h`) is defined as `false` by every shipping
-  pipeline and `true` by the five debug ones, so in a shipping pipeline the whole debug
-  block folds to a compile-time `false` branch and those fragments generate the code they
-  did before the channels existed.
-* `FrameUniforms.debugMode` selects the channel per frame, so changing channel rebuilds no
-  pipeline state.
+Every pipeline built from a fragment that reads the constant must define it, including the shipping
+grass, terrain, and water pipelines. Metal aborts pipeline validation when a referenced function
+constant is undefined. The first attempt left it undefined, and every renderer start died inside
+`validateWithDevice`. So one function builds all these constant values, and a new fragment cannot get
+the constant without its definition.
 
-Every pipeline built from one of the four fragments that reads the constant must set it —
-including the shipping grass, terrain and water pipelines, which previously specialized
-nothing. Metal requires a referenced function constant to be defined at specialization and
-**aborts pipeline validation** when one is not, so leaving it undefined in the shipping
-pipelines is not an option: the first attempt did exactly that and every `Renderer.init`
-died with `MTLReportFailure` inside `validateWithDevice`. `Renderer.specializedFragment`
-is the one place that builds these `MTLFunctionConstantValues`, so a new fragment cannot
-pick up the constant without also picking up the definition.
-
-Seven modes (`DebugViewMode` in `ShaderTypes.h`, mirrored by `RenderDebugMode` in
-`opensky/Engine/Rendering/RendererDebugState.swift`):
-
-| Mode | What it writes |
+| Mode | What it shows |
 | --- | --- |
-| `off` | Shipping shading; no debug pipeline is bound |
-| `wireframe` | Flat wire colour, with the encoder's triangle fill mode set to `.lines` |
-| `worldNormals` | World-space normal remapped from [-1, 1] to [0, 1] RGB |
-| `textureCoordinates` | `fract(uv)` in red/green |
-| `mipLevel` | `calculate_unclamped_lod` through a fine-cool to coarse-warm ramp |
-| `shadowCascade` | One colour per sun-shadow cascade, grey past the last |
-| `layerCategory` | One colour per `RenderLayerBit` |
+| Off | Normal shading. No debug pipeline is bound |
+| Wireframe | A flat wire color, with the encoder's fill mode set to lines |
+| World normals | The world normal moved from -1..1 to 0..1 as RGB |
+| Texture coordinates | `fract(uv)` in red and green |
+| Mip level | `calculate_unclamped_lod` on a ramp from fine and cool to coarse and warm |
+| Shadow cascade | One color per sun shadow cascade, grey past the last |
+| Layer category | One color per layer |
 
-Only **five** pipeline states are needed rather than seven modes times five geometry paths:
-`DebugRenderPipelines` in `Rendering/RendererScenePipelineSetup.swift` holds
-`staticMesh`, `skinned`, `terrain`, `grass` and `water`. There is no separate cutout
-variant, because `updateDrawUniforms` writes `alphaThreshold: material.alphaTestThreshold ?? 0`
-and a threshold of zero discards nothing, so the alpha-testing static variant serves the
-opaque groups too. The water debug variant deliberately drops its shipping twin's blend
-state: a debug channel answers "what is here", and blending that answer with the terrain
-underneath would hide the water plane in exactly the modes meant to find it.
+Five debug pipelines cover every mode: static mesh, skinned, terrain, grass, and water. No separate
+cutout variant is needed: an alpha threshold of zero discards nothing, so the alpha-test variant
+also serves opaque groups. The water debug pipeline has no blending, because a debug channel answers
+"what is here", and blending it with the terrain below would hide the water in exactly the modes
+meant to find it. The shadow cascade mode uses the same cascade function as shading, so it shows the
+cascade shading really used.
 
-`shadowCascade` reuses `sunShadowCascadeIndex`, factored out of `sunShadowFactor`, so the
-cascade the view draws is the cascade the shading used.
+Two modes are left out on purpose. A LOD level mode would only show near or far, because there is no
+per-mesh LOD here (`NiLODNode` and `NiSwitchNode` are not traversed), and the layer mode already
+separates distant LOD. An overdraw mode needs a blending pipeline set and an always-pass depth state,
+and a stencil version would clash with the SWF layer's counting stencil in the same encoder.
 
-Two modes named in the issue are deliberately absent. **LOD level** would render as a binary
-near/far tint, because there is no per-mesh LOD in this engine — `NIFNode.traversedTypes`
-excludes `NiLODNode`/`NiSwitchNode` — and `layerCategory` already separates distant LOD for
-free. **Overdraw** needs a blend-enabled pipeline set plus a depth-always state plus
-per-site overrides, and the stencil alternative collides with the SWF layer's counting
-stencil ops in the same encoder; it lands later behind the unchanged mode enum.
-
-### Fill mode
-
-Wireframe is a raster state rather than a channel, so `encodeScenePass` sets it once on the
-encoder and threads the chosen mode through `ScenePassState.fillMode`. `encodeParticles`
-forces `.fill` and restores that value (a wireframed billboard quad is noise), and the pass
-resets to `.fill` before the world-overlay, SWF and dev-UI layers, which share the same
-encoder and would otherwise draw a wireframe HUD.
+Wireframe is a raster state, not a channel. The scene pass sets it once. Particles force fill mode
+and put the old value back, because a wireframe billboard is noise. The pass goes back to fill
+before the world overlay, the SWF layer, and the UI overlay, which share the encoder and would
+otherwise draw a wireframe HUD.
 
 ## Layer isolation
 
-`RenderLayer` (`Rendering/RendererDebugState.swift`) is one `OptionSet` whose raw values
-match `RenderLayerBit` in `ShaderTypes.h` bit for bit: `statics`, `actors`, `distantLOD`,
-`terrain`, `water`, `sky`, `grass`, `particles`.
+The layers are statics, actors, distant LOD, terrain, water, sky, grass, and particles. The Swift
+option set and the shader's bits use the same values.
 
-`RenderScene` already partitions the frame, so `terrain`, `water`, `sky`, `grass` and
-`particles` isolate at their encode sites with no new tagging. Separating statics, actors
-and distant LOD inside `opaque`/`alphaTested` needs a tag, and that tag lives on
-`RenderPlacement`/`DrawInstance`, **not** on `RenderMesh`: meshes are shared and cached by
-VFS path in `MeshLibrary`, so mesh identity cannot own a scene role — the same tree mesh is
-a static in one cell and a distant-LOD billboard in the block above it. The
-`layer: RenderLayer = .statics` default leaves every ordinary construction site unchanged;
-only `ActorAssembly.renderPlacements` (`.actors`) and the two distant-LOD builders
-(`.distantLOD`) pass anything else. The layer joins the `GroupAccumulator` key, so a
-`DrawGroup` never mixes roles and `DrawGroup.layer` is well defined.
+The render scene already splits terrain, water, sky, grass, and particles, so those are filtered
+where they are drawn. Statics, actors, and distant LOD share the opaque and alpha-test lists, so
+they need a tag. The tag is on the placement and the instance, not on the mesh. Meshes are cached by
+path and shared, so the same tree mesh is a static in one cell and a distant LOD model in the block
+above it. The default is statics, so ordinary code does not change. Only actor assembly and the two
+distant LOD builders set another layer. The layer is part of the group key, so a group never mixes
+layers.
 
-**The shadow pass honours the same mask.** Hiding the statics while their shadows still fell
-on the terrain would make the tool actively misleading, so `encodeCasterGroups` and
-`encodeShadowTerrain` filter on `effectiveRenderLayers` exactly as the scene pass does.
+The shadow pass uses the same mask. Hiding statics while their shadows still fell on the terrain
+would make the tool mislead.
 
-Solo is **derived, not stored**: `RenderLayer.soloedLayer` is non-nil when the mask holds
-exactly one bit. Two stores for one state desynchronise; a derived one cannot.
+Solo is derived, not stored: a layer is soloed when the mask has exactly one bit. Two stores for one
+state can disagree. A derived value cannot.
 
-## Composition with the subsystem enables
+## Combining with the subsystem switches
 
-`Renderer` already carries `grassEnabled`, `particlesEnabled`, `precipitationEnabled` and
-friends, so a parallel set of layer booleans would be two competing controls for the same
-pixels. The rule is stated once, on `RenderLayerPolicy`, and folded exactly once per frame
-by `Renderer.effectiveRenderLayers` with no GPU work:
+The renderer already has switches such as grass, particles, and precipitation. A second set of layer
+switches would be two controls for the same pixels. The rule:
 
-> A subsystem enable is the *feature* switch — semantic, persisted, owned by its panel
-> section. The layer mask is the *view* filter — transient, never persisted, dev-only.
-> Effective visibility is the AND.
+> A subsystem switch is the feature switch: it has meaning, it is saved, and its panel section owns
+> it. The layer mask is a view filter: it is temporary, never saved, and for developers only. What
+> is visible is the AND of both.
 
-`.grass` drops when grass is disabled. `.particles` drops only when both particle sources
-are off, because cell particles and precipitation share one layer and one encode path; each
-source is still ANDed with its own enable at its draw site.
+Grass drops when grass is off. Particles drop only when both particle sources are off, because cell
+particles and precipitation share one layer and one draw path. Each source still checks its own
+switch where it draws. The combined mask is worked out once per frame, with no GPU work.
 
-## Not persisted, and not in an offscreen frame
+## Not saved, and not in an offscreen frame
 
-Unlike `ShadowQuality`, neither the channel nor the mask survives a relaunch. A session that
-starts in wireframe, or with the terrain missing, reads as a rendering bug — and telling
-those two apart is the entire point of the pair.
+Unlike shadow quality, neither the channel nor the mask survives a relaunch. A session that starts
+in wireframe, or with no terrain, looks like a rendering bug, and telling those apart is the point of
+the tools.
 
-For the same reason `renderOffscreenFrame` substitutes `RenderDebugState.production` for the
-duration of the frame unless `Renderer.renderDebugAppliesOffscreen` is set, so screenshots
-and bench runs stay clean however the sidebar is currently set. The device-gated tests opt
-in through that flag.
+For the same reason, an offscreen frame uses the normal settings unless it asks for the debug state.
+Screenshots and bench runs stay clean whatever the sidebar says. Device tests opt in.
 
-## Surface
+## Where to see it
 
-`World > Render Debug` (`opensky/App/Shell/Sections/RenderDebugSection.swift`), wired
-through `RenderDebugControlProviding`. Controls: `RenderDebugModeControl` (channel),
-`RenderDebugLayer<Name>Control` (one checkbox per layer, in `RenderLayer.ordered`),
-`RenderDebugSoloControl` (isolation, writing the same mask the checkboxes do), readout
-`RenderDebugStatsLabel`. A non-`off` channel or a mask other than `.all` lights the
-`Destination-world` override indicator, and the sidebar's "Reset all" clears both.
-
-## Verification
-
-* `openskyTests/Rendering/RenderDebugStateTests.swift` — raw values pinned against the imported
-  `DebugViewMode` and `RenderLayerBit`, solo derivation, the whole `RenderLayerPolicy`
-  composition rule, readout wording.
-* `openskyTests/Rendering/RenderDebugEncodeTests.swift` (device gated) — draw-stat deltas for the
-  scene and shadow passes when a layer is isolated, an offscreen frame proving the filters
-  do not leak, and a wireframe frame covering fewer pixels than the filled one.
-* `openskyTests/App/Shell/Sections/RenderDebugSectionTests.swift` — the section built through the
-  real registry factory, its pinned accessibility ids, the control round trip, and the
-  override/reset contract.
-* `openskyUITests/RenderDebugUITests.swift` — the ids reachable in the built view hierarchy.
+`World > World` has a Render Debug section: a channel picker, one checkbox per layer, and a solo
+control that writes the same mask. A channel other than off, or a mask other than all layers, shows
+the World destination's override dot, and Reset all clears both.

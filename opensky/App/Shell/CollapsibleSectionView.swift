@@ -6,7 +6,7 @@
 // Layout only reclaims a hidden view's space when it is an *arranged* subview
 // of a stack. Pinned as an ordinary subview, a collapsed section kept its full
 // expanded height and the panel column reserved a blank block for it
-// (docs/tools/app-ui.md, "collapsed section occupies its header height").
+// (docs/tools/app-ui.md, "Layout invariants").
 
 import AppKit
 

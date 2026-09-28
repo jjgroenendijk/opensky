@@ -43,7 +43,7 @@
 // (<https://ck.uesp.net/wiki/AI_Data_Tab>). `ActorReaction.provokesAttack(at:)`
 // carries that table, so this file only has to pick the reaction.
 //
-// Documented in docs/engine/combat.md.
+// Documented in docs/engine/hostility.md.
 
 import Foundation
 

@@ -21,13 +21,13 @@
 //  * **Twist** bounds the roll of body B about the shared twist axis, measured
 //    between the two plane normals.
 //
-// The uncertainty is real and is recorded in docs/engine/ragdoll.md: the cone
+// The uncertainty is real and is recorded in docs/engine/ragdoll-solver.md: the cone
 // and twist readings are firm, the plane reading is the one that could be
 // something else. It is bounded, though — every reading of these fields
 // produces a limit that is *at least* as tight as no limit at all, so a wrong
 // one makes a shoulder stiff or loose, never unstable.
 //
-// Documented in docs/engine/ragdoll.md.
+// Documented in docs/engine/ragdoll-solver.md.
 
 import simd
 

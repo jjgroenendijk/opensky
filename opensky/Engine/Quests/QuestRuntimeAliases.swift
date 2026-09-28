@@ -14,7 +14,7 @@
 // which is what makes a restarted quest re-run its fills against the world as
 // it stands then rather than as it stood at the first start.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/quest-state.md.
 
 import Foundation
 

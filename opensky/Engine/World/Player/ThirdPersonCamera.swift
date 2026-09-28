@@ -10,8 +10,8 @@
 // in the retail executable and in a user's own `My Games` profile, neither of
 // which OpenSky reads. So the framing is computed from two things that are
 // measurable here: the player capsule (`PlayerCapsule.standard`, itself derived
-// in docs/engine/walk-mode.md) and the vertical field of view the renderer
-// projects with. See docs/engine/walk-mode.md, "Third-person camera".
+// in docs/engine/player-camera.md) and the vertical field of view the renderer
+// projects with. See docs/engine/player-camera.md, "Third-person framing".
 //
 // The camera never integrates a pose of its own. It is a pure function of the
 // capsule's feet position and the look angles the shared `FreeFlyCamera`

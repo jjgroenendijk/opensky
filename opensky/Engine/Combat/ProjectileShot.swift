@@ -19,7 +19,7 @@
 // drop, and a spell is not fired from a bow. A spell projectile launches
 // straight down the aim ray.
 //
-// Documented in docs/engine/archery.md and docs/engine/magic.md.
+// Documented in docs/engine/projectiles.md and docs/engine/spell-delivery.md.
 
 import Foundation
 

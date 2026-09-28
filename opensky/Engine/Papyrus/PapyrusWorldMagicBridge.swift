@@ -27,7 +27,7 @@
 // `CasterRuntime`, so a scripted cast applies its effect list through the one
 // implementation a player's cast uses.
 //
-// Documented in docs/engine/papyrus-vm.md.
+// Documented in docs/engine/papyrus-spell-natives.md.
 
 import Foundation
 

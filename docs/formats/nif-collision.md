@@ -54,7 +54,7 @@ has a meaning only on layers `SKYL_BIPED` (8), `SKYL_DEADBIP` (32), and `SKYL_BI
 (33). On other layers OpenSky reports no part, not 0, because 0 is itself a part
 (`P_OTHER`, which vanilla puts on `NPC Neck`). Every body of the vanilla human
 `skeleton.nif` is on layer 8, group 0, with the correct part number. See
-[ragdoll self-collision](/engine/ragdoll.md#self-collision).
+[ragdoll self-collision](/engine/ragdoll-solver.md#self-collision).
 
 A body is solid for the player when all of these are true:
 

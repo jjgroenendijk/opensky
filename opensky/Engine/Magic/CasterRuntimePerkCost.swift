@@ -34,7 +34,7 @@
 // is skipped and counted like every other unbound subject
 // (`PerkRuntimeEvaluation`).
 //
-// Documented in docs/engine/perks.md and docs/engine/magic.md.
+// Documented in docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
 

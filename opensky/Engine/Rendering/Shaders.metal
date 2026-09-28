@@ -287,7 +287,7 @@ fragment float4 skyFragment(
     return float4(color, 1.0);
 }
 
-// Static-mesh path (docs/todo.md 2.6): diffuse * (directional sun + ambient),
+// Static-mesh path: diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
 // selected via function constant so opaque draws pay nothing for it.
 
@@ -521,7 +521,7 @@ fragment float4 grassFragment(
     return float4(applyFog(lit, in.worldPosition, frame), alpha);
 }
 
-// Terrain splat path (docs/todo.md 3.1): per-quadrant draw blends the BTXT
+// Terrain splat path (docs/rendering/scene-drawing.md): per-quadrant draw blends the BTXT
 // base diffuse with up to TerrainConstantMaxLayers ATXT layer diffuses by
 // per-vertex VTXT opacities (UESP LAND: VTXT holds a 0.0-1.0 opacity per
 // painted vertex of the 17x17 quadrant grid). Weights arrive as a second

@@ -19,7 +19,7 @@
 //
 // Nothing here reads a clock. `advance()` is the only thing that moves a
 // playhead, so a movie nobody advances renders the same frame forever — the
-// determinism contract in docs/rendering/ui.md.
+// determinism contract in docs/rendering/swf-layer.md.
 
 import Foundation
 

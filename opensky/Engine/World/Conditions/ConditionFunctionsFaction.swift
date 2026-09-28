@@ -49,7 +49,7 @@
 // counts them by index, which is what the real-data sweep ranks the next
 // implementation from.
 //
-// Documented in docs/engine/condition-functions.md and docs/engine/combat.md.
+// Documented in docs/engine/condition-functions.md and docs/engine/hostility.md.
 
 import Foundation
 

@@ -125,7 +125,7 @@ The leading separator must be removed, not rejected. Most vanilla tracks are wri
 and `..`, so the path cannot leave the data root.
 
 The name in the record is often not the name of the file that ships. See
-[shipped-file resolution](/engine/music.md#shipped-file-resolution).
+[shipped-file resolution](/engine/music.md#finding-the-shipped-file).
 
 ## Not used yet
 

@@ -26,7 +26,7 @@
 // Failure model: nothing here throws. Every operation is a component read or
 // write, and an actor nothing has written about simply has no override.
 //
-// Documented in docs/engine/combat.md and docs/formats/relationships.md.
+// Documented in docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
 

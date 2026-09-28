@@ -37,7 +37,7 @@
 // mask, and Cicero's hat (measured 2026-08-17; the counterexamples are pinned in
 // `EnchantmentRuntimeRealDataTests` so nothing can quietly start enforcing it).
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/item-enchantments.md.
 
 import Foundation
 

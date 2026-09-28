@@ -15,7 +15,7 @@
 // and a timer fires from `SWFMovieRuntime.advance()` — the same explicit tick
 // that moves a playhead. Nothing reads a clock, so the same tick sequence
 // always produces the same frame, which is the determinism contract in
-// docs/rendering/ui.md.
+// docs/rendering/swf-layer.md.
 //
 // `setInterval` is a Flash player built-in with no entry in the SWF
 // specification; the two calling conventions below are the documented

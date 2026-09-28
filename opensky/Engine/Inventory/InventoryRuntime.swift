@@ -20,7 +20,7 @@
 // type first (`ReferenceInventoryState.removing`), and the store only ever sees
 // a state that already succeeded.
 //
-// Documented in docs/engine/runtime-state.md.
+// Documented in docs/engine/inventory-state.md.
 
 import Foundation
 

@@ -20,7 +20,7 @@
 // spell and releasing to cast it."
 // (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>)
 //
-// Documented in docs/engine/magic.md.
+// Documented in docs/engine/spellcasting.md.
 
 import Foundation
 

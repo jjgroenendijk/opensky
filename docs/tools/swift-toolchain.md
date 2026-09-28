@@ -3,7 +3,6 @@ type: Tool
 title: Swift toolchain and language mode
 description: The Apple Swift 6.3.3 baseline, Swift 6 language mode across every target, the gate that enforces both, and the isolation patterns the migration settled on.
 tags: [tool, build, concurrency, swift]
-timestamp: 2026-09-27T00:00:00Z
 ---
 
 # Swift toolchain and language mode
@@ -11,14 +10,6 @@ timestamp: 2026-09-27T00:00:00Z
 OpenSky builds with Apple Swift 6.3.3 (Xcode 26.6) and every Xcode build configuration
 is in Swift 6 language mode. Both facts are checked by `tools/lint/swift-baseline.sh`,
 reachable as `make swift-baseline`, so neither can regress silently.
-
-## Contents
-
-* [What is enforced](#what-is-enforced)
-* [Where the gate runs](#where-the-gate-runs)
-* [Default actor isolation](#default-actor-isolation)
-* [Isolation patterns this codebase uses](#isolation-patterns-this-codebase-uses)
-* [Raising the baseline](#raising-the-baseline)
 
 ## What is enforced
 
@@ -76,7 +67,7 @@ code declares `@MainActor` on itself instead.
 
 ## Isolation patterns this codebase uses
 
-The Swift 6 migration (issues #310 through #314) settled on a small set of moves. In
+The Swift 6 migration settled on a small set of moves. In
 preference order:
 
 1. **State the truth about a type.** A pure parser, geometry routine, or value type is

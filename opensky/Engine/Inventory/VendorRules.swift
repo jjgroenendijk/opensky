@@ -29,7 +29,7 @@
 // authors Belethor's negated `VendorItemsMisc` list, which would be pointless
 // on a vendor that bought nothing honest. So the flag here means "also buys
 // stolen goods", and the keyword list still gates everything else. Recorded
-// in docs/engine/barter.md.
+// in docs/engine/vendor-factions.md.
 //
 // Observed on the local install (`Skyrim.esm`): 145 vendor factions; hours
 // `0-24` on 81 of them and `8-20` on 41; one authors `0-0`, which this engine
@@ -37,7 +37,7 @@
 // trade with; one (`WhiterunBanneredMareFaction`) authors no list, which this
 // engine reads as no keyword gate.
 //
-// Documented in docs/engine/barter.md.
+// Documented in docs/engine/vendor-factions.md.
 
 import Foundation
 

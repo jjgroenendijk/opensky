@@ -290,7 +290,7 @@ extension GameViewController: CrimeArrestSession {
     /// Puts the player on a resident marker's placement. A marker in a cell
     /// that is not streamed in is left alone: this engine has no cross-cell
     /// teleport yet, so the player stays where they are and the readout says
-    /// so (docs/engine/crime.md).
+    /// so (docs/engine/guard-response.md).
     private func movePlayer(toMarker marker: ReferenceKey) -> Bool {
         guard
             let renderer,

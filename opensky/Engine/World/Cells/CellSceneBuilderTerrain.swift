@@ -2,7 +2,7 @@
 // CellSceneBuilder.swift for file-length limits (RendererSetup.swift
 // precedent): LAND -> TerrainMeshBuilder patches -> resolved base + layer
 // textures -> packed weights -> TerrainDrawItems for the splat pipeline
-// (docs/rendering/metal4-renderer.md, terrain splat section). Per-patch and
+// (docs/rendering/scene-drawing.md, terrain splat section). Per-patch and
 // per-layer failures log + skip + count, never abort the build (AGENTS.md
 // mod-quirk rule).
 
