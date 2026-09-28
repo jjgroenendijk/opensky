@@ -13,6 +13,7 @@
 // Documented in docs/formats/opensky-save-actor-chunks.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState

@@ -30,9 +30,11 @@
 // Documented in docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 
 /// What a guard does on seeing the player with a bounty.
 nonisolated public enum CrimeResponse: Equatable, Sendable {
@@ -56,26 +58,6 @@ nonisolated public enum CrimeResponsePolicy: Sendable {
             return .attackOnSight(bounty: bounty)
         }
         return values.arrest ? .confront(bounty: bounty) : .none
-    }
-}
-
-/// Who polices what.
-nonisolated public enum GuardRecognition: Sendable {
-    /// The crime faction `profile` polices, or nil when it is not a guard.
-    ///
-    /// Membership in the guard faction is what makes a guard; `CRIF` is which
-    /// hold it answers for. A guard with no `CRIF` polices nothing, and a load
-    /// order with no `GFAC` has no guards at all.
-    public static func policedFaction(
-        of profile: ActorSocialProfile,
-        guardFaction: ReferenceKey?
-    ) -> ReferenceKey? {
-        guard
-            let guardFaction,
-            let crimeFaction = profile.crimeFaction,
-            profile.memberships.isMember(of: guardFaction)
-        else { return nil }
-        return crimeFaction
     }
 }
 

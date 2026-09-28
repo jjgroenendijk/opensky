@@ -12,6 +12,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyInventoryInterface
 import Testing
 
 struct InventoryBaselineRealDataTests {

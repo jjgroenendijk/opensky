@@ -25,10 +25,13 @@
 // (<https://en.uesp.net/wiki/Skyrim:Crime>).
 
 import AppKit
+import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyEngine
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyPerception
 import OpenSkyRendering
 import OpenSkyWorldState

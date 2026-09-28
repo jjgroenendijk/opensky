@@ -21,6 +21,7 @@ import Foundation
 import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 import OSLog
 import simd
 

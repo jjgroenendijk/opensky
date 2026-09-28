@@ -14,6 +14,8 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyCrime
+@testable import OpenSkyCrimeTesting
 @testable import OpenSkyEngine
 @testable import OpenSkyFactions
 @testable import OpenSkyFormatsCore

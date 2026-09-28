@@ -10,6 +10,8 @@
 
 import Foundation
 @testable import OpenSkyConditions
+@testable import OpenSkyCrimeInterface
+@testable import OpenSkyCrimeTesting
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import Testing

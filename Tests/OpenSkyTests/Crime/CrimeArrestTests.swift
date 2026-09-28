@@ -3,7 +3,11 @@
 // only (CrimeFixture, InventoryBaselineFixture).
 
 import Foundation
+@testable import OpenSkyCrime
+@testable import OpenSkyCrimeInterface
+@testable import OpenSkyCrimeTesting
 @testable import OpenSkyEngine
+@testable import OpenSkyInventoryInterface
 @testable import OpenSkyWorldState
 import Testing
 

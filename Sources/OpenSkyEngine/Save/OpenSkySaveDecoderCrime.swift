@@ -18,8 +18,10 @@
 // length is a thrown error rather than a multi-gigabyte allocation.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 /// One actor's saved ledger, before it is merged back into the delta.

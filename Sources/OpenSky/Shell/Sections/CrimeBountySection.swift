@@ -7,6 +7,7 @@
 // exists to demonstrate rather than restore a knob.
 
 import AppKit
+import OpenSkyCrime
 import OpenSkyEngine
 import OpenSkyFormatsCore
 

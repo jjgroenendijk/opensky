@@ -13,8 +13,10 @@
 // to a fence.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {

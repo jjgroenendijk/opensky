@@ -9,11 +9,15 @@
 // The actions live in `GameViewController+CrimeFactionActions.swift`.
 
 import AppKit
+import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyEngine
 import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What the panel has selected. Nil selections fall back to the first option

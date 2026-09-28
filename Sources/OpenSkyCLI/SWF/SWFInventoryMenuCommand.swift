@@ -12,6 +12,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 enum SWFInventoryMenuCommand {

@@ -12,6 +12,7 @@
 // player out of a guild they just joined would undo the demonstration.
 
 import AppKit
+import OpenSkyCrime
 import OpenSkyEngine
 import OpenSkyFormatsCore
 

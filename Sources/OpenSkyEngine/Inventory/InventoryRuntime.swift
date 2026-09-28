@@ -25,34 +25,12 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyWorldState
-
-/// One inventory owner: its identity, which plugin record its baseline comes
-/// from, and the cell its mutations are attributed to.
-///
-/// The three travel together because every mutation needs all three, and
-/// passing them separately at each call site is how a mutation ends up
-/// attributed to the wrong cell. `cell` is optional for the same reason the
-/// store's is: a script may empty a container in a cell that has never been
-/// loaded.
-nonisolated public struct InventoryHolder: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let owner: InventoryOwner
-    public let cell: CellSceneLocation?
-
-    public init(key: ReferenceKey, owner: InventoryOwner, cell: CellSceneLocation? = nil) {
-        self.key = key
-        self.owner = owner
-        self.cell = cell
-    }
-
-    /// The player, whose baseline is empty and who belongs to no cell.
-    public static let player = InventoryHolder(key: .player, owner: .player, cell: nil)
-}
 
 /// Reads and mutates inventories on top of a `WorldStateStore`.
 @MainActor
-public struct InventoryRuntime {
+public struct InventoryRuntime: InventoryAccess {
     /// Vanilla gold, `Gold001`.
     ///
     /// Gold is an ordinary `MISC` item and an ordinary stack — there is no

@@ -2,6 +2,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 // Papyrus bridge for the World > Scripts sidebar panel (issue #278). Sampling

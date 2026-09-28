@@ -4,6 +4,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import Testing

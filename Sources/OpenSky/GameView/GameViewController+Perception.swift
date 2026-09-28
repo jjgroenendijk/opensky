@@ -20,6 +20,7 @@ import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 
 /// Perception state the controller owns. Extensions cannot add stored

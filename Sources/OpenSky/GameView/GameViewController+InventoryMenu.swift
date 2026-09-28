@@ -14,6 +14,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyRendering
 import OSLog
 

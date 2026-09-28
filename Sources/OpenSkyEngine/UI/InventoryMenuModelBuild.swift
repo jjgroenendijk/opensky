@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 
 nonisolated extension InventoryMenuModel {
     /// Builds the list one owner presents.

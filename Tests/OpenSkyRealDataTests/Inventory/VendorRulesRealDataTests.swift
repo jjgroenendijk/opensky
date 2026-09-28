@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyInventoryInterface
 import Testing
 
 struct VendorRulesRealDataTests {

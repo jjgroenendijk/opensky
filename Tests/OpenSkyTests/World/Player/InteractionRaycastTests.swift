@@ -5,6 +5,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorldInterface
 import simd
 import Testing
 

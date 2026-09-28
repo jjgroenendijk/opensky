@@ -17,6 +17,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyRendering
 import OpenSkyWorldState
 

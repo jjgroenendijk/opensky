@@ -6,8 +6,10 @@
 // not change what the next snapshot reports would let the panel pass while
 // showing a number nothing produced.
 
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventoryInterface
 
 /// The fake's inventory-and-equipment ledger, kept together so
 /// `FakeWorldProviders` spends one stored property on it.

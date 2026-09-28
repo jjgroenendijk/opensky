@@ -33,50 +33,11 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
-
-/// What reporting one crime did, and why.
-nonisolated public struct CrimeOutcome: Equatable, Sendable {
-    /// Why a crime accrued no gold, when it accrued none.
-    public enum Refusal: String, Equatable, Sendable {
-        /// The place belongs to no crime faction, so there is nobody to charge.
-        case noCrimeFaction
-        /// This load order carries no FACT for the resolved crime faction.
-        case unresolvedCrimeFaction
-        /// The faction does not have `trackCrime` set.
-        case factionIgnoresCrime
-        /// The faction sets the ignore bit for this kind of crime.
-        case factionIgnoresKind
-        /// The faction does not report crimes against its own members, and the
-        /// victim is one.
-        case victimIsMember
-        /// Nobody saw it.
-        case unwitnessed
-    }
-
-    /// Gold added to the ledger, which is zero for every refusal.
-    public let gold: Int32
-    /// The faction charged, or nil when nothing was charged.
-    public let faction: ReferenceKey?
-    /// Whether the crime was counted at all, which is false only when there was
-    /// no faction to count it against.
-    public let recorded: Bool
-    /// Why no gold was charged, or nil when some was.
-    public let refusal: Refusal?
-
-    /// Nothing happened, for a crime that reached no faction.
-    public static func refused(_ refusal: Refusal, faction: ReferenceKey? = nil) -> CrimeOutcome {
-        CrimeOutcome(
-            gold: 0,
-            faction: faction,
-            recorded: faction != nil && refusal != .unresolvedCrimeFaction,
-            refusal: refusal
-        )
-    }
-}
 
 /// Reads and mutates crime ledgers on top of a `WorldStateStore`, and decides
 /// what one reported crime costs.

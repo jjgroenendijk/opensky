@@ -6,6 +6,7 @@
 
 import AppKit
 import OpenSkyActorsInterface
+import OpenSkyCrime
 import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyPerceptionInterface

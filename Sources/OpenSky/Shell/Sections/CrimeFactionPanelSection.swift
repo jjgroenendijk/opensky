@@ -8,6 +8,7 @@
 // tickers would build it four times for one identical reading.
 
 import AppKit
+import OpenSkyCrime
 import OpenSkyEngine
 import OpenSkyFormatsESM
 

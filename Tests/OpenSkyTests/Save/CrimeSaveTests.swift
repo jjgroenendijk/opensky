@@ -4,8 +4,10 @@
 // encoder produced before either chunk existed.
 
 import Foundation
+@testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventoryInterface
 @testable import OpenSkyWorldState
 import Testing
 

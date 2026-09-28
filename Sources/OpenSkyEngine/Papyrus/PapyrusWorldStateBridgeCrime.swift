@@ -11,23 +11,24 @@
 // one leaves every native here refusing rather than answering zero.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 
 extension PapyrusWorldStateBridge {
     public func crimeGold(of faction: ReferenceKey) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
-        return Int(reporter.runtime.crimeGold(of: faction))
+        return Int(reporter.crimeGold(of: faction))
     }
 
     public func crimeGold(of faction: ReferenceKey, violent: Bool) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
-        return Int(reporter.runtime.crimeGold(of: faction, violent: violent))
+        return Int(reporter.crimeGold(of: faction, violent: violent))
     }
 
     @discardableResult
     public func modifyCrimeGold(of faction: ReferenceKey, by amount: Int, violent: Bool) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
-        return Int(reporter.runtime.modifyCrimeGold(
+        return Int(reporter.modifyCrimeGold(
             by: Int32(clamping: amount), violent: violent, of: faction
         ))
     }
@@ -35,7 +36,7 @@ extension PapyrusWorldStateBridge {
     @discardableResult
     public func setCrimeGold(of faction: ReferenceKey, to gold: Int, violent: Bool) -> Int? {
         guard let reporter = crimeReporter?() else { return nil }
-        return Int(reporter.runtime.setCrimeGold(
+        return Int(reporter.setCrimeGold(
             Int32(clamping: gold), violent: violent, of: faction
         ))
     }
@@ -65,7 +66,7 @@ extension PapyrusWorldStateBridge {
     ) -> Int? {
         guard let reporter = crimeReporter?(), let world = reporter.world else { return nil }
         let cell = world.crimeCell(of: witness)
-        return Int(reporter.runtime.report(CrimeEvent(
+        return Int(reporter.report(CrimeEvent(
             kind: kind,
             perpetrator: criminal,
             victim: witness,

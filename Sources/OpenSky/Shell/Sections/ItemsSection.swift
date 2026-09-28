@@ -14,6 +14,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 
 final class ItemsSection: PanelSectionViewController {
     weak var provider: (any ItemControlProviding)? {

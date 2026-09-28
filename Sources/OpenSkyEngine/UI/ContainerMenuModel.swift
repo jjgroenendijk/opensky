@@ -14,6 +14,7 @@
 // Documented in docs/engine/barter.md.
 
 import Foundation
+import OpenSkyInventoryInterface
 
 /// The transfer list one container or merchant session presents.
 nonisolated public struct ContainerMenuModel: Equatable, Sendable {

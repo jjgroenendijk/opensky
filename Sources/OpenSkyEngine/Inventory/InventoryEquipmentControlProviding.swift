@@ -19,7 +19,9 @@
 // Documented in docs/engine/inventory-equipment.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 
 /// Which inventory a grant lands in.
 ///
@@ -38,56 +40,6 @@ nonisolated public enum InventoryGrantTarget: String, Equatable, Sendable, CaseI
         case .player: "Player"
         case .openContainer: "Open container"
         }
-    }
-}
-
-/// The `XOWN`/`XRNK` reading for one placed reference, and what the crime
-/// runtime makes of it.
-///
-/// It was an inspection until issue #504; since then ownership is enforced and
-/// this states the enforced answer rather than the raw fields alone. It is on
-/// the gate panel because "taking this is theft" is a fact the loop otherwise
-/// moves through silently.
-nonisolated public struct ReferenceOwnershipReadout: Equatable, Sendable {
-    /// How the reference is named in the world, matching the HUD prompt.
-    public let name: String
-    public let reference: FormID
-    /// `XOWN` — the owning NPC_ or FACT, nil when the reference itself is
-    /// unowned. A reference with none may still be owned through its cell,
-    /// which `isTheft` accounts for and this field does not.
-    public let owner: FormID?
-    /// `XRNK` — the faction rank required to use it freely. Meaningful only
-    /// when `owner` is a FACT; nil when the field is absent.
-    public let factionRank: Int32?
-    /// Whether taking it would actually be theft for the player right now
-    /// (issue #504): the `OwnershipVerdict` over the reference's own `XOWN`,
-    /// the cell's, and the player's memberships. Not the same as `isOwned` —
-    /// a reference in an owned shop carries no `XOWN` and is still theft, and
-    /// a faction-owned chest the player ranks high enough in is not.
-    public let isTheft: Bool
-    /// What taking it would add to the bounty, in gold. Zero when the take is
-    /// no crime, and also when the place answers to no crime faction.
-    public let bounty: Int32
-
-    public init(
-        name: String,
-        reference: FormID,
-        owner: FormID?,
-        factionRank: Int32?,
-        isTheft: Bool = false,
-        bounty: Int32 = 0
-    ) {
-        self.name = name
-        self.reference = reference
-        self.owner = owner
-        self.factionRank = factionRank
-        self.isTheft = isTheft
-        self.bounty = bounty
-    }
-
-    /// Whether the reference record itself names an owner.
-    public var isOwned: Bool {
-        owner != nil
     }
 }
 

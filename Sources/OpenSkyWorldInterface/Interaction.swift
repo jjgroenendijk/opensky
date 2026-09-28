@@ -57,6 +57,24 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     /// interaction-animation boundaries. They ride together so the cell build
     /// remains the single resolution point.
     public let sounds: ModelBase.Sounds?
+
+    public init(
+        reference: FormID,
+        base: FormID,
+        position: SIMD3<Float>,
+        name: String,
+        action: InteractionAction,
+        actionLabel: String,
+        sounds: ModelBase.Sounds?
+    ) {
+        self.reference = reference
+        self.base = base
+        self.position = position
+        self.name = name
+        self.action = action
+        self.actionLabel = actionLabel
+        self.sounds = sounds
+    }
 }
 
 /// Current crosshair target. Distance and hit position come from exact
@@ -65,12 +83,22 @@ nonisolated public struct InteractionTarget: Equatable, Sendable {
     public let interaction: PlacedInteraction
     public let hitPosition: SIMD3<Float>
     public let distance: Float
+
+    public init(interaction: PlacedInteraction, hitPosition: SIMD3<Float>, distance: Float) {
+        self.interaction = interaction
+        self.hitPosition = hitPosition
+        self.distance = distance
+    }
 }
 
 /// One use-key activation. M11 Papyrus OnActivate can subscribe to this
 /// engine event without changing the raycast or door transition path.
 nonisolated public struct InteractionEvent: Equatable, Sendable {
     public let target: InteractionTarget
+
+    public init(target: InteractionTarget) {
+        self.target = target
+    }
 }
 
 /// One use-key activation of an actor (issue #205): the event the dialogue
@@ -89,6 +117,11 @@ nonisolated public struct TalkActivationEvent: Equatable, Sendable {
     public let speaker: ReferenceKey
     /// The crosshair target it was picked from, for the readouts.
     public let target: InteractionTarget
+
+    public init(speaker: ReferenceKey, target: InteractionTarget) {
+        self.speaker = speaker
+        self.target = target
+    }
 }
 
 /// Motion lifecycle for an activated interaction.
@@ -108,6 +141,11 @@ nonisolated public enum InteractionAnimationPhase: Equatable, Sendable {
 nonisolated public struct InteractionAnimationEvent: Equatable, Sendable {
     public let interaction: PlacedInteraction
     public let phase: InteractionAnimationPhase
+
+    public init(interaction: PlacedInteraction, phase: InteractionAnimationPhase) {
+        self.interaction = interaction
+        self.phase = phase
+    }
 }
 
 /// Finite normalized world-space ray. A nil ray means the current camera mode
@@ -147,4 +185,10 @@ nonisolated public struct InteractionRayHit: Equatable, Sendable {
     public let reference: FormID
     public let position: SIMD3<Float>
     public let distance: Float
+
+    public init(reference: FormID, position: SIMD3<Float>, distance: Float) {
+        self.reference = reference
+        self.position = position
+        self.distance = distance
+    }
 }

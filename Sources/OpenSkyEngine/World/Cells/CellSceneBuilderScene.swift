@@ -2,11 +2,13 @@
 // limits: flatten placed models, attach terrain/environment draws, union
 // bounds, emit one load summary.
 
+import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import OSLog
 

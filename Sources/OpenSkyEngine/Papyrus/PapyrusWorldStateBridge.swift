@@ -8,9 +8,12 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 @MainActor
@@ -94,7 +97,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// the controller owns it and builds it after this bridge exists. Nil in a
     /// session with no crime runtime, and every crime native then refuses
     /// rather than answering zero.
-    public var crimeReporter: (() -> CrimeReporter?)?
+    public var crimeReporter: (() -> (any CrimeReporting)?)?
     /// The session's faction runtime, which every membership native goes through
     /// (issue #508). Held as a getter closure taking the actor it is about, for
     /// two reasons: the controller owns it and builds it after this bridge

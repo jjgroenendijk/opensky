@@ -10,6 +10,7 @@
 // Documented in docs/engine/papyrus-activation.md and docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 
 nonisolated extension PapyrusNativeFunctions {
