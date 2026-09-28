@@ -10,6 +10,7 @@
 //   at all.
 
 import Foundation
+import OpenSkyFormats
 
 extension PapyrusWorldRuntime {
     /// Queues `OnActivate(akActionRef)` on every script instance attached to

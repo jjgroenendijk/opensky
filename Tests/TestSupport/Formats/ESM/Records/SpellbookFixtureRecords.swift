@@ -12,6 +12,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 extension SpellbookFixture {
     static var equipSlots: [Data] {

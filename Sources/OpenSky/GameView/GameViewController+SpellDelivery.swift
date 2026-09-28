@@ -21,6 +21,7 @@
 //   scene — fires no spell projectile and the caster tally counts the refusal.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController: SpellHitApplying {

@@ -28,6 +28,7 @@
 // chains are not decoded — a documented gap for M18+.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
     static func installObjectReference(into registry: inout PapyrusNativeRegistry) {

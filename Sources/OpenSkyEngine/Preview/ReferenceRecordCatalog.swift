@@ -3,6 +3,7 @@
 // extraction and sorting stay AppKit-free and deterministic.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum ReferenceRecordType: String, CaseIterable {
     case keyword = "KYWD"

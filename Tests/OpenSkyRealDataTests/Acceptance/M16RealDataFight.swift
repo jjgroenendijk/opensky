@@ -13,6 +13,7 @@
 // and the arrival position, which is what keeps the record-reading in one place.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 @MainActor

@@ -13,6 +13,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 /// The synthetic terrain and water the route runs over.

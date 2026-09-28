@@ -3,6 +3,7 @@
 // camera for a built cell; `demo` mirrors the DemoScene constants for the
 // synthetic fallback scene.
 
+import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 

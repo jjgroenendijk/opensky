@@ -19,6 +19,7 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Everything about the running session a crime needs to know.
 @MainActor

@@ -7,6 +7,7 @@
 // this file only parses args and prints.
 
 import Foundation
+import OpenSkyFormats
 
 enum ActorCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

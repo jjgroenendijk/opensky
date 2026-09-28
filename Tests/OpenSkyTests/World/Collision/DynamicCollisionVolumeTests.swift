@@ -2,6 +2,7 @@
 // geometry becomes, and the two queries the solver asks of it.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

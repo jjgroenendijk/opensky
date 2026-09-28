@@ -30,6 +30,7 @@
 // Documented in docs/engine/actor-value-store.md.
 
 import Foundation
+import OpenSkyFormats
 
 extension ActorValueRuntime {
     // MARK: - Reading

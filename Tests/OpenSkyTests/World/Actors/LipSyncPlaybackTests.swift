@@ -1,4 +1,5 @@
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 @Suite("Audio-clock lip-sync playback")

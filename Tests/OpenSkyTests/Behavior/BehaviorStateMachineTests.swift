@@ -7,6 +7,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 /// The pieces one two-state machine is made of, so each test can vary one of

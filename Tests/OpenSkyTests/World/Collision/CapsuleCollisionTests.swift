@@ -2,6 +2,7 @@
 // terrain/mesh seam, query filtering, ceilings. No game assets.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

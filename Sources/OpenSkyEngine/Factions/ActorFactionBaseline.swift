@@ -15,6 +15,7 @@
 // Documented in docs/engine/hostility.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What plugin data authors about one actor's social standing.
 nonisolated struct ActorFactionBaseline: Equatable {

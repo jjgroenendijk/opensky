@@ -2,6 +2,7 @@
 // Synthetic geometry only — no install, no device.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

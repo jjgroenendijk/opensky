@@ -26,6 +26,7 @@
 // Documented in docs/engine/dialogue.md and docs/engine/condition-functions.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct DialogueResolution: Sendable {
     /// VTCK of each actor this session resolved one for. An actor absent from

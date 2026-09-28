@@ -8,6 +8,7 @@
 // the settled-pose drain are all the engine's own.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 @MainActor

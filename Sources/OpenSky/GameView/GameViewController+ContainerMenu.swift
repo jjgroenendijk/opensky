@@ -13,6 +13,7 @@
 // See docs/engine/barter.md.
 
 import AppKit
+import OpenSkyFormats
 import OSLog
 
 struct ContainerMenuRuntimeState {

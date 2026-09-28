@@ -4,6 +4,7 @@
 // References: practical split scheme (Zhang et al., "Parallel-Split Shadow
 // Maps"), stable texel-snapping fit (Microsoft CascadedShadowMaps11 sample).
 
+import OpenSkyFormats
 import simd
 
 /// One sun-shadow cascade: orthographic light-space transform plus the

@@ -4,6 +4,7 @@
 // there is no renderer (Metal 4 missing).
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController: FirstPersonControlProviding {

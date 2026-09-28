@@ -3,6 +3,7 @@
 // consumer needs a hardcoded vanilla FormID.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ResolvedMagicEffect: Equatable {
     let id: ResolvedFormID

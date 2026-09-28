@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// Standard scenario: one race (skin torso+feet), an alternate skin, clothes
 /// covering the body slot reachable directly (outfit) or through an LVLI

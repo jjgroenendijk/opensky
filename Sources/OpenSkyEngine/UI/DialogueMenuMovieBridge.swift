@@ -55,6 +55,7 @@
 // Documented in docs/engine/dialogue-menu.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// The three tallies a dialogue bring-up is gated on. Zero of each is the gate
 /// passing; the panel and the CLI probe print all three even at zero, so a

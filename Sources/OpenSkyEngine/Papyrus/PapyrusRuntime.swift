@@ -1,6 +1,7 @@
 // Long-lived Papyrus script library, instance table, and invocation façade.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum PapyrusRuntimeError: Error, Equatable {
     case missingScript(String)

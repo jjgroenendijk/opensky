@@ -10,6 +10,7 @@
 // second implementation of it.
 
 import Foundation
+import OpenSkyFormats
 
 extension GameViewController: MeleeCombatControlProviding {
     var isWeaponDrawn: Bool {

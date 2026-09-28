@@ -2,6 +2,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct FormListStoreTests {
@@ -160,7 +161,7 @@ struct FormListStoreTests {
     }
 
     private func list(_ formID: UInt32, _ editorID: String, _ entries: [UInt32]) -> Data {
-        FormListTests.recordBytes(formID: formID, editorID: editorID, entries: entries)
+        FormListFixture.recordBytes(formID: formID, editorID: editorID, entries: entries)
     }
 
     private func keyword(_ formID: UInt32, _ editorID: String) -> Data {

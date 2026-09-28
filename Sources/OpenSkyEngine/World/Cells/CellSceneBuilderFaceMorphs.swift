@@ -3,6 +3,7 @@
 // Vertex count is the final guard before an actor-local buffer is attached.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated private struct FaceMorphAssociationState {
     var bindings: [ObjectIdentifier: FaceMorphBuffer] = [:]

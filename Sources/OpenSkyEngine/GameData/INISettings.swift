@@ -3,6 +3,7 @@
 // ignored so the next valid source (or caller fallback) remains usable.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct INIFile: Equatable {
     private var values: [String: [String: String]] = [:]

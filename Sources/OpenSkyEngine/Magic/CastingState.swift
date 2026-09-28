@@ -25,6 +25,7 @@
 // Documented in docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Where one hand's cast is.
 nonisolated enum SpellCastPhase: String, Equatable, Sendable, CaseIterable {

@@ -24,6 +24,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
+import OpenSkyFormats
 
 @MainActor
 struct ActiveEffectRuntime {

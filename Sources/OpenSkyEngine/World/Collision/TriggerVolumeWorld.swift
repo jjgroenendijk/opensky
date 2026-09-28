@@ -7,6 +7,7 @@
 // produced, so the narrowphase below is deliberately simpler than
 // `CapsuleWorldCollider`.
 
+import OpenSkyFormats
 import simd
 
 nonisolated struct TriggerVolume {

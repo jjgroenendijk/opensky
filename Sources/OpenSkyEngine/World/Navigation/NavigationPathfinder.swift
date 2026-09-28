@@ -4,6 +4,7 @@
 // centroid distance, or zero when a resident teleport can make world-space
 // distance non-admissible.
 
+import OpenSkyFormats
 import simd
 
 nonisolated enum NavigationPortal: Equatable, Sendable {

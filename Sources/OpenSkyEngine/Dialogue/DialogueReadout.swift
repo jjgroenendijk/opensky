@@ -10,6 +10,8 @@
 // No AppKit import on purpose: the file compiles into both the app and the CLI
 // target, so it needs no project-membership exception.
 
+import OpenSkyFormats
+
 nonisolated enum DialogueReadout {
     /// The Talk target, the conversation, and the topics on offer — the three
     /// things the acceptance question "did F on a voiced NPC open a

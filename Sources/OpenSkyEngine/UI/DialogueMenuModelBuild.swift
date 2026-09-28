@@ -24,6 +24,7 @@
 // Documented in docs/engine/dialogue-menu.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension DialogueMenuModel {
     /// What one topic row reads, in the order the records decide it.

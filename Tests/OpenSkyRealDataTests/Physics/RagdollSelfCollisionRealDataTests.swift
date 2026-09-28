@@ -12,6 +12,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

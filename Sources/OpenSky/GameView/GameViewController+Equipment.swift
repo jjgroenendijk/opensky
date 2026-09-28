@@ -15,6 +15,7 @@
 // unavailable instead of silently doing nothing.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     /// Equips on the selected target, unequipping whatever conflicts.

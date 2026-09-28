@@ -6,6 +6,7 @@
 // function reads the same snapshot.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ConditionDataResolution: @unchecked Sendable {
     let keywords: KeywordStore?

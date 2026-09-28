@@ -19,6 +19,7 @@
 // rather than a zero it would go on to act upon.
 
 import Foundation
+import OpenSkyFormats
 
 /// Failures the seam itself reports, as opposed to the `QuestError`s the quest
 /// layer throws once a quest has been named.

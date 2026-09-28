@@ -13,6 +13,7 @@
 // loop that ran first would be one frame behind the fight it is describing.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 /// Combat-loop state the controller owns. Extensions cannot add stored

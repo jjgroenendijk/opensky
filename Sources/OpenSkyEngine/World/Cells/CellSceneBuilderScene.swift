@@ -2,6 +2,7 @@
 // limits: flatten placed models, attach terrain/environment draws, union
 // bounds, emit one load summary.
 
+import OpenSkyFormats
 import OSLog
 
 nonisolated struct CellGeometryBuild {

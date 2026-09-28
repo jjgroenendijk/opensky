@@ -6,6 +6,7 @@
 // file or touches game data.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 @MainActor

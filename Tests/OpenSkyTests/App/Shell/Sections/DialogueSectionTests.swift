@@ -10,6 +10,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 @MainActor

@@ -8,6 +8,7 @@
 // inspects a single movie.
 
 import Foundation
+import OpenSkyFormats
 
 enum SWFCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

@@ -29,6 +29,7 @@
 //
 // Documented in docs/engine/dynamic-bodies.md.
 
+import OpenSkyFormats
 import simd
 
 /// What one step needs from the world outside the body set.

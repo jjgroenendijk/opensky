@@ -3,6 +3,7 @@
 // plugin definitions.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 
 nonisolated struct ResolvedFormList: Equatable {

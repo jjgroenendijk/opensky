@@ -11,6 +11,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 @MainActor
 enum PerkRuntimeFixture {

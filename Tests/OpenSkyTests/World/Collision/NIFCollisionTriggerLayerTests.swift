@@ -2,6 +2,7 @@
 // only. Layouts: NifTools nif.xml; docs/formats/nif-collision.md.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

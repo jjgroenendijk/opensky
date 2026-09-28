@@ -6,6 +6,7 @@
 // geometry, so each `@Test` below names one of its clauses.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

@@ -26,6 +26,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One session's resolved item enchantments.
 nonisolated struct ItemEnchantmentProfileCache {

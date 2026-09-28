@@ -1,6 +1,7 @@
 // Relative branch opcodes.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusInterpreter {
     func controlOp(

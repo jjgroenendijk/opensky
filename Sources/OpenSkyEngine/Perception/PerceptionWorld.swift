@@ -21,6 +21,7 @@
 //
 // Documented in docs/engine/detection.md.
 
+import OpenSkyFormats
 import simd
 
 /// One actor that is looking and listening, as the perception pass sees it.

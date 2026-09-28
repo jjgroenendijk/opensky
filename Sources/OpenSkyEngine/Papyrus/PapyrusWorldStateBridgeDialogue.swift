@@ -18,6 +18,7 @@
 // instead of restating them.
 
 import Foundation
+import OpenSkyFormats
 
 @MainActor
 extension PapyrusWorldStateBridge: DialogueFragmentDispatching {

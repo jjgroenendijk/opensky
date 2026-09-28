@@ -30,6 +30,7 @@
 // Documented in docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Reads and mutates quest state on top of a `WorldStateStore`.
 @MainActor

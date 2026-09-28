@@ -8,6 +8,7 @@
 // Documented in docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Everything the cast loop declined to do, so unimplemented ground is measured
 /// rather than silent.

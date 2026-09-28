@@ -12,6 +12,7 @@
 // `menuMode` itself.
 
 import AppKit
+import OpenSkyFormats
 
 /// Active-effect state the controller owns. Extensions cannot add stored
 /// properties, so it lives as one value on `GameViewController`.

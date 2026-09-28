@@ -14,6 +14,7 @@
 // Documented in docs/engine/conditions.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum ConditionProbe {
     /// Runs one function against `context` and answers with its value.

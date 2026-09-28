@@ -8,6 +8,7 @@
 // type cap is smaller than the family is.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

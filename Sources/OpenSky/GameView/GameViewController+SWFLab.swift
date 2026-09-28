@@ -11,6 +11,7 @@
 // a missing install degrades to an empty list and an explanatory readout.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     /// Selector state for the UI Lab SWF section. Value type on the controller

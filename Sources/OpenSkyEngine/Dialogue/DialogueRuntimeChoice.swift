@@ -29,6 +29,7 @@
 //    set is exactly where it would be noticed.
 
 import Foundation
+import OpenSkyFormats
 
 /// Where a chosen response's result scripts go.
 ///

@@ -5,6 +5,7 @@
 
 import AVFAudio
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// How a source reaches the main mixer. Explicit rather than inferred from the

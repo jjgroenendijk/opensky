@@ -26,6 +26,7 @@
 // Documented in docs/engine/dialogue-menu.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One selectable line in the topic list.
 nonisolated struct DialogueTopicEntry: Equatable, Sendable {

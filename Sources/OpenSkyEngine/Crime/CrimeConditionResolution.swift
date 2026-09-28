@@ -22,6 +22,7 @@
 // Documented in docs/engine/crime.md and docs/engine/condition-functions.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Every actor's crime ledger plus the store a faction parameter resolves
 /// against.

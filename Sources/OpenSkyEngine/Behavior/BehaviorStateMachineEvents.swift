@@ -12,6 +12,7 @@
 // random-transition event and none name the other three.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension BehaviorGraphInstance {
     // MARK: - Notify events

@@ -16,6 +16,7 @@
 // the panel reads it directly and asks the index only what it is for.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     /// The AVIF record describing a vanilla actor value, when the session has

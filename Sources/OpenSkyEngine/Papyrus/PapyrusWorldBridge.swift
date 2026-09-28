@@ -24,6 +24,7 @@
 // which is why every access is optional at the call site.
 
 import Foundation
+import OpenSkyFormats
 
 /// What one activation did, returned by both
 /// `PapyrusWorldBridge.activate(_:by:togglesOpen:)` and

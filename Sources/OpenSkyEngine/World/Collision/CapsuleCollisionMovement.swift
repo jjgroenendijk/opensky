@@ -1,5 +1,6 @@
 // Swept movement helpers split from CapsuleCollision.swift for file limits.
 
+import OpenSkyFormats
 import simd
 
 nonisolated extension CapsuleWorldCollider {

@@ -2,6 +2,7 @@
 // draw deltas, and the measured kinematic gait-clip drive.
 
 import AppKit
+import OpenSkyFormats
 
 struct NPCMovementBridgeState {
     var clips: [String: ActorAnimationClip] = [:]

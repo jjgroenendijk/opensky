@@ -39,6 +39,7 @@
 // Documented in docs/engine/actor-values.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// The two game settings the per-level derivation reads, resolved once.
 ///

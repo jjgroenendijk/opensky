@@ -19,6 +19,7 @@
 // testable against synthetic AS2 fixtures.
 
 import Foundation
+import OpenSkyFormats
 
 /// What the movie asked the engine to do.
 nonisolated enum ContainerMenuAction: Equatable, Sendable {

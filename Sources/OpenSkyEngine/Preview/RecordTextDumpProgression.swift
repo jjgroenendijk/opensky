@@ -3,6 +3,7 @@
 // Asset Browser.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension RecordTextDump {
     static func progressionSummary(

@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// Running totals over every NAVM decoded in the target area.
 struct NavmeshCensus {

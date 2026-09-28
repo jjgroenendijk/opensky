@@ -7,6 +7,7 @@
 // parses args + prints only; the logic is unit-tested in OpenSkyTests.
 
 import Foundation
+import OpenSkyFormats
 
 enum SkeletonCommand {
     /// Cap the per-skeleton bone dump so a 99-bone rig stays greppable.

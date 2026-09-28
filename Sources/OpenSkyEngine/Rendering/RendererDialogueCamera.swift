@@ -23,6 +23,7 @@
 // they chose; disengaging restores the pose and re-projects, and the mode was
 // never touched to need restoring.
 
+import OpenSkyFormats
 import simd
 
 /// What the app publishes each frame while a conversation is open. Sampled by

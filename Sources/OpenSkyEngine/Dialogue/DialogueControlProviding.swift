@@ -17,6 +17,7 @@
 // Documented in docs/engine/dialogue-menu.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One topic as the panel lists it.
 nonisolated struct DialogueTopicRow: Equatable, Sendable {

@@ -17,6 +17,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 enum CrimeFixture {
     static let pluginName = "Base.esm"

@@ -6,6 +6,7 @@
 // Exact Bethesda candidate-grid/PRNG behavior is undocumented. OpenSky's
 // explicit approximation + observed density evidence: docs/engine/grass.md.
 
+import OpenSkyFormats
 import simd
 
 /// One cell-owned grass instance before mesh loading/GPU batching.

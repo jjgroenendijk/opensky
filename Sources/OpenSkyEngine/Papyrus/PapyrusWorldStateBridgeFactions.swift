@@ -20,6 +20,7 @@
 // `derivedHostilityDecision(of:)` does for the combat loop.
 
 import Foundation
+import OpenSkyFormats
 
 extension PapyrusWorldStateBridge {
     @discardableResult

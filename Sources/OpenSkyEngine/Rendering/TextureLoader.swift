@@ -8,6 +8,7 @@
 
 import Foundation
 import Metal
+import OpenSkyFormats
 import os
 
 /// How a texture is consumed — decides color space and the placeholder pixel.

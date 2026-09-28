@@ -8,6 +8,7 @@
 // cell unload belongs in a store above this layer, not here.
 
 import Foundation
+import OpenSkyFormats
 
 /// The decoded record a runtime reference stands for. REFR and ACHR are the
 /// two placement records a cell build retains; both are plain value types.

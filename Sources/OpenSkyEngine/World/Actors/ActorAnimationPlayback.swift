@@ -3,6 +3,7 @@
 // skin palette, then uploaded once per render frame. No behavior graph or AI.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 nonisolated enum SkeletonPoseError: Error, Equatable {

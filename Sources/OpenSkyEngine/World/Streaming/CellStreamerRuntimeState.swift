@@ -25,6 +25,7 @@
 //
 // Documented in docs/engine/runtime-state.md.
 
+import OpenSkyFormats
 import simd
 
 extension CellStreamer {

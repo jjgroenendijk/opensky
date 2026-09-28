@@ -7,6 +7,7 @@
 // sample and two sections can never show a half-updated session.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     var journalSnapshot: JournalControlSnapshot {

@@ -1,0 +1,151 @@
+// SPEL record: the container the caster runtime consumes. A spell is the
+// shared magic-item header, the 36-byte SPIT casting struct, and the same
+// EFID/EFIT/CTDA effect run ALCH and INGR already decode.
+//
+// Decode policy follows MGEF: a wrong record type throws, an individual
+// malformed field is tallied and the rest of the record still decodes, and a
+// truncated SPIT leaves `data == nil` rather than losing the effect list — the
+// effects are what a caster needs even when the header is unreadable.
+//
+// Skipped for now: VMAD script attachments, which no spell consumer reads yet.
+//
+// References:
+//   UESP "Skyrim Mod:Mod File Format/SPEL"
+//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SPEL
+//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(SPEL, 'Spell', ...)`
+//     line 9980.
+// Layout documented in docs/formats/magic-records.md.
+
+import Foundation
+
+nonisolated package struct Spell {
+    package let formID: FormID
+    package let header: MagicItemHeader
+    /// SPIT. Nil when the field is absent or too short to decode.
+    package let data: SpellItemData?
+    package let effects: [MagicItemEffect]
+    package let skipped: MagicEffectTally
+
+    package var editorID: String? {
+        header.fields.editorID
+    }
+
+    package var name: LString? {
+        header.fields.name
+    }
+
+    package init(record: ESMRecord, localized: Bool) throws {
+        guard record.type == "SPEL" else {
+            throw ESMError.malformed("expected SPEL record, got \(record.type)")
+        }
+        var decoder = MagicItemFields(localized: localized)
+        for field in try record.fields() {
+            decoder.decode(field)
+        }
+        formID = FormID(record.formID)
+        header = decoder.header
+        data = decoder.data
+        effects = decoder.finishEffects()
+        skipped = decoder.skipped
+    }
+}
+
+/// Field accumulator shared by the SPEL and SCRL decoders: the header, the
+/// SPIT struct, the effect run, and the unread-field tally. SCRL adds DATA on
+/// top through `decodeItemValue`.
+nonisolated package struct MagicItemFields {
+    package let localized: Bool
+    package private(set) var header = MagicItemHeader()
+    package private(set) var data: SpellItemData?
+    package private(set) var skipped = MagicEffectTally()
+    private var effects = MagicItemEffectList()
+
+    package init(localized: Bool) {
+        self.localized = localized
+    }
+
+    /// Decodes one field, tallying anything unread or malformed. Returns
+    /// whether the field was consumed so SCRL can add its own cases.
+    @discardableResult
+    package mutating func decode(_ field: ESMField) -> Bool {
+        do {
+            if try header.decode(field: field, localized: localized) {
+                return true
+            }
+            if field.type == "SPIT" {
+                data = try SpellItemData(field: field)
+                return true
+            }
+            if try effects.decode(field: field) {
+                return true
+            }
+            skipped.note(.unknownField(field.type))
+            return false
+        } catch {
+            skipped.note(.malformedField(field.type))
+            return true
+        }
+    }
+
+    package mutating func finishEffects() -> [MagicItemEffect] {
+        effects.finish()
+    }
+}
+
+/// A decoded SPEL or SCRL, so one store and one inspector path can carry both.
+nonisolated package enum MagicCastingRecord {
+    case spell(Spell)
+    case scroll(Scroll)
+
+    package var recordType: FourCC {
+        switch self {
+        case .spell: "SPEL"
+        case .scroll: "SCRL"
+        }
+    }
+
+    package var editorID: String? {
+        switch self {
+        case let .spell(spell): spell.editorID
+        case let .scroll(scroll): scroll.editorID
+        }
+    }
+
+    package var name: LString? {
+        switch self {
+        case let .spell(spell): spell.name
+        case let .scroll(scroll): scroll.name
+        }
+    }
+
+    package var data: SpellItemData? {
+        switch self {
+        case let .spell(spell): spell.data
+        case let .scroll(scroll): scroll.data
+        }
+    }
+
+    /// ETYP — the EQUP slot the record links to, still raw and still relative to
+    /// the plugin that authored the record. What answers which hands a readied
+    /// spell takes (issue #470).
+    package var equipType: FormID? {
+        switch self {
+        case let .spell(spell): spell.header.equipType
+        case let .scroll(scroll): scroll.header.equipType
+        }
+    }
+
+    package var effects: [MagicItemEffect] {
+        switch self {
+        case let .spell(spell): spell.effects
+        case let .scroll(scroll): scroll.effects
+        }
+    }
+
+    package var skipped: MagicEffectTally {
+        switch self {
+        case let .spell(spell): spell.skipped
+        case let .scroll(scroll): scroll.skipped
+        }
+    }
+}

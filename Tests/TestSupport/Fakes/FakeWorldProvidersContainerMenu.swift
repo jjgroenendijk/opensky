@@ -6,6 +6,7 @@
 // panel is showing without inspecting the model.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 extension FakeWorldProviders {
     static let merchantList = InventoryMenuModel(

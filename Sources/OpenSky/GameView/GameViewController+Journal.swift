@@ -16,6 +16,7 @@
 // See docs/engine/journal.md.
 
 import AppKit
+import OpenSkyFormats
 import OSLog
 
 struct JournalRuntimeState {

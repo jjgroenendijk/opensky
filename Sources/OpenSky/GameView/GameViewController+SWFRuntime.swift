@@ -15,6 +15,7 @@
 // the app surface.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController {
     func startSWFRuntime() {

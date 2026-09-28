@@ -26,6 +26,7 @@
 // Documented in docs/engine/hostility.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What one seeding pass did.
 nonisolated struct FactionSeedReport: Equatable, Sendable {

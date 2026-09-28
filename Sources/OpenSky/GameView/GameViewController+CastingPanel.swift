@@ -12,6 +12,7 @@
 // button that did nothing.
 
 import AppKit
+import OpenSkyFormats
 
 extension GameViewController: CastingControlProviding {
     var castingControlSnapshot: CastingControlSnapshot {

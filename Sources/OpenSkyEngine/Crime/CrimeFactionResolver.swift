@@ -30,6 +30,7 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Resolves the responsible crime faction for a place.
 ///

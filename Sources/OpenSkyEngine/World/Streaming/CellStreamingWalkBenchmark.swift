@@ -3,6 +3,7 @@
 // this shared driver owns behavior and gates.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 nonisolated enum CellStreamingWalkBenchmarkError: LocalizedError {

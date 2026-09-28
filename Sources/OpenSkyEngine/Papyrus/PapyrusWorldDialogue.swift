@@ -30,6 +30,7 @@
 // Documented in docs/engine/dialogue.md and docs/engine/papyrus-quests.md.
 
 import Foundation
+import OpenSkyFormats
 
 extension PapyrusWorldRuntime {
     /// Instantiates the response's generated result script if it is not

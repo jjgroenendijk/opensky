@@ -25,6 +25,7 @@
 // (<https://en.uesp.net/wiki/Skyrim:Crime>).
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController {

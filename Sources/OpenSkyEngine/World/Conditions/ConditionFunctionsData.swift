@@ -5,6 +5,7 @@
 // Core/wbDefinitionsTES5.pas. Creation Kit numbers are 4096 higher.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
     static func installData(_ registry: inout ConditionFunctionRegistry) {

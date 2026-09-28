@@ -38,6 +38,7 @@
 // Documented in docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// What a cast needs from the world it happens in.

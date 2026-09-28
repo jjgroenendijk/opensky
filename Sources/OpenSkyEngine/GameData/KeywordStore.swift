@@ -3,6 +3,7 @@
 // vanilla keyword IDs.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ResolvedKeyword: Equatable {
     let id: ResolvedFormID

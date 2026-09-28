@@ -11,6 +11,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 private final class DialogueCallLog: @unchecked Sendable {

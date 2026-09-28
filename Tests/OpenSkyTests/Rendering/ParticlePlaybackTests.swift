@@ -4,6 +4,7 @@
 import Metal
 import MetalKit
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

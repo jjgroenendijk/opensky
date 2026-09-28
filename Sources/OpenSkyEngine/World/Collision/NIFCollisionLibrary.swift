@@ -3,6 +3,7 @@
 // collision caches without a second residency graph.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum NIFCollisionLibraryError: Error, Equatable {
     case fileNotFound(path: String)

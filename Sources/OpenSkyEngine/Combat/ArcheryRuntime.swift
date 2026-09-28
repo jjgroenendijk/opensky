@@ -28,6 +28,7 @@
 // Documented in docs/engine/archery.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One frame of archery intent. Filled beside `MeleeIntent` from the same
 /// drained camera input, because it is the same button: with a bow equipped the

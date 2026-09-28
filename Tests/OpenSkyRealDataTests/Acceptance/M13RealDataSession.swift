@@ -11,6 +11,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// One headless engine over the user's install: the plugin's quests, the
 /// Papyrus world runtime with the install's own scripts behind it, and the

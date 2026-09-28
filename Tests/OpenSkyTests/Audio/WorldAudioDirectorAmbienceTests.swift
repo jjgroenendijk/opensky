@@ -5,6 +5,7 @@
 
 import AVFAudio
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 @MainActor

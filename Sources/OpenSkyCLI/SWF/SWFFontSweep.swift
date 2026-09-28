@@ -5,6 +5,7 @@
 // Any vanilla font/text decode failure fails the sweep.
 
 import Foundation
+import OpenSkyFormats
 
 /// Accumulates font + text decode results across an `swf sweep` run.
 struct SWFFontTextTally {

@@ -12,6 +12,7 @@
 // chain loop.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ResolvedEnchantment {
     let id: ResolvedFormID

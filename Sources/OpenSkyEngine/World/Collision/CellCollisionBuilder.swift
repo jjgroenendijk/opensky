@@ -3,6 +3,7 @@
 // plugin parsing and can be tested with synthetic NIF collision models.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 import simd
 

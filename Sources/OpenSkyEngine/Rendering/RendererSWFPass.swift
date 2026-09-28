@@ -9,6 +9,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 

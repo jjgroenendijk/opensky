@@ -21,6 +21,7 @@
 // mode and resumes when it comes back.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 /// Archery state the controller owns. Extensions cannot add stored properties,

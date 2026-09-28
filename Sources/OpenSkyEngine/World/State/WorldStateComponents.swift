@@ -13,6 +13,7 @@
 // Documented in docs/engine/runtime-state.md.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// Identity of one component slot on a reference.

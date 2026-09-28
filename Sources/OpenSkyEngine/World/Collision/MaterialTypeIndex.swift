@@ -10,6 +10,7 @@
 // Built once per plugin and read from the build queue like the other record
 // indexes, which is why it is an immutable value rather than a cache.
 
+import OpenSkyFormats
 import OSLog
 
 nonisolated struct MaterialTypeIndex: Sendable {

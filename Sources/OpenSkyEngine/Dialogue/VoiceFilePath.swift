@@ -21,6 +21,7 @@
 // supplies the strings, which is what lets the rule be pinned by table tests.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum VoiceFilePath {
     /// Archive directory every voice file lives under, as a canonical VFS key.

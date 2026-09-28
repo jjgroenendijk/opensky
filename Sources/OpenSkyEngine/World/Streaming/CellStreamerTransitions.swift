@@ -1,6 +1,7 @@
 // Selected-door transition dispatch + async interior/exterior scene swaps. Split
 // from CellStreamer so exterior grid scheduling stays readable.
 
+import OpenSkyFormats
 import OSLog
 import simd
 

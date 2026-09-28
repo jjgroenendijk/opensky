@@ -24,6 +24,7 @@
 // Documented in docs/engine/papyrus-activation.md and docs/engine/skill-advancement.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
     static func installSkill(into registry: inout PapyrusNativeRegistry) {

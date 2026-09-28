@@ -5,6 +5,7 @@
 // (Tests/OpenSkyTests/Audio/WorldMusicFixtures.swift).
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct MusicCatalogTests {

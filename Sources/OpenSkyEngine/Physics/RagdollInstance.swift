@@ -32,6 +32,7 @@
 //
 // Documented in docs/engine/ragdoll.md.
 
+import OpenSkyFormats
 import simd
 
 /// How a ragdoll is currently driven.

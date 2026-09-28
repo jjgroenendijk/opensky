@@ -10,6 +10,7 @@
 // in `RagdollRealDataTests`, which is the half that needs the install.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

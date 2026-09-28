@@ -25,6 +25,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/guard-response.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
     static func installCrime(_ registry: inout ConditionFunctionRegistry) {

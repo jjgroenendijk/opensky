@@ -12,6 +12,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyFormats
 
 enum SWFRenderSweep {
     /// Fixed animation time: the demo scene is identical across renders, so

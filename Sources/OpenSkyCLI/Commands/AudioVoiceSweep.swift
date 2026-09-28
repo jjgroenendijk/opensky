@@ -13,6 +13,7 @@
 // exactly how many entries were skipped.
 
 import Foundation
+import OpenSkyFormats
 
 enum AudioVoiceSweep {
     /// Plugins that ship voice archives. Read in this order so the report is

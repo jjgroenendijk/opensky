@@ -6,6 +6,7 @@
 // renderer, no window and no game data.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// The crime and faction half of the fake's stored state.
 struct FakeCrimeFactionState {

@@ -82,6 +82,11 @@ cannot be scripted: TCC is protected by SIP, and the Accessibility entry is in t
 database. `make test-perms` checks what it can (the data root is readable, and both bundles have a
 real signature) and opens the right settings pane for the rest.
 
+Observed 2026-09-28. A test bundle without a test host runs in the plain `xctest` runner. macOS
+asks that runner for removable-volume access, and the run waits on the dialog until it times out
+with "timed out while preparing". Clicking Allow once let the run continue. `OpenSkyFormatsTests`
+is hosted by `OpenSky.app` for this reason ([Swift modules](/tools/modules.md)).
+
 Retires when `make test-ui` reaches a test case on this machine.
 
 ## Stale testmanagerd

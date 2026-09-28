@@ -4,6 +4,7 @@
 // shapes and the fail-loud behavior match the app exactly.
 
 import Foundation
+import OpenSkyFormats
 
 struct CLIContext {
     let root: GameDataRoot

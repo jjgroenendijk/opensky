@@ -5,6 +5,7 @@
 // breaking-off half — and the session both build lives here.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 @MainActor

@@ -7,6 +7,7 @@
 // Documented in docs/engine/footstep-sounds.md.
 
 import AppKit
+import OpenSkyFormats
 
 final class AudioFootstepsSection: PanelSectionViewController {
     weak var provider: (any AudioControlProviding)? {

@@ -33,6 +33,7 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What reporting one crime did, and why.
 nonisolated struct CrimeOutcome: Equatable, Sendable {

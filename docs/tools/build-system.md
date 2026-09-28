@@ -53,6 +53,7 @@ Config/
 │   ├── Signing.xcconfig     CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM, one identity
 │   ├── App.xcconfig         OpenSky: bundle id, Info.plist keys, ffmpeg link + rpath
 │   ├── CLI.xcconfig         OpenSkyCLI: binary name, isolation default, ffmpeg link + rpath
+│   ├── Formats*.xcconfig    OpenSkyFormats and OpenSkyFormatsTests (see Swift modules)
 │   ├── Tests.xcconfig       the unit bundles: TEST_HOST, BUNDLE_LOADER
 │   └── UITests.xcconfig     OpenSkyUITests: TEST_TARGET_NAME
 └── TestPlans/
@@ -80,9 +81,8 @@ no other file does. `MTL_HEADER_SEARCH_PATHS` points at the same folder, so `Sha
 There is no bridging header. A bridging header is visible to every Swift file in its target, so every
 file depended on the shared header whether it used it or not, and `OpenSkyCLI` had to name the app's
 header by path. The header also pulls in Foundation and `simd`, so files that relied on that now
-import them themselves, as `SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY` asks.
-
-The module did not make incremental builds smaller. Editing the header and editing an unrelated
+import them themselves, as `SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY` asks. The module did
+not make incremental builds smaller. Editing the header and editing an unrelated
 parser file both recompile the whole target, because the module-wide `.swiftmodule` is an input to
 every compile task. The reason for the module is explicit dependencies and two decoupled targets.
 

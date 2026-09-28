@@ -20,6 +20,7 @@
 //
 // Documented in docs/engine/dynamic-narrowphase.md.
 
+import OpenSkyFormats
 import simd
 
 /// A shape cast along a straight path.

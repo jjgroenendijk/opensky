@@ -16,6 +16,7 @@
 // Documented in docs/engine/interaction.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// A live transfer session between one container and the player.
 @MainActor

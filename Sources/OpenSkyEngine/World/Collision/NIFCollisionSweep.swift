@@ -3,6 +3,7 @@
 // one malformed/modded NIF cannot hide coverage for sibling assets.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct NIFCollisionAssetReport {
     let path: String

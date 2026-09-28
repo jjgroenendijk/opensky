@@ -12,6 +12,7 @@
 // AppKit-free, so it compiles into `openskycli` alongside the app.
 
 import Foundation
+import OpenSkyFormats
 
 /// One faction a popup offers, named the way the readout names it.
 nonisolated struct FactionOption: Equatable, Sendable {

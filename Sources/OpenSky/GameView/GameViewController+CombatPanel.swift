@@ -15,6 +15,7 @@
 // think about two different notions of "this one".
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 extension GameViewController: CombatLoopControlProviding {

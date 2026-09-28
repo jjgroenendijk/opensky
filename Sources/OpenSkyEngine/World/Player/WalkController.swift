@@ -1,6 +1,7 @@
 // Fixed-step player movement: capsule pose, gravity, terrain grounding, static
 // mesh collide-and-slide, slope limit, and bounded step response.
 
+import OpenSkyFormats
 import simd
 
 /// Which camera the world is viewed through. `fly` is the developer's

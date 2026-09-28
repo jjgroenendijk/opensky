@@ -18,6 +18,7 @@
 // event-driven transitions, crossfades, and nesting.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// One evaluated `hkbBlenderGeneratorChild`: its pose and the weights the

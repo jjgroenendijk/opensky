@@ -22,6 +22,7 @@
 // Documented in docs/engine/combat.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One blow, as `OnHit(ObjectReference akAggressor, Form akSource, Projectile
 /// akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack,

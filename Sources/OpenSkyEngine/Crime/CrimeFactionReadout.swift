@@ -3,6 +3,7 @@
 // snapshot the same way.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum CrimeFactionReadout {
     // MARK: - Bounty

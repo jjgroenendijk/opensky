@@ -26,6 +26,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One session's per-skill perk-tree counts.
 nonisolated struct PerkTreeCountCache {

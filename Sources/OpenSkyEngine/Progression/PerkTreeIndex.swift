@@ -27,6 +27,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One perk's place in the tree that grants it.
 nonisolated struct PerkTreePlacement: Equatable, Sendable {

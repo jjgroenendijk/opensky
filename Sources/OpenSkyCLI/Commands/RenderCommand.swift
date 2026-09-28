@@ -7,6 +7,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyFormats
 import simd
 
 enum RenderCommand {

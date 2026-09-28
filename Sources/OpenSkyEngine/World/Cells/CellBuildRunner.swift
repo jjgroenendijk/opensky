@@ -5,6 +5,7 @@
 // frame. Concurrency confinement decision: docs/engine/cell-streaming.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Builds one cell scene by grid coordinate. The single seam scene build
 /// crosses to reach `CellSceneBuilder`; a fake conformer lets CellStreamer

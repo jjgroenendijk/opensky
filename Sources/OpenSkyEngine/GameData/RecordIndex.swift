@@ -4,6 +4,7 @@
 // the last valid definition.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 
 nonisolated struct IndexedRecord {

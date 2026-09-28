@@ -6,6 +6,7 @@
 // Split from GameViewController+Streaming.swift, which is already at its
 // split-for-size shape; the wiring here is independent of scene composition.
 
+import OpenSkyFormats
 import OSLog
 
 extension GameViewController {

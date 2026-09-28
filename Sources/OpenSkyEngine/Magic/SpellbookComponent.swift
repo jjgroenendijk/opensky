@@ -26,6 +26,7 @@
 // Documented in docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Which hand a spell is readied in.
 ///

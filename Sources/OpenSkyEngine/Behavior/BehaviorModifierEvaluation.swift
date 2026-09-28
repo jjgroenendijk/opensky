@@ -15,6 +15,7 @@
 // not as a foot in a plausible but invented position.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension BehaviorGraphInstance {
     /// Runs the modifier at `target` over `pose`. Modifiers that only touch

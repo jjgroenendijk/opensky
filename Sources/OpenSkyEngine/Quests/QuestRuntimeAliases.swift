@@ -17,6 +17,7 @@
 // Documented in docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormats
 
 extension QuestRuntime {
     // MARK: - Reading

@@ -8,6 +8,7 @@
 // Documented in docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 extension CasterRuntime {
     /// Applies every ability `holder` knows as an effect on `holder`.

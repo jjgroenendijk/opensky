@@ -3,6 +3,7 @@
 // lookup without reproducing record-specific path rules.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum SoundResolveError: Error, Equatable {
     case soundNotFound(FormID)

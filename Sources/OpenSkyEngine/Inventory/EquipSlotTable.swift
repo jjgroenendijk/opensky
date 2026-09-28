@@ -24,6 +24,7 @@
 // docs/engine/inventory-equipment.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum EquipSlotHands {
     /// Editor ID of the leaf slot meaning the right hand.

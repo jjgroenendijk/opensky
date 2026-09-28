@@ -25,6 +25,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/combat.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One actor's state as a condition sees it.
 nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable {

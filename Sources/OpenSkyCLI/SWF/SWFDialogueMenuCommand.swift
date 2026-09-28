@@ -26,6 +26,7 @@
 // entry clip's own `SetEntryText`.
 
 import Foundation
+import OpenSkyFormats
 
 enum SWFDialogueMenuCommand {
     private static let defaultTicks = 20

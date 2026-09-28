@@ -2,6 +2,7 @@
 // bounded repathing over synthetic in-code geometry (issue #200).
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

@@ -5,6 +5,7 @@
 // cell (docs/decisions/first-render-cell.md).
 
 import Foundation
+import OpenSkyFormats
 
 enum CellCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

@@ -36,6 +36,7 @@
 // Documented in docs/engine/perks.md.
 
 import Foundation
+import OpenSkyFormats
 import os
 
 /// Which world reference each condition-tab subject is, for one evaluation.

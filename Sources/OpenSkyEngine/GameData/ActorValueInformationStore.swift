@@ -8,6 +8,7 @@
 // Nothing here introduces a second skill enum.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct ResolvedActorValueInformation: Equatable {
     let id: ResolvedFormID

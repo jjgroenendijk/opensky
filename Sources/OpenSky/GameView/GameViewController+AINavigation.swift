@@ -17,6 +17,7 @@
 // person aims across a city.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 /// The gate panel's shared selection and its last outcome line. Extensions

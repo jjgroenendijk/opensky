@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 enum GlobalFixture {
     /// GLOB record: EDID zstring, FNAM type character, FLTV float32.

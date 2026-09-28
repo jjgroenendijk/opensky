@@ -2,6 +2,7 @@
 // MOD4/MOD5 decode behind it (issue #190). Synthetic fixtures throughout.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct ArmorAddonFirstPersonModelTests {

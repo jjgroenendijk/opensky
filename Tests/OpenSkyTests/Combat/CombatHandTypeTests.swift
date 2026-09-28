@@ -6,6 +6,7 @@
 // `MeleeCombatRealDataTests` is what proves the vanilla graph agrees.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import Testing
 
 struct CombatHandTypeTests {

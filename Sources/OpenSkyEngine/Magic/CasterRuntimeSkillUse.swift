@@ -27,6 +27,7 @@
 // Documented in docs/engine/skill-advancement.md and docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 
 extension CasterRuntime {
     /// Reports one cast's skill uses, one per effect that names a magic skill.

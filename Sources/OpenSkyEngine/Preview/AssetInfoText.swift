@@ -4,6 +4,7 @@
 // renderer skip exactly (same code paths).
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum AssetInfoText {
     /// NIF container stats + flattened engine-model view (drawable meshes,

@@ -13,6 +13,7 @@
 // closes the loop on vanilla PROJ values.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

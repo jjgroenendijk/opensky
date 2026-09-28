@@ -29,6 +29,7 @@
 // Documented in docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Reads and writes relationship ranks on top of a `WorldStateStore`, with the
 /// authored `RELA` records behind them.

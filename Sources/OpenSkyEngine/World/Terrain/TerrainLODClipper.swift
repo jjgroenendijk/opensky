@@ -3,6 +3,7 @@
 // edge vertices preserve every available static-mesh attribute.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 nonisolated struct TerrainLODClipMask: Equatable, Hashable {

@@ -6,6 +6,7 @@
 // halves hand the machine live in `CombatBehaviorFixture`.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

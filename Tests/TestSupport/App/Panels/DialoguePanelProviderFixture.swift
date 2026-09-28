@@ -8,6 +8,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// Builds a `DialogueControlSnapshot` from only the fields a test cares about.
 /// The snapshot is immutable by design and its memberwise initializer takes

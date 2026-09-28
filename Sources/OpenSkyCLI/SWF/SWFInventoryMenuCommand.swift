@@ -9,6 +9,7 @@
 // tested there against synthetic fixtures.
 
 import Foundation
+import OpenSkyFormats
 
 enum SWFInventoryMenuCommand {
     private static let defaultTicks = 20

@@ -1,24 +1,26 @@
 #!/bin/sh
 # CLI target-boundary lint (issues #109, #336). Target membership follows the
 # folder split under Sources/: OpenSky/ builds only into the app, OpenSkyEngine/
-# and ShaderTypes/ build into both the app and OpenSkyCLI. So an AppKit, Cocoa, or
-# SwiftUI import anywhere under OpenSkyEngine/ enters the CLI build and breaks it. This
+# and ShaderTypes/ build into both the app and OpenSkyCLI, and the OpenSkyFormats/
+# framework is linked by both. So an AppKit, Cocoa, or SwiftUI import anywhere under
+# OpenSkyEngine/ or OpenSkyFormats/ enters the CLI build and breaks it. This
 # asserts there are none — catches the break at commit time, no CLI build.
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
 
-engine_dir="Sources/OpenSkyEngine"
+engine_dirs="Sources/OpenSkyEngine Sources/OpenSkyFormats"
 import_re='^[[:space:]]*import (AppKit|Cocoa|SwiftUI)'
 
-offenders="$(grep -rlE "$import_re" --include='*.swift' "$engine_dir" | sort || true)"
+# shellcheck disable=SC2086 # the two folders are deliberately word-split
+offenders="$(grep -rlE "$import_re" --include='*.swift' $engine_dirs | sort || true)"
 
 if [ -n "$offenders" ]; then
   {
     printf '[FAIL] app-only sources compiled into OpenSkyCLI:\n'
     printf '%s\n' "$offenders" | sed 's/^/  /'
-    printf 'These import AppKit/Cocoa/SwiftUI but live under %s/, which the\n' "$engine_dir"
-    printf 'OpenSkyCLI target synchronizes.\n'
+    printf 'These import AppKit/Cocoa/SwiftUI but live under %s, which\n' "$engine_dirs"
+    printf 'the OpenSkyCLI target builds or links.\n'
     printf 'Fix: move the file to Sources/OpenSky/ with git mv, or drop the import.\n'
   } >&2
   exit 1

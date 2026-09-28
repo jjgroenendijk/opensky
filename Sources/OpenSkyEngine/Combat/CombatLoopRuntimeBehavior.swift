@@ -25,6 +25,7 @@
 // Documented in docs/engine/combat-behavior.md.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 extension CombatLoopRuntime {

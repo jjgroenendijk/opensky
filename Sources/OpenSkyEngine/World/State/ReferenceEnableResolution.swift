@@ -2,6 +2,8 @@
 // #201). A package selector can pass a WorldState snapshot's answers without
 // letting the condition registry reach into the main-actor store.
 
+import OpenSkyFormats
+
 nonisolated struct ReferenceEnableResolution: Sendable {
     static let empty = ReferenceEnableResolution(states: [:])
 

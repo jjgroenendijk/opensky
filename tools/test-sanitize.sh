@@ -1,6 +1,6 @@
 #!/bin/sh
-# Run OpenSkyTests -- the synthetic unit bundle alone, not the real-data one -- under
-# the runtime sanitizers (issue #383).
+# Run the synthetic unit bundles, OpenSkyTests and OpenSkyFormatsTests, not the
+# real-data one, under the runtime sanitizers (issue #383).
 #
 # `Config/TestPlans/Sanitizers.xctestplan` carries two configurations, because Thread and
 # Address Sanitizer cannot be enabled in the same build:
@@ -135,4 +135,4 @@ if [ "$failed" != "0" ]; then
     echo "[ERROR] $failed sanitized test(s) failed; see make test-report" >&2
     exit 1
 fi
-echo "[ OK ] OpenSkyTests is clean under the sanitizers"
+echo "[ OK ] the unit bundles are clean under the sanitizers"

@@ -30,6 +30,7 @@
 // Documented in docs/engine/spellcasting.md and docs/engine/inventory-equipment.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// Failures readying a spell reports. Like `EquipmentError`, each is a caller
 /// mistake or a data answer, never malformed input.

@@ -7,6 +7,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyFormats
 import OpenSkyShaderTypes
 
 /// Draw accounting for the most recently encoded SWF layer, mirrored to

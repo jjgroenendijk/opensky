@@ -4,6 +4,7 @@
 // failure here reproduces a renderer skip exactly.
 
 import Foundation
+import OpenSkyFormats
 
 enum AssetCommand {
     static func runNIF(context: CLIContext, scanner: inout ArgumentScanner) throws {

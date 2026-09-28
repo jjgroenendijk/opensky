@@ -3,6 +3,7 @@
 // each other. Synthetic graphs only — no install.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

@@ -10,6 +10,7 @@
 // scene-owned lifetime it already reconciles for collision and rigid bodies.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 
 nonisolated extension CellSceneBuilder {

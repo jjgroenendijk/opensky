@@ -1,6 +1,7 @@
 // Cached STAT/ModelBase indexes and exterior build-source lookup. Split from
 // CellSceneBuilder.swift to keep the primary build flow within strict limits.
 
+import OpenSkyFormats
 import OSLog
 
 nonisolated struct ExteriorBuildSource {

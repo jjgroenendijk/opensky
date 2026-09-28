@@ -21,6 +21,7 @@
 // than a fault.
 
 import Foundation
+import OpenSkyFormats
 
 /// What a resolved footstep event turns into.
 nonisolated struct ResolvedFootstep: Equatable, Sendable {

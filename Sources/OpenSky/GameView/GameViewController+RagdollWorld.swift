@@ -15,6 +15,7 @@
 // happened rather than assume the graph drove it.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 extension GameViewController: RagdollWorldSeam {

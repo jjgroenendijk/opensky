@@ -4,6 +4,7 @@
 // OpenSkyTests exercises this). See docs/tools/preview-gui.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What one sidebar row selects.
 nonisolated enum PreviewSelection {

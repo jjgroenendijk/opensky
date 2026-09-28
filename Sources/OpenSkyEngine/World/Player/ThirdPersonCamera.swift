@@ -18,6 +18,7 @@
 // already owns, so switching between `.walk` and `.thirdPerson` changes where
 // the eye is and nothing about where the player is looking.
 
+import OpenSkyFormats
 import simd
 
 nonisolated struct ThirdPersonCamera: Equatable {

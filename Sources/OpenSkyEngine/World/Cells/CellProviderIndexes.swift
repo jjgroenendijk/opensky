@@ -2,6 +2,7 @@
 // assembly outside AppDelegate makes additions testable without app startup.
 
 import Metal
+import OpenSkyFormats
 
 nonisolated struct CellProviderIndexes {
     /// The four load-order magic stores, decoded off one shared `RecordIndex`

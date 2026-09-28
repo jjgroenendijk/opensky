@@ -19,6 +19,7 @@
 //
 // Documented in docs/engine/dynamic-bodies.md.
 
+import OpenSkyFormats
 import simd
 
 /// A body a cell build produced, before the runtime gives it a pose.

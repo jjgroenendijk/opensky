@@ -9,6 +9,7 @@
 // knows the archives and the plugin.
 
 import AppKit
+import OpenSkyFormats
 import OSLog
 
 /// What the player-body wiring keeps between frames. Stored on the controller

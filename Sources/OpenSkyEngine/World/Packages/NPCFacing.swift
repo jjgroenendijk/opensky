@@ -16,6 +16,7 @@
 // actor turns on the spot, its feet do not move, and nothing above the neck is
 // aimed at anything (issue #427, "Out of scope").
 
+import OpenSkyFormats
 import simd
 
 /// What starting a turn needs. The placement and scale come from the caller

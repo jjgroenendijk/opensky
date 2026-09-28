@@ -6,6 +6,7 @@
 // path policy is documented in docs/formats/music.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated enum MusicResolveError: Error, Equatable {
     case musicTypeNotFound(FormID)

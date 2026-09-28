@@ -5,6 +5,7 @@
 // by CellGridDiffs and build completions, unit-tested without game data or a
 // GPU. See docs/engine/cell-streaming.md.
 
+import OpenSkyFormats
 import simd
 
 /// What CellStreamer must drive after applying one grid diff: coordinates to

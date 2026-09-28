@@ -27,6 +27,7 @@
 // Documented in docs/engine/melee-combat.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// What a resolved hit impact turns into. The melee counterpart of
 /// `ResolvedFootstep`, and deliberately the same shape.

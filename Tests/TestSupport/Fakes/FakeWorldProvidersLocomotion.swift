@@ -6,6 +6,7 @@
 // registry tests keep compiling.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 
 /// The stored half of the fake's locomotion state, kept as one value so the
 /// class body above stays inside the type-length cap.

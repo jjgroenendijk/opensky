@@ -20,6 +20,7 @@
 // Documented in docs/engine/papyrus-spell-natives.md and docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 extension PapyrusWorldStateBridge {

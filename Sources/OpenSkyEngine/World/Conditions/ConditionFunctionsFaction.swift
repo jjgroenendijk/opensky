@@ -52,6 +52,7 @@
 // Documented in docs/engine/condition-functions.md and docs/engine/hostility.md.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
     static func installFaction(_ registry: inout ConditionFunctionRegistry) {

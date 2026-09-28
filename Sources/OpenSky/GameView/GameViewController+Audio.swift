@@ -4,6 +4,7 @@
 // and an empty picker so the panel never crashes.
 
 import AppKit
+import OpenSkyFormats
 import simd
 
 /// Where a panel-triggered source lands: straight ahead of the camera, far

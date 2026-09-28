@@ -3,6 +3,7 @@
 // built in code; no game content is involved.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 
 enum TriggerStreamFixture {

@@ -2,6 +2,7 @@
 // The formatter feeds both `openskycli record` and the Asset Browser.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated extension RecordTextDump {
     struct MagicInspectorContext {

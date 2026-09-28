@@ -27,6 +27,7 @@
 // self-occlusion, which is the one thing the arms genuinely need.
 
 import Metal
+import OpenSkyFormats
 import simd
 
 extension Renderer {

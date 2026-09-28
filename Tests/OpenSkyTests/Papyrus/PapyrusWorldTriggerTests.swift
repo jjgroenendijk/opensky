@@ -6,6 +6,7 @@
 // lives in M11TriggerVolumeWalkTests.
 
 @testable import OpenSky
+@testable import OpenSkyFormats
 import simd
 import Testing
 

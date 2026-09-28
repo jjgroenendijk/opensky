@@ -1,10 +1,11 @@
 # AGENTS.md — openskyTestSupport
 
-Test support compiled into **both** unit-test bundles: `OpenSkyTests` and
+Test support compiled into two unit-test bundles: `OpenSkyTests` and
 `OpenSkyRealDataTests`. The folder exists because the two targets are separate modules with
-no way to import each other, while a fixture like `ESMFixture` or `FakeWorldProviders` is
-needed by both (issue #418). Membership follows the folder, exactly as `Sources/OpenSkyEngine/`
-builds into the app and `OpenSkyCLI`.
+no way to import each other, while a fixture like `FakeWorldProviders` is needed by both
+(issue #418). A fixture that only builds bytes and needs no engine code goes in
+`Tests/FormatsTestSupport/` instead, so the parser bundle can use it too. Membership follows
+the folder, exactly as `Sources/OpenSkyEngine/` builds into the app and `OpenSkyCLI`.
 
 ## What belongs here
 
@@ -14,8 +15,8 @@ support only the real-data suites use stays in `Tests/OpenSkyRealDataTests/`. Ke
 tight matters: a file here is compiled twice, once per bundle.
 
 Fixtures are synthetic and built in code, never an extracted game file (root `AGENTS.md`,
-Legal & IP boundary). `BSAFixture`, `ESMFixture`, `NIFFixture` and `PexFixture` are the
-established builders.
+Legal & IP boundary). The established byte builders, `BSAFixture`, `ESMFixture`, `NIFFixture`
+and `PexFixture`, live in `Tests/FormatsTestSupport/`.
 
 ## No tests here
 

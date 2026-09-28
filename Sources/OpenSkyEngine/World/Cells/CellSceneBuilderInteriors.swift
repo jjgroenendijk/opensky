@@ -10,6 +10,7 @@
 //   https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbImplementation.pas
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct DoorTransition {
     let sourceDoor: FormID

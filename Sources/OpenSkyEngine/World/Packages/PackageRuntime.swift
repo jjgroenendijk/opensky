@@ -3,6 +3,7 @@
 // interval for calendar/condition changes, and an explicit panel seam.
 
 import Foundation
+import OpenSkyFormats
 
 nonisolated struct PackageActorReadout: Equatable, Sendable {
     let actor: ReferenceKey

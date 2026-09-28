@@ -13,6 +13,7 @@
 // Documented in docs/formats/fuz.md and docs/engine/audio-decoding.md.
 
 import Foundation
+import OpenSkyFormats
 
 /// One recorded response of one INFO.
 nonisolated struct VoiceLine: Equatable {

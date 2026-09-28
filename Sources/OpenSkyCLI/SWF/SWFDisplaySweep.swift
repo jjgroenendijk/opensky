@@ -7,6 +7,7 @@
 // ClipActions) are tallied so the deferral stays measured.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// Accumulates display-list decode + scene-flattening results across a sweep.

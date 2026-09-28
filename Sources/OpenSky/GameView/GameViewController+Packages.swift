@@ -2,6 +2,7 @@
 // M16 panel reads the retained readouts; this file adds no UI.
 
 import AppKit
+import OpenSkyFormats
 
 struct PackageBridgeState {
     var runtime: ActorPackageRuntime?

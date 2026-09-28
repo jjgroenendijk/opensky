@@ -28,7 +28,7 @@ quietly reach one even by accident (issue #362).
 
 ## Support shared with the real-data target
 
-`Tests/TestSupport/` is compiled into both unit-test bundles, and that is where a fixture
+`Tests/TestSupport/` is compiled into this bundle and `OpenSkyRealDataTests`, and that is where a fixture
 both a synthetic suite and a real-data suite need has to live — the two targets are separate
 modules and cannot import each other. Support only this target uses stays here.
 
@@ -41,7 +41,9 @@ not reachable from this half. `Tests/TestSupport/AGENTS.md` has the rule.
 ## Fixtures and output
 
 - Fixtures are synthetic and built in code — never a real extracted file. The existing
-  helpers are `BSAFixture`, `ESMFixture`, `NIFFixture`, and `StringTableFixture`.
+  helpers are `BSAFixture`, `ESMFixture`, `NIFFixture`, and `StringTableFixture`, in
+  `Tests/FormatsTestSupport/`.
+- A parser test that needs no engine code belongs in `Tests/OpenSkyFormatsTests/`, not here.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `logs/`.

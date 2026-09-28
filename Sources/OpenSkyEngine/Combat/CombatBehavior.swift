@@ -18,6 +18,7 @@
 //
 // Documented in docs/engine/combat-behavior.md.
 
+import OpenSkyFormats
 import simd
 
 /// Where one actor is in a fight.

@@ -5,18 +5,8 @@
 // from the async build/streaming controller that will drive this on later
 // commits of this branch. See docs/engine/cell-streaming.md.
 
+import OpenSkyFormats
 import simd
-
-/// Integer exterior-cell coordinate for grid streaming. Distinct from
-/// `Cell.Grid` (the decoded XCLC record field, which also carries the
-/// force-hide-land-quad flags and belongs to one parsed plugin) — this is
-/// the pure streaming-side type. `CellSceneBuilder.buildScene` still takes
-/// raw `gridX`/`gridY` Int32; convert at the call site (`coordinate.x`,
-/// `coordinate.y`).
-nonisolated struct CellCoordinate: Hashable {
-    var x: Int32
-    var y: Int32
-}
 
 /// Cells to load and cells to unload, computed fresh each call against
 /// whatever the caller reports as currently resident (`CellGridManager`

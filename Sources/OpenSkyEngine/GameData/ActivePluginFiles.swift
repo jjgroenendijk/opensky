@@ -8,6 +8,7 @@
 // the game.
 
 import Foundation
+import OpenSkyFormats
 import OSLog
 
 nonisolated enum ActivePluginFiles {

@@ -14,6 +14,7 @@
 // Documented in docs/engine/detection.md.
 
 import Foundation
+import OpenSkyFormats
 import simd
 
 /// One observer's regard for one target, as a panel or a transcript shows it.
