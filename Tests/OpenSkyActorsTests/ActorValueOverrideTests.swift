@@ -14,8 +14,10 @@
 // came from. Record derivation itself is `ActorValueDerivationTests`.
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyActors
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 @testable import OpenSkyWorldState
 import Testing
 

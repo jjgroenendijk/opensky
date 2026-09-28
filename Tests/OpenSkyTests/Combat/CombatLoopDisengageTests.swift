@@ -6,6 +6,7 @@
 // Split for the strict lint type cap; the session both halves build lives in
 // `CombatLoopFixture`.
 
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface

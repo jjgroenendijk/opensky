@@ -30,7 +30,9 @@
 // Documented in docs/engine/actor-value-store.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 extension ActorValueRuntime {

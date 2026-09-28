@@ -27,6 +27,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One actor's state as a condition sees it.
 nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Sendable {

@@ -16,6 +16,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// What plugin data authors about one actor's social standing.
 nonisolated public struct ActorFactionBaseline: Equatable, Sendable {

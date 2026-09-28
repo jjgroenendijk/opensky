@@ -23,19 +23,16 @@
 // Documented in docs/engine/actor-value-store.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 /// Reads and mutates actor values on top of a `WorldStateStore`.
 @MainActor
-public struct ActorValueRuntime {
-    /// Simulation step regeneration advances in, matching the Papyrus VM's
-    /// fixed step so that a frame drives both the same way. 1/60 s.
-    public static let fixedStepSeconds = 1.0 / 60
-
-    /// Most whole steps one `advance(delta:)` runs, so a multi-second stall
-    /// cannot spend minutes regenerating in a single frame.
-    public static let maximumStepsPerAdvance = 8
+public struct ActorValueRuntime: ActorValueAccess {
+    public static let fixedStepSeconds = ActorValueStep.fixedStepSeconds
+    public static let maximumStepsPerAdvance = ActorValueStep.maximumStepsPerAdvance
 
     public let store: WorldStateStore
     public let baselines: ActorValueBaselineResolver

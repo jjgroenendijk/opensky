@@ -25,33 +25,7 @@
 // what makes the acceptance test a list of strings.
 
 import Foundation
-
-/// Where the weapon is.
-///
-/// `drawing` and `sheathing` are the interim states between the engine raising
-/// the event and the clip reaching the annotation that actually moves the
-/// model. The attachment is on the hand node for `drawn` and `sheathing`, and
-/// on the sheathed node for `sheathed` and `drawing`: the weapon stays where it
-/// was until `BeginWeaponDraw` or `BeginWeaponSheathe` says the hand has
-/// reached it.
-nonisolated public enum WeaponDrawState: String, Equatable, Sendable, CaseIterable {
-    case sheathed
-    case drawing
-    case drawn
-    case sheathing
-
-    /// Whether the attachment rides the hand node in this state.
-    public var isWeaponInHand: Bool {
-        self == .drawn || self == .sheathing
-    }
-
-    /// Whether a swing is allowed to start. Vanilla will not attack from a
-    /// sheathed weapon; it draws first, which is the engine's job to sequence
-    /// and not this type's.
-    public var canAttack: Bool {
-        self == .drawn
-    }
-}
+import OpenSkyActorsInterface
 
 /// Where a swing is.
 ///

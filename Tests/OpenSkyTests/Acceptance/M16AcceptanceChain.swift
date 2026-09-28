@@ -23,6 +23,7 @@
 // gate is `M16AcceptanceRealDataTests`, which is env-gated.
 
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore

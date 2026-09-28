@@ -6,6 +6,7 @@
 // (`logs/hkx-behavior-census.log`); the fixture is a list of strings, which is
 // exactly what the queue hands a consumer.
 
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 import Testing
 

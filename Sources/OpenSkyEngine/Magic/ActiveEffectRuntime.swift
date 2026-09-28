@@ -24,6 +24,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -33,14 +34,14 @@ import OpenSkyWorldState
 public struct ActiveEffectRuntime {
     /// Simulation step effects advance in, matching `ActorValueRuntime` so a
     /// frame drives both the same way. 1/60 s.
-    public static let fixedStepSeconds = ActorValueRuntime.fixedStepSeconds
+    public static let fixedStepSeconds = ActorValueStep.fixedStepSeconds
 
     /// Most whole steps one `advance(delta:)` runs, so a multi-second stall
     /// cannot spend minutes ticking effects in a single frame.
-    public static let maximumStepsPerAdvance = ActorValueRuntime.maximumStepsPerAdvance
+    public static let maximumStepsPerAdvance = ActorValueStep.maximumStepsPerAdvance
 
     /// The actor-value surface every application ultimately writes through.
-    public let values: ActorValueRuntime
+    public let values: any ActorValueAccess
     /// Load-order MGEF lookup behind every EFID.
     public let effects: MagicEffectStore
     /// What an effect entry's CTDA list is evaluated against.
@@ -56,7 +57,7 @@ public struct ActiveEffectRuntime {
     public var tally = ActiveEffectTally()
 
     public init(
-        values: ActorValueRuntime,
+        values: any ActorValueAccess,
         effects: MagicEffectStore,
         conditions: ConditionContext = ConditionContext(),
         conditionRegistry: ConditionFunctionRegistry = .standard

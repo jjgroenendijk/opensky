@@ -19,6 +19,7 @@
 import AppKit
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyActors
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState

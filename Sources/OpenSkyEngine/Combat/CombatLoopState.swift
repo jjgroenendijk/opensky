@@ -22,6 +22,7 @@
 //
 // Documented in docs/engine/combat.md.
 
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import simd
 

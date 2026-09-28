@@ -29,6 +29,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// What one reconciliation did.
 nonisolated public struct WornEnchantmentReport: Equatable, Sendable {

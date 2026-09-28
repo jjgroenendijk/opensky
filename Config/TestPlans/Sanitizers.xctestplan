@@ -110,6 +110,16 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyPerceptionInterface",
           "name" : "OpenSkyPerceptionInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyActors",
+          "name" : "OpenSkyActors"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyActorsInterface",
+          "name" : "OpenSkyActorsInterface"
         }
       ]
     }
@@ -233,6 +243,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyPerceptionTests",
         "name" : "OpenSkyPerceptionTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyActorsTests",
+        "name" : "OpenSkyActorsTests"
       }
     }
   ],

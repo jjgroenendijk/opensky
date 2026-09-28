@@ -11,6 +11,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorldState
 import OSLog

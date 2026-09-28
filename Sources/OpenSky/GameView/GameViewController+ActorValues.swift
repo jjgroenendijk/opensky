@@ -12,9 +12,12 @@
 // the established rule and it is why nothing here checks `menuMode` itself.
 
 import AppKit
+import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorldState
 import OSLog

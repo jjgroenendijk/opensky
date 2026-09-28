@@ -25,6 +25,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Terminal visual-resolution failures.
 nonisolated public enum ActorVisualError: Error, Equatable {

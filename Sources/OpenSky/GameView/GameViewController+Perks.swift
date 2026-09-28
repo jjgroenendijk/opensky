@@ -18,9 +18,11 @@
 // the player in this engine, and the perks a player has are the ones they took.
 
 import AppKit
+import OpenSkyActors
 import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Perk state the controller owns. Extensions cannot add stored properties, so
 /// it lives as one value on `GameViewController`.

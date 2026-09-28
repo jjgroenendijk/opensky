@@ -23,6 +23,8 @@
 // (AGENTS.md "Legal & IP boundary").
 
 import Foundation
+@testable import OpenSkyActors
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -253,7 +255,7 @@ struct EnchantmentAcceptanceRealDataTests {
     /// whatever fortify the reader reports. A fixed weapon rather than the real
     /// one, so the only thing that can move the number is the enchantment.
     @MainActor
-    private static func damage(reading values: ActorValueRuntime) -> MeleeDamageResult {
+    private static func damage(reading values: any ActorValueAccess) -> MeleeDamageResult {
         MeleeDamage.resolve(
             weapon: MeleeWeaponProfile(damage: 10, reach: 1, handType: .sword),
             block: nil,

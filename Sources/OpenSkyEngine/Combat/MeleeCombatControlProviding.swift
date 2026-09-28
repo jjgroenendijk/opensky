@@ -10,6 +10,7 @@
 // AppKit-free, so it compiles into `openskycli` alongside the app.
 
 import Foundation
+import OpenSkyActorsInterface
 
 /// One landed hit as a panel spells it.
 nonisolated public struct MeleeHitReadout: Equatable, Sendable {

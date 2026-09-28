@@ -21,8 +21,11 @@
 // playback and says so.
 
 import AppKit
+import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics

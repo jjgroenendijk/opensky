@@ -26,6 +26,8 @@
 import AppKit
 import Foundation
 @testable import OpenSky
+@testable import OpenSkyActors
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation

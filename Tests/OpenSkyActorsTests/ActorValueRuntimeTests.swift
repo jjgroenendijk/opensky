@@ -6,8 +6,10 @@
 // about records, so its tests need none.
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyActors
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 @testable import OpenSkyWorldState
 import Testing
 

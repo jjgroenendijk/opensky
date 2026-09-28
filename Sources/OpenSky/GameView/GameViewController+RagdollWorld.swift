@@ -15,6 +15,7 @@
 // happened rather than assume the graph drove it.
 
 import AppKit
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

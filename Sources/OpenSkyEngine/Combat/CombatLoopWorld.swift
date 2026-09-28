@@ -17,6 +17,7 @@
 //
 // Documented in docs/engine/combat.md.
 
+import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyPhysics

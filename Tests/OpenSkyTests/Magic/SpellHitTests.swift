@@ -10,8 +10,10 @@
 // could only answer what it was handed.
 
 import Foundation
+@testable import OpenSkyActors
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 @testable import OpenSkyWorldState
 import simd
 import Testing

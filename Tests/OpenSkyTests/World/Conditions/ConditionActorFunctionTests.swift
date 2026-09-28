@@ -9,10 +9,12 @@
 // boundary").
 
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 import Testing
 
 struct ConditionActorFunctionTests {

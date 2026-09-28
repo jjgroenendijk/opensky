@@ -29,6 +29,7 @@
 
 import Foundation
 import Metal
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation

@@ -6,9 +6,11 @@
 // milestone's worth of snapshot literals is past the strict-lint type-length
 // cap, and what is under test is the surface rather than the numbers.
 
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
 @testable import OpenSkyPerceptionInterface
 
 @MainActor

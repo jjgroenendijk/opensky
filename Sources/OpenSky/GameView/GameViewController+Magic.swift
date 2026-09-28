@@ -14,6 +14,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 
 /// Active-effect state the controller owns. Extensions cannot add stored

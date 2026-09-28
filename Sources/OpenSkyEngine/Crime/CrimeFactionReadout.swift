@@ -3,6 +3,7 @@
 // snapshot the same way.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 

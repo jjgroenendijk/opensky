@@ -23,6 +23,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Re-derives actor perk lists from plugin data.
 nonisolated public struct ActorPerkBaselineResolver: Sendable {

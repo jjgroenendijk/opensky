@@ -7,6 +7,7 @@
 // Progression` destination with no renderer, no window and no game data.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyGameData
 
 /// The progression half of the fake's stored state.
 struct FakeProgressionState {

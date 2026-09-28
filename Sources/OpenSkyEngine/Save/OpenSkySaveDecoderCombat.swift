@@ -15,6 +15,7 @@
 // chunk stream itself provides one level up.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

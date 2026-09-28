@@ -28,6 +28,7 @@
 // registration of their own.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 
 nonisolated extension PapyrusNativeFunctions {

@@ -14,6 +14,7 @@
 // component and has to keep it, or a reload would find it angry again.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsCore
 import OpenSkyWorldState
 

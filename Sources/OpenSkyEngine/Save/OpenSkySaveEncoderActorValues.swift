@@ -10,7 +10,9 @@
 // by.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsCore
+import OpenSkyGameData
 import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {

@@ -47,6 +47,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Skeleton nodes a rigid attachment can hang from.
 ///

@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 nonisolated public struct PackageActorReadout: Equatable, Sendable {

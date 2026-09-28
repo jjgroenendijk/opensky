@@ -9,6 +9,7 @@
 // synthetic suite is the one that is wrong.
 
 import Foundation
+@testable import OpenSkyActors
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

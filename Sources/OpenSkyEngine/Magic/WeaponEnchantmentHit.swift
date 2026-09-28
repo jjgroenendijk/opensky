@@ -28,6 +28,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 /// One enchanted weapon's hit, as the world seam receives it.

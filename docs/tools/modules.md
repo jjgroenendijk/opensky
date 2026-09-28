@@ -84,7 +84,7 @@ OpenSkyFormatsESM         plugin records          OpenSkyFormatsMesh    NIF, TRI
 OpenSkyFormatsAnimation   HKX, LIP                OpenSkyFormatsAudio   WAV, XWM, FUZ
 OpenSkyFormatsPEX         compiled Papyrus        OpenSkyFormatsSWF     Flash menus, AS2
   ^
-OpenSkyGameData           virtual file system, load order, record index, record stores
+OpenSkyGameData           virtual file system, load order, record stores, actor stats from records
   ^
 OpenSkyBehavior           Havok behavior graph evaluation, skeleton pose math
   ^
@@ -97,8 +97,10 @@ OpenSkyWorldState         runtime state store, open component set, game clock, g
   ^
 OpenSkyConditions         condition evaluator, function registry, core functions
   ^
+OpenSkyActorsInterface    actor state components, ActorValueAccess, actor conditions
 OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
   ^
+OpenSkyActors             actor value runtime
 OpenSkyPerception         perception runtime, detection formula, sight, overlay
   ^
 OpenSkyEngine             the rest of the engine, until it is split; imports interfaces only
@@ -129,9 +131,12 @@ A lower module never imports a higher one. These patterns keep it that way:
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
   to move the camera and run the world. The engine's `GameSession` is that driver.
+- Logic that only reads plugin records, with no runtime state, is not a feature. It moves down
+  into `OpenSkyGameData`. Example: actor templates, derived actor values, and resistances.
 - A feature that another module calls into offers a protocol in its interface. Example: crime
-  asks `DetectionObserving` which observers saw an act. `PerceptionRuntime` conforms, and the app
-  hands the runtime to crime as that protocol.
+  asks `DetectionObserving` which observers saw an act. Magic and progression change actor values
+  through `ActorValueAccess`. The implementation conforms, and the app hands it over as that
+  protocol.
 - A lower module that stores something for every feature keeps an open set instead of a closed
   enum. `OpenSkyWorldState` stores any `WorldStateComponent`, and each feature declares its own
   `WorldStateComponentKind`. `ConditionContext` stores any `ConditionResolution` by type, and each

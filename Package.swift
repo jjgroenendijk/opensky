@@ -281,6 +281,18 @@ targets += foundation(
 // Features
 
 targets += feature(
+    "OpenSkyActors",
+    dependencies: ["OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState"],
+    interface: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions"
+    ],
+    tests: [
+        "OpenSkyActorsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyWorldState", "FormatsCoreTesting", "FormatsESMTesting"
+    ]
+)
+targets += feature(
     "OpenSkyPerception",
     dependencies: [
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyPhysics", "OpenSkyDiagnostics",
@@ -303,7 +315,7 @@ targets += foundation(
     dependencies: ["OpenSkyFormatsCore"] + formatFamilies.map { "OpenSkyFormats\($0)" } + [
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyDiagnostics", "OpenSkyPhysics",
         "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyConditions",
-        "OpenSkyPerceptionInterface", "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyActorsInterface", "OpenSkyPerceptionInterface", "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

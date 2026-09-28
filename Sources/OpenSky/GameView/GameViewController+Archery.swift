@@ -21,8 +21,10 @@
 // mode and resumes when it comes back.
 
 import AppKit
+import OpenSkyActors
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 import simd
 

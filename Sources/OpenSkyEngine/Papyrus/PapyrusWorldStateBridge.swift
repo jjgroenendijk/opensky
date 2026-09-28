@@ -7,6 +7,7 @@
 // held weakly because the same controller owns both.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
@@ -42,7 +43,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// closure answering nil, makes every actor native a tallied failure rather
     /// than a convincing zero. Conformance lives in
     /// `PapyrusWorldStateBridgeActors.swift`.
-    public var actorValueRuntime: (() -> ActorValueRuntime?)?
+    public var actorValueRuntime: (() -> (any ActorValueAccess)?)?
     public var ragdollRuntime: (() -> RagdollRuntime?)?
     /// The combat loop, which `StartCombat`, `StopCombat` and `IsInCombat` reach
     /// through (issue #424). Nil leaves all three tallied failures rather than

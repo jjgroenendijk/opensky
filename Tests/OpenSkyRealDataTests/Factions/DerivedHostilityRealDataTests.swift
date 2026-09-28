@@ -13,6 +13,7 @@
 
 import Foundation
 import Metal
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

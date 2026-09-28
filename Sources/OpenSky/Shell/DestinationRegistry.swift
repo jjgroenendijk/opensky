@@ -5,6 +5,7 @@
 // Placement rules + the how-to: docs/tools/app-ui.md.
 
 import AppKit
+import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyPerceptionInterface

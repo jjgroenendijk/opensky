@@ -11,6 +11,7 @@
 // without the per-bone pose it died in.
 
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

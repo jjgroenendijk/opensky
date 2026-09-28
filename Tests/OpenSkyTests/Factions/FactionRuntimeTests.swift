@@ -5,6 +5,7 @@
 
 import FormatsESMTesting
 import Foundation
+@testable import OpenSkyActorsInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

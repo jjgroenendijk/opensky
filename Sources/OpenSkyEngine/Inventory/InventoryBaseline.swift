@@ -43,6 +43,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// Which plugin record an owner's baseline comes from.
 ///

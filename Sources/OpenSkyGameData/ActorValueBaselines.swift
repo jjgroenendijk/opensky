@@ -10,7 +10,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// Which plugin record an actor's baseline comes from.
 ///

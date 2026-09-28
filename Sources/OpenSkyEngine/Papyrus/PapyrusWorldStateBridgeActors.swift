@@ -28,7 +28,9 @@
 // Documented in docs/engine/papyrus-actor-natives.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {
