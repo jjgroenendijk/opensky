@@ -3,7 +3,7 @@
 import Foundation
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installDeferredAnimation(into registry: inout PapyrusNativeRegistry) {
+    public static func installDeferredAnimation(into registry: inout PapyrusNativeRegistry) {
         for functionName in [
             "PlayAnimation",
             "PlayAnimationAndWait",

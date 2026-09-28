@@ -6,15 +6,15 @@
 import CFFmpeg
 import Foundation
 
-nonisolated final class FFmpegResampler {
+nonisolated public final class FFmpegResampler {
     /// `SwrContext` is opaque in the public headers, so Swift imports it as `OpaquePointer`.
     private var context: OpaquePointer?
-    let channelCount: Int
-    let sampleRate: Int
+    public let channelCount: Int
+    public let sampleRate: Int
 
     /// Builds a converter matched to the first decoded frame: same channel layout, same
     /// sample rate, sample format forced to `AV_SAMPLE_FMT_FLT`.
-    init(matching frame: UnsafeMutablePointer<AVFrame>) throws {
+    public init(matching frame: UnsafeMutablePointer<AVFrame>) throws {
         let sourceFormat = frame.pointee.format
         guard sourceFormat >= 0 else {
             throw WMADecoderError.unsupportedSampleFormat(sourceFormat)
@@ -55,7 +55,7 @@ nonisolated final class FFmpegResampler {
 
     /// Converts one decoded frame. The returned array is interleaved and sized to the
     /// samples libswresample actually wrote, which can differ from the frame's own count.
-    func interleavedFloats(from frame: UnsafeMutablePointer<AVFrame>) throws -> [Float] {
+    public func interleavedFloats(from frame: UnsafeMutablePointer<AVFrame>) throws -> [Float] {
         guard let context else { throw WMADecoderError.allocationFailed("SwrContext") }
         guard let extended = frame.pointee.extended_data else { return [] }
         let inputCount = frame.pointee.nb_samples

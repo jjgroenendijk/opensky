@@ -22,7 +22,7 @@ import OpenSkyFormats
 /// scene with no FACT index — because answering "not a member" there would read
 /// as a fact about the actor rather than about the session.
 @MainActor
-protocol PapyrusWorldFactionBridge {
+public protocol PapyrusWorldFactionBridge {
     /// Puts `actor` in `faction` at rank 0.
     ///
     /// "Adds the Actor to a specified faction at rank 0. If the Actor is already
@@ -123,25 +123,25 @@ protocol PapyrusWorldFactionBridge {
 /// check.
 nonisolated extension PapyrusWorldAccess {
     @discardableResult
-    func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+    public func addToFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
         MainActor.assumeIsolated { bridge.addToFaction(actor, faction: faction) }
     }
 
     @discardableResult
-    func removeFromFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+    public func removeFromFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
         MainActor.assumeIsolated { bridge.removeFromFaction(actor, faction: faction) }
     }
 
-    func isInFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
+    public func isInFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
         MainActor.assumeIsolated { bridge.isInFaction(actor, faction: faction) }
     }
 
-    func factionRank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8?? {
+    public func factionRank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8?? {
         MainActor.assumeIsolated { bridge.factionRank(of: actor, in: faction) }
     }
 
     @discardableResult
-    func setFactionRank(
+    public func setFactionRank(
         _ rank: Int8,
         of actor: ReferenceKey,
         in faction: ReferenceKey
@@ -149,12 +149,12 @@ nonisolated extension PapyrusWorldAccess {
         MainActor.assumeIsolated { bridge.setFactionRank(rank, of: actor, in: faction) }
     }
 
-    func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8?? {
+    public func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8?? {
         MainActor.assumeIsolated { bridge.relationshipRank(of: actor, toward: other) }
     }
 
     @discardableResult
-    func setRelationshipRank(
+    public func setRelationshipRank(
         _ rank: Int8,
         of actor: ReferenceKey,
         toward other: ReferenceKey
@@ -164,15 +164,15 @@ nonisolated extension PapyrusWorldAccess {
         }
     }
 
-    func factionReaction(of actor: ReferenceKey, toward other: ReferenceKey) -> Int? {
+    public func factionReaction(of actor: ReferenceKey, toward other: ReferenceKey) -> Int? {
         MainActor.assumeIsolated { bridge.factionReaction(of: actor, toward: other) }
     }
 
-    func isHostile(_ actor: ReferenceKey, toward other: ReferenceKey) -> Bool? {
+    public func isHostile(_ actor: ReferenceKey, toward other: ReferenceKey) -> Bool? {
         MainActor.assumeIsolated { bridge.isHostile(actor, toward: other) }
     }
 
-    func factionRelation(of faction: ReferenceKey, toward other: ReferenceKey) -> Int? {
+    public func factionRelation(of faction: ReferenceKey, toward other: ReferenceKey) -> Int? {
         MainActor.assumeIsolated { bridge.factionRelation(of: faction, toward: other) }
     }
 }

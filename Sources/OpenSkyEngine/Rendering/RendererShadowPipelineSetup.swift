@@ -8,7 +8,7 @@ import OpenSkyShaderTypes
 
 extension Renderer {
     /// Builds the shadow pipelines + compare sampler + cascade array together.
-    static func makeShadowResources(device: MTLDevice) throws -> ShadowResources {
+    public static func makeShadowResources(device: MTLDevice) throws -> ShadowResources {
         try ShadowResources(
             pipelines: makeShadowPipelines(device: device),
             sampler: makeShadowSampler(device: device),

@@ -10,14 +10,14 @@ import Foundation
 /// One row of the system menu. Skyrim's own pause menu carries more rows; these
 /// are the three M8.5.1 owns end to end, and the enum is the only place a row is
 /// named so the movie bridge and the panel cannot disagree.
-nonisolated enum SystemMenuEntry: String, CaseIterable, Sendable {
+nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
     case resume
     case settings
     case quit
 
     /// Row label. Not localized yet — the vanilla string tables land with the
     /// movie-driven presentation, not with the engine-side selector.
-    var title: String {
+    public var title: String {
         switch self {
         case .resume: "Resume"
         case .settings: "Settings"
@@ -27,7 +27,7 @@ nonisolated enum SystemMenuEntry: String, CaseIterable, Sendable {
 
     /// Capitalized fragment used to build accessibility identifiers, so a row's
     /// control id is derived rather than written twice.
-    var identifierFragment: String {
+    public var identifierFragment: String {
         rawValue.prefix(1).uppercased() + rawValue.dropFirst()
     }
 }
@@ -36,7 +36,7 @@ nonisolated enum SystemMenuEntry: String, CaseIterable, Sendable {
 /// engine effect of its own: M8.5.1 surfaces the data-root and audio-volume
 /// placeholders beside the menu rather than pushing a second menu, and M9 binds
 /// the live audio categories behind them.
-nonisolated enum SystemMenuOutcome: Equatable, Sendable {
+nonisolated public enum SystemMenuOutcome: Equatable, Sendable {
     /// Close the menu and return to gameplay.
     case resume
     /// Reveal the settings placeholders; the menu stays open.
@@ -45,7 +45,7 @@ nonisolated enum SystemMenuOutcome: Equatable, Sendable {
     case quit
 
     /// Readout label for the verification panel.
-    var label: String {
+    public var label: String {
         switch self {
         case .resume: "Resume"
         case .showSettings: "Settings"
@@ -57,28 +57,28 @@ nonisolated enum SystemMenuOutcome: Equatable, Sendable {
 /// Selection state for the system menu. A value type so the panel, the input
 /// path, and the tests all reason about the same transitions without touching
 /// AppKit or the renderer.
-nonisolated struct SystemMenuModel: Equatable, Sendable {
+nonisolated public struct SystemMenuModel: Equatable, Sendable {
     /// Rows in display order.
-    let entries: [SystemMenuEntry]
-    private(set) var isOpen = false
-    private(set) var selectedIndex = 0
+    public let entries: [SystemMenuEntry]
+    public private(set) var isOpen = false
+    public private(set) var selectedIndex = 0
     /// The last row activated while open, for the verification readout.
-    private(set) var lastOutcome: SystemMenuOutcome?
+    public private(set) var lastOutcome: SystemMenuOutcome?
     /// True once Settings has been activated, so the placeholders read as
     /// revealed rather than merely present.
-    private(set) var settingsRevealed = false
+    public private(set) var settingsRevealed = false
 
-    init(entries: [SystemMenuEntry] = SystemMenuEntry.allCases) {
+    public init(entries: [SystemMenuEntry] = SystemMenuEntry.allCases) {
         self.entries = entries.isEmpty ? SystemMenuEntry.allCases : entries
     }
 
-    var selectedEntry: SystemMenuEntry? {
+    public var selectedEntry: SystemMenuEntry? {
         entries.indices.contains(selectedIndex) ? entries[selectedIndex] : nil
     }
 
     /// Opens the menu at the first row. Re-opening an already-open menu keeps
     /// the current selection so a stray open cannot silently reset it.
-    mutating func open() {
+    public mutating func open() {
         guard !isOpen else { return }
         isOpen = true
         selectedIndex = 0
@@ -88,7 +88,7 @@ nonisolated struct SystemMenuModel: Equatable, Sendable {
 
     /// Closes the menu and clears the revealed-settings state. Selection resets
     /// so the next open starts at the top, matching the vanilla menu.
-    mutating func close() {
+    public mutating func close() {
         isOpen = false
         selectedIndex = 0
         settingsRevealed = false
@@ -98,7 +98,7 @@ nonisolated struct SystemMenuModel: Equatable, Sendable {
     /// and a three-row menu is unusable without it; horizontal moves are
     /// accepted and ignored (a one-column list has nowhere to go) so the caller
     /// still treats the event as consumed by the menu.
-    mutating func moveSelection(_ direction: MenuInputEvent.Direction) {
+    public mutating func moveSelection(_ direction: MenuInputEvent.Direction) {
         guard isOpen, !entries.isEmpty else { return }
         switch direction {
         case .up:
@@ -114,7 +114,7 @@ nonisolated struct SystemMenuModel: Equatable, Sendable {
     /// closes the menu here; quit is left to the host because terminating is not
     /// a state transition the model can perform.
     @discardableResult
-    mutating func activateSelection() -> SystemMenuOutcome? {
+    public mutating func activateSelection() -> SystemMenuOutcome? {
         guard isOpen, let entry = selectedEntry else { return nil }
         let outcome: SystemMenuOutcome = switch entry {
         case .resume: .resume
@@ -138,7 +138,7 @@ nonisolated struct SystemMenuModel: Equatable, Sendable {
     /// activated a row, nil otherwise. Cancel is Resume: the vanilla pause menu
     /// closes on the same key that opened it.
     @discardableResult
-    mutating func handle(_ event: MenuInputEvent) -> SystemMenuOutcome? {
+    public mutating func handle(_ event: MenuInputEvent) -> SystemMenuOutcome? {
         guard isOpen else { return nil }
         switch event {
         case let .move(direction):

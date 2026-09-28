@@ -13,6 +13,7 @@
 // exactly how many entries were skipped.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

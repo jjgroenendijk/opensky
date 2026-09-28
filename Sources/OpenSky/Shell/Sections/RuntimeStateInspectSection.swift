@@ -6,6 +6,7 @@
 // here is a setting the user can leave in a non-default position.
 
 import AppKit
+import OpenSkyEngine
 
 final class RuntimeStateInspectSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

@@ -15,6 +15,7 @@
 // keeps each section's dependency honest.
 
 import AppKit
+import OpenSkyEngine
 
 final class DialoguePanelViewController: InspectorPanelViewController {
     let dialogueSection = DialogueSection()

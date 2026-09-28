@@ -19,7 +19,7 @@ import OpenSkyGameData
 
 /// Failure modes introduced by the slot layer, distinct from
 /// `OpenSkySaveError`, which describes the container's own contents.
-nonisolated enum OpenSkySaveStoreError: Error, Equatable {
+nonisolated public enum OpenSkySaveStoreError: Error, Equatable {
     /// The slot name is empty, over-long, or contains something that is not
     /// allowed in a file name here: a path separator, a leading dot, or a
     /// control character.
@@ -33,23 +33,25 @@ nonisolated enum OpenSkySaveStoreError: Error, Equatable {
 }
 
 /// A directory of named OpenSky saves.
-nonisolated struct OpenSkySaveStore {
+nonisolated public struct OpenSkySaveStore {
     /// Longest slot name accepted. Well under every filesystem's limit, and
     /// long enough for a date plus a description.
-    static let maximumSlotNameLength = 64
+    public static let maximumSlotNameLength = 64
 
     /// Directory the slots live in. Created by whoever produced the URL;
     /// `defaultStore(fileManager:)` creates it.
-    let directory: URL
+    public let directory: URL
     private let fileManager: FileManager
 
-    init(directory: URL, fileManager: FileManager = .default) {
+    public init(directory: URL, fileManager: FileManager = .default) {
         self.directory = directory
         self.fileManager = fileManager
     }
 
     /// Store rooted at `OpenSkySaveIO.defaultSavesDirectory(fileManager:)`.
-    static func defaultStore(fileManager: FileManager = .default) throws -> OpenSkySaveStore {
+    public static func defaultStore(fileManager: FileManager = .default) throws
+        -> OpenSkySaveStore
+    {
         let directory = try OpenSkySaveIO.defaultSavesDirectory(fileManager: fileManager)
         return OpenSkySaveStore(directory: directory, fileManager: fileManager)
     }
@@ -61,7 +63,7 @@ nonisolated struct OpenSkySaveStore {
     /// - Throws: `OpenSkySaveStoreError.invalidSlotName` when the name could
     ///   address something other than a plain file directly inside
     ///   `directory`.
-    func url(forSlot slot: String) throws -> URL {
+    public func url(forSlot slot: String) throws -> URL {
         try Self.validate(slot: slot)
         return directory.appending(
             path: "\(slot).\(OpenSkySaveFormat.fileExtension)",
@@ -72,7 +74,7 @@ nonisolated struct OpenSkySaveStore {
     /// Rejects anything that is not a plain file name. The check is a
     /// whitelist of failure reasons rather than a sanitizer: silently
     /// rewriting a user's slot name would make two different names collide.
-    static func validate(slot: String) throws {
+    public static func validate(slot: String) throws {
         guard !slot.isEmpty else {
             throw OpenSkySaveStoreError.invalidSlotName(slot, reason: "the name is empty")
         }
@@ -116,7 +118,7 @@ nonisolated struct OpenSkySaveStore {
     ///
     /// - Returns: the file that was written.
     @discardableResult
-    func save(
+    public func save(
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
         metadata: SaveCreationMetadata,
@@ -144,7 +146,7 @@ nonisolated struct OpenSkySaveStore {
     /// Verification is opt-in because decoding must work with nothing but the
     /// file: an inspector on a machine with no game install passes nil, while
     /// the engine passes the fingerprint it built at startup.
-    func load(
+    public func load(
         slot: String,
         verifyingAgainst current: [SavePluginFingerprint]? = nil
     ) throws -> OpenSkySaveFile {
@@ -164,7 +166,7 @@ nonisolated struct OpenSkySaveStore {
     /// - Throws: whatever `FileManager` reports when the directory cannot be
     ///   listed. A missing directory is not an error: it means no save has
     ///   been written yet, so the result is empty.
-    func listSlots() throws -> [String] {
+    public func listSlots() throws -> [String] {
         guard fileManager.fileExists(atPath: directory.path(percentEncoded: false)) else {
             return []
         }
@@ -185,7 +187,7 @@ nonisolated struct OpenSkySaveStore {
 nonisolated extension OpenSkySaveStore {
     /// Load-order fingerprint of the plugins `root` resolves to, in load
     /// order.
-    static func fingerprint(
+    public static func fingerprint(
         forRoot root: GameDataRoot,
         location: PluginsTextLocation? = nil,
         fileManager: FileManager = .default
@@ -209,7 +211,7 @@ nonisolated extension OpenSkySaveStore {
     ///   plugin that could not be read or parsed. A save written against a
     ///   load order that was only partly readable would verify against
     ///   nothing, so this fails rather than skipping the entry.
-    static func fingerprint(
+    public static func fingerprint(
         forPlugins entries: [PluginLoadOrder.Entry]
     ) throws -> [SavePluginFingerprint] {
         try entries.map { entry in

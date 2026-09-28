@@ -23,7 +23,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installCrime(into registry: inout PapyrusNativeRegistry) {
+    public static func installCrime(into registry: inout PapyrusNativeRegistry) {
         installFactionCrimeGold(into: &registry)
         installCrimeAlarms(into: &registry)
     }
@@ -175,7 +175,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// this engine addresses a FACT by the same `ReferenceKey` its memberships
     /// and its ledger rows are keyed by — so the receiver resolves exactly as an
     /// `Actor` receiver does and needs no separate lookup.
-    static func factionTarget(
+    public static func factionTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
         body: (PapyrusWorldAccess, ReferenceKey) -> PapyrusNativeResult

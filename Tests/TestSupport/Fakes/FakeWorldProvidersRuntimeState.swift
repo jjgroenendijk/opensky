@@ -4,7 +4,7 @@
 // used to hold this lives on in OpenSkyTests. See Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 /// Forwards the runtime-state seam to the panel tests' recorder rather than

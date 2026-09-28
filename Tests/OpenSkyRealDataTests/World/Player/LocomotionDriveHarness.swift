@@ -8,7 +8,7 @@
 // already loaded from the user's install (never committed — AGENTS.md
 // "Legal & IP").
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 
 /// One held input driven for a number of fixed steps.

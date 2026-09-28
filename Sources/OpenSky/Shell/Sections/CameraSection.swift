@@ -8,6 +8,7 @@
 // bug report can carry the exact camera that produced a frame.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 final class CameraSection: PanelSectionViewController {

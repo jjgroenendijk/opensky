@@ -9,7 +9,7 @@
 // Everything is built in code. The vanilla humanoid's own numbers are asserted
 // in `RagdollRealDataTests`, which is the half that needs the install.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

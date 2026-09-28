@@ -6,39 +6,39 @@
 import Foundation
 
 /// Everything the decoder needs to interpret a stream of compressed packets.
-nonisolated struct AudioCodecParameters: Equatable, Sendable {
+nonisolated public struct AudioCodecParameters: Equatable, Sendable {
     /// `WAVEFORMATEX.wFormatTag`. WMAv2 is `0x0161`.
-    let formatTag: UInt16
-    let channelCount: Int
-    let sampleRate: Int
+    public let formatTag: UInt16
+    public let channelCount: Int
+    public let sampleRate: Int
     /// `WAVEFORMATEX.nBlockAlign`: the size in bytes of one compressed packet.
-    let blockAlign: Int
+    public let blockAlign: Int
     /// `WAVEFORMATEX.nAvgBytesPerSec`, used only to reconstruct the nominal bit rate.
-    let averageBytesPerSecond: Int
+    public let averageBytesPerSecond: Int
     /// `WAVEFORMATEX.cbSize` bytes of codec-private data following the fixed header.
-    let extradata: Data
+    public let extradata: Data
 }
 
 /// Decoded PCM: interleaved 32-bit float, native endianness, one canonical shape whatever
 /// sample format the underlying decoder happened to produce.
-nonisolated struct DecodedAudio: Equatable, Sendable {
-    let sampleRate: Int
-    let channelCount: Int
-    let samples: [Float]
+nonisolated public struct DecodedAudio: Equatable, Sendable {
+    public let sampleRate: Int
+    public let channelCount: Int
+    public let samples: [Float]
 
     /// Sample frames, that is one value per channel counted once.
-    var frameCount: Int {
+    public var frameCount: Int {
         channelCount > 0 ? samples.count / channelCount : 0
     }
 
-    var duration: Double {
+    public var duration: Double {
         sampleRate > 0 ? Double(frameCount) / Double(sampleRate) : 0
     }
 }
 
 /// Failures the decoder reports. Every case is recoverable by the caller: nothing here
 /// leaves a half-built decoder behind, and no case is reachable from valid input.
-nonisolated enum WMADecoderError: Error, Equatable {
+nonisolated public enum WMADecoderError: Error, Equatable {
     /// The container described a codec this decoder does not implement.
     case unsupportedFormatTag(UInt16)
     /// A header field is outside the range the decoder can act on.

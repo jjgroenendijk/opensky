@@ -42,13 +42,13 @@ import OpenSkyGameData
 
 extension CasterRuntime {
     /// The `Mod Spell Cost` entry point, by its documented id.
-    static let spellCostEntryPoint = PerkEntryPoint(rawValue: 38)
+    public static let spellCostEntryPoint = PerkEntryPoint(rawValue: 38)
 
     /// What casting `spell` costs `caster` right now, in magicka.
     ///
     /// The record's own cost when no perk runtime is wired, which is what every
     /// synthetic session and every actor with no perks pays.
-    func cost(of spell: ResolvedSpell, caster: ActorValueHolder) -> Float {
+    public func cost(of spell: ResolvedSpell, caster: ActorValueHolder) -> Float {
         let authored = Float(spell.cost.cost)
         guard var perks else { return authored }
         var cost = authored
@@ -76,7 +76,7 @@ extension CasterRuntime {
     /// Whether `perk` already reduces spell cost through its own entry point,
     /// which is what makes the SPIT halving a duplicate rather than a second
     /// reduction. See the file header for the measured record.
-    static func reducesSpellCost(_ perk: ResolvedPerk) -> Bool {
+    public static func reducesSpellCost(_ perk: ResolvedPerk) -> Bool {
         perk.effects.contains { $0.entryPoint == spellCostEntryPoint }
     }
 }

@@ -4,7 +4,7 @@
 // what differs is that these tests ask what is left behind after an impact
 // rather than what the impact did.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

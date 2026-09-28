@@ -2,7 +2,7 @@
 // and 5x5 union size without Metal or game data. Runtime settlement, memory,
 // unload, and build-count gates live in `openskycli bench --fly-path`.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

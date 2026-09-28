@@ -8,7 +8,7 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum ProgressionControlReadout {
+nonisolated public enum ProgressionControlReadout: Sendable {
     /// Column width the skill lines pad their names to. Wide enough for
     /// "Enchanting"; a longer modded name pushes its own line out rather than
     /// being truncated, because a cut-off name is worse than a ragged column.
@@ -16,7 +16,7 @@ nonisolated enum ProgressionControlReadout {
 
     /// The character line: what the player is, what the next level costs, and
     /// what is waiting to be spent.
-    static func characterText(for snapshot: ProgressionControlSnapshot) -> String {
+    public static func characterText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Character: unavailable" }
         return String(
             format: "Character: level %d — %.0f/%.0f XP  %d perk point(s)"
@@ -32,7 +32,7 @@ nonisolated enum ProgressionControlReadout {
     /// What the level-ups already accepted bought, which is the history a
     /// level-up screen lists rather than the mechanism: the ten points a pick
     /// grants live in the actor value's base offset.
-    static func picksText(for snapshot: ProgressionControlSnapshot) -> String {
+    public static func picksText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Picks: unavailable" }
         let counts = ActorValueKind.allCases.map { kind in
             "\(kind.shortLabel) \(snapshot.attributePicks.count { $0 == kind })"
@@ -46,7 +46,7 @@ nonisolated enum ProgressionControlReadout {
     /// trained to, and how far the next point is, closed by what the per-skill
     /// count cache behind those numbers is doing (issue #556) — the reading that
     /// makes the reuse visible from the panel rather than from a profiler.
-    static func skillsText(for snapshot: ProgressionControlSnapshot) -> String {
+    public static func skillsText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Skills: unavailable" }
         guard !snapshot.skills.isEmpty else {
             return "Skills: this load order carries no AVIF skill records."
@@ -77,7 +77,7 @@ nonisolated enum ProgressionControlReadout {
     /// The selected skill's tree, one line per box, in `INAM` order. A list
     /// rather than a drawn grid: the connections are what the tree means, and
     /// they read exactly as well spelled out.
-    static func perkTreeText(for snapshot: ProgressionControlSnapshot) -> String {
+    public static func perkTreeText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Perk tree: unavailable" }
         let skillName = snapshot.selectedSkillReadout?.name
             ?? ActorValueIdentity.description(of: snapshot.selectedSkill)
@@ -99,7 +99,7 @@ nonisolated enum ProgressionControlReadout {
 
     /// The selected box's record: its flags, its own conditions, and one line
     /// per effect.
-    static func perkText(for snapshot: ProgressionControlSnapshot) -> String {
+    public static func perkText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Selected perk: unavailable" }
         guard let perk = snapshot.perk else {
             return "Selected perk: none — this box grants no perk."
@@ -129,7 +129,7 @@ nonisolated enum ProgressionControlReadout {
     /// What one granted use or point did, which is what the panel prints as
     /// its last-action line: the experience it was worth, the level it moved,
     /// and the character level it bought.
-    static func advanceText(_ report: SkillAdvanceReport, skillName: String) -> String {
+    public static func advanceText(_ report: SkillAdvanceReport, skillName: String) -> String {
         var text = String(
             format: "%@: +%.1f XP, %.0f banked",
             skillName,
@@ -151,7 +151,7 @@ nonisolated enum ProgressionControlReadout {
     }
 
     /// Which skill and box the controls act on, and what the last one did.
-    static func controlsText(for snapshot: ProgressionControlSnapshot) -> String {
+    public static func controlsText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Controls: unavailable" }
         let skillName = snapshot.selectedSkillReadout?.name
             ?? ActorValueIdentity.description(of: snapshot.selectedSkill)
@@ -162,7 +162,7 @@ nonisolated enum ProgressionControlReadout {
     /// Why a box cannot be bought right now, spelled as the rule that refused
     /// it — every one of these is something a level-up screen has to say out
     /// loud rather than a greyed-out button with no reason.
-    static func availabilityText(_ node: PerkTreeNodeReadout) -> String {
+    public static func availabilityText(_ node: PerkTreeNodeReadout) -> String {
         // A box granting nothing is not "available": it is the tree's entry
         // node, or a dangling `PNAM`. No point is ever spent on either.
         guard !node.grantsNoPerk else { return "grants no perk" }
@@ -170,7 +170,7 @@ nonisolated enum ProgressionControlReadout {
         return description(of: refusal)
     }
 
-    static func description(of refusal: PerkSpendRefusal) -> String {
+    public static func description(of refusal: PerkSpendRefusal) -> String {
         switch refusal {
         case .unresolvedPerk: "no PERK record in this load order"
         case .notPlayable: "not playable"

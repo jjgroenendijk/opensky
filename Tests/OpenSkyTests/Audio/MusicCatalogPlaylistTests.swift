@@ -3,7 +3,7 @@
 // selection equality the director uses as its restart guard. Split from
 // MusicCatalogTests for the strict type-length limit; same synthetic fixtures.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

@@ -7,6 +7,7 @@
 // section carries this destination's overridden-ness.
 
 import AppKit
+import OpenSkyEngine
 
 final class ScriptInstancesSection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

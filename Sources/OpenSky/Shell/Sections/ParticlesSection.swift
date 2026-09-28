@@ -2,6 +2,7 @@
 // live system readout (issue #98 decomposition of EnvironmentParticleControls).
 
 import AppKit
+import OpenSkyEngine
 
 final class ParticlesSection: PanelSectionViewController {
     weak var provider: (any ParticleControlProviding)? {

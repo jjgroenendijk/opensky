@@ -3,44 +3,44 @@
 import Foundation
 import OSLog
 
-nonisolated struct PapyrusNativeKey: Equatable, Hashable, Sendable {
-    let scriptName: String
-    let functionName: String
+nonisolated public struct PapyrusNativeKey: Equatable, Hashable, Sendable {
+    public let scriptName: String
+    public let functionName: String
 
-    init(scriptName: String, functionName: String) {
+    public init(scriptName: String, functionName: String) {
         self.scriptName = PapyrusRuntime.key(scriptName)
         self.functionName = PapyrusRuntime.key(functionName)
     }
 }
 
-nonisolated struct PapyrusNativeFunction: Sendable {
-    typealias Body = @Sendable (
+nonisolated public struct PapyrusNativeFunction: Sendable {
+    public typealias Body = @Sendable (
         PapyrusNativeCall,
         PapyrusNativeContext
     ) -> PapyrusNativeResult
 
-    let scriptName: String
-    let functionName: String
-    let body: Body
+    public let scriptName: String
+    public let functionName: String
+    public let body: Body
 
-    var key: PapyrusNativeKey {
+    public var key: PapyrusNativeKey {
         PapyrusNativeKey(scriptName: scriptName, functionName: functionName)
     }
 }
 
-nonisolated final class PapyrusNativeLog {
-    let entryLimit: Int
-    let messageLimit: Int
+nonisolated public final class PapyrusNativeLog {
+    public let entryLimit: Int
+    public let messageLimit: Int
 
-    private(set) var messages: [String] = []
-    private(set) var total = 0
+    public private(set) var messages: [String] = []
+    public private(set) var total = 0
 
-    init(entryLimit: Int = 256, messageLimit: Int = 1024) {
+    public init(entryLimit: Int = 256, messageLimit: Int = 1024) {
         self.entryLimit = max(1, entryLimit)
         self.messageLimit = max(1, messageLimit)
     }
 
-    func append(_ message: String) {
+    public func append(_ message: String) {
         total += 1
         messages.append(String(message.prefix(messageLimit)))
         if messages.count > entryLimit {
@@ -49,15 +49,15 @@ nonisolated final class PapyrusNativeLog {
     }
 }
 
-nonisolated final class PapyrusNativeContext {
-    var random: ConditionRandom
-    let log: PapyrusNativeLog
+nonisolated public final class PapyrusNativeContext {
+    public var random: ConditionRandom
+    public let log: PapyrusNativeLog
     /// The world a native may read and mutate, or nil in a headless runtime
     /// with no world behind it (issue #172). A native that needs the world
     /// returns a failure rather than guessing when this is nil.
-    let world: PapyrusWorldAccess?
+    public let world: PapyrusWorldAccess?
 
-    init(
+    public init(
         seed: UInt64 = ConditionRandom.defaultSeed,
         log: PapyrusNativeLog = PapyrusNativeLog(),
         world: PapyrusWorldAccess? = nil
@@ -68,19 +68,19 @@ nonisolated final class PapyrusNativeContext {
     }
 }
 
-nonisolated struct PapyrusNativeRegistry: PapyrusNativeDispatch {
-    static var empty: PapyrusNativeRegistry {
+nonisolated public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
+    public static var empty: PapyrusNativeRegistry {
         PapyrusNativeRegistry()
     }
 
-    static var standard: PapyrusNativeRegistry {
+    public static var standard: PapyrusNativeRegistry {
         standard(context: PapyrusNativeContext())
     }
 
     /// The standard registry over a caller-supplied context, which is how a
     /// world-aware session installs the same natives with
     /// `PapyrusNativeContext.world` set (issue #172).
-    static func standard(context: PapyrusNativeContext) -> PapyrusNativeRegistry {
+    public static func standard(context: PapyrusNativeContext) -> PapyrusNativeRegistry {
         var registry = PapyrusNativeRegistry(context: context)
         PapyrusNativeFunctions.install(into: &registry)
         return registry
@@ -91,18 +91,18 @@ nonisolated struct PapyrusNativeRegistry: PapyrusNativeDispatch {
         category: "PapyrusNatives"
     )
 
-    let context: PapyrusNativeContext
+    public let context: PapyrusNativeContext
     private var functions: [PapyrusNativeKey: PapyrusNativeFunction] = [:]
 
-    init(context: PapyrusNativeContext = PapyrusNativeContext()) {
+    public init(context: PapyrusNativeContext = PapyrusNativeContext()) {
         self.context = context
     }
 
-    mutating func register(_ function: PapyrusNativeFunction) {
+    public mutating func register(_ function: PapyrusNativeFunction) {
         functions[function.key] = function
     }
 
-    func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
+    public func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         let key = PapyrusNativeKey(
             scriptName: call.scriptName,
             functionName: call.functionName
@@ -116,17 +116,17 @@ nonisolated struct PapyrusNativeRegistry: PapyrusNativeDispatch {
         return function.body(call, context)
     }
 
-    func contains(scriptName: String, functionName: String) -> Bool {
+    public func contains(scriptName: String, functionName: String) -> Bool {
         functions[
             PapyrusNativeKey(scriptName: scriptName, functionName: functionName)
         ] != nil
     }
 
-    var count: Int {
+    public var count: Int {
         functions.count
     }
 
-    var keys: [PapyrusNativeKey] {
+    public var keys: [PapyrusNativeKey] {
         functions.keys.sorted {
             $0.scriptName == $1.scriptName
                 ? $0.functionName < $1.functionName

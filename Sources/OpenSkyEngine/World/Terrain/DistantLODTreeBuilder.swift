@@ -5,10 +5,10 @@ import OpenSkyGameData
 import simd
 
 nonisolated extension DistantLODBuilder {
-    struct TreeBuild {
-        let placements: [RenderPlacement]
-        let blockCount: Int
-        let missingBlockCount: Int
+    public struct TreeBuild {
+        public let placements: [RenderPlacement]
+        public let blockCount: Int
+        public let missingBlockCount: Int
     }
 
     private struct PendingTreePlacement {
@@ -25,7 +25,7 @@ nonisolated extension DistantLODBuilder {
         let loadDistance: Float
     }
 
-    func buildTrees(
+    public func buildTrees(
         worldspace: String,
         settings: LODSettings,
         configuration: TerrainLODConfiguration,

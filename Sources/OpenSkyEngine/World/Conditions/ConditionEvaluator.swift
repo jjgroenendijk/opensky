@@ -39,7 +39,7 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum ConditionDataDomain: String, Equatable, Sendable {
+nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case keyword
     case formList
     case location
@@ -49,7 +49,7 @@ nonisolated enum ConditionDataDomain: String, Equatable, Sendable {
 /// than counted as one number because the four say different things about what
 /// is missing: no state for the actor, no record behind a parameter, a casting
 /// source OpenSky readies nothing into, and a hand holding no spell.
-nonisolated enum ConditionMagicDomain: String, Equatable, Sendable {
+nonisolated public enum ConditionMagicDomain: String, Equatable, Sendable {
     /// The run-on named a reference the magic seam carries no state for.
     case actor
     /// A FormID parameter, or a readied spell, that this load order does not
@@ -69,7 +69,7 @@ nonisolated enum ConditionMagicDomain: String, Equatable, Sendable {
 /// The `Error` conformance exists only so these can ride in a `Result`; nothing
 /// in the evaluator ever throws one, and no caller should catch one. Missing
 /// coverage is a value here, not a control-flow event.
-nonisolated enum ConditionFailure: Equatable, Error, Sendable {
+nonisolated public enum ConditionFailure: Equatable, Error, Sendable {
     /// Raw on-disk function index with no registry entry (Creation Kit spells
     /// this number 4096 higher).
     case unknownFunction(UInt16)
@@ -148,23 +148,23 @@ nonisolated enum ConditionFailure: Equatable, Error, Sendable {
 /// `isTrue` is always usable: a condition that could not be evaluated is false
 /// and names why in `failures`, so a caller that only wants a Bool never has to
 /// handle an error path.
-nonisolated struct ConditionOutcome: Equatable, Sendable {
-    let isTrue: Bool
+nonisolated public struct ConditionOutcome: Equatable, Sendable {
+    public let isTrue: Bool
     /// Reasons for every condition that could not produce a real answer, in
     /// evaluation order. Empty when the whole list evaluated cleanly.
-    let failures: [ConditionFailure]
+    public let failures: [ConditionFailure]
 
-    static let `true` = ConditionOutcome(isTrue: true, failures: [])
-    static let `false` = ConditionOutcome(isTrue: false, failures: [])
+    public static let `true` = ConditionOutcome(isTrue: true, failures: [])
+    public static let `false` = ConditionOutcome(isTrue: false, failures: [])
 
-    init(isTrue: Bool, failures: [ConditionFailure] = []) {
+    public init(isTrue: Bool, failures: [ConditionFailure] = []) {
         self.isTrue = isTrue
         self.failures = failures
     }
 
     /// True when the outcome came from real answers rather than from a
     /// fallback.
-    var isConclusive: Bool {
+    public var isConclusive: Bool {
         failures.isEmpty
     }
 }
@@ -176,18 +176,18 @@ nonisolated struct ConditionOutcome: Equatable, Sendable {
 /// session, and tests seed it per test. SplitMix64 (Steele, Lea and Flood,
 /// "Fast splittable pseudorandom number generators", OOPSLA 2014) is used
 /// because it is one multiply-free mixing step with no warm-up and no table.
-nonisolated struct ConditionRandom: Equatable, Sendable {
+nonisolated public struct ConditionRandom: Equatable, Sendable {
     /// SplitMix64's golden-ratio increment, also this generator's default seed.
-    static let defaultSeed: UInt64 = 0x9E37_79B9_7F4A_7C15
+    public static let defaultSeed: UInt64 = 0x9E37_79B9_7F4A_7C15
 
     private var state: UInt64
 
-    init(seed: UInt64 = ConditionRandom.defaultSeed) {
+    public init(seed: UInt64 = ConditionRandom.defaultSeed) {
         state = seed
     }
 
     /// Next raw 64-bit draw.
-    mutating func next() -> UInt64 {
+    public mutating func next() -> UInt64 {
         state &+= Self.defaultSeed
         var z = state
         z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
@@ -198,7 +198,7 @@ nonisolated struct ConditionRandom: Equatable, Sendable {
     /// Next integer in 0...99 **inclusive** — `GetRandomPercent` never returns
     /// 100 (Creation Kit wiki "GetRandomPercent"). The modulo bias over a
     /// 64-bit draw is below one part in 2^57 and is not corrected for.
-    mutating func percent() -> Int {
+    public mutating func percent() -> Int {
         Int(next() % 100)
     }
 }
@@ -210,12 +210,12 @@ nonisolated struct ConditionRandom: Equatable, Sendable {
 /// every condition in a list is evaluated even once the result is decided — so
 /// the tally reports the full coverage picture of the list rather than only of
 /// its prefix.
-nonisolated struct ConditionEvaluator {
-    var context: ConditionContext
-    let registry: ConditionFunctionRegistry
-    private(set) var tally: ConditionTally
+nonisolated public struct ConditionEvaluator: Sendable {
+    public var context: ConditionContext
+    public let registry: ConditionFunctionRegistry
+    public private(set) var tally: ConditionTally
 
-    init(
+    public init(
         context: ConditionContext,
         registry: ConditionFunctionRegistry = .standard,
         tally: ConditionTally = ConditionTally()
@@ -228,7 +228,7 @@ nonisolated struct ConditionEvaluator {
     // MARK: - Evaluation
 
     /// Evaluates one condition: `functionReturn <operator> comparisonValue`.
-    mutating func evaluate(_ condition: Condition) -> ConditionOutcome {
+    public mutating func evaluate(_ condition: Condition) -> ConditionOutcome {
         tally.noteCondition()
         switch result(of: condition) {
         case let .success(isTrue):
@@ -241,7 +241,7 @@ nonisolated struct ConditionEvaluator {
 
     /// Evaluates a whole condition run with OR grouping (see the file header).
     /// An empty run is true, which is what an unconditioned record means.
-    mutating func evaluate(_ conditions: [Condition]) -> ConditionOutcome {
+    public mutating func evaluate(_ conditions: [Condition]) -> ConditionOutcome {
         tally.noteList()
         guard !conditions.isEmpty else { return .true }
 
@@ -266,7 +266,7 @@ nonisolated struct ConditionEvaluator {
     }
 
     /// Convenience over a decoded `ConditionList`.
-    mutating func evaluate(_ list: ConditionList) -> ConditionOutcome {
+    public mutating func evaluate(_ list: ConditionList) -> ConditionOutcome {
         evaluate(list.conditions)
     }
 
@@ -308,7 +308,7 @@ nonisolated struct ConditionEvaluator {
 
     /// Exact float comparison — see the file header on why no epsilon. Nil for
     /// the two undefined operator encodings.
-    static func compare(
+    public static func compare(
         _ left: Float,
         _ comparison: Condition.ComparisonOperator,
         _ right: Float

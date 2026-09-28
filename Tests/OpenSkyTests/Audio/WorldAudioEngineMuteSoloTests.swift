@@ -6,7 +6,7 @@
 // the category volume a slider left behind.
 
 import AVFAudio
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

@@ -30,36 +30,40 @@ import OpenSkyFormats
 
 /// The hands an equipped item takes. Not a biped slot: nothing in BOD2/BODT
 /// describes holding something.
-nonisolated struct HandSlots: OptionSet, Equatable, Sendable {
-    let rawValue: UInt8
+nonisolated public struct HandSlots: OptionSet, Equatable, Sendable {
+    public let rawValue: UInt8
 
-    static let rightHand = HandSlots(rawValue: 1 << 0)
-    static let leftHand = HandSlots(rawValue: 1 << 1)
-    static let bothHands: HandSlots = [.rightHand, .leftHand]
+    public init(rawValue: UInt8) {
+        self.rawValue = rawValue
+    }
+
+    public static let rightHand = HandSlots(rawValue: 1 << 0)
+    public static let leftHand = HandSlots(rawValue: 1 << 1)
+    public static let bothHands: HandSlots = [.rightHand, .leftHand]
 
     /// True when the two sets share at least one hand.
-    func overlaps(_ other: HandSlots) -> Bool {
+    public func overlaps(_ other: HandSlots) -> Bool {
         !isDisjoint(with: other)
     }
 }
 
 /// Everything one equipped item takes up, across both kinds of slot.
-nonisolated struct EquipmentOccupancy: Equatable, Sendable {
-    let slots: BodySlots
-    let hands: HandSlots
+nonisolated public struct EquipmentOccupancy: Equatable, Sendable {
+    public let slots: BodySlots
+    public let hands: HandSlots
 
     /// Takes nothing — the reading for an item that is carryable but not
     /// wearable, such as a potion.
-    static let none = EquipmentOccupancy(slots: BodySlots(), hands: HandSlots())
+    public static let none = EquipmentOccupancy(slots: BodySlots(), hands: HandSlots())
 
-    init(slots: BodySlots = BodySlots(), hands: HandSlots = HandSlots()) {
+    public init(slots: BodySlots = BodySlots(), hands: HandSlots = HandSlots()) {
         self.slots = slots
         self.hands = hands
     }
 
     /// True when the item occupies nothing at all, which is what makes it
     /// unequippable.
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         slots.isEmpty && hands.isEmpty
     }
 
@@ -68,18 +72,18 @@ nonisolated struct EquipmentOccupancy: Equatable, Sendable {
     /// Overlap in either half is a conflict, and an item that occupies nothing
     /// conflicts with nothing — including with itself, which is why `equip`
     /// refuses such an item outright instead of relying on this.
-    func conflicts(with other: Self) -> Bool {
+    public func conflicts(with other: Self) -> Bool {
         slots.overlaps(other.slots) || hands.overlaps(other.hands)
     }
 }
 
 /// One equippable base record reduced to what equipping needs from it.
-nonisolated struct EquippableItem: Equatable, Sendable {
-    let formID: FormID
-    let occupancy: EquipmentOccupancy
+nonisolated public struct EquippableItem: Equatable, Sendable {
+    public let formID: FormID
+    public let occupancy: EquipmentOccupancy
     /// WEAP MODL — the world model a hand attachment loads. Nil for armour,
     /// whose geometry comes from its ARMA armatures instead.
-    let modelPath: String?
+    public let modelPath: String?
 }
 
 /// Which slots each equippable base record in one plugin occupies.
@@ -89,25 +93,25 @@ nonisolated struct EquippableItem: Equatable, Sendable {
 /// store's `ItemDefinition` is the *inventory* view — value, weight, name —
 /// and deliberately carries no body template; widening it would put armour
 /// layout data on every potion.
-nonisolated struct EquipmentCatalog {
+nonisolated public struct EquipmentCatalog: Sendable {
     /// The hands a weapon takes when its ETYP link names nothing this plugin
     /// can resolve. Five vanilla WEAP records carry no ETYP at all — the
     /// unarmed pseudo-weapon among them — and the right hand is both what the
     /// retired animation-type heuristic returned for them and the hand the
     /// skeleton's `Weapon` attach node hangs off.
-    static let defaultWeaponHands = HandSlots.rightHand
+    public static let defaultWeaponHands = HandSlots.rightHand
 
     /// Equippable items by raw FormID: every ARMO with a body template, plus
     /// every WEAP.
-    let items: [UInt32: EquippableItem]
+    public let items: [UInt32: EquippableItem]
     /// The EQUP graph the ETYP links were resolved through, kept so an
     /// inspector can show which slot an item resolved to.
-    let equipSlots: EquipSlotTable
+    public let equipSlots: EquipSlotTable
     /// How many WEAP records fell back on `defaultWeaponHands` because their
     /// ETYP was absent or named no EQUP in this plugin.
-    let unresolvedEquipTypes: Int
+    public let unresolvedEquipTypes: Int
 
-    init(
+    public init(
         items: [UInt32: EquippableItem],
         equipSlots: EquipSlotTable = EquipSlotTable(),
         unresolvedEquipTypes: Int = 0
@@ -120,7 +124,7 @@ nonisolated struct EquipmentCatalog {
     /// Indexes the ARMO and WEAP top groups against the plugin's own EQUP
     /// records. Records that fail to decode drop out and later read as not
     /// equippable.
-    static func build(from file: ESMFile) -> EquipmentCatalog {
+    public static func build(from file: ESMFile) -> EquipmentCatalog {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         let equipSlots = EquipSlotTable(file: file)
         var items: [UInt32: EquippableItem] = [:]
@@ -153,13 +157,13 @@ nonisolated struct EquipmentCatalog {
     }
 
     /// `item`'s entry, or nil when no loaded plugin describes it as equippable.
-    func item(_ item: FormID) -> EquippableItem? {
+    public func item(_ item: FormID) -> EquippableItem? {
         items[item.rawValue]
     }
 
     /// What `item` occupies; `.none` when nothing describes it, which reads as
     /// "not equippable" everywhere it is used.
-    func occupancy(of item: FormID) -> EquipmentOccupancy {
+    public func occupancy(of item: FormID) -> EquipmentOccupancy {
         items[item.rawValue]?.occupancy ?? .none
     }
 

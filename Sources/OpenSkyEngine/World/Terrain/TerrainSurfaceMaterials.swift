@@ -16,19 +16,19 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct TerrainSurfaceMaterials: Equatable, Sendable {
+nonisolated public struct TerrainSurfaceMaterials: Equatable, Sendable {
     /// One MATT FormID per terrain vertex, row-major south->north /
     /// west->east like `TerrainHeightField.heights`. Nil where the winning
     /// texture names no material, or where nothing is painted at all.
-    let materials: [FormID?]
+    public let materials: [FormID?]
 
-    init?(materials: [FormID?]) {
+    public init?(materials: [FormID?]) {
         guard materials.count == Land.vertexCount else { return nil }
         self.materials = materials
     }
 
     /// The material at a terrain grid position, clamped to the grid.
-    func material(column: Int, row: Int) -> FormID? {
+    public func material(column: Int, row: Int) -> FormID? {
         let dimension = TerrainMeshBuilder.gridDimension
         let clampedColumn = min(max(column, 0), dimension - 1)
         let clampedRow = min(max(row, 0), dimension - 1)
@@ -77,7 +77,10 @@ nonisolated struct TerrainSurfaceMaterials: Equatable, Sendable {
     /// Builds the grid for one LAND. Returns nil when the record paints
     /// nothing this could resolve, so a caller keeps a height field with no
     /// material rather than one claiming every vertex is unpainted.
-    static func build(land: Land, materialTypes: MaterialTypeIndex) -> TerrainSurfaceMaterials? {
+    public static func build(
+        land: Land,
+        materialTypes: MaterialTypeIndex
+    ) -> TerrainSurfaceMaterials? {
         let dimension = TerrainMeshBuilder.gridDimension
         var resolved = [FormID?](repeating: nil, count: Land.vertexCount)
         var painted = false

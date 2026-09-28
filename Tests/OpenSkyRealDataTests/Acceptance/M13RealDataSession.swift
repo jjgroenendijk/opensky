@@ -10,7 +10,7 @@
 // directory the test removes.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 

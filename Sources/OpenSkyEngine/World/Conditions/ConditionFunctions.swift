@@ -13,8 +13,8 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum ConditionFunctions {
-    static func install(into registry: inout ConditionFunctionRegistry) {
+nonisolated public enum ConditionFunctions: Sendable {
+    public static func install(into registry: inout ConditionFunctionRegistry) {
         installTime(&registry)
         installReference(&registry)
         installGlobals(&registry)
@@ -31,7 +31,7 @@ nonisolated enum ConditionFunctions {
 
     // MARK: - Reference identity
 
-    static func installReference(_ registry: inout ConditionFunctionRegistry) {
+    public static func installReference(_ registry: inout ConditionFunctionRegistry) {
         // xEdit TES5 condition table: index 35, `GetDisabled`, no parameters.
         // Creation Kit semantics: 1 when the run-on reference is disabled.
         registry.register(ConditionFunction(
@@ -57,7 +57,7 @@ nonisolated enum ConditionFunctions {
 
     /// The base object a placement stands for. Both placement records carry it
     /// in their NAME subrecord, decoded as `base`.
-    static func baseForm(of entry: RuntimeReferenceEntry) -> FormID {
+    public static func baseForm(of entry: RuntimeReferenceEntry) -> FormID {
         switch entry.record {
         case let .reference(reference): reference.base
         case let .actor(actor): actor.base
@@ -66,7 +66,7 @@ nonisolated enum ConditionFunctions {
 
     // MARK: - Globals
 
-    static func installGlobals(_ registry: inout ConditionFunctionRegistry) {
+    public static func installGlobals(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 74,
             name: "GetGlobalValue",
@@ -95,7 +95,7 @@ nonisolated enum ConditionFunctions {
 
     /// Condition functions return 1 and 0 rather than a Bool, because the
     /// comparison that follows is numeric.
-    static func isTrue(_ value: Bool) -> Float {
+    public static func isTrue(_ value: Bool) -> Float {
         value ? 1 : 0
     }
 }

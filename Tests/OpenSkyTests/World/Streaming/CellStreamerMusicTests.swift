@@ -3,7 +3,7 @@
 // Extension of CellStreamerTests to reuse its synthetic runner + CellScene
 // helpers without growing that file past the length limit.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

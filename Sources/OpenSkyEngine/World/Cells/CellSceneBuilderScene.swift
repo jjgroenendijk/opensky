@@ -6,55 +6,55 @@ import OpenSkyFormats
 import OpenSkyGameData
 import OSLog
 
-nonisolated struct CellGeometryBuild {
-    let location: CellSceneLocation
-    let doors: [PlacedDoor]
-    let interactions: [FormID: PlacedInteraction]
-    let terrain: TerrainBuild?
-    let grass: GrassBuild?
-    let water: WaterBuild?
-    let sky: SkyParameters?
-    let lighting: RenderLighting?
-    let pointLights: [RenderPointLight]
-    let staticCollision: StaticCollisionSet
+nonisolated public struct CellGeometryBuild {
+    public let location: CellSceneLocation
+    public let doors: [PlacedDoor]
+    public let interactions: [FormID: PlacedInteraction]
+    public let terrain: TerrainBuild?
+    public let grass: GrassBuild?
+    public let water: WaterBuild?
+    public let sky: SkyParameters?
+    public let lighting: RenderLighting?
+    public let pointLights: [RenderPointLight]
+    public let staticCollision: StaticCollisionSet
     /// Authored trigger volumes (issue #173). `var` with a default so a build
     /// that predates trigger collection still constructs.
-    var triggerVolumes: TriggerVolumeSet = .empty
+    public var triggerVolumes: TriggerVolumeSet = .empty
     /// Simulated rigid bodies this cell places (issue #193). Same defaulting
     /// reason as the trigger set above.
-    var dynamicBodies: [DynamicBodyPlacement] = []
+    public var dynamicBodies: [DynamicBodyPlacement] = []
     /// Decoded NAVM records built beside the rest of the cell-owned geometry.
-    var navmeshes: [Navmesh] = []
+    public var navmeshes: [Navmesh] = []
     /// Assembled actor placements + exact accounting (5.5 actor streaming).
-    let actors: CellActorBuild
+    public let actors: CellActorBuild
     /// WRLD.ZNAM of the owning worldspace (M9.2.3 music selection). `var` with
     /// a default so the interior path, which has no worldspace, omits it.
-    var worldspaceMusicType: FormID?
+    public var worldspaceMusicType: FormID?
     /// Runtime index entries for this cell's REFRs (issue #158). Actor entries
     /// travel inside `actors` and are merged in by makeScene.
-    var referenceEntries: [RuntimeReferenceEntry] = []
+    public var referenceEntries: [RuntimeReferenceEntry] = []
     /// Journal sequence of the world-state snapshot this build applied
     /// (issue #160); 0 for a build with no runtime state behind it.
-    var stateSequence: UInt64 = 0
+    public var stateSequence: UInt64 = 0
 
     /// Statics and actors share one per-cell index; both are placements the
     /// runtime addresses by `ReferenceKey`.
-    var referenceIndex: RuntimeReferenceIndex {
+    public var referenceIndex: RuntimeReferenceIndex {
         RuntimeReferenceIndex(entries: referenceEntries + actors.entries)
     }
 }
 
 /// Exterior environment trio built beside the placed models.
-nonisolated struct EnvironmentBuild {
-    let terrain: TerrainBuild?
-    let grass: GrassBuild?
-    let water: WaterBuild?
-    let sky: SkyParameters?
+nonisolated public struct EnvironmentBuild {
+    public let terrain: TerrainBuild?
+    public let grass: GrassBuild?
+    public let water: WaterBuild?
+    public let sky: SkyParameters?
 }
 
 nonisolated extension CellSceneBuilder {
     /// Terrain + water + procedural sky (suppressed for noSky worldspaces).
-    nonisolated func buildEnvironment(
+    nonisolated public func buildEnvironment(
         found: FoundCell,
         worldspace: Worldspace?
     ) -> EnvironmentBuild {
@@ -75,7 +75,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Keeps only REFRs whose base resolves to DOOR and whose XTEL decoded.
     /// Interaction metadata independently includes non-teleport doors.
-    nonisolated func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
+    nonisolated public func resolveDoors(refs: [PlacedReference]) -> [PlacedDoor] {
         let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
         return refs.compactMap { ref in
             guard
@@ -93,7 +93,7 @@ nonisolated extension CellSceneBuilder {
     /// Retains named use-key targets beside collision geometry. Every
     /// interaction-capable base uses the generic activation action except
     /// doors, whose typed open action can additionally drive XTEL.
-    nonisolated func resolveInteractions(
+    nonisolated public func resolveInteractions(
         refs: [PlacedReference]
     ) -> [FormID: PlacedInteraction] {
         let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
@@ -152,11 +152,11 @@ nonisolated extension CellSceneBuilder {
     /// unload can keep the union over resident cells and evict the rest.
     /// Empties the libraries' touched sets so the next `drainTouchedAssets`
     /// reports exactly one cell's working set. Every build path starts with it.
-    nonisolated func resetTouchedAssets() {
+    nonisolated public func resetTouchedAssets() {
         _ = drainTouchedAssets()
     }
 
-    nonisolated func drainTouchedAssets() -> CellAssets {
+    nonisolated public func drainTouchedAssets() -> CellAssets {
         CellAssets(
             meshKeys: meshes.drainTouchedKeys()
                 .union(collisionModels?.drainTouchedKeys() ?? []),
@@ -181,7 +181,7 @@ nonisolated extension CellSceneBuilder {
 
     /// RenderScene handles opaque/alpha-test order; environment adds terrain,
     /// water, sky. Model + geometry AABBs feed framing and frustum culling.
-    nonisolated func makeScene(
+    nonisolated public func makeScene(
         found: FoundCell,
         grid: (x: Int32, y: Int32),
         instances: [ResolvedInstance],

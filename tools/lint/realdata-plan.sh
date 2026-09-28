@@ -33,13 +33,12 @@ import sys
 PLAN = pathlib.Path("Config/TestPlans/RealData.xctestplan")
 TARGET = "OpenSkyRealDataTests"
 HOME = pathlib.Path("Tests/OpenSkyRealDataTests")
-ELSEWHERE = [
-    pathlib.Path("Tests/OpenSkyTests"),
-    pathlib.Path("Tests/OpenSkyFormatsTests"),
-    pathlib.Path("Tests/OpenSkyGameDataTests"),
-    pathlib.Path("Tests/FormatsTestSupport"),
-    pathlib.Path("Tests/TestSupport"),
-]
+# Every other test folder: the app-hosted unit bundle, the package test and
+# testing targets, and the shared support folder.
+ELSEWHERE = sorted(
+    folder for folder in pathlib.Path("Tests").iterdir()
+    if folder.is_dir() and folder != HOME
+)
 # A Swift Testing suite is a plain type declaration -- no @Suite attribute is
 # required -- so the declarations are found positionally and each one keeps the
 # text up to the next declaration.

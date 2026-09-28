@@ -12,73 +12,73 @@ import simd
 /// axes are in [-1, 1]; look deltas are raw pointer deltas in points (the
 /// camera applies its own sensitivity/sign). `dt` is seconds since the last
 /// update. Pure value — the view layer fills it from NSEvents.
-nonisolated struct CameraInput {
+nonisolated public struct CameraInput: Sendable {
     /// Along the view forward vector (+1 = W, -1 = S).
-    var moveForward: Float = 0
+    public var moveForward: Float = 0
     /// Along the horizontal right vector (+1 = D, -1 = A).
-    var moveRight: Float = 0
+    public var moveRight: Float = 0
     /// Along world up +Z (+1 = E/up, -1 = Q/down).
-    var moveUp: Float = 0
+    public var moveUp: Float = 0
     /// Pointer delta, points, +x = pointer moved right.
-    var lookRight: Float = 0
+    public var lookRight: Float = 0
     /// Pointer delta, points, +y = pointer moved up (view looks up).
-    var lookUp: Float = 0
+    public var lookUp: Float = 0
     /// Shift held -> speed boost. In walk mode this is run rather than walk.
-    var boost = false
+    public var boost = false
     /// Sprint key held (issue #188). Walk mode only; fly mode ignores it.
-    var sprint = false
+    public var sprint = false
     /// Sneak mode, a toggle rather than a held key, so the value is the state
     /// the toggle currently sits in and not an edge.
-    var sneak = false
+    public var sneak = false
     /// One-shot jump request, latched by the input state until a frame drains it.
-    var jump = false
+    public var jump = false
     /// One-shot request to advance the camera mode one step around the
     /// fly -> walk -> third-person cycle (issue #189).
-    var cycleCameraMode = false
+    public var cycleCameraMode = false
     /// One-shot attack request, latched like jump (issue #195). Walk mode
     /// only; fly mode ignores it.
-    var attack = false
+    public var attack = false
     /// The same button as a *level* rather than an edge (issue #196). A melee
     /// swing is a press and a bow draw is a hold, so the same binding has to
     /// report both: melee reads `attack`, archery reads this.
-    var attackHeld = false
+    public var attackHeld = false
     /// Block key held, a level rather than an edge — the melee runtime raises
     /// `blockStart` and `blockStop` on the changes.
-    var block = false
+    public var block = false
     /// One-shot draw/sheath request. One binding for both directions, because
     /// vanilla binds one key and the graph knows which way it is going.
-    var toggleWeaponDrawn = false
+    public var toggleWeaponDrawn = false
     /// Seconds elapsed since the previous update.
-    var dt: Float = 0
+    public var dt: Float = 0
 }
 
 /// Camera pose + free-fly integration. Yaw rotates about world +Z (0 -> +X
 /// east, +pi/2 -> +Y north); pitch elevates the view (+ looks up), clamped shy
 /// of straight up/down so the view direction never aligns with world up (that
 /// degenerates `lookAt`). Conventions: docs/decisions/coordinates.md.
-nonisolated struct FreeFlyCamera {
-    var position: SIMD3<Float>
-    var yaw: Float
-    var pitch: Float
+nonisolated public struct FreeFlyCamera: Sendable {
+    public var position: SIMD3<Float>
+    public var yaw: Float
+    public var pitch: Float
 
     /// Pitch limit (~89 deg): keeps forward off the world-up axis so the view
     /// basis stays well-conditioned.
-    static let maxPitch = MatrixMath.radians(fromDegrees: 89)
+    public static let maxPitch = MatrixMath.radians(fromDegrees: 89)
 
     /// Base translation speed. Skyrim exterior cell = 4096 units; ~1800
     /// units/s crosses one in ~2.3 s — seconds, not minutes
     /// (docs/decisions/coordinates.md scale).
-    static let baseSpeed: Float = 1800
+    public static let baseSpeed: Float = 1800
 
     /// Shift multiplier over `baseSpeed`.
-    static let boostMultiplier: Float = 3.5
+    public static let boostMultiplier: Float = 3.5
 
     /// Radians of look per point of pointer motion.
-    static let lookSensitivity: Float = 0.0025
+    public static let lookSensitivity: Float = 0.0025
 
-    static let worldUp = SIMD3<Float>(0, 0, 1)
+    public static let worldUp = SIMD3<Float>(0, 0, 1)
 
-    init(position: SIMD3<Float>, yaw: Float, pitch: Float) {
+    public init(position: SIMD3<Float>, yaw: Float, pitch: Float) {
         self.position = position
         self.yaw = yaw
         self.pitch = Self.clampPitch(pitch)
@@ -88,7 +88,7 @@ nonisolated struct FreeFlyCamera {
     /// exactly where the injected camera framed the scene. Forward =
     /// eye -> target; yaw/pitch are recovered from it (degenerate straight-down
     /// framing falls back to yaw 0).
-    init(framing camera: SceneCamera) {
+    public init(framing camera: SceneCamera) {
         let direction = camera.target - camera.eye
         let length = simd_length(direction)
         let forward = length > .ulpOfOne ? direction / length : SIMD3<Float>(1, 0, 0)
@@ -98,26 +98,26 @@ nonisolated struct FreeFlyCamera {
     }
 
     /// Unit view direction from yaw/pitch (Z-up world space).
-    var forward: SIMD3<Float> {
+    public var forward: SIMD3<Float> {
         let cosPitch = cosf(pitch)
         return SIMD3<Float>(cosPitch * cosf(yaw), cosPitch * sinf(yaw), sinf(pitch))
     }
 
     /// Horizontal right vector (strafing stays level regardless of pitch).
     /// Matches `cross(forward, worldUp)` for level forward: yaw 0 -> (0,-1,0).
-    var right: SIMD3<Float> {
+    public var right: SIMD3<Float> {
         SIMD3<Float>(sinf(yaw), -cosf(yaw), 0)
     }
 
     /// Right-handed view matrix looking down the forward vector, world up +Z.
-    func viewMatrix() -> float4x4 {
+    public func viewMatrix() -> float4x4 {
         MatrixMath.lookAt(eye: position, target: position + forward, up: Self.worldUp)
     }
 
     /// Rotates the view by a pointer delta. Pointer right turns the view right
     /// (yaw decreases in this right-handed Z-up basis); pointer up raises pitch.
     /// Pitch is clamped.
-    mutating func applyLook(lookRight: Float, lookUp: Float) {
+    public mutating func applyLook(lookRight: Float, lookUp: Float) {
         yaw -= lookRight * Self.lookSensitivity
         pitch = Self.clampPitch(pitch + lookUp * Self.lookSensitivity)
     }
@@ -125,7 +125,7 @@ nonisolated struct FreeFlyCamera {
     /// Translates along forward/right/world-up by the input axes for `dt`
     /// seconds. Combined direction is normalized so diagonal motion is not
     /// faster; Shift applies the boost multiplier.
-    mutating func applyMove(
+    public mutating func applyMove(
         forwardAxis: Float,
         rightAxis: Float,
         upAxis: Float,
@@ -141,7 +141,7 @@ nonisolated struct FreeFlyCamera {
 
     /// Applies one input frame: look first (so movement uses the new heading),
     /// then translation.
-    mutating func update(_ input: CameraInput) {
+    public mutating func update(_ input: CameraInput) {
         applyLook(lookRight: input.lookRight, lookUp: input.lookUp)
         applyMove(
             forwardAxis: input.moveForward,
@@ -157,7 +157,7 @@ nonisolated struct FreeFlyCamera {
     /// aims itself at a point instead of integrating input (issue #427) and has
     /// to land inside the same bound this camera integrates within, or the two
     /// would disagree about what a legal view direction is.
-    static func clampPitch(_ pitch: Float) -> Float {
+    public static func clampPitch(_ pitch: Float) -> Float {
         max(-maxPitch, min(maxPitch, pitch))
     }
 }

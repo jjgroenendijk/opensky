@@ -4,7 +4,7 @@
 // to a draw instance. No Metal here — the arithmetic is the whole claim, and
 // the pixel evidence that it reaches the screen is RendererDynamicPoseTests.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

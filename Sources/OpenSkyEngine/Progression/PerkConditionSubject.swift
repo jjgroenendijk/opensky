@@ -29,7 +29,7 @@ import Foundation
 import OpenSkyFormats
 
 /// One object a perk effect's condition tab may run against.
-nonisolated enum PerkConditionSubject: String, CaseIterable, Hashable, Sendable {
+nonisolated public enum PerkConditionSubject: String, CaseIterable, Hashable, Sendable {
     /// The actor that owns the perk, which is tab 0 of every entry point.
     case perkOwner
     case target
@@ -41,7 +41,7 @@ nonisolated enum PerkConditionSubject: String, CaseIterable, Hashable, Sendable 
     case enchantment
     case lockedReference
 
-    var describedName: String {
+    public var describedName: String {
         switch self {
         case .perkOwner: "perk owner"
         case .target: "target"
@@ -60,13 +60,13 @@ nonisolated extension PerkEntryPoint {
     /// The subjects this entry point's condition tabs run against, in tab
     /// order. An entry point outside the transcribed table answers with the
     /// perk owner alone, which is tab 0 everywhere it is documented.
-    var conditionSubjects: [PerkConditionSubject] {
+    public var conditionSubjects: [PerkConditionSubject] {
         PerkConditionSubject.table[rawValue] ?? [.perkOwner]
     }
 
     /// The subject tab `index` runs against, or nil when the record declared
     /// more tabs than the entry point documents.
-    func conditionSubject(atTab index: Int) -> PerkConditionSubject? {
+    public func conditionSubject(atTab index: Int) -> PerkConditionSubject? {
         let subjects = conditionSubjects
         guard index >= 0, index < subjects.count else { return nil }
         return subjects[index]
@@ -76,7 +76,7 @@ nonisolated extension PerkEntryPoint {
 nonisolated extension PerkConditionSubject {
     /// Entry-point id to its ordered condition subjects, transcribed from
     /// UESP's "Perk Effect Types" table.
-    static let table: [UInt8: [PerkConditionSubject]] = [
+    public static let table: [UInt8: [PerkConditionSubject]] = [
         0: [.perkOwner, .weapon, .target],
         1: [.perkOwner, .weapon, .target],
         2: [.perkOwner, .weapon, .target],

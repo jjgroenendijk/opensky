@@ -41,8 +41,8 @@ import OpenSkyFormats
 nonisolated extension HUDMovieBridge {
     /// The field the line is written into, and the holder whose visibility
     /// decides whether it is drawn.
-    static let subtitleHolderPath = "\(targetPath)/SubtitleTextHolder"
-    static let subtitleTextPath = "\(subtitleHolderPath)/textField"
+    public static let subtitleHolderPath = "\(targetPath)/SubtitleTextHolder"
+    public static let subtitleTextPath = "\(subtitleHolderPath)/textField"
 
     /// Shows one line of dialogue, or clears the subtitle when `text` is nil or
     /// empty.
@@ -50,7 +50,7 @@ nonisolated extension HUDMovieBridge {
     /// Clearing hides the holder rather than only blanking the field, because
     /// the holder carries authored art around the text and a blank field inside
     /// a visible holder is an empty box on screen.
-    static func setSubtitleText(_ text: String?, runtime: SWFMovieRuntime) {
+    public static func setSubtitleText(_ text: String?, runtime: SWFMovieRuntime) {
         let line = text ?? ""
         if let field = runtime.node(atPath: subtitleTextPath, from: runtime.root) {
             runtime.setText(line, of: field)
@@ -63,14 +63,14 @@ nonisolated extension HUDMovieBridge {
     /// Clears the subtitle. Named rather than folded into a nil argument
     /// because "the line ended" is a different intent from "here is the line",
     /// and the caller reads better for saying which one it means.
-    static func clearSubtitleText(runtime: SWFMovieRuntime) {
+    public static func clearSubtitleText(runtime: SWFMovieRuntime) {
         setSubtitleText(nil, runtime: runtime)
     }
 
     /// The line the movie's own field currently holds, which is what proves a
     /// publish reached the movie rather than only the engine model. Nil when
     /// the movie has no such field.
-    static func subtitleText(runtime: SWFMovieRuntime) -> String? {
+    public static func subtitleText(runtime: SWFMovieRuntime) -> String? {
         guard let field = runtime.node(atPath: subtitleTextPath, from: runtime.root) else {
             return nil
         }
@@ -78,7 +78,7 @@ nonisolated extension HUDMovieBridge {
     }
 
     /// Whether the holder is currently drawn.
-    static func isSubtitleVisible(runtime: SWFMovieRuntime) -> Bool {
+    public static func isSubtitleVisible(runtime: SWFMovieRuntime) -> Bool {
         runtime.node(atPath: subtitleHolderPath, from: runtime.root)?.isVisible ?? false
     }
 

@@ -36,34 +36,34 @@ import OpenSkyFormats
 ///
 /// Explicit fields rather than a dictionary so the save writes the same bytes
 /// twice for the same state, which is the rule every component here follows.
-nonisolated struct CrimeCounts: Equatable, Sendable {
-    private(set) var theft: Int32
-    private(set) var assault: Int32
-    private(set) var murder: Int32
-    private(set) var trespass: Int32
+nonisolated public struct CrimeCounts: Equatable, Sendable {
+    public private(set) var theft: Int32
+    public private(set) var assault: Int32
+    public private(set) var murder: Int32
+    public private(set) var trespass: Int32
 
-    static let none = CrimeCounts()
+    public static let none = CrimeCounts()
 
     /// Clamped on the way in, which is what makes this the save decoder's entry
     /// point: a negative count from a corrupt file becomes zero rather than a
     /// number that reads as "minus three murders".
-    init(theft: Int32 = 0, assault: Int32 = 0, murder: Int32 = 0, trespass: Int32 = 0) {
+    public init(theft: Int32 = 0, assault: Int32 = 0, murder: Int32 = 0, trespass: Int32 = 0) {
         self.theft = max(0, theft)
         self.assault = max(0, assault)
         self.murder = max(0, murder)
         self.trespass = max(0, trespass)
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         self == CrimeCounts()
     }
 
     /// Every crime of every kind.
-    var total: Int64 {
+    public var total: Int64 {
         Int64(theft) + Int64(assault) + Int64(murder) + Int64(trespass)
     }
 
-    subscript(kind: CrimeKind) -> Int32 {
+    public subscript(kind: CrimeKind) -> Int32 {
         switch kind {
         case .theft: theft
         case .assault: assault
@@ -75,7 +75,7 @@ nonisolated struct CrimeCounts: Equatable, Sendable {
     /// These counts with one more of `kind`. Saturating rather than wrapping:
     /// a session long enough to overflow `Int32` murders should report
     /// `Int32.max` rather than a negative number.
-    func incrementing(_ kind: CrimeKind) -> CrimeCounts {
+    public func incrementing(_ kind: CrimeKind) -> CrimeCounts {
         let raised = Int32(clamping: Int64(self[kind]) + 1)
         var result = self
         switch kind {
@@ -95,16 +95,16 @@ nonisolated struct CrimeCounts: Equatable, Sendable {
 /// `GetCrimeGoldNonviolent` are separate condition functions, and
 /// `Faction.ModCrimeGold` takes an `abViolent` flag. `gold` is their sum,
 /// which is what `GetCrimeGold` and a guard's fine both mean.
-nonisolated struct CrimeLedgerEntry: Equatable, Sendable, Comparable {
-    let faction: ReferenceKey
+nonisolated public struct CrimeLedgerEntry: Equatable, Sendable, Comparable {
+    public let faction: ReferenceKey
     /// Crime gold outstanding for non-violent crimes — theft and trespass.
     /// Never negative: a bounty is paid down to zero, never past it.
-    let nonViolentGold: Int32
+    public let nonViolentGold: Int32
     /// Crime gold outstanding for violent crimes — assault and murder.
-    let violentGold: Int32
-    let counts: CrimeCounts
+    public let violentGold: Int32
+    public let counts: CrimeCounts
 
-    init(
+    public init(
         faction: ReferenceKey,
         nonViolentGold: Int32 = 0,
         violentGold: Int32 = 0,
@@ -117,21 +117,21 @@ nonisolated struct CrimeLedgerEntry: Equatable, Sendable, Comparable {
     }
 
     /// Everything owed to this faction, saturating rather than wrapping.
-    var gold: Int32 {
+    public var gold: Int32 {
         Int32(clamping: Int64(nonViolentGold) + Int64(violentGold))
     }
 
     /// One half of the gold.
-    func gold(violent: Bool) -> Int32 {
+    public func gold(violent: Bool) -> Int32 {
         violent ? violentGold : nonViolentGold
     }
 
     /// True when the row records nothing, which is when it is dropped.
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         nonViolentGold == 0 && violentGold == 0 && counts.isEmpty
     }
 
-    static func < (lhs: Self, rhs: Self) -> Bool {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.faction < rhs.faction
     }
 
@@ -147,17 +147,17 @@ nonisolated struct CrimeLedgerEntry: Equatable, Sendable, Comparable {
 }
 
 /// Everything one actor owes, in ascending faction-key order.
-nonisolated struct CrimeLedgerState: WorldStateComponent {
+nonisolated public struct CrimeLedgerState: WorldStateComponent, Sendable {
     /// One row per faction, sorted by faction key, none of them empty.
-    private(set) var entries: [CrimeLedgerEntry]
+    public private(set) var entries: [CrimeLedgerEntry]
 
-    static let empty = CrimeLedgerState()
+    public static let empty = CrimeLedgerState()
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .crimeLedger
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .crimeLedger(self)
     }
 
@@ -170,7 +170,7 @@ nonisolated struct CrimeLedgerState: WorldStateComponent {
     /// stored membership and an owned perk follow: a bounty is progress the
     /// player made, and losing it because a plugin came and went would be the
     /// damaging direction to fail in.
-    init(entries: [CrimeLedgerEntry] = []) {
+    public init(entries: [CrimeLedgerEntry] = []) {
         var rows: [ReferenceKey: CrimeLedgerEntry] = [:]
         for entry in entries where !entry.isEmpty {
             rows[entry.faction] = entry
@@ -178,55 +178,55 @@ nonisolated struct CrimeLedgerState: WorldStateComponent {
         self.entries = rows.keys.sorted().compactMap { rows[$0] }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .crimeLedger(value) = erased else { return nil }
         self = value
     }
 
     // MARK: - Reading
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         entries.isEmpty
     }
 
-    var count: Int {
+    public var count: Int {
         entries.count
     }
 
     /// Every faction this actor owes something to or has offended, in key
     /// order.
-    var factions: [ReferenceKey] {
+    public var factions: [ReferenceKey] {
         entries.map(\.faction)
     }
 
-    func entry(for faction: ReferenceKey) -> CrimeLedgerEntry? {
+    public func entry(for faction: ReferenceKey) -> CrimeLedgerEntry? {
         entries.first { $0.faction == faction }
     }
 
     /// Crime gold owed to one faction, both halves together; 0 when there is
     /// no row, which is not a different answer from a row that has been paid
     /// off.
-    func gold(for faction: ReferenceKey) -> Int32 {
+    public func gold(for faction: ReferenceKey) -> Int32 {
         entry(for: faction)?.gold ?? 0
     }
 
     /// One half of what is owed to one faction.
-    func gold(for faction: ReferenceKey, violent: Bool) -> Int32 {
+    public func gold(for faction: ReferenceKey, violent: Bool) -> Int32 {
         entry(for: faction)?.gold(violent: violent) ?? 0
     }
 
-    func counts(for faction: ReferenceKey) -> CrimeCounts {
+    public func counts(for faction: ReferenceKey) -> CrimeCounts {
         entry(for: faction)?.counts ?? .none
     }
 
     /// Total gold owed everywhere, which is UESP's "Total Lifetime Bounty"
     /// read across the rows rather than stored a second time.
-    var totalGold: Int64 {
+    public var totalGold: Int64 {
         entries.reduce(0) { $0 + Int64($1.gold) }
     }
 
     /// How many crimes of one kind this actor has committed anywhere.
-    func totalCount(of kind: CrimeKind) -> Int64 {
+    public func totalCount(of kind: CrimeKind) -> Int64 {
         entries.reduce(0) { $0 + Int64($1.counts[kind]) }
     }
 
@@ -237,7 +237,7 @@ nonisolated struct CrimeLedgerState: WorldStateComponent {
     ///
     /// Both halves move in one call because a crime is one fact: recording the
     /// count and the gold separately is two chances for them to disagree.
-    func recording(_ kind: CrimeKind, gold: Int32, against faction: ReferenceKey) -> Self {
+    public func recording(_ kind: CrimeKind, gold: Int32, against faction: ReferenceKey) -> Self {
         let existing = entry(for: faction) ?? CrimeLedgerEntry(faction: faction)
         let violent = kind.isViolent
         return replacing(existing.setting(
@@ -253,7 +253,11 @@ nonisolated struct CrimeLedgerState: WorldStateComponent {
     /// The door `Faction.ModCrimeGold` comes through, which is why it does not
     /// touch the counts: paying a bounty settles the debt and does not
     /// un-commit the crime.
-    func modifyingGold(by delta: Int32, violent: Bool = false, for faction: ReferenceKey) -> Self {
+    public func modifyingGold(
+        by delta: Int32,
+        violent: Bool = false,
+        for faction: ReferenceKey
+    ) -> Self {
         let existing = entry(for: faction) ?? CrimeLedgerEntry(faction: faction)
         return settingGold(
             Self.saturatingSum(existing.gold(violent: violent), delta),
@@ -265,14 +269,18 @@ nonisolated struct CrimeLedgerState: WorldStateComponent {
     /// This ledger with one half of `faction`'s gold set outright, leaving the
     /// other half and the counts alone. `Faction.SetCrimeGold` sets the
     /// non-violent half and `Faction.SetCrimeGoldViolent` the violent one.
-    func settingGold(_ gold: Int32, violent: Bool = false, for faction: ReferenceKey) -> Self {
+    public func settingGold(
+        _ gold: Int32,
+        violent: Bool = false,
+        for faction: ReferenceKey
+    ) -> Self {
         let existing = entry(for: faction) ?? CrimeLedgerEntry(faction: faction)
         return replacing(existing.setting(max(0, gold), violent: violent))
     }
 
     /// This ledger with both halves of `faction`'s gold at zero and the counts
     /// kept. What paying a fine or serving the sentence does.
-    func clearingGold(for faction: ReferenceKey) -> Self {
+    public func clearingGold(for faction: ReferenceKey) -> Self {
         settingGold(0, violent: true, for: faction).settingGold(0, violent: false, for: faction)
     }
 

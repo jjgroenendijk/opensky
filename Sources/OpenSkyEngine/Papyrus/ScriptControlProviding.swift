@@ -12,42 +12,68 @@
 // Documented in docs/engine/papyrus-world.md.
 
 /// One native function name and how often the session called it.
-nonisolated struct ScriptsNativeCount: Equatable, Sendable {
+nonisolated public struct ScriptsNativeCount: Equatable, Sendable {
     /// Qualified native name, as `PapyrusNativeCall.qualifiedName` spells it.
-    let name: String
-    let count: Int
+    public let name: String
+    public let count: Int
 }
 
 /// One reference alias of a quest, as the Quests section shows it (issue
 /// #183): what the record authored, and what the session filled it with.
-nonisolated struct ScriptQuestAliasRow: Equatable, Sendable {
+nonisolated public struct ScriptQuestAliasRow: Equatable, Sendable {
     /// ALST/ALLS number scripts and conditions address the alias by.
-    let aliasID: UInt32
+    public let aliasID: UInt32
     /// ALID, the authoring name. Empty when the record carried none.
-    let name: String
+    public let name: String
     /// `Quest.Alias.FillType.name`, so the readout states *how* an alias is
     /// meant to fill and not only whether it did.
-    let fillType: String
+    public let fillType: String
     /// Optional aliases may legitimately stay empty; a non-optional one that
     /// does stops its quest from starting.
-    let isOptional: Bool
+    public let isOptional: Bool
     /// `ReferenceKey.description` of the filled reference, or nil when the
     /// alias holds nothing.
-    let reference: String?
+    public let reference: String?
+
+    public init(
+        aliasID: UInt32,
+        name: String,
+        fillType: String,
+        isOptional: Bool,
+        reference: String?
+    ) {
+        self.aliasID = aliasID
+        self.name = name
+        self.fillType = fillType
+        self.isOptional = isOptional
+        self.reference = reference
+    }
 }
 
 /// One quest's alias table for the Quests section.
-nonisolated struct ScriptQuestAliasInspection: Equatable, Sendable {
-    let editorID: String
-    let formIDText: String
+nonisolated public struct ScriptQuestAliasInspection: Equatable, Sendable {
+    public let editorID: String
+    public let formIDText: String
     /// Aliases are filled only while a quest runs, so a stopped quest showing
     /// every row empty is correct rather than broken.
-    let isRunning: Bool
+    public let isRunning: Bool
     /// Every alias the record declares, in the file order they fill in.
-    let rows: [ScriptQuestAliasRow]
+    public let rows: [ScriptQuestAliasRow]
 
-    var filledCount: Int {
+    public var filledCount: Int {
         rows.count { $0.reference != nil }
+    }
+
+    public init(
+        editorID: String,
+        formIDText: String,
+        isRunning: Bool,
+        rows: [ScriptQuestAliasRow]
+    ) {
+        self.editorID = editorID
+        self.formIDText = formIDText
+        self.isRunning = isRunning
+        self.rows = rows
     }
 }
 
@@ -56,13 +82,13 @@ nonisolated struct ScriptQuestAliasInspection: Equatable, Sendable {
 /// A struct rather than a set of individual protocol properties, for the same
 /// reason `RuntimeStateSnapshot` is one: the panel refreshes all of these
 /// together, so the readout stays a pure function of a single engine sample.
-nonisolated struct ScriptsSnapshot: Equatable {
+nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     /// Unimplemented natives a snapshot names, most-called first. The panel
     /// shows the worst offenders, not the whole tally, which runs to hundreds
     /// of names on a real install.
-    static let topUnimplementedNativeLimit = 5
+    public static let topUnimplementedNativeLimit = 5
 
-    static let empty = ScriptsSnapshot(
+    public static let empty = ScriptsSnapshot(
         instanceCount: 0,
         targetDescription: nil,
         targetScripts: [],
@@ -100,99 +126,99 @@ nonisolated struct ScriptsSnapshot: Equatable {
 
     /// Live script instances the world runtime owns across every attached
     /// cell, plus whatever persistent instances outlived their cell.
-    let instanceCount: Int
+    public let instanceCount: Int
     /// `ReferenceKey.description` of the current interaction target, or nil
     /// when nothing is targeted. A `String` rather than a `ReferenceKey` so
     /// the panel needs no formatting logic, matching
     /// `RuntimeStateSnapshot.currentTargetDescription`.
-    let targetDescription: String?
+    public let targetDescription: String?
     /// Script names attached to that target, sorted. Empty both when nothing
     /// is targeted and when the target carries no scripts; the panel tells
     /// those apart by `targetDescription` being nil.
-    let targetScripts: [String]
+    public let targetScripts: [String]
 
     // MARK: Quests
 
     /// Script instances belonging to a quest rather than to a placed
     /// reference (issue #322). A subset of `instanceCount`.
-    let questInstanceCount: Int
+    public let questInstanceCount: Int
     /// Quests holding at least one of those instances.
-    let questCount: Int
+    public let questCount: Int
     /// Quests the session's state reports as running, scripted or not. Zero
     /// when the session has no quest index at all, which is also what a
     /// synthetic scene shows.
-    let runningQuestCount: Int
+    public let runningQuestCount: Int
     /// Stage fragments enqueued this session.
-    let questFragmentsQueued: Int
+    public let questFragmentsQueued: Int
     /// Newest stage fragment enqueued, worded like a recent-event entry. Nil
     /// until a stage carrying a fragment is set.
-    let lastQuestFragment: String?
+    public let lastQuestFragment: String?
     /// Script instances belonging to a filled quest alias (issue #183). Keyed
     /// by the filled reference rather than by the quest, so these are *not* a
     /// subset of `questInstanceCount`, though they are one of `instanceCount`.
-    let questAliasInstanceCount: Int
+    public let questAliasInstanceCount: Int
     /// Aliases filled across every quest this session.
-    let filledAliasCount: Int
+    public let filledAliasCount: Int
     /// Quests holding at least one filled alias. Lower than `runningQuestCount`
     /// whenever a running quest declares no alias, or declares only ones whose
     /// fill type OpenSky does not implement.
-    let aliasQuestCount: Int
+    public let aliasQuestCount: Int
     /// Quests whose alias fill failed while their scripts were attached at
     /// wire-up. Nonzero means a start-game-enabled quest is running with an
     /// empty table it should have refused to start with.
-    let questAliasFillFailures: Int
+    public let questAliasFillFailures: Int
     /// Newest alias filled, worded like a recent-event entry. Nil until a quest
     /// with a fillable alias starts.
-    let lastQuestAliasFill: String?
+    public let lastQuestAliasFill: String?
 
     // MARK: Events
 
     /// Preformatted names of the most recently dispatched events, oldest
     /// last, at most `PapyrusWorldRuntime.recentEventLimit` of them.
-    let recentEvents: [String]
+    public let recentEvents: [String]
     /// Recent-event entries pushed out of the ring by newer ones.
-    let droppedRecentEventCount: Int
+    public let droppedRecentEventCount: Int
     /// Events queued but not yet dispatched, carried to the next tick.
-    let pendingEventCount: Int
+    public let pendingEventCount: Int
 
     // MARK: Scheduler
 
     /// Mirror of `PapyrusWorldRuntime.isPaused`, the VM's own pause. Not the
     /// engine's menu-mode pause, which is a separate control.
-    let isPaused: Bool
+    public let isPaused: Bool
     /// Latent calls parked in the scheduler, `Utility.Wait` above all.
-    let pendingWaitCount: Int
+    public let pendingWaitCount: Int
     /// Armed `RegisterForUpdate` timer slots across every instance.
-    let pendingTimerCount: Int
+    public let pendingTimerCount: Int
     /// Fixed steps the scheduler has run this session.
-    let tickCount: Int
+    public let tickCount: Int
     /// Per-tick dispatch ceiling in events.
-    let budgetEvents: Int
+    public let budgetEvents: Int
     /// Per-tick dispatch ceiling in interpreted instructions.
-    let budgetInstructions: Int
+    public let budgetInstructions: Int
 
     // Fields of `PapyrusWorldRuntime.lastTickReport`, flattened so the panel
     // reads scalars rather than reaching into an engine value type.
 
-    let lastTickSteps: Int
-    let lastTickDispatched: Int
-    let lastTickQueued: Int
-    let lastTickResumed: Int
-    let lastTickFaulted: Int
+    public let lastTickSteps: Int
+    public let lastTickDispatched: Int
+    public let lastTickQueued: Int
+    public let lastTickResumed: Int
+    public let lastTickFaulted: Int
 
     // MARK: Native coverage
 
     /// Native calls the session made, implemented or not.
-    let nativeCallTotal: Int
+    public let nativeCallTotal: Int
     /// Distinct native names the session called that never reported
     /// `PapyrusNativeFailure.unimplemented`. This is coverage as observed,
     /// not as registered: a native nothing has called yet is not counted.
-    let implementedNativeNameCount: Int
+    public let implementedNativeNameCount: Int
     /// Calls that returned `PapyrusNativeFailure.unimplemented`.
-    let unimplementedNativeTotal: Int
+    public let unimplementedNativeTotal: Int
     /// The most-called unimplemented natives, at most
     /// `topUnimplementedNativeLimit` of them.
-    let topUnimplementedNatives: [ScriptsNativeCount]
+    public let topUnimplementedNatives: [ScriptsNativeCount]
 }
 
 /// Live-renderer seam for the World > Scripts panel.
@@ -201,7 +227,7 @@ nonisolated struct ScriptsSnapshot: Equatable {
 /// declares it and the panel reaches it through the composed
 /// `WorldControlProviders`.
 @MainActor
-protocol ScriptControlProviding: AnyObject {
+public protocol ScriptControlProviding: AnyObject {
     /// One sample of everything the readout shows. `ScriptsSnapshot.empty`
     /// when the session has no VM, which is what a synthetic scene or an
     /// install carrying no compiled scripts leaves behind.

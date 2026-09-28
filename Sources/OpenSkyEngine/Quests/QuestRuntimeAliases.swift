@@ -27,7 +27,7 @@ extension QuestRuntime {
     /// objective reads as all-false.
     ///
     /// - Throws: `QuestError.unknownQuest`, `QuestError.unresolvedQuestKey`.
-    func aliasState(of id: FormID) throws -> QuestAliasState {
+    public func aliasState(of id: FormID) throws -> QuestAliasState {
         guard quests.quest(id) != nil else {
             throw QuestError.unknownQuest(id)
         }
@@ -43,20 +43,20 @@ extension QuestRuntime {
     /// The lookup shape the Papyrus binding seam and the condition evaluator
     /// both need: a VMAD alias property and a `questAlias` run-on each arrive
     /// holding a quest plus an alias number and nothing else.
-    func aliasReference(alias aliasID: UInt32, in id: FormID) -> ReferenceKey? {
+    public func aliasReference(alias aliasID: UInt32, in id: FormID) -> ReferenceKey? {
         guard let key = quests.key(for: id) else { return nil }
         return store.component(QuestAliasState.self, for: key)?.reference(forAlias: aliasID)
     }
 
     /// Location currently filling one ALLS alias.
-    func aliasLocation(alias aliasID: UInt32, in id: FormID) -> ResolvedFormID? {
+    public func aliasLocation(alias aliasID: UInt32, in id: FormID) -> ResolvedFormID? {
         guard let key = quests.key(for: id) else { return nil }
         return store.component(QuestAliasState.self, for: key)?.location(forAlias: aliasID)
     }
 
     /// Every quest with a non-empty alias table, in `ReferenceKey` order,
     /// paired with the record it belongs to. For inspection surfaces.
-    func filledAliasQuests() -> [(quest: Quest, aliases: QuestAliasState)] {
+    public func filledAliasQuests() -> [(quest: Quest, aliases: QuestAliasState)] {
         quests.sortedQuests().compactMap { quest in
             guard
                 let key = quests.key(for: quest.formID),
@@ -71,7 +71,7 @@ extension QuestRuntime {
 
     /// The seam conditions read alias fills through, built the same way
     /// `resolution()` builds the quest-state seam.
-    func aliasResolution() -> QuestAliasResolution {
+    public func aliasResolution() -> QuestAliasResolution {
         var tables: [ReferenceKey: QuestAliasState] = [:]
         for quest in quests.sortedQuests() {
             guard
@@ -98,7 +98,7 @@ extension QuestRuntime {
     ///   empty, in which case nothing is written.
     /// - Returns: the table as stored, and the reasons any alias stayed empty.
     @discardableResult
-    func fillAliases(of quest: Quest, key: ReferenceKey) throws -> QuestAliasFillResult {
+    public func fillAliases(of quest: Quest, key: ReferenceKey) throws -> QuestAliasFillResult {
         if let existing = store.component(QuestAliasState.self, for: key), !existing.isEmpty {
             return QuestAliasFillResult(
                 state: existing, skipped: QuestAliasTally(), unfilledRequired: []
@@ -127,7 +127,7 @@ extension QuestRuntime {
     ///
     /// - Returns: true when a table was actually removed.
     @discardableResult
-    func clearAliases(key: ReferenceKey) -> Bool {
+    public func clearAliases(key: ReferenceKey) -> Bool {
         store.reset(.questAliases, for: key)
     }
 }

@@ -5,7 +5,7 @@
 // fake exists now so the aggregate provider protocol stays satisfiable and the
 // registry tests keep compiling.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// The stored half of the fake's locomotion state, kept as one value so the

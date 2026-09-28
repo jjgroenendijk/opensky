@@ -13,6 +13,7 @@
 // See docs/engine/barter.md.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 import OSLog

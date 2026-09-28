@@ -18,22 +18,22 @@ import OpenSkyFormats
 /// Where the listener is, expressed as the only fields music selection reads.
 /// The streamer emits a fresh value whenever the center cell changes (exterior
 /// recenter, interior enter/exit).
-nonisolated struct MusicContext: Equatable, Sendable {
-    let isInterior: Bool
+nonisolated public struct MusicContext: Equatable, Sendable {
+    public let isInterior: Bool
     /// CELL.XCMO override; nil when the cell authors none.
-    let cellMusicType: FormID?
+    public let cellMusicType: FormID?
     /// XCLR REGN FormIDs for the exterior center cell; empty for interiors.
-    let regions: [FormID]
+    public let regions: [FormID]
     /// WRLD.ZNAM of the owning worldspace; nil for interiors and worldspaces
     /// without one.
-    let worldspaceMusicType: FormID?
+    public let worldspaceMusicType: FormID?
     /// Stable identity of the cell the context came from (interior CELL FormID
     /// or the packed exterior grid coordinate). Only feeds the deterministic
     /// track pick, so two cells sharing a playlist do not always open on the
     /// same track.
-    let cellIdentity: UInt32
+    public let cellIdentity: UInt32
 
-    static let empty = MusicContext(
+    public static let empty = MusicContext(
         isInterior: false,
         cellMusicType: nil,
         regions: [],
@@ -44,7 +44,7 @@ nonisolated struct MusicContext: Equatable, Sendable {
     /// Reproducible seed for the track ordering. Deliberately hand-rolled
     /// (FNV-1a over the fields) because `Hasher` is seeded per process, which
     /// would make the "random" pick differ between two runs of the same scene.
-    var seed: UInt64 {
+    public var seed: UInt64 {
         var hash: UInt64 = 0xCBF2_9CE4_8422_2325
         func mix(_ value: UInt64) {
             var remaining = value
@@ -67,7 +67,7 @@ nonisolated struct MusicContext: Equatable, Sendable {
 
 /// The three music states milestone 9.2.3 names. Derivation and limits:
 /// docs/engine/music.md.
-nonisolated enum MusicState: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum MusicState: String, Equatable, Sendable, CaseIterable {
     /// Any interior CELL, whatever playlist it selects.
     case interior
     /// Exterior whose selected MUSC editor id follows Bethesda's town naming
@@ -84,7 +84,7 @@ nonisolated enum MusicState: String, Equatable, Sendable, CaseIterable {
     /// lets leaving combat restore the selection it interrupted.
     case combat
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .interior: "interior"
         case .town: "town"
@@ -95,7 +95,7 @@ nonisolated enum MusicState: String, Equatable, Sendable, CaseIterable {
 }
 
 /// How the director walks the playlist once a track ends.
-nonisolated enum MusicPlaylistAdvance: String, Equatable, Sendable {
+nonisolated public enum MusicPlaylistAdvance: String, Equatable, Sendable {
     /// MUSC "Plays One Selection": one track, then silence.
     case stopAfterOne
     /// No cycle flag: the single chosen track repeats for as long as the
@@ -107,46 +107,46 @@ nonisolated enum MusicPlaylistAdvance: String, Equatable, Sendable {
 }
 
 /// One MUST track reduced to what playback needs.
-nonisolated struct PlayableMusicTrack: Equatable, Sendable {
-    let formID: FormID
-    let editorID: String?
+nonisolated public struct PlayableMusicTrack: Equatable, Sendable {
+    public let formID: FormID
+    public let editorID: String?
     /// Canonical VFS key of the ANAM stream.
-    let path: String
+    public let path: String
 }
 
 /// A resolved playlist: which MUSC won the precedence chain, the tracks it
 /// contributes in play order, and the transition policy. Equatable so the
 /// director can skip a restart when a new context resolves to the same music.
-nonisolated struct MusicSelection: Equatable, Sendable {
+nonisolated public struct MusicSelection: Equatable, Sendable {
     /// Crossfade used when the MUSC authors no WNAM fade duration.
-    static let defaultCrossfadeSeconds: Float = 2
+    public static let defaultCrossfadeSeconds: Float = 2
     /// Depth bound on palette (MUST-of-MUSTs) expansion.
-    static let maximumPaletteDepth = 4
+    public static let maximumPaletteDepth = 4
 
-    let state: MusicState
+    public let state: MusicState
     /// The MUSC that won; nil when nothing was selectable.
-    let musicType: FormID?
-    let editorID: String?
+    public let musicType: FormID?
+    public let editorID: String?
     /// Play order. Truncated to one entry unless `advance` is `.cycle`.
-    let tracks: [PlayableMusicTrack]
-    let advance: MusicPlaylistAdvance
+    public let tracks: [PlayableMusicTrack]
+    public let advance: MusicPlaylistAdvance
     /// Seconds the director crossfades over when swapping to this selection.
-    let crossfadeSeconds: Float
+    public let crossfadeSeconds: Float
 
-    var isSilent: Bool {
+    public var isSilent: Bool {
         tracks.isEmpty
     }
 
     /// Label for the panel readout: editor id when the record has one, else the
     /// FormID, else "none".
-    var displayName: String {
+    public var displayName: String {
         if let editorID, !editorID.isEmpty {
             return editorID
         }
         return musicType?.description ?? "none"
     }
 
-    static func silent(state: MusicState) -> MusicSelection {
+    public static func silent(state: MusicState) -> MusicSelection {
         MusicSelection(
             state: state,
             musicType: nil,
@@ -161,7 +161,7 @@ nonisolated struct MusicSelection: Equatable, Sendable {
     /// resolved through the ordinary chain becomes the combat selection: the
     /// tracks, the advance policy and the crossfade are the record's, and only
     /// the state — a game-system fact, not a record one — is imposed.
-    func labelled(_ state: MusicState) -> MusicSelection {
+    public func labelled(_ state: MusicState) -> MusicSelection {
         MusicSelection(
             state: state,
             musicType: musicType,
@@ -175,7 +175,7 @@ nonisolated struct MusicSelection: Equatable, Sendable {
     /// Walks the precedence chain for `context` and resolves the winner. An
     /// absent store, an unresolvable link, or a playlist with no playable file
     /// all degrade to a silent selection rather than throwing.
-    static func resolve(
+    public static func resolve(
         context: MusicContext,
         musicStore: MusicRecordStore?,
         weatherStore: WeatherStore?
@@ -199,7 +199,7 @@ nonisolated struct MusicSelection: Equatable, Sendable {
 
     /// Resolves one named MUSC directly. The panel's force control uses this;
     /// the context path funnels into it after picking a winner.
-    static func resolve(
+    public static func resolve(
         musicType id: FormID,
         musicStore: MusicRecordStore,
         isInterior: Bool = false,
@@ -265,7 +265,7 @@ nonisolated struct MusicSelection: Equatable, Sendable {
     /// selects nothing and the director leaves the music where it was rather
     /// than guessing (issue #374). The observation that these records exist in
     /// vanilla is M9's, recorded in docs/engine/music.md.
-    static let combatEditorIDPrefix = "muscombat"
+    public static let combatEditorIDPrefix = "muscombat"
 
     private static func derivedState(isInterior: Bool, editorID: String?) -> MusicState {
         if isInterior {
@@ -349,7 +349,7 @@ nonisolated struct MusicSelection: Equatable, Sendable {
     /// Fisher-Yates over a seeded generator. Hand-rolled rather than
     /// `shuffled(using:)` so the ordering is pinned by this repository, not by
     /// whatever the standard library's algorithm happens to be.
-    static func deterministicOrder(
+    public static func deterministicOrder(
         _ tracks: [PlayableMusicTrack],
         seed: UInt64
     ) -> [PlayableMusicTrack] {
@@ -369,7 +369,7 @@ nonisolated extension SplitMix64 {
     /// generator (weather rolls use the same one) so a "random" music pick has
     /// the same platform-stable, reproducible stream the rest of the engine
     /// relies on.
-    mutating func next(upperBound: UInt64) -> UInt64 {
+    public mutating func next(upperBound: UInt64) -> UInt64 {
         guard upperBound > 1 else { return 0 }
         let limit = UInt64.max - (UInt64.max % upperBound)
         var value = next()

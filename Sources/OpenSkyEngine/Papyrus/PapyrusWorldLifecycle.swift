@@ -15,10 +15,10 @@ import OpenSkyFormats
 
 /// One script slated for instantiation during an attach, in deterministic
 /// `sortedEntries()` × VMAD-script order.
-nonisolated struct PapyrusAttachItem {
-    let key: PapyrusInstanceKey
-    let script: AttachedScript
-    let isPersistent: Bool
+nonisolated public struct PapyrusAttachItem: Sendable {
+    public let key: PapyrusInstanceKey
+    public let script: AttachedScript
+    public let isPersistent: Bool
 }
 
 extension PapyrusWorldRuntime {
@@ -34,7 +34,7 @@ extension PapyrusWorldRuntime {
     /// Event order on first integration, per instance in sorted order:
     /// `OnInit` (only if never fired) then `OnCellAttach` then `OnLoad` —
     /// enqueued, never dispatched inline.
-    func attach(
+    public func attach(
         cell: CellSceneLocation,
         references: RuntimeReferenceIndex,
         formIDResolver: FormIDResolver,
@@ -64,7 +64,7 @@ extension PapyrusWorldRuntime {
     /// `isPersistent` survive with their variables intact — including across
     /// world-space transitions, since nothing ever retires them; everything
     /// else is removed from the runtime and from the event queue.
-    func detach(cell: CellSceneLocation) {
+    public func detach(cell: CellSceneLocation) {
         guard let keys = attachedByCell.removeValue(forKey: cell) else {
             return
         }
@@ -110,7 +110,7 @@ extension PapyrusWorldRuntime {
             ?? []
     }
 
-    func instantiate(_ item: PapyrusAttachItem) -> Bool {
+    public func instantiate(_ item: PapyrusAttachItem) -> Bool {
         do {
             let handle = try runtime.makeInstance(scriptName: item.script.name)
             instancesByKey[item.key] = handle
@@ -124,7 +124,7 @@ extension PapyrusWorldRuntime {
 
     /// Second attach pass: bind VMAD properties once every instance in the
     /// cell exists, so intra-cell object properties resolve to live handles.
-    func bind(
+    public func bind(
         plan: [PapyrusAttachItem],
         created: Set<PapyrusInstanceKey>,
         formIDResolver: FormIDResolver
@@ -196,7 +196,7 @@ extension PapyrusWorldRuntime {
         }
     }
 
-    func retire(_ key: PapyrusInstanceKey) {
+    public func retire(_ key: PapyrusInstanceKey) {
         guard let handle = instancesByKey.removeValue(forKey: key) else {
             return
         }

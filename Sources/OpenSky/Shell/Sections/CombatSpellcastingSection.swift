@@ -11,6 +11,7 @@
 // something the user did on purpose.
 
 import AppKit
+import OpenSkyEngine
 
 final class CombatSpellcastingSection: PanelSectionViewController {
     weak var provider: (any CastingControlProviding)? {

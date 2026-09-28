@@ -16,6 +16,7 @@
 // deliberate way back.
 
 import AppKit
+import OpenSkyEngine
 
 final class AICombatSection: PanelSectionViewController {
     weak var provider: (any CombatLoopControlProviding)? {

@@ -7,7 +7,7 @@
 // does to said-state and to the follow-up topics.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

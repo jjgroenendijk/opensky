@@ -4,12 +4,12 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum PackageResolveError: Error, Equatable {
+nonisolated public enum PackageResolveError: Error, Equatable {
     case missingPackage(FormID)
     case templateCycle([FormID])
 }
 
-nonisolated enum PackageProcedureKind: Equatable, Sendable {
+nonisolated public enum PackageProcedureKind: Equatable, Sendable {
     case travel
     case wander
     case sandbox
@@ -18,20 +18,20 @@ nonisolated enum PackageProcedureKind: Equatable, Sendable {
     case unsupported(String)
 }
 
-nonisolated struct ResolvedPackage: Equatable {
-    let package: Package
-    let template: Package?
-    let templateChain: [FormID]
-    let procedure: PackageProcedureKind
+nonisolated public struct ResolvedPackage: Equatable, Sendable {
+    public let package: Package
+    public let template: Package?
+    public let templateChain: [FormID]
+    public let procedure: PackageProcedureKind
 
-    var location: Package.Location? {
+    public var location: Package.Location? {
         package.dataInputs.compactMap { input -> Package.Location? in
             guard case let .location(value) = input.value else { return nil }
             return value
         }.first
     }
 
-    var target: Package.Target? {
+    public var target: Package.Target? {
         package.dataInputs.compactMap { input -> Package.Target? in
             guard case let .target(value) = input.value else { return nil }
             return value
@@ -39,16 +39,16 @@ nonisolated struct ResolvedPackage: Equatable {
     }
 }
 
-nonisolated struct PackageStore {
-    let packages: [UInt32: Package]
-    let actorTemplates: ActorTemplateResolver
+nonisolated public struct PackageStore: Sendable {
+    public let packages: [UInt32: Package]
+    public let actorTemplates: ActorTemplateResolver
 
-    static let empty = PackageStore(
+    public static let empty = PackageStore(
         packages: [],
         actorTemplates: ActorTemplateResolver(actors: [:], leveledActors: [:])
     )
 
-    init(file: ESMFile) {
+    public init(file: ESMFile) {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         actorTemplates = ActorTemplateResolver.build(from: file, localized: localized)
         var decoded: [UInt32: Package] = [:]
@@ -63,7 +63,7 @@ nonisolated struct PackageStore {
         packages = decoded
     }
 
-    init(packages: [Package], actorTemplates: ActorTemplateResolver) {
+    public init(packages: [Package], actorTemplates: ActorTemplateResolver) {
         self.packages = Dictionary(
             packages.map { ($0.formID.rawValue, $0) },
             uniquingKeysWith: { first, _ in first }
@@ -71,15 +71,15 @@ nonisolated struct PackageStore {
         self.actorTemplates = actorTemplates
     }
 
-    func package(_ id: FormID) -> Package? {
+    public func package(_ id: FormID) -> Package? {
         packages[id.rawValue]
     }
 
-    func packageStack(for actorBase: FormID) throws -> ActorSourcedField<[FormID]> {
+    public func packageStack(for actorBase: FormID) throws -> ActorSourcedField<[FormID]> {
         try actorTemplates.resolvePackages(base: actorBase).packages
     }
 
-    func resolve(_ id: FormID) throws -> ResolvedPackage {
+    public func resolve(_ id: FormID) throws -> ResolvedPackage {
         guard let concrete = package(id) else { throw PackageResolveError.missingPackage(id) }
         var chain: [FormID] = [id]
         var seen: Set<FormID> = [id]

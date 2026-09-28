@@ -34,27 +34,27 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// What one reconciliation did.
-nonisolated struct PerkAbilityReport: Equatable, Sendable {
+nonisolated public struct PerkAbilityReport: Equatable, Sendable {
     /// Spells newly granted, in ascending key order.
-    let granted: [ReferenceKey]
+    public let granted: [ReferenceKey]
     /// Spells taken back off, in ascending key order.
-    let revoked: [ReferenceKey]
+    public let revoked: [ReferenceKey]
     /// Constant effects stored across every newly granted ability.
-    let storedCount: Int
+    public let storedCount: Int
     /// Effects dispelled across every revoked ability.
-    let dispelledCount: Int
+    public let dispelledCount: Int
 
-    static let none = PerkAbilityReport(
+    public static let none = PerkAbilityReport(
         granted: [], revoked: [], storedCount: 0, dispelledCount: 0
     )
 
     /// Whether anything moved, which is what tells a caller to refresh a
     /// readout.
-    var didChange: Bool {
+    public var didChange: Bool {
         !granted.isEmpty || !revoked.isEmpty
     }
 
-    var describedLine: String {
+    public var describedLine: String {
         guard didChange else { return "Perk abilities unchanged." }
         return "Perk abilities: \(granted.count) granted (\(storedCount) effect(s)), "
             + "\(revoked.count) revoked (\(dispelledCount) effect(s))."
@@ -62,11 +62,11 @@ nonisolated struct PerkAbilityReport: Equatable, Sendable {
 }
 
 @MainActor
-enum PerkAbilityApplication {
+public enum PerkAbilityApplication {
     /// Makes the perk-sourced constant effects on `holder` match the abilities
     /// its owned perks grant.
     @discardableResult
-    static func reconcile(
+    public static func reconcile(
         on holder: ActorValueHolder,
         perks: PerkRuntime,
         spells: SpellStore,
@@ -119,7 +119,7 @@ enum PerkAbilityApplication {
     /// spell is not an ability: that spell is cast when the entry point fires
     /// (a combat hit, a bash), not carried, and applying it here would give
     /// every Bladesman owner a permanent bleed.
-    static func abilities(
+    public static func abilities(
         of holder: ActorValueHolder,
         perks: PerkRuntime,
         spells: SpellStore

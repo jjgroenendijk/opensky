@@ -5,7 +5,7 @@ import OpenSkyFormats
 import simd
 
 extension CellStreamer {
-    func sampleTerrain(at position: SIMD2<Float>) -> TerrainGroundSample? {
+    public func sampleTerrain(at position: SIMD2<Float>) -> TerrainGroundSample? {
         guard interiorScene == nil else { return nil }
         return composition.sampleTerrain(at: position)
     }
@@ -13,7 +13,7 @@ extension CellStreamer {
     /// Water-surface height for the locomotion bridge's swim test (issue #188).
     /// Interiors report none: a vanilla interior authors its water as placed
     /// geometry rather than as the cell-wide plane XCLW describes.
-    func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
+    public func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
         guard interiorScene == nil else { return nil }
         return composition.sampleWaterHeight(at: position)
     }
@@ -27,7 +27,7 @@ extension CellStreamer {
     /// through the query they already ran. The static half comes first so the
     /// world a body cannot move stays ahead of it in every deterministic
     /// tie-break.
-    func collisionCandidates(
+    public func collisionCandidates(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
         staticCollisionCandidates(overlapping: bounds)
@@ -36,7 +36,7 @@ extension CellStreamer {
 
     /// The immutable half alone, which is what the dynamic solver collides its
     /// bodies against — a body must not be handed itself as an obstacle.
-    func staticCollisionCandidates(
+    public func staticCollisionCandidates(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
         if let interiorScene {
@@ -45,7 +45,7 @@ extension CellStreamer {
         return composition.collisionCandidates(overlapping: bounds)
     }
 
-    func updateInteractionTarget(ray: InteractionRay?) {
+    public func updateInteractionTarget(ray: InteractionRay?) {
         let pick = ray.map(pickInteraction(ray:)) ?? (target: nil, speaker: nil)
         talk.speaker = pick.speaker
         guard pick.target != interactionTarget else { return }
@@ -111,7 +111,7 @@ extension CellStreamer {
     /// tag stands for the display name of whatever fills the alias, and an
     /// interaction is the only place a placed reference's resolved name is
     /// already sitting.
-    func interactionName(reference: FormID) -> String? {
+    public func interactionName(reference: FormID) -> String? {
         activeInteraction(reference: reference)?.name
     }
 
@@ -125,14 +125,14 @@ extension CellStreamer {
     /// Full decoded record behind a reference the player is looking at or
     /// otherwise addressing (issue #158). An interior scene replaces the
     /// exterior composition entirely, so it answers alone when present.
-    func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
+    public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
         if let interiorScene {
             return interiorScene.references.entry(for: formID)
         }
         return composition.referenceEntry(formID: formID)
     }
 
-    func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
+    public func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
         if let interiorScene {
             return interiorScene.references[key]
         }
@@ -146,7 +146,7 @@ extension CellStreamer {
     /// milestone, so "equip on the nearest actor" is what makes an equip
     /// visible. Linear over resident actors, which is tens of records, and
     /// deterministic on ties through `actorEntries()`.
-    func nearestActorEntry(to position: SIMD3<Float>) -> RuntimeReferenceEntry? {
+    public func nearestActorEntry(to position: SIMD3<Float>) -> RuntimeReferenceEntry? {
         residentActorEntries().min { lhs, rhs in
             distanceSquared(lhs, position) < distanceSquared(rhs, position)
         }
@@ -159,7 +159,7 @@ extension CellStreamer {
     /// would be work nobody can observe. An interior scene replaces the
     /// exterior composition entirely, exactly as it does for every other lookup
     /// here.
-    func residentActorEntries() -> [RuntimeReferenceEntry] {
+    public func residentActorEntries() -> [RuntimeReferenceEntry] {
         interiorScene.map {
             $0.references.sortedEntries().filter { $0.placedActor != nil }
         } ?? composition.actorEntries()
@@ -172,7 +172,7 @@ extension CellStreamer {
     /// its `XLCN` link (issue #504) — for a caller that has a location and needs
     /// what the CELL authored. An interior scene replaces the exterior
     /// composition entirely, exactly as it does for every other lookup here.
-    func residentScene(at location: CellSceneLocation) -> CellScene? {
+    public func residentScene(at location: CellSceneLocation) -> CellScene? {
         if let interiorScene {
             return interiorScene.location == location ? interiorScene : nil
         }
@@ -181,7 +181,7 @@ extension CellStreamer {
 
     /// Snapshot index for live package-condition evaluation. Unlike the actor
     /// list, this includes disabled REFRs that an explicit run-on may name.
-    func residentReferenceIndex() -> RuntimeReferenceIndex {
+    public func residentReferenceIndex() -> RuntimeReferenceIndex {
         RuntimeReferenceIndex(entries: interiorScene.map {
             $0.references.sortedEntries()
         } ?? composition.referenceEntries())
@@ -198,7 +198,7 @@ extension CellStreamer {
     /// Every resident container the merchant menu can be pointed at (issue
     /// #179). An interior scene replaces the exterior composition entirely, so
     /// it answers alone when present, exactly as it does for the lookups above.
-    func containerInteractions() -> [PlacedInteraction] {
+    public func containerInteractions() -> [PlacedInteraction] {
         if let interiorScene {
             return interiorScene.interactions.values
                 .filter { $0.action == .search }
@@ -216,7 +216,7 @@ extension CellStreamer {
     /// so an index would be a second thing to keep in step for no gain. Empty
     /// both when the actor resolved cleanly and when its cell is not resident;
     /// the panel distinguishes those by whether the actor was found at all.
-    func appearanceSkipReasons(forActor formID: FormID) -> [String] {
+    public func appearanceSkipReasons(forActor formID: FormID) -> [String] {
         let prefix = "ACHR \(formID): "
         let summaries = interiorScene.map { [$0.summary] } ?? composition.actorSummaries()
         return summaries
@@ -227,14 +227,14 @@ extension CellStreamer {
 
     /// Which resident cell holds a reference, so a Papyrus world write can be
     /// attributed to one cell instead of every resident one (issue #172).
-    func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+    public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
         if let interiorScene {
             return interiorScene.references[key] == nil ? nil : interiorScene.location
         }
         return composition.cellLocation(of: key)
     }
 
-    func activateInteractionTarget() {
+    public func activateInteractionTarget() {
         guard let interactionTarget else { return }
         onInteraction(InteractionEvent(target: interactionTarget))
         // After the plain event, so an activated actor reaches the audio and

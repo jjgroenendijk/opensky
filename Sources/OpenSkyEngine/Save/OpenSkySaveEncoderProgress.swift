@@ -17,7 +17,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `PLVL` chunk: every snapshot entry carrying character-level
     /// progress, in the snapshot's `ReferenceKey` order. A session that never
     /// levelled writes no chunk.
-    static func writePlayerProgress(
+    public static func writePlayerProgress(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

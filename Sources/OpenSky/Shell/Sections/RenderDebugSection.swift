@@ -15,6 +15,7 @@
 // them the way it releases a frozen physics simulation.
 
 import AppKit
+import OpenSkyEngine
 
 final class RenderDebugSection: PanelSectionViewController {
     weak var provider: (any RenderDebugControlProviding)? {

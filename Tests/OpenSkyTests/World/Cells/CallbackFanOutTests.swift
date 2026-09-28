@@ -2,7 +2,7 @@
 // empty case that every engine seam sits in until something subscribes.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 @MainActor

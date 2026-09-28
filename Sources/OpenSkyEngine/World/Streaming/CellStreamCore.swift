@@ -11,15 +11,15 @@ import simd
 /// What CellStreamer must drive after applying one grid diff: coordinates to
 /// hand the builder (each requested exactly once) and resident coordinates to
 /// drop from the composition (their cells left the grid).
-nonisolated struct StreamActions: Equatable {
-    let requests: [CellCoordinate]
-    let removals: [CellCoordinate]
+nonisolated public struct StreamActions: Equatable, Sendable {
+    public let requests: [CellCoordinate]
+    public let removals: [CellCoordinate]
 }
 
-nonisolated struct CellStreamCore {
+nonisolated public struct CellStreamCore: Sendable {
     /// How a completed build resolved. Payload-free: the core tracks only
     /// coordinates; CellStreamer carries the built CellScene for `.success`.
-    enum BuildKind: Equatable {
+    public enum BuildKind: Equatable, Sendable {
         /// Built a drawable cell.
         case success
         /// No CELL at the grid slot (void exterior slot, `cellNotFound`).
@@ -30,7 +30,7 @@ nonisolated struct CellStreamCore {
     }
 
     /// Outcome of folding one completed build back in.
-    enum IntegrationResult: Equatable {
+    public enum IntegrationResult: Equatable, Sendable {
         /// New resident cell -- caller adds it to the composition + recomposes.
         case integrated
         /// Recorded void; nothing to draw, no recompose.
@@ -43,33 +43,33 @@ nonisolated struct CellStreamCore {
     }
 
     /// Built cells currently resident (mirror of the composition's keys).
-    private(set) var resident: Set<CellCoordinate> = []
+    public private(set) var resident: Set<CellCoordinate> = []
     /// Requested, build dispatched, not yet integrated.
-    private(set) var inFlight: Set<CellCoordinate> = []
+    public private(set) var inFlight: Set<CellCoordinate> = []
     /// Slots with no CELL record -- remembered so the grid never re-requests
     /// them (retry storm), forgotten only when the slot leaves the grid.
-    private(set) var void: Set<CellCoordinate> = []
+    public private(set) var void: Set<CellCoordinate> = []
     /// Slots whose build threw -- same no-retry treatment as void.
-    private(set) var failed: Set<CellCoordinate> = []
+    public private(set) var failed: Set<CellCoordinate> = []
     /// Resident cells whose scene is being rebuilt against newer world state
     /// (issue #160). A rebuilding cell stays in `resident` throughout, so it
     /// keeps rendering its old scene until the replacement arrives; this set
     /// only records that a completion for an already-resident coordinate is
     /// expected and must not be discarded as stale.
-    private(set) var rebuilding: Set<CellCoordinate> = []
+    public private(set) var rebuilding: Set<CellCoordinate> = []
 
     /// Everything the grid manager must treat as already handled, so
     /// `CellGridManager.update` never re-emits these in `loads`. Feeding
     /// void + failed here (not just resident + in-flight) is what stops the
     /// per-frame retry storm on empty or broken slots.
-    var accountedCells: Set<CellCoordinate> {
+    public var accountedCells: Set<CellCoordinate> {
         resident.union(inFlight).union(void).union(failed)
     }
 
     /// Seeds one synchronously-built destination exterior cell after a door
     /// transition. Existing bookkeeping remains valid while streaming was
     /// suspended; destination becomes resident before next grid diff.
-    mutating func seedResident(_ coordinate: CellCoordinate) {
+    public mutating func seedResident(_ coordinate: CellCoordinate) {
         inFlight.remove(coordinate)
         void.remove(coordinate)
         failed.remove(coordinate)
@@ -81,7 +81,7 @@ nonisolated struct CellStreamCore {
     /// cell (issue #160). Returns false when the coordinate is not resident,
     /// which is how the streamer declines to dispatch a rebuild for a cell
     /// whose first build has not landed yet or that has since been unloaded.
-    mutating func beginRebuild(_ coordinate: CellCoordinate) -> Bool {
+    public mutating func beginRebuild(_ coordinate: CellCoordinate) -> Bool {
         guard resident.contains(coordinate) else { return false }
         rebuilding.insert(coordinate)
         return true
@@ -94,7 +94,7 @@ nonisolated struct CellStreamCore {
     /// slot is simply forgotten so a return visit rebuilds it fresh (an
     /// in-flight build still running is left to complete and then be
     /// discarded as stale, since it is no longer in `inFlight`).
-    mutating func apply(diff: CellGridDiff) -> StreamActions {
+    public mutating func apply(diff: CellGridDiff) -> StreamActions {
         for coordinate in diff.loads {
             inFlight.insert(coordinate)
         }
@@ -120,7 +120,7 @@ nonisolated struct CellStreamCore {
     /// (issue #160): a drawable result replaces the resident scene, while a
     /// void or failed result is discarded so the cell keeps the scene it is
     /// already rendering rather than vanishing because of a transient error.
-    mutating func integrate(
+    public mutating func integrate(
         coordinate: CellCoordinate,
         kind: BuildKind
     ) -> IntegrationResult {

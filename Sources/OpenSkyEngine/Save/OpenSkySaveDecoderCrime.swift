@@ -21,23 +21,23 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's saved ledger, before it is merged back into the delta.
-nonisolated struct SaveCrimeLedgerEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let ledger: CrimeLedgerState
+nonisolated public struct SaveCrimeLedgerEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let ledger: CrimeLedgerState
 }
 
 /// One owner's stolen counts, before they are laid over its inventory.
-nonisolated struct SaveStolenGoodsEntry: Equatable, Sendable {
-    let key: ReferenceKey
+nonisolated public struct SaveStolenGoodsEntry: Equatable, Sendable {
+    public let key: ReferenceKey
     /// How many copies of each item are stolen, in the order the chunk listed.
-    let stolen: [InventoryStack]
+    public let stolen: [InventoryStack]
 }
 
-nonisolated enum OpenSkySaveCrimeDecoder {
+nonisolated public enum OpenSkySaveCrimeDecoder: Sendable {
     // MARK: - CRIM
 
-    static func decodeCrimeLedgers(_ payload: Data) throws -> [SaveCrimeLedgerEntry] {
+    public static func decodeCrimeLedgers(_ payload: Data) throws -> [SaveCrimeLedgerEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CRIM entry count")
         try OpenSkySaveDecoder.validate(
@@ -57,7 +57,7 @@ nonisolated enum OpenSkySaveCrimeDecoder {
     /// Lays each saved ledger over the matching `RDLT` delta, adding an entry
     /// for an actor that had no other component, and re-sorts the result into
     /// `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ values: [SaveCrimeLedgerEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
@@ -73,7 +73,7 @@ nonisolated enum OpenSkySaveCrimeDecoder {
 
     // MARK: - STOL
 
-    static func decodeStolenGoods(_ payload: Data) throws -> [SaveStolenGoodsEntry] {
+    public static func decodeStolenGoods(_ payload: Data) throws -> [SaveStolenGoodsEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("STOL entry count")
         try OpenSkySaveDecoder.validate(
@@ -96,7 +96,7 @@ nonisolated enum OpenSkySaveCrimeDecoder {
     /// A stolen count larger than the total the inventory holds is clamped to
     /// that total rather than rejected: the invariant belongs to the component,
     /// and one impossible row is not a reason to fail a whole save.
-    static func mergeStolen(
+    public static func mergeStolen(
         _ values: [SaveStolenGoodsEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

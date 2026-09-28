@@ -15,25 +15,25 @@
 import OpenSkyFormats
 import OSLog
 
-nonisolated struct NavmeshIndex: Sendable {
-    static let logger = Logger(
+nonisolated public struct NavmeshIndex: Sendable {
+    public static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Navmesh"
     )
 
     /// Every NVMI entry, by the NAVM FormID it describes.
-    let infos: [UInt32: NavmeshInfo]
+    public let infos: [UInt32: NavmeshInfo]
     /// Navmeshes this plugin deletes from its masters. Kept separate from
     /// `infos` because a deleted navmesh has no entry to look up.
-    let deletedNavmeshes: Set<UInt32>
+    public let deletedNavmeshes: Set<UInt32>
     /// Location -> the navmeshes authored there. An exterior square usually
     /// holds one, but the array is the honest shape: nothing in the format
     /// forbids more, and island meshes share a square with the ground mesh.
     private let byLocation: [NavmeshLocation: [FormID]]
 
-    static let empty = NavmeshIndex(infos: [], deletedNavmeshes: [])
+    public static let empty = NavmeshIndex(infos: [], deletedNavmeshes: [])
 
-    init(file: ESMFile) {
+    public init(file: ESMFile) {
         var infos: [NavmeshInfo] = []
         var deleted: [FormID] = []
         if let group = file.topGroup(of: "NAVI"), let children = try? group.children() {
@@ -56,7 +56,7 @@ nonisolated struct NavmeshIndex: Sendable {
     }
 
     /// Test seam, and the shape the file initializer funnels into.
-    init(infos: [NavmeshInfo], deletedNavmeshes: [FormID]) {
+    public init(infos: [NavmeshInfo], deletedNavmeshes: [FormID]) {
         self.infos = Dictionary(
             infos.map { ($0.navmesh.rawValue, $0) },
             // Two NVMI entries cannot name the same NAVM in a well-formed
@@ -69,32 +69,32 @@ nonisolated struct NavmeshIndex: Sendable {
         }
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         infos.isEmpty
     }
 
-    var count: Int {
+    public var count: Int {
         infos.count
     }
 
-    func info(_ navmesh: FormID) -> NavmeshInfo? {
+    public func info(_ navmesh: FormID) -> NavmeshInfo? {
         infos[navmesh.rawValue]
     }
 
     /// The navmeshes authored at a location, in record order.
-    func navmeshes(at location: NavmeshLocation) -> [FormID] {
+    public func navmeshes(at location: NavmeshLocation) -> [FormID] {
         byLocation[location] ?? []
     }
 
     /// Navmeshes reachable across a shared edge from `navmesh`. Empty for an
     /// unknown FormID, which is the same answer as "links nowhere" — a route
     /// that cannot name its start has nowhere to continue to either.
-    func edgeLinks(from navmesh: FormID) -> [FormID] {
+    public func edgeLinks(from navmesh: FormID) -> [FormID] {
         info(navmesh)?.edgeLinks ?? []
     }
 
     /// Every location the index knows about. The order is unspecified.
-    var locations: [NavmeshLocation] {
+    public var locations: [NavmeshLocation] {
         Array(byLocation.keys)
     }
 }

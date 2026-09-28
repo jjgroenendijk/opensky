@@ -30,9 +30,9 @@ import Foundation
 
 /// One parsed transition condition. Immutable, so the evaluator parses each
 /// authored string once and reuses the tree.
-nonisolated struct BehaviorConditionExpression: Equatable {
+nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
     /// The comparisons the authored strings use.
-    enum Comparison: String, Equatable, Sendable {
+    public enum Comparison: String, Equatable, Sendable {
         case equal = "=="
         case notEqual = "!="
         case greaterOrEqual = ">="
@@ -41,9 +41,9 @@ nonisolated struct BehaviorConditionExpression: Equatable {
         case less = "<"
 
         /// Longest first, so `>=` is not read as `>` followed by `=`.
-        static let allSpellings = ["==", "!=", ">=", "<=", ">", "<"]
+        public static let allSpellings = ["==", "!=", ">=", "<=", ">", "<"]
 
-        func holds(_ lhs: Float, _ rhs: Float) -> Bool {
+        public func holds(_ lhs: Float, _ rhs: Float) -> Bool {
             switch self {
             case .equal: lhs == rhs
             case .notEqual: lhs != rhs
@@ -55,7 +55,7 @@ nonisolated struct BehaviorConditionExpression: Equatable {
         }
     }
 
-    indirect enum Node: Equatable {
+    indirect public enum Node: Equatable, Sendable {
         case number(Float)
         case variable(String)
         case negation(Node)
@@ -65,12 +65,12 @@ nonisolated struct BehaviorConditionExpression: Equatable {
     }
 
     /// The authored text, kept so the tally can name what failed.
-    let source: String
-    let root: Node
+    public let source: String
+    public let root: Node
 
     /// Parses `source`, or returns nil when it is empty or does not fit the
     /// grammar above. Never throws and never traps: the text is external input.
-    static func parse(_ source: String) -> BehaviorConditionExpression? {
+    public static func parse(_ source: String) -> BehaviorConditionExpression? {
         guard let tokens = BehaviorConditionLexer.tokens(of: source) else { return nil }
         var parser = BehaviorConditionParser(tokens: tokens)
         guard let root = parser.parseDisjunction(), parser.isAtEnd else { return nil }
@@ -78,7 +78,7 @@ nonisolated struct BehaviorConditionExpression: Equatable {
     }
 
     /// True or false when every name resolves, nil when one does not.
-    func evaluate(in variables: BehaviorVariableStore) -> Bool? {
+    public func evaluate(in variables: BehaviorVariableStore) -> Bool? {
         Self.truth(of: root, in: variables)
     }
 
@@ -121,7 +121,7 @@ nonisolated struct BehaviorConditionExpression: Equatable {
 
 /// One lexed token. Split out so the parser reads as grammar rather than as
 /// character handling.
-nonisolated enum BehaviorConditionToken: Equatable {
+nonisolated public enum BehaviorConditionToken: Equatable, Sendable {
     case number(Float)
     case name(String)
     case comparison(BehaviorConditionExpression.Comparison)
@@ -134,8 +134,8 @@ nonisolated enum BehaviorConditionToken: Equatable {
 
 /// Text to tokens. Returns nil on any character the grammar has no place for,
 /// so an unexpected authored form is reported rather than half-read.
-nonisolated enum BehaviorConditionLexer {
-    static func tokens(of source: String) -> [BehaviorConditionToken]? {
+nonisolated public enum BehaviorConditionLexer: Sendable {
+    public static func tokens(of source: String) -> [BehaviorConditionToken]? {
         var tokens: [BehaviorConditionToken] = []
         let characters = Array(source)
         var index = 0
@@ -232,19 +232,19 @@ nonisolated enum BehaviorConditionLexer {
 
 /// Recursive descent over the token list. Every rule returns nil rather than
 /// throwing, because a malformed condition is data, not a programming error.
-nonisolated struct BehaviorConditionParser {
-    let tokens: [BehaviorConditionToken]
+nonisolated public struct BehaviorConditionParser: Sendable {
+    public let tokens: [BehaviorConditionToken]
     private var index = 0
 
-    init(tokens: [BehaviorConditionToken]) {
+    public init(tokens: [BehaviorConditionToken]) {
         self.tokens = tokens
     }
 
-    var isAtEnd: Bool {
+    public var isAtEnd: Bool {
         index >= tokens.count
     }
 
-    mutating func parseDisjunction() -> BehaviorConditionExpression.Node? {
+    public mutating func parseDisjunction() -> BehaviorConditionExpression.Node? {
         guard var node = parseConjunction() else { return nil }
         while match(.or) {
             guard let right = parseConjunction() else { return nil }

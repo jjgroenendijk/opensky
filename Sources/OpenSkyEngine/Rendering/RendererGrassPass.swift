@@ -13,7 +13,7 @@ extension Renderer {
         let maximumDistanceSquared: Float
     }
 
-    func encodeGrass(groups: [GrassDrawGroup], state: inout ScenePassState) {
+    public func encodeGrass(groups: [GrassDrawGroup], state: inout ScenePassState) {
         var stats = GrassDrawStats(
             sceneInstances: groups.reduce(0) { $0 + $1.instances.count }
         )

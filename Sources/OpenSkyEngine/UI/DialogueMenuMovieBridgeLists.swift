@@ -26,7 +26,7 @@ nonisolated extension DialogueMenuMovieBridge {
     /// rebuilds the entry clips from the array and resets `iSelectedIndex` to
     /// the base's -1 sentinel as it goes, so the selection is written
     /// afterwards, never before.
-    static func publish(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
+    public static func publish(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
         setSpeakerName(model.speaker, runtime: runtime)
         publishTopics(model, runtime: runtime)
         publishLine(model, runtime: runtime)
@@ -47,7 +47,7 @@ nonisolated extension DialogueMenuMovieBridge {
     /// The value comes off the movie's own class constants rather than from a
     /// number pinned here, so a movie whose vocabulary moved is a no-op rather
     /// than a wrong state.
-    static func setMenuState(_ state: DialogueMenuModel.State, runtime: SWFMovieRuntime) {
+    public static func setMenuState(_ state: DialogueMenuModel.State, runtime: SWFMovieRuntime) {
         guard
             let value = stateConstant(constantName(for: state), runtime: runtime),
             let menu = runtime.node(atPath: menuPath, from: runtime.root)
@@ -59,7 +59,7 @@ nonisolated extension DialogueMenuMovieBridge {
     }
 
     /// The movie's own name for one engine state.
-    static func constantName(for state: DialogueMenuModel.State) -> String {
+    public static func constantName(for state: DialogueMenuModel.State) -> String {
         switch state {
         case .greeting: "SHOW_GREETING"
         case .topicList: "TOPIC_LIST_SHOWN"
@@ -68,7 +68,7 @@ nonisolated extension DialogueMenuMovieBridge {
     }
 
     /// The topic rows and the selection.
-    static func publishTopics(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
+    public static func publishTopics(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
         let rows = model.topics.enumerated().map { index, entry in
             topicRow(entry, index: index)
         }
@@ -100,7 +100,7 @@ nonisolated extension DialogueMenuMovieBridge {
     /// field directly. The rows stay listed behind a line either way — what
     /// stops a second choice landing on top of the first is the selection,
     /// which `publishTopics` writes as -1 while a response is being said.
-    static func publishLine(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
+    public static func publishLine(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
         guard let line = model.line else {
             setSubtitle(nil, runtime: runtime)
             runtime.callMovie("ShowDialogueList", atPath: menuPath, arguments: [])
@@ -110,7 +110,7 @@ nonisolated extension DialogueMenuMovieBridge {
     }
 
     /// Writes the subtitle field and drives the movie's show/hide around it.
-    static func setSubtitle(_ text: String?, runtime: SWFMovieRuntime) {
+    public static func setSubtitle(_ text: String?, runtime: SWFMovieRuntime) {
         guard let text, !text.isEmpty else {
             setText("", atPath: subtitleTextPath, runtime: runtime)
             runtime.callMovie("HideDialogueText", atPath: menuPath, arguments: [])
@@ -122,7 +122,7 @@ nonisolated extension DialogueMenuMovieBridge {
         )
     }
 
-    static func setSpeakerName(_ name: String, runtime: SWFMovieRuntime) {
+    public static func setSpeakerName(_ name: String, runtime: SWFMovieRuntime) {
         setText(name, atPath: speakerNamePath, runtime: runtime)
         runtime.callMovie(
             "SetSpeakerName", atPath: menuPath, arguments: [.string(name)]
@@ -130,7 +130,7 @@ nonisolated extension DialogueMenuMovieBridge {
     }
 
     /// Replaces the topic list's `EntriesA` with `rows`.
-    static func publish(
+    public static func publish(
         rows: [[String: AS2Value]],
         atPath path: String,
         runtime: SWFMovieRuntime
@@ -159,7 +159,7 @@ nonisolated extension DialogueMenuMovieBridge {
     /// method is called with the row index and at row 2 when it is not, so
     /// whatever it takes, it is not the index — and calling it would silently
     /// undo the selection the engine just made.
-    static func select(_ index: Int, count: Int, runtime: SWFMovieRuntime) {
+    public static func select(_ index: Int, count: Int, runtime: SWFMovieRuntime) {
         guard let list = runtime.node(atPath: topicListPath, from: runtime.root) else {
             return
         }
@@ -186,7 +186,7 @@ nonisolated extension DialogueMenuMovieBridge {
     /// whose winning response changed is not a topic the player has not seen.
     /// `responseHash` carries the winning INFO's FormID, which is the identity
     /// OpenSky actually addresses a response by.
-    static func topicRow(_ entry: DialogueTopicEntry, index: Int) -> [String: AS2Value] {
+    public static func topicRow(_ entry: DialogueTopicEntry, index: Int) -> [String: AS2Value] {
         [
             "text": .string(entry.text),
             "topicIndex": .integer(index),
@@ -201,7 +201,7 @@ nonisolated extension DialogueMenuMovieBridge {
     ///
     /// `EntriesA` is an AS2 array, so its rows are numeric property names and
     /// have to be sorted numerically — lexical order puts row 10 before row 2.
-    static func topicLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func topicLabels(runtime: SWFMovieRuntime) -> [String] {
         guard
             let list = runtime.node(atPath: topicListPath, from: runtime.root),
             let entries = list.object.lookup(entryArrayName)?.property.value.objectValue
@@ -223,7 +223,7 @@ nonisolated extension DialogueMenuMovieBridge {
     }
 
     /// The row the movie has selected, or nil when it has none.
-    static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
+    public static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
         guard
             let list = runtime.node(atPath: topicListPath, from: runtime.root),
             case let .number(index) = list.object.lookup(selectedIndexName)?.property.value,
@@ -236,17 +236,17 @@ nonisolated extension DialogueMenuMovieBridge {
 
     /// Text the movie's own subtitle field holds, which is what proves a
     /// publish reached the movie rather than only the engine model.
-    static func subtitleText(runtime: SWFMovieRuntime) -> String? {
+    public static func subtitleText(runtime: SWFMovieRuntime) -> String? {
         text(atPath: subtitleTextPath, runtime: runtime)
     }
 
-    static func speakerNameText(runtime: SWFMovieRuntime) -> String? {
+    public static func speakerNameText(runtime: SWFMovieRuntime) -> String? {
         text(atPath: speakerNamePath, runtime: runtime)
     }
 
     /// Frame label the topic list holder is stopped on, which is the movie's
     /// own account of the transition it last played.
-    static func holderFrameLabel(runtime: SWFMovieRuntime) -> String? {
+    public static func holderFrameLabel(runtime: SWFMovieRuntime) -> String? {
         guard
             let holder = runtime.node(atPath: topicListHolderPath, from: runtime.root),
             let frames = holder.timeline?.frames,

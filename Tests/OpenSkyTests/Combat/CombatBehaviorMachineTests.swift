@@ -11,7 +11,7 @@
 // phases. The cadence cases are the same assertions against the same numbers;
 // everything else is behaviour the clock could not have.
 
-@testable import OpenSky
+import OpenSkyEngine
 import simd
 import Testing
 

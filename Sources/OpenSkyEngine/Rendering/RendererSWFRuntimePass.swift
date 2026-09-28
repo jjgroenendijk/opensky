@@ -19,7 +19,7 @@ import OpenSkyFormats
 extension Renderer {
     /// The AS2 runtime driving the assigned movie, or nil while the layer is on
     /// the static frame-1 path.
-    var swfRuntime: SWFMovieRuntime? {
+    public var swfRuntime: SWFMovieRuntime? {
         swf.runtime
     }
 
@@ -32,7 +32,7 @@ extension Renderer {
     /// `myLog` calls inside its own `DoInitAction` blocks — so a host surface
     /// installed after this returns arrives too late to answer them.
     @discardableResult
-    func startSWFRuntime(
+    public func startSWFRuntime(
         limits: AS2Limits = .standard,
         prepare: ((SWFMovieRuntime) -> Void)? = nil
     ) throws -> SWFMovieRuntime? {
@@ -55,7 +55,7 @@ extension Renderer {
     /// One explicit tick of the assigned movie. Pushes a new command stream
     /// only when the tick actually changed the display list, so an idle movie
     /// costs one dirty-flag read.
-    func advanceSWFRuntime() throws {
+    public func advanceSWFRuntime() throws {
         guard let runtime = swf.runtime else {
             return
         }
@@ -72,7 +72,7 @@ extension Renderer {
     /// Nothing here reads a clock or an event queue — the event is injected, on
     /// the main thread, between frames.
     @discardableResult
-    func sendSWFInput(_ event: SWFInputEvent) throws -> Bool {
+    public func sendSWFInput(_ event: SWFInputEvent) throws -> Bool {
         guard let runtime = swf.runtime else {
             return false
         }
@@ -87,7 +87,7 @@ extension Renderer {
     /// or a function on its root clip — the engine-to-movie half of the bridge —
     /// and pushes whatever the call changed.
     @discardableResult
-    func callSWFMovie(_ name: String, arguments: [AS2Value] = []) throws -> AS2Value {
+    public func callSWFMovie(_ name: String, arguments: [AS2Value] = []) throws -> AS2Value {
         guard let runtime = swf.runtime else {
             return .undefined
         }
@@ -102,7 +102,7 @@ extension Renderer {
     /// changed command stream. Vanilla `hudmenu.swf` keeps its entry points on
     /// `/HUDMovieBaseInstance` instead of registering GameDelegate callbacks.
     @discardableResult
-    func callSWFMovie(
+    public func callSWFMovie(
         _ name: String,
         atPath path: String,
         arguments: [AS2Value] = []
@@ -118,7 +118,7 @@ extension Renderer {
     /// Applies one engine-owned mutation to the live runtime and synchronizes
     /// the renderer once. HUD initialization uses this to batch meter, compass,
     /// and prompt state without rebuilding the command stream after each call.
-    func updateSWFRuntime(_ body: (SWFMovieRuntime) -> Void) throws {
+    public func updateSWFRuntime(_ body: (SWFMovieRuntime) -> Void) throws {
         guard let runtime = swf.runtime else {
             return
         }
@@ -127,7 +127,7 @@ extension Renderer {
     }
 
     /// Drops the runtime and restores the movie's static frame-1 stream.
-    func stopSWFRuntime() throws {
+    public func stopSWFRuntime() throws {
         guard swf.runtime != nil, let movie = swf.movie else {
             swf.runtime = nil
             return
@@ -142,7 +142,7 @@ extension Renderer {
     /// in-flight frames drain, exactly like a movie swap.
     ///
     /// Main thread, between frames — the same contract as `setSWFMovie`.
-    func updateSWFScene(_ scene: SWFScene) throws {
+    public func updateSWFScene(_ scene: SWFScene) throws {
         guard let movie = swf.movie else {
             return
         }

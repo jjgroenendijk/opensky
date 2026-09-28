@@ -19,7 +19,7 @@ extension WorldAudioEngine {
     /// `AVAudioEnvironmentNode` spatializes mono inputs and passes stereo
     /// through unspatialized (the same rule `AudioSourceStreamer.monoDownmix`
     /// follows for streamed sources).
-    nonisolated static func makeBuffer(
+    nonisolated public static func makeBuffer(
         wav data: Data,
         downmixToMono: Bool
     ) throws -> AVAudioPCMBuffer {
@@ -63,7 +63,7 @@ extension WorldAudioEngine {
     /// two share the RIFF header and differ in the form type at byte 8, so a
     /// twelve-byte peek decides which player path a file takes without parsing
     /// either container.
-    nonisolated static func isWAV(_ data: Data) -> Bool {
+    nonisolated public static func isWAV(_ data: Data) -> Bool {
         guard data.count >= 12 else { return false }
         let start = data.startIndex
         let magic = data[start ..< start + 4]

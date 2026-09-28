@@ -27,7 +27,7 @@ import simd
 extension PapyrusWorldStateBridge {
     // MARK: - Reading
 
-    func spellState(for key: ReferenceKey) -> PapyrusSpellState? {
+    public func spellState(for key: ReferenceKey) -> PapyrusSpellState? {
         guard
             let caster = casterRuntime?(),
             let holder = actorHolder(for: key)
@@ -48,7 +48,7 @@ extension PapyrusWorldStateBridge {
     // MARK: - Knowing
 
     @discardableResult
-    func addSpell(_ spell: ReferenceKey, to actor: ReferenceKey) -> Bool {
+    public func addSpell(_ spell: ReferenceKey, to actor: ReferenceKey) -> Bool {
         guard let caster = casterRuntime?(), let holder = actorHolder(for: actor) else {
             return false
         }
@@ -56,7 +56,7 @@ extension PapyrusWorldStateBridge {
     }
 
     @discardableResult
-    func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool {
+    public func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool {
         guard let caster = casterRuntime?(), let holder = actorHolder(for: actor) else {
             return false
         }
@@ -66,7 +66,7 @@ extension PapyrusWorldStateBridge {
     // MARK: - Readying
 
     @discardableResult
-    func equipSpell(
+    public func equipSpell(
         _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
     ) -> Bool {
         guard
@@ -82,7 +82,7 @@ extension PapyrusWorldStateBridge {
     }
 
     @discardableResult
-    func unequipSpell(
+    public func unequipSpell(
         _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
     ) -> Bool {
         guard
@@ -97,13 +97,13 @@ extension PapyrusWorldStateBridge {
     // MARK: - Dispelling
 
     @discardableResult
-    func dispelSpell(_ spell: ReferenceKey, on actor: ReferenceKey) -> Int {
+    public func dispelSpell(_ spell: ReferenceKey, on actor: ReferenceKey) -> Int {
         guard let holder = actorHolder(for: actor) else { return 0 }
         return dispelEffects?(holder) { $0.source.record == spell } ?? 0
     }
 
     @discardableResult
-    func dispelAllSpells(on actor: ReferenceKey) -> Int {
+    public func dispelAllSpells(on actor: ReferenceKey) -> Int {
         guard let holder = actorHolder(for: actor) else { return 0 }
         let spells = casterRuntime?()?.spellbook.spells
         return dispelEffects?(holder) { effect in
@@ -122,7 +122,7 @@ extension PapyrusWorldStateBridge {
     ///
     /// A source record this load order no longer resolves is left alone, which
     /// keeps a dropped plugin from turning into a silent mass dispel.
-    static func isDispellable(_ effect: ActiveEffect, spells: SpellStore?) -> Bool {
+    public static func isDispellable(_ effect: ActiveEffect, spells: SpellStore?) -> Bool {
         guard effect.source.kind == .spell, !effect.isConstant else { return false }
         guard let record = spells?.spell(key: effect.source.record) else { return false }
         switch record.spellType {
@@ -134,7 +134,7 @@ extension PapyrusWorldStateBridge {
     // MARK: - Casting
 
     @discardableResult
-    func castSpell(
+    public func castSpell(
         _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
     ) -> Bool {
         guard

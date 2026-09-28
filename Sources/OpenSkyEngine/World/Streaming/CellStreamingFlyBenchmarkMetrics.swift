@@ -6,28 +6,28 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct CollisionBuildBenchmarkSummary {
-    let average: Double
-    let p95: Double
-    let maximum: Double
-    let shapes: Int
-    let triangles: Int
+nonisolated public struct CollisionBuildBenchmarkSummary: Sendable {
+    public let average: Double
+    public let p95: Double
+    public let maximum: Double
+    public let shapes: Int
+    public let triangles: Int
 }
 
-nonisolated struct ActorBuildBenchmarkSummary {
-    let average: Double
-    let p95: Double
-    let maximum: Double
-    let discovered: Int
-    let rendered: Int
-    let disabledSkips: Int
-    let failures: Int
-    let animated: Int
-    let animationFailures: Int
-    let cellReports: [ActorCellReport]
+nonisolated public struct ActorBuildBenchmarkSummary: Sendable {
+    public let average: Double
+    public let p95: Double
+    public let maximum: Double
+    public let discovered: Int
+    public let rendered: Int
+    public let disabledSkips: Int
+    public let failures: Int
+    public let animated: Int
+    public let animationFailures: Int
+    public let cellReports: [ActorCellReport]
 }
 
-nonisolated func validatedFlyUpdateBudgets(
+nonisolated public func validatedFlyUpdateBudgets(
     render: OffscreenBenchResult,
     configuration: CellStreamingFlyBenchmarkConfiguration
 ) throws {
@@ -73,7 +73,7 @@ nonisolated func validatedFlyUpdateBudgets(
     }
 }
 
-nonisolated func validatedCollisionBuildMetrics(
+nonisolated public func validatedCollisionBuildMetrics(
     runner: SerialCellBuildRunner,
     configuration: CellStreamingFlyBenchmarkConfiguration,
     expectedCount: Int
@@ -118,7 +118,7 @@ nonisolated func validatedCollisionBuildMetrics(
 /// failure reason-tagged — 5.6 zero-unexplained rule), then the latency
 /// budget over the same per-cell durations. Count of metric entries is
 /// validated by validatedCollisionBuildMetrics.
-nonisolated func validatedActorBuildMetrics(
+nonisolated public func validatedActorBuildMetrics(
     runner: SerialCellBuildRunner,
     configuration: CellStreamingFlyBenchmarkConfiguration
 ) throws -> ActorBuildBenchmarkSummary {
@@ -215,6 +215,6 @@ nonisolated private func actorCellReports(
         }
 }
 
-nonisolated func p95Index(count: Int) -> Int {
+nonisolated public func p95Index(count: Int) -> Int {
     min(count - 1, Int(ceil(Double(count) * 0.95)) - 1)
 }

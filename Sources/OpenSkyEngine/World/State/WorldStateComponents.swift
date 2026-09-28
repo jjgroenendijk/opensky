@@ -22,7 +22,7 @@ import simd
 /// dictionary key inside `ReferenceStateDelta` and as the addressing token for
 /// per-component reset and journal entries. Adding a component in a later
 /// milestone means adding a case here plus a conforming value type.
-nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendable {
+nonisolated public enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendable {
     /// Runtime enable/disable, overriding the record's `initiallyDisabled`
     /// header flag.
     case enableState
@@ -164,7 +164,7 @@ nonisolated enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendab
 /// `erased` widens a concrete component into the storage representation, and
 /// `init(erased:)` narrows it back, returning nil when the value belongs to a
 /// different slot.
-nonisolated protocol WorldStateComponent: Equatable, Sendable {
+nonisolated public protocol WorldStateComponent: Equatable, Sendable {
     /// The slot this component type occupies.
     static var componentKind: WorldStateComponentKind { get }
     /// This value widened into the erased storage representation.
@@ -178,7 +178,7 @@ nonisolated protocol WorldStateComponent: Equatable, Sendable {
 /// This is the representation `ReferenceStateDelta` stores and the journal
 /// records, so old/new pairs in the journal stay strongly typed without the
 /// journal needing to be generic.
-nonisolated enum WorldStateComponentValue: Equatable, Sendable {
+nonisolated public enum WorldStateComponentValue: Equatable, Sendable {
     case enableState(ReferenceEnableState)
     case transform(ReferenceTransformOverride)
     case activation(ReferenceActivationState)
@@ -200,7 +200,7 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
     case playerProgress(PlayerProgressState)
     case crimeLedger(CrimeLedgerState)
 
-    var kind: WorldStateComponentKind {
+    public var kind: WorldStateComponentKind {
         switch self {
         case .enableState: .enableState
         case .transform: .transform
@@ -231,25 +231,25 @@ nonisolated enum WorldStateComponentValue: Equatable, Sendable {
 /// Whether a reference is currently enabled, overriding the record header's
 /// `initiallyDisabled` flag. Papyrus `Enable()` / `Disable()` (M11) writes
 /// exactly this component.
-nonisolated struct ReferenceEnableState: WorldStateComponent, Hashable {
-    var isEnabled: Bool
+nonisolated public struct ReferenceEnableState: WorldStateComponent, Hashable, Sendable {
+    public var isEnabled: Bool
 
-    static let enabled = ReferenceEnableState(isEnabled: true)
-    static let disabled = ReferenceEnableState(isEnabled: false)
+    public static let enabled = ReferenceEnableState(isEnabled: true)
+    public static let disabled = ReferenceEnableState(isEnabled: false)
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .enableState
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .enableState(self)
     }
 
-    init(isEnabled: Bool) {
+    public init(isEnabled: Bool) {
         self.isEnabled = isEnabled
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .enableState(value) = erased else { return nil }
         self = value
     }
@@ -258,40 +258,40 @@ nonisolated struct ReferenceEnableState: WorldStateComponent, Hashable {
 /// A full placement override: the REFR/ACHR DATA transform plus the XSCL
 /// scale, which the records keep as separate fields and this component keeps
 /// together because moving something at runtime touches both.
-nonisolated struct ReferenceTransformOverride: WorldStateComponent {
-    var placement: PlacedReference.Placement
+nonisolated public struct ReferenceTransformOverride: WorldStateComponent, Sendable {
+    public var placement: PlacedReference.Placement
     /// Uniform scale, matching XSCL semantics; 1 is "unscaled".
-    var scale: Float
+    public var scale: Float
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .transform
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .transform(self)
     }
 
-    var position: SIMD3<Float> {
+    public var position: SIMD3<Float> {
         placement.position
     }
 
-    var rotation: SIMD3<Float> {
+    public var rotation: SIMD3<Float> {
         placement.rotation
     }
 
-    init(placement: PlacedReference.Placement, scale: Float = 1) {
+    public init(placement: PlacedReference.Placement, scale: Float = 1) {
         self.placement = placement
         self.scale = scale
     }
 
-    init(position: SIMD3<Float>, rotation: SIMD3<Float> = .zero, scale: Float = 1) {
+    public init(position: SIMD3<Float>, rotation: SIMD3<Float> = .zero, scale: Float = 1) {
         self.init(
             placement: PlacedReference.Placement(position: position, rotation: rotation),
             scale: scale
         )
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .transform(value) = erased else { return nil }
         self = value
     }
@@ -304,34 +304,38 @@ nonisolated struct ReferenceTransformOverride: WorldStateComponent {
 /// typed open/closed marker doors and containers read. `lastActivator` is the
 /// reference that most recently activated this one, which M11's `OnActivate`
 /// hands to script code as its `akActionRef` argument.
-nonisolated struct ReferenceActivationState: WorldStateComponent, Hashable {
-    var activationCount: UInt32
-    var isOpen: Bool
-    var lastActivator: ReferenceKey?
+nonisolated public struct ReferenceActivationState: WorldStateComponent, Hashable, Sendable {
+    public var activationCount: UInt32
+    public var isOpen: Bool
+    public var lastActivator: ReferenceKey?
 
     /// Never activated: the value a reference implicitly has before anything
     /// touches it.
-    static let untouched = ReferenceActivationState()
+    public static let untouched = ReferenceActivationState()
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .activation
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .activation(self)
     }
 
-    var wasActivated: Bool {
+    public var wasActivated: Bool {
         activationCount > 0
     }
 
-    init(activationCount: UInt32 = 0, isOpen: Bool = false, lastActivator: ReferenceKey? = nil) {
+    public init(
+        activationCount: UInt32 = 0,
+        isOpen: Bool = false,
+        lastActivator: ReferenceKey? = nil
+    ) {
         self.activationCount = activationCount
         self.isOpen = isOpen
         self.lastActivator = lastActivator
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .activation(value) = erased else { return nil }
         self = value
     }
@@ -339,7 +343,7 @@ nonisolated struct ReferenceActivationState: WorldStateComponent, Hashable {
     /// The state after one more activation by `activator`, toggling `isOpen`
     /// when `togglesOpen` is set (doors and containers) and leaving it alone
     /// otherwise.
-    func activated(by activator: ReferenceKey? = nil, togglesOpen: Bool = false) -> Self {
+    public func activated(by activator: ReferenceKey? = nil, togglesOpen: Bool = false) -> Self {
         ReferenceActivationState(
             activationCount: activationCount &+ 1,
             isOpen: togglesOpen ? !isOpen : isOpen,
@@ -351,25 +355,25 @@ nonisolated struct ReferenceActivationState: WorldStateComponent, Hashable {
 /// Runtime deletion. Distinct from the record header's `deleted` flag, which
 /// says the plugin itself removed the record: this component says the running
 /// game removed the object, and clearing it restores the plugin's placement.
-nonisolated struct ReferenceDeletionState: WorldStateComponent, Hashable {
-    var isDeleted: Bool
+nonisolated public struct ReferenceDeletionState: WorldStateComponent, Hashable, Sendable {
+    public var isDeleted: Bool
 
-    static let deleted = ReferenceDeletionState(isDeleted: true)
-    static let notDeleted = ReferenceDeletionState(isDeleted: false)
+    public static let deleted = ReferenceDeletionState(isDeleted: true)
+    public static let notDeleted = ReferenceDeletionState(isDeleted: false)
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .deletion
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .deletion(self)
     }
 
-    init(isDeleted: Bool) {
+    public init(isDeleted: Bool) {
         self.isDeleted = isDeleted
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .deletion(value) = erased else { return nil }
         self = value
     }
@@ -386,15 +390,15 @@ nonisolated struct ReferenceDeletionState: WorldStateComponent, Hashable {
 /// resident any more. It is optional because a caller that has no meaningful
 /// cell — a persistent reference mutated by a script with no scene loaded —
 /// must still be able to record a delta.
-nonisolated struct ReferenceStateDelta: Equatable, Sendable {
+nonisolated public struct ReferenceStateDelta: Equatable, Sendable {
     /// Component values by slot. Never contains an entry the store considers
     /// clean: clearing the last component removes the whole delta.
-    private(set) var components: [WorldStateComponentKind: WorldStateComponentValue]
+    public private(set) var components: [WorldStateComponentKind: WorldStateComponentValue]
     /// Cell the most recent mutation was recorded under, for per-cell dirty
     /// counts.
-    private(set) var cell: CellSceneLocation?
+    public private(set) var cell: CellSceneLocation?
 
-    init(
+    public init(
         components: [WorldStateComponentKind: WorldStateComponentValue] = [:],
         cell: CellSceneLocation? = nil
     ) {
@@ -402,29 +406,29 @@ nonisolated struct ReferenceStateDelta: Equatable, Sendable {
         self.cell = cell
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         components.isEmpty
     }
 
     /// Kinds present, in `WorldStateComponentKind.allCases` order so that
     /// iteration never depends on dictionary ordering.
-    var sortedKinds: [WorldStateComponentKind] {
+    public var sortedKinds: [WorldStateComponentKind] {
         WorldStateComponentKind.allCases.filter { components[$0] != nil }
     }
 
-    subscript(kind: WorldStateComponentKind) -> WorldStateComponentValue? {
+    public subscript(kind: WorldStateComponentKind) -> WorldStateComponentValue? {
         components[kind]
     }
 
     /// The stored value for `type`, or nil when that slot is clean.
-    func component<Component: WorldStateComponent>(_ type: Component.Type) -> Component? {
+    public func component<Component: WorldStateComponent>(_ type: Component.Type) -> Component? {
         guard let erased = components[Component.componentKind] else { return nil }
         return Component(erased: erased)
     }
 
     /// Stores `value`, returning the value it replaced.
     @discardableResult
-    mutating func set(_ value: WorldStateComponentValue) -> WorldStateComponentValue? {
+    public mutating func set(_ value: WorldStateComponentValue) -> WorldStateComponentValue? {
         let previous = components[value.kind]
         components[value.kind] = value
         return previous
@@ -432,11 +436,11 @@ nonisolated struct ReferenceStateDelta: Equatable, Sendable {
 
     /// Removes the value in `kind`, returning what was there.
     @discardableResult
-    mutating func clear(_ kind: WorldStateComponentKind) -> WorldStateComponentValue? {
+    public mutating func clear(_ kind: WorldStateComponentKind) -> WorldStateComponentValue? {
         components.removeValue(forKey: kind)
     }
 
-    mutating func record(cell: CellSceneLocation?) {
+    public mutating func record(cell: CellSceneLocation?) {
         if let cell {
             self.cell = cell
         }

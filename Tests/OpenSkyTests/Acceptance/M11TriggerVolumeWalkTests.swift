@@ -8,7 +8,7 @@
 // No game content, no Metal.
 
 import FormatsTestSupport
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

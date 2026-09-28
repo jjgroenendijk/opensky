@@ -31,25 +31,25 @@ import OpenSkyGameData
 /// against the load order where a resolver was supplied (issue #466). The
 /// equipment runtime reads the resolved identity instead of walking plugins
 /// again for every equip.
-nonisolated struct ItemEnchantment: Equatable {
+nonisolated public struct ItemEnchantment: Equatable, Sendable {
     /// EITM exactly as the record writes it, relative to its own plugin.
-    let link: FormID
+    public let link: FormID
     /// EAMT, the fully charged value. Weapons only: ARMO has no charge field.
-    let charge: UInt16?
+    public let charge: UInt16?
     /// The winning ENCH identity, or nil when no resolver was supplied or the
     /// link is dangling.
-    let resolvedID: ResolvedFormID?
+    public let resolvedID: ResolvedFormID?
 }
 
 /// Resolves an item's EITM through an `EnchantmentStore`. Held by
 /// `ItemDefinitionStore` so the per-record projections can name the winning
 /// enchantment without each of them knowing about the load order.
-nonisolated struct ItemEnchantmentResolver {
-    let store: EnchantmentStore
+nonisolated public struct ItemEnchantmentResolver: Sendable {
+    public let store: EnchantmentStore
     /// The plugin the records being indexed came from; EITM is relative to it.
-    let pluginName: String
+    public let pluginName: String
 
-    func resolve(_ link: FormID?, charge: UInt16?) -> ItemEnchantment? {
+    public func resolve(_ link: FormID?, charge: UInt16?) -> ItemEnchantment? {
         guard let link else { return nil }
         return ItemEnchantment(
             link: link,
@@ -62,9 +62,9 @@ nonisolated struct ItemEnchantmentResolver {
 /// One carryable base record, reduced to what inventory needs from all of
 /// them. The `family` tag says which record type it came from, so a consumer
 /// that needs the full decode can go back to the typed record.
-nonisolated struct ItemDefinition: Equatable {
+nonisolated public struct ItemDefinition: Equatable, Sendable {
     /// Which record family the definition came from.
-    enum Family: String, Equatable, CaseIterable {
+    public enum Family: String, Equatable, CaseIterable, Sendable {
         case armor = "ARMO"
         case ammunition = "AMMO"
         case book = "BOOK"
@@ -76,7 +76,7 @@ nonisolated struct ItemDefinition: Equatable {
         /// The top group this family lives in. `FourCC` only builds from a
         /// string literal, so the mapping is spelled out rather than derived
         /// from `rawValue`.
-        var recordType: FourCC {
+        public var recordType: FourCC {
             switch self {
             case .armor: "ARMO"
             case .ammunition: "AMMO"
@@ -89,33 +89,33 @@ nonisolated struct ItemDefinition: Equatable {
         }
     }
 
-    let formID: FormID
-    let family: Family
-    let editorID: String?
+    public let formID: FormID
+    public let family: Family
+    public let editorID: String?
     /// FULL — display name. Nil on records that never surface in a menu.
-    let name: LString?
+    public let name: LString?
     /// Gold value before enchantment adjustments.
-    let value: Int32
+    public let value: Int32
     /// Carry weight.
-    let weight: Float
+    public let weight: Float
     /// KYWD links (vendor category, material, weapon type).
-    let keywords: [FormID]
+    public let keywords: [FormID]
     /// EITM and, on a weapon, EAMT. Nil on an unenchanted record and on every
     /// family that has no enchantment field at all.
-    let enchantment: ItemEnchantment?
+    public let enchantment: ItemEnchantment?
 
     /// v1 stacking key: the base FormID. See the file header for why this is
     /// provisional.
-    var stackKey: UInt32 {
+    public var stackKey: UInt32 {
         formID.rawValue
     }
 }
 
-nonisolated final class ItemDefinitionStore {
+nonisolated public final class ItemDefinitionStore {
     /// Carryable item definitions, keyed by raw FormID.
-    let definitions: [UInt32: ItemDefinition]
+    public let definitions: [UInt32: ItemDefinition]
     /// CONT decodes, keyed by raw FormID.
-    let containers: [UInt32: Container]
+    public let containers: [UInt32: Container]
     /// WEAP decodes, keyed by raw FormID (issue #195).
     ///
     /// Kept beside the unified views rather than folded into them: melee
@@ -124,54 +124,54 @@ nonisolated final class ItemDefinitionStore {
     /// has in common. A second dictionary over the same records costs one
     /// pointer per weapon and keeps the common view from growing a
     /// weapon-shaped hole every other family fills with nil.
-    let weapons: [UInt32: Weapon]
+    public let weapons: [UInt32: Weapon]
     /// AMMO decodes, keyed by raw FormID (issue #196).
     ///
     /// Beside the unified views for the same reason the WEAP decodes are:
     /// archery needs DATA `damage` and the PROJ link, and `ItemDefinition`
     /// carries only what every family has in common.
-    let ammunition: [UInt32: Ammunition]
+    public let ammunition: [UInt32: Ammunition]
     /// ALCH decodes, keyed by raw FormID (issue #469).
     ///
     /// Beside the unified views for the same reason the WEAP and AMMO decodes
     /// are: consuming a potion needs its EFID/EFIT effect list, and
     /// `ItemDefinition` deliberately carries only what every family has in
     /// common.
-    let ingestibles: [UInt32: Ingestible]
+    public let ingestibles: [UInt32: Ingestible]
     /// INGR decodes, keyed by raw FormID (issue #469). Beside the ALCH decodes
     /// for the same reason.
-    let ingredients: [UInt32: Ingredient]
+    public let ingredients: [UInt32: Ingredient]
     /// BOOK decodes, keyed by raw FormID (issue #470). Beside the others for
     /// the same reason: reading a spell tome needs the DATA "teaches" union,
     /// and `ItemDefinition` carries only what every family has in common.
-    let books: [UInt32: Book]
+    public let books: [UInt32: Book]
     /// ARMO decodes, keyed by raw FormID (issue #498).
     ///
     /// Beside the unified views for the same reason the WEAP decodes are: the
     /// armour skills level on what the wearer is wearing, which is the BOD2
     /// armour type, and `ItemDefinition` carries only what every family has in
     /// common.
-    let armor: [UInt32: Armor]
+    public let armor: [UInt32: Armor]
     /// PROJ decodes, keyed by raw FormID (issue #196).
     ///
     /// PROJ is not a carryable family and has no `ItemDefinition` view at all,
     /// but the record an arrow points at is exactly what a shot needs next, so
     /// it is indexed here rather than in a second store that would have to be
     /// built from the same file and handed around beside this one.
-    let projectiles: [UInt32: Projectile]
+    public let projectiles: [UInt32: Projectile]
 
     /// Records that failed to decode, by family — surfaced so the real-data
     /// sweep can assert zero rather than silently indexing fewer items.
-    let skippedCounts: [ItemDefinition.Family: Int]
+    public let skippedCounts: [ItemDefinition.Family: Int]
 
     /// The load-order resolver behind `ItemDefinition.enchantment`, or nil when
     /// the store was built without one and the links stay unresolved.
-    let enchantments: ItemEnchantmentResolver?
+    public let enchantments: ItemEnchantmentResolver?
 
     /// Builds the index. Supply `enchantments` to have every weapon and armor
     /// EITM resolved to the winning ENCH identity while the index is built;
     /// without it the links are still carried, just unresolved.
-    init(file: ESMFile, enchantments: ItemEnchantmentResolver? = nil) {
+    public init(file: ESMFile, enchantments: ItemEnchantmentResolver? = nil) {
         self.enchantments = enchantments
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         var definitions: [UInt32: ItemDefinition] = [:]
@@ -224,12 +224,12 @@ nonisolated final class ItemDefinitionStore {
 
     /// The armour type of a worn piece — heavy, light or clothing — or nil when
     /// the item is not armour or its record carries no BOD2 body template.
-    func armorType(_ id: FormID) -> ArmorType? {
+    public func armorType(_ id: FormID) -> ArmorType? {
         armor[id.rawValue]?.bodyTemplate?.armorType
     }
 
     /// The decoded BOOK behind an item, or nil when the item is not a book.
-    func book(_ id: FormID) -> Book? {
+    public func book(_ id: FormID) -> Book? {
         books[id.rawValue]
     }
 
@@ -239,14 +239,14 @@ nonisolated final class ItemDefinitionStore {
     /// The link is plugin-relative and returned raw, because the caller holds
     /// the plugin the item index was built from and the resolver that turns it
     /// into a `ReferenceKey`.
-    func teachesSpell(_ id: FormID) -> FormID? {
+    public func teachesSpell(_ id: FormID) -> FormID? {
         guard case let .spell(spell) = books[id.rawValue]?.teaches else { return nil }
         return spell
     }
 
     /// What consuming `id` applies, or nil when it is not something an actor
     /// can eat or drink (issue #469).
-    func magicItemUse(_ id: FormID) -> MagicItemUse? {
+    public func magicItemUse(_ id: FormID) -> MagicItemUse? {
         if let ingestible = ingestibles[id.rawValue] {
             return MagicItemUse(
                 item: id,
@@ -269,17 +269,17 @@ nonisolated final class ItemDefinitionStore {
         )
     }
 
-    func definition(_ id: FormID) -> ItemDefinition? {
+    public func definition(_ id: FormID) -> ItemDefinition? {
         definitions[id.rawValue]
     }
 
-    func container(_ id: FormID) -> Container? {
+    public func container(_ id: FormID) -> Container? {
         containers[id.rawValue]
     }
 
     /// The decoded WEAP behind an equipped item, or nil when the item is not a
     /// weapon.
-    func weapon(_ id: FormID) -> Weapon? {
+    public func weapon(_ id: FormID) -> Weapon? {
         weapons[id.rawValue]
     }
 
@@ -291,7 +291,7 @@ nonisolated final class ItemDefinitionStore {
     /// or one with no launch speed. An arrow that cannot fly is better
     /// reported as no arrow than as a projectile that stands still where the
     /// bow is.
-    func archeryAmmunition(_ id: FormID) -> ArcheryAmmunition? {
+    public func archeryAmmunition(_ id: FormID) -> ArcheryAmmunition? {
         guard
             let ammo = ammunition[id.rawValue],
             let link = ammo.projectile,
@@ -309,7 +309,7 @@ nonisolated final class ItemDefinitionStore {
     /// with no launch speed — so a spell whose projectile cannot fly is a
     /// counted refusal rather than something standing still in the caster's
     /// face.
-    func projectileProfile(_ id: FormID) -> ProjectileProfile? {
+    public func projectileProfile(_ id: FormID) -> ProjectileProfile? {
         guard let projectile = projectiles[id.rawValue], projectile.isBallistic else {
             return nil
         }
@@ -318,7 +318,7 @@ nonisolated final class ItemDefinitionStore {
 
     /// Every definition of one family, in FormID order — a stable listing for
     /// the record dump and the sweep test.
-    func definitions(of family: ItemDefinition.Family) -> [ItemDefinition] {
+    public func definitions(of family: ItemDefinition.Family) -> [ItemDefinition] {
         definitions.values
             .filter { $0.family == family }
             .sorted { $0.formID.rawValue < $1.formID.rawValue }
@@ -327,7 +327,7 @@ nonisolated final class ItemDefinitionStore {
     /// The ENCH behind an item's EITM, or nil when the item is unenchanted or
     /// the store was built without a resolver (issue #466). The equipment
     /// runtime reads this instead of re-walking plugins.
-    func enchantment(of definition: ItemDefinition) -> ResolvedEnchantment? {
+    public func enchantment(of definition: ItemDefinition) -> ResolvedEnchantment? {
         guard
             let resolver = enchantments,
             let resolvedID = definition.enchantment?.resolvedID

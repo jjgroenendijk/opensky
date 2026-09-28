@@ -21,42 +21,42 @@ import OpenSkyFormats
 
 /// What a running movie's AS2 runtime looks like from outside, at one instant.
 /// Every field defaults, so a test can build the one case it is asserting.
-nonisolated struct SWFLabRuntimeSnapshot: Equatable {
+nonisolated public struct SWFLabRuntimeSnapshot: Equatable, Sendable {
     /// True once the bring-up sequence ran (`DoInitAction`, frame 1, its
     /// `DoAction`).
-    var isStarted = false
+    public var isStarted = false
     /// Explicit ticks applied since bring-up. Never a time source.
-    var tickCount = 0
+    public var tickCount = 0
     /// Live display nodes in the whole tree, including the root.
-    var nodeCount = 0
-    var rootChildCount = 0
+    public var nodeCount = 0
+    public var rootChildCount = 0
     /// Zero-based playhead of the root timeline; -1 until frame 1 executes.
-    var currentFrame = -1
-    var frameCount = 0
+    public var currentFrame = -1
+    public var frameCount = 0
     /// Slash path of the `Selection.setFocus` target, or nil when unfocused.
-    var focusPath: String?
+    public var focusPath: String?
     /// Instantiations refused because the tree hit its node cap.
-    var droppedInstantiations = 0
+    public var droppedInstantiations = 0
     /// Frame `DoAction` blocks skipped by the goto re-entry guard.
-    var droppedFrameActions = 0
-    var timerCount = 0
-    var droppedTimers = 0
-    var pointerEvents = 0
-    var keyEvents = 0
+    public var droppedFrameActions = 0
+    public var timerCount = 0
+    public var droppedTimers = 0
+    public var pointerEvents = 0
+    public var keyEvents = 0
     /// `Key.getCode()`: the most recent injected key.
-    var lastKeyCode = 0
+    public var lastKeyCode = 0
     /// Callback names the movie registered with `GameDelegate.addCallBack` —
     /// exactly the engine-to-movie calls this menu is prepared for.
-    var callbackNames: [String] = []
-    var invokeLog = SWFInvokeLog()
-    var tally = AS2Tally()
-    var trace = AS2TraceLog()
+    public var callbackNames: [String] = []
+    public var invokeLog = SWFInvokeLog()
+    public var tally = AS2Tally()
+    public var trace = AS2TraceLog()
 }
 
 nonisolated extension SWFLabRuntimeSnapshot {
     /// Reads a live runtime. Main thread, between frames — the same contract
     /// every other renderer seam runs under.
-    init(runtime: SWFMovieRuntime) {
+    public init(runtime: SWFMovieRuntime) {
         self.init(
             isStarted: runtime.isStarted,
             tickCount: runtime.tickCount,
@@ -83,13 +83,13 @@ nonisolated extension SWFLabRuntimeSnapshot {
 nonisolated extension SWFLabReadout {
     /// Invoke-log entries the readout shows. The header still reports the
     /// totals, so a clipped list never hides how much it stopped showing.
-    static let shownInvokeEntries = 6
+    public static let shownInvokeEntries = 6
     /// Ranked names shown per tally line.
-    static let shownRankedNames = 3
+    public static let shownRankedNames = 3
 
     /// Movie state: is the runtime up, how far has it been ticked, how big is
     /// the tree, and what did it have to drop.
-    static func runtimeText(for snapshot: SWFLabControlSnapshot) -> String {
+    public static func runtimeText(for snapshot: SWFLabControlSnapshot) -> String {
         guard let runtime = snapshot.runtime else {
             return snapshot.selectedPath == nil
                 ? "Runtime: no movie selected"
@@ -113,7 +113,7 @@ nonisolated extension SWFLabReadout {
 
     /// Both directions of the `GameDelegate` bridge: what the menu is prepared
     /// to be called with, and what actually crossed.
-    static func invokeText(for snapshot: SWFLabControlSnapshot) -> String {
+    public static func invokeText(for snapshot: SWFLabControlSnapshot) -> String {
         guard let runtime = snapshot.runtime else {
             return "Invokes: runtime not started"
         }
@@ -135,7 +135,7 @@ nonisolated extension SWFLabReadout {
 
     /// The interpreter's op tally — what ran, what faulted, and what was not
     /// implemented — plus whatever the movie traced.
-    static func tallyText(for snapshot: SWFLabControlSnapshot) -> String {
+    public static func tallyText(for snapshot: SWFLabControlSnapshot) -> String {
         guard let runtime = snapshot.runtime else {
             return "Ops: runtime not started"
         }

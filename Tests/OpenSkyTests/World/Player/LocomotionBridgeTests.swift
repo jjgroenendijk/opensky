@@ -7,7 +7,7 @@
 // install (AGENTS.md "Legal & IP boundary"); the real graph is driven by
 // `LocomotionBridgeRealDataTests`.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

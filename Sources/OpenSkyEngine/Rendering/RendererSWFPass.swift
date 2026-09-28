@@ -16,14 +16,14 @@ import simd
 extension Renderer {
     /// SWF layer A/B toggle. Off -> the layer encodes nothing and the frame
     /// matches a no-movie baseline exactly.
-    var swfEnabled: Bool {
+    public var swfEnabled: Bool {
         get { swf.enabled }
         set { swf.enabled = newValue }
     }
 
     /// Centered SWF presentation scale. The HUD acceptance panel uses this for
     /// live A/B checks without mutating the movie's display list.
-    var swfScale: Float {
+    public var swfScale: Float {
         get { swf.scale }
         set {
             let finite = newValue.isFinite ? newValue : 1
@@ -32,19 +32,19 @@ extension Renderer {
     }
 
     /// The movie package assigned via `setSWFMovie`; nil -> no SWF draws.
-    var swfScene: SWFMovieScene? {
+    public var swfScene: SWFMovieScene? {
         swf.movie?.scene
     }
 
     /// SWF draw accounting from the most recently encoded frame.
-    var lastSWFDrawStats: SWFDrawStats {
+    public var lastSWFDrawStats: SWFDrawStats {
         swf.lastDrawStats
     }
 
     /// Assigns (or clears) the movie the SWF layer renders. Builds the GPU
     /// package synchronously; the old package's allocations retire once
     /// in-flight frames drain. Main thread, between frames, like `setScene`.
-    func setSWFMovie(_ scene: SWFMovieScene?) throws {
+    public func setSWFMovie(_ scene: SWFMovieScene?) throws {
         purgeRetiredResources()
         // A new movie invalidates any runtime driving the old one; the caller
         // starts a fresh one with `startSWFRuntime()`.
@@ -82,7 +82,7 @@ extension Renderer {
     /// Encodes the SWF layer into the open scene pass. Deterministic: the
     /// same movie and viewport produce the same command stream, uniforms, and
     /// glyph quads, so repeated frames are byte-identical.
-    func encodeSWF(descriptor: MTL4RenderPassDescriptor, state: inout ScenePassState) {
+    public func encodeSWF(descriptor: MTL4RenderPassDescriptor, state: inout ScenePassState) {
         var stats = SWFDrawStats()
         defer { swf.lastDrawStats = stats }
         guard swf.enabled, let movie = swf.movie else { return }
@@ -189,43 +189,43 @@ extension Renderer {
 }
 
 /// One encoded draw of the SWF layer.
-nonisolated struct SWFDrawOp {
-    enum Kind {
+nonisolated public struct SWFDrawOp: Sendable {
+    public enum Kind: Sendable {
         case content(clipCount: Int)
         case maskIncrement
         case maskDecrement
     }
 
-    let kind: Kind
-    let usesGlyphBuffer: Bool
-    let vertexStart: Int
-    let vertexCount: Int
-    let uniformIndex: Int
-    let bitmapId: UInt16?
-    let glyphCount: Int
+    public let kind: Kind
+    public let usesGlyphBuffer: Bool
+    public let vertexStart: Int
+    public let vertexCount: Int
+    public let uniformIndex: Int
+    public let bitmapId: UInt16?
+    public let glyphCount: Int
 }
 
 /// Per-frame CPU pass: walks the flattened command stream, producing draw ops
 /// with their uniforms and the glyph-quad vertices for text draws.
-nonisolated struct SWFFrameBuilder {
-    let movie: SWFMovieResources
-    let glyphAtlas: UIGlyphAtlas
+nonisolated public struct SWFFrameBuilder {
+    public let movie: SWFMovieResources
+    public let glyphAtlas: UIGlyphAtlas
     /// Character-local twips -> framebuffer pixels for the stage.
     private let stageToPixels: SWFTransform
     /// Framebuffer pixels -> NDC.
     private let pixelsToClip: SWFTransform
 
-    private(set) var ops: [SWFDrawOp] = []
-    private(set) var uniforms: [SWFDrawUniforms] = []
-    private(set) var glyphVertices: [SWFVertex] = []
-    private(set) var skipped = 0
+    public private(set) var ops: [SWFDrawOp] = []
+    public private(set) var uniforms: [SWFDrawUniforms] = []
+    public private(set) var glyphVertices: [SWFVertex] = []
+    public private(set) var skipped = 0
     private var glyphQuadCount = 0
 
-    init(movie: SWFMovieResources, viewport: SIMD2<Float>, glyphAtlas: UIGlyphAtlas) {
+    public init(movie: SWFMovieResources, viewport: SIMD2<Float>, glyphAtlas: UIGlyphAtlas) {
         self.init(movie: movie, viewport: viewport, contentScale: 1, glyphAtlas: glyphAtlas)
     }
 
-    init(
+    public init(
         movie: SWFMovieResources,
         viewport: SIMD2<Float>,
         contentScale: Float,
@@ -241,7 +241,7 @@ nonisolated struct SWFFrameBuilder {
         pixelsToClip = SWFViewportMapping.pixelsToClip(viewportPixels: viewport)
     }
 
-    mutating func build() {
+    public mutating func build() {
         for (index, command) in movie.commands.enumerated() {
             switch command {
             case let .beginClip(masks):

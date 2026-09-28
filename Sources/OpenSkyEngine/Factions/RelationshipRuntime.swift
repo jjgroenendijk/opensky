@@ -35,25 +35,25 @@ import OpenSkyGameData
 /// Reads and writes relationship ranks on top of a `WorldStateStore`, with the
 /// authored `RELA` records behind them.
 @MainActor
-struct RelationshipRuntime {
+public struct RelationshipRuntime {
     /// Load-order RELA and ASTP lookup behind the authored layer.
-    let relationships: RelationshipStore
+    public let relationships: RelationshipStore
 
     private let worldState: WorldStateStore
 
-    init(store: WorldStateStore, relationships: RelationshipStore) {
+    public init(store: WorldStateStore, relationships: RelationshipStore) {
         worldState = store
         self.relationships = relationships
     }
 
-    var store: WorldStateStore {
+    public var store: WorldStateStore {
         worldState
     }
 
     // MARK: - Reading
 
     /// `key`'s scripted overrides, empty when nothing has ever written one.
-    func state(of key: ReferenceKey) -> ActorRelationshipState {
+    public func state(of key: ReferenceKey) -> ActorRelationshipState {
         worldState.component(ActorRelationshipState.self, for: key) ?? ActorRelationshipState()
     }
 
@@ -67,7 +67,7 @@ struct RelationshipRuntime {
     /// `bases` maps a reference to the `NPC_` identity a `RELA` record would
     /// name, and answers nil for an actor that has none — the player, and any
     /// actor no plugin describes.
-    func rank(
+    public func rank(
         of observer: ReferenceKey,
         toward target: ReferenceKey,
         bases: (ReferenceKey) -> ResolvedFormID?
@@ -86,7 +86,7 @@ struct RelationshipRuntime {
     /// The scripted rank alone, in either direction. Both directions are stored,
     /// so the second read is a fallback for a component written by an older
     /// build rather than a disagreement this one can produce.
-    func storedRank(of observer: ReferenceKey, toward target: ReferenceKey) -> Int8? {
+    public func storedRank(of observer: ReferenceKey, toward target: ReferenceKey) -> Int8? {
         state(of: observer).rank(toward: target)
             ?? state(of: target).rank(toward: observer)
     }
@@ -107,7 +107,7 @@ struct RelationshipRuntime {
     ///
     /// - Returns: true when stored state changed.
     @discardableResult
-    func setRank(
+    public func setRank(
         _ rank: Int8,
         of observer: ReferenceKey,
         toward target: ReferenceKey,

@@ -11,6 +11,7 @@
 // a missing install degrades to an empty list and an explanatory readout.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

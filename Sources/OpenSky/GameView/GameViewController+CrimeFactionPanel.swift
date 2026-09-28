@@ -9,6 +9,7 @@
 // The actions live in `GameViewController+CrimeFactionActions.swift`.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

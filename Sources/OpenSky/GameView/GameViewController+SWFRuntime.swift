@@ -15,6 +15,7 @@
 // the app surface.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension GameViewController {

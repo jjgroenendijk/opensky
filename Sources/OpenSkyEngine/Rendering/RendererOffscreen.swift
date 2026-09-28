@@ -11,30 +11,30 @@ import OpenSkyFormats
 import simd
 
 /// Result of a sustained offscreen render run.
-nonisolated struct OffscreenBenchResult {
+nonisolated public struct OffscreenBenchResult: Sendable {
     /// Wall-clock duration of each synchronous frame in ms — CPU encode +
     /// GPU execution + sync, an upper bound on the pipelined loop's frame
     /// interval.
-    let frameMS: [Double]
+    public let frameMS: [Double]
     /// FrameStats window summary lines flushed during the run (one per 120
     /// frames) — the 2.6 instrument's own view of the same frames.
-    let windowSummaries: [String]
+    public let windowSummaries: [String]
     /// CPU time spent sampling + composing + refreshing resident actor palettes.
-    let animationMS: [Double]
+    public let animationMS: [Double]
     /// CPU wall time of `encodeShadowPass` per frame (cascade fit + caster
     /// culling/writes + encode) — the M7.1.2 sun-shadow budget metric. Mirrors
     /// `animationMS`; empty when the run never sampled it.
-    let shadowMS: [Double]
+    public let shadowMS: [Double]
     /// CPU wall time of the per-frame audio update per frame (listener pose +
     /// `WorldAudioEngine.tick` + music director) — the M9.2.4 audio budget
     /// metric. Mirrors `animationMS`; every entry is zero on a run with no
     /// audio engine attached, and the array is empty when never sampled.
-    let audioUpdateMS: [Double]
+    public let audioUpdateMS: [Double]
     /// CPU wall time of the world-simulation callback per frame. The callback
     /// owns the Papyrus VM advance; every entry is zero when none is attached.
-    let scriptUpdateMS: [Double]
+    public let scriptUpdateMS: [Double]
 
-    init(
+    public init(
         frameMS: [Double],
         windowSummaries: [String],
         animationMS: [Double] = [],
@@ -50,48 +50,48 @@ nonisolated struct OffscreenBenchResult {
         self.scriptUpdateMS = scriptUpdateMS
     }
 
-    var averageMS: Double {
+    public var averageMS: Double {
         frameMS.isEmpty ? 0 : frameMS.reduce(0, +) / Double(frameMS.count)
     }
 
     /// Nearest-rank percentile of the per-frame times; `percentile` in
     /// 0...100. Empty run -> 0.
-    func percentileMS(_ percentile: Double) -> Double {
+    public func percentileMS(_ percentile: Double) -> Double {
         guard !frameMS.isEmpty else { return 0 }
         let sorted = frameMS.sorted()
         let rank = Int((percentile / 100 * Double(sorted.count)).rounded(.up))
         return sorted[min(max(rank - 1, 0), sorted.count - 1)]
     }
 
-    var animationAverageMS: Double {
+    public var animationAverageMS: Double {
         animationMS.isEmpty ? 0 : animationMS.reduce(0, +) / Double(animationMS.count)
     }
 
-    func animationPercentileMS(_ percentile: Double) -> Double {
+    public func animationPercentileMS(_ percentile: Double) -> Double {
         Self.percentile(animationMS, percentile: percentile)
     }
 
-    var shadowAverageMS: Double {
+    public var shadowAverageMS: Double {
         shadowMS.isEmpty ? 0 : shadowMS.reduce(0, +) / Double(shadowMS.count)
     }
 
-    func shadowPercentileMS(_ percentile: Double) -> Double {
+    public func shadowPercentileMS(_ percentile: Double) -> Double {
         Self.percentile(shadowMS, percentile: percentile)
     }
 
-    var audioUpdateAverageMS: Double {
+    public var audioUpdateAverageMS: Double {
         audioUpdateMS.isEmpty ? 0 : audioUpdateMS.reduce(0, +) / Double(audioUpdateMS.count)
     }
 
-    func audioUpdatePercentileMS(_ percentile: Double) -> Double {
+    public func audioUpdatePercentileMS(_ percentile: Double) -> Double {
         Self.percentile(audioUpdateMS, percentile: percentile)
     }
 
-    var scriptUpdateAverageMS: Double {
+    public var scriptUpdateAverageMS: Double {
         scriptUpdateMS.isEmpty ? 0 : scriptUpdateMS.reduce(0, +) / Double(scriptUpdateMS.count)
     }
 
-    func scriptUpdatePercentileMS(_ percentile: Double) -> Double {
+    public func scriptUpdatePercentileMS(_ percentile: Double) -> Double {
         Self.percentile(scriptUpdateMS, percentile: percentile)
     }
 
@@ -251,7 +251,7 @@ extension Renderer {
     /// Renders one frame into an offscreen texture and blocks until the GPU
     /// finishes it — deterministic render tests and engine-output
     /// screenshots (todo 2.9) without drawable/compositor involvement.
-    func renderOffscreen(width: Int, height: Int) throws -> MTLTexture {
+    public func renderOffscreen(width: Int, height: Int) throws -> MTLTexture {
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
         residencySet.addAllocations([color, depth])
         residencySet.commit()
@@ -267,7 +267,11 @@ extension Renderer {
     }
 
     /// Exact animation-time render for deterministic frame-delta gates.
-    func renderOffscreen(width: Int, height: Int, animationTime: Float) throws -> MTLTexture {
+    public func renderOffscreen(
+        width: Int,
+        height: Int,
+        animationTime: Float
+    ) throws -> MTLTexture {
         self.animationTime = animationTime
         updateAnimations(deltaTime: 0)
         updateWeather(deltaTime: 0)
@@ -293,7 +297,7 @@ extension Renderer {
     /// preventing a busy-spin without hiding main-thread stream work. Returns
     /// timing for every frame through settlement; exhausting `maxFrames`
     /// throws so a stalled build cannot false-pass.
-    func pumpOffscreen(
+    public func pumpOffscreen(
         width: Int,
         height: Int,
         maxFrames: Int,
@@ -353,7 +357,7 @@ extension Renderer {
     /// target and reports per-frame wall times + FrameStats window
     /// summaries. Synchronous frames make the numbers conservative: each
     /// includes the full CPU-GPU round trip a pipelined loop overlaps.
-    func renderOffscreenSustained(
+    public func renderOffscreenSustained(
         width: Int,
         height: Int,
         frames: Int

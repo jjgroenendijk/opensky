@@ -10,7 +10,7 @@ import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 
-nonisolated enum RenderMeshError: Error, Equatable {
+nonisolated public enum RenderMeshError: Error, Equatable {
     /// Triangle index points past the vertex array (defensive: parsers
     /// validate, but this data ultimately comes from external files).
     case indexOutOfRange(index: UInt16, vertexCount: Int)
@@ -23,17 +23,17 @@ nonisolated enum RenderMeshError: Error, Equatable {
 /// Second stream for skinned meshes. Swift's SIMD alignment makes this 32
 /// bytes (16-byte float4, 8-byte ushort4, tail padding); descriptor uses the
 /// same MemoryLayout stride so CPU/GPU packing cannot drift.
-nonisolated struct SkinVertex {
-    let weights: SIMD4<Float>
-    let boneIndices: SIMD4<UInt16>
+nonisolated public struct SkinVertex: Sendable {
+    public let weights: SIMD4<Float>
+    public let boneIndices: SIMD4<UInt16>
 }
 
-nonisolated enum SkinVertexLayout {
-    static let weightsOffset = 0
-    static let boneIndicesOffset = 16
-    static let stride = MemoryLayout<SkinVertex>.stride
+nonisolated public enum SkinVertexLayout: Sendable {
+    public static let weightsOffset = 0
+    public static let boneIndicesOffset = 16
+    public static let stride = MemoryLayout<SkinVertex>.stride
 
-    static func vertexDescriptor() -> MTLVertexDescriptor {
+    public static func vertexDescriptor() -> MTLVertexDescriptor {
         let descriptor = StaticVertexLayout.vertexDescriptor()
         let buffer = BufferIndex.skinningAttributes.rawValue
         descriptor.attributes[VertexAttribute.boneWeights.rawValue].format = .float4
@@ -51,17 +51,17 @@ nonisolated enum SkinVertexLayout {
 
 /// Actor-local FaceGen expression stream. SIMD3 occupies 16 bytes in Swift,
 /// matching the explicitly separated float3 attributes Metal reads.
-nonisolated struct MorphVertexDelta {
-    let position: SIMD3<Float>
-    let normal: SIMD3<Float>
+nonisolated public struct MorphVertexDelta: Sendable {
+    public let position: SIMD3<Float>
+    public let normal: SIMD3<Float>
 }
 
-nonisolated enum MorphVertexLayout {
-    static let positionOffset = 0
-    static let normalOffset = 16
-    static let stride = MemoryLayout<MorphVertexDelta>.stride
+nonisolated public enum MorphVertexLayout: Sendable {
+    public static let positionOffset = 0
+    public static let normalOffset = 16
+    public static let stride = MemoryLayout<MorphVertexDelta>.stride
 
-    static func vertexDescriptor() -> MTLVertexDescriptor {
+    public static func vertexDescriptor() -> MTLVertexDescriptor {
         let descriptor = SkinVertexLayout.vertexDescriptor()
         let buffer = BufferIndex.morphDeltas.rawValue
         descriptor.attributes[VertexAttribute.morphPositionDelta.rawValue].format = .float3
@@ -81,19 +81,19 @@ nonisolated enum MorphVertexLayout {
 /// normal, float2 texcoord, float4 color — 48 bytes, tightly packed floats
 /// (not simd-aligned; the vertex descriptor below is the single source of
 /// truth for the shader's view of it).
-nonisolated enum StaticVertexLayout {
-    static let positionOffset = 0
-    static let normalOffset = 12
-    static let texcoordOffset = 24
-    static let colorOffset = 32
-    static let stride = 48
+nonisolated public enum StaticVertexLayout: Sendable {
+    public static let positionOffset = 0
+    public static let normalOffset = 12
+    public static let texcoordOffset = 24
+    public static let colorOffset = 32
+    public static let stride = 48
 
     /// Attribute defaults for meshes that omit an array: +Z normal (world
     /// up, docs/decisions/coordinates.md), origin UV, opaque white color.
-    static let defaultNormal = SIMD3<Float>(0, 0, 1)
-    static let defaultColor = SIMD4<Float>(1, 1, 1, 1)
+    public static let defaultNormal = SIMD3<Float>(0, 0, 1)
+    public static let defaultColor = SIMD4<Float>(1, 1, 1, 1)
 
-    static func vertexDescriptor() -> MTLVertexDescriptor {
+    public static func vertexDescriptor() -> MTLVertexDescriptor {
         let descriptor = MTLVertexDescriptor()
         let buffer = BufferIndex.vertices.rawValue
 
@@ -115,7 +115,7 @@ nonisolated enum StaticVertexLayout {
 
     /// Packs a mesh's attribute arrays into the interleaved layout above.
     /// Mesh contract: attribute arrays are empty or vertex-count sized.
-    static func interleave(_ mesh: Mesh) -> [Float] {
+    public static func interleave(_ mesh: Mesh) -> [Float] {
         var floats: [Float] = []
         floats.reserveCapacity(mesh.positions.count * stride / MemoryLayout<Float>.size)
         for index in mesh.positions.indices {
@@ -140,11 +140,11 @@ nonisolated enum StaticVertexLayout {
 /// a parallel stream instead of forking the 48-byte static layout so
 /// RenderMesh upload and StaticVertexLayout stay untouched
 /// (docs/rendering/scene-drawing.md, terrain splat section).
-nonisolated enum TerrainVertexLayout {
+nonisolated public enum TerrainVertexLayout: Sendable {
     /// Two tightly packed float4 lanes per vertex.
-    static let weightsStride = 32
+    public static let weightsStride = 32
 
-    static func vertexDescriptor() -> MTLVertexDescriptor {
+    public static func vertexDescriptor() -> MTLVertexDescriptor {
         let descriptor = StaticVertexLayout.vertexDescriptor()
         let buffer = BufferIndex.terrainWeights.rawValue
 
@@ -166,30 +166,30 @@ nonisolated enum TerrainVertexLayout {
 /// One mesh's GPU residence: interleaved vertex buffer + uint16 index
 /// buffer, plus the mesh-local -> model-root transform and material slot
 /// carried over from the engine Mesh.
-nonisolated final class RenderMesh {
-    let name: String?
-    let vertexCount: Int
-    let vertexBuffer: MTLBuffer
-    let indexBuffer: MTLBuffer
-    let indexCount: Int
-    let skinningBuffer: MTLBuffer?
-    let boneMatrixBuffer: MTLBuffer?
+nonisolated public final class RenderMesh {
+    public let name: String?
+    public let vertexCount: Int
+    public let vertexBuffer: MTLBuffer
+    public let indexBuffer: MTLBuffer
+    public let indexCount: Int
+    public let skinningBuffer: MTLBuffer?
+    public let boneMatrixBuffer: MTLBuffer?
     private let skinningPalette: SkinningPalette?
-    private(set) var currentBoneMatrices: [float4x4]
-    var isSkinned: Bool {
+    public private(set) var currentBoneMatrices: [float4x4]
+    public var isSkinned: Bool {
         skinningBuffer != nil
     }
 
     /// Mesh-local -> model-root transform (see Geometry/Mesh.swift).
-    let localTransform: float4x4
+    public let localTransform: float4x4
     /// Mesh-local bounds retained for vertex effects that need normalized
     /// height (grass sway). RenderModel also retains model-root bounds for
     /// placement culling through MeshLibrary.
-    let localBounds: ModelBounds
+    public let localBounds: ModelBounds
     /// Index into the owning model's materials.
-    let materialSlot: Int
+    public let materialSlot: Int
 
-    init(device: MTLDevice, mesh: Mesh) throws {
+    public init(device: MTLDevice, mesh: Mesh) throws {
         guard !mesh.positions.isEmpty, !mesh.indices.isEmpty else {
             throw RenderMeshError.emptyMesh
         }
@@ -292,7 +292,7 @@ nonisolated final class RenderMesh {
     /// Refreshes CPU palette from an animated skeleton world pose. Unmatched
     /// helper/NIF-only bones keep their verified bind matrix.
     @discardableResult
-    func updateSkinningPose(_ transformsByName: [String: float4x4]) -> Int {
+    public func updateSkinningPose(_ transformsByName: [String: float4x4]) -> Int {
         guard let palette = skinningPalette else { return 0 }
         let posed = palette.posed(by: transformsByName)
         currentBoneMatrices = posed.matrices
@@ -302,7 +302,7 @@ nonisolated final class RenderMesh {
     /// Restores verified NIF bind matrices for actor-animation A/B. Returns
     /// palette size so live inspection can prove resident skinning work ran.
     @discardableResult
-    func resetSkinningPose() -> Int {
+    public func resetSkinningPose() -> Int {
         guard let palette = skinningPalette else { return 0 }
         currentBoneMatrices = palette.bindPoseMatrices
         return palette.bindPoseMatrices.count
@@ -310,7 +310,7 @@ nonisolated final class RenderMesh {
 
     /// Copies current CPU palette into this frame-in-flight slot immediately
     /// before encoding, so CPU updates never race prior GPU frames.
-    func prepareBoneMatrices(slot: Int) {
+    public func prepareBoneMatrices(slot: Int) {
         guard let buffer = boneMatrixBuffer, !currentBoneMatrices.isEmpty else { return }
         buffer.contents().advanced(by: boneMatrixOffset(slot: slot)).copyMemory(
             from: currentBoneMatrices,
@@ -318,7 +318,7 @@ nonisolated final class RenderMesh {
         )
     }
 
-    func boneMatrixOffset(slot: Int) -> Int {
+    public func boneMatrixOffset(slot: Int) -> Int {
         slot * currentBoneMatrices.count * MemoryLayout<float4x4>.stride
     }
 }

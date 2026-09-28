@@ -9,7 +9,7 @@ import Foundation
 import OpenSkyFormats
 
 /// Which way an arrest ends.
-nonisolated enum ArrestOutcome: Equatable, Sendable {
+nonisolated public enum ArrestOutcome: Equatable, Sendable {
     /// Pay the bounty in gold. `goToJail` moves the player to the faction's
     /// exterior jail marker afterwards, as `PlayerPayCrimeGold`'s parameter of
     /// that name documents: "The player is not actually put in jail, but moved
@@ -22,7 +22,7 @@ nonisolated enum ArrestOutcome: Equatable, Sendable {
 
 /// An arrest outcome run to completion by the session.
 @MainActor
-protocol CrimeArrestSession: AnyObject {
+public protocol CrimeArrestSession: AnyObject {
     /// Whether the player can pay `faction`'s bounty, or nil for a session with
     /// no crime runtime.
     func canPayCrimeGold(to faction: ReferenceKey) -> Bool?

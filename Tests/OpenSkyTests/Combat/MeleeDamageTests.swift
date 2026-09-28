@@ -7,7 +7,7 @@
 // 2.000 skill weight, 0.700 cap — which are not the ones UESP prints; see
 // `CombatSettings` for the reading that reconciles the two.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct MeleeDamageTests {

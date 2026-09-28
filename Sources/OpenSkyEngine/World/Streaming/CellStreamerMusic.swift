@@ -13,20 +13,20 @@ import OpenSkyFormats
 
 /// Cheap identity for diff: only the fields that drive `MusicSelection.resolve`.
 /// Equal keys never re-resolve, so a steady-state frame costs one comparison.
-nonisolated struct MusicKey: Equatable, Sendable {
-    let isInterior: Bool
-    let interiorFormID: UInt32?
-    let exteriorCenter: CellCoordinate?
-    let cellMusicType: UInt32?
-    let regions: [UInt32]
-    let worldspaceMusicType: UInt32?
+nonisolated public struct MusicKey: Equatable, Sendable {
+    public let isInterior: Bool
+    public let interiorFormID: UInt32?
+    public let exteriorCenter: CellCoordinate?
+    public let cellMusicType: UInt32?
+    public let regions: [UInt32]
+    public let worldspaceMusicType: UInt32?
 }
 
 extension CellStreamer {
     /// Resolves the streamer's current center cell into a music key, and emits
     /// a fresh `MusicContext` when it differs from the previous one. Called
     /// from update() and apply(transition:).
-    func emitMusicContextIfNeeded() {
+    public func emitMusicContextIfNeeded() {
         let key = currentMusicKey()
         guard key != lastEmittedMusicKey else { return }
         lastEmittedMusicKey = key
@@ -36,7 +36,7 @@ extension CellStreamer {
     /// Forces a re-emit on the next call, for a scene swap that changes the
     /// music without changing the key (an interior re-entered with the same
     /// FormID after its playlist resolved differently).
-    func invalidateMusicContext() {
+    public func invalidateMusicContext() {
         lastEmittedMusicKey = nil
     }
 

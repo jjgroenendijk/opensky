@@ -23,14 +23,14 @@ import OpenSkyFormats
 
 /// One owner's saved enchanted-item state, before it is merged back into the
 /// delta.
-nonisolated struct SaveEnchantedItemEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: EnchantedItemState
+nonisolated public struct SaveEnchantedItemEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: EnchantedItemState
 }
 
-nonisolated enum OpenSkySaveEnchantedItemDecoder {
-    static func decodeEnchantedItems(_ payload: Data) throws -> [SaveEnchantedItemEntry] {
+nonisolated public enum OpenSkySaveEnchantedItemDecoder: Sendable {
+    public static func decodeEnchantedItems(_ payload: Data) throws -> [SaveEnchantedItemEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("ECHG entry count")
         try OpenSkySaveDecoder.validate(
@@ -50,7 +50,7 @@ nonisolated enum OpenSkySaveEnchantedItemDecoder {
     /// Lays each saved state over the matching `RDLT` delta, adding an entry for
     /// an owner that had no other component, and re-sorts the result into
     /// `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ values: [SaveEnchantedItemEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

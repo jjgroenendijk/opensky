@@ -6,31 +6,47 @@ import Metal
 import MetalKit
 import OpenSkyShaderTypes
 
-nonisolated struct WorldOverlayDrawStats: Equatable {
-    var submittedPrimitiveCount = 0
-    var drawnPrimitiveCount = 0
-    var triangleCount = 0
-    var lineSegmentCount = 0
-    var droppedPrimitiveCount = 0
-    var drawCalls = 0
+nonisolated public struct WorldOverlayDrawStats: Equatable, Sendable {
+    public var submittedPrimitiveCount = 0
+    public var drawnPrimitiveCount = 0
+    public var triangleCount = 0
+    public var lineSegmentCount = 0
+    public var droppedPrimitiveCount = 0
+    public var drawCalls = 0
 
-    var wasTruncated: Bool {
+    public var wasTruncated: Bool {
         droppedPrimitiveCount > 0
+    }
+
+    public init(
+        submittedPrimitiveCount: Int = 0,
+        drawnPrimitiveCount: Int = 0,
+        triangleCount: Int = 0,
+        lineSegmentCount: Int = 0,
+        droppedPrimitiveCount: Int = 0,
+        drawCalls: Int = 0
+    ) {
+        self.submittedPrimitiveCount = submittedPrimitiveCount
+        self.drawnPrimitiveCount = drawnPrimitiveCount
+        self.triangleCount = triangleCount
+        self.lineSegmentCount = lineSegmentCount
+        self.droppedPrimitiveCount = droppedPrimitiveCount
+        self.drawCalls = drawCalls
     }
 }
 
-nonisolated struct WorldOverlayResources {
-    let pipeline: MTLRenderPipelineState
-    let depthState: MTLDepthStencilState
-    let vertexBuffer: MTLBuffer
+nonisolated public struct WorldOverlayResources {
+    public let pipeline: MTLRenderPipelineState
+    public let depthState: MTLDepthStencilState
+    public let vertexBuffer: MTLBuffer
 }
 
 extension Renderer {
     /// Hard cap across triangles and line segments. A triangle is the largest
     /// primitive at three vertices, which sizes the fixed triple-buffered ring.
-    static let worldOverlayPrimitiveBudget = 65536
+    public static let worldOverlayPrimitiveBudget = 65536
 
-    static func makeWorldOverlayResources(
+    public static func makeWorldOverlayResources(
         device: MTLDevice,
         view: MTKView
     ) throws -> WorldOverlayResources {
@@ -94,7 +110,7 @@ extension Renderer {
         return state
     }
 
-    func encodeWorldOverlay(state: inout ScenePassState) {
+    public func encodeWorldOverlay(state: inout ScenePassState) {
         let context = WorldOverlayFrameContext(
             navmeshOverlayEnabled: navmeshOverlayEnabled,
             pathOverlayEnabled: pathOverlayEnabled,

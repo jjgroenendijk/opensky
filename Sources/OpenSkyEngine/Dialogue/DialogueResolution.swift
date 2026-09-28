@@ -28,18 +28,18 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct DialogueResolution: Sendable {
+nonisolated public struct DialogueResolution: Sendable {
     /// VTCK of each actor this session resolved one for. An actor absent from
     /// the table has no *known* voice type, which is not the same as having
     /// none, so the function that reads it reports a coverage gap.
     private let voiceTypes: [ReferenceKey: FormID]
     /// The actor currently in conversation with the player, or nil when the
     /// player is not talking to anybody.
-    let speakerInDialogue: ReferenceKey?
+    public let speakerInDialogue: ReferenceKey?
 
-    static let empty = DialogueResolution()
+    public static let empty = DialogueResolution()
 
-    init(
+    public init(
         voiceTypes: [ReferenceKey: FormID] = [:],
         speakerInDialogue: ReferenceKey? = nil
     ) {
@@ -48,23 +48,23 @@ nonisolated struct DialogueResolution: Sendable {
     }
 
     /// Voice type of one actor, or nil when this session resolved none for it.
-    func voiceType(of key: ReferenceKey) -> FormID? {
+    public func voiceType(of key: ReferenceKey) -> FormID? {
         voiceTypes[key]
     }
 
     /// Whether `key` is the actor the player is talking to right now.
-    func isInDialogueWithPlayer(_ key: ReferenceKey) -> Bool {
+    public func isInDialogueWithPlayer(_ key: ReferenceKey) -> Bool {
         speakerInDialogue == key
     }
 
     /// This resolution with `speaker` marked as the conversation partner, which
     /// is what opening a conversation produces.
-    func talking(to speaker: ReferenceKey?) -> Self {
+    public func talking(to speaker: ReferenceKey?) -> Self {
         DialogueResolution(voiceTypes: voiceTypes, speakerInDialogue: speaker)
     }
 
     /// Actors this resolution knows a voice type for.
-    var voiceTypeCount: Int {
+    public var voiceTypeCount: Int {
         voiceTypes.count
     }
 }

@@ -50,16 +50,16 @@ import OpenSkyGameData
 /// same index. Both forms answer the identical question, which is what makes
 /// the synthetic suites and `SkillAdvancementRealDataTests` two views of one
 /// code path rather than two code paths.
-nonisolated struct SkillUseParameterSource {
+nonisolated public struct SkillUseParameterSource: Sendable {
     private let lookup: @Sendable (Int32) -> SkillUseParameters?
 
-    init(lookup: @escaping @Sendable (Int32) -> SkillUseParameters?) {
+    public init(lookup: @escaping @Sendable (Int32) -> SkillUseParameters?) {
         self.lookup = lookup
     }
 
     /// The load order's own answer: the winning AVIF record for the actor value
     /// index, and the `AVSK` field on it.
-    init(store: ActorValueInformationStore) {
+    public init(store: ActorValueInformationStore) {
         var table: [Int32: SkillUseParameters] = [:]
         for index in ActorValueIdentity.skillIndices {
             guard let use = store.information(actorValueIndex: index)?.information.skillUse
@@ -70,48 +70,48 @@ nonisolated struct SkillUseParameterSource {
     }
 
     /// A stated table, which is what a synthetic fixture hands over.
-    init(table: [Int32: SkillUseParameters]) {
+    public init(table: [Int32: SkillUseParameters]) {
         self.init { table[$0] }
     }
 
     /// Nothing at all: every skill answers nil, which is a session with no game
     /// data and therefore no advancement.
-    static let none = SkillUseParameterSource { _ in nil }
+    public static let none = SkillUseParameterSource { _ in nil }
 
-    func parameters(forSkill index: Int32) -> SkillUseParameters? {
+    public func parameters(forSkill index: Int32) -> SkillUseParameters? {
         lookup(index)
     }
 }
 
 /// Converts skill use into skill level on top of an `ActorValueRuntime`.
 @MainActor
-struct SkillAdvancementRuntime {
+public struct SkillAdvancementRuntime {
     /// The read and write surface for both the skill and the slot holding its
     /// accumulated experience.
-    let values: ActorValueRuntime
+    public let values: ActorValueRuntime
     /// Per-skill `AVSK` parameters.
-    let parameters: SkillUseParameterSource
+    public let parameters: SkillUseParameterSource
     /// The two resolved game settings.
-    var settings: SkillAdvancementSettings
+    public var settings: SkillAdvancementSettings
     /// What the actor taking a blow is wearing, which is the one thing a hit
     /// cannot say about itself. Answers `.none` in a session with no equipment
     /// resolution, and an armoured hit then credits nothing rather than
     /// guessing a skill.
-    var wornArmor: @MainActor (ReferenceKey) -> WornArmorProfile = { _ in .none }
+    public var wornArmor: @MainActor (ReferenceKey) -> WornArmorProfile = { _ in .none }
     /// Character leveling, which is what a skill point's banked experience is
     /// spent on (issue #499). Nil in a session with no character leveling, and
     /// the experience is then computed and reported but not banked anywhere —
     /// which is what every synthetic suite that drives skills alone does.
-    var leveling: PlayerLevelRuntime?
-    private(set) var tally = SkillAdvancementTally()
+    public var leveling: PlayerLevelRuntime?
+    public private(set) var tally = SkillAdvancementTally()
 
     /// The player's stored progress, or a fresh one when this session runs no
     /// character leveling.
-    var progress: PlayerProgressState {
+    public var progress: PlayerProgressState {
         leveling?.state ?? PlayerProgressState()
     }
 
-    init(
+    public init(
         values: ActorValueRuntime,
         parameters: SkillUseParameterSource = .none,
         settings: SkillAdvancementSettings = .documentedDefaults
@@ -124,7 +124,7 @@ struct SkillAdvancementRuntime {
     // MARK: - Reading
 
     /// The player's holder, which is the only character this runtime advances.
-    var player: ActorValueHolder {
+    public var player: ActorValueHolder {
         .player
     }
 
@@ -132,21 +132,21 @@ struct SkillAdvancementRuntime {
     /// training and level-ups have added, and never a Fortify modifier: a
     /// fortified skill is not a trained one, and letting a potion move the
     /// threshold would make advancement depend on what the character drank.
-    func level(ofSkill index: Int32, on holder: ActorValueHolder) -> Float {
+    public func level(ofSkill index: Int32, on holder: ActorValueHolder) -> Float {
         values.baseValue(at: index, on: holder) ?? ActorValueIdentity.skillFloor
     }
 
     /// Experience accumulated toward `skill`'s next level, read out of the
     /// skill's `Skill Advance` slot. Zero for a skill nothing has used, and the
     /// read the progression panel of item 20.7 takes.
-    func experience(forSkill index: Int32, on holder: ActorValueHolder) -> Float {
+    public func experience(forSkill index: Int32, on holder: ActorValueHolder) -> Float {
         guard let slot = ActorValueIdentity.skillAdvanceIndex(forSkill: index) else { return 0 }
         return max(0, values.baseValue(at: slot, on: holder) ?? 0)
     }
 
     /// What `skill` needs to reach its next level from where it stands, or zero
     /// when this load order carries no parameters for it.
-    func threshold(forSkill index: Int32, on holder: ActorValueHolder) -> Float {
+    public func threshold(forSkill index: Int32, on holder: ActorValueHolder) -> Float {
         guard let use = parameters.parameters(forSkill: index) else { return 0 }
         return SkillAdvancement.threshold(
             atSkillLevel: level(ofSkill: index, on: holder),
@@ -164,7 +164,7 @@ struct SkillAdvancementRuntime {
     ///   with no advancement parameters for the skill. Every one of those is
     ///   counted in the tally.
     @discardableResult
-    mutating func record(_ use: SkillUseEvent) -> SkillAdvanceReport? {
+    public mutating func record(_ use: SkillUseEvent) -> SkillAdvanceReport? {
         guard use.actor == ReferenceKey.player else {
             tally.noteNonPlayer()
             return nil
@@ -189,7 +189,7 @@ struct SkillAdvancementRuntime {
     /// - Returns: nil for an index that is not one of the eighteen skills, and
     ///   for a load order carrying no parameters for it.
     @discardableResult
-    mutating func advance(
+    public mutating func advance(
         skill index: Int32,
         byUse amount: Float,
         on holder: ActorValueHolder
@@ -242,7 +242,7 @@ struct SkillAdvancementRuntime {
     /// - Returns: nil for an index that is not a skill, and for a skill already
     ///   at the ceiling, which cannot take the point.
     @discardableResult
-    mutating func increment(
+    public mutating func increment(
         skill index: Int32,
         on holder: ActorValueHolder
     ) -> SkillAdvanceReport? {

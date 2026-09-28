@@ -9,18 +9,18 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct ConditionDataResolution: @unchecked Sendable {
-    let keywords: KeywordStore?
-    let formLists: FormListStore?
-    let locations: LocationStore?
-    let sourcePlugin: String?
+nonisolated public struct ConditionDataResolution: @unchecked Sendable, Sendable {
+    public let keywords: KeywordStore?
+    public let formLists: FormListStore?
+    public let locations: LocationStore?
+    public let sourcePlugin: String?
 
     private let currentLocations: [ReferenceKey: ResolvedFormID]
     private let editorLocations: [ReferenceKey: ResolvedFormID]
 
-    static let empty = ConditionDataResolution()
+    public static let empty = ConditionDataResolution()
 
-    init(
+    public init(
         keywords: KeywordStore? = nil,
         formLists: FormListStore? = nil,
         locations: LocationStore? = nil,
@@ -36,11 +36,11 @@ nonisolated struct ConditionDataResolution: @unchecked Sendable {
         self.editorLocations = editorLocations
     }
 
-    func currentLocation(of reference: ReferenceKey) -> ResolvedFormID? {
+    public func currentLocation(of reference: ReferenceKey) -> ResolvedFormID? {
         currentLocations[reference]
     }
 
-    func editorLocation(of reference: ReferenceKey) -> ResolvedFormID? {
+    public func editorLocation(of reference: ReferenceKey) -> ResolvedFormID? {
         editorLocations[reference]
     }
 }

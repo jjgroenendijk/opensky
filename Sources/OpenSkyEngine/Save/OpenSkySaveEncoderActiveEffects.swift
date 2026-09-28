@@ -29,7 +29,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// snapshot's `ReferenceKey` order. A session in which nothing was applied
     /// writes no chunk, so its bytes match what this encoder produced before
     /// the chunk existed.
-    static func writeActiveEffects(
+    public static func writeActiveEffects(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

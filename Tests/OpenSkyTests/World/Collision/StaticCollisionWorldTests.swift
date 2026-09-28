@@ -1,7 +1,7 @@
 // Per-cell static collision BVH + composition lifecycle over synthetic engine
 // values only. No game content, file parsing, or Metal device required.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

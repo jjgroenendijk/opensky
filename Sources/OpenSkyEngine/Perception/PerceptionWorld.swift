@@ -25,23 +25,23 @@ import OpenSkyFormats
 import simd
 
 /// One actor that is looking and listening, as the perception pass sees it.
-nonisolated struct PerceptionObserver: Equatable, Sendable {
-    let key: ReferenceKey
+nonisolated public struct PerceptionObserver: Equatable, Sendable {
+    public let key: ReferenceKey
     /// Capsule bottom, world space.
-    let feet: SIMD3<Float>
+    public let feet: SIMD3<Float>
     /// The point sight is traced from: the capsule's eye height above `feet`.
-    let eye: SIMD3<Float>
+    public let eye: SIMD3<Float>
     /// Facing yaw in radians, in the locomotion bridge's convention. The view
     /// cone is centred on it.
-    let facing: Float
+    public let facing: Float
     /// Whether this observer stands in an exterior cell, which is what
     /// `fSneakExteriorDistanceMult` applies to.
-    let isExterior: Bool
+    public let isExterior: Bool
     /// FULL name when one resolves, else the editor ID, else the FormID. Never
     /// empty, so a readout line always names something.
-    let name: String
+    public let name: String
 
-    init(
+    public init(
         key: ReferenceKey,
         feet: SIMD3<Float>,
         eye: SIMD3<Float>? = nil,
@@ -60,34 +60,34 @@ nonisolated struct PerceptionObserver: Equatable, Sendable {
     /// The unit heading the cone is centred on, in the XY plane. Perception is
     /// a yaw cone rather than a solid angle: nothing in this engine pitches an
     /// actor's head, so a pitch term would only ever read zero.
-    var heading: SIMD2<Float> {
+    public var heading: SIMD2<Float> {
         SIMD2(cosf(facing), sinf(facing))
     }
 }
 
 /// One actor that may be perceived, as the perception pass sees it.
-nonisolated struct PerceptionTarget: Equatable, Sendable {
-    let key: ReferenceKey
+nonisolated public struct PerceptionTarget: Equatable, Sendable {
+    public let key: ReferenceKey
     /// Capsule bottom, world space.
-    let feet: SIMD3<Float>
+    public let feet: SIMD3<Float>
     /// The point sight is traced to. Tracing to the eye rather than to the feet
     /// is what makes a target behind a waist-high wall still visible.
-    let eye: SIMD3<Float>
+    public let eye: SIMD3<Float>
     /// How the target is moving right now, or nil when it is standing still. A
     /// still target makes no movement noise at all, which is vanilla's own rule
     /// ("This value is simply set to 0 when not moving").
-    let gait: LocomotionGait?
+    public let gait: LocomotionGait?
     /// Whether the target is crouched. Distinct from `gait == .sneak` because a
     /// motionless crouching target is still harder to see while making no noise.
-    let isSneaking: Bool
+    public let isSneaking: Bool
     /// Combined weight of everything equipped, which the movement-noise term
     /// scales with. Zero is a supported value, not a missing one: it means the
     /// target counts as `equippedWeightBase` alone.
-    let equippedWeight: Float
+    public let equippedWeight: Float
     /// FULL name when one resolves, else the editor ID, else the FormID.
-    let name: String
+    public let name: String
 
-    init(
+    public init(
         key: ReferenceKey,
         feet: SIMD3<Float>,
         eye: SIMD3<Float>? = nil,
@@ -108,7 +108,7 @@ nonisolated struct PerceptionTarget: Equatable, Sendable {
 
 /// Everything `PerceptionRuntime` needs from the session around it.
 @MainActor
-protocol PerceptionWorld: AnyObject {
+public protocol PerceptionWorld: AnyObject {
     /// Every actor whose perception is simulated this frame, in `ReferenceKey`
     /// order. The caller's filter, not the runtime's: only the session knows
     /// which resident ACHRs the AI is driving, and simulating the rest would be

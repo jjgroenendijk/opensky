@@ -3,6 +3,7 @@
 // paths and misses.
 
 import AppKit
+import OpenSkyEngine
 
 final class FaceMorphSection: PanelSectionViewController {
     weak var provider: (any FaceMorphControlProviding)? {

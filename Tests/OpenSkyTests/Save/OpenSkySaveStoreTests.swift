@@ -6,7 +6,7 @@
 // state and plugin bytes from ESMFixture, so no game data is involved.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

@@ -31,26 +31,26 @@ import Foundation
 import OpenSkyFormats
 
 /// What one reconciliation did.
-nonisolated struct WornEnchantmentReport: Equatable, Sendable {
+nonisolated public struct WornEnchantmentReport: Equatable, Sendable {
     /// Items whose effects were applied this time, ascending.
-    let applied: [FormID]
+    public let applied: [FormID]
     /// Items whose effects were taken back off, ascending.
-    let removed: [FormID]
+    public let removed: [FormID]
     /// Constant effects stored across every newly worn item.
-    let storedCount: Int
+    public let storedCount: Int
     /// Effects dispelled across every item that came off.
-    let dispelledCount: Int
+    public let dispelledCount: Int
 
-    static let none = WornEnchantmentReport(
+    public static let none = WornEnchantmentReport(
         applied: [], removed: [], storedCount: 0, dispelledCount: 0
     )
 
     /// Whether anything moved, which is what tells a caller to refresh a readout.
-    var didChange: Bool {
+    public var didChange: Bool {
         !applied.isEmpty || !removed.isEmpty
     }
 
-    var describedLine: String {
+    public var describedLine: String {
         guard didChange else { return "Worn enchantments unchanged." }
         return "Worn enchantments: \(applied.count) item(s) on (\(storedCount) effect(s)), "
             + "\(removed.count) off (\(dispelledCount) effect(s))."
@@ -58,7 +58,7 @@ nonisolated struct WornEnchantmentReport: Equatable, Sendable {
 }
 
 @MainActor
-enum WornEnchantmentApplication {
+public enum WornEnchantmentApplication {
     /// Brings `holder`'s constant effects in line with what it is wearing.
     ///
     /// - Parameter worn: the resolved enchantment of every item `holder` has
@@ -66,7 +66,7 @@ enum WornEnchantmentApplication {
     ///   drawn enchanted sword, a staff — is ignored here rather than filtered by
     ///   the caller, so no caller has to know the rule.
     @discardableResult
-    static func reconcile(
+    public static func reconcile(
         worn: [ItemEnchantmentProfile],
         on holder: ActorValueHolder,
         using runtime: inout ActiveEffectRuntime
@@ -116,7 +116,7 @@ enum WornEnchantmentApplication {
     /// Takes every worn enchantment off `holder` and forgets them, which is what
     /// an `unequipAll` and a dev control mean.
     @discardableResult
-    static func removeAll(
+    public static func removeAll(
         on holder: ActorValueHolder,
         using runtime: inout ActiveEffectRuntime
     ) -> WornEnchantmentReport {

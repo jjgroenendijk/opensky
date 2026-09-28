@@ -8,7 +8,7 @@
 // full 7.1.1 backup pushes it toward the sun to fullBackupNearZ (more
 // negative). residentNearZ is resident geometry's nearest-toward-sun distance.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

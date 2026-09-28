@@ -30,8 +30,8 @@ private struct ResolvedAudioFile {
 }
 
 @MainActor
-final class WorldAudioSoundDirector {
-    static let logger = Logger(
+public final class WorldAudioSoundDirector {
+    public static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldAudioDirector"
     )
@@ -46,11 +46,11 @@ final class WorldAudioSoundDirector {
 
     /// SFX on use-key activation. Off by default until the user enables audio;
     /// the panel control writes back here.
-    var sfxEnabled = true
+    public var sfxEnabled = true
     /// Continuous ambience bed. Same default policy as `sfxEnabled`. Toggling
     /// it takes effect immediately: switching off retires the playing bed,
     /// switching back on restarts the bed the last context resolved.
-    var ambienceEnabled = true {
+    public var ambienceEnabled = true {
         didSet {
             guard ambienceEnabled != oldValue else { return }
             applyAmbienceState()
@@ -71,10 +71,10 @@ final class WorldAudioSoundDirector {
     private var interactionLoopSourceIDs: [FormID: Int] = [:]
 
     /// Most recent SFX outcome, surfaced through the World > Audio readout.
-    private(set) var lastSFXDescription: String?
-    private(set) var lastSFXError: String?
+    public private(set) var lastSFXDescription: String?
+    public private(set) var lastSFXError: String?
 
-    init(
+    public init(
         engine: WorldAudioEngine,
         soundStore: SoundRecordStore?,
         weatherStore: WeatherStore?,
@@ -95,7 +95,7 @@ final class WorldAudioSoundDirector {
 
     /// Test seam: same shape as the production init but takes a file loader
     /// closure directly so tests do not need a real VirtualFileSystem.
-    init(
+    public init(
         engine: WorldAudioEngine,
         soundStore: SoundRecordStore?,
         weatherStore: WeatherStore?,
@@ -113,7 +113,7 @@ final class WorldAudioSoundDirector {
 
     /// CellStreamer.onInteraction subscriber. Plays the activator's activation
     /// sound (DOOR.SNAM, ACTI.VNAM, CONT.SNAM) at the placed position.
-    func handleInteraction(_ event: InteractionEvent) {
+    public func handleInteraction(_ event: InteractionEvent) {
         guard sfxEnabled, engine.isRunning else { return }
         guard
             let sounds = event.target.interaction.sounds,
@@ -130,7 +130,7 @@ final class WorldAudioSoundDirector {
     /// close and cancellation both retire it, while only close plays the
     /// authored one-shot. The same event also supports a future container
     /// animation because DOOR.ANAM and CONT.QNAM share `sounds.close`.
-    func handleInteractionAnimation(_ event: InteractionAnimationEvent) {
+    public func handleInteractionAnimation(_ event: InteractionAnimationEvent) {
         let interaction = event.interaction
         switch event.phase {
         case .motionStarted:
@@ -167,7 +167,7 @@ final class WorldAudioSoundDirector {
     /// and, when it differs from the last resolved one, retires the previous
     /// sources and starts the new ones. A bed that did not change is a no-op;
     /// a bed resolved while ambience is off is remembered but not started.
-    func handleAmbienceContext(_ context: AmbienceContext) {
+    public func handleAmbienceContext(_ context: AmbienceContext) {
         let bed = AmbienceBed.resolve(
             context: context,
             weatherStore: weatherStore,
@@ -190,7 +190,7 @@ final class WorldAudioSoundDirector {
 
     /// Forces a one-shot SFX for any resolved SNDR FormID. Used by the World >
     /// Audio panel to verify SFX without relying on a walk-mode interaction.
-    func forcePlaySound(formID: FormID, position: SIMD3<Float>) {
+    public func forcePlaySound(formID: FormID, position: SIMD3<Float>) {
         guard engine.isRunning else {
             lastSFXError = "engine not running"
             return
@@ -202,7 +202,7 @@ final class WorldAudioSoundDirector {
     /// of this director's ambience sources is still alive in the engine, so the
     /// readout cannot claim a bed the engine already retired (FIFO eviction,
     /// cell purge, or a stream that ended).
-    var currentAmbienceDescription: String {
+    public var currentAmbienceDescription: String {
         pruneRetiredAmbienceSources()
         guard !ambienceSourceIDs.isEmpty else { return "none" }
         return desiredBed.entries

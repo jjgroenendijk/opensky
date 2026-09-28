@@ -15,7 +15,7 @@
 // `openskycli bench --fly-path`, which cannot run in a unit test.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

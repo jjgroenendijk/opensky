@@ -6,17 +6,17 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
-    struct KeywordContext {
-        let store: KeywordStore
-        let sourcePlugin: String
+    public struct KeywordContext: Sendable {
+        public let store: KeywordStore
+        public let sourcePlugin: String
     }
 
-    struct FormListContext {
-        let store: FormListStore
-        let sourcePlugin: String
+    public struct FormListContext: Sendable {
+        public let store: FormListStore
+        public let sourcePlugin: String
     }
 
-    static func referenceRecordSummary(
+    public static func referenceRecordSummary(
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,

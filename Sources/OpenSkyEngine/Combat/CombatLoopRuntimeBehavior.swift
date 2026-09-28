@@ -30,7 +30,7 @@ import simd
 
 extension CombatLoopRuntime {
     /// Advances every engaged actor by one fixed step and acts on what each did.
-    func driveBehaviors(world: any CombatLoopWorld) {
+    public func driveBehaviors(world: any CombatLoopWorld) {
         let actors = world.combatActors()
         let resident = Set(actors.map(\.key))
         // Over a snapshot of the keys, not the live view: retiring mutates the

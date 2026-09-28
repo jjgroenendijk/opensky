@@ -44,7 +44,7 @@ extension PapyrusWorldRuntime {
     /// - Returns: the function names enqueued, which is empty in both those
     ///   cases and when the response declares no fragment for `phase`.
     @discardableResult
-    func queueTopicInfoFragment(
+    public func queueTopicInfoFragment(
         of info: TopicInfo,
         key: ReferenceKey,
         phase: TopicInfoFragmentPhase,
@@ -75,7 +75,7 @@ extension PapyrusWorldRuntime {
     }
 
     /// Response result scripts holding a live instance.
-    var dialogueInfoCount: Int {
+    public var dialogueInfoCount: Int {
         Set(dialogueInstanceKeys.map(\.reference)).count
     }
 

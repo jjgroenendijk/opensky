@@ -6,7 +6,7 @@
 // stay inside the strict-lint type-length cap.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 @MainActor

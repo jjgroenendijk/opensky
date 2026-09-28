@@ -12,6 +12,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

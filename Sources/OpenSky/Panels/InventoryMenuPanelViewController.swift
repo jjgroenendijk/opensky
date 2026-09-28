@@ -3,6 +3,7 @@
 // engine-side row list and what the vanilla movie built from it.
 
 import AppKit
+import OpenSkyEngine
 
 final class InventoryMenuPanelViewController: InspectorPanelViewController {
     let menuSection = InventoryMenuSection()

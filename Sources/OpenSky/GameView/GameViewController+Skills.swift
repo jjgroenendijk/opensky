@@ -19,6 +19,7 @@
 // Documented in docs/engine/skill-advancement.md.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 /// Skill-advancement state the controller owns. Extensions cannot add stored

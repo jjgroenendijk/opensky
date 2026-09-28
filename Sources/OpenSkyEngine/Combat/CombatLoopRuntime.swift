@@ -32,15 +32,15 @@ import OpenSkyFormats
 import simd
 
 @MainActor
-final class CombatLoopRuntime {
+public final class CombatLoopRuntime {
     /// Step the fight advances on, matching the actor-value runtime's and the
     /// perception pass's so a frame drives all three the same way. 1/60 s.
-    static let fixedStepSeconds: Float = 1.0 / 60
+    public static let fixedStepSeconds: Float = 1.0 / 60
 
     /// Most whole steps one `advance(by:)` runs, so a multi-second stall cannot
     /// spend a minute of fighting in a single frame. Same cap, same reason as
     /// `ActorValueRuntime.maximumStepsPerAdvance`.
-    static let maximumStepsPerAdvance = 8
+    public static let maximumStepsPerAdvance = 8
 
     /// Most actors that may hold a behavior machine at once (scope point 7).
     ///
@@ -49,36 +49,36 @@ final class CombatLoopRuntime {
     /// whose approach silently never started. Past the cap the nearest actors
     /// win and `crowdedOutCount` says how many did not, because a silent
     /// truncation would read as "nobody else was fighting".
-    static let maximumEngagedActors = NPCMovementRuntime.maximumSimultaneousMovers
+    public static let maximumEngagedActors = NPCMovementRuntime.maximumSimultaneousMovers
 
     /// How many incoming hits the trace keeps.
-    static let traceLimit = 16
+    public static let traceLimit = 16
 
     /// Seconds the player's damage flash decays over. An OpenSky number: the
     /// HUD hook needs a duration and no record states one.
-    static let damageFlashSeconds: Float = 0.35
+    public static let damageFlashSeconds: Float = 0.35
 
-    let settings: CombatSettings
+    public let settings: CombatSettings
     /// Ceilings on everything the fight spawns.
-    var limits = CombatTransientLimits.standard
+    public var limits = CombatTransientLimits.standard
     /// The cadence, block, flee and search numbers every machine runs on.
-    var behaviorSettings = CombatBehaviorSettings.standard
+    public var behaviorSettings = CombatBehaviorSettings.standard
 
-    private(set) var state = CombatLoopState.calm
+    public private(set) var state = CombatLoopState.calm
     /// One machine per actor that is fighting or has fought, keyed by actor.
-    private(set) var behaviors: [ReferenceKey: CombatBehaviorMachine] = [:]
+    public private(set) var behaviors: [ReferenceKey: CombatBehaviorMachine] = [:]
     /// Hostile living actors the cap refused a machine at the last step.
-    private(set) var crowdedOutCount = 0
+    public private(set) var crowdedOutCount = 0
     /// Blows the player has taken, oldest first.
-    private(set) var incomingTrace: [CombatIncomingHit] = []
-    private(set) var incomingHitCount = 0
+    public private(set) var incomingTrace: [CombatIncomingHit] = []
+    public private(set) var incomingHitCount = 0
     /// The HUD's damage-flash hook: 1 the step a blow lands, decaying to 0 over
     /// `damageFlashSeconds`.
-    private(set) var playerDamageFlash: Float = 0
+    public private(set) var playerDamageFlash: Float = 0
     /// Transients removed by the caps since construction, cumulative.
-    private(set) var trimmedTransients = CombatTransientCounts()
+    public private(set) var trimmedTransients = CombatTransientCounts()
     /// Human-readable result of the last panel or script action.
-    var lastActionText = "No fight yet."
+    public var lastActionText = "No fight yet."
 
     private weak var world: (any CombatLoopWorld)?
     private var accumulator: Double = 0
@@ -94,13 +94,13 @@ final class CombatLoopRuntime {
     /// than being re-selected every step.
     private var wasInCombat = false
 
-    init(settings: CombatSettings, world: (any CombatLoopWorld)? = nil) {
+    public init(settings: CombatSettings, world: (any CombatLoopWorld)? = nil) {
         self.settings = settings
         self.world = world
     }
 
     /// Attaches (or detaches) the world the loop runs over.
-    func attach(world: (any CombatLoopWorld)?) {
+    public func attach(world: (any CombatLoopWorld)?) {
         self.world = world
         reset()
     }
@@ -108,7 +108,7 @@ final class CombatLoopRuntime {
     // MARK: - Hostility
 
     /// `key`'s stored regard for the player.
-    func hostility(of key: ReferenceKey) -> ActorHostility {
+    public func hostility(of key: ReferenceKey) -> ActorHostility {
         world?.combatHostility(of: key) ?? .neutral
     }
 
@@ -117,7 +117,7 @@ final class CombatLoopRuntime {
     ///
     /// - Returns: true when stored state changed.
     @discardableResult
-    func setHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
+    public func setHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
         guard let world else { return false }
         let changed = world.setCombatHostility(hostility, on: key)
         if hostility == .neutral {
@@ -134,14 +134,14 @@ final class CombatLoopRuntime {
     ///
     /// - Returns: true when this call is what turned the actor hostile.
     @discardableResult
-    func provoke(_ key: ReferenceKey) -> Bool {
+    public func provoke(_ key: ReferenceKey) -> Bool {
         guard key != .player, hostility(of: key) != .hostile else { return false }
         return setHostility(.hostile, on: key)
     }
 
     /// Every landed melee hit the player's swing produced: provokes each target,
     /// puts it in the fight, and interrupts whatever it was doing.
-    func notePlayerHits(_ targets: [ReferenceKey]) {
+    public func notePlayerHits(_ targets: [ReferenceKey]) {
         for target in targets where target != .player {
             provoke(target)
             provoked.insert(target)
@@ -154,7 +154,7 @@ final class CombatLoopRuntime {
     /// A charge in the actor's hand goes with the attack: the same blow that
     /// takes a swing away takes a cast away, which is why `isAttacking` counts
     /// the casting phase.
-    func noteStagger(of key: ReferenceKey) {
+    public func noteStagger(of key: ReferenceKey) {
         var machine = behaviors[key] ?? CombatBehaviorMachine(
             settings: behaviorSettings, seed: CombatBehaviorMachine.seed(for: key)
         )
@@ -176,7 +176,7 @@ final class CombatLoopRuntime {
     ///   target other than the player — the fight this engine runs is against
     ///   the player, so naming anybody else would be a fight nothing simulates.
     @discardableResult
-    func startCombat(_ actor: ReferenceKey, with target: ReferenceKey) -> Bool {
+    public func startCombat(_ actor: ReferenceKey, with target: ReferenceKey) -> Bool {
         guard let world, actor != .player, target == .player else { return false }
         guard world.combatActors().contains(where: { $0.key == actor && !$0.isDead })
         else { return false }
@@ -192,7 +192,7 @@ final class CombatLoopRuntime {
     ///
     /// - Returns: true when there was a fight to stop.
     @discardableResult
-    func stopCombat(_ actor: ReferenceKey) -> Bool {
+    public func stopCombat(_ actor: ReferenceKey) -> Bool {
         guard let world, behaviors[actor]?.isEngaged == true else {
             forcedTargets.removeValue(forKey: actor)
             return false
@@ -205,32 +205,32 @@ final class CombatLoopRuntime {
     // MARK: - Reading
 
     /// Where `key` is in a fight, or nil when it has no machine.
-    func phase(of key: ReferenceKey) -> CombatBehaviorPhase? {
+    public func phase(of key: ReferenceKey) -> CombatBehaviorPhase? {
         behaviors[key]?.phase
     }
 
     /// What `key` is blocking with, or nil when its guard is down. The answer
     /// `combatBlock(of:)` gives for every actor that is not the player.
-    func blockKind(of key: ReferenceKey) -> MeleeBlockKind? {
+    public func blockKind(of key: ReferenceKey) -> MeleeBlockKind? {
         behaviors[key]?.blockKind
     }
 
     /// `key`'s combat state as `GetCombatState` and `IsInCombat` read it.
-    func activity(of key: ReferenceKey) -> ActorCombatActivity {
+    public func activity(of key: ReferenceKey) -> ActorCombatActivity {
         guard let phase = behaviors[key]?.phase, phase.isEngaged else { return .notFighting }
         return phase == .searching ? .searching : .fighting
     }
 
     /// Who `key` is fighting, which is the player unless a script said
     /// otherwise.
-    func target(of key: ReferenceKey) -> ReferenceKey {
+    public func target(of key: ReferenceKey) -> ReferenceKey {
         forcedTargets[key] ?? .player
     }
 
     /// Whether `key` engages without having to perceive its target: a script
     /// called `StartCombat`, or the player hit it and it has not turned around
     /// yet.
-    func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
+    public func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
         forcedTargets[key] != nil || provoked.contains(key)
     }
 
@@ -245,7 +245,7 @@ final class CombatLoopRuntime {
     ///
     /// - Returns: how many whole steps ran.
     @discardableResult
-    func advance(by delta: Float) -> Int {
+    public func advance(by delta: Float) -> Int {
         guard delta.isFinite, delta > 0 else { return 0 }
         accumulator += Double(delta)
         var steps = 0
@@ -272,7 +272,7 @@ final class CombatLoopRuntime {
     /// from "not fighting" rather than resuming mid-windup. An actor that is
     /// still hostile and can still perceive the player re-engages on the first
     /// step after the load, which is the same route it took the first time.
-    func prepareForPersistence() {
+    public func prepareForPersistence() {
         world?.despawnCombatTransients()
         for key in behaviors.keys.sorted() {
             if behaviors[key]?.pendingCast != nil {
@@ -285,7 +285,7 @@ final class CombatLoopRuntime {
     }
 
     /// Forgets every live fight without touching stored hostility.
-    func reset() {
+    public func reset() {
         state = .calm
         behaviors = [:]
         forcedTargets = [:]
@@ -301,7 +301,7 @@ final class CombatLoopRuntime {
     }
 
     /// Empties the incoming trace and its count without disturbing the fight.
-    func clearTrace() {
+    public func clearTrace() {
         incomingTrace = []
         incomingHitCount = 0
     }
@@ -314,7 +314,7 @@ final class CombatLoopRuntime {
     /// Here rather than in the satellite because `behaviors` is `private(set)`
     /// and that is per file: the satellite decides what to tell a machine but
     /// must not be able to rewrite its phase behind the runtime's back.
-    func stepBehavior(
+    public func stepBehavior(
         of key: ReferenceKey, inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
         var machine = behaviors[key] ?? CombatBehaviorMachine(
@@ -330,7 +330,7 @@ final class CombatLoopRuntime {
 
     /// Parks one machine without losing its counts, for an actor that died or
     /// whose cell unloaded. A charge in flight is dropped with it.
-    func parkBehavior(of key: ReferenceKey) {
+    public func parkBehavior(of key: ReferenceKey) {
         if behaviors[key]?.pendingCast != nil {
             world?.cancelCombatCast(by: key)
         }
@@ -338,25 +338,25 @@ final class CombatLoopRuntime {
     }
 
     /// Drops a charge the world refused to begin, leaving the fight running.
-    func abandonCast(of key: ReferenceKey, world: any CombatLoopWorld) {
+    public func abandonCast(of key: ReferenceKey, world: any CombatLoopWorld) {
         world.cancelCombatCast(by: key)
         behaviors[key]?.abandonCast()
     }
 
     /// Forgets one machine outright, for an actor that is no longer resident.
-    func retireBehavior(of key: ReferenceKey) {
+    public func retireBehavior(of key: ReferenceKey) {
         behaviors.removeValue(forKey: key)
         forcedTargets.removeValue(forKey: key)
         provoked.remove(key)
     }
 
     /// Records how many hostile living actors the engagement cap refused.
-    func noteCrowdedOut(_ count: Int) {
+    public func noteCrowdedOut(_ count: Int) {
         crowdedOutCount = count
     }
 
     /// Appends one incoming hit to the trace, trimming to the limit.
-    func append(_ hit: CombatIncomingHit) {
+    public func append(_ hit: CombatIncomingHit) {
         incomingHitCount += 1
         incomingTrace.append(hit)
         if incomingTrace.count > Self.traceLimit {
@@ -366,14 +366,14 @@ final class CombatLoopRuntime {
     }
 
     /// The next attack's identity, so two hits from one attack read as one.
-    func nextAttackID() -> Int {
+    public func nextAttackID() -> Int {
         attackID += 1
         return attackID
     }
 
     /// Stores and returns one panel-facing outcome line.
     @discardableResult
-    func record(_ text: String) -> String {
+    public func record(_ text: String) -> String {
         lastActionText = text
         return text
     }
@@ -432,7 +432,7 @@ final class CombatLoopRuntime {
 /// Three cases because the Creation Kit wiki documents three returns, and 16.7
 /// is what makes the third reachable: an actor that lost its target and is
 /// looking for it is neither out of combat nor fighting.
-nonisolated enum ActorCombatActivity: UInt8, Equatable, Sendable, CaseIterable {
+nonisolated public enum ActorCombatActivity: UInt8, Equatable, Sendable, CaseIterable {
     /// Not fighting. `GetCombatState` 0.
     ///
     /// Spelled `notFighting` rather than `none`, because `.none` on an
@@ -444,7 +444,7 @@ nonisolated enum ActorCombatActivity: UInt8, Equatable, Sendable, CaseIterable {
     /// Searching for a target it lost. `GetCombatState` 2.
     case searching = 2
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .notFighting: "not in combat"
         case .fighting: "in combat"

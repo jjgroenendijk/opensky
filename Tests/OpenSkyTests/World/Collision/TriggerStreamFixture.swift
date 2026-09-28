@@ -2,7 +2,7 @@
 // box volumes, cell scenes carrying them, and capsule poses. Every value is
 // built in code; no game content is involved.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

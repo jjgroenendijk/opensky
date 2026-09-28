@@ -7,7 +7,6 @@
 // what they put in the `HavokFilter`, so the filters are a parameter and
 // everything else is fixed.
 
-@testable import OpenSky
 @testable import OpenSkyFormats
 import simd
 

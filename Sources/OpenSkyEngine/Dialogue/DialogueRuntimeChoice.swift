@@ -39,7 +39,7 @@ import OpenSkyFormats
 /// runtime must still be able to hold a conversation. The conformer in a real
 /// session is the Papyrus world bridge.
 @MainActor
-protocol DialogueFragmentDispatching: AnyObject, Sendable {
+public protocol DialogueFragmentDispatching: AnyObject, Sendable {
     /// Instantiates the response's result script if needed and enqueues the
     /// fragment for `phase`.
     ///
@@ -64,7 +64,7 @@ extension DialogueRuntime {
     ///   response, `DialogueError.unresolvedInfoKey` when its FormID does not
     ///   resolve to a session-stable key, in which case nothing is written.
     @discardableResult
-    func choose(_ id: FormID, speaker: ReferenceKey) throws -> DialogueChoice {
+    public func choose(_ id: FormID, speaker: ReferenceKey) throws -> DialogueChoice {
         guard let info = dialogue.info(id) else {
             throw DialogueError.unknownInfo(id)
         }

@@ -36,41 +36,41 @@
 import Foundation
 
 /// The player's level, banked character experience and perk-point pool.
-nonisolated struct PlayerProgressState: WorldStateComponent {
+nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
     /// Most perk points the pool holds. The Creation Kit wiki states the cap on
     /// the function that writes it: "Final values can not exceed 255."
     /// (<https://ck.uesp.net/wiki/ModPerkPoints_-_Game>)
-    static let maximumPerkPoints = 255
+    public static let maximumPerkPoints = 255
 
     /// The character level, which is what `GetLevel` reports for the player.
-    private(set) var level: Int
+    public private(set) var level: Int
     /// Character experience banked toward the next level, always below the next
     /// threshold once a level-up has been run against it.
-    private(set) var experience: Float
+    public private(set) var experience: Float
     /// Perk points earned and not yet spent.
-    private(set) var perkPoints: Int
+    public private(set) var perkPoints: Int
     /// Attribute picks the player is owed and has not made — one per level
     /// gained. "if you gained 4 levels you will be prompted to make 4 choices
     /// in succession" (<https://en.uesp.net/wiki/Skyrim:Leveling>).
-    private(set) var pendingAttributePicks: Int
+    public private(set) var pendingAttributePicks: Int
     /// Every pick already made, oldest first.
-    private(set) var attributePicks: [ActorValueKind]
+    public private(set) var attributePicks: [ActorValueKind]
     /// Skill points gained over the session, which is the number a level-up
     /// screen counts and a trainer's per-level cap is checked against.
-    private(set) var skillIncreases: Int
+    public private(set) var skillIncreases: Int
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .playerProgress
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .playerProgress(self)
     }
 
     /// Normalizes on the way in, which is what makes this the save decoder's
     /// entry point: a file written by a different build, or corrupted, restores
     /// a component every reader can trust rather than a NaN that spreads.
-    init(
+    public init(
         level: Int = PlayerLevelSource.startingLevel,
         experience: Float = 0,
         perkPoints: Int = 0,
@@ -86,20 +86,20 @@ nonisolated struct PlayerProgressState: WorldStateComponent {
         self.skillIncreases = max(0, skillIncreases)
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .playerProgress(value) = erased else { return nil }
         self = value
     }
 
     /// True when the component says nothing a fresh session would not, which is
     /// when the store drops the slot rather than keeping it around.
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         self == PlayerProgressState()
     }
 
     /// How many times each attribute has been picked, which is what a readout
     /// prints beside the three bars.
-    func pickCount(of kind: ActorValueKind) -> Int {
+    public func pickCount(of kind: ActorValueKind) -> Int {
         attributePicks.count { $0 == kind }
     }
 
@@ -109,14 +109,14 @@ nonisolated struct PlayerProgressState: WorldStateComponent {
     ///
     /// A non-finite or negative amount banks nothing, by the rule every runtime
     /// here follows: a bad number is ignored rather than propagated.
-    func banking(experience amount: Float) -> PlayerProgressState {
+    public func banking(experience amount: Float) -> PlayerProgressState {
         guard amount.isFinite, amount > 0 else { return self }
         return with { $0.experience += amount }
     }
 
     /// Records `levels` gained and the experience left carrying, granting one
     /// perk point and one owed attribute pick per level.
-    func leveled(_ outcome: CharacterLevelOutcome) -> PlayerProgressState {
+    public func leveled(_ outcome: CharacterLevelOutcome) -> PlayerProgressState {
         guard outcome.levelsGained > 0 else {
             return with { $0.experience = max(0, outcome.carriedExperience) }
         }
@@ -132,7 +132,7 @@ nonisolated struct PlayerProgressState: WorldStateComponent {
     ///
     /// - Returns: nil when nothing is owed, which is the caller's cue to refuse
     ///   rather than hand out a free ten points.
-    func choosing(_ kind: ActorValueKind) -> PlayerProgressState? {
+    public func choosing(_ kind: ActorValueKind) -> PlayerProgressState? {
         guard pendingAttributePicks > 0 else { return nil }
         return with {
             $0.pendingAttributePicks -= 1
@@ -143,19 +143,19 @@ nonisolated struct PlayerProgressState: WorldStateComponent {
     /// Takes one perk point out of the pool.
     ///
     /// - Returns: nil when the pool is empty.
-    func spendingPerkPoint() -> PlayerProgressState? {
+    public func spendingPerkPoint() -> PlayerProgressState? {
         guard perkPoints > 0 else { return nil }
         return with { $0.perkPoints -= 1 }
     }
 
     /// Adds `delta` perk points, clamped to the pool's documented bounds. The
     /// write behind `Game.ModPerkPoints`.
-    func modifyingPerkPoints(by delta: Int) -> PlayerProgressState {
+    public func modifyingPerkPoints(by delta: Int) -> PlayerProgressState {
         with { $0.perkPoints = min(Self.maximumPerkPoints, max(0, $0.perkPoints + delta)) }
     }
 
     /// Notes `count` skill points gained.
-    func notingSkillIncreases(_ count: Int) -> PlayerProgressState {
+    public func notingSkillIncreases(_ count: Int) -> PlayerProgressState {
         guard count > 0 else { return self }
         return with { $0.skillIncreases += count }
     }

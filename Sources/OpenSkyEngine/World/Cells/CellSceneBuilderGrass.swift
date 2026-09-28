@@ -5,15 +5,15 @@
 import OpenSkyFormats
 import OSLog
 
-nonisolated struct GrassBuild {
-    let placements: [GrassPlacement]
-    let renderPlacements: [GrassRenderPlacement]
-    let typeCount: Int
-    let typeSkipCount: Int
+nonisolated public struct GrassBuild {
+    public let placements: [GrassPlacement]
+    public let renderPlacements: [GrassRenderPlacement]
+    public let typeCount: Int
+    public let typeSkipCount: Int
 }
 
 nonisolated extension CellSceneBuilder {
-    nonisolated func buildGrass(
+    nonisolated public func buildGrass(
         found: FoundCell,
         worldspace: Worldspace?,
         terrain: TerrainBuild?,

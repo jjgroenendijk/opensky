@@ -22,7 +22,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `PRKS` chunk: every snapshot entry carrying owned perks, in the
     /// snapshot's `ReferenceKey` order. A session in which nobody owns a perk
     /// writes no chunk.
-    static func writePerks(
+    public static func writePerks(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

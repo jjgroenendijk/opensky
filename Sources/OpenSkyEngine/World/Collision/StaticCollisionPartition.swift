@@ -5,20 +5,20 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct StaticCollisionPartition {
-    let geometry: NIFCollisionGeometry
-    let localBounds: ModelBounds
+nonisolated public struct StaticCollisionPartition: Sendable {
+    public let geometry: NIFCollisionGeometry
+    public let localBounds: ModelBounds
 }
 
-nonisolated struct StaticCollisionPartitionResult {
-    let partitions: [StaticCollisionPartition]
-    let failureCount: Int
+nonisolated public struct StaticCollisionPartitionResult: Sendable {
+    public let partitions: [StaticCollisionPartition]
+    public let failureCount: Int
 }
 
 nonisolated extension StaticCollisionShape {
     private static let maximumTrianglesPerLeaf = 64
 
-    static func placed(
+    public static func placed(
         reference: FormID,
         transform: float4x4,
         geometry: NIFCollisionGeometry,
@@ -34,7 +34,7 @@ nonisolated extension StaticCollisionShape {
 
     /// Partitioning is spatial, and a NIF shape carries one material for all of
     /// its geometry, so every leaf a shape splits into inherits that material.
-    static func placed(
+    public static func placed(
         reference: FormID,
         transform: float4x4,
         partitions: [StaticCollisionPartition],
@@ -51,7 +51,7 @@ nonisolated extension StaticCollisionShape {
         }
     }
 
-    static func partitions(
+    public static func partitions(
         for geometry: NIFCollisionGeometry
     ) -> StaticCollisionPartitionResult {
         guard case let .triangleSoup(vertices, indices) = geometry else {

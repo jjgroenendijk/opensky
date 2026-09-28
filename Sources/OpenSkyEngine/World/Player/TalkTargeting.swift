@@ -39,21 +39,21 @@ import simd
 /// three parts of one thing, and because the streamer's own body is what a
 /// reader of that file is there for.
 @MainActor
-struct TalkTargetingSeam {
+public struct TalkTargetingSeam {
     /// The resident actors the view ray may pick up, sampled once per targeting
     /// pass. A seam rather than a walk over `residentActorEntries()` inside the
     /// streamer, because who is worth talking to is a question about death,
     /// hostility and the world-state components the app owns, not about
     /// streaming. Nil in a session that never wired it, which is every session
     /// before the dialogue layer and every test that does not care.
-    var candidateSource: (() -> [TalkCandidate])?
+    public var candidateSource: (() -> [TalkCandidate])?
     /// Fires when the use key activates a Talk target. Multicast for the same
     /// reason `CellStreamer.onInteraction` is: the dialogue menu subscribes
     /// here and item 17.4's camera is the next subscriber.
-    let activations = CallbackFanOut<TalkActivationEvent>()
+    public let activations = CallbackFanOut<TalkActivationEvent>()
     /// The actor the current interaction target names, retained from the pick
     /// so activation does not have to resolve it again.
-    var speaker: ReferenceKey?
+    public var speaker: ReferenceKey?
 }
 
 /// One actor the crosshair may pick up, in the shape targeting needs and no
@@ -61,25 +61,25 @@ struct TalkTargetingSeam {
 /// facing, a scale and a death latch because a swing needs them, and it carries
 /// no `FormID`, which a `PlacedInteraction` does. The app builds these from the
 /// same resident-actor walk that builds those.
-nonisolated struct TalkCandidate: Equatable, Sendable {
+nonisolated public struct TalkCandidate: Equatable, Sendable {
     /// Session-stable identity, which is what a dialogue-entry event carries
     /// and what said-state and the speaker's runtime state are filed under.
-    let key: ReferenceKey
+    public let key: ReferenceKey
     /// The placed ACHR, so the picked actor can ride in a `PlacedInteraction`
     /// beside every other crosshair target.
-    let reference: FormID
+    public let reference: FormID
     /// Its NPC_ record.
-    let base: FormID
+    public let base: FormID
     /// Capsule bottom, world space, in the same convention `MeleeTarget` uses.
-    let feet: SIMD3<Float>
+    public let feet: SIMD3<Float>
     /// Capsule dimensions. Actors share the player's, as they do in melee:
     /// nothing in this engine resolves a per-race capsule yet.
-    let capsule: PlayerCapsule
+    public let capsule: PlayerCapsule
     /// FULL name when one resolves, else something that still names the actor.
     /// Never empty, so the crosshair prompt always reads as a sentence.
-    let name: String
+    public let name: String
 
-    init(
+    public init(
         key: ReferenceKey,
         reference: FormID,
         base: FormID,
@@ -98,25 +98,25 @@ nonisolated struct TalkCandidate: Equatable, Sendable {
     /// The capsule's core segment, bottom cap centre to top cap centre — the
     /// same construction `MeleeTarget.segment` makes, so a ray and a swing
     /// agree on where an actor is.
-    var segment: (first: SIMD3<Float>, second: SIMD3<Float>) {
+    public var segment: (first: SIMD3<Float>, second: SIMD3<Float>) {
         MeleeTarget(key: key, feet: feet, capsule: capsule).segment
     }
 }
 
 /// Where a view ray met one actor.
-nonisolated struct TalkHit: Equatable, Sendable {
-    let candidate: TalkCandidate
+nonisolated public struct TalkHit: Equatable, Sendable {
+    public let candidate: TalkCandidate
     /// Travel along the ray at the closest approach, world units. This is the
     /// nearest point on the ray to the capsule's axis rather than the point the
     /// ray entered the capsule at, which is the same simplification
     /// `MeleeHitDetector` makes and is invisible at a crosshair prompt's
     /// resolution.
-    let distance: Float
+    public let distance: Float
     /// Midpoint of that closest approach, world space.
-    let position: SIMD3<Float>
+    public let position: SIMD3<Float>
 }
 
-nonisolated enum TalkTargetPicker {
+nonisolated public enum TalkTargetPicker: Sendable {
     /// How far a conversation can be started from.
     ///
     /// The interaction ray's own reach rather than a second number: OpenSky has
@@ -125,7 +125,7 @@ nonisolated enum TalkTargetPicker {
     /// then refuses. Stated here rather than hidden in a default argument so
     /// the assumption is one line to find and one line to change when a GMST
     /// answers it.
-    static let defaultMaximumDistance = InteractionRay.defaultMaximumDistance
+    public static let defaultMaximumDistance = InteractionRay.defaultMaximumDistance
 
     /// The nearest actor `ray` passes through, or nil when it passes through
     /// none within `maximumDistance`.
@@ -133,7 +133,7 @@ nonisolated enum TalkTargetPicker {
     /// Ties break on the lower reference, for the reason `MeleeHitDetector`
     /// breaks them there: two actors standing in the same doorway must come
     /// back in the same order every frame or the prompt flickers between them.
-    static func nearest(
+    public static func nearest(
         ray: InteractionRay,
         candidates: [TalkCandidate],
         maximumDistance: Float = defaultMaximumDistance

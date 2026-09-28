@@ -9,7 +9,7 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum OpenSkySaveEncoder {
+nonisolated public enum OpenSkySaveEncoder: Sendable {
     /// Serializes a snapshot, its load-order fingerprint and header metadata.
     ///
     /// Byte-for-byte deterministic given equal arguments: entries are written
@@ -23,7 +23,7 @@ nonisolated enum OpenSkySaveEncoder {
     /// chunk at all, so a session with no VM produces the same bytes it always
     /// did. `timers` behaves the same way and writes no `PTMR` chunk when it
     /// is empty.
-    static func encode(
+    public static func encode(
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
         metadata: SaveCreationMetadata,
@@ -147,7 +147,7 @@ nonisolated enum OpenSkySaveEncoder {
 
     /// Writes `tag` plus the length-prefixed bytes `body` produces, so a
     /// decoder that does not know the tag can skip exactly the right amount.
-    static func writeChunk(
+    public static func writeChunk(
         tag: String,
         into writer: inout BinaryWriter,
         body: (inout BinaryWriter) -> Void
@@ -188,7 +188,7 @@ nonisolated enum OpenSkySaveEncoder {
             .sorted { $0.tag < $1.tag }
     }
 
-    static func writeKey(_ key: ReferenceKey, into writer: inout BinaryWriter) {
+    public static func writeKey(_ key: ReferenceKey, into writer: inout BinaryWriter) {
         switch key {
         case let .plugin(name, objectID):
             writer.writeUInt8(OpenSkySaveFormat.KeyTag.plugin)
@@ -200,7 +200,7 @@ nonisolated enum OpenSkySaveEncoder {
         }
     }
 
-    static func writeCell(_ cell: CellSceneLocation?, into writer: inout BinaryWriter) {
+    public static func writeCell(_ cell: CellSceneLocation?, into writer: inout BinaryWriter) {
         switch cell {
         case .none:
             writer.writeUInt8(OpenSkySaveFormat.CellTag.absent)
@@ -330,7 +330,7 @@ nonisolated enum OpenSkySaveEncoder {
     /// UInt16 byte length + UTF-8 bytes. Strings longer than `UInt16.max`
     /// bytes are cut back to the last whole UTF-8 scalar that fits, so the
     /// decoder still sees valid text.
-    static func writeString(_ string: String, into writer: inout BinaryWriter) {
+    public static func writeString(_ string: String, into writer: inout BinaryWriter) {
         let bytes = truncatedUTF8(string)
         writer.writeUInt16(UInt16(clamping: bytes.count))
         writer.write(bytes)

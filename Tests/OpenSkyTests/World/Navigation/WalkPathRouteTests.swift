@@ -1,6 +1,6 @@
 // Deterministic clean engine values for M4.5 route. No game payload.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

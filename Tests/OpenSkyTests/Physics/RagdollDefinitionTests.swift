@@ -5,7 +5,7 @@
 // joints onto body indices, pivots into centre-of-mass-local frames — and
 // `NIFCollisionConstraintTests` already covers the decode that produces one.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

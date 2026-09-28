@@ -37,7 +37,7 @@ extension CasterRuntime {
     ///   - amount: the magicka the use is measured in — the spell's authored
     ///     base cost for a fire-and-forget cast, the magicka drained for one
     ///     step of a maintained one.
-    func noteSkillUse(of spell: ResolvedSpell, amount: Float, caster: ActorValueHolder) {
+    public func noteSkillUse(of spell: ResolvedSpell, amount: Float, caster: ActorValueHolder) {
         guard let world, amount.isFinite, amount > 0 else { return }
         for entry in spell.effects {
             guard let data = entry.effect?.effect.data else { continue }
@@ -55,7 +55,7 @@ extension CasterRuntime {
 
     /// The spell's authored base cost, which is what a cast is worth in skill
     /// uses regardless of what the caster was charged.
-    func baseSkillUseAmount(of spell: ResolvedSpell) -> Float {
+    public func baseSkillUseAmount(of spell: ResolvedSpell) -> Float {
         Float(spell.cost.cost)
     }
 }

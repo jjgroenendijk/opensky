@@ -18,7 +18,7 @@ import OpenSkyFormats
 
 /// One loadable animation, as the evaluator needs it: how long it runs and what
 /// the bones look like at a time inside it.
-nonisolated protocol BehaviorClip {
+nonisolated public protocol BehaviorClip {
     /// Clip length in seconds. Zero or less means the clip cannot be sampled,
     /// and a clip generator holding one produces the reference pose.
     var duration: Float { get }
@@ -41,20 +41,20 @@ nonisolated protocol BehaviorClip {
 nonisolated extension BehaviorClip {
     /// In place unless the clip says otherwise. A clip built in code carries no
     /// reference frame, and neither does any vanilla animation.
-    var carriesExtractedMotion: Bool {
+    public var carriesExtractedMotion: Bool {
         false
     }
 
     /// Unannotated unless the clip says otherwise, so a test clip built in code
     /// stays a bone source and nothing else.
-    var annotations: [HKAAnnotation] {
+    public var annotations: [HKAAnnotation] {
         []
     }
 }
 
 /// Where a clip generator's animation comes from. One instance is shared by
 /// every clip generator of one graph instance.
-nonisolated protocol BehaviorClipSource {
+nonisolated public protocol BehaviorClipSource {
     /// The clip a generator names, or nil when this source cannot supply it.
     /// Both spellings are passed because vanilla data uses both: most
     /// generators carry a name, and a few carry only a binding index.
@@ -65,31 +65,33 @@ nonisolated protocol BehaviorClipSource {
 /// generator falls back to the reference pose and costs one tally entry — which
 /// is what the graph-shape unit tests and the structural half of the real-data
 /// probe want.
-nonisolated struct EmptyBehaviorClipSource: BehaviorClipSource {
-    func clip(named _: String?, bindingIndex _: Int) -> (any BehaviorClip)? {
+nonisolated public struct EmptyBehaviorClipSource: BehaviorClipSource, Sendable {
+    public func clip(named _: String?, bindingIndex _: Int) -> (any BehaviorClip)? {
         nil
     }
+
+    public init() {}
 }
 
 /// A clip backed by a decoded spline animation and its binding: the adapter
 /// over the sampling seam that already existed before this milestone.
-nonisolated struct SplineBehaviorClip: BehaviorClip {
-    let animation: HKASplineCompressedAnimation
-    let binding: HKAAnimationBinding
+nonisolated public struct SplineBehaviorClip: BehaviorClip, Sendable {
+    public let animation: HKASplineCompressedAnimation
+    public let binding: HKAAnimationBinding
 
-    var duration: Float {
+    public var duration: Float {
         animation.duration
     }
 
-    var carriesExtractedMotion: Bool {
+    public var carriesExtractedMotion: Bool {
         animation.carriesExtractedMotion
     }
 
-    var annotations: [HKAAnnotation] {
+    public var annotations: [HKAAnnotation] {
         animation.annotations
     }
 
-    func samples(at time: Float) -> [HKABoneTransformSample] {
+    public func samples(at time: Float) -> [HKABoneTransformSample] {
         guard animation.duration > 0, time.isFinite else { return [] }
         let clamped = min(max(time, 0), animation.duration)
         return (try? animation.boneLocalTransforms(at: clamped, binding: binding)) ?? []
@@ -100,11 +102,11 @@ nonisolated struct SplineBehaviorClip: BehaviorClip {
 /// generator spells and by binding index. Callers that already resolved their
 /// clips — the real-data probe, and eventually item 14.6's loader — hand one of
 /// these to the instance.
-nonisolated struct BehaviorClipTable: BehaviorClipSource {
+nonisolated public struct BehaviorClipTable: BehaviorClipSource {
     private let byName: [String: any BehaviorClip]
     private let byIndex: [Int: any BehaviorClip]
 
-    init(
+    public init(
         byName: [String: any BehaviorClip] = [:],
         byIndex: [Int: any BehaviorClip] = [:]
     ) {
@@ -114,7 +116,7 @@ nonisolated struct BehaviorClipTable: BehaviorClipSource {
 
     /// Name lookup wins over index lookup, because a name survives a character
     /// file whose animation list a mod reordered.
-    func clip(named name: String?, bindingIndex: Int) -> (any BehaviorClip)? {
+    public func clip(named name: String?, bindingIndex: Int) -> (any BehaviorClip)? {
         if let name, let clip = byName[Self.key(name)] {
             return clip
         }
@@ -124,7 +126,7 @@ nonisolated struct BehaviorClipTable: BehaviorClipSource {
     /// Animation names are compared case-insensitively on normalized
     /// separators, because Bethesda's authored names and the archive paths that
     /// carry them disagree on both.
-    static func key(_ name: String) -> String {
+    public static func key(_ name: String) -> String {
         name.replacingOccurrences(of: "/", with: "\\").lowercased()
     }
 }

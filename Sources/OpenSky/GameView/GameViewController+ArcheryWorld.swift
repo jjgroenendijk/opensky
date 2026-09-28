@@ -28,6 +28,7 @@
 //   the spawn path does not have.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import simd
 

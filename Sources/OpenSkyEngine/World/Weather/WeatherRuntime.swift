@@ -16,19 +16,19 @@ import simd
 /// from the current hour and the climate's sunrise/sunset windows. Applying the
 /// same weights to any four keyframes (colors, fog, DALC) keeps every channel
 /// in lockstep across the day.
-nonisolated struct TimeOfDayWeights: Equatable {
-    let sunrise: Float
-    let day: Float
-    let sunset: Float
-    let night: Float
+nonisolated public struct TimeOfDayWeights: Equatable, Sendable {
+    public let sunrise: Float
+    public let day: Float
+    public let sunset: Float
+    public let night: Float
 
     /// Default windows (hours) when a climate has no TNAM timing: sunrise
     /// 05:00-07:00, sunset 17:00-19:00. Chosen as sane vanilla-like midpoints;
     /// real timing overrides them per climate.
-    static let defaultSunrise: (begin: Float, end: Float) = (5, 7)
-    static let defaultSunset: (begin: Float, end: Float) = (17, 19)
+    public static let defaultSunrise: (begin: Float, end: Float) = (5, 7)
+    public static let defaultSunset: (begin: Float, end: Float) = (17, 19)
 
-    init(sunrise: Float, day: Float, sunset: Float, night: Float) {
+    public init(sunrise: Float, day: Float, sunset: Float, night: Float) {
         self.sunrise = sunrise
         self.day = day
         self.sunset = sunset
@@ -39,7 +39,7 @@ nonisolated struct TimeOfDayWeights: Equatable {
     /// ramp peaking the sunrise keyframe at the sunrise midpoint, full day
     /// between the windows, a ramp peaking sunset at the sunset midpoint, and
     /// night after. Only ever two adjacent keyframes are non-zero.
-    init(hour: Float, timing: Climate.Timing?) {
+    public init(hour: Float, timing: Climate.Timing?) {
         let hour = TimeOfDayWeights.wrap(hour)
         let windows = TimeOfDayWeights.windows(timing: timing)
         let sunriseBegin = windows.sunriseBegin
@@ -70,11 +70,11 @@ nonisolated struct TimeOfDayWeights: Equatable {
 
     /// 0-1 daylight amount for the day/night-only fog pairs: full day counts 1,
     /// the twilight ramps count half, night counts 0.
-    var daylight: Float {
+    public var daylight: Float {
         day + 0.5 * sunrise + 0.5 * sunset
     }
 
-    func blend(
+    public func blend(
         _ sunriseValue: SIMD3<Float>,
         _ dayValue: SIMD3<Float>,
         _ sunsetValue: SIMD3<Float>,
@@ -83,7 +83,7 @@ nonisolated struct TimeOfDayWeights: Equatable {
         sunrise * sunriseValue + day * dayValue + sunset * sunsetValue + night * nightValue
     }
 
-    func blend(
+    public func blend(
         _ sunriseValue: Float, _ dayValue: Float, _ sunsetValue: Float, _ nightValue: Float
     ) -> Float {
         sunrise * sunriseValue + day * dayValue + sunset * sunsetValue + night * nightValue
@@ -135,19 +135,19 @@ nonisolated struct TimeOfDayWeights: Equatable {
 
 /// Published wind for precipitation, grass, particles, and later audio. Vector
 /// form keeps blends across transitions continuous through direction wrap.
-nonisolated struct WindState: Equatable {
+nonisolated public struct WindState: Equatable, Sendable {
     /// Unit direction the wind blows toward, in the worldspace XY plane.
-    let direction: SIMD2<Float>
+    public let direction: SIMD2<Float>
     /// 0-1 wind speed (WTHR DATA Wind Speed).
-    let speed: Float
+    public let speed: Float
     /// Degrees of meander around `direction` (WTHR DATA Wind Direction Range).
-    let meanderRange: Float
+    public let meanderRange: Float
 
-    static let calm = WindState(direction: SIMD2(1, 0), speed: 0, meanderRange: 0)
+    public static let calm = WindState(direction: SIMD2(1, 0), speed: 0, meanderRange: 0)
 
     /// From a weather's DATA block; nil data -> calm. Direction degrees map to
     /// an XY unit vector (0 deg = +X, growing counter-clockwise).
-    static func from(_ data: Weather.WeatherData?) -> WindState {
+    public static func from(_ data: Weather.WeatherData?) -> WindState {
         guard let data else { return .calm }
         let radians = data.windDirection * Float.pi / 180
         return WindState(
@@ -159,7 +159,7 @@ nonisolated struct WindState: Equatable {
 
     /// Blends velocity vectors (dir * speed) so opposing winds cross through
     /// calm rather than snapping 180 degrees; renormalizes the result.
-    static func blend(_ lhs: WindState, _ rhs: WindState, _ time: Float) -> WindState {
+    public static func blend(_ lhs: WindState, _ rhs: WindState, _ time: Float) -> WindState {
         let time = simd_clamp(time, 0, 1)
         let velocity = simd_mix(
             lhs.direction * lhs.speed,
@@ -180,18 +180,18 @@ nonisolated struct WindState: Equatable {
 /// Transition-blended precipitation contribution. WTHR DATA carries a
 /// classification, not a separate density scalar, so a settled rain/snow
 /// weather contributes 1 and the weather cross-fade supplies intensity.
-nonisolated struct PrecipitationState: Equatable {
-    let rainIntensity: Float
-    let snowIntensity: Float
+nonisolated public struct PrecipitationState: Equatable, Sendable {
+    public let rainIntensity: Float
+    public let snowIntensity: Float
 
-    static let none = PrecipitationState(rainIntensity: 0, snowIntensity: 0)
+    public static let none = PrecipitationState(rainIntensity: 0, snowIntensity: 0)
 
-    init(rainIntensity: Float, snowIntensity: Float) {
+    public init(rainIntensity: Float, snowIntensity: Float) {
         self.rainIntensity = simd_clamp(rainIntensity, 0, 1)
         self.snowIntensity = simd_clamp(snowIntensity, 0, 1)
     }
 
-    init(_ classification: Weather.Precipitation) {
+    public init(_ classification: Weather.Precipitation) {
         switch classification {
         case .rainy:
             self.init(rainIntensity: 1, snowIntensity: 0)
@@ -202,11 +202,11 @@ nonisolated struct PrecipitationState: Equatable {
         }
     }
 
-    var intensity: Float {
+    public var intensity: Float {
         max(rainIntensity, snowIntensity)
     }
 
-    static func blend(
+    public static func blend(
         _ lhs: PrecipitationState,
         _ rhs: PrecipitationState,
         _ time: Float
@@ -222,29 +222,29 @@ nonisolated struct PrecipitationState: Equatable {
 /// Fully time-of-day-blended snapshot of one weather (or a transition blend of
 /// two), ready to feed FrameUniforms. Sky palette colors drive the sky shader;
 /// fog + ambient + directional feed the exterior lit path.
-nonisolated struct ResolvedWeather: Equatable {
-    var skyUpper: SIMD3<Float>
-    var skyLower: SIMD3<Float>
-    var horizon: SIMD3<Float>
-    var sun: SIMD3<Float>
-    var sunGlare: SIMD3<Float>
-    var stars: SIMD3<Float>
-    var fogNearColor: SIMD3<Float>
-    var fogFarColor: SIMD3<Float>
-    var fogNearDistance: Float
-    var fogFarDistance: Float
-    var fogPower: Float
-    var fogMaximum: Float
-    var fogEnabled: Bool
-    var sunlightColor: SIMD3<Float>
-    var ambientColor: SIMD3<Float>
-    var directionalAmbient: DirectionalAmbientColors
-    var wind: WindState
-    var precipitation: PrecipitationState
+nonisolated public struct ResolvedWeather: Equatable, Sendable {
+    public var skyUpper: SIMD3<Float>
+    public var skyLower: SIMD3<Float>
+    public var horizon: SIMD3<Float>
+    public var sun: SIMD3<Float>
+    public var sunGlare: SIMD3<Float>
+    public var stars: SIMD3<Float>
+    public var fogNearColor: SIMD3<Float>
+    public var fogFarColor: SIMD3<Float>
+    public var fogNearDistance: Float
+    public var fogFarDistance: Float
+    public var fogPower: Float
+    public var fogMaximum: Float
+    public var fogEnabled: Bool
+    public var sunlightColor: SIMD3<Float>
+    public var ambientColor: SIMD3<Float>
+    public var directionalAmbient: DirectionalAmbientColors
+    public var wind: WindState
+    public var precipitation: PrecipitationState
 
     /// Resolves one weather at `hour` under `timing`. Missing NAM0/FNAM/DALC
     /// fields resolve to zero/disabled rather than throwing (mod-quirk rule).
-    static func resolve(
+    public static func resolve(
         _ weather: Weather, hour: Float, timing: Climate.Timing?
     ) -> ResolvedWeather {
         let weights = TimeOfDayWeights(hour: hour, timing: timing)
@@ -278,7 +278,7 @@ nonisolated struct ResolvedWeather: Equatable {
         )
     }
 
-    static func blend(
+    public static func blend(
         _ lhs: ResolvedWeather, _ rhs: ResolvedWeather, _ time: Float
     ) -> ResolvedWeather {
         let time = simd_clamp(time, 0, 1)
@@ -316,7 +316,7 @@ nonisolated struct ResolvedWeather: Equatable {
 
     /// Extra storm attenuation over the authored WTHR palette. Kept in the
     /// renderer-facing snapshot so fog/lighting remain authored values.
-    func applyingStormSkyDarkening(maximum: Float = 0.35) -> ResolvedWeather {
+    public func applyingStormSkyDarkening(maximum: Float = 0.35) -> ResolvedWeather {
         var result = self
         let scale = 1 - simd_clamp(maximum, 0, 1) * precipitation.intensity
         result.skyUpper *= scale

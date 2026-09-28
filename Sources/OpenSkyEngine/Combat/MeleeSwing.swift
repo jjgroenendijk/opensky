@@ -35,24 +35,24 @@ import OpenSkyFormats
 import simd
 
 /// Everything a swing needs to know about the weapon making it.
-nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
+nonisolated public struct MeleeWeaponProfile: Equatable, Sendable {
     /// WEAP DATA base damage.
-    let damage: Float
+    public let damage: Float
     /// WEAP DNAM `reach` multiplier.
-    let reach: Float
+    public let reach: Float
     /// WEAP DNAM `speed`, written to `weaponSpeedMult`.
-    let speed: Float
+    public let speed: Float
     /// WEAP DNAM `stagger` magnitude, written to `staggerMagnitude` on the
     /// target's graph.
-    let stagger: Float
+    public let stagger: Float
     /// The WEAP itself, for the readout and the impact-data lookup. Nil for an
     /// unarmed swing.
-    let weapon: FormID?
+    public let weapon: FormID?
     /// BIDS — the impact data set the hit resolves its sound through.
-    let impactDataSet: FormID?
+    public let impactDataSet: FormID?
     /// Which animation set the graph plays for this weapon, written to
     /// `iRightHandType` (issue #403).
-    let handType: CombatHandType
+    public let handType: CombatHandType
     /// The weapon's resolved enchantment, or nil when it carries none (issue
     /// #472).
     ///
@@ -60,9 +60,9 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
     /// looked up at the contact frame, for the reason `ArrowPayload` fixes its
     /// damage at launch: a swing must apply the enchantment the weapon had when it
     /// started, not whatever the player has equipped by the time it lands.
-    let enchantment: ItemEnchantmentProfile?
+    public let enchantment: ItemEnchantmentProfile?
 
-    init(
+    public init(
         damage: Float,
         reach: Float,
         speed: Float = 1,
@@ -85,7 +85,7 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
     /// The profile of a bare-handed swing on a session with no unarmed WEAP
     /// record. One point of damage and a reach multiplier of 1, so the swing
     /// reaches exactly `fCombatDistance`.
-    static let unarmed = MeleeWeaponProfile(damage: 1, reach: 1)
+    public static let unarmed = MeleeWeaponProfile(damage: 1, reach: 1)
 
     /// The profile of a hand holding a readied spell (issue #470).
     ///
@@ -94,10 +94,10 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
     /// the unarmed ones and are never used: `MeleeCombatRuntime` never gets an
     /// attack event for a hand holding a spell, because that hand's button goes
     /// to the cast loop instead.
-    static let readiedSpell = MeleeWeaponProfile(damage: 1, reach: 1, handType: .spell)
+    public static let readiedSpell = MeleeWeaponProfile(damage: 1, reach: 1, handType: .spell)
 
     /// One decoded WEAP as a swing profile.
-    init(weapon record: Weapon, enchantment: ItemEnchantmentProfile? = nil) {
+    public init(weapon record: Weapon, enchantment: ItemEnchantmentProfile? = nil) {
         self.init(
             damage: Float(record.damage),
             reach: record.reach.isFinite && record.reach > 0 ? record.reach : 1,
@@ -111,13 +111,13 @@ nonisolated struct MeleeWeaponProfile: Equatable, Sendable {
     }
 }
 
-nonisolated enum MeleeSwing {
+nonisolated public enum MeleeSwing: Sendable {
     /// How far a swing reaches, in world units.
     ///
     /// A non-finite or non-positive scale is treated as 1: an actor whose scale
     /// failed to resolve must still be able to swing, and a zero reach would
     /// make every attack silently miss.
-    static func reach(
+    public static func reach(
         weapon: MeleeWeaponProfile,
         settings: CombatSettings,
         actorScale: Float = 1
@@ -137,14 +137,14 @@ nonisolated enum MeleeSwing {
     /// capsule height about the chest covers a target standing on the same
     /// floor without reaching one standing on a table, which is the behaviour a
     /// player expects from a horizontal swing.
-    static let bladeHalfExtentFraction: Float = 0.25
+    public static let bladeHalfExtentFraction: Float = 0.25
 
     /// The swing's radius, as a fraction of the attacker capsule radius.
     ///
     /// Also an OpenSky decision. The blade itself is thin, but a swing is an
     /// arc and the capsule is its hull, so the radius stands in for the arc's
     /// horizontal width rather than for the steel.
-    static let arcRadiusFraction: Float = 0.75
+    public static let arcRadiusFraction: Float = 0.75
 
     /// The volume a swing occupies, as a 15.2 sweep query.
     ///
@@ -154,7 +154,7 @@ nonisolated enum MeleeSwing {
     ///   - facing: yaw the attacker is facing, radians, matching the
     ///     locomotion bridge's convention (`cos` forward on x, `sin` on y).
     ///   - reach: how far the swing travels, from `reach(weapon:settings:)`.
-    static func volume(
+    public static func volume(
         feet: SIMD3<Float>,
         capsule: PlayerCapsule,
         facing: Float,

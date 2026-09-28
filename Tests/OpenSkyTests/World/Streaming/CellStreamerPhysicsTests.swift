@@ -4,7 +4,7 @@
 // cell, leave with it, survive a rebuild, and only re-install when the scene
 // they came from actually changed.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

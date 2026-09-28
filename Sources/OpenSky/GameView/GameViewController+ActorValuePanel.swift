@@ -8,6 +8,7 @@
 // no accounting invented at the UI.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension GameViewController: ActorValueControlProviding {

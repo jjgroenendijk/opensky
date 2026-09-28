@@ -12,6 +12,7 @@
 // player out of a guild they just joined would undo the demonstration.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 final class FactionMembershipSection: CrimeFactionPanelSection {

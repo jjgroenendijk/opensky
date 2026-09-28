@@ -19,8 +19,8 @@ import OSLog
 import simd
 
 @MainActor
-final class WorldAudioFootstepDirector {
-    static let logger = Logger(
+public final class WorldAudioFootstepDirector {
+    public static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldAudioFootstep"
     )
@@ -31,35 +31,35 @@ final class WorldAudioFootstepDirector {
     private let fileLoader: (String) throws -> Data
     /// MATT index, for naming the ground material in the readout. Empty in a
     /// synthetic session, and then a material is reported by FormID.
-    var materialTypes = MaterialTypeIndex.empty
+    public var materialTypes = MaterialTypeIndex.empty
 
     /// Footstep playback. On by default, like the SFX and ambience beds; the
     /// World > Audio panel writes back here.
-    var footstepsEnabled = true
+    public var footstepsEnabled = true
 
     /// The MATT the last routed frame reported under the player's feet
     /// (issue #358), nil while airborne or on a surface that names none.
-    private(set) var groundMaterial: FormID?
+    public private(set) var groundMaterial: FormID?
 
     /// A material the panel pins in place of the ground contact's, for
     /// verifying that a chosen surface really does select a different sound.
     /// Nil — the default — follows the ground.
-    var forcedMaterial: FormID?
+    public var forcedMaterial: FormID?
 
     /// The set the player currently walks with. Starts at the store's default
     /// set and is replaced when the player's feet armature resolves to one.
-    private(set) var footstepSet: FootstepSet?
+    public private(set) var footstepSet: FootstepSet?
 
     /// Last resolved footstep, for the panel readout.
-    private(set) var lastFootstepDescription: String?
-    private(set) var lastFootstepError: String?
+    public private(set) var lastFootstepDescription: String?
+    public private(set) var lastFootstepError: String?
     /// Events routed and events played since construction. The two differ by
     /// the tags the current set has no footstep for, which is normal vanilla
     /// data rather than a fault, so both are reported.
-    private(set) var routedEventCount = 0
-    private(set) var playedFootstepCount = 0
+    public private(set) var routedEventCount = 0
+    public private(set) var playedFootstepCount = 0
 
-    init(
+    public init(
         engine: WorldAudioEngine,
         footstepStore: FootstepStore?,
         soundStore: SoundRecordStore?,
@@ -78,7 +78,7 @@ final class WorldAudioFootstepDirector {
     }
 
     /// Test seam: same shape, with the file loader injected directly.
-    init(
+    public init(
         engine: WorldAudioEngine,
         footstepStore: FootstepStore?,
         soundStore: SoundRecordStore?,
@@ -94,7 +94,7 @@ final class WorldAudioFootstepDirector {
     /// Picks the footstep set from the armatures on the player's feet, falling
     /// back to the store's default. Called when the player body is assembled or
     /// re-equipped; passing an empty list restores the default.
-    func updateFootstepSet(feetArmatures: [FormID]) {
+    public func updateFootstepSet(feetArmatures: [FormID]) {
         footstepSet = footstepStore?.set(forArmatures: feetArmatures)
     }
 
@@ -106,7 +106,7 @@ final class WorldAudioFootstepDirector {
     /// player's feet, so the step is heard where it is made rather than at the
     /// listener, and `material` is the MATT the ground contact reported there,
     /// which is what makes snow and wood sound different (issue #358).
-    func handleGraphEvents(
+    public func handleGraphEvents(
         _ names: [String],
         gait: LocomotionGait,
         position: SIMD3<Float>,
@@ -131,7 +131,7 @@ final class WorldAudioFootstepDirector {
 
     /// Which of the FSTS lists a locomotion gait reads. One-to-one: the five
     /// gaits the bridge resolves are the five lists a footstep set carries.
-    nonisolated static func footstepGait(for gait: LocomotionGait) -> FootstepGait {
+    nonisolated public static func footstepGait(for gait: LocomotionGait) -> FootstepGait {
         switch gait {
         case .walk: .walking
         case .run: .running
@@ -142,7 +142,7 @@ final class WorldAudioFootstepDirector {
     }
 
     /// The tags the current set answers to for one gait, for the readout.
-    func tags(for gait: LocomotionGait) -> [String] {
+    public func tags(for gait: LocomotionGait) -> [String] {
         guard let footstepStore, let footstepSet else { return [] }
         return footstepStore.tags(for: Self.footstepGait(for: gait), in: footstepSet)
     }
@@ -150,7 +150,7 @@ final class WorldAudioFootstepDirector {
     /// Plays one footstep for `tag` without waiting for the graph to fire it.
     /// The World > Audio panel's verification control; returns nil on success
     /// or a short reason for the readout.
-    func forcePlayFootstep(
+    public func forcePlayFootstep(
         tag: String,
         gait: LocomotionGait,
         position: SIMD3<Float>
@@ -171,25 +171,25 @@ final class WorldAudioFootstepDirector {
 
     /// The material every resolution is made against: the panel's pinned one
     /// when it has pinned one, else the ground contact's.
-    var activeMaterial: FormID? {
+    public var activeMaterial: FormID? {
         forcedMaterial ?? groundMaterial
     }
 
     /// How the panel names the current set.
-    var footstepSetDescription: String {
+    public var footstepSetDescription: String {
         guard let footstepSet else { return "none" }
         return describe(footstepSet)
     }
 
     /// How the panel names the surface footsteps currently resolve against.
-    var materialDescription: String {
+    public var materialDescription: String {
         guard let material = activeMaterial else { return "none" }
         let name = materialTypes.describe(material)
         return forcedMaterial == nil ? name : "\(name) (forced)"
     }
 
     /// Every material the panel can pin, ordered by name so the menu is stable.
-    var selectableMaterials: [(id: FormID, name: String)] {
+    public var selectableMaterials: [(id: FormID, name: String)] {
         materialTypes.materials.values
             .map { (id: $0.formID, name: materialTypes.describe($0.formID)) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }

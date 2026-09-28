@@ -19,7 +19,7 @@ import Foundation
 /// How a function reads one of its two 4-byte parameter words. The parameter is
 /// stored raw by the decoder, so the function's own declaration is the only
 /// thing that says what the bits mean.
-nonisolated enum ConditionParameterType: Equatable, Sendable {
+nonisolated public enum ConditionParameterType: Equatable, Sendable {
     /// The function ignores this parameter.
     case unused
     case formID
@@ -29,18 +29,18 @@ nonisolated enum ConditionParameterType: Equatable, Sendable {
 
 /// One condition function: what it is called, how its parameters are typed, and
 /// how to compute its value.
-nonisolated struct ConditionFunction: Sendable {
+nonisolated public struct ConditionFunction: Sendable {
     /// Raw on-disk index (Creation Kit number minus 4096).
-    let index: UInt16
+    public let index: UInt16
     /// Creation Kit name, spelled exactly as the editor spells it.
-    let name: String
-    let parameter1: ConditionParameterType
-    let parameter2: ConditionParameterType
+    public let name: String
+    public let parameter1: ConditionParameterType
+    public let parameter2: ConditionParameterType
     /// Computes the left-hand side of the comparison, or names why it cannot.
     /// `inout` because a function may consume randomness.
-    let body: @Sendable (inout ConditionCall) -> Result<Float, ConditionFailure>
+    public let body: @Sendable (inout ConditionCall) -> Result<Float, ConditionFailure>
 
-    init(
+    public init(
         index: UInt16,
         name: String,
         parameter1: ConditionParameterType = .unused,
@@ -55,62 +55,62 @@ nonisolated struct ConditionFunction: Sendable {
     }
 
     /// Creation Kit spelling of the index, 4096 higher than the stored one.
-    var creationKitIndex: Int {
+    public var creationKitIndex: Int {
         Int(index) + ConditionFunctionRegistry.creationKitOffset
     }
 }
 
 /// Lookup from raw function index to implementation.
-nonisolated struct ConditionFunctionRegistry: Sendable {
+nonisolated public struct ConditionFunctionRegistry: Sendable {
     /// The Creation Kit displays every condition function index 4096 higher
     /// than the plugin stores it (UESP "CTDA Field").
-    static let creationKitOffset = 4096
+    public static let creationKitOffset = 4096
 
     /// The set the engine evaluates with. Built once; adding to it is an
     /// `install` call in `ConditionFunctions`, never a mutation from a caller.
-    static let standard: ConditionFunctionRegistry = {
+    public static let standard: ConditionFunctionRegistry = {
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.install(into: &registry)
         return registry
     }()
 
     /// Deliberately empty, for tests that need every index to be unknown.
-    static let empty = ConditionFunctionRegistry()
+    public static let empty = ConditionFunctionRegistry()
 
     private var functions: [UInt16: ConditionFunction] = [:]
 
-    init() {}
+    public init() {}
 
     /// Last registration wins, so a later install can override an earlier one.
-    mutating func register(_ function: ConditionFunction) {
+    public mutating func register(_ function: ConditionFunction) {
         functions[function.index] = function
     }
 
-    subscript(index: UInt16) -> ConditionFunction? {
+    public subscript(index: UInt16) -> ConditionFunction? {
         functions[index]
     }
 
-    var count: Int {
+    public var count: Int {
         functions.count
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         functions.isEmpty
     }
 
     /// Implemented indices in ascending order.
-    var indices: [UInt16] {
+    public var indices: [UInt16] {
         functions.keys.sorted()
     }
 
     /// Report name for an index: the Creation Kit name when the function is
     /// implemented, and the bare Creation Kit number when it is not.
-    func name(for index: UInt16) -> String {
+    public func name(for index: UInt16) -> String {
         functions[index]?.name ?? "function \(Int(index) + Self.creationKitOffset)"
     }
 
     /// Implemented functions in index order, for inspection surfaces.
-    func sortedFunctions() -> [ConditionFunction] {
+    public func sortedFunctions() -> [ConditionFunction] {
         indices.compactMap { functions[$0] }
     }
 }

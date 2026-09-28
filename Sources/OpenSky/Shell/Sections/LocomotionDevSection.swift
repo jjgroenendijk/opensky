@@ -15,6 +15,7 @@
 // therefore not an override.
 
 import AppKit
+import OpenSkyEngine
 
 final class LocomotionDevSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

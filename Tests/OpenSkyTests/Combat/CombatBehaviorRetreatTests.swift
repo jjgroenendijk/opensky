@@ -5,7 +5,7 @@
 // `CombatBehaviorMachineTests` for the strict lint type cap; the literals both
 // halves hand the machine live in `CombatBehaviorFixture`.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

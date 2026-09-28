@@ -26,7 +26,7 @@ import Foundation
 import OpenSkyFormats
 
 /// Terminal visual-resolution failures.
-nonisolated enum ActorVisualError: Error, Equatable {
+nonisolated public enum ActorVisualError: Error, Equatable {
     /// RNAM absent after template resolution, or no such RACE record.
     case missingRace(FormID?, npc: FormID)
     /// Neither NPC_ WNAM nor RACE WNAM yields a decodable ARMO.
@@ -35,7 +35,7 @@ nonisolated enum ActorVisualError: Error, Equatable {
     /// the OTFT record itself is missing).
     case brokenOutfitChain(outfit: FormID, item: FormID?, reason: OutfitChainFailure)
 
-    nonisolated enum OutfitChainFailure: Equatable {
+    nonisolated public enum OutfitChainFailure: Equatable, Sendable {
         case missingOutfitRecord
         /// INAM entry is neither a known ARMO nor a known LVLI.
         case danglingItem
@@ -46,8 +46,8 @@ nonisolated enum ActorVisualError: Error, Equatable {
 
 /// Reason-tagged degrade: the part is absent from `parts` on purpose, and
 /// the reason says why (exact accounting, no silent drops).
-nonisolated struct AppearanceSkip: Equatable {
-    nonisolated enum Reason: Equatable {
+nonisolated public struct AppearanceSkip: Equatable, Sendable {
+    nonisolated public enum Reason: Equatable, Sendable {
         /// RACE has no skeleton ANAM for the resolved gender.
         case noSkeletonForGender
         /// ARMO armature FormID matches no ARMA record.
@@ -72,29 +72,29 @@ nonisolated struct AppearanceSkip: Equatable {
     }
 
     /// The record the skip is about (ARMA, ARMO, or RACE FormID).
-    let subject: FormID
-    let reason: Reason
+    public let subject: FormID
+    public let reason: Reason
 }
 
 /// One renderable worn part: an ARMA model chosen for race + gender.
-nonisolated struct ResolvedBodyPart: Equatable {
-    nonisolated enum Origin: Equatable {
+nonisolated public struct ResolvedBodyPart: Equatable, Sendable {
+    nonisolated public enum Origin: Equatable, Sendable {
         /// Naked-skin ARMO (NPC_ WNAM or RACE WNAM).
         case skin(FormID)
         /// Outfit piece ARMO reached through DOFT.
         case outfit(FormID)
     }
 
-    let origin: Origin
-    let armature: FormID
+    public let origin: Origin
+    public let armature: FormID
     /// ARMA MOD2 (male) / MOD3 (female) path, relative to Data/.
-    let modelPath: String
+    public let modelPath: String
     /// ARMA MOD4 (male) / MOD5 (female) path — what this piece shows on the
     /// player's own arms, or nil when the armature declares no first-person
     /// geometry at all (issue #190). Carried here rather than looked up later
     /// so the first-person projection needs no second pass over the ARMA index.
-    let firstPersonModelPath: String?
-    let slots: BodySlots
+    public let firstPersonModelPath: String?
+    public let slots: BodySlots
 }
 
 /// One rigid model hung off a named skeleton bone rather than skinned to the
@@ -105,48 +105,48 @@ nonisolated struct ResolvedBodyPart: Equatable {
 /// character rig spells the drawn-weapon node `Weapon`, parented to
 /// `NPC R Hand [RHnd]`; the matching NIF node is `WEAPON`. Both names are
 /// observed from the install, never assumed — see docs/engine/actor-resolution.md.
-nonisolated struct ResolvedAttachment: Equatable {
+nonisolated public struct ResolvedAttachment: Equatable, Sendable {
     /// The equipped base record the model came from (a WEAP).
-    let item: FormID
+    public let item: FormID
     /// WEAP MODL path, relative to Data/.
-    let modelPath: String
+    public let modelPath: String
     /// Havok rig bone the model rides.
-    let bone: String
+    public let bone: String
 }
 
 /// Everything milestone 5.2 resolves for one placed actor.
-nonisolated struct ResolvedActorVisual: Equatable {
-    let appearance: ResolvedActorAppearance
+nonisolated public struct ResolvedActorVisual: Equatable {
+    public let appearance: ResolvedActorAppearance
     /// RACE ANAM for the resolved gender; nil -> reason-tagged skip.
-    let skeletonPath: String?
+    public let skeletonPath: String?
     /// The ARMO providing naked skin (after WNAM fallback).
-    let skin: FormID
+    public let skin: FormID
     /// Union of equipped outfit ARMO body slots — the skin mask.
-    let equippedSlots: BodySlots
-    let parts: [ResolvedBodyPart]
+    public let equippedSlots: BodySlots
+    public let parts: [ResolvedBodyPart]
     /// Rigid bone attachments — drawn weapons. Empty unless a runtime equipped
     /// set supplied one.
-    let attachments: [ResolvedAttachment]
+    public let attachments: [ResolvedAttachment]
     /// True when a runtime equipped set replaced the plugin `defaultOutfit`.
-    let usesRuntimeEquipment: Bool
+    public let usesRuntimeEquipment: Bool
     /// Nil when the race does not use baked FaceGen heads (RACE DATA flag
     /// 0x2 clear — creature races like cow/dog/bear have no facegeom files).
-    let faceGenMeshPath: String?
-    let faceGenTintPath: String?
-    let skips: [AppearanceSkip]
+    public let faceGenMeshPath: String?
+    public let faceGenTintPath: String?
+    public let skips: [AppearanceSkip]
 }
 
 /// FaceGen asset path convention, verified against the real install
 /// (docs/formats/actors.md): directory is the defining plugin's file name
 /// lowercased; file name is the full FormID with the load-order byte zeroed
 /// (== 8-hex zero-padded objectID); separators + extension lowercase.
-nonisolated enum FaceGenPaths {
-    static func mesh(for id: ResolvedFormID) -> String {
+nonisolated public enum FaceGenPaths: Sendable {
+    public static func mesh(for id: ResolvedFormID) -> String {
         "meshes\\actors\\character\\facegendata\\facegeom\\"
             + component(for: id) + ".nif"
     }
 
-    static func tint(for id: ResolvedFormID) -> String {
+    public static func tint(for id: ResolvedFormID) -> String {
         "textures\\actors\\character\\facegendata\\facetint\\"
             + component(for: id) + ".dds"
     }
@@ -158,22 +158,22 @@ nonisolated enum FaceGenPaths {
 
 /// Resolves visuals against pre-built single-plugin record indexes
 /// (raw-FormID keys, matching ActorTemplateResolver's convention).
-nonisolated struct ActorVisualResolver {
-    let races: [UInt32: Race]
-    let armors: [UInt32: Armor]
-    let armorAddons: [UInt32: ArmorAddon]
-    let outfits: [UInt32: Outfit]
-    let leveledItems: [UInt32: LeveledList]
+nonisolated public struct ActorVisualResolver: Sendable {
+    public let races: [UInt32: Race]
+    public let armors: [UInt32: Armor]
+    public let armorAddons: [UInt32: ArmorAddon]
+    public let outfits: [UInt32: Outfit]
+    public let leveledItems: [UInt32: LeveledList]
     /// Maps record FormIDs to (defining plugin, objectID) for FaceGen.
-    let formIDResolver: FormIDResolver
+    public let formIDResolver: FormIDResolver
     /// Slot and model data for runtime-equipped items (issue #178). Empty in
     /// the fixtures that only exercise the plugin `defaultOutfit` path.
-    let equipment: EquipmentCatalog
+    public let equipment: EquipmentCatalog
     /// HDPT records named by NPC_ and RACE head-part lists. Only expression
     /// TRI association fields are decoded (issue #207).
-    let headParts: [UInt32: HeadPart]
+    public let headParts: [UInt32: HeadPart]
 
-    init(
+    public init(
         races: [UInt32: Race],
         armors: [UInt32: Armor],
         armorAddons: [UInt32: ArmorAddon],
@@ -195,7 +195,7 @@ nonisolated struct ActorVisualResolver {
 
     /// Indexes every decodable RACE/ARMO/ARMA/OTFT/LVLI top-group record.
     /// Undecodable records drop out and later resolve as dangling.
-    static func build(
+    public static func build(
         from file: ESMFile,
         localized: Bool,
         pluginName: String
@@ -236,7 +236,7 @@ nonisolated struct ActorVisualResolver {
     ///   - equipped: a runtime equipped set that replaces the plugin
     ///     `defaultOutfit` chain wholesale. Nil — the normal case for an actor
     ///     nothing has touched — resolves through DOFT exactly as before.
-    func resolve(
+    public func resolve(
         appearance: ResolvedActorAppearance,
         equipped: [FormID]? = nil
     ) throws -> ResolvedActorVisual {
@@ -303,7 +303,7 @@ nonisolated struct ActorVisualResolver {
     /// Expression-bearing HDPT records for one resolved actor. RACE supplies
     /// the default head and mouth; NPC_ head parts supply the chosen eyes,
     /// brows, hair, facial hair and marks. FormID order stays deterministic.
-    func expressionHeadParts(for appearance: ResolvedActorAppearance) -> [HeadPart] {
+    public func expressionHeadParts(for appearance: ResolvedActorAppearance) -> [HeadPart] {
         guard
             let raceID = appearance.race.value,
             let race = races[raceID.rawValue]
@@ -360,16 +360,16 @@ nonisolated struct ActorVisualResolver {
     /// Selection inputs shared by every armature of one ARMO. `mask`
     /// non-nil marks skin resolution: armatures overlapping the equipped
     /// slots are hidden instead of emitted.
-    struct PartSelection {
-        let origin: ResolvedBodyPart.Origin
-        let race: FormID
-        let female: Bool
-        let mask: BodySlots?
+    public struct PartSelection: Sendable {
+        public let origin: ResolvedBodyPart.Origin
+        public let race: FormID
+        public let female: Bool
+        public let mask: BodySlots?
     }
 
     /// Race-compatible armatures of one ARMO resolved to gendered model
     /// paths, each tagged with the ARMA DNAM draw priority arbitration needs.
-    func bodyParts(
+    public func bodyParts(
         of armor: Armor,
         selection: PartSelection,
         seen: inout Set<UInt32>,

@@ -45,7 +45,7 @@ import OpenSkyFormats
 ///
 /// `Int32` raw values, matching the `int32` the graph declares, so writing one
 /// is `BehaviorVariableValue.int(handType.rawValue)` with no conversion.
-nonisolated enum CombatHandType: Int32, Equatable, Sendable, CaseIterable {
+nonisolated public enum CombatHandType: Int32, Equatable, Sendable, CaseIterable {
     /// Nothing held: the hand-to-hand animation set.
     case handToHand = 0
     case sword = 1
@@ -71,7 +71,7 @@ nonisolated enum CombatHandType: Int32, Equatable, Sendable, CaseIterable {
     /// `crossbow` is 9 in the record and 12 in the graph; every other value
     /// carries across unchanged, which is exactly why this conversion exists
     /// rather than a raw-value cast.
-    init(weapon animationType: Weapon.AnimationType?) {
+    public init(weapon animationType: Weapon.AnimationType?) {
         switch animationType {
         case .oneHandSword: self = .sword
         case .oneHandDagger: self = .dagger
@@ -87,14 +87,14 @@ nonisolated enum CombatHandType: Int32, Equatable, Sendable, CaseIterable {
     }
 
     /// The value written into the graph variable.
-    var graphValue: BehaviorVariableValue {
+    public var graphValue: BehaviorVariableValue {
         .int(rawValue)
     }
 
     /// Whether drawing this hand plays the magic-cast equip rather than the
     /// weapon equip. Only a readied spell does: a staff is equipped through
     /// `Weap_Equip_MSG` like any other weapon, as its index-8 child shows.
-    var drawsAsMagic: Bool {
+    public var drawsAsMagic: Bool {
         self == .spell
     }
 
@@ -109,7 +109,7 @@ nonisolated enum CombatHandType: Int32, Equatable, Sendable, CaseIterable {
     /// weapons whose authored slot does not match their animation family.
     /// Nothing reconciles them, because they answer different questions —
     /// which animation set plays, and which hands the item fills.
-    var occupiesBothHands: Bool {
+    public var occupiesBothHands: Bool {
         switch self {
         case .greatsword, .battleaxe, .bow, .crossbow: true
         default: false
@@ -117,7 +117,7 @@ nonisolated enum CombatHandType: Int32, Equatable, Sendable, CaseIterable {
     }
 
     /// How the melee readout names it.
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .handToHand: "empty"
         case .sword: "one-handed sword"

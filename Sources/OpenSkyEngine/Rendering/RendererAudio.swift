@@ -11,7 +11,7 @@ extension Renderer {
     /// Advances the audio clock and ticks the engine. A paused frame advances
     /// the clock mark but skips the tick entirely: sources hold their state and
     /// the listener pose stays where it was when the pause began.
-    func updateAudioFromWallClock() {
+    public func updateAudioFromWallClock() {
         let delta = audioClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
         guard !worldSimPaused else {
             // A paused frame does no audio work at all, so the measured cost of
@@ -33,7 +33,7 @@ extension Renderer {
     /// benchmark samples per frame the same way it samples the animation and
     /// shadow updates. With no engine attached the guard below returns before
     /// the clock is read, so the instrumentation costs one optional test.
-    func updateAudio(deltaTime: Float) {
+    public func updateAudio(deltaTime: Float) {
         guard let worldAudio else {
             lastAudioUpdateMS = 0
             return

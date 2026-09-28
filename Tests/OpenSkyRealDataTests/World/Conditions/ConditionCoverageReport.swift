@@ -6,7 +6,7 @@
 // names function indices and counts, never records.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 
 extension ConditionCoverage {
     /// How many unimplemented functions the ranked table shows.

@@ -31,37 +31,37 @@ import OpenSkyFormats
 import simd
 
 /// One enchanted weapon's hit, as the world seam receives it.
-nonisolated struct WeaponEnchantmentHit: Equatable, Sendable {
+nonisolated public struct WeaponEnchantmentHit: Equatable, Sendable {
     /// The weapon's resolved enchantment, fixed when the swing or the shot
     /// started.
-    let profile: ItemEnchantmentProfile
+    public let profile: ItemEnchantmentProfile
     /// Who swung or shot. The charge comes off this owner's copy of the item.
-    let attacker: ReferenceKey
+    public let attacker: ReferenceKey
     /// The actor that was struck.
-    let target: ReferenceKey
+    public let target: ReferenceKey
     /// Where contact was made, world space. What an area entry measures from.
-    let position: SIMD3<Float>
+    public let position: SIMD3<Float>
 }
 
 /// What applying one enchanted hit did.
-nonisolated struct WeaponEnchantmentReport: Equatable, Sendable {
-    let item: FormID
+nonisolated public struct WeaponEnchantmentReport: Equatable, Sendable {
+    public let item: FormID
     /// The enchantment's display name, so a readout names it rather than a form.
-    let name: String
+    public let name: String
     /// The charge after the hit. Unchanged from before it when nothing fired.
-    let charge: EnchantmentCharge
+    public let charge: EnchantmentCharge
     /// False when the weapon had nothing left to spend, which is the one reason
     /// a landed hit from an enchanted weapon applies nothing.
-    let didFire: Bool
+    public let didFire: Bool
     /// Effect entries handed to the effect runtime.
-    let entryCount: Int
+    public let entryCount: Int
     /// Timed and constant effects the runtime stored.
-    let storedCount: Int
+    public let storedCount: Int
     /// Every hostile entry's resistance adjustment, in application order.
-    let adjustments: [SpellMagnitudeAdjustment]
+    public let adjustments: [SpellMagnitudeAdjustment]
 
     /// One line for a readout: what fired, on what, and what is left.
-    var describedLine: String {
+    public var describedLine: String {
         guard didFire else {
             return "\(name): out of charge (\(charge.describedLine))"
         }
@@ -75,7 +75,7 @@ nonisolated struct WeaponEnchantmentReport: Equatable, Sendable {
 /// for a projectile and a target-actor cast: the two differ in how they find the
 /// actor and not at all in what happens once they have one.
 @MainActor
-protocol WeaponEnchantmentApplying {
+public protocol WeaponEnchantmentApplying {
     /// Applies `hit`, spending the weapon's charge.
     ///
     /// - Returns: what it did, or nil when this session cannot apply enchantments
@@ -91,7 +91,7 @@ protocol WeaponEnchantmentApplying {
 /// a shared store whose tally advances as it works, and a copy held here would grow
 /// a tally the panel never sees.
 @MainActor
-enum WeaponEnchantmentApplication {
+public enum WeaponEnchantmentApplication {
     /// Spends `hit`'s charge and applies its effects to the struck actor.
     ///
     /// The charge is spent first and only once: a hit that cannot pay applies
@@ -107,7 +107,7 @@ enum WeaponEnchantmentApplication {
     ///   - target: the struck actor's holder, or nil when it stopped being
     ///     resident between the impact and this call. The charge is still spent:
     ///     the swing landed.
-    static func apply(
+    public static func apply(
         _ hit: WeaponEnchantmentHit,
         owner: ActorValueHolder,
         target: ActorValueHolder?,

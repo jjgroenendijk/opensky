@@ -28,32 +28,32 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 @MainActor
-struct ActiveEffectRuntime {
+public struct ActiveEffectRuntime {
     /// Simulation step effects advance in, matching `ActorValueRuntime` so a
     /// frame drives both the same way. 1/60 s.
-    static let fixedStepSeconds = ActorValueRuntime.fixedStepSeconds
+    public static let fixedStepSeconds = ActorValueRuntime.fixedStepSeconds
 
     /// Most whole steps one `advance(delta:)` runs, so a multi-second stall
     /// cannot spend minutes ticking effects in a single frame.
-    static let maximumStepsPerAdvance = ActorValueRuntime.maximumStepsPerAdvance
+    public static let maximumStepsPerAdvance = ActorValueRuntime.maximumStepsPerAdvance
 
     /// The actor-value surface every application ultimately writes through.
-    let values: ActorValueRuntime
+    public let values: ActorValueRuntime
     /// Load-order MGEF lookup behind every EFID.
-    let effects: MagicEffectStore
+    public let effects: MagicEffectStore
     /// What an effect entry's CTDA list is evaluated against.
     ///
     /// A whole context rather than a yes/no closure, so the same evaluator the
     /// rest of the engine uses answers here and an unevaluatable condition is
     /// the documented reason-tagged false rather than a silent pass.
-    var conditions: ConditionContext
-    let conditionRegistry: ConditionFunctionRegistry
+    public var conditions: ConditionContext
+    public let conditionRegistry: ConditionFunctionRegistry
     /// What the runtime did and declined to do. Not `private(set)`: the tick
     /// half lives in `ActiveEffectRuntimeTick.swift` and a file-private setter
     /// would put it out of reach there.
-    var tally = ActiveEffectTally()
+    public var tally = ActiveEffectTally()
 
-    init(
+    public init(
         values: ActorValueRuntime,
         effects: MagicEffectStore,
         conditions: ConditionContext = ConditionContext(),
@@ -65,25 +65,25 @@ struct ActiveEffectRuntime {
         self.conditionRegistry = conditionRegistry
     }
 
-    var store: WorldStateStore {
+    public var store: WorldStateStore {
         values.store
     }
 
     // MARK: - Reading
 
     /// Every effect currently acting on `holder`.
-    func state(of holder: ActorValueHolder) -> ActiveEffectState {
+    public func state(of holder: ActorValueHolder) -> ActiveEffectState {
         store.component(ActiveEffectState.self, for: holder.key) ?? ActiveEffectState()
     }
 
     /// `holder`'s effects in application order.
-    func active(on holder: ActorValueHolder) -> [ActiveEffect] {
+    public func active(on holder: ActorValueHolder) -> [ActiveEffect] {
         state(of: holder).effects
     }
 
     /// Whether `holder` carries an application of `effect` — the shape
     /// `HasMagicEffect` needs (issue 19.11 registers the function itself).
-    func hasMagicEffect(_ effect: ReferenceKey, on holder: ActorValueHolder) -> Bool {
+    public func hasMagicEffect(_ effect: ReferenceKey, on holder: ActorValueHolder) -> Bool {
         state(of: holder).hasEffect(effect)
     }
 
@@ -102,7 +102,7 @@ struct ActiveEffectRuntime {
     ///   rather than an instant application of its zero duration.
     /// - Returns: the timed effects that were stored, in application order.
     @discardableResult
-    mutating func apply(
+    public mutating func apply(
         _ entries: [MagicItemEffect],
         fromPlugin pluginName: String,
         source: ActiveEffectSource,
@@ -156,7 +156,7 @@ struct ActiveEffectRuntime {
     ///
     /// - Returns: how many effects were removed.
     @discardableResult
-    mutating func dispel(
+    public mutating func dispel(
         on holder: ActorValueHolder,
         where predicate: (ActiveEffect) -> Bool
     ) -> Int {
@@ -172,7 +172,7 @@ struct ActiveEffectRuntime {
     /// Removes every effect on `holder` — the Dispel archetype's shape, and
     /// what a dev control offers.
     @discardableResult
-    mutating func dispelAll(on holder: ActorValueHolder) -> Int {
+    public mutating func dispelAll(on holder: ActorValueHolder) -> Int {
         dispel(on: holder) { _ in true }
     }
 
@@ -187,7 +187,7 @@ struct ActiveEffectRuntime {
     ///
     /// - Returns: how many actor values were re-established.
     @discardableResult
-    func reestablishModifiers(on holder: ActorValueHolder) -> Int {
+    public func reestablishModifiers(on holder: ActorValueHolder) -> Int {
         let owned = state(of: holder).ownedModifiers
         for (index, amount) in owned.sorted(by: { $0.key < $1.key }) {
             values.setModifier(amount, for: .temporary, at: index, on: holder)
@@ -307,7 +307,7 @@ struct ActiveEffectRuntime {
     /// blow struck. The same floor is applied to magicka and stamina, which
     /// share the storage and the expiry path; a living actor left at zero
     /// magicka by a timer is the same invented loss.
-    func release(_ doomed: [ActiveEffect], on holder: ActorValueHolder) {
+    public func release(_ doomed: [ActiveEffect], on holder: ActorValueHolder) {
         for effect in doomed {
             for value in effect.values where value.applied != 0 {
                 let kind = ActorValueIdentity.kind(at: value.index)
@@ -325,12 +325,12 @@ struct ActiveEffectRuntime {
 
     /// What a primary is left with when an expiring modifier would otherwise
     /// empty it: "at least 1 health point" (UESP, Fortify Health).
-    static let expiryFloor: Float = 1
+    public static let expiryFloor: Float = 1
 
     /// Stores `state`, dropping the whole component once it is empty so an
     /// actor whose effects all expired stops being dirty for this slot.
     /// Internal for the reason `release` is.
-    func write(_ state: ActiveEffectState, for holder: ActorValueHolder) {
+    public func write(_ state: ActiveEffectState, for holder: ActorValueHolder) {
         if state.isEmpty {
             store.reset(.activeEffects, for: holder.key)
         } else {

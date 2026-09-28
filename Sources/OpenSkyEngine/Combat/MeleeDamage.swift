@@ -73,7 +73,7 @@
 import Foundation
 
 /// What the blocker was holding, which picks the formula branch.
-nonisolated enum MeleeBlockKind: Equatable, Sendable {
+nonisolated public enum MeleeBlockKind: Equatable, Sendable {
     /// Blocking with a weapon or a torch: scales on the *attacker's* base
     /// weapon damage.
     case weapon
@@ -83,19 +83,19 @@ nonisolated enum MeleeBlockKind: Equatable, Sendable {
 
 /// One resolved hit's damage accounting, kept whole so a readout can explain a
 /// number rather than just show it.
-nonisolated struct MeleeDamageResult: Equatable, Sendable {
+nonisolated public struct MeleeDamageResult: Equatable, Sendable {
     /// WEAP base damage before anything reduced it.
-    let base: Float
+    public let base: Float
     /// The fraction the block absorbed, after the cap. Zero when unblocked.
-    let blockedFraction: Float
+    public let blockedFraction: Float
     /// What actually comes off health.
-    let applied: Float
+    public let applied: Float
     /// The attacker's fortify multiplier this result was resolved with, so a
     /// readout can show why the number is not the WEAP one. 1 for a character
     /// with no fortify effect.
-    let attackMultiplier: Float
+    public let attackMultiplier: Float
 
-    init(
+    public init(
         base: Float,
         blockedFraction: Float,
         applied: Float,
@@ -107,22 +107,22 @@ nonisolated struct MeleeDamageResult: Equatable, Sendable {
         self.attackMultiplier = attackMultiplier
     }
 
-    var wasBlocked: Bool {
+    public var wasBlocked: Bool {
         blockedFraction > 0
     }
 
     /// Whether a fortify effect moved the number away from the WEAP base.
-    var wasFortified: Bool {
+    public var wasFortified: Bool {
         attackMultiplier != 1
     }
 }
 
-nonisolated enum MeleeDamage {
+nonisolated public enum MeleeDamage: Sendable {
     /// The Block skill a character with no skill table is assumed to have.
     /// UESP "Skyrim:Block" gives 15 as the starting value for every race with
     /// no Block bonus; the real per-actor number arrives with the rest of the
     /// actor-value table in M18.
-    static let defaultBlockSkill: Float = 15
+    public static let defaultBlockSkill: Float = 15
 
     /// What one landed swing takes off the target's health.
     ///
@@ -139,7 +139,7 @@ nonisolated enum MeleeDamage {
     ///   - attackMultiplier: the *attacker's* perk, enchantment and potion terms
     ///     (issue #472). 1 for a character with none.
     ///     `CombatFortifyBonus.melee(handType:)` supplies it.
-    static func resolve(
+    public static func resolve(
         weapon: MeleeWeaponProfile,
         block: MeleeBlockKind?,
         settings: CombatSettings,
@@ -175,7 +175,7 @@ nonisolated enum MeleeDamage {
     }
 
     /// The blocked fraction on its own, capped at `fBlockMax`.
-    static func blockedFraction(
+    public static func blockedFraction(
         attackerDamage: Float,
         block: MeleeBlockKind,
         settings: CombatSettings,

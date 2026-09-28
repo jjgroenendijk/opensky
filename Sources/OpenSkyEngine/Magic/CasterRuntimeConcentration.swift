@@ -21,7 +21,7 @@ import OpenSkyGameData
 extension CasterRuntime {
     /// One frame of a maintained cast: drain, apply the whole seconds that
     /// elapsed, and stop when the magicka runs out or the release is due.
-    func maintain(
+    public func maintain(
         _ hand: SpellHand,
         spell: ResolvedSpell,
         delta: Float,
@@ -56,7 +56,7 @@ extension CasterRuntime {
     }
 
     /// One application of a maintained spell's effect list.
-    func applyOnce(
+    public func applyOnce(
         _ hand: SpellHand,
         spell: ResolvedSpell,
         caster: ActorValueHolder
@@ -68,7 +68,7 @@ extension CasterRuntime {
         tally.noteConcentrationSecond()
     }
 
-    func stopConcentration(
+    public func stopConcentration(
         _ hand: SpellHand,
         spell: ReferenceKey,
         caster: ActorValueHolder

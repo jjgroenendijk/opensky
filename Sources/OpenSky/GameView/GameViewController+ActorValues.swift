@@ -12,6 +12,7 @@
 // the established rule and it is why nothing here checks `menuMode` itself.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OSLog
 

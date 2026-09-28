@@ -27,26 +27,26 @@ import Foundation
 import Synchronization
 
 /// The player's character level as every derivation reads it.
-nonisolated final class PlayerLevelSource: Sendable {
+nonisolated public final class PlayerLevelSource: Sendable {
     /// The level a session with no progression carries: the level the race's
     /// starting attributes are defined for, and the floor every derivation
     /// already clamps to.
-    static let startingLevel = 1
+    public static let startingLevel = 1
 
     private let stored: Mutex<Int>
 
-    init(_ level: Int = PlayerLevelSource.startingLevel) {
+    public init(_ level: Int = PlayerLevelSource.startingLevel) {
         stored = Mutex(max(Self.startingLevel, level))
     }
 
-    var level: Int {
+    public var level: Int {
         stored.withLock { $0 }
     }
 
     /// Publishes a new level. Anything below the starting level is clamped
     /// rather than refused: a level of zero is not a number this engine has a
     /// derivation for, and the clamp is the same one every consumer applies.
-    func set(_ level: Int) {
+    public func set(_ level: Int) {
         stored.withLock { $0 = max(Self.startingLevel, level) }
     }
 }

@@ -4,7 +4,7 @@
 // timer into a fresh engine instance. No game bytes or test doubles are used.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

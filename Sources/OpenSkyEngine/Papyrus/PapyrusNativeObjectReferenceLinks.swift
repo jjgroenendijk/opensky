@@ -33,7 +33,7 @@ nonisolated extension PapyrusNativeFunctions {
     ///
     /// Returns true unless the recursion cap refused the activation, which is
     /// the only way this can fail outright.
-    static func installActivate(into registry: inout PapyrusNativeRegistry) {
+    public static func installActivate(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference",
             functionName: "Activate"
@@ -72,7 +72,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// or a keyword handle the world runtime never handed out. Only an argument
     /// of the wrong type is a failure, because that is a broken call rather
     /// than an absent link.
-    static func installLinkedReference(into registry: inout PapyrusNativeRegistry) {
+    public static func installLinkedReference(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference",
             functionName: "GetLinkedRef"

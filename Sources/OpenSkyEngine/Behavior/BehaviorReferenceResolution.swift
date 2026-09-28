@@ -50,7 +50,7 @@ import OpenSkyFormats
 
 /// Where a named behavior file comes from. The engine answers by loading it out
 /// of the install; a test answers from a table it built in code.
-nonisolated protocol BehaviorReferenceSource {
+nonisolated public protocol BehaviorReferenceSource {
     /// The graph `name` refers to, built over `skeleton` and `clips`, or nil
     /// when this source cannot supply it.
     func behavior(
@@ -63,7 +63,7 @@ nonisolated protocol BehaviorReferenceSource {
 nonisolated extension BehaviorGraphInstance {
     /// Evaluates one behavior reference, or the reference pose with a tally
     /// entry when the name cannot be resolved.
-    func evaluateBehaviorReference(
+    public func evaluateBehaviorReference(
         _ generator: HKBBehaviorReferenceGenerator,
         deltaTime: Float
     ) -> BehaviorPose {
@@ -150,7 +150,7 @@ nonisolated extension BehaviorGraphInstance {
     /// Behavior names are compared case-insensitively on the file name alone,
     /// because a reference spells the name the project's `m_behaviorFilenames`
     /// spells it and those carry mixed case and mixed separators.
-    static func referenceKey(_ name: String) -> String {
+    public static func referenceKey(_ name: String) -> String {
         let file = name.replacingOccurrences(of: "/", with: "\\")
             .split(separator: "\\").last.map(String.init) ?? name
         return file.lowercased()

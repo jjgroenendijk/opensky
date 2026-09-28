@@ -36,7 +36,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
-    static func installActor(_ registry: inout ConditionFunctionRegistry) {
+    public static func installActor(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the current, modified value of the specified stat."
         // (<https://ck.uesp.net/wiki/GetActorValue>)
         registry.register(ConditionFunction(
@@ -116,7 +116,7 @@ nonisolated extension ConditionFunctions {
     /// `GetBaseActorValue One-Handed >= 20`, measured 2026-08-20 with
     /// `openskycli record Armsman20` — so without these a perk-point spend
     /// could never satisfy a vanilla tree.
-    static func installLevelAndBaseValue(_ registry: inout ConditionFunctionRegistry) {
+    public static func installLevelAndBaseValue(_ registry: inout ConditionFunctionRegistry) {
         // "Returns the current, unmodified value of the specified stat", the
         // base rather than the total (<https://ck.uesp.net/wiki/GetActorValue>
         // contrasts the two). What the actor's records author plus whatever an
@@ -150,7 +150,7 @@ nonisolated extension ConditionFunctions {
     /// `.unresolvedParameter` is left for a negative or out-of-table number
     /// alone — a parameter that names no actor value at all, where the function
     /// has no number to compare and a zero would be acted upon.
-    static func actorValue(
+    public static func actorValue(
         _ call: ConditionCall,
         index: UInt16,
         read: (ActorConditionState, Int32) -> Float?

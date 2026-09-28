@@ -24,18 +24,18 @@ import OpenSkyFormats
 import simd
 
 /// A shape cast along a straight path.
-nonisolated struct ShapeSweepQuery {
+nonisolated public struct ShapeSweepQuery: Sendable {
     /// The swept shape's start pose. For a capsule these are the two segment
     /// ends; for a sphere pass the same point twice.
-    let first: SIMD3<Float>
-    let second: SIMD3<Float>
-    let radius: Float
+    public let first: SIMD3<Float>
+    public let second: SIMD3<Float>
+    public let radius: Float
     /// Direction of travel; normalized on use, so an unnormalized vector is
     /// accepted.
-    let direction: SIMD3<Float>
-    let maximumDistance: Float
+    public let direction: SIMD3<Float>
+    public let maximumDistance: Float
 
-    static func sphere(
+    public static func sphere(
         center: SIMD3<Float>,
         radius: Float,
         direction: SIMD3<Float>,
@@ -50,7 +50,7 @@ nonisolated struct ShapeSweepQuery {
         )
     }
 
-    static func capsule(
+    public static func capsule(
         first: SIMD3<Float>,
         second: SIMD3<Float>,
         radius: Float,
@@ -68,7 +68,7 @@ nonisolated struct ShapeSweepQuery {
 
     /// The AABB the whole sweep occupies, which is what the broadphase is asked
     /// for before any narrowphase runs.
-    var bounds: ModelBounds {
+    public var bounds: ModelBounds {
         let travel = normalizedDirection * maximumDistance
         let extent = SIMD3<Float>(repeating: radius)
         let lower = simd_min(simd_min(first, second), simd_min(first, second) + travel)
@@ -76,25 +76,25 @@ nonisolated struct ShapeSweepQuery {
         return ModelBounds(min: lower - extent, max: upper + extent)
     }
 
-    var normalizedDirection: SIMD3<Float> {
+    public var normalizedDirection: SIMD3<Float> {
         let length = simd_length(direction)
         return length > Float.ulpOfOne ? direction / length : SIMD3(0, 0, -1)
     }
 }
 
 /// Where a sweep first touched something.
-nonisolated struct ShapeSweepHit: Equatable {
-    let reference: FormID
+nonisolated public struct ShapeSweepHit: Equatable, Sendable {
+    public let reference: FormID
     /// Travel distance along the sweep direction at first touch. Zero means the
     /// shape already overlapped at the start pose.
-    let distance: Float
+    public let distance: Float
     /// Point on the obstacle, in world space.
-    let position: SIMD3<Float>
+    public let position: SIMD3<Float>
     /// Surface normal pointing back toward the swept shape.
-    let normal: SIMD3<Float>
+    public let normal: SIMD3<Float>
     /// True when the start pose already overlapped, so `distance` is not a
     /// distance travelled. A tunneling guard treats this as "already stuck".
-    let startsOverlapping: Bool
+    public let startsOverlapping: Bool
 }
 
 /// One overlap of the swept shape at a sampled travel distance.
@@ -104,17 +104,17 @@ nonisolated private struct SweepOverlap {
     let normal: SIMD3<Float>
 }
 
-nonisolated enum ShapeSweeper {
+nonisolated public enum ShapeSweeper: Sendable {
     /// Steps taken along the sweep before the first touching step is bisected.
     /// The coarse pass costs one overlap test each; the bisection then converges
     /// on the touch distance to well inside the solver's penetration slop.
-    static let sampleCount = 24
+    public static let sampleCount = 24
     /// Bisection rounds after the first touching sample.
-    static let refinementCount = 12
+    public static let refinementCount = 12
     private static let epsilon: Float = 1e-5
 
     /// First hit along `query`, or nil where the sweep is clear.
-    static func firstHit(
+    public static func firstHit(
         query: ShapeSweepQuery,
         shapes: [StaticCollisionShape]
     ) -> ShapeSweepHit? {

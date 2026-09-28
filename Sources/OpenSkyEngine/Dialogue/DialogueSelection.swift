@@ -21,7 +21,7 @@ import OpenSkyFormats
 /// Ordered by when the check happens, which is also the order the reasons are
 /// worth reading in: a response whose topic's quest is not running was never a
 /// candidate, while one whose conditions failed was.
-nonisolated enum DialogueRejection: Equatable, Sendable {
+nonisolated public enum DialogueRejection: Equatable, Sendable {
     /// The topic names an owning quest that is not running.
     case questNotRunning(FormID)
     /// The response is flagged say-once and has already been said.
@@ -35,79 +35,79 @@ nonisolated enum DialogueRejection: Equatable, Sendable {
 }
 
 /// One response considered for a topic, with the reason it did or did not win.
-nonisolated struct DialogueInfoTrace: Equatable, Sendable {
+nonisolated public struct DialogueInfoTrace: Equatable, Sendable {
     /// The INFO record considered.
-    let info: FormID
+    public let info: FormID
     /// Its condition list's outcome, or nil when the response was rejected
     /// before its conditions were reached — a say-once line already said, or a
     /// line after the winner.
-    let outcome: ConditionOutcome?
+    public let outcome: ConditionOutcome?
     /// Nil for the winner, and the reason otherwise.
-    let rejection: DialogueRejection?
+    public let rejection: DialogueRejection?
 
-    var isWinner: Bool {
+    public var isWinner: Bool {
         rejection == nil
     }
 }
 
 /// One topic a speaker offers, with the response that won it.
-nonisolated struct DialogueTopicOffer: Equatable, Sendable {
+nonisolated public struct DialogueTopicOffer: Equatable, Sendable {
     /// The DIAL record.
-    let topic: FormID
+    public let topic: FormID
     /// The INFO that won, in the file order the child group lists.
-    let info: FormID
+    public let info: FormID
     /// Every response considered for this topic, in file order, winner
     /// included.
-    let considered: [DialogueInfoTrace]
+    public let considered: [DialogueInfoTrace]
 
     /// Reasons every considered response could not be answered cleanly, in
     /// evaluation order. Empty when the whole topic evaluated from real
     /// answers, which is what makes coverage measurable rather than assumed.
-    var failures: [ConditionFailure] {
+    public var failures: [ConditionFailure] {
         considered.flatMap { $0.outcome?.failures ?? [] }
     }
 }
 
 /// The result of asking what a speaker has to say.
-nonisolated struct DialogueSelection: Equatable, Sendable {
+nonisolated public struct DialogueSelection: Equatable, Sendable {
     /// Topics the player may pick, in the order they should be listed:
     /// descending DIAL priority, then ascending FormID.
-    let offers: [DialogueTopicOffer]
+    public let offers: [DialogueTopicOffer]
     /// Topics that were considered and offered nothing, with the reason each
     /// of their responses lost. Kept rather than dropped because "this topic
     /// exists and offered nothing" is what an acceptance readout has to
     /// explain.
-    let rejected: [DialogueTopicOffer]
+    public let rejected: [DialogueTopicOffer]
     /// What the condition evaluator could not answer while selecting.
-    let tally: ConditionTally
+    public let tally: ConditionTally
 
-    static let empty = DialogueSelection(offers: [], rejected: [], tally: ConditionTally())
+    public static let empty = DialogueSelection(offers: [], rejected: [], tally: ConditionTally())
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         offers.isEmpty
     }
 }
 
 /// What choosing a response produced.
-nonisolated struct DialogueChoice: Equatable, Sendable {
+nonisolated public struct DialogueChoice: Equatable, Sendable {
     /// The response that was chosen.
-    let info: FormID
+    public let info: FormID
     /// Said-state as stored afterwards.
-    let state: DialogueRuntimeState
+    public let state: DialogueRuntimeState
     /// Topics the chosen response links to through TCLT, filtered the same way
     /// the offered list is, so a link to a topic whose quest has since stopped
     /// does not appear.
-    let next: DialogueSelection
+    public let next: DialogueSelection
     /// Whether the response ends the conversation, which is the documented
     /// meaning of the goodbye flag.
-    let endsConversation: Bool
+    public let endsConversation: Bool
     /// Result-script fragments that were dispatched, in begin-then-end order.
     /// Empty when the response carries no result script, and also when no
     /// dispatcher was wired — the two are distinguished by
     /// `unrunFragmentCount`.
-    let dispatchedFragments: [String]
+    public let dispatchedFragments: [String]
     /// Fragments the response declared that nothing ran. Counted rather than
     /// dropped: a result script that never runs is exactly the gap this number
     /// exists to surface.
-    let unrunFragmentCount: Int
+    public let unrunFragmentCount: Int
 }

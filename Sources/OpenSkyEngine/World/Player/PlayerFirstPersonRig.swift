@@ -17,18 +17,18 @@ import Metal
 import OpenSkyFormats
 import simd
 
-nonisolated final class PlayerFirstPersonRig {
-    let assembly: ActorAssembly<ActorRenderAsset>
-    let animation: PlayerAnimationPlayback
+nonisolated public final class PlayerFirstPersonRig {
+    public let assembly: ActorAssembly<ActorRenderAsset>
+    public let animation: PlayerAnimationPlayback
     /// Index of `Camera1st [Cam1]` in the first-person rig, or nil when the
     /// skeleton does not declare it. Nil is a reportable fact about the
     /// install, not a crash: the arms then hang off the reference height.
-    let cameraBoneIndex: Int?
+    public let cameraBoneIndex: Int?
 
-    private(set) var transform = matrix_identity_float4x4
-    private(set) var render: RenderScene
+    public private(set) var transform = matrix_identity_float4x4
+    public private(set) var render: RenderScene
 
-    init(assembly: ActorAssembly<ActorRenderAsset>, animation: PlayerAnimationPlayback) {
+    public init(assembly: ActorAssembly<ActorRenderAsset>, animation: PlayerAnimationPlayback) {
         self.assembly = assembly
         self.animation = animation
         cameraBoneIndex = animation.skeleton.boneNames
@@ -38,7 +38,7 @@ nonisolated final class PlayerFirstPersonRig {
 
     /// The camera bone's matrix in rig space for the pose currently published,
     /// or nil when there is no pose or no such bone.
-    var cameraBoneMatrix: float4x4? {
+    public var cameraBoneMatrix: float4x4? {
         guard
             let cameraBoneIndex,
             !animation.pose.bones.isEmpty,
@@ -52,7 +52,7 @@ nonisolated final class PlayerFirstPersonRig {
     }
 
     /// Hangs the arms off the eye. Draw groups are rebuilt only on a real move.
-    func place(eyePosition: SIMD3<Float>, yaw: Float, pitch: Float) {
+    public func place(eyePosition: SIMD3<Float>, yaw: Float, pitch: Float) {
         let wanted = FirstPersonCamera.rigTransform(
             eyeMatrix: FirstPersonCamera.eyeMatrix(
                 eyePosition: eyePosition, yaw: yaw, pitch: pitch
@@ -66,7 +66,7 @@ nonisolated final class PlayerFirstPersonRig {
 
     /// GPU allocations the arms keep alive, added to the renderer's residency
     /// set at attach and live for the whole session, exactly as the body's are.
-    var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [MTLAllocation] {
         render.residencyAllocations
     }
 

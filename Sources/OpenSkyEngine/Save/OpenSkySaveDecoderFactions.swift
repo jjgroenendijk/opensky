@@ -18,14 +18,14 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's saved memberships, before they are merged back into the delta.
-nonisolated struct SaveFactionEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: ActorFactionState
+nonisolated public struct SaveFactionEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: ActorFactionState
 }
 
-nonisolated enum OpenSkySaveFactionDecoder {
-    static func decodeFactionMemberships(_ payload: Data) throws -> [SaveFactionEntry] {
+nonisolated public enum OpenSkySaveFactionDecoder: Sendable {
+    public static func decodeFactionMemberships(_ payload: Data) throws -> [SaveFactionEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("FCTN entry count")
         try OpenSkySaveDecoder.validate(
@@ -45,7 +45,7 @@ nonisolated enum OpenSkySaveFactionDecoder {
     /// Lays each saved membership list over the matching `RDLT` delta, adding
     /// an entry for an actor that had no other component, and re-sorts the
     /// result into `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ values: [SaveFactionEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

@@ -48,7 +48,7 @@ nonisolated extension ResolvedActorVisual {
     /// - Parameter skeletonPath: the first-person NIF skeleton the arm meshes
     ///   skin against, passed in rather than hardcoded here so a test can
     ///   project onto a synthetic rig.
-    func firstPersonProjection(skeletonPath: String) -> ResolvedActorVisual {
+    public func firstPersonProjection(skeletonPath: String) -> ResolvedActorVisual {
         var skips = skips
         var parts: [ResolvedBodyPart] = []
         for part in self.parts {

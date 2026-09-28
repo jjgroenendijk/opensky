@@ -20,36 +20,40 @@ import OpenSkyShaderTypes
 ///
 /// Raw values are the shader contract: they match `RenderLayerBit` in
 /// `ShaderTypes.h` bit for bit, and `RenderDebugStateTests` pins them.
-nonisolated struct RenderLayer: OptionSet, Hashable, Sendable {
-    let rawValue: UInt32
+nonisolated public struct RenderLayer: OptionSet, Hashable, Sendable {
+    public let rawValue: UInt32
+
+    public init(rawValue: UInt32) {
+        self.rawValue = rawValue
+    }
 
     /// Ordinary cell-owned world geometry: the default role, which is what
     /// keeps every existing `RenderPlacement` construction site unchanged.
-    static let statics = RenderLayer(rawValue: 1 << 0)
+    public static let statics = RenderLayer(rawValue: 1 << 0)
     /// Actors and the player's own rig, from `ActorAssembly`.
-    static let actors = RenderLayer(rawValue: 1 << 1)
+    public static let actors = RenderLayer(rawValue: 1 << 1)
     /// Distant LOD blocks and tree billboards.
-    static let distantLOD = RenderLayer(rawValue: 1 << 2)
-    static let terrain = RenderLayer(rawValue: 1 << 3)
-    static let water = RenderLayer(rawValue: 1 << 4)
-    static let sky = RenderLayer(rawValue: 1 << 5)
-    static let grass = RenderLayer(rawValue: 1 << 6)
+    public static let distantLOD = RenderLayer(rawValue: 1 << 2)
+    public static let terrain = RenderLayer(rawValue: 1 << 3)
+    public static let water = RenderLayer(rawValue: 1 << 4)
+    public static let sky = RenderLayer(rawValue: 1 << 5)
+    public static let grass = RenderLayer(rawValue: 1 << 6)
     /// Cell particle systems and precipitation, which share one encode path.
-    static let particles = RenderLayer(rawValue: 1 << 7)
+    public static let particles = RenderLayer(rawValue: 1 << 7)
 
     /// Every layer on: the default, and the only mask a shipping frame uses.
-    static let all: RenderLayer = [
+    public static let all: RenderLayer = [
         .statics, .actors, .distantLOD, .terrain, .water, .sky, .grass, .particles
     ]
 
     /// Stable presentation order for the panel checkboxes and the readout.
     /// Ordering by raw value would be equally stable but would put the sky
     /// between water and grass; this groups geometry before atmosphere.
-    static let ordered: [RenderLayer] = [
+    public static let ordered: [RenderLayer] = [
         .statics, .actors, .distantLOD, .terrain, .grass, .water, .sky, .particles
     ]
 
-    var title: String {
+    public var title: String {
         switch self {
         case .statics: "Statics"
         case .actors: "Actors"
@@ -66,7 +70,7 @@ nonisolated struct RenderLayer: OptionSet, Hashable, Sendable {
     /// The layer's part of its checkbox accessibility identifier. Spelled out
     /// rather than derived from `title`, because these are the UI-test API and
     /// a wording change to a label must not silently rename one.
-    var identifierFragment: String {
+    public var identifierFragment: String {
         switch self {
         case .statics: "Statics"
         case .actors: "Actors"
@@ -85,7 +89,7 @@ nonisolated struct RenderLayer: OptionSet, Hashable, Sendable {
     /// Solo is derived rather than stored precisely so that it cannot drift out
     /// of step with the per-layer toggles: unchecking a second layer by hand is
     /// the same act as pressing solo on the first.
-    var soloedLayer: RenderLayer? {
+    public var soloedLayer: RenderLayer? {
         rawValue.nonzeroBitCount == 1 ? self : nil
     }
 }
@@ -94,7 +98,7 @@ nonisolated struct RenderLayer: OptionSet, Hashable, Sendable {
 /// `DebugViewMode` in `ShaderTypes.h`; `RenderDebugStateTests` pins the raw
 /// values so a shader/Swift drift fails a test rather than showing up as a
 /// wrong colour on screen.
-nonisolated enum RenderDebugMode: UInt32, CaseIterable, Sendable {
+nonisolated public enum RenderDebugMode: UInt32, CaseIterable, Sendable {
     case off = 0
     case wireframe = 1
     case worldNormals = 2
@@ -103,7 +107,7 @@ nonisolated enum RenderDebugMode: UInt32, CaseIterable, Sendable {
     case shadowCascade = 5
     case layerCategory = 6
 
-    var title: String {
+    public var title: String {
         switch self {
         case .off: "Off"
         case .wireframe: "Wireframe"
@@ -118,24 +122,24 @@ nonisolated enum RenderDebugMode: UInt32, CaseIterable, Sendable {
 
 /// The renderer's whole debug-view state: which channel the scene pass writes
 /// and which layers it draws at all.
-nonisolated struct RenderDebugState: Equatable, Sendable {
-    var mode = RenderDebugMode.off
-    var layers = RenderLayer.all
+nonisolated public struct RenderDebugState: Equatable, Sendable {
+    public var mode = RenderDebugMode.off
+    public var layers = RenderLayer.all
 
     /// What a shipping frame renders, and what an offscreen frame falls back to.
-    static let production = RenderDebugState()
+    public static let production = RenderDebugState()
 
-    var isDefault: Bool {
+    public var isDefault: Bool {
         self == .production
     }
 
     /// True while a debug pipeline is bound, which is also what decides whether
     /// the frame is safe to screenshot as engine output.
-    var isDebugViewActive: Bool {
+    public var isDebugViewActive: Bool {
         mode != .off
     }
 
-    var soloedLayer: RenderLayer? {
+    public var soloedLayer: RenderLayer? {
         layers.soloedLayer
     }
 }
@@ -148,8 +152,8 @@ nonisolated struct RenderDebugState: Equatable, Sendable {
 /// by its own panel section. The layer mask is the *view* filter: transient,
 /// never persisted, dev-only. Effective visibility is the AND of the two, so
 /// neither control can silently override the other.
-nonisolated enum RenderLayerPolicy {
-    static func effective(
+nonisolated public enum RenderLayerPolicy: Sendable {
+    public static func effective(
         mask: RenderLayer,
         grassEnabled: Bool,
         particlesEnabled: Bool,
@@ -174,7 +178,7 @@ extension Renderer {
     /// Read by both the scene pass and the shadow pass, so hiding statics also
     /// removes the shadows they were casting — a mask that hid the geometry and
     /// kept its shadow would be actively misleading.
-    var effectiveRenderLayers: RenderLayer {
+    public var effectiveRenderLayers: RenderLayer {
         RenderLayerPolicy.effective(
             mask: renderDebug.layers,
             grassEnabled: grassEnabled,
@@ -184,13 +188,13 @@ extension Renderer {
     }
 
     /// Whether the scene pass binds the debug pipelines this frame.
-    var isRenderDebugActive: Bool {
+    public var isRenderDebugActive: Bool {
         renderDebug.isDebugViewActive
     }
 
     /// Isolates one layer, or restores all of them when it is already the only
     /// one drawn — the panel's solo button toggles rather than latches.
-    func soloRenderLayer(_ layer: RenderLayer) {
+    public func soloRenderLayer(_ layer: RenderLayer) {
         renderDebug.layers = renderDebug.soloedLayer == layer ? .all : layer
     }
 }

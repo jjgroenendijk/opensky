@@ -7,7 +7,7 @@
 // same resolution against a vanilla caster.
 
 import Foundation
-@testable import OpenSky
+import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

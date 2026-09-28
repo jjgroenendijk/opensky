@@ -14,6 +14,7 @@
 // outside it is a reason-tagged failure rather than a spellless stranger.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension GameViewController {

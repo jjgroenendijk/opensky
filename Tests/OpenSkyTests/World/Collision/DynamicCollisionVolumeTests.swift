@@ -1,7 +1,7 @@
 // The convex collider a dynamic body presents (issue #193): what each decoded
 // geometry becomes, and the two queries the solver asks of it.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

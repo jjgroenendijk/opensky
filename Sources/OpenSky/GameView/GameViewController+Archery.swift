@@ -21,6 +21,7 @@
 // mode and resumes when it comes back.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import simd
 

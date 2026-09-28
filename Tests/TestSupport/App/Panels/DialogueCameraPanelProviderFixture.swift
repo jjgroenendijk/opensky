@@ -8,7 +8,7 @@
 // file-length limit.
 
 import AppKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

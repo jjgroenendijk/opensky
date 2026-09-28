@@ -26,7 +26,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `DETH` chunk: every snapshot entry carrying a death component, in
     /// the snapshot's `ReferenceKey` order. A session in which nothing died
     /// writes no chunk.
-    static func writeDeaths(
+    public static func writeDeaths(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

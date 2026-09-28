@@ -20,12 +20,12 @@ import simd
 /// `PlayerCapsule.eyeHeight` only while walking, so the value is passed in
 /// from `WalkController` rather than derived inside the streamer. Nil at the
 /// call site means "not in walk mode, do not test".
-nonisolated struct PlayerCapsuleState: Equatable, Sendable {
-    let capsule: PlayerCapsule
+nonisolated public struct PlayerCapsuleState: Equatable, Sendable {
+    public let capsule: PlayerCapsule
     /// Capsule bottom in world space, as advanced by `WalkController`.
-    let feetPosition: SIMD3<Float>
+    public let feetPosition: SIMD3<Float>
 
-    init(capsule: PlayerCapsule = .standard, feetPosition: SIMD3<Float>) {
+    public init(capsule: PlayerCapsule = .standard, feetPosition: SIMD3<Float>) {
         self.capsule = capsule
         self.feetPosition = feetPosition
     }
@@ -33,24 +33,24 @@ nonisolated struct PlayerCapsuleState: Equatable, Sendable {
 
 /// One trigger-occupancy edge. Identity is the authoring REFR's
 /// `ReferenceKey`, because that is what a script instance is addressed by.
-nonisolated struct TriggerTransitionEvent: Equatable, Sendable {
-    nonisolated enum Phase: Equatable, Sendable {
+nonisolated public struct TriggerTransitionEvent: Equatable, Sendable {
+    nonisolated public enum Phase: Equatable, Sendable {
         case enter
         case leave
     }
 
-    let reference: ReferenceKey
-    let phase: Phase
+    public let reference: ReferenceKey
+    public let phase: Phase
     /// The occupying actor. Nil preserves the player-capsule event surface;
     /// NPC movers name themselves so Papyrus receives the correct activator.
-    var actor: ReferenceKey?
+    public var actor: ReferenceKey?
 }
 
 extension CellStreamer {
     /// Longest teleport, in capsule radii, that is still sampled for volumes
     /// crossed on the way. Past this the sweep samples evenly at coarser
     /// spacing, so a very long jump stays O(1) rather than O(distance).
-    static let maximumTriggerSweepSamples = 16
+    public static let maximumTriggerSweepSamples = 16
 
     /// Subscribes `triggerLog` to this streamer's own fan-out, from `init`.
     ///
@@ -58,7 +58,7 @@ extension CellStreamer {
     /// bridge, so nothing in `dispatchTriggerEdges` knows a readout exists.
     /// Weak, because the fan-out this streamer owns would otherwise retain it
     /// back.
-    func installTriggerLogging() {
+    public func installTriggerLogging() {
         onTriggerTransition.add { [weak self] event in
             guard let self else { return }
             triggerLog.record(event, formID: referenceEntry(key: event.reference)?.formID)
@@ -68,7 +68,7 @@ extension CellStreamer {
     /// Trigger volumes the capsule intersects right now, interior-aware in the
     /// same shape as `collisionCandidates(overlapping:)`: an interior scene
     /// replaces the exterior composition entirely, so it answers alone.
-    func triggerVolumes(intersecting state: PlayerCapsuleState) -> [TriggerVolume] {
+    public func triggerVolumes(intersecting state: PlayerCapsuleState) -> [TriggerVolume] {
         triggerVolumes(intersecting: state.capsule, at: state.feetPosition)
     }
 
@@ -86,7 +86,7 @@ extension CellStreamer {
 
     /// Summed trigger accounting over whatever is currently live, for the
     /// inspection surface.
-    func triggerStats() -> TriggerVolumeStats {
+    public func triggerStats() -> TriggerVolumeStats {
         if let interiorScene {
             return interiorScene.triggerVolumes.stats
         }
@@ -100,7 +100,7 @@ extension CellStreamer {
     /// toggling to fly mode inside a volume does not fabricate a leave the
     /// player never performed. The leave fires on the first walk-mode frame
     /// that finds the capsule outside.
-    func updateTriggerOccupancy(_ state: PlayerCapsuleState?) {
+    public func updateTriggerOccupancy(_ state: PlayerCapsuleState?) {
         guard let state else {
             lastTriggerFeetPosition = nil
             return
@@ -125,7 +125,7 @@ extension CellStreamer {
     /// Called from `emitCellDetached(_:)`, which is the single funnel every
     /// unload path goes through — grid eviction, a coverage-transition drop,
     /// and a door transition replacing the previous scene.
-    func releaseTriggers(in scene: CellScene) {
+    public func releaseTriggers(in scene: CellScene) {
         guard !occupiedTriggers.isEmpty else { return }
         let owned = Set(scene.triggerVolumes.volumes.map(\.reference))
         let released = occupiedTriggers.intersection(owned)
@@ -170,7 +170,7 @@ extension CellStreamer {
     ///
     /// A normal walking frame moves far less than a radius and produces no
     /// samples at all, so this costs nothing until something teleports.
-    static func sweepSamples(
+    public static func sweepSamples(
         from origin: SIMD3<Float>,
         to destination: SIMD3<Float>,
         radius: Float

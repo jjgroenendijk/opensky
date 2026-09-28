@@ -8,12 +8,12 @@ import Foundation
 import OpenSkyFormats
 import simd
 
-nonisolated enum ActorAssetFailure: Error, Equatable {
+nonisolated public enum ActorAssetFailure: Error, Equatable {
     case missing
     case invalid
 }
 
-nonisolated protocol ActorAssetProvider {
+nonisolated public protocol ActorAssetProvider {
     associatedtype Skeleton
     associatedtype Asset
 
@@ -33,55 +33,55 @@ nonisolated protocol ActorAssetProvider {
     ) -> Result<Asset, ActorAssetFailure>
 }
 
-nonisolated enum ActorModelRole: Equatable {
+nonisolated public enum ActorModelRole: Equatable, Sendable {
     case body(ResolvedBodyPart)
     case faceGenHead(tintPath: String?)
     /// A drawn weapon riding a hand bone.
     case attachment(ResolvedAttachment)
 }
 
-nonisolated struct ActorAssemblySkip: Equatable {
-    nonisolated enum Subject: Equatable {
+nonisolated public struct ActorAssemblySkip: Equatable, Sendable {
+    nonisolated public enum Subject: Equatable, Sendable {
         case appearance(AppearanceSkip)
         case skeleton(path: String)
         case model(role: ActorModelRole, path: String)
         case actor(FormID)
     }
 
-    nonisolated enum Reason: Equatable {
+    nonisolated public enum Reason: Equatable, Sendable {
         case appearance
         case missingAsset
         case invalidAsset
         case noCoreGeometry
     }
 
-    let subject: Subject
-    let reason: Reason
+    public let subject: Subject
+    public let reason: Reason
 }
 
-nonisolated struct AssembledActorModel<Asset> {
-    let role: ActorModelRole
-    let path: String
-    let asset: Asset
+nonisolated public struct AssembledActorModel<Asset> {
+    public let role: ActorModelRole
+    public let path: String
+    public let asset: Asset
 }
 
-nonisolated struct ActorAssembly<Asset> {
-    let actor: FormID
-    let base: FormID
-    let visual: ResolvedActorVisual
-    let transform: float4x4
-    let models: [AssembledActorModel<Asset>]
-    let skips: [ActorAssemblySkip]
+nonisolated public struct ActorAssembly<Asset> {
+    public let actor: FormID
+    public let base: FormID
+    public let visual: ResolvedActorVisual
+    public let transform: float4x4
+    public let models: [AssembledActorModel<Asset>]
+    public let skips: [ActorAssemblySkip]
 
-    var isRenderable: Bool {
+    public var isRenderable: Bool {
         !models.isEmpty
     }
 }
 
-nonisolated struct ActorAssembler<Provider: ActorAssetProvider> {
-    let provider: Provider
+nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
+    public let provider: Provider
 
-    func assemble(
+    public func assemble(
         placed actor: PlacedActor,
         visual: ResolvedActorVisual
     ) -> ActorAssembly<Provider.Asset> {
@@ -105,7 +105,7 @@ nonisolated struct ActorAssembler<Provider: ActorAssetProvider> {
     /// record's position and rotation. Everything past the transform is the
     /// same path a streamed NPC takes, which is the point: one assembly, one
     /// masking rule, one equipment attachment.
-    func assemble(
+    public func assemble(
         actor: FormID,
         base: FormID,
         transform: float4x4,
@@ -224,30 +224,30 @@ nonisolated struct ActorAssembler<Provider: ActorAssetProvider> {
     }
 }
 
-nonisolated struct ActorSkeletonAsset {
-    let pathKey: String
-    let skeleton: NIFSkeleton
+nonisolated public struct ActorSkeletonAsset: Sendable {
+    public let pathKey: String
+    public let skeleton: NIFSkeleton
 }
 
-nonisolated struct ActorRenderAsset {
-    let model: RenderModel
-    let bounds: ModelBounds?
+nonisolated public struct ActorRenderAsset {
+    public let model: RenderModel
+    public let bounds: ModelBounds?
 }
 
 nonisolated extension MeshLibrary: ActorAssetProvider {
-    typealias Skeleton = ActorSkeletonAsset
-    typealias Asset = ActorRenderAsset
+    public typealias Skeleton = ActorSkeletonAsset
+    public typealias Asset = ActorRenderAsset
 }
 
 nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
-    var renderPlacements: [RenderPlacement] {
+    public var renderPlacements: [RenderPlacement] {
         renderPlacements(at: transform)
     }
 
     /// The same placements at a transform supplied from outside the assembly.
     /// The player body is assembled once and moves every frame (issue #189), so
     /// its transform cannot be the one baked in at assembly time.
-    func renderPlacements(
+    public func renderPlacements(
         at transform: float4x4,
         faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
     ) -> [RenderPlacement] {
@@ -270,7 +270,7 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
         }
     }
 
-    var worldBounds: ModelBounds? {
+    public var worldBounds: ModelBounds? {
         models.filter { !Self.isAttachment($0.role) }
             .compactMap { $0.asset.bounds?.transformed(by: transform) }
             .reduce(nil) { result, bounds in result.map { $0.union(bounds) } ?? bounds }

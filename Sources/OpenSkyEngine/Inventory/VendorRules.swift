@@ -44,16 +44,16 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// When a vendor trades, from the `VENV` start and end hours.
-nonisolated struct VendorHours: Equatable, Sendable {
-    let start: UInt16
-    let end: UInt16
+nonisolated public struct VendorHours: Equatable, Sendable {
+    public let start: UInt16
+    public let end: UInt16
 
     /// Whether `hour` (0 up to 24) falls inside the window.
     ///
     /// Start inclusive, end exclusive. An end of 24 or more runs to midnight; a
     /// start after the end wraps past midnight; a start equal to the end is
     /// read as always open (see the file header).
-    func isOpen(atHour hour: Float) -> Bool {
+    public func isOpen(atHour hour: Float) -> Bool {
         guard start != end else { return true }
         let open = Float(start)
         let close = Float(min(end, 24))
@@ -65,37 +65,37 @@ nonisolated struct VendorHours: Equatable, Sendable {
 }
 
 /// One actor's vendor role, resolved from its vendor faction.
-nonisolated struct Vendor: Equatable, Sendable {
-    let faction: ReferenceKey
-    let factionName: String
+nonisolated public struct Vendor: Equatable, Sendable {
+    public let faction: ReferenceKey
+    public let factionName: String
     /// The `VENC` merchant chest, or nil when the faction names none — then
     /// the vendor sells from its own inventory.
-    let merchantChest: ReferenceKey?
-    let hours: VendorHours?
+    public let merchantChest: ReferenceKey?
+    public let hours: VendorHours?
     /// Every keyword the `VEND` list names, flattened through nested lists.
     /// Nil when the faction authors no list, which gates nothing.
-    let listKeywords: Set<ReferenceKey>?
+    public let listKeywords: Set<ReferenceKey>?
     /// `VENV`'s "Not Buy/Sell": trade what does *not* match the list.
-    let negatesList: Bool
+    public let negatesList: Bool
     /// `VENV`'s "Only Buys Stolen Goods": this vendor is a fence.
-    let buysStolen: Bool
+    public let buysStolen: Bool
 
     /// Whether this vendor buys and sells an item carrying `keywords`.
-    func trades(keywords: Set<ReferenceKey>) -> Bool {
+    public func trades(keywords: Set<ReferenceKey>) -> Bool {
         guard let listKeywords else { return true }
         let matches = !listKeywords.isDisjoint(with: keywords)
         return matches != negatesList
     }
 
-    func isOpen(atHour hour: Float) -> Bool {
+    public func isOpen(atHour hour: Float) -> Bool {
         hours?.isOpen(atHour: hour) ?? true
     }
 }
 
 /// Finds an actor's vendor faction and reads its vendor block.
-nonisolated struct VendorResolver {
-    let factions: FactionStore
-    let formLists: FormListStore
+nonisolated public struct VendorResolver: Sendable {
+    public let factions: FactionStore
+    public let formLists: FormListStore
 
     /// The first vendor faction among `memberships`, in membership order, or
     /// nil when the actor is no merchant.
@@ -105,7 +105,7 @@ nonisolated struct VendorResolver {
     /// in having access to two merchant chests" — switches between them by
     /// the vendor conditions this engine does not evaluate yet, so the first
     /// authored one is the honest default.
-    func vendor(memberships: ActorFactionState) -> Vendor? {
+    public func vendor(memberships: ActorFactionState) -> Vendor? {
         for membership in memberships.memberships {
             guard
                 let resolved = factions.faction(key: membership.faction),
@@ -116,7 +116,7 @@ nonisolated struct VendorResolver {
         return nil
     }
 
-    func vendor(faction resolved: ResolvedFaction) -> Vendor {
+    public func vendor(faction resolved: ResolvedFaction) -> Vendor {
         let values = resolved.faction.vendorValues
         return Vendor(
             faction: ReferenceKey(resolved: resolved.id),
@@ -130,7 +130,7 @@ nonisolated struct VendorResolver {
     }
 
     /// An item's keywords as the same identities the list resolves to.
-    func keywords(_ raw: [FormID], fromPlugin pluginName: String) -> Set<ReferenceKey> {
+    public func keywords(_ raw: [FormID], fromPlugin pluginName: String) -> Set<ReferenceKey> {
         Set(raw.compactMap {
             formLists.resolvedID($0, fromPlugin: pluginName).map(ReferenceKey.init(resolved:))
         })
@@ -143,5 +143,10 @@ nonisolated struct VendorResolver {
             let flattened = formLists.flattened(id)
         else { return nil }
         return Set(flattened.entries.compactMap { $0.map(ReferenceKey.init(resolved:)) })
+    }
+
+    public init(factions: FactionStore, formLists: FormListStore) {
+        self.factions = factions
+        self.formLists = formLists
     }
 }

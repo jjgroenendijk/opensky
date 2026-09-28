@@ -7,6 +7,7 @@
 // override dot and "Reset all" act on.
 
 @testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct DestinationRegistryLocomotionTests {

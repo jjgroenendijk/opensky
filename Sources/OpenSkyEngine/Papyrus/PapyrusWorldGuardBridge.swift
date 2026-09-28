@@ -16,7 +16,7 @@ import OpenSkyGameData
 
 /// Guard and arrest operations a Papyrus native may perform.
 @MainActor
-protocol PapyrusWorldGuardBridge {
+public protocol PapyrusWorldGuardBridge {
     /// The crime faction `actor` reports to — its `CRIF` — as `.some(nil)` when
     /// it names none, or nil for a session with no faction data.
     ///
@@ -44,12 +44,12 @@ protocol PapyrusWorldGuardBridge {
 }
 
 extension PapyrusWorldStateBridge {
-    func crimeFaction(ofActor actor: ReferenceKey) -> ReferenceKey?? {
+    public func crimeFaction(ofActor actor: ReferenceKey) -> ReferenceKey?? {
         guard let profile = socialProfile?(actor) else { return nil }
         return .some(profile.crimeFaction)
     }
 
-    func isGuard(_ actor: ReferenceKey) -> Bool? {
+    public func isGuard(_ actor: ReferenceKey) -> Bool? {
         guard
             let profile = socialProfile?(actor),
             let runtime = factionRuntime?(actor)
@@ -60,11 +60,11 @@ extension PapyrusWorldStateBridge {
         ) != nil
     }
 
-    func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {
+    public func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {
         arrestSession?()?.canPayCrimeGold(to: faction)
     }
 
-    func settleArrest(
+    public func settleArrest(
         with faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>? {
@@ -75,19 +75,19 @@ extension PapyrusWorldStateBridge {
 /// Nonisolated hops, one `MainActor.assumeIsolated` per method, mirroring the
 /// rest of `PapyrusWorldAccess`.
 nonisolated extension PapyrusWorldAccess {
-    func crimeFaction(ofActor actor: ReferenceKey) -> ReferenceKey?? {
+    public func crimeFaction(ofActor actor: ReferenceKey) -> ReferenceKey?? {
         MainActor.assumeIsolated { bridge.crimeFaction(ofActor: actor) }
     }
 
-    func isGuard(_ actor: ReferenceKey) -> Bool? {
+    public func isGuard(_ actor: ReferenceKey) -> Bool? {
         MainActor.assumeIsolated { bridge.isGuard(actor) }
     }
 
-    func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {
+    public func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {
         MainActor.assumeIsolated { bridge.canPayCrimeGold(to: faction) }
     }
 
-    func settleArrest(
+    public func settleArrest(
         with faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> Result<ArrestSettlement, ArrestRefusal>? {

@@ -6,7 +6,7 @@
 // save chunk; nothing here touches bytes.
 
 import FormatsTestSupport
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 @MainActor

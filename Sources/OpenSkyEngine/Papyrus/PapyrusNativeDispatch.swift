@@ -2,21 +2,21 @@
 
 import Foundation
 
-nonisolated enum PapyrusNativeCallKind: Equatable, Sendable {
+nonisolated public enum PapyrusNativeCallKind: Equatable, Sendable {
     case method
     case parent
     case staticFunction
 }
 
-nonisolated struct PapyrusNativeCall: Equatable, Sendable {
-    let kind: PapyrusNativeCallKind
-    let scriptName: String
-    let functionName: String
-    let receiver: PapyrusObjectHandle?
-    let arguments: [PapyrusValue]
-    let returnType: PapyrusType
+nonisolated public struct PapyrusNativeCall: Equatable, Sendable {
+    public let kind: PapyrusNativeCallKind
+    public let scriptName: String
+    public let functionName: String
+    public let receiver: PapyrusObjectHandle?
+    public let arguments: [PapyrusValue]
+    public let returnType: PapyrusType
 
-    init(
+    public init(
         kind: PapyrusNativeCallKind,
         scriptName: String,
         functionName: String,
@@ -32,11 +32,11 @@ nonisolated struct PapyrusNativeCall: Equatable, Sendable {
         self.returnType = returnType
     }
 
-    var qualifiedName: String {
+    public var qualifiedName: String {
         "\(scriptName).\(functionName)"
     }
 
-    func returning(_ type: PapyrusType) -> PapyrusNativeCall {
+    public func returning(_ type: PapyrusType) -> PapyrusNativeCall {
         PapyrusNativeCall(
             kind: kind,
             scriptName: scriptName,
@@ -48,39 +48,39 @@ nonisolated struct PapyrusNativeCall: Equatable, Sendable {
     }
 }
 
-nonisolated enum PapyrusNativeFailure: Equatable, Sendable {
+nonisolated public enum PapyrusNativeFailure: Equatable, Sendable {
     case unimplemented(String)
     case invalidArguments(function: String, detail: String)
 }
 
-nonisolated enum PapyrusNativeSuspension: Equatable, Sendable {
+nonisolated public enum PapyrusNativeSuspension: Equatable, Sendable {
     case realSeconds(Double)
     case gameHours(Double)
 }
 
-nonisolated enum PapyrusNativeDeviation: Equatable, Sendable {
+nonisolated public enum PapyrusNativeDeviation: Equatable, Sendable {
     case deferredAnimation
 }
 
-nonisolated enum PapyrusNativeResult: Equatable, Sendable {
+nonisolated public enum PapyrusNativeResult: Equatable, Sendable {
     case returned(PapyrusValue)
     case failed(PapyrusNativeFailure)
     case suspended(PapyrusNativeSuspension)
     case deviated(PapyrusValue, PapyrusNativeDeviation)
 }
 
-nonisolated protocol PapyrusNativeDispatch {
+nonisolated public protocol PapyrusNativeDispatch {
     func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult
 }
 
-nonisolated final class PapyrusRecordingNativeDispatch: PapyrusNativeDispatch {
-    let callLimit: Int
-    var queuedResults: [PapyrusNativeResult]
+nonisolated public final class PapyrusRecordingNativeDispatch: PapyrusNativeDispatch {
+    public let callLimit: Int
+    public var queuedResults: [PapyrusNativeResult]
 
-    private(set) var calls: [PapyrusNativeCall] = []
-    private(set) var callTotal = 0
+    public private(set) var calls: [PapyrusNativeCall] = []
+    public private(set) var callTotal = 0
 
-    init(
+    public init(
         callLimit: Int = PapyrusLimits.standard.nativeCallRecords,
         queuedResults: [PapyrusNativeResult] = []
     ) {
@@ -88,7 +88,7 @@ nonisolated final class PapyrusRecordingNativeDispatch: PapyrusNativeDispatch {
         self.queuedResults = queuedResults
     }
 
-    func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
+    public func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         callTotal += 1
         calls.append(call)
         if calls.count > callLimit {

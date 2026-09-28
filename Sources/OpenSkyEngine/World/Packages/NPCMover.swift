@@ -10,26 +10,26 @@ private struct NPCMoverStepPlan {
     let yaw: Float
 }
 
-struct NPCMover {
-    let actor: ReferenceKey
-    let formID: FormID
-    let scale: Float
-    let capsule: PlayerCapsule
-    let authoredPlacement: PlacedReference.Placement
+public struct NPCMover {
+    public let actor: ReferenceKey
+    public let formID: FormID
+    public let scale: Float
+    public let capsule: PlayerCapsule
+    public let authoredPlacement: PlacedReference.Placement
     private let configuration: PlayerMovementConfiguration
-    var controller: WalkController
-    var path: NavigationPath
-    var waypointIndex = 0
-    var yaw: Float
-    var gait: LocomotionGait = .walk
-    var state: NPCMovementState = .moving
-    var repathCount = 0
+    public var controller: WalkController
+    public var path: NavigationPath
+    public var waypointIndex = 0
+    public var yaw: Float
+    public var gait: LocomotionGait = .walk
+    public var state: NPCMovementState = .moving
+    public var repathCount = 0
     private var secondsWithoutProgress: Float = 0
     private var bestWaypointDistance: Float = .greatestFiniteMagnitude
     private var occupiedTriggers: Set<ReferenceKey> = []
-    var currentCell: CellSceneLocation?
+    public var currentCell: CellSceneLocation?
 
-    init(start: NPCMoveStart) {
+    public init(start: NPCMoveStart) {
         actor = start.actor
         formID = start.formID
         scale = start.scale
@@ -46,7 +46,10 @@ struct NPCMover {
         advancePastReachedWaypoints()
     }
 
-    mutating func advance(by frameTime: Float, world: NPCMovementWorld) -> NPCMoverAdvanceOutcome {
+    public mutating func advance(
+        by frameTime: Float,
+        world: NPCMovementWorld
+    ) -> NPCMoverAdvanceOutcome {
         var emissions = NPCMoverEmissions()
         guard state == .moving || state == .awaitingRepath else {
             return NPCMoverAdvanceOutcome(emissions: emissions, isFinished: true)

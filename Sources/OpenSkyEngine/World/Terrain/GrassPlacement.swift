@@ -10,23 +10,23 @@ import OpenSkyFormats
 import simd
 
 /// One cell-owned grass instance before mesh loading/GPU batching.
-nonisolated struct GrassPlacement: Equatable {
-    let grass: FormID
-    let modelPath: String
-    let position: SIMD3<Float>
-    let normal: SIMD3<Float>
-    let yawRadians: Float
-    let scale: SIMD3<Float>
-    let color: SIMD3<Float>
-    let wavePeriod: Float
-    let flags: Grass.Flags
+nonisolated public struct GrassPlacement: Equatable, Sendable {
+    public let grass: FormID
+    public let modelPath: String
+    public let position: SIMD3<Float>
+    public let normal: SIMD3<Float>
+    public let yawRadians: Float
+    public let scale: SIMD3<Float>
+    public let color: SIMD3<Float>
+    public let wavePeriod: Float
+    public let flags: Grass.Flags
 }
 
-nonisolated enum GrassPlacementBuilder {
+nonisolated public enum GrassPlacementBuilder: Sendable {
     /// Defensive floor for malformed zero/negative Position Range. This also
     /// caps one grass type at 128x128 candidates per cell before density and
     /// texture coverage reject most candidates.
-    static let minimumSpacing: Float = 32
+    public static let minimumSpacing: Float = 32
     private static let maximumAxisCandidates = 128
 
     private struct Source {
@@ -73,7 +73,7 @@ nonisolated enum GrassPlacementBuilder {
     /// Pure placement pass. Dictionaries are raw-plugin indexes; generation
     /// sorts every FormID before iteration so dictionary/set order cannot
     /// perturb output.
-    static func placements(
+    public static func placements(
         land: Land,
         heightField: TerrainHeightField,
         landTextures: [UInt32: LandTexture],

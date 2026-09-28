@@ -4,20 +4,34 @@
 // The readout below is the section's evidence: a mode name alone cannot show
 // that hiding a layer actually removed its draws, and a draw-call delta can.
 
-nonisolated struct RenderDebugControlSnapshot: Equatable {
-    let mode: RenderDebugMode
+nonisolated public struct RenderDebugControlSnapshot: Equatable, Sendable {
+    public let mode: RenderDebugMode
     /// The mask the user set.
-    let layers: RenderLayer
+    public let layers: RenderLayer
     /// The mask after the subsystem enables were folded in
     /// (`RenderLayerPolicy`). Differs from `layers` when a layer is checked
     /// here but switched off by its own panel section.
-    let effectiveLayers: RenderLayer
-    let stats: SceneDrawStats
-    let shadowStats: ShadowDrawStats
+    public let effectiveLayers: RenderLayer
+    public let stats: SceneDrawStats
+    public let shadowStats: ShadowDrawStats
+
+    public init(
+        mode: RenderDebugMode,
+        layers: RenderLayer,
+        effectiveLayers: RenderLayer,
+        stats: SceneDrawStats,
+        shadowStats: ShadowDrawStats
+    ) {
+        self.mode = mode
+        self.layers = layers
+        self.effectiveLayers = effectiveLayers
+        self.stats = stats
+        self.shadowStats = shadowStats
+    }
 }
 
 @MainActor
-protocol RenderDebugControlProviding: AnyObject {
+public protocol RenderDebugControlProviding: AnyObject {
     var renderDebugMode: RenderDebugMode { get set }
     var renderDebugLayers: RenderLayer { get set }
     var renderDebugSnapshot: RenderDebugControlSnapshot { get }
@@ -25,14 +39,14 @@ protocol RenderDebugControlProviding: AnyObject {
 
 /// Readout text for the Render Debug section, kept apart from AppKit so the
 /// wording is unit-testable.
-nonisolated enum RenderDebugReadout {
-    static func modeText(for snapshot: RenderDebugControlSnapshot) -> String {
+nonisolated public enum RenderDebugReadout: Sendable {
+    public static func modeText(for snapshot: RenderDebugControlSnapshot) -> String {
         "View: \(snapshot.mode.title)"
     }
 
     /// Names the isolated layer when there is one, otherwise lists what is
     /// hidden — "all layers" is the answer a default session should read.
-    static func layerText(for snapshot: RenderDebugControlSnapshot) -> String {
+    public static func layerText(for snapshot: RenderDebugControlSnapshot) -> String {
         if let soloed = snapshot.layers.soloedLayer {
             return "Layers: solo \(soloed.title)"
         }
@@ -42,7 +56,7 @@ nonisolated enum RenderDebugReadout {
     }
 
     /// Layers the mask allows but a subsystem enable has switched off anyway.
-    static func suppressedText(for snapshot: RenderDebugControlSnapshot) -> String? {
+    public static func suppressedText(for snapshot: RenderDebugControlSnapshot) -> String? {
         let suppressed = RenderLayer.ordered.filter {
             snapshot.layers.contains($0) && !snapshot.effectiveLayers.contains($0)
         }
@@ -51,7 +65,7 @@ nonisolated enum RenderDebugReadout {
             + suppressed.map(\.title).joined(separator: ", ")
     }
 
-    static func drawText(for snapshot: RenderDebugControlSnapshot) -> String {
+    public static func drawText(for snapshot: RenderDebugControlSnapshot) -> String {
         """
         Scene: \(snapshot.stats.drawCalls) draws, \
         \(snapshot.stats.drawnInstances) instances
@@ -60,7 +74,7 @@ nonisolated enum RenderDebugReadout {
         """
     }
 
-    static func text(for snapshot: RenderDebugControlSnapshot) -> String {
+    public static func text(for snapshot: RenderDebugControlSnapshot) -> String {
         [
             modeText(for: snapshot),
             layerText(for: snapshot),

@@ -4,6 +4,7 @@
 
 import Metal
 import MetalKit
+import OpenSkyEngine
 
 /// One rendered offscreen frame + the stats the commands report.
 struct OffscreenFrame {

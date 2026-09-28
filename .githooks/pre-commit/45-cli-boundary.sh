@@ -1,5 +1,5 @@
 #!/bin/sh
-# App-only (AppKit) sources must stay out of Sources/OpenSkyEngine (issues #109, #336).
+# App-only (AppKit) sources must stay under Sources/OpenSky (issues #109, #336).
 set -eu
 # shellcheck source=/dev/null
 . "$(git rev-parse --show-toplevel)/.githooks/lib.sh"

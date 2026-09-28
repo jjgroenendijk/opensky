@@ -22,14 +22,14 @@ import simd
 /// variable through the wrong accessor coerces rather than failing, because a
 /// binding names a member whose Swift type is fixed while the authored variable
 /// type is whatever the graph author chose.
-nonisolated enum BehaviorVariableValue: Equatable, Sendable {
+nonisolated public enum BehaviorVariableValue: Equatable, Sendable {
     case bool(Bool)
     case int(Int32)
     case real(Float)
     case quad(SIMD4<Float>)
 
     /// The value as a float, which is what a bound float member wants.
-    var realValue: Float {
+    public var realValue: Float {
         switch self {
         case let .bool(value): value ? 1 : 0
         case let .int(value): Float(value)
@@ -40,7 +40,7 @@ nonisolated enum BehaviorVariableValue: Equatable, Sendable {
 
     /// The value as an integer, which is what a bound index or enum member
     /// wants. A real truncates toward zero.
-    var intValue: Int {
+    public var intValue: Int {
         switch self {
         case let .bool(value): value ? 1 : 0
         case let .int(value): Int(value)
@@ -50,7 +50,7 @@ nonisolated enum BehaviorVariableValue: Equatable, Sendable {
     }
 
     /// The value as a bool. Havok treats any non-zero word as true.
-    var boolValue: Bool {
+    public var boolValue: Bool {
         switch self {
         case let .bool(value): value
         case let .int(value): value != 0
@@ -64,11 +64,11 @@ nonisolated enum BehaviorVariableValue: Equatable, Sendable {
 /// Two instances built from the same `hkbBehaviorGraphData` start identical and
 /// diverge only through the setters, which is what makes 14.7's second graph
 /// instance independent of the first.
-nonisolated struct BehaviorVariableStore: Equatable {
+nonisolated public struct BehaviorVariableStore: Equatable, Sendable {
     /// Declared name per index; nil where the graph declares none.
-    let names: [String?]
+    public let names: [String?]
     /// Declared type per index; nil where the byte on disk names no known type.
-    let types: [HKBVariableType?]
+    public let types: [HKBVariableType?]
 
     /// Raw word slot per index, as `hkbVariableValueSet::m_wordVariableValues`
     /// stores it. A real variable's float lives here as its bit pattern.
@@ -84,7 +84,7 @@ nonisolated struct BehaviorVariableStore: Equatable {
     /// Builds the store from the graph's declarations. A missing or short
     /// initial-value set is not a fault: Havok omits trailing zeros, so any
     /// index the value set does not reach starts at zero.
-    init(data: HKBBehaviorGraphData?) {
+    public init(data: HKBBehaviorGraphData?) {
         let infos = data?.variableInfos ?? []
         let declaredNames = data?.stringData?.variableNames ?? []
         let count = max(infos.count, declaredNames.count)
@@ -119,13 +119,13 @@ nonisolated struct BehaviorVariableStore: Equatable {
         indexByName = byName
     }
 
-    var count: Int {
+    public var count: Int {
         words.count
     }
 
     /// The declared index of `name`, or nil when the graph declares no such
     /// variable. Names are matched exactly; Havok's are case-sensitive.
-    func index(of name: String) -> Int? {
+    public func index(of name: String) -> Int? {
         indexByName[name]
     }
 
@@ -134,7 +134,7 @@ nonisolated struct BehaviorVariableStore: Equatable {
     /// The value at `index` in the shape its declared type asks for, or nil
     /// when the index is out of range. An index whose declared type is unknown
     /// reads as `.int`, which preserves the stored word.
-    func value(at index: Int) -> BehaviorVariableValue? {
+    public func value(at index: Int) -> BehaviorVariableValue? {
         guard words.indices.contains(index) else { return nil }
         switch types[index] {
         case .bool:
@@ -148,7 +148,7 @@ nonisolated struct BehaviorVariableStore: Equatable {
         }
     }
 
-    func value(of name: String) -> BehaviorVariableValue? {
+    public func value(of name: String) -> BehaviorVariableValue? {
         index(of: name).flatMap { value(at: $0) }
     }
 
@@ -157,7 +157,7 @@ nonisolated struct BehaviorVariableStore: Equatable {
     /// Stores `value` at `index`, coerced to the declared type. Out of range is
     /// a no-op rather than a trap: a caller naming a variable a modded graph
     /// dropped must not crash the engine.
-    mutating func setValue(_ value: BehaviorVariableValue, at index: Int) {
+    public mutating func setValue(_ value: BehaviorVariableValue, at index: Int) {
         guard words.indices.contains(index) else { return }
         switch types[index] {
         case .bool:
@@ -178,7 +178,7 @@ nonisolated struct BehaviorVariableStore: Equatable {
     /// Stores `value` under `name`. Returns false when the graph declares no
     /// such variable, so a caller wiring engine state can report the miss.
     @discardableResult
-    mutating func setValue(_ value: BehaviorVariableValue, of name: String) -> Bool {
+    public mutating func setValue(_ value: BehaviorVariableValue, of name: String) -> Bool {
         guard let index = index(of: name) else { return false }
         setValue(value, at: index)
         return true

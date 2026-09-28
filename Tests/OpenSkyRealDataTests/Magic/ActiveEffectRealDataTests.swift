@@ -15,7 +15,7 @@
 // game data). Run with `make realtest`.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

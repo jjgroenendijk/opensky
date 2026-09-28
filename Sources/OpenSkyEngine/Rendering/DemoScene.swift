@@ -17,23 +17,23 @@ import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 
-nonisolated enum DemoScene {
+nonisolated public enum DemoScene: Sendable {
     // MARK: - Camera + light (consumed by the renderer's FrameUniforms)
 
     /// South-west of the scene, eye height well above the ground plane.
-    static let cameraEye = SIMD3<Float>(-380, -480, 280)
-    static let cameraTarget = SIMD3<Float>(0, 0, 48)
+    public static let cameraEye = SIMD3<Float>(-380, -480, 280)
+    public static let cameraTarget = SIMD3<Float>(0, 0, 48)
 
     /// Direction sunlight travels (sun in the south-west sky).
-    static let sunDirection = simd_normalize(SIMD3<Float>(0.4, 0.35, -0.85))
-    static let sunColor = SIMD3<Float>(1.0, 0.97, 0.88)
-    static let ambientColor = SIMD3<Float>(0.22, 0.24, 0.28)
+    public static let sunDirection = simd_normalize(SIMD3<Float>(0.4, 0.35, -0.85))
+    public static let sunColor = SIMD3<Float>(1.0, 0.97, 0.88)
+    public static let ambientColor = SIMD3<Float>(0.22, 0.24, 0.28)
 
     // MARK: - Scene build
 
     /// Builds the full demo scene: checkerboard ground, three crates (one
     /// yawed 45°, one scaled), one double-sided alpha-test cutout panel.
-    static func build(device: MTLDevice) throws -> RenderScene {
+    public static func build(device: MTLDevice) throws -> RenderScene {
         let checker = try checkerTexture(device: device)
         let textures: [String: MTLTexture] = try [
             "demo/checker": checker,
@@ -126,7 +126,7 @@ nonisolated enum DemoScene {
     }
 
     /// Ground quad at z = 0, +Z normal, UVs tiling `uvRepeat` times.
-    static func planeMesh(halfSize: Float, uvRepeat: Float) -> Mesh {
+    public static func planeMesh(halfSize: Float, uvRepeat: Float) -> Mesh {
         let half = halfSize
         return Mesh(
             name: "demo-plane",
@@ -149,7 +149,7 @@ nonisolated enum DemoScene {
     }
 
     /// Closed box sitting on z = 0, per-face normals + 0..1 UVs.
-    static func boxMesh(halfWidth: Float, halfDepth: Float, height: Float) -> Mesh {
+    public static func boxMesh(halfWidth: Float, halfDepth: Float, height: Float) -> Mesh {
         let dx = halfWidth
         let dy = halfDepth
         let dz = height
@@ -208,7 +208,7 @@ nonisolated enum DemoScene {
     /// Vertical quad standing on z = 0 in the x/z plane, -Y normal (faces
     /// the demo camera). Drawn double-sided with alpha test — the foliage
     /// pipeline variant.
-    static func panelMesh(halfWidth: Float, height: Float) -> Mesh {
+    public static func panelMesh(halfWidth: Float, height: Float) -> Mesh {
         let dx = halfWidth
         let dz = height
         return Mesh(

@@ -10,6 +10,7 @@
 // narrow provider protocol.
 
 import AppKit
+import OpenSkyEngine
 
 final class WorldPanelViewController: InspectorPanelViewController {
     let cameraSection = CameraSection()

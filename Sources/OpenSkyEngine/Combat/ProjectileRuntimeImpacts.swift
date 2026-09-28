@@ -17,7 +17,7 @@ import simd
 
 extension ProjectileRuntime {
     /// One landed arrow's health damage, or zero for anything else.
-    func applyArrow(_ projectile: LiveProjectile, impact: ProjectileImpact) -> Float {
+    public func applyArrow(_ projectile: LiveProjectile, impact: ProjectileImpact) -> Float {
         guard
             let arrow = projectile.payload.arrow,
             let target = impact.target, let world,
@@ -63,7 +63,7 @@ extension ProjectileRuntime {
     ///   is what `resolve(_:impact:)` reports and the enchantment's own outcome is
     ///   read off the session's readout instead.
     @discardableResult
-    func applyBowEnchantment(
+    public func applyBowEnchantment(
         _ arrow: ArrowPayload,
         projectile: LiveProjectile,
         impact: ProjectileImpact,
@@ -86,7 +86,7 @@ extension ProjectileRuntime {
     /// A spell that struck geometry rather than an actor still applies: its
     /// area entries reach whoever was standing near the wall. One that reaches
     /// nobody reports nil, which is what an area of zero against a wall is.
-    func applySpell(
+    public func applySpell(
         _ projectile: LiveProjectile,
         impact: ProjectileImpact
     ) -> SpellHitReport? {

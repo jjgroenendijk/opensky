@@ -16,6 +16,7 @@
 // purpose. `MagicEffectDispelControl` is the deliberate way back.
 
 import AppKit
+import OpenSkyEngine
 
 final class CombatMagicEffectsSection: PanelSectionViewController {
     weak var provider: (any MagicEffectControlProviding)? {

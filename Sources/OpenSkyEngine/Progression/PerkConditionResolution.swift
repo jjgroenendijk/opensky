@@ -24,19 +24,19 @@ import OpenSkyGameData
 /// `@unchecked Sendable` for the reason `MagicConditionResolution` is: the store
 /// is an immutable value snapshot built once at load, and only its
 /// `RecordIndex` back-reference keeps it from being checked automatically.
-nonisolated struct PerkConditionResolution: @unchecked Sendable {
+nonisolated public struct PerkConditionResolution: @unchecked Sendable, Sendable {
     /// Load-order PERK lookup, for the `ptPerk` parameter. Nil in a session with
     /// no perk data, which is what makes `HasPerk` report a gap rather than
     /// answering "does not own it" for every actor in the game.
-    let store: PerkStore?
+    public let store: PerkStore?
     /// The plugin a condition's FormID parameters are spelled against.
-    let sourcePlugin: String?
+    public let sourcePlugin: String?
 
     private let owned: [ReferenceKey: Set<ReferenceKey>]
 
-    static let empty = PerkConditionResolution()
+    public static let empty = PerkConditionResolution()
 
-    init(
+    public init(
         store: PerkStore? = nil,
         sourcePlugin: String? = nil,
         owned: [ReferenceKey: Set<ReferenceKey>] = [:]
@@ -48,7 +48,7 @@ nonisolated struct PerkConditionResolution: @unchecked Sendable {
 
     /// Whether the seam can answer at all: a session with no PERK store cannot,
     /// and says so rather than answering false everywhere.
-    var isAvailable: Bool {
+    public var isAvailable: Bool {
         store != nil
     }
 
@@ -60,7 +60,7 @@ nonisolated struct PerkConditionResolution: @unchecked Sendable {
     /// an ordinary key and read as "this actor does not have it" — which is a
     /// different answer from "this engine has no such perk". The keyword seam
     /// applies the same rule for the same reason.
-    func key(of formID: FormID) -> ReferenceKey? {
+    public func key(of formID: FormID) -> ReferenceKey? {
         guard
             let sourcePlugin,
             let store,
@@ -75,13 +75,13 @@ nonisolated struct PerkConditionResolution: @unchecked Sendable {
     /// An actor with no entry owns nothing, which is a real answer rather than
     /// a gap: not having taken a perk is the normal state, and every actor in
     /// the game starts there.
-    func owns(_ perk: ReferenceKey, on actor: ReferenceKey) -> Bool? {
+    public func owns(_ perk: ReferenceKey, on actor: ReferenceKey) -> Bool? {
         guard isAvailable else { return nil }
         return owned[actor]?.contains(perk) ?? false
     }
 
     /// The perks `actor` owns, empty for an actor that owns none.
-    func perks(of actor: ReferenceKey) -> Set<ReferenceKey> {
+    public func perks(of actor: ReferenceKey) -> Set<ReferenceKey> {
         owned[actor] ?? []
     }
 }

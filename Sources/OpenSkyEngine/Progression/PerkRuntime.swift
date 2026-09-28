@@ -30,22 +30,22 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// What one seeding pass did.
-nonisolated struct PerkSeedReport: Equatable, Sendable {
+nonisolated public struct PerkSeedReport: Equatable, Sendable {
     /// Perks added by this pass.
-    let added: [ReferenceKey]
+    public let added: [ReferenceKey]
     /// Links the load order carries no PERK record for, which is a dangling
     /// `PRKR` entry rather than an error.
-    let unresolved: Int
+    public let unresolved: Int
 
-    static let none = PerkSeedReport(added: [], unresolved: 0)
+    public static let none = PerkSeedReport(added: [], unresolved: 0)
 }
 
 /// Reads and mutates owned perks on top of a `WorldStateStore`.
 @MainActor
-struct PerkRuntime {
+public struct PerkRuntime {
     /// Load-order PERK lookup behind every stored key, and the entry-point
     /// index every evaluation queries.
-    let perks: PerkStore
+    public let perks: PerkStore
     /// What a perk effect's PRKC condition tabs are evaluated against.
     ///
     /// A whole context rather than a yes/no closure, for the reason
@@ -54,15 +54,15 @@ struct PerkRuntime {
     /// documented reason-tagged false rather than a silent pass. The `perks`
     /// seam on it is rebuilt per evaluation from the store, so `HasPerk` always
     /// reads live ownership rather than whatever the caller last handed over.
-    var conditions: ConditionContext
-    let conditionRegistry: ConditionFunctionRegistry
+    public var conditions: ConditionContext
+    public let conditionRegistry: ConditionFunctionRegistry
     /// What the runtime did and declined to do. Not `private(set)`: the
     /// evaluation half lives in `PerkRuntimeEvaluation.swift`.
-    var tally = PerkRuntimeTally()
+    public var tally = PerkRuntimeTally()
 
     private let worldState: WorldStateStore
 
-    init(
+    public init(
         store: WorldStateStore,
         perks: PerkStore,
         conditions: ConditionContext = ConditionContext(),
@@ -74,7 +74,7 @@ struct PerkRuntime {
         self.conditionRegistry = conditionRegistry
     }
 
-    var store: WorldStateStore {
+    public var store: WorldStateStore {
         worldState
     }
 
@@ -84,17 +84,17 @@ struct PerkRuntime {
     /// is what the player starts a session with, and what
     /// "seed the player empty" means: no component at all rather than a
     /// component holding nothing.
-    func state(of holder: ActorValueHolder) -> PerkState {
+    public func state(of holder: ActorValueHolder) -> PerkState {
         worldState.component(PerkState.self, for: holder.key) ?? PerkState()
     }
 
-    func owns(_ perk: ReferenceKey, on holder: ActorValueHolder) -> Bool {
+    public func owns(_ perk: ReferenceKey, on holder: ActorValueHolder) -> Bool {
         state(of: holder).owns(perk)
     }
 
     /// The record behind a stored key, or nil when this load order no longer
     /// carries it.
-    func record(_ perk: ReferenceKey) -> ResolvedPerk? {
+    public func record(_ perk: ReferenceKey) -> ResolvedPerk? {
         perks.perk(key: perk)
     }
 
@@ -102,7 +102,7 @@ struct PerkRuntime {
     /// order. A key the load order dropped stays in the component — losing it
     /// would make removing a plugin destroy progress — and is simply absent
     /// from this listing.
-    func ownedPerks(of holder: ActorValueHolder) -> [ResolvedPerk] {
+    public func ownedPerks(of holder: ActorValueHolder) -> [ResolvedPerk] {
         state(of: holder).owned.compactMap(record)
     }
 
@@ -114,7 +114,7 @@ struct PerkRuntime {
     /// vanilla adds one record per rank and a script may legitimately have
     /// added a later rank without the earlier ones. Reporting a count would
     /// then say "rank 1" for an actor holding the fifth record.
-    func rank(inChainFrom head: ReferenceKey, on holder: ActorValueHolder) -> Int {
+    public func rank(inChainFrom head: ReferenceKey, on holder: ActorValueHolder) -> Int {
         guard let resolved = perks.perk(key: head) else { return 0 }
         let state = state(of: holder)
         var rank = 0
@@ -138,7 +138,7 @@ struct PerkRuntime {
     ///
     /// - Returns: true when the perk was not already owned.
     @discardableResult
-    mutating func add(_ perk: ReferenceKey, to holder: ActorValueHolder) -> Bool {
+    public mutating func add(_ perk: ReferenceKey, to holder: ActorValueHolder) -> Bool {
         guard record(perk) != nil else {
             tally.noteUnresolvedPerk()
             return false
@@ -153,7 +153,7 @@ struct PerkRuntime {
     ///
     /// - Returns: true when the perk was owned.
     @discardableResult
-    mutating func remove(_ perk: ReferenceKey, from holder: ActorValueHolder) -> Bool {
+    public mutating func remove(_ perk: ReferenceKey, from holder: ActorValueHolder) -> Bool {
         write(state(of: holder).removing(perk), for: holder)
     }
 
@@ -162,7 +162,7 @@ struct PerkRuntime {
     /// Idempotent: an actor seeded twice is seeded once, which is what lets the
     /// caller do it lazily the first time anything asks about the actor.
     @discardableResult
-    mutating func seed(
+    public mutating func seed(
         _ links: [FormID],
         fromPlugin pluginName: String,
         to holder: ActorValueHolder
@@ -189,7 +189,7 @@ struct PerkRuntime {
 
     /// Owned perks for `holders` as the condition machinery reads them, which
     /// is what `HasPerk` answers from.
-    func conditionResolution(
+    public func conditionResolution(
         for holders: [ReferenceKey],
         sourcePlugin: String?
     ) -> PerkConditionResolution {
@@ -201,7 +201,7 @@ struct PerkRuntime {
     }
 
     /// The owned set of each of `holders`, for the seam and for the bridge.
-    func ownership(of holders: [ReferenceKey]) -> [ReferenceKey: Set<ReferenceKey>] {
+    public func ownership(of holders: [ReferenceKey]) -> [ReferenceKey: Set<ReferenceKey>] {
         var owned: [ReferenceKey: Set<ReferenceKey>] = [:]
         for key in holders {
             guard let state = worldState.component(PerkState.self, for: key) else { continue }

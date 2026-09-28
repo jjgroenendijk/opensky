@@ -7,21 +7,21 @@ import OpenSkyFormats
 import OSLog
 import simd
 
-nonisolated struct CellCollisionPlacement {
-    let reference: FormID
-    let modelPath: String
-    let transform: float4x4
+nonisolated public struct CellCollisionPlacement: Sendable {
+    public let reference: FormID
+    public let modelPath: String
+    public let transform: float4x4
     /// Session-stable identity of the reference, where the build retained one.
     /// A dynamic body is registered under it, because a rigid body outlives the
     /// scene it was built in and a raw FormID is not stable across plugins.
-    let key: ReferenceKey?
+    public let key: ReferenceKey?
     /// The placement's own position, euler rotation, and uniform XSCL scale,
     /// kept apart from `transform` because a simulated body integrates a pose
     /// rather than a matrix (issue #193).
-    let placement: PlacedReference.Placement
-    let scale: Float
+    public let placement: PlacedReference.Placement
+    public let scale: Float
 
-    init(
+    public init(
         reference: FormID,
         modelPath: String,
         transform: float4x4,
@@ -42,13 +42,13 @@ nonisolated struct CellCollisionPlacement {
 
 /// The three running totals a cell's collision build carries, bundled so the
 /// per-placement step can take one `inout` instead of three.
-nonisolated struct CellCollisionAccumulator {
-    var shapes: [StaticCollisionShape] = []
-    var dynamicBodies: [DynamicBodyPlacement] = []
-    var stats = StaticCollisionStats()
+nonisolated public struct CellCollisionAccumulator: Sendable {
+    public var shapes: [StaticCollisionShape] = []
+    public var dynamicBodies: [DynamicBodyPlacement] = []
+    public var stats = StaticCollisionStats()
 
     /// The per-model tallies that hold whether or not any body is placed.
-    mutating func record(model: NIFCollisionModel) {
+    public mutating func record(model: NIFCollisionModel) {
         if !model.bodies.isEmpty {
             stats.collisionModelReferenceCount += 1
         }
@@ -62,29 +62,29 @@ nonisolated struct CellCollisionAccumulator {
 
 /// Both collision products of one cell's placements: the immutable set the
 /// broadphase indexes, and the bodies the dynamic world simulates (issue #193).
-nonisolated struct CellCollisionProducts {
-    var collision: StaticCollisionSet
-    var dynamicBodies: [DynamicBodyPlacement] = []
+nonisolated public struct CellCollisionProducts: Sendable {
+    public var collision: StaticCollisionSet
+    public var dynamicBodies: [DynamicBodyPlacement] = []
 }
 
-nonisolated struct CellCollisionPartitionKey: Hashable {
-    let modelKey: String
-    let bodyIndex: Int
-    let shapeIndex: Int
+nonisolated public struct CellCollisionPartitionKey: Hashable, Sendable {
+    public let modelKey: String
+    public let bodyIndex: Int
+    public let shapeIndex: Int
 
-    init(_ modelKey: String, _ bodyIndex: Int, _ shapeIndex: Int) {
+    public init(_ modelKey: String, _ bodyIndex: Int, _ shapeIndex: Int) {
         self.modelKey = modelKey
         self.bodyIndex = bodyIndex
         self.shapeIndex = shapeIndex
     }
 }
 
-nonisolated struct CellCollisionPartitionCache {
+nonisolated public struct CellCollisionPartitionCache: Sendable {
     private var entries: [
         CellCollisionPartitionKey: StaticCollisionPartitionResult
     ] = [:]
 
-    mutating func partitions(
+    public mutating func partitions(
         key: CellCollisionPartitionKey,
         geometry: NIFCollisionGeometry
     ) -> StaticCollisionPartitionResult {
@@ -96,48 +96,48 @@ nonisolated struct CellCollisionPartitionCache {
         return partitions
     }
 
-    mutating func evict(dropping modelKeys: Set<String>) {
+    public mutating func evict(dropping modelKeys: Set<String>) {
         entries = entries.filter { key, _ in
             !modelKeys.contains(key.modelKey)
         }
     }
 
-    func contains(_ key: CellCollisionPartitionKey) -> Bool {
+    public func contains(_ key: CellCollisionPartitionKey) -> Bool {
         entries[key] != nil
     }
 
-    var count: Int {
+    public var count: Int {
         entries.count
     }
 }
 
 /// Where one decoded shape lands in the world, bundled so the placement call
 /// stays inside the strict parameter cap.
-nonisolated struct ShapePlacement {
-    let key: CellCollisionPartitionKey
-    let transform: float4x4
-    let reference: FormID
+nonisolated public struct ShapePlacement: Sendable {
+    public let key: CellCollisionPartitionKey
+    public let transform: float4x4
+    public let reference: FormID
 }
 
-nonisolated struct CellCollisionGridEntry {
-    let coordinate: CellCoordinate
-    let collision: StaticCollisionSet?
+nonisolated public struct CellCollisionGridEntry: Sendable {
+    public let coordinate: CellCoordinate
+    public let collision: StaticCollisionSet?
 }
 
-nonisolated struct CellCollisionGridResult {
-    let entries: [CellCollisionGridEntry]
+nonisolated public struct CellCollisionGridResult: Sendable {
+    public let entries: [CellCollisionGridEntry]
 
-    var stats: StaticCollisionStats {
+    public var stats: StaticCollisionStats {
         entries.compactMap(\.collision).reduce(into: StaticCollisionStats()) {
             $0.add($1.stats)
         }
     }
 
-    var voidCellCount: Int {
+    public var voidCellCount: Int {
         entries.count(where: { $0.collision == nil })
     }
 
-    var passesAcceptance: Bool {
+    public var passesAcceptance: Bool {
         let stats = stats
         return stats.loadFailureCount == 0
             && stats.decodeFailureCount == 0
@@ -145,8 +145,8 @@ nonisolated struct CellCollisionGridResult {
     }
 }
 
-nonisolated enum CellCollisionGridProbe {
-    static func run(
+nonisolated public enum CellCollisionGridProbe: Sendable {
+    public static func run(
         builder: CellSceneBuilder,
         worldspaceEditorID: String,
         center: CellCoordinate,
@@ -181,7 +181,7 @@ nonisolated enum CellCollisionGridProbe {
 nonisolated extension CellSceneBuilder {
     /// Resolves model-bearing placements independently of render load.
     /// Collision-only NIFs stay physical when no drawable mesh uploads.
-    nonisolated func resolveCollisionPlacements(
+    nonisolated public func resolveCollisionPlacements(
         refs: [PlacedReference],
         keys: [FormID: ReferenceKey] = [:]
     ) -> [CellCollisionPlacement] {
@@ -216,7 +216,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Collision-only exterior build for CLI stats. Same ref discovery,
     /// transforms, filters, cache as full scene build; no render upload.
-    nonisolated func buildStaticCollision(
+    nonisolated public func buildStaticCollision(
         worldspaceEditorID: String,
         gridX: Int32,
         gridY: Int32
@@ -247,7 +247,7 @@ nonisolated extension CellSceneBuilder {
         return buildStaticCollision(refs: refs, location: .exterior(coordinate))
     }
 
-    nonisolated func buildStaticCollision(
+    nonisolated public func buildStaticCollision(
         refs: [PlacedReference],
         location: CellSceneLocation
     ) -> StaticCollisionSet {
@@ -260,7 +260,7 @@ nonisolated extension CellSceneBuilder {
     ///   simulated body can be registered under an identity that survives the
     ///   cell being rebuilt. A reference with no key contributes static shapes
     ///   only, which is what a build with no reference retention wants.
-    nonisolated func buildCollisionProducts(
+    nonisolated public func buildCollisionProducts(
         refs: [PlacedReference],
         location: CellSceneLocation,
         keys: [FormID: ReferenceKey] = [:]
@@ -276,7 +276,7 @@ nonisolated extension CellSceneBuilder {
         return products
     }
 
-    nonisolated func buildStaticCollision(
+    nonisolated public func buildStaticCollision(
         placements: [CellCollisionPlacement],
         location: CellSceneLocation
     ) -> StaticCollisionSet {
@@ -293,7 +293,7 @@ nonisolated extension CellSceneBuilder {
     /// (docs/formats/nif-collision.md, dynamics census). A body that qualifies
     /// but whose reference carries no runtime key, or whose shapes yield no
     /// convex volume, falls back to being static rather than disappearing.
-    nonisolated func buildCollisionProducts(
+    nonisolated public func buildCollisionProducts(
         placements: [CellCollisionPlacement],
         location: CellSceneLocation
     ) -> CellCollisionProducts {
@@ -441,7 +441,7 @@ nonisolated extension CellSceneBuilder {
         stats.estimatedBytes += Self.estimatedBytes(of: shape.geometry)
     }
 
-    nonisolated func evictCollisionPartitions(dropping keys: Set<String>) {
+    nonisolated public func evictCollisionPartitions(dropping keys: Set<String>) {
         collisionPartitionCache.evict(dropping: keys)
     }
 

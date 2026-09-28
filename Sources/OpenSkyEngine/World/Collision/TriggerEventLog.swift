@@ -18,12 +18,12 @@ import OpenSkyFormats
 /// through `CellStreamer.referenceEntry(key:)`. It is nil when the authoring
 /// cell has already been unloaded, which is exactly what happens for the leave
 /// events `releaseTriggers(in:)` fires while a cell is going away.
-nonisolated struct TriggerTransitionRecord: Equatable, Sendable {
-    let event: TriggerTransitionEvent
-    let formID: FormID?
+nonisolated public struct TriggerTransitionRecord: Equatable, Sendable {
+    public let event: TriggerTransitionEvent
+    public let formID: FormID?
 
     /// One readout line: what happened, to which reference, and its FormID.
-    var line: String {
+    public var line: String {
         let phase = event.phase == .enter ? "enter" : "leave"
         let form = formID.map { "0x\($0.description)" } ?? "unloaded"
         return "\(phase) \(event.reference.description) \(form)"
@@ -31,19 +31,19 @@ nonisolated struct TriggerTransitionRecord: Equatable, Sendable {
 }
 
 /// Bounded, newest-last ring of `TriggerTransitionRecord`.
-final class TriggerEventLog {
+public final class TriggerEventLog {
     /// Records retained. The readout is a short tail a person reads at a
     /// glance, not an audit trail, and an unbounded log on a subscriber that
     /// fires on every volume edge would grow for the whole session.
-    static let capacity = 16
+    public static let capacity = 16
 
-    private(set) var records: [TriggerTransitionRecord] = []
+    public private(set) var records: [TriggerTransitionRecord] = []
     /// Transitions recorded since the last `clear()`, including the ones the
     /// ring has already dropped, so a full ring still reports honest totals.
-    private(set) var recordedCount = 0
+    public private(set) var recordedCount = 0
 
     /// Appends one transition, dropping the oldest record past `capacity`.
-    func record(_ event: TriggerTransitionEvent, formID: FormID?) {
+    public func record(_ event: TriggerTransitionEvent, formID: FormID?) {
         records.append(TriggerTransitionRecord(event: event, formID: formID))
         if records.count > Self.capacity {
             records.removeFirst(records.count - Self.capacity)
@@ -51,13 +51,13 @@ final class TriggerEventLog {
         recordedCount += 1
     }
 
-    func clear() {
+    public func clear() {
         records.removeAll()
         recordedCount = 0
     }
 
     /// Readout lines, oldest first.
-    var lines: [String] {
+    public var lines: [String] {
         records.map(\.line)
     }
 }

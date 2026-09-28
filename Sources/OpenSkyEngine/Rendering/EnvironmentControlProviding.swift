@@ -7,7 +7,7 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 @MainActor
-protocol ShadowControlProviding: AnyObject {
+public protocol ShadowControlProviding: AnyObject {
     /// Sun-shadow on/off, independent of the selected quality tier so an A/B
     /// flip does not discard the tier. Was the `H` key until it became a
     /// checkbox (no dev behaviour reachable only by an unadvertised keystroke —
@@ -21,7 +21,7 @@ protocol ShadowControlProviding: AnyObject {
 }
 
 @MainActor
-protocol TerrainLODControlProviding: AnyObject {
+public protocol TerrainLODControlProviding: AnyObject {
     var terrainLODConfigurationSnapshot: TerrainLODConfigurationSnapshot { get }
     var terrainLODOverrideActive: Bool { get }
     func applyTerrainLODConfiguration(_ configuration: TerrainLODConfiguration) -> Bool
@@ -29,7 +29,7 @@ protocol TerrainLODControlProviding: AnyObject {
 }
 
 @MainActor
-protocol WeatherControlProviding: AnyObject {
+public protocol WeatherControlProviding: AnyObject {
     var weatherEnabled: Bool { get set }
     var selectableWeatherNames: [String] { get }
     func forceWeather(named name: String?)
@@ -42,26 +42,38 @@ protocol WeatherControlProviding: AnyObject {
     var timeOfDay: Float { get set }
 }
 
-nonisolated struct AnimationControlSnapshot: Equatable {
-    let playbackCount: Int
-    let updatedBoneCount: Int
-    let updateMS: Double
+nonisolated public struct AnimationControlSnapshot: Equatable, Sendable {
+    public let playbackCount: Int
+    public let updatedBoneCount: Int
+    public let updateMS: Double
+
+    public init(playbackCount: Int, updatedBoneCount: Int, updateMS: Double) {
+        self.playbackCount = playbackCount
+        self.updatedBoneCount = updatedBoneCount
+        self.updateMS = updateMS
+    }
 }
 
 @MainActor
-protocol AnimationControlProviding: AnyObject {
+public protocol AnimationControlProviding: AnyObject {
     var actorAnimationsEnabled: Bool { get set }
     var animationSnapshot: AnimationControlSnapshot { get }
 }
 
-nonisolated struct ParticleControlSnapshot: Equatable {
-    let systemCount: Int
-    let emitterCount: Int
-    let liveCount: Int
+nonisolated public struct ParticleControlSnapshot: Equatable, Sendable {
+    public let systemCount: Int
+    public let emitterCount: Int
+    public let liveCount: Int
+
+    public init(systemCount: Int, emitterCount: Int, liveCount: Int) {
+        self.systemCount = systemCount
+        self.emitterCount = emitterCount
+        self.liveCount = liveCount
+    }
 }
 
 @MainActor
-protocol ParticleControlProviding: AnyObject {
+public protocol ParticleControlProviding: AnyObject {
     var particlesEnabled: Bool { get set }
     var particlesFrozen: Bool { get set }
     var particleEmissionScale: Float { get set }
@@ -69,23 +81,41 @@ protocol ParticleControlProviding: AnyObject {
 }
 
 @MainActor
-protocol PrecipitationControlProviding: AnyObject {
+public protocol PrecipitationControlProviding: AnyObject {
     var precipitationEnabled: Bool { get set }
     var precipitationSnapshot: PrecipitationRuntimeSnapshot { get }
 }
 
-nonisolated struct GrassControlSnapshot: Equatable {
-    let sceneInstances: Int
-    let drawnInstances: Int
-    let drawCalls: Int
-    let distanceCulledInstances: Int
-    let densityCulledInstances: Int
-    let frustumCulledInstances: Int
-    let budgetDroppedInstances: Int
+nonisolated public struct GrassControlSnapshot: Equatable, Sendable {
+    public let sceneInstances: Int
+    public let drawnInstances: Int
+    public let drawCalls: Int
+    public let distanceCulledInstances: Int
+    public let densityCulledInstances: Int
+    public let frustumCulledInstances: Int
+    public let budgetDroppedInstances: Int
+
+    public init(
+        sceneInstances: Int,
+        drawnInstances: Int,
+        drawCalls: Int,
+        distanceCulledInstances: Int,
+        densityCulledInstances: Int,
+        frustumCulledInstances: Int,
+        budgetDroppedInstances: Int
+    ) {
+        self.sceneInstances = sceneInstances
+        self.drawnInstances = drawnInstances
+        self.drawCalls = drawCalls
+        self.distanceCulledInstances = distanceCulledInstances
+        self.densityCulledInstances = densityCulledInstances
+        self.frustumCulledInstances = frustumCulledInstances
+        self.budgetDroppedInstances = budgetDroppedInstances
+    }
 }
 
 @MainActor
-protocol GrassControlProviding: AnyObject {
+public protocol GrassControlProviding: AnyObject {
     var grassEnabled: Bool { get set }
     var grassDensityScale: Float { get set }
     var grassDrawDistance: Float { get set }
@@ -95,43 +125,57 @@ protocol GrassControlProviding: AnyObject {
 
 /// Live camera pose, as one value so a panel and the HUD read the same frame's
 /// numbers rather than each polling the parts separately.
-nonisolated struct CameraPoseSnapshot: Equatable {
+nonisolated public struct CameraPoseSnapshot: Equatable, Sendable {
     /// World position in native Skyrim units (docs/decisions/coordinates.md).
-    let position: SIMD3<Float>
+    public let position: SIMD3<Float>
     /// Heading in radians about world +Z.
-    let yaw: Float
+    public let yaw: Float
     /// Elevation in radians, positive looking up.
-    let pitch: Float
+    public let pitch: Float
     /// Exterior cell the position falls in, by floor division.
-    let cell: CellCoordinate
-    let movementMode: CameraMovementMode
+    public let cell: CellCoordinate
+    public let movementMode: CameraMovementMode
 
     /// Reported by providers with no live renderer.
-    static let unavailable = CameraPoseSnapshot(
+    public static let unavailable = CameraPoseSnapshot(
         position: .zero, yaw: 0, pitch: 0, cell: CellCoordinate(x: 0, y: 0), movementMode: .fly
     )
 
-    var yawDegrees: Float {
+    public var yawDegrees: Float {
         yaw * 180 / .pi
     }
 
-    var pitchDegrees: Float {
+    public var pitchDegrees: Float {
         pitch * 180 / .pi
     }
 
     /// Short, stable name for one camera mode, used by the pasteable pose line
     /// so a bug report says which camera produced a frame.
-    static func name(of mode: CameraMovementMode) -> String {
+    public static func name(of mode: CameraMovementMode) -> String {
         switch mode {
         case .fly: "fly"
         case .walk: "walk"
         case .thirdPerson: "third person"
         }
     }
+
+    public init(
+        position: SIMD3<Float>,
+        yaw: Float,
+        pitch: Float,
+        cell: CellCoordinate,
+        movementMode: CameraMovementMode
+    ) {
+        self.position = position
+        self.yaw = yaw
+        self.pitch = pitch
+        self.cell = cell
+        self.movementMode = movementMode
+    }
 }
 
 @MainActor
-protocol CameraControlProviding: AnyObject {
+public protocol CameraControlProviding: AnyObject {
     var cameraPose: CameraPoseSnapshot { get }
     var movementConfiguration: PlayerMovementConfiguration { get }
     /// Settable so every camera mode is reachable from the sidebar. The `G`
@@ -144,14 +188,14 @@ protocol CameraControlProviding: AnyObject {
 }
 
 extension CameraControlProviding {
-    var movementConfiguration: PlayerMovementConfiguration {
+    public var movementConfiguration: PlayerMovementConfiguration {
         .synthetic
     }
 
     /// Default implementation so every consumer formats the pose identically;
     /// a conformer that overrode it would let two readouts of the same camera
     /// disagree.
-    var cameraPoseDescription: String {
+    public var cameraPoseDescription: String {
         let pose = cameraPose
         return String(
             format: "camera %@ | position %.1f, %.1f, %.1f | yaw %.1f deg | "
@@ -164,7 +208,7 @@ extension CameraControlProviding {
 }
 
 @MainActor
-protocol FrameStatsProviding: AnyObject {
+public protocol FrameStatsProviding: AnyObject {
     /// Latest closed live window; `FrameStatsSnapshot.empty` before the first
     /// one closes or with no live renderer.
     var frameStatsSnapshot: FrameStatsSnapshot { get }
@@ -172,70 +216,84 @@ protocol FrameStatsProviding: AnyObject {
 
 /// Per-frame scene accounting plus the streaming and memory numbers that answer
 /// "is this frame slow because of what is resident?".
-nonisolated struct SceneStatsSnapshot: Equatable {
-    let drawCalls: Int
-    let drawnInstances: Int
-    let culledInstances: Int
-    let residentCellCount: Int
+nonisolated public struct SceneStatsSnapshot: Equatable, Sendable {
+    public let drawCalls: Int
+    public let drawnInstances: Int
+    public let culledInstances: Int
+    public let residentCellCount: Int
     /// Process physical footprint, or nil when the mach call fails.
-    let memoryFootprintMB: Double?
+    public let memoryFootprintMB: Double?
 
-    static let empty = SceneStatsSnapshot(
+    public static let empty = SceneStatsSnapshot(
         drawCalls: 0, drawnInstances: 0, culledInstances: 0,
         residentCellCount: 0, memoryFootprintMB: nil
     )
+
+    public init(
+        drawCalls: Int,
+        drawnInstances: Int,
+        culledInstances: Int,
+        residentCellCount: Int,
+        memoryFootprintMB: Double?
+    ) {
+        self.drawCalls = drawCalls
+        self.drawnInstances = drawnInstances
+        self.culledInstances = culledInstances
+        self.residentCellCount = residentCellCount
+        self.memoryFootprintMB = memoryFootprintMB
+    }
 }
 
 @MainActor
-protocol SceneStatsProviding: AnyObject {
+public protocol SceneStatsProviding: AnyObject {
     var sceneStatsSnapshot: SceneStatsSnapshot { get }
 }
 
 /// One playing audio source as the World > Audio panel shows it.
-nonisolated struct AudioSourceStatsSnapshot: Equatable {
+nonisolated public struct AudioSourceStatsSnapshot: Equatable, Sendable {
     /// VFS path of the playing file.
-    let name: String
-    let categoryName: String
+    public let name: String
+    public let categoryName: String
     /// False for a non-positional source (music or ambience routed to a
     /// category submix): its position and distance are not meaningful.
-    let isPositional: Bool
+    public let isPositional: Bool
     /// World position in native Skyrim units. Zero when not positional.
-    let worldPosition: SIMD3<Float>
+    public let worldPosition: SIMD3<Float>
     /// Listener distance in meters (the attenuation model's unit). Zero when
     /// not positional.
-    let distanceMeters: Float
+    public let distanceMeters: Float
     /// Fade multiplier in [0, 1] currently folded into the gain. 1 = not faded.
-    let fadeGain: Float
+    public let fadeGain: Float
     /// True while a gain ramp is in flight on this source.
-    let isFading: Bool
+    public let isFading: Bool
     /// master x category x source x fade gain, before distance attenuation.
-    let effectiveGain: Float
+    public let effectiveGain: Float
     /// How far into its material the source has played, in seconds, or nil
     /// before its player node has rendered anything. This is the playback
     /// clock item 17.5 added, surfaced so the panel shows a voice line
     /// advancing rather than only that it started.
-    let positionSeconds: Double?
+    public let positionSeconds: Double?
 }
 
 /// Published state of the world audio graph, read at 2 Hz by the panel. Only
 /// this Equatable value crosses from the engine to the readout.
-nonisolated struct AudioStatsSnapshot: Equatable {
-    let enabled: Bool
-    let engineRunning: Bool
+nonisolated public struct AudioStatsSnapshot: Equatable, Sendable {
+    public let enabled: Bool
+    public let engineRunning: Bool
     /// Output device format line, or the failure reason when not running.
-    let outputDescription: String
-    let sources: [AudioSourceStatsSnapshot]
-    let sourceCap: Int
+    public let outputDescription: String
+    public let sources: [AudioSourceStatsSnapshot]
+    public let sourceCap: Int
 
     /// Reported by providers with no live audio engine.
-    static let empty = AudioStatsSnapshot(
+    public static let empty = AudioStatsSnapshot(
         enabled: false, engineRunning: false, outputDescription: "no engine",
         sources: [], sourceCap: 0
     )
 }
 
 @MainActor
-protocol AudioControlProviding: AnyObject {
+public protocol AudioControlProviding: AnyObject {
     var audioEnabled: Bool { get set }
     var audioMasterVolume: Float { get set }
     func audioVolume(for category: AudioCategory) -> Float

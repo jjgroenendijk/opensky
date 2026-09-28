@@ -7,12 +7,12 @@ import ImageIO
 import Metal
 import UniformTypeIdentifiers
 
-enum FrameScreenshotError: LocalizedError {
+public enum FrameScreenshotError: LocalizedError {
     case imageCreationFailed
     case destinationCreationFailed(URL)
     case writeFailed(URL)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .imageCreationFailed:
             "Cannot create an image from the rendered frame."
@@ -24,9 +24,9 @@ enum FrameScreenshotError: LocalizedError {
     }
 }
 
-nonisolated enum FrameScreenshot {
+nonisolated public enum FrameScreenshot: Sendable {
     /// Reads a shared-storage BGRA8 render target into an sRGB CGImage.
-    static func image(from texture: MTLTexture) -> CGImage? {
+    public static func image(from texture: MTLTexture) -> CGImage? {
         let width = texture.width
         let height = texture.height
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
@@ -55,14 +55,14 @@ nonisolated enum FrameScreenshot {
         }
     }
 
-    static func write(texture: MTLTexture, to url: URL) throws {
+    public static func write(texture: MTLTexture, to url: URL) throws {
         guard let image = image(from: texture) else {
             throw FrameScreenshotError.imageCreationFailed
         }
         try write(image: image, to: url)
     }
 
-    static func write(image: CGImage, to url: URL) throws {
+    public static func write(image: CGImage, to url: URL) throws {
         guard
             let destination = CGImageDestinationCreateWithURL(
                 url as CFURL,

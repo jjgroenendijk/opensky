@@ -13,6 +13,7 @@
 // apart keeps each section's dependency honest.
 
 import AppKit
+import OpenSkyEngine
 
 final class HUDInteractionPanelViewController: InspectorPanelViewController {
     let elementsSection = HUDElementsSection()

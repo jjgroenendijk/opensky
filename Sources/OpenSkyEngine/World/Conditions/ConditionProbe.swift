@@ -16,12 +16,12 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum ConditionProbe {
+nonisolated public enum ConditionProbe: Sendable {
     /// Runs one function against `context` and answers with its value.
     ///
     /// - Returns: the left-hand side the function computed, or the
     ///   machine-readable reason it could not.
-    static func value(
+    public static func value(
         of functionIndex: UInt16,
         parameter1: UInt32 = 0,
         parameter2: UInt32 = 0,
@@ -44,7 +44,7 @@ nonisolated enum ConditionProbe {
 
     /// The same run, spelled for a readout: the value, or the failure's reason
     /// in the words `RuntimeStateConditionRunner` already uses everywhere else.
-    static func text(
+    public static func text(
         of functionIndex: UInt16,
         parameter1: UInt32 = 0,
         parameter2: UInt32 = 0,

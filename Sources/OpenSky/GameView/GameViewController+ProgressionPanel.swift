@@ -11,6 +11,7 @@
 // The reading half lives in `GameViewController+ProgressionTree.swift`.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

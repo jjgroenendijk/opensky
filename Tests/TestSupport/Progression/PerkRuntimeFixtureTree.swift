@@ -11,7 +11,6 @@
 
 import FormatsTestSupport
 import Foundation
-@testable import OpenSky
 
 @MainActor
 extension PerkRuntimeFixture {

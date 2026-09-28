@@ -11,31 +11,31 @@ import simd
 // MARK: - Setup factories
 
 /// The scene pass's pipeline states, built together from one library.
-nonisolated struct RenderPipelines {
-    let sky: MTLRenderPipelineState
-    let opaque: MTLRenderPipelineState
-    let alphaTest: MTLRenderPipelineState
-    let skinnedOpaque: MTLRenderPipelineState
-    let skinnedAlphaTest: MTLRenderPipelineState
-    let morphedSkinnedOpaque: MTLRenderPipelineState
-    let morphedSkinnedAlphaTest: MTLRenderPipelineState
-    let grass: MTLRenderPipelineState
-    let terrain: MTLRenderPipelineState
-    let water: MTLRenderPipelineState
-    let particles: ParticlePipelines
+nonisolated public struct RenderPipelines: Sendable {
+    public let sky: MTLRenderPipelineState
+    public let opaque: MTLRenderPipelineState
+    public let alphaTest: MTLRenderPipelineState
+    public let skinnedOpaque: MTLRenderPipelineState
+    public let skinnedAlphaTest: MTLRenderPipelineState
+    public let morphedSkinnedOpaque: MTLRenderPipelineState
+    public let morphedSkinnedAlphaTest: MTLRenderPipelineState
+    public let grass: MTLRenderPipelineState
+    public let terrain: MTLRenderPipelineState
+    public let water: MTLRenderPipelineState
+    public let particles: ParticlePipelines
     /// Render-debug twins of the five geometry paths (issue #144). Built
     /// alongside the shipping set so a mode change binds a state rather than
     /// compiling one mid-session.
-    let debug: DebugRenderPipelines
+    public let debug: DebugRenderPipelines
 }
 
-nonisolated struct ParticlePipelines {
-    let alpha: MTLRenderPipelineState
-    let additive: MTLRenderPipelineState
-    let additiveOne: MTLRenderPipelineState
-    let multiply: MTLRenderPipelineState
+nonisolated public struct ParticlePipelines: Sendable {
+    public let alpha: MTLRenderPipelineState
+    public let additive: MTLRenderPipelineState
+    public let additiveOne: MTLRenderPipelineState
+    public let multiply: MTLRenderPipelineState
 
-    func pipeline(for mode: ParticleBlendMode) -> MTLRenderPipelineState {
+    public func pipeline(for mode: ParticleBlendMode) -> MTLRenderPipelineState {
         switch mode {
         case .alpha: alpha
         case .additive: additive
@@ -49,81 +49,81 @@ nonisolated struct ParticlePipelines {
 /// attachment. `alphaTest` carries a discard fragment; the rest run
 /// depth-only. `skinned` handles both opaque and alpha-tested skinned casters
 /// (skinned cutouts cast a conservative solid shadow in 7.1.1).
-nonisolated struct ShadowPipelines {
-    let staticCaster: MTLRenderPipelineState
-    let alphaTest: MTLRenderPipelineState
-    let skinned: MTLRenderPipelineState
-    let morphedSkinned: MTLRenderPipelineState
-    let terrain: MTLRenderPipelineState
+nonisolated public struct ShadowPipelines: Sendable {
+    public let staticCaster: MTLRenderPipelineState
+    public let alphaTest: MTLRenderPipelineState
+    public let skinned: MTLRenderPipelineState
+    public let morphedSkinned: MTLRenderPipelineState
+    public let terrain: MTLRenderPipelineState
 }
 
 /// Every long-lived sun-shadow GPU object, built + stored as a unit so the
 /// renderer init/state stays compact.
-nonisolated struct ShadowResources {
-    let pipelines: ShadowPipelines
-    let sampler: MTLSamplerState
-    let map: MTLTexture
+nonisolated public struct ShadowResources {
+    public let pipelines: ShadowPipelines
+    public let sampler: MTLSamplerState
+    public let map: MTLTexture
 }
 
 extension Renderer {
-    static func makeCommandQueue(device: MTLDevice) throws -> MTL4CommandQueue {
+    public static func makeCommandQueue(device: MTLDevice) throws -> MTL4CommandQueue {
         guard let queue = device.makeMTL4CommandQueue() else {
             throw RendererError.commandQueueUnavailable
         }
         return queue
     }
 
-    static func makeCommandBuffer(device: MTLDevice) throws -> MTL4CommandBuffer {
+    public static func makeCommandBuffer(device: MTLDevice) throws -> MTL4CommandBuffer {
         guard let buffer = device.makeCommandBuffer() else {
             throw RendererError.commandBufferUnavailable
         }
         return buffer
     }
 
-    nonisolated static var nearPlane: Float {
+    nonisolated public static var nearPlane: Float {
         10
     }
 
-    nonisolated static var farPlane: Float {
+    nonisolated public static var farPlane: Float {
         65536
     }
 
     /// Sun-shadow far bound (high quality): 3 exterior cells (4096 units each),
     /// matching the resident streaming grid. Casters beyond it are un-shadowed
     /// by design.
-    nonisolated static var shadowDistance: Float {
+    nonisolated public static var shadowDistance: Float {
         12288
     }
 
     /// Low-quality sun-shadow far bound: 2 exterior cells. Shorter range +
     /// fewer cascades (see shadowCascadeCount) trade shadow reach for cost.
-    nonisolated static var shadowDistanceLow: Float {
+    nonisolated public static var shadowDistanceLow: Float {
         8192
     }
 
     /// Light near plane extended backwards (toward the sun) by this many world
     /// units so casters between the sun and a cascade slice still render.
-    nonisolated static var shadowCasterBackup: Float {
+    nonisolated public static var shadowCasterBackup: Float {
         12288
     }
 
     /// Blend between uniform + logarithmic cascade splits (0 = uniform).
-    nonisolated static var shadowSplitLambda: Float {
+    nonisolated public static var shadowSplitLambda: Float {
         0.7
     }
 
     /// Raster depth bias for the shadow pre-pass: constant + slope-scaled,
     /// no clamp. Trades a little peter-panning for acne removal; tune against
     /// the real install if either shows.
-    nonisolated static var shadowDepthBias: Float {
+    nonisolated public static var shadowDepthBias: Float {
         2
     }
 
-    nonisolated static var shadowSlopeScale: Float {
+    nonisolated public static var shadowSlopeScale: Float {
         3
     }
 
-    static func makeCommandAllocators(device: MTLDevice) throws -> [MTL4CommandAllocator] {
+    public static func makeCommandAllocators(device: MTLDevice) throws -> [MTL4CommandAllocator] {
         try (0 ..< maxFramesInFlight).map { _ in
             guard let allocator = device.makeCommandAllocator() else {
                 throw RendererError.commandAllocatorUnavailable
@@ -134,7 +134,7 @@ extension Renderer {
 
     /// Long-lived resources for passes outside the base scene pipelines.
     /// Grouping their factories keeps Renderer.init below the strict body cap.
-    static func makeAuxiliaryResources(
+    public static func makeAuxiliaryResources(
         device: MTLDevice,
         view: MTKView
     ) throws -> (
@@ -156,7 +156,7 @@ extension Renderer {
     /// Argument table sized for the whole scene pass. Buffers: vertices,
     /// frame + draw uniforms, terrain weights, instance transforms, particles.
     /// Textures: base diffuse + the terrain layer array.
-    static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
+    public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
         // Highest buffer index is the world-overlay vertex stream (#422).
         descriptor.maxBufferBindCount = BufferIndex.morphDeltas.rawValue + 1
@@ -168,7 +168,7 @@ extension Renderer {
         return try device.makeArgumentTable(descriptor: descriptor)
     }
 
-    nonisolated static func makeUniformBuffer(
+    nonisolated public static func makeUniformBuffer(
         device: MTLDevice,
         length: Int,
         label: String
@@ -180,7 +180,7 @@ extension Renderer {
     }
 
     /// Per-frame uniform ring: one aligned slot per in-flight frame.
-    static func makeFrameUniformBuffer(device: MTLDevice) throws -> MTLBuffer {
+    public static func makeFrameUniformBuffer(device: MTLDevice) throws -> MTLBuffer {
         try makeUniformBuffer(
             device: device,
             length: alignedFrameUniformsSize * maxFramesInFlight,
@@ -188,7 +188,7 @@ extension Renderer {
         )
     }
 
-    static func makePipelines(
+    public static func makePipelines(
         device: MTLDevice,
         view: MTKView
     ) throws -> RenderPipelines {
@@ -364,7 +364,7 @@ extension Renderer {
     /// Standard opaque depth: write-through, closer fragment wins. Metal 4
     /// binds the depth attachment format at pass time (MTKView
     /// `depth32Float`), not in the pipeline descriptor.
-    static func makeDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
+    public static func makeDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = "OpaqueDepth"
         descriptor.depthCompareFunction = .less
@@ -376,7 +376,7 @@ extension Renderer {
     }
 
     /// Water tests opaque depth but does not write depth while blending.
-    static func makeWaterDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
+    public static func makeWaterDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = "WaterReadOnlyDepth"
         descriptor.depthCompareFunction = .less
@@ -389,7 +389,7 @@ extension Renderer {
 
     /// Mipmapped trilinear + anisotropic sampler, repeat addressing (world
     /// textures tile). Argument-table binding needs the GPU resource ID.
-    static func makeSampler(device: MTLDevice) throws -> MTLSamplerState {
+    public static func makeSampler(device: MTLDevice) throws -> MTLSamplerState {
         let descriptor = MTLSamplerDescriptor()
         descriptor.label = "TrilinearAniso"
         descriptor.minFilter = .linear
@@ -405,7 +405,7 @@ extension Renderer {
         return sampler
     }
 
-    static func makeResidencySet(
+    public static func makeResidencySet(
         device: MTLDevice,
         allocations: [MTLAllocation]
     ) throws -> MTLResidencySet {

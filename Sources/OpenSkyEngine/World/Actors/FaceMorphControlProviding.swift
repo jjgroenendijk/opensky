@@ -3,8 +3,8 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct FaceMorphControlSnapshot: Equatable {
-    static let empty = FaceMorphControlSnapshot(
+nonisolated public struct FaceMorphControlSnapshot: Equatable, Sendable {
+    public static let empty = FaceMorphControlSnapshot(
         actor: nil,
         targetNames: [],
         weights: [:],
@@ -13,16 +13,32 @@ nonisolated struct FaceMorphControlSnapshot: Equatable {
         unknownTargetCount: 0
     )
 
-    let actor: FormID?
-    let targetNames: [String]
-    let weights: [String: Float]
-    let pairedPaths: [String]
-    let associationMisses: [String]
-    let unknownTargetCount: Int
+    public let actor: FormID?
+    public let targetNames: [String]
+    public let weights: [String: Float]
+    public let pairedPaths: [String]
+    public let associationMisses: [String]
+    public let unknownTargetCount: Int
+
+    public init(
+        actor: FormID?,
+        targetNames: [String],
+        weights: [String: Float],
+        pairedPaths: [String],
+        associationMisses: [String],
+        unknownTargetCount: Int
+    ) {
+        self.actor = actor
+        self.targetNames = targetNames
+        self.weights = weights
+        self.pairedPaths = pairedPaths
+        self.associationMisses = associationMisses
+        self.unknownTargetCount = unknownTargetCount
+    }
 }
 
 @MainActor
-protocol FaceMorphControlProviding: AnyObject {
+public protocol FaceMorphControlProviding: AnyObject {
     var faceMorphSnapshot: FaceMorphControlSnapshot { get }
 
     func setFaceMorphWeight(_ weight: Float, target: String)

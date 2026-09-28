@@ -6,11 +6,11 @@ import Foundation
 import OpenSkyFormats
 import simd
 
-nonisolated struct TerrainLODClipMask: Equatable, Hashable {
-    let level: Int32
+nonisolated public struct TerrainLODClipMask: Equatable, Hashable, Sendable {
+    public let level: Int32
     private let visibleCellIndexes: Set<Int>
 
-    init(
+    public init(
         level: Int32,
         blockOrigin: CellCoordinate,
         visibleCells: Set<CellCoordinate>
@@ -24,22 +24,22 @@ nonisolated struct TerrainLODClipMask: Equatable, Hashable {
         })
     }
 
-    var visibleCellCount: Int {
+    public var visibleCellCount: Int {
         visibleCellIndexes.count
     }
 
-    var isComplete: Bool {
+    public var isComplete: Bool {
         visibleCellCount == Int(level * level)
     }
 
-    func contains(localX: Int, localY: Int) -> Bool {
+    public func contains(localX: Int, localY: Int) -> Bool {
         guard localX >= 0, localX < level, localY >= 0, localY < level else {
             return false
         }
         return visibleCellIndexes.contains(localY * Int(level) + localX)
     }
 
-    func contains(_ cell: CellCoordinate, blockOrigin: CellCoordinate) -> Bool {
+    public func contains(_ cell: CellCoordinate, blockOrigin: CellCoordinate) -> Bool {
         contains(
             localX: Int(cell.x - blockOrigin.x),
             localY: Int(cell.y - blockOrigin.y)
@@ -47,7 +47,7 @@ nonisolated struct TerrainLODClipMask: Equatable, Hashable {
     }
 
     /// Stable bitset token for clipped GPU-cache variants.
-    var cacheKey: String {
+    public var cacheKey: String {
         let digits = Array("0123456789abcdef")
         let cellCount = Int(level * level)
         var encoded = String()
@@ -63,7 +63,7 @@ nonisolated struct TerrainLODClipMask: Equatable, Hashable {
         return "\(level)-\(encoded)"
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(level)
         for index in visibleCellIndexes.sorted() {
             hasher.combine(index)
@@ -71,8 +71,8 @@ nonisolated struct TerrainLODClipMask: Equatable, Hashable {
     }
 }
 
-nonisolated enum TerrainLODClipper {
-    static func clipped(_ model: Model, to mask: TerrainLODClipMask) -> Model {
+nonisolated public enum TerrainLODClipper: Sendable {
+    public static func clipped(_ model: Model, to mask: TerrainLODClipMask) -> Model {
         guard !mask.isComplete else { return model }
         return Model(
             meshes: model.meshes.flatMap { clipped($0, to: mask) },

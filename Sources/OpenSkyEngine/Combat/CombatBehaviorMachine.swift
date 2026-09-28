@@ -46,28 +46,28 @@ import Foundation
 import simd
 
 /// The decision layer for one actor in one fight.
-nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
-    let settings: CombatBehaviorSettings
+nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
+    public let settings: CombatBehaviorSettings
 
-    private(set) var phase = CombatBehaviorPhase.idle
+    public private(set) var phase = CombatBehaviorPhase.idle
     /// Seconds spent in the current phase.
-    private(set) var phaseSeconds: Float = 0
+    public private(set) var phaseSeconds: Float = 0
     /// Fights entered, attacks started, contact steps reached, guards raised and
     /// searches begun since construction. The panel reads all five; the first
     /// two differ only by an attack a stagger interrupted before it connected.
-    private(set) var fightCount = 0
-    private(set) var attackCount = 0
-    private(set) var contactCount = 0
-    private(set) var blockCount = 0
-    private(set) var searchCount = 0
+    public private(set) var fightCount = 0
+    public private(set) var attackCount = 0
+    public private(set) var contactCount = 0
+    public private(set) var blockCount = 0
+    public private(set) var searchCount = 0
     /// Casts begun since construction, which differs from casts released by the
     /// ones a stagger or a retreat interrupted.
-    private(set) var castCount = 0
+    public private(set) var castCount = 0
 
     /// The spell being charged right now, or nil when nothing is. Readable so
     /// the runtime can drop the cast behind a stagger or a park, which happen
     /// outside `step(seconds:inputs:)`.
-    private(set) var pendingCast: CombatSpellOption?
+    public private(set) var pendingCast: CombatSpellOption?
 
     /// Seeded per actor, drawn from only for the block roll.
     private var random: ConditionRandom
@@ -75,13 +75,13 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     /// stated interval rather than every step.
     private var secondsSinceCommand: Float = 0
 
-    init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
+    public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
         random = ConditionRandom(seed: seed)
     }
 
     /// Whether this actor counts as being in the fight.
-    var isEngaged: Bool {
+    public var isEngaged: Bool {
         phase.isEngaged
     }
 
@@ -91,7 +91,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     /// resolution that would tell it apart from a raised sword, and reporting
     /// `.shield` without one would move the damage reduction to a different
     /// pinned constant on a guess. Stated in docs/engine/combat-behavior.md.
-    var blockKind: MeleeBlockKind? {
+    public var blockKind: MeleeBlockKind? {
         phase == .blocking ? .weapon : nil
     }
 
@@ -101,7 +101,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     /// left the casting phase without releasing. Fleeing, losing the target and
     /// giving up all reach that line, so no exit has to remember to clean up
     /// after a charge it did not start.
-    mutating func step(seconds: Float, inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
+    public mutating func step(seconds: Float, inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard seconds > 0, seconds.isFinite else { return unchanged() }
         phaseSeconds += seconds
         secondsSinceCommand += seconds
@@ -143,7 +143,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
     /// - Returns: true when the machine actually entered a stagger, so a caller
     ///   asks for a clip only when there is one to play.
     @discardableResult
-    mutating func stagger() -> Bool {
+    public mutating func stagger() -> Bool {
         guard phase != .staggered else { return false }
         if !phase.isEngaged {
             fightCount += 1
@@ -155,7 +155,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
 
     /// Drops a charge the world refused to start, without ending the fight:
     /// the actor lands in the gap between attacks and decides again from there.
-    mutating func abandonCast() {
+    public mutating func abandonCast() {
         guard phase == .casting else { return }
         pendingCast = nil
         enter(.spacing)
@@ -163,7 +163,7 @@ nonisolated struct CombatBehaviorMachine: Equatable, Sendable {
 
     /// Ends the fight outright without touching the counts, for `StopCombat`
     /// and for an actor whose cell unloaded.
-    mutating func park() {
+    public mutating func park() {
         pendingCast = nil
         enter(.idle)
         secondsSinceCommand = 0

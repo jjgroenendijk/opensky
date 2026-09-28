@@ -16,6 +16,7 @@
 // it would undo that.
 
 import AppKit
+import OpenSkyEngine
 
 final class CombatRagdollSection: PanelSectionViewController {
     weak var provider: (any RagdollControlProviding)? {

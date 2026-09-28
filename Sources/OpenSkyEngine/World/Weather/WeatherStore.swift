@@ -12,15 +12,15 @@ import OpenSkyFormats
 import simd
 
 /// One weighted weather candidate, unifying CLMT WLST and REGN RDWT entries.
-nonisolated struct WeightedWeather: Equatable {
-    let weather: FormID
-    let chance: Int
+nonisolated public struct WeightedWeather: Equatable, Sendable {
+    public let weather: FormID
+    public let chance: Int
 }
 
 /// Data-driven shortcuts used by the main-app precipitation acceptance
 /// surface. Preferred vanilla editor IDs keep the visual gate reproducible;
 /// classification fallback keeps the controls useful with other data sets.
-nonisolated enum WeatherPreset: CaseIterable {
+nonisolated public enum WeatherPreset: CaseIterable, Sendable {
     case clear
     case rain
     case snow
@@ -46,16 +46,16 @@ nonisolated enum WeatherPreset: CaseIterable {
 /// an ESMFile. Holds only value types after construction (no ESMFile
 /// reference), so it is safe to read from the render thread while the cell
 /// builder drives the same ESMFile on its own queue.
-nonisolated final class WeatherStore {
-    let weathers: [UInt32: Weather]
-    let climates: [UInt32: Climate]
-    let regions: [UInt32: Region]
+nonisolated public final class WeatherStore {
+    public let weathers: [UInt32: Weather]
+    public let climates: [UInt32: Climate]
+    public let regions: [UInt32: Region]
     /// WRLD FormID -> CNAM climate FormID.
-    let worldspaceClimate: [UInt32: FormID]
+    public let worldspaceClimate: [UInt32: FormID]
     /// WRLD editor ID -> FormID, to resolve the pinned worldspace by name.
-    let worldspaceByEditorID: [String: UInt32]
+    public let worldspaceByEditorID: [String: UInt32]
 
-    init(file: ESMFile) {
+    public init(file: ESMFile) {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         weathers = Self.index(file, "WTHR") { try? Weather(record: $0) }
         climates = Self.index(file, "CLMT") { try? Climate(record: $0) }
@@ -79,20 +79,20 @@ nonisolated final class WeatherStore {
         worldspaceByEditorID = worldByEditorID
     }
 
-    func weather(_ id: FormID) -> Weather? {
+    public func weather(_ id: FormID) -> Weather? {
         weathers[id.rawValue]
     }
 
-    func climate(_ id: FormID) -> Climate? {
+    public func climate(_ id: FormID) -> Climate? {
         climates[id.rawValue]
     }
 
-    func region(_ id: FormID) -> Region? {
+    public func region(_ id: FormID) -> Region? {
         regions[id.rawValue]
     }
 
     /// Weathers with usable visuals, sorted by editor ID — the UI force list.
-    func selectableWeathers() -> [Weather] {
+    public func selectableWeathers() -> [Weather] {
         weathers.values
             .filter { $0.colors != nil }
             .sorted {
@@ -103,7 +103,7 @@ nonisolated final class WeatherStore {
     /// Stable rain/snow/clear candidates for the app's quick controls.
     /// Exact known vanilla records win; otherwise select the first sorted WTHR
     /// with the required decoded classification.
-    func weather(for preset: WeatherPreset) -> Weather? {
+    public func weather(for preset: WeatherPreset) -> Weather? {
         let selectable = selectableWeathers()
         return selectable.first { $0.editorID == preset.preferredEditorID }
             ?? selectable.first { weather in
@@ -132,7 +132,7 @@ nonisolated final class WeatherStore {
 /// Region/climate selection: builds the weighted candidate pool for a location
 /// and picks one deterministically. Pure over a WeatherStore so it unit-tests
 /// without a running renderer.
-nonisolated enum WeatherSelection {
+nonisolated public enum WeatherSelection: Sendable {
     /// Candidate pool for `worldspace` given the exterior cell's XCLR regions.
     ///
     /// Rules (xEdit REGN semantics, flagged in docs/engine/weather.md):
@@ -145,7 +145,7 @@ nonisolated enum WeatherSelection {
     ///
     /// `globals` resolves CLMT WLST global overrides; nil keeps every climate
     /// chance at the number the plugin authored.
-    static func candidates(
+    public static func candidates(
         worldspace: UInt32?,
         regionIDs: [FormID],
         store: WeatherStore,
@@ -183,7 +183,7 @@ nonisolated enum WeatherSelection {
     /// used; an unresolvable global leaves the authored chance alone. See
     /// docs/formats/weather.md. (REGN's RDWT entries carry a similar unused
     /// global that stays ignored.)
-    static func climateCandidates(
+    public static func climateCandidates(
         worldspace: UInt32?,
         store: WeatherStore,
         globals: GlobalResolution? = nil
@@ -223,7 +223,7 @@ nonisolated enum WeatherSelection {
 
     /// Weighted pick by `chance`. Zero/negative chances are ignored; an
     /// all-zero pool falls back to a uniform pick so a candidate always wins.
-    static func pick(from pool: [WeightedWeather], seed: UInt64) -> FormID? {
+    public static func pick(from pool: [WeightedWeather], seed: UInt64) -> FormID? {
         guard !pool.isEmpty else { return nil }
         var rng = SplitMix64(seed: seed)
         let total = pool.reduce(0) { $0 + max(0, $1.chance) }
@@ -244,14 +244,14 @@ nonisolated enum WeatherSelection {
 /// SplitMix64: tiny deterministic PRNG for reproducible weather rolls. Seed
 /// combines worldspace FormID + a reroll epoch counter so a given epoch always
 /// picks the same weather (tests depend on it).
-nonisolated struct SplitMix64 {
+nonisolated public struct SplitMix64: Sendable {
     private var state: UInt64
 
-    init(seed: UInt64) {
+    public init(seed: UInt64) {
         state = seed
     }
 
-    mutating func next() -> UInt64 {
+    public mutating func next() -> UInt64 {
         state = state &+ 0x9E37_79B9_7F4A_7C15
         var z = state
         z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9

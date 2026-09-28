@@ -3,7 +3,7 @@
 // renderer only owns the generic source registry and toggles.
 
 extension CellStreamer {
-    func appendNavigationWorldOverlay(
+    public func appendNavigationWorldOverlay(
         context: WorldOverlayFrameContext,
         to list: inout WorldOverlayDrawList
     ) {

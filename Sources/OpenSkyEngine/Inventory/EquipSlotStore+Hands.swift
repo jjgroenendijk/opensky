@@ -8,13 +8,13 @@ nonisolated extension EquipSlotStore {
     /// The hands the slot named by `id` occupies, or nil when the link names
     /// no EQUP in the load order. `[]` is a resolved slot that takes no hand —
     /// Voice and Potion — and is not a miss.
-    func hands(of id: FormID?, fromPlugin pluginName: String) -> HandSlots? {
+    public func hands(of id: FormID?, fromPlugin pluginName: String) -> HandSlots? {
         handChoice(of: id, fromPlugin: pluginName)?.hands
     }
 
     /// The same answer keeping the all-parents/choose-one distinction, which is
     /// what equipping a spell to a named hand needs (issue #470).
-    func handChoice(
+    public func handChoice(
         of id: FormID?,
         fromPlugin pluginName: String
     ) -> EquipSlotHandChoice? {

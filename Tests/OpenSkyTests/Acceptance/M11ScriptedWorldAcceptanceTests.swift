@@ -19,7 +19,7 @@
 // boundary"), and everything except the final rebuild runs without a GPU.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

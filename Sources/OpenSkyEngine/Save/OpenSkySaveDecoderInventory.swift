@@ -15,14 +15,14 @@ import Foundation
 import OpenSkyFormats
 
 /// One owner's saved inventory, before it is merged back into its delta.
-nonisolated struct SaveInventoryEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let inventory: ReferenceInventoryState
+nonisolated public struct SaveInventoryEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let inventory: ReferenceInventoryState
 }
 
-nonisolated enum OpenSkySaveInventoryDecoder {
-    static func decodeInventories(_ payload: Data) throws -> [SaveInventoryEntry] {
+nonisolated public enum OpenSkySaveInventoryDecoder: Sendable {
+    public static func decodeInventories(_ payload: Data) throws -> [SaveInventoryEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("INVN entry count")
         try OpenSkySaveDecoder.validate(
@@ -46,7 +46,7 @@ nonisolated enum OpenSkySaveInventoryDecoder {
     /// Re-sorting is not defensive tidying: `WorldStateSnapshot` promises that
     /// order, and an owner that appears only in `INVN` is inserted in whatever
     /// position the chunk listed it.
-    static func merge(
+    public static func merge(
         _ inventories: [SaveInventoryEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

@@ -28,47 +28,52 @@ import simd
 
 /// What the app publishes each frame while a conversation is open. Sampled by
 /// the session — the renderer knows nothing about speakers, rigs or menus.
-nonisolated struct DialogueCameraFocus: Equatable, Sendable {
+nonisolated public struct DialogueCameraFocus: Equatable, Sendable {
     /// Who is being talked to. Carried so the panel can name them and so a
     /// focus that silently changed actor is visible rather than invisible.
-    let speaker: ReferenceKey
+    public let speaker: ReferenceKey
     /// The speaker's head, world space.
-    let headPosition: SIMD3<Float>
+    public let headPosition: SIMD3<Float>
+
+    public init(speaker: ReferenceKey, headPosition: SIMD3<Float>) {
+        self.speaker = speaker
+        self.headPosition = headPosition
+    }
 }
 
 /// Everything the override owns, in one value: extensions cannot add stored
 /// properties, and these three are one thing.
-struct RendererDialogueCameraState {
+public struct RendererDialogueCameraState {
     /// The live focus, or nil when no conversation is framing anybody.
-    var focus: DialogueCameraFocus?
+    public var focus: DialogueCameraFocus?
     /// The framing math and its collision readout.
-    var camera = DialogueCamera()
+    public var camera = DialogueCamera()
     /// The player's own view pose, held while the override stands in for it.
     /// Non-nil exactly while the swap is applied.
-    var restorePose: FreeFlyCamera?
+    public var restorePose: FreeFlyCamera?
 }
 
 extension Renderer {
     /// True while a conversation owns the view.
-    var isDialogueCameraEngaged: Bool {
+    public var isDialogueCameraEngaged: Bool {
         dialogueCameraState.focus != nil
     }
 
     /// The pose the last resolve settled on, or nil when none has run.
-    var dialogueCameraPose: DialogueCameraPose? {
+    public var dialogueCameraPose: DialogueCameraPose? {
         dialogueCameraState.camera.pose
     }
 
     /// The camera mode that is still live underneath the override and that the
     /// view returns to when the conversation ends.
-    var dialogueCameraRestoreMode: CameraMovementMode {
+    public var dialogueCameraRestoreMode: CameraMovementMode {
         movementMode
     }
 
     /// The field of view that mode projects with, which is what releasing the
     /// override re-projects to. The one statement of the per-mode rule;
     /// `activeFOVYRadians` reads it rather than repeating it.
-    var dialogueCameraRestoreFOVYRadians: Float {
+    public var dialogueCameraRestoreFOVYRadians: Float {
         movementMode == .walk
             ? firstPersonCamera.fovYRadians
             : FirstPersonCamera.defaultFOVYRadians
@@ -81,7 +86,7 @@ extension Renderer {
     /// have to re-project: the field of view a conversation is watched at is
     /// the shared world angle, which is not the angle first person projects
     /// with.
-    func setDialogueCameraFocus(_ focus: DialogueCameraFocus?) {
+    public func setDialogueCameraFocus(_ focus: DialogueCameraFocus?) {
         let wasEngaged = isDialogueCameraEngaged
         restorePlayerCameraPose()
         dialogueCameraState.focus = focus
@@ -95,7 +100,7 @@ extension Renderer {
 
     /// Puts the player's own pose back. Safe to call when nothing is applied,
     /// which is what lets the input frame start with it unconditionally.
-    func restorePlayerCameraPose() {
+    public func restorePlayerCameraPose() {
         guard let restorePose = dialogueCameraState.restorePose else { return }
         freeFlyCamera = restorePose
         dialogueCameraState.restorePose = nil
@@ -107,7 +112,7 @@ extension Renderer {
     /// `setDialogueCameraFocus` so a session that renders without running the
     /// input loop — an offscreen A/B frame, a test — is framed the same way a
     /// live one is.
-    func applyDialogueCamera() {
+    public func applyDialogueCamera() {
         restorePlayerCameraPose()
         guard let focus = dialogueCameraState.focus else { return }
         dialogueCameraState.restorePose = freeFlyCamera
@@ -131,7 +136,7 @@ extension Renderer {
     /// the dialogue camera off from a point that is already stood off. In fly
     /// mode there is no capsule under the view, so the view is the best answer
     /// available.
-    var playerEyePosition: SIMD3<Float> {
+    public var playerEyePosition: SIMD3<Float> {
         guard movementMode.isPlayerControlled else {
             return dialogueCameraState.restorePose?.position ?? freeFlyCamera.position
         }
@@ -146,7 +151,7 @@ extension Renderer {
     /// the gizmo can never disagree with the frame it is drawn over. While the
     /// camera is engaged the eye *is* the viewpoint, so the useful half of the
     /// gizmo is the pivot and the line the player's own eye looks along.
-    func appendDialogueCameraOverlay(
+    public func appendDialogueCameraOverlay(
         context: WorldOverlayFrameContext,
         to list: inout WorldOverlayDrawList
     ) {

@@ -7,7 +7,7 @@
 // app shows the user when a save refuses to load.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

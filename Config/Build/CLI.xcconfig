@@ -14,9 +14,10 @@ SUPPORTED_PLATFORMS = macosx
 // borrow the app target's bridging header.
 SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
 
-// Shaders.metal lives in Sources/OpenSkyEngine and imports ShaderTypes.h from the
-// module directory Sources/ShaderTypes.
-MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/ShaderTypes
+// Shaders.metal lives in Sources/Shaders and imports ShaderTypes.h from the package's
+// OpenSkyShaderTypes target. The target compiles it, because makeDefaultLibrary() reads
+// the main bundle.
+MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
 
 // The vendored decode-only ffmpeg. A command-line tool has no bundle to embed into, so
 // it loads the dylibs straight from .vendor at run time.

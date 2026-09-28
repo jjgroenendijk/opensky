@@ -23,19 +23,19 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum VoiceFilePath {
+nonisolated public enum VoiceFilePath: Sendable {
     /// Archive directory every voice file lives under, as a canonical VFS key.
-    static let root = "sound\\voice"
+    public static let root = "sound\\voice"
 
     /// Characters the quest editor ID keeps once the pair is too long to
     /// spell out.
-    static let questNameLimit = 10
+    public static let questNameLimit = 10
     /// Characters the topic editor ID keeps once the pair is too long to
     /// spell out.
-    static let topicNameLimit = 15
+    public static let topicNameLimit = 15
     /// Characters the two editor IDs may occupy together, underscore excluded,
     /// before either is shortened at all.
-    static let combinedNameBudget = questNameLimit + topicNameLimit
+    public static let combinedNameBudget = questNameLimit + topicNameLimit
 
     /// The `<quest>_<topic>` stem, lowercased because every path here is a
     /// canonical VFS key.
@@ -51,7 +51,7 @@ nonisolated enum VoiceFilePath {
     ///
     /// Either name may be empty — many vanilla topics carry no editor ID,
     /// which is why so many voice files have a doubled underscore.
-    static func stem(quest: String?, topic: String?) -> String {
+    public static func stem(quest: String?, topic: String?) -> String {
         let quest = (quest ?? "").lowercased()
         let topic = (topic ?? "").lowercased()
         let reserved = min(topic.count, topicNameLimit)
@@ -71,27 +71,27 @@ nonisolated enum VoiceFilePath {
     ///     see `exportedFormID(_:masterCount:)`.
     ///   - responseNumber: TRDT's response number, one-based, which is the
     ///     trailing `_1`, `_2` of a multi-part line.
-    nonisolated struct Name: Equatable {
-        let quest: String?
-        let topic: String?
-        let objectID: UInt32
-        let responseNumber: Int
+    nonisolated public struct Name: Equatable, Sendable {
+        public let quest: String?
+        public let topic: String?
+        public let objectID: UInt32
+        public let responseNumber: Int
     }
 
     /// One voice file's name, without a directory.
-    static func fileName(_ name: Name) -> String {
+    public static func fileName(_ name: Name) -> String {
         let identifier = String(format: "%08x", name.objectID)
         let stem = stem(quest: name.quest, topic: name.topic)
         return "\(stem)_\(identifier)_\(name.responseNumber).fuz"
     }
 
     /// Full canonical VFS key for one line.
-    static func path(plugin: String, voiceType: String, name: Name) -> String {
+    public static func path(plugin: String, voiceType: String, name: Name) -> String {
         directory(plugin: plugin, voiceType: voiceType) + "\\" + fileName(name)
     }
 
     /// Directory holding every line one voice type says for one plugin.
-    static func directory(plugin: String, voiceType: String) -> String {
+    public static func directory(plugin: String, voiceType: String) -> String {
         "\(root)\\\(plugin.lowercased())\\\(voiceType.lowercased())"
     }
 
@@ -104,7 +104,7 @@ nonisolated enum VoiceFilePath {
     /// that index — and only that index — is cleared. This is why every
     /// Dawnguard line is `00xxxxxx` while the handful that override an
     /// Update.esm record keep their `01`.
-    static func exportedFormID(_ id: FormID, masterCount: Int) -> UInt32 {
+    public static func exportedFormID(_ id: FormID, masterCount: Int) -> UInt32 {
         id.masterIndex >= masterCount ? id.objectID : id.rawValue
     }
 }

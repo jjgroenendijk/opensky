@@ -12,15 +12,15 @@ import OpenSkyFormats
 import OSLog
 
 /// A decoded REFR plus the children group it was stored in.
-nonisolated struct CollectedReference {
-    let reference: PlacedReference
-    let isPersistent: Bool
+nonisolated public struct CollectedReference: Sendable {
+    public let reference: PlacedReference
+    public let isPersistent: Bool
 }
 
 /// A decoded ACHR plus the children group it was stored in.
-nonisolated struct CollectedActor {
-    let actor: PlacedActor
-    let isPersistent: Bool
+nonisolated public struct CollectedActor: Sendable {
+    public let actor: PlacedActor
+    public let isPersistent: Bool
 }
 
 nonisolated extension CellSceneBuilder {
@@ -31,7 +31,7 @@ nonisolated extension CellSceneBuilder {
     /// docs/engine/cell-scene.md). NAVM has its own walk over the same groups
     /// in `collectNavmeshes`, off the build path. Deleted REFRs place nothing
     /// -> also ignored. A REFR that fails to decode is malformed.
-    nonisolated func collectTaggedReferences(
+    nonisolated public func collectTaggedReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [CollectedReference] {
@@ -67,7 +67,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Untagged collection for the render and collision paths, which place
     /// persistent and temporary records identically.
-    nonisolated func collectReferences(
+    nonisolated public func collectReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [PlacedReference] {
@@ -81,7 +81,7 @@ nonisolated extension CellSceneBuilder {
     /// from a local temporary group is temporary, and everything else in the
     /// final set is persistent — refs merged in from the worldspace persistent
     /// CELL are stored there precisely because they are persistent.
-    nonisolated func referenceEntries(
+    nonisolated public func referenceEntries(
         refs: [PlacedReference],
         collected: [CollectedReference]
     ) -> [RuntimeReferenceEntry] {
@@ -97,7 +97,7 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    nonisolated func actorEntries(_ collected: [CollectedActor]) -> [RuntimeReferenceEntry] {
+    nonisolated public func actorEntries(_ collected: [CollectedActor]) -> [RuntimeReferenceEntry] {
         collected.compactMap { entry in
             runtimeEntry(
                 formID: entry.actor.formID,
@@ -110,7 +110,7 @@ nonisolated extension CellSceneBuilder {
     /// Nil when the FormID is null or otherwise unresolvable against the
     /// plugin's master list: an unkeyed record has no runtime identity, so it
     /// is left out of the index rather than given a placeholder key.
-    nonisolated func runtimeEntry(
+    nonisolated public func runtimeEntry(
         formID: FormID,
         isPersistent: Bool,
         record: RuntimeReferenceRecord

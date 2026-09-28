@@ -19,7 +19,7 @@ extension Renderer {
     /// "between frames" is guaranteed by that shared thread. The GPU may still
     /// be executing frames that reference the OLD scene: those resources go on
     /// the retire list instead of being released here — never blocks the GPU.
-    func setScene(_ newScene: RenderScene, camera newCamera: SceneCamera? = nil) throws {
+    public func setScene(_ newScene: RenderScene, camera newCamera: SceneCamera? = nil) throws {
         purgeRetiredResources()
         // Allocate every fallible buffer before mutating live state; a failure
         // leaves the old scene + rings intact. The player body draws from the
@@ -61,7 +61,7 @@ extension Renderer {
     /// `instanceCount` instances, doing nothing when they already fit. The
     /// player body calls this on attach: the scene it is drawn beside was sized
     /// without it (issue #189).
-    func growRings(drawCount: Int, instanceCount: Int) throws {
+    public func growRings(drawCount: Int, instanceCount: Int) throws {
         let newDraw = try regrownDrawRing(for: drawCount)
         let newInstance = try regrownInstanceRing(for: instanceCount)
         guard newDraw != nil || newInstance != nil else { return }
@@ -78,22 +78,22 @@ extension Renderer {
 
     /// Replacement draw-side rings (draw + point-light + shadow-draw), sized to
     /// the new draw count. nil when the current rings already fit.
-    struct DrawRingRegrow {
-        let draw: MTLBuffer
-        let pointLight: MTLBuffer
-        let shadowDraw: MTLBuffer
-        let capacity: Int
+    public struct DrawRingRegrow {
+        public let draw: MTLBuffer
+        public let pointLight: MTLBuffer
+        public let shadowDraw: MTLBuffer
+        public let capacity: Int
     }
 
     /// Replacement instance-side rings (scene + shadow), sized to the new
     /// instance count. nil when the current rings already fit.
-    struct InstanceRingRegrow {
-        let instance: MTLBuffer
-        let shadowInstance: MTLBuffer
-        let capacity: Int
+    public struct InstanceRingRegrow {
+        public let instance: MTLBuffer
+        public let shadowInstance: MTLBuffer
+        public let capacity: Int
     }
 
-    func regrownDrawRing(for drawCount: Int) throws -> DrawRingRegrow? {
+    public func regrownDrawRing(for drawCount: Int) throws -> DrawRingRegrow? {
         guard drawCount > drawUniformSlotCapacity else { return nil }
         let capacity = Self.slotCapacity(for: drawCount)
         return try DrawRingRegrow(
@@ -119,7 +119,7 @@ extension Renderer {
         )
     }
 
-    func regrownInstanceRing(for instanceCount: Int) throws -> InstanceRingRegrow? {
+    public func regrownInstanceRing(for instanceCount: Int) throws -> InstanceRingRegrow? {
         guard instanceCount > instanceSlotCapacity else { return nil }
         let capacity = Self.slotCapacity(for: instanceCount)
         let length = MemoryLayout<InstanceTransform>.stride * capacity * Self.maxFramesInFlight
@@ -140,7 +140,7 @@ extension Renderer {
 
     /// Swaps in the new draw-side rings, retiring the old ones (they may back
     /// in-flight frames) and adding the new ones to the residency set.
-    func adoptDrawRing(_ ring: DrawRingRegrow, retiring: inout [MTLAllocation]) {
+    public func adoptDrawRing(_ ring: DrawRingRegrow, retiring: inout [MTLAllocation]) {
         retiring.append(drawUniformBuffer)
         retiring.append(pointLightBuffer)
         retiring.append(shadowDrawUniformBuffer)
@@ -151,7 +151,7 @@ extension Renderer {
         residencySet.addAllocations([ring.draw, ring.pointLight, ring.shadowDraw])
     }
 
-    func adoptInstanceRing(_ ring: InstanceRingRegrow, retiring: inout [MTLAllocation]) {
+    public func adoptInstanceRing(_ ring: InstanceRingRegrow, retiring: inout [MTLAllocation]) {
         retiring.append(instanceTransformBuffer)
         retiring.append(shadowInstanceBuffer)
         instanceTransformBuffer = ring.instance
@@ -163,7 +163,7 @@ extension Renderer {
     /// Queues allocations for deferred residency-set removal once the frames
     /// that may still reference them provably drain (used by setSWFMovie;
     /// setScene manages its own retire entry alongside the ring swap).
-    func retireAllocations(_ allocations: [MTLAllocation]) {
+    public func retireAllocations(_ allocations: [MTLAllocation]) {
         guard !allocations.isEmpty else { return }
         retired.append(RetiredAllocations(
             lastFrameIndex: UInt64(frameIndex - 1),
@@ -179,7 +179,7 @@ extension Renderer {
     /// anything the CURRENT scene or rings also use (swap A -> B -> A, or
     /// adjacent cells sharing meshes: the allocation is both retired and live).
     /// Called opportunistically from draw(in:) and setScene.
-    func purgeRetiredResources() {
+    public func purgeRetiredResources() {
         guard !retired.isEmpty else { return }
         let drained = endFrameEvent.signaledValue
         var ready: [MTLAllocation] = []

@@ -35,48 +35,48 @@
 
 import Foundation
 
-nonisolated enum ArcheryGraphNames {
+nonisolated public enum ArcheryGraphNames: Sendable {
     // MARK: - Events raised into the graph
 
     /// Begin drawing. Raised when the attack button goes down with a bow in
     /// hand, where the same press with a melee weapon raises
     /// `CombatGraphNames.attackStart`.
-    static let bowDrawStart = "bowDrawStart"
+    public static let bowDrawStart = "bowDrawStart"
     /// Loose. Shared with melee's held power attack, which is the same button
     /// coming back up.
-    static let attackRelease = CombatGraphNames.attackRelease
+    public static let attackRelease = CombatGraphNames.attackRelease
     /// Abandon the draw without loosing — sheathing mid-pull, or a stagger.
-    static let bowReset = "bowReset"
+    public static let bowReset = "bowReset"
 
     /// Every event the archery runtime raises, in the order the runtime raises
     /// edges in.
-    static let raisedEvents = [bowDrawStart, attackRelease, bowReset]
+    public static let raisedEvents = [bowDrawStart, attackRelease, bowReset]
 
     // MARK: - Events observed coming back out
 
     /// The clip annotation that puts an arrow in the draw hand. This is the
     /// nock, and it is the frame the arrow becomes a visible attachment.
-    static let arrowAttach = "arrowAttach"
+    public static let arrowAttach = "arrowAttach"
     /// Full draw reached. Past this the shot deals its full damage; see
     /// `ArcheryDamage`.
-    static let bowDrawn = "bowDrawn"
+    public static let bowDrawn = "bowDrawn"
     /// The frame the arrow leaves the string. This is the spawn frame.
-    static let arrowRelease = "arrowRelease"
+    public static let arrowRelease = "arrowRelease"
     /// The arrow leaves the hand, which is the frame its attachment is dropped.
-    static let arrowDetach = "arrowDetach"
+    public static let arrowDetach = "arrowDetach"
     /// The two clip annotations that bracket the draw animation itself.
-    static let bowDraw = "BowDraw"
-    static let bowRelease = "BowRelease"
+    public static let bowDraw = "BowDraw"
+    public static let bowRelease = "BowRelease"
 
     /// Every event the archery state machine acts on when the graph fires it.
-    static let observedEvents = [
+    public static let observedEvents = [
         arrowAttach, bowDrawn, arrowRelease, arrowDetach, bowReset, bowDraw, bowRelease
     ]
 
     // MARK: - Variables
 
     /// Whether the bow is at full draw. Bool, `0_master.hkx`.
-    static let isBowDrawn = "bBowDrawn"
+    public static let isBowDrawn = "bBowDrawn"
 
     /// Every variable the archery runtime writes.
     ///
@@ -87,5 +87,5 @@ nonisolated enum ArcheryGraphNames {
     /// an animation set silently rather than visibly. `bowZoom`, `bowZoomAmt`
     /// and `bAimActive` are absent because Eagle Eye zoom is a perk effect and
     /// perks are M18's.
-    static let variables = [isBowDrawn]
+    public static let variables = [isBowDrawn]
 }

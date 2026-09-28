@@ -7,34 +7,34 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum PapyrusFlow {
+nonisolated public enum PapyrusFlow {
     case next
     case jump(Int)
     case returned(PapyrusValue)
     case suspended(SuspendedCall)
 }
 
-nonisolated enum PapyrusResumeTarget {
+nonisolated public enum PapyrusResumeTarget: Sendable {
     case root
     case assign(PexValue)
 }
 
-nonisolated struct SuspendedCall {
-    let id: UInt64
-    let nativeCall: PapyrusNativeCall
-    let request: PapyrusNativeSuspension
-    let continuation: PapyrusContinuation
+nonisolated public struct SuspendedCall {
+    public let id: UInt64
+    public let nativeCall: PapyrusNativeCall
+    public let request: PapyrusNativeSuspension
+    public let continuation: PapyrusContinuation
 }
 
-nonisolated final class PapyrusContinuation {
+nonisolated public final class PapyrusContinuation {
     private let interpreter: PapyrusInterpreter
     private var consumed = false
 
-    init(interpreter: PapyrusInterpreter) {
+    public init(interpreter: PapyrusInterpreter) {
         self.interpreter = interpreter
     }
 
-    func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
+    public func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
         guard !consumed else {
             return .faulted(.invalidResume)
         }
@@ -43,23 +43,23 @@ nonisolated final class PapyrusContinuation {
     }
 }
 
-nonisolated final class PapyrusInterpreter {
-    let runtime: PapyrusRuntime
-    var frames: [PapyrusFrame] = []
+nonisolated public final class PapyrusInterpreter {
+    public let runtime: PapyrusRuntime
+    public var frames: [PapyrusFrame] = []
 
     private var remainingBudget: Int
-    var pendingResume: (id: UInt64, target: PapyrusResumeTarget)?
+    public var pendingResume: (id: UInt64, target: PapyrusResumeTarget)?
 
-    init(runtime: PapyrusRuntime) {
+    public init(runtime: PapyrusRuntime) {
         self.runtime = runtime
         remainingBudget = runtime.limits.instructionBudget
     }
 
-    var instructionIndex: Int {
+    public var instructionIndex: Int {
         frames.last.map { max(0, $0.instructionIndex - 1) } ?? 0
     }
 
-    func invoke(
+    public func invoke(
         _ functionName: String,
         on handle: PapyrusObjectHandle,
         arguments: [PapyrusValue]
@@ -100,7 +100,7 @@ nonisolated final class PapyrusInterpreter {
         }
     }
 
-    func invokeStatic(
+    public func invokeStatic(
         _ functionName: String,
         on scriptName: String,
         arguments: [PapyrusValue]
@@ -141,7 +141,7 @@ nonisolated final class PapyrusInterpreter {
         }
     }
 
-    func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
+    public func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
         guard let pending = pendingResume, pending.id == id else {
             return fault(.invalidResume)
         }
@@ -169,7 +169,7 @@ nonisolated final class PapyrusInterpreter {
         }
     }
 
-    func run() -> PapyrusRunOutcome {
+    public func run() -> PapyrusRunOutcome {
         do {
             while let frame = frames.last {
                 guard frame.instructionIndex < frame.function.instructions.count else {
@@ -202,7 +202,7 @@ nonisolated final class PapyrusInterpreter {
         }
     }
 
-    func pushFrame(
+    public func pushFrame(
         _ resolved: PapyrusResolvedFunction,
         instanceHandle: PapyrusObjectHandle?,
         arguments: [PapyrusValue],

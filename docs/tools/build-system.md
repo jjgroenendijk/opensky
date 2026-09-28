@@ -71,10 +71,12 @@ file, so the Swift 6 mode check still catches a configuration that slips back
 ## The OpenSkyShaderTypes module
 
 Structs and constants shared by Swift and the Metal shaders live in
-`Sources/ShaderTypes/ShaderTypes.h`, next to a `module.modulemap` that declares
-`module OpenSkyShaderTypes { header "ShaderTypes.h" export * }`. `Config/Build/Base.xcconfig` puts that
-folder on `SWIFT_INCLUDE_PATHS`, so a file that writes `import OpenSkyShaderTypes` sees the types and
-no other file does. `MTL_HEADER_SEARCH_PATHS` points at the same folder, so `Shaders.metal` keeps
+`Sources/OpenSkyShaderTypes/ShaderTypes.h`, next to a `module.modulemap` that declares
+`module OpenSkyShaderTypes { header "ShaderTypes.h" export * }`. The folder is a clang target of the
+Swift package, so a file that writes `import OpenSkyShaderTypes` sees the types and no other file
+does. SwiftPM links a clang target's object file, so the target also holds `ShaderTypes.m`, which
+declares nothing. It is Objective-C because the header imports Foundation.
+`MTL_HEADER_SEARCH_PATHS` points at the same folder, so `Shaders.metal` keeps
 `#import "ShaderTypes.h"`.
 
 There is no bridging header. A bridging header is visible to every Swift file in its target, so every

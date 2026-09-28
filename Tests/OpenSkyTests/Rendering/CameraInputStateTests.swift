@@ -1,7 +1,7 @@
 // CameraInputState press/release -> axis logic + look-delta draining (todo
 // 2.8). AppKit-free, so fully unit-testable.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 /// `CameraInputState` is main-actor state by design — the view writes it and

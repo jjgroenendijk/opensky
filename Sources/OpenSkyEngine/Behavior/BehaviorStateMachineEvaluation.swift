@@ -20,13 +20,13 @@ import Foundation
 import OpenSkyFormats
 
 /// One transition the update may fire, with where it was found.
-nonisolated struct BehaviorTransitionCandidate {
-    let info: HKBStateMachineTransitionInfo
-    let isWildcard: Bool
+nonisolated public struct BehaviorTransitionCandidate: Sendable {
+    public let info: HKBStateMachineTransitionInfo
+    public let isWildcard: Bool
 
     /// Higher sorts first. A state's own transition outranks a wildcard of the
     /// same priority.
-    var rank: (Int, Int) {
+    public var rank: (Int, Int) {
         (info.priority, isWildcard ? 0 : 1)
     }
 }
@@ -34,7 +34,7 @@ nonisolated struct BehaviorTransitionCandidate {
 nonisolated extension BehaviorGraphInstance {
     /// Runs one state machine: enter, step the crossfade, pick a transition,
     /// then pose the current state and whatever is still blending out.
-    func evaluateStateMachine(
+    public func evaluateStateMachine(
         _ machine: HKBStateMachine,
         at target: HKXPointerTarget,
         bound: [String: BehaviorVariableValue],
@@ -107,7 +107,7 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// The enabled state with `id`, and where it lives.
-    func stateInfo(
+    public func stateInfo(
         of machine: HKBStateMachine,
         id: Int
     ) -> (target: HKXPointerTarget, info: HKBStateMachineStateInfo)? {
@@ -269,7 +269,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// The common half of every state change: exit events, the id swap, enter
     /// events, and the machine's own change event.
-    func switchState(
+    public func switchState(
         _ state: inout BehaviorMachineState,
         to stateId: Int,
         machine: HKBStateMachine,

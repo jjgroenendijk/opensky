@@ -26,7 +26,7 @@ extension Renderer {
 
     /// Water renders after opaque + cutout geometry. Depth is read-only;
     /// straight-alpha blend exposes terrain/objects beneath the surface.
-    func encodeWater(
+    public func encodeWater(
         items: [WaterDrawItem],
         state: inout ScenePassState
     ) {

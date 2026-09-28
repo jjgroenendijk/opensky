@@ -3,7 +3,7 @@
 // template source, outfit masking, FaceGen, and missing-asset policy.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

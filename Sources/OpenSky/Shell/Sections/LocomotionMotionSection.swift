@@ -10,6 +10,7 @@
 // that does carry extracted motion shows up here rather than looking identical.
 
 import AppKit
+import OpenSkyEngine
 
 final class LocomotionMotionSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

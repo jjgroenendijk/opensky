@@ -12,17 +12,17 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct DoorTransition {
-    let sourceDoor: FormID
-    let destinationDoor: FormID
-    let destinationPlacement: PlacedReference.Placement
-    let scene: CellScene
+nonisolated public struct DoorTransition {
+    public let sourceDoor: FormID
+    public let destinationDoor: FormID
+    public let destinationPlacement: PlacedReference.Placement
+    public let scene: CellScene
 }
 
 nonisolated extension CellSceneBuilder {
     /// Lightweight door probe over WRLD persistent refs. Their storage CELL
     /// is (0,0); physical REFR position supplies streamed-cell ownership.
-    nonisolated func exteriorDoors(
+    nonisolated public func exteriorDoors(
         worldspaceEditorID: String
     ) throws -> [(coordinate: CellCoordinate, door: PlacedDoor)] {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
@@ -39,7 +39,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Merges local refs with XTEL refs from persistent CELL, filtering both
     /// by physical coordinate. Prevents persistent doors drawing in (0,0).
-    nonisolated func exteriorReferences(
+    nonisolated public func exteriorReferences(
         local: [PlacedReference],
         world: ESMGroup,
         coordinate: CellCoordinate,
@@ -89,7 +89,7 @@ nonisolated extension CellSceneBuilder {
 
     /// - Parameter state: runtime deviations to lay over the plugin's data
     ///   (issue #160), applied through the same path the exterior build uses.
-    nonisolated func buildInteriorScene(
+    nonisolated public func buildInteriorScene(
         cellFormID: FormID,
         state: WorldStateSnapshot = .empty
     ) throws -> CellScene {
@@ -146,7 +146,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Resolves source REFR XTEL -> destination door REFR -> owning CELL,
     /// then builds that exact cell on the same cache-confined queue.
-    nonisolated func buildDoorTransition(
+    nonisolated public func buildDoorTransition(
         from sourceDoor: FormID,
         worldspaceEditorID: String,
         state: WorldStateSnapshot = .empty

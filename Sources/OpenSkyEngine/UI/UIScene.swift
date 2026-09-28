@@ -7,20 +7,20 @@ import CoreText
 import simd
 
 /// A border stroke on a panel.
-nonisolated struct UIBorder: Equatable {
-    var width: Float
-    var color: SIMD4<Float>
+nonisolated public struct UIBorder: Equatable, Sendable {
+    public var width: Float
+    public var color: SIMD4<Float>
 }
 
 /// A (optionally wrapped) run of text.
-nonisolated struct UILabel: Equatable {
-    var text: String
-    var font: UIFont
-    var color: SIMD4<Float>
+nonisolated public struct UILabel: Equatable, Sendable {
+    public var text: String
+    public var font: UIFont
+    public var color: SIMD4<Float>
     /// Wrap width in points; nil -> single line.
-    var maxWidth: Float?
+    public var maxWidth: Float?
 
-    init(text: String, font: UIFont, color: SIMD4<Float>, maxWidth: Float? = nil) {
+    public init(text: String, font: UIFont, color: SIMD4<Float>, maxWidth: Float? = nil) {
         self.text = text
         self.font = font
         self.color = color
@@ -29,35 +29,35 @@ nonisolated struct UILabel: Equatable {
 }
 
 /// A node's drawable content.
-nonisolated enum UINodeContent: Equatable {
+nonisolated public enum UINodeContent: Equatable, Sendable {
     case panel(size: UISize, color: SIMD4<Float>, border: UIBorder?)
     case marker(size: UISize, color: SIMD4<Float>)
     case label(UILabel)
 }
 
 /// One anchored node: content positioned by anchor + point offset.
-nonisolated struct UINode: Equatable {
-    var anchor: UIAnchor
-    var offset: UIPoint
-    var content: UINodeContent
+nonisolated public struct UINode: Equatable, Sendable {
+    public var anchor: UIAnchor
+    public var offset: UIPoint
+    public var content: UINodeContent
 
-    init(anchor: UIAnchor, offset: UIPoint = UIPoint(x: 0, y: 0), content: UINodeContent) {
+    public init(anchor: UIAnchor, offset: UIPoint = UIPoint(x: 0, y: 0), content: UINodeContent) {
         self.anchor = anchor
         self.offset = offset
         self.content = content
     }
 }
 
-nonisolated struct UIScene {
-    var nodes: [UINode]
+nonisolated public struct UIScene: Sendable {
+    public var nodes: [UINode]
 
-    init(nodes: [UINode] = []) {
+    public init(nodes: [UINode] = []) {
         self.nodes = nodes
     }
 
-    static let empty = UIScene()
+    public static let empty = UIScene()
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         nodes.isEmpty
     }
 
@@ -79,7 +79,11 @@ nonisolated struct UIScene {
 
     /// Resolves the scene to a pixel-space draw list. `atlas` gains any glyphs
     /// the labels need (revision bumps -> renderer re-uploads).
-    func resolve(viewportPixels: SIMD2<Float>, scale: Float, atlas: UIGlyphAtlas) -> UIDrawList {
+    public func resolve(
+        viewportPixels: SIMD2<Float>,
+        scale: Float,
+        atlas: UIGlyphAtlas
+    ) -> UIDrawList {
         let scale = UIScale(scale)
         var list = UIDrawList(whiteUV: atlas.whiteUV)
         guard viewportPixels.x > 0, viewportPixels.y > 0 else { return list }

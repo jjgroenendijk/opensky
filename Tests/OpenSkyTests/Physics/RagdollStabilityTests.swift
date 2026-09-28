@@ -10,7 +10,7 @@
 // it, which means every collapse starts from whatever state the previous one
 // left.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

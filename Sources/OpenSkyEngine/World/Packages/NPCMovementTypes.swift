@@ -5,7 +5,7 @@
 import OpenSkyFormats
 import simd
 
-nonisolated enum NPCMovementState: String, Equatable, Sendable {
+nonisolated public enum NPCMovementState: String, Equatable, Sendable {
     case moving
     case awaitingRepath
     case arrived
@@ -19,7 +19,7 @@ nonisolated enum NPCMovementState: String, Equatable, Sendable {
     case facing
 }
 
-nonisolated enum NPCMovementSettleReason: String, Equatable, Sendable {
+nonisolated public enum NPCMovementSettleReason: String, Equatable, Sendable {
     case arrival
     case giveUp
     case halt
@@ -29,36 +29,36 @@ nonisolated enum NPCMovementSettleReason: String, Equatable, Sendable {
     case turn
 }
 
-nonisolated struct NPCMovementReadout: Equatable, Sendable {
-    let actor: ReferenceKey
-    let state: NPCMovementState
-    let feetPosition: SIMD3<Float>
-    let yaw: Float
-    let waypointIndex: Int
-    let waypointCount: Int
-    let gait: LocomotionGait
-    let repathCount: Int
+nonisolated public struct NPCMovementReadout: Equatable, Sendable {
+    public let actor: ReferenceKey
+    public let state: NPCMovementState
+    public let feetPosition: SIMD3<Float>
+    public let yaw: Float
+    public let waypointIndex: Int
+    public let waypointCount: Int
+    public let gait: LocomotionGait
+    public let repathCount: Int
 }
 
 /// What the movement authority publishes to animation and combat. A drive may
 /// run a behavior graph or select in-place gait clips; neither can write the
 /// capsule pose through this value.
-nonisolated struct NPCLocomotionDriveUpdate: Equatable, Sendable {
-    let actor: ReferenceKey
-    let intent: LocomotionIntent
-    let gait: LocomotionGait
-    let yaw: Float
-    let deltaTime: Float
+nonisolated public struct NPCLocomotionDriveUpdate: Equatable, Sendable {
+    public let actor: ReferenceKey
+    public let intent: LocomotionIntent
+    public let gait: LocomotionGait
+    public let yaw: Float
+    public let deltaTime: Float
 }
 
-nonisolated struct NPCMovementPersistence: Equatable, Sendable {
-    let actor: ReferenceKey
-    let transform: ReferenceTransformOverride
-    let cell: CellSceneLocation?
-    let reason: NPCMovementSettleReason
+nonisolated public struct NPCMovementPersistence: Equatable, Sendable {
+    public let actor: ReferenceKey
+    public let transform: ReferenceTransformOverride
+    public let cell: CellSceneLocation?
+    public let reason: NPCMovementSettleReason
 }
 
-nonisolated enum NPCMoveCommandResult: Equatable, Sendable {
+nonisolated public enum NPCMoveCommandResult: Equatable, Sendable {
     case started
     case actorNotResident
     case noPath(NavigationPathMiss)
@@ -67,7 +67,7 @@ nonisolated enum NPCMoveCommandResult: Equatable, Sendable {
 
 /// The panel and future AI-package seam. Item 16.8 can select an actor and a
 /// picked point without knowing how paths, fixed steps, or persistence work.
-protocol MoveToPointControl: AnyObject {
+public protocol MoveToPointControl: AnyObject {
     @discardableResult
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
 

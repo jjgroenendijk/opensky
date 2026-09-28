@@ -35,7 +35,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// `CrimeKind.allCases` order. The counts travel beside the gold because
     /// they are not derivable from it — an unwitnessed crime moves one and not
     /// the other, which is the whole difference the ledger records.
-    static func writeCrimeLedgers(
+    public static func writeCrimeLedgers(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -71,7 +71,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// stolen writes no row and a session in which nothing was stolen writes no
     /// chunk, so its bytes match what this encoder produced before the chunk
     /// existed.
-    static func writeStolenGoods(
+    public static func writeStolenGoods(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

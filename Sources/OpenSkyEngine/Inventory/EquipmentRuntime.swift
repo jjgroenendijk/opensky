@@ -39,7 +39,7 @@ import OpenSkyFormats
 
 /// Failures the equipment layer reports. Like `InventoryError`, every one is a
 /// caller mistake rather than malformed input.
-nonisolated enum EquipmentError: Error, Equatable {
+nonisolated public enum EquipmentError: Error, Equatable {
     /// The owner does not hold the item it was asked to equip.
     case notHeld(item: FormID, owner: ReferenceKey)
     /// No loaded plugin describes the item as occupying any slot or hand, so
@@ -48,37 +48,37 @@ nonisolated enum EquipmentError: Error, Equatable {
 }
 
 /// What one equip changed: the item now worn and everything it displaced.
-nonisolated struct EquipmentChange: Equatable, Sendable {
-    let equipped: FormID
+nonisolated public struct EquipmentChange: Equatable, Sendable {
+    public let equipped: FormID
     /// Items unequipped to make room, in ascending FormID order. Empty when
     /// nothing conflicted.
-    let unequipped: [FormID]
+    public let unequipped: [FormID]
     /// False when the item was already equipped and displaced nothing, so the
     /// stored state is byte-identical and no rebuild is needed.
-    let changed: Bool
+    public let changed: Bool
 }
 
 /// Equips and unequips items on top of an `InventoryRuntime`.
 @MainActor
-struct EquipmentRuntime {
-    let inventory: InventoryRuntime
-    let catalog: EquipmentCatalog
+public struct EquipmentRuntime {
+    public let inventory: InventoryRuntime
+    public let catalog: EquipmentCatalog
 
     // MARK: - Reading
 
     /// `holder`'s equipped set, from its runtime component when it has one and
     /// from its plugin baseline when it does not.
-    func equipped(on holder: InventoryHolder) -> [FormID] {
+    public func equipped(on holder: InventoryHolder) -> [FormID] {
         inventory.inventory(of: holder).equipped
     }
 
-    func isEquipped(_ item: FormID, on holder: InventoryHolder) -> Bool {
+    public func isEquipped(_ item: FormID, on holder: InventoryHolder) -> Bool {
         inventory.inventory(of: holder).isEquipped(item)
     }
 
     /// What `item` occupies, for a caller that wants to explain a conflict
     /// before causing one.
-    func occupancy(of item: FormID) -> EquipmentOccupancy {
+    public func occupancy(of item: FormID) -> EquipmentOccupancy {
         catalog.occupancy(of: item)
     }
 
@@ -94,7 +94,7 @@ struct EquipmentRuntime {
     /// - Throws: `EquipmentError.notHeld` when the owner does not hold the
     ///   item, `EquipmentError.notEquippable` when it occupies no slot.
     @discardableResult
-    func equip(_ item: FormID, on holder: InventoryHolder) throws -> EquipmentChange {
+    public func equip(_ item: FormID, on holder: InventoryHolder) throws -> EquipmentChange {
         let state = inventory.inventory(of: holder)
         guard state.count(of: item) > 0 else {
             throw EquipmentError.notHeld(item: item, owner: holder.key)
@@ -117,7 +117,7 @@ struct EquipmentRuntime {
     ///
     /// - Returns: true when the stored state changed.
     @discardableResult
-    func unequip(_ item: FormID, on holder: InventoryHolder) -> Bool {
+    public func unequip(_ item: FormID, on holder: InventoryHolder) -> Bool {
         inventory.unequip(item, on: holder)
     }
 
@@ -125,7 +125,12 @@ struct EquipmentRuntime {
     ///
     /// - Returns: true when the stored state changed.
     @discardableResult
-    func unequipAll(on holder: InventoryHolder) -> Bool {
+    public func unequipAll(on holder: InventoryHolder) -> Bool {
         inventory.setEquipped([], on: holder)
+    }
+
+    public init(inventory: InventoryRuntime, catalog: EquipmentCatalog) {
+        self.inventory = inventory
+        self.catalog = catalog
     }
 }

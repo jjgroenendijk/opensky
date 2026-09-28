@@ -15,6 +15,7 @@
 // as a bug in the simulation rather than as a control someone left on.
 
 import AppKit
+import OpenSkyEngine
 
 final class CombatPhysicsSection: PanelSectionViewController {
     weak var provider: (any PhysicsControlProviding)? {

@@ -37,50 +37,50 @@ import OpenSkyFormats
 import simd
 
 /// One observer-target pair's identity.
-nonisolated struct DetectionPairKey: Hashable, Comparable, Sendable {
-    let observer: ReferenceKey
-    let target: ReferenceKey
+nonisolated public struct DetectionPairKey: Hashable, Comparable, Sendable {
+    public let observer: ReferenceKey
+    public let target: ReferenceKey
 
-    static func < (lhs: DetectionPairKey, rhs: DetectionPairKey) -> Bool {
+    public static func < (lhs: DetectionPairKey, rhs: DetectionPairKey) -> Bool {
         (lhs.observer, lhs.target) < (rhs.observer, rhs.target)
     }
 }
 
 @MainActor
-final class PerceptionRuntime {
+public final class PerceptionRuntime {
     /// Step the pass advances on, matching the combat loop's and the
     /// actor-value runtime's so one frame drives all three the same way. 1/60 s.
-    static let fixedStepSeconds: Float = 1.0 / 60
+    public static let fixedStepSeconds: Float = 1.0 / 60
 
     /// Most whole steps one `advance(by:)` runs, so a multi-second stall cannot
     /// spend a minute of watching in a single frame.
-    static let maximumStepsPerAdvance = 8
+    public static let maximumStepsPerAdvance = 8
 
     /// Most pairs tracked at once. Eight movers is `NPCMovementRuntime`'s named
     /// crowd cap and a handful of targets is all 16.6 produces, so 64 leaves
     /// room above anything the milestone creates while still bounding the work.
-    static let maximumPairs = 64
+    public static let maximumPairs = 64
 
     /// Pairs re-evaluated per fixed step. At the cap this spreads a full sweep
     /// over eight steps, or about an eighth of a second — far below the time a
     /// detection level takes to cross a threshold.
-    static let pairsPerStep = 8
+    public static let pairsPerStep = 8
 
-    let settings: DetectionSettings
+    public let settings: DetectionSettings
 
     /// Every tracked pair's state, keyed by the pair.
-    private(set) var pairs: [DetectionPairKey: DetectionPairState] = [:]
+    public private(set) var pairs: [DetectionPairKey: DetectionPairState] = [:]
     /// The observers the last roster refresh found, in evaluation order.
-    private(set) var observers: [PerceptionObserver] = []
+    public private(set) var observers: [PerceptionObserver] = []
     /// The targets the last roster refresh found, in evaluation order.
-    private(set) var targets: [PerceptionTarget] = []
+    public private(set) var targets: [PerceptionTarget] = []
     /// Pairs the cap dropped at the last roster refresh.
-    private(set) var droppedPairCount = 0
+    public private(set) var droppedPairCount = 0
     /// Line-of-sight rays cast since construction, cumulative. The pass's cost
     /// in the one unit that matters.
-    private(set) var lineOfSightQueryCount = 0
+    public private(set) var lineOfSightQueryCount = 0
     /// Whole fixed steps run since construction.
-    private(set) var stepCount = 0
+    public private(set) var stepCount = 0
 
     private weak var world: (any PerceptionWorld)?
     private var accumulator: Double = 0
@@ -92,13 +92,13 @@ final class PerceptionRuntime {
     /// how much simulated time to charge it.
     private var lastEvaluatedStep: [DetectionPairKey: Int] = [:]
 
-    init(settings: DetectionSettings, world: (any PerceptionWorld)? = nil) {
+    public init(settings: DetectionSettings, world: (any PerceptionWorld)? = nil) {
         self.settings = settings
         self.world = world
     }
 
     /// Attaches (or detaches) the world the pass runs over.
-    func attach(world: (any PerceptionWorld)?) {
+    public func attach(world: (any PerceptionWorld)?) {
         self.world = world
         reset()
     }
@@ -106,13 +106,13 @@ final class PerceptionRuntime {
     // MARK: - Reading
 
     /// `observer`'s regard for `target`, unaware when the pair is not tracked.
-    func state(observer: ReferenceKey, target: ReferenceKey) -> DetectionPairState {
+    public func state(observer: ReferenceKey, target: ReferenceKey) -> DetectionPairState {
         pairs[DetectionPairKey(observer: observer, target: target)] ?? .unaware
     }
 
     /// The strongest state any observer holds about `target`, which is what a
     /// "am I detected?" question means from the target's side.
-    func strongestState(of target: ReferenceKey) -> DetectionState {
+    public func strongestState(of target: ReferenceKey) -> DetectionState {
         var strongest = DetectionState.unaware
         for (key, pair) in pairs where key.target == target {
             if pair.state == .detected {
@@ -132,7 +132,7 @@ final class PerceptionRuntime {
     /// an observer that is merely suspicious has not seen anything, and the
     /// order is sorted rather than dictionary order so two runs over the same
     /// recorded inputs name the same witnesses in the same sequence.
-    func observersDetecting(_ target: ReferenceKey) -> [ReferenceKey] {
+    public func observersDetecting(_ target: ReferenceKey) -> [ReferenceKey] {
         pairs
             .filter { $0.key.target == target && $0.value.state == .detected }
             .map(\.key.observer)
@@ -149,7 +149,7 @@ final class PerceptionRuntime {
     ///
     /// - Returns: how many whole steps ran.
     @discardableResult
-    func advance(by delta: Float) -> Int {
+    public func advance(by delta: Float) -> Int {
         guard delta.isFinite, delta > 0, let world else { return 0 }
         accumulator += Double(delta)
         guard accumulator >= Double(Self.fixedStepSeconds) else { return 0 }
@@ -171,7 +171,7 @@ final class PerceptionRuntime {
     }
 
     /// Forgets every tracked pair and every counter.
-    func reset() {
+    public func reset() {
         pairs = [:]
         observers = []
         targets = []

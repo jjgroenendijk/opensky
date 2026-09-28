@@ -41,7 +41,7 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// Why an arrest outcome could not run.
-nonisolated enum ArrestRefusal: Error, Equatable, Sendable {
+nonisolated public enum ArrestRefusal: Error, Equatable, Sendable {
     /// The player owes this faction nothing.
     case noBounty
     /// The player's gold does not cover the bounty.
@@ -49,37 +49,37 @@ nonisolated enum ArrestRefusal: Error, Equatable, Sendable {
 }
 
 /// What one arrest outcome did.
-nonisolated struct ArrestSettlement: Equatable, Sendable {
-    let faction: ReferenceKey
+nonisolated public struct ArrestSettlement: Equatable, Sendable {
+    public let faction: ReferenceKey
     /// The bounty that was cleared.
-    let bounty: Int32
+    public let bounty: Int32
     /// Gold taken from the player; zero for a jail sentence.
-    let goldPaid: Int32
+    public let goldPaid: Int32
     /// Stolen stacks that went to the evidence chest.
-    let confiscated: [InventoryStack]
+    public let confiscated: [InventoryStack]
     /// Where they went, or nil when nothing moved.
-    let evidenceChest: ReferenceKey?
+    public let evidenceChest: ReferenceKey?
     /// Days served; zero for a paid fine.
-    let sentenceDays: Int
+    public let sentenceDays: Int
     /// Where the player should stand afterwards: the faction's exterior jail
     /// marker for a sentence or a pay-and-go-to-jail, nil otherwise.
-    let releaseMarker: ReferenceKey?
+    public let releaseMarker: ReferenceKey?
 }
 
 /// The two ways an arrest ends, over the crime ledger and the inventory.
 @MainActor
-struct CrimeArrest {
+public struct CrimeArrest {
     /// Gold of bounty per day of sentence, and the longest sentence, from
     /// UESP's "maximum sentence is seven days ... for any bounty 700 or higher".
-    static let goldPerSentenceDay: Int32 = 100
-    static let maximumSentenceDays = 7
+    public static let goldPerSentenceDay: Int32 = 100
+    public static let maximumSentenceDays = 7
 
-    let crime: CrimeRuntime
-    let inventory: InventoryRuntime
+    public let crime: CrimeRuntime
+    public let inventory: InventoryRuntime
 
     /// Days served for `bounty`: one per hundred gold, at least one, at most
     /// seven.
-    static func sentenceDays(bounty: Int32) -> Int {
+    public static func sentenceDays(bounty: Int32) -> Int {
         guard bounty > 0 else { return 0 }
         return min(maximumSentenceDays, max(1, Int(bounty / goldPerSentenceDay)))
     }
@@ -87,19 +87,19 @@ struct CrimeArrest {
     /// `Faction.CanPayCrimeGold`: whether the player carries enough gold to
     /// clear the bounty. False when there is no bounty, because there is
     /// nothing to pay.
-    func canPay(_ faction: ReferenceKey) -> Bool {
+    public func canPay(_ faction: ReferenceKey) -> Bool {
         let owed = crime.crimeGold(of: faction)
         return owed > 0 && inventory.goldCount(of: .player) >= owed
     }
 
     /// The faction's evidence chest (`STOL`) as a runtime identity.
-    func evidenceChest(of faction: ReferenceKey) -> ReferenceKey? {
+    public func evidenceChest(of faction: ReferenceKey) -> ReferenceKey? {
         guard let resolved = crime.factions.faction(key: faction) else { return nil }
         return crime.factions.linkKey(resolved.faction.evidenceChest, of: resolved)
     }
 
     /// The faction's exterior jail marker (`JAIL`) as a runtime identity.
-    func releaseMarker(of faction: ReferenceKey) -> ReferenceKey? {
+    public func releaseMarker(of faction: ReferenceKey) -> ReferenceKey? {
         guard let resolved = crime.factions.faction(key: faction) else { return nil }
         return crime.factions.linkKey(resolved.faction.exteriorJailMarker, of: resolved)
     }
@@ -113,7 +113,7 @@ struct CrimeArrest {
     ///   has nowhere to put them, and deleting items is not what seizing means.
     /// - Throws: `ArrestRefusal`, writing nothing.
     @discardableResult
-    func pay(
+    public func pay(
         _ faction: ReferenceKey,
         removeStolen: Bool = true,
         goToJail: Bool = false,
@@ -144,7 +144,7 @@ struct CrimeArrest {
     ///
     /// - Throws: `ArrestRefusal.noBounty`, writing nothing.
     @discardableResult
-    func jail(
+    public func jail(
         _ faction: ReferenceKey,
         evidence: InventoryHolder?
     ) throws(ArrestRefusal) -> ArrestSettlement {
@@ -169,12 +169,17 @@ struct CrimeArrest {
     /// in `Skyrim.esm` places `EvidenceChestStolenGoods` or
     /// `EvidenceChestPlayerInventory`, neither of which authors a `CNTO`.
     /// Recorded in docs/engine/guard-response.md.
-    func unresidentEvidence(of faction: ReferenceKey) -> InventoryHolder? {
+    public func unresidentEvidence(of faction: ReferenceKey) -> InventoryHolder? {
         evidenceChest(of: faction).map { InventoryHolder(key: $0, owner: .generated) }
     }
 
     private func confiscate(into evidence: InventoryHolder?) -> [InventoryStack] {
         guard let evidence else { return [] }
         return (try? inventory.confiscateStolen(from: .player, to: evidence)) ?? []
+    }
+
+    public init(crime: CrimeRuntime, inventory: InventoryRuntime) {
+        self.crime = crime
+        self.inventory = inventory
     }
 }

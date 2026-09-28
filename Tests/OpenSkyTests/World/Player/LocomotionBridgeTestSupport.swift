@@ -2,7 +2,7 @@
 // graph, the step state, and the controller driving helpers. Split out of
 // `LocomotionBridgeTests` so both files stay inside the lint type-length cap.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

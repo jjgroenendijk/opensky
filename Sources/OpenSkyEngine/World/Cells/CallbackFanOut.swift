@@ -19,22 +19,22 @@ import Foundation
 /// Use a tuple `Value` for a callback that carries several arguments. Issue
 /// #172 reuses this for `CellStreamer.onInteraction` when Papyrus subscribes
 /// beside the world sound director.
-final class CallbackFanOut<Value> {
+public final class CallbackFanOut<Value> {
     private var handlers: [(Value) -> Void] = []
 
     /// How many handlers are registered. Tests assert on it; the engine does
     /// not branch on it.
-    var handlerCount: Int {
+    public var handlerCount: Int {
         handlers.count
     }
 
     /// Appends a handler. Registration order is delivery order.
-    func add(_ handler: @escaping (Value) -> Void) {
+    public func add(_ handler: @escaping (Value) -> Void) {
         handlers.append(handler)
     }
 
     /// Delivers `value` to every handler, in registration order.
-    func callAsFunction(_ value: Value) {
+    public func callAsFunction(_ value: Value) {
         for handler in handlers {
             handler(value)
         }

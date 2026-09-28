@@ -11,22 +11,22 @@ import QuartzCore
 /// reference mark to the current time, so resuming after any pause length yields
 /// a single frame of delta, never the whole paused span. Value type: each timed
 /// subsystem owns its own clock.
-nonisolated struct FrameSimClock {
+nonisolated public struct FrameSimClock: Sendable {
     /// Hard cap on a single delta, in seconds. A breakpoint, the first frame
     /// after resume, or an app-nap wake must not advance the sim by the whole
     /// elapsed gap.
-    var maxDelta: Float
+    public var maxDelta: Float
 
     private var lastTick: CFTimeInterval?
 
-    init(maxDelta: Float = 0.1) {
+    public init(maxDelta: Float = 0.1) {
         self.maxDelta = maxDelta
     }
 
     /// Records `now` as the newest tick and returns the delta to feed the sim.
     /// The first tick (no prior mark) and any paused tick return zero, but both
     /// still advance the mark so the next unpaused tick measures one frame.
-    mutating func advance(to now: CFTimeInterval, paused: Bool) -> Float {
+    public mutating func advance(to now: CFTimeInterval, paused: Bool) -> Float {
         defer { lastTick = now }
         guard let lastTick, !paused else { return 0 }
         return Float(min(now - lastTick, TimeInterval(maxDelta)))
@@ -34,7 +34,7 @@ nonisolated struct FrameSimClock {
 
     /// Forgets the reference mark so the next `advance` returns zero. Used when a
     /// scene swap or camera reseed should not carry a stale delta forward.
-    mutating func reset() {
+    public mutating func reset() {
         lastTick = nil
     }
 }

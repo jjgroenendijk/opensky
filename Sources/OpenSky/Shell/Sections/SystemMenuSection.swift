@@ -4,6 +4,7 @@
 // diverge from live input.
 
 import AppKit
+import OpenSkyEngine
 
 final class SystemMenuSection: PanelSectionViewController {
     weak var provider: (any SystemMenuControlProviding)? {

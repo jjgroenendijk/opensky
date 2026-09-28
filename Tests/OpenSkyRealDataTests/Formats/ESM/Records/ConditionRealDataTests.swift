@@ -16,7 +16,7 @@
 // Core/wbDefinitionsTES5.pas `wbCTDA` (line 6889).
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

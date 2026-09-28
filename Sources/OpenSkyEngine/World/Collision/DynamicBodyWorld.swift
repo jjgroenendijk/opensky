@@ -23,40 +23,58 @@ import OpenSkyFormats
 import simd
 
 /// A body a cell build produced, before the runtime gives it a pose.
-nonisolated struct DynamicBodyPlacement: Sendable {
-    let key: ReferenceKey
-    let reference: FormID
-    let definition: DynamicBodyDefinition
+nonisolated public struct DynamicBodyPlacement: Sendable {
+    public let key: ReferenceKey
+    public let reference: FormID
+    public let definition: DynamicBodyDefinition
     /// The reference's own origin, from its placement or its transform
     /// override.
-    let originPosition: SIMD3<Float>
-    let orientation: simd_quatf
+    public let originPosition: SIMD3<Float>
+    public let orientation: simd_quatf
 }
 
 /// Counts one refresh of the physics panel shows (item 15.9 ships the panel;
 /// this is the value it reads).
-nonisolated struct DynamicBodyStatsSnapshot: Equatable, Sendable {
-    var bodyCount = 0
-    var activeBodyCount = 0
-    var sleepingBodyCount = 0
-    var contactCount = 0
-    var substepCount = 0
-    var recoveredBodyCount = 0
+nonisolated public struct DynamicBodyStatsSnapshot: Equatable, Sendable {
+    public var bodyCount = 0
+    public var activeBodyCount = 0
+    public var sleepingBodyCount = 0
+    public var contactCount = 0
+    public var substepCount = 0
+    public var recoveredBodyCount = 0
     /// True while stepping is suspended by the panel's freeze control.
-    var isFrozen = false
+    public var isFrozen = false
+
+    public init(
+        bodyCount: Int = 0,
+        activeBodyCount: Int = 0,
+        sleepingBodyCount: Int = 0,
+        contactCount: Int = 0,
+        substepCount: Int = 0,
+        recoveredBodyCount: Int = 0,
+        isFrozen: Bool = false
+    ) {
+        self.bodyCount = bodyCount
+        self.activeBodyCount = activeBodyCount
+        self.sleepingBodyCount = sleepingBodyCount
+        self.contactCount = contactCount
+        self.substepCount = substepCount
+        self.recoveredBodyCount = recoveredBodyCount
+        self.isFrozen = isFrozen
+    }
 }
 
-nonisolated struct SettledDynamicBodyTransform: Sendable {
-    let key: ReferenceKey
-    let transform: ReferenceTransformOverride
-    let placingCell: CellSceneLocation
+nonisolated public struct SettledDynamicBodyTransform: Sendable {
+    public let key: ReferenceKey
+    public let transform: ReferenceTransformOverride
+    public let placingCell: CellSceneLocation
 }
 
 /// The panel seam for `World > Combat & Physics` (issue #193 scope point 7).
 /// Specified here, consumed by item 15.9 — the same shape as every other panel
 /// bridge: one `Equatable` snapshot out, plain actions in.
 @MainActor
-protocol PhysicsControlProviding: AnyObject {
+public protocol PhysicsControlProviding: AnyObject {
     var dynamicBodyStatsSnapshot: DynamicBodyStatsSnapshot { get }
     /// Suspends and resumes integration without discarding the bodies, so a
     /// developer can inspect a scene mid-fall.
@@ -66,9 +84,9 @@ protocol PhysicsControlProviding: AnyObject {
     func resetDynamicBodies()
 }
 
-nonisolated struct DynamicBodyWorld {
+nonisolated public struct DynamicBodyWorld: Sendable {
     /// Bodies in ascending `ReferenceKey` order — the solver's iteration order.
-    private(set) var bodies: [DynamicBody] = []
+    public private(set) var bodies: [DynamicBody] = []
     /// Pose each body was placed at, for the panel's reset action.
     private var placedPoses: [ReferenceKey: (position: SIMD3<Float>, orientation: simd_quatf)] = [:]
     /// Resting poses observed since the last drain, for persistence.
@@ -81,26 +99,26 @@ nonisolated struct DynamicBodyWorld {
     /// per cell. A rebuilt cell arrives with a fresh sequence and so hands its
     /// placements over again; an unchanged one is skipped. Kept here rather than
     /// on the streamer because it describes what this registry holds.
-    private(set) var installedCells: [CellSceneLocation: UInt64] = [:]
+    public private(set) var installedCells: [CellSceneLocation: UInt64] = [:]
     /// Capsule bottom at the previous shove, for deriving the player's velocity
     /// from how far it walked. Nil before the first walk-mode frame.
-    var lastPushFeetPosition: SIMD3<Float>?
-    var isFrozen = false
-    private(set) var lastStats = DynamicStepStats()
+    public var lastPushFeetPosition: SIMD3<Float>?
+    public var isFrozen = false
+    public private(set) var lastStats = DynamicStepStats()
 
-    var bodyCount: Int {
+    public var bodyCount: Int {
         bodies.count
     }
 
-    var activeBodyCount: Int {
+    public var activeBodyCount: Int {
         bodies.count(where: { !$0.isSleeping })
     }
 
-    var sleepingBodyCount: Int {
+    public var sleepingBodyCount: Int {
         bodies.count(where: \.isSleeping)
     }
 
-    var statsSnapshot: DynamicBodyStatsSnapshot {
+    public var statsSnapshot: DynamicBodyStatsSnapshot {
         DynamicBodyStatsSnapshot(
             bodyCount: bodies.count,
             activeBodyCount: activeBodyCount,
@@ -118,7 +136,7 @@ nonisolated struct DynamicBodyWorld {
     /// does. A body already registered under the same key keeps its live pose
     /// and velocity: a rebuild triggered by an unrelated runtime-state write
     /// must not teleport a crate back to where the plugin put it.
-    mutating func setCell(
+    public mutating func setCell(
         _ location: CellSceneLocation,
         placements: [DynamicBodyPlacement],
         sequence: UInt64 = 0
@@ -153,7 +171,7 @@ nonisolated struct DynamicBodyWorld {
 
     /// Drops every body currently occupying a departing cell. A body that was
     /// placed there but crossed into a resident neighbour keeps simulating.
-    mutating func removeCell(_ location: CellSceneLocation) {
+    public mutating func removeCell(_ location: CellSceneLocation) {
         let departing = bodies.filter { $0.occupiedCell == location }
         for body in departing {
             placedPoses.removeValue(forKey: body.key)
@@ -166,7 +184,7 @@ nonisolated struct DynamicBodyWorld {
     /// Retires bodies that crossed beyond the resident composition. Unlike
     /// `removeCell`, this also covers an occupied cell that was never loaded and
     /// therefore never appears in `installedCells`.
-    mutating func retainBodies(occupying resident: Set<CellSceneLocation>) {
+    public mutating func retainBodies(occupying resident: Set<CellSceneLocation>) {
         let departing = bodies.filter { !resident.contains($0.occupiedCell) }
         for body in departing {
             placedPoses.removeValue(forKey: body.key)
@@ -175,7 +193,7 @@ nonisolated struct DynamicBodyWorld {
         bodies.removeAll { !resident.contains($0.occupiedCell) }
     }
 
-    mutating func removeAll() {
+    public mutating func removeAll() {
         bodies.removeAll()
         placedPoses.removeAll()
         wasSleeping.removeAll()
@@ -185,7 +203,7 @@ nonisolated struct DynamicBodyWorld {
 
     /// Registers one body outside a cell build — the path a dropped inventory
     /// item takes, which has a spawn state but no placed reference yet.
-    mutating func add(_ placement: DynamicBodyPlacement, in location: CellSceneLocation) {
+    public mutating func add(_ placement: DynamicBodyPlacement, in location: CellSceneLocation) {
         bodies.removeAll { $0.key == placement.key }
         bodies.append(DynamicBody(
             key: placement.key,
@@ -217,7 +235,7 @@ nonisolated struct DynamicBodyWorld {
     ///
     /// - Returns: how many were put to sleep.
     @discardableResult
-    mutating func sleepExcessBodies(over limit: Int) -> Int {
+    public mutating func sleepExcessBodies(over limit: Int) -> Int {
         let awake = bodies.indices.filter { !bodies[$0].isSleeping }
         let excess = awake.count - max(0, limit)
         guard excess > 0 else { return 0 }
@@ -230,7 +248,7 @@ nonisolated struct DynamicBodyWorld {
     }
 
     /// Returns every body to its placed pose, at rest and awake.
-    mutating func reset() {
+    public mutating func reset() {
         for index in bodies.indices {
             guard let pose = placedPoses[bodies[index].key] else { continue }
             bodies[index] = DynamicBody(
@@ -256,7 +274,7 @@ nonisolated struct DynamicBodyWorld {
     /// and a frame longer than `WalkController.maximumFrameTime` contributes
     /// only that much, exactly as the player capsule's clock does.
     @discardableResult
-    mutating func advance(by frameTime: Float, world: DynamicStepWorld) -> DynamicStepStats {
+    public mutating func advance(by frameTime: Float, world: DynamicStepWorld) -> DynamicStepStats {
         guard !isFrozen, !bodies.isEmpty else {
             lastStats = DynamicStepStats(
                 activeBodyCount: activeBodyCount,
@@ -309,7 +327,7 @@ nonisolated struct DynamicBodyWorld {
     /// Hands over the resting transforms recorded since the last call, so the
     /// caller can write them to `WorldStateStore` under the `.transform`
     /// component. Ordered by key, because a journal has to be reproducible.
-    mutating func drainSettledTransforms() -> [SettledDynamicBodyTransform] {
+    public mutating func drainSettledTransforms() -> [SettledDynamicBodyTransform] {
         let drained = settled.sorted { $0.key < $1.key }
             .compactMap { key, transform in
                 bodies.first(where: { $0.key == key }).map {
@@ -327,7 +345,7 @@ nonisolated struct DynamicBodyWorld {
     /// Every body's shapes at their current pose, for the collision query the
     /// player capsule and the interaction ray run. Bodies are visited in key
     /// order so the candidate list is stable.
-    func placedShapes(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
+    public func placedShapes(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
         bodies.filter { $0.worldBounds.overlaps(bounds) }
             .flatMap { $0.placedShapes() }
             .filter { $0.bounds.overlaps(bounds) }
@@ -341,7 +359,7 @@ nonisolated struct DynamicBodyWorld {
     /// renderer an empty map and costs it nothing. Rebuilt per frame rather
     /// than cached: fifty-odd entries is a few microseconds, and a cache here
     /// would have to be invalidated by every lifecycle path in this type.
-    var instanceDeltas: [UInt32: float4x4] {
+    public var instanceDeltas: [UInt32: float4x4] {
         var deltas: [UInt32: float4x4] = [:]
         for body in bodies {
             guard let placed = placedPoses[body.key] else { continue }
@@ -356,7 +374,7 @@ nonisolated struct DynamicBodyWorld {
 
     /// Current exterior draw owner by REFR FormID. The placing cell remains
     /// separate so persistence can rebuild the authoritative reference later.
-    var exteriorDrawOwnership: [UInt32: CellCoordinate] {
+    public var exteriorDrawOwnership: [UInt32: CellCoordinate] {
         var ownership: [UInt32: CellCoordinate] = [:]
         for body in bodies {
             guard case let .exterior(coordinate) = body.occupiedCell else { continue }
@@ -365,12 +383,12 @@ nonisolated struct DynamicBodyWorld {
         return ownership
     }
 
-    func body(for key: ReferenceKey) -> DynamicBody? {
+    public func body(for key: ReferenceKey) -> DynamicBody? {
         bodies.first { $0.key == key }
     }
 
     /// Applies an impulse to one body, waking it.
-    mutating func applyImpulse(
+    public mutating func applyImpulse(
         _ impulse: SIMD3<Float>,
         at point: SIMD3<Float>,
         to key: ReferenceKey
@@ -389,7 +407,7 @@ nonisolated struct DynamicBodyWorld {
     /// horizontal speed and the body's mass. That makes a light bowl skitter
     /// and a heavy crate barely shift, which is the behaviour the shove is for,
     /// without letting a walking player inject unbounded energy.
-    mutating func push(
+    public mutating func push(
         capsule: PlayerCapsule,
         feetPosition: SIMD3<Float>,
         velocity: SIMD3<Float>
@@ -425,5 +443,5 @@ nonisolated struct DynamicBodyWorld {
     /// How much of the player's momentum a shove transfers. Below one because a
     /// walking actor braces rather than transferring its whole stride, and
     /// because a value of one makes light clutter fly.
-    static let pushEfficiency: Float = 0.35
+    public static let pushEfficiency: Float = 0.35
 }

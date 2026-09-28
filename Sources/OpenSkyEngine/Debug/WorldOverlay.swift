@@ -5,57 +5,57 @@
 import OpenSkyShaderTypes
 import simd
 
-nonisolated struct WorldOverlayPoint: Equatable, Sendable {
-    let position: SIMD3<Float>
-    let color: SIMD4<Float>
+nonisolated public struct WorldOverlayPoint: Equatable, Sendable {
+    public let position: SIMD3<Float>
+    public let color: SIMD4<Float>
 }
 
-nonisolated struct WorldOverlayTriangle: Equatable, Sendable {
-    let first: WorldOverlayPoint
-    let second: WorldOverlayPoint
-    let third: WorldOverlayPoint
+nonisolated public struct WorldOverlayTriangle: Equatable, Sendable {
+    public let first: WorldOverlayPoint
+    public let second: WorldOverlayPoint
+    public let third: WorldOverlayPoint
 }
 
-nonisolated struct WorldOverlayLineSegment: Equatable, Sendable {
-    let first: WorldOverlayPoint
-    let second: WorldOverlayPoint
+nonisolated public struct WorldOverlayLineSegment: Equatable, Sendable {
+    public let first: WorldOverlayPoint
+    public let second: WorldOverlayPoint
 }
 
-nonisolated enum WorldOverlayPrimitive: Equatable, Sendable {
+nonisolated public enum WorldOverlayPrimitive: Equatable, Sendable {
     case triangle(WorldOverlayTriangle)
     case lineSegment(WorldOverlayLineSegment)
 }
 
 /// GPU-ready result after applying the hard primitive budget. Triangle
 /// vertices precede line vertices so one buffer supports one draw per topology.
-nonisolated struct WorldOverlayBudgetResult {
-    let vertices: [OverlayVertex]
-    let submittedPrimitiveCount: Int
-    let triangleCount: Int
-    let lineSegmentCount: Int
-    let droppedPrimitiveCount: Int
+nonisolated public struct WorldOverlayBudgetResult: Sendable {
+    public let vertices: [OverlayVertex]
+    public let submittedPrimitiveCount: Int
+    public let triangleCount: Int
+    public let lineSegmentCount: Int
+    public let droppedPrimitiveCount: Int
 
-    var drawnPrimitiveCount: Int {
+    public var drawnPrimitiveCount: Int {
         triangleCount + lineSegmentCount
     }
 
-    var triangleVertexCount: Int {
+    public var triangleVertexCount: Int {
         triangleCount * 3
     }
 
-    var lineVertexCount: Int {
+    public var lineVertexCount: Int {
         lineSegmentCount * 2
     }
 }
 
-nonisolated struct WorldOverlayDrawList {
-    private(set) var primitives: [WorldOverlayPrimitive] = []
+nonisolated public struct WorldOverlayDrawList: Sendable {
+    public private(set) var primitives: [WorldOverlayPrimitive] = []
 
-    var primitiveCount: Int {
+    public var primitiveCount: Int {
         primitives.count
     }
 
-    mutating func addTriangle(
+    public mutating func addTriangle(
         _ first: WorldOverlayPoint,
         _ second: WorldOverlayPoint,
         _ third: WorldOverlayPoint
@@ -67,7 +67,7 @@ nonisolated struct WorldOverlayDrawList {
         )))
     }
 
-    mutating func addTriangle(
+    public mutating func addTriangle(
         _ first: SIMD3<Float>,
         _ second: SIMD3<Float>,
         _ third: SIMD3<Float>,
@@ -80,7 +80,7 @@ nonisolated struct WorldOverlayDrawList {
         )
     }
 
-    mutating func addLineSegment(
+    public mutating func addLineSegment(
         _ first: WorldOverlayPoint,
         _ second: WorldOverlayPoint
     ) {
@@ -90,7 +90,7 @@ nonisolated struct WorldOverlayDrawList {
         )))
     }
 
-    mutating func addLineSegment(
+    public mutating func addLineSegment(
         _ first: SIMD3<Float>,
         _ second: SIMD3<Float>,
         color: SIMD4<Float>
@@ -101,7 +101,7 @@ nonisolated struct WorldOverlayDrawList {
         )
     }
 
-    mutating func addPolyline(_ points: [SIMD3<Float>], color: SIMD4<Float>) {
+    public mutating func addPolyline(_ points: [SIMD3<Float>], color: SIMD4<Float>) {
         guard points.count > 1 else { return }
         for index in 1 ..< points.count {
             addLineSegment(points[index - 1], points[index], color: color)
@@ -110,7 +110,7 @@ nonisolated struct WorldOverlayDrawList {
 
     /// Keeps the first `maxPrimitives` in submission order, then groups their
     /// vertices by topology for the two GPU draws. Negative caps keep none.
-    func budgeted(maxPrimitives: Int) -> WorldOverlayBudgetResult {
+    public func budgeted(maxPrimitives: Int) -> WorldOverlayBudgetResult {
         let keptCount = min(max(maxPrimitives, 0), primitives.count)
         var triangleVertices: [OverlayVertex] = []
         var lineVertices: [OverlayVertex] = []
@@ -145,15 +145,15 @@ nonisolated struct WorldOverlayDrawList {
 
 /// Renderer-owned switches exposed to a source while it builds one frame.
 /// Future sources can ignore these and gate on their own subsystem state.
-nonisolated struct WorldOverlayFrameContext: Equatable, Sendable {
-    let navmeshOverlayEnabled: Bool
-    let pathOverlayEnabled: Bool
+nonisolated public struct WorldOverlayFrameContext: Equatable, Sendable {
+    public let navmeshOverlayEnabled: Bool
+    public let pathOverlayEnabled: Bool
     /// Perception view cones and investigate positions (issue #202).
-    let detectionOverlayEnabled: Bool
+    public let detectionOverlayEnabled: Bool
     /// The conversation camera's pivot, sightline and eye (issue #427).
-    let dialogueCameraOverlayEnabled: Bool
+    public let dialogueCameraOverlayEnabled: Bool
 
-    init(
+    public init(
         navmeshOverlayEnabled: Bool = false,
         pathOverlayEnabled: Bool = false,
         detectionOverlayEnabled: Bool = false,
@@ -169,8 +169,8 @@ nonisolated struct WorldOverlayFrameContext: Equatable, Sendable {
 /// Stable-order registry. Re-registering an identifier replaces its closure
 /// in place, which lets a subsystem refresh ownership without changing draw
 /// order or growing the registry.
-final class WorldOverlaySourceRegistry {
-    typealias Source = (WorldOverlayFrameContext, inout WorldOverlayDrawList) -> Void
+public final class WorldOverlaySourceRegistry {
+    public typealias Source = (WorldOverlayFrameContext, inout WorldOverlayDrawList) -> Void
 
     private struct Entry {
         let identifier: String
@@ -179,11 +179,11 @@ final class WorldOverlaySourceRegistry {
 
     private var entries: [Entry] = []
 
-    var sourceCount: Int {
+    public var sourceCount: Int {
         entries.count
     }
 
-    func register(identifier: String, source: @escaping Source) {
+    public func register(identifier: String, source: @escaping Source) {
         if let index = entries.firstIndex(where: { $0.identifier == identifier }) {
             entries[index].source = source
         } else {
@@ -191,11 +191,11 @@ final class WorldOverlaySourceRegistry {
         }
     }
 
-    func remove(identifier: String) {
+    public func remove(identifier: String) {
         entries.removeAll { $0.identifier == identifier }
     }
 
-    func makeDrawList(context: WorldOverlayFrameContext) -> WorldOverlayDrawList {
+    public func makeDrawList(context: WorldOverlayFrameContext) -> WorldOverlayDrawList {
         var list = WorldOverlayDrawList()
         for entry in entries {
             entry.source(context, &list)

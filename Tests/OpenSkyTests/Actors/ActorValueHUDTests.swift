@@ -7,7 +7,7 @@
 // nothing about the movie side changed here.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 @MainActor

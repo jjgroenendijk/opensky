@@ -9,6 +9,7 @@
 // than one that says why it did nothing.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension GameViewController: ContainerMenuControlProviding {

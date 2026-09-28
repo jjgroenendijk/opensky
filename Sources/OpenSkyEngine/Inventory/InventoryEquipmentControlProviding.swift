@@ -28,12 +28,12 @@ import OpenSkyFormats
 /// barter session both act on. A merchant is a container, so nominating one
 /// under `World > Container Menu > Merchant` and opening it makes this the
 /// merchant's stock too.
-nonisolated enum InventoryGrantTarget: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum InventoryGrantTarget: String, Equatable, Sendable, CaseIterable {
     case player
     case openContainer
 
     /// How the control and the readout name it.
-    var label: String {
+    public var label: String {
         switch self {
         case .player: "Player"
         case .openContainer: "Open container"
@@ -48,28 +48,28 @@ nonisolated enum InventoryGrantTarget: String, Equatable, Sendable, CaseIterable
 /// this states the enforced answer rather than the raw fields alone. It is on
 /// the gate panel because "taking this is theft" is a fact the loop otherwise
 /// moves through silently.
-nonisolated struct ReferenceOwnershipReadout: Equatable, Sendable {
+nonisolated public struct ReferenceOwnershipReadout: Equatable, Sendable {
     /// How the reference is named in the world, matching the HUD prompt.
-    let name: String
-    let reference: FormID
+    public let name: String
+    public let reference: FormID
     /// `XOWN` — the owning NPC_ or FACT, nil when the reference itself is
     /// unowned. A reference with none may still be owned through its cell,
     /// which `isTheft` accounts for and this field does not.
-    let owner: FormID?
+    public let owner: FormID?
     /// `XRNK` — the faction rank required to use it freely. Meaningful only
     /// when `owner` is a FACT; nil when the field is absent.
-    let factionRank: Int32?
+    public let factionRank: Int32?
     /// Whether taking it would actually be theft for the player right now
     /// (issue #504): the `OwnershipVerdict` over the reference's own `XOWN`,
     /// the cell's, and the player's memberships. Not the same as `isOwned` —
     /// a reference in an owned shop carries no `XOWN` and is still theft, and
     /// a faction-owned chest the player ranks high enough in is not.
-    let isTheft: Bool
+    public let isTheft: Bool
     /// What taking it would add to the bounty, in gold. Zero when the take is
     /// no crime, and also when the place answers to no crime faction.
-    let bounty: Int32
+    public let bounty: Int32
 
-    init(
+    public init(
         name: String,
         reference: FormID,
         owner: FormID?,
@@ -86,64 +86,76 @@ nonisolated struct ReferenceOwnershipReadout: Equatable, Sendable {
     }
 
     /// Whether the reference record itself names an owner.
-    var isOwned: Bool {
+    public var isOwned: Bool {
         owner != nil
     }
 }
 
 /// What one actor is wearing, and what its appearance resolution left out.
-nonisolated struct EquipInspectReadout: Equatable, Sendable {
+nonisolated public struct EquipInspectReadout: Equatable, Sendable {
     /// The holder's display name, or nil when nothing resolves the selected
     /// target — no player inventory, or no resident actor.
-    let name: String?
+    public let name: String?
     /// The equipped set, with the slots and hands each piece occupies.
-    let equipped: [EquippedItemReadout]
+    public let equipped: [EquippedItemReadout]
     /// `AppearanceSkip` lines for this actor from the last build of its cell,
     /// already stripped of the "ACHR <id>: " prefix. Always empty for the
     /// player, who has no rendered body until M14.
-    let appearanceSkips: [String]
+    public let appearanceSkips: [String]
     /// True when the actor's cell rendered it from its runtime equipped set
     /// rather than from the plugin default outfit. False for the player.
-    let usesRuntimeEquipment: Bool
+    public let usesRuntimeEquipment: Bool
 
-    static let unresolved = EquipInspectReadout(
+    public static let unresolved = EquipInspectReadout(
         name: nil, equipped: [], appearanceSkips: [], usesRuntimeEquipment: false
     )
+
+    public init(
+        name: String?,
+        equipped: [EquippedItemReadout],
+        appearanceSkips: [String],
+        usesRuntimeEquipment: Bool
+    ) {
+        self.name = name
+        self.equipped = equipped
+        self.appearanceSkips = appearanceSkips
+        self.usesRuntimeEquipment = usesRuntimeEquipment
+    }
 }
 
 /// One observation of everything the gate destination shows.
-nonisolated struct InventoryEquipmentSnapshot: Equatable, Sendable {
+nonisolated public struct InventoryEquipmentSnapshot: Equatable, Sendable {
     /// False when no inventory runtime is attached — no game data, or a demo
     /// scene. Every other field is then empty and the panel says so rather
     /// than showing a convincing zero.
-    let isAvailable: Bool
+    public let isAvailable: Bool
 
     // MARK: Grants
 
     /// Whether a container session is open, so the panel can lock the
     /// open-container grant target rather than offer a grant that would be
     /// refused.
-    let hasOpenContainer: Bool
+    public let hasOpenContainer: Bool
     /// The open container's display name, nil when no session is live.
-    let openContainerName: String?
+    public let openContainerName: String?
     /// Stacks the player holds, in the component's FormID order.
-    let playerStacks: [ItemStackReadout]
-    let playerGold: Int32
-    let playerWeight: Float
+    public let playerStacks: [ItemStackReadout]
+    public let playerGold: Int32
+    public let playerWeight: Float
     /// Stacks the open container holds; empty when none is open.
-    let containerStacks: [ItemStackReadout]
-    let containerGold: Int32
+    public let containerStacks: [ItemStackReadout]
+    public let containerGold: Int32
 
     // MARK: Ownership
 
     /// The crosshair target's ownership, nil when the crosshair is on nothing.
-    let targetOwnership: ReferenceOwnershipReadout?
+    public let targetOwnership: ReferenceOwnershipReadout?
 
     // MARK: Equipment
 
     /// Which owner the equipment inspection is reading.
-    let equipTarget: EquipmentTargetSelector
-    let equipInspection: EquipInspectReadout
+    public let equipTarget: EquipmentTargetSelector
+    public let equipInspection: EquipInspectReadout
     /// What the session's resolved-enchantment cache holds and how much of it
     /// has been reused (issue #489).
     ///
@@ -151,13 +163,13 @@ nonisolated struct InventoryEquipmentSnapshot: Equatable, Sendable {
     /// the enchantment lines it feeds are read: the equipped set above names
     /// what each piece carries, and this says how many times that answer was
     /// reused rather than re-walked out of the records.
-    let enchantmentCache: EnchantmentCacheReadout
+    public let enchantmentCache: EnchantmentCacheReadout
 
     /// Human-readable result of the last grant, shown verbatim.
-    let lastActionText: String
+    public let lastActionText: String
 
     /// The reading with no runtime attached.
-    static let unavailable = InventoryEquipmentSnapshot(
+    public static let unavailable = InventoryEquipmentSnapshot(
         isAvailable: false,
         hasOpenContainer: false,
         openContainerName: nil,
@@ -172,6 +184,36 @@ nonisolated struct InventoryEquipmentSnapshot: Equatable, Sendable {
         enchantmentCache: .empty,
         lastActionText: "Inventory and equipment unavailable: no game data loaded."
     )
+
+    public init(
+        isAvailable: Bool,
+        hasOpenContainer: Bool,
+        openContainerName: String?,
+        playerStacks: [ItemStackReadout],
+        playerGold: Int32,
+        playerWeight: Float,
+        containerStacks: [ItemStackReadout],
+        containerGold: Int32,
+        targetOwnership: ReferenceOwnershipReadout?,
+        equipTarget: EquipmentTargetSelector,
+        equipInspection: EquipInspectReadout,
+        enchantmentCache: EnchantmentCacheReadout,
+        lastActionText: String
+    ) {
+        self.isAvailable = isAvailable
+        self.hasOpenContainer = hasOpenContainer
+        self.openContainerName = openContainerName
+        self.playerStacks = playerStacks
+        self.playerGold = playerGold
+        self.playerWeight = playerWeight
+        self.containerStacks = containerStacks
+        self.containerGold = containerGold
+        self.targetOwnership = targetOwnership
+        self.equipTarget = equipTarget
+        self.equipInspection = equipInspection
+        self.enchantmentCache = enchantmentCache
+        self.lastActionText = lastActionText
+    }
 }
 
 /// Live-renderer seam for the `World > Inventory & Equipment` panel.
@@ -179,7 +221,7 @@ nonisolated struct InventoryEquipmentSnapshot: Equatable, Sendable {
 /// `refocusGameView()` is deliberately absent: `HUDControlProviding` declares
 /// it and the panel reaches it through the composed `WorldControlProviders`.
 @MainActor
-protocol InventoryEquipmentControlProviding: AnyObject {
+public protocol InventoryEquipmentControlProviding: AnyObject {
     /// Which owner the equipment inspection reads. Settable because the
     /// selector is the section's only control and the snapshot has to reflect
     /// it on the next tick.

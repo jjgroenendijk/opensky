@@ -7,18 +7,18 @@
 
 import Foundation
 
-nonisolated enum TimeOfDaySettings {
+nonisolated public enum TimeOfDaySettings: Sendable {
     /// UserDefaults key holding the time-of-day hour (0-24).
-    static let defaultsKey = "TimeOfDaySetting"
+    public static let defaultsKey = "TimeOfDaySetting"
 
     /// Hour used when nothing valid is stored (Renderer.timeOfDay default).
-    static let fallback: Float = 13
+    public static let fallback: Float = 13
 
     /// Valid game-clock range in hours.
-    static let range: ClosedRange<Float> = 0 ... 24
+    public static let range: ClosedRange<Float> = 0 ... 24
 
     /// Reads the stored hour; missing/out-of-range -> fallback.
-    static func load(from defaults: UserDefaults = .standard) -> Float {
+    public static func load(from defaults: UserDefaults = .standard) -> Float {
         guard defaults.object(forKey: defaultsKey) != nil else { return fallback }
         let hour = Float(defaults.double(forKey: defaultsKey))
         guard hour.isFinite, range.contains(hour) else { return fallback }
@@ -26,13 +26,13 @@ nonisolated enum TimeOfDaySettings {
     }
 
     /// Persists the chosen hour, clamped into range.
-    static func store(_ hour: Float, to defaults: UserDefaults = .standard) {
+    public static func store(_ hour: Float, to defaults: UserDefaults = .standard) {
         let clamped = min(max(hour, range.lowerBound), range.upperBound)
         defaults.set(Double(clamped), forKey: defaultsKey)
     }
 
     /// Removes the explicit choice so subsequent launches use the fallback.
-    static func clearOverride(from defaults: UserDefaults = .standard) {
+    public static func clearOverride(from defaults: UserDefaults = .standard) {
         defaults.removeObject(forKey: defaultsKey)
     }
 }

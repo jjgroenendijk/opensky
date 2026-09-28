@@ -20,32 +20,32 @@ import simd
 /// Identity of the cell whose ambience should be playing. The streamer emits a
 /// fresh value whenever the center cell changes (exterior recenter, interior
 /// enter/exit). Pure value, Sendable; the director owns no streaming state.
-nonisolated struct AmbienceContext: Equatable, Sendable {
+nonisolated public struct AmbienceContext: Equatable, Sendable {
     /// XCLR REGN FormIDs for exterior ambience; empty for interiors.
-    let regions: [FormID]
+    public let regions: [FormID]
     /// XCAS acoustic-space FormID for interior ambience; nil for exteriors.
-    let acousticSpace: FormID?
-    let isInterior: Bool
+    public let acousticSpace: FormID?
+    public let isInterior: Bool
 
-    static let empty = AmbienceContext(regions: [], acousticSpace: nil, isInterior: false)
+    public static let empty = AmbienceContext(regions: [], acousticSpace: nil, isInterior: false)
 }
 
 /// Resolved ambient bed: the SNDR/SOUN FormIDs that should be the positional
 /// loop set for the current context. Order is preserved (record order in
 /// REGN.RDSA, then ASPC.SNAM before ASPC.RDAT borrow) so the director's diff
 /// stays deterministic.
-nonisolated struct AmbienceBed: Equatable {
-    struct Entry: Equatable {
+nonisolated public struct AmbienceBed: Equatable, Sendable {
+    public struct Entry: Equatable, Sendable {
         /// SNDR descriptor or SOUN legacy marker. The director resolves the
         /// SOUN -> SNDR hop through SoundRecordStore before playback.
-        let sound: FormID
+        public let sound: FormID
     }
 
-    let entries: [Entry]
+    public let entries: [Entry]
 
-    static let empty = AmbienceBed(entries: [])
+    public static let empty = AmbienceBed(entries: [])
 
-    static func resolve(
+    public static func resolve(
         context: AmbienceContext,
         weatherStore: WeatherStore?,
         aspcStore: AcousticSpaceStore?

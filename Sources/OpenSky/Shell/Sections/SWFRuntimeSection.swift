@@ -16,6 +16,7 @@
 // and every control talks to the engine only through `SWFLabControlProviding`.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 final class SWFRuntimeSection: PanelSectionViewController {

@@ -22,7 +22,7 @@ import OpenSkyFormats
 import simd
 import Synchronization
 
-nonisolated enum AudioEngineError: Error, Equatable {
+nonisolated public enum AudioEngineError: Error, Equatable {
     /// Playback was requested while the engine is disabled or failed to start.
     case notRunning
     /// A pcm format could not be constructed for the source's sample rate.
@@ -36,18 +36,18 @@ nonisolated enum AudioEngineError: Error, Equatable {
 /// Thread-safe projection of one main-actor source clock. RenderAnimation is a
 /// nonisolated protocol, so LipSyncPlayback reads this value instead of
 /// crossing actor isolation into WorldAudioEngine during scene traversal.
-nonisolated final class VoicePlaybackClock: @unchecked Sendable, Equatable {
+nonisolated public final class VoicePlaybackClock: @unchecked Sendable, Equatable {
     private let storedPosition = Mutex<Double?>(0)
 
-    var position: Double? {
+    public var position: Double? {
         storedPosition.withLock { $0 }
     }
 
-    func publish(_ position: Double?) {
+    public func publish(_ position: Double?) {
         storedPosition.withLock { $0 = position }
     }
 
-    static func == (lhs: VoicePlaybackClock, rhs: VoicePlaybackClock) -> Bool {
+    public static func == (lhs: VoicePlaybackClock, rhs: VoicePlaybackClock) -> Bool {
         lhs === rhs
     }
 }
@@ -56,29 +56,29 @@ nonisolated final class VoicePlaybackClock: @unchecked Sendable, Equatable {
 /// unit AudioSpace fixes). Game-authored values arrive in M9.2 from sound
 /// descriptor records; until then these are tuned only to make the World >
 /// Audio verification audible and obviously direction/distance dependent.
-nonisolated enum ProvisionalAttenuation {
+nonisolated public enum ProvisionalAttenuation: Sendable {
     /// Distance at which a source plays at full gain (~2 m).
-    static let referenceDistanceMeters: Float = 2
+    public static let referenceDistanceMeters: Float = 2
     /// Attenuation stops growing past this distance (~one exterior cell).
-    static let maximumDistanceMeters: Float = 60
-    static let rolloffFactor: Float = 1
+    public static let maximumDistanceMeters: Float = 60
+    public static let rolloffFactor: Float = 1
 }
 
 @MainActor
-final class WorldAudioEngine {
+public final class WorldAudioEngine {
     /// Concurrent-source budget. Provisional; the eviction rule is FIFO — see
     /// `makeRoomForNewSource()` in WorldAudioEngineSources.swift.
-    static let maxConcurrentSources = 8
+    public static let maxConcurrentSources = 8
     /// Sources bound to a cell farther than this (Chebyshev rings) from the
     /// listener's cell are stopped on the audio tick — cleanup when the world
     /// streams away. One ring beyond the streamer's default 5x5 residency.
-    static let cellPurgeRadius: Int32 = 3
+    public static let cellPurgeRadius: Int32 = 3
 
-    let engine = AVAudioEngine()
-    let environment = AVAudioEnvironmentNode()
-    private(set) var categoryMixers: [AudioCategory: AVAudioMixerNode] = [:]
+    public let engine = AVAudioEngine()
+    public let environment = AVAudioEnvironmentNode()
+    public private(set) var categoryMixers: [AudioCategory: AVAudioMixerNode] = [:]
     /// Serial owner of every WMADecoder and all streaming state.
-    let decodeQueue = DispatchQueue(
+    public let decodeQueue = DispatchQueue(
         label: "nl.jjgroenendijk.opensky.audio-decode",
         qos: .userInitiated
     )
@@ -86,27 +86,27 @@ final class WorldAudioEngine {
     /// Playing sources, oldest first (append order = start order, which is what
     /// the FIFO eviction walks). Written only by WorldAudioEngineSources.swift;
     /// internal rather than private(set) because that file is a satellite.
-    var sources: [ActiveAudioSource] = []
+    public var sources: [ActiveAudioSource] = []
     /// Next source id; taken only by WorldAudioEngineSources.swift.
-    var nextSourceID = 1
+    public var nextSourceID = 1
     /// Live half of the playback clock: seconds accumulated from the audio
     /// tick's paused-aware frame delta. Offline the clock reads the engine's
     /// manual-rendering sample time instead; both live in
     /// WorldAudioEngineVoice.swift, which is why this is internal.
-    var liveClockSeconds: Double = 0
+    public var liveClockSeconds: Double = 0
     /// Called with a source's id once that source has played to its end and
     /// been retired. Set by whoever needs to know a line finished — the
     /// dialogue subtitle lifecycle and the menu's auto-advance. Never fires
     /// for a source that was stopped, evicted or purged.
-    var onSourceFinished: ((Int) -> Void)?
+    public var onSourceFinished: ((Int) -> Void)?
     /// Why the graph is not running, for the panel readout. nil while healthy.
-    private(set) var unavailableReason: String?
+    public private(set) var unavailableReason: String?
     /// Listener pose in world space, kept for the snapshot's distance column.
-    private(set) var listenerWorldPosition = SIMD3<Float>.zero
+    public private(set) var listenerWorldPosition = SIMD3<Float>.zero
 
     /// Off by default: no audio engine starts (and no output device is touched)
     /// until the user enables it in World > Audio.
-    var isEnabled = false {
+    public var isEnabled = false {
         didSet {
             guard isEnabled != oldValue else { return }
             if isEnabled {
@@ -117,11 +117,11 @@ final class WorldAudioEngine {
         }
     }
 
-    var isRunning: Bool {
+    public var isRunning: Bool {
         engine.isRunning
     }
 
-    var masterVolume: Float = 1 {
+    public var masterVolume: Float = 1 {
         didSet {
             masterVolume = simd_clamp(masterVolume, 0, 1)
             engine.mainMixerNode.outputVolume = masterVolume
@@ -141,7 +141,7 @@ final class WorldAudioEngine {
     /// contributes zero gain. Mute and solo are independent filters and both
     /// must pass, so soloing a category does not unmute it: an explicitly
     /// muted category stays silent even while it is the soloed one.
-    var soloedCategory: AudioCategory? {
+    public var soloedCategory: AudioCategory? {
         didSet {
             guard soloedCategory != oldValue else { return }
             applyCategoryGains()
@@ -152,27 +152,27 @@ final class WorldAudioEngine {
     /// nil and renders to the output device.
     private let manualRenderingFormat: AVAudioFormat?
 
-    init(manualRenderingFormat: AVAudioFormat? = nil) {
+    public init(manualRenderingFormat: AVAudioFormat? = nil) {
         self.manualRenderingFormat = manualRenderingFormat
         buildGraph()
     }
 
-    func volume(for category: AudioCategory) -> Float {
+    public func volume(for category: AudioCategory) -> Float {
         categoryVolumes[category] ?? 1
     }
 
-    func setVolume(_ volume: Float, for category: AudioCategory) {
+    public func setVolume(_ volume: Float, for category: AudioCategory) {
         categoryVolumes[category] = simd_clamp(volume, 0, 1)
         applyCategoryGains()
     }
 
-    func isMuted(_ category: AudioCategory) -> Bool {
+    public func isMuted(_ category: AudioCategory) -> Bool {
         mutedCategories.contains(category)
     }
 
     /// Mutes or unmutes one category. The category's volume is untouched, so
     /// unmuting restores exactly the level the slider was left at.
-    func setMuted(_ muted: Bool, for category: AudioCategory) {
+    public func setMuted(_ muted: Bool, for category: AudioCategory) {
         let changed: Bool = if muted {
             mutedCategories.insert(category).inserted
         } else {
@@ -187,7 +187,7 @@ final class WorldAudioEngine {
     /// category is soloed. Every gain path folds mute and solo in here, so the
     /// submixes, the positional node volumes and the panel's reported
     /// `effectiveGain` can never disagree.
-    func audibleVolume(for category: AudioCategory) -> Float {
+    public func audibleVolume(for category: AudioCategory) -> Float {
         guard !mutedCategories.contains(category) else { return 0 }
         if let soloedCategory, soloedCategory != category {
             return 0
@@ -208,7 +208,7 @@ final class WorldAudioEngine {
 
     /// Pushes the camera pose into the environment node, converting Skyrim's
     /// Z-up native-unit world into the Y-up meter listener space (AudioSpace).
-    func updateListener(worldPosition: SIMD3<Float>, yaw: Float, pitch: Float) {
+    public func updateListener(worldPosition: SIMD3<Float>, yaw: Float, pitch: Float) {
         listenerWorldPosition = worldPosition
         let position = AudioSpace.listenerPosition(fromWorld: worldPosition)
         environment.listenerPosition = AVAudio3DPoint(
@@ -231,7 +231,7 @@ final class WorldAudioEngine {
     /// stop sources the world streamed away from. `deltaTime` is in seconds and
     /// comes from the renderer's paused-aware audio clock, so fades freeze in
     /// menu mode and never jump on resume. Zero advances nothing.
-    func tick(listenerCell: CellCoordinate, deltaTime: Float = 0) {
+    public func tick(listenerCell: CellCoordinate, deltaTime: Float = 0) {
         liveClockSeconds += Double(max(0, deltaTime))
         for source in sources {
             source.voiceClock?.publish(max(0, playbackClockSeconds - source.startClockSeconds))

@@ -8,7 +8,7 @@
 // carrying any of its data.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// One transition of a synthetic machine.

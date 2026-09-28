@@ -19,16 +19,16 @@ import Foundation
 import OpenSkyFormats
 
 @MainActor
-final class PapyrusWorldRuntime {
+public final class PapyrusWorldRuntime {
     /// The headless script library and instance table this runtime drives.
-    let runtime: PapyrusRuntime
+    public let runtime: PapyrusRuntime
     /// Fixed-step scheduler for latent calls (`Utility.Wait` and friends).
-    let scheduler: PapyrusScheduler
+    public let scheduler: PapyrusScheduler
     /// One fixed simulation step in seconds; `advance(delta:gameClock:)`
     /// accumulates wall time into whole steps of this size.
-    let fixedStepSeconds: Double
+    public let fixedStepSeconds: Double
     /// Per-tick dispatch ceiling; tests lower it to force carry-over.
-    var budget: PapyrusTickBudget = .standard
+    public var budget: PapyrusTickBudget = .standard
     /// Freezes the VM's own clock (issue #278). While true,
     /// `advance(delta:gameClock:)` returns a zero report and accumulates
     /// nothing, so unpausing never bursts through the time that passed.
@@ -38,66 +38,66 @@ final class PapyrusWorldRuntime {
     /// Independent of `Renderer.worldSimPaused`, which the menu-mode
     /// controller owns: menu mode delivers delta 0 to the whole world
     /// simulation, while this pauses only the script VM.
-    var isPaused = false
+    public var isPaused = false
 
     // Stored state is internal rather than private because the lifecycle,
     // event, and persistence satellites live in separate files.
-    var instancesByKey: [PapyrusInstanceKey: PapyrusObjectHandle] = [:]
-    var keysByHandle: [PapyrusObjectHandle: PapyrusInstanceKey] = [:]
+    public var instancesByKey: [PapyrusInstanceKey: PapyrusObjectHandle] = [:]
+    public var keysByHandle: [PapyrusObjectHandle: PapyrusInstanceKey] = [:]
     /// Instances whose `OnInit` has been delivered. Persists in the save
     /// chunk so a restore never refires it.
-    var firedOnInit: Set<PapyrusInstanceKey> = []
+    public var firedOnInit: Set<PapyrusInstanceKey> = []
     /// Instances with an `OnInit` queued but not yet delivered, so a rebuild
     /// between enqueue and dispatch cannot enqueue a second one.
-    var pendingOnInit: Set<PapyrusInstanceKey> = []
+    public var pendingOnInit: Set<PapyrusInstanceKey> = []
     /// Which instances each attached cell owns, so detach retires the right
     /// ones.
-    var attachedByCell: [CellSceneLocation: Set<PapyrusInstanceKey>] = [:]
+    public var attachedByCell: [CellSceneLocation: Set<PapyrusInstanceKey>] = [:]
     /// Instances created from an `isPersistent` reference entry; these
     /// survive `detach`.
-    var persistentKeys: Set<PapyrusInstanceKey> = []
+    public var persistentKeys: Set<PapyrusInstanceKey> = []
     /// Instances belonging to a quest rather than to a placed reference
     /// (issue #322). They are in no cell's set, so only `detachQuest(key:)`
     /// retires them. See `PapyrusWorldQuests.swift`.
-    var questInstanceKeys: Set<PapyrusInstanceKey> = []
+    public var questInstanceKeys: Set<PapyrusInstanceKey> = []
     /// Script instances belonging to one quest's filled aliases (issue #183),
     /// keyed by the *quest* so `detachQuest(key:)` can retire them, while the
     /// instances themselves are keyed by the filled reference — a
     /// `ReferenceAlias` script runs on the reference in the alias, not on the
     /// quest. See `PapyrusWorldQuests.swift`.
-    var questAliasInstanceKeys: [ReferenceKey: Set<PapyrusInstanceKey>] = [:]
+    public var questAliasInstanceKeys: [ReferenceKey: Set<PapyrusInstanceKey>] = [:]
     /// Filled quest aliases every VMAD binding pass resolves alias-typed
     /// object properties through (issue #183). A value rather than a callback
     /// into the session, so binding stays nonisolated; the bridge refreshes it
     /// whenever a fill changes it. `.empty` in a session with no quest layer,
     /// where every alias property keeps its compiler default.
-    var aliasResolution: QuestAliasResolution = .empty
+    public var aliasResolution: QuestAliasResolution = .empty
     /// Newest alias filled and bound, worded like a `recentEvents` entry, for
     /// the Scripts readout. Nil until a quest with an alias starts.
-    var lastQuestAliasFill: String?
+    public var lastQuestAliasFill: String?
     /// Script instances belonging to a dialogue response rather than to a
     /// placed reference (issue #426). They are in no cell's set and nothing
     /// retires them; see `PapyrusWorldDialogue.swift`.
-    var dialogueInstanceKeys: Set<PapyrusInstanceKey> = []
+    public var dialogueInstanceKeys: Set<PapyrusInstanceKey> = []
     /// Dialogue result fragments enqueued this session, for the Scripts
     /// readout.
-    var dialogueFragmentsQueued = 0
+    public var dialogueFragmentsQueued = 0
     /// Newest dialogue result fragment enqueued, worded like a `recentEvents`
     /// entry. Nil until a response with a result script is chosen.
-    var lastDialogueFragment: String?
+    public var lastDialogueFragment: String?
     /// Stage fragments enqueued this session, for the Scripts readout.
-    var questFragmentsQueued = 0
+    public var questFragmentsQueued = 0
     /// Newest fragment enqueued, worded like a `recentEvents` entry. Nil until
     /// a stage with a fragment is set.
-    var lastQuestFragment: String?
+    public var lastQuestFragment: String?
     /// The single main-actor FIFO event queue; global order is preserved.
-    var eventQueue: [PapyrusScriptEvent] = []
+    public var eventQueue: [PapyrusScriptEvent] = []
     /// Instances with a latent call in flight. Their queued events stay
     /// queued, in order, until the suspended handler settles.
-    var busyInstances: Set<PapyrusInstanceKey> = []
+    public var busyInstances: Set<PapyrusInstanceKey> = []
     /// Update timers for `Form.RegisterForUpdate` and friends (issue #277);
     /// advanced once per fixed step by `advanceUpdateTimers(gameClock:)`.
-    var updateTimers = PapyrusUpdateTimerRegistry()
+    public var updateTimers = PapyrusUpdateTimerRegistry()
     /// Master-list resolver the most recent attach carried (issue #375), so an
     /// event argument naming a base record — `OnHit`'s `akSource` and
     /// `akProjectile` — can be turned into world identity without the caller
@@ -107,11 +107,11 @@ final class PapyrusWorldRuntime {
     /// One resolver covers the session, which is the same single-resolver
     /// assumption `PapyrusWorldStateBridge.referenceKey(forFormID:)` and the
     /// cell builder already make, not a new one.
-    private(set) var formIDResolver: FormIDResolver?
+    public private(set) var formIDResolver: FormIDResolver?
     /// Attach, dispatch, and restore skips, for inspection and acceptance.
-    var skips = PapyrusWorldSkipTally()
+    public var skips = PapyrusWorldSkipTally()
     /// VMAD property-binding skips aggregated across every attach.
-    var bindingSkips = ScriptBindingTally()
+    public var bindingSkips = ScriptBindingTally()
 
     /// Resolves a script name to its compiled form the first time an attach
     /// needs it. Nil means no library is available (headless tests), so only
@@ -122,70 +122,70 @@ final class PapyrusWorldRuntime {
     /// Decoding every `.pex` in an install up front costs far more than a
     /// session ever uses, so the library fills in lazily, one script per
     /// first use.
-    var scriptProvider: ((String) -> PexFile?)?
+    public var scriptProvider: ((String) -> PexFile?)?
     /// Script names the provider already failed to resolve, keyed lowercased.
-    var unresolvableScripts: Set<String> = []
+    public var unresolvableScripts: Set<String> = []
 
     /// Handles handed out for references that carry no script instance — the
     /// player above all — so a native can name them (issue #172). Allocated
     /// downwards from `UInt64.max` while `PapyrusRuntime` allocates instance
     /// handles upwards from 1, which is what keeps the two ranges apart.
-    var opaqueHandlesByKey: [ReferenceKey: PapyrusObjectHandle] = [:]
-    var opaqueKeysByHandle: [PapyrusObjectHandle: ReferenceKey] = [:]
-    var nextOpaqueHandleValue = UInt64.max
+    public var opaqueHandlesByKey: [ReferenceKey: PapyrusObjectHandle] = [:]
+    public var opaqueKeysByHandle: [PapyrusObjectHandle: ReferenceKey] = [:]
+    public var nextOpaqueHandleValue = UInt64.max
     /// Activation depth of the event currently being dispatched; 0 while
     /// nothing is dispatching, which is the depth a player use-key activation
     /// starts from. Read by `queueOnActivate(target:activator:)`.
-    private(set) var currentActivationDepth = 0
+    public private(set) var currentActivationDepth = 0
 
     /// What the most recent tick that actually stepped did, so an inspector
     /// can read the per-frame budget spend the callers otherwise discard.
     /// Deliberately not overwritten by a zero-step `advance`: a paused or
     /// sub-step frame would otherwise wipe the only sample there is.
-    private(set) var lastTickReport: PapyrusTickReport = .zero
+    public private(set) var lastTickReport: PapyrusTickReport = .zero
 
     /// Preformatted names of the most recently dispatched events, oldest
     /// first, at most `recentEventLimit` of them. `eventQueue` holds what is
     /// still pending, so this is the only record of what already ran.
-    private(set) var recentEvents: [String] = []
+    public private(set) var recentEvents: [String] = []
     /// Recent-event entries pushed out of the ring by newer ones.
-    private(set) var droppedRecentEventCount = 0
+    public private(set) var droppedRecentEventCount = 0
 
-    let suspensionTracker: PapyrusWorldSuspensionTracker
-    var accumulatorSeconds = 0.0
+    public let suspensionTracker: PapyrusWorldSuspensionTracker
+    public var accumulatorSeconds = 0.0
 
     /// Cap on whole steps one `advance` may run, so a long hitch cannot
     /// snowball into a burst of catch-up simulation.
-    static let maximumStepsPerAdvance = 4
+    public static let maximumStepsPerAdvance = 4
 
     /// How deep a chain of script-driven activations may go before the world
     /// runtime refuses to queue another `OnActivate` (issue #172). Player use
     /// keys enter at depth 0, so eight `Activate` calls may chain off one
     /// press. Refusals are tallied as `activationRecursionCappedTotal`.
-    static let maximumActivationDepth = 8
+    public static let maximumActivationDepth = 8
 
     /// Entries `recentEvents` retains, matching
     /// `RuntimeStateSnapshot.journalTailLimit`: both feed a sidebar readout
     /// that shows recent history rather than a whole session.
-    static let recentEventLimit = 8
+    public static let recentEventLimit = 8
 
-    static let onInitEventName = "OnInit"
-    static let onCellAttachEventName = "OnCellAttach"
-    static let onLoadEventName = "OnLoad"
-    static let onActivateEventName = "OnActivate"
-    static let onTriggerEnterEventName = "OnTriggerEnter"
-    static let onTriggerLeaveEventName = "OnTriggerLeave"
-    static let onUpdateEventName = "OnUpdate"
-    static let onUpdateGameTimeEventName = "OnUpdateGameTime"
-    static let onHitEventName = "OnHit"
-    static let onDyingEventName = "OnDying"
-    static let onDeathEventName = "OnDeath"
+    public static let onInitEventName = "OnInit"
+    public static let onCellAttachEventName = "OnCellAttach"
+    public static let onLoadEventName = "OnLoad"
+    public static let onActivateEventName = "OnActivate"
+    public static let onTriggerEnterEventName = "OnTriggerEnter"
+    public static let onTriggerLeaveEventName = "OnTriggerLeave"
+    public static let onUpdateEventName = "OnUpdate"
+    public static let onUpdateGameTimeEventName = "OnUpdateGameTime"
+    public static let onHitEventName = "OnHit"
+    public static let onDyingEventName = "OnDying"
+    public static let onDeathEventName = "OnDeath"
 
     /// Marks the depth every activation queued from inside this dispatch sits
     /// at. A latent handler that resumes on a later tick has lost the depth
     /// and re-enters at 0; that is a stated simplification, and the per-tick
     /// event budget still bounds the damage.
-    func withActivationDepth<Result>(
+    public func withActivationDepth<Result>(
         _ depth: Int, _ body: () -> Result
     ) -> Result {
         let previous = currentActivationDepth
@@ -194,7 +194,7 @@ final class PapyrusWorldRuntime {
         return body()
     }
 
-    init(runtime: PapyrusRuntime, fixedStepSeconds: Double = 1.0 / 30.0) {
+    public init(runtime: PapyrusRuntime, fixedStepSeconds: Double = 1.0 / 30.0) {
         self.runtime = runtime
         let step = fixedStepSeconds > 0 ? fixedStepSeconds : 1.0 / 30.0
         self.fixedStepSeconds = step
@@ -209,19 +209,19 @@ final class PapyrusWorldRuntime {
     /// Keeps the attach's master-list resolver for later event arguments.
     /// Lives here rather than in the lifecycle satellite because the setter is
     /// private to this file.
-    func retainFormIDResolver(_ resolver: FormIDResolver) {
+    public func retainFormIDResolver(_ resolver: FormIDResolver) {
         formIDResolver = resolver
     }
 
     /// Keeps `report` as the latest tick sample. Lives here rather than in the
     /// event satellite because the setter is private to this file.
-    func retainTickReport(_ report: PapyrusTickReport) {
+    public func retainTickReport(_ report: PapyrusTickReport) {
         lastTickReport = report
     }
 
     /// Appends `event` to the recent-event ring, evicting the oldest entry
     /// and counting it once the ring is full.
-    func recordDispatchedEvent(_ event: PapyrusScriptEvent) {
+    public func recordDispatchedEvent(_ event: PapyrusScriptEvent) {
         recentEvents.append(
             "\(event.functionName) -> \(event.target.scriptName)"
         )
@@ -232,13 +232,13 @@ final class PapyrusWorldRuntime {
     }
 
     /// Appends one event to the FIFO queue; delivery happens on a later tick.
-    func enqueue(_ event: PapyrusScriptEvent) {
+    public func enqueue(_ event: PapyrusScriptEvent) {
         eventQueue.append(event)
     }
 
     /// Enqueues `OnInit` unless it already fired or is already queued.
     /// `OnInit` fires once ever per instance and the fired set persists.
-    func enqueueOnInitIfNeeded(_ key: PapyrusInstanceKey) {
+    public func enqueueOnInitIfNeeded(_ key: PapyrusInstanceKey) {
         guard !firedOnInit.contains(key), !pendingOnInit.contains(key) else {
             return
         }
@@ -260,7 +260,7 @@ final class PapyrusWorldRuntime {
     /// in the library. Without the chain every inherited native would arrive
     /// under the child's name and miss the registry, which is a family of false
     /// unimplemented tallies rather than a family of missing behaviours.
-    func resolveScript(named name: String) -> Bool {
+    public func resolveScript(named name: String) -> Bool {
         guard resolveScriptFile(named: name) else { return false }
         var parent = runtime.script(named: name)?.parentClassName ?? ""
         var visited: Set<String> = [PapyrusRuntime.key(name)]
@@ -301,7 +301,7 @@ final class PapyrusWorldRuntime {
     /// One handle per world reference for VMAD object-property binding. A
     /// reference carrying several scripts resolves to the instance with the
     /// lowest script name, chosen deterministically.
-    func referenceHandleMap() -> [ReferenceKey: PapyrusObjectHandle] {
+    public func referenceHandleMap() -> [ReferenceKey: PapyrusObjectHandle] {
         var map: [ReferenceKey: PapyrusObjectHandle] = [:]
         for key in instancesByKey.keys.sorted() where map[key.reference] == nil {
             map[key.reference] = instancesByKey[key]
@@ -314,11 +314,11 @@ final class PapyrusWorldRuntime {
 /// nonisolated closure) and the main-actor world runtime. Both touch it only
 /// from the main actor; the class exists because a main-actor closure cannot
 /// be stored on the nonisolated scheduler.
-nonisolated final class PapyrusWorldSuspensionTracker {
-    struct StepSummary {
-        let resumed: Int
-        let faulted: Int
-        let settledInstances: [PapyrusInstanceKey]
+nonisolated public final class PapyrusWorldSuspensionTracker {
+    public struct StepSummary: Sendable {
+        public let resumed: Int
+        public let faulted: Int
+        public let settledInstances: [PapyrusInstanceKey]
     }
 
     private var instanceByID: [UInt64: PapyrusInstanceKey] = [:]
@@ -327,18 +327,18 @@ nonisolated final class PapyrusWorldSuspensionTracker {
     private var settled: [PapyrusInstanceKey] = []
 
     /// Marks `instance` busy under suspension `id`.
-    func begin(id: UInt64, instance: PapyrusInstanceKey) {
+    public func begin(id: UInt64, instance: PapyrusInstanceKey) {
         instanceByID[id] = instance
     }
 
     /// Drops every suspension owned by a retired instance.
-    func forget(instance key: PapyrusInstanceKey) {
+    public func forget(instance key: PapyrusInstanceKey) {
         instanceByID = instanceByID.filter { $0.value != key }
     }
 
     /// Follows one woken call: a re-suspension moves the busy marker to the
     /// new suspension id, a terminal outcome settles the instance.
-    func noteResume(of call: SuspendedCall, outcome: PapyrusRunOutcome) {
+    public func noteResume(of call: SuspendedCall, outcome: PapyrusRunOutcome) {
         resumed += 1
         let key = instanceByID.removeValue(forKey: call.id)
         switch outcome {
@@ -359,7 +359,7 @@ nonisolated final class PapyrusWorldSuspensionTracker {
     }
 
     /// Returns and resets the per-step counters.
-    func drainStep() -> StepSummary {
+    public func drainStep() -> StepSummary {
         defer {
             resumed = 0
             faulted = 0

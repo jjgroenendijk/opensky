@@ -13,6 +13,7 @@
 // the reset that clears it.
 
 import AppKit
+import OpenSkyEngine
 
 final class RuntimeStateChangeSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

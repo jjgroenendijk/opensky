@@ -19,14 +19,14 @@ extension PapyrusWorldRuntime {
     /// Queues `OnTriggerEnter(akActionRef)` on every script instance attached
     /// to `volume`. Returns how many events were queued.
     @discardableResult
-    func queueOnTriggerEnter(volume: ReferenceKey, actor: ReferenceKey) -> Int {
+    public func queueOnTriggerEnter(volume: ReferenceKey, actor: ReferenceKey) -> Int {
         queueTriggerEvent(Self.onTriggerEnterEventName, volume: volume, actor: actor)
     }
 
     /// Queues `OnTriggerLeave(akActionRef)` on every script instance attached
     /// to `volume`. Returns how many events were queued.
     @discardableResult
-    func queueOnTriggerLeave(volume: ReferenceKey, actor: ReferenceKey) -> Int {
+    public func queueOnTriggerLeave(volume: ReferenceKey, actor: ReferenceKey) -> Int {
         queueTriggerEvent(Self.onTriggerLeaveEventName, volume: volume, actor: actor)
     }
 
@@ -63,7 +63,7 @@ extension PapyrusWorldStateBridge {
     /// build took the key from the cell's runtime index and skipped any volume
     /// it could not name.
     @discardableResult
-    func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {
+    public func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {
         guard let world else { return 0 }
         let actor = event.actor ?? playerKey
         switch event.phase {

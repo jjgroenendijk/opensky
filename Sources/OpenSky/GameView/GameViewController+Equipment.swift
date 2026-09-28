@@ -15,6 +15,7 @@
 // unavailable instead of silently doing nothing.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension GameViewController {

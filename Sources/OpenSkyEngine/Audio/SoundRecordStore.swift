@@ -6,24 +6,24 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated enum SoundResolveError: Error, Equatable {
+nonisolated public enum SoundResolveError: Error, Equatable {
     case soundNotFound(FormID)
     case descriptorNotFound(FormID, sound: FormID)
 }
 
-nonisolated struct ResolvedSound {
-    let sound: SoundMarker
-    let descriptor: SoundDescriptor
-    let audioCategory: AudioCategory?
-    let filePaths: [String]
+nonisolated public struct ResolvedSound: Sendable {
+    public let sound: SoundMarker
+    public let descriptor: SoundDescriptor
+    public let audioCategory: AudioCategory?
+    public let filePaths: [String]
 }
 
-nonisolated final class SoundRecordStore {
-    let sounds: [UInt32: SoundMarker]
-    let descriptors: [UInt32: SoundDescriptor]
-    let categories: [UInt32: SoundCategory]
+nonisolated public final class SoundRecordStore {
+    public let sounds: [UInt32: SoundMarker]
+    public let descriptors: [UInt32: SoundDescriptor]
+    public let categories: [UInt32: SoundCategory]
 
-    init(file: ESMFile) {
+    public init(file: ESMFile) {
         sounds = Self.index(file, type: "SOUN") { try? SoundMarker(record: $0) }
         descriptors = Self.index(file, type: "SNDR") {
             try? SoundDescriptor(record: $0)
@@ -34,19 +34,19 @@ nonisolated final class SoundRecordStore {
         }
     }
 
-    func sound(_ id: FormID) -> SoundMarker? {
+    public func sound(_ id: FormID) -> SoundMarker? {
         sounds[id.rawValue]
     }
 
-    func descriptor(_ id: FormID) -> SoundDescriptor? {
+    public func descriptor(_ id: FormID) -> SoundDescriptor? {
         descriptors[id.rawValue]
     }
 
-    func category(_ id: FormID) -> SoundCategory? {
+    public func category(_ id: FormID) -> SoundCategory? {
         categories[id.rawValue]
     }
 
-    func resolve(sound id: FormID) throws -> ResolvedSound {
+    public func resolve(sound id: FormID) throws -> ResolvedSound {
         guard let sound = sound(id) else {
             throw SoundResolveError.soundNotFound(id)
         }
@@ -62,7 +62,7 @@ nonisolated final class SoundRecordStore {
     /// raw FormIDs whose target type the decoder does not pin, so runtime
     /// consumers route them through here. Throws `soundNotFound` when the
     /// reference is neither a SOUN nor a SNDR.
-    func resolveAny(_ id: FormID) throws -> ResolvedSound {
+    public func resolveAny(_ id: FormID) throws -> ResolvedSound {
         // Direct SNDR hit: synthesize a marker so the public shape stays
         // consistent with the SOUN path.
         if let descriptor = descriptors[id.rawValue] {
@@ -77,7 +77,7 @@ nonisolated final class SoundRecordStore {
     /// Walks SNCT.PNAM until it reaches one of vanilla's four menu categories.
     /// A visited set makes malformed mod cycles terminate without inventing a
     /// category; callers choose their own fallback.
-    func audioCategory(for descriptor: SoundDescriptor) -> AudioCategory? {
+    public func audioCategory(for descriptor: SoundDescriptor) -> AudioCategory? {
         var current = descriptor.category
         var visited: Set<UInt32> = []
         while let id = current, visited.insert(id.rawValue).inserted {

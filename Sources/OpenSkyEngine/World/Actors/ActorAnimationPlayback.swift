@@ -7,21 +7,21 @@ import OpenSkyFormats
 import OpenSkyGameData
 import simd
 
-nonisolated enum SkeletonPoseError: Error, Equatable {
+nonisolated public enum SkeletonPoseError: Error, Equatable {
     case boneIndexOutOfRange(Int)
     case parentCycle(Int)
 }
 
 /// Pure pose math: local TRS -> skeleton-world matrices. Kept independent of
 /// Metal + file loading so hierarchy and palette math are unit-testable.
-nonisolated enum SkeletonPoseMath {
-    static func localMatrix(_ pose: HKABonePose) -> float4x4 {
+nonisolated public enum SkeletonPoseMath: Sendable {
+    public static func localMatrix(_ pose: HKABonePose) -> float4x4 {
         let rotation = float4x4(pose.rotation)
         let scale = float4x4(diagonal: SIMD4(pose.scale, 1))
         return MatrixMath.translation(pose.translation) * rotation * scale
     }
 
-    static func worldMatrices(
+    public static func worldMatrices(
         skeleton: HKASkeleton,
         samples: [HKABoneTransformSample]
     ) throws -> [float4x4] {
@@ -39,7 +39,7 @@ nonisolated enum SkeletonPoseMath {
     /// behavior graph produces (`BehaviorPose.bones`) — through the parent
     /// chain. Bones past the end of `localPoses` keep their reference pose, so a
     /// graph bound to a rig with fewer bones than the skeleton still composes.
-    static func worldMatrices(
+    public static func worldMatrices(
         skeleton: HKASkeleton,
         localPoses: [HKABonePose]
     ) throws -> [float4x4] {
@@ -77,17 +77,17 @@ nonisolated enum SkeletonPoseMath {
     }
 }
 
-nonisolated final class ActorAnimationClip {
-    let skeleton: HKASkeleton
-    let animation: HKASplineCompressedAnimation
-    let binding: HKAAnimationBinding
+nonisolated public final class ActorAnimationClip {
+    public let skeleton: HKASkeleton
+    public let animation: HKASplineCompressedAnimation
+    public let binding: HKAAnimationBinding
     /// The `.nif` this rig's skeleton came from, which is also where its
     /// ragdoll bodies and joints live (issue #197). Carried here rather than
     /// re-derived because the clip is the only thing that already knows which
     /// skeleton an actor is using.
-    let skeletonMeshPath: String
+    public let skeletonMeshPath: String
 
-    init(
+    public init(
         skeleton: HKASkeleton,
         animation: HKASplineCompressedAnimation,
         binding: HKAAnimationBinding,
@@ -101,7 +101,7 @@ nonisolated final class ActorAnimationClip {
 
     /// The rig's bind pose as skeleton-world matrices, in bone order. The frame
     /// a ragdoll's bodies are authored against.
-    var bindWorldMatrices: [float4x4] {
+    public var bindWorldMatrices: [float4x4] {
         (try? SkeletonPoseMath.worldMatrices(
             skeleton: skeleton, localPoses: skeleton.referencePose
         )) ?? []
@@ -110,7 +110,7 @@ nonisolated final class ActorAnimationClip {
     /// The pose at `time` as skeleton-world matrices in bone order, which is
     /// what a ragdoll hand-off reads. Nil where the clip cannot be sampled, the
     /// same condition `namedWorldTransforms(at:)` returns nil on.
-    func orderedWorldTransforms(at time: Float) -> [float4x4]? {
+    public func orderedWorldTransforms(at time: Float) -> [float4x4]? {
         guard let named = namedWorldTransforms(at: time) else { return nil }
         let bind = bindWorldMatrices
         return skeleton.boneNames.enumerated().map { index, name in
@@ -118,7 +118,7 @@ nonisolated final class ActorAnimationClip {
         }
     }
 
-    func namedWorldTransforms(at time: Float) -> [String: float4x4]? {
+    public func namedWorldTransforms(at time: Float) -> [String: float4x4]? {
         guard animation.duration > 0 else { return nil }
         let sampleTime = time.truncatingRemainder(dividingBy: animation.duration)
         guard
@@ -139,7 +139,7 @@ nonisolated final class ActorAnimationClip {
     }
 }
 
-nonisolated enum ActorAnimationLoadError: LocalizedError {
+nonisolated public enum ActorAnimationLoadError: LocalizedError {
     case unsupportedSkeleton(String)
     case missing(String)
     case noRig(String)
@@ -147,7 +147,7 @@ nonisolated enum ActorAnimationLoadError: LocalizedError {
     case noBinding(String)
     case invalid(String, any Error)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case let .unsupportedSkeleton(path):
             "no verified direct idle path for skeleton \(path)"
@@ -167,7 +167,7 @@ nonisolated enum ActorAnimationLoadError: LocalizedError {
 
 /// RenderScene stores these references. Removing a resident CellScene removes
 /// its playback objects; decoded immutable clip assets may remain cache-hot.
-nonisolated protocol RenderAnimation: AnyObject {
+nonisolated public protocol RenderAnimation: AnyObject {
     @discardableResult
     func update(at time: Float) -> Int
 
@@ -178,17 +178,17 @@ nonisolated protocol RenderAnimation: AnyObject {
 
 nonisolated extension RenderAnimation {
     @discardableResult
-    func resetToBindPose() -> Int {
+    public func resetToBindPose() -> Int {
         0
     }
 }
 
-nonisolated final class ActorAnimationPlayback: RenderAnimation {
-    let actor: FormID
-    let female: Bool
+nonisolated public final class ActorAnimationPlayback: RenderAnimation {
+    public let actor: FormID
+    public let female: Bool
     /// The clip currently sounding: the idle one, or a bounded override a
     /// combat reaction asked for (issue #374).
-    private(set) var clip: ActorAnimationClip
+    public private(set) var clip: ActorAnimationClip
     /// The clip this actor returns to when an override ends.
     private let idleClip: ActorAnimationClip
     private var locomotionClip: ActorAnimationClip
@@ -199,7 +199,7 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
     private var overrideEnd: Float = 0
     private let meshes: [RenderMesh]
 
-    init(
+    public init(
         actor: FormID,
         clip: ActorAnimationClip,
         models: [RenderModel],
@@ -221,7 +221,11 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
     /// A second request replaces the first rather than queueing: a stagger that
     /// interrupts an attack has to take the attack's clip away, which is the
     /// same rule the player's graph follows.
-    func play(_ clip: ActorAnimationClip, startingAt time: Float, forSeconds seconds: Float) {
+    public func play(
+        _ clip: ActorAnimationClip,
+        startingAt time: Float,
+        forSeconds seconds: Float
+    ) {
         guard seconds > 0, seconds.isFinite else { return }
         self.clip = clip
         overrideStart = time
@@ -230,7 +234,7 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
 
     /// Selects the in-place gait clip a kinematic NPC drive resolved. Combat
     /// overrides remain authoritative until their bounded hold expires.
-    func setLocomotionClip(_ clip: ActorAnimationClip?) {
+    public func setLocomotionClip(_ clip: ActorAnimationClip?) {
         locomotionClip = clip ?? idleClip
         if overrideEnd == 0 {
             self.clip = locomotionClip
@@ -238,14 +242,14 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
     }
 
     /// Whether a bounded override is playing as of `time`.
-    func isOverriding(at time: Float) -> Bool {
+    public func isOverriding(at time: Float) -> Bool {
         overrideEnd > 0 && time < overrideEnd
     }
 
     /// The pose to draw at `time`, with an expired override already retired.
     /// The one place the override's own clock is applied, so every consumer —
     /// skinning here, the ragdoll hand-off in the app — reads the same pose.
-    func pose(at time: Float) -> [String: float4x4]? {
+    public func pose(at time: Float) -> [String: float4x4]? {
         if overrideEnd > 0, time >= overrideEnd {
             clip = locomotionClip
             overrideEnd = 0
@@ -255,13 +259,13 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
     }
 
     @discardableResult
-    func update(at time: Float) -> Int {
+    public func update(at time: Float) -> Int {
         guard let transforms = pose(at: time) else { return 0 }
         var updatedMeshes = Set<ObjectIdentifier>()
         return apply(transforms, updating: &updatedMeshes)
     }
 
-    func apply(
+    public func apply(
         _ transforms: [String: float4x4],
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
@@ -272,18 +276,18 @@ nonisolated final class ActorAnimationPlayback: RenderAnimation {
     }
 
     @discardableResult
-    func resetToBindPose() -> Int {
+    public func resetToBindPose() -> Int {
         meshes.reduce(0) { $0 + $1.resetSkinningPose() }
     }
 }
 
-nonisolated struct ActorAnimationCacheKey: Hashable {
-    let skeletonPath: String
-    let female: Bool
+nonisolated public struct ActorAnimationCacheKey: Hashable, Sendable {
+    public let skeletonPath: String
+    public let female: Bool
 }
 
 nonisolated extension CellSceneBuilder {
-    nonisolated func makeAnimationPlayback(
+    nonisolated public func makeAnimationPlayback(
         assembly: ActorAssembly<ActorRenderAsset>
     ) -> Result<ActorAnimationPlayback, ActorAnimationLoadError> {
         guard let skeletonPath = assembly.visual.skeletonPath else {

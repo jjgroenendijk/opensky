@@ -12,7 +12,7 @@
 // than on rendered text alone.
 
 import AppKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 
 /// Sends a control's action the way a click would, so a test drives the panel
 /// through the same path AppKit does.

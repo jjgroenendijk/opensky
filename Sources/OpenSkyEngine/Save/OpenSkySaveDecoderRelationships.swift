@@ -20,14 +20,14 @@ import OpenSkyFormats
 
 /// One actor's saved relationship overrides, before they are merged back into
 /// the delta.
-nonisolated struct SaveRelationshipEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: ActorRelationshipState
+nonisolated public struct SaveRelationshipEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: ActorRelationshipState
 }
 
-nonisolated enum OpenSkySaveRelationshipDecoder {
-    static func decodeRelationshipRanks(_ payload: Data) throws -> [SaveRelationshipEntry] {
+nonisolated public enum OpenSkySaveRelationshipDecoder: Sendable {
+    public static func decodeRelationshipRanks(_ payload: Data) throws -> [SaveRelationshipEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RELS entry count")
         try OpenSkySaveDecoder.validate(
@@ -47,7 +47,7 @@ nonisolated enum OpenSkySaveRelationshipDecoder {
     /// Lays each saved override list over the matching `RDLT` delta, adding an
     /// entry for an actor that had no other component, and re-sorts the result
     /// into `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ values: [SaveRelationshipEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

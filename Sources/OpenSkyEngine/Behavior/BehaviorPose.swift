@@ -24,9 +24,9 @@ import simd
 /// The travel one update extracted from the root bone: how far the character
 /// moved and how far it turned, in the root bone's own local frame. Never
 /// applied to `BehaviorPose.bones`.
-nonisolated struct BehaviorRootMotion: Equatable, Sendable {
-    var translation: SIMD3<Float>
-    var rotation: simd_quatf
+nonisolated public struct BehaviorRootMotion: Equatable, Sendable {
+    public var translation: SIMD3<Float>
+    public var rotation: simd_quatf
     /// True when this travel came from a clip whose data carries extracted
     /// motion, and therefore when the graph — not the resolved gait — is what
     /// moves the character this step.
@@ -36,9 +36,9 @@ nonisolated struct BehaviorRootMotion: Equatable, Sendable {
     /// happens to stand still for a step still holds movement authority and
     /// still reports zero travel; an in-place clip never holds it however far
     /// its root bone drifts (issue #370).
-    var isExtracted: Bool
+    public var isExtracted: Bool
 
-    init(
+    public init(
         translation: SIMD3<Float>,
         rotation: simd_quatf,
         isExtracted: Bool = false
@@ -48,11 +48,11 @@ nonisolated struct BehaviorRootMotion: Equatable, Sendable {
         self.isExtracted = isExtracted
     }
 
-    static let identity = BehaviorRootMotion(
+    public static let identity = BehaviorRootMotion(
         translation: SIMD3<Float>(), rotation: simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
     )
 
-    static func == (lhs: BehaviorRootMotion, rhs: BehaviorRootMotion) -> Bool {
+    public static func == (lhs: BehaviorRootMotion, rhs: BehaviorRootMotion) -> Bool {
         lhs.translation == rhs.translation
             && lhs.rotation.vector == rhs.rotation.vector
             && lhs.isExtracted == rhs.isExtracted
@@ -61,11 +61,11 @@ nonisolated struct BehaviorRootMotion: Equatable, Sendable {
 
 /// One evaluated pose: local TRS per skeleton bone, plus the root motion the
 /// generators under it extracted.
-nonisolated struct BehaviorPose: Equatable {
-    var bones: [HKABonePose]
-    var rootMotion: BehaviorRootMotion
+nonisolated public struct BehaviorPose: Equatable, Sendable {
+    public var bones: [HKABonePose]
+    public var rootMotion: BehaviorRootMotion
 
-    init(bones: [HKABonePose], rootMotion: BehaviorRootMotion = .identity) {
+    public init(bones: [HKABonePose], rootMotion: BehaviorRootMotion = .identity) {
         self.bones = bones
         self.rootMotion = rootMotion
     }
@@ -74,20 +74,20 @@ nonisolated struct BehaviorPose: Equatable {
 /// The skeleton a behavior graph instance poses. Kept separate from
 /// `HKASkeleton` so the evaluator can be unit-tested against a three-bone rig
 /// built in code, with no packfile in the way.
-nonisolated struct BehaviorSkeleton: Equatable {
-    let boneNames: [String]
-    let referencePose: [HKABonePose]
+nonisolated public struct BehaviorSkeleton: Equatable, Sendable {
+    public let boneNames: [String]
+    public let referencePose: [HKABonePose]
     /// The bone whose animated travel is extracted rather than composed. On
     /// every vanilla Skyrim rig this is bone 0, `NPC Root [Root]`.
-    let rootBoneIndex: Int
+    public let rootBoneIndex: Int
 
-    init(boneNames: [String], referencePose: [HKABonePose], rootBoneIndex: Int = 0) {
+    public init(boneNames: [String], referencePose: [HKABonePose], rootBoneIndex: Int = 0) {
         self.boneNames = boneNames
         self.referencePose = referencePose
         self.rootBoneIndex = rootBoneIndex
     }
 
-    init(_ skeleton: HKASkeleton, rootBoneIndex: Int = 0) {
+    public init(_ skeleton: HKASkeleton, rootBoneIndex: Int = 0) {
         self.init(
             boneNames: skeleton.boneNames,
             referencePose: skeleton.referencePose,
@@ -95,14 +95,14 @@ nonisolated struct BehaviorSkeleton: Equatable {
         )
     }
 
-    var boneCount: Int {
+    public var boneCount: Int {
         referencePose.count
     }
 
     /// A pose holding nothing but the reference pose. This is what a generator
     /// with no semantics of its own returns, and what a blend of no children
     /// falls back to.
-    var restPose: BehaviorPose {
+    public var restPose: BehaviorPose {
         BehaviorPose(bones: referencePose)
     }
 }
@@ -110,9 +110,9 @@ nonisolated struct BehaviorSkeleton: Equatable {
 /// Pure pose math: blending, sample application, and root-motion extraction.
 /// No file loading and no graph state, so every rule below is unit-testable
 /// against hand-computed values.
-nonisolated enum BehaviorPoseMath {
+nonisolated public enum BehaviorPoseMath: Sendable {
     /// The identity quaternion, spelled once.
-    static let identityRotation = simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
+    public static let identityRotation = simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
 
     /// Blends `lhs` toward `rhs` by `weight`, clamped to [0, 1]. Translation
     /// and scale interpolate linearly; rotation interpolates along the shortest
@@ -122,7 +122,7 @@ nonisolated enum BehaviorPoseMath {
     /// Bone counts that disagree are not a fault: the shorter list wins, and
     /// the extra bones of the longer one are kept as they are. A clip bound to
     /// a rig with fewer bones than the character's is ordinary in modded data.
-    static func blend(_ lhs: BehaviorPose, _ rhs: BehaviorPose, weight: Float)
+    public static func blend(_ lhs: BehaviorPose, _ rhs: BehaviorPose, weight: Float)
         -> BehaviorPose
     {
         let amount = clamped(weight)
@@ -140,7 +140,7 @@ nonisolated enum BehaviorPoseMath {
         )
     }
 
-    static func blend(_ lhs: HKABonePose, _ rhs: HKABonePose, weight: Float)
+    public static func blend(_ lhs: HKABonePose, _ rhs: HKABonePose, weight: Float)
         -> HKABonePose
     {
         let amount = clamped(weight)
@@ -151,7 +151,7 @@ nonisolated enum BehaviorPoseMath {
         )
     }
 
-    static func blend(
+    public static func blend(
         _ lhs: BehaviorRootMotion,
         _ rhs: BehaviorRootMotion,
         weight: Float
@@ -176,7 +176,7 @@ nonisolated enum BehaviorPoseMath {
     /// Children of non-positive weight are dropped rather than normalized to
     /// zero, because a blender whose weights all fall to zero must produce the
     /// reference pose rather than a divide by zero. `fallback` is that pose.
-    static func blend(
+    public static func blend(
         children: [(pose: BehaviorPose, weight: Float)],
         fallback: BehaviorPose
     ) -> BehaviorPose {
@@ -195,16 +195,16 @@ nonisolated enum BehaviorPoseMath {
     /// One child of a per-bone blend: its pose, its whole-pose weight, and the
     /// per-bone mask that scales that weight bone by bone (`hkbBoneWeightArray`).
     /// A nil mask means the child contributes at full weight everywhere.
-    nonisolated struct MaskedChild {
-        let pose: BehaviorPose
-        let weight: Float
-        let boneWeights: [Float]?
+    nonisolated public struct MaskedChild: Sendable {
+        public let pose: BehaviorPose
+        public let weight: Float
+        public let boneWeights: [Float]?
 
         /// This child's effective weight on one bone. Bones past the end of the
         /// mask contribute at full weight: a mask shorter than the skeleton is
         /// ordinary in modded data, and treating the tail as zero would silently
         /// drop every bone the author did not reach.
-        func weight(ofBone index: Int) -> Float {
+        public func weight(ofBone index: Int) -> Float {
             guard let boneWeights, boneWeights.indices.contains(index) else {
                 return weight
             }
@@ -224,7 +224,7 @@ nonisolated enum BehaviorPoseMath {
     /// The fold is the same left-to-right normalized one
     /// `blend(children:fallback:)` performs, run once per bone, so a child with
     /// no mask produces exactly the unmasked result.
-    static func blend(masked children: [MaskedChild], fallback: BehaviorPose)
+    public static func blend(masked children: [MaskedChild], fallback: BehaviorPose)
         -> BehaviorPose
     {
         let contributing = children.filter { $0.weight > 0 && $0.weight.isFinite }
@@ -274,7 +274,7 @@ nonisolated enum BehaviorPoseMath {
 
     /// Overwrites the bones a clip sampled onto a copy of `base`, dropping
     /// samples that name a bone the skeleton does not have.
-    static func applying(
+    public static func applying(
         _ samples: [HKABoneTransformSample],
         to base: [HKABonePose]
     ) -> [HKABonePose] {
@@ -292,7 +292,7 @@ nonisolated enum BehaviorPoseMath {
     /// `isExtracted` is the caller's to state, because this is arithmetic over
     /// two poses and cannot know whether the clip they came from carries a
     /// reference frame.
-    static func rootMotion(
+    public static func rootMotion(
         from previous: HKABonePose,
         to current: HKABonePose,
         isExtracted: Bool = false
@@ -307,7 +307,7 @@ nonisolated enum BehaviorPoseMath {
     /// Adds `next` after `first`, which is how a clip that looped mid-update
     /// reports its travel: the run to the end of the clip, then the run from
     /// the start.
-    static func concatenating(
+    public static func concatenating(
         _ first: BehaviorRootMotion,
         _ next: BehaviorRootMotion
     ) -> BehaviorRootMotion {
@@ -333,7 +333,7 @@ nonisolated enum BehaviorPoseMath {
 
     /// Shortest-arc slerp that tolerates the degenerate inputs decoded data can
     /// carry: a zero-length quaternion blends as if it were the identity.
-    static func slerp(_ lhs: simd_quatf, _ rhs: simd_quatf, _ amount: Float)
+    public static func slerp(_ lhs: simd_quatf, _ rhs: simd_quatf, _ amount: Float)
         -> simd_quatf
     {
         let start = normalized(lhs)
@@ -349,7 +349,7 @@ nonisolated enum BehaviorPoseMath {
 
     /// A unit quaternion, falling back to the identity when the input has no
     /// length to normalize. Malformed input must not produce a NaN pose.
-    static func normalized(_ rotation: simd_quatf) -> simd_quatf {
+    public static func normalized(_ rotation: simd_quatf) -> simd_quatf {
         let lengthSquared = simd_length_squared(rotation.vector)
         guard lengthSquared.isFinite, lengthSquared > 1e-12 else {
             return identityRotation

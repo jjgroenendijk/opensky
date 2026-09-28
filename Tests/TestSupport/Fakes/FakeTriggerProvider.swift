@@ -3,7 +3,7 @@
 // OpenSkyRealDataTests. See Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 /// Records what the Triggers section asks of the live streamer (issue #173).

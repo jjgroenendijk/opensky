@@ -9,18 +9,18 @@ extension Renderer {
     /// encoder + frame slot + frustum, the running cursors into the
     /// per-draw uniform ring (visible groups) and the per-instance
     /// transform ring (visible instances), and the accumulating draw stats.
-    struct ScenePassState {
-        let encoder: MTL4RenderCommandEncoder
-        let slot: Int
-        let frustum: Frustum
+    public struct ScenePassState {
+        public let encoder: MTL4RenderCommandEncoder
+        public let slot: Int
+        public let frustum: Frustum
         /// The fill mode this frame's geometry draws under — `.lines` in the
         /// wireframe debug view. Encoded once at the top of the pass; the
         /// billboard layer forces `.fill` and restores this value, because a
         /// wireframed particle quad is noise rather than diagnosis.
-        var fillMode = MTLTriangleFillMode.fill
-        var drawCursor = 0
-        var instanceCursor = 0
-        var stats = SceneDrawStats()
+        public var fillMode = MTLTriangleFillMode.fill
+        public var drawCursor = 0
+        public var instanceCursor = 0
+        public var stats = SceneDrawStats()
     }
 
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
@@ -216,7 +216,7 @@ extension Renderer {
     /// Internal rather than private: the first-person arms are encoded through
     /// this same path, from `RendererFirstPersonArms.swift`, so they cull,
     /// light, and bind exactly as every other skinned actor does.
-    func encode(
+    public func encode(
         groups: [DrawGroup],
         staticPipeline: MTLRenderPipelineState,
         skinnedPipeline: MTLRenderPipelineState,
@@ -312,7 +312,7 @@ extension Renderer {
     /// the shadow and scene passes both bind skinned casters, but the CPU
     /// palette is identical across both within one frame, so a second copy is
     /// pure waste. frameBonePrepared resets at the top of each frame's encode.
-    func prepareBoneMatricesOnce(for mesh: RenderMesh, slot: Int) {
+    public func prepareBoneMatricesOnce(for mesh: RenderMesh, slot: Int) {
         guard frameBonePrepared.insert(ObjectIdentifier(mesh)).inserted else { return }
         mesh.prepareBoneMatrices(slot: slot)
     }
@@ -427,7 +427,7 @@ extension Renderer {
         )
     }
 
-    func encodeScenePass(
+    public func encodeScenePass(
         descriptor: MTL4RenderPassDescriptor,
         slot: Int,
         projection: float4x4

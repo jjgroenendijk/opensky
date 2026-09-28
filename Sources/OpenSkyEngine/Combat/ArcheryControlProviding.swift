@@ -12,68 +12,94 @@
 import Foundation
 
 /// One finished shot as a panel spells it.
-nonisolated struct ProjectileTraceReadout: Equatable, Sendable {
-    let id: Int
+nonisolated public struct ProjectileTraceReadout: Equatable, Sendable {
+    public let id: Int
     /// Spawn point, impact point and flight time — the three the issue names.
-    let launch: SIMD3<Float>
-    let end: SIMD3<Float>
-    let flightTime: Float
+    public let launch: SIMD3<Float>
+    public let end: SIMD3<Float>
+    public let flightTime: Float
     /// Path length travelled, world units.
-    let travelled: Float
+    public let travelled: Float
     /// How far below the aim line the shot ended, world units.
-    let drop: Float
-    let outcome: ProjectileOutcome
+    public let drop: Float
+    public let outcome: ProjectileOutcome
     /// The actor struck, as its `ReferenceKey` description; nil for a miss or
     /// a hit on static geometry.
-    let target: String?
-    let appliedDamage: Float
+    public let target: String?
+    public let appliedDamage: Float
     /// The SNDR that played, or nil when the chain named none.
-    let sound: String?
+    public let sound: String?
     /// Whether the arrow was left standing in what it hit.
-    let stuck: Bool
+    public let stuck: Bool
+
+    public init(
+        id: Int,
+        launch: SIMD3<Float>,
+        end: SIMD3<Float>,
+        flightTime: Float,
+        travelled: Float,
+        drop: Float,
+        outcome: ProjectileOutcome,
+        target: String?,
+        appliedDamage: Float,
+        sound: String?,
+        stuck: Bool
+    ) {
+        self.id = id
+        self.launch = launch
+        self.end = end
+        self.flightTime = flightTime
+        self.travelled = travelled
+        self.drop = drop
+        self.outcome = outcome
+        self.target = target
+        self.appliedDamage = appliedDamage
+        self.sound = sound
+        self.stuck = stuck
+    }
 }
 
 /// One observation of the archery runtime.
-nonisolated struct ArcherySnapshot: Equatable, Sendable {
+nonisolated public struct ArcherySnapshot: Equatable, Sendable {
     /// False when no archery runtime is attached — no game data, or a demo
     /// scene. Every other field is then empty and the panel says so rather
     /// than showing a convincing zero.
-    let isAvailable: Bool
-    let phase: ArcheryShotPhase
+    public let isAvailable: Bool
+    public let phase: ArcheryShotPhase
     /// Whether an arrow is currently in the draw hand.
-    let hasArrowAttached: Bool
+    public let hasArrowAttached: Bool
     /// How long the attack button has been held on the current draw, seconds,
     /// and the hold that produced the last shot.
-    let heldSeconds: Float
-    let lastHeldSeconds: Float
+    public let heldSeconds: Float
+    public let lastHeldSeconds: Float
     /// The draw-time damage fraction the current hold has earned, `0...1`.
-    let drawFraction: Float
+    public let drawFraction: Float
     /// The equipped bow's editor name, or "none".
-    let bowName: String
-    let bowDamage: Float
-    let bowSpeed: Float
+    public let bowName: String
+    public let bowDamage: Float
+    public let bowSpeed: Float
     /// The selected arrow's editor name, or "none"; its AMMO damage; and the
     /// PROJ flight numbers it carries.
-    let arrowName: String
-    let arrowDamage: Float
-    let projectileName: String
-    let projectileSpeed: Float
-    let projectileGravityFactor: Float
-    let projectileRange: Float
+    public let arrowName: String
+    public let arrowDamage: Float
+    public let projectileName: String
+    public let projectileSpeed: Float
+    public let projectileGravityFactor: Float
+    public let projectileRange: Float
     /// Draws asked for, arrows loosed, impacts resolved.
-    let drawRequestCount: Int
-    let firedCount: Int
-    let impactCount: Int
+    public let drawRequestCount: Int
+    public let firedCount: Int
+    public let impactCount: Int
     /// How many arrows are in the air and how many are standing in the world.
-    let liveCount: Int
-    let stuckCount: Int
+    public let liveCount: Int
+    public let stuckCount: Int
     /// The finished-shot trace, oldest first.
-    let trace: [ProjectileTraceReadout]
+    public let trace: [ProjectileTraceReadout]
     /// Every archery GMST with its resolved value and where it came from.
-    let settings: [String]
+    public let settings: [String]
 
     /// The reading with no runtime attached.
-    static let unavailable = ArcherySnapshot(
+    public static let unavailable = ArcherySnapshot(
         isAvailable: false,
         phase: .idle,
         hasArrowAttached: false,
@@ -97,10 +123,58 @@ nonisolated struct ArcherySnapshot: Equatable, Sendable {
         trace: [],
         settings: []
     )
+
+    public init(
+        isAvailable: Bool,
+        phase: ArcheryShotPhase,
+        hasArrowAttached: Bool,
+        heldSeconds: Float,
+        lastHeldSeconds: Float,
+        drawFraction: Float,
+        bowName: String,
+        bowDamage: Float,
+        bowSpeed: Float,
+        arrowName: String,
+        arrowDamage: Float,
+        projectileName: String,
+        projectileSpeed: Float,
+        projectileGravityFactor: Float,
+        projectileRange: Float,
+        drawRequestCount: Int,
+        firedCount: Int,
+        impactCount: Int,
+        liveCount: Int,
+        stuckCount: Int,
+        trace: [ProjectileTraceReadout],
+        settings: [String]
+    ) {
+        self.isAvailable = isAvailable
+        self.phase = phase
+        self.hasArrowAttached = hasArrowAttached
+        self.heldSeconds = heldSeconds
+        self.lastHeldSeconds = lastHeldSeconds
+        self.drawFraction = drawFraction
+        self.bowName = bowName
+        self.bowDamage = bowDamage
+        self.bowSpeed = bowSpeed
+        self.arrowName = arrowName
+        self.arrowDamage = arrowDamage
+        self.projectileName = projectileName
+        self.projectileSpeed = projectileSpeed
+        self.projectileGravityFactor = projectileGravityFactor
+        self.projectileRange = projectileRange
+        self.drawRequestCount = drawRequestCount
+        self.firedCount = firedCount
+        self.impactCount = impactCount
+        self.liveCount = liveCount
+        self.stuckCount = stuckCount
+        self.trace = trace
+        self.settings = settings
+    }
 }
 
 @MainActor
-protocol ArcheryControlProviding: AnyObject {
+public protocol ArcheryControlProviding: AnyObject {
     var archerySnapshot: ArcherySnapshot { get }
 
     /// Fires one projectile from the current aim without touching the quiver.

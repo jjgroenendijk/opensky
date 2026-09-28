@@ -10,11 +10,11 @@
 // No AppKit import on purpose: the file compiles into both the app and the CLI
 // target, so it needs no project-membership exception.
 
-nonisolated enum ScriptsReadout {
+nonisolated public enum ScriptsReadout: Sendable {
     /// Instance count, the current interaction target, and the scripts attached
     /// to it. An untargeted session and a targeted reference carrying no
     /// scripts read as two different stated conditions, never as a blank.
-    static func instancesText(for snapshot: ScriptsSnapshot) -> String {
+    public static func instancesText(for snapshot: ScriptsSnapshot) -> String {
         guard let target = snapshot.targetDescription else {
             return "Instances: \(snapshot.instanceCount)\nTarget: none"
         }
@@ -34,7 +34,7 @@ nonisolated enum ScriptsReadout {
     /// Running quests and quests with instances are two different numbers on
     /// purpose: a quest that carries no scripts runs perfectly well without
     /// any, so the gap between them is information rather than an error.
-    static func questsText(for snapshot: ScriptsSnapshot) -> String {
+    public static func questsText(for snapshot: ScriptsSnapshot) -> String {
         [
             "Running quests: \(snapshot.runningQuestCount)"
                 + "  Scripted: \(snapshot.questCount)",
@@ -57,7 +57,7 @@ nonisolated enum ScriptsReadout {
     /// found nothing are told apart on screen rather than both reading as a
     /// blank. A quest that is not running shows every alias empty, which is
     /// what the Creation Kit describes rather than a fault.
-    static func questAliasText(
+    public static func questAliasText(
         for table: ScriptQuestAliasInspection?,
         editorID: String
     ) -> String {
@@ -84,7 +84,7 @@ nonisolated enum ScriptsReadout {
 
     /// Queue depth plus the dispatched-event tail, oldest first, in the same
     /// most-recent-last presentation the Runtime State journal uses.
-    static func eventsText(for snapshot: ScriptsSnapshot) -> String {
+    public static func eventsText(for snapshot: ScriptsSnapshot) -> String {
         let header = "Pending events: \(snapshot.pendingEventCount)"
             + "  Dropped: \(snapshot.droppedRecentEventCount)"
         guard !snapshot.recentEvents.isEmpty else {
@@ -96,7 +96,7 @@ nonisolated enum ScriptsReadout {
     /// Whether the VM is running, what it is holding, and what the last fixed
     /// step actually did. The pause line states the VM's own pause only; the
     /// engine's menu-mode pause is a separate control under System Menu.
-    static func schedulerText(for snapshot: ScriptsSnapshot) -> String {
+    public static func schedulerText(for snapshot: ScriptsSnapshot) -> String {
         [
             "VM: \(snapshot.isPaused ? "paused" : "running")",
             "Pending waits: \(snapshot.pendingWaitCount)"
@@ -115,7 +115,7 @@ nonisolated enum ScriptsReadout {
     /// Native coverage as observed, not as registered: a native nothing has
     /// called yet is counted nowhere. The ranked list names the worst offenders
     /// so a missing native is a fact on screen rather than a silent no-op.
-    static func nativeTallyText(for snapshot: ScriptsSnapshot) -> String {
+    public static func nativeTallyText(for snapshot: ScriptsSnapshot) -> String {
         var lines = [
             "Native calls: \(snapshot.nativeCallTotal)",
             "Implemented names: \(snapshot.implementedNativeNameCount)"

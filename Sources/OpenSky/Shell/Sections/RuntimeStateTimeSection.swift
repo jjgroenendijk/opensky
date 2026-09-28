@@ -16,6 +16,7 @@
 // been played, not a knob left in a non-default position.
 
 import AppKit
+import OpenSkyEngine
 
 final class RuntimeStateTimeSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

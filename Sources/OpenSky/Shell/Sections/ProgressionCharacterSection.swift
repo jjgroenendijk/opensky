@@ -13,6 +13,7 @@
 // level back would undo the demonstration rather than a knob.
 
 import AppKit
+import OpenSkyEngine
 
 final class ProgressionCharacterSection: ProgressionPanelSection {
     /// What the experience field starts at: enough that one click crosses the

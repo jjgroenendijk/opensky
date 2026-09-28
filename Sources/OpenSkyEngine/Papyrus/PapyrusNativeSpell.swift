@@ -36,7 +36,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installSpell(into registry: inout PapyrusNativeRegistry) {
+    public static func installSpell(into registry: inout PapyrusNativeRegistry) {
         installSpellKnowledge(into: &registry)
         installSpellEquip(into: &registry)
         installSpellEffects(into: &registry)
@@ -296,7 +296,7 @@ nonisolated extension PapyrusNativeFunctions {
 
     /// Argument `index` as a casting source, or nil when it is missing or names
     /// no documented source.
-    static func castingSource(
+    public static func castingSource(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> CastingSource? {
@@ -305,7 +305,7 @@ nonisolated extension PapyrusNativeFunctions {
 
     /// One record identity as the object value a script compares against, or
     /// Papyrus `None` when no handle can be minted for it.
-    static func handle(
+    public static func handle(
         _ key: ReferenceKey,
         in world: PapyrusWorldAccess
     ) -> PapyrusValue {
@@ -315,7 +315,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// The single failure a spell native returns when the session runs no
     /// spellbook — a synthetic scene with no SPEL index, where inventing an
     /// empty spellbook would read as an actor who has learned nothing.
-    static func needsSpellbook(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
+    public static func needsSpellbook(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         failure(
             call,
             "\(call.functionName) needs a session with a spellbook runtime"

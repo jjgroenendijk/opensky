@@ -7,7 +7,6 @@
 
 import FormatsTestSupport
 import Foundation
-@testable import OpenSky
 @testable import OpenSkyFormats
 import Testing
 

@@ -10,7 +10,7 @@
 import Foundation
 import Metal
 import MetalKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct RendererWorldSimTickTests {

@@ -28,27 +28,27 @@ import OpenSkyFormats
 /// akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack,
 /// bool abHitBlocked)` spells it
 /// (<https://www.creationkit.com/index.php?title=OnHit_-_ObjectReference>).
-nonisolated struct ScriptHitEvent: Equatable, Sendable {
+nonisolated public struct ScriptHitEvent: Equatable, Sendable {
     /// What was hit. Not necessarily an actor: the event is declared on
     /// `ObjectReference`, so a scripted crate takes it too.
-    let target: ReferenceKey
+    public let target: ReferenceKey
     /// Who swung or fired.
-    let aggressor: ReferenceKey
+    public let aggressor: ReferenceKey
     /// The WEAP, SPEL, EXPL, INGR, ALCH or ENCH behind the hit, or nil where
     /// the path names none — an unarmed blow, above all.
-    let source: FormID?
+    public let source: FormID?
     /// The PROJ that struck, or nil for a melee hit. The wiki records that
     /// vanilla leaves this `None` for an actor target even for an arrow; this
     /// engine fills it in whenever the projectile runtime knows it, which is
     /// more informative and cannot break a handler that checks for `None`
     /// first.
-    let projectile: FormID?
-    let isPowerAttack: Bool
-    let isSneakAttack: Bool
-    let isBashAttack: Bool
-    let isBlocked: Bool
+    public let projectile: FormID?
+    public let isPowerAttack: Bool
+    public let isSneakAttack: Bool
+    public let isBashAttack: Bool
+    public let isBlocked: Bool
 
-    init(
+    public init(
         target: ReferenceKey,
         aggressor: ReferenceKey,
         source: FormID? = nil,
@@ -71,7 +71,7 @@ nonisolated struct ScriptHitEvent: Equatable, Sendable {
 
 /// How a combat runtime tells the script layer that a blow landed.
 @MainActor
-protocol ScriptHitReporting: AnyObject {
+public protocol ScriptHitReporting: AnyObject {
     /// Delivers one landed blow to the scripts attached to its target.
     ///
     /// - Returns: how many `OnHit` events were queued. Zero is the ordinary
@@ -85,7 +85,7 @@ nonisolated extension ScriptHitReporting {
     /// A world with no script layer behind it reports nothing, which is what
     /// every acceptance fake wants and what a synthetic scene genuinely is.
     @discardableResult
-    func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
+    public func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
         0
     }
 }

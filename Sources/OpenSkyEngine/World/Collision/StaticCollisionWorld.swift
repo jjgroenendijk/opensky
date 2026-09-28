@@ -6,18 +6,18 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct StaticCollisionShape {
-    let reference: FormID
-    let transform: float4x4
-    let geometry: NIFCollisionGeometry
-    let bounds: ModelBounds
+nonisolated public struct StaticCollisionShape: Sendable {
+    public let reference: FormID
+    public let transform: float4x4
+    public let geometry: NIFCollisionGeometry
+    public let bounds: ModelBounds
     /// The MATT material type this surface is made of (issue #358), already
     /// resolved from the NIF's Havok material value at build time so that
     /// nothing downstream has to know a mesh names its surface by hash. Nil
     /// where the mesh carries no material or names one no MATT hashes to.
-    let material: FormID?
+    public let material: FormID?
 
-    init(
+    public init(
         reference: FormID,
         transform: float4x4,
         geometry: NIFCollisionGeometry,
@@ -31,25 +31,25 @@ nonisolated struct StaticCollisionShape {
         self.material = material
     }
 
-    var triangleCount: Int {
+    public var triangleCount: Int {
         guard case let .triangleSoup(_, indices) = geometry else { return 0 }
         return indices.count / 3
     }
 }
 
-nonisolated struct StaticCollisionStats: Equatable {
-    var modelReferenceCount = 0
-    var collisionModelReferenceCount = 0
-    var bodyCount = 0
-    var filteredBodyCount = 0
-    var shapeCount = 0
-    var triangleCount = 0
-    var unsupportedReachableBlockCount = 0
-    var decodeFailureCount = 0
-    var loadFailureCount = 0
-    var estimatedBytes = 0
+nonisolated public struct StaticCollisionStats: Equatable, Sendable {
+    public var modelReferenceCount = 0
+    public var collisionModelReferenceCount = 0
+    public var bodyCount = 0
+    public var filteredBodyCount = 0
+    public var shapeCount = 0
+    public var triangleCount = 0
+    public var unsupportedReachableBlockCount = 0
+    public var decodeFailureCount = 0
+    public var loadFailureCount = 0
+    public var estimatedBytes = 0
 
-    mutating func add(_ other: StaticCollisionStats) {
+    public mutating func add(_ other: StaticCollisionStats) {
         modelReferenceCount += other.modelReferenceCount
         collisionModelReferenceCount += other.collisionModelReferenceCount
         bodyCount += other.bodyCount
@@ -63,14 +63,14 @@ nonisolated struct StaticCollisionStats: Equatable {
     }
 }
 
-nonisolated struct StaticCollisionSet {
-    let location: CellSceneLocation?
-    let shapes: [StaticCollisionShape]
-    let stats: StaticCollisionStats
-    var buildDurationMS: Double
+nonisolated public struct StaticCollisionSet: Sendable {
+    public let location: CellSceneLocation?
+    public let shapes: [StaticCollisionShape]
+    public let stats: StaticCollisionStats
+    public var buildDurationMS: Double
     private let index: BoundsSpatialIndex
 
-    init(
+    public init(
         location: CellSceneLocation?,
         shapes: [StaticCollisionShape],
         stats: StaticCollisionStats,
@@ -83,17 +83,17 @@ nonisolated struct StaticCollisionSet {
         index = BoundsSpatialIndex(bounds: shapes.map(\.bounds))
     }
 
-    static let empty = StaticCollisionSet(
+    public static let empty = StaticCollisionSet(
         location: nil,
         shapes: [],
         stats: StaticCollisionStats()
     )
 
-    var indexNodeCount: Int {
+    public var indexNodeCount: Int {
         index.nodeCount
     }
 
-    func candidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
+    public func candidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
         index.query(overlapping: bounds)
             .map { shapes[$0] }
             .filter { $0.bounds.overlaps(bounds) }
@@ -101,7 +101,7 @@ nonisolated struct StaticCollisionSet {
 }
 
 nonisolated extension ModelBounds {
-    func overlaps(_ other: ModelBounds) -> Bool {
+    public func overlaps(_ other: ModelBounds) -> Bool {
         min.x <= other.max.x && max.x >= other.min.x
             && min.y <= other.max.y && max.y >= other.min.y
             && min.z <= other.max.z && max.z >= other.min.z

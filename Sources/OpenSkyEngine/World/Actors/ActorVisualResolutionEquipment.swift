@@ -57,28 +57,28 @@ import OpenSkyFormats
 /// The sheathed nodes (`WeaponSword`, `WeaponAxe`, `WeaponBack`, `Quiver`)
 /// hang off the pelvis and spine instead and belong to draw/sheath, which is
 /// M15. Recorded in docs/engine/actor-resolution.md.
-nonisolated enum ActorAttachmentBone {
+nonisolated public enum ActorAttachmentBone: Sendable {
     /// The drawn right-hand weapon node.
-    static let drawnWeapon = "Weapon"
+    public static let drawnWeapon = "Weapon"
 }
 
 /// One resolved body part with the ARMA DNAM draw priority that orders it.
-nonisolated struct PrioritizedPart: Equatable {
-    let part: ResolvedBodyPart
+nonisolated public struct PrioritizedPart: Equatable, Sendable {
+    public let part: ResolvedBodyPart
     /// The ARMO the armature came from — carried for logging and tests, so a
     /// part's provenance survives the sort.
-    let owner: FormID
+    public let owner: FormID
     /// DNAM priority for the resolved gender. 0 for a DNAM-less ARMA, which
     /// is the naked-body level and therefore sorts first.
-    let priority: UInt8
+    public let priority: UInt8
 }
 
 /// The worn pieces one resolve pass drew from, whichever source supplied them.
-nonisolated struct WornEquipment {
-    let armors: [Armor]
-    let attachments: [ResolvedAttachment]
+nonisolated public struct WornEquipment: Sendable {
+    public let armors: [Armor]
+    public let attachments: [ResolvedAttachment]
 
-    init(armors: [Armor], attachments: [ResolvedAttachment] = []) {
+    public init(armors: [Armor], attachments: [ResolvedAttachment] = []) {
         self.armors = armors
         self.attachments = attachments
     }
@@ -88,7 +88,7 @@ nonisolated extension ActorVisualResolver {
     /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI expanded via
     /// the deterministic entry policy. Any unusable link throws — the gate
     /// forbids silently rendering the actor naked when the chain breaks.
-    func outfitPieces(of appearance: ResolvedActorAppearance) throws -> [Armor] {
+    public func outfitPieces(of appearance: ResolvedActorAppearance) throws -> [Armor] {
         guard let outfitID = appearance.defaultOutfit.value else { return [] }
         guard let outfit = outfits[outfitID.rawValue] else {
             throw ActorVisualError.brokenOutfitChain(
@@ -160,7 +160,7 @@ nonisolated extension ActorVisualResolver {
     /// Order follows the equipped set, which `ReferenceInventoryState` keeps
     /// sorted by FormID — so two stores that reached the same equipped set
     /// resolve to the same part list in the same order.
-    func wornEquipment(
+    public func wornEquipment(
         equipped: [FormID],
         skips: inout [AppearanceSkip]
     ) -> WornEquipment {
@@ -196,7 +196,7 @@ nonisolated extension ActorVisualResolver {
     /// be stable — so an outfit whose ARMAs all carry the same priority comes
     /// out in exactly the order it went in, and nothing about the existing
     /// plugin-outfit path moves.
-    static func inDrawOrder(_ parts: [PrioritizedPart]) -> [ResolvedBodyPart] {
+    public static func inDrawOrder(_ parts: [PrioritizedPart]) -> [ResolvedBodyPart] {
         parts.enumerated()
             .sorted { lhs, rhs in
                 (lhs.element.priority, lhs.offset) < (rhs.element.priority, rhs.offset)

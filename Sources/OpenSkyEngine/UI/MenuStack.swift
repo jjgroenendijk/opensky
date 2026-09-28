@@ -7,16 +7,16 @@
 /// Opaque menu name. Mirrors Scaleform's string menu identity (for example
 /// "InventoryMenu", "Console", "Dialogue Menu") without hardcoding any list;
 /// the engine only compares identity, never interprets the name.
-nonisolated struct MenuIdentifier: Hashable {
-    let name: String
+nonisolated public struct MenuIdentifier: Hashable, Sendable {
+    public let name: String
 
-    init(_ name: String) {
+    public init(_ name: String) {
         self.name = name
     }
 }
 
 nonisolated extension MenuIdentifier: ExpressibleByStringLiteral {
-    init(stringLiteral value: String) {
+    public init(stringLiteral value: String) {
         self.init(value)
     }
 }
@@ -24,28 +24,28 @@ nonisolated extension MenuIdentifier: ExpressibleByStringLiteral {
 /// Ordered, duplicate-free stack of open menus. The top of the stack is the
 /// focused menu that receives input first. Value type so callers can snapshot
 /// and compare freely; `MenuModeController` owns the one live instance.
-nonisolated struct MenuStack: Equatable {
-    private(set) var identifiers: [MenuIdentifier] = []
+nonisolated public struct MenuStack: Equatable, Sendable {
+    public private(set) var identifiers: [MenuIdentifier] = []
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         identifiers.isEmpty
     }
 
-    var count: Int {
+    public var count: Int {
         identifiers.count
     }
 
     /// The focused menu (top of stack); nil in gameplay mode.
-    var top: MenuIdentifier? {
+    public var top: MenuIdentifier? {
         identifiers.last
     }
 
     /// True when at least one menu is open, i.e. menu mode is active.
-    var isMenuMode: Bool {
+    public var isMenuMode: Bool {
         !identifiers.isEmpty
     }
 
-    func contains(_ identifier: MenuIdentifier) -> Bool {
+    public func contains(_ identifier: MenuIdentifier) -> Bool {
         identifiers.contains(identifier)
     }
 
@@ -54,7 +54,7 @@ nonisolated struct MenuStack: Equatable {
     /// a no-op that returns false, letting the caller detect the rejected
     /// duplicate rather than stacking two of the same menu.
     @discardableResult
-    mutating func push(_ identifier: MenuIdentifier) -> Bool {
+    public mutating func push(_ identifier: MenuIdentifier) -> Bool {
         guard !identifiers.contains(identifier) else { return false }
         identifiers.append(identifier)
         return true
@@ -63,7 +63,7 @@ nonisolated struct MenuStack: Equatable {
     /// Pops the top menu. Returns the removed identifier, or nil when the stack
     /// is already empty, so a stray pop in gameplay mode is a harmless no-op.
     @discardableResult
-    mutating func pop() -> MenuIdentifier? {
+    public mutating func pop() -> MenuIdentifier? {
         identifiers.popLast()
     }
 
@@ -71,14 +71,14 @@ nonisolated struct MenuStack: Equatable {
     /// close a menu by name while others stay open. Returns true when the menu
     /// was open.
     @discardableResult
-    mutating func remove(_ identifier: MenuIdentifier) -> Bool {
+    public mutating func remove(_ identifier: MenuIdentifier) -> Bool {
         guard let index = identifiers.firstIndex(of: identifier) else { return false }
         identifiers.remove(at: index)
         return true
     }
 
     /// Closes every menu, returning to gameplay mode.
-    mutating func removeAll() {
+    public mutating func removeAll() {
         identifiers.removeAll()
     }
 }

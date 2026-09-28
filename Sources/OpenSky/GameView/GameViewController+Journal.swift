@@ -16,6 +16,7 @@
 // See docs/engine/journal.md.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 import OSLog

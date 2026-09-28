@@ -9,6 +9,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyEngine
 
 @MainActor
 struct FakeVoiceState {

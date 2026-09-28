@@ -17,7 +17,7 @@ import OpenSkyFormats
 
 /// What the movie asked the engine to do, as reported through its outbound
 /// `GameDelegate` calls.
-nonisolated enum InventoryMenuAction: Equatable, Sendable {
+nonisolated public enum InventoryMenuAction: Equatable, Sendable {
     /// Equip or unequip the row at this index of the current category.
     case equip(index: Int)
     case drop(index: Int)
@@ -26,14 +26,14 @@ nonisolated enum InventoryMenuAction: Equatable, Sendable {
 
 /// What one bring-up left behind. All three are gates: the milestone's stated
 /// target is zero of each, matching `startmenu.swf`'s 0-of-36 result.
-nonisolated struct InventoryMenuDiagnostics: Equatable, Sendable {
-    let faults: Int
-    let missingNames: Int
-    let unhandledInvokes: Int
+nonisolated public struct InventoryMenuDiagnostics: Equatable, Sendable {
+    public let faults: Int
+    public let missingNames: Int
+    public let unhandledInvokes: Int
 }
 
-nonisolated enum InventoryMenuMovieBridge {
-    static let moviePath = "interface\\inventorymenu.swf"
+nonisolated public enum InventoryMenuMovieBridge: Sendable {
+    public static let moviePath = "interface\\inventorymenu.swf"
 
     /// The `InventoryMenuObj` instance, and the two `Shared.BSScrollingList`
     /// instances underneath it.
@@ -45,30 +45,30 @@ nonisolated enum InventoryMenuMovieBridge {
     /// (`SWFMovieImportMerger`) the whole subtree is absent and the menu comes
     /// up as eleven display nodes with no list at all. Measured paths, read
     /// back with `openskycli swf action-run --movie inventorymenu`.
-    static let menuPath = "/Menu_mc"
-    static let listsPath = "\(menuPath)/InventoryLists_mc"
-    static let categoryListPath = "\(listsPath)/CategoriesListHolder/List_mc"
-    static let itemListPath = "\(listsPath)/ItemsListHolder/List_mc"
-    static let bottomBarPath = "\(menuPath)/BottomBar_mc"
+    public static let menuPath = "/Menu_mc"
+    public static let listsPath = "\(menuPath)/InventoryLists_mc"
+    public static let categoryListPath = "\(listsPath)/CategoriesListHolder/List_mc"
+    public static let itemListPath = "\(listsPath)/ItemsListHolder/List_mc"
+    public static let bottomBarPath = "\(menuPath)/BottomBar_mc"
     /// The two totals are `TextField` instances on the player info card.
-    static let playerInfoPath = "\(bottomBarPath)/PlayerInfoCard_mc"
-    static let goldFieldPath = "\(playerInfoPath)/PlayerGoldValue"
-    static let carryWeightFieldPath = "\(playerInfoPath)/CarryWeightValue"
+    public static let playerInfoPath = "\(bottomBarPath)/PlayerInfoCard_mc"
+    public static let goldFieldPath = "\(playerInfoPath)/PlayerGoldValue"
+    public static let carryWeightFieldPath = "\(playerInfoPath)/CarryWeightValue"
 
     /// `PLATFORM_PC_KBMOUSE`, the value the movie's platform switch expects for
     /// keyboard and mouse. Same constant the system menu passes.
-    static let pcPlatform = 0.0
+    public static let pcPlatform = 0.0
 
     /// `Shared.BSScrollingList`'s backing array of row objects, and the index it
     /// keeps its selection in — the phase-4 contract the scope decision named,
     /// confirmed present on both list objects after bring-up.
-    static let entryArrayName = "EntriesA"
-    static let selectedIndexName = "iSelectedIndex"
+    public static let entryArrayName = "EntriesA"
+    public static let selectedIndexName = "iSelectedIndex"
 
     /// The engine-to-movie callback the lists register with `GameDelegate`.
     /// Writing `EntriesA` changes the data; this is what makes the list rebuild
     /// its rows from it.
-    static let invalidateCallback = "InvalidateListData"
+    public static let invalidateCallback = "InvalidateListData"
 
     /// Movie-to-engine calls that do not mutate OpenSky state. The boolean
     /// queries answer false; the rest are notifications whose consumers are
@@ -81,12 +81,12 @@ nonisolated enum InventoryMenuMovieBridge {
     /// `UpdateItem3D` is the rotating item preview pane, deferred out of this
     /// milestone. Answering it as a no-op is what keeps the deferral visible as
     /// a named decision rather than as an unhandled call in the tally.
-    static let sinkHostFunctions = [
+    public static let sinkHostFunctions = [
         "myLog", "PlaySound", "PlayOKSound", "RequestPlayerInfo",
         "RequestItemCardInfo", "SetSelectedItem", "ShowShoutFistHelp",
         "UpdateItem3D", "EndItem3D"
     ]
-    static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
+    public static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
 
     /// The outbound calls that reach an engine action. Registered in `activate`
     /// rather than `prepare`, because each needs the callback the caller
@@ -99,19 +99,19 @@ nonisolated enum InventoryMenuMovieBridge {
     /// movie's own bytecode — but no measured run has invoked either, so the
     /// engine drives equip and drop from the selection rather than waiting for
     /// them. Treat both as unconfirmed until a run logs one.
-    static let actionHostFunctions = ["CloseMenu", "ItemSelect", "DropItem"]
+    public static let actionHostFunctions = ["CloseMenu", "ItemSelect", "DropItem"]
 
     /// Scaleform's UI-sound hook, reached as a plain `_global` function rather
     /// than through `GameDelegate`. OpenSky has no UI sound bank yet, so it is a
     /// no-op rather than a missing name.
-    static let globalSinkFunctions = ["gfxProcessSound"]
+    public static let globalSinkFunctions = ["gfxProcessSound"]
 
     // MARK: - Bring-up
 
     /// Installs the surface the movie reaches for *during* `start()`. Bring-up
     /// is the first thing that calls out to the host, so this must run before
     /// the runtime is started (`Renderer.startSWFRuntime(prepare:)`).
-    static func prepare(runtime: SWFMovieRuntime) {
+    public static func prepare(runtime: SWFMovieRuntime) {
         for name in sinkHostFunctions {
             runtime.registerHostFunction(name) { _ in .undefined }
         }
@@ -130,7 +130,7 @@ nonisolated enum InventoryMenuMovieBridge {
     ///
     /// Nothing here throws. A movie that does not match the measured contract
     /// leaves entries in the missing-API tally, which the panel reports.
-    static func activate(
+    public static func activate(
         runtime: SWFMovieRuntime,
         onAction: @escaping @MainActor @Sendable (InventoryMenuAction) -> Void
     ) {
@@ -161,7 +161,7 @@ nonisolated enum InventoryMenuMovieBridge {
     /// transition, so an up or down key delivered to the category list moves
     /// nothing. Category changes are therefore engine-driven and republished;
     /// see docs/engine/inventory-menu.md.
-    static func focusItemList(runtime: SWFMovieRuntime) {
+    public static func focusItemList(runtime: SWFMovieRuntime) {
         runtime.focusTarget = runtime.node(atPath: itemListPath, from: runtime.root)
     }
 
@@ -174,7 +174,7 @@ nonisolated enum InventoryMenuMovieBridge {
     /// the list to rebuild. A list the movie has not built yet is skipped
     /// rather than fabricated — a menu with no lists is a measurement result,
     /// not something to paper over.
-    static func publish(_ model: InventoryMenuModel, runtime: SWFMovieRuntime) {
+    public static func publish(_ model: InventoryMenuModel, runtime: SWFMovieRuntime) {
         let categories = model.categoryLabels
         let entries = model.entries
         publish(
@@ -204,7 +204,7 @@ nonisolated enum InventoryMenuMovieBridge {
     /// One `EntriesA` row. `text`, `count`, `weight`, `value` and `equipped`
     /// are what a vanilla item row displays; `index` is what the movie hands
     /// back on an outbound call.
-    static func row(for entry: InventoryMenuEntry, index: Int) -> [String: AS2Value] {
+    public static func row(for entry: InventoryMenuEntry, index: Int) -> [String: AS2Value] {
         [
             "text": .string(entry.name),
             "index": .integer(index),
@@ -222,7 +222,7 @@ nonisolated enum InventoryMenuMovieBridge {
     /// the movie's own CLIK focus path moves the selection. Pointer deltas have
     /// no absolute stage position and remain unsupported here.
     @discardableResult
-    static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
+    public static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
         guard let key = key(for: event) else {
             return false
         }
@@ -235,7 +235,7 @@ nonisolated enum InventoryMenuMovieBridge {
 
     /// Faults, distinct unresolved names and unhandled bridge calls, for the
     /// verification readout and the acceptance gate.
-    static func diagnostics(runtime: SWFMovieRuntime) -> InventoryMenuDiagnostics {
+    public static func diagnostics(runtime: SWFMovieRuntime) -> InventoryMenuDiagnostics {
         InventoryMenuDiagnostics(
             faults: runtime.tally.faultTotal,
             missingNames: runtime.tally.missingNames.count,
@@ -246,19 +246,19 @@ nonisolated enum InventoryMenuMovieBridge {
     /// The row labels the movie actually holds, read back out of its own list.
     /// These prove the engine's rows crossed the bridge rather than that the
     /// engine still has them.
-    static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
         entryLabels(runtime: runtime, atPath: itemListPath)
     }
 
-    static func categoryLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func categoryLabels(runtime: SWFMovieRuntime) -> [String] {
         entryLabels(runtime: runtime, atPath: categoryListPath)
     }
 
-    static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
+    public static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
         selectedIndex(runtime: runtime, atPath: itemListPath)
     }
 
-    static func selectedCategoryIndex(runtime: SWFMovieRuntime) -> Int? {
+    public static func selectedCategoryIndex(runtime: SWFMovieRuntime) -> Int? {
         selectedIndex(runtime: runtime, atPath: categoryListPath)
     }
 }

@@ -9,17 +9,22 @@ import simd
 
 /// One sun-shadow cascade: orthographic light-space transform plus the
 /// view-space depth range of the camera-frustum slice it covers.
-nonisolated struct ShadowCascade {
-    var viewProjection: simd_float4x4
-    var splitNear: Float
-    var splitFar: Float
+nonisolated public struct ShadowCascade: Sendable {
+    public var viewProjection: simd_float4x4
+    public var splitNear: Float
+    public var splitFar: Float
 }
 
-nonisolated enum ShadowCascadeMath {
+nonisolated public enum ShadowCascadeMath: Sendable {
     /// Practical (blended uniform + logarithmic) split scheme. Returns `count`
     /// strictly increasing far bounds; last element is exactly `far`. Degenerate
     /// input is clamped to a sane range rather than crashing.
-    static func splitDistances(near: Float, far: Float, count: Int, lambda: Float) -> [Float] {
+    public static func splitDistances(
+        near: Float,
+        far: Float,
+        count: Int,
+        lambda: Float
+    ) -> [Float] {
         let steps = max(count, 1)
         let safeNear = max(near, 1e-4)
         let safeFar = max(far, safeNear * (1 + 1e-4))
@@ -44,7 +49,7 @@ nonisolated enum ShadowCascadeMath {
     /// starts at `nearPlane`; `shadowDistance` is the overall far bound. Each
     /// cascade fits a rotation-invariant square around the slice's bounding
     /// sphere and snaps its origin to the shadow-map texel grid.
-    static func makeCascades(
+    public static func makeCascades(
         cameraToWorld: simd_float4x4,
         fovYRadians: Float,
         aspectRatio: Float,
@@ -102,7 +107,11 @@ nonisolated enum ShadowCascadeMath {
     /// Cascade lookup mirrored by the MSL shader: first `i` in `0..<cascadeCount`
     /// with `viewDepth <= splits[i]`, else the last cascade. Written as a plain
     /// descending scan (no break) so the shader can mirror it verbatim.
-    static func cascadeIndex(viewDepth: Float, splits: SIMD4<Float>, cascadeCount: Int) -> Int {
+    public static func cascadeIndex(
+        viewDepth: Float,
+        splits: SIMD4<Float>,
+        cascadeCount: Int
+    ) -> Int {
         let count = min(max(cascadeCount, 1), 4)
         var index = count - 1
         var slot = count - 1
@@ -119,19 +128,19 @@ nonisolated enum ShadowCascadeMath {
 
     /// Light-space up vector: world Z-up, switched to +X when the sun points
     /// (anti)parallel to Z so `lookAt` never degenerates.
-    static func lightUp(_ sunDirection: SIMD3<Float>) -> SIMD3<Float> {
+    public static func lightUp(_ sunDirection: SIMD3<Float>) -> SIMD3<Float> {
         let zUp = SIMD3<Float>(0, 0, 1)
         return abs(simd_dot(sunDirection, zUp)) > 0.99 ? SIMD3<Float>(1, 0, 0) : zUp
     }
 
     /// Unit sun-travel direction; falls back to straight-down for a zero vector.
-    static func normalizedSun(_ sunDirection: SIMD3<Float>) -> SIMD3<Float> {
+    public static func normalizedSun(_ sunDirection: SIMD3<Float>) -> SIMD3<Float> {
         let length = simd_length(sunDirection)
         return length > 1e-6 ? sunDirection / length : SIMD3<Float>(0, 0, -1)
     }
 
     /// Eight world-space corners of the camera-frustum slice `[sliceNear, sliceFar]`.
-    static func sliceCorners(
+    public static func sliceCorners(
         cameraToWorld: simd_float4x4,
         tanHalfFovY: Float,
         aspectRatio: Float,
@@ -155,7 +164,9 @@ nonisolated enum ShadowCascadeMath {
     }
 
     /// Bounding sphere (centroid + enclosing radius) of the slice corners.
-    static func boundingSphere(_ corners: [SIMD3<Float>]) -> (center: SIMD3<Float>, radius: Float) {
+    public static func boundingSphere(_ corners: [SIMD3<Float>])
+        -> (center: SIMD3<Float>, radius: Float)
+    {
         var center = SIMD3<Float>(0, 0, 0)
         for corner in corners {
             center += corner
@@ -171,7 +182,7 @@ nonisolated enum ShadowCascadeMath {
     /// Light view-projection for one slice: sphere-fit square ortho box, origin
     /// snapped to the texel grid, near plane extended toward the sun by
     /// `casterBackup` so casters between the sun and the slice still render.
-    static func fitCascade(
+    public static func fitCascade(
         corners: [SIMD3<Float>],
         sun: SIMD3<Float>,
         up: SIMD3<Float>,
@@ -228,7 +239,10 @@ nonisolated enum ShadowCascadeMath {
     /// light-space z of its eight corners, negated into
     /// MatrixMath.orthographic's positive near-distance convention (eye looks
     /// down -z, so the corner closest to the sun has the largest z).
-    static func residentNearLightZ(_ bounds: ModelBounds, lightView: simd_float4x4) -> Float {
+    public static func residentNearLightZ(
+        _ bounds: ModelBounds,
+        lightView: simd_float4x4
+    ) -> Float {
         var maxZ = -Float.greatestFiniteMagnitude
         for corner in bounds.corners {
             let z = (lightView * SIMD4<Float>(corner.x, corner.y, corner.z, 1)).z
@@ -246,7 +260,7 @@ nonisolated enum ShadowCascadeMath {
     /// result stays <= sliceNearZ (slice covered) and, whenever resident
     /// geometry sits within the backup, <= residentNearZ (no caster clipped),
     /// and never reaches past the full backup toward the sun.
-    static func clampedShadowNearZ(
+    public static func clampedShadowNearZ(
         sliceNearZ: Float,
         fullBackupNearZ: Float,
         residentNearZ: Float?

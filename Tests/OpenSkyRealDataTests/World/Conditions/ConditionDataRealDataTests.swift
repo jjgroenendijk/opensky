@@ -2,7 +2,7 @@
 // aggregate counts are evidence only; no game bytes leave the run.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

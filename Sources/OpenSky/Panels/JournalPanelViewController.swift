@@ -13,6 +13,7 @@
 // World > Scripts > Quests deliberately counts only the script side.
 
 import AppKit
+import OpenSkyEngine
 
 final class JournalPanelViewController: InspectorPanelViewController {
     let questsSection = JournalQuestsSection()

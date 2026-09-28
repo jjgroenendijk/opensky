@@ -7,7 +7,7 @@
 // notice: the selection stops at the ends rather than wrapping, a chosen line
 // cannot be chosen over, and the subtitle goes away when the line does.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

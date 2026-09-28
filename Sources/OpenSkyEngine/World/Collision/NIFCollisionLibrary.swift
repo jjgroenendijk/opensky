@@ -6,21 +6,21 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated enum NIFCollisionLibraryError: Error, Equatable {
+nonisolated public enum NIFCollisionLibraryError: Error, Equatable {
     case fileNotFound(path: String)
     case parseFailed(path: String, reason: String)
 }
 
-nonisolated final class NIFCollisionLibrary {
+nonisolated public final class NIFCollisionLibrary {
     private let fileSystem: VirtualFileSystem
     private var cache: [String: NIFCollisionModel] = [:]
     private var touchedKeys: Set<String> = []
 
-    init(fileSystem: VirtualFileSystem) {
+    public init(fileSystem: VirtualFileSystem) {
         self.fileSystem = fileSystem
     }
 
-    func model(path: String) throws -> NIFCollisionModel {
+    public func model(path: String) throws -> NIFCollisionModel {
         let key = try meshKey(for: path)
         touchedKeys.insert(key)
         if let cached = cache[key] {
@@ -44,14 +44,14 @@ nonisolated final class NIFCollisionLibrary {
         }
     }
 
-    func drainTouchedKeys() -> Set<String> {
+    public func drainTouchedKeys() -> Set<String> {
         let result = touchedKeys
         touchedKeys.removeAll(keepingCapacity: true)
         return result
     }
 
     @discardableResult
-    func evict(dropping keys: Set<String>) -> Int {
+    public func evict(dropping keys: Set<String>) -> Int {
         keys.reduce(into: 0) { count, key in
             if cache.removeValue(forKey: key) != nil {
                 count += 1
@@ -59,11 +59,11 @@ nonisolated final class NIFCollisionLibrary {
         }
     }
 
-    var loadedCount: Int {
+    public var loadedCount: Int {
         cache.count
     }
 
-    func canonicalKey(for path: String) -> String {
+    public func canonicalKey(for path: String) -> String {
         (try? meshKey(for: path)) ?? path
     }
 

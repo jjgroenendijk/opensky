@@ -15,6 +15,7 @@
 // its own.
 
 import AppKit
+import OpenSkyEngine
 
 @MainActor
 final class FrameHUDView: NSView {

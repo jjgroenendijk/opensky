@@ -16,6 +16,7 @@
 // renderer reads once per frame, so setting it is a plain override write.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 extension GameViewController {

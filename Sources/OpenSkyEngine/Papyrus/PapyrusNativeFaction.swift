@@ -57,7 +57,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installFaction(into registry: inout PapyrusNativeRegistry) {
+    public static func installFaction(into registry: inout PapyrusNativeRegistry) {
         installFactionMemberships(into: &registry)
         installFactionRanks(into: &registry)
         installRelationshipRanks(into: &registry)

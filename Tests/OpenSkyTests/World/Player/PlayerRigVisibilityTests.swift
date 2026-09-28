@@ -1,7 +1,7 @@
 // The first-person visibility matrix (issue #190): which rig is drawn and
 // which is cast, per camera mode. Pure value — no device, no install.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct PlayerRigVisibilityTests {

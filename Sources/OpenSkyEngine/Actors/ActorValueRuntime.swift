@@ -27,28 +27,28 @@ import OpenSkyFormats
 
 /// Reads and mutates actor values on top of a `WorldStateStore`.
 @MainActor
-struct ActorValueRuntime {
+public struct ActorValueRuntime {
     /// Simulation step regeneration advances in, matching the Papyrus VM's
     /// fixed step so that a frame drives both the same way. 1/60 s.
-    static let fixedStepSeconds = 1.0 / 60
+    public static let fixedStepSeconds = 1.0 / 60
 
     /// Most whole steps one `advance(delta:)` runs, so a multi-second stall
     /// cannot spend minutes regenerating in a single frame.
-    static let maximumStepsPerAdvance = 8
+    public static let maximumStepsPerAdvance = 8
 
-    let store: WorldStateStore
-    let baselines: ActorValueBaselineResolver
+    public let store: WorldStateStore
+    public let baselines: ActorValueBaselineResolver
 
     // MARK: - Reading
 
     /// `holder`'s maximums and regen rates, re-derived from plugin data.
-    func baseline(of holder: ActorValueHolder) -> ActorValueBaseline {
+    public func baseline(of holder: ActorValueHolder) -> ActorValueBaseline {
         baselines.baseline(for: holder.subject)
     }
 
     /// `holder`'s effective state: its runtime component when it has one, a
     /// full baseline when it does not.
-    func state(of holder: ActorValueHolder) -> ActorValueState {
+    public func state(of holder: ActorValueHolder) -> ActorValueState {
         store.component(ActorValueState.self, for: holder.key)
             ?? ActorValueState.baseline(maximums: baseline(of: holder).maximums)
     }
@@ -65,7 +65,7 @@ struct ActorValueRuntime {
     /// DamageActorValue or RestoreActorValue only adjust the current value"
     /// (<https://ck.uesp.net/wiki/ModActorValue_-_Actor>), and a primary's
     /// damage is the drop in its stored current value rather than a slot.
-    func maximums(of holder: ActorValueHolder) -> ActorValues {
+    public func maximums(of holder: ActorValueHolder) -> ActorValues {
         Self.maximums(derived: baseline(of: holder).maximums, state: state(of: holder))
     }
 
@@ -75,7 +75,7 @@ struct ActorValueRuntime {
     /// Floored at zero the way every derived maximum is: the game has no
     /// concept of a negative maximum, and one would make every fraction the HUD
     /// asks for meaningless.
-    static func maximums(derived: ActorValues, state: ActorValueState) -> ActorValues {
+    public static func maximums(derived: ActorValues, state: ActorValueState) -> ActorValues {
         var values = ActorValues.zero
         for kind in ActorValueKind.allCases {
             let index = ActorValueIdentity.index(of: kind)
@@ -86,24 +86,24 @@ struct ActorValueRuntime {
 
     /// Whether `holder` has been touched at runtime, as opposed to still
     /// reading a full baseline.
-    func hasRuntimeState(_ holder: ActorValueHolder) -> Bool {
+    public func hasRuntimeState(_ holder: ActorValueHolder) -> Bool {
         store.component(ActorValueState.self, for: holder.key) != nil
     }
 
     /// `holder`'s current values.
-    func current(of holder: ActorValueHolder) -> ActorValues {
+    public func current(of holder: ActorValueHolder) -> ActorValues {
         state(of: holder).current
     }
 
     /// `holder`'s current values as fractions of its maximums, which is the
     /// shape the HUD meters take.
-    func fractions(of holder: ActorValueHolder) -> ActorValues {
+    public func fractions(of holder: ActorValueHolder) -> ActorValues {
         current(of: holder).fractions(of: maximums(of: holder))
     }
 
     /// Whether `holder` is at zero health. The flag item 15.6 consumes; this
     /// layer does not act on it.
-    func hasZeroHealth(_ holder: ActorValueHolder) -> Bool {
+    public func hasZeroHealth(_ holder: ActorValueHolder) -> Bool {
         state(of: holder).hasZeroHealth
     }
 
@@ -117,7 +117,7 @@ struct ActorValueRuntime {
     ///
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func damage(
+    public func damage(
         _ kind: ActorValueKind,
         by amount: Float,
         on holder: ActorValueHolder
@@ -129,7 +129,7 @@ struct ActorValueRuntime {
     ///
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func restore(
+    public func restore(
         _ kind: ActorValueKind,
         by amount: Float,
         on holder: ActorValueHolder
@@ -147,7 +147,7 @@ struct ActorValueRuntime {
     ///
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func set(
+    public func set(
         _ kind: ActorValueKind,
         to value: Float,
         on holder: ActorValueHolder
@@ -168,7 +168,7 @@ struct ActorValueRuntime {
     ///
     /// - Returns: the state as stored afterwards.
     @discardableResult
-    func restoreAll(on holder: ActorValueHolder) -> ActorValueState {
+    public func restoreAll(on holder: ActorValueHolder) -> ActorValueState {
         // The override table survives a refill: a fortified actor filled to
         // the top is full at its fortified maximum, not stripped of the buff.
         write(
@@ -198,7 +198,7 @@ struct ActorValueRuntime {
     ///
     /// - Returns: the holders whose stored state actually changed.
     @discardableResult
-    func stepRegeneration(over holders: [ActorValueHolder]) -> [ActorValueHolder] {
+    public func stepRegeneration(over holders: [ActorValueHolder]) -> [ActorValueHolder] {
         regenerate(over: holders, seconds: Self.fixedStepSeconds)
     }
 
@@ -216,7 +216,7 @@ struct ActorValueRuntime {
     ///
     /// - Returns: how many whole steps ran.
     @discardableResult
-    func advance(
+    public func advance(
         delta: Float,
         accumulator: inout Double,
         over holders: [ActorValueHolder]
@@ -245,7 +245,7 @@ struct ActorValueRuntime {
     ///
     /// - Returns: true when runtime state was actually removed.
     @discardableResult
-    func reset(_ holder: ActorValueHolder) -> Bool {
+    public func reset(_ holder: ActorValueHolder) -> Bool {
         store.reset(.actorValues, for: holder.key)
     }
 
@@ -309,5 +309,10 @@ struct ActorValueRuntime {
             changed.append(holder)
         }
         return changed
+    }
+
+    public init(store: WorldStateStore, baselines: ActorValueBaselineResolver) {
+        self.store = store
+        self.baselines = baselines
     }
 }

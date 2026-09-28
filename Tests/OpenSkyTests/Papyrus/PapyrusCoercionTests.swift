@@ -1,5 +1,5 @@
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct PapyrusCoercionTests {

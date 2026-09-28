@@ -28,14 +28,14 @@ import Foundation
 ///
 /// Two cases rather than three: "dead" is `ActorDeathState.isDead` and would be
 /// a second, disagreeing record of the same fact if it were also spelled here.
-nonisolated enum ActorHostility: UInt8, Equatable, Sendable, CaseIterable {
+nonisolated public enum ActorHostility: UInt8, Equatable, Sendable, CaseIterable {
     /// The actor has no quarrel with the player. Every actor starts here.
     case neutral = 0
     /// The actor fights the player: the dev-target driver attacks from this
     /// state, and it is what `IsInCombat` and `GetCombatState` read.
     case hostile = 1
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .neutral: "neutral"
         case .hostile: "hostile"
@@ -44,25 +44,25 @@ nonisolated enum ActorHostility: UInt8, Equatable, Sendable, CaseIterable {
 }
 
 /// One actor's hostility toward the player.
-nonisolated struct ActorCombatState: WorldStateComponent, Equatable {
-    var hostility: ActorHostility
+nonisolated public struct ActorCombatState: WorldStateComponent, Equatable, Sendable {
+    public var hostility: ActorHostility
 
-    static let hostile = ActorCombatState(hostility: .hostile)
-    static let neutral = ActorCombatState(hostility: .neutral)
+    public static let hostile = ActorCombatState(hostility: .hostile)
+    public static let neutral = ActorCombatState(hostility: .neutral)
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .combat
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .combat(self)
     }
 
-    init(hostility: ActorHostility) {
+    public init(hostility: ActorHostility) {
         self.hostility = hostility
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .combat(value) = erased else { return nil }
         self = value
     }

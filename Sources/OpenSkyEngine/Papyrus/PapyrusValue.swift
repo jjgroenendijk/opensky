@@ -7,15 +7,15 @@
 
 import Foundation
 
-nonisolated struct PapyrusObjectHandle: Equatable, Hashable, Sendable {
-    let rawValue: UInt64
+nonisolated public struct PapyrusObjectHandle: Equatable, Hashable, Sendable {
+    public let rawValue: UInt64
 
-    init(_ rawValue: UInt64) {
+    public init(_ rawValue: UInt64) {
         self.rawValue = rawValue
     }
 }
 
-indirect nonisolated enum PapyrusType: Equatable, Sendable {
+indirect nonisolated public enum PapyrusType: Equatable, Sendable {
     case none
     case boolean
     case integer
@@ -24,7 +24,7 @@ indirect nonisolated enum PapyrusType: Equatable, Sendable {
     case object(String)
     case array(PapyrusType)
 
-    init(name: String) {
+    public init(name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.hasSuffix("[]") {
             self = .array(PapyrusType(name: String(trimmed.dropLast(2))))
@@ -46,7 +46,7 @@ indirect nonisolated enum PapyrusType: Equatable, Sendable {
         }
     }
 
-    var name: String {
+    public var name: String {
         switch self {
         case .none: "None"
         case .boolean: "Bool"
@@ -58,7 +58,7 @@ indirect nonisolated enum PapyrusType: Equatable, Sendable {
         }
     }
 
-    var defaultValue: PapyrusValue {
+    public var defaultValue: PapyrusValue {
         switch self {
         case .none, .object, .array:
             .none
@@ -74,17 +74,17 @@ indirect nonisolated enum PapyrusType: Equatable, Sendable {
     }
 }
 
-nonisolated final class PapyrusArray: @unchecked Sendable {
-    let elementType: PapyrusType
-    var elements: [PapyrusValue]
+nonisolated public final class PapyrusArray: @unchecked Sendable {
+    public let elementType: PapyrusType
+    public var elements: [PapyrusValue]
 
-    init(elementType: PapyrusType, elements: [PapyrusValue]) {
+    public init(elementType: PapyrusType, elements: [PapyrusValue]) {
         self.elementType = elementType
         self.elements = elements
     }
 }
 
-nonisolated enum PapyrusValue: Sendable {
+nonisolated public enum PapyrusValue: Sendable {
     case none
     case boolean(Bool)
     case integer(Int32)
@@ -93,7 +93,7 @@ nonisolated enum PapyrusValue: Sendable {
     case object(PapyrusObjectHandle)
     case array(PapyrusArray)
 
-    var typeName: String {
+    public var typeName: String {
         switch self {
         case .none: "None"
         case .boolean: "Bool"
@@ -107,7 +107,7 @@ nonisolated enum PapyrusValue: Sendable {
 }
 
 nonisolated extension PapyrusValue: Equatable {
-    static func == (left: PapyrusValue, right: PapyrusValue) -> Bool {
+    public static func == (left: PapyrusValue, right: PapyrusValue) -> Bool {
         switch (left, right) {
         case (.none, .none):
             true

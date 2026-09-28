@@ -8,7 +8,7 @@
 // recorded rather than performed, which is what lets a panel test drive the
 // whole destination with no renderer, no window and no game data.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// The actor-value half of the fake's stored state (issue #194).

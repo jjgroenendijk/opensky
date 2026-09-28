@@ -13,6 +13,7 @@
 // through the same code path, with no second set of rules.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 /// State the world-item bridge owns. Stored on `GameViewController` because

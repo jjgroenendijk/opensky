@@ -21,6 +21,7 @@
 // playback and says so.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import simd
 

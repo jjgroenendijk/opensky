@@ -17,7 +17,7 @@ nonisolated extension LocomotionBridge {
     /// declared it. A name the graph does not carry is reported rather than
     /// dropped, which is how a graph that spells something differently becomes
     /// visible.
-    func write(_ value: BehaviorVariableValue, to name: String) {
+    public func write(_ value: BehaviorVariableValue, to name: String) {
         writeToFirstPersonGraph(value, to: name)
         guard let graph else { return }
         if graph.setVariable(value, named: name) {
@@ -31,7 +31,7 @@ nonisolated extension LocomotionBridge {
     /// control in `LocomotionBridgeDevControls.swift` raises through this path
     /// too, so an event fired from the sidebar is indistinguishable from one
     /// the player produced.
-    func raise(_ name: String) {
+    public func raise(_ name: String) {
         raiseOnFirstPersonGraph(name)
         guard let graph else { return }
         if graph.raiseEvent(named: name) {
@@ -48,7 +48,7 @@ nonisolated extension LocomotionBridge {
     ///
     /// In this satellite rather than in the class body, which is at the
     /// strict-lint length cap.
-    func swimVerticalVelocity(swimming: Bool) -> Float {
+    public func swimVerticalVelocity(swimming: Bool) -> Float {
         guard swimming else { return 0 }
         let rate = configuration.swimSpeed.value * 0.5
         if intent.jump {
@@ -63,7 +63,7 @@ nonisolated extension LocomotionBridge {
     /// Read straight off the instance rather than mirrored, so it is the graph's
     /// number and not a copy of it that can go stale. In an extension because
     /// the class body is at the strict-lint length cap.
-    var ragdollBlendDuration: Float? {
+    public var ragdollBlendDuration: Float? {
         graph?.ragdollBlendDuration
     }
 }

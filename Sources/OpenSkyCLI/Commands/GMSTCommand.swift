@@ -5,6 +5,7 @@
 // than guessed at.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

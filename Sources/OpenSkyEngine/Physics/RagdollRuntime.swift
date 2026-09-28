@@ -34,23 +34,23 @@ import OpenSkyFormats
 import simd
 
 /// One actor the runtime can kill and ragdoll.
-nonisolated struct RagdollActor: Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation
+nonisolated public struct RagdollActor: Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation
     /// The ACHR this ragdoll stands for, for query attribution.
-    let reference: FormID
+    public let reference: FormID
     /// The ragdoll the actor's skeleton carries.
-    let definition: RagdollDefinition
+    public let definition: RagdollDefinition
     /// The skeleton-world matrices the animation currently holds, in the actor's
     /// own space.
-    let animatedBoneMatrices: [float4x4]
+    public let animatedBoneMatrices: [float4x4]
     /// Actor space to world space.
-    let actorToWorld: float4x4
+    public let actorToWorld: float4x4
     /// How fast the whole actor was moving when it died, so a corpse keeps its
     /// momentum.
-    let velocity: SIMD3<Float>
+    public let velocity: SIMD3<Float>
 
-    init(
+    public init(
         key: ReferenceKey,
         cell: CellSceneLocation,
         reference: FormID,
@@ -76,7 +76,7 @@ nonisolated struct RagdollActor: Sendable {
 /// and naming them together is what lets the acceptance tests drive the whole
 /// runtime against a fake with no renderer, no window and no game data.
 @MainActor
-protocol RagdollWorldSeam: AnyObject {
+public protocol RagdollWorldSeam: AnyObject {
     /// Everything a ragdoll needs about `key`, or nil when that actor has no
     /// resolvable skeleton right now.
     func ragdollActor(for key: ReferenceKey) -> RagdollActor?
@@ -120,41 +120,41 @@ nonisolated extension RagdollWorldSeam {
     /// A world with no script layer behind it queues nothing, which is what
     /// every acceptance fake and every synthetic scene genuinely is.
     @discardableResult
-    func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
+    public func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
         0
     }
 }
 
 @MainActor
-final class RagdollRuntime {
-    private(set) var world = RagdollWorld()
+public final class RagdollRuntime {
+    public private(set) var world = RagdollWorld()
     /// Deaths whose graph took the death events and is expected to hand off.
-    private(set) var pendingHandOffs: Set<ReferenceKey> = []
+    public private(set) var pendingHandOffs: Set<ReferenceKey> = []
     /// How many deaths the graph drove, and how many the fallback had to.
-    private(set) var graphDrivenDeathCount = 0
-    private(set) var fallbackDeathCount = 0
+    public private(set) var graphDrivenDeathCount = 0
+    public private(set) var fallbackDeathCount = 0
     /// `OnDying` and `OnDeath` events this runtime's deaths queued (issue
     /// #375), counted together. Zero in a session with no script VM and zero
     /// for a corpse carrying no scripts, which are two different reasons for
     /// the same honest number — the panel reads it beside the death counts so
     /// the pair can be compared.
-    private(set) var deathEventsQueued = 0
+    public private(set) var deathEventsQueued = 0
 
     /// The blend the controlling `hkbRigidBodyRagdollControlsModifier` asks for,
     /// published by the behavior evaluator when it runs one. Vanilla's
     /// `DriveRagdollRB` in `0_master.hkx` carries 0.5 seconds; this is the
     /// default a session with no evaluated modifier falls back to, and it is
     /// that same value rather than an invented one.
-    var blendDuration: Float = HKBRigidBodyRagdollControlsModifier.vanillaBlendDuration
+    public var blendDuration: Float = HKBRigidBodyRagdollControlsModifier.vanillaBlendDuration
 
     private weak var seam: (any RagdollWorldSeam)?
 
-    init(seam: (any RagdollWorldSeam)? = nil) {
+    public init(seam: (any RagdollWorldSeam)? = nil) {
         self.seam = seam
     }
 
     /// Attaches (or detaches) the session this runtime resolves against.
-    func attach(seam: (any RagdollWorldSeam)?) {
+    public func attach(seam: (any RagdollWorldSeam)?) {
         self.seam = seam
         reset()
     }
@@ -178,7 +178,7 @@ final class RagdollRuntime {
     ///
     /// - Returns: true when this call is what killed the actor.
     @discardableResult
-    func noteZeroHealth(of key: ReferenceKey, killer: ReferenceKey? = nil) -> Bool {
+    public func noteZeroHealth(of key: ReferenceKey, killer: ReferenceKey? = nil) -> Bool {
         guard let seam, seam.deathState(of: key)?.isDead != true else { return false }
         guard let actor = seam.ragdollActor(for: key) else { return false }
         seam.writeDeathState(.justDied, for: key, in: actor.cell)
@@ -198,18 +198,18 @@ final class RagdollRuntime {
     }
 
     /// Whether `key` reads as dead right now.
-    func isDead(_ key: ReferenceKey) -> Bool {
+    public func isDead(_ key: ReferenceKey) -> Bool {
         seam?.deathState(of: key)?.isDead ?? false
     }
 
     /// Whether activating `key` should open a container over its corpse rather
     /// than talk to it.
-    func opensAsCorpse(_ key: ReferenceKey) -> Bool {
+    public func opensAsCorpse(_ key: ReferenceKey) -> Bool {
         isDead(key)
     }
 
     /// Records that `key`'s corpse has been searched.
-    func noteLooted(_ key: ReferenceKey) {
+    public func noteLooted(_ key: ReferenceKey) {
         guard
             let seam,
             let state = seam.deathState(of: key), state.isDead, !state.wasLooted,
@@ -224,7 +224,7 @@ final class RagdollRuntime {
     ///
     /// - Returns: true when this frame's events handed the skeleton over.
     @discardableResult
-    func handleGraphEvents(_ names: [String], on key: ReferenceKey) -> Bool {
+    public func handleGraphEvents(_ names: [String], on key: ReferenceKey) -> Bool {
         var handed = false
         for name in names {
             guard let instant = RagdollGraphNames.handOff(name) else { continue }
@@ -238,7 +238,7 @@ final class RagdollRuntime {
     ///
     /// - Returns: true when a ragdoll now exists for `key`.
     @discardableResult
-    func activate(_ key: ReferenceKey, instant: Bool) -> Bool {
+    public func activate(_ key: ReferenceKey, instant: Bool) -> Bool {
         guard let seam, !world.isRagdolling(key) else { return false }
         guard let actor = seam.ragdollActor(for: key) else { return false }
         guard
@@ -263,7 +263,7 @@ final class RagdollRuntime {
     ///
     /// - Returns: true when a ragdoll now exists for `key`.
     @discardableResult
-    func trigger(_ key: ReferenceKey) -> Bool {
+    public func trigger(_ key: ReferenceKey) -> Bool {
         guard let seam else { return false }
         if seam.deathState(of: key)?.isDead != true {
             noteZeroHealth(of: key)
@@ -274,7 +274,7 @@ final class RagdollRuntime {
     // MARK: - Stepping
 
     /// Advances every live ragdoll and persists whatever came to rest.
-    func advance(by frameTime: Float) {
+    public func advance(by frameTime: Float) {
         guard let seam else { return }
         world.advance(by: frameTime, world: seam.ragdollStepWorld)
         for settled in world.drainSettledTransforms() {
@@ -290,7 +290,7 @@ final class RagdollRuntime {
     }
 
     /// The pose one actor draws this frame, or nil when it is not ragdolling.
-    func boneMatrices(
+    public func boneMatrices(
         for key: ReferenceKey,
         blending animated: [String: float4x4],
         worldToActor: float4x4
@@ -300,14 +300,14 @@ final class RagdollRuntime {
 
     /// Suspends and resumes stepping without discarding the corpses, which is
     /// what the panel's freeze control drives.
-    var isFrozen: Bool {
+    public var isFrozen: Bool {
         get { world.isFrozen }
         set { world.isFrozen = newValue }
     }
 
     /// Whether a ragdoll's own bones may touch each other, which is what the
     /// panel's self-collision control drives (issue #413).
-    var isSelfCollisionEnabled: Bool {
+    public var isSelfCollisionEnabled: Bool {
         get { world.isSelfCollisionEnabled }
         set { world.isSelfCollisionEnabled = newValue }
     }
@@ -319,13 +319,13 @@ final class RagdollRuntime {
     ///
     /// - Returns: how many stopped simulating.
     @discardableResult
-    func trim(to limit: Int) -> Int {
+    public func trim(to limit: Int) -> Int {
         world.trim(to: limit)
     }
 
     /// Forgets every live ragdoll and every pending hand-off. The deaths
     /// themselves are the store's and survive.
-    func reset() {
+    public func reset() {
         world.removeAll()
         pendingHandOffs.removeAll()
         graphDrivenDeathCount = 0

@@ -12,7 +12,7 @@
 // state machine those names drive and the env-gated `ProjectileRealDataTests`
 // closes the loop on vanilla PROJ values.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

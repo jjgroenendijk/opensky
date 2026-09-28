@@ -19,7 +19,7 @@
 // on a device-less runner with no install.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

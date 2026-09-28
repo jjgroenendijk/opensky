@@ -26,19 +26,19 @@ import Foundation
 import OpenSkyFormats
 
 /// What consuming one item applies.
-nonisolated struct MagicItemUse: Equatable {
-    let item: FormID
+nonisolated public struct MagicItemUse: Equatable, Sendable {
+    public let item: FormID
     /// Which source kind the resulting effects are attributed to.
-    let kind: ActiveEffectSourceKind
+    public let kind: ActiveEffectSourceKind
     /// The effect entries one unit applies, already narrowed by the ingredient
     /// rule where it applies.
-    let effects: [MagicItemEffect]
+    public let effects: [MagicItemEffect]
     /// ALCH ENIT's consume sound, for the milestone that plays it.
-    let consumeSound: FormID?
+    public let consumeSound: FormID?
 }
 
 /// Why a consume attempt did nothing.
-nonisolated enum MagicItemConsumeError: Equatable, Error {
+nonisolated public enum MagicItemConsumeError: Equatable, Error {
     /// The item is not an ALCH or an INGR, or no loaded plugin describes it.
     case notConsumable(FormID)
     /// The holder carries none of it.
@@ -46,15 +46,15 @@ nonisolated enum MagicItemConsumeError: Equatable, Error {
 }
 
 /// What one successful consume did.
-nonisolated struct MagicItemConsumeOutcome: Equatable {
-    let item: FormID
-    let kind: ActiveEffectSourceKind
+nonisolated public struct MagicItemConsumeOutcome: Equatable, Sendable {
+    public let item: FormID
+    public let kind: ActiveEffectSourceKind
     /// Effect entries handed to the runtime — not all of which necessarily
     /// applied; the runtime's tally says which did not and why.
-    let entryCount: Int
+    public let entryCount: Int
     /// The timed effects that became components. Instant effects moved a value
     /// and are not here, by design.
-    let stored: [ActiveEffect]
+    public let stored: [ActiveEffect]
 }
 
 extension ActiveEffectRuntime {
@@ -69,7 +69,7 @@ extension ActiveEffectRuntime {
     /// - Throws: `MagicItemConsumeError`, plus whatever `InventoryRuntime`
     ///   throws when the removal fails.
     @discardableResult
-    mutating func consume(
+    public mutating func consume(
         _ item: FormID,
         from holder: InventoryHolder,
         on target: ActorValueHolder,

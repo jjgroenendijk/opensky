@@ -31,32 +31,32 @@
 import Foundation
 
 /// The ceiling on each transient population.
-nonisolated struct CombatTransientLimits: Equatable, Sendable {
+nonisolated public struct CombatTransientLimits: Equatable, Sendable {
     /// Arrows in the air at once. Twelve is well past what a bow can loose in
     /// the time the first arrow is still flying, so the cap is a runaway guard
     /// rather than a gameplay rule.
-    var liveProjectiles: Int
+    public var liveProjectiles: Int
     /// Arrows left standing in the world. Chosen so a full quiver emptied into
     /// one wall stays visible; past it the oldest is pulled out.
-    var stuckProjectiles: Int
+    public var stuckProjectiles: Int
     /// Corpses simulating at once. The 15.6 stress runs eight collapsing
     /// together inside budget, so eight is the measured number rather than a
     /// hoped-for one.
-    var activeRagdolls: Int
+    public var activeRagdolls: Int
     /// Dynamic bodies awake at once. The 15.2 stress settles this many inside
     /// the step budget; past it the oldest awake body is put to sleep where it
     /// is rather than deleted.
-    var awakeBodies: Int
+    public var awakeBodies: Int
 
     /// What a session runs with.
-    static let standard = CombatTransientLimits(
+    public static let standard = CombatTransientLimits(
         liveProjectiles: 12,
         stuckProjectiles: 32,
         activeRagdolls: 8,
         awakeBodies: 64
     )
 
-    init(
+    public init(
         liveProjectiles: Int,
         stuckProjectiles: Int,
         activeRagdolls: Int,
@@ -71,7 +71,7 @@ nonisolated struct CombatTransientLimits: Equatable, Sendable {
     /// How many of each population is over its ceiling, given live counts.
     /// Zero in every field when nothing needs trimming, which is the common
     /// case and costs four comparisons.
-    func excess(over counts: CombatTransientCounts) -> CombatTransientCounts {
+    public func excess(over counts: CombatTransientCounts) -> CombatTransientCounts {
         CombatTransientCounts(
             liveProjectiles: max(0, counts.liveProjectiles - liveProjectiles),
             stuckProjectiles: max(0, counts.stuckProjectiles - stuckProjectiles),
@@ -81,7 +81,7 @@ nonisolated struct CombatTransientLimits: Equatable, Sendable {
     }
 
     /// Whether any population is over its ceiling.
-    func needsTrim(_ counts: CombatTransientCounts) -> Bool {
+    public func needsTrim(_ counts: CombatTransientCounts) -> Bool {
         excess(over: counts) != .none
     }
 }

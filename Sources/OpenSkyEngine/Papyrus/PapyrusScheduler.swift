@@ -2,7 +2,7 @@
 
 import Foundation
 
-nonisolated final class PapyrusScheduler {
+nonisolated public final class PapyrusScheduler {
     private struct Entry {
         let order: UInt64
         let wake: Wake
@@ -18,20 +18,20 @@ nonisolated final class PapyrusScheduler {
         case gameHours(Double)
     }
 
-    let runtime: PapyrusRuntime
-    let fixedStepSeconds: Double
-    let maximumGameHoursPerStep: Double
+    public let runtime: PapyrusRuntime
+    public let fixedStepSeconds: Double
+    public let maximumGameHoursPerStep: Double
 
     /// Observation seam for the M11.2 world runtime: called after every woken
     /// call resumes, before its outcome is routed, so the caller can retire
     /// per-instance bookkeeping and count resumes.
-    var onResume: ((SuspendedCall, PapyrusRunOutcome) -> Void)?
+    public var onResume: ((SuspendedCall, PapyrusRunOutcome) -> Void)?
 
-    private(set) var tickCount = 0
-    private(set) var elapsedGameHours = 0.0
-    private(set) var pendingCount = 0
+    public private(set) var tickCount = 0
+    public private(set) var elapsedGameHours = 0.0
+    public private(set) var pendingCount = 0
 
-    var realSeconds: Double {
+    public var realSeconds: Double {
         Double(tickCount) * fixedStepSeconds
     }
 
@@ -40,7 +40,7 @@ nonisolated final class PapyrusScheduler {
     private var entries: [Entry] = []
     private var terminal: [PapyrusRunOutcome] = []
 
-    init(
+    public init(
         runtime: PapyrusRuntime,
         fixedStepSeconds: Double,
         maximumGameHoursPerStep: Double = 24
@@ -50,11 +50,11 @@ nonisolated final class PapyrusScheduler {
         self.maximumGameHoursPerStep = max(0, maximumGameHoursPerStep)
     }
 
-    func schedule(_ outcome: PapyrusRunOutcome) {
+    public func schedule(_ outcome: PapyrusRunOutcome) {
         route(outcome)
     }
 
-    func tick(gameClock: GameClock? = nil) -> [PapyrusRunOutcome] {
+    public func tick(gameClock: GameClock? = nil) -> [PapyrusRunOutcome] {
         tickCount += 1
         consumeGameTime(gameClock)
         wakeDueCalls()

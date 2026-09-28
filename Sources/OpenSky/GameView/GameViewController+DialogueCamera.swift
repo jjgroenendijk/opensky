@@ -21,6 +21,7 @@
 // See docs/engine/dialogue-camera.md.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import simd
 

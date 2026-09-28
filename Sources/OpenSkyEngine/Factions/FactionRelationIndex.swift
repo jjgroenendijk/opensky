@@ -19,7 +19,7 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// Directional reaction lookup between two factions.
-nonisolated struct FactionRelationIndex {
+nonisolated public struct FactionRelationIndex: Sendable {
     /// Ordered pair: what a member of `from` makes of a member of `to`.
     private struct Pair: Hashable {
         let from: ReferenceKey
@@ -30,13 +30,13 @@ nonisolated struct FactionRelationIndex {
     /// XNAM entries whose combat-reaction word is none of the four the spec
     /// names. Counted rather than guessed at, and reported so a load order that
     /// carries one is a fact somebody can see rather than a silent neutral.
-    private(set) var unnamedReactionCount = 0
+    public private(set) var unnamedReactionCount = 0
 
-    var count: Int {
+    public var count: Int {
         reactions.count
     }
 
-    init(store: FactionStore) {
+    public init(store: FactionStore) {
         for faction in store.sortedFactions {
             let from = ReferenceKey(resolved: faction.id)
             for relation in faction.faction.relations {
@@ -52,7 +52,7 @@ nonisolated struct FactionRelationIndex {
     /// factions have nothing to do with each other" from "one of them wrote
     /// Neutral down", because only the second is an authored opinion and a
     /// later term may want to know the difference.
-    func reaction(of from: ReferenceKey, toward to: ReferenceKey) -> ActorReaction? {
+    public func reaction(of from: ReferenceKey, toward to: ReferenceKey) -> ActorReaction? {
         reactions[Pair(from: from, to: to)]
     }
 

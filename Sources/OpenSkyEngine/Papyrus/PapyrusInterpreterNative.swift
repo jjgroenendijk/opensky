@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusInterpreter {
-    func suspend(
+    public func suspend(
         call: PapyrusNativeCall,
         request: PapyrusNativeSuspension,
         target: PapyrusResumeTarget
@@ -20,7 +20,7 @@ nonisolated extension PapyrusInterpreter {
         )
     }
 
-    func nativeFlow(
+    public func nativeFlow(
         _ call: PapyrusNativeCall,
         destination: PexValue
     ) throws(PapyrusFault) -> PapyrusFlow {
@@ -53,7 +53,7 @@ nonisolated extension PapyrusInterpreter {
         }
     }
 
-    func nativeOutcome(
+    public func nativeOutcome(
         _ call: PapyrusNativeCall,
         target: PapyrusResumeTarget
     ) -> PapyrusRunOutcome {

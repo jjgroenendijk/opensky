@@ -25,7 +25,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
-    static func installDialogue(_ registry: inout ConditionFunctionRegistry) {
+    public static func installDialogue(_ registry: inout ConditionFunctionRegistry) {
         // "Returns true if the actor's voice type matches the specified voice
         // type." (<https://ck.uesp.net/wiki/GetIsVoiceType>) Parameter 1 is
         // `ptVoiceType`, a VTYP FormID.

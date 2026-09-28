@@ -24,7 +24,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
-    static func installPerk(_ registry: inout ConditionFunctionRegistry) {
+    public static func installPerk(_ registry: inout ConditionFunctionRegistry) {
         // "Returns whether the actor has the specified perk."
         // (<https://ck.uesp.net/wiki/HasPerk>) The run-on names the actor, and
         // parameter 1 names the PERK record.

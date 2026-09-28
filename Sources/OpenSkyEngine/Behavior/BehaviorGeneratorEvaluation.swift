@@ -26,19 +26,19 @@ import simd
 /// `m_boneWeights`; the root travel uses `m_worldFromModelWeight`, which is the
 /// member whose whole purpose is to let a child drive motion without driving
 /// the pose.
-nonisolated struct BehaviorBlendChild {
-    let pose: BehaviorPose
-    let weight: Float
-    let motionWeight: Float
+nonisolated public struct BehaviorBlendChild: Sendable {
+    public let pose: BehaviorPose
+    public let weight: Float
+    public let motionWeight: Float
     /// One weight per skeleton bone, or nil for a child that contributes at
     /// full weight everywhere.
-    let boneWeights: [Float]?
+    public let boneWeights: [Float]?
 }
 
 nonisolated extension BehaviorGraphInstance {
     /// The pose of the generator at `target`, or the reference pose when there
     /// is nothing there to evaluate.
-    func evaluateGenerator(
+    public func evaluateGenerator(
         at target: HKXPointerTarget?,
         depth: Int,
         deltaTime: Float
@@ -155,7 +155,7 @@ nonisolated extension BehaviorGraphInstance {
     ///
     /// A child under `m_referencePoseWeightThreshold` is dropped rather than
     /// blended, which is what the member is for.
-    func evaluateBlend(
+    public func evaluateBlend(
         _ blender: HKBBlenderFields,
         bound: [String: BehaviorVariableValue],
         depth: Int,
@@ -275,7 +275,7 @@ nonisolated extension BehaviorGraphInstance {
     /// `m_selectedGeneratorIndex`, which is normally variable-bound. An index
     /// outside the child list selects nothing and produces the reference pose,
     /// which is what Havok does with an unset selector.
-    func evaluateSelector(
+    public func evaluateSelector(
         _ selector: HKBManualSelectorGenerator,
         bound: [String: BehaviorVariableValue],
         depth: Int,

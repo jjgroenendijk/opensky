@@ -2,7 +2,7 @@
 // settles and sleeps, an impulse wakes it, and a crowded scene stays finite,
 // stays above the floor, and produces the same resting state twice.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

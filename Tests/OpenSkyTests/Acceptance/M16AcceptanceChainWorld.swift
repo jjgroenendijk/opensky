@@ -8,7 +8,7 @@
 // that answered these from literals would be testing two runtimes over a
 // diorama rather than a chain.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

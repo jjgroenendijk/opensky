@@ -4,13 +4,13 @@
 import OpenSkyFormats
 import OSLog
 
-nonisolated struct ExteriorBuildSource {
-    let world: FoundWorld
-    let cell: FoundCell
+nonisolated public struct ExteriorBuildSource: Sendable {
+    public let world: FoundWorld
+    public let cell: FoundCell
 }
 
 nonisolated extension CellSceneBuilder {
-    nonisolated func exteriorBuildSource(
+    nonisolated public func exteriorBuildSource(
         worldspaceEditorID: String,
         gridX: Int32,
         gridY: Int32
@@ -37,7 +37,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     /// One plugin means REFR and base IDs share a FormID space for now.
-    nonisolated func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
+    nonisolated public func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
         if let statIndex {
             return statIndex
         }
@@ -57,7 +57,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     /// One cached index spans the six model-base top groups.
-    nonisolated func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
+    nonisolated public func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
         if let modelBaseIndex {
             return modelBaseIndex
         }
@@ -91,7 +91,7 @@ nonisolated extension CellSceneBuilder {
     /// use. A plugin with no MATT group yields the empty index rather than nil,
     /// so a synthetic scene resolves every surface to no material instead of
     /// rebuilding the index per cell.
-    nonisolated func materialTypeIndexBuildingIfNeeded() -> MaterialTypeIndex {
+    nonisolated public func materialTypeIndexBuildingIfNeeded() -> MaterialTypeIndex {
         if let materialTypeIndex {
             return materialTypeIndex
         }
@@ -100,7 +100,7 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
-    nonisolated func resolveBase(
+    nonisolated public func resolveBase(
         formID: UInt32,
         statIndex: [UInt32: StaticObject],
         modelBaseIndex: [UInt32: ModelBase]

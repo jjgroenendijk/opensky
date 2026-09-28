@@ -50,7 +50,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// which is the opposite of what `DamageActorValue` does and is deliberate:
     /// the wiki's own example modifies health by -10, and a `ModActorValue` that
     /// could only ever raise a value would be a different function.
-    static func installActorValueWriteNatives(into registry: inout PapyrusNativeRegistry) {
+    public static func installActorValueWriteNatives(into registry: inout PapyrusNativeRegistry) {
         for write in PapyrusActorValueWrite.allCases {
             registry.register(PapyrusNativeFunction(
                 scriptName: "Actor",

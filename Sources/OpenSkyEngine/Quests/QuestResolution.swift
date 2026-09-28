@@ -13,20 +13,20 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct QuestResolution: Sendable {
+nonisolated public struct QuestResolution: Sendable {
     private let defaults: QuestStore
     private let overrides: [ReferenceKey: QuestRuntimeState]
 
-    static let empty = QuestResolution(defaults: .empty, overrides: [:])
+    public static let empty = QuestResolution(defaults: .empty, overrides: [:])
 
-    init(defaults: QuestStore?, overrides: [ReferenceKey: QuestRuntimeState] = [:]) {
+    public init(defaults: QuestStore?, overrides: [ReferenceKey: QuestRuntimeState] = [:]) {
         self.defaults = defaults ?? .empty
         self.overrides = overrides
     }
 
     /// Resolution over a snapshot's quest components, for a consumer running
     /// off the main actor where the live store is unreachable.
-    init(defaults: QuestStore?, snapshot: WorldStateSnapshot) {
+    public init(defaults: QuestStore?, snapshot: WorldStateSnapshot) {
         var overrides: [ReferenceKey: QuestRuntimeState] = [:]
         for entry in snapshot.entries {
             guard let state = entry.delta.component(QuestRuntimeState.self) else { continue }
@@ -36,7 +36,7 @@ nonisolated struct QuestResolution: Sendable {
     }
 
     /// Current state of the quest `id` names, or nil when no quest does.
-    func state(for id: FormID) -> QuestRuntimeState? {
+    public func state(for id: FormID) -> QuestRuntimeState? {
         guard let quest = defaults.quest(id) else { return nil }
         guard let key = defaults.key(for: id), let override = overrides[key] else {
             return QuestRuntimeState.baseline(for: quest)
@@ -44,20 +44,20 @@ nonisolated struct QuestResolution: Sendable {
         return override
     }
 
-    func state(editorID: String) -> QuestRuntimeState? {
+    public func state(editorID: String) -> QuestRuntimeState? {
         guard let id = defaults.formID(editorID: editorID) else { return nil }
         return state(for: id)
     }
 
     /// True when the session has recorded runtime state for `id`, as opposed to
     /// the quest still reading straight from plugin data.
-    func hasRuntimeState(_ id: FormID) -> Bool {
+    public func hasRuntimeState(_ id: FormID) -> Bool {
         guard let key = defaults.key(for: id) else { return false }
         return overrides[key] != nil
     }
 
     /// Quests with runtime state in this resolution.
-    var runtimeStateCount: Int {
+    public var runtimeStateCount: Int {
         overrides.count
     }
 }

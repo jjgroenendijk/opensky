@@ -15,36 +15,36 @@ import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 
-nonisolated final class WeatherSystem {
+nonisolated public final class WeatherSystem {
     /// How a forced weather change arrives.
-    enum Transition {
+    public enum Transition: Sendable {
         /// Snap instantly (no blend) — tests + the UI "apply now" path.
         case instant
         /// Cross-fade over the target weather's derived transition duration.
         case timed
     }
 
-    let store: WeatherStore
-    let worldspaceFormID: UInt32?
+    public let store: WeatherStore
+    public let worldspaceFormID: UInt32?
 
     // MARK: Tuning constants (documented in docs/engine/weather.md)
 
     /// Auto reroll cadence in game-hours, accumulated from the game clock's
     /// elapsed hours. Chosen for a visible-but-not-frantic churn on a dev
     /// clock.
-    static let rerollGameHours: Float = 6
+    public static let rerollGameHours: Float = 6
     /// Fallback transition seconds when a weather has no DATA Trans Delta.
-    static let defaultTransitionSeconds: Float = 10
+    public static let defaultTransitionSeconds: Float = 10
     /// Trans Delta is clamped to this floor before inversion so a near-zero
     /// delta cannot produce an unbounded transition.
-    static let minTransDelta: Float = 0.02
+    public static let minTransDelta: Float = 0.02
 
     // MARK: Selection + transition state
 
     /// XCLR regions of the current exterior cell; drives region selection.
-    private(set) var currentRegions: [FormID] = []
+    public private(set) var currentRegions: [FormID] = []
     /// Forced weather override; nil = automatic selection.
-    private(set) var forced: FormID?
+    public private(set) var forced: FormID?
     /// Reroll epoch — part of the deterministic pick seed.
     private var epoch: UInt64 = 0
     /// Settled source weather of the active blend (== `toWeather` when idle).
@@ -56,18 +56,18 @@ nonisolated final class WeatherSystem {
     private var transitionDuration: Float = WeatherSystem.defaultTransitionSeconds
     private var gameHoursSinceRoll: Float = 0
     /// Cached resolve at the last update — recomputed only on update().
-    private(set) var resolvedWeather: ResolvedWeather?
+    public private(set) var resolvedWeather: ResolvedWeather?
     /// Freezes only weather cross-fade progress. Time-of-day resolution and
     /// precipitation particle playback continue, enabling a stable mid-storm
     /// inspection frame in the main app.
-    var transitionsPaused = false
+    public var transitionsPaused = false
     /// Current global-variable values, used to honour the CLMT WLST global on
     /// each climate weather chance (issue #165). Nil leaves every chance at the
     /// authored number. Replaced through `setGlobalResolution(_:)` whenever the
     /// session mutates a global.
-    private(set) var globalResolution: GlobalResolution?
+    public private(set) var globalResolution: GlobalResolution?
 
-    init(store: WeatherStore, worldspaceFormID: UInt32?) {
+    public init(store: WeatherStore, worldspaceFormID: UInt32?) {
         self.store = store
         self.worldspaceFormID = worldspaceFormID
         // Seed an initial automatic pick so the first frame already has weather.
@@ -78,7 +78,7 @@ nonisolated final class WeatherSystem {
 
     /// Convenience: resolve the store + worldspace from an ESM file by editor
     /// ID. Returns nil when the plugin carries no weather data at all.
-    convenience init?(file: ESMFile, worldspaceEditorID: String) {
+    public convenience init?(file: ESMFile, worldspaceEditorID: String) {
         let store = WeatherStore(file: file)
         guard !store.weathers.isEmpty else { return nil }
         self.init(
@@ -91,21 +91,21 @@ nonisolated final class WeatherSystem {
 
     /// Current published wind (blended across a transition). Calm when no
     /// weather is active.
-    var currentWind: WindState {
+    public var currentWind: WindState {
         resolvedWeather?.wind ?? .calm
     }
 
     /// FormID of the weather being transitioned toward, nil when inactive.
-    var currentWeatherID: FormID? {
+    public var currentWeatherID: FormID? {
         toWeather
     }
 
-    var currentWeatherEditorID: String? {
+    public var currentWeatherEditorID: String? {
         toWeather.flatMap { store.weather($0)?.editorID }
     }
 
     /// 0-1 progress of the active transition (1 when settled).
-    var transitionFraction: Float {
+    public var transitionFraction: Float {
         transitionProgress
     }
 
@@ -114,7 +114,7 @@ nonisolated final class WeatherSystem {
     /// Feeds the current exterior cell's XCLR regions. A changed region set
     /// rerolls immediately (a new region may bring different weather), unless a
     /// weather is forced.
-    func setRegions(_ regions: [FormID]) {
+    public func setRegions(_ regions: [FormID]) {
         guard regions != currentRegions else { return }
         currentRegions = regions
         guard forced == nil else { return }
@@ -125,7 +125,10 @@ nonisolated final class WeatherSystem {
     /// changed chances are visible immediately rather than at the next
     /// six-game-hour boundary. That is what makes a mutated weather-chance
     /// global observable in the running app.
-    func setGlobalResolution(_ resolution: GlobalResolution?, reroll shouldReroll: Bool = true) {
+    public func setGlobalResolution(
+        _ resolution: GlobalResolution?,
+        reroll shouldReroll: Bool = true
+    ) {
         globalResolution = resolution
         guard shouldReroll, forced == nil else { return }
         gameHoursSinceRoll = 0
@@ -134,7 +137,7 @@ nonisolated final class WeatherSystem {
 
     /// Forces `weather` (nil resumes automatic selection). Instant snaps;
     /// timed cross-fades over the derived duration.
-    func forceWeather(_ weather: FormID?, transition: Transition) {
+    public func forceWeather(_ weather: FormID?, transition: Transition) {
         forced = weather
         guard let weather else {
             // Resume auto: keep showing the settled weather, let rerolls take
@@ -151,7 +154,7 @@ nonisolated final class WeatherSystem {
     /// recomputes the resolved blend at `hour`. A clock that never advances
     /// elapses zero hours and so never auto-rerolls, which keeps forced
     /// weather deterministic for tests and offscreen renders.
-    func update(deltaTime: Float, hour: Float, elapsedGameHours: Float = 0) {
+    public func update(deltaTime: Float, hour: Float, elapsedGameHours: Float = 0) {
         advanceTransition(deltaTime: max(0, deltaTime))
         if elapsedGameHours.isFinite, elapsedGameHours > 0 {
             gameHoursSinceRoll += elapsedGameHours

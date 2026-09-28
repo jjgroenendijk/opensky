@@ -8,6 +8,7 @@
 // an existing subsystem joins that subsystem's neighbourhood).
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 final class FirstPersonSection: PanelSectionViewController {

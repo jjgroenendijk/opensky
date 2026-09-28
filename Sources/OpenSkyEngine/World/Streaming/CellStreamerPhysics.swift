@@ -19,7 +19,7 @@ extension CellStreamer {
     /// One frame of dynamic simulation: reconcile residency, shove whatever the
     /// player walked into, step the solver, then hand any newly-settled resting
     /// transform to the world state.
-    func advancePhysics(frameTime: Float, player: PlayerCapsuleState?) {
+    public func advancePhysics(frameTime: Float, player: PlayerCapsuleState?) {
         reconcileDynamicBodies()
         pushDynamicBodies(player: player, frameTime: frameTime)
         dynamicBodies.advance(
@@ -47,7 +47,7 @@ extension CellStreamer {
 
     /// Adds the bodies of every newly resident or rebuilt cell and drops the
     /// bodies of every cell that left.
-    func reconcileDynamicBodies() {
+    public func reconcileDynamicBodies() {
         let resident = residentDynamicBodyScenes()
         dynamicBodies.retainBodies(occupying: Set(resident.keys))
         for location in dynamicBodies.installedCells.keys where resident[location] == nil {
@@ -101,14 +101,14 @@ extension CellStreamer {
     /// Faster than this and the capsule was teleported, not walked, so the
     /// frame contributes no shove. Engine units per second; a sprint is a few
     /// hundred.
-    static let maximumPushSpeed: Float = 3000
+    public static let maximumPushSpeed: Float = 3000
 }
 
 nonisolated extension CellSceneLocation {
     /// A total order over cell identities, so a dictionary of resident cells
     /// can be visited reproducibly. Exteriors sort by grid coordinate and come
     /// before every interior, which sorts by CELL FormID.
-    static func isOrderedBefore(_ lhs: CellSceneLocation, _ rhs: CellSceneLocation) -> Bool {
+    public static func isOrderedBefore(_ lhs: CellSceneLocation, _ rhs: CellSceneLocation) -> Bool {
         switch (lhs, rhs) {
         case let (.exterior(left), .exterior(right)):
             (left.x, left.y) < (right.x, right.y)

@@ -4,6 +4,7 @@
 
 import AppKit
 import MetalKit
+import OpenSkyEngine
 import OpenSkyGameData
 import OSLog
 import simd

@@ -4,7 +4,7 @@
 // encoder produced before either chunk existed.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

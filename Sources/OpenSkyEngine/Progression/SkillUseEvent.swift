@@ -45,7 +45,7 @@ import OpenSkyFormats
 /// two of these cases cannot answer it on their own — a weapon hit's skill
 /// depends on which animation family the weapon belongs to, and an armoured
 /// hit's on what the target is wearing.
-nonisolated enum SkillUseAction: Equatable, Sendable {
+nonisolated public enum SkillUseAction: Equatable, Sendable {
     /// A landed strike, credited to the skill the weapon's animation family
     /// belongs to. The amount is the weapon's base damage.
     case weaponHit(CombatHandType)
@@ -69,7 +69,7 @@ nonisolated enum SkillUseAction: Equatable, Sendable {
     /// (<https://en.uesp.net/wiki/Skyrim:Unarmed_Combat>). Neither does a staff,
     /// a torch, a shield swing or a readied spell reported as a weapon hit,
     /// because none of those is a weapon strike the weapon skills claim.
-    var skillIndex: Int32? {
+    public var skillIndex: Int32? {
         switch self {
         case let .weaponHit(handType):
             switch handType {
@@ -93,16 +93,16 @@ nonisolated enum SkillUseAction: Equatable, Sendable {
 }
 
 /// One skill use, from the system that simulated it.
-nonisolated struct SkillUseEvent: Equatable, Sendable {
+nonisolated public struct SkillUseEvent: Equatable, Sendable {
     /// Who used the skill. Only the player advances: "Advances the progress of
     /// the provided Skill by the given amount (for the player only)"
     /// (<https://ck.uesp.net/wiki/AdvanceSkill_-_Game>), and NPCs in this engine
     /// stay on skills derived from their records.
-    let actor: ReferenceKey
-    let action: SkillUseAction
+    public let actor: ReferenceKey
+    public let action: SkillUseAction
     /// The action's base experience, per the table quoted in this file's
     /// header. Zero or less is a use that is worth nothing and is dropped.
-    let amount: Float
+    public let amount: Float
 }
 
 /// What one actor is wearing, as the armour skills count it.
@@ -124,13 +124,13 @@ nonisolated struct SkillUseEvent: Equatable, Sendable {
 ///   that it does. This scales it proportionally, which is the simplest
 ///   monotone reading and the one that makes a full four-piece set worth four
 ///   times a single bracer. The factor is unverified against the shipped game.
-nonisolated struct WornArmorProfile: Equatable, Sendable {
-    let heavyPieces: Int
-    let lightPieces: Int
+nonisolated public struct WornArmorProfile: Equatable, Sendable {
+    public let heavyPieces: Int
+    public let lightPieces: Int
 
-    static let none = WornArmorProfile(heavyPieces: 0, lightPieces: 0)
+    public static let none = WornArmorProfile(heavyPieces: 0, lightPieces: 0)
 
-    init(heavyPieces: Int, lightPieces: Int) {
+    public init(heavyPieces: Int, lightPieces: Int) {
         self.heavyPieces = max(0, heavyPieces)
         self.lightPieces = max(0, lightPieces)
     }
@@ -138,7 +138,7 @@ nonisolated struct WornArmorProfile: Equatable, Sendable {
     /// The armour skill a strike against this actor credits, and how many
     /// pieces of it are worn — or nil for an actor wearing no armour at all,
     /// whose strike credits nothing.
-    var creditedSkill: (index: Int32, pieces: Int)? {
+    public var creditedSkill: (index: Int32, pieces: Int)? {
         guard heavyPieces > 0 || lightPieces > 0 else { return nil }
         let name = heavyPieces >= lightPieces ? "Heavy Armor" : "Light Armor"
         guard let index = ActorValueIdentity.index(named: name) else { return nil }
@@ -155,7 +155,7 @@ nonisolated struct WornArmorProfile: Equatable, Sendable {
 /// compiling. Answering with the experience awarded rather than with nothing is
 /// what lets a test assert that a blow reached progression at all.
 @MainActor
-protocol SkillUseReporting: AnyObject {
+public protocol SkillUseReporting: AnyObject {
     /// Converts one use into skill experience on the acting character.
     ///
     /// - Returns: the skill experience awarded. Zero is the ordinary answer for
@@ -169,7 +169,7 @@ nonisolated extension SkillUseReporting {
     /// A world with no progression behind it awards nothing, which is what
     /// every acceptance fake wants and what a synthetic scene genuinely is.
     @discardableResult
-    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+    public func reportSkillUse(_ use: SkillUseEvent) -> Float {
         0
     }
 }

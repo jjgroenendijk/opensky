@@ -51,7 +51,7 @@ import OpenSkyGameData
 /// tree node is drawn unavailable. Nothing here traps and nothing throws past
 /// the caller: a request for a perk that does not exist is an answer, not a
 /// crash.
-nonisolated enum PerkSpendRefusal: Error, Equatable, Sendable {
+nonisolated public enum PerkSpendRefusal: Error, Equatable, Sendable {
     /// This load order carries no PERK record for the requested key.
     case unresolvedPerk
     /// The record's `DATA` playable flag is clear.
@@ -76,18 +76,18 @@ nonisolated enum PerkSpendRefusal: Error, Equatable, Sendable {
 /// `@MainActor` only because reading ownership goes through `PerkRuntime`,
 /// which writes to a main-actor store.
 @MainActor
-struct PerkTreeSpendValidator {
+public struct PerkTreeSpendValidator {
     /// Ownership plus the load-order PERK index.
-    let runtime: PerkRuntime
+    public let runtime: PerkRuntime
     /// Where each perk sits in a skill tree.
-    let trees: PerkTreeIndex
-    let conditionRegistry: ConditionFunctionRegistry
+    public let trees: PerkTreeIndex
+    public let conditionRegistry: ConditionFunctionRegistry
 
     /// Depth cap for the walk back to a chain head, matching `PerkStore`'s own
     /// cap so a mod-authored `NNAM` loop cannot hang a click.
     private static let chainDepthCap = 32
 
-    init(
+    public init(
         runtime: PerkRuntime,
         trees: PerkTreeIndex,
         conditionRegistry: ConditionFunctionRegistry = .standard
@@ -106,7 +106,7 @@ struct PerkTreeSpendValidator {
     ///   last published.
     /// - Returns: nil when the spend is allowed, and the rule that refused it
     ///   otherwise.
-    func refusal(
+    public func refusal(
         for perk: ReferenceKey,
         on holder: ActorValueHolder,
         conditions: ConditionContext

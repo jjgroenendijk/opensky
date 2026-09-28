@@ -20,7 +20,7 @@ extension ActiveEffectRuntime {
     ///
     /// - Returns: how many effects expired.
     @discardableResult
-    mutating func step(over holders: [ActorValueHolder]) -> Int {
+    public mutating func step(over holders: [ActorValueHolder]) -> Int {
         tick(over: holders, seconds: Float(Self.fixedStepSeconds))
     }
 
@@ -33,7 +33,7 @@ extension ActiveEffectRuntime {
     ///
     /// - Returns: how many whole steps ran.
     @discardableResult
-    mutating func advance(
+    public mutating func advance(
         delta: Float,
         accumulator: inout Double,
         over holders: [ActorValueHolder]

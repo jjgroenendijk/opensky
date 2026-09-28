@@ -5,7 +5,7 @@ nonisolated extension RenderScene {
     /// The ordinary scene with selected simulated references removed. Their
     /// instances are handed to the occupied cell separately, while terrain,
     /// lighting, animation, and every untagged placement stay cell-owned.
-    func excludingDynamicReferences(_ references: Set<UInt32>) -> RenderScene {
+    public func excludingDynamicReferences(_ references: Set<UInt32>) -> RenderScene {
         replacingDrawGroups(
             opaque: Self.filter(opaque) { !references.contains($0.referenceFormID) },
             alphaTested: Self.filter(alphaTested) {
@@ -18,7 +18,7 @@ nonisolated extension RenderScene {
     /// Only one simulated reference's draw instances, with no cell-wide
     /// terrain or environment content. This is the unit of draw handoff across
     /// an exterior boundary.
-    func dynamicReferenceScene(_ reference: UInt32) -> RenderScene {
+    public func dynamicReferenceScene(_ reference: UInt32) -> RenderScene {
         replacingDrawGroups(
             opaque: Self.filter(opaque) { $0.referenceFormID == reference },
             alphaTested: Self.filter(alphaTested) { $0.referenceFormID == reference },

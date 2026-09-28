@@ -3,7 +3,7 @@
 // constants the renderer uses (see Renderer.swift projection setup), camera
 // looking north (+Y world) with world up = +Z, matching MatrixMathTests style.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

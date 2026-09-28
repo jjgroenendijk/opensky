@@ -20,32 +20,44 @@ import Foundation
 import OpenSkyFormats
 
 /// One topic as the panel lists it.
-nonisolated struct DialogueTopicRow: Equatable, Sendable {
-    let topic: FormID
+nonisolated public struct DialogueTopicRow: Equatable, Sendable {
+    public let topic: FormID
     /// The INFO that won the topic, which is what choosing the row delivers.
-    let info: FormID
+    public let info: FormID
     /// What the row reads in the menu.
-    let text: String
+    public let text: String
     /// Whether the winning response ends the conversation.
-    let endsConversation: Bool
+    public let endsConversation: Bool
+
+    public init(topic: FormID, info: FormID, text: String, endsConversation: Bool) {
+        self.topic = topic
+        self.info = info
+        self.text = text
+        self.endsConversation = endsConversation
+    }
 }
 
 /// One topic that offered nothing, with the reason its responses lost.
-nonisolated struct DialogueRejectionRow: Equatable, Sendable {
-    let topic: FormID
+nonisolated public struct DialogueRejectionRow: Equatable, Sendable {
+    public let topic: FormID
     /// One phrase per considered response, in evaluation order: the reason it
     /// was not chosen, worded the way `DialogueRejection` states it.
-    let reasons: [String]
+    public let reasons: [String]
+
+    public init(topic: FormID, reasons: [String]) {
+        self.topic = topic
+        self.reasons = reasons
+    }
 }
 
 /// Everything the dialogue readouts show, captured in one value.
-nonisolated struct DialogueControlSnapshot: Equatable {
+nonisolated public struct DialogueControlSnapshot: Equatable, Sendable {
     /// Rows a snapshot carries. A speaker can offer more topics than a readout
     /// is worth, and the panel states how many it dropped rather than growing
     /// without bound.
-    static let rowLimit = 12
+    public static let rowLimit = 12
 
-    static let empty = DialogueControlSnapshot(
+    public static let empty = DialogueControlSnapshot(
         hasDialogueIndex: false,
         topicCount: 0,
         infoCount: 0,
@@ -76,58 +88,110 @@ nonisolated struct DialogueControlSnapshot: Equatable {
 
     /// False when the session loaded no plugin, which is the one case the
     /// readout states rather than showing zeros that look like an empty index.
-    let hasDialogueIndex: Bool
-    let topicCount: Int
-    let infoCount: Int
+    public let hasDialogueIndex: Bool
+    public let topicCount: Int
+    public let infoCount: Int
 
     // MARK: Talk target
 
     /// The actor the crosshair is on, when it is on one. Nil means the use key
     /// would not start a conversation.
-    let targetName: String?
-    let targetKey: ReferenceKey?
+    public let targetName: String?
+    public let targetKey: ReferenceKey?
 
     // MARK: Conversation
 
     /// Who the open conversation is with, empty when none is open.
-    let speaker: String
-    let isOpen: Bool
+    public let speaker: String
+    public let isOpen: Bool
     /// Menu-stack identifiers currently open, top last. Proves the menu drives
     /// the engine's own stack rather than a private flag.
-    let openMenus: [String]
+    public let openMenus: [String]
     /// The engine's pause gate right now. The point of the whole per-menu
     /// policy is that this stays false with the dialogue menu open, so the
     /// readout shows it rather than assuming it.
-    let worldSimPaused: Bool
+    public let worldSimPaused: Bool
     /// `DialogueMenuModel.State`, or `closed`.
-    let state: String
-    let rows: [DialogueTopicRow]
-    let droppedRowCount: Int
-    let selectedIndex: Int
+    public let state: String
+    public let rows: [DialogueTopicRow]
+    public let droppedRowCount: Int
+    public let selectedIndex: Int
     /// The line being said, nil when none is.
-    let subtitle: String?
+    public let subtitle: String?
 
     // MARK: Why a topic is missing
 
-    let rejections: [DialogueRejectionRow]
+    public let rejections: [DialogueRejectionRow]
     /// Condition calls the evaluator could not answer while selecting, which is
     /// the number that says how much of the trace is real.
-    let unresolvedConditionCount: Int
+    public let unresolvedConditionCount: Int
     /// Result of the last panel control, worded for the readout.
-    let lastOutcome: String?
+    public let lastOutcome: String?
 
     // MARK: Movie
 
-    let movieLoaded: Bool
-    let movieError: String?
+    public let movieLoaded: Bool
+    public let movieError: String?
     /// Rows the movie's own topic list holds, read back out of it.
-    let movieTopicRows: Int
-    let movieSelectedIndex: Int?
+    public let movieTopicRows: Int
+    public let movieSelectedIndex: Int?
     /// Text the movie's own subtitle field holds.
-    let movieSubtitle: String?
+    public let movieSubtitle: String?
     /// The movie's own `eMenuState`, which the engine writes and reads back.
-    let movieMenuState: Int?
-    let movieDiagnostics: DialogueMenuDiagnostics
+    public let movieMenuState: Int?
+    public let movieDiagnostics: DialogueMenuDiagnostics
+
+    public init(
+        hasDialogueIndex: Bool,
+        topicCount: Int,
+        infoCount: Int,
+        targetName: String?,
+        targetKey: ReferenceKey?,
+        speaker: String,
+        isOpen: Bool,
+        openMenus: [String],
+        worldSimPaused: Bool,
+        state: String,
+        rows: [DialogueTopicRow],
+        droppedRowCount: Int,
+        selectedIndex: Int,
+        subtitle: String?,
+        rejections: [DialogueRejectionRow],
+        unresolvedConditionCount: Int,
+        lastOutcome: String?,
+        movieLoaded: Bool,
+        movieError: String?,
+        movieTopicRows: Int,
+        movieSelectedIndex: Int?,
+        movieSubtitle: String?,
+        movieMenuState: Int?,
+        movieDiagnostics: DialogueMenuDiagnostics
+    ) {
+        self.hasDialogueIndex = hasDialogueIndex
+        self.topicCount = topicCount
+        self.infoCount = infoCount
+        self.targetName = targetName
+        self.targetKey = targetKey
+        self.speaker = speaker
+        self.isOpen = isOpen
+        self.openMenus = openMenus
+        self.worldSimPaused = worldSimPaused
+        self.state = state
+        self.rows = rows
+        self.droppedRowCount = droppedRowCount
+        self.selectedIndex = selectedIndex
+        self.subtitle = subtitle
+        self.rejections = rejections
+        self.unresolvedConditionCount = unresolvedConditionCount
+        self.lastOutcome = lastOutcome
+        self.movieLoaded = movieLoaded
+        self.movieError = movieError
+        self.movieTopicRows = movieTopicRows
+        self.movieSelectedIndex = movieSelectedIndex
+        self.movieSubtitle = movieSubtitle
+        self.movieMenuState = movieMenuState
+        self.movieDiagnostics = movieDiagnostics
+    }
 }
 
 /// Live-renderer seam for the dialogue section.
@@ -136,7 +200,7 @@ nonisolated struct DialogueControlSnapshot: Equatable {
 /// declares it and the panel reaches it through the composed
 /// `WorldControlProviders`.
 @MainActor
-protocol DialogueControlProviding: AnyObject {
+public protocol DialogueControlProviding: AnyObject {
     /// One sample of everything the readouts show.
     /// `DialogueControlSnapshot.empty` when the session has no dialogue index.
     var dialogueSnapshot: DialogueControlSnapshot { get }

@@ -13,7 +13,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installGuard(into registry: inout PapyrusNativeRegistry) {
+    public static func installGuard(into registry: inout PapyrusNativeRegistry) {
         installGuardQueries(into: &registry)
         installArrestOutcomes(into: &registry)
     }

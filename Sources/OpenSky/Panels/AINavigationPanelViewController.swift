@@ -15,6 +15,7 @@
 // what it notices is an enemy.
 
 import AppKit
+import OpenSkyEngine
 
 final class AINavigationPanelViewController: InspectorPanelViewController {
     let overlaySection = AIOverlaySection()

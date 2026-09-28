@@ -1,3 +1,4 @@
+import OpenSkyEngine
 import OpenSkyFormats
 
 // Papyrus bridge for the World > Scripts sidebar panel (issue #278). Sampling

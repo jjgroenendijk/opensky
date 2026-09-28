@@ -55,28 +55,28 @@ import OpenSkyFormats
 /// Reads dialogue selection and writes said-state on top of a
 /// `WorldStateStore`.
 @MainActor
-struct DialogueRuntime {
-    let store: WorldStateStore
+public struct DialogueRuntime {
+    public let store: WorldStateStore
     /// Plugin-side index every selection reads and every mutation takes its
     /// session-stable keys from.
-    let dialogue: DialogueStore
+    public let dialogue: DialogueStore
     /// Quest index, for the owning-quest filter and for the alias scope a
     /// dialogue condition is evaluated in.
-    let quests: QuestStore
+    public let quests: QuestStore
     /// Quest state seam, so "is the owning quest running" is answered by the
     /// same resolution the condition functions read rather than by a second
     /// path into the store.
-    var questStates: QuestResolution
+    public var questStates: QuestResolution
     /// Everything a condition may read. Selection overrides `subject`, `target`
     /// and `aliasQuest` per response and leaves the rest alone.
-    var context: ConditionContext
-    var registry: ConditionFunctionRegistry
+    public var context: ConditionContext
+    public var registry: ConditionFunctionRegistry
     /// Where a chosen response's result scripts go. Nil in a session with no
     /// script runtime, in which case the fragments a response declares are
     /// counted as unrun rather than silently dropped.
-    var fragments: (any DialogueFragmentDispatching)?
+    public var fragments: (any DialogueFragmentDispatching)?
 
-    init(
+    public init(
         store: WorldStateStore,
         dialogue: DialogueStore,
         quests: QuestStore,
@@ -98,14 +98,14 @@ struct DialogueRuntime {
 
     /// Said-state of one response: its runtime component when it has one, the
     /// unsaid baseline when it does not.
-    func saidState(of id: FormID) -> DialogueRuntimeState {
+    public func saidState(of id: FormID) -> DialogueRuntimeState {
         guard let key = dialogue.key(forInfo: id) else { return .unsaid }
         return store.component(DialogueRuntimeState.self, for: key) ?? .unsaid
     }
 
     /// Whether the response has ever been said, which is what the say-once rule
     /// tests.
-    func hasBeenSaid(_ id: FormID) -> Bool {
+    public func hasBeenSaid(_ id: FormID) -> Bool {
         saidState(of: id).hasBeenSaid
     }
 
@@ -114,7 +114,7 @@ struct DialogueRuntime {
     ///
     /// - Returns: true when runtime state was actually removed.
     @discardableResult
-    func reset(_ id: FormID) -> Bool {
+    public func reset(_ id: FormID) -> Bool {
         guard let key = dialogue.key(forInfo: id) else { return false }
         return store.reset(.dialogue, for: key)
     }
@@ -128,7 +128,7 @@ struct DialogueRuntime {
     /// for, and only category 0 is the menu the player picks from. The other
     /// categories — scene, combat, detection and the rest — are spoken by the
     /// machinery that owns them and never appear as a choice.
-    func topics(for speaker: ReferenceKey) -> DialogueSelection {
+    public func topics(for speaker: ReferenceKey) -> DialogueSelection {
         select(
             topics: dialogue.sortedTopics().filter { $0.category == .player },
             speaker: speaker
@@ -142,7 +142,7 @@ struct DialogueRuntime {
     /// and `Skyrim.esm` carries 297 HELO topics. The highest-priority topic
     /// with a winning response is the greeting; ties fall to FormID, exactly as
     /// in the offered list.
-    func greeting(for speaker: ReferenceKey) -> DialogueTopicOffer? {
+    public func greeting(for speaker: ReferenceKey) -> DialogueTopicOffer? {
         select(
             topics: dialogue.sortedTopics().filter { $0.subtype == "HELO" },
             speaker: speaker
@@ -151,7 +151,7 @@ struct DialogueRuntime {
 
     /// Selection restricted to the topics `ids` names, which is what a chosen
     /// response's TCLT links produce.
-    func topics(linked ids: [FormID], speaker: ReferenceKey) -> DialogueSelection {
+    public func topics(linked ids: [FormID], speaker: ReferenceKey) -> DialogueSelection {
         select(topics: ids.compactMap { dialogue.topic($0) }, speaker: speaker)
     }
 

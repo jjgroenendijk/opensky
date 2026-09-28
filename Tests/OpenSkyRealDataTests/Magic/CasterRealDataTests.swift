@@ -9,7 +9,7 @@
 // EQUP walk can and cannot put in a hand.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

@@ -16,9 +16,9 @@
 import Foundation
 
 /// The transfer list one container or merchant session presents.
-nonisolated struct ContainerMenuModel: Equatable, Sendable {
+nonisolated public struct ContainerMenuModel: Equatable, Sendable {
     /// Which owner's items the single item list is showing.
-    enum Side: String, Equatable, Sendable {
+    public enum Side: String, Equatable, Sendable {
         /// The container or merchant. Vanilla opens on this side, because the
         /// point of opening a chest is to see what is in it.
         case container
@@ -26,25 +26,25 @@ nonisolated struct ContainerMenuModel: Equatable, Sendable {
     }
 
     /// What activating a row means.
-    enum Mode: String, Equatable, Sendable {
+    public enum Mode: String, Equatable, Sendable {
         /// `containermenu.swf`: rows move for free.
         case container
         /// `bartermenu.swf`: rows move for gold, priced by `pricing`.
         case barter
     }
 
-    let mode: Mode
+    public let mode: Mode
     /// The container's or merchant's own list, including its gold.
-    var container: InventoryMenuModel
-    var player: InventoryMenuModel
-    private(set) var side: Side
+    public var container: InventoryMenuModel
+    public var player: InventoryMenuModel
+    public private(set) var side: Side
     /// The price factors in force. Present in container mode too, where nothing
     /// consults it, so the two modes differ by one flag rather than by shape.
-    let pricing: BarterPricing
+    public let pricing: BarterPricing
     /// How the container names itself in the readout, from its base record.
-    let containerName: String
+    public let containerName: String
 
-    static let empty = ContainerMenuModel(
+    public static let empty = ContainerMenuModel(
         mode: .container,
         container: .empty,
         player: .empty,
@@ -52,7 +52,7 @@ nonisolated struct ContainerMenuModel: Equatable, Sendable {
         containerName: "none"
     )
 
-    init(
+    public init(
         mode: Mode,
         container: InventoryMenuModel,
         player: InventoryMenuModel,
@@ -71,7 +71,7 @@ nonisolated struct ContainerMenuModel: Equatable, Sendable {
     // MARK: - Reading
 
     /// The pane the item list is showing.
-    var active: InventoryMenuModel {
+    public var active: InventoryMenuModel {
         get { side == .container ? container : player }
         set {
             if side == .container {
@@ -82,24 +82,24 @@ nonisolated struct ContainerMenuModel: Equatable, Sendable {
         }
     }
 
-    var selectedEntry: InventoryMenuEntry? {
+    public var selectedEntry: InventoryMenuEntry? {
         active.selectedEntry
     }
 
     /// The merchant's purse, which is an ordinary gold stack in the container's
     /// own inventory rather than a separate field.
-    var containerGold: Int32 {
+    public var containerGold: Int32 {
         container.gold
     }
 
-    var playerGold: Int32 {
+    public var playerGold: Int32 {
         player.gold
     }
 
     /// What one of `entry` costs on the side it is displayed on: the buy price
     /// for the merchant's stock, the sell price for the player's. Nil in
     /// container mode, where nothing is priced.
-    func price(for entry: InventoryMenuEntry) -> Int32? {
+    public func price(for entry: InventoryMenuEntry) -> Int32? {
         guard mode == .barter else { return nil }
         return side == .container
             ? pricing.buyPrice(value: entry.value)
@@ -108,7 +108,7 @@ nonisolated struct ContainerMenuModel: Equatable, Sendable {
 
     /// What activating the selected row would do, as the vanilla movies label
     /// it: `$Take` / `$Store` for a container, `$Buy` / `$Sell` for a merchant.
-    var transferLabel: String {
+    public var transferLabel: String {
         switch (mode, side) {
         case (.container, .container): "Take"
         case (.container, .player): "Store"
@@ -120,7 +120,7 @@ nonisolated struct ContainerMenuModel: Equatable, Sendable {
     /// Whether the price of the selected row can actually be paid, so the menu
     /// can disable a row rather than offer a transaction that will be refused.
     /// True in container mode, where nothing is paid for.
-    var canAffordSelection: Bool {
+    public var canAffordSelection: Bool {
         guard mode == .barter, let entry = selectedEntry, let price = price(for: entry) else {
             return true
         }
@@ -132,29 +132,29 @@ nonisolated struct ContainerMenuModel: Equatable, Sendable {
     /// Swaps which owner the item list shows and returns the row selection to
     /// the top of the new side, for the same reason a category change does: the
     /// other side's rows are a different list.
-    mutating func switchSide() {
+    public mutating func switchSide() {
         side = side == .container ? .player : .container
         active.select(0)
     }
 
-    mutating func select(side newSide: Side) {
+    public mutating func select(side newSide: Side) {
         guard newSide != side else { return }
         switchSide()
     }
 
-    mutating func moveSelection(by offset: Int) {
+    public mutating func moveSelection(by offset: Int) {
         active.moveSelection(by: offset)
     }
 
-    mutating func moveCategory(by offset: Int) {
+    public mutating func moveCategory(by offset: Int) {
         active.moveCategory(by: offset)
     }
 
-    mutating func select(_ index: Int) {
+    public mutating func select(_ index: Int) {
         active.select(index)
     }
 
-    mutating func selectCategory(_ index: Int) {
+    public mutating func selectCategory(_ index: Int) {
         active.selectCategory(index)
     }
 
@@ -165,7 +165,7 @@ nonisolated struct ContainerMenuModel: Equatable, Sendable {
     /// player who takes the third item would find the cursor back at the top.
     /// A selection that no longer exists — the row that just moved out — is
     /// dropped by `select`'s own bounds check rather than clamped here.
-    mutating func restore(from previous: ContainerMenuModel) {
+    public mutating func restore(from previous: ContainerMenuModel) {
         side = previous.side
         container.selectCategory(previous.container.selectedCategoryIndex)
         container.select(previous.container.selectedIndex)
@@ -181,7 +181,7 @@ extension ContainerMenuModel {
     ///
     /// Both panes are built by #289's builder, so the container's rows sort,
     /// name themselves and split gold out exactly as the player's do.
-    static func build(
+    public static func build(
         container: InventoryHolder,
         containerName: String,
         mode: Mode,

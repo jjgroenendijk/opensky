@@ -5,7 +5,7 @@
 // the user's own install and is cited at the declaration site; the env-gated
 // `MeleeCombatRealDataTests` is what proves the vanilla graph agrees.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

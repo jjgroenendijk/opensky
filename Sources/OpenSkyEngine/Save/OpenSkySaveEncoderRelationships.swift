@@ -24,7 +24,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `RELS` chunk: every snapshot entry carrying a scripted relationship
     /// rank, in the snapshot's `ReferenceKey` order. A session in which no
     /// script set a rank writes no chunk.
-    static func writeRelationshipRanks(
+    public static func writeRelationshipRanks(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

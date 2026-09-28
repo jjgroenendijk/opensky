@@ -31,23 +31,23 @@ import OpenSkyGameData
 /// `@unchecked Sendable` for the reason `PerkConditionResolution` is: the store
 /// is an immutable value snapshot built once at load, and only its
 /// `RecordIndex` back-reference keeps it from being checked automatically.
-nonisolated struct CrimeConditionResolution: @unchecked Sendable {
+nonisolated public struct CrimeConditionResolution: @unchecked Sendable, Sendable {
     /// Load-order FACT lookup, for the `ptFactionNull` parameter. Nil in a
     /// session with no faction data, which is what makes `GetCrimeGold` report
     /// a gap rather than answering "owes nothing" for every actor in the game.
-    let factions: FactionStore?
+    public let factions: FactionStore?
     /// The plugin a condition's FormID parameters are spelled against.
-    let sourcePlugin: String?
+    public let sourcePlugin: String?
     /// The faction a null parameter means: the one answering for where the
     /// subject currently stands. Nil outside any hold, where a null-parameter
     /// condition has nothing to ask about.
-    let currentCrimeFaction: ReferenceKey?
+    public let currentCrimeFaction: ReferenceKey?
 
     private let ledgers: [ReferenceKey: CrimeLedgerState]
 
-    static let empty = CrimeConditionResolution()
+    public static let empty = CrimeConditionResolution()
 
-    init(
+    public init(
         factions: FactionStore? = nil,
         sourcePlugin: String? = nil,
         currentCrimeFaction: ReferenceKey? = nil,
@@ -61,7 +61,7 @@ nonisolated struct CrimeConditionResolution: @unchecked Sendable {
 
     /// Whether the seam can answer at all: a session with no FACT store cannot,
     /// and says so rather than answering zero everywhere.
-    var isAvailable: Bool {
+    public var isAvailable: Bool {
         factions != nil
     }
 
@@ -74,7 +74,7 @@ nonisolated struct CrimeConditionResolution: @unchecked Sendable {
     /// faction no plugin defines would otherwise come back as an ordinary key
     /// and read as "owes this faction nothing", which is a different answer
     /// from "this engine has no such faction".
-    func key(of formID: FormID) -> ReferenceKey? {
+    public func key(of formID: FormID) -> ReferenceKey? {
         guard !formID.isNull else { return currentCrimeFaction }
         guard
             let sourcePlugin,
@@ -90,14 +90,18 @@ nonisolated struct CrimeConditionResolution: @unchecked Sendable {
     /// An actor with no ledger owes nothing, which is a real answer rather than
     /// a gap: owing nobody anything is the normal state, and every actor in the
     /// game starts there.
-    func crimeGold(of faction: ReferenceKey, on actor: ReferenceKey) -> Int32? {
+    public func crimeGold(of faction: ReferenceKey, on actor: ReferenceKey) -> Int32? {
         guard isAvailable else { return nil }
         return ledgers[actor]?.gold(for: faction) ?? 0
     }
 
     /// One half of what `actor` owes `faction`, or nil when no crime data is
     /// wired. What `GetCrimeGoldViolent` and `GetCrimeGoldNonviolent` read.
-    func crimeGold(of faction: ReferenceKey, violent: Bool, on actor: ReferenceKey) -> Int32? {
+    public func crimeGold(
+        of faction: ReferenceKey,
+        violent: Bool,
+        on actor: ReferenceKey
+    ) -> Int32? {
         guard isAvailable else { return nil }
         return ledgers[actor]?.gold(for: faction, violent: violent) ?? 0
     }

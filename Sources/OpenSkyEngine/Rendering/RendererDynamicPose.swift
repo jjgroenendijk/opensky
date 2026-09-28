@@ -26,7 +26,7 @@ nonisolated extension DrawInstance {
     /// This instance carried through a rigid transform: matrices recomposed and
     /// the culling AABB moved with them, so a body that has left its baked
     /// bounds is still drawn.
-    func moved(by delta: float4x4) -> DrawInstance {
+    public func moved(by delta: float4x4) -> DrawInstance {
         let matrix = delta * modelMatrix
         return DrawInstance(
             modelMatrix: matrix,
@@ -49,7 +49,7 @@ extension Renderer {
     /// it pays one integer comparison per instance. A body resting exactly
     /// where it was placed is absent from the map rather than present with an
     /// identity delta, so settled clutter costs the same as static clutter.
-    func drawn(_ instance: DrawInstance) -> DrawInstance {
+    public func drawn(_ instance: DrawInstance) -> DrawInstance {
         guard
             instance.referenceFormID != 0,
             let delta = npcInstanceDeltas[instance.referenceFormID]

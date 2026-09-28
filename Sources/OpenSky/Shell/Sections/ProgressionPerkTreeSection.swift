@@ -19,6 +19,7 @@
 // Not overridden: an owned perk is world state, not a panel setting.
 
 import AppKit
+import OpenSkyEngine
 
 final class ProgressionPerkTreeSection: ProgressionPanelSection {
     let skillControl = NSPopUpButton()

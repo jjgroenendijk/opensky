@@ -25,7 +25,7 @@ extension PapyrusWorldRuntime {
     /// The events inherit depth `currentActivationDepth + 1`, and a chain that
     /// would exceed `maximumActivationDepth` queues nothing and is tallied.
     @discardableResult
-    func queueOnActivate(
+    public func queueOnActivate(
         target: ReferenceKey,
         activator: ReferenceKey
     ) -> PapyrusActivationOutcome {
@@ -66,7 +66,7 @@ extension PapyrusWorldRuntime {
     /// handle was handed out keeps both handles alive. Both resolve back to
     /// the same `ReferenceKey`, so world writes stay correct; only handle
     /// identity comparison in script code would notice.
-    func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle {
+    public func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle {
         if let existing = instanceHandle(for: key) {
             return existing
         }
@@ -82,7 +82,7 @@ extension PapyrusWorldRuntime {
     /// World identity behind a handle: a live script instance's reference, or
     /// the reference an opaque handle was minted for. Nil for a handle this
     /// world runtime never handed out.
-    func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey? {
+    public func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey? {
         keysByHandle[handle]?.reference ?? opaqueKeysByHandle[handle]
     }
 

@@ -2,6 +2,7 @@
 // draw deltas, and the measured kinematic gait-clip drive.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

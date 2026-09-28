@@ -20,16 +20,16 @@ nonisolated private func capsuleResponseNormal(
     return length > Float.ulpOfOne ? horizontal / length : normal
 }
 
-nonisolated struct CapsuleWorldCollider {
-    typealias CandidateQuery = (ModelBounds) -> [StaticCollisionShape]
+nonisolated public struct CapsuleWorldCollider: Sendable {
+    public typealias CandidateQuery = (ModelBounds) -> [StaticCollisionShape]
 
     private static let contactTolerance: Float = 0.02
     private static let separationSlop: Float = 0.002
     private static let maximumIterations = 8
 
-    let capsule: PlayerCapsule
+    public let capsule: PlayerCapsule
 
-    func move(
+    public func move(
         from start: SIMD3<Float>,
         displacement: SIMD3<Float>,
         query: CandidateQuery
@@ -264,13 +264,13 @@ nonisolated struct CapsuleWorldCollider {
 }
 
 nonisolated extension CapsuleWorldCollider {
-    static let boxIndices: [UInt32] = [
+    public static let boxIndices: [UInt32] = [
         0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7,
         0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5,
         2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7
     ]
 
-    static func boxVertices(_ half: SIMD3<Float>) -> [SIMD3<Float>] {
+    public static func boxVertices(_ half: SIMD3<Float>) -> [SIMD3<Float>] {
         [
             SIMD3(-half.x, -half.y, -half.z), SIMD3(half.x, -half.y, -half.z),
             SIMD3(half.x, half.y, -half.z), SIMD3(-half.x, half.y, -half.z),
@@ -355,7 +355,7 @@ nonisolated extension CapsuleWorldCollider {
         return u >= 0 && v >= 0 && u + v <= 1
     }
 
-    static func closestPoint(
+    public static func closestPoint(
         on triangle: CollisionTriangle,
         to point: SIMD3<Float>
     ) -> SIMD3<Float> {

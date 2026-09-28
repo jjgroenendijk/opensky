@@ -9,6 +9,7 @@
 // needs a FormID typed in.
 
 import AppKit
+import OpenSkyEngine
 
 final class ContainerMerchantSection: PanelSectionViewController {
     weak var provider: (any ContainerMenuControlProviding)? {

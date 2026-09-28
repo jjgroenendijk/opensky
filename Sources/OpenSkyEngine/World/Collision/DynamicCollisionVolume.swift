@@ -25,20 +25,20 @@ import simd
 
 /// An outward-facing half-space bounding a hull: points inside satisfy
 /// `dot(normal, point) <= offset`.
-nonisolated struct DynamicCollisionPlane: Equatable, Sendable {
-    let normal: SIMD3<Float>
-    let offset: Float
+nonisolated public struct DynamicCollisionPlane: Equatable, Sendable {
+    public let normal: SIMD3<Float>
+    public let offset: Float
 }
 
 /// How deep one point sits inside a volume, and which way pushes it out.
-nonisolated struct DynamicPenetration: Equatable, Sendable {
+nonisolated public struct DynamicPenetration: Equatable, Sendable {
     /// Unit vector pointing out of the volume, toward the intruding point.
-    let normal: SIMD3<Float>
+    public let normal: SIMD3<Float>
     /// Positive overlap along `normal`.
-    let depth: Float
+    public let depth: Float
 }
 
-nonisolated enum DynamicCollisionVolume: Sendable {
+nonisolated public enum DynamicCollisionVolume: Sendable {
     /// Sphere when `first == second`, capsule otherwise.
     case radial(first: SIMD3<Float>, second: SIMD3<Float>, radius: Float)
     /// Convex point cloud plus its outward face planes.
@@ -53,7 +53,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
     ///
     /// A triangle soup becomes its own axis-aligned box. That is the one lossy
     /// conversion here and it is deliberate — see the file header.
-    static func make(from geometry: NIFCollisionGeometry) -> DynamicCollisionVolume? {
+    public static func make(from geometry: NIFCollisionGeometry) -> DynamicCollisionVolume? {
         switch geometry {
         case let .sphere(radius):
             radius > 0 ? .radial(first: .zero, second: .zero, radius: radius) : nil
@@ -70,7 +70,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
         }
     }
 
-    static func box(
+    public static func box(
         halfExtents: SIMD3<Float>,
         center: SIMD3<Float> = .zero
     ) -> DynamicCollisionVolume? {
@@ -95,7 +95,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
     /// a cloud that leaves fewer than four distinct planes cannot bound a
     /// volume and produces nil rather than a hull the solver would read as
     /// infinitely thin.
-    static func hull(points: [SIMD3<Float>], indices: [UInt32]) -> DynamicCollisionVolume? {
+    public static func hull(points: [SIMD3<Float>], indices: [UInt32]) -> DynamicCollisionVolume? {
         guard points.count >= 4 else { return nil }
         let center = points.reduce(SIMD3<Float>.zero, +) / Float(points.count)
         var planes: [DynamicCollisionPlane] = []
@@ -140,7 +140,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
     /// World-space points the solver tests against everything else, given the
     /// body's pose. A hull reports its vertices; a radial volume reports its two
     /// segment ends, whose skin radius carries the rest of the shape.
-    func contactSamples(position: SIMD3<Float>, orientation: simd_quatf) -> [SIMD3<Float>] {
+    public func contactSamples(position: SIMD3<Float>, orientation: simd_quatf) -> [SIMD3<Float>] {
         switch self {
         case let .radial(first, second, _):
             first == second
@@ -153,7 +153,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
 
     /// The skin every contact sample carries. Zero for a hull, whose vertices
     /// are the surface itself.
-    var skinRadius: Float {
+    public var skinRadius: Float {
         switch self {
         case let .radial(_, _, radius): radius
         case .hull: 0
@@ -166,7 +166,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
     /// The hull answer is the standard convex-vs-sphere test: the least
     /// separated face plane decides, so a point strictly inside every plane is
     /// pushed out along the face it is nearest to.
-    func penetration(of point: SIMD3<Float>, radius: Float) -> DynamicPenetration? {
+    public func penetration(of point: SIMD3<Float>, radius: Float) -> DynamicPenetration? {
         switch self {
         case let .radial(first, second, volumeRadius):
             let closest = DynamicCollisionMath.closestPoint(onSegment: (first, second), to: point)
@@ -194,7 +194,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
     }
 
     /// Local-space AABB, skin included.
-    var localBounds: ModelBounds {
+    public var localBounds: ModelBounds {
         switch self {
         case let .radial(first, second, radius):
             let extent = SIMD3<Float>(repeating: radius)
@@ -210,7 +210,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
     /// Distance from the local origin to the farthest surface point — the
     /// radius of the sphere a rotating body can never leave, which is what the
     /// broadphase inflates its query box by.
-    var boundingRadius: Float {
+    public var boundingRadius: Float {
         switch self {
         case let .radial(first, second, radius):
             max(simd_length(first), simd_length(second)) + radius
@@ -221,7 +221,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
 
     /// The same volume with every point moved by `offset`, used to re-express a
     /// body's shapes relative to its centre of mass.
-    func translated(by offset: SIMD3<Float>) -> DynamicCollisionVolume {
+    public func translated(by offset: SIMD3<Float>) -> DynamicCollisionVolume {
         switch self {
         case let .radial(first, second, radius):
             .radial(first: first + offset, second: second + offset, radius: radius)
@@ -242,7 +242,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
     /// apply to points; the radius of a radial volume takes the transform's
     /// largest axis scale, matching how the static narrowphase scales a placed
     /// sphere or capsule.
-    func transformed(by matrix: float4x4) -> DynamicCollisionVolume? {
+    public func transformed(by matrix: float4x4) -> DynamicCollisionVolume? {
         let scale = DynamicCollisionMath.maximumScale(of: matrix)
         switch self {
         case let .radial(first, second, radius):
@@ -274,7 +274,7 @@ nonisolated enum DynamicCollisionVolume: Sendable {
 }
 
 nonisolated extension DynamicCollisionPlane {
-    func isNear(_ other: DynamicCollisionPlane, epsilon: Float) -> Bool {
+    public func isNear(_ other: DynamicCollisionPlane, epsilon: Float) -> Bool {
         simd_length(normal - other.normal) <= epsilon && abs(offset - other.offset) <= epsilon
     }
 }
@@ -282,13 +282,13 @@ nonisolated extension DynamicCollisionPlane {
 /// Small geometric helpers the dynamic solver shares. Kept beside the volume
 /// rather than reached for from `CapsuleWorldCollider`, whose equivalents are
 /// private to the player-capsule narrowphase.
-nonisolated enum DynamicCollisionMath {
+nonisolated public enum DynamicCollisionMath: Sendable {
     /// The direction a degenerate contact is pushed along when the geometry
     /// gives no usable one: straight up, which is the harmless answer for a
     /// body that has ended up exactly on an obstacle's axis.
-    static let fallbackNormal = SIMD3<Float>(0, 0, 1)
+    public static let fallbackNormal = SIMD3<Float>(0, 0, 1)
 
-    static func closestPoint(
+    public static func closestPoint(
         onSegment segment: (SIMD3<Float>, SIMD3<Float>),
         to point: SIMD3<Float>
     ) -> SIMD3<Float> {
@@ -299,12 +299,12 @@ nonisolated enum DynamicCollisionMath {
         return segment.0 + delta * time
     }
 
-    static func transform(_ point: SIMD3<Float>, by matrix: float4x4) -> SIMD3<Float> {
+    public static func transform(_ point: SIMD3<Float>, by matrix: float4x4) -> SIMD3<Float> {
         let transformed = matrix * SIMD4<Float>(point, 1)
         return SIMD3(transformed.x, transformed.y, transformed.z)
     }
 
-    static func maximumScale(of matrix: float4x4) -> Float {
+    public static func maximumScale(of matrix: float4x4) -> Float {
         max(
             simd_length(SIMD3(matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z)),
             simd_length(SIMD3(matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z)),
@@ -314,7 +314,7 @@ nonisolated enum DynamicCollisionMath {
 }
 
 nonisolated extension SIMD3 where Scalar == Float {
-    var isFiniteVector: Bool {
+    public var isFiniteVector: Bool {
         x.isFinite && y.isFinite && z.isFinite
     }
 }

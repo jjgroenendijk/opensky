@@ -18,11 +18,11 @@ import OpenSkyFormats
 import OSLog
 
 /// The spawned half of one build's reference set.
-nonisolated struct SpawnedReferenceBuild {
-    let references: [PlacedReference]
-    let entries: [RuntimeReferenceEntry]
+nonisolated public struct SpawnedReferenceBuild: Sendable {
+    public let references: [PlacedReference]
+    public let entries: [RuntimeReferenceEntry]
 
-    static let empty = SpawnedReferenceBuild(references: [], entries: [])
+    public static let empty = SpawnedReferenceBuild(references: [], entries: [])
 }
 
 nonisolated extension CellSceneBuilder {
@@ -35,7 +35,7 @@ nonisolated extension CellSceneBuilder {
     /// A spawn whose generated sequence has outrun the 24-bit object ID has no
     /// FormID to be addressed by, so it is dropped and counted rather than
     /// aliased onto another object's ID.
-    nonisolated func spawnedReferences(
+    nonisolated public func spawnedReferences(
         in location: CellSceneLocation,
         state: WorldStateSnapshot,
         counts: inout BuildCounts

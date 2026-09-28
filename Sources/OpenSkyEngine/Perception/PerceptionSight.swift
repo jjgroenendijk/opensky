@@ -13,7 +13,7 @@
 import Foundation
 import simd
 
-nonisolated enum PerceptionSight {
+nonisolated public enum PerceptionSight: Sendable {
     /// Whether `target` lies inside a cone of half-angle `cosine` about
     /// `observer`'s heading.
     ///
@@ -27,7 +27,7 @@ nonisolated enum PerceptionSight {
     /// inside every cone. It has no direction to be outside one in, and
     /// reporting "not seen" for something occupying your own space would be the
     /// stranger answer.
-    static func isInViewCone(
+    public static func isInViewCone(
         observer: PerceptionObserver,
         target: PerceptionTarget,
         cosine: Float
@@ -42,7 +42,7 @@ nonisolated enum PerceptionSight {
 
     /// Straight-line distance between a pair, world units. Feet to feet, so a
     /// crouching target is not reported as further away than a standing one.
-    static func distance(observer: PerceptionObserver, target: PerceptionTarget) -> Float {
+    public static func distance(observer: PerceptionObserver, target: PerceptionTarget) -> Float {
         let separation = simd_distance(observer.feet, target.feet)
         return separation.isFinite ? separation : .greatestFiniteMagnitude
     }

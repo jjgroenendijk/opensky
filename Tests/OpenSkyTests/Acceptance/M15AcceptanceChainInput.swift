@@ -8,7 +8,6 @@
 // without knowing a key" has to prove.
 
 import AppKit
-@testable import OpenSky
 import Testing
 
 @MainActor

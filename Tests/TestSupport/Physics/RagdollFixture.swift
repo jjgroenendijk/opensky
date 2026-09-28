@@ -9,7 +9,7 @@
 // pattern the vanilla census reports for a leg (`NPC L Thigh` on a cone at the
 // hip, `NPC L Calf -> NPC L Thigh` on a limited hinge at the knee).
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 

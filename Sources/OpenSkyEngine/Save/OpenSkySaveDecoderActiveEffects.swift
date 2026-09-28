@@ -21,14 +21,14 @@ import OpenSkyFormats
 
 /// One actor's saved active effects, before they are merged back into the
 /// delta.
-nonisolated struct SaveActiveEffectEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: ActiveEffectState
+nonisolated public struct SaveActiveEffectEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: ActiveEffectState
 }
 
-nonisolated enum OpenSkySaveActiveEffectDecoder {
-    static func decodeActiveEffects(_ payload: Data) throws -> [SaveActiveEffectEntry] {
+nonisolated public enum OpenSkySaveActiveEffectDecoder: Sendable {
+    public static func decodeActiveEffects(_ payload: Data) throws -> [SaveActiveEffectEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("AEFF entry count")
         try OpenSkySaveDecoder.validate(
@@ -48,7 +48,7 @@ nonisolated enum OpenSkySaveActiveEffectDecoder {
     /// Lays each saved effect list over the matching `RDLT` delta, adding an
     /// entry for an actor that had no other component, and re-sorts the result
     /// into `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ values: [SaveActiveEffectEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

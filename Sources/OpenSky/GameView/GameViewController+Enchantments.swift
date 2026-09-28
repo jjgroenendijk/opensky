@@ -23,6 +23,7 @@
 // too.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 

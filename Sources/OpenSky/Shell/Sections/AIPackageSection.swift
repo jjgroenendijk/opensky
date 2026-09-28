@@ -13,6 +13,7 @@
 // panel setting.
 
 import AppKit
+import OpenSkyEngine
 
 final class AIPackageSection: PanelSectionViewController {
     weak var provider: (any AINavigationControlProviding)? {

@@ -31,7 +31,7 @@ import OpenSkyFormats
 /// `Comparable` on purpose, and the order is the point: `max` of two reactions
 /// is the more hostile one, which is the rule the derivation applies when an
 /// actor's several factions disagree about the same target.
-nonisolated enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable {
+nonisolated public enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable {
     case ally = 0
     case friend = 1
     case neutral = 2
@@ -40,7 +40,7 @@ nonisolated enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable {
     /// The reaction a FACT interfaction relation declares, or nil for a raw
     /// value outside the four the spec names — a mod may author one, and
     /// reading it as any of these would be an invention.
-    init?(_ reaction: Faction.CombatReaction) {
+    public init?(_ reaction: Faction.CombatReaction) {
         switch reaction {
         case .ally: self = .ally
         case .friend: self = .friend
@@ -58,7 +58,7 @@ nonisolated enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable {
     /// **Neutral**, not under Enemy. Two actors who dislike each other do not
     /// attack each other on sight unless one of them is Very Aggressive, which
     /// is the same treatment strangers get.
-    init?(_ rank: RelationshipRank) {
+    public init?(_ rank: RelationshipRank) {
         switch rank {
         case .lover, .ally: self = .ally
         case .confidant, .friend: self = .friend
@@ -68,11 +68,11 @@ nonisolated enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable {
         }
     }
 
-    static func < (lhs: Self, rhs: Self) -> Bool {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.rawValue < rhs.rawValue
     }
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .ally: "ally"
         case .friend: "friend"
@@ -93,7 +93,7 @@ nonisolated enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable {
     /// An aggression value the spec does not name does not attack. The engine
     /// refuses to guess what a mod's fifth aggression level meant, and refusing
     /// upward — into a drawn weapon — would be the damaging direction to guess.
-    func provokesAttack(at aggression: ActorAggression) -> Bool {
+    public func provokesAttack(at aggression: ActorAggression) -> Bool {
         switch aggression {
         case .unaggressive: false
         case .aggressive: self == .enemy

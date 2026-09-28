@@ -55,7 +55,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension ConditionFunctions {
-    static func installFaction(_ registry: inout ConditionFunctionRegistry) {
+    public static func installFaction(_ registry: inout ConditionFunctionRegistry) {
         installMemberships(&registry)
         installRelations(&registry)
     }
@@ -178,7 +178,7 @@ nonisolated extension ConditionFunctions {
 
     /// The Creation Kit number `GetFactionRelation` answers with, which is not
     /// the `XNAM` word `ActorReaction` stores.
-    static func factionRelationValue(of reaction: ActorReaction) -> Int {
+    public static func factionRelationValue(of reaction: ActorReaction) -> Int {
         switch reaction {
         case .neutral: 0
         case .enemy: 1

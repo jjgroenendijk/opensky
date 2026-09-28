@@ -9,7 +9,7 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
-    static func installData(_ registry: inout ConditionFunctionRegistry) {
+    public static func installData(_ registry: inout ConditionFunctionRegistry) {
         installKeywordAndFormList(&registry)
         installLocationData(&registry)
     }

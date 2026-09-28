@@ -7,18 +7,18 @@ import OpenSkyFormats
 import OpenSkyShaderTypes
 import simd
 
-nonisolated struct SceneCamera {
-    let eye: SIMD3<Float>
-    let target: SIMD3<Float>
+nonisolated public struct SceneCamera: Sendable {
+    public let eye: SIMD3<Float>
+    public let target: SIMD3<Float>
     /// Direction sunlight travels (unit vector).
-    let sunDirection: SIMD3<Float>
-    let sunColor: SIMD3<Float>
-    let ambientColor: SIMD3<Float>
+    public let sunDirection: SIMD3<Float>
+    public let sunColor: SIMD3<Float>
+    public let ambientColor: SIMD3<Float>
     /// Actor-origin pose for an XTEL camera. Free-fly uses `eye` verbatim;
     /// walk mode raises this feet position by capsule eye height.
-    let walkFeetPosition: SIMD3<Float>?
+    public let walkFeetPosition: SIMD3<Float>?
 
-    init(
+    public init(
         eye: SIMD3<Float>,
         target: SIMD3<Float>,
         sunDirection: SIMD3<Float>,
@@ -36,7 +36,7 @@ nonisolated struct SceneCamera {
 
     /// DemoScene's hand-tuned camera + light — used whenever no cell scene
     /// is injected (existing tests, missing game data).
-    static let demo = SceneCamera(
+    public static let demo = SceneCamera(
         eye: DemoScene.cameraEye,
         target: DemoScene.cameraTarget,
         sunDirection: DemoScene.sunDirection,
@@ -59,7 +59,7 @@ nonisolated struct SceneCamera {
     /// clear the frame edge. Sun/ambient reuse the demo values. Degenerate
     /// (near-point) bounds fall back to a minimum distance so the camera
     /// never sits on its target.
-    static func framing(bounds: (min: SIMD3<Float>, max: SIMD3<Float>)) -> SceneCamera {
+    public static func framing(bounds: (min: SIMD3<Float>, max: SIMD3<Float>)) -> SceneCamera {
         let center = (bounds.min + bounds.max) * 0.5
         let radius = simd_length(bounds.max - bounds.min) * 0.5
         let fitDistance = radius / sinf(fovYRadians * 0.5) * 1.1
@@ -78,7 +78,7 @@ nonisolated struct SceneCamera {
     /// Creates an XTEL arrival pose. Skyrim rotation X is pitch, Z is heading
     /// in same Z-up basis used by REFR transforms; Y roll is intentionally
     /// ignored by upright free-fly view.
-    static func teleport(placement: PlacedReference.Placement) -> SceneCamera {
+    public static func teleport(placement: PlacedReference.Placement) -> SceneCamera {
         let yaw = placement.rotation.z
         let pitch = placement.rotation.x
         let cosPitch = cosf(pitch)

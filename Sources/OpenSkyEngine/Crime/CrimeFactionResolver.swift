@@ -37,16 +37,16 @@ import OpenSkyGameData
 ///
 /// A value snapshot over the two stores, shaped like `OwnershipResolver`: the
 /// answer is a pure function of the cell handed in.
-nonisolated struct CrimeFactionResolver {
-    let locations: LocationStore
-    let factions: FactionStore
+nonisolated public struct CrimeFactionResolver: Sendable {
+    public let locations: LocationStore
+    public let factions: FactionStore
 
     /// The crime faction in force in `cell`, or nil when the location chain
     /// names none.
     ///
     /// `pluginName` is the plugin the cell's `XLCN` is spelled against, which
     /// is the plugin the cell record was read from.
-    func crimeFaction(in cell: Cell, fromPlugin pluginName: String) -> ResolvedFaction? {
+    public func crimeFaction(in cell: Cell, fromPlugin pluginName: String) -> ResolvedFaction? {
         guard
             let location = locations.location(containing: cell, fromPlugin: pluginName)
         else { return nil }
@@ -60,7 +60,7 @@ nonisolated struct CrimeFactionResolver {
     /// authored-but-dangling link is a place that *has* an owner the engine
     /// cannot name, and skipping past it to a grandparent would charge the
     /// bounty to the wrong hold.
-    func crimeFaction(of location: ResolvedLocation) -> ResolvedFaction? {
+    public func crimeFaction(of location: ResolvedLocation) -> ResolvedFaction? {
         for step in locations.parentChain(of: location.id) {
             guard let link = step.location.crimeFaction, !link.isNull else { continue }
             return factions.resolve(link, fromPlugin: step.sourcePlugin)
@@ -69,7 +69,12 @@ nonisolated struct CrimeFactionResolver {
     }
 
     /// The same answer as the runtime identity the crime ledger is keyed by.
-    func crimeFactionKey(in cell: Cell, fromPlugin pluginName: String) -> ReferenceKey? {
+    public func crimeFactionKey(in cell: Cell, fromPlugin pluginName: String) -> ReferenceKey? {
         crimeFaction(in: cell, fromPlugin: pluginName).map { ReferenceKey(resolved: $0.id) }
+    }
+
+    public init(locations: LocationStore, factions: FactionStore) {
+        self.locations = locations
+        self.factions = factions
     }
 }

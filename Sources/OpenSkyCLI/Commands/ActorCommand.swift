@@ -7,6 +7,7 @@
 // this file only parses args and prints.
 
 import Foundation
+import OpenSkyEngine
 import OpenSkyFormats
 
 enum ActorCommand {

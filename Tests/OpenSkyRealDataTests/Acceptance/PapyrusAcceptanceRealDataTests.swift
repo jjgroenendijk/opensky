@@ -1,7 +1,7 @@
 // Env-gated M11.1 acceptance over the user's read-only vanilla PEX corpus.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import Testing

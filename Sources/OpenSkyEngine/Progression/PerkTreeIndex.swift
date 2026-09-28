@@ -31,31 +31,31 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// One perk's place in the tree that grants it.
-nonisolated struct PerkTreePlacement: Equatable, Sendable {
+nonisolated public struct PerkTreePlacement: Equatable, Sendable {
     /// The AVIF record whose tree carries the box.
-    let skill: ResolvedFormID
+    public let skill: ResolvedFormID
     /// The actor-value index that AVIF names, when it names a vanilla one. What
     /// a skill requirement is stated against, and what a readout groups by.
-    let actorValueIndex: Int32?
+    public let actorValueIndex: Int32?
     /// The box's own `INAM` identity inside the tree.
-    let node: UInt32
+    public let node: UInt32
     /// Whether the box's `FNAM` asks for a parent.
-    let requiresParent: Bool
+    public let requiresParent: Bool
     /// Perks whose boxes draw a line to this one.
-    let parents: [ReferenceKey]
+    public let parents: [ReferenceKey]
     /// Whether the tree's entry node is one of those boxes, which is what makes
     /// the first real perk of a tree reachable with nothing owned.
-    let reachableFromRoot: Bool
+    public let reachableFromRoot: Bool
 }
 
 /// Load-order-wide map from a perk to its box.
-nonisolated struct PerkTreeIndex {
+nonisolated public struct PerkTreeIndex: Sendable {
     private let placements: [ReferenceKey: PerkTreePlacement]
 
     /// Nothing at all, which is what a synthetic session with no AVIF records
     /// carries. Every perk is then outside every tree, and a spend is refused
     /// with a reason rather than accepted against a tree that does not exist.
-    static let empty = PerkTreeIndex(placements: [:])
+    public static let empty = PerkTreeIndex(placements: [:])
 
     private init(placements: [ReferenceKey: PerkTreePlacement]) {
         self.placements = placements
@@ -65,7 +65,7 @@ nonisolated struct PerkTreeIndex {
     ///
     /// A `PNAM` this load order carries no PERK for is skipped: it is a
     /// dangling link rather than an error, exactly as a dangling `PRKR` is.
-    init(information: ActorValueInformationStore, perks: PerkStore) {
+    public init(information: ActorValueInformationStore, perks: PerkStore) {
         var placements: [ReferenceKey: PerkTreePlacement] = [:]
         for record in information.perkTreeRecords {
             let tree = record.information.perkTree
@@ -103,11 +103,11 @@ nonisolated struct PerkTreeIndex {
     /// Where `perk` sits, or nil when no tree in this load order grants it —
     /// which is every quest perk, every ability the game hands out directly,
     /// and every perk in a session with no AVIF records.
-    func placement(of perk: ReferenceKey) -> PerkTreePlacement? {
+    public func placement(of perk: ReferenceKey) -> PerkTreePlacement? {
         placements[perk]
     }
 
-    var count: Int {
+    public var count: Int {
         placements.count
     }
 }

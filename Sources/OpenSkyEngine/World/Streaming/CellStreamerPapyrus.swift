@@ -17,7 +17,7 @@ extension CellStreamer {
     /// - Parameter firstIntegration: false when the cell never left and its
     ///   scene was merely rebuilt, which is the signal not to re-fire load
     ///   events.
-    func emitCellAttached(_ scene: CellScene, firstIntegration: Bool) {
+    public func emitCellAttached(_ scene: CellScene, firstIntegration: Bool) {
         guard scene.location != nil else { return }
         onCellAttached?(scene, firstIntegration)
     }
@@ -34,7 +34,7 @@ extension CellStreamer {
     /// it before is what gives a surviving (persistent) instance its cleanup.
     /// Trigger release is not gated on the location, because a volume has a
     /// `ReferenceKey` whether or not the CELL identity resolved.
-    func emitCellDetached(_ scene: CellScene?) {
+    public func emitCellDetached(_ scene: CellScene?) {
         guard let scene else { return }
         releaseTriggers(in: scene)
         guard let location = scene.location else { return }

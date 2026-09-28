@@ -22,13 +22,13 @@ import simd
 /// Why the player has no body. Every case is reported rather than swallowed:
 /// a bodiless player in third person looks like a rendering bug, and the panel
 /// has to be able to say which of these it actually is.
-nonisolated enum PlayerBodyError: LocalizedError, Equatable {
+nonisolated public enum PlayerBodyError: LocalizedError, Equatable {
     case noFileSystem
     case unresolvedBase(FormID, String)
     case noRenderableGeometry([String])
     case behavior(PlayerBehaviorGraphError)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .noFileSystem:
             "no game archives are mounted"
@@ -43,7 +43,7 @@ nonisolated enum PlayerBodyError: LocalizedError, Equatable {
 }
 
 /// What a scene provider has to answer for the app to draw a player.
-nonisolated protocol PlayerBodyProviding {
+nonisolated public protocol PlayerBodyProviding {
     /// The mounted archives, for loading the behavior graph and its clips.
     var playerAssetFileSystem: VirtualFileSystem? { get }
 
@@ -65,11 +65,11 @@ nonisolated protocol PlayerBodyProviding {
 }
 
 nonisolated extension CellSceneBuilder: PlayerBodyProviding {
-    var playerAssetFileSystem: VirtualFileSystem? {
+    public var playerAssetFileSystem: VirtualFileSystem? {
         fileSystem
     }
 
-    func makePlayerBody(
+    public func makePlayerBody(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
         equipped: [FormID]?
@@ -87,7 +87,7 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
             }
     }
 
-    func makePlayerFirstPersonRig(
+    public func makePlayerFirstPersonRig(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
         equipped: [FormID]?

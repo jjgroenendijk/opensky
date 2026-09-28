@@ -1,7 +1,7 @@
 // First-person camera parameters and the arms anchor (issue #190). Pure math —
 // no install, no device.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

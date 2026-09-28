@@ -30,40 +30,40 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// What one seeding pass did.
-nonisolated struct FactionSeedReport: Equatable, Sendable {
+nonisolated public struct FactionSeedReport: Equatable, Sendable {
     /// Factions the pass added, in the order the record authored them.
-    let added: [ReferenceKey]
+    public let added: [ReferenceKey]
     /// `SNAM` entries the load order carries no FACT record for, which is a
     /// dangling link rather than an error.
-    let unresolved: Int
+    public let unresolved: Int
     /// True when this actor had already been seeded, so the pass did nothing.
-    let wasAlreadySeeded: Bool
+    public let wasAlreadySeeded: Bool
 
-    static let none = FactionSeedReport(added: [], unresolved: 0, wasAlreadySeeded: false)
+    public static let none = FactionSeedReport(added: [], unresolved: 0, wasAlreadySeeded: false)
 }
 
 /// Reads and mutates faction memberships on top of a `WorldStateStore`, and
 /// answers what one actor makes of another.
 @MainActor
-struct FactionRuntime {
+public struct FactionRuntime {
     /// Load-order FACT lookup behind every stored membership.
-    let factions: FactionStore
+    public let factions: FactionStore
     /// Record-side resolution of an actor's authored `SNAM` run and `AIDT`.
     /// Nil on a synthetic scene, where nothing can be seeded and every actor's
     /// memberships are whatever a caller wrote by hand.
-    let baselines: ActorFactionBaselineResolver?
+    public let baselines: ActorFactionBaselineResolver?
     /// The plugin an actor's `SNAM` links and NPC_ bases are relative to, which
     /// is the base plugin the record indexes were built from.
-    let pluginName: String?
+    public let pluginName: String?
     /// Factions, relationships and the crime seam, over the aggression table.
-    var derivation: HostilityDerivation
+    public var derivation: HostilityDerivation
     /// Actors already seeded this session, so a lazy caller can seed on every
     /// query and pay for it once.
-    private(set) var seededActors: Set<ReferenceKey> = []
+    public private(set) var seededActors: Set<ReferenceKey> = []
 
     private let worldState: WorldStateStore
 
-    init(
+    public init(
         store: WorldStateStore,
         factions: FactionStore,
         derivation: HostilityDerivation,
@@ -77,30 +77,30 @@ struct FactionRuntime {
         self.pluginName = pluginName
     }
 
-    var store: WorldStateStore {
+    public var store: WorldStateStore {
         worldState
     }
 
     // MARK: - Reading
 
     /// `key`'s memberships, empty when nothing has ever written one.
-    func state(of key: ReferenceKey) -> ActorFactionState {
+    public func state(of key: ReferenceKey) -> ActorFactionState {
         worldState.component(ActorFactionState.self, for: key) ?? ActorFactionState()
     }
 
-    func isMember(_ key: ReferenceKey, of faction: ReferenceKey) -> Bool {
+    public func isMember(_ key: ReferenceKey, of faction: ReferenceKey) -> Bool {
         state(of: key).isMember(of: faction)
     }
 
     /// The rank `key` holds, or nil when it is not a member.
-    func rank(of key: ReferenceKey, in faction: ReferenceKey) -> Int8? {
+    public func rank(of key: ReferenceKey, in faction: ReferenceKey) -> Int8? {
         state(of: key).rank(in: faction)
     }
 
     /// Every faction `key` belongs to that this load order can still resolve,
     /// in key order. A membership the load order dropped stays in the component
     /// and is simply absent from this listing.
-    func resolvedFactions(of key: ReferenceKey) -> [ResolvedFaction] {
+    public func resolvedFactions(of key: ReferenceKey) -> [ResolvedFaction] {
         state(of: key).factions.compactMap { factions.faction(key: $0) }
     }
 
@@ -117,7 +117,7 @@ struct FactionRuntime {
     ///
     /// - Returns: true when the stored state changed.
     @discardableResult
-    func join(
+    public func join(
         _ key: ReferenceKey,
         to faction: ReferenceKey,
         rank: Int8 = 0,
@@ -134,7 +134,7 @@ struct FactionRuntime {
     ///
     /// - Returns: true when the actor was a member.
     @discardableResult
-    func leave(
+    public func leave(
         _ key: ReferenceKey,
         from faction: ReferenceKey,
         in cell: CellSceneLocation? = nil
@@ -147,7 +147,7 @@ struct FactionRuntime {
     /// Idempotent per session: an actor seeded twice is seeded once, which is
     /// what lets the caller do it lazily the first time anything asks.
     @discardableResult
-    mutating func seed(_ holder: ActorValueHolder) -> FactionSeedReport {
+    public mutating func seed(_ holder: ActorValueHolder) -> FactionSeedReport {
         guard !seededActors.contains(holder.key) else {
             return FactionSeedReport(added: [], unresolved: 0, wasAlreadySeeded: true)
         }
@@ -163,7 +163,7 @@ struct FactionRuntime {
     /// The same seed for a caller that already resolved the run it wants
     /// applied — the save decoder's counterpart, and what the unit suites use.
     @discardableResult
-    func seed(
+    public func seed(
         _ memberships: [ActorBase.FactionMembership],
         fromPlugin plugin: String,
         to holder: ActorValueHolder
@@ -194,7 +194,7 @@ struct FactionRuntime {
 
     /// Everything the derivation needs to know about one actor, assembled from
     /// the component, the records and the session's override.
-    func profile(of holder: ActorValueHolder) -> ActorSocialProfile {
+    public func profile(of holder: ActorValueHolder) -> ActorSocialProfile {
         ActorSocialProfile(
             key: holder.key,
             base: resolvedBase(of: holder.subject),
@@ -213,7 +213,7 @@ struct FactionRuntime {
     /// The crime faction `subject` reports crimes to — its authored `CRIF`
     /// resolved against the load order (issue #505). Nil for the player, a
     /// generated actor, and a link no plugin defines.
-    func crimeFaction(of subject: ActorValueSubject) -> ReferenceKey? {
+    public func crimeFaction(of subject: ActorValueSubject) -> ReferenceKey? {
         guard
             let pluginName,
             let link = baselines?.baseline(for: subject).crimeFaction,
@@ -228,7 +228,7 @@ struct FactionRuntime {
     /// Exposed so a per-frame caller can skip the mutating seed entirely — a
     /// `Set` membership test rather than a copy of this whole struct — and only
     /// pay for it the first time it sees an actor.
-    func needsSeeding(_ key: ReferenceKey) -> Bool {
+    public func needsSeeding(_ key: ReferenceKey) -> Bool {
         !seededActors.contains(key)
     }
 
@@ -237,7 +237,7 @@ struct FactionRuntime {
     /// Seeds nothing, so an actor nobody has seeded yet answers from an empty
     /// membership list. Callers that want the authored run to count seed first,
     /// which `decide(_:toward:)` does for them.
-    func decision(
+    public func decision(
         _ observer: ActorValueHolder,
         toward target: ActorValueHolder
     ) -> HostilityDecision {
@@ -248,7 +248,7 @@ struct FactionRuntime {
     /// never-asked-about actor answers from what it was authored as rather than
     /// from nothing.
     @discardableResult
-    mutating func decide(
+    public mutating func decide(
         _ observer: ActorValueHolder,
         toward target: ActorValueHolder
     ) -> HostilityDecision {

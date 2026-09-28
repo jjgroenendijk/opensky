@@ -3,7 +3,7 @@
 // one-move diffing, hysteresis no-thrash, radius parameter. Pure math,
 // synthetic positions (AGENTS.md testing rule).
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

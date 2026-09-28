@@ -9,7 +9,7 @@
 //   "Skyrim:Weapons", Overview — * (1 + skill/200) * (1 + perk effects) * ...
 //   "Skyrim:Archery", Draw Time and Damage Dealt — the three-branch curve.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct ArcheryDamageTests {

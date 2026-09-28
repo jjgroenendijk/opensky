@@ -3,7 +3,7 @@
 
 import FormatsTestSupport
 import Foundation
-@testable import OpenSky
+import OpenSkyEngine
 import simd
 import Testing
 

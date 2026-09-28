@@ -5,20 +5,20 @@
 
 import simd
 
-struct CellStreamerNavigationState {
-    var graph = RuntimeNavigationGraph()
-    var repathRequests: [NavigationRepathRequest] = []
-    var onRepath: ((NavigationRepathResponse) -> Void)?
+public struct CellStreamerNavigationState {
+    public var graph = RuntimeNavigationGraph()
+    public var repathRequests: [NavigationRepathRequest] = []
+    public var onRepath: ((NavigationRepathResponse) -> Void)?
     /// Most recently completed path, retained only as the debug-overlay source.
-    var lastPath: NavigationPath?
+    public var lastPath: NavigationPath?
 }
 
 extension CellStreamer {
     /// Named frame budget: a crowd may invalidate together after an unload,
     /// but only this many queued paths can consume A* work in one frame.
-    static let maximumNavigationRepathsPerFrame = 2
+    public static let maximumNavigationRepathsPerFrame = 2
 
-    func navigationProjection(
+    public func navigationProjection(
         of point: SIMD3<Float>,
         searchRadius: Float = NavigationPathQuery.defaultProjectionRadius
     ) -> NavigationProjectionResult {
@@ -28,14 +28,14 @@ extension CellStreamer {
 
     /// Immediate query for user-driven and inspection callers. Actor followers
     /// use the queued repath surface below so a crowd cannot spike one frame.
-    func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
+    public func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
         reconcileNavigation()
         let result = navigationState.graph.findPath(query)
         rememberNavigationPath(from: result)
         return result
     }
 
-    func navigationPathIsCurrent(
+    public func navigationPathIsCurrent(
         _ path: NavigationPath,
         target: SIMD3<Float>,
         targetMoveTolerance: Float = NavigationPathQuery.defaultTargetMoveTolerance
@@ -48,7 +48,7 @@ extension CellStreamer {
 
     /// Queues one replacement per follower only when an unload/rebuild or a
     /// sufficiently moved target invalidated its prior corridor.
-    func requestNavigationRepathIfNeeded(
+    public func requestNavigationRepathIfNeeded(
         identifier: UInt64,
         query: NavigationPathQuery,
         previousPath: NavigationPath,
@@ -64,18 +64,18 @@ extension CellStreamer {
         requestNavigationRepath(NavigationRepathRequest(identifier: identifier, query: query))
     }
 
-    func requestNavigationRepath(_ request: NavigationRepathRequest) {
+    public func requestNavigationRepath(_ request: NavigationRepathRequest) {
         navigationState.repathRequests.removeAll { $0.identifier == request.identifier }
         navigationState.repathRequests.append(request)
     }
 
-    func advanceWorldSystems(frameTime: Float, player: PlayerCapsuleState?) {
+    public func advanceWorldSystems(frameTime: Float, player: PlayerCapsuleState?) {
         advancePhysics(frameTime: frameTime, player: player)
         advanceNPCMovement(frameTime: frameTime)
         advanceNavigation()
     }
 
-    func advanceNavigation() {
+    public func advanceNavigation() {
         reconcileNavigation()
         let count = min(
             Self.maximumNavigationRepathsPerFrame,
@@ -95,7 +95,7 @@ extension CellStreamer {
     }
 
     /// Adds every newly resident/rebuilt cell and drops every departed one.
-    func reconcileNavigation() {
+    public func reconcileNavigation() {
         let resident = residentNavigationScenes()
         navigationState.graph.retainCells(Set(resident.keys))
         for location in resident.keys.sorted(by: CellSceneLocation.isOrderedBefore) {

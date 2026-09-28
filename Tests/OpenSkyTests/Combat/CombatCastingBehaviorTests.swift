@@ -11,7 +11,7 @@
 // step flags that came out. The world half — a cast that becomes spent magicka
 // and a projectile — is `CombatLoopCastingTests`.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

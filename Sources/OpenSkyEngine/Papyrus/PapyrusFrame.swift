@@ -3,23 +3,23 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum PapyrusFrameCompletion {
+nonisolated public enum PapyrusFrameCompletion: Sendable {
     case root
     case assign(PexValue)
     case discard
 }
 
-nonisolated final class PapyrusFrame {
-    let ownerScript: PexObject
-    let function: PexFunction
-    let instanceHandle: PapyrusObjectHandle?
-    let completion: PapyrusFrameCompletion
+nonisolated public final class PapyrusFrame {
+    public let ownerScript: PexObject
+    public let function: PexFunction
+    public let instanceHandle: PapyrusObjectHandle?
+    public let completion: PapyrusFrameCompletion
 
-    private(set) var values: [String: PapyrusValue] = [:]
-    private(set) var types: [String: PapyrusType] = [:]
-    var instructionIndex = 0
+    public private(set) var values: [String: PapyrusValue] = [:]
+    public private(set) var types: [String: PapyrusType] = [:]
+    public var instructionIndex = 0
 
-    init(
+    public init(
         ownerScript: PexObject,
         function: PexFunction,
         instanceHandle: PapyrusObjectHandle?,
@@ -46,19 +46,19 @@ nonisolated final class PapyrusFrame {
         }
     }
 
-    var defaultReturnValue: PapyrusValue {
+    public var defaultReturnValue: PapyrusValue {
         PapyrusType(name: function.returnTypeName).defaultValue
     }
 
-    func localValue(named name: String) -> PapyrusValue? {
+    public func localValue(named name: String) -> PapyrusValue? {
         values[PapyrusRuntime.key(name)]
     }
 
-    func localType(named name: String) -> PapyrusType? {
+    public func localType(named name: String) -> PapyrusType? {
         types[PapyrusRuntime.key(name)]
     }
 
-    func setLocalValue(_ value: PapyrusValue, named name: String) -> Bool {
+    public func setLocalValue(_ value: PapyrusValue, named name: String) -> Bool {
         let key = PapyrusRuntime.key(name)
         guard values[key] != nil else {
             return false

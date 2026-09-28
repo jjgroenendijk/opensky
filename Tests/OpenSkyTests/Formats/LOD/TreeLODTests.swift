@@ -1,6 +1,6 @@
 import FormatsTestSupport
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

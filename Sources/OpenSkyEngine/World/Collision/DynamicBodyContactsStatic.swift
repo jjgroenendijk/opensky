@@ -19,7 +19,7 @@ import simd
 /// world. Any thin body sunk past its own half-thickness flips the same way.
 /// Nothing about the body is a safe reference — the surface has to speak for
 /// itself.
-nonisolated enum DynamicSurfaceOrientation {
+nonisolated public enum DynamicSurfaceOrientation: Sendable {
     /// Trust the winding the file carries. Vanilla wound its collision
     /// triangles front face outward, which the probe confirms over a whole
     /// interior's architecture and furniture: reading the winding straight took
@@ -35,7 +35,7 @@ nonisolated enum DynamicSurfaceOrientation {
 
     /// The rule one placed shape's triangles are read under, in that shape's
     /// own local space.
-    static func of(_ geometry: NIFCollisionGeometry) -> Self {
+    public static func of(_ geometry: NIFCollisionGeometry) -> Self {
         switch geometry {
         case let .convexVertices(vertices, _):
             .outward(from: Self.centroid(of: vertices))
@@ -48,7 +48,7 @@ nonisolated enum DynamicSurfaceOrientation {
 
     /// The same rule expressed in world space, for the query that places a
     /// shape's triangles before testing them.
-    func transformed(by matrix: float4x4) -> Self {
+    public func transformed(by matrix: float4x4) -> Self {
         switch self {
         case .winding:
             .winding
@@ -58,7 +58,7 @@ nonisolated enum DynamicSurfaceOrientation {
     }
 
     /// Turns a triangle's raw winding normal into its surface normal.
-    func oriented(_ normal: SIMD3<Float>, at vertex: SIMD3<Float>) -> SIMD3<Float> {
+    public func oriented(_ normal: SIMD3<Float>, at vertex: SIMD3<Float>) -> SIMD3<Float> {
         guard case let .outward(interior) = self else { return normal }
         return simd_dot(normal, interior - vertex) > 0 ? -normal : normal
     }
@@ -71,7 +71,7 @@ nonisolated enum DynamicSurfaceOrientation {
 
 nonisolated extension DynamicBodyContacts {
     /// How deep a world sphere sits inside one placed static shape.
-    static func penetration(
+    public static func penetration(
         of point: SIMD3<Float>,
         radius: Float,
         shape: StaticCollisionShape
@@ -154,7 +154,7 @@ nonisolated extension DynamicBodyContacts {
 
     /// Signed sphere-versus-triangle against a triangle already prepared for
     /// the query, for the caller that has one point and one triangle.
-    static func nearestSurface(
+    public static func nearestSurface(
         of point: SIMD3<Float>,
         radius: Float,
         triangle: CollisionTriangle,
@@ -175,15 +175,15 @@ nonisolated extension DynamicBodyContacts {
 /// times over for one answer. Hoisting the cross product, the normalisation,
 /// the facing decision and the bounds out of it is most of what took the
 /// measured step from tens of milliseconds to something a frame can afford.
-nonisolated struct DynamicSurfaceTriangle {
-    let triangle: CollisionTriangle
+nonisolated public struct DynamicSurfaceTriangle: Sendable {
+    public let triangle: CollisionTriangle
     /// The surface normal, already facing the way the shape's own rule says.
-    let normal: SIMD3<Float>
-    let lower: SIMD3<Float>
-    let upper: SIMD3<Float>
+    public let normal: SIMD3<Float>
+    public let lower: SIMD3<Float>
+    public let upper: SIMD3<Float>
 
     /// Nil for a degenerate triangle, which has no surface to speak of.
-    init?(_ triangle: CollisionTriangle, orientation: DynamicSurfaceOrientation) {
+    public init?(_ triangle: CollisionTriangle, orientation: DynamicSurfaceOrientation) {
         let raw = simd_cross(
             triangle.second - triangle.first,
             triangle.third - triangle.first
@@ -208,7 +208,7 @@ nonisolated struct DynamicSurfaceTriangle {
     /// - Returns: nil when this triangle is out of range or cannot be the
     ///   nearest. A non-nil answer with no penetration still matters — it is how
     ///   a near surface saying "outside" vetoes a far one saying "deep inside".
-    func surface(
+    public func surface(
         of point: SIMD3<Float>,
         radius: Float,
         recovery: Float,

@@ -5,12 +5,12 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum CrimeFactionReadout {
+nonisolated public enum CrimeFactionReadout: Sendable {
     // MARK: - Bounty
 
     /// The ledger, the place the player stands in, and what the last crime and
     /// the last guard did.
-    static func bountyText(for snapshot: CrimeFactionControlSnapshot) -> String {
+    public static func bountyText(for snapshot: CrimeFactionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return snapshot.lastActionText }
         let total = snapshot.bounties.reduce(Int64(0)) { $0 + Int64($1.gold) }
         var lines = ["Bounty: \(total) gold with \(snapshot.bounties.count) faction(s)"]
@@ -26,7 +26,7 @@ nonisolated enum CrimeFactionReadout {
         return lines.joined(separator: "\n")
     }
 
-    static func responseText(_ response: CrimeResponse) -> String {
+    public static func responseText(_ response: CrimeResponse) -> String {
         switch response {
         case .none: "ignore"
         case .confront: "confront"
@@ -44,7 +44,7 @@ nonisolated enum CrimeFactionReadout {
     // MARK: - Theft
 
     /// The crosshair verdict and the stolen copies the player carries.
-    static func theftText(for snapshot: CrimeFactionControlSnapshot) -> String {
+    public static func theftText(for snapshot: CrimeFactionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return snapshot.lastActionText }
         var lines: [String] = []
         if let ownership = snapshot.ownership {
@@ -68,7 +68,7 @@ nonisolated enum CrimeFactionReadout {
 
     /// Both membership lists, what the subject makes of the player and why,
     /// and whether it is a guard.
-    static func membershipText(for snapshot: CrimeFactionControlSnapshot) -> String {
+    public static func membershipText(for snapshot: CrimeFactionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return snapshot.lastActionText }
         let subject = snapshot.subject
         var lines = membershipLines("Player", snapshot.playerMemberships)
@@ -92,7 +92,7 @@ nonisolated enum CrimeFactionReadout {
     }
 
     /// The precedence list top to bottom, marking the term that answered.
-    static func reactionLines(_ terms: ReactionTermsReadout) -> [String] {
+    public static func reactionLines(_ terms: ReactionTermsReadout) -> [String] {
         let decision = terms.decision
         return [
             "Toward the player: \(name(decision.hostility)), reaction "
@@ -105,7 +105,7 @@ nonisolated enum CrimeFactionReadout {
         ]
     }
 
-    static func name(_ reaction: ActorReaction) -> String {
+    public static func name(_ reaction: ActorReaction) -> String {
         switch reaction {
         case .ally: "ally"
         case .friend: "friend"
@@ -114,7 +114,7 @@ nonisolated enum CrimeFactionReadout {
         }
     }
 
-    static func name(_ hostility: ActorHostility) -> String {
+    public static func name(_ hostility: ActorHostility) -> String {
         hostility == .hostile ? "hostile" : "not hostile"
     }
 
@@ -122,7 +122,7 @@ nonisolated enum CrimeFactionReadout {
 
     /// The subject's resolved vendor role, the override over it, and whether
     /// it trades at this hour.
-    static func vendorText(for snapshot: CrimeFactionControlSnapshot) -> String {
+    public static func vendorText(for snapshot: CrimeFactionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return snapshot.lastActionText }
         let resolved = snapshot.subject.vendor?.factionName ?? "not a merchant"
         var lines = ["\(snapshot.subject.name): \(resolved)"]

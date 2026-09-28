@@ -49,7 +49,7 @@ nonisolated extension ActorValueDerivation {
     /// record actually said. The eighteen skills are always present, because
     /// the race bonus and the class spread both apply on top of a floor that is
     /// itself documented rather than assumed.
-    static func generalBaseValues(
+    public static func generalBaseValues(
         inputs: ActorValueInputs,
         settings: ActorValueLevelSettings = .documentedDefaults,
         playerLevel: Int = 1
@@ -68,7 +68,7 @@ nonisolated extension ActorValueDerivation {
 
     /// The eighteen skills: the documented floor, the race's bonuses, and — for
     /// an auto-calc actor — the class's spread of the per-level skill points.
-    static func skillBaseValues(
+    public static func skillBaseValues(
         inputs: ActorValueInputs,
         settings: ActorValueLevelSettings = .documentedDefaults,
         playerLevel: Int = 1
@@ -103,7 +103,7 @@ nonisolated extension ActorValueDerivation {
     /// Returns whole points per index, omitting the skills that got none. A
     /// class with no weights spreads nothing, which is what a class record
     /// with a zero-weight DATA or no class at all should do.
-    static func distributeSkillPoints(
+    public static func distributeSkillPoints(
         points: Int,
         weights: CharacterClass.SkillWeights
     ) -> [Int32: Int] {
@@ -148,16 +148,16 @@ nonisolated extension ActorValueDerivation {
 /// Spelled once here rather than as literals at four call sites, and numbered
 /// from `ActorValueIdentity.vanillaNames` — index 30 is `Speed Mult` because
 /// that table says so, not because anything recalled it.
-nonisolated enum ActorValueIndex {
-    static let speedMult: Int32 = 30
-    static let carryWeight: Int32 = 32
-    static let unarmedDamage: Int32 = 35
-    static let mass: Int32 = 36
-    static let damageResist: Int32 = 39
-    static let poisonResist: Int32 = 40
-    static let resistFire: Int32 = 41
-    static let resistShock: Int32 = 42
-    static let resistFrost: Int32 = 43
-    static let resistMagic: Int32 = 44
-    static let resistDisease: Int32 = 45
+nonisolated public enum ActorValueIndex: Sendable {
+    public static let speedMult: Int32 = 30
+    public static let carryWeight: Int32 = 32
+    public static let unarmedDamage: Int32 = 35
+    public static let mass: Int32 = 36
+    public static let damageResist: Int32 = 39
+    public static let poisonResist: Int32 = 40
+    public static let resistFire: Int32 = 41
+    public static let resistShock: Int32 = 42
+    public static let resistFrost: Int32 = 43
+    public static let resistMagic: Int32 = 44
+    public static let resistDisease: Int32 = 45
 }

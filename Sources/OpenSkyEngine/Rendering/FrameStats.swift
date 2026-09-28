@@ -16,35 +16,35 @@ import os
 /// and the frame HUD both poll this so they can never show different numbers).
 /// Separate from the 120-frame log window, which stays the milestone 2.9
 /// measurement and is never disturbed by a reader.
-nonisolated struct FrameStatsSnapshot: Equatable {
+nonisolated public struct FrameStatsSnapshot: Equatable, Sendable {
     /// Frames per second implied by `frameMS`; zero before the first window.
-    let fps: Double
+    public let fps: Double
     /// Average frame-to-frame interval in milliseconds.
-    let frameMS: Double
+    public let frameMS: Double
     /// Worst frame-to-frame interval in the window, in milliseconds.
-    let maxFrameMS: Double
+    public let maxFrameMS: Double
     /// Average CPU encode time in milliseconds.
-    let encodeMS: Double
+    public let encodeMS: Double
     /// Average GPU time in milliseconds, or nil while no counter-heap pair has
     /// resolved yet (the readout shows "n/a", matching the log line).
-    let gpuMS: Double?
+    public let gpuMS: Double?
     /// Frames that fed this reading; zero means "no window has closed yet".
-    let sampleCount: Int
+    public let sampleCount: Int
 
     /// Reported before the first short window closes, and by providers with no
     /// live renderer.
-    static let empty = FrameStatsSnapshot(
+    public static let empty = FrameStatsSnapshot(
         fps: 0, frameMS: 0, maxFrameMS: 0, encodeMS: 0, gpuMS: nil, sampleCount: 0
     )
 
     /// True once a window has closed, so a readout can distinguish "measuring"
     /// from "genuinely zero frames per second".
-    var hasMeasurement: Bool {
+    public var hasMeasurement: Bool {
         sampleCount > 0
     }
 }
 
-nonisolated final class FrameStats {
+nonisolated public final class FrameStats {
     private static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "FrameStats"
@@ -97,7 +97,7 @@ nonisolated final class FrameStats {
     private var gpuFrameCount = 0
     private var signpostState: OSSignpostIntervalState?
 
-    init(device: MTLDevice) {
+    public init(device: MTLDevice) {
         self.device = device
         correlation = Self.sample(device: device)
         liveCorrelation = correlation
@@ -105,7 +105,7 @@ nonisolated final class FrameStats {
 
     /// Current live reading. Safe from any thread, including while frames are
     /// being recorded — see `published`.
-    func snapshot() -> FrameStatsSnapshot {
+    public func snapshot() -> FrameStatsSnapshot {
         published.withLock { $0 }
     }
 
@@ -115,7 +115,7 @@ nonisolated final class FrameStats {
     }
 
     /// Call at the top of the render callback; pass the result to endFrame.
-    func beginFrame() -> UInt64 {
+    public func beginFrame() -> UInt64 {
         signpostState = Self.signposter.beginInterval("frame")
         return DispatchTime.now().uptimeNanoseconds
     }
@@ -125,7 +125,7 @@ nonisolated final class FrameStats {
     /// heap is unavailable). Returns the logged summary line when this frame
     /// closed a stats window — surfaced so tests can verify the instrument.
     @discardableResult
-    func endFrame(cpuStartNS: UInt64, gpuTicks: (start: UInt64, end: UInt64)?) -> String? {
+    public func endFrame(cpuStartNS: UInt64, gpuTicks: (start: UInt64, end: UInt64)?) -> String? {
         if let state = signpostState {
             Self.signposter.endInterval("frame", state)
             signpostState = nil

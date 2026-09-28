@@ -3,6 +3,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyEngine
 import OpenSkyFormats
 
 enum BenchCommand {

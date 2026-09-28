@@ -61,17 +61,17 @@ import OpenSkyFormats
 
 /// One perk effect as the evaluator sees it: the function to apply, the payload
 /// it reads, and the priority it declared.
-nonisolated struct PerkEntryPointOperand: Equatable, Sendable {
-    let function: PerkFunction
+nonisolated public struct PerkEntryPointOperand: Equatable, Sendable {
+    public let function: PerkFunction
     /// EPFD as decoded, or nil when the effect carried none.
-    let data: PerkFunctionData?
+    public let data: PerkFunctionData?
     /// PRKE byte 2, verbatim.
-    let priority: UInt8
+    public let priority: UInt8
     /// The perk the effect belongs to, carried for reporting only. Nil for a
     /// hand-built operand in a test.
-    let perk: ReferenceKey?
+    public let perk: ReferenceKey?
 
-    init(
+    public init(
         function: PerkFunction,
         data: PerkFunctionData?,
         priority: UInt8 = 0,
@@ -90,7 +90,7 @@ nonisolated struct PerkEntryPointOperand: Equatable, Sendable {
 /// The `Error` conformance exists only so these can ride in a `Result`, which
 /// is the same reason `ConditionFailure` carries one; nothing here ever throws
 /// and no caller should catch one.
-nonisolated enum PerkEntryPointSkip: Equatable, Error, Sendable {
+nonisolated public enum PerkEntryPointSkip: Equatable, Error, Sendable {
     /// A function that produces something other than a number, or the one
     /// numeric function whose randomness is undocumented. See the file header.
     case unsupportedFunction(PerkFunction)
@@ -105,30 +105,30 @@ nonisolated enum PerkEntryPointSkip: Equatable, Error, Sendable {
 }
 
 /// What one evaluation did.
-nonisolated struct PerkEntryPointOutcome: Equatable, Sendable {
+nonisolated public struct PerkEntryPointOutcome: Equatable, Sendable {
     /// The value after every applicable effect folded in.
-    let value: Float
+    public let value: Float
     /// The value the caller handed in, so a readout can show both.
-    let input: Float
+    public let input: Float
     /// How many operands actually moved the value.
-    let applied: Int
+    public let applied: Int
     /// Every operand that did not, in evaluation order.
-    let skipped: [PerkEntryPointSkip]
+    public let skipped: [PerkEntryPointSkip]
 
     /// Whether any perk changed the number.
-    var didChange: Bool {
+    public var didChange: Bool {
         value != input
     }
 }
 
-nonisolated enum PerkEntryPointEvaluator {
+nonisolated public enum PerkEntryPointEvaluator: Sendable {
     /// Folds every operand into `value`, in the documented order.
     ///
     /// - Parameter actorValue: reads one of the owner's actor values by vanilla
     ///   index, for the four `AV` functions. Answering nil is a counted skip
     ///   rather than a zero, because a zero would silently turn
     ///   `Value * AV * FACTOR` into a wipe.
-    static func evaluate(
+    public static func evaluate(
         _ value: Float,
         through operands: [PerkEntryPointOperand],
         actorValue: (Int32) -> Float? = { _ in nil }
@@ -160,7 +160,7 @@ nonisolated enum PerkEntryPointEvaluator {
     /// Sorted on the index alongside the element because Swift's `sort` is not
     /// guaranteed stable, and an unstable tie-break would make the same load
     /// order fold the same effects in a different sequence between runs.
-    static func ordered(_ operands: [PerkEntryPointOperand]) -> [PerkEntryPointOperand] {
+    public static func ordered(_ operands: [PerkEntryPointOperand]) -> [PerkEntryPointOperand] {
         operands
             .enumerated()
             .sorted {
@@ -172,7 +172,7 @@ nonisolated enum PerkEntryPointEvaluator {
     }
 
     /// One operand applied to one value.
-    static func apply(
+    public static func apply(
         _ operand: PerkEntryPointOperand,
         to value: Float,
         actorValue: (Int32) -> Float?

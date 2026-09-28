@@ -21,19 +21,19 @@ import simd
 /// Both immutable collision products of one cell build. They are produced
 /// together because they share the same reference list and the same NIF cache,
 /// and travel together onto the `CellScene`.
-nonisolated struct CellCollisionBuild {
-    let staticCollision: StaticCollisionSet
-    let triggerVolumes: TriggerVolumeSet
+nonisolated public struct CellCollisionBuild: Sendable {
+    public let staticCollision: StaticCollisionSet
+    public let triggerVolumes: TriggerVolumeSet
     /// Bodies of this cell the dynamic world simulates (issue #193). Empty for
     /// a build with no reference retention, because a simulated body needs the
     /// `ReferenceKey` the entries carry.
-    var dynamicBodies: [DynamicBodyPlacement] = []
+    public var dynamicBodies: [DynamicBodyPlacement] = []
 }
 
 nonisolated extension CellSceneBuilder {
     /// The solid set and the trigger set for one cell, from the references a
     /// build settled on after runtime state was applied.
-    nonisolated func buildCollision(
+    nonisolated public func buildCollision(
         resolved: EffectiveReferences,
         location: CellSceneLocation
     ) -> CellCollisionBuild {
@@ -66,7 +66,7 @@ nonisolated extension CellSceneBuilder {
     ///
     /// Volume order is deterministic: primitives in reference order first, then
     /// mesh bodies in reference, body and shape order.
-    nonisolated func buildTriggerVolumes(
+    nonisolated public func buildTriggerVolumes(
         refs: [PlacedReference],
         entries: [RuntimeReferenceEntry],
         location: CellSceneLocation
@@ -144,7 +144,7 @@ nonisolated extension CellSceneBuilder {
     /// sphere primitives in `Skyrim.esm` stores the same value in all three
     /// axes (`PlacedReferenceXPRMRealDataTests`, observed 2026-07-31), so the
     /// three are interchangeable and no axis is being guessed.
-    nonisolated static func triggerGeometry(
+    nonisolated public static func triggerGeometry(
         of primitive: PlacedReference.Primitive
     ) -> NIFCollisionGeometry? {
         switch primitive.type {

@@ -18,23 +18,23 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's values as a panel spells them.
-nonisolated struct ActorValueReadout: Equatable, Sendable {
+nonisolated public struct ActorValueReadout: Equatable, Sendable {
     /// FULL name when the actor index resolves one, else the editor ID, else
     /// the FormID. Never empty, so a readout line always names something.
-    let name: String
-    let current: ActorValues
-    let maximums: ActorValues
+    public let name: String
+    public let current: ActorValues
+    public let maximums: ActorValues
     /// Percent of each maximum restored per second, from RACE DATA.
-    let regenPercentPerSecond: ActorValues
+    public let regenPercentPerSecond: ActorValues
     /// The level the derivation used, which is what explains an unexpected
     /// maximum more often than anything else on this readout.
-    let level: Int
+    public let level: Int
     /// Whether the per-level class spread applied.
-    let autoCalculatesStats: Bool
+    public let autoCalculatesStats: Bool
     /// The flag item 15.6 consumes.
-    let hasZeroHealth: Bool
+    public let hasZeroHealth: Bool
 
-    static let empty = ActorValueReadout(
+    public static let empty = ActorValueReadout(
         name: "—",
         current: .zero,
         maximums: .zero,
@@ -43,6 +43,24 @@ nonisolated struct ActorValueReadout: Equatable, Sendable {
         autoCalculatesStats: false,
         hasZeroHealth: true
     )
+
+    public init(
+        name: String,
+        current: ActorValues,
+        maximums: ActorValues,
+        regenPercentPerSecond: ActorValues,
+        level: Int,
+        autoCalculatesStats: Bool,
+        hasZeroHealth: Bool
+    ) {
+        self.name = name
+        self.current = current
+        self.maximums = maximums
+        self.regenPercentPerSecond = regenPercentPerSecond
+        self.level = level
+        self.autoCalculatesStats = autoCalculatesStats
+        self.hasZeroHealth = hasZeroHealth
+    }
 }
 
 /// One actor value as the panel inspects it (issue #468, roadmap item 19.5).
@@ -50,22 +68,22 @@ nonisolated struct ActorValueReadout: Equatable, Sendable {
 /// Carries the modifier slots separately rather than only the current number,
 /// because the whole point of the general store is that a damaged resistance
 /// and a lowered base are different states that read the same at a glance.
-nonisolated struct ActorValueInspection: Equatable, Sendable {
+nonisolated public struct ActorValueInspection: Equatable, Sendable {
     /// Vanilla name, or the bare index when the selection names none, so a
     /// readout line always names something.
-    let name: String
-    let index: Int32
-    let current: Float
-    let base: Float
-    let permanent: Float
-    let temporary: Float
-    let damage: Float
+    public let name: String
+    public let index: Int32
+    public let current: Float
+    public let base: Float
+    public let permanent: Float
+    public let temporary: Float
+    public let damage: Float
     /// The capped fraction of damage this value removes, for a percentage
     /// resistance; nil for every other actor value, including `Damage Resist`,
     /// which is an armor rating rather than a percentage.
-    let resistanceFraction: Float?
+    public let resistanceFraction: Float?
 
-    static let empty = ActorValueInspection(
+    public static let empty = ActorValueInspection(
         name: "—",
         index: ActorValueIdentity.noneIndex,
         current: 0,
@@ -75,6 +93,26 @@ nonisolated struct ActorValueInspection: Equatable, Sendable {
         damage: 0,
         resistanceFraction: nil
     )
+
+    public init(
+        name: String,
+        index: Int32,
+        current: Float,
+        base: Float,
+        permanent: Float,
+        temporary: Float,
+        damage: Float,
+        resistanceFraction: Float?
+    ) {
+        self.name = name
+        self.index = index
+        self.current = current
+        self.base = base
+        self.permanent = permanent
+        self.temporary = temporary
+        self.damage = damage
+        self.resistanceFraction = resistanceFraction
+    }
 }
 
 /// Who a damage or restore control applies to.
@@ -82,35 +120,35 @@ nonisolated struct ActorValueInspection: Equatable, Sendable {
 /// The same two selectors `EquipmentTargetSelector` offers, for the same
 /// reason: the player is where the HUD meters are checked, and the nearest
 /// resident actor is the only thing a hit is visible on.
-nonisolated enum ActorValueTargetSelector: Equatable, Sendable {
+nonisolated public enum ActorValueTargetSelector: Equatable, Sendable {
     case player
     /// The resident ACHR closest to the player.
     case nearestActor
 }
 
 /// One observation of the actor-value runtime.
-nonisolated struct ActorValueControlSnapshot: Equatable, Sendable {
+nonisolated public struct ActorValueControlSnapshot: Equatable, Sendable {
     /// False when no actor-value runtime is attached — no game data, or a demo
     /// scene. Every other field is then empty and the panel says so rather than
     /// showing a convincing zero.
-    let isAvailable: Bool
+    public let isAvailable: Bool
     /// The player's values, always present when available.
-    let player: ActorValueReadout
+    public let player: ActorValueReadout
     /// The nearest resident ACHR's values, or nil when none is loaded.
-    let nearestActor: ActorValueReadout?
+    public let nearestActor: ActorValueReadout?
     /// Which target the dev controls act on.
-    let target: ActorValueTargetSelector
+    public let target: ActorValueTargetSelector
     /// The actor value the controls act on, read off the selected target
     /// (issue #468).
-    let selection: ActorValueInspection
+    public let selection: ActorValueInspection
     /// How many references currently carry an actor-value component, across
     /// every cell whether resident or not.
-    let runtimeActorCount: Int
+    public let runtimeActorCount: Int
     /// Human-readable result of the last panel action.
-    let lastActionText: String
+    public let lastActionText: String
 
     /// The reading with no runtime attached.
-    static let unavailable = ActorValueControlSnapshot(
+    public static let unavailable = ActorValueControlSnapshot(
         isAvailable: false,
         player: .empty,
         nearestActor: nil,
@@ -119,10 +157,28 @@ nonisolated struct ActorValueControlSnapshot: Equatable, Sendable {
         runtimeActorCount: 0,
         lastActionText: "Actor values unavailable: no game data loaded."
     )
+
+    public init(
+        isAvailable: Bool,
+        player: ActorValueReadout,
+        nearestActor: ActorValueReadout?,
+        target: ActorValueTargetSelector,
+        selection: ActorValueInspection,
+        runtimeActorCount: Int,
+        lastActionText: String
+    ) {
+        self.isAvailable = isAvailable
+        self.player = player
+        self.nearestActor = nearestActor
+        self.target = target
+        self.selection = selection
+        self.runtimeActorCount = runtimeActorCount
+        self.lastActionText = lastActionText
+    }
 }
 
 @MainActor
-protocol ActorValueControlProviding: AnyObject {
+public protocol ActorValueControlProviding: AnyObject {
     var actorValueControlSnapshot: ActorValueControlSnapshot { get }
 
     /// Which target the damage and restore controls act on.

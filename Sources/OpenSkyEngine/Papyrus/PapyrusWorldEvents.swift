@@ -16,7 +16,7 @@ extension PapyrusWorldRuntime {
     /// sidebar's step-one-tick control drives, and stepping a paused VM is
     /// the whole point of pausing it.
     @discardableResult
-    func stepFixed(gameClock: GameClock? = nil) -> PapyrusTickReport {
+    public func stepFixed(gameClock: GameClock? = nil) -> PapyrusTickReport {
         _ = scheduler.tick(gameClock: gameClock)
         let resumes = suspensionTracker.drainStep()
         for key in resumes.settledInstances {
@@ -49,7 +49,7 @@ extension PapyrusWorldRuntime {
     /// same zero report and, crucially, accumulates nothing, so however long
     /// the VM stays paused, unpausing never runs a burst of catch-up steps.
     @discardableResult
-    func advance(delta: Float, gameClock: GameClock? = nil) -> PapyrusTickReport {
+    public func advance(delta: Float, gameClock: GameClock? = nil) -> PapyrusTickReport {
         var report = PapyrusTickReport(
             steps: 0, dispatched: 0, queued: eventQueue.count,
             resumed: 0, faulted: 0

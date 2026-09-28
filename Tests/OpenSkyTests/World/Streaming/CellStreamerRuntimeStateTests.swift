@@ -8,7 +8,7 @@
 // `ManualCellBuildRunner` so the test controls exactly when each build
 // completes. No Metal, no game data.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

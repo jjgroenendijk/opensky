@@ -21,7 +21,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `QSTS` chunk: every snapshot entry carrying a quest component, in
     /// the snapshot's `ReferenceKey` order. A session that touched no quest
     /// writes no chunk.
-    static func writeQuestStates(
+    public static func writeQuestStates(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -73,7 +73,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// An empty table is deliberately not written. It is the state a quest has
     /// before a start and after a stop, and the decoder restores exactly that
     /// for a quest the chunk does not mention.
-    static func writeQuestAliases(
+    public static func writeQuestAliases(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -105,7 +105,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// `QLOC`: location targets are a sibling chunk because QALS entries are
     /// not individually length-delimited and cannot be extended compatibly.
-    static func writeQuestLocationAliases(
+    public static func writeQuestLocationAliases(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

@@ -5,7 +5,7 @@
 // The runtime is `@MainActor` because the store is, so the suite is too.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

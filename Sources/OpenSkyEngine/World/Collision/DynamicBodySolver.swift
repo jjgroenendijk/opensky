@@ -33,14 +33,14 @@ import OpenSkyFormats
 import simd
 
 /// What one step needs from the world outside the body set.
-nonisolated struct DynamicStepWorld {
+nonisolated public struct DynamicStepWorld {
     /// Static broadphase, normally `CellSceneComposition.collisionCandidates`.
-    let staticCandidates: (ModelBounds) -> [StaticCollisionShape]
+    public let staticCandidates: (ModelBounds) -> [StaticCollisionShape]
     /// Engine units per second squared, Z-up. Defaults to the same constant the
     /// player capsule falls under.
-    var gravity = SIMD3<Float>(0, 0, -WalkController.gravity)
+    public var gravity = SIMD3<Float>(0, 0, -WalkController.gravity)
 
-    init(
+    public init(
         staticCandidates: @escaping (ModelBounds) -> [StaticCollisionShape] = { _ in [] },
         gravity: SIMD3<Float> = SIMD3(0, 0, -WalkController.gravity)
     ) {
@@ -50,47 +50,47 @@ nonisolated struct DynamicStepWorld {
 }
 
 /// What one step did, for the panel readout and the perf gate.
-nonisolated struct DynamicStepStats: Equatable, Sendable {
-    var activeBodyCount = 0
-    var sleepingBodyCount = 0
-    var contactCount = 0
+nonisolated public struct DynamicStepStats: Equatable, Sendable {
+    public var activeBodyCount = 0
+    public var sleepingBodyCount = 0
+    public var contactCount = 0
     /// Contacts between two dynamic bodies rather than against static geometry.
     /// On a ragdoll that is bone against bone, which is what the self-collision
     /// filter decides the set of (issue #413).
-    var pairContactCount = 0
-    var substepCount = 0
+    public var pairContactCount = 0
+    public var substepCount = 0
     /// Bodies whose integrated pose came back non-finite and were reset. Always
     /// zero on well-formed input; a non-zero value is a bug, not a tolerance.
-    var recoveredBodyCount = 0
+    public var recoveredBodyCount = 0
     /// Joint limits still violated after the last constraint iteration of the
     /// last substep (issue #197). Zero means the ragdoll's joints converged;
     /// a persistently non-zero value is what the panel's convergence readout
     /// shows and what the stability gate asserts stays bounded.
-    var jointViolationCount = 0
+    public var jointViolationCount = 0
 }
 
-nonisolated enum DynamicBodySolver {
+nonisolated public enum DynamicBodySolver: Sendable {
     /// Solver iterations per substep. Four is enough for a stack of a handful of
     /// clutter items to settle without visible sink at 120 Hz.
-    static let iterationCount = 4
+    public static let iterationCount = 4
     /// Ceiling on substeps per step, so an absurd velocity costs bounded time.
     /// Motion beyond what these substeps cover is discarded — see the header.
-    static let maximumSubstepCount = 8
+    public static let maximumSubstepCount = 8
     /// Penetration left unresolved, in engine units. Resolving to exactly zero
     /// makes resting contacts flicker in and out.
-    static let penetrationSlop: Float = 0.5
+    public static let penetrationSlop: Float = 0.5
     /// Fraction of the remaining penetration pushed out of the positions per
     /// substep. Below one so a deep recovery is spread over several substeps
     /// rather than snapping.
-    static let correctionRate: Float = 0.4
+    public static let correctionRate: Float = 0.4
     /// Ceiling on how far one substep may move a body to recover penetration,
     /// in engine units. Vanilla authors clutter *inside* the shelf it stands on,
     /// so a body's first contacts are routinely tens of units deep; without a
     /// ceiling the recovery reads as a launch and the body leaves the world.
-    static let maximumCorrectionDistance: Float = 1.5
+    public static let maximumCorrectionDistance: Float = 1.5
     /// Below this closing speed a contact is treated as resting and gets no
     /// bounce, whatever the body's restitution. Engine units per second.
-    static let restitutionThreshold: Float = 120
+    public static let restitutionThreshold: Float = 120
     /// Sleep thresholds, and how many steps under them it takes.
     ///
     /// The linear one is a speed in engine units. The angular one is derived
@@ -100,15 +100,15 @@ nonisolated enum DynamicBodySolver {
     /// the spin at which the outermost point of the collider travels at
     /// `sleepLinearSpeed`. A fixed constant was either too tight for clutter the
     /// size of a cup or too loose for furniture.
-    static let sleepLinearSpeed: Float = 6
+    public static let sleepLinearSpeed: Float = 6
     /// Ceiling on the derived angular threshold, so a body with an implausibly
     /// small collider is not allowed to sleep while visibly spinning.
-    static let maximumSleepAngularSpeed: Float = 0.7
-    static let sleepStepCount = 60
+    public static let maximumSleepAngularSpeed: Float = 0.7
+    public static let sleepStepCount = 60
 
     /// The spin at which the farthest point of `body`'s collider moves at
     /// `sleepLinearSpeed`.
-    static func sleepAngularSpeed(of body: DynamicBody) -> Float {
+    public static func sleepAngularSpeed(of body: DynamicBody) -> Float {
         let radius = body.definition.boundingRadius
         guard radius > Float.ulpOfOne else { return maximumSleepAngularSpeed }
         return min(sleepLinearSpeed / radius, maximumSleepAngularSpeed)
@@ -141,7 +141,7 @@ nonisolated enum DynamicBodySolver {
     /// The default is the empty set, so a caller that says nothing gets the
     /// bones-do-not-touch behaviour rather than an unfiltered pile of contacts.
     @discardableResult
-    static func step(
+    public static func step(
         bodies: inout [DynamicBody],
         world: DynamicStepWorld,
         dt: Float,
@@ -240,7 +240,7 @@ nonisolated enum DynamicBodySolver {
     /// How far a body may move in one substep before a wall could be crossed
     /// without ever being sampled: half the collision margin plus a fraction of
     /// the body's own size, so a large crate substeps less often than a coin.
-    static func substepDistance(of body: DynamicBody) -> Float {
+    public static func substepDistance(of body: DynamicBody) -> Float {
         max(
             DynamicBodyContacts.contactMargin,
             body.definition.boundingRadius * 0.5
@@ -344,7 +344,7 @@ nonisolated enum DynamicBodySolver {
 
     /// Internal for the same reason `resolve` is: the contact half of this enum
     /// clamps the velocities it writes.
-    static func clamped(_ vector: SIMD3<Float>, to limit: Float) -> SIMD3<Float> {
+    public static func clamped(_ vector: SIMD3<Float>, to limit: Float) -> SIMD3<Float> {
         guard vector.isFiniteVector else { return .zero }
         let length = simd_length(vector)
         return length > limit && length > Float.ulpOfOne ? vector / length * limit : vector
@@ -352,7 +352,7 @@ nonisolated enum DynamicBodySolver {
 }
 
 nonisolated extension SIMD4 where Scalar == Float {
-    var isFiniteVector4: Bool {
+    public var isFiniteVector4: Bool {
         x.isFinite && y.isFinite && z.isFinite && w.isFinite
     }
 }

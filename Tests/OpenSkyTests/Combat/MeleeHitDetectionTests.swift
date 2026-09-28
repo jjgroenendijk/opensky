@@ -8,7 +8,7 @@
 // closest-approach solver has to get right for a capsule sweep to mean
 // anything.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

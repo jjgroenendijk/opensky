@@ -37,27 +37,27 @@ import simd
 /// One frame of player intent, in the form the bridge consumes. Filled from
 /// `CameraInput` once per frame and held across the fixed steps that frame
 /// drives, exactly like the rest of `CameraInput`.
-nonisolated struct LocomotionIntent: Equatable {
+nonisolated public struct LocomotionIntent: Equatable, Sendable {
     /// Along the level view forward vector, [-1, 1].
-    var moveForward: Float = 0
+    public var moveForward: Float = 0
     /// Along the level view right vector, [-1, 1].
-    var moveRight: Float = 0
+    public var moveRight: Float = 0
     /// Run key (Shift) held.
-    var run = false
+    public var run = false
     /// Sprint key held.
-    var sprint = false
+    public var sprint = false
     /// Sneak toggle state.
-    var sneak = false
+    public var sneak = false
     /// One jump press, consumed by the first step that can act on it.
-    var jump = false
+    public var jump = false
 
-    static let still = LocomotionIntent()
+    public static let still = LocomotionIntent()
 }
 
 /// Which gait the bridge resolved for a step. Sneak outranks sprint, which
 /// outranks run: crouching cancels a sprint in vanilla rather than stacking
 /// with it, and swimming replaces all three.
-nonisolated enum LocomotionGait: String, Equatable, Sendable {
+nonisolated public enum LocomotionGait: String, Equatable, Sendable {
     case walk
     case run
     case sprint
@@ -65,7 +65,7 @@ nonisolated enum LocomotionGait: String, Equatable, Sendable {
     case swim
 }
 
-nonisolated final class LocomotionBridge {
+nonisolated public final class LocomotionBridge {
     /// How far the capsule bottom must sit below the water surface before
     /// swimming starts, and how far it must rise before it stops. The enter
     /// depth is most of the capsule (128 units tall, eye at 112): the player
@@ -73,36 +73,36 @@ nonisolated final class LocomotionBridge {
     /// two differ so a capsule bobbing on the threshold cannot flip modes every
     /// step. Both are OpenSky measurements against the capsule dimensions; no
     /// GMST in the install states either.
-    static let swimEnterDepth: Float = 90
-    static let swimExitDepth: Float = 70
+    public static let swimEnterDepth: Float = 90
+    public static let swimExitDepth: Float = 70
 
-    let configuration: PlayerMovementConfiguration
+    public let configuration: PlayerMovementConfiguration
     /// The graph this bridge feeds, or nil. A nil graph is a supported
     /// configuration and not a degraded one: locomotion still resolves, and
     /// every write and event is dropped rather than queued, which is why item
     /// 14.6 can attach a real graph mid-session with nothing to replay.
-    private(set) var graph: BehaviorGraphInstance?
+    public private(set) var graph: BehaviorGraphInstance?
     /// The first-person graph, run beside the third-person one over the
     /// install's `_1stperson` behavior set (issue #190). Nil until the app
     /// attaches it, and nil forever on an install that ships no first-person
     /// files, both of which are supported rather than degraded: the arms are
     /// then simply not drawn. See LocomotionBridgeFirstPerson.swift.
-    private(set) var firstPersonGraph: BehaviorGraphInstance?
+    public private(set) var firstPersonGraph: BehaviorGraphInstance?
     /// Water surface height at a world XY, or nil where the cell has no water.
-    var sampleWater: ((SIMD2<Float>) -> Float?)?
+    public var sampleWater: ((SIMD2<Float>) -> Float?)?
     /// The pose the last graph update produced, for whoever is drawing the
     /// body (issue #189). Published here rather than sampled elsewhere because
     /// this is the only place the graph is stepped, and the graph steps on the
     /// simulation clock: see PlayerAnimationPlayback.swift.
-    let pose = PlayerPoseBuffer()
+    public let pose = PlayerPoseBuffer()
     /// The same, for the first-person rig. A separate buffer because the two
     /// graphs pose two different skeletons and a shared one would hand the
     /// arms the body's bones.
-    let firstPersonPose = PlayerPoseBuffer()
+    public let firstPersonPose = PlayerPoseBuffer()
 
     /// This frame's intent. The renderer writes it once per frame; every fixed
     /// step in that frame reads the same value.
-    var intent: LocomotionIntent = .still
+    public var intent: LocomotionIntent = .still
 
     /// This frame's melee intent, split out of `intent` because nothing in the
     /// fixed step reads it (issue #195). Attacking does not move the capsule —
@@ -110,7 +110,7 @@ nonisolated final class LocomotionBridge {
     /// runtime consumes this at frame rate and the locomotion step never sees
     /// it. Published here rather than routed separately so there is still one
     /// input path from `CameraInputState` to the world.
-    private(set) var meleeIntent: MeleeIntent = .still
+    public private(set) var meleeIntent: MeleeIntent = .still
 
     /// This frame's archery intent, published beside `meleeIntent` and for the
     /// same reason (issue #196): drawing a bow does not move the capsule, so
@@ -118,7 +118,7 @@ nonisolated final class LocomotionBridge {
     /// never sees it. `hasBowEquipped` is left false here — the bridge does not
     /// know what is in the player's hands — and the app fills it in from the
     /// equipped set before handing the value on.
-    private(set) var archeryIntent: ArcheryIntent = .still
+    public private(set) var archeryIntent: ArcheryIntent = .still
 
     /// A gait held regardless of what the player is pressing, or nil for the
     /// ordinary resolution (issue #191). This is the dev control behind
@@ -132,14 +132,14 @@ nonisolated final class LocomotionBridge {
     /// shows the swim clips and the swim speed while the player still walks on
     /// the floor, which is what a dev control should do rather than pretending
     /// the world changed.
-    var forcedGait: LocomotionGait?
+    public var forcedGait: LocomotionGait?
 
-    private(set) var status: LocomotionStatus
+    public private(set) var status: LocomotionStatus
     /// Third-person graph events awaiting a consumer (issue #352). Only the
     /// third-person graph feeds it: both graphs run the same locomotion clips
     /// and therefore fire the same triggers, so draining both would play every
     /// footstep twice. See LocomotionGraphEventQueue.swift.
-    let graphEvents: LocomotionGraphEventQueue
+    public let graphEvents: LocomotionGraphEventQueue
     /// The footstep director's cursor into `graphEvents`, and the melee
     /// runtime's (issue #195). Named cursors rather than one shared drain,
     /// because both consumers act on the same stream and a drain-once queue
@@ -152,15 +152,15 @@ nonisolated final class LocomotionBridge {
     /// holds the bridge as a settable property and a cursor stored beside it
     /// would silently point into the previous bridge's queue after a
     /// reassignment.
-    let footstepEventConsumer: LocomotionGraphEventQueue.Consumer
-    let meleeEventConsumer: LocomotionGraphEventQueue.Consumer
+    public let footstepEventConsumer: LocomotionGraphEventQueue.Consumer
+    public let meleeEventConsumer: LocomotionGraphEventQueue.Consumer
     /// The archery runtime's cursor (issue #196), the third. Nothing about the
     /// queue changed to add it, which is what item 15.4's promotion from
     /// drain-once bought.
-    let archeryEventConsumer: LocomotionGraphEventQueue.Consumer
+    public let archeryEventConsumer: LocomotionGraphEventQueue.Consumer
     /// The ragdoll runtime's cursor (issue #197), the fourth. Nothing about the
     /// queue changed to add it either.
-    let ragdollEventConsumer: LocomotionGraphEventQueue.Consumer
+    public let ragdollEventConsumer: LocomotionGraphEventQueue.Consumer
 
     private var previousYaw: Float?
     private var wasMoving = false
@@ -188,7 +188,7 @@ nonisolated final class LocomotionBridge {
     private var isAirborneFromJump = false
     private var pendingJump = false
 
-    init(
+    public init(
         configuration: PlayerMovementConfiguration,
         graph: BehaviorGraphInstance? = nil,
         sampleWater: ((SIMD2<Float>) -> Float?)? = nil
@@ -209,7 +209,7 @@ nonisolated final class LocomotionBridge {
     /// Takes this frame's intent from the drained camera input. Jump is latched
     /// here rather than consumed, so a press between two rendered frames still
     /// reaches a fixed step.
-    func acceptFrame(_ input: CameraInput) {
+    public func acceptFrame(_ input: CameraInput) {
         intent = LocomotionIntent(
             moveForward: input.moveForward,
             moveRight: input.moveRight,
@@ -235,7 +235,7 @@ nonisolated final class LocomotionBridge {
     /// A zero-length step is a total no-op — no variable write, no event, no
     /// graph update, no latch consumed — because a paused frame must advance
     /// nothing and fire nothing (docs/engine/menu-mode.md).
-    func plan(_ state: LocomotionStepState) -> LocomotionStepPlan {
+    public func plan(_ state: LocomotionStepState) -> LocomotionStepPlan {
         guard state.dt > 0 else {
             status.lastPlan = .still
             return .still
@@ -282,7 +282,7 @@ nonisolated final class LocomotionBridge {
     /// state so the newly attached graph is not told about transitions that
     /// happened before it existed (issue #189). The app calls this once, when
     /// the install's own `0_master.hkx` has loaded.
-    func attach(graph: BehaviorGraphInstance?) {
+    public func attach(graph: BehaviorGraphInstance?) {
         self.graph = graph
         reset()
     }
@@ -291,14 +291,14 @@ nonisolated final class LocomotionBridge {
     /// because the two load independently: an install can ship a usable
     /// third-person set and a broken `_1stperson` one, and that has to leave
     /// the player walking rather than take the whole graph down.
-    func attachFirstPerson(graph: BehaviorGraphInstance?) {
+    public func attachFirstPerson(graph: BehaviorGraphInstance?) {
         firstPersonGraph = graph
         reset()
     }
 
     /// Forgets the edge state so the next step raises no stale transition.
     /// Called when walk mode is entered or the player is teleported.
-    func reset() {
+    public func reset() {
         previousYaw = nil
         wasMoving = false
         wasSprinting = false
@@ -328,7 +328,7 @@ nonisolated final class LocomotionBridge {
     /// bridge lives in `LocomotionBridgeFirstPerson.swift`. Lending one
     /// narrow mutation is what keeps the setter closed to everyone else rather
     /// than widening it for the whole module.
-    func updateStatus(_ change: (inout LocomotionStatus) -> Void) {
+    public func updateStatus(_ change: (inout LocomotionStatus) -> Void) {
         change(&status)
     }
 

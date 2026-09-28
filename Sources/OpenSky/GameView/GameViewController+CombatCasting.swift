@@ -30,6 +30,7 @@
 // Documented in docs/engine/ai-spell-use.md.
 
 import AppKit
+import OpenSkyEngine
 import OpenSkyFormats
 import OpenSkyGameData
 import simd

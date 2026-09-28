@@ -51,7 +51,7 @@ import simd
 /// It refines `SpellHitApplying` (issue #471) so a spell that leaves the caster
 /// lands through the same one implementation a projectile's does.
 @MainActor
-protocol CasterWorld: SkillUseReporting, SpellHitApplying {
+public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
     /// Whole game days elapsed, which is what the once-per-day power rule
     /// compares.
     var castingGameDay: Int32 { get }
@@ -95,22 +95,22 @@ protocol CasterWorld: SkillUseReporting, SpellHitApplying {
 /// A key rather than a nested dictionary because every lookup needs both
 /// halves and neither is meaningful alone: "the right hand" is not a cast until
 /// somebody is doing it (issue #473).
-nonisolated struct CastSlot: Hashable, Sendable {
-    let caster: ReferenceKey
-    let hand: SpellHand
+nonisolated public struct CastSlot: Hashable, Sendable {
+    public let caster: ReferenceKey
+    public let hand: SpellHand
 }
 
 /// Where a caster is aiming, and what is standing there.
-nonisolated struct SpellAim: Equatable, Sendable {
+nonisolated public struct SpellAim: Equatable, Sendable {
     /// The actor the aim ray reached, or nil when it reached nobody.
-    let target: ReferenceKey?
+    public let target: ReferenceKey?
     /// Where the ray ended, world space — the actor it found, or the far end of
     /// the range. What an area application measures its radius from.
-    let position: SIMD3<Float>
+    public let position: SIMD3<Float>
     /// Every actor a landed spell could catch, for the area rule.
-    let candidates: [MeleeTarget]
+    public let candidates: [MeleeTarget]
 
-    init(
+    public init(
         target: ReferenceKey? = nil,
         position: SIMD3<Float> = SIMD3<Float>(),
         candidates: [MeleeTarget] = []
@@ -121,32 +121,32 @@ nonisolated struct SpellAim: Equatable, Sendable {
     }
 
     /// The reading a session with no world can give.
-    static let none = SpellAim()
+    public static let none = SpellAim()
 }
 
 @MainActor
-final class CasterRuntime {
+public final class CasterRuntime {
     /// Most whole applications one `advance` may run for a maintained cast, so
     /// a multi-second stall cannot land a minute of healing in one frame. The
     /// same cap `ActiveEffectRuntime` puts on its steps.
-    static let maximumApplicationsPerAdvance = ActiveEffectRuntime.maximumStepsPerAdvance
+    public static let maximumApplicationsPerAdvance = ActiveEffectRuntime.maximumStepsPerAdvance
 
-    let spellbook: SpellbookRuntime
-    let values: ActorValueRuntime
+    public let spellbook: SpellbookRuntime
+    public let values: ActorValueRuntime
     /// What the loop did and declined to do. Not `private(set)`: the ability
     /// half lives in `CasterRuntimeAbilities.swift` and a file-private setter
     /// would put it out of reach there, the same reason
     /// `ActiveEffectRuntime.tally` is internal.
-    var tally = CastingTally()
+    public var tally = CastingTally()
     /// The most recent outcome per hand, for a readout. The player's hands
     /// alone: an NPC's casts are reported through the combat loop's own
     /// readout, and letting every actor in a fight overwrite this would make
     /// the panel line say whatever the last skeever did.
-    private(set) var lastOutcome: [SpellHand: SpellCastOutcome] = [:]
+    public private(set) var lastOutcome: [SpellHand: SpellCastOutcome] = [:]
 
     /// The world a cast happens in. Readable across the satellites for the
     /// reason `tally` is settable across them.
-    private(set) weak var world: (any CasterWorld)?
+    public private(set) weak var world: (any CasterWorld)?
     /// Every cast in flight, keyed by the actor casting and the hand it is in.
     ///
     /// Not `private`: the concentration half lives in
@@ -156,7 +156,7 @@ final class CasterRuntime {
     /// NPC's spells through this same runtime: two actors charging at once are
     /// two casts, and a hand-keyed dictionary would have the second one
     /// overwrite the first's charge.
-    var casts: [CastSlot: SpellCastState] = [:]
+    public var casts: [CastSlot: SpellCastState] = [:]
     /// Whether each actor's hand button was down on the previous frame, so
     /// `acceptFrame` acts on edges rather than levels. Owned here rather than in
     /// the input satellite because an extension cannot add stored properties.
@@ -165,9 +165,9 @@ final class CasterRuntime {
     /// The perk runtime a cost is folded through (issue #497), or nil in a
     /// session with no perk data — every synthetic scene, where the record's
     /// own cost is what the caster pays. See `CasterRuntimePerkCost.swift`.
-    var perks: PerkRuntime?
+    public var perks: PerkRuntime?
 
-    init(
+    public init(
         spellbook: SpellbookRuntime,
         values: ActorValueRuntime,
         world: (any CasterWorld)? = nil
@@ -177,7 +177,7 @@ final class CasterRuntime {
         self.world = world
     }
 
-    func attach(world: (any CasterWorld)?) {
+    public func attach(world: (any CasterWorld)?) {
         self.world = world
         casts = [:]
         heldButtons = [:]
@@ -185,33 +185,33 @@ final class CasterRuntime {
 
     /// Whether `caster`'s `hand` button was down on the previous frame.
     /// Internal so the input satellite can read it.
-    func wasHeld(_ hand: SpellHand, on caster: ReferenceKey = .player) -> Bool {
+    public func wasHeld(_ hand: SpellHand, on caster: ReferenceKey = .player) -> Bool {
         heldButtons[CastSlot(caster: caster, hand: hand)] ?? false
     }
 
-    func setHeld(_ hand: SpellHand, _ held: Bool, on caster: ReferenceKey = .player) {
+    public func setHeld(_ hand: SpellHand, _ held: Bool, on caster: ReferenceKey = .player) {
         heldButtons[CastSlot(caster: caster, hand: hand)] = held
     }
 
     // MARK: - Reading
 
-    func state(of hand: SpellHand, on caster: ReferenceKey = .player) -> SpellCastState {
+    public func state(of hand: SpellHand, on caster: ReferenceKey = .player) -> SpellCastState {
         casts[CastSlot(caster: caster, hand: hand)] ?? SpellCastState()
     }
 
-    func phase(of hand: SpellHand, on caster: ReferenceKey = .player) -> SpellCastPhase {
+    public func phase(of hand: SpellHand, on caster: ReferenceKey = .player) -> SpellCastPhase {
         state(of: hand, on: caster).phase
     }
 
     /// Whether either of `caster`'s hands is mid-cast, which is what magicka
     /// regeneration stands down for.
-    func isCasting(_ caster: ReferenceKey = .player) -> Bool {
+    public func isCasting(_ caster: ReferenceKey = .player) -> Bool {
         SpellHand.allCases.contains { phase(of: $0, on: caster).isCasting }
     }
 
     /// Every actor with a cast in flight, in key order. What the combat panel
     /// counts so an NPC mid-charge is visible rather than assumed.
-    var castingActors: [ReferenceKey] {
+    public var castingActors: [ReferenceKey] {
         Set(casts.filter(\.value.phase.isCasting).keys.map(\.caster)).sorted()
     }
 
@@ -219,7 +219,7 @@ final class CasterRuntime {
 
     /// Starts a cast in `hand`.
     @discardableResult
-    func begin(_ hand: SpellHand, on caster: ActorValueHolder) -> SpellCastOutcome {
+    public func begin(_ hand: SpellHand, on caster: ActorValueHolder) -> SpellCastOutcome {
         guard let key = spellbook.state(of: caster).spell(in: hand) else {
             return record(hand, on: caster, .failed(.noSpellReadied(hand)))
         }
@@ -241,7 +241,7 @@ final class CasterRuntime {
 
     /// Releases the cast input in `hand`.
     @discardableResult
-    func release(_ hand: SpellHand, on caster: ActorValueHolder) -> SpellCastOutcome {
+    public func release(_ hand: SpellHand, on caster: ActorValueHolder) -> SpellCastOutcome {
         var state = state(of: hand, on: caster.key)
         guard let key = state.spell, let spell = spellbook.record(key) else {
             casts[slot(hand, caster)] = SpellCastState()
@@ -267,7 +267,7 @@ final class CasterRuntime {
     }
 
     /// Ends whatever `hand` is doing without casting it.
-    func cancel(_ hand: SpellHand, on caster: ActorValueHolder) {
+    public func cancel(_ hand: SpellHand, on caster: ActorValueHolder) {
         casts[slot(hand, caster)] = SpellCastState()
     }
 
@@ -277,7 +277,7 @@ final class CasterRuntime {
     ///
     /// Delta 0 advances nothing, which is what a menu-paused frame delivers —
     /// the same rule regeneration and the effect tick follow.
-    func advance(delta: Float, on caster: ActorValueHolder) {
+    public func advance(delta: Float, on caster: ActorValueHolder) {
         guard delta > 0 else { return }
         for hand in SpellHand.allCases {
             advance(hand, delta: delta, on: caster)
@@ -384,7 +384,7 @@ final class CasterRuntime {
     /// lives in `CasterRuntimeDelivery.swift` (issue #471).
     ///
     /// - Returns: how many timed effects were stored.
-    func apply(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Int {
+    public func apply(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Int {
         guard let world else { return 0 }
         let delivery = spell.data?.delivery ?? .selfTarget
         tally.note(delivery: delivery)
@@ -406,14 +406,14 @@ final class CasterRuntime {
     }
 
     /// The slot one actor's hand casts in.
-    func slot(_ hand: SpellHand, _ caster: ActorValueHolder) -> CastSlot {
+    public func slot(_ hand: SpellHand, _ caster: ActorValueHolder) -> CastSlot {
         CastSlot(caster: caster.key, hand: hand)
     }
 
     /// Tallies an outcome and, for the player alone, keeps it as the readout's
     /// last line.
     @discardableResult
-    func record(
+    public func record(
         _ hand: SpellHand,
         on caster: ActorValueHolder,
         _ outcome: SpellCastOutcome

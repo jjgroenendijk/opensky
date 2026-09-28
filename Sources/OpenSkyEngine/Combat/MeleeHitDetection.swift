@@ -39,24 +39,24 @@ import OpenSkyFormats
 import simd
 
 /// One actor a swing can connect with.
-nonisolated struct MeleeTarget: Equatable, Sendable {
+nonisolated public struct MeleeTarget: Equatable, Sendable {
     /// Which reference it is, which is also the identity the once-per-swing
     /// filter and the damage application key on.
-    let key: ReferenceKey
+    public let key: ReferenceKey
     /// Capsule bottom, world space.
-    let feet: SIMD3<Float>
+    public let feet: SIMD3<Float>
     /// Its capsule dimensions. Actors share the player's in this milestone;
     /// per-race capsules are not resolved anywhere in the engine yet.
-    let capsule: PlayerCapsule
+    public let capsule: PlayerCapsule
 
-    init(key: ReferenceKey, feet: SIMD3<Float>, capsule: PlayerCapsule = .standard) {
+    public init(key: ReferenceKey, feet: SIMD3<Float>, capsule: PlayerCapsule = .standard) {
         self.key = key
         self.feet = feet
         self.capsule = capsule
     }
 
     /// The capsule's core segment, bottom cap centre to top cap centre.
-    var segment: (first: SIMD3<Float>, second: SIMD3<Float>) {
+    public var segment: (first: SIMD3<Float>, second: SIMD3<Float>) {
         let radius = max(capsule.radius, 0)
         let height = max(capsule.height, radius * 2)
         return (
@@ -67,22 +67,22 @@ nonisolated struct MeleeTarget: Equatable, Sendable {
 }
 
 /// Where a swing touched one target.
-nonisolated struct MeleeHit: Equatable, Sendable {
-    let target: ReferenceKey
+nonisolated public struct MeleeHit: Equatable, Sendable {
+    public let target: ReferenceKey
     /// Travel along the swing at which contact was found, world units.
-    let distance: Float
+    public let distance: Float
     /// Contact point, world space — the midpoint of the closest approach, so
     /// an impact sound is heard between the blade and the body rather than
     /// inside either.
-    let position: SIMD3<Float>
+    public let position: SIMD3<Float>
 }
 
-nonisolated enum MeleeHitDetector {
+nonisolated public enum MeleeHitDetector: Sendable {
     /// Steps taken along the swing. `ShapeSweeper` uses 24 for a query whose
     /// answer feeds a solver; a swing needs enough samples that a thin target
     /// cannot slip between two of them, and at 24 steps over a 141-unit reach
     /// the spacing is under 6 units against a 24-unit capsule radius.
-    static let sampleCount = 24
+    public static let sampleCount = 24
 
     /// Every target `swing` reaches, nearest first, ties broken on the lower
     /// reference so two coincident targets always come back in the same order.
@@ -93,7 +93,7 @@ nonisolated enum MeleeHitDetector {
     ///     filters out `attacker`.
     ///   - attacker: the swinging reference, never hit by its own swing.
     ///   - alreadyHit: targets this swing has already landed on.
-    static func hits(
+    public static func hits(
         swing: ShapeSweepQuery,
         targets: [MeleeTarget],
         attacker: ReferenceKey?,
@@ -151,7 +151,7 @@ nonisolated enum MeleeHitDetector {
     /// clamp both parameters into `0...1`, and re-solve the second against the
     /// clamped first and back again, which is what makes the parallel and
     /// degenerate cases land on an end point rather than on a divide by zero.
-    static func closestApproach(
+    public static func closestApproach(
         first: (SIMD3<Float>, SIMD3<Float>),
         second: (SIMD3<Float>, SIMD3<Float>)
     ) -> (onFirst: SIMD3<Float>, onSecond: SIMD3<Float>) {

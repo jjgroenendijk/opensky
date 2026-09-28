@@ -14,7 +14,7 @@ nonisolated extension SystemMenuMovieBridge {
     /// - Returns: whether the movie consumed the event.
     @MainActor
     @discardableResult
-    static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
+    public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
         var consumed = false
         try renderer.updateSWFRuntime { runtime in
             consumed = handle(event, runtime: runtime)

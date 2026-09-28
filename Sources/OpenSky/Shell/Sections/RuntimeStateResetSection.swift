@@ -9,6 +9,7 @@
 // other three sections report false so a fresh session reads as not overridden.
 
 import AppKit
+import OpenSkyEngine
 
 final class RuntimeStateResetSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

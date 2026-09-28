@@ -29,7 +29,7 @@ import simd
 nonisolated extension LocomotionBridge {
     /// Tells each attached graph which perspective it is. Idempotent, so
     /// calling it from both `init` and `reset` costs one write each.
-    func seedPerspectiveVariables() {
+    public func seedPerspectiveVariables() {
         _ = graph?.setVariable(.bool(false), named: LocomotionGraphNames.isFirstPerson)
         _ = firstPersonGraph?.setVariable(
             .bool(true), named: LocomotionGraphNames.isFirstPerson
@@ -37,7 +37,7 @@ nonisolated extension LocomotionBridge {
     }
 
     /// One variable write, mirrored onto the first-person graph.
-    func writeToFirstPersonGraph(_ value: BehaviorVariableValue, to name: String) {
+    public func writeToFirstPersonGraph(_ value: BehaviorVariableValue, to name: String) {
         guard let firstPersonGraph else { return }
         if firstPersonGraph.setVariable(value, named: name) {
             updateStatus { $0.noteFirstPersonVariableWritten(name) }
@@ -47,7 +47,7 @@ nonisolated extension LocomotionBridge {
     }
 
     /// One edge event, mirrored onto the first-person graph.
-    func raiseOnFirstPersonGraph(_ name: String) {
+    public func raiseOnFirstPersonGraph(_ name: String) {
         guard let firstPersonGraph else { return }
         if firstPersonGraph.raiseEvent(named: name) {
             updateStatus { $0.noteFirstPersonEventRaised(name) }
@@ -59,7 +59,7 @@ nonisolated extension LocomotionBridge {
     /// Steps the first-person graph and publishes its pose. Its root motion is
     /// read and dropped: movement authority belongs to the third-person graph
     /// and the character controller alone.
-    func advanceFirstPersonGraph(deltaTime: Float) {
+    public func advanceFirstPersonGraph(deltaTime: Float) {
         guard let firstPersonGraph else { return }
         let result = firstPersonGraph.update(deltaTime: deltaTime)
         updateStatus { $0.noteFirstPersonGraphUpdate(events: result.firedEvents) }

@@ -17,15 +17,15 @@ import Foundation
 import OpenSkyFormats
 import Synchronization
 
-nonisolated final class AudioSourceStreamer: @unchecked Sendable {
+nonisolated public final class AudioSourceStreamer: @unchecked Sendable {
     /// Encoded packets decoded per scheduled buffer. At vanilla music rates one
     /// packet decodes to ~46 ms of PCM, so a chunk is roughly three quarters of
     /// a second.
-    static let packetsPerChunk = 16
+    public static let packetsPerChunk = 16
     /// Buffers scheduled ahead of playback. Refill triggers when one finishes
     /// playing, so two chunks (~1.5 s) of margin always remain — far more than
     /// the sub-millisecond decode of the next chunk needs.
-    static let maxChunksInFlight = 3
+    public static let maxChunksInFlight = 3
 
     private let queue: DispatchQueue
     private let node: AVAudioPlayerNode
@@ -50,7 +50,7 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
     /// Cross-thread completion flag, polled by the main actor each audio tick.
     private let finished = Mutex(false)
 
-    var isFinished: Bool {
+    public var isFinished: Bool {
         finished.withLock { $0 }
     }
 
@@ -64,7 +64,7 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
     ///   - loops: rewind to the first packet at end of file instead of
     ///     reporting completion.
     ///   - queue: the engine's shared serial decode queue.
-    init(
+    public init(
         file: XWMFile,
         node: AVAudioPlayerNode,
         format: AVAudioFormat,
@@ -82,7 +82,7 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
 
     /// Begins decoding and scheduling on the decode queue. The caller starts
     /// the player node; playback begins when the first buffer lands.
-    func start() {
+    public func start() {
         queue.async { [self] in
             do {
                 decoder = try WMADecoder(parameters: AudioCodecParameters(xwm: file.codec))
@@ -97,7 +97,7 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
     /// Requests a stop. The engine also stops the node on the main actor, which
     /// discards scheduled buffers and fires their completions; this flag stops
     /// the decode queue from scheduling replacements.
-    func requestStop() {
+    public func requestStop() {
         queue.async { [self] in
             stopped = true
             markFinished()
@@ -206,12 +206,12 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
     /// the repository and the decode loop itself can only be exercised against
     /// the user's own install. A source rewinds when it was started as a loop,
     /// its last pass actually produced PCM, and no stop was requested.
-    static func shouldRewind(loops: Bool, passProducedSamples: Bool, stopped: Bool) -> Bool {
+    public static func shouldRewind(loops: Bool, passProducedSamples: Bool, stopped: Bool) -> Bool {
         loops && passProducedSamples && !stopped
     }
 
     /// Averages interleaved multi-channel PCM into one mono channel.
-    static func monoDownmix(_ interleaved: [Float], channelCount: Int) -> [Float] {
+    public static func monoDownmix(_ interleaved: [Float], channelCount: Int) -> [Float] {
         guard channelCount > 1 else { return interleaved }
         let frameCount = interleaved.count / channelCount
         var mono = [Float](repeating: 0, count: frameCount)
@@ -229,7 +229,7 @@ nonisolated final class AudioSourceStreamer: @unchecked Sendable {
     /// Packs interleaved decoder output into a deinterleaved float PCM buffer
     /// matching `format`. Returns nil when the sample count does not fill whole
     /// frames or allocation fails.
-    static func makeBuffer(
+    public static func makeBuffer(
         samples: [Float],
         sourceChannelCount: Int,
         downmixToMono: Bool,

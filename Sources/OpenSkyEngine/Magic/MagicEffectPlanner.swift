@@ -50,31 +50,31 @@ import OpenSkyFormats
 import OpenSkyGameData
 
 /// One MGEF entry resolved into an application the runtime can carry out.
-nonisolated struct MagicEffectApplication: Equatable {
+nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     /// The MGEF being applied.
-    let effect: ReferenceKey
-    let archetype: MagicEffectArchetype
+    public let effect: ReferenceKey
+    public let archetype: MagicEffectArchetype
     /// Which of the two documented timed behaviours applies. Meaningless for an
     /// instant application, which is applied once and stored nowhere.
-    let mode: ActiveEffectMode
-    let isDetrimental: Bool
+    public let mode: ActiveEffectMode
+    public let isDetrimental: Bool
     /// EFIT duration in seconds; zero for an instantaneous effect.
-    let duration: Float
+    public let duration: Float
     /// The actor values acted on, first value first.
-    let values: [ActiveEffectValue]
+    public let values: [ActiveEffectValue]
     /// Peak Value Modifier's second associated item.
-    let stackKeyword: ReferenceKey?
+    public let stackKeyword: ReferenceKey?
     /// MGEF No Recast: "Once the magic effect is applied to a target, it cannot
     /// be cast again on the same target until it has worn off or been
     /// dispelled."
-    let refusesRecast: Bool
+    public let refusesRecast: Bool
 
     /// Whether the effect applies once rather than persisting.
     ///
     /// A constant effect also carries a duration of zero and is the opposite of
     /// instant: it persists until the item that granted it comes off, so the
     /// mode is asked before the number (issue #472).
-    var isInstant: Bool {
+    public var isInstant: Bool {
         mode != .constant && duration <= 0
     }
 }
@@ -84,7 +84,7 @@ nonisolated struct MagicEffectApplication: Equatable {
 /// other ones.
 /// The `Error` conformance exists only so these can ride in a `Result`; nothing
 /// here ever throws one, exactly as `ConditionFailure` documents.
-nonisolated enum MagicEffectPlanFailure: Equatable, Error, Hashable, Sendable {
+nonisolated public enum MagicEffectPlanFailure: Equatable, Error, Hashable, Sendable {
     /// The archetype has no implementation in this milestone.
     case unimplementedArchetype(MagicEffectArchetype)
     /// The archetype is implemented but the record names no actor value inside
@@ -94,15 +94,15 @@ nonisolated enum MagicEffectPlanFailure: Equatable, Error, Hashable, Sendable {
     case undecodedEffect
 }
 
-nonisolated enum MagicEffectPlanner {
-    enum Outcome: Equatable {
+nonisolated public enum MagicEffectPlanner: Sendable {
+    public enum Outcome: Equatable, Sendable {
         case apply(MagicEffectApplication)
         case skip(MagicEffectPlanFailure)
     }
 
     /// The archetypes this milestone implements. Everything else is counted and
     /// applies nothing.
-    static let implementedArchetypes: Set<MagicEffectArchetype> = [
+    public static let implementedArchetypes: Set<MagicEffectArchetype> = [
         .valueModifier, .dualValueModifier, .peakValueModifier
     ]
 
@@ -119,7 +119,7 @@ nonisolated enum MagicEffectPlanner {
     ///   - resolveKeyword: turns the MGEF's associated-item link into a key.
     ///     Supplied by the runtime, which owns the load order; a planner that
     ///     resolved links itself would need a store and stop being pure.
-    static func plan(
+    public static func plan(
         effect: ResolvedMagicEffect,
         entry: MagicItemEffect,
         isConstant: Bool = false,

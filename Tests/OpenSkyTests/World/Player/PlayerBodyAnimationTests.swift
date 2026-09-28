@@ -3,7 +3,7 @@
 // No install; the skinned mesh needs a Metal 4 device and skips without one.
 
 import Metal
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

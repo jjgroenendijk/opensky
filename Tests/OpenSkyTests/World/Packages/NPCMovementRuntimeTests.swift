@@ -1,7 +1,7 @@
 // Deterministic NPC corridor following, door handoff, trigger occupancy,
 // bounded recovery, sparse persistence, and crowd cap (issue #423).
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

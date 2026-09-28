@@ -6,7 +6,7 @@
 import FormatsTestSupport
 import Foundation
 import Metal
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData
 import simd

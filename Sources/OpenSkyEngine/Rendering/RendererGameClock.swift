@@ -11,26 +11,26 @@ import QuartzCore
 
 /// The renderer's game-time state, grouped so `Renderer` carries one stored
 /// property instead of four.
-nonisolated struct RendererGameTime {
+nonisolated public struct RendererGameTime: Sendable {
     /// Authoritative game clock (docs/engine/game-clock.md).
-    var clock = GameClock()
+    public var clock = GameClock()
     /// Wall-clock delta source for the clock, paused in menu mode like every
     /// other sim clock.
-    var frameClock = FrameSimClock()
+    public var frameClock = FrameSimClock()
     /// Seam the per-frame `TimeScale` read goes through. nil (no game data,
     /// offscreen tests, CLI) -> the vanilla default 20.
-    var globalResolution: GlobalResolution?
+    public var globalResolution: GlobalResolution?
     /// `totalGameSeconds` at the last weather update, so the weather runtime
     /// receives real elapsed game hours instead of reconstructing them from
     /// hour deltas. nil until the first update.
-    var weatherGameSecondsMark: Double?
+    public var weatherGameSecondsMark: Double?
 }
 
 extension Renderer {
     /// Authoritative game clock. Setting it wholesale (save load, tests)
     /// resets the weather's elapsed-hours mark so a restored date does not
     /// register as months of weather time.
-    var gameClock: GameClock {
+    public var gameClock: GameClock {
         get { gameTime.clock }
         set {
             gameTime.clock = newValue
@@ -41,7 +41,7 @@ extension Renderer {
     /// Fractional hour of day in [0, 24), projected from the game clock.
     /// Setting it scrubs the clock's hour and keeps the date — the same
     /// observable meaning every pre-clock call site relied on.
-    var timeOfDay: Float {
+    public var timeOfDay: Float {
         get { gameTime.clock.hourOfDay }
         set { gameTime.clock.setHour(newValue) }
     }
@@ -49,7 +49,7 @@ extension Renderer {
     /// Current timescale: the `TimeScale` global through the seam, the
     /// vanilla default 20 when nothing resolves it. Clamping happens in
     /// `GameClock.advance`.
-    var currentTimescale: Float {
+    public var currentTimescale: Float {
         gameTime.globalResolution?.floatValue(editorID: GameClock.timescaleEditorID)
             ?? GameClock.defaultTimescale
     }
@@ -58,7 +58,7 @@ extension Renderer {
     /// game time for free: the frame clock returns zero while paused and
     /// carries no jump on resume. The offscreen path deliberately never calls
     /// this, so a fixed clock renders deterministically.
-    func advanceGameClockFromWallClock() {
+    public func advanceGameClockFromWallClock() {
         let delta = gameTime.frameClock.advance(
             to: CACurrentMediaTime(), paused: worldSimPaused
         )
@@ -70,7 +70,7 @@ extension Renderer {
     /// frame's clock. Menu pause is honoured through the clock rather than a
     /// branch: `worldSimClock` returns zero while paused, and the world
     /// runtime's fixed-step accumulator treats a zero delta as no advance.
-    func updateWorldSimFromWallClock() {
+    public func updateWorldSimFromWallClock() {
         let delta = worldSimClock.advance(
             to: CACurrentMediaTime(), paused: worldSimPaused
         )
@@ -80,7 +80,7 @@ extension Renderer {
     /// Times only the world callback, excluding the renderer clock advance.
     /// Both the live and offscreen loops use this seam so the fly benchmark
     /// measures the same Papyrus VM work the shipping frame loop performs.
-    func updateWorldSim(deltaTime: Float) {
+    public func updateWorldSim(deltaTime: Float) {
         guard let onWorldUpdate else {
             lastScriptUpdateMS = 0
             return
@@ -95,7 +95,7 @@ extension Renderer {
     /// motion (advancement and forward scrubs alike). Backward scrubs count
     /// zero and a single step is capped at one day, preserving the bounds the
     /// old wrap heuristic enforced.
-    func consumeElapsedGameHours() -> Float {
+    public func consumeElapsedGameHours() -> Float {
         defer { gameTime.weatherGameSecondsMark = gameTime.clock.totalGameSeconds }
         guard let mark = gameTime.weatherGameSecondsMark else { return 0 }
         let hours = (gameTime.clock.totalGameSeconds - mark) / GameClock.secondsPerHour

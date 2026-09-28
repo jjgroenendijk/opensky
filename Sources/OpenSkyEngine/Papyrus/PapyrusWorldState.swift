@@ -9,16 +9,16 @@ import OpenSkyFormats
 /// script is attached to plus its lowercased script name. `Comparable` orders
 /// by reference first, then script name, which makes save writes and event
 /// enqueue order deterministic.
-nonisolated struct PapyrusInstanceKey: Hashable, Comparable, Sendable {
-    let reference: ReferenceKey
-    let scriptName: String
+nonisolated public struct PapyrusInstanceKey: Hashable, Comparable, Sendable {
+    public let reference: ReferenceKey
+    public let scriptName: String
 
-    init(reference: ReferenceKey, scriptName: String) {
+    public init(reference: ReferenceKey, scriptName: String) {
         self.reference = reference
         self.scriptName = PapyrusRuntime.key(scriptName)
     }
 
-    static func < (left: Self, right: Self) -> Bool {
+    public static func < (left: Self, right: Self) -> Bool {
         if left.reference != right.reference {
             return left.reference < right.reference
         }
@@ -28,12 +28,12 @@ nonisolated struct PapyrusInstanceKey: Hashable, Comparable, Sendable {
 
 /// One persisted script variable. Keys are the lowercased storage keys the
 /// instance uses, so a restore addresses the same slots a snapshot read.
-nonisolated struct PapyrusVariableState: Equatable, Sendable {
-    let declaringScript: String
-    let name: String
-    let value: PapyrusValue
+nonisolated public struct PapyrusVariableState: Equatable, Sendable {
+    public let declaringScript: String
+    public let name: String
+    public let value: PapyrusValue
 
-    init(declaringScript: String, name: String, value: PapyrusValue) {
+    public init(declaringScript: String, name: String, value: PapyrusValue) {
         self.declaringScript = PapyrusInstance.key(declaringScript)
         self.name = PapyrusInstance.key(name)
         self.value = value
@@ -47,27 +47,27 @@ nonisolated struct PapyrusVariableState: Equatable, Sendable {
 /// runtime-allocated identity with no world meaning, so they are not
 /// persistable; `PapyrusWorldRuntime.instanceStates()` snapshots both as
 /// `.none` and a restore leaves the PEX default in their place.
-nonisolated struct PapyrusInstanceState: Equatable, Sendable {
-    let key: PapyrusInstanceKey
-    let activeState: String
+nonisolated public struct PapyrusInstanceState: Equatable, Sendable {
+    public let key: PapyrusInstanceKey
+    public let activeState: String
     /// Sorted by `(declaringScript, name)` for byte-deterministic output.
-    let variables: [PapyrusVariableState]
-    let hasFiredOnInit: Bool
+    public let variables: [PapyrusVariableState]
+    public let hasFiredOnInit: Bool
 }
 
 /// One queued script event, delivered FIFO by `PapyrusWorldRuntime`.
-nonisolated struct PapyrusScriptEvent: Equatable, Sendable {
-    let target: PapyrusInstanceKey
-    let functionName: String
-    let arguments: [PapyrusValue]
+nonisolated public struct PapyrusScriptEvent: Equatable, Sendable {
+    public let target: PapyrusInstanceKey
+    public let functionName: String
+    public let arguments: [PapyrusValue]
     /// How many script-driven activations deep this event is (issue #172). A
     /// player use key queues `OnActivate` at depth 1; an `Activate` native
     /// called from that handler queues at depth 2, and
     /// `PapyrusWorldRuntime.maximumActivationDepth` stops the chain. Every
     /// other event stays at 0.
-    let activationDepth: Int
+    public let activationDepth: Int
 
-    init(
+    public init(
         target: PapyrusInstanceKey,
         functionName: String,
         arguments: [PapyrusValue],
@@ -88,36 +88,36 @@ nonisolated struct PapyrusScriptEvent: Equatable, Sendable {
 /// hitching the frame, and 100 000 instructions is a tenth of the existing
 /// per-invocation `PapyrusLimits.instructionBudget`, so one runaway handler
 /// cannot consume more of a frame than a whole invocation may consume total.
-nonisolated struct PapyrusTickBudget: Equatable, Sendable {
-    var events: Int
-    var instructions: Int
+nonisolated public struct PapyrusTickBudget: Equatable, Sendable {
+    public var events: Int
+    public var instructions: Int
 
-    static let standard = PapyrusTickBudget(events: 32, instructions: 100_000)
+    public static let standard = PapyrusTickBudget(events: 32, instructions: 100_000)
 }
 
 /// What one tick of the world runtime did, so callers and tests can assert
 /// on carry-over and latent resumes.
-nonisolated struct PapyrusTickReport: Equatable, Sendable {
+nonisolated public struct PapyrusTickReport: Equatable, Sendable {
     /// A tick that did nothing: the report a paused or zero-delta `advance`
     /// returns, and the value `PapyrusWorldRuntime.lastTickReport` starts at.
-    static let zero = PapyrusTickReport(
+    public static let zero = PapyrusTickReport(
         steps: 0, dispatched: 0, queued: 0, resumed: 0, faulted: 0
     )
 
     /// Fixed steps advanced this tick.
-    let steps: Int
+    public let steps: Int
     /// Events dispatched (consumed from the queue).
-    let dispatched: Int
+    public let dispatched: Int
     /// Events still queued after the tick, carried to the next one.
-    let queued: Int
+    public let queued: Int
     /// Latent calls resumed by the scheduler.
-    let resumed: Int
+    public let resumed: Int
     /// Faults observed, from event dispatch and latent resumes combined.
-    let faulted: Int
+    public let faulted: Int
 
     /// Combines consecutive step reports: counters add, `queued` is the
     /// latest queue depth.
-    func adding(_ next: PapyrusTickReport) -> PapyrusTickReport {
+    public func adding(_ next: PapyrusTickReport) -> PapyrusTickReport {
         PapyrusTickReport(
             steps: steps + next.steps,
             dispatched: dispatched + next.dispatched,
@@ -131,7 +131,7 @@ nonisolated struct PapyrusTickReport: Equatable, Sendable {
 /// Why the world runtime skipped an attach, an event, or a piece of save
 /// data. Skips are counted, never faults: malformed or unknown input must
 /// not crash.
-nonisolated enum PapyrusWorldSkipReason: Hashable, Sendable {
+nonisolated public enum PapyrusWorldSkipReason: Hashable, Sendable {
     case removedScript
     case missingScript
     case instanceCreationFailed
@@ -145,7 +145,7 @@ nonisolated enum PapyrusWorldSkipReason: Hashable, Sendable {
     /// so there was nothing to send the fragment function to (issue #322).
     case missingQuestFragmentInstance
 
-    var name: String {
+    public var name: String {
         switch self {
         case .removedScript: "VMAD script marked removed"
         case .missingScript: "script missing from library"
@@ -163,14 +163,14 @@ nonisolated enum PapyrusWorldSkipReason: Hashable, Sendable {
 
 /// Counter set for `PapyrusWorldSkipReason`, mirroring `ScriptBindingTally`
 /// so inspection UI can rank both the same way.
-nonisolated struct PapyrusWorldSkipTally: Equatable, Sendable {
-    private(set) var counts: [PapyrusWorldSkipReason: Int] = [:]
+nonisolated public struct PapyrusWorldSkipTally: Equatable, Sendable {
+    public private(set) var counts: [PapyrusWorldSkipReason: Int] = [:]
 
-    var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    var ranked: [(name: String, count: Int)] {
+    public var ranked: [(name: String, count: Int)] {
         counts
             .sorted {
                 $0.value == $1.value
@@ -180,7 +180,7 @@ nonisolated struct PapyrusWorldSkipTally: Equatable, Sendable {
             .map { ($0.key.name, $0.value) }
     }
 
-    mutating func note(_ reason: PapyrusWorldSkipReason) {
+    public mutating func note(_ reason: PapyrusWorldSkipReason) {
         counts[reason, default: 0] += 1
     }
 }

@@ -3,6 +3,7 @@
 // can never quote different numbers for the same frame.
 
 import AppKit
+import OpenSkyEngine
 
 final class FrameStatsSection: PanelSectionViewController {
     weak var provider: (any FrameStatsProviding)? {

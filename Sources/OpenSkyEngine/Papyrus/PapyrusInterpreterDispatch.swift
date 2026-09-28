@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyFormats
 
 nonisolated extension PapyrusInterpreter {
-    func requireOperands(
+    public func requireOperands(
         _ count: Int,
         instruction: PexInstruction
     ) throws(PapyrusFault) -> [PexValue] {
@@ -17,7 +17,7 @@ nonisolated extension PapyrusInterpreter {
         return instruction.operands
     }
 
-    func step(
+    public func step(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow {

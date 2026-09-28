@@ -6,10 +6,10 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum AssetInfoText {
+nonisolated public enum AssetInfoText: Sendable {
     /// NIF container stats + flattened engine-model view (drawable meshes,
     /// resolved materials).
-    static func nif(file: NIFFile) -> String {
+    public static func nif(file: NIFFile) -> String {
         let header = file.header
         var lines = [
             "\(header.versionLine), user version \(header.userVersion), "
@@ -56,7 +56,7 @@ nonisolated enum AssetInfoText {
     }
 
     /// DDS header + mip chain.
-    static func dds(file: DDSFile, byteCount: Int) -> String {
+    public static func dds(file: DDSFile, byteCount: Int) -> String {
         var lines = [
             "\(file.width)x\(file.height) \(file.format), "
                 + "\(file.mipCount) mips, declares sRGB: \(file.declaresSRGB), "

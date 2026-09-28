@@ -6,7 +6,7 @@
 // the engine raises, the events the graph fires back, and the shot that comes
 // out the other end.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

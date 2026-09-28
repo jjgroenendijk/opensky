@@ -16,8 +16,8 @@ import Foundation
 import OpenSkyFormats
 
 /// The `AIOverlayStatsLabel` lines: what is switched on and what it cost.
-nonisolated enum AIOverlayReadout {
-    static func toggleText(for snapshot: AIOverlayControlSnapshot) -> String {
+nonisolated public enum AIOverlayReadout: Sendable {
+    public static func toggleText(for snapshot: AIOverlayControlSnapshot) -> String {
         let on = [
             snapshot.navmeshOverlayEnabled ? "navmesh" : nil,
             snapshot.pathOverlayEnabled ? "path" : nil,
@@ -29,7 +29,7 @@ nonisolated enum AIOverlayReadout {
     /// What the overlay pass actually submitted and drew last frame. A user who
     /// switched the navmesh on and sees nothing needs to know whether the pass
     /// drew nothing or drew it somewhere else.
-    static func drawText(for snapshot: AIOverlayControlSnapshot) -> String {
+    public static func drawText(for snapshot: AIOverlayControlSnapshot) -> String {
         let stats = snapshot.stats
         let truncation = stats.wasTruncated
             ? " — \(stats.droppedPrimitiveCount) dropped over the primitive budget"
@@ -42,9 +42,9 @@ nonisolated enum AIOverlayReadout {
 }
 
 /// The `AIActorStatsLabel` and `AIMovementStatsLabel` lines.
-nonisolated enum AINavigationReadout {
+nonisolated public enum AINavigationReadout: Sendable {
     /// Who is resident and which of them the destination is acting on.
-    static func actorText(for snapshot: AINavigationSnapshot) -> String {
+    public static func actorText(for snapshot: AINavigationSnapshot) -> String {
         guard snapshot.isAvailable else { return "Actors: unavailable" }
         guard !snapshot.actors.isEmpty else {
             return "Actors: none resident.\nStream a cell holding one, or walk to Whiterun."
@@ -62,7 +62,7 @@ nonisolated enum AINavigationReadout {
 
     /// One selected actor's mover: where it is on its path and how it is
     /// travelling.
-    static func movementText(for snapshot: AINavigationSnapshot) -> String {
+    public static func movementText(for snapshot: AINavigationSnapshot) -> String {
         guard snapshot.isAvailable else { return "Movement: unavailable" }
         let crowd = "Movers: \(snapshot.moverCount)/\(snapshot.moverLimit)"
         guard let movement = snapshot.movement else {
@@ -77,7 +77,7 @@ nonisolated enum AINavigationReadout {
     }
 
     /// What one move request answered, in the words the panel shows.
-    static func moveResultText(_ result: NPCMoveCommandResult, actor: String) -> String {
+    public static func moveResultText(_ result: NPCMoveCommandResult, actor: String) -> String {
         switch result {
         case .started:
             "Move: \(actor) is pathing to the crosshair point."
@@ -90,7 +90,7 @@ nonisolated enum AINavigationReadout {
         }
     }
 
-    static func missText(_ miss: NavigationPathMiss) -> String {
+    public static func missText(_ miss: NavigationPathMiss) -> String {
         switch miss {
         case .startProjection: "the actor is not standing on the navmesh"
         case .targetProjection: "the crosshair point is not on the navmesh"
@@ -100,8 +100,8 @@ nonisolated enum AINavigationReadout {
 }
 
 /// The `AIPackageStatsLabel` lines: which package the schedule chose, and when.
-nonisolated enum AIPackageReadout {
-    static func packageText(for snapshot: AINavigationSnapshot) -> String {
+nonisolated public enum AIPackageReadout: Sendable {
+    public static func packageText(for snapshot: AINavigationSnapshot) -> String {
         guard snapshot.isAvailable else { return "Package: unavailable" }
         let header = "Packages: \(snapshot.packagedActorCount) actors keeping a schedule"
         guard let package = snapshot.package else {
@@ -111,7 +111,7 @@ nonisolated enum AIPackageReadout {
     }
 
     /// Which package won for one actor, and which procedure it runs.
-    static func selectionText(for package: PackageActorReadout) -> String {
+    public static func selectionText(for package: PackageActorReadout) -> String {
         guard let current = package.currentPackage else {
             return "Package: none selected (base \(package.actorBase))"
         }
@@ -123,7 +123,7 @@ nonisolated enum AIPackageReadout {
         return "Package: \(name) (\(current)), \(procedure)\(evaluated)"
     }
 
-    static func procedureText(for procedure: PackageProcedureKind) -> String {
+    public static func procedureText(for procedure: PackageProcedureKind) -> String {
         switch procedure {
         case .travel: "travel"
         case .wander: "wander"
@@ -136,7 +136,7 @@ nonisolated enum AIPackageReadout {
 
     /// The authored schedule spelled out, because a row of signed bytes is not
     /// a thing a person can check a clock against.
-    static func scheduleText(for schedule: Package.Schedule?) -> String {
+    public static func scheduleText(for schedule: Package.Schedule?) -> String {
         guard let schedule else { return "Schedule: none authored" }
         guard schedule.hour >= 0 else {
             return "Schedule: any time" + calendarSuffix(schedule)
@@ -165,8 +165,8 @@ nonisolated enum AIPackageReadout {
 /// The `DetectionStatsLabel` header lines. The pair lines under it are
 /// `DetectionPairReadout.summaryLine`, which issue #202 published for this
 /// label.
-nonisolated enum AIDetectionReadout {
-    static func passText(for snapshot: PerceptionControlSnapshot) -> String {
+nonisolated public enum AIDetectionReadout: Sendable {
+    public static func passText(for snapshot: PerceptionControlSnapshot) -> String {
         guard !snapshot.isUnavailable else { return "Detection: unavailable" }
         let readout = snapshot.readout
         let dropped = readout.droppedPairCount > 0
@@ -179,7 +179,7 @@ nonisolated enum AIDetectionReadout {
     }
 
     /// Every pair the selected actor is on either side of.
-    static func pairsText(lines: [String], actor: String) -> String {
+    public static func pairsText(lines: [String], actor: String) -> String {
         guard !lines.isEmpty else {
             return "\(actor): nothing perceives it and it perceives nothing"
         }

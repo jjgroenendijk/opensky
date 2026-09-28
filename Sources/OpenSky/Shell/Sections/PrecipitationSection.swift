@@ -2,6 +2,7 @@
 // readout (issue #98 decomposition of EnvironmentPrecipitationControls).
 
 import AppKit
+import OpenSkyEngine
 
 final class PrecipitationSection: PanelSectionViewController {
     weak var provider: (any PrecipitationControlProviding)? {

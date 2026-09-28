@@ -5,7 +5,7 @@
 // Every fixture is built in code by `RagdollFixture`. Nothing here reads the
 // install, so the whole suite runs in `make test`.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import simd
 import Testing
 

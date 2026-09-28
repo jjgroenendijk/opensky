@@ -28,7 +28,7 @@ import Foundation
 /// projectile spawns on. `loosed` lasts a single batch: `endFrame()` returns it
 /// to `idle`, exactly as the melee contact frame closes, so a graph that fires
 /// `arrowRelease` and nothing else cannot sit in the spawn window.
-nonisolated enum ArcheryShotPhase: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum ArcheryShotPhase: String, Equatable, Sendable, CaseIterable {
     case idle
     case nocked
     case drawing
@@ -37,39 +37,39 @@ nonisolated enum ArcheryShotPhase: String, Equatable, Sendable, CaseIterable {
 
     /// Whether a shot is in progress at all, which is what a readout means by
     /// "aiming".
-    var isDrawing: Bool {
+    public var isDrawing: Bool {
         self == .nocked || self == .drawing || self == .drawn
     }
 
     /// Whether the bow has reached full draw, which is what `bBowDrawn`
     /// reports to the graph and what the damage curve reads.
-    var isFullyDrawn: Bool {
+    public var isFullyDrawn: Bool {
         self == .drawn
     }
 }
 
 /// What one observed event did to the shot.
-nonisolated struct ArcheryStateChange: Equatable, Sendable {
-    let event: String
-    let phase: ArcheryShotPhase
+nonisolated public struct ArcheryStateChange: Equatable, Sendable {
+    public let event: String
+    public let phase: ArcheryShotPhase
     /// True on the frame an arrow became a visible attachment in the draw hand.
-    let attachedArrow: Bool
+    public let attachedArrow: Bool
     /// True on the frame the arrow left the string, which is the frame a
     /// projectile spawns on.
-    let loosedArrow: Bool
+    public let loosedArrow: Bool
 }
 
 /// The archery half of the player's graph state, advanced by fired event names.
-nonisolated struct ArcheryState: Equatable, Sendable {
-    private(set) var phase = ArcheryShotPhase.idle
+nonisolated public struct ArcheryState: Equatable, Sendable {
+    public private(set) var phase = ArcheryShotPhase.idle
     /// Whether an arrow is currently attached to the draw hand, from
     /// `arrowAttach` and `arrowDetach`.
-    private(set) var hasArrowAttached = false
+    public private(set) var hasArrowAttached = false
     /// How many arrows have left the string since construction.
-    private(set) var shotCount = 0
+    public private(set) var shotCount = 0
     /// Monotonic id of the shot in progress, so a spawned projectile can say
     /// which draw produced it. Zero before the first nock.
-    private(set) var shotID = 0
+    public private(set) var shotID = 0
 
     /// Advances the state by one fired event name, answering with what changed
     /// or nil when the name is not one this machine acts on.
@@ -81,7 +81,7 @@ nonisolated struct ArcheryState: Equatable, Sendable {
     /// strict-lint complexity cap, and the two halves are the two things the
     /// graph reports: where the draw has got to, and where the arrow is.
     @discardableResult
-    mutating func handle(_ event: String) -> ArcheryStateChange? {
+    public mutating func handle(_ event: String) -> ArcheryStateChange? {
         if let change = handleDraw(event) {
             return change
         }
@@ -160,21 +160,21 @@ nonisolated struct ArcheryState: Equatable, Sendable {
 
     /// Advances by a whole drained batch, answering with the changes in order.
     @discardableResult
-    mutating func handle(_ events: [String]) -> [ArcheryStateChange] {
+    public mutating func handle(_ events: [String]) -> [ArcheryStateChange] {
         events.compactMap { handle($0) }
     }
 
     /// Closes the release frame, so a shot that fires `arrowRelease` and
     /// nothing else does not sit in the spawn window forever. Called once per
     /// frame after the batch has been handled.
-    mutating func endFrame() {
+    public mutating func endFrame() {
         if phase == .loosed {
             phase = .idle
         }
     }
 
     /// Forgets everything, for a teleport or a graph re-attach.
-    mutating func reset() {
+    public mutating func reset() {
         self = ArcheryState()
     }
 }

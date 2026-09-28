@@ -28,27 +28,27 @@
 import Foundation
 
 /// Which clock a timer counts against.
-nonisolated enum PapyrusUpdateTimerFamily: Hashable, Sendable {
+nonisolated public enum PapyrusUpdateTimerFamily: Hashable, Sendable {
     case real
     case gameTime
 }
 
 /// One of the four per-instance timer slots. The raw value is the stable slot
 /// order snapshots sort by.
-nonisolated enum PapyrusUpdateTimerSlot: Int, CaseIterable, Hashable, Sendable {
+nonisolated public enum PapyrusUpdateTimerSlot: Int, CaseIterable, Hashable, Sendable {
     case realRepeating = 0
     case realSingleShot = 1
     case gameTimeRepeating = 2
     case gameTimeSingleShot = 3
 
-    var family: PapyrusUpdateTimerFamily {
+    public var family: PapyrusUpdateTimerFamily {
         switch self {
         case .realRepeating, .realSingleShot: .real
         case .gameTimeRepeating, .gameTimeSingleShot: .gameTime
         }
     }
 
-    var isRepeating: Bool {
+    public var isRepeating: Bool {
         self == .realRepeating || self == .gameTimeRepeating
     }
 }
@@ -57,17 +57,17 @@ nonisolated enum PapyrusUpdateTimerSlot: Int, CaseIterable, Hashable, Sendable {
 /// delay is stored as time remaining rather than an absolute deadline, so a
 /// restore re-anchors against the current clock and the wall or game time
 /// spent between save and load never counts toward the timer.
-nonisolated struct PapyrusTimerState: Equatable, Sendable {
-    let key: PapyrusInstanceKey
-    let slot: PapyrusUpdateTimerSlot
+nonisolated public struct PapyrusTimerState: Equatable, Sendable {
+    public let key: PapyrusInstanceKey
+    public let slot: PapyrusUpdateTimerSlot
     /// Registered interval in the slot's unit: real seconds or game hours.
-    let interval: Double
+    public let interval: Double
     /// Time left before the next fire, in the same unit. Never negative.
-    let remaining: Double
+    public let remaining: Double
 }
 
 /// The timer table itself: slots keyed by instance, plus the clock anchors.
-nonisolated struct PapyrusUpdateTimerRegistry {
+nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {
     /// When one armed slot is due, in the arithmetic of its family.
     private enum Wake: Equatable {
         case realSteps(startTick: Int, duration: Double)
@@ -81,32 +81,32 @@ nonisolated struct PapyrusUpdateTimerRegistry {
     }
 
     /// One due slot, in registration order among slots due the same step.
-    struct Firing: Equatable {
-        let key: PapyrusInstanceKey
-        let slot: PapyrusUpdateTimerSlot
+    public struct Firing: Equatable, Sendable {
+        public let key: PapyrusInstanceKey
+        public let slot: PapyrusUpdateTimerSlot
     }
 
     /// Same forward cap as `PapyrusScheduler.maximumGameHoursPerStep`: one
     /// step's game-time contribution never exceeds a day, so a console scrub
     /// cannot flush every game-time timer through years at once.
-    let maximumGameHoursPerStep: Double
+    public let maximumGameHoursPerStep: Double
 
-    private(set) var tickCount = 0
-    private(set) var elapsedGameHours = 0.0
+    public private(set) var tickCount = 0
+    public private(set) var elapsedGameHours = 0.0
     private var lastGameSeconds: Double?
     private var nextOrder: UInt64 = 0
     private var entries: [PapyrusInstanceKey: [PapyrusUpdateTimerSlot: Entry]] = [:]
 
-    init(maximumGameHoursPerStep: Double = 24) {
+    public init(maximumGameHoursPerStep: Double = 24) {
         self.maximumGameHoursPerStep = max(0, maximumGameHoursPerStep)
     }
 
-    var pendingCount: Int {
+    public var pendingCount: Int {
         entries.values.reduce(0) { $0 + $1.count }
     }
 
     /// Arms `slot` on `key`, replacing whatever that slot held.
-    mutating func register(
+    public mutating func register(
         key: PapyrusInstanceKey,
         slot: PapyrusUpdateTimerSlot,
         interval: Double
@@ -117,7 +117,7 @@ nonisolated struct PapyrusUpdateTimerRegistry {
 
     /// Re-arms a restored slot with its saved remaining delay, anchored to
     /// the current tick and game-hour counters.
-    mutating func restore(
+    public mutating func restore(
         key: PapyrusInstanceKey,
         slot: PapyrusUpdateTimerSlot,
         interval: Double,
@@ -133,7 +133,7 @@ nonisolated struct PapyrusUpdateTimerRegistry {
 
     /// Clears both of `family`'s slots on `key`, leaving the other family
     /// untouched.
-    mutating func unregister(
+    public mutating func unregister(
         key: PapyrusInstanceKey,
         family: PapyrusUpdateTimerFamily
     ) {
@@ -145,14 +145,14 @@ nonisolated struct PapyrusUpdateTimerRegistry {
     }
 
     /// Drops every slot `key` holds; called when the instance is retired.
-    mutating func removeAll(for key: PapyrusInstanceKey) {
+    public mutating func removeAll(for key: PapyrusInstanceKey) {
         entries[key] = nil
     }
 
     /// Advances one fixed step and returns the slots that came due, ordered
     /// by registration order. Each due slot appears exactly once: a repeating
     /// slot re-anchors to now plus its interval, a single-shot clears.
-    mutating func advanceStep(
+    public mutating func advanceStep(
         stepSeconds: Double,
         gameClock: GameClock?
     ) -> [Firing] {
@@ -167,7 +167,7 @@ nonisolated struct PapyrusUpdateTimerRegistry {
 
     /// Persistable view of every slot whose instance is in `keys`, sorted by
     /// instance key then slot raw value for deterministic save output.
-    func states(
+    public func states(
         for keys: Set<PapyrusInstanceKey>,
         stepSeconds: Double
     ) -> [PapyrusTimerState] {
@@ -275,7 +275,7 @@ extension PapyrusWorldRuntime {
     /// to, so the call is a no-op; the native still returns None either way,
     /// matching a registration the engine accepted but can never deliver.
     @discardableResult
-    func registerUpdateTimer(
+    public func registerUpdateTimer(
         handle: PapyrusObjectHandle,
         slot: PapyrusUpdateTimerSlot,
         interval: Double
@@ -287,7 +287,7 @@ extension PapyrusWorldRuntime {
 
     /// Clears both of `family`'s slots on the instance behind `handle`.
     @discardableResult
-    func unregisterUpdateTimers(
+    public func unregisterUpdateTimers(
         handle: PapyrusObjectHandle,
         family: PapyrusUpdateTimerFamily
     ) -> Bool {
@@ -300,7 +300,7 @@ extension PapyrusWorldRuntime {
     /// slot — never dispatched inline, so a handler that re-registers cannot
     /// re-enter dispatch. Runs between the scheduler tick and the queue drain,
     /// so a timer becoming due on step N dispatches on step N.
-    func advanceUpdateTimers(gameClock: GameClock?) {
+    public func advanceUpdateTimers(gameClock: GameClock?) {
         let firings = updateTimers.advanceStep(
             stepSeconds: fixedStepSeconds, gameClock: gameClock
         )

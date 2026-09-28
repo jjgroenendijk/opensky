@@ -10,9 +10,9 @@
 
 import Foundation
 
-nonisolated enum OpenSkySaveTimerDecoder {
+nonisolated public enum OpenSkySaveTimerDecoder: Sendable {
     /// `PTMR` chunk: a timer count, then one entry per armed slot.
-    static func decodeTimers(_ payload: Data) throws -> [PapyrusTimerState] {
+    public static func decodeTimers(_ payload: Data) throws -> [PapyrusTimerState] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PTMR timer count")
         try OpenSkySaveDecoder.validate(

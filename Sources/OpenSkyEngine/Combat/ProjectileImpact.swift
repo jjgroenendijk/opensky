@@ -40,20 +40,20 @@ import OpenSkyFormats
 import simd
 
 /// Where a projectile touched something, and what.
-nonisolated struct ProjectileImpact: Equatable, Sendable {
+nonisolated public struct ProjectileImpact: Equatable, Sendable {
     /// Travel along the step's segment at which contact was found, world units.
-    let distance: Float
+    public let distance: Float
     /// Contact point, world space.
-    let position: SIMD3<Float>
+    public let position: SIMD3<Float>
     /// Surface normal pointing back toward the arrow, where the query supplied
     /// one. Zero against an actor, whose capsule normal is derived instead.
-    let normal: SIMD3<Float>
+    public let normal: SIMD3<Float>
     /// The actor struck, or nil for static geometry.
-    let target: ReferenceKey?
+    public let target: ReferenceKey?
     /// The reference struck, where the query named one.
-    let reference: FormID?
+    public let reference: FormID?
 
-    var isActor: Bool {
+    public var isActor: Bool {
         target != nil
     }
 }
@@ -64,21 +64,27 @@ nonisolated struct ProjectileImpact: Equatable, Sendable {
 /// A value rather than three arguments because all three describe the same
 /// step, and a caller that mixed one step's endpoints with another's radius
 /// would be asking a question about nothing.
-nonisolated struct ProjectileStep: Equatable, Sendable {
-    let from: SIMD3<Float>
-    let to: SIMD3<Float>
+nonisolated public struct ProjectileStep: Equatable, Sendable {
+    public let from: SIMD3<Float>
+    public let to: SIMD3<Float>
     /// PROJ `collisionRadius`. Zero flies as a point, which is a supported case
     /// rather than a degraded one.
-    let radius: Float
+    public let radius: Float
 
     /// The radius with its non-finite and negative cases resolved, which is
     /// what every query below actually uses.
-    var clampedRadius: Float {
+    public var clampedRadius: Float {
         radius.isFinite ? max(0, radius) : 0
+    }
+
+    public init(from: SIMD3<Float>, to: SIMD3<Float>, radius: Float) {
+        self.from = from
+        self.to = to
+        self.radius = radius
     }
 }
 
-nonisolated enum ProjectileImpactQuery {
+nonisolated public enum ProjectileImpactQuery: Sendable {
     /// The nearest thing `step` touches, or nil when it is clear.
     ///
     /// - Parameters:
@@ -91,7 +97,7 @@ nonisolated enum ProjectileImpactQuery {
     ///   - sweep: the static-collision query, normally `ShapeSweeper.firstHit`
     ///     over the streamer's broadphase. Passed in so this stays a pure
     ///     function.
-    static func first(
+    public static func first(
         step: ProjectileStep,
         targets: [MeleeTarget],
         shooter: ReferenceKey?,
@@ -128,7 +134,7 @@ nonisolated enum ProjectileImpactQuery {
     /// Each capsule is tested once against the whole step segment rather than
     /// at sampled points along it, so a thin actor cannot slip between two
     /// samples of a fast arrow — which at arrow speeds is not a hypothetical.
-    static func firstActor(
+    public static func firstActor(
         from: SIMD3<Float>,
         to: SIMD3<Float>,
         radius: Float,
@@ -171,7 +177,7 @@ nonisolated enum ProjectileImpactQuery {
     /// REFR DATA uses, and `MatrixMath.eulerAngles(of:)` is what the dynamic
     /// solver already converts an orientation through, so the same conversion
     /// is used here rather than a second one that could disagree with it.
-    static func stuckRotation(alongFlight direction: SIMD3<Float>) -> SIMD3<Float> {
+    public static func stuckRotation(alongFlight direction: SIMD3<Float>) -> SIMD3<Float> {
         let forward = ProjectileFlight.normalized(direction)
         // Yaw about Z, then pitch down from the horizon. Roll is left at zero:
         // an arrow is rotationally symmetric about its own shaft, so there is

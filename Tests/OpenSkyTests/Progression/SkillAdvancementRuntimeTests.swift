@@ -9,7 +9,7 @@
 // `SkillAdvancementRealDataTests` is what checks the install still says them.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

@@ -11,15 +11,15 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated struct PerkRuntimeTally: Equatable, Sendable {
+nonisolated public struct PerkRuntimeTally: Equatable, Sendable {
     /// Add or seed calls naming a PERK no loaded plugin carries.
-    private(set) var unresolvedPerks = 0
+    public private(set) var unresolvedPerks = 0
     /// Entry-point evaluations that ran at all.
-    private(set) var evaluations = 0
+    public private(set) var evaluations = 0
     /// Effects whose function produces something other than a number, or whose
     /// payload did not match its function. Keyed by the function's description
     /// so a readout ranks them without a second table.
-    private(set) var unsupportedFunctions: [String: Int] = [:]
+    public private(set) var unsupportedFunctions: [String: Int] = [:]
     /// Condition tabs skipped because the caller bound no reference for the
     /// subject they run against, keyed by that subject.
     ///
@@ -27,14 +27,14 @@ nonisolated struct PerkRuntimeTally: Equatable, Sendable {
     /// tab that nothing can bind is *not* evaluated, so the effect applies more
     /// widely than the record asks. Counting it per subject is what says how
     /// much, and to what.
-    private(set) var unboundConditionSubjects: [PerkConditionSubject: Int] = [:]
+    public private(set) var unboundConditionSubjects: [PerkConditionSubject: Int] = [:]
     /// Condition tabs that were evaluated and came out false, which is a perk
     /// correctly not applying rather than a gap.
-    private(set) var conditionsFailed = 0
+    public private(set) var conditionsFailed = 0
     /// Effects skipped because an actor-value function had no value to read.
-    private(set) var unavailableActorValues = 0
+    public private(set) var unavailableActorValues = 0
 
-    var isClean: Bool {
+    public var isClean: Bool {
         unresolvedPerks == 0
             && unsupportedFunctions.isEmpty
             && unboundConditionSubjects.isEmpty
@@ -43,29 +43,29 @@ nonisolated struct PerkRuntimeTally: Equatable, Sendable {
 
     /// Unsupported functions ranked by count, ties broken by name so the order
     /// is stable.
-    var rankedUnsupportedFunctions: [(name: String, count: Int)] {
+    public var rankedUnsupportedFunctions: [(name: String, count: Int)] {
         unsupportedFunctions
             .sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
             .map { ($0.key, $0.value) }
     }
 
-    mutating func noteUnresolvedPerk() {
+    public mutating func noteUnresolvedPerk() {
         unresolvedPerks += 1
     }
 
-    mutating func noteEvaluation() {
+    public mutating func noteEvaluation() {
         evaluations += 1
     }
 
-    mutating func noteConditionFailed() {
+    public mutating func noteConditionFailed() {
         conditionsFailed += 1
     }
 
-    mutating func noteUnboundSubject(_ subject: PerkConditionSubject) {
+    public mutating func noteUnboundSubject(_ subject: PerkConditionSubject) {
         unboundConditionSubjects[subject, default: 0] += 1
     }
 
-    mutating func note(_ skip: PerkEntryPointSkip) {
+    public mutating func note(_ skip: PerkEntryPointSkip) {
         switch skip {
         case let .unsupportedFunction(function), let .missingData(function),
              let .nonFiniteResult(function):

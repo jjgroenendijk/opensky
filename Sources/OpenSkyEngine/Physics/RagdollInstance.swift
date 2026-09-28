@@ -36,7 +36,7 @@ import OpenSkyFormats
 import simd
 
 /// How a ragdoll is currently driven.
-nonisolated enum RagdollPhase: Equatable, Sendable {
+nonisolated public enum RagdollPhase: Equatable, Sendable {
     /// Bodies exist and are simulating, but the skeleton is still partly
     /// animated. The associated value is how far through the blend it is,
     /// `0 ... 1`.
@@ -48,8 +48,8 @@ nonisolated enum RagdollPhase: Equatable, Sendable {
     case settled
 }
 
-nonisolated struct RagdollInstance: Sendable {
-    let definition: RagdollDefinition
+nonisolated public struct RagdollInstance: Sendable {
+    public let definition: RagdollDefinition
     /// One body per `definition.bones` entry, index-aligned with it.
     ///
     /// Settable within the module rather than `private(set)`, for the same
@@ -57,18 +57,18 @@ nonisolated struct RagdollInstance: Sendable {
     /// solver owns these values during a step, and the stability gate re-throws
     /// the same ragdoll sixty times through them. Nothing outside re-poses a
     /// ragdoll — the pose it has is the one the simulation gave it.
-    var bodies: [DynamicBody]
+    public var bodies: [DynamicBody]
     /// Seconds the animated-to-simulated blend takes, from the controlling
     /// modifier's `m_durationToBlend`. Zero means an instant hand-off, which is
     /// what the `RagdollInstant` event asks for.
-    let blendDuration: Float
+    public let blendDuration: Float
     /// Whether the bones may touch each other at all this step. The pairs are
     /// the definition's; this is the switch the sidebar throws over them, so a
     /// viewer can see the same collapse with and without a torso its arms
     /// cannot pass through (issue #413).
-    var isSelfCollisionEnabled = true
-    private(set) var blendElapsed: Float = 0
-    private(set) var lastStats = DynamicStepStats()
+    public var isSelfCollisionEnabled = true
+    public private(set) var blendElapsed: Float = 0
+    public private(set) var lastStats = DynamicStepStats()
     /// Where the root bone was when the current settle window opened, and how
     /// long that window has been running.
     private var settleReference: SIMD3<Float>?
@@ -78,7 +78,7 @@ nonisolated struct RagdollInstance: Sendable {
     /// rest again is projected again.
     private var hasProjectedAtRest = false
 
-    var phase: RagdollPhase {
+    public var phase: RagdollPhase {
         if bodies.allSatisfy(\.isSleeping) {
             return .settled
         }
@@ -87,12 +87,12 @@ nonisolated struct RagdollInstance: Sendable {
     }
 
     /// How much of the pose the simulation owns right now, `0 ... 1`.
-    var simulationWeight: Float {
+    public var simulationWeight: Float {
         guard blendDuration > 0 else { return 1 }
         return min(max(blendElapsed / blendDuration, 0), 1)
     }
 
-    var isSettled: Bool {
+    public var isSettled: Bool {
         bodies.allSatisfy(\.isSleeping)
     }
 
@@ -105,7 +105,7 @@ nonisolated struct RagdollInstance: Sendable {
     ///
     /// Nil when the definition names no bone the pose supplies, which is the
     /// unresolvable case a caller should report rather than paper over.
-    init?(
+    public init?(
         definition: RagdollDefinition,
         animatedBoneMatrices: [float4x4],
         actorToWorld: float4x4,
@@ -142,7 +142,7 @@ nonisolated struct RagdollInstance: Sendable {
 
     /// A ragdoll assembled from bodies directly, for the synthetic fixtures the
     /// deterministic tests build in code.
-    init(definition: RagdollDefinition, bodies: [DynamicBody], blendDuration: Float = 0) {
+    public init(definition: RagdollDefinition, bodies: [DynamicBody], blendDuration: Float = 0) {
         self.definition = definition
         self.bodies = bodies
         self.blendDuration = max(0, blendDuration.isFinite ? blendDuration : 0)
@@ -163,10 +163,10 @@ nonisolated struct RagdollInstance: Sendable {
     /// than velocity: the root travels less than `settleDistance` over
     /// `settleWindow`, and the whole ragdoll is put to sleep. An impulse wakes
     /// it again exactly as it wakes any 15.2 body.
-    static let settleWindow: Float = 1
-    static let settleDistance: Float = 3
-    static let settleJointSeparation: Float = 2
-    static let settleAngularViolation: Float = 0.06
+    public static let settleWindow: Float = 1
+    public static let settleDistance: Float = 3
+    public static let settleJointSeparation: Float = 2
+    public static let settleAngularViolation: Float = 0.06
     /// Pose-only projections made on arrival at rest.
     ///
     /// One is not enough: a pass moves a body by at most
@@ -179,16 +179,16 @@ nonisolated struct RagdollInstance: Sendable {
     /// radians, and thirty-two reach 0.10 and 0.024. It is paid once per corpse
     /// per spell of rest, over seventeen joints, so buying the tight answer
     /// costs nothing worth measuring.
-    static let restProjectionCount = 32
+    public static let restProjectionCount = 32
     /// How far inside the settling thresholds the projection drives the joints
     /// before it stops. Half, so a corpse rests clear of the boundary rather
     /// than on it: the vanilla humanoid's worst joint stops at 0.024 radians
     /// against a 0.06 threshold instead of at 0.058.
-    static let restProjectionMargin: Float = 0.5
+    public static let restProjectionMargin: Float = 0.5
 
     /// Advances the ragdoll by one fixed step of the 15.2 clock.
     @discardableResult
-    mutating func step(world: DynamicStepWorld, dt: Float) -> DynamicStepStats {
+    public mutating func step(world: DynamicStepWorld, dt: Float) -> DynamicStepStats {
         guard dt > 0, dt.isFinite else { return lastStats }
         blendElapsed = min(blendElapsed + dt, max(blendDuration, 0))
         lastStats = DynamicBodySolver.step(
@@ -287,7 +287,7 @@ nonisolated struct RagdollInstance: Sendable {
     }
 
     /// Wakes every bone, which is what a dev trigger and a fresh impact both do.
-    mutating func wake() {
+    public mutating func wake() {
         for index in bodies.indices {
             bodies[index].wake()
         }
@@ -298,7 +298,7 @@ nonisolated struct RagdollInstance: Sendable {
 
     /// Applies an impulse to the bone nearest `point`, waking the whole ragdoll
     /// so a settled corpse responds to being hit.
-    mutating func applyImpulse(_ impulse: SIMD3<Float>, at point: SIMD3<Float>) {
+    public mutating func applyImpulse(_ impulse: SIMD3<Float>, at point: SIMD3<Float>) {
         guard
             let nearest = bodies.indices.min(by: {
                 simd_distance_squared(bodies[$0].position, point)
@@ -318,7 +318,7 @@ nonisolated struct RagdollInstance: Sendable {
     /// with. It is the caller's rather than the instance's because an actor that
     /// is streamed out and back re-derives its placement, and a cached inverse
     /// would quietly be the old one.
-    func boneMatrices(worldToActor: float4x4) -> [String: float4x4] {
+    public func boneMatrices(worldToActor: float4x4) -> [String: float4x4] {
         var matrices: [String: float4x4] = [:]
         for (index, bone) in definition.bones.enumerated() where bodies.indices.contains(index) {
             let placement = worldToActor * bodies[index].worldMatrix
@@ -337,7 +337,7 @@ nonisolated struct RagdollInstance: Sendable {
     /// two poses of the same rigid skeleton does not visibly shear. Past the
     /// blend the animated side is dropped entirely, so the corpse's steady state
     /// is exactly the simulated pose.
-    func blendedBoneMatrices(
+    public func blendedBoneMatrices(
         animated: [String: float4x4],
         worldToActor: float4x4
     ) -> [String: float4x4] {
@@ -358,23 +358,23 @@ nonisolated struct RagdollInstance: Sendable {
     /// Where the actor's root sits now, for the resting transform persistence
     /// records. The first bone of a vanilla ragdoll is the pelvis, which is the
     /// closest thing a collapsed skeleton has to a root.
-    var restingRootPosition: SIMD3<Float>? {
+    public var restingRootPosition: SIMD3<Float>? {
         bodies.first?.originPosition
     }
 
-    var restingRootOrientation: simd_quatf? {
+    public var restingRootOrientation: simd_quatf? {
         bodies.first?.orientation
     }
 }
 
 /// A rigid pose pulled out of a matrix, and the mixing the blend needs.
-nonisolated struct RagdollPose: Sendable {
-    let position: SIMD3<Float>
-    let orientation: simd_quatf
+nonisolated public struct RagdollPose: Sendable {
+    public let position: SIMD3<Float>
+    public let orientation: simd_quatf
 
     /// Nil for a matrix that carries no usable rigid part — a degenerate bind
     /// pose, or a non-finite animated one.
-    init?(matrix: float4x4) {
+    public init?(matrix: float4x4) {
         let translation = matrix.columns.3
         guard translation.isFiniteVector4 else { return nil }
         let axes = [matrix.columns.0.xyz, matrix.columns.1.xyz, matrix.columns.2.xyz]
@@ -391,7 +391,7 @@ nonisolated struct RagdollPose: Sendable {
 
     /// Linear mix of two placements: translation lerped, rotation slerped, and
     /// the scale of `lhs` kept because both sides describe the same rigid bone.
-    static func mix(_ lhs: float4x4, _ rhs: float4x4, weight: Float) -> float4x4 {
+    public static func mix(_ lhs: float4x4, _ rhs: float4x4, weight: Float) -> float4x4 {
         let amount = min(max(weight, 0), 1)
         guard let first = RagdollPose(matrix: lhs), let second = RagdollPose(matrix: rhs) else {
             return amount >= 0.5 ? rhs : lhs

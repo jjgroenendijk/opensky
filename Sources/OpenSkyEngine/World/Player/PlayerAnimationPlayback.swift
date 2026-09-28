@@ -28,18 +28,18 @@ import simd
 /// simulation ran no step since the last frame — a paused frame, or a frame
 /// shorter than one fixed step — and the palettes already hold the right
 /// matrices, so the whole compose-and-upload path is skipped rather than redone.
-nonisolated final class PlayerPoseBuffer {
-    private(set) var bones: [HKABonePose] = []
-    private(set) var revision = 0
+nonisolated public final class PlayerPoseBuffer {
+    public private(set) var bones: [HKABonePose] = []
+    public private(set) var revision = 0
 
-    func publish(_ bones: [HKABonePose]) {
+    public func publish(_ bones: [HKABonePose]) {
         self.bones = bones
         revision &+= 1
     }
 
     /// Drops the pose, so a body attached after a reset composes from the
     /// reference pose rather than from wherever the player last stood.
-    func clear() {
+    public func clear() {
         bones = []
         revision &+= 1
     }
@@ -52,16 +52,16 @@ nonisolated final class PlayerPoseBuffer {
 /// player's own instance does not: the body is streaming-independent and the
 /// renderer holds it directly (`RendererPlayerBody.swift`), because everything
 /// in `RenderScene.animations` is evicted with its owning cell.
-nonisolated final class PlayerAnimationPlayback: RenderAnimation {
-    let skeleton: HKASkeleton
-    let pose: PlayerPoseBuffer
+nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
+    public let skeleton: HKASkeleton
+    public let pose: PlayerPoseBuffer
     private let meshes: [RenderMesh]
     /// The revision last composed, so an unchanged pose costs one comparison.
     private var appliedRevision: Int?
     /// Bones matched into palettes by the last applied pose, for the readout.
-    private(set) var lastUpdatedBoneCount = 0
+    public private(set) var lastUpdatedBoneCount = 0
 
-    init(skeleton: HKASkeleton, pose: PlayerPoseBuffer, models: [RenderModel]) {
+    public init(skeleton: HKASkeleton, pose: PlayerPoseBuffer, models: [RenderModel]) {
         self.skeleton = skeleton
         self.pose = pose
         var seen = Set<ObjectIdentifier>()
@@ -78,7 +78,7 @@ nonisolated final class PlayerAnimationPlayback: RenderAnimation {
     /// renderer's per-frame bone accounting counts the player exactly as it
     /// counts an NPC.
     @discardableResult
-    func update(at _: Float) -> Int {
+    public func update(at _: Float) -> Int {
         guard appliedRevision != pose.revision else { return lastUpdatedBoneCount }
         appliedRevision = pose.revision
         guard !pose.bones.isEmpty else {
@@ -103,7 +103,7 @@ nonisolated final class PlayerAnimationPlayback: RenderAnimation {
     }
 
     @discardableResult
-    func resetToBindPose() -> Int {
+    public func resetToBindPose() -> Int {
         // Forgetting the applied revision is what makes the A/B toggle
         // reversible: turning animation back on must recompose even though the
         // simulation may not have produced a new pose in between.

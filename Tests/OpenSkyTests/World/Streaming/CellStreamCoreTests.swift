@@ -3,7 +3,7 @@
 // (void/failed no-retry, stale/out-of-order discard). Pure value type -- no
 // Metal, no async, synthetic coordinates (AGENTS.md testing rule).
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

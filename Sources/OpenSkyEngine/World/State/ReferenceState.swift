@@ -18,17 +18,17 @@ import OpenSkyFormats
 /// call `applying(_:)` with the store's delta. `overriddenKinds` reports which
 /// slots the delta supplied, so a caller can tell "disabled because a script
 /// disabled it" from "disabled because the record says so".
-nonisolated struct ReferenceState: Equatable, Sendable {
-    let key: ReferenceKey
-    var enableState: ReferenceEnableState
-    var transform: ReferenceTransformOverride
-    var activation: ReferenceActivationState
-    var deletion: ReferenceDeletionState
+nonisolated public struct ReferenceState: Equatable, Sendable {
+    public let key: ReferenceKey
+    public var enableState: ReferenceEnableState
+    public var transform: ReferenceTransformOverride
+    public var activation: ReferenceActivationState
+    public var deletion: ReferenceDeletionState
     /// Slots whose value came from a runtime delta rather than the record.
-    private(set) var overriddenKinds: Set<WorldStateComponentKind> = []
+    public private(set) var overriddenKinds: Set<WorldStateComponentKind> = []
 
     /// True when at least one slot deviates from the record.
-    var isDirty: Bool {
+    public var isDirty: Bool {
         !overriddenKinds.isEmpty
     }
 
@@ -39,7 +39,7 @@ nonisolated struct ReferenceState: Equatable, Sendable {
     ///   deletion baseline is always "not deleted". That flag means the plugin
     ///   removed the record, which is a load-time concern rather than a runtime
     ///   one.
-    init(baseline entry: RuntimeReferenceEntry) {
+    public init(baseline entry: RuntimeReferenceEntry) {
         key = entry.key
         switch entry.record {
         case let .reference(reference):
@@ -61,7 +61,7 @@ nonisolated struct ReferenceState: Equatable, Sendable {
 
     /// This baseline with `delta`'s components laid over it. A nil or empty
     /// delta returns the baseline unchanged.
-    func applying(_ delta: ReferenceStateDelta?) -> Self {
+    public func applying(_ delta: ReferenceStateDelta?) -> Self {
         guard let delta, !delta.isEmpty else { return self }
         var resolved = self
         if let value = delta.component(ReferenceEnableState.self) {
@@ -85,7 +85,7 @@ nonisolated struct ReferenceState: Equatable, Sendable {
 
     /// Whether this reference should be drawn at all: deleted-at-runtime and
     /// disabled objects both drop out.
-    var isVisible: Bool {
+    public var isVisible: Bool {
         enableState.isEnabled && !deletion.isDeleted
     }
 }

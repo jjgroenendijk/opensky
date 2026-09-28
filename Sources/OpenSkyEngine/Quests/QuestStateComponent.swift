@@ -65,15 +65,15 @@ import OpenSkyFormats
 /// three separate natives, each taking its own Bool, and none of them clears
 /// another (<https://ck.uesp.net/wiki/SetObjectiveDisplayed_-_Quest> and
 /// siblings). They are modelled the same way here.
-nonisolated struct QuestObjectiveState: Equatable, Sendable {
+nonisolated public struct QuestObjectiveState: Equatable, Sendable {
     /// QOBJ index this state belongs to.
-    let index: UInt16
+    public let index: UInt16
     /// Shown in the journal.
-    var isDisplayed: Bool
-    var isCompleted: Bool
-    var isFailed: Bool
+    public var isDisplayed: Bool
+    public var isCompleted: Bool
+    public var isFailed: Bool
 
-    init(
+    public init(
         index: UInt16,
         isDisplayed: Bool = false,
         isCompleted: Bool = false,
@@ -87,7 +87,7 @@ nonisolated struct QuestObjectiveState: Equatable, Sendable {
 
     /// True when nothing has touched this objective, which is the state a quest
     /// implicitly gives every objective it defines.
-    var isUntouched: Bool {
+    public var isUntouched: Bool {
         !isDisplayed && !isCompleted && !isFailed
     }
 }
@@ -99,7 +99,7 @@ nonisolated struct QuestObjectiveState: Equatable, Sendable {
 /// rather than a clamp: a script that sets a stage the quest does not define has
 /// a bug, and silently recording it would hide the bug behind a quest that never
 /// advances.
-nonisolated enum QuestError: Error, Equatable {
+nonisolated public enum QuestError: Error, Equatable {
     /// No loaded plugin defines a QUST with this FormID.
     case unknownQuest(FormID)
     /// The QUST record exists but its FormID does not resolve to a
@@ -124,25 +124,25 @@ nonisolated enum QuestError: Error, Equatable {
 }
 
 /// Everything the runtime records about one quest.
-nonisolated struct QuestRuntimeState: WorldStateComponent {
+nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
     /// Whether the quest is running. A quest that has been stopped is not
     /// running even if it was completed first.
-    private(set) var isRunning: Bool
-    private(set) var isCompleted: Bool
+    public private(set) var isRunning: Bool
+    public private(set) var isCompleted: Bool
     /// Stage indices ever reached, sorted ascending and unique.
-    private(set) var stagesReached: [UInt16]
+    public private(set) var stagesReached: [UInt16]
     /// Objectives whose display state deviates from untouched, sorted by index.
-    private(set) var objectives: [QuestObjectiveState]
+    public private(set) var objectives: [QuestObjectiveState]
 
     /// A quest nothing has started: the baseline of every quest whose DNAM does
     /// not say start-game-enabled.
-    static let dormant = QuestRuntimeState()
+    public static let dormant = QuestRuntimeState()
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .quest
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .quest(self)
     }
 
@@ -151,7 +151,7 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
     /// untouched objective drops out. This initializer is also the save
     /// decoder's entry point, so a corrupt file degrades into a valid state
     /// rather than failing the whole load.
-    init(
+    public init(
         isRunning: Bool = false,
         isCompleted: Bool = false,
         stagesReached: [UInt16] = [],
@@ -167,7 +167,7 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
         self.objectives = byIndex.keys.sorted().compactMap { byIndex[$0] }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .quest(value) = erased else { return nil }
         self = value
     }
@@ -179,7 +179,7 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
     /// writes about the quest's design, not about a session, so a fresh game
     /// starts every quest uncompleted; see docs/engine/quest-state.md for the
     /// vanilla start machinery this v1 leaves out.
-    static func baseline(for quest: Quest) -> QuestRuntimeState {
+    public static func baseline(for quest: Quest) -> QuestRuntimeState {
         QuestRuntimeState(isRunning: quest.flags.contains(.startGameEnabled))
     }
 
@@ -190,7 +190,7 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
     /// Callers that need the `GetStage` return value use `stageValue`, which
     /// spells the "no stage reached" case as 0 the way the condition function
     /// does.
-    var currentStage: UInt16? {
+    public var currentStage: UInt16? {
         stagesReached.last
     }
 
@@ -198,32 +198,32 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
     /// that has reached none. A quest that has genuinely reached stage 0 is
     /// indistinguishable from one that has reached nothing, which is also true
     /// of the function this mirrors.
-    var stageValue: UInt16 {
+    public var stageValue: UInt16 {
         currentStage ?? 0
     }
 
     /// Whether `index` was explicitly visited. A lower stage is never implied by
     /// a higher one (see the file header).
-    func isStageDone(_ index: UInt16) -> Bool {
+    public func isStageDone(_ index: UInt16) -> Bool {
         stagesReached.contains(index)
     }
 
     /// Display state of one objective; an objective nothing has touched reads as
     /// all-false rather than as nil.
-    func objective(_ index: UInt16) -> QuestObjectiveState {
+    public func objective(_ index: UInt16) -> QuestObjectiveState {
         objectives.first { $0.index == index } ?? QuestObjectiveState(index: index)
     }
 
     /// True when the state still equals the plugin baseline for `quest`, which
     /// is what makes a reset back to plugin data meaningful.
-    func matchesBaseline(of quest: Quest) -> Bool {
+    public func matchesBaseline(of quest: Quest) -> Bool {
         self == Self.baseline(for: quest)
     }
 
     // MARK: - Mutating
 
     /// This state with the quest running.
-    func starting() -> Self {
+    public func starting() -> Self {
         var result = self
         result.isRunning = true
         return result
@@ -232,7 +232,7 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
     /// This state with the quest no longer running. The reached stages and the
     /// completed flag survive, because stopping a quest is not the same as
     /// resetting it.
-    func stopping() -> Self {
+    public func stopping() -> Self {
         var result = self
         result.isRunning = false
         return result
@@ -240,7 +240,7 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
 
     /// This state with the quest flagged completed, leaving the running flag
     /// alone (see the file header).
-    func completing() -> Self {
+    public func completing() -> Self {
         var result = self
         result.isCompleted = true
         return result
@@ -248,22 +248,22 @@ nonisolated struct QuestRuntimeState: WorldStateComponent {
 
     /// This state with `index` recorded as reached. Reaching a stage twice
     /// changes nothing, and reaching a lower stage never lowers `currentStage`.
-    func reachingStage(_ index: UInt16) -> Self {
+    public func reachingStage(_ index: UInt16) -> Self {
         guard !stagesReached.contains(index) else { return self }
         var result = self
         result.stagesReached = (stagesReached + [index]).sorted()
         return result
     }
 
-    func settingObjectiveDisplayed(_ index: UInt16, _ isDisplayed: Bool) -> Self {
+    public func settingObjectiveDisplayed(_ index: UInt16, _ isDisplayed: Bool) -> Self {
         updatingObjective(index) { $0.isDisplayed = isDisplayed }
     }
 
-    func settingObjectiveCompleted(_ index: UInt16, _ isCompleted: Bool) -> Self {
+    public func settingObjectiveCompleted(_ index: UInt16, _ isCompleted: Bool) -> Self {
         updatingObjective(index) { $0.isCompleted = isCompleted }
     }
 
-    func settingObjectiveFailed(_ index: UInt16, _ isFailed: Bool) -> Self {
+    public func settingObjectiveFailed(_ index: UInt16, _ isFailed: Bool) -> Self {
         updatingObjective(index) { $0.isFailed = isFailed }
     }
 

@@ -12,11 +12,11 @@
 
 import OpenSkyFormats
 
-nonisolated enum DialogueReadout {
+nonisolated public enum DialogueReadout: Sendable {
     /// The Talk target, the conversation, and the topics on offer — the three
     /// things the acceptance question "did F on a voiced NPC open a
     /// condition-filtered list" is answered from.
-    static func topicsText(for snapshot: DialogueControlSnapshot) -> String {
+    public static func topicsText(for snapshot: DialogueControlSnapshot) -> String {
         guard snapshot.hasDialogueIndex else {
             return "Dialogue: unavailable (no plugin loaded)"
         }
@@ -59,7 +59,7 @@ nonisolated enum DialogueReadout {
     ///
     /// This is the readout item 17.8 needs: "the line I expected is missing" is
     /// only debuggable if the engine says which check rejected it.
-    static func conditionsText(for snapshot: DialogueControlSnapshot) -> String {
+    public static func conditionsText(for snapshot: DialogueControlSnapshot) -> String {
         guard snapshot.hasDialogueIndex else {
             return "Condition trace: unavailable (no plugin loaded)"
         }
@@ -81,7 +81,7 @@ nonisolated enum DialogueReadout {
 
     /// What the vanilla movie built, beside what the engine published, plus the
     /// three bring-up tallies.
-    static func movieText(for snapshot: DialogueControlSnapshot) -> String {
+    public static func movieText(for snapshot: DialogueControlSnapshot) -> String {
         if let error = snapshot.movieError {
             return "Movie: failed — \(error)"
         }
@@ -103,12 +103,12 @@ nonisolated enum DialogueReadout {
 
     /// Result of the last panel control, or the standing instruction when none
     /// has run.
-    static func outcomeText(for snapshot: DialogueControlSnapshot) -> String {
+    public static func outcomeText(for snapshot: DialogueControlSnapshot) -> String {
         snapshot.lastOutcome ?? "Point the crosshair at an actor and press F, or Open."
     }
 
     /// One rejection reason worded for a readout.
-    static func reason(_ rejection: DialogueRejection) -> String {
+    public static func reason(_ rejection: DialogueRejection) -> String {
         switch rejection {
         case let .questNotRunning(quest): "quest \(quest) not running"
         case .alreadySaid: "already said"

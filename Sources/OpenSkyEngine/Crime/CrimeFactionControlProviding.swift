@@ -15,97 +15,155 @@ import Foundation
 import OpenSkyFormats
 
 /// One faction a popup offers, named the way the readout names it.
-nonisolated struct FactionOption: Equatable, Sendable {
-    let key: ReferenceKey
-    let name: String
+nonisolated public struct FactionOption: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let name: String
+
+    public init(key: ReferenceKey, name: String) {
+        self.key = key
+        self.name = name
+    }
 }
 
 /// One row of the player's bounty ledger.
-nonisolated struct BountyReadout: Equatable, Sendable {
-    let faction: FactionOption
-    let nonViolentGold: Int32
-    let violentGold: Int32
-    let counts: CrimeCounts
+nonisolated public struct BountyReadout: Equatable, Sendable {
+    public let faction: FactionOption
+    public let nonViolentGold: Int32
+    public let violentGold: Int32
+    public let counts: CrimeCounts
     /// What a guard of this faction does on seeing the player at this bounty.
-    let response: CrimeResponse
+    public let response: CrimeResponse
 
-    var gold: Int32 {
+    public var gold: Int32 {
         Int32(clamping: Int64(nonViolentGold) + Int64(violentGold))
+    }
+
+    public init(
+        faction: FactionOption,
+        nonViolentGold: Int32,
+        violentGold: Int32,
+        counts: CrimeCounts,
+        response: CrimeResponse
+    ) {
+        self.faction = faction
+        self.nonViolentGold = nonViolentGold
+        self.violentGold = violentGold
+        self.counts = counts
+        self.response = response
     }
 }
 
 /// One membership, resolved to a name.
-nonisolated struct MembershipReadout: Equatable, Sendable {
-    let faction: FactionOption
-    let rank: Int8
+nonisolated public struct MembershipReadout: Equatable, Sendable {
+    public let faction: FactionOption
+    public let rank: Int8
+
+    public init(faction: FactionOption, rank: Int8) {
+        self.faction = faction
+        self.rank = rank
+    }
 }
 
 /// Every term of the hostility precedence list for one ordered pair, so a
 /// reader sees which one answered and what the others would have said.
-nonisolated struct ReactionTermsReadout: Equatable, Sendable {
-    let decision: HostilityDecision
+nonisolated public struct ReactionTermsReadout: Equatable, Sendable {
+    public let decision: HostilityDecision
     /// The stored `ActorCombatState` answer, which beats every record term.
-    let hostilityOverride: ActorHostility?
-    let crime: ActorReaction?
+    public let hostilityOverride: ActorHostility?
+    public let crime: ActorReaction?
     /// The reaction the relationship rank collapses to, scripted or authored.
-    let relationship: ActorReaction?
+    public let relationship: ActorReaction?
     /// The scripted rank behind `relationship`, when a script set one.
-    let scriptedRank: Int8?
+    public let scriptedRank: Int8?
     /// The most hostile interfaction relation between the two membership lists.
-    let faction: ActorReaction?
+    public let faction: ActorReaction?
+
+    public init(
+        decision: HostilityDecision,
+        hostilityOverride: ActorHostility?,
+        crime: ActorReaction?,
+        relationship: ActorReaction?,
+        scriptedRank: Int8?,
+        faction: ActorReaction?
+    ) {
+        self.decision = decision
+        self.hostilityOverride = hostilityOverride
+        self.crime = crime
+        self.relationship = relationship
+        self.scriptedRank = scriptedRank
+        self.faction = faction
+    }
 }
 
 /// The actor the membership and vendor controls act on.
-nonisolated struct SocialSubjectReadout: Equatable, Sendable {
-    let key: ReferenceKey
-    let name: String
-    let memberships: [MembershipReadout]
+nonisolated public struct SocialSubjectReadout: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let name: String
+    public let memberships: [MembershipReadout]
     /// What this actor makes of the player; nil for the player itself.
-    let towardPlayer: ReactionTermsReadout?
+    public let towardPlayer: ReactionTermsReadout?
     /// The `CRIF` crime faction this actor reports to.
-    let crimeFaction: FactionOption?
+    public let crimeFaction: FactionOption?
     /// The crime faction this actor polices, when it is a guard.
-    let policedFaction: FactionOption?
+    public let policedFaction: FactionOption?
     /// The vendor role its memberships give it, before any panel override.
-    let vendor: Vendor?
+    public let vendor: Vendor?
+
+    public init(
+        key: ReferenceKey,
+        name: String,
+        memberships: [MembershipReadout],
+        towardPlayer: ReactionTermsReadout?,
+        crimeFaction: FactionOption?,
+        policedFaction: FactionOption?,
+        vendor: Vendor?
+    ) {
+        self.key = key
+        self.name = name
+        self.memberships = memberships
+        self.towardPlayer = towardPlayer
+        self.crimeFaction = crimeFaction
+        self.policedFaction = policedFaction
+        self.vendor = vendor
+    }
 }
 
 /// One observation of the crime and faction runtimes.
-nonisolated struct CrimeFactionControlSnapshot: Equatable, Sendable {
+nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
     /// False when no crime or faction runtime is attached — no game data, or a
     /// demo scene. The panel then says so rather than showing an empty ledger
     /// that looks like an honest player.
-    let isAvailable: Bool
-    let bounties: [BountyReadout]
+    public let isAvailable: Bool
+    public let bounties: [BountyReadout]
     /// The crime faction answering for the cell the player stands in.
-    let currentCrimeFaction: FactionOption?
+    public let currentCrimeFaction: FactionOption?
     /// What taking the reference under the crosshair would be, and whose it is.
-    let ownership: ReferenceOwnershipReadout?
-    let ownerName: String?
+    public let ownership: ReferenceOwnershipReadout?
+    public let ownerName: String?
     /// The player's stolen stacks, one row per form.
-    let stolenStacks: [ItemStackReadout]
+    public let stolenStacks: [ItemStackReadout]
     /// Factions that track crime, which is what a bounty can be written to.
-    let crimeFactions: [FactionOption]
-    let selectedCrimeFaction: ReferenceKey?
-    let playerMemberships: [MembershipReadout]
-    let subject: SocialSubjectReadout
+    public let crimeFactions: [FactionOption]
+    public let selectedCrimeFaction: ReferenceKey?
+    public let playerMemberships: [MembershipReadout]
+    public let subject: SocialSubjectReadout
     /// Every faction the load order carries, for the membership controls.
-    let factions: [FactionOption]
-    let selectedFaction: ReferenceKey?
+    public let factions: [FactionOption]
+    public let selectedFaction: ReferenceKey?
     /// Every vendor faction, for the merchant override.
-    let vendorFactions: [FactionOption]
-    let vendorOverride: ReferenceKey?
+    public let vendorFactions: [FactionOption]
+    public let vendorOverride: ReferenceKey?
     /// The vendor the next barter uses: the override when one is chosen, the
     /// subject's own role otherwise.
-    let effectiveVendor: Vendor?
+    public let effectiveVendor: Vendor?
     /// The game hour the vendor's window is judged at, or nil with no clock.
-    let hour: Float?
-    let lastCrimeText: String
-    let lastGuardText: String
-    let lastActionText: String
+    public let hour: Float?
+    public let lastCrimeText: String
+    public let lastGuardText: String
+    public let lastActionText: String
 
     /// The reading with no runtime attached.
-    static let unavailable = CrimeFactionControlSnapshot(
+    public static let unavailable = CrimeFactionControlSnapshot(
         isAvailable: false,
         bounties: [],
         currentCrimeFaction: nil,
@@ -129,10 +187,52 @@ nonisolated struct CrimeFactionControlSnapshot: Equatable, Sendable {
         lastGuardText: "No guard has acted yet.",
         lastActionText: "Crime and factions unavailable: no game data loaded."
     )
+
+    public init(
+        isAvailable: Bool,
+        bounties: [BountyReadout],
+        currentCrimeFaction: FactionOption?,
+        ownership: ReferenceOwnershipReadout?,
+        ownerName: String?,
+        stolenStacks: [ItemStackReadout],
+        crimeFactions: [FactionOption],
+        selectedCrimeFaction: ReferenceKey?,
+        playerMemberships: [MembershipReadout],
+        subject: SocialSubjectReadout,
+        factions: [FactionOption],
+        selectedFaction: ReferenceKey?,
+        vendorFactions: [FactionOption],
+        vendorOverride: ReferenceKey?,
+        effectiveVendor: Vendor?,
+        hour: Float?,
+        lastCrimeText: String,
+        lastGuardText: String,
+        lastActionText: String
+    ) {
+        self.isAvailable = isAvailable
+        self.bounties = bounties
+        self.currentCrimeFaction = currentCrimeFaction
+        self.ownership = ownership
+        self.ownerName = ownerName
+        self.stolenStacks = stolenStacks
+        self.crimeFactions = crimeFactions
+        self.selectedCrimeFaction = selectedCrimeFaction
+        self.playerMemberships = playerMemberships
+        self.subject = subject
+        self.factions = factions
+        self.selectedFaction = selectedFaction
+        self.vendorFactions = vendorFactions
+        self.vendorOverride = vendorOverride
+        self.effectiveVendor = effectiveVendor
+        self.hour = hour
+        self.lastCrimeText = lastCrimeText
+        self.lastGuardText = lastGuardText
+        self.lastActionText = lastActionText
+    }
 }
 
 @MainActor
-protocol CrimeFactionControlProviding: AnyObject {
+public protocol CrimeFactionControlProviding: AnyObject {
     var crimeFactionSnapshot: CrimeFactionControlSnapshot { get }
 
     /// The crime faction the bounty controls write to.

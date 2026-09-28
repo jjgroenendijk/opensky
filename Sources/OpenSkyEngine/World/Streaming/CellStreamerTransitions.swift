@@ -7,7 +7,7 @@ import simd
 
 extension CellStreamer {
     /// Returns true only when a successful transition replaced current view.
-    func finishDoorTransition(_ entries: [DoorTransitionBuildResult]) -> Bool {
+    public func finishDoorTransition(_ entries: [DoorTransitionBuildResult]) -> Bool {
         guard let entry = entries.last else { return false }
         transitionInFlight = nil
         let motionInteraction = doorMotionInteraction
@@ -35,7 +35,7 @@ extension CellStreamer {
 
     /// Returns true while interior owns current view. Exterior composition +
     /// bookkeeping remain resident but frozen until a door returns outside.
-    func updateInteriorIfNeeded(
+    public func updateInteriorIfNeeded(
         completedLOD: [DistantLODBuildResult]
     ) -> Bool {
         guard interiorScene != nil else { return false }
@@ -48,7 +48,7 @@ extension CellStreamer {
         return true
     }
 
-    func nearestDoor(in scene: CellScene, to position: SIMD3<Float>) -> PlacedDoor? {
+    public func nearestDoor(in scene: CellScene, to position: SIMD3<Float>) -> PlacedDoor? {
         scene.doors
             .filter { simd_distance($0.position, position) <= Self.doorActivationRadius }
             .min { lhs, rhs in
@@ -58,7 +58,7 @@ extension CellStreamer {
     }
 
     @discardableResult
-    func requestDoorTransition(_ door: PlacedDoor?) -> Bool {
+    public func requestDoorTransition(_ door: PlacedDoor?) -> Bool {
         guard transitionInFlight == nil, let door else { return false }
         transitionInFlight = door.reference
         interiorRebuildInFlight = false
@@ -88,7 +88,11 @@ extension CellStreamer {
     ///   - isRebuild: true when this transition is such a rebuild rather than a
     ///     player-driven move. A rebuild passes no camera to the sink, so the
     ///     scene swaps underneath a player who stays where they were standing.
-    func apply(transition: DoorTransition, sourceDoor: FormID? = nil, isRebuild: Bool = false) {
+    public func apply(
+        transition: DoorTransition,
+        sourceDoor: FormID? = nil,
+        isRebuild: Bool = false
+    ) {
         updateInteractionTarget(ray: nil)
         let camera = isRebuild
             ? nil

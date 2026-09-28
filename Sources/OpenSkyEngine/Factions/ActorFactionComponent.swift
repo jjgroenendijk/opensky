@@ -25,11 +25,11 @@ import OpenSkyFormats
 /// The rank is signed because `ActorBase.FactionMembership.rank` is — xEdit
 /// reads `itS8` and vanilla authors negative ranks to mean "a member the rank
 /// titles do not name".
-nonisolated struct ActorFactionMembership: Equatable, Sendable, Comparable {
-    let faction: ReferenceKey
-    let rank: Int8
+nonisolated public struct ActorFactionMembership: Equatable, Sendable, Comparable {
+    public let faction: ReferenceKey
+    public let rank: Int8
 
-    static func < (lhs: Self, rhs: Self) -> Bool {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.faction == rhs.faction ? lhs.rank < rhs.rank : lhs.faction < rhs.faction
     }
 }
@@ -42,28 +42,28 @@ nonisolated struct ActorFactionMembership: Equatable, Sendable, Comparable {
 /// entry per faction: joining a faction an actor is already in changes the rank
 /// rather than adding a second row, because "what rank is this actor" must have
 /// exactly one answer.
-nonisolated struct ActorFactionState: WorldStateComponent {
-    private(set) var memberships: [ActorFactionMembership]
+nonisolated public struct ActorFactionState: WorldStateComponent, Sendable {
+    public private(set) var memberships: [ActorFactionMembership]
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .factions
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .factions(self)
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         memberships.isEmpty
     }
 
-    var count: Int {
+    public var count: Int {
         memberships.count
     }
 
     /// Just the factions, in the same order, for a caller that does not care
     /// about ranks.
-    var factions: [ReferenceKey] {
+    public var factions: [ReferenceKey] {
         memberships.map(\.faction)
     }
 
@@ -76,7 +76,7 @@ nonisolated struct ActorFactionState: WorldStateComponent {
     /// spell and an owned perk follow: losing it would make removing a plugin
     /// destroy progress, and it is invisible to every query that goes through
     /// `FactionStore` anyway.
-    init(memberships: [ActorFactionMembership] = []) {
+    public init(memberships: [ActorFactionMembership] = []) {
         var ranks: [ReferenceKey: Int8] = [:]
         for membership in memberships {
             ranks[membership.faction] = membership.rank
@@ -87,24 +87,24 @@ nonisolated struct ActorFactionState: WorldStateComponent {
         }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .factions(value) = erased else { return nil }
         self = value
     }
 
-    func isMember(of faction: ReferenceKey) -> Bool {
+    public func isMember(of faction: ReferenceKey) -> Bool {
         memberships.contains { $0.faction == faction }
     }
 
     /// The rank the actor holds, or nil when it is not a member — which is not
     /// the same as rank 0, a rank vanilla authors freely.
-    func rank(in faction: ReferenceKey) -> Int8? {
+    public func rank(in faction: ReferenceKey) -> Int8? {
         memberships.first { $0.faction == faction }?.rank
     }
 
     /// The state after joining `faction` at `rank`, or changing the rank when
     /// the actor is already a member.
-    func joining(_ faction: ReferenceKey, rank: Int8) -> ActorFactionState {
+    public func joining(_ faction: ReferenceKey, rank: Int8) -> ActorFactionState {
         ActorFactionState(
             memberships: memberships + [ActorFactionMembership(faction: faction, rank: rank)]
         )
@@ -112,7 +112,7 @@ nonisolated struct ActorFactionState: WorldStateComponent {
 
     /// The state after leaving `faction`, unchanged when the actor was never in
     /// it.
-    func leaving(_ faction: ReferenceKey) -> ActorFactionState {
+    public func leaving(_ faction: ReferenceKey) -> ActorFactionState {
         guard isMember(of: faction) else { return self }
         return ActorFactionState(memberships: memberships.filter { $0.faction != faction })
     }

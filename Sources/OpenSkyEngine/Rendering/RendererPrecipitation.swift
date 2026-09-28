@@ -3,7 +3,7 @@
 import Metal
 
 extension Renderer {
-    static func makeInitialScene(
+    public static func makeInitialScene(
         device: MTLDevice,
         requested: RenderScene?
     ) throws -> (RenderScene, PrecipitationVolume) {
@@ -11,7 +11,7 @@ extension Renderer {
         return try (scene, PrecipitationVolume(device: device))
     }
 
-    func updatePrecipitation(deltaTime: Float) {
+    public func updatePrecipitation(deltaTime: Float) {
         precipitation.update(PrecipitationUpdate(
             cameraPosition: freeFlyCamera.position,
             state: currentResolvedWeather?.precipitation ?? .none,

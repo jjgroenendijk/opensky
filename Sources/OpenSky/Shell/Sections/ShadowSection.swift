@@ -3,6 +3,7 @@
 // live renderer, plus a 2 Hz shadow-draw readout.
 
 import AppKit
+import OpenSkyEngine
 
 final class ShadowSection: PanelSectionViewController {
     weak var provider: (any ShadowControlProviding)? {

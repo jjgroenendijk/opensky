@@ -9,8 +9,8 @@ import Foundation
 import OpenSkyFormats
 import simd
 
-nonisolated enum OpenSkySaveEntryDecoder {
-    static func decodeEntries(_ payload: Data) throws -> [WorldStateSnapshotEntry] {
+nonisolated public enum OpenSkySaveEntryDecoder: Sendable {
+    public static func decodeEntries(_ payload: Data) throws -> [WorldStateSnapshotEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RDLT entry count")
         try OpenSkySaveDecoder.validate(
@@ -29,7 +29,7 @@ nonisolated enum OpenSkySaveEntryDecoder {
 
     /// GVAR chunk: count, then key + declared-type tag + float32 value per
     /// overridden global (issue #165).
-    static func decodeGlobals(_ payload: Data) throws -> [WorldStateGlobalSnapshotEntry] {
+    public static func decodeGlobals(_ payload: Data) throws -> [WorldStateGlobalSnapshotEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("GVAR entry count")
         try OpenSkySaveDecoder.validate(
@@ -65,7 +65,7 @@ nonisolated enum OpenSkySaveEntryDecoder {
         )
     }
 
-    static func decodeKey(_ reader: inout SaveReader) throws -> ReferenceKey {
+    public static func decodeKey(_ reader: inout SaveReader) throws -> ReferenceKey {
         let tag = try reader.uint8("reference key kind")
         switch tag {
         case OpenSkySaveFormat.KeyTag.plugin:
@@ -80,7 +80,7 @@ nonisolated enum OpenSkySaveEntryDecoder {
     }
 
     /// Shared with the `INVN` decoder, which writes the same tagged cell.
-    static func decodeCell(_ reader: inout SaveReader) throws -> CellSceneLocation? {
+    public static func decodeCell(_ reader: inout SaveReader) throws -> CellSceneLocation? {
         let tag = try reader.uint8("cell kind")
         switch tag {
         case OpenSkySaveFormat.CellTag.absent:

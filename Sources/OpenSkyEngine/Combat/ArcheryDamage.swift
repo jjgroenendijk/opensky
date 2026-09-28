@@ -65,38 +65,38 @@ import Foundation
 
 /// One resolved shot's damage accounting, kept whole so a readout can explain
 /// a number rather than just show it.
-nonisolated struct ArcheryDamageResult: Equatable, Sendable {
+nonisolated public struct ArcheryDamageResult: Equatable, Sendable {
     /// WEAP base damage.
-    let bowDamage: Float
+    public let bowDamage: Float
     /// AMMO base damage.
-    let arrowDamage: Float
+    public let arrowDamage: Float
     /// The draw-time fraction, `0...1`.
-    let drawFraction: Float
+    public let drawFraction: Float
     /// What actually comes off health.
-    let applied: Float
+    public let applied: Float
 
     /// The two base damages before the draw term, which is what the weapon
     /// sheet in vanilla shows.
-    var combinedBase: Float {
+    public var combinedBase: Float {
         bowDamage + arrowDamage
     }
 }
 
-nonisolated enum ArcheryDamage {
+nonisolated public enum ArcheryDamage: Sendable {
     /// The Archery skill a character with no skill table is assumed to have.
     /// UESP "Skyrim:Archery" gives 15 as the starting value for a race with no
     /// Archery bonus; the real per-actor number arrives with the rest of the
     /// actor-value table in M18. The same reasoning and the same default as
     /// `MeleeDamage.defaultBlockSkill`.
-    static let defaultArcherySkill: Float = 15
+    public static let defaultArcherySkill: Float = 15
 
     /// The lowest fraction a released shot can deal, from the page's first
     /// branch.
-    static let minimumDrawFraction: Float = 0.35
+    public static let minimumDrawFraction: Float = 0.35
 
     /// Frames per second the draw-time formula is written in. The page states
     /// it in frames and says "to calculate using seconds, replace t by 60t".
-    static let drawFormulaFrameRate: Float = 60
+    public static let drawFormulaFrameRate: Float = 60
 
     /// What one landed arrow takes off the target's health.
     ///
@@ -108,7 +108,7 @@ nonisolated enum ArcheryDamage {
     ///   - bonusMultiplier: the perk, enchantment and potion terms folded into
     ///     one. 1 for a character with none; `CombatFortifyBonus.archery`
     ///     supplies the enchantment and potion halves (issue #472).
-    static func resolve(
+    public static func resolve(
         bowDamage: Float,
         arrowDamage: Float,
         drawFraction: Float = 1,
@@ -137,7 +137,7 @@ nonisolated enum ArcheryDamage {
     ///   - speed: WEAP DNAM `speed` times any weapon-speed multiplier. A
     ///     non-positive or non-finite value falls back to 1, which is the
     ///     multiplier a weapon with no speed data would have had anyway.
-    static func drawFraction(heldSeconds: Float, speed: Float) -> Float {
+    public static func drawFraction(heldSeconds: Float, speed: Float) -> Float {
         let scale = speed.isFinite && speed > 0 ? speed : 1
         let frames = heldSeconds.isFinite ? max(0, heldSeconds) * drawFormulaFrameRate : 0
         let lower = 50 + 12 / scale

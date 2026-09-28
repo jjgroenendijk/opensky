@@ -7,14 +7,14 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated final class PapyrusInstance {
-    let handle: PapyrusObjectHandle
-    let rootScriptName: String
-    var activeState: String
+nonisolated public final class PapyrusInstance {
+    public let handle: PapyrusObjectHandle
+    public let rootScriptName: String
+    public var activeState: String
 
     private var variablesByScript: [String: [String: PapyrusValue]]
 
-    init(
+    public init(
         handle: PapyrusObjectHandle,
         rootScriptName: String,
         activeState: String,
@@ -26,11 +26,11 @@ nonisolated final class PapyrusInstance {
         self.variablesByScript = variablesByScript
     }
 
-    func value(named name: String, declaredBy scriptName: String) -> PapyrusValue? {
+    public func value(named name: String, declaredBy scriptName: String) -> PapyrusValue? {
         variablesByScript[Self.key(scriptName)]?[Self.key(name)]
     }
 
-    func setValue(
+    public func setValue(
         _ value: PapyrusValue,
         named name: String,
         declaredBy scriptName: String
@@ -44,7 +44,7 @@ nonisolated final class PapyrusInstance {
         return true
     }
 
-    func applyInitialValue(
+    public func applyInitialValue(
         _ value: PapyrusValue,
         named name: String,
         scriptChain: [PexObject]
@@ -60,7 +60,7 @@ nonisolated final class PapyrusInstance {
     /// Deterministic snapshot of every variable for save serialization,
     /// sorted by lowercased declaring-script key then variable key. Values are
     /// raw runtime values; the caller decides what is persistable.
-    func sortedVariableStates() -> [PapyrusVariableState] {
+    public func sortedVariableStates() -> [PapyrusVariableState] {
         variablesByScript
             .sorted { $0.key < $1.key }
             .flatMap { scriptKey, variables in
@@ -78,21 +78,21 @@ nonisolated final class PapyrusInstance {
     /// script or the variable does not exist on this instance, so a caller
     /// can skip and count unknown save data instead of crashing.
     @discardableResult
-    func restore(_ state: PapyrusVariableState) -> Bool {
+    public func restore(_ state: PapyrusVariableState) -> Bool {
         setValue(state.value, named: state.name, declaredBy: state.declaringScript)
     }
 
-    static func key(_ value: String) -> String {
+    public static func key(_ value: String) -> String {
         value.lowercased()
     }
 }
 
-nonisolated struct PapyrusResolvedFunction {
-    let script: PexObject
-    let function: PexFunction
+nonisolated public struct PapyrusResolvedFunction: Sendable {
+    public let script: PexObject
+    public let function: PexFunction
 }
 
-nonisolated struct PapyrusResolvedProperty {
-    let script: PexObject
-    let property: PexProperty
+nonisolated public struct PapyrusResolvedProperty: Sendable {
+    public let script: PexObject
+    public let property: PexProperty
 }

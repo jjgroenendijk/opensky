@@ -16,6 +16,7 @@
 // `ScriptSchedulerSectionInput.swift`, the same split `SWFRuntimeSection` uses.
 
 import AppKit
+import OpenSkyEngine
 
 final class ScriptSchedulerSection: PanelSectionViewController {
     /// Ticks the burst button applies. Twenty fixed steps is two thirds of a

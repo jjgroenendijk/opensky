@@ -23,7 +23,7 @@ import OpenSkyFormats
 
 /// Everything about the running session a crime needs to know.
 @MainActor
-protocol CrimeWorld: AnyObject {
+public protocol CrimeWorld: AnyObject {
     /// The owner in force for one resident reference: its own `XOWN`, else the
     /// owner of the cell it stands in (`OwnershipResolver`). Nil when nothing
     /// claims it, and also when nothing resident is that reference — a
@@ -50,23 +50,23 @@ protocol CrimeWorld: AnyObject {
 
 /// Turns things that happened into ledger entries.
 @MainActor
-final class CrimeReporter {
+public final class CrimeReporter {
     /// The ledger and the pricing behind it. A `var` because the witness source
     /// is attached after construction, exactly as `HostilityDerivation.crime`
     /// is.
-    var runtime: CrimeRuntime
+    public var runtime: CrimeRuntime
     /// The session the facts come from. Weak because the controller that owns
     /// this owns the session too.
-    weak var world: (any CrimeWorld)?
+    public weak var world: (any CrimeWorld)?
 
-    init(runtime: CrimeRuntime, world: (any CrimeWorld)? = nil) {
+    public init(runtime: CrimeRuntime, world: (any CrimeWorld)? = nil) {
         self.runtime = runtime
         self.world = world
     }
 
     /// Where "did anybody see?" is answered, forwarded so a session can attach
     /// the perception pass without reaching through to the runtime.
-    var witnesses: any CrimeWitnessSource {
+    public var witnesses: any CrimeWitnessSource {
         get { runtime.witnesses }
         set { runtime.witnesses = newValue }
     }
@@ -78,7 +78,7 @@ final class CrimeReporter {
     /// The question a take asks before it takes, and the one an inspector shows
     /// under the crosshair. A session with no world answers `.unowned`, which
     /// is the pre-crime behaviour rather than a new wrong answer.
-    func verdict(
+    public func verdict(
         on reference: ReferenceKey,
         by actor: ReferenceKey = .player
     ) -> OwnershipVerdict {
@@ -92,7 +92,7 @@ final class CrimeReporter {
     /// Quoted through `CrimeRuntime.quote`, so the same faction flags that would
     /// refuse the charge refuse the quote: a panel must not promise a bounty the
     /// take will not accrue.
-    func theftBounty(
+    public func theftBounty(
         of item: FormID,
         count: Int32,
         from reference: ReferenceKey,
@@ -114,7 +114,7 @@ final class CrimeReporter {
     /// has just asked for the verdict and acted on it; resolving it twice is
     /// two chances for the world to have moved in between.
     @discardableResult
-    func reportTheft(
+    public func reportTheft(
         of item: FormID,
         count: Int32,
         from reference: ReferenceKey,
@@ -135,7 +135,7 @@ final class CrimeReporter {
     /// caller's to know — the combat runtime holds both — so this records what
     /// it is told.
     @discardableResult
-    func reportAssault(
+    public func reportAssault(
         on victim: ReferenceKey,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
@@ -144,7 +144,7 @@ final class CrimeReporter {
 
     /// Reports a non-hostile actor dying.
     @discardableResult
-    func reportMurder(
+    public func reportMurder(
         of victim: ReferenceKey,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
@@ -157,7 +157,7 @@ final class CrimeReporter {
     /// that noticed the trespass is the one that knows which cell it noticed it
     /// in.
     @discardableResult
-    func reportTrespass(
+    public func reportTrespass(
         in cell: CellSceneLocation?,
         owner: ReferenceOwner?,
         by actor: ReferenceKey = .player

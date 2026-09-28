@@ -26,17 +26,17 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum EquipSlotHands {
+nonisolated public enum EquipSlotHands: Sendable {
     /// Editor ID of the leaf slot meaning the right hand.
-    static let rightHandEditorID = "righthand"
+    public static let rightHandEditorID = "righthand"
     /// Editor ID of the leaf slot meaning the left hand.
-    static let leftHandEditorID = "lefthand"
+    public static let leftHandEditorID = "lefthand"
     /// Bounds a parent chain a mod has made cyclic. Vanilla chains are one
     /// link deep; eight is far past anything meaningful.
-    static let parentDepthCap = 8
+    public static let parentDepthCap = 8
 
     /// The hands `slot` occupies, following its parents through `lookup`.
-    static func hands(of slot: EquipSlot, lookup: (FormID) -> EquipSlot?) -> HandSlots {
+    public static func hands(of slot: EquipSlot, lookup: (FormID) -> EquipSlot?) -> HandSlots {
         choice(of: slot, lookup: lookup).hands
     }
 
@@ -49,7 +49,7 @@ nonisolated enum EquipSlotHands {
     /// "use all parents" byte, so a master spell filling both hands and a
     /// novice spell going into whichever hand the player asked for are the same
     /// walk with two different readings of the answer (issue #470).
-    static func choice(
+    public static func choice(
         of slot: EquipSlot,
         lookup: (FormID) -> EquipSlot?
     ) -> EquipSlotHandChoice {
@@ -57,7 +57,7 @@ nonisolated enum EquipSlotHands {
     }
 
     /// The hands the leaf slot named by `editorID` occupies.
-    static func leafHands(editorID: String?) -> HandSlots {
+    public static func leafHands(editorID: String?) -> HandSlots {
         switch editorID?.lowercased() {
         case rightHandEditorID: .rightHand
         case leftHandEditorID: .leftHand
@@ -90,7 +90,7 @@ nonisolated enum EquipSlotHands {
 /// the equipper's pick. A weapon never needed the distinction — the engine has
 /// to answer with one deterministic hand either way — but a readied spell does,
 /// because the player names the hand.
-nonisolated enum EquipSlotHandChoice: Equatable, Sendable {
+nonisolated public enum EquipSlotHandChoice: Equatable, Sendable {
     /// Every hand in the set is taken at once. A leaf slot and an all-parents
     /// slot both read this way, so `.fixed([])` is the honest answer for Voice
     /// and Potion: a resolved slot that takes no hand at all.
@@ -100,7 +100,7 @@ nonisolated enum EquipSlotHandChoice: Equatable, Sendable {
 
     /// Every hand the slot could occupy, whichever reading applies. Not what a
     /// `.choice` slot actually fills — use `occupancy(preferring:)` for that.
-    var candidates: HandSlots {
+    public var candidates: HandSlots {
         switch self {
         case let .fixed(hands), let .choice(hands): hands
         }
@@ -110,7 +110,7 @@ nonisolated enum EquipSlotHandChoice: Equatable, Sendable {
     /// all-parents slot fills everything it names, and a choose-one slot
     /// resolves to the right hand when the right hand is among its options,
     /// because that is the hand the skeleton's `Weapon` attach node hangs off.
-    var hands: HandSlots {
+    public var hands: HandSlots {
         switch self {
         case let .fixed(hands): hands
         case let .choice(hands): hands.contains(.rightHand) ? .rightHand : hands
@@ -125,7 +125,7 @@ nonisolated enum EquipSlotHandChoice: Equatable, Sendable {
     /// the player pressed. A `.choice` slot answers with the requested hand
     /// when it is one of the options and refuses otherwise, rather than
     /// silently putting the spell somewhere else.
-    func occupancy(preferring hand: HandSlots) -> HandSlots? {
+    public func occupancy(preferring hand: HandSlots) -> HandSlots? {
         switch self {
         case let .fixed(hands): hands.isEmpty ? nil : hands
         case let .choice(hands): hands.overlaps(hand) ? hand : nil
@@ -140,14 +140,14 @@ nonisolated enum EquipSlotHandChoice: Equatable, Sendable {
 /// inspectors. Every vanilla ETYP link points at an EQUP in Skyrim.esm, so the
 /// single-file table answers the base game exactly, and a mod that adds its
 /// own slots is served by the store.
-nonisolated struct EquipSlotTable: Equatable {
-    let slots: [UInt32: EquipSlot]
+nonisolated public struct EquipSlotTable: Equatable, Sendable {
+    public let slots: [UInt32: EquipSlot]
 
-    init(slots: [UInt32: EquipSlot] = [:]) {
+    public init(slots: [UInt32: EquipSlot] = [:]) {
         self.slots = slots
     }
 
-    init(file: ESMFile) {
+    public init(file: ESMFile) {
         var slots: [UInt32: EquipSlot] = [:]
         guard
             let group = file.topGroup(of: "EQUP"),
@@ -168,13 +168,13 @@ nonisolated struct EquipSlotTable: Equatable {
     /// The hands `id` occupies, or nil when no EQUP in this plugin answers the
     /// link. Nil and `[]` are different answers: nil is an unresolved link,
     /// `[]` is a slot that genuinely takes no hand, such as Voice.
-    func hands(of id: FormID?) -> HandSlots? {
+    public func hands(of id: FormID?) -> HandSlots? {
         handChoice(of: id)?.hands
     }
 
     /// The same answer keeping the all-parents/choose-one distinction, for a
     /// caller that names the hand it wants (issue #470).
-    func handChoice(of id: FormID?) -> EquipSlotHandChoice? {
+    public func handChoice(of id: FormID?) -> EquipSlotHandChoice? {
         guard let id, !id.isNull, let slot = slots[id.rawValue] else { return nil }
         return EquipSlotHands.choice(of: slot) { slots[$0.rawValue] }
     }

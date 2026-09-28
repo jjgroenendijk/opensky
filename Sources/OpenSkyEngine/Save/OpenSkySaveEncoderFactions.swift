@@ -23,7 +23,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `FCTN` chunk: every snapshot entry carrying faction memberships, in
     /// the snapshot's `ReferenceKey` order. A session in which nobody joined
     /// anything and nobody was asked writes no chunk.
-    static func writeFactionMemberships(
+    public static func writeFactionMemberships(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

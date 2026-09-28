@@ -16,28 +16,28 @@ import simd
 /// Per-build actor accounting; folded into CellLoadSummary. The exact
 /// invariant `discovered == rendered + disabledSkips + failures` is the 5.5
 /// acceptance rule — every discovered ACHR must land in exactly one bucket.
-nonisolated struct ActorBuildCounts {
+nonisolated public struct ActorBuildCounts: Sendable {
     /// Non-deleted ACHRs owned by this cell: local persistent + temporary
     /// children plus position-mapped worldspace-persistent placements.
-    var discovered = 0
-    var rendered = 0
+    public var discovered = 0
+    public var rendered = 0
     /// Actors present but deliberately not drawn: initially-disabled ACHRs
     /// (record-header flag 0x800), plus the ones runtime state disabled or
     /// deleted since load (issue #160). All three share one bucket so the
     /// exact-accounting rule above keeps holding; the per-actor log line says
     /// which of them applied.
-    var disabledSkips = 0
+    public var disabledSkips = 0
     /// Malformed ACHR records, unresolved template/visual chains, and
     /// assemblies with no core geometry.
-    var failures = 0
+    public var failures = 0
     /// One human-readable reason per failure ("ACHR <id>: <why>") — the 5.6
     /// acceptance rule: every counted failure is explained, so
     /// `failureReasons.count == failures` always.
-    var failureReasons: [String] = []
+    public var failureReasons: [String] = []
     /// Rendered actors split exactly into animated + bind-pose fallback.
-    var animated = 0
-    var animationFailures = 0
-    var animationFailureReasons: [String] = []
+    public var animated = 0
+    public var animationFailures = 0
+    public var animationFailureReasons: [String] = []
     /// Every `AppearanceSkip` the visual resolution reported, per actor, as
     /// "ACHR <id>: <reason> (<subject>)" (issue #180).
     ///
@@ -47,25 +47,25 @@ nonisolated struct ActorBuildCounts {
     /// the `World > Inventory & Equipment` panel can say why a piece of an
     /// equipped set contributed no geometry, instead of leaving a missing
     /// gauntlet looking like an equip that silently did nothing.
-    var appearanceSkipReasons: [String] = []
+    public var appearanceSkipReasons: [String] = []
 }
 
 /// Assembled actor render data handed to makeScene beside static instances.
-nonisolated struct CellActorBuild {
-    var placements: [RenderPlacement] = []
-    var animations: [any RenderAnimation] = []
-    var counts = ActorBuildCounts()
-    var durationMS = 0.0
+nonisolated public struct CellActorBuild {
+    public var placements: [RenderPlacement] = []
+    public var animations: [any RenderAnimation] = []
+    public var counts = ActorBuildCounts()
+    public var durationMS = 0.0
     /// Runtime index entries for the ACHRs this cell owns (issue #158).
     /// Populated for every discovered actor, including ones skipped for
     /// rendering: an initially-disabled actor still exists at runtime.
-    var entries: [RuntimeReferenceEntry] = []
+    public var entries: [RuntimeReferenceEntry] = []
 }
 
 nonisolated extension CellSceneBuilder {
     /// Actors for one exterior cell: local ACHRs plus worldspace-persistent
     /// ACHRs whose physical position lies in this cell, resolved + assembled.
-    nonisolated func buildExteriorActors(
+    nonisolated public func buildExteriorActors(
         cellChildren: ESMGroup?,
         world: ESMGroup,
         coordinate: CellCoordinate,
@@ -100,7 +100,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Actors for one interior cell — local children groups only; interiors
     /// have no worldspace persistent cell to map in.
-    nonisolated func buildInteriorActors(
+    nonisolated public func buildInteriorActors(
         cellChildren: ESMGroup?,
         localized: Bool,
         deltas: [ReferenceKey: ReferenceStateDelta] = [:]
@@ -356,7 +356,7 @@ nonisolated extension CellSceneBuilder {
     /// because the player body resolves through the same pair
     /// (CellSceneBuilderPlayer.swift) and must not force a second copy of two
     /// plugin-wide indexes into memory.
-    nonisolated func actorResolversBuildingIfNeeded(
+    nonisolated public func actorResolversBuildingIfNeeded(
         localized: Bool
     ) -> (template: ActorTemplateResolver, visual: ActorVisualResolver) {
         if let template = actorTemplateResolver, let visual = actorVisualResolver {

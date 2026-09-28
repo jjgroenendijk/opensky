@@ -36,20 +36,20 @@ import OpenSkyFormats
 /// the same key into each hand.
 ///
 /// The raw values are the save encoding and must not be renumbered.
-nonisolated enum SpellHand: UInt8, CaseIterable, Hashable, Sendable {
+nonisolated public enum SpellHand: UInt8, CaseIterable, Hashable, Sendable {
     case left = 0
     case right = 1
 
     /// The equipment-layer slot this hand is, so a spell and a weapon are
     /// arbitrated against the same occupancy value.
-    var slots: HandSlots {
+    public var slots: HandSlots {
         switch self {
         case .left: .leftHand
         case .right: .rightHand
         }
     }
 
-    var describedName: String {
+    public var describedName: String {
         switch self {
         case .left: "left hand"
         case .right: "right hand"
@@ -58,10 +58,10 @@ nonisolated enum SpellHand: UInt8, CaseIterable, Hashable, Sendable {
 }
 
 /// One actor's known spells, read tomes, readied hands and spent powers.
-nonisolated struct SpellbookState: WorldStateComponent {
+nonisolated public struct SpellbookState: WorldStateComponent, Sendable {
     /// SPEL records the actor knows, in ascending key order. Ordered rather
     /// than a set so the save writes the same bytes twice for the same state.
-    private(set) var known: [ReferenceKey]
+    public private(set) var known: [ReferenceKey]
     /// BOOK records the actor has already opened, in ascending key order.
     ///
     /// This is the "already read" mark UESP records on the BOOK DATA flag byte:
@@ -72,19 +72,19 @@ nonisolated struct SpellbookState: WorldStateComponent {
     /// because it is what stops a second reading of the same tome teaching a
     /// spell twice, and per-reader is the only reading that survives an NPC
     /// picking the book up.
-    private(set) var readBooks: [ReferenceKey]
-    private(set) var leftHand: ReferenceKey?
-    private(set) var rightHand: ReferenceKey?
+    public private(set) var readBooks: [ReferenceKey]
+    public private(set) var leftHand: ReferenceKey?
+    public private(set) var rightHand: ReferenceKey?
     /// Whole game days on which a greater power was last used, keyed by the
     /// power. UESP: "Each Greater Power can only be used once per game day"
     /// (<https://en.uesp.net/wiki/Skyrim:Powers>).
-    private(set) var powerDays: [ReferenceKey: Int32]
+    public private(set) var powerDays: [ReferenceKey: Int32]
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .spellbook
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .spellbook(self)
     }
 
@@ -97,7 +97,7 @@ nonisolated struct SpellbookState: WorldStateComponent {
     /// was never known and the case where it was forgotten in the same write.
     /// A spent-power day for a spell that is not known is dropped for the same
     /// reason: nothing can ever consult it again.
-    init(
+    public init(
         known: [ReferenceKey] = [],
         readBooks: [ReferenceKey] = [],
         leftHand: ReferenceKey? = nil,
@@ -112,29 +112,29 @@ nonisolated struct SpellbookState: WorldStateComponent {
         self.powerDays = powerDays.filter { knownSet.contains($0.key) }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .spellbook(value) = erased else { return nil }
         self = value
     }
 
     /// True when nothing is recorded at all, which is when the store drops the
     /// slot rather than keeping an empty component around.
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         known.isEmpty && readBooks.isEmpty && powerDays.isEmpty
     }
 
     // MARK: - Queries
 
-    func knows(_ spell: ReferenceKey) -> Bool {
+    public func knows(_ spell: ReferenceKey) -> Bool {
         known.contains(spell)
     }
 
-    func hasRead(_ book: ReferenceKey) -> Bool {
+    public func hasRead(_ book: ReferenceKey) -> Bool {
         readBooks.contains(book)
     }
 
     /// The spell readied in `hand`, or nil when that hand holds no spell.
-    func spell(in hand: SpellHand) -> ReferenceKey? {
+    public func spell(in hand: SpellHand) -> ReferenceKey? {
         switch hand {
         case .left: leftHand
         case .right: rightHand
@@ -143,7 +143,7 @@ nonisolated struct SpellbookState: WorldStateComponent {
 
     /// The hands `spell` currently occupies — both when it is a two-handed
     /// spell readied in each, and `[]` when it is not readied at all.
-    func hands(of spell: ReferenceKey) -> HandSlots {
+    public func hands(of spell: ReferenceKey) -> HandSlots {
         var hands = HandSlots()
         if leftHand == spell {
             hands.insert(.leftHand)
@@ -156,7 +156,7 @@ nonisolated struct SpellbookState: WorldStateComponent {
 
     /// Every hand currently holding a spell, whichever spell it is. What the
     /// item side asks before equipping something that takes a hand.
-    var occupiedHands: HandSlots {
+    public var occupiedHands: HandSlots {
         var hands = HandSlots()
         if leftHand != nil {
             hands.insert(.leftHand)
@@ -168,13 +168,13 @@ nonisolated struct SpellbookState: WorldStateComponent {
     }
 
     /// Whether `power` has already been spent on whole game day `day`.
-    func hasSpentPower(_ power: ReferenceKey, onDay day: Int32) -> Bool {
+    public func hasSpentPower(_ power: ReferenceKey, onDay day: Int32) -> Bool {
         powerDays[power] == day
     }
 
     // MARK: - Mutations
 
-    func learning(_ spell: ReferenceKey) -> SpellbookState {
+    public func learning(_ spell: ReferenceKey) -> SpellbookState {
         guard !knows(spell) else { return self }
         return copy(known: known + [spell])
     }
@@ -182,12 +182,12 @@ nonisolated struct SpellbookState: WorldStateComponent {
     /// This state without `spell`, and without it in either hand — the same
     /// write, because a hand pointing at a spell the actor no longer knows is
     /// the one state this type refuses to hold.
-    func forgetting(_ spell: ReferenceKey) -> SpellbookState {
+    public func forgetting(_ spell: ReferenceKey) -> SpellbookState {
         guard knows(spell) else { return self }
         return copy(known: known.filter { $0 != spell })
     }
 
-    func markingRead(_ book: ReferenceKey) -> SpellbookState {
+    public func markingRead(_ book: ReferenceKey) -> SpellbookState {
         guard !hasRead(book) else { return self }
         return copy(readBooks: readBooks + [book])
     }
@@ -198,7 +198,7 @@ nonisolated struct SpellbookState: WorldStateComponent {
     /// Takes a `HandSlots` rather than a `SpellHand` because a two-handed spell
     /// fills both at once and doing that as two writes would leave a state
     /// where the same spell is in one hand and something else is in the other.
-    func equipping(_ spell: ReferenceKey, in hands: HandSlots) -> SpellbookState {
+    public func equipping(_ spell: ReferenceKey, in hands: HandSlots) -> SpellbookState {
         guard knows(spell), !hands.isEmpty else { return self }
         return copy(
             leftHand: hands.contains(.leftHand) ? spell : leftHand,
@@ -207,7 +207,7 @@ nonisolated struct SpellbookState: WorldStateComponent {
     }
 
     /// This state with `hands` emptied of whatever spell was readied in them.
-    func unequipping(_ hands: HandSlots) -> SpellbookState {
+    public func unequipping(_ hands: HandSlots) -> SpellbookState {
         copy(
             leftHand: hands.contains(.leftHand) ? nil : leftHand,
             rightHand: hands.contains(.rightHand) ? nil : rightHand
@@ -215,7 +215,7 @@ nonisolated struct SpellbookState: WorldStateComponent {
     }
 
     /// This state with `power` marked spent on whole game day `day`.
-    func spendingPower(_ power: ReferenceKey, onDay day: Int32) -> SpellbookState {
+    public func spendingPower(_ power: ReferenceKey, onDay day: Int32) -> SpellbookState {
         var days = powerDays
         days[power] = day
         return copy(powerDays: days)

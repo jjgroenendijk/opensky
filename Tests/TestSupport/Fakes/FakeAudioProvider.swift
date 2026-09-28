@@ -4,7 +4,7 @@
 // compile; see Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 /// Shared with the M9.2.4 mute/solo satellite file

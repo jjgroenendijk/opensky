@@ -48,7 +48,7 @@ import OpenSkyFormats
 /// A `ReferenceKey` alone cannot answer this: the store keys state by identity
 /// and knows nothing about record types, so the caller that has the placement
 /// says which kind of owner it is holding.
-nonisolated enum InventoryOwner: Equatable, Sendable {
+nonisolated public enum InventoryOwner: Equatable, Sendable {
     /// The player, whose baseline is empty.
     case player
     /// A placed CONT, identified by its base record.
@@ -65,22 +65,22 @@ nonisolated enum InventoryOwner: Equatable, Sendable {
 /// Immutable and buildable once per load order, matching the `*Store`
 /// convention (`WeatherStore`, `ItemDefinitionStore`): nothing here mutates
 /// after `init`, so it is freely readable from the cell-build queue.
-nonisolated struct InventoryBaselineResolver {
+nonisolated public struct InventoryBaselineResolver {
     /// Deepest leveled-list nesting followed before expansion gives up. A list
     /// that points at itself is caught by the visited set; this cap catches the
     /// long chain that is technically acyclic and still nonsense.
-    static let maximumLeveledDepth = 8
+    public static let maximumLeveledDepth = 8
 
     /// Item and container index from #175.
-    let items: ItemDefinitionStore
+    public let items: ItemDefinitionStore
     /// LVLI decodes by raw FormID. Kept here rather than in
     /// `ItemDefinitionStore` because a leveled list is not a carryable item and
     /// has neither a value nor a weight to expose through `ItemDefinition`.
-    let leveledItems: [UInt32: LeveledList]
+    public let leveledItems: [UInt32: LeveledList]
     /// OTFT decodes by raw FormID.
-    let outfits: [UInt32: Outfit]
+    public let outfits: [UInt32: Outfit]
     /// Template-chain resolution, which supplies `defaultOutfit`.
-    let actors: ActorTemplateResolver
+    public let actors: ActorTemplateResolver
 
     /// Builds every index this resolver needs from one plugin.
     ///
@@ -93,7 +93,7 @@ nonisolated struct InventoryBaselineResolver {
     ///   links are relative to. Nil leaves every enchanted item's `resolvedID`
     ///   nil, and then nothing can apply an enchantment at runtime (issue #472) —
     ///   which is what a synthetic session means.
-    static func build(
+    public static func build(
         from file: ESMFile,
         enchantments: ItemEnchantmentResolver? = nil
     ) -> InventoryBaselineResolver {
@@ -108,7 +108,7 @@ nonisolated struct InventoryBaselineResolver {
 
     /// `owner`'s inventory as plugin data describes it, with no runtime state
     /// applied. An owner nothing has touched resolves through here every time.
-    func baseline(for owner: InventoryOwner) -> ReferenceInventoryState {
+    public func baseline(for owner: InventoryOwner) -> ReferenceInventoryState {
         switch owner {
         case .player, .generated:
             .empty

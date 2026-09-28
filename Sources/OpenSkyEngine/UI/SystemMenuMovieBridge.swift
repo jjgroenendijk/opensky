@@ -12,45 +12,45 @@
 import Foundation
 import OpenSkyFormats
 
-nonisolated enum SystemMenuMovieBridge {
-    static let moviePath = "interface\\quest_journal.swf"
+nonisolated public enum SystemMenuMovieBridge: Sendable {
+    public static let moviePath = "interface\\quest_journal.swf"
     /// The `QuestJournalBase` instance. Page switching is a direct method on
     /// this clip; engine lifecycle calls are `GameDelegate` callbacks.
-    static let menuPath = "/QuestJournalFader/Menu_mc"
-    static let systemPagePath = "\(menuPath)/SystemFader/Page_mc"
-    static let systemCategoryListPath = "\(systemPagePath)/CategoryList_mc/List_mc"
-    static let settingsCategoryListPath = "\(systemPagePath)/SettingsPanel/List_mc"
-    static let systemFaderPath = "\(menuPath)/SystemFader"
-    static let questsFaderPath = "\(menuPath)/QuestsFader"
-    static let statsFaderPath = "\(menuPath)/StatsFader"
+    public static let menuPath = "/QuestJournalFader/Menu_mc"
+    public static let systemPagePath = "\(menuPath)/SystemFader/Page_mc"
+    public static let systemCategoryListPath = "\(systemPagePath)/CategoryList_mc/List_mc"
+    public static let settingsCategoryListPath = "\(systemPagePath)/SettingsPanel/List_mc"
+    public static let systemFaderPath = "\(menuPath)/SystemFader"
+    public static let questsFaderPath = "\(menuPath)/QuestsFader"
+    public static let statsFaderPath = "\(menuPath)/StatsFader"
 
     /// `PLATFORM_PC_KBMOUSE`, the value the movie's platform switch expects for
     /// keyboard and mouse.
-    static let pcPlatform = 0.0
+    public static let pcPlatform = 0.0
 
     /// Movie-to-engine calls that do not mutate OpenSky state yet. The boolean
     /// queries return false; the rest are notifications or requests whose data
     /// consumers are outside the system-page surface.
-    static let sinkHostFunctions = [
+    public static let sinkHostFunctions = [
         "myLog", "PlaySound", "PlayOKSound", "RememberCurrentTabIndex",
         "RequestPlayerInfo"
     ]
-    static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
+    public static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
 
     /// Scaleform's UI-sound hook, which the movie reaches for as a plain
     /// `_global` function rather than through `GameDelegate`. OpenSky has no UI
     /// sound bank yet, so it is a no-op rather than a missing name.
-    static let globalSinkFunctions = ["gfxProcessSound"]
+    public static let globalSinkFunctions = ["gfxProcessSound"]
 
     /// `PageArray` is `[Quests, Stats, System]`, measured from the live movie.
-    static let systemTabIndex = 2
+    public static let systemTabIndex = 2
 
     // MARK: - Bring-up
 
     /// Installs the surface the movie reaches for *during* `start()`. Bring-up
     /// is the first thing that calls out to the host, so this must run before
     /// the runtime is started (`Renderer.startSWFRuntime(prepare:)`).
-    static func prepare(runtime: SWFMovieRuntime) {
+    public static func prepare(runtime: SWFMovieRuntime) {
         for name in sinkHostFunctions {
             runtime.registerHostFunction(name) { _ in .undefined }
         }
@@ -69,7 +69,7 @@ nonisolated enum SystemMenuMovieBridge {
     ///
     /// Nothing here throws. A movie that does not match the measured contract
     /// leaves entries in the missing-API tally, which the panel reports.
-    static func activate(
+    public static func activate(
         runtime: SWFMovieRuntime,
         onClose: @escaping @MainActor @Sendable () -> Void
     ) {
@@ -94,7 +94,7 @@ nonisolated enum SystemMenuMovieBridge {
     /// Pointer deltas have no absolute stage position, so they remain
     /// unsupported here and fall back to the engine selector.
     @discardableResult
-    static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
+    public static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
         if
             case .button(.accept) = event,
             openSelectedSystemPage(runtime: runtime)
@@ -112,14 +112,14 @@ nonisolated enum SystemMenuMovieBridge {
     // MARK: - Readout
 
     /// Faults and distinct unresolved names, for the verification readout.
-    static func diagnostics(runtime: SWFMovieRuntime) -> (faults: Int, missingNames: Int) {
+    public static func diagnostics(runtime: SWFMovieRuntime) -> (faults: Int, missingNames: Int) {
         let tally = runtime.tally
         return (tally.faultTotal, tally.missingNames.count)
     }
 
     /// The page brought to the front, derived from the actual System category
     /// rows rather than a bridge-owned flag.
-    static func currentState(runtime: SWFMovieRuntime) -> String? {
+    public static func currentState(runtime: SWFMovieRuntime) -> String? {
         guard
             let fader = runtime.node(atPath: systemFaderPath, from: runtime.root),
             let index = fader.timeline?.frameIndex(forLabel: "forceFade"),
@@ -133,12 +133,12 @@ nonisolated enum SystemMenuMovieBridge {
     /// The row labels the movie actually built, read back from the list's own
     /// entry array. These prove that the expected movie loaded; `currentState`
     /// separately proves that activation brought the System page to the front.
-    static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
         entryLabels(runtime: runtime, atPath: systemCategoryListPath)
     }
 
     /// Settings categories reached by activating the `$SETTINGS` system row.
-    static func settingsCategoryLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func settingsCategoryLabels(runtime: SWFMovieRuntime) -> [String] {
         entryLabels(runtime: runtime, atPath: settingsCategoryListPath)
     }
 
@@ -231,6 +231,6 @@ nonisolated enum SystemMenuMovieBridge {
     }
 
     /// `SystemCategoriesList`'s backing array of row objects.
-    static let entryArrayName = "EntriesA"
-    static let settingsCategoryIndex = 4
+    public static let entryArrayName = "EntriesA"
+    public static let settingsCategoryIndex = 4
 }

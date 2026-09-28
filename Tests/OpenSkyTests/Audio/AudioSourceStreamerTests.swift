@@ -4,7 +4,7 @@
 // `openskycli audio sweep` gate (no WMA fixture may enter the repository).
 
 import AVFAudio
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct AudioSourceStreamerTests {

@@ -25,22 +25,22 @@ import OpenSkyFormats
 /// `oldValue` is nil when the component had no delta before (the reference was
 /// clean in that slot), and `newValue` is nil when the mutation was a reset. A
 /// entry with both nil is never produced: the store skips no-op mutations.
-nonisolated struct WorldStateJournalEntry: Equatable, Sendable {
+nonisolated public struct WorldStateJournalEntry: Equatable, Sendable {
     /// Store-wide monotonic sequence number, starting at 1. Never reused and
     /// never renumbered, so an entry stays comparable to one that has already
     /// been dropped from the bounded window.
-    let sequence: UInt64
-    let key: ReferenceKey
-    let kind: WorldStateComponentKind
+    public let sequence: UInt64
+    public let key: ReferenceKey
+    public let kind: WorldStateComponentKind
     /// Value before the mutation; nil when the slot was clean.
-    let oldValue: WorldStateComponentValue?
+    public let oldValue: WorldStateComponentValue?
     /// Value after the mutation; nil when the mutation cleared the slot.
-    let newValue: WorldStateComponentValue?
+    public let newValue: WorldStateComponentValue?
     /// Cell the mutation was recorded under, when the caller supplied one.
-    let cell: CellSceneLocation?
+    public let cell: CellSceneLocation?
 
     /// True when this entry restored a slot to its plugin default.
-    var isReset: Bool {
+    public var isReset: Bool {
         newValue == nil
     }
 }
@@ -51,20 +51,20 @@ nonisolated struct WorldStateJournalEntry: Equatable, Sendable {
 /// object's, and there is no cell: a global belongs to the session rather than
 /// to any location, which is also why a global write does not trigger a cell
 /// rebuild.
-nonisolated struct WorldStateGlobalJournalEntry: Equatable, Sendable {
+nonisolated public struct WorldStateGlobalJournalEntry: Equatable, Sendable {
     /// Drawn from the same counter as `WorldStateJournalEntry.sequence`, so the
     /// two logs interleave into one causal order.
-    let sequence: UInt64
-    let key: ReferenceKey
+    public let sequence: UInt64
+    public let key: ReferenceKey
     /// Value before the mutation; nil when the global still had its plugin
     /// default.
-    let oldValue: GlobalValue?
+    public let oldValue: GlobalValue?
     /// Value after the mutation; nil when the mutation reset the global to its
     /// plugin default.
-    let newValue: GlobalValue?
+    public let newValue: GlobalValue?
 
     /// True when this entry restored the global to its plugin default.
-    var isReset: Bool {
+    public var isReset: Bool {
         newValue == nil
     }
 }
@@ -84,25 +84,25 @@ nonisolated struct WorldStateGlobalJournalEntry: Equatable, Sendable {
 /// the reference history, and the reverse. Storage is a fixed-size ring, so
 /// recording is O(1) and the memory cost is bounded at construction rather than
 /// growing to a high-water mark.
-nonisolated struct WorldStateJournal: Sendable {
+nonisolated public struct WorldStateJournal: Sendable {
     /// Entries retained before the oldest starts falling off the back. Sized so
     /// that a normal play session's recent history — a few thousand
     /// activations, moves and enable toggles — fits, while the memory cost
     /// stays a fixed few hundred kilobytes.
-    static let defaultCapacity = 4096
+    public static let defaultCapacity = 4096
 
     /// Maximum number of retained entries, per window. Always at least 1.
-    let capacity: Int
+    public let capacity: Int
     /// Sequence number the next recorded entry will carry, whichever window it
     /// lands in.
-    private(set) var nextSequence: UInt64 = 1
+    public private(set) var nextSequence: UInt64 = 1
 
     private var components: JournalRing<WorldStateJournalEntry>
     private var globals: JournalRing<WorldStateGlobalJournalEntry>
 
     /// Capacities below 1 are clamped rather than rejected: a journal is
     /// runtime bookkeeping and must never be the thing that fails a mutation.
-    init(capacity: Int = WorldStateJournal.defaultCapacity) {
+    public init(capacity: Int = WorldStateJournal.defaultCapacity) {
         let bounded = max(1, capacity)
         self.capacity = bounded
         components = JournalRing(capacity: bounded)
@@ -112,40 +112,40 @@ nonisolated struct WorldStateJournal: Sendable {
     // MARK: - Component entries
 
     /// Retained component entries, oldest first.
-    var entries: [WorldStateJournalEntry] {
+    public var entries: [WorldStateJournalEntry] {
         components.entries
     }
 
     /// Component entries dropped because the window was full.
-    var droppedCount: Int {
+    public var droppedCount: Int {
         components.droppedCount
     }
 
     /// Number of retained component entries, which is
     /// `min(total recorded, capacity)`.
-    var entryCount: Int {
+    public var entryCount: Int {
         components.count
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         components.isEmpty
     }
 
     /// Oldest retained component entry, nil when nothing has been recorded or
     /// everything recorded has already been dropped.
-    var oldest: WorldStateJournalEntry? {
+    public var oldest: WorldStateJournalEntry? {
         components.oldest
     }
 
     /// Most recently recorded component entry.
-    var newest: WorldStateJournalEntry? {
+    public var newest: WorldStateJournalEntry? {
         components.newest
     }
 
     /// Appends a component mutation, dropping the oldest entry when the window
     /// is full, and returns the entry as recorded (sequence number included).
     @discardableResult
-    mutating func record(
+    public mutating func record(
         key: ReferenceKey,
         kind: WorldStateComponentKind,
         oldValue: WorldStateComponentValue?,
@@ -168,26 +168,26 @@ nonisolated struct WorldStateJournal: Sendable {
     // MARK: - Global entries
 
     /// Retained global entries, oldest first.
-    var globalEntries: [WorldStateGlobalJournalEntry] {
+    public var globalEntries: [WorldStateGlobalJournalEntry] {
         globals.entries
     }
 
     /// Global entries dropped because the window was full.
-    var droppedGlobalCount: Int {
+    public var droppedGlobalCount: Int {
         globals.droppedCount
     }
 
-    var globalEntryCount: Int {
+    public var globalEntryCount: Int {
         globals.count
     }
 
-    var newestGlobal: WorldStateGlobalJournalEntry? {
+    public var newestGlobal: WorldStateGlobalJournalEntry? {
         globals.newest
     }
 
     /// Appends a global mutation, taking the next shared sequence number.
     @discardableResult
-    mutating func recordGlobal(
+    public mutating func recordGlobal(
         key: ReferenceKey,
         oldValue: GlobalValue?,
         newValue: GlobalValue?
@@ -208,7 +208,7 @@ nonisolated struct WorldStateJournal: Sendable {
     /// Drops every retained entry from both windows. Sequence numbering and the
     /// dropped counts are deliberately untouched: clearing a window is not the
     /// same as claiming the mutations never happened.
-    mutating func removeAll() {
+    public mutating func removeAll() {
         components.removeAll()
         globals.removeAll()
     }

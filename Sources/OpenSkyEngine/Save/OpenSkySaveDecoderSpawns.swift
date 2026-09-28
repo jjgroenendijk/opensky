@@ -13,13 +13,13 @@ import OpenSkyFormats
 import simd
 
 /// One saved spawned object, before it is merged back into its delta.
-nonisolated struct SaveSpawnEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let spawn: ReferenceSpawnState
+nonisolated public struct SaveSpawnEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let spawn: ReferenceSpawnState
 }
 
-nonisolated enum OpenSkySaveSpawnDecoder {
-    static func decodeSpawns(_ payload: Data) throws -> [SaveSpawnEntry] {
+nonisolated public enum OpenSkySaveSpawnDecoder: Sendable {
+    public static func decodeSpawns(_ payload: Data) throws -> [SaveSpawnEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("SPWN entry count")
         try OpenSkySaveDecoder.validate(
@@ -39,7 +39,7 @@ nonisolated enum OpenSkySaveSpawnDecoder {
     /// Lays each saved spawn over the matching `RDLT` delta, adding an entry
     /// for an object that had no other component, and re-sorts the result into
     /// `ReferenceKey` total order — the order `WorldStateSnapshot` promises.
-    static func merge(
+    public static func merge(
         _ spawns: [SaveSpawnEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

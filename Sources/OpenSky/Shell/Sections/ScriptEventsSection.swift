@@ -7,6 +7,7 @@
 // engine just do, in order. Read-only, so it is never overridden.
 
 import AppKit
+import OpenSkyEngine
 
 final class ScriptEventsSection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

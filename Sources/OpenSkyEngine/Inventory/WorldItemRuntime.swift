@@ -34,7 +34,7 @@ import simd
 /// Failures the world-item layer reports. Inventory arithmetic failures are
 /// `InventoryError` and pass straight through; these are the ones about the
 /// world rather than about the items.
-nonisolated enum WorldItemError: Error, Equatable {
+nonisolated public enum WorldItemError: Error, Equatable {
     /// The activated reference is not in any resident cell's runtime index, so
     /// there is nothing to identify, remove or attribute the change to.
     case unknownReference(FormID)
@@ -46,21 +46,21 @@ nonisolated enum WorldItemError: Error, Equatable {
 }
 
 /// What one successful take moved.
-nonisolated struct WorldTakeOutcome: Equatable, Sendable {
+nonisolated public struct WorldTakeOutcome: Equatable, Sendable {
     /// The reference that left the world.
-    let key: ReferenceKey
+    public let key: ReferenceKey
     /// The base item that entered the inventory.
-    let item: FormID
+    public let item: FormID
     /// How many, from the reference's XCNT or its spawned stack count.
-    let count: Int32
+    public let count: Int32
     /// Whether the take was theft, which is what marks the stack stolen
     /// (issue #504). False for an unowned item and for one this actor may use.
-    let stolen: Bool
+    public let stolen: Bool
     /// Bounty the take accrued, which is zero when nobody saw it, when the
     /// place answers to no crime faction, and whenever the take was not theft.
-    let bounty: Int32
+    public let bounty: Int32
 
-    init(
+    public init(
         key: ReferenceKey,
         item: FormID,
         count: Int32,
@@ -76,14 +76,18 @@ nonisolated struct WorldTakeOutcome: Equatable, Sendable {
 }
 
 /// Where a dropped object lands.
-nonisolated struct DropPlacement: Equatable, Sendable {
+nonisolated public struct DropPlacement: Equatable, Sendable {
     /// Cell the object comes to rest in. The caller supplies it because only
     /// the streamer knows which cell the player is standing in.
-    let location: CellSceneLocation
-    let position: SIMD3<Float>
-    let rotation: SIMD3<Float>
+    public let location: CellSceneLocation
+    public let position: SIMD3<Float>
+    public let rotation: SIMD3<Float>
 
-    init(location: CellSceneLocation, position: SIMD3<Float>, rotation: SIMD3<Float> = .zero) {
+    public init(
+        location: CellSceneLocation,
+        position: SIMD3<Float>,
+        rotation: SIMD3<Float> = .zero
+    ) {
         self.location = location
         self.position = position
         self.rotation = rotation
@@ -92,7 +96,7 @@ nonisolated struct DropPlacement: Equatable, Sendable {
 
 /// Takes, drops and container sessions on top of `InventoryRuntime`.
 @MainActor
-final class WorldItemRuntime {
+public final class WorldItemRuntime {
     /// How far below the camera a dropped object is released, in game units.
     ///
     /// Roughly the distance from a standing actor's eye to the ground, so an
@@ -107,12 +111,12 @@ final class WorldItemRuntime {
     /// physics. An object whose mesh carries no dynamic body still comes to rest
     /// exactly here, which is why the offset is a plausible resting height
     /// rather than an arm's length.
-    static let dropHeight: Float = 100
+    public static let dropHeight: Float = 100
     /// How far in front of the camera a dropped object is placed, so it does
     /// not land inside the player capsule and immediately re-target itself.
-    static let dropForwardOffset: Float = 60
+    public static let dropForwardOffset: Float = 60
 
-    let inventory: InventoryRuntime
+    public let inventory: InventoryRuntime
     /// Resident reference index, for resolving an activated FormID to its
     /// runtime key and cell. Weak because the controller that owns this also
     /// owns the streamer behind it.
@@ -121,23 +125,23 @@ final class WorldItemRuntime {
     /// already declares exactly the three lookups this needs, and `CellStreamer`
     /// already conforms. The name says Papyrus because that milestone
     /// introduced it, not because the seam is Papyrus-specific.
-    weak var references: (any PapyrusWorldReferenceSource)?
+    public weak var references: (any PapyrusWorldReferenceSource)?
 
     /// The player's inventory holder, which is the destination of every take
     /// and the source of every drop.
-    let player = InventoryHolder.player
+    public let player = InventoryHolder.player
 
     /// Where a take asks whether it is theft, and says so when it is (issue
     /// #504). Nil in a session with no crime runtime — a synthetic scene, or a
     /// load order with no FACT data — where every take is an honest one, which
     /// is the behaviour this file had before crime existed.
-    var crime: CrimeReporter?
+    public var crime: CrimeReporter?
 
-    var store: WorldStateStore {
+    public var store: WorldStateStore {
         inventory.store
     }
 
-    init(
+    public init(
         inventory: InventoryRuntime,
         references: (any PapyrusWorldReferenceSource)? = nil
     ) {
@@ -153,7 +157,7 @@ final class WorldItemRuntime {
     /// its cell, so that an equip is attributed to the cell whose rebuild makes
     /// it visible. Only the entry knows all three, which is why this lives
     /// beside the other holder-building call sites rather than at the UI.
-    func actorHolder(formID: FormID) -> InventoryHolder? {
+    public func actorHolder(formID: FormID) -> InventoryHolder? {
         guard
             let entry = references?.referenceEntry(formID: formID),
             let actor = entry.placedActor
@@ -163,7 +167,7 @@ final class WorldItemRuntime {
 
     /// The same holder for an entry already in hand, so a caller that resolved
     /// one (the nearest-actor lookup) does not resolve it twice.
-    func actorHolder(entry: RuntimeReferenceEntry, base: FormID) -> InventoryHolder {
+    public func actorHolder(entry: RuntimeReferenceEntry, base: FormID) -> InventoryHolder {
         InventoryHolder(
             key: entry.key,
             owner: .actor(base: base),
@@ -181,7 +185,7 @@ final class WorldItemRuntime {
     ///   it, and `InventoryError.countOverflow` when the player's stack cannot
     ///   grow. Nothing is written in any of those cases.
     @discardableResult
-    func take(_ interaction: PlacedInteraction) throws -> WorldTakeOutcome {
+    public func take(_ interaction: PlacedInteraction) throws -> WorldTakeOutcome {
         guard interaction.action == .take else {
             throw WorldItemError.notTakeable(interaction.reference)
         }
@@ -252,7 +256,7 @@ final class WorldItemRuntime {
     /// - Throws: `InventoryError.insufficientCount` when the player holds
     ///   fewer, in which case nothing is written and no key is allocated.
     @discardableResult
-    func drop(
+    public func drop(
         _ item: FormID,
         count: Int32 = 1,
         at placement: DropPlacement
@@ -281,7 +285,7 @@ final class WorldItemRuntime {
     /// at the sky does not throw the item over the player's head. A camera
     /// pointing straight up or straight down leaves nothing to flatten, and the
     /// object lands directly below the eye.
-    static func dropPlacement(
+    public static func dropPlacement(
         in location: CellSceneLocation,
         eye: SIMD3<Float>,
         forward: SIMD3<Float>
@@ -309,7 +313,7 @@ final class WorldItemRuntime {
     /// - Throws: `WorldItemError.notAContainer` for a non-`.search`
     ///   interaction, `WorldItemError.unknownReference` when nothing resident
     ///   holds it.
-    func openContainer(_ interaction: PlacedInteraction) throws -> ContainerSession {
+    public func openContainer(_ interaction: PlacedInteraction) throws -> ContainerSession {
         guard interaction.action == .search else {
             throw WorldItemError.notAContainer(interaction.reference)
         }

@@ -18,7 +18,7 @@ extension Renderer {
     /// Attaches the assembled body, sizing the draw rings for its groups and
     /// making its buffers resident. Replacing an attached body (a new equipped
     /// set) retires the old one's allocations the same way a scene swap does.
-    func setPlayerBody(_ body: PlayerBody?) throws {
+    public func setPlayerBody(_ body: PlayerBody?) throws {
         let retiring = playerBody?.residencyAllocations ?? []
         playerBody = body
         updatePlayerBodyPose()
@@ -36,7 +36,7 @@ extension Renderer {
     /// frame's position, so the body and the camera never disagree by a frame.
     /// In fly mode the body is left exactly where the player last stood: fly is
     /// a developer view of the same world, not a different world.
-    func updatePlayerBodyPose() {
+    public func updatePlayerBodyPose() {
         guard let playerBody, movementMode.isPlayerControlled else { return }
         playerBody.place(
             feetPosition: walkController.feetPosition,
@@ -47,7 +47,7 @@ extension Renderer {
     /// The player's contribution to the per-frame animation pass. Mirrors what
     /// `RenderScene.updateAnimations` does for cell-owned actors, including the
     /// `World > Environment` animation A/B toggle.
-    func updatePlayerBodyAnimation(enabled: Bool) -> Int {
+    public func updatePlayerBodyAnimation(enabled: Bool) -> Int {
         guard let playerBody else { return 0 }
         return enabled
             ? playerBody.animation.update(at: 0)
@@ -63,19 +63,19 @@ extension Renderer {
     /// about correctness. The first-person arms are *not* here: they are
     /// encoded after everything else into their own depth slice
     /// (`RendererFirstPersonArms.swift`).
-    var opaqueDrawGroups: [DrawGroup] {
+    public var opaqueDrawGroups: [DrawGroup] {
         guard let playerBody, isPlayerBodyVisible else { return scene.opaque }
         return scene.opaque + playerBody.render.opaque
     }
 
-    var alphaTestedDrawGroups: [DrawGroup] {
+    public var alphaTestedDrawGroups: [DrawGroup] {
         guard let playerBody, isPlayerBodyVisible else { return scene.alphaTested }
         return scene.alphaTested + playerBody.render.alphaTested
     }
 
     /// What this frame draws and casts, from the one policy value that owns
     /// the whole matrix (`PlayerRigVisibility`, issue #190).
-    var rigVisibility: PlayerRigVisibility {
+    public var rigVisibility: PlayerRigVisibility {
         PlayerRigVisibility.resolve(
             mode: movementMode,
             hasBody: playerBody != nil,
@@ -88,18 +88,18 @@ extension Renderer {
     /// What the shadow pass rasterizes: the scene plus the player's body in
     /// every mode a player exists in, whether or not the eye can see it. The
     /// reasoning is on `PlayerRigVisibility`.
-    var shadowOpaqueDrawGroups: [DrawGroup] {
+    public var shadowOpaqueDrawGroups: [DrawGroup] {
         guard let playerBody, rigVisibility.castsBodyShadow else { return scene.opaque }
         return scene.opaque + playerBody.render.opaque
     }
 
-    var shadowAlphaTestedDrawGroups: [DrawGroup] {
+    public var shadowAlphaTestedDrawGroups: [DrawGroup] {
         guard let playerBody, rigVisibility.castsBodyShadow else { return scene.alphaTested }
         return scene.alphaTested + playerBody.render.alphaTested
     }
 
     /// Whether the third-person body is drawn to the camera this frame.
-    var isPlayerBodyVisible: Bool {
+    public var isPlayerBodyVisible: Bool {
         rigVisibility.drawsBody
     }
 

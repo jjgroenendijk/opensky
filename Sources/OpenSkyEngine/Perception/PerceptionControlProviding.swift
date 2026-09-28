@@ -12,31 +12,42 @@ import OpenSkyFormats
 
 /// One resolved detection setting as a panel shows it: the name it is addressed
 /// by, its value, and where that value came from.
-nonisolated struct DetectionSettingReadout: Equatable {
-    let editorID: String
-    let value: Float
+nonisolated public struct DetectionSettingReadout: Equatable, Sendable {
+    public let editorID: String
+    public let value: Float
     /// The winning plugin, the documented fallback, or "OpenSky constant" for a
     /// number no record states. The whole point of the row.
-    let source: String
+    public let source: String
+
+    public init(editorID: String, value: Float, source: String) {
+        self.editorID = editorID
+        self.value = value
+        self.source = source
+    }
 }
 
-nonisolated struct PerceptionControlSnapshot: Equatable {
+nonisolated public struct PerceptionControlSnapshot: Equatable, Sendable {
     /// Every tracked pair, the roster sizes, and what the caps dropped.
-    let readout: PerceptionReadout
+    public let readout: PerceptionReadout
     /// Every resolved setting beside its provenance, in formula order.
-    let settings: [DetectionSettingReadout]
+    public let settings: [DetectionSettingReadout]
 
-    static let unavailable = PerceptionControlSnapshot(readout: .empty, settings: [])
+    public static let unavailable = PerceptionControlSnapshot(readout: .empty, settings: [])
 
     /// True when no perception runtime is attached, which is every synthetic
     /// scene. The panel reports that rather than showing a convincing zero.
-    var isUnavailable: Bool {
+    public var isUnavailable: Bool {
         settings.isEmpty
+    }
+
+    public init(readout: PerceptionReadout, settings: [DetectionSettingReadout]) {
+        self.readout = readout
+        self.settings = settings
     }
 }
 
 @MainActor
-protocol PerceptionControlProviding: AnyObject {
+public protocol PerceptionControlProviding: AnyObject {
     var perceptionSnapshot: PerceptionControlSnapshot { get }
 
     /// The `DetectionStatsLabel` lines for one actor: every pair it observes or

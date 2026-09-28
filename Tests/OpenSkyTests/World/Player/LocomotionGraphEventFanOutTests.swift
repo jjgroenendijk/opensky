@@ -10,7 +10,7 @@
 //
 // Synthetic names throughout; nothing here needs a graph.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 import Testing
 
 struct LocomotionGraphEventFanOutTests {

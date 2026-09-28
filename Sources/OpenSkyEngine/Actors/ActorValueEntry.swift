@@ -38,7 +38,7 @@
 import Foundation
 
 /// Which of an actor value's three modifier slots a write lands in.
-nonisolated enum ActorValueModifier: String, CaseIterable, Hashable, Sendable {
+nonisolated public enum ActorValueModifier: String, CaseIterable, Hashable, Sendable {
     /// `ModActorValue`'s slot: an adjustment with nothing keeping it alive.
     case permanent
     /// An active magic effect's slot, dropped by the save on purpose.
@@ -53,13 +53,13 @@ nonisolated enum ActorValueModifier: String, CaseIterable, Hashable, Sendable {
 /// sites, for the reason `ActorValueState`'s non-negative invariant is: one NaN
 /// would spread through every later sum and a resistance query would answer
 /// NaN rather than a fraction.
-nonisolated struct ActorValueEntry: Equatable, Sendable {
-    private(set) var base: Float
-    private(set) var permanent: Float
-    private(set) var temporary: Float
-    private(set) var damage: Float
+nonisolated public struct ActorValueEntry: Equatable, Sendable {
+    public private(set) var base: Float
+    public private(set) var permanent: Float
+    public private(set) var temporary: Float
+    public private(set) var damage: Float
 
-    init(base: Float = 0, permanent: Float = 0, temporary: Float = 0, damage: Float = 0) {
+    public init(base: Float = 0, permanent: Float = 0, temporary: Float = 0, damage: Float = 0) {
         self.base = Self.finite(base)
         self.permanent = Self.finite(permanent)
         self.temporary = Self.finite(temporary)
@@ -67,7 +67,7 @@ nonisolated struct ActorValueEntry: Equatable, Sendable {
         self.damage = min(0, Self.finite(damage))
     }
 
-    subscript(modifier: ActorValueModifier) -> Float {
+    public subscript(modifier: ActorValueModifier) -> Float {
         switch modifier {
         case .permanent: permanent
         case .temporary: temporary
@@ -80,24 +80,24 @@ nonisolated struct ActorValueEntry: Equatable, Sendable {
     /// Not floored at zero. The mutations below never take a value below zero
     /// on their own, but a permanent modifier a caller sets outright may, and
     /// clamping here would hide that rather than let the caller see it.
-    var current: Float {
+    public var current: Float {
         base + permanent + temporary + damage
     }
 
     /// The sum a damage modifier is measured against — everything that is not
     /// damage. `restore` cannot lift `current` above it.
-    var undamagedValue: Float {
+    public var undamagedValue: Float {
         base + permanent + temporary
     }
 
     /// This entry with its base replaced — `SetActorValue`'s effect, leaving
     /// every modifier intact.
-    func settingBase(_ value: Float) -> ActorValueEntry {
+    public func settingBase(_ value: Float) -> ActorValueEntry {
         with { $0.base = Self.finite(value) }
     }
 
     /// This entry with one modifier replaced outright.
-    func setting(_ modifier: ActorValueModifier, to value: Float) -> ActorValueEntry {
+    public func setting(_ modifier: ActorValueModifier, to value: Float) -> ActorValueEntry {
         with { entry in
             switch modifier {
             case .permanent: entry.permanent = Self.finite(value)
@@ -109,7 +109,7 @@ nonisolated struct ActorValueEntry: Equatable, Sendable {
 
     /// This entry with `delta` added to one modifier, which is what applying
     /// and removing an effect both do.
-    func adding(_ delta: Float, to modifier: ActorValueModifier) -> ActorValueEntry {
+    public func adding(_ delta: Float, to modifier: ActorValueModifier) -> ActorValueEntry {
         guard delta.isFinite else { return self }
         return setting(modifier, to: self[modifier] + delta)
     }
@@ -119,7 +119,7 @@ nonisolated struct ActorValueEntry: Equatable, Sendable {
     ///
     /// A non-positive or non-finite `amount` changes nothing rather than
     /// healing, mirroring `ActorValueState.damaging(_:by:)`.
-    func damaging(by amount: Float) -> ActorValueEntry {
+    public func damaging(by amount: Float) -> ActorValueEntry {
         guard amount.isFinite, amount > 0 else { return self }
         return with { $0.damage = max(-max(0, undamagedValue), damage - amount) }
     }
@@ -127,7 +127,7 @@ nonisolated struct ActorValueEntry: Equatable, Sendable {
     /// This entry with `amount` of its damage undone, capped at no damage at
     /// all. Restoring never lifts a value above what its base and modifiers
     /// say, which is why it writes the damage slot rather than the base.
-    func restoring(by amount: Float) -> ActorValueEntry {
+    public func restoring(by amount: Float) -> ActorValueEntry {
         guard amount.isFinite, amount > 0 else { return self }
         return with { $0.damage = min(0, damage + amount) }
     }

@@ -28,42 +28,42 @@ import OpenSkyFormats
 import simd
 
 @MainActor
-final class MeleeCombatRuntime {
+public final class MeleeCombatRuntime {
     /// How many hit records the trace keeps. A swing through a crowd lands
     /// several at once, so this is a handful of swings rather than a handful
     /// of hits.
-    static let traceLimit = 16
+    public static let traceLimit = 16
 
-    let settings: CombatSettings
-    private(set) var state = MeleeCombatState()
+    public let settings: CombatSettings
+    public private(set) var state = MeleeCombatState()
     /// The most recent landed hits, oldest first.
-    private(set) var trace: [MeleeHitRecord] = []
+    public private(set) var trace: [MeleeHitRecord] = []
     /// Swings that reached their contact frame, and hits those swings landed.
     /// The two differ by every swing that connected with nothing, which is
     /// most of them.
-    private(set) var swingCount = 0
-    private(set) var hitCount = 0
+    public private(set) var swingCount = 0
+    public private(set) var hitCount = 0
 
     /// The weapon the player is swinging. Written when equipment resolves; the
     /// unarmed profile until then. Its `handType` is what `iRightHandType`
     /// reports, so the graph plays that weapon's own equip and attack clips.
-    var weapon = MeleeWeaponProfile.unarmed
+    public var weapon = MeleeWeaponProfile.unarmed
 
     /// What the left hand is holding, written to `iLeftHandType`. Separate from
     /// `weapon` because the left hand holds things a `MeleeWeaponProfile`
     /// cannot describe — a shield, a torch, a readied spell — and because a
     /// two-handed weapon occupies both hands while still being one profile.
     /// Empty until equipment resolves one.
-    var offHand = CombatHandType.handToHand
+    public var offHand = CombatHandType.handToHand
 
     /// Resolves the IPCT chain for a landed hit. Nil in a synthetic session,
     /// and then hits are silent rather than absent.
-    var impacts: MeleeImpactResolver?
+    public var impacts: MeleeImpactResolver?
 
     /// Holds the guard up from something other than the mouse button. Ored
     /// with the frame's intent, so releasing the button does not drop a guard
     /// a probe or a headless driver put up.
-    var panelBlocking = false
+    public var panelBlocking = false
 
     private weak var world: (any MeleeCombatWorld)?
     /// Targets this swing has already landed on, cleared when the swing id
@@ -77,13 +77,13 @@ final class MeleeCombatRuntime {
     private var pendingAttack = false
     private var pendingToggle = false
 
-    init(settings: CombatSettings, world: (any MeleeCombatWorld)? = nil) {
+    public init(settings: CombatSettings, world: (any MeleeCombatWorld)? = nil) {
         self.settings = settings
         self.world = world
     }
 
     /// Attaches (or detaches) the world this runtime resolves against.
-    func attach(world: (any MeleeCombatWorld)?) {
+    public func attach(world: (any MeleeCombatWorld)?) {
         self.world = world
         reset()
     }
@@ -95,7 +95,7 @@ final class MeleeCombatRuntime {
     /// Both one-shot presses latch rather than being consumed here, for the
     /// same reason jump does: a press between two rendered frames must still
     /// reach the graph, and must reach it exactly once.
-    func acceptFrame(_ intent: MeleeIntent) {
+    public func acceptFrame(_ intent: MeleeIntent) {
         if intent.attack {
             requestAttack()
         }
@@ -114,25 +114,25 @@ final class MeleeCombatRuntime {
     /// button reaches the same latch through `acceptFrame(_:)`, so a swing
     /// requested from the sidebar is indistinguishable from one the player
     /// made.
-    func requestAttack() {
+    public func requestAttack() {
         pendingAttack = true
     }
 
     /// Latches one draw or sheath, whichever the current state implies.
-    func requestWeaponToggle() {
+    public func requestWeaponToggle() {
         pendingToggle = true
     }
 
     /// Asks for a specific draw state rather than a toggle, which is what a
     /// checkbox means. A request that matches the current state does nothing.
-    func setWeaponDrawn(_ drawn: Bool) {
+    public func setWeaponDrawn(_ drawn: Bool) {
         guard drawn != state.drawState.isWeaponInHand else { return }
         requestWeaponToggle()
     }
 
     /// Empties the trace and both counts without disturbing anything the
     /// player can feel, which is what the panel's own clear control does.
-    func clearTrace() {
+    public func clearTrace() {
         trace = []
         swingCount = 0
         hitCount = 0
@@ -145,7 +145,7 @@ final class MeleeCombatRuntime {
     ///
     /// - Returns: the hits this frame landed, in the order they were resolved.
     @discardableResult
-    func handleGraphEvents(_ names: [String]) -> [MeleeHitRecord] {
+    public func handleGraphEvents(_ names: [String]) -> [MeleeHitRecord] {
         var landed: [MeleeHitRecord] = []
         for change in state.handle(names) where change.openedHitWindow {
             swingCount += 1
@@ -159,7 +159,7 @@ final class MeleeCombatRuntime {
     /// Forgets every edge and every in-flight swing. Called when the bridge
     /// resets, so a teleport cannot land the hit the swing before it was
     /// interrupted by.
-    func reset() {
+    public func reset() {
         state.reset()
         trace = []
         swingCount = 0
@@ -174,7 +174,7 @@ final class MeleeCombatRuntime {
     // MARK: - Readout
 
     /// Where the swing would reach right now, for the panel and the tests.
-    var currentReach: Float {
+    public var currentReach: Float {
         MeleeSwing.reach(
             weapon: weapon,
             settings: settings,

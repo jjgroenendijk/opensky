@@ -19,7 +19,7 @@ nonisolated extension QuestJournalMovieBridge {
     /// and resets `iSelectedIndex` to the list base's own nothing-selected
     /// sentinel of -1 as it goes, so the selection is written afterwards, not
     /// before, exactly as the inventory menu's list does.
-    static func publish(_ model: JournalMenuModel, runtime: SWFMovieRuntime) {
+    public static func publish(_ model: JournalMenuModel, runtime: SWFMovieRuntime) {
         rebuild(
             rows: model.entries.map(titleRow),
             atPath: titleListPath,
@@ -45,7 +45,7 @@ nonisolated extension QuestJournalMovieBridge {
     /// leaves the rest holding whatever the previous publish put there, so a
     /// quest with no objectives would keep showing the last quest's first line.
     /// `ClearList` is the base class's own method for exactly that.
-    static func rebuild(
+    public static func rebuild(
         rows: [[String: AS2Value]],
         atPath path: String,
         selection: Int,
@@ -60,7 +60,7 @@ nonisolated extension QuestJournalMovieBridge {
     }
 
     /// The selected quest's name, journal paragraphs and type endpiece.
-    static func publishSelectionText(_ model: JournalMenuModel, runtime: SWFMovieRuntime) {
+    public static func publishSelectionText(_ model: JournalMenuModel, runtime: SWFMovieRuntime) {
         let entry = model.selectedEntry
         setText(entry?.title ?? "", atPath: titleTextPath, runtime: runtime)
         setText(entry?.descriptionText ?? "", atPath: descriptionTextPath, runtime: runtime)
@@ -73,7 +73,7 @@ nonisolated extension QuestJournalMovieBridge {
     }
 
     /// Replaces one list's `EntriesA` with `rows`.
-    static func publish(
+    public static func publish(
         rows: [[String: AS2Value]],
         atPath path: String,
         runtime: SWFMovieRuntime
@@ -94,7 +94,7 @@ nonisolated extension QuestJournalMovieBridge {
     }
 
     /// Rebuilds one list's entry clips from the array just written.
-    static func invalidate(atPath path: String, runtime: SWFMovieRuntime) {
+    public static func invalidate(atPath path: String, runtime: SWFMovieRuntime) {
         runtime.callMovie(invalidateMethod, atPath: path, arguments: [])
     }
 
@@ -104,7 +104,7 @@ nonisolated extension QuestJournalMovieBridge {
     /// `iSelectedIndex`, and it is both what an empty list holds and what a
     /// caller asks for when the list is a readout rather than a cursor. A
     /// positive index is clamped into the rows that exist.
-    static func select(
+    public static func select(
         _ index: Int,
         count: Int,
         atPath path: String,
@@ -119,7 +119,7 @@ nonisolated extension QuestJournalMovieBridge {
 
     /// One quest row. `text` is the field the list base's `SetEntryText` reads;
     /// the rest carry the row's identity back out of a movie-driven selection.
-    static func titleRow(_ entry: JournalQuestEntry) -> [String: AS2Value] {
+    public static func titleRow(_ entry: JournalQuestEntry) -> [String: AS2Value] {
         [
             "text": .string(entry.title),
             "formID": .number(Double(entry.formID.rawValue)),
@@ -138,7 +138,7 @@ nonisolated extension QuestJournalMovieBridge {
     /// `openskycli swf quest-journal --objective-state completed`. `active`
     /// marks the player's tracked objective, which OpenSky does not model, so
     /// it is published false rather than guessed.
-    static func objectiveRow(_ objective: JournalObjectiveEntry) -> [String: AS2Value] {
+    public static func objectiveRow(_ objective: JournalObjectiveEntry) -> [String: AS2Value] {
         [
             "text": .string(objective.text),
             "instance": .integer(Int(objective.index)),
@@ -149,7 +149,7 @@ nonisolated extension QuestJournalMovieBridge {
     }
 
     /// Entry-clip frame label for one objective display state.
-    static func frameLabel(for state: JournalObjectiveEntry.State) -> String {
+    public static func frameLabel(for state: JournalObjectiveEntry.State) -> String {
         switch state {
         case .displayed: objectiveNormalFrame
         case .completed: objectiveCompletedFrame
@@ -161,7 +161,7 @@ nonisolated extension QuestJournalMovieBridge {
     /// labels are the type names, so the mapping is a rename rather than a
     /// number: the movie has no endpiece for a type it predates, which falls
     /// back to `Misc`.
-    static func endpieceFrame(for kind: Quest.Kind) -> String {
+    public static func endpieceFrame(for kind: Quest.Kind) -> String {
         switch kind {
         case .mainQuest: "Main"
         case .magesGuild: "MagesGuild"
@@ -179,12 +179,12 @@ nonisolated extension QuestJournalMovieBridge {
 
     /// Position of that label in the clip's own label order, which is the
     /// number a row carries when the page wants the type without the name.
-    static func endpieceFrameIndex(for kind: Quest.Kind) -> Int {
+    public static func endpieceFrameIndex(for kind: Quest.Kind) -> Int {
         endpieceFrames.firstIndex(of: endpieceFrame(for: kind)) ?? 0
     }
 
     /// The endpiece clip's frame labels in timeline order, as measured.
-    static var endpieceFrames: [String] {
+    public static var endpieceFrames: [String] {
         [
             "Main", "MagesGuild", "ThievesGuild", "DarkBrotherhood", "Companion",
             "Favor", "Daedric", "Misc", "CivilWar", "DLC01", "DLC02"
@@ -197,7 +197,7 @@ nonisolated extension QuestJournalMovieBridge {
     ///
     /// `EntriesA` is an AS2 array, so its rows are numeric property names and
     /// have to be sorted numerically — lexical order puts row 10 before row 2.
-    static func entryLabels(runtime: SWFMovieRuntime, atPath path: String) -> [String] {
+    public static func entryLabels(runtime: SWFMovieRuntime, atPath path: String) -> [String] {
         guard
             let list = runtime.node(atPath: path, from: runtime.root),
             let entries = list.object.lookup(entryArrayName)?.property.value.objectValue
@@ -218,15 +218,15 @@ nonisolated extension QuestJournalMovieBridge {
             }
     }
 
-    static func questLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func questLabels(runtime: SWFMovieRuntime) -> [String] {
         entryLabels(runtime: runtime, atPath: titleListPath)
     }
 
-    static func objectiveLabels(runtime: SWFMovieRuntime) -> [String] {
+    public static func objectiveLabels(runtime: SWFMovieRuntime) -> [String] {
         entryLabels(runtime: runtime, atPath: objectiveListPath)
     }
 
-    static func selectedIndex(runtime: SWFMovieRuntime, atPath path: String) -> Int? {
+    public static func selectedIndex(runtime: SWFMovieRuntime, atPath path: String) -> Int? {
         guard
             let list = runtime.node(atPath: path, from: runtime.root),
             case let .number(index) = list.object.lookup(selectedIndexName)?.property.value,
@@ -239,16 +239,16 @@ nonisolated extension QuestJournalMovieBridge {
 
     /// Text the page's own title field currently holds, which is what proves a
     /// publish reached the movie rather than only the engine model.
-    static func titleText(runtime: SWFMovieRuntime) -> String? {
+    public static func titleText(runtime: SWFMovieRuntime) -> String? {
         text(atPath: titleTextPath, runtime: runtime)
     }
 
-    static func descriptionText(runtime: SWFMovieRuntime) -> String? {
+    public static func descriptionText(runtime: SWFMovieRuntime) -> String? {
         text(atPath: descriptionTextPath, runtime: runtime)
     }
 
     /// The three tallies the bring-up gate reads, for the verification readout.
-    static func diagnostics(runtime: SWFMovieRuntime) -> QuestJournalDiagnostics {
+    public static func diagnostics(runtime: SWFMovieRuntime) -> QuestJournalDiagnostics {
         let tally = runtime.tally
         return QuestJournalDiagnostics(
             faults: tally.faultTotal,
@@ -283,7 +283,7 @@ nonisolated extension QuestJournalMovieBridge {
     /// `ClearList` hides the surplus entry clips rather than moving them back
     /// to a blank frame, so a cleared list still holds the last row's label on
     /// a clip nobody can see.
-    static func objectiveEntryFrames(runtime: SWFMovieRuntime) -> [String] {
+    public static func objectiveEntryFrames(runtime: SWFMovieRuntime) -> [String] {
         guard let list = runtime.node(atPath: objectiveListPath, from: runtime.root) else {
             return []
         }

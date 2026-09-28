@@ -4,48 +4,48 @@
 import OpenSkyFormats
 import simd
 
-struct CellStreamerNPCMovementState {
-    var runtime = NPCMovementRuntime()
-    var configuration = PlayerMovementConfiguration.synthetic
-    var onPersist: ((NPCMovementPersistence) -> Void)?
-    var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
-    var onPosesChanged: (([UInt32: float4x4]) -> Void)?
-    var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
+public struct CellStreamerNPCMovementState {
+    public var runtime = NPCMovementRuntime()
+    public var configuration = PlayerMovementConfiguration.synthetic
+    public var onPersist: ((NPCMovementPersistence) -> Void)?
+    public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
+    public var onPosesChanged: (([UInt32: float4x4]) -> Void)?
+    public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
 }
 
 extension CellStreamer: MoveToPointControl {
-    var npcMovement: NPCMovementRuntime {
+    public var npcMovement: NPCMovementRuntime {
         get { npcMovementState.runtime }
         set { npcMovementState.runtime = newValue }
     }
 
-    var npcMovementConfiguration: PlayerMovementConfiguration {
+    public var npcMovementConfiguration: PlayerMovementConfiguration {
         get { npcMovementState.configuration }
         set { npcMovementState.configuration = newValue }
     }
 
-    var onNPCMovementPersist: ((NPCMovementPersistence) -> Void)? {
+    public var onNPCMovementPersist: ((NPCMovementPersistence) -> Void)? {
         get { npcMovementState.onPersist }
         set { npcMovementState.onPersist = newValue }
     }
 
-    var onNPCLocomotionDrive: ((NPCLocomotionDriveUpdate) -> Void)? {
+    public var onNPCLocomotionDrive: ((NPCLocomotionDriveUpdate) -> Void)? {
         get { npcMovementState.onDrive }
         set { npcMovementState.onDrive = newValue }
     }
 
-    var onNPCPosesChanged: (([UInt32: float4x4]) -> Void)? {
+    public var onNPCPosesChanged: (([UInt32: float4x4]) -> Void)? {
         get { npcMovementState.onPosesChanged }
         set { npcMovementState.onPosesChanged = newValue }
     }
 
-    var onNPCDoorCrossing: ((ReferenceKey, FormID) -> Void)? {
+    public var onNPCDoorCrossing: ((ReferenceKey, FormID) -> Void)? {
         get { npcMovementState.onDoorCrossing }
         set { npcMovementState.onDoorCrossing = newValue }
     }
 
     @discardableResult
-    func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult {
+    public func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult {
         guard let entry = referenceEntry(key: actor), let placed = entry.placedActor else {
             return .actorNotResident
         }
@@ -77,7 +77,7 @@ extension CellStreamer: MoveToPointControl {
     }
 
     @discardableResult
-    func stopActor(_ actor: ReferenceKey) -> Bool {
+    public func stopActor(_ actor: ReferenceKey) -> Bool {
         bindNPCMovementCallbacks()
         return npcMovement.stop(actor)
     }
@@ -89,7 +89,7 @@ extension CellStreamer: MoveToPointControl {
     /// somewhere turns where it now stands rather than where its ACHR was
     /// authored.
     @discardableResult
-    func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>) -> Bool {
+    public func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>) -> Bool {
         guard let entry = referenceEntry(key: actor), let placed = entry.placedActor else {
             return false
         }
@@ -110,7 +110,7 @@ extension CellStreamer: MoveToPointControl {
     }
 
     @discardableResult
-    func releaseActorFacing(_ actor: ReferenceKey) -> Bool {
+    public func releaseActorFacing(_ actor: ReferenceKey) -> Bool {
         bindNPCMovementCallbacks()
         let released = npcMovement.releaseFacing(actor)
         if released {
@@ -120,24 +120,24 @@ extension CellStreamer: MoveToPointControl {
     }
 
     /// What one actor is turning towards, for the gate readout.
-    func npcFacing(for actor: ReferenceKey) -> NPCFacingHold? {
+    public func npcFacing(for actor: ReferenceKey) -> NPCFacingHold? {
         npcMovement.facing(for: actor)
     }
 
-    func npcMovementReadouts() -> [NPCMovementReadout] {
+    public func npcMovementReadouts() -> [NPCMovementReadout] {
         npcMovement.readouts()
     }
 
-    func npcTransform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
+    public func npcTransform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
         npcMovement.transform(for: actor)
     }
 
     /// Writes all active actors once immediately before a save snapshot.
-    func persistNPCMovementForSave() {
+    public func persistNPCMovementForSave() {
         npcMovement.persistForSave()
     }
 
-    func advanceNPCMovement(frameTime: Float) {
+    public func advanceNPCMovement(frameTime: Float) {
         bindNPCMovementCallbacks()
         npcMovement.advance(by: frameTime, world: NPCMovementWorld(
             sampleGround: { [weak self] position in self?.sampleTerrain(at: position) },
@@ -162,7 +162,7 @@ extension CellStreamer: MoveToPointControl {
         return navigationState.graph.cell(at: position)
     }
 
-    func bindNPCMovementCallbacks() {
+    public func bindNPCMovementCallbacks() {
         npcMovement.onDrive = { [weak self] update in
             self?.onNPCLocomotionDrive?(update)
         }

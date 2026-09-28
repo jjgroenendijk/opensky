@@ -6,11 +6,11 @@ import Foundation
 import OpenSkyFormats
 import OSLog
 
-nonisolated enum ScriptBindingError: Error, Equatable {
+nonisolated public enum ScriptBindingError: Error, Equatable {
     case removedScript(String)
 }
 
-nonisolated enum ScriptBindingSkipReason: Hashable {
+nonisolated public enum ScriptBindingSkipReason: Hashable, Sendable {
     case removedProperty
     case missingProperty
     case manualProperty
@@ -23,7 +23,7 @@ nonisolated enum ScriptBindingSkipReason: Hashable {
     case unresolvedReference
     case typeMismatch
 
-    var name: String {
+    public var name: String {
         switch self {
         case .removedProperty: "removed property"
         case .missingProperty: "property missing from PEX"
@@ -36,14 +36,14 @@ nonisolated enum ScriptBindingSkipReason: Hashable {
     }
 }
 
-nonisolated struct ScriptBindingTally: Equatable {
-    private(set) var counts: [ScriptBindingSkipReason: Int] = [:]
+nonisolated public struct ScriptBindingTally: Equatable, Sendable {
+    public private(set) var counts: [ScriptBindingSkipReason: Int] = [:]
 
-    var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    var ranked: [(name: String, count: Int)] {
+    public var ranked: [(name: String, count: Int)] {
         counts
             .sorted {
                 $0.value == $1.value
@@ -53,28 +53,28 @@ nonisolated struct ScriptBindingTally: Equatable {
             .map { ($0.key.name, $0.value) }
     }
 
-    mutating func note(_ reason: ScriptBindingSkipReason) {
+    public mutating func note(_ reason: ScriptBindingSkipReason) {
         counts[reason, default: 0] += 1
     }
 
-    mutating func merge(_ other: ScriptBindingTally) {
+    public mutating func merge(_ other: ScriptBindingTally) {
         for (reason, count) in other.counts {
             counts[reason, default: 0] += count
         }
     }
 }
 
-nonisolated struct ScriptBinding {
-    let initialValues: [String: PapyrusValue]
+nonisolated public struct ScriptBinding: Sendable {
+    public let initialValues: [String: PapyrusValue]
     /// Direct VMAD FormIDs that resolved all the way through
     /// `FormIDResolver` -> `ReferenceKey` -> caller-owned opaque handle.
-    let resolvedReferences: [ReferenceKey]
-    let skipped: ScriptBindingTally
+    public let resolvedReferences: [ReferenceKey]
+    public let skipped: ScriptBindingTally
 }
 
-nonisolated struct BoundScriptInstance {
-    let handle: PapyrusObjectHandle
-    let binding: ScriptBinding
+nonisolated public struct BoundScriptInstance: Sendable {
+    public let handle: PapyrusObjectHandle
+    public let binding: ScriptBinding
 }
 
 nonisolated extension AttachedScript {
@@ -83,7 +83,7 @@ nonisolated extension AttachedScript {
     /// An unfilled alias object and a direct reference with no live opaque
     /// handle leave the PEX compiler default intact. The caller owns
     /// world-reference handle allocation; M11.2 supplies that lifecycle.
-    func makeInstance(
+    public func makeInstance(
         in runtime: PapyrusRuntime,
         handle: PapyrusObjectHandle? = nil,
         formIDResolver: FormIDResolver,
@@ -104,7 +104,7 @@ nonisolated extension AttachedScript {
         return BoundScriptInstance(handle: instanceHandle, binding: binding)
     }
 
-    func binding(
+    public func binding(
         in runtime: PapyrusRuntime,
         formIDResolver: FormIDResolver,
         aliases: QuestAliasResolution = .empty,

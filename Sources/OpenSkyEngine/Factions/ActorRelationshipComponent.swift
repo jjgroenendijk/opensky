@@ -50,11 +50,11 @@ import OpenSkyFormats
 /// Signed and stored raw: the wiki calls -4...4 "acceptable" without saying what
 /// happens outside it, so a value a script invents is kept rather than clamped
 /// into a rank it did not mean.
-nonisolated struct ActorRelationshipOverride: Equatable, Sendable, Comparable {
-    let other: ReferenceKey
-    let rank: Int8
+nonisolated public struct ActorRelationshipOverride: Equatable, Sendable, Comparable {
+    public let other: ReferenceKey
+    public let rank: Int8
 
-    static func < (lhs: Self, rhs: Self) -> Bool {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.other == rhs.other ? lhs.rank < rhs.rank : lhs.other < rhs.other
     }
 }
@@ -66,22 +66,22 @@ nonisolated struct ActorRelationshipOverride: Equatable, Sendable, Comparable {
 /// the same state, which is the rule `ActorFactionState.memberships` already
 /// follows. One entry per other actor: setting a rank twice replaces it, because
 /// "what are these two to each other" must have exactly one answer.
-nonisolated struct ActorRelationshipState: WorldStateComponent {
-    private(set) var overrides: [ActorRelationshipOverride]
+nonisolated public struct ActorRelationshipState: WorldStateComponent, Sendable {
+    public private(set) var overrides: [ActorRelationshipOverride]
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .relationships
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .relationships(self)
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         overrides.isEmpty
     }
 
-    var count: Int {
+    public var count: Int {
         overrides.count
     }
 
@@ -94,7 +94,7 @@ nonisolated struct ActorRelationshipState: WorldStateComponent {
     /// faction membership follows: the entry is invisible to every query that
     /// goes through a live key anyway, and dropping it would make a plugin
     /// coming and going destroy a scripted relationship.
-    init(overrides: [ActorRelationshipOverride] = []) {
+    public init(overrides: [ActorRelationshipOverride] = []) {
         var ranks: [ReferenceKey: Int8] = [:]
         for override in overrides {
             ranks[override.other] = override.rank
@@ -105,20 +105,20 @@ nonisolated struct ActorRelationshipState: WorldStateComponent {
         }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .relationships(value) = erased else { return nil }
         self = value
     }
 
     /// The rank toward `other`, or nil when no script has set one — which is not
     /// the same as 0, the Acquaintance rank a script may set deliberately.
-    func rank(toward other: ReferenceKey) -> Int8? {
+    public func rank(toward other: ReferenceKey) -> Int8? {
         overrides.first { $0.other == other }?.rank
     }
 
     /// The state after setting the rank toward `other`, replacing any earlier
     /// one.
-    func setting(_ rank: Int8, toward other: ReferenceKey) -> ActorRelationshipState {
+    public func setting(_ rank: Int8, toward other: ReferenceKey) -> ActorRelationshipState {
         ActorRelationshipState(
             overrides: overrides + [ActorRelationshipOverride(other: other, rank: rank)]
         )

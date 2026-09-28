@@ -2,7 +2,7 @@
 // resting transforms it hands to persistence, the player's shove, and the
 // panel's freeze and reset controls.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

@@ -24,7 +24,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// component's own `location`, not the delta's attribution cell: the former
     /// says where the object is and the latter says where it was last touched,
     /// and only the first belongs in the world.
-    static func writeSpawnedReferences(
+    public static func writeSpawnedReferences(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

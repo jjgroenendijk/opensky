@@ -23,46 +23,60 @@ import OpenSkyFormats
 import simd
 
 /// Who is shooting, and from where.
-nonisolated struct ProjectileShooter: Equatable, Sendable {
+nonisolated public struct ProjectileShooter: Equatable, Sendable {
     /// The shooter's reference, so a shot can never hit its own owner.
-    let key: ReferenceKey
+    public let key: ReferenceKey
     /// The muzzle, world space. The eye rather than the bow hand: the aim ray
     /// is the camera's, and starting the arrow anywhere the camera is not makes
     /// a shot that lands off the reticle by the offset between them.
-    let origin: SIMD3<Float>
+    public let origin: SIMD3<Float>
     /// The camera's forward direction, before the tilt-up angle is applied.
-    let aim: SIMD3<Float>
+    public let aim: SIMD3<Float>
     /// Which perspective is active, which picks the tilt GMST.
-    let isFirstPerson: Bool
+    public let isFirstPerson: Bool
     /// The cell the shooter is standing in, which is the cell a stuck arrow is
     /// spawned into. Nil outside a streamed world, and then nothing sticks.
-    let location: CellSceneLocation?
+    public let location: CellSceneLocation?
+
+    public init(
+        key: ReferenceKey,
+        origin: SIMD3<Float>,
+        aim: SIMD3<Float>,
+        isFirstPerson: Bool,
+        location: CellSceneLocation?
+    ) {
+        self.key = key
+        self.origin = origin
+        self.aim = aim
+        self.isFirstPerson = isFirstPerson
+        self.location = location
+    }
 }
 
 /// One projectile in flight — an arrow or a cast spell (issue #471).
-nonisolated struct LiveProjectile: Equatable, Sendable {
+nonisolated public struct LiveProjectile: Equatable, Sendable {
     /// Monotonic id, so the trace can name a projectile that no longer exists.
-    let id: Int
-    let shooter: ReferenceKey
-    let profile: ProjectileProfile
+    public let id: Int
+    public let shooter: ReferenceKey
+    public let profile: ProjectileProfile
     /// What it carries and what it does when it lands. Fixed at launch, for the
     /// reason a bow's damage is: re-deriving it at impact would let a weapon
     /// swap or a re-ready mid-flight change what is already in the air.
-    let payload: ProjectilePayload
-    let launchPosition: SIMD3<Float>
-    let launchDirection: SIMD3<Float>
+    public let payload: ProjectilePayload
+    public let launchPosition: SIMD3<Float>
+    public let launchDirection: SIMD3<Float>
     /// The cell it was fired in, which is where a stick lands.
-    let location: CellSceneLocation?
-    var state: ProjectileFlightState
+    public let location: CellSceneLocation?
+    public var state: ProjectileFlightState
 
     /// Where the shot is now, which is what a readout draws.
-    var position: SIMD3<Float> {
+    public var position: SIMD3<Float> {
         state.position
     }
 }
 
 /// Why a projectile stopped existing.
-nonisolated enum ProjectileOutcome: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum ProjectileOutcome: String, Equatable, Sendable, CaseIterable {
     /// Struck an actor capsule.
     case hitActor
     /// Struck placed static geometry.
@@ -76,7 +90,7 @@ nonisolated enum ProjectileOutcome: String, Equatable, Sendable, CaseIterable {
     case cancelled
 
     /// Whether the projectile ended by touching something.
-    var isImpact: Bool {
+    public var isImpact: Bool {
         self == .hitActor || self == .hitStatic
     }
 }
@@ -84,54 +98,54 @@ nonisolated enum ProjectileOutcome: String, Equatable, Sendable, CaseIterable {
 /// One finished shot, kept for the panel's last-trajectory readout. Carries
 /// everything the issue asks that readout to show: spawn point, impact point
 /// and flight time.
-nonisolated struct ProjectileTrace: Equatable, Sendable {
-    let id: Int
-    let launchPosition: SIMD3<Float>
-    let launchDirection: SIMD3<Float>
+nonisolated public struct ProjectileTrace: Equatable, Sendable {
+    public let id: Int
+    public let launchPosition: SIMD3<Float>
+    public let launchDirection: SIMD3<Float>
     /// Where it ended. For a miss this is simply where it was given up on.
-    let endPosition: SIMD3<Float>
+    public let endPosition: SIMD3<Float>
     /// Seconds of flight.
-    let flightTime: Float
+    public let flightTime: Float
     /// Path length travelled, world units.
-    let travelled: Float
+    public let travelled: Float
     /// How far below the aim line it ended, world units. Zero for a shot with
     /// no gravity.
-    let drop: Float
-    let outcome: ProjectileOutcome
+    public let drop: Float
+    public let outcome: ProjectileOutcome
     /// What it hit, when it hit an actor.
-    let target: ReferenceKey?
+    public let target: ReferenceKey?
     /// Health actually taken off; zero for a miss or an unarmoured non-actor.
     /// A spell takes health off through the effect runtime instead, so this
     /// stays zero for one and `spellHit` carries what it did.
-    let appliedDamage: Float
+    public let appliedDamage: Float
     /// The SNDR the impact chain resolved, or nil where it named none.
-    let sound: FormID?
+    public let sound: FormID?
     /// Whether the arrow was left in the world at the impact point.
-    let stuck: Bool
+    public let stuck: Bool
     /// What a landed spell applied, or nil for an arrow and for a spell that
     /// reached nobody (issue #471).
-    let spellHit: SpellHitReport?
+    public let spellHit: SpellHitReport?
     /// Whether this hit should make its target hostile: every arrow, and a
     /// spell whose effects are hostile. Read by the combat loop, so a healing
     /// spell cast at a follower does not start a fight.
-    let provokes: Bool
+    public let provokes: Bool
 }
 
 /// One arrow left standing in whatever it hit.
-nonisolated struct StuckProjectile: Equatable, Sendable {
+nonisolated public struct StuckProjectile: Equatable, Sendable {
     /// The projectile that made it, so the trace and the registry agree.
-    let projectileID: Int
+    public let projectileID: Int
     /// The AMMO to draw it from. A stuck arrow is the ammunition's own ground
     /// model, which is the model a spent arrow is picked back up as.
-    let base: FormID
-    let location: CellSceneLocation
-    let position: SIMD3<Float>
+    public let base: FormID
+    public let location: CellSceneLocation
+    public let position: SIMD3<Float>
     /// Rotation in the same radians `PlacedReference.Placement` uses, aligned
     /// with the flight direction at impact so the shaft points into the surface.
-    let rotation: SIMD3<Float>
+    public let rotation: SIMD3<Float>
     /// The reference it stuck in, for the readout. Nil for terrain and for
     /// anything the sweep could not name.
-    let host: FormID?
+    public let host: FormID?
 }
 
 /// Applying one landed spell, wherever it came from.
@@ -140,7 +154,7 @@ nonisolated struct StuckProjectile: Equatable, Sendable {
 /// target-actor cast and a concentration beam all land the same way, and the
 /// session implements the answer once for all three (issue #471).
 @MainActor
-protocol SpellHitApplying: AnyObject {
+public protocol SpellHitApplying: AnyObject {
     /// Applies one landed spell to the actors it reached.
     ///
     /// - Returns: what was applied. `SpellHitReport.none` when the session has
@@ -156,7 +170,7 @@ protocol SpellHitApplying: AnyObject {
 /// enchanted bow and an enchanted blade apply through one implementation (issue
 /// #472).
 @MainActor
-protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHitApplying,
+public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHitApplying,
     WeaponEnchantmentApplying
 {
     /// Where the player is aiming from, this frame.

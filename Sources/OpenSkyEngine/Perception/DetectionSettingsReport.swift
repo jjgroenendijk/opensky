@@ -11,7 +11,7 @@ import Foundation
 nonisolated extension DetectionSettings {
     /// Every setting paired with the name it is addressed by. Load-order
     /// settings first, in formula order, then OpenSky's own.
-    var report: [(editorID: String, setting: MovementSetting)] {
+    public var report: [(editorID: String, setting: MovementSetting)] {
         [
             ("fSneakBaseValue", sneakBaseValue),
             ("fSneakMaxDistance", maxDistance),

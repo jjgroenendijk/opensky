@@ -28,7 +28,7 @@ import Foundation
 import OpenSkyFormats
 
 /// Where one hand's cast is.
-nonisolated enum SpellCastPhase: String, Equatable, Sendable, CaseIterable {
+nonisolated public enum SpellCastPhase: String, Equatable, Sendable, CaseIterable {
     /// Nothing is being cast in this hand.
     case idle
     /// The cast input is held and the SPIT charge time has not elapsed.
@@ -45,13 +45,13 @@ nonisolated enum SpellCastPhase: String, Equatable, Sendable, CaseIterable {
     /// by "casting" and what magicka regeneration has to stand down for. UESP:
     /// "Magicka will not regenerate while you are casting a spell."
     /// (<https://en.uesp.net/wiki/Skyrim:Magicka>)
-    var isCasting: Bool {
+    public var isCasting: Bool {
         self != .idle
     }
 }
 
 /// Why a cast did not happen.
-nonisolated enum SpellCastFailure: Equatable, Sendable {
+nonisolated public enum SpellCastFailure: Equatable, Sendable {
     /// No spell is readied in the hand that was asked to cast.
     case noSpellReadied(SpellHand)
     /// A spell is readied but this load order no longer carries the record.
@@ -75,7 +75,7 @@ nonisolated enum SpellCastFailure: Equatable, Sendable {
     /// (<https://en.uesp.net/wiki/Skyrim:Powers>)
     case powerAlreadyUsedToday(day: Int32)
 
-    var describedReason: String {
+    public var describedReason: String {
         switch self {
         case let .noSpellReadied(hand): "no spell readied in the \(hand.describedName)"
         case let .unknownSpell(spell): "no loaded plugin carries \(spell)"
@@ -92,7 +92,7 @@ nonisolated enum SpellCastFailure: Equatable, Sendable {
 }
 
 /// What one cast action did.
-nonisolated enum SpellCastOutcome: Equatable, Sendable {
+nonisolated public enum SpellCastOutcome: Equatable, Sendable {
     /// The charge started. Carries the seconds until the spell is castable, so
     /// a caller can tell an instant-charge spell from one that has to be held.
     case charging(spell: ReferenceKey, chargeTime: Float)
@@ -111,7 +111,7 @@ nonisolated enum SpellCastOutcome: Equatable, Sendable {
     /// The hand was idle and the action asked nothing of it.
     case ignored
 
-    var isCast: Bool {
+    public var isCast: Bool {
         if case .cast = self {
             return true
         }
@@ -121,14 +121,14 @@ nonisolated enum SpellCastOutcome: Equatable, Sendable {
     /// Whether a spell actually left the hand: a fire-and-forget one landed, or
     /// a maintained one ran and was let go. What the combat loop counts as a
     /// cast having happened (issue #473).
-    var isFinished: Bool {
+    public var isFinished: Bool {
         switch self {
         case .cast, .released: true
         default: false
         }
     }
 
-    var failure: SpellCastFailure? {
+    public var failure: SpellCastFailure? {
         if case let .failed(reason) = self {
             return reason
         }
@@ -137,16 +137,16 @@ nonisolated enum SpellCastOutcome: Equatable, Sendable {
 }
 
 /// One completed application: what was spent and what landed.
-nonisolated struct SpellCastResult: Equatable, Sendable {
-    let spell: ReferenceKey
-    let hand: SpellHand
+nonisolated public struct SpellCastResult: Equatable, Sendable {
+    public let spell: ReferenceKey
+    public let hand: SpellHand
     /// Magicka actually taken off the caster.
-    let magickaSpent: Float
+    public let magickaSpent: Float
     /// Effect entries handed to the active-effect runtime.
-    let entryCount: Int
+    public let entryCount: Int
     /// Timed effects it stored. Zero for a spell whose entries are all instant,
     /// which is what a restore-health cast is.
-    let storedCount: Int
+    public let storedCount: Int
 }
 
 /// One hand's cast, advanced by time.
@@ -154,65 +154,65 @@ nonisolated struct SpellCastResult: Equatable, Sendable {
 /// Deliberately not a world-state component: a charge in progress is frame
 /// state, and a save that restored one would put the player back mid-cast with
 /// magicka already committed. The readied spell persists; the cast does not.
-nonisolated struct SpellCastState: Equatable, Sendable {
-    private(set) var phase = SpellCastPhase.idle
+nonisolated public struct SpellCastState: Equatable, Sendable {
+    public private(set) var phase = SpellCastPhase.idle
     /// The spell this cast is of, nil while idle.
-    private(set) var spell: ReferenceKey?
+    public private(set) var spell: ReferenceKey?
     /// Seconds spent charging so far.
-    private(set) var charged: Float = 0
+    public private(set) var charged: Float = 0
     /// Seconds the concentration has been maintained.
-    private(set) var held: Float = 0
+    public private(set) var held: Float = 0
     /// Whole seconds of concentration whose effect application already
     /// happened. Counted rather than derived from `held`, for the reason
     /// `ActiveEffect.paidSeconds` is: repeated small steps must not round into
     /// an extra application.
-    private(set) var appliedSeconds: UInt32 = 0
+    public private(set) var appliedSeconds: UInt32 = 0
     /// Magicka this cast has taken so far, which for a concentration spell
     /// grows for as long as it runs.
-    private(set) var magickaSpent: Float = 0
+    public private(set) var magickaSpent: Float = 0
     /// True once the input was released but the concentration has not yet
     /// reached the SPIT minimum cast duration.
-    private(set) var isReleasing = false
+    public private(set) var isReleasing = false
 
     /// Starts a charge.
-    mutating func beginCharge(_ spell: ReferenceKey) {
+    public mutating func beginCharge(_ spell: ReferenceKey) {
         self = SpellCastState()
         self.spell = spell
         phase = .charging
     }
 
     /// Moves a fully charged fire-and-forget cast to the release window.
-    mutating func makeReady() {
+    public mutating func makeReady() {
         phase = .ready
     }
 
     /// Moves a fully charged concentration cast to maintenance.
-    mutating func beginConcentration() {
+    public mutating func beginConcentration() {
         phase = .concentrating
     }
 
-    mutating func addCharge(_ delta: Float) {
+    public mutating func addCharge(_ delta: Float) {
         charged += delta
     }
 
-    mutating func addHeld(_ delta: Float) {
+    public mutating func addHeld(_ delta: Float) {
         held += delta
     }
 
-    mutating func noteApplied() {
+    public mutating func noteApplied() {
         appliedSeconds += 1
     }
 
-    mutating func spend(_ magicka: Float) {
+    public mutating func spend(_ magicka: Float) {
         magickaSpent += magicka
     }
 
-    mutating func requestRelease() {
+    public mutating func requestRelease() {
         isReleasing = true
     }
 
     /// Ends the cast, leaving the hand idle.
-    mutating func finish() {
+    public mutating func finish() {
         self = SpellCastState()
     }
 
@@ -223,7 +223,7 @@ nonisolated struct SpellCastState: Equatable, Sendable {
     /// step is 1/60 s, which has no exact binary representation, so sixty steps
     /// sum to slightly under one second. Without the tolerance a maintained
     /// spell would skip an application every second.
-    static let secondTolerance: Float = 0.001
+    public static let secondTolerance: Float = 0.001
 
     /// Applications that are due but have not happened yet, capped at the steps
     /// one advance may run so a stalled frame cannot apply a minute of healing
@@ -232,7 +232,7 @@ nonisolated struct SpellCastState: Equatable, Sendable {
     /// One at entry plus one per whole second held, which is why the count is
     /// `elapsed + 1`: a maintained heal starts healing when it starts costing
     /// rather than a second later.
-    func pendingApplications(limit: Int) -> Int {
+    public func pendingApplications(limit: Int) -> Int {
         let elapsed = UInt32(max(0, held + Self.secondTolerance).rounded(.down))
         let due = elapsed &+ 1
         guard due > appliedSeconds else { return 0 }

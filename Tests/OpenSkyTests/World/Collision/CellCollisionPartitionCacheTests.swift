@@ -2,7 +2,7 @@
 // shares canonical model keys with MeshLibrary and NIFCollisionLibrary, so a
 // departed cell's drop-set must remove only matching partition results.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

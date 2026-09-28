@@ -7,12 +7,12 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated enum RecordTextDump {
+nonisolated public enum RecordTextDump: Sendable {
     /// Big records (Tamriel WRLD carries thousands of RNAMs) get capped so
     /// the dump stays readable; the tail is summarized per field type.
-    static let fieldPrintCap = 64
+    public static let fieldPrintCap = 64
 
-    static func dump(record: ESMRecord, localized: Bool) -> String {
+    public static func dump(record: ESMRecord, localized: Bool) -> String {
         dump(
             record: record,
             localized: localized,
@@ -22,7 +22,7 @@ nonisolated enum RecordTextDump {
         )
     }
 
-    static func dump(
+    public static func dump(
         record: ESMRecord,
         localized: Bool,
         keywordStore: KeywordStore,
@@ -37,7 +37,7 @@ nonisolated enum RecordTextDump {
         )
     }
 
-    static func dump(
+    public static func dump(
         record: ESMRecord,
         localized: Bool,
         keywordStore: KeywordStore,
@@ -53,7 +53,7 @@ nonisolated enum RecordTextDump {
         )
     }
 
-    static func dump(
+    public static func dump(
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,

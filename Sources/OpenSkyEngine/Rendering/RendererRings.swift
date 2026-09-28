@@ -11,31 +11,31 @@ import simd
 extension Renderer {
     /// Ring slots per frame for `count` draws: next power of two, min 1 —
     /// headroom so the per-cell-crossing swaps of streaming rarely realloc.
-    static func slotCapacity(for count: Int) -> Int {
+    public static func slotCapacity(for count: Int) -> Int {
         count <= 1 ? 1 : 1 << (Int.bitWidth - (count - 1).leadingZeroBitCount)
     }
 
     /// Shadow draw-ring slots one frame can need for a `drawCapacity`-slot
     /// scene: one ShadowDrawUniforms per cascade per drawn caster.
-    static func shadowDrawCapacity(_ drawCapacity: Int) -> Int {
+    public static func shadowDrawCapacity(_ drawCapacity: Int) -> Int {
         ShadowConstant.cascadeCount.rawValue * drawCapacity
     }
 
     /// Every per-frame ring a scene needs: the scene-pass draw + point-light +
     /// instance rings, plus the parallel shadow-pass draw + instance rings.
-    struct SceneRings {
-        let drawBuffer: MTLBuffer
-        let pointLightBuffer: MTLBuffer
-        let drawCapacity: Int
-        let instanceBuffer: MTLBuffer
-        let instanceCapacity: Int
-        let shadowDrawBuffer: MTLBuffer
-        let shadowInstanceBuffer: MTLBuffer
+    public struct SceneRings {
+        public let drawBuffer: MTLBuffer
+        public let pointLightBuffer: MTLBuffer
+        public let drawCapacity: Int
+        public let instanceBuffer: MTLBuffer
+        public let instanceCapacity: Int
+        public let shadowDrawBuffer: MTLBuffer
+        public let shadowInstanceBuffer: MTLBuffer
     }
 
     /// Allocates every per-frame ring for a scene — shared by init and the
     /// regrow path in setScene (identical sizing policy in one place).
-    static func makeSceneRings(device: MTLDevice, scene: RenderScene) throws -> SceneRings {
+    public static func makeSceneRings(device: MTLDevice, scene: RenderScene) throws -> SceneRings {
         let drawCapacity = slotCapacity(for: scene.drawCount)
         let instanceCapacity = slotCapacity(for: scene.instanceCount)
         let instanceLength = MemoryLayout<InstanceTransform>.stride

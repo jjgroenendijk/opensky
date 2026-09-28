@@ -18,14 +18,14 @@ import simd
 /// Six inward-facing view-frustum planes, extracted from a view-projection
 /// matrix. Each plane satisfies `dot(normal, point) + d >= 0` for points on the
 /// inside (visible) half-space; `normal` (plane.xyz) is unit length.
-nonisolated struct Frustum {
+nonisolated public struct Frustum: Sendable {
     /// Left, right, bottom, top, near, far, in that order.
-    let planes: [SIMD4<Float>]
+    public let planes: [SIMD4<Float>]
 
     /// `viewProjection` is the combined `P * V` matrix (column-vector
     /// convention: `clip = viewProjection * v`) — no model matrix, since this
     /// operates in world space against world-space AABBs.
-    init(viewProjection matrix: float4x4) {
+    public init(viewProjection matrix: float4x4) {
         func row(_ i: Int) -> SIMD4<Float> {
             SIMD4(
                 matrix.columns.0[i], matrix.columns.1[i],
@@ -55,7 +55,7 @@ nonisolated struct Frustum {
     /// normal. The box is outside only if that single corner is outside — so a
     /// box straddling a plane, or fully inside all six, tests `true`. Never
     /// culls a box that is actually visible; may keep one that is not.
-    func intersects(min: SIMD3<Float>, max: SIMD3<Float>) -> Bool {
+    public func intersects(min: SIMD3<Float>, max: SIMD3<Float>) -> Bool {
         for plane in planes {
             let normal = SIMD3(plane.x, plane.y, plane.z)
             let pVertex = SIMD3(
@@ -73,7 +73,7 @@ nonisolated struct Frustum {
     /// Convenience overload for `ModelBounds` (Rendering/MeshLibrary.swift) so
     /// callers with a model-space-derived world AABB don't have to unpack
     /// min/max by hand. The core test stays decoupled from `ModelBounds`.
-    func intersects(_ bounds: ModelBounds) -> Bool {
+    public func intersects(_ bounds: ModelBounds) -> Bool {
         intersects(min: bounds.min, max: bounds.max)
     }
 }

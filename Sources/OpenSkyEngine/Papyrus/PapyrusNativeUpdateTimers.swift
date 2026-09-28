@@ -21,7 +21,7 @@
 import Foundation
 
 nonisolated extension PapyrusNativeFunctions {
-    static func installUpdateTimers(into registry: inout PapyrusNativeRegistry) {
+    public static func installUpdateTimers(into registry: inout PapyrusNativeRegistry) {
         let slots: [(String, PapyrusUpdateTimerSlot)] = [
             ("RegisterForUpdate", .realRepeating),
             ("RegisterForSingleUpdate", .realSingleShot),

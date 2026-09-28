@@ -49,46 +49,46 @@ import OpenSkyFormats
 
 /// One actor's authored spell list, kept split so an inspector can say which
 /// half a spell came from.
-nonisolated struct ActorSpellBaseline: Equatable, Sendable {
+nonisolated public struct ActorSpellBaseline: Equatable, Sendable {
     /// The NPC_'s own `SPLO` run, from whichever chain record supplies it.
-    let actorSpells: [FormID]
+    public let actorSpells: [FormID]
     /// The `SPLO` run on the RACE the actor is a member of.
-    let raceSpells: [FormID]
+    public let raceSpells: [FormID]
 
     /// Both lists, actor first, with a FormID named by both kept once. Order is
     /// the record's own, so two runs of the same session grant the same list in
     /// the same sequence.
-    var all: [FormID] {
+    public var all: [FormID] {
         var seen: Set<UInt32> = []
         return (actorSpells + raceSpells).filter { seen.insert($0.rawValue).inserted }
     }
 
     /// An actor with no records behind it — a summon, a synthetic fixture.
-    static let none = ActorSpellBaseline(actorSpells: [], raceSpells: [])
+    public static let none = ActorSpellBaseline(actorSpells: [], raceSpells: [])
 }
 
 /// Re-derives actor spell lists from plugin data.
-nonisolated struct ActorSpellBaselineResolver {
+nonisolated public struct ActorSpellBaselineResolver: Sendable {
     /// Deepest leveled-spell nesting followed before expansion gives up. The
     /// visited set catches a list that points at itself; this cap catches the
     /// long chain that is technically acyclic and still nonsense. The same
     /// number and the same reason as `InventoryBaselineResolver`.
-    static let maximumLeveledDepth = 8
+    public static let maximumLeveledDepth = 8
 
     /// Template-chain resolution, which supplies the NPC_ list, the race and
     /// the LVSP index an entry may route through.
-    let templates: ActorTemplateResolver
+    public let templates: ActorTemplateResolver
     /// RACE decodes by raw FormID, which supply the race list.
-    let races: [UInt32: Race]
+    public let races: [UInt32: Race]
 
     /// Built from the indexes the actor-value side already loaded, rather than
     /// walking the plugin a second time for records that are already in memory.
-    init(actorValues: ActorValueResolver) {
+    public init(actorValues: ActorValueResolver) {
         templates = actorValues.templates
         races = actorValues.races
     }
 
-    init(templates: ActorTemplateResolver, races: [UInt32: Race]) {
+    public init(templates: ActorTemplateResolver, races: [UInt32: Race]) {
         self.templates = templates
         self.races = races
     }
@@ -100,7 +100,7 @@ nonisolated struct ActorSpellBaselineResolver {
     /// `InventoryBaselineResolver.actorBaseline` states: an actor whose chain
     /// does not resolve has no appearance either, and that path already reports
     /// the failure.
-    func baseline(for base: FormID) -> ActorSpellBaseline {
+    public func baseline(for base: FormID) -> ActorSpellBaseline {
         guard let resolved = try? templates.resolveSpells(base: base) else { return .none }
         let race = resolved.race.value.flatMap { races[$0.rawValue] }
         return ActorSpellBaseline(
@@ -139,7 +139,7 @@ nonisolated struct ActorSpellBaselineResolver {
 
     /// The spell list for one actor-value subject, which is what a runtime
     /// holding an `ActorValueHolder` actually has in hand.
-    func baseline(for subject: ActorValueSubject) -> ActorSpellBaseline {
+    public func baseline(for subject: ActorValueSubject) -> ActorSpellBaseline {
         switch subject {
         case let .actor(base): baseline(for: base)
         case .player, .generated: .none

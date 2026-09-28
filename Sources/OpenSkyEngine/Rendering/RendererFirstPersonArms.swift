@@ -33,7 +33,7 @@ import simd
 extension Renderer {
     /// Attaches the assembled arms, sizing the draw rings for their groups and
     /// making their buffers resident, exactly as `setPlayerBody` does.
-    func setPlayerFirstPersonRig(_ rig: PlayerFirstPersonRig?) throws {
+    public func setPlayerFirstPersonRig(_ rig: PlayerFirstPersonRig?) throws {
         let retiring = playerFirstPersonRig?.residencyAllocations ?? []
         playerFirstPersonRig = rig
         updatePlayerFirstPersonPose()
@@ -56,7 +56,7 @@ extension Renderer {
     /// looking from, so the arms are left where they were rather than being
     /// dragged out to the orbit camera: they are not drawn there, and moving
     /// them would rebuild their draw groups every frame for nothing.
-    func updatePlayerFirstPersonPose() {
+    public func updatePlayerFirstPersonPose() {
         guard let playerFirstPersonRig, movementMode == .walk else { return }
         playerFirstPersonRig.place(
             eyePosition: freeFlyCamera.position,
@@ -67,7 +67,7 @@ extension Renderer {
 
     /// The arms' contribution to the per-frame animation pass, mirroring
     /// `updatePlayerBodyAnimation`.
-    func updatePlayerFirstPersonAnimation(enabled: Bool) -> Int {
+    public func updatePlayerFirstPersonAnimation(enabled: Bool) -> Int {
         guard let playerFirstPersonRig else { return 0 }
         return enabled
             ? playerFirstPersonRig.animation.update(at: 0)
@@ -76,7 +76,7 @@ extension Renderer {
 
     /// Whether the arms are drawn to the camera this frame. First person only:
     /// fly and third person show the body instead.
-    var areFirstPersonArmsVisible: Bool {
+    public var areFirstPersonArmsVisible: Bool {
         rigVisibility.drawsArms
     }
 
@@ -92,7 +92,7 @@ extension Renderer {
     /// interrupted (issue #427): the dialogue camera stands outside the
     /// player's head, so the first-person comfort setting has nothing to say
     /// about it, and every conversation is framed the same way as a result.
-    var activeFOVYRadians: Float {
+    public var activeFOVYRadians: Float {
         isDialogueCameraEngaged
             ? DialogueCamera.fovYRadians
             : dialogueCameraRestoreFOVYRadians
@@ -101,7 +101,7 @@ extension Renderer {
     /// Rebuilds `projectionMatrix` for the current mode, field of view, and
     /// drawable size. Called on resize, on a camera-mode change, and when the
     /// field-of-view control moves, so the three cannot disagree.
-    func rebuildProjection() {
+    public func rebuildProjection() {
         projectionMatrix = MatrixMath.perspective(
             fovYRadians: activeFOVYRadians,
             aspectRatio: drawableAspectRatio,
@@ -111,7 +111,7 @@ extension Renderer {
     }
 
     /// Sets the first-person field of view and re-projects.
-    func setFirstPersonFOVY(radians: Float) {
+    public func setFirstPersonFOVY(radians: Float) {
         firstPersonCamera.setFOVY(radians: radians)
         rebuildProjection()
     }
@@ -119,7 +119,7 @@ extension Renderer {
     /// Encodes the arms into the near depth slice, then restores the full
     /// viewport so everything encoded after them (the SWF layer, the dev UI)
     /// is unaffected.
-    func encodeFirstPersonArms(
+    public func encodeFirstPersonArms(
         descriptor: MTL4RenderPassDescriptor,
         state: inout ScenePassState
     ) {

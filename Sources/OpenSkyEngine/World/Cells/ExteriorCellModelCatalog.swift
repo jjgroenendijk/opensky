@@ -9,10 +9,10 @@ import Foundation
 import OpenSkyFormats
 import OpenSkyGameData
 
-nonisolated struct ExteriorCellModelCatalog {
-    let file: ESMFile
+nonisolated public struct ExteriorCellModelCatalog: Sendable {
+    public let file: ESMFile
 
-    func modelPaths(
+    public func modelPaths(
         worldspaceEditorID: String,
         gridX: Int32,
         gridY: Int32

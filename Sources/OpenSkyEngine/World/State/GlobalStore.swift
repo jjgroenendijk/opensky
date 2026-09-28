@@ -24,7 +24,7 @@ import OpenSkyFormats
 /// indexed by their exact spelling elsewhere in the engine, but a global is
 /// named by scripts and by the console, where Skyrim has always matched editor
 /// IDs without regard to case, so this index normalizes instead.
-nonisolated final class GlobalStore: Sendable {
+nonisolated public final class GlobalStore: Sendable {
     /// Raw FormID -> decoded record.
     private let globalsByFormID: [UInt32: Global]
     /// Lowercased editor ID -> raw FormID.
@@ -34,13 +34,13 @@ nonisolated final class GlobalStore: Sendable {
     /// load-order-relative number.
     private let keysByFormID: [UInt32: ReferenceKey]
 
-    static let empty = GlobalStore(globals: [], resolver: FormIDResolver(
+    public static let empty = GlobalStore(globals: [], resolver: FormIDResolver(
         pluginName: "", masters: []
     ))
 
     /// - Parameter pluginName: file name of `file`, needed because a plugin
     ///   does not record its own name and `ReferenceKey` is built from it.
-    convenience init(file: ESMFile, pluginName: String) {
+    public convenience init(file: ESMFile, pluginName: String) {
         let masters = (try? file.pluginHeader().masters) ?? []
         var decoded: [Global] = []
         if let top = file.topGroup(of: "GLOB"), let children = try? top.children() {
@@ -55,7 +55,7 @@ nonisolated final class GlobalStore: Sendable {
         )
     }
 
-    init(globals: [Global], resolver: FormIDResolver) {
+    public init(globals: [Global], resolver: FormIDResolver) {
         var byFormID: [UInt32: Global] = [:]
         var byEditorID: [String: UInt32] = [:]
         var keys: [UInt32: ReferenceKey] = [:]
@@ -74,41 +74,41 @@ nonisolated final class GlobalStore: Sendable {
         keysByFormID = keys
     }
 
-    var count: Int {
+    public var count: Int {
         globalsByFormID.count
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         globalsByFormID.isEmpty
     }
 
-    func global(_ id: FormID) -> Global? {
+    public func global(_ id: FormID) -> Global? {
         globalsByFormID[id.rawValue]
     }
 
-    func global(editorID: String) -> Global? {
+    public func global(editorID: String) -> Global? {
         guard let raw = formIDsByEditorID[editorID.lowercased()] else { return nil }
         return globalsByFormID[raw]
     }
 
-    func formID(editorID: String) -> FormID? {
+    public func formID(editorID: String) -> FormID? {
         formIDsByEditorID[editorID.lowercased()].map(FormID.init)
     }
 
     /// Session-stable key for a global, which is how the runtime layer and the
     /// save file address it. Nil for a FormID this plugin does not define.
-    func key(for id: FormID) -> ReferenceKey? {
+    public func key(for id: FormID) -> ReferenceKey? {
         keysByFormID[id.rawValue]
     }
 
-    func key(editorID: String) -> ReferenceKey? {
+    public func key(editorID: String) -> ReferenceKey? {
         guard let raw = formIDsByEditorID[editorID.lowercased()] else { return nil }
         return keysByFormID[raw]
     }
 
     /// Records in editor-ID order, for inspection surfaces. Records without an
     /// editor ID sort by FormID under their hex spelling.
-    func sortedGlobals() -> [Global] {
+    public func sortedGlobals() -> [Global] {
         globalsByFormID.values.sorted {
             ($0.editorID ?? $0.formID.description) < ($1.editorID ?? $1.formID.description)
         }
@@ -122,7 +122,7 @@ nonisolated final class GlobalStore: Sendable {
 /// FormID names no global this store knows. Consumers never reach past this
 /// into `WorldStateStore`, which is what lets the value come from a snapshot on
 /// a build thread just as easily as from the live store on the main actor.
-nonisolated struct GlobalResolution: Sendable {
+nonisolated public struct GlobalResolution: Sendable {
     private let defaults: GlobalStore
     private let overrides: [ReferenceKey: GlobalValue]
     /// Game clock the five vanilla time globals project from (issue #164).
@@ -133,9 +133,9 @@ nonisolated struct GlobalResolution: Sendable {
     /// `TimeScale` is not projected; it stays an ordinary global.
     private let clock: GameClock?
 
-    static let empty = GlobalResolution(defaults: .empty, overrides: [:])
+    public static let empty = GlobalResolution(defaults: .empty, overrides: [:])
 
-    init(
+    public init(
         defaults: GlobalStore?,
         overrides: [ReferenceKey: GlobalValue] = [:],
         clock: GameClock? = nil
@@ -147,7 +147,7 @@ nonisolated struct GlobalResolution: Sendable {
 
     /// Resolution over a snapshot's globals, for a consumer running off the
     /// main actor where the live store is unreachable.
-    init(defaults: GlobalStore?, snapshot: WorldStateSnapshot, clock: GameClock? = nil) {
+    public init(defaults: GlobalStore?, snapshot: WorldStateSnapshot, clock: GameClock? = nil) {
         var overrides: [ReferenceKey: GlobalValue] = [:]
         overrides.reserveCapacity(snapshot.globals.count)
         for entry in snapshot.globals {
@@ -157,7 +157,7 @@ nonisolated struct GlobalResolution: Sendable {
     }
 
     /// Current value of the global `id` names, or nil when no global does.
-    func value(for id: FormID) -> GlobalValue? {
+    public func value(for id: FormID) -> GlobalValue? {
         guard let global = defaults.global(id) else { return nil }
         if
             let clock, let editorID = global.editorID,
@@ -174,18 +174,18 @@ nonisolated struct GlobalResolution: Sendable {
         return override
     }
 
-    func value(editorID: String) -> GlobalValue? {
+    public func value(editorID: String) -> GlobalValue? {
         guard let id = defaults.formID(editorID: editorID) else { return nil }
         return value(for: id)
     }
 
     /// Numeric shorthand for a caller that does not care about the declared
     /// type, such as the game clock reading `TimeScale` (issue #164).
-    func floatValue(for id: FormID) -> Float? {
+    public func floatValue(for id: FormID) -> Float? {
         value(for: id)?.value
     }
 
-    func floatValue(editorID: String) -> Float? {
+    public func floatValue(editorID: String) -> Float? {
         value(editorID: editorID)?.value
     }
 
@@ -195,7 +195,7 @@ nonisolated struct GlobalResolution: Sendable {
     /// comparison resolves through this store. Nil means the condition
     /// references a global nothing defines, which the evaluator must treat as
     /// an unevaluatable condition rather than as a comparison against zero.
-    func comparisonValue(_ comparison: Condition.ComparisonValue) -> Float? {
+    public func comparisonValue(_ comparison: Condition.ComparisonValue) -> Float? {
         switch comparison {
         case let .value(literal): literal
         case let .global(id): floatValue(for: id)
@@ -203,7 +203,7 @@ nonisolated struct GlobalResolution: Sendable {
     }
 
     /// True when the session has recorded an override for `id`.
-    func isOverridden(_ id: FormID) -> Bool {
+    public func isOverridden(_ id: FormID) -> Bool {
         guard let key = defaults.key(for: id) else { return false }
         return overrides[key] != nil
     }

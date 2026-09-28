@@ -7,7 +7,7 @@
 // ordinary container reference here exactly as it is in the engine.
 
 import Foundation
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

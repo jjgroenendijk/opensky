@@ -16,7 +16,7 @@ import simd
 /// Sun-shadow quality tier (M7.1.2). Drives cascade count, shadow range, and
 /// PCF tap count; the app sidebar selects it. `.off` renders no shadow pass
 /// (equivalent to `sunShadowsEnabled = false`, but a persisted user choice).
-nonisolated enum ShadowQuality: String, CaseIterable {
+nonisolated public enum ShadowQuality: String, CaseIterable, Sendable {
     case off
     case low
     case high
@@ -25,22 +25,34 @@ nonisolated enum ShadowQuality: String, CaseIterable {
 /// Per-frame shadow-pass culling + draw accounting, mirror of SceneDrawStats:
 /// deterministic evidence for the per-cascade caster-culling tests and budget
 /// triage. Counts are summed across every rendered cascade.
-nonisolated struct ShadowDrawStats: Equatable {
+nonisolated public struct ShadowDrawStats: Equatable, Sendable {
     /// drawIndexedPrimitives calls encoded (all cascades).
-    var drawCalls = 0
+    public var drawCalls = 0
     /// Caster instances drawn after per-cascade frustum culling (static +
     /// terrain), summed across cascades.
-    var drawnInstances = 0
+    public var drawnInstances = 0
     /// (instance, cascade) pairs the frustum test skipped this frame.
-    var culledInstances = 0
+    public var culledInstances = 0
     /// Cascade slices actually rendered (2 low, 3 high).
-    var cascadesRendered = 0
+    public var cascadesRendered = 0
 
-    mutating func formMaximum(_ other: ShadowDrawStats) {
+    public mutating func formMaximum(_ other: ShadowDrawStats) {
         drawCalls = max(drawCalls, other.drawCalls)
         drawnInstances = max(drawnInstances, other.drawnInstances)
         culledInstances = max(culledInstances, other.culledInstances)
         cascadesRendered = max(cascadesRendered, other.cascadesRendered)
+    }
+
+    public init(
+        drawCalls: Int = 0,
+        drawnInstances: Int = 0,
+        culledInstances: Int = 0,
+        cascadesRendered: Int = 0
+    ) {
+        self.drawCalls = drawCalls
+        self.drawnInstances = drawnInstances
+        self.culledInstances = culledInstances
+        self.cascadesRendered = cascadesRendered
     }
 }
 
@@ -69,31 +81,31 @@ extension Renderer {
 
     /// Shadows render this frame only when both the dev toggle and a non-off
     /// quality allow it — `H` flips the toggle without losing the quality.
-    var shadowRenders: Bool {
+    public var shadowRenders: Bool {
         sunShadowsEnabled && shadowQuality != .off
     }
 
     /// Cascades to render: 2 for low (cheaper), 3 for high. The shadow map
     /// keeps all ShadowConstantCascadeCount slices allocated either way; low
     /// simply renders fewer and the shader pads the unused splits.
-    var shadowCascadeCount: Int {
+    public var shadowCascadeCount: Int {
         shadowQuality == .low ? 2 : ShadowConstant.cascadeCount.rawValue
     }
 
     /// Sun-shadow far bound for the active quality.
-    var activeShadowDistance: Float {
+    public var activeShadowDistance: Float {
         shadowQuality == .low ? Self.shadowDistanceLow : Self.shadowDistance
     }
 
     /// PCF kernel radius bound into FrameUniforms: 0 -> single compare tap
     /// (low), 1 -> the 3x3 kernel (high). Read by sunShadowFactor.
-    var shadowSampleRadius: UInt32 {
+    public var shadowSampleRadius: UInt32 {
         shadowQuality == .low ? 0 : 1
     }
 
     /// Shadow instance-ring slots one frame slot can need: every scene
     /// instance drawn in every cascade (per-cascade contiguous runs).
-    var shadowInstanceSlotCapacity: Int {
+    public var shadowInstanceSlotCapacity: Int {
         ShadowConstant.cascadeCount.rawValue * instanceSlotCapacity
     }
 
@@ -107,14 +119,14 @@ extension Renderer {
 
     /// This frame's cascade `index` world->light-clip matrix for FrameUniforms;
     /// identity pads slots past the produced cascade count.
-    func shadowCascadeMatrix(_ index: Int) -> float4x4 {
+    public func shadowCascadeMatrix(_ index: Int) -> float4x4 {
         index < shadowCascades.count ? shadowCascades[index].viewProjection
             : matrix_identity_float4x4
     }
 
     /// Per-cascade far bounds packed for the shader, padded with the last real
     /// bound (mirrors ShadowCascadeMath.cascadeIndex padding).
-    func shadowCascadeSplitBounds() -> SIMD4<Float> {
+    public func shadowCascadeSplitBounds() -> SIMD4<Float> {
         let lastFar = shadowCascades.last?.splitFar ?? Self.shadowDistance
         func far(_ index: Int) -> Float {
             index < shadowCascades.count ? shadowCascades[index].splitFar : lastFar
@@ -140,7 +152,7 @@ extension Renderer {
     /// frame); an idle pass (shadows off / no casters) returns true having
     /// reset the per-frame shadow state so the scene pass shades unshadowed.
     /// Records its own CPU wall time in `lastShadowUpdateMS` every frame.
-    func encodeShadowPass(slot: Int, projection: float4x4) -> Bool {
+    public func encodeShadowPass(slot: Int, projection: float4x4) -> Bool {
         let started = DispatchTime.now().uptimeNanoseconds
         defer {
             lastShadowUpdateMS =

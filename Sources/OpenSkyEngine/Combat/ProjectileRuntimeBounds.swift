@@ -25,7 +25,7 @@ extension ProjectileRuntime {
     ///
     /// - Returns: how many were cancelled.
     @discardableResult
-    func trimLive(to limit: Int) -> Int {
+    public func trimLive(to limit: Int) -> Int {
         let excess = live.count - max(0, limit)
         guard excess > 0 else { return 0 }
         for projectile in live.prefix(excess) {
@@ -41,7 +41,7 @@ extension ProjectileRuntime {
     ///
     /// - Returns: how many were removed.
     @discardableResult
-    func trimStuck(to limit: Int) -> Int {
+    public func trimStuck(to limit: Int) -> Int {
         let excess = stuck.count - max(0, limit)
         guard excess > 0 else { return 0 }
         removeStuckArrows(Array(stuck.indices.prefix(excess)))

@@ -7,7 +7,7 @@
 // it and no self-consistent test would notice.
 
 import Foundation
-@testable import OpenSky
+import OpenSkyEngine
 @testable import OpenSkyFormats
 import Testing
 

@@ -28,39 +28,39 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's state as a condition sees it.
-nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable {
+nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Sendable {
     /// Current health, magicka and stamina.
-    var current: ActorValues
+    public var current: ActorValues
     /// Re-derived maximums, which is what `GetBaseActorValue` reports and what
     /// the percentage divides by.
-    var maximums: ActorValues
+    public var maximums: ActorValues
     /// Whether `ActorDeathState` has latched.
-    var isDead: Bool
+    public var isDead: Bool
     /// The actor's stored regard for the player.
-    var hostility: ActorHostility
+    public var hostility: ActorHostility
     /// What the actor is actually doing about a fight, which is what
     /// `GetCombatState` reports (issue #424). Hostility says how an actor feels;
     /// this says whether it is currently acting on it.
-    var combatActivity: ActorCombatActivity
+    public var combatActivity: ActorCombatActivity
     /// Where this actor's weapon is, or nil when nothing in this session
     /// observes a draw state for it.
-    var weaponDrawState: WeaponDrawState?
+    public var weaponDrawState: WeaponDrawState?
     /// Who this actor is fighting, or nil when it is fighting nobody.
-    var combatTarget: ReferenceKey?
+    public var combatTarget: ReferenceKey?
     /// Non-primary actor values this actor has moved off its baseline
     /// (issue #468), which is what lets `GetActorValue` answer for a resistance
     /// rather than tally a miss.
-    var general: [Int32: ActorValueEntry]
+    public var general: [Int32: ActorValueEntry]
     /// Non-primary base values this actor's records author.
-    var generalBaseline: [Int32: Float]
+    public var generalBaseline: [Int32: Float]
     /// Whether this actor is the player, which is what the resistance cap
     /// depends on.
-    var isPlayer: Bool
+    public var isPlayer: Bool
     /// The actor's level, which is what `GetLevel` reports (issue #499): the
     /// derived level for an NPC, and the character level for the player.
-    var level: Int
+    public var level: Int
 
-    init(
+    public init(
         current: ActorValues,
         maximums: ActorValues,
         isDead: Bool = false,
@@ -98,7 +98,7 @@ nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable 
     /// Read from the behavior phase rather than from stored hostility: an actor
     /// that hates the player but has not perceived them yet, and one that
     /// searched and gave up, are both hostile and neither is in a fight.
-    var combatStateValue: Float {
+    public var combatStateValue: Float {
         isDead ? 0 : Float(combatActivity.rawValue)
     }
 
@@ -111,7 +111,7 @@ nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable 
     /// is out; an unarmed actor with its hands up therefore reads as 2. That is
     /// a stated deviation rather than a silent one — see
     /// docs/engine/condition-functions.md.
-    var weaponOutValue: Float? {
+    public var weaponOutValue: Float? {
         weaponDrawState.map { $0.isWeaponInHand ? 2 : 0 }
     }
 }
@@ -120,15 +120,15 @@ nonisolated struct ActorConditionState: ActorValueReadable, Equatable, Sendable 
 ///
 /// A value type over a dictionary: cheap to build, cheap to copy, and unable to
 /// go stale mid-evaluation the way a live read could.
-nonisolated struct ActorStateResolution: Sendable {
+nonisolated public struct ActorStateResolution: Sendable {
     /// No actor state at all, which is what a context with no world running
     /// carries. Every actor function is then a reason-tagged false and a tally
     /// bucket.
-    static let empty = ActorStateResolution()
+    public static let empty = ActorStateResolution()
 
     private let states: [ReferenceKey: ActorConditionState]
 
-    init(states: [ReferenceKey: ActorConditionState] = [:]) {
+    public init(states: [ReferenceKey: ActorConditionState] = [:]) {
         self.states = states
     }
 
@@ -148,7 +148,7 @@ nonisolated struct ActorStateResolution: Sendable {
     ///
     /// A dead actor is given no target, matching `CombatLoopState.derive`: a
     /// corpse is not fighting anybody, whatever hostility it died carrying.
-    static func fight(
+    public static func fight(
         states: [ReferenceKey: ActorConditionState],
         playerKey: ReferenceKey,
         playerTarget: ReferenceKey?
@@ -166,24 +166,24 @@ nonisolated struct ActorStateResolution: Sendable {
     }
 
     /// `key`'s state, or nil when this resolution carries none for it.
-    func state(for key: ReferenceKey) -> ActorConditionState? {
+    public func state(for key: ReferenceKey) -> ActorConditionState? {
         states[key]
     }
 
     /// Who `key` is fighting, or nil when it is fighting nobody and when
     /// nothing is known about it.
-    func combatTarget(of key: ReferenceKey) -> ReferenceKey? {
+    public func combatTarget(of key: ReferenceKey) -> ReferenceKey? {
         states[key]?.combatTarget
     }
 
     /// Actors this resolution knows about.
-    var count: Int {
+    public var count: Int {
         states.count
     }
 
     /// True when nothing was wired, which is what a context with no world
     /// running carries.
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         states.isEmpty
     }
 }

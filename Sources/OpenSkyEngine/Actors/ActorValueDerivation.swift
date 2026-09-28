@@ -47,28 +47,28 @@ import OpenSkyGameData
 /// Carried as a value rather than looked up per actor: deriving stats for a
 /// cell full of actors must not walk the GMST table a thousand times, and a
 /// test must be able to state both numbers without building a plugin.
-nonisolated struct ActorValueLevelSettings: Equatable, Sendable {
+nonisolated public struct ActorValueLevelSettings: Equatable, Sendable {
     /// `iAVDhmsLevelUp` — points spread across the three attributes per level
     /// above 1.
-    var pointsPerLevel: Int
+    public var pointsPerLevel: Int
     /// `fNPCHealthLevelBonus` — extra health per level above 1, outside the
     /// weighted spread.
-    var healthBonusPerLevel: Float
+    public var healthBonusPerLevel: Float
     /// `iAVDSkillsLevelUp` — points spread across the eighteen skills per level
     /// above 1, which UESP states as "the fixed 8 skill points per level"
     /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>) and
     /// `Skyrim.esm` authors at exactly that (issue #468).
-    var skillPointsPerLevel = 8
+    public var skillPointsPerLevel = 8
 
     /// The values the Creation Kit documents as the defaults, used when no
     /// loaded plugin defines the setting.
-    static let documentedDefaults = ActorValueLevelSettings(
+    public static let documentedDefaults = ActorValueLevelSettings(
         pointsPerLevel: 10,
         healthBonusPerLevel: 5,
         skillPointsPerLevel: 8
     )
 
-    static func resolve(store: GameSettingStore) -> ActorValueLevelSettings {
+    public static func resolve(store: GameSettingStore) -> ActorValueLevelSettings {
         var settings = ActorValueLevelSettings.documentedDefaults
         if case let .integer(points)? = store.setting(editorID: "iAVDhmsLevelUp")?.setting.value {
             settings.pointsPerLevel = max(0, Int(points))
@@ -92,21 +92,21 @@ nonisolated struct ActorValueLevelSettings: Equatable, Sendable {
 
 /// Everything the derivation needs about one actor, gathered from the records
 /// its template chain resolves to.
-nonisolated struct ActorValueInputs: Equatable, Sendable {
+nonisolated public struct ActorValueInputs: Equatable, Sendable {
     /// RACE DATA starting attributes, from the traits-resolved race.
-    var race: Race.Stats
+    public var race: Race.Stats
     /// ACBS offsets and level words, from the stats-resolved NPC_.
-    var stats: ActorBase.Stats
+    public var stats: ActorBase.Stats
     /// Whether stats come from race + class + level rather than race + offset.
-    var autoCalculatesStats: Bool
+    public var autoCalculatesStats: Bool
     /// Whether the level word is a player-level multiplier.
-    var usesPlayerLevelMultiplier: Bool
+    public var usesPlayerLevelMultiplier: Bool
     /// CLAS attribute weights, zero when the actor names no class.
-    var attributeWeights: CharacterClass.AttributeWeights
+    public var attributeWeights: CharacterClass.AttributeWeights
     /// CLAS skill weights, empty when the actor names no class (issue #468).
-    var skillWeights: CharacterClass.SkillWeights
+    public var skillWeights: CharacterClass.SkillWeights
 
-    init(
+    public init(
         race: Race.Stats = Race.Stats(),
         stats: ActorBase.Stats = ActorBase.Stats(),
         autoCalculatesStats: Bool = false,
@@ -123,7 +123,7 @@ nonisolated struct ActorValueInputs: Equatable, Sendable {
     }
 }
 
-nonisolated enum ActorValueDerivation {
+nonisolated public enum ActorValueDerivation: Sendable {
     /// The actor's effective level.
     ///
     /// A fixed-level actor uses the ACBS level word directly. A `PC Level Mult`
@@ -137,7 +137,7 @@ nonisolated enum ActorValueDerivation {
     /// leaves both fields at zero when the designer sets no clamp, and vanilla
     /// records rely on that. Every level floors at 1, which is the level the
     /// race's starting attributes are defined for.
-    static func level(inputs: ActorValueInputs, playerLevel: Int) -> Int {
+    public static func level(inputs: ActorValueInputs, playerLevel: Int) -> Int {
         guard inputs.usesPlayerLevelMultiplier else {
             return max(1, Int(inputs.stats.levelWord))
         }
@@ -160,7 +160,7 @@ nonisolated enum ActorValueDerivation {
     ///     no player level system before M18, so callers pass 1 and get the
     ///     bottom of every scaled actor's range — deliberately the low end
     ///     rather than a guess at the middle.
-    static func baseValues(
+    public static func baseValues(
         inputs: ActorValueInputs,
         settings: ActorValueLevelSettings = .documentedDefaults,
         playerLevel: Int = 1
@@ -197,7 +197,7 @@ nonisolated enum ActorValueDerivation {
     /// weights spreads nothing, which is what a record with a zero-weight DATA
     /// or no class at all should do — the alternative, dividing by zero, would
     /// put a NaN into an actor's maximum health.
-    static func distribute(
+    public static func distribute(
         points: Int,
         weights: CharacterClass.AttributeWeights
     ) -> ActorValues {

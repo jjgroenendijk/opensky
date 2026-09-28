@@ -11,7 +11,7 @@ import Foundation
 nonisolated extension WMADecoder {
     /// Rejects header values the decoder cannot act on before anything is allocated, so a
     /// malformed container fails cheaply and with a specific error.
-    static func validate(_ parameters: AudioCodecParameters) throws {
+    public static func validate(_ parameters: AudioCodecParameters) throws {
         guard parameters.formatTag == wmaV2FormatTag else {
             throw WMADecoderError.unsupportedFormatTag(parameters.formatTag)
         }
@@ -34,7 +34,7 @@ nonisolated extension WMADecoder {
     }
 
     /// Allocates, configures and opens the codec context. Frees it again on every failure.
-    static func makeContext(
+    public static func makeContext(
         _ parameters: AudioCodecParameters
     ) throws -> UnsafeMutablePointer<AVCodecContext> {
         guard let codec = avcodec_find_decoder(AV_CODEC_ID_WMAV2) else {

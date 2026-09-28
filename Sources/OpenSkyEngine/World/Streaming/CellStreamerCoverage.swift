@@ -17,7 +17,7 @@ extension CellStreamer {
     /// Lives beside the coverage transition rather than in CellStreamer.swift
     /// because both answer the same question — what happens to a cell that has
     /// stopped being resident — and because the class is at its length limit.
-    func unload(_ coordinates: [CellCoordinate]) {
+    public func unload(_ coordinates: [CellCoordinate]) {
         var departed = CellAssets()
         for coordinate in coordinates {
             guard let removed = composition.removeCell(at: coordinate) else { continue }
@@ -30,7 +30,7 @@ extension CellStreamer {
 
     /// Requests the distant ring for the current center once the near grid has
     /// settled.
-    func requestDistantLODIfNeeded() {
+    public func requestDistantLODIfNeeded() {
         // Cell + LOD work share one serial cache-confined queue. Let every
         // desired full cell reach resident/void/failed first so first-time
         // loading 100+ distant assets cannot starve the near grid.
@@ -42,7 +42,7 @@ extension CellStreamer {
         }
     }
 
-    func integrateDistantLOD(_ entries: [DistantLODBuildResult]) -> Bool {
+    public func integrateDistantLOD(_ entries: [DistantLODBuildResult]) -> Bool {
         var changed = false
         for entry in entries {
             switch entry.result {
@@ -70,7 +70,7 @@ extension CellStreamer {
         return changed
     }
 
-    func discardStagedCells(outside desiredCells: Set<CellCoordinate>) {
+    public func discardStagedCells(outside desiredCells: Set<CellCoordinate>) {
         let stale = stagedCells.keys.filter { !desiredCells.contains($0) }
         for coordinate in stale {
             guard let scene = stagedCells.removeValue(forKey: coordinate) else { continue }
@@ -78,7 +78,7 @@ extension CellStreamer {
         }
     }
 
-    func commitCoverageTransition(distantLOD: DistantLODScene?) {
+    public func commitCoverageTransition(distantLOD: DistantLODScene?) {
         var departed = CellAssets()
         for coordinate in composition.coordinates where !core.resident.contains(coordinate) {
             guard let scene = composition.removeCell(at: coordinate) else { continue }
@@ -119,7 +119,7 @@ extension CellStreamer {
     /// offscreen. An interior scene and the staged cells are unioned in because
     /// neither is part of the composition while it owns the view, and evicting
     /// what they are drawing would drop a live asset.
-    func evictUnused(_ candidates: CellAssets) {
+    public func evictUnused(_ candidates: CellAssets) {
         var resident = composition.residentAssets()
         if let interiorScene {
             resident.meshKeys.formUnion(interiorScene.assets.meshKeys)

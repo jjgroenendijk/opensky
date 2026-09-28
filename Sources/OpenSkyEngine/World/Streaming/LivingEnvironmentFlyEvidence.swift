@@ -1,17 +1,17 @@
 // M7.6 peak live-system evidence collected across production fly frames.
 
-nonisolated struct LivingEnvironmentFlyEvidence {
-    var grassDrawStats = GrassDrawStats()
-    var shadowDrawStats = ShadowDrawStats()
-    var animationUpdatedBoneCount = 0
-    var particleSystemCount = 0
-    var particleLiveCount = 0
-    var rainLiveCount = 0
-    var weatherName: String?
-    var windSpeed: Float = 0
+nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {
+    public var grassDrawStats = GrassDrawStats()
+    public var shadowDrawStats = ShadowDrawStats()
+    public var animationUpdatedBoneCount = 0
+    public var particleSystemCount = 0
+    public var particleLiveCount = 0
+    public var rainLiveCount = 0
+    public var weatherName: String?
+    public var windSpeed: Float = 0
 
     @MainActor
-    mutating func capture(_ renderer: Renderer) {
+    public mutating func capture(_ renderer: Renderer) {
         grassDrawStats.formMaximum(renderer.lastGrassDrawStats)
         shadowDrawStats.formMaximum(renderer.lastShadowDrawStats)
         animationUpdatedBoneCount = max(
@@ -31,7 +31,7 @@ nonisolated struct LivingEnvironmentFlyEvidence {
         windSpeed = max(windSpeed, renderer.currentWind.speed)
     }
 
-    func validated(animatedActorCount: Int) throws -> LivingEnvironmentFlyEvidence {
+    public func validated(animatedActorCount: Int) throws -> LivingEnvironmentFlyEvidence {
         guard weatherName != nil else {
             throw CellStreamingFlyBenchmarkError.noWeatherRendered
         }

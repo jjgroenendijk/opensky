@@ -1,7 +1,7 @@
 // Third-person camera framing, mode cycling, and collision zoom (issue #189).
 // Synthetic geometry only — no install, no device.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd
 import Testing

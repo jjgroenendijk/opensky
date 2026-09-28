@@ -35,25 +35,25 @@ import OpenSkyFormats
 /// that is the identity everything downstream addresses — the Papyrus handle
 /// map, the condition run-on resolution, the save file — and because a FormID
 /// is load-order relative and would be wrong after the plugin list changes.
-nonisolated struct QuestAliasFill: Equatable, Sendable {
+nonisolated public struct QuestAliasFill: Equatable, Sendable {
     /// ALST/ALLS number the quest's scripts and conditions address the alias by.
-    let aliasID: UInt32
+    public let aliasID: UInt32
     /// Reference currently in the alias.
-    let reference: ReferenceKey
+    public let reference: ReferenceKey
 }
 
 /// One filled location alias. Locations are base records rather than placed
 /// references, so their stable identity is a `ResolvedFormID`, not a
 /// `ReferenceKey` exposed through the reference-alias API.
-nonisolated struct QuestLocationAliasFill: Equatable, Sendable {
-    let aliasID: UInt32
-    let location: ResolvedFormID
+nonisolated public struct QuestLocationAliasFill: Equatable, Sendable {
+    public let aliasID: UInt32
+    public let location: ResolvedFormID
 }
 
 /// Why one alias was left unfilled. Every case is a recorded, tallied skip
 /// rather than a failure: the quest may still start, and an empty optional
 /// alias is a legitimate outcome the Creation Kit documents.
-nonisolated enum QuestAliasSkipKind: Hashable, Sendable {
+nonisolated public enum QuestAliasSkipKind: Hashable, Sendable {
     /// A fill type OpenSky does not implement yet. Carries the type so the
     /// tally names which ones a corpus actually needs.
     case unsupportedFillType(Quest.Alias.FillType)
@@ -72,7 +72,7 @@ nonisolated enum QuestAliasSkipKind: Hashable, Sendable {
     /// `QuestAliasFiller` states why.
     case reusedInQuest
 
-    var name: String {
+    public var name: String {
         switch self {
         case let .unsupportedFillType(type): "unsupported fill \(type.name)"
         case .locationAlias: "location alias"
@@ -87,18 +87,18 @@ nonisolated enum QuestAliasSkipKind: Hashable, Sendable {
 /// `QuestTally` and `ScriptBindingTally`. A census asserts against it; one
 /// quest's copy explains why its filled count came out lower than its alias
 /// count.
-nonisolated struct QuestAliasTally: Equatable, Sendable {
-    private(set) var counts: [QuestAliasSkipKind: Int] = [:]
+nonisolated public struct QuestAliasTally: Equatable, Sendable {
+    public private(set) var counts: [QuestAliasSkipKind: Int] = [:]
 
-    var total: Int {
+    public var total: Int {
         counts.values.reduce(0, +)
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         counts.isEmpty
     }
 
-    var ranked: [(name: String, count: Int)] {
+    public var ranked: [(name: String, count: Int)] {
         counts
             .sorted {
                 $0.value == $1.value
@@ -108,11 +108,11 @@ nonisolated struct QuestAliasTally: Equatable, Sendable {
             .map { ($0.key.name, $0.value) }
     }
 
-    mutating func note(_ kind: QuestAliasSkipKind, count: Int = 1) {
+    public mutating func note(_ kind: QuestAliasSkipKind, count: Int = 1) {
         counts[kind, default: 0] += count
     }
 
-    mutating func merge(_ other: QuestAliasTally) {
+    public mutating func merge(_ other: QuestAliasTally) {
         for (kind, count) in other.counts {
             note(kind, count: count)
         }
@@ -120,21 +120,21 @@ nonisolated struct QuestAliasTally: Equatable, Sendable {
 }
 
 /// The filled alias table of one quest.
-nonisolated struct QuestAliasState: WorldStateComponent {
+nonisolated public struct QuestAliasState: WorldStateComponent, Sendable {
     /// Filled aliases, sorted by alias ID and unique by it.
-    private(set) var fills: [QuestAliasFill]
+    public private(set) var fills: [QuestAliasFill]
     /// Filled ALLS entries, sorted and unique by alias ID like `fills`.
-    private(set) var locationFills: [QuestLocationAliasFill]
+    public private(set) var locationFills: [QuestLocationAliasFill]
 
     /// A quest whose aliases hold nothing: the state before a start and after
     /// a stop.
-    static let empty = QuestAliasState()
+    public static let empty = QuestAliasState()
 
-    static var componentKind: WorldStateComponentKind {
+    public static var componentKind: WorldStateComponentKind {
         .questAliases
     }
 
-    var erased: WorldStateComponentValue {
+    public var erased: WorldStateComponentValue {
         .questAliases(self)
     }
 
@@ -142,7 +142,7 @@ nonisolated struct QuestAliasState: WorldStateComponent {
     /// winning and the result comes out sorted. This is also the save
     /// decoder's entry point, so a corrupt file degrades into a valid table
     /// rather than failing the whole load.
-    init(
+    public init(
         fills: [QuestAliasFill] = [],
         locationFills: [QuestLocationAliasFill] = []
     ) {
@@ -162,38 +162,38 @@ nonisolated struct QuestAliasState: WorldStateComponent {
         }
     }
 
-    init?(erased: WorldStateComponentValue) {
+    public init?(erased: WorldStateComponentValue) {
         guard case let .questAliases(value) = erased else { return nil }
         self = value
     }
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         fills.isEmpty && locationFills.isEmpty
     }
 
-    var count: Int {
+    public var count: Int {
         fills.count + locationFills.count
     }
 
     /// Reference filling `aliasID`, or nil when that alias is empty or the
     /// quest defines no such alias.
-    func reference(forAlias aliasID: UInt32) -> ReferenceKey? {
+    public func reference(forAlias aliasID: UInt32) -> ReferenceKey? {
         fills.first { $0.aliasID == aliasID }?.reference
     }
 
-    func location(forAlias aliasID: UInt32) -> ResolvedFormID? {
+    public func location(forAlias aliasID: UInt32) -> ResolvedFormID? {
         locationFills.first { $0.aliasID == aliasID }?.location
     }
 
     /// True when `key` already fills some alias of this quest, which is what
     /// the Creation Kit's "will not fill two aliases on the same quest with
     /// the same reference" rule tests.
-    func holds(_ key: ReferenceKey) -> Bool {
+    public func holds(_ key: ReferenceKey) -> Bool {
         fills.contains { $0.reference == key }
     }
 
     /// This table with `aliasID` filled by `key`, replacing whatever was there.
-    func filling(_ aliasID: UInt32, with key: ReferenceKey) -> Self {
+    public func filling(_ aliasID: UInt32, with key: ReferenceKey) -> Self {
         QuestAliasState(
             fills: fills.filter { $0.aliasID != aliasID }
                 + [QuestAliasFill(aliasID: aliasID, reference: key)],
@@ -201,7 +201,7 @@ nonisolated struct QuestAliasState: WorldStateComponent {
         )
     }
 
-    func fillingLocation(_ aliasID: UInt32, with location: ResolvedFormID) -> Self {
+    public func fillingLocation(_ aliasID: UInt32, with location: ResolvedFormID) -> Self {
         QuestAliasState(
             fills: fills.filter { $0.aliasID != aliasID },
             locationFills: locationFills.filter { $0.aliasID != aliasID }

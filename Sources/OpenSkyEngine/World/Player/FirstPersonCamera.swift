@@ -35,31 +35,31 @@
 import OpenSkyFormats
 import simd
 
-nonisolated struct FirstPersonCamera: Equatable {
+nonisolated public struct FirstPersonCamera: Equatable, Sendable {
     /// The default vertical field of view, in radians: the same 65 degrees the
     /// scene pass projects the world with (`RendererDraw`, `RendererOffscreen`).
     /// Chosen as the default because no readable game data names another, and
     /// asserted against the renderer by `FirstPersonCameraTests`.
-    static let defaultFOVYRadians = MatrixMath.radians(fromDegrees: defaultFOVYDegrees)
+    public static let defaultFOVYRadians = MatrixMath.radians(fromDegrees: defaultFOVYDegrees)
 
     /// The same angle in the unit the panel control presents, so the slider,
     /// the override check, and the engine cannot disagree about "default".
-    static let defaultFOVYDegrees: Float = 65
+    public static let defaultFOVYDegrees: Float = 65
 
     /// How far the field of view may be pushed from the panel. Wide enough to
     /// cover the range a Skyrim player's own INI profile realistically holds
     /// and narrow enough that the projection stays well conditioned.
-    static let fovYRange: ClosedRange<Float> = (
+    public static let fovYRange: ClosedRange<Float> = (
         MatrixMath.radians(fromDegrees: 30) ... MatrixMath.radians(fromDegrees: 120)
     )
 
     /// The rig bone the eye rides. Present only in the first-person skeleton.
-    static let cameraBoneName = "Camera1st [Cam1]"
+    public static let cameraBoneName = "Camera1st [Cam1]"
 
     /// Where the camera bone sits in rig space when the graph has produced no
     /// pose yet — the reference-pose value, so the first frame after attach is
     /// framed like every frame after it rather than at the rig's feet.
-    static let fallbackCameraBoneHeight: Float = 121
+    public static let fallbackCameraBoneHeight: Float = 121
 
     /// The share of the depth range the first-person arms are compressed into.
     ///
@@ -74,23 +74,23 @@ nonisolated struct FirstPersonCamera: Equatable {
     /// `nearPlane / (1 - depthSlice)` from the eye — about 10.2 units with the
     /// 10-unit near plane — which is inside the capsule's own radius and so
     /// unreachable by world geometry.
-    static let depthSlice: Float = 0.02
+    public static let depthSlice: Float = 0.02
 
     /// The requested vertical field of view, clamped to `fovYRange`.
-    private(set) var fovYRadians = defaultFOVYRadians
+    public private(set) var fovYRadians = defaultFOVYRadians
 
     /// Sets the field of view, clamping rather than refusing: the control is a
     /// slider and the engine must never be handed a degenerate projection.
-    mutating func setFOVY(radians: Float) {
+    public mutating func setFOVY(radians: Float) {
         guard radians.isFinite else { return }
         fovYRadians = min(max(radians, Self.fovYRange.lowerBound), Self.fovYRange.upperBound)
     }
 
-    mutating func reset() {
+    public mutating func reset() {
         fovYRadians = Self.defaultFOVYRadians
     }
 
-    var isOverridden: Bool {
+    public var isOverridden: Bool {
         fovYRadians != Self.defaultFOVYRadians
     }
 
@@ -103,7 +103,7 @@ nonisolated struct FirstPersonCamera: Equatable {
     /// applied in the rig's own frame, whose X axis is the camera's right
     /// vector after the yaw. So looking down tips the arms down with the view
     /// instead of sliding them.
-    static func eyeMatrix(
+    public static func eyeMatrix(
         eyePosition: SIMD3<Float>,
         yaw: Float,
         pitch: Float
@@ -123,7 +123,7 @@ nonisolated struct FirstPersonCamera: Equatable {
     /// construction. A non-invertible bone matrix — only reachable from
     /// malformed data — falls back to the reference height so the arms stay in
     /// front of the player instead of collapsing onto the origin.
-    static func rigTransform(
+    public static func rigTransform(
         eyeMatrix: float4x4,
         cameraBone: float4x4?
     ) -> float4x4 {

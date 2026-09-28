@@ -33,26 +33,26 @@ import simd
 
 /// One simulated bone: the body that stands for it and the bind-pose frame that
 /// ties the body to the animation skeleton.
-nonisolated struct RagdollBoneDefinition: Sendable {
+nonisolated public struct RagdollBoneDefinition: Sendable {
     /// The `NiNode` the `bhkBlendCollisionObject` targeted, which on a character
     /// skeleton is the animation bone's own name (`NPC L Calf [LClf]`).
-    let boneName: String
+    public let boneName: String
     /// Index into the animation skeleton's bone list, resolved by name.
-    let boneIndex: Int
-    let body: DynamicBodyDefinition
+    public let boneIndex: Int
+    public let body: DynamicBodyDefinition
     /// Where the animation skeleton draws this bone with nothing animated, in
     /// the model space the bodies were built in.
-    let bindBoneMatrix: float4x4
+    public let bindBoneMatrix: float4x4
     /// `bindBoneMatrix.inverse`, kept rather than recomputed because the
     /// hand-off multiplies by it once per bone per activation.
-    let bindBoneInverse: float4x4
+    public let bindBoneInverse: float4x4
     /// The `BipedPart` the source body's `HavokFilter` named, which is what
     /// decides who this bone may collide with (`RagdollSelfCollision`). Nil on a
     /// body whose filter names no biped layer, and nil by default so a synthetic
     /// fixture that says nothing about parts self-collides with nothing.
-    let bipedPart: UInt8?
+    public let bipedPart: UInt8?
 
-    init(
+    public init(
         boneName: String,
         boneIndex: Int,
         body: DynamicBodyDefinition,
@@ -75,15 +75,15 @@ nonisolated struct RagdollBoneDefinition: Sendable {
 /// twist, plane and motor, a hinge names its rotation axis and two
 /// perpendiculars, and a ball-and-socket names none at all and leaves them at
 /// the identity basis.
-nonisolated struct RagdollJointFrame: Sendable {
-    let pivot: SIMD3<Float>
+nonisolated public struct RagdollJointFrame: Sendable {
+    public let pivot: SIMD3<Float>
     /// The cone's central axis on a ragdoll joint, the rotation axis on a hinge.
-    let primaryAxis: SIMD3<Float>
+    public let primaryAxis: SIMD3<Float>
     /// The plane normal on a ragdoll joint, the first perpendicular on a hinge.
     /// This is the axis a twist angle is measured from.
-    let secondaryAxis: SIMD3<Float>
+    public let secondaryAxis: SIMD3<Float>
 
-    static let identity = RagdollJointFrame(
+    public static let identity = RagdollJointFrame(
         pivot: .zero,
         primaryAxis: SIMD3<Float>(1, 0, 0),
         secondaryAxis: SIMD3<Float>(0, 1, 0)
@@ -97,7 +97,7 @@ nonisolated struct RagdollJointFrame: Sendable {
 /// plain hinges on clutter (docs/formats/nif-collision.md). Everything else
 /// decodes to `.point` and is tallied, because a joint held at its pivot with
 /// its rotation free is a visibly loose limb rather than an invented limit.
-nonisolated enum RagdollJointLimits: Sendable {
+nonisolated public enum RagdollJointLimits: Sendable {
     /// Pivots held together, rotation free.
     case point
     /// Pivots held `length` engine units apart, rotation free.
@@ -119,13 +119,13 @@ nonisolated enum RagdollJointLimits: Sendable {
 
 /// One joint: the two bodies it binds, each body's end of it, what it limits,
 /// and how much it resists being moved.
-nonisolated struct RagdollJointDefinition: Sendable {
+nonisolated public struct RagdollJointDefinition: Sendable {
     /// Indices into `RagdollDefinition.bones`, always distinct and in range.
-    let bodyA: Int
-    let bodyB: Int
-    let frameA: RagdollJointFrame
-    let frameB: RagdollJointFrame
-    let limits: RagdollJointLimits
+    public let bodyA: Int
+    public let bodyB: Int
+    public let frameA: RagdollJointFrame
+    public let frameB: RagdollJointFrame
+    public let limits: RagdollJointLimits
     /// `bhkRagdollConstraint`/`bhkLimitedHingeConstraint` `maxFriction`, raw as
     /// the file stores it.
     ///
@@ -138,9 +138,9 @@ nonisolated struct RagdollJointDefinition: Sendable {
     /// docs/engine/ragdoll-solver.md, and it is bounded in the only way that matters —
     /// friction can only ever take energy out, so a wrong scale makes a corpse
     /// stiff or floppy and can never make one unstable.
-    let maxFriction: Float
+    public let maxFriction: Float
 
-    init(
+    public init(
         bodyA: Int,
         bodyB: Int,
         frameA: RagdollJointFrame,
@@ -161,7 +161,7 @@ nonisolated struct RagdollJointDefinition: Sendable {
 /// rather than thrown: a ragdoll missing one limb is more useful than none, and
 /// the acceptance gate wants to assert that the vanilla humanoid skeleton
 /// produces an empty list.
-nonisolated enum RagdollBuildSkip: Equatable, Sendable {
+nonisolated public enum RagdollBuildSkip: Equatable, Sendable {
     /// A body whose target node names no bone of the animation skeleton.
     case unresolvedBoneName(String)
     /// A body with no name at all, so nothing could be resolved.
@@ -175,26 +175,26 @@ nonisolated enum RagdollBuildSkip: Equatable, Sendable {
 }
 
 /// One actor's whole ragdoll.
-nonisolated struct RagdollDefinition: Sendable {
-    let bones: [RagdollBoneDefinition]
-    let joints: [RagdollJointDefinition]
+nonisolated public struct RagdollDefinition: Sendable {
+    public let bones: [RagdollBoneDefinition]
+    public let joints: [RagdollJointDefinition]
     /// Everything the build dropped, in the order it was dropped.
-    let skipped: [RagdollBuildSkip]
+    public let skipped: [RagdollBuildSkip]
     /// Which of this ragdoll's own bones may touch each other, from the biped
     /// part numbers the bodies carry and the joint graph they form (issue #413).
     /// Derived once here rather than per step, because it depends on nothing
     /// that moves.
-    let selfCollision: RagdollSelfCollision
+    public let selfCollision: RagdollSelfCollision
 
-    var boneCount: Int {
+    public var boneCount: Int {
         bones.count
     }
 
-    var jointCount: Int {
+    public var jointCount: Int {
         joints.count
     }
 
-    init(
+    public init(
         bones: [RagdollBoneDefinition],
         joints: [RagdollJointDefinition],
         skipped: [RagdollBuildSkip] = []

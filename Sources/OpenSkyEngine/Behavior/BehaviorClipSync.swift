@@ -31,7 +31,7 @@ nonisolated extension BehaviorGraphInstance {
     /// run, as a fraction of its own clip window, or nil when the subtree holds
     /// none. Depth first in declared order, so the answer is the same on every
     /// run over the same graph.
-    func clipPhase(under target: HKXPointerTarget?) -> Float? {
+    public func clipPhase(under target: HKXPointerTarget?) -> Float? {
         guard let target else { return nil }
         var visited: Set<HKXPointerTarget> = []
         var stack: [(target: HKXPointerTarget, depth: Int)] = [(target, 0)]
@@ -60,7 +60,7 @@ nonisolated extension BehaviorGraphInstance {
     /// marker. Neither means anything until item 14.5 has two actors to align,
     /// so every evaluation costs one tally entry rather than an invented
     /// alignment.
-    func evaluateSynchronizedClip(
+    public func evaluateSynchronizedClip(
         _ generator: BSSynchronizedClipGenerator,
         depth: Int,
         deltaTime: Float
@@ -72,7 +72,9 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// The phase a sync master imposes on its siblings, applied every update.
-    func continuousClipPhase(of target: HKXPointerTarget?) -> (value: Float, seedOnly: Bool)? {
+    public func continuousClipPhase(of target: HKXPointerTarget?)
+        -> (value: Float, seedOnly: Bool)?
+    {
         clipPhase(under: target).map { ($0, false) }
     }
 }

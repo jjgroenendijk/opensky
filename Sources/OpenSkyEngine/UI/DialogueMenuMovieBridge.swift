@@ -60,52 +60,52 @@ import OpenSkyFormats
 /// The three tallies a dialogue bring-up is gated on. Zero of each is the gate
 /// passing; the panel and the CLI probe print all three even at zero, so a
 /// passing gate cannot be mistaken for a missing readout.
-nonisolated struct DialogueMenuDiagnostics: Equatable, Sendable {
-    let faults: Int
-    let missingNames: Int
-    let unhandledInvokes: Int
+nonisolated public struct DialogueMenuDiagnostics: Equatable, Sendable {
+    public let faults: Int
+    public let missingNames: Int
+    public let unhandledInvokes: Int
 
-    static let none = DialogueMenuDiagnostics(
+    public static let none = DialogueMenuDiagnostics(
         faults: 0, missingNames: 0, unhandledInvokes: 0
     )
 }
 
-nonisolated enum DialogueMenuMovieBridge {
-    static let moviePath = "interface\\dialoguemenu.swf"
+nonisolated public enum DialogueMenuMovieBridge: Sendable {
+    public static let moviePath = "interface\\dialoguemenu.swf"
     /// The placed `DialogueMenuObj` instance, which is where every engine
     /// entry point lives.
-    static let menuPath = "/DialogueMenu_mc"
-    static let speakerNamePath = "\(menuPath)/SpeakerName"
-    static let subtitleTextPath = "\(menuPath)/SubtitleText"
-    static let topicListHolderPath = "\(menuPath)/TopicListHolder"
-    static let topicListPath = "\(topicListHolderPath)/List_mc"
-    static let exitButtonPath = "\(menuPath)/ExitButton"
+    public static let menuPath = "/DialogueMenu_mc"
+    public static let speakerNamePath = "\(menuPath)/SpeakerName"
+    public static let subtitleTextPath = "\(menuPath)/SubtitleText"
+    public static let topicListHolderPath = "\(menuPath)/TopicListHolder"
+    public static let topicListPath = "\(topicListHolderPath)/List_mc"
+    public static let exitButtonPath = "\(menuPath)/ExitButton"
 
     /// The list base's backing array and selection, shared with every other
     /// CLIK list in the game.
-    static let entryArrayName = "EntriesA"
-    static let selectedIndexName = "iSelectedIndex"
-    static let invalidateMethod = "InvalidateData"
-    static let clearMethod = "ClearList"
+    public static let entryArrayName = "EntriesA"
+    public static let selectedIndexName = "iSelectedIndex"
+    public static let invalidateMethod = "InvalidateData"
+    public static let clearMethod = "ClearList"
     /// `TopicList`'s own rebuild, which repositions the centred entries after
     /// `InvalidateData` has rebuilt them.
-    static let updateListMethod = "UpdateList"
+    public static let updateListMethod = "UpdateList"
     /// `TopicList`'s own selection setter, which moves the highlight and the
     /// centring together.
-    static let selectTopicMethod = "SetSelectedTopic"
+    public static let selectTopicMethod = "SetSelectedTopic"
 
     /// The instance property holding the menu's own state, whose values are the
     /// four `DialogueMenuObj` class constants.
-    static let menuStateName = "eMenuState"
-    static let stateConstantNames = [
+    public static let menuStateName = "eMenuState"
+    public static let stateConstantNames = [
         "SHOW_GREETING", "TOPIC_LIST_SHOWN", "TOPIC_CLICKED", "TRANSITIONING"
     ]
     /// The class the constants and the prototype methods are read off.
-    static let menuClassName = "DialogueMenuObj"
-    static let listClassName = "TopicList"
+    public static let menuClassName = "DialogueMenuObj"
+    public static let listClassName = "TopicList"
 
     /// Engine entry points on the menu instance that OpenSky drives.
-    static let requiredEntryPoints = [
+    public static let requiredEntryPoints = [
         "PopulateDialogueLists",
         "SetSpeakerName",
         "ShowDialogueText",
@@ -127,26 +127,26 @@ nonisolated enum DialogueMenuMovieBridge {
     ///   carries.
     /// * `AdjustForPALSD` is a standard-definition television layout the macOS
     ///   target has no use for.
-    static let deferredEntryPoints = [
+    public static let deferredEntryPoints = [
         "OnVoiceReady", "SkipText", "SetAllowProgress", "StartProgressTimer",
         "AdjustForPALSD"
     ]
 
     /// `PLATFORM_PC_KBMOUSE`, the same value the system menu's platform switch
     /// takes.
-    static let pcPlatform = SystemMenuMovieBridge.pcPlatform
+    public static let pcPlatform = SystemMenuMovieBridge.pcPlatform
 
     /// Movie-to-engine calls with no OpenSky consumer on this surface. Sunk
     /// rather than left missing so a bring-up's unhandled-invoke count means
     /// "something the engine should answer and does not".
-    static let sinkHostFunctions = ["myLog", "PlaySound", "PlayOKSound"]
+    public static let sinkHostFunctions = ["myLog", "PlaySound", "PlayOKSound"]
 
     // MARK: - Bring-up
 
     /// Installs the surface the movie reaches for *during* `start()`. Bring-up
     /// is the first thing that calls out to the host, so this must run before
     /// the runtime is started (`Renderer.startSWFRuntime(prepare:)`).
-    static func prepare(runtime: SWFMovieRuntime) {
+    public static func prepare(runtime: SWFMovieRuntime) {
         for name in sinkHostFunctions {
             runtime.registerHostFunction(name) { _ in .undefined }
         }
@@ -162,7 +162,7 @@ nonisolated enum DialogueMenuMovieBridge {
     /// dialogue menu degrades to an engine-side list when the movie's shape has
     /// moved, and taking the app down at the moment a conversation starts is
     /// the one outcome the AS2 scope decision rules out.
-    static func missingEntryPoints(runtime: SWFMovieRuntime) -> [String] {
+    public static func missingEntryPoints(runtime: SWFMovieRuntime) -> [String] {
         guard let menu = runtime.node(atPath: menuPath, from: runtime.root) else {
             return requiredEntryPoints
         }
@@ -176,7 +176,7 @@ nonisolated enum DialogueMenuMovieBridge {
     ///
     /// Nothing here throws. A movie that does not match the measured contract
     /// leaves entries in the missing-API tally, which the panel reports.
-    static func activate(
+    public static func activate(
         runtime: SWFMovieRuntime,
         onClose: @escaping @MainActor @Sendable () -> Void
     ) {
@@ -200,14 +200,14 @@ nonisolated enum DialogueMenuMovieBridge {
     ///
     /// - Returns: whether the movie consumed the event.
     @discardableResult
-    static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
+    public static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
         guard let key = key(for: event) else { return false }
         let down = runtime.handle(.keyDown(code: key.code, ascii: key.ascii))
         let up = runtime.handle(.keyUp(code: key.code))
         return down || up
     }
 
-    static func key(for event: MenuInputEvent) -> (code: Int, ascii: Int)? {
+    public static func key(for event: MenuInputEvent) -> (code: Int, ascii: Int)? {
         switch event {
         case .move(.up): (SWFKeyCode.up, 0)
         case .move(.down): (SWFKeyCode.down, 0)
@@ -221,7 +221,7 @@ nonisolated enum DialogueMenuMovieBridge {
     // MARK: - Readout
 
     /// The three tallies the bring-up gate reads.
-    static func diagnostics(runtime: SWFMovieRuntime) -> DialogueMenuDiagnostics {
+    public static func diagnostics(runtime: SWFMovieRuntime) -> DialogueMenuDiagnostics {
         let tally = runtime.tally
         return DialogueMenuDiagnostics(
             faults: tally.faultTotal,
@@ -233,7 +233,7 @@ nonisolated enum DialogueMenuMovieBridge {
     /// The value one of the movie's own state constants carries, so the state
     /// this bridge publishes can be asserted against the movie instead of
     /// pinned to a number here.
-    static func stateConstant(_ name: String, runtime: SWFMovieRuntime) -> Int? {
+    public static func stateConstant(_ name: String, runtime: SWFMovieRuntime) -> Int? {
         guard
             let menuClass = runtime.runtime.registeredClass(named: menuClassName),
             case let .number(value) = menuClass.lookup(name)?.property.value,
@@ -245,7 +245,7 @@ nonisolated enum DialogueMenuMovieBridge {
     }
 
     /// The state the live movie is in, read off its own `eMenuState`.
-    static func menuState(runtime: SWFMovieRuntime) -> Int? {
+    public static func menuState(runtime: SWFMovieRuntime) -> Int? {
         guard
             let menu = runtime.node(atPath: menuPath, from: runtime.root),
             case let .number(value) = menu.object.lookup(menuStateName)?.property.value,

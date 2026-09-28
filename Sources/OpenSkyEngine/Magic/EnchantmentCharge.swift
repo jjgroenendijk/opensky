@@ -56,37 +56,37 @@ import Foundation
 ///
 /// A value type with no store behind it, so the arithmetic is checkable without
 /// a world: `EnchantmentRuntime` is what reads and writes the stored number.
-nonisolated struct EnchantmentCharge: Equatable, Sendable {
+nonisolated public struct EnchantmentCharge: Equatable, Sendable {
     /// The weapon's `EAMT`: the fully charged value.
-    let capacity: Float
+    public let capacity: Float
     /// What is left of it.
-    let remaining: Float
+    public let remaining: Float
     /// What one hit spends — the enchantment's cost. Zero for an enchantment
     /// that charges nothing, which then fires forever.
-    let costPerUse: Float
+    public let costPerUse: Float
 
-    init(capacity: Float, remaining: Float, costPerUse: Float) {
+    public init(capacity: Float, remaining: Float, costPerUse: Float) {
         self.capacity = Self.clamped(capacity)
         self.remaining = min(Self.clamped(remaining), self.capacity)
         self.costPerUse = Self.clamped(costPerUse)
     }
 
     /// A fully charged weapon.
-    init(capacity: Float, costPerUse: Float) {
+    public init(capacity: Float, costPerUse: Float) {
         self.init(capacity: capacity, remaining: capacity, costPerUse: costPerUse)
     }
 
     /// Whether the enchantment spends anything at all. False for a cost of
     /// zero and for a weapon whose record names no charge, both of which fire
     /// without ever running down.
-    var isMetered: Bool {
+    public var isMetered: Bool {
         costPerUse > 0 && capacity > 0
     }
 
     /// How many more hits the enchantment can pay for. `Int.max` when nothing
     /// is metered, which is the honest answer to "how many uses does a
     /// cost-free enchantment have".
-    var usesRemaining: Int {
+    public var usesRemaining: Int {
         guard isMetered else { return .max }
         return Int((remaining / costPerUse).rounded(.down))
     }
@@ -98,19 +98,19 @@ nonisolated struct EnchantmentCharge: Equatable, Sendable {
     /// charge" (<https://en.uesp.net/wiki/Skyrim:Enchanting>), so a fraction of
     /// a use is not a use. The leftover is stranded rather than spent, which is
     /// also why `usesRemaining` floors.
-    var canFire: Bool {
+    public var canFire: Bool {
         !isMetered || remaining >= costPerUse
     }
 
     /// Fraction of the full charge still held, `0...1`. Zero when the weapon
     /// carries no charge field at all.
-    var fraction: Float {
+    public var fraction: Float {
         guard capacity > 0 else { return 0 }
         return min(max(0, remaining / capacity), 1)
     }
 
     /// This charge after one hit paid for itself, or nil when it could not.
-    func spending() -> EnchantmentCharge? {
+    public func spending() -> EnchantmentCharge? {
         guard canFire else { return nil }
         guard isMetered else { return self }
         return EnchantmentCharge(
@@ -121,13 +121,13 @@ nonisolated struct EnchantmentCharge: Equatable, Sendable {
     }
 
     /// This charge with `amount` put back, capped at the capacity.
-    func restoring(to amount: Float) -> EnchantmentCharge {
+    public func restoring(to amount: Float) -> EnchantmentCharge {
         EnchantmentCharge(capacity: capacity, remaining: amount, costPerUse: costPerUse)
     }
 
     /// One line for a readout: what is left, out of what, and how many hits
     /// that buys.
-    var describedLine: String {
+    public var describedLine: String {
         guard isMetered else {
             return capacity > 0 ? String(format: "%.0f charge, unmetered", capacity) : "no charge"
         }

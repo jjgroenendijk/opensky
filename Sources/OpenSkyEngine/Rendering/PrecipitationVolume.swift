@@ -7,37 +7,49 @@ import Metal
 import OpenSkyFormats
 import simd
 
-nonisolated struct PrecipitationRuntimeSnapshot: Equatable {
-    let state: PrecipitationState
-    let roofOccluded: Bool
-    let rainLiveCount: Int
-    let snowLiveCount: Int
+nonisolated public struct PrecipitationRuntimeSnapshot: Equatable, Sendable {
+    public let state: PrecipitationState
+    public let roofOccluded: Bool
+    public let rainLiveCount: Int
+    public let snowLiveCount: Int
+
+    public init(
+        state: PrecipitationState,
+        roofOccluded: Bool,
+        rainLiveCount: Int,
+        snowLiveCount: Int
+    ) {
+        self.state = state
+        self.roofOccluded = roofOccluded
+        self.rainLiveCount = rainLiveCount
+        self.snowLiveCount = snowLiveCount
+    }
 }
 
-nonisolated struct PrecipitationUpdate {
-    let cameraPosition: SIMD3<Float>
-    let state: PrecipitationState
-    let wind: WindState
-    let deltaTime: Float
-    let exterior: Bool
-    let enabled: Bool
-    let collisionQuery: WalkController.CollisionQuery?
+nonisolated public struct PrecipitationUpdate {
+    public let cameraPosition: SIMD3<Float>
+    public let state: PrecipitationState
+    public let wind: WindState
+    public let deltaTime: Float
+    public let exterior: Bool
+    public let enabled: Bool
+    public let collisionQuery: WalkController.CollisionQuery?
 }
 
-nonisolated final class PrecipitationVolume {
+nonisolated public final class PrecipitationVolume {
     private let rain: ParticlePlayback
     private let snow: ParticlePlayback
-    private(set) var anchor: SIMD3<Float>?
-    private(set) var snapshot = PrecipitationRuntimeSnapshot(
+    public private(set) var anchor: SIMD3<Float>?
+    public private(set) var snapshot = PrecipitationRuntimeSnapshot(
         state: .none, roofOccluded: false, rainLiveCount: 0, snowLiveCount: 0
     )
-    private(set) var drawItems: [ParticlePlayback] = []
+    public private(set) var drawItems: [ParticlePlayback] = []
 
-    var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [MTLAllocation] {
         [rain.instanceBuffer, rain.texture, snow.instanceBuffer, snow.texture]
     }
 
-    init(device: MTLDevice) throws {
+    public init(device: MTLDevice) throws {
         rain = try ParticlePlayback(
             device: device,
             definition: Self.rainDefinition,
@@ -56,7 +68,7 @@ nonisolated final class PrecipitationVolume {
         )
     }
 
-    func update(_ update: PrecipitationUpdate) {
+    public func update(_ update: PrecipitationUpdate) {
         guard update.exterior, update.enabled else {
             clear()
             return

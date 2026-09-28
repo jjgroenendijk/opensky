@@ -8,6 +8,7 @@
 // never overridden.
 
 import AppKit
+import OpenSkyEngine
 
 final class ScriptNativeTallySection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

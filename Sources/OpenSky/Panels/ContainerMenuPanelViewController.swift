@@ -3,6 +3,7 @@
 // and the menu itself.
 
 import AppKit
+import OpenSkyEngine
 
 final class ContainerMenuPanelViewController: InspectorPanelViewController {
     let merchantSection = ContainerMerchantSection()

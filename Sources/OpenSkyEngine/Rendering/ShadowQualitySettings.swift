@@ -6,15 +6,15 @@
 
 import Foundation
 
-nonisolated enum ShadowQualitySettings {
+nonisolated public enum ShadowQualitySettings: Sendable {
     /// UserDefaults key holding the ShadowQuality rawValue string.
-    static let defaultsKey = "ShadowQualitySetting"
+    public static let defaultsKey = "ShadowQualitySetting"
 
     /// Quality used when nothing valid is stored.
-    static let fallback = ShadowQuality.high
+    public static let fallback = ShadowQuality.high
 
     /// Reads the stored quality; missing/unknown rawValue -> fallback.
-    static func load(from defaults: UserDefaults = .standard) -> ShadowQuality {
+    public static func load(from defaults: UserDefaults = .standard) -> ShadowQuality {
         guard
             let raw = defaults.string(forKey: defaultsKey),
             let quality = ShadowQuality(rawValue: raw)
@@ -25,12 +25,12 @@ nonisolated enum ShadowQualitySettings {
     }
 
     /// Persists the chosen quality by rawValue.
-    static func store(_ quality: ShadowQuality, to defaults: UserDefaults = .standard) {
+    public static func store(_ quality: ShadowQuality, to defaults: UserDefaults = .standard) {
         defaults.set(quality.rawValue, forKey: defaultsKey)
     }
 
     /// Removes the explicit choice so subsequent launches use the fallback.
-    static func clearOverride(from defaults: UserDefaults = .standard) {
+    public static func clearOverride(from defaults: UserDefaults = .standard) {
         defaults.removeObject(forKey: defaultsKey)
     }
 }

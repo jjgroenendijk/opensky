@@ -18,14 +18,14 @@ import Foundation
 import OpenSkyFormats
 
 /// One actor's saved hostility, before it is merged back into the delta.
-nonisolated struct SaveCombatStateEntry: Equatable, Sendable {
-    let key: ReferenceKey
-    let cell: CellSceneLocation?
-    let state: ActorCombatState
+nonisolated public struct SaveCombatStateEntry: Equatable, Sendable {
+    public let key: ReferenceKey
+    public let cell: CellSceneLocation?
+    public let state: ActorCombatState
 }
 
-nonisolated enum OpenSkySaveCombatDecoder {
-    static func decodeCombatStates(_ payload: Data) throws -> [SaveCombatStateEntry] {
+nonisolated public enum OpenSkySaveCombatDecoder: Sendable {
+    public static func decodeCombatStates(_ payload: Data) throws -> [SaveCombatStateEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CBTS entry count")
         try OpenSkySaveDecoder.validate(
@@ -45,7 +45,7 @@ nonisolated enum OpenSkySaveCombatDecoder {
     /// Lays each saved hostility over the matching `RDLT` delta, adding an
     /// entry for an actor that had no other component, and re-sorts the result
     /// into `ReferenceKey` total order.
-    static func merge(
+    public static func merge(
         _ states: [SaveCombatStateEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {

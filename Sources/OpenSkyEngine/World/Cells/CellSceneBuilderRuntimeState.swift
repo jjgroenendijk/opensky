@@ -21,20 +21,20 @@ import OSLog
 /// One cell's references as a build should place them: the index entries every
 /// placement keeps, the deltas that applied to them, and the effective set that
 /// reaches render and collision.
-nonisolated struct EffectiveReferences {
+nonisolated public struct EffectiveReferences: Sendable {
     /// Index entries for every reference the plugin placed, including ones
     /// runtime state hides: an object a script disabled still exists.
-    let entries: [RuntimeReferenceEntry]
+    public let entries: [RuntimeReferenceEntry]
     /// This build's snapshot, flattened for repeated lookup.
-    let deltas: [ReferenceKey: ReferenceStateDelta]
+    public let deltas: [ReferenceKey: ReferenceStateDelta]
     /// What render and collision both place. Both read this one array, so a
     /// moved object's collision shape follows its mesh.
-    let references: [PlacedReference]
+    public let references: [PlacedReference]
 }
 
 nonisolated extension CellSceneBuilder {
     /// Keys `entries` by the FormID a placement was authored under.
-    nonisolated func entriesByFormID(
+    nonisolated public func entriesByFormID(
         _ entries: [RuntimeReferenceEntry]
     ) -> [FormID: RuntimeReferenceEntry] {
         var result: [FormID: RuntimeReferenceEntry] = [:]
@@ -54,7 +54,7 @@ nonisolated extension CellSceneBuilder {
     /// appended to its output, so a dropped item that was later moved, disabled
     /// or picked back up goes through the same resolution an authored
     /// placement does instead of needing a second set of rules (issue #177).
-    nonisolated func effectiveReferences(
+    nonisolated public func effectiveReferences(
         refs: [PlacedReference],
         collected: [CollectedReference],
         state: WorldStateSnapshot,
@@ -92,7 +92,7 @@ nonisolated extension CellSceneBuilder {
     ///     (an unresolvable FormID) have no runtime identity and pass through
     ///     untouched.
     ///   - deltas: this build's snapshot, flattened by `deltasByKey()`.
-    nonisolated func applyRuntimeState(
+    nonisolated public func applyRuntimeState(
         refs: [PlacedReference],
         entries: [RuntimeReferenceEntry],
         deltas: [ReferenceKey: ReferenceStateDelta],
@@ -141,7 +141,7 @@ nonisolated extension CellSceneBuilder {
     /// `entry`'s plugin baseline with this build's delta laid over it. The
     /// baseline is re-derived from the decoded record, never cached, so it
     /// cannot go stale against a reloaded plugin.
-    nonisolated func resolvedRuntimeState(
+    nonisolated public func resolvedRuntimeState(
         for entry: RuntimeReferenceEntry,
         deltas: [ReferenceKey: ReferenceStateDelta]
     ) -> ReferenceState {

@@ -46,12 +46,12 @@
 
 import simd
 
-nonisolated enum RagdollConstraintSolver {
+nonisolated public enum RagdollConstraintSolver: Sendable {
     /// Velocity iterations per substep over the whole joint set. Higher than
     /// the contact solver's four because a joint chain propagates a correction
     /// one link per iteration, and a humanoid ragdoll is six links from pelvis
     /// to hand.
-    static let iterationCount = 16
+    public static let iterationCount = 16
     /// Passes the position and orientation corrections make over the joint list
     /// before anything is actually moved.
     ///
@@ -69,37 +69,37 @@ nonisolated enum RagdollConstraintSolver {
     /// measured a settled corpse crawling across the floor at better than a unit
     /// a second, driven by nothing but its own position corrections doing work
     /// against gravity.
-    static let positionIterationCount = 4
+    public static let positionIterationCount = 4
     /// Fraction of a joint's remaining positional error removed per substep.
     /// Below one for the reason in the header.
-    static let positionCorrectionRate: Float = 0.4
+    public static let positionCorrectionRate: Float = 0.4
     /// Positional error left alone, in engine units. A joint solved to exactly
     /// zero chatters against the contact solver, which is pushing the same
     /// bodies for its own reasons.
-    static let positionSlop: Float = 0.05
+    public static let positionSlop: Float = 0.05
     /// Fraction of an angular limit's remaining violation rotated out of the
     /// poses per substep. Below one for the same reason the positional rate is:
     /// a snap is energy, and pacing the recovery is not.
-    static let angularCorrectionRate: Float = 0.2
+    public static let angularCorrectionRate: Float = 0.2
     /// Angular violation left alone, in radians. About a fifth of a degree.
     /// Vanilla authors a couple of the humanoid's own joints a few degrees
     /// outside their limits at the bind pose, so a solver that chased zero would
     /// never stop turning a corpse that is already lying still.
-    static let angularSlop: Float = 0.004
+    public static let angularSlop: Float = 0.004
     /// Ceiling on how far one substep may turn a body to recover a limit, in
     /// radians. The angular counterpart of `maximumPositionCorrection`.
-    static let maximumLimitCorrection: Float = 0.15
+    public static let maximumLimitCorrection: Float = 0.15
     /// Ceiling on how far one substep may move a body to fix joint drift, in
     /// engine units. The same guard `maximumCorrectionDistance` gives contacts,
     /// for the same reason.
-    static let maximumPositionCorrection: Float = 2
+    public static let maximumPositionCorrection: Float = 2
 
     /// Runs the whole joint set over `bodies` for one substep.
     ///
     /// - Returns: how many limit constraints were found violated on the final
     ///   iteration, which is the panel's convergence readout.
     @discardableResult
-    static func solve(
+    public static func solve(
         joints: [RagdollJointDefinition],
         bodies: inout [DynamicBody],
         dt: Float
@@ -135,7 +135,7 @@ nonisolated enum RagdollConstraintSolver {
     /// It cannot destabilize anything, whatever the unit turns out to be. The
     /// impulse only ever opposes the existing relative motion and is clamped to
     /// at most all of it, so friction takes energy out and never puts any in.
-    static func applyFriction(
+    public static func applyFriction(
         _ joint: RagdollJointDefinition,
         bodies: inout [DynamicBody],
         dt: Float
@@ -165,7 +165,7 @@ nonisolated enum RagdollConstraintSolver {
     /// world inverse inertia. Inverting it directly rather than iterating three
     /// scalar rows is what makes one visit remove the whole relative motion
     /// instead of a third of it.
-    static func solvePoint(
+    public static func solvePoint(
         _ joint: RagdollJointDefinition,
         bodies: inout [DynamicBody]
     ) {
@@ -234,7 +234,7 @@ nonisolated enum RagdollConstraintSolver {
     /// Solves whatever angular limits the joint carries.
     ///
     /// - Returns: how many of them were found violated.
-    static func solveLimits(
+    public static func solveLimits(
         _ joint: RagdollJointDefinition,
         accumulated: inout RagdollLimitImpulses,
         bodies: inout [DynamicBody]
@@ -303,7 +303,7 @@ nonisolated enum RagdollConstraintSolver {
     /// turned three times for the one misalignment it has. The share each body
     /// takes is its inverse inertia about the limit's own axis, so a heavy
     /// torso turns less than the arm hanging off it.
-    static func correctLimits(
+    public static func correctLimits(
         joints: [RagdollJointDefinition],
         bodies: inout [DynamicBody],
         includeSleeping: Bool = false
@@ -357,7 +357,7 @@ nonisolated enum RagdollConstraintSolver {
     /// Accumulated per body and applied once, exactly as the contact solver's
     /// recovery is: a bone with three joints on it would otherwise be moved
     /// three times for the one displacement it actually has.
-    static func correctPositions(
+    public static func correctPositions(
         joints: [RagdollJointDefinition],
         bodies: inout [DynamicBody],
         includeSleeping: Bool = false
@@ -430,10 +430,10 @@ nonisolated enum RagdollConstraintSolver {
 /// The accumulated one-sided impulse of each limit a joint can carry. Four
 /// slots because a ragdoll cone is the widest joint: cone, plane, twist, and one
 /// spare the hinge family uses for its axis alignment.
-nonisolated struct RagdollLimitImpulses: Sendable {
+nonisolated public struct RagdollLimitImpulses: Sendable {
     private var values = SIMD4<Float>()
 
-    subscript(slot: Int) -> Float {
+    public subscript(slot: Int) -> Float {
         get { slot >= 0 && slot < 4 ? values[slot] : 0 }
         set {
             guard slot >= 0, slot < 4 else { return }

@@ -6,7 +6,7 @@
 // not change what the next snapshot reports would let the panel pass while
 // showing a number nothing produced.
 
-@testable import OpenSky
+@testable import OpenSkyEngine
 @testable import OpenSkyFormats
 
 /// The fake's inventory-and-equipment ledger, kept together so

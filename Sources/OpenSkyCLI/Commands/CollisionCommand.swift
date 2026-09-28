@@ -4,6 +4,7 @@
 
 import Foundation
 import Metal
+import OpenSkyEngine
 import OpenSkyFormats
 
 enum CollisionCommand {
