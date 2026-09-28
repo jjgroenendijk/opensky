@@ -54,7 +54,7 @@ struct PapyrusNativeGuardTests {
     }
 
     private struct Fixture {
-        // periphery:ignore - held so the world and bridge the registry reaches
+        // Held so the world and bridge the registry reaches
         // stay alive for the length of a test
         let session: PapyrusWorldFixture.Session
         let registry: PapyrusNativeRegistry

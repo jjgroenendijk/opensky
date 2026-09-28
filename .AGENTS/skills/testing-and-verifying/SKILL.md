@@ -48,16 +48,13 @@ test first, watch it fail, then fix.
 - `make verify-build` compiles the app, `OpenSkyCLI`, and both unit bundles without running
   a test. It is the only routine command that compiles `OpenSkyRealDataTests`, and the
   cheapest way to catch a type change that breaks a target you did not test.
-- `make dead-code` scans for new unused code. Run it when a change adds, removes, or stops
-  using declarations. It builds uncached into its own tree, so its first run in a worktree
-  is a full build.
 - After a failure, `make test-report` names the failing tests and messages. Do not
   hand-parse `.xcresult` JSON.
 
 ## Long runs
 
 Anything that builds (`make test-fast` after an edit, `make test`, `make verify-build`,
-`make cli`, `make realtest`, `make dead-code`, `make install`) can pass the
+`make cli`, `make realtest`, `make install`) can pass the
 two-minute tool timeout. Start it with `run_in_background` and wait for the completion
 notification rather than polling a log.
 

@@ -132,8 +132,6 @@ instead of minutes. In a linked worktree `make clean DEEP=1` removes only the li
 
 The mapping has three costs:
 
-- A replayed task writes no index data. Periphery reads the index, so `make dead-code` builds
-  uncached into `DerivedData-index/` ([code smell scans](/decisions/code-smell-scans.md)).
 - `#filePath` reads `/^src/...`, so a test cannot find the checkout from it. Real-data suites find
   `logs/` by walking up from the test bundle to the folder holding `OpenSky.xcodeproj`.
 - Debug info names sources `/^src/...`. A command-line `lldb` needs

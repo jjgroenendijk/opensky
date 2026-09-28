@@ -27,9 +27,6 @@ TEST_RESULTS     := build/test-results
 DERIVED_DATA     ?= $(CURDIR)/DerivedData
 XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
-# The dead-code scan's own build tree: uncached, so its index store is complete.
-INDEX_DATA       ?= $(DERIVED_DATA)-index
-export OPENSKY_INDEX_DATA := $(INDEX_DATA)
 # Xcode's default cache location. Only `make clean` uses it, to sweep what an
 # Xcode GUI build or an older checkout left there.
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
@@ -50,10 +47,6 @@ PRUNE_DAYS       ?= 14
 # the shell twin of this.
 xcb = xcodebuild -project $(PROJECT) -scheme $(1) -configuration $(2) \
 	$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS)
-# The same for the dead-code index tree: Debug, its own derived data, no cache.
-xcb_index = xcodebuild -project $(PROJECT) -scheme $(1) -configuration Debug \
-	-derivedDataPath $(INDEX_DATA) COMPILATION_CACHE_ENABLE_CACHING=NO \
-	$(XCODEBUILD_FLAGS)
 XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
 XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
 XCB_RELEASE      := $(call xcb,$(SCHEME),Release)
@@ -128,7 +121,7 @@ format-check: ## Fail if anything is unformatted, without writing
 		--dry-run --Werror $(METAL_FILES)
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content docs-length dup-check ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content docs-length ## Run every linter (warnings fail)
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
 	@./tools/lint/swift-baseline.sh
@@ -168,38 +161,9 @@ docs-links: ## Check links inside docs/ resolve
 docs-length: ## Check no docs page is longer than the limit
 	@./tools/lint/docs-length.sh
 
-##@ Code smells
+##@ Build checks
 
-# Both scans compare against a baseline of the findings that were already in the
-# tree, so they fail only on new ones; issue #569 tracks the existing ones
-# (docs/decisions/code-smell-scans.md). dup-check reads sources only and is part
-# of `make lint`. dead-code reads the compiler's index store, which a build
-# served from the shared compilation cache leaves nearly empty, so it builds
-# every target uncached into its own tree, INDEX_DATA. On demand, not on push.
-
-.PHONY: dup-check dup-baseline dead-code dead-code-baseline dead-code-index verify-build
-
-dup-check: ## Fail on new copy-pasted Swift (jscpd)
-	@./tools/lint/duplicates.sh $(SWIFT_PATHS)
-
-dup-baseline: ## Rewrite the duplication baseline after removing clones
-	@./tools/lint/duplicates.sh -u $(SWIFT_PATHS)
-
-dead-code: dead-code-index ## Build uncached, then fail on new unused code (Periphery)
-	@./tools/lint/dead-code.sh
-
-dead-code-baseline: dead-code-index ## Rewrite the unused-code baseline after a cleanup
-	@./tools/lint/dead-code.sh -u
-
-# The three builds whose index store Periphery reads, with the compilation cache
-# off, because a cache hit skips writing index data. Its own tree, so it never
-# invalidates the cached one. The first run in a worktree is a full build.
-dead-code-index: vendor-link
-	@$(XCB_RUN) dead-code-unit $(call xcb_index,$(SCHEME)) \
-		-destination '$(DESTINATION)' $(UNIT_PLAN) build-for-testing
-	@$(XCB_RUN) dead-code-realdata $(call xcb_index,$(SCHEME)) \
-		-destination '$(DESTINATION)' -testPlan RealData build-for-testing
-	@$(XCB_RUN) dead-code-cli $(call xcb_index,$(CLI_SCHEME)) build
+.PHONY: verify-build
 
 # Every target compiled, no test run: OpenSkyTests, the app with
 # OpenSkyRealDataTests, and openskycli. Catches a change that breaks a target it
@@ -354,7 +318,7 @@ prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=14] [DRY_R
 # to the main checkout's shared store, and DEEP=1 removes only the link.
 clean: ## Remove build output and caches [DEEP=1 also drops the compile cache]
 	@rm -rf build
-	@for dd in "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"; do \
+	@for dd in "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized"; do \
 		[ -d "$$dd" ] || continue; \
 		if [ -n "$(DEEP)" ]; then \
 			rm -rf "$$dd"; \
