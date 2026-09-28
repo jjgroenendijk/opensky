@@ -10,6 +10,7 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyGameData
+import OpenSkyRendering
 import OSLog
 
 extension GameViewController {

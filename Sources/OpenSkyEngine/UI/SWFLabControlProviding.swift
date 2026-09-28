@@ -12,6 +12,7 @@
 // UI Lab SWF readout: what is selected, what decoding produced, and what the
 // last encoded frame drew.
 import OpenSkyFormatsSWF
+import OpenSkyRendering
 
 nonisolated public struct SWFLabControlSnapshot: Equatable, Sendable {
     /// Archive path of the assigned movie (`interface\console.swf`); nil when

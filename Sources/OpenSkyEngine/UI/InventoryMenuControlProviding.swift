@@ -8,6 +8,7 @@
 // second shape.
 
 import Foundation
+import OpenSkyRendering
 
 nonisolated public struct InventoryMenuControlSnapshot: Equatable, Sendable {
     public let isOpen: Bool

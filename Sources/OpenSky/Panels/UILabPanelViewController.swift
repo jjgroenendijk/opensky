@@ -14,6 +14,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class UILabControlsSection: PanelSectionViewController {
     /// Discrete scale presets surfaced by the popup (points -> pixels factor).

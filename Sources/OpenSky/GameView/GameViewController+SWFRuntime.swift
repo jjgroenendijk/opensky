@@ -17,6 +17,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsSWF
+import OpenSkyRendering
 
 extension GameViewController {
     func startSWFRuntime() {

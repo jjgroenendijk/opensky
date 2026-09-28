@@ -7,6 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyRendering
 import OpenSkyShaderTypes
 import simd
 

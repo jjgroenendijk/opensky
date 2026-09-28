@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class WeatherSection: PanelSectionViewController {
     weak var provider: (any WeatherControlProviding)? {

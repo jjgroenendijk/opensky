@@ -21,6 +21,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyRendering
 import PhysicsTesting
 import simd
 

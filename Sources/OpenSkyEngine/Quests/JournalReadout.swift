@@ -1,3 +1,5 @@
+import OpenSkyRendering
+
 // World > Quests & Journal readout text (issue #184): the device-free half of
 // the journal verification surface.
 //

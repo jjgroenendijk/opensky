@@ -18,6 +18,7 @@ import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyRendering
 import simd
 
 enum WhiterunGuardFixture {

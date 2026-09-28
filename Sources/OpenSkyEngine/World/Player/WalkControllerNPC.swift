@@ -1,6 +1,8 @@
 // NPC entry point over WalkController's existing player update path
 // (issue #423). Kept outside the controller body for the lint size cap.
 
+import OpenSkyRendering
+
 extension WalkController {
     /// Advances a non-player capsule on the same accumulator and fixed clock
     /// as walk mode. The temporary camera contributes facing only; all input

@@ -8,6 +8,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyRendering
 
 extension GameViewController {
     /// Which built-in overlay sample the UI Lab shows. Declared here rather

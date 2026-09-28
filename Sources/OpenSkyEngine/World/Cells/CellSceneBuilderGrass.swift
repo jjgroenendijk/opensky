@@ -4,6 +4,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import OSLog
 
 nonisolated public struct GrassBuild {

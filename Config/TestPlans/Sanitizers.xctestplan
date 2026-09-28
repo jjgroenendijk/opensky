@@ -80,6 +80,11 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyDiagnostics",
           "name" : "OpenSkyDiagnostics"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyRendering",
+          "name" : "OpenSkyRendering"
         }
       ]
     }
@@ -171,6 +176,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyPhysicsTests",
         "name" : "OpenSkyPhysicsTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyRenderingTests",
+        "name" : "OpenSkyRenderingTests"
       }
     }
   ],

@@ -10,6 +10,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
+import OpenSkyRendering
 
 nonisolated extension DialogueMenuMovieBridge {
     /// Delivers one menu event to a live movie through the renderer, which

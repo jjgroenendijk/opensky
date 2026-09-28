@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyRendering
 
 nonisolated extension ContainerMenuMovieBridge {
     // MARK: - Totals

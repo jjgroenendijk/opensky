@@ -4,6 +4,7 @@
 // slice, is `RendererFirstPersonArms.swift`.
 
 import Metal
+import OpenSkyRendering
 
 extension Renderer {
     /// Attaches the assembled arms, sizing the draw rings for their groups and

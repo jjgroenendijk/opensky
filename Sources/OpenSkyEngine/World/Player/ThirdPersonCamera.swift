@@ -20,6 +20,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyPhysics
+import OpenSkyRendering
 import simd
 
 nonisolated public struct ThirdPersonCamera: Equatable, Sendable {

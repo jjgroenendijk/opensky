@@ -9,6 +9,7 @@
 import AppKit
 import MetalKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class GameMetalView: MTKView {
     /// Shared with the renderer; nil before wiring (renderer then stays on its

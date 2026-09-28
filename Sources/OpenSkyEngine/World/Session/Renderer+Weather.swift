@@ -1,6 +1,7 @@
 // The per-frame weather advance (M7.2.2), run by the game session between the
 // world simulation and the renderer's own animation step.
 
+import OpenSkyRendering
 import QuartzCore
 
 extension Renderer {

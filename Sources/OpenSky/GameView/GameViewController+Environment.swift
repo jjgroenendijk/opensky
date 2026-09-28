@@ -8,6 +8,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import simd
 
 extension GameViewController: WeatherControlProviding {

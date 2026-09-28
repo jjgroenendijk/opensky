@@ -3,6 +3,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyRendering
 import simd
 
 nonisolated public struct WalkController: Sendable {

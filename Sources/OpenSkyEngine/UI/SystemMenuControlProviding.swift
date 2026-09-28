@@ -4,6 +4,7 @@
 // the vanilla-movie presentation state behind them.
 
 import Foundation
+import OpenSkyRendering
 
 nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
     public let isOpen: Bool

@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class HUDElementsSection: PanelSectionViewController {
     nonisolated static let scalePresets: [(title: String, value: Float)] = [

@@ -14,6 +14,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyRendering
 
 extension GameViewController {
     /// Selector state for the UI Lab SWF section. Value type on the controller

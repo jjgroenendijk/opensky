@@ -10,6 +10,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+import OpenSkyRendering
 
 extension GameViewController {
     var journalSnapshot: JournalControlSnapshot {

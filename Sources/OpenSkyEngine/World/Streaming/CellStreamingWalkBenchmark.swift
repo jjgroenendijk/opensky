@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import simd
 
 nonisolated public enum CellStreamingWalkBenchmarkError: LocalizedError {

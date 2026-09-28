@@ -16,6 +16,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRendering
 import OSLog
 
 struct ContainerMenuRuntimeState {

@@ -12,6 +12,7 @@ import Metal
 import MetalKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyRendering
 import simd
 import Testing
 

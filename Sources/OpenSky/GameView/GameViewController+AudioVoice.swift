@@ -13,6 +13,7 @@ import OpenSkyEngine
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRendering
 import OSLog
 import simd
 

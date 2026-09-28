@@ -4,6 +4,7 @@
 import FormatsESMTesting
 import Foundation
 import OpenSkyEngine
+@testable import OpenSkyRendering
 import simd
 import Testing
 

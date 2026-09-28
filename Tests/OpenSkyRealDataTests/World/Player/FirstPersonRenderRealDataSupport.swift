@@ -10,6 +10,7 @@ import Metal
 import MetalKit
 @testable import OpenSkyEngine
 @testable import OpenSkyPhysics
+@testable import OpenSkyRendering
 import simd
 import Testing
 import UniformTypeIdentifiers

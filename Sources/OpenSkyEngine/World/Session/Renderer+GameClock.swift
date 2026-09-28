@@ -7,6 +7,7 @@
 // written from the main thread (panel scrubs, global writes, save restore) and
 // read in `draw(in:)`, which MTKView also runs on the main thread.
 
+import OpenSkyRendering
 import QuartzCore
 
 /// The renderer's game-time state, grouped so `Renderer` carries one stored

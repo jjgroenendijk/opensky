@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSkyEngine
+@testable import OpenSkyRendering
 import Testing
 
 struct GameClockTests {

@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyRendering
 
 nonisolated public struct CollisionBuildBenchmarkSummary: Sendable {
     public let average: Double

@@ -18,6 +18,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyPhysics
+@testable import OpenSkyRendering
 import Testing
 
 /// A provider whose builds report whatever summary the case needs, so the real

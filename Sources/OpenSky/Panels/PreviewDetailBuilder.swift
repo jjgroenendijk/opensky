@@ -11,6 +11,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyRendering
 import simd
 
 final class PreviewDetailBuilder {

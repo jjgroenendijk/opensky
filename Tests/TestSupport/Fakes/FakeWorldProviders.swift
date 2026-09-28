@@ -8,6 +8,7 @@ import AppKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
+@testable import OpenSkyRendering
 
 /// Stands in for the game controller, which conforms to every provider
 /// protocol. Shared with `WorldPanelTests` so a panel test exercises the same

@@ -8,6 +8,7 @@
 import FormatsSWFTesting
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyRendering
 import Testing
 
 struct SWFLabRuntimeReadoutTests {

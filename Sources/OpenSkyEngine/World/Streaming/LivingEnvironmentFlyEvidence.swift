@@ -1,5 +1,7 @@
 // M7.6 peak live-system evidence collected across production fly frames.
 
+import OpenSkyRendering
+
 nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {
     public var grassDrawStats = GrassDrawStats()
     public var shadowDrawStats = ShadowDrawStats()

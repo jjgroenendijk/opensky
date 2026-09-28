@@ -4,6 +4,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRendering
 import simd
 
 nonisolated public struct InteriorLightingBuild: Sendable {

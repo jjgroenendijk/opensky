@@ -12,6 +12,7 @@ import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
+@testable import OpenSkyRendering
 import simd
 import Testing
 

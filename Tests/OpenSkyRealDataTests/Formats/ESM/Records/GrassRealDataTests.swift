@@ -9,6 +9,7 @@ import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyRendering
 import Testing
 
 struct GrassRealDataTests {

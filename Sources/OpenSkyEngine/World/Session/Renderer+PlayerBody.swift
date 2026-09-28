@@ -3,6 +3,7 @@
 // renderer's half, which draws it, is `RendererPlayerBody.swift`.
 
 import Metal
+import OpenSkyRendering
 
 extension Renderer {
     /// Attaches the assembled body, sizing the draw rings for its groups and

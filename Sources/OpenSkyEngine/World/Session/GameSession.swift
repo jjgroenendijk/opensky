@@ -6,6 +6,7 @@
 // The work itself lives in the `Renderer+*.swift` extensions beside this file,
 // which read and write this state through `Renderer+Session.swift`.
 
+import OpenSkyRendering
 import simd
 
 public final class GameSession: RenderFrameDriver {

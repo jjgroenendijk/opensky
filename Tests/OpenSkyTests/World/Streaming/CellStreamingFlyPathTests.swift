@@ -4,6 +4,7 @@
 
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyRendering
 import Testing
 
 struct CellStreamingFlyPathTests {

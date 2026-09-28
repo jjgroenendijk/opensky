@@ -10,6 +10,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyGameData
+import OpenSkyRendering
 import simd
 
 nonisolated extension LocalizedLabels {

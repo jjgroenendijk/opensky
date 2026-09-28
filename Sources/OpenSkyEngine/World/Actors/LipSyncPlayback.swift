@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
+import OpenSkyRendering
 
 nonisolated public enum LipSyncClockMode: String, Equatable, Sendable {
     case audio

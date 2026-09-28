@@ -10,6 +10,7 @@ import MetalKit
 @testable import OpenSky
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyRendering
 import simd
 import Testing
 

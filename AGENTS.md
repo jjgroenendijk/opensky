@@ -98,6 +98,7 @@ Sources/
   OpenSkyBehavior/      package module: behavior graph evaluation, skeleton pose math
   OpenSkyDiagnostics/   package module: memory footprint, debug world overlays
   OpenSkyPhysics/       package module: collision worlds, dynamic bodies, ragdolls
+  OpenSkyRendering/     package module: Metal renderer, scenes, cameras, terrain meshes
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
@@ -106,6 +107,7 @@ Tests/
   OpenSkyGameDataTests/ package test target: synthetic suites for OpenSkyGameData
   OpenSkyBehaviorTests/ package test target: synthetic suites for OpenSkyBehavior
   OpenSkyPhysicsTests/  package test target: synthetic suites for OpenSkyPhysics
+  OpenSkyRenderingTests/ package test target: synthetic suites for OpenSkyRendering
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
@@ -128,12 +130,13 @@ runner it shares a session with (`docs/testing.md`). A gated suite written outsi
 
 No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngine/`,
 `Sources/OpenSkyFormats*/`, or `Sources/OpenSkyEngine/World/`; each goes in a domain folder.
-`Sources/OpenSkyGameData/` is small enough to stay flat:
+`Sources/OpenSkyGameData/` is small enough to stay flat. `Sources/OpenSkyRendering/` keeps the
+renderer at its root and puts `UI/`, `Terrain/`, and `Weather/` in folders. The others:
 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
   and `Resources/` (`Assets.xcassets`, `Branding/`).
-- `Sources/OpenSkyEngine/`: one folder per domain (`Magic/`, `Dialogue/`, `Rendering/`,
+- `Sources/OpenSkyEngine/`: one folder per domain (`Magic/`, `Dialogue/`, `Audio/`,
   ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
   folder.
 - `Sources/OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus
@@ -149,7 +152,7 @@ No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngi
 An extension file is named `Type+Feature.swift`, for example
 `GameView/GameViewController+Magic.swift`. Test folders use the same subfolder names as the
 source file they test: the tests for
-`Sources/OpenSkyEngine/World/Terrain/TerrainMeshBuilder.swift` live in
+`Sources/OpenSkyEngine/World/Terrain/DistantLOD.swift` live in
 `Tests/OpenSkyTests/World/Terrain/`, and tests for app code live under `Tests/OpenSkyTests/App/`. Only
 cross-cutting folders are test-only: `Acceptance/` (milestone gates), `Fakes/`, and
 `Support/`. File names stay unique inside a target, because Swift rejects two files with

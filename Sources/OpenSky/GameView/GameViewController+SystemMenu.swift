@@ -8,6 +8,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyRendering
 import OSLog
 
 struct SystemMenuRuntimeState {

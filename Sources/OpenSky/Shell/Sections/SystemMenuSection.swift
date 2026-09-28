@@ -5,6 +5,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyRendering
 
 final class SystemMenuSection: PanelSectionViewController {
     weak var provider: (any SystemMenuControlProviding)? {
