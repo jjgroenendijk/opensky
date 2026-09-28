@@ -17,9 +17,12 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyInventoryTesting
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 
 /// The engine objects the gate drives, wired the way `wireWorldItems` wires
@@ -44,7 +47,7 @@ struct M12AcceptanceChain {
     static let ownerActor = Fixture.guardActor
 
     let store = WorldStateStore()
-    let references: PapyrusWorldFixtureReferences
+    let references: FakeWorldReferences
     let runtime: WorldItemRuntime
     let equipment: EquipmentRuntime
     let pricing = BarterPricing.vanilla
@@ -52,7 +55,7 @@ struct M12AcceptanceChain {
     init() throws {
         let baselines = try Fixture.resolver()
         let inventory = InventoryRuntime(store: store, baselines: baselines)
-        references = try PapyrusWorldFixtureReferences(
+        references = try FakeWorldReferences(
             entries: Self.entries(), cell: Self.cell
         )
         runtime = WorldItemRuntime(inventory: inventory, references: references)

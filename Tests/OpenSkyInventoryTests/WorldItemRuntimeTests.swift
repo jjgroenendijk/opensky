@@ -1,19 +1,21 @@
 // World item take/drop/container tests (issue #177, roadmap item 12.1.3).
 //
 // Everything runs on a real `WorldStateStore` and a real `InventoryRuntime`
-// over the synthetic M12.1 plugin, with `PapyrusWorldFixtureReferences` in
+// over the synthetic M12.1 plugin, with `FakeWorldReferences` in
 // place of a `CellStreamer` so no scene, no Metal and no game data are needed.
 // The seam under test is exactly the one the app uses: `wireWorldItems` builds
 // the same object with the same two collaborators.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyInventoryTesting
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -31,7 +33,7 @@ struct WorldItemRuntimeTests {
     struct Harness {
         let store: WorldStateStore
         let runtime: WorldItemRuntime
-        let references: PapyrusWorldFixtureReferences
+        let references: FakeWorldReferences
     }
 
     /// One placed reference with no plugin record behind it. The spawn
@@ -86,7 +88,7 @@ struct WorldItemRuntimeTests {
 
     static func harness(entries: [RuntimeReferenceEntry]) throws -> Harness {
         let store = WorldStateStore()
-        let references = PapyrusWorldFixtureReferences(entries: entries, cell: cell)
+        let references = FakeWorldReferences(entries: entries, cell: cell)
         return try Harness(
             store: store,
             runtime: WorldItemRuntime(

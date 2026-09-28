@@ -32,6 +32,7 @@ import OpenSkyBehavior
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState

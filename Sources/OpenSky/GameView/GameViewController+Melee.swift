@@ -19,6 +19,8 @@ import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyRendering
 import simd

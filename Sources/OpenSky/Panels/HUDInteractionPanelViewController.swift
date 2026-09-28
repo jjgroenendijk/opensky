@@ -14,6 +14,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyInventory
 
 final class HUDInteractionPanelViewController: InspectorPanelViewController {
     let elementsSection = HUDElementsSection()

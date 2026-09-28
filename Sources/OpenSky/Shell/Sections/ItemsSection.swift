@@ -14,6 +14,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 
 final class ItemsSection: PanelSectionViewController {

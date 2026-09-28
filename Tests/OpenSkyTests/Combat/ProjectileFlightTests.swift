@@ -12,6 +12,7 @@
 // units/s^2 — `WalkController.gravity` itself.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyGameData
 import simd
 import Testing
 

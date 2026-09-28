@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// One item row: the stack plus everything the row displays.
 ///
@@ -123,7 +124,7 @@ nonisolated public struct InventoryMenuModel: Equatable, Sendable {
     /// Total carried weight across every row, from #175's per-item weights.
     public let carriedWeight: Float
     /// The owner's gold, which is an ordinary stack rather than a currency
-    /// field — see `InventoryRuntime.vanillaGoldFormID`.
+    /// field — see `ItemDefinitionStore.vanillaGoldFormID`.
     public let gold: Int32
 
     public static let empty = InventoryMenuModel(

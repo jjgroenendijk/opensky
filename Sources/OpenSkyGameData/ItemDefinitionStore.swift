@@ -26,7 +26,6 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// The ENCH link a weapon or a piece of armor carries, already resolved
 /// against the load order where a resolver was supplied (issue #466). The
@@ -57,6 +56,11 @@ nonisolated public struct ItemEnchantmentResolver: Sendable {
             charge: charge,
             resolvedID: store.resolvedID(link, fromPlugin: pluginName)
         )
+    }
+
+    public init(store: EnchantmentStore, pluginName: String) {
+        self.store = store
+        self.pluginName = pluginName
     }
 }
 
@@ -113,6 +117,16 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
 }
 
 nonisolated public final class ItemDefinitionStore {
+    /// Vanilla gold, `Gold001`.
+    ///
+    /// Gold is an ordinary `MISC` item and an ordinary stack — there is no
+    /// separate currency field anywhere in this engine, which is also how the
+    /// original data models it. Confirmed against the local install rather than
+    /// from memory: `openskycli record Gold001` reports
+    /// `MISC 0000000F — decoded MISC: editorID Gold001, value 1, weight 0.00`.
+    /// Cross-checked against UESP "Skyrim:Gold".
+    public static let vanillaGoldFormID = FormID(0x0000_000F)
+
     /// Carryable item definitions, keyed by raw FormID.
     public let definitions: [UInt32: ItemDefinition]
     /// CONT decodes, keyed by raw FormID.
@@ -243,31 +257,6 @@ nonisolated public final class ItemDefinitionStore {
     public func teachesSpell(_ id: FormID) -> FormID? {
         guard case let .spell(spell) = books[id.rawValue]?.teaches else { return nil }
         return spell
-    }
-
-    /// What consuming `id` applies, or nil when it is not something an actor
-    /// can eat or drink (issue #469).
-    public func magicItemUse(_ id: FormID) -> MagicItemUse? {
-        if let ingestible = ingestibles[id.rawValue] {
-            return MagicItemUse(
-                item: id,
-                kind: .potion,
-                effects: ingestible.effects,
-                consumeSound: ingestible.consumeSound
-            )
-        }
-        guard let ingredient = ingredients[id.rawValue] else { return nil }
-        // Eating a raw ingredient applies only its first effect. UESP's
-        // "Skyrim:Alchemy Effects" states it directly: "Ingredients listed in
-        // bold have that effect as their first, meaning that eating a sample of
-        // that ingredient will provide a small version of that effect."
-        // <https://en.uesp.net/wiki/Skyrim:Alchemy_Effects>
-        return MagicItemUse(
-            item: id,
-            kind: .ingredient,
-            effects: Array(ingredient.effects.prefix(1)),
-            consumeSound: nil
-        )
     }
 
     public func definition(_ id: FormID) -> ItemDefinition? {

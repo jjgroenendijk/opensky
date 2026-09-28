@@ -11,6 +11,8 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyRendering
 import OpenSkyWorldInterface

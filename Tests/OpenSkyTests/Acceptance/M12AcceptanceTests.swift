@@ -16,8 +16,12 @@ import Foundation
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyInventoryTesting
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyWorldState
+@testable import OpenSkyWorldTesting
 import Testing
 
 @MainActor

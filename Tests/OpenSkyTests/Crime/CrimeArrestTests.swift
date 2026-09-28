@@ -7,7 +7,9 @@ import Foundation
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyCrimeTesting
 @testable import OpenSkyEngine
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyInventoryTesting
 @testable import OpenSkyWorldState
 import Testing
 

@@ -297,7 +297,22 @@ targets += foundation(
 
 // Interfaces declared ahead of their implementations, because features below them
 // need their values.
-targets += interface("OpenSkyWorld", dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsESM"])
+targets += interface(
+    "OpenSkyWorld",
+    dependencies: [
+        "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM",
+        "OpenSkyGameData",
+        "OpenSkyWorldState"
+    ]
+)
+targets += testing(
+    "OpenSkyWorldTesting",
+    dependencies: [
+        "OpenSkyWorldInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyWorldState"
+    ]
+)
 targets += interface(
     "OpenSkyInventory",
     dependencies: [
@@ -307,6 +322,7 @@ targets += interface(
         "OpenSkyWorldState"
     ]
 )
+targets += interface("OpenSkyMagic", dependencies: [])
 
 targets += feature(
     "OpenSkyActors",
@@ -397,6 +413,23 @@ targets += feature(
         "OpenSkyWorldState", "OpenSkyConditions", "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
+targets += feature(
+    "OpenSkyInventory",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyFactionsInterface", "OpenSkyCrimeInterface", "OpenSkyMagicInterface",
+        "OpenSkyWorldInterface"
+    ],
+    testing: [
+        "OpenSkyFormatsESM", "OpenSkyGameData", "FormatsCoreTesting", "FormatsESMTesting"
+    ],
+    tests: [
+        "OpenSkyInventoryInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyWorldState", "OpenSkyFactionsInterface", "OpenSkyCrimeInterface",
+        "OpenSkyMagicInterface", "OpenSkyWorldInterface", "OpenSkyWorldTesting",
+        "FormatsCoreTesting", "FormatsESMTesting"
+    ]
+)
 
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
@@ -406,7 +439,7 @@ targets += foundation(
         "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyConditions",
         "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
-        "OpenSkyWorldInterface", "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyWorldInterface", "OpenSkyMagicInterface", "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

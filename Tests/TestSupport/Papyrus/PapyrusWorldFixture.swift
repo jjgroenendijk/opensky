@@ -11,7 +11,9 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
+@testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 /// Records "Probe.Note" calls in dispatch order while forwarding everything
@@ -48,39 +50,9 @@ nonisolated final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch {
     }
 }
 
-/// Synthetic `PapyrusWorldReferenceSource`: a fixed reference index that
-/// answers as if every entry were resident in one cell. This is what lets a
-/// natives test run with no `CellStreamer`, no scene, and no GPU.
-nonisolated final class PapyrusWorldFixtureReferences: PapyrusWorldReferenceSource {
-    var index: RuntimeReferenceIndex
-    /// Cell every known reference reports as resident in; nil models a
-    /// reference the streamer cannot attribute, so writes go unattributed.
-    var cell: CellSceneLocation?
-
-    init(
-        entries: [RuntimeReferenceEntry],
-        cell: CellSceneLocation? = PapyrusWorldFixture.cell
-    ) {
-        index = RuntimeReferenceIndex(entries: entries)
-        self.cell = cell
-    }
-
-    func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
-        index.entry(for: formID)
-    }
-
-    func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
-        index[key]
-    }
-
-    func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        index[key] == nil ? nil : cell
-    }
-}
-
 enum PapyrusWorldFixture {
     static let pluginName = "skyrim.esm"
-    static let cell = CellSceneLocation.exterior(CellCoordinate(x: 0, y: 0))
+    static let cell = FakeWorldReferences.defaultCell
     static let otherCell = CellSceneLocation.interior(FormID(0x2000))
 
     static var resolver: FormIDResolver {
@@ -250,7 +222,7 @@ enum PapyrusWorldFixture {
         let world: PapyrusWorldRuntime
         let bridge: PapyrusWorldStateBridge
         let worldState: WorldStateStore
-        let references: PapyrusWorldFixtureReferences
+        let references: FakeWorldReferences
         let dispatch: PapyrusWorldProbeDispatch
     }
 
@@ -272,7 +244,7 @@ enum PapyrusWorldFixture {
         worldState: WorldStateStore = WorldStateStore(),
         attach: Bool = true
     ) -> Session {
-        let references = PapyrusWorldFixtureReferences(entries: entries, cell: cell)
+        let references = FakeWorldReferences(entries: entries, cell: cell)
         let bridge = PapyrusWorldStateBridge(
             worldState: worldState, references: references, globals: globals
         )

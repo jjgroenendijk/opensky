@@ -4,9 +4,10 @@
 // without a game install.
 
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+@testable import OpenSkyMagicInterface
 import Testing
 
 struct InventoryEquipmentReadoutTests {

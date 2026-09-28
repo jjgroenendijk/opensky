@@ -14,6 +14,7 @@ import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 
 extension GameViewController: MeleeCombatControlProviding {

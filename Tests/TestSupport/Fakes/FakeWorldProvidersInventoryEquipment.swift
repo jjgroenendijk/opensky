@@ -9,7 +9,9 @@
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+@testable import OpenSkyMagicInterface
 
 /// The fake's inventory-and-equipment ledger, kept together so
 /// `FakeWorldProviders` spends one stored property on it.

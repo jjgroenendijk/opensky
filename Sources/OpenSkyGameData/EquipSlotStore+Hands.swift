@@ -2,7 +2,6 @@
 // the equipment runtime, so the store in GameData stays free of it.
 
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 nonisolated extension EquipSlotStore {
     /// The hands the slot named by `id` occupies, or nil when the link names

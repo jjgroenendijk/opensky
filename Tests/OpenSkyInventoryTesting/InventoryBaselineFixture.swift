@@ -36,45 +36,46 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyInventoryInterface
 
-enum InventoryBaselineFixture {
-    static let gold = FormID(0x0000_000F)
-    static let lockpick = FormID(0x0000_0100)
-    static let sword = FormID(0x0000_0200)
-    static let greatsword = FormID(0x0000_0210)
-    static let cuirass = FormID(0x0000_0300)
-    static let helmet = FormID(0x0000_0400)
-    static let leatherCuirass = FormID(0x0000_0410)
-    static let gauntlets = FormID(0x0000_0420)
+public enum InventoryBaselineFixture {
+    public static let gold = FormID(0x0000_000F)
+    public static let lockpick = FormID(0x0000_0100)
+    public static let sword = FormID(0x0000_0200)
+    public static let greatsword = FormID(0x0000_0210)
+    public static let cuirass = FormID(0x0000_0300)
+    public static let helmet = FormID(0x0000_0400)
+    public static let leatherCuirass = FormID(0x0000_0410)
+    public static let gauntlets = FormID(0x0000_0420)
 
-    static let rightHandSlot = FormID(0x0000_0500)
-    static let leftHandSlot = FormID(0x0000_0510)
-    static let eitherHandSlot = FormID(0x0000_0520)
-    static let bothHandsSlot = FormID(0x0000_0530)
+    public static let rightHandSlot = FormID(0x0000_0500)
+    public static let leftHandSlot = FormID(0x0000_0510)
+    public static let eitherHandSlot = FormID(0x0000_0520)
+    public static let bothHandsSlot = FormID(0x0000_0530)
 
-    static let singlePickList = FormID(0x0000_1000)
-    static let bundleList = FormID(0x0000_1010)
-    static let cyclicList = FormID(0x0000_1020)
-    static let emptyList = FormID(0x0000_1030)
+    public static let singlePickList = FormID(0x0000_1000)
+    public static let bundleList = FormID(0x0000_1010)
+    public static let cyclicList = FormID(0x0000_1020)
+    public static let emptyList = FormID(0x0000_1030)
 
-    static let guardOutfit = FormID(0x0000_2000)
-    static let emptyOutfit = FormID(0x0000_2010)
+    public static let guardOutfit = FormID(0x0000_2000)
+    public static let emptyOutfit = FormID(0x0000_2010)
 
-    static let guardActor = FormID(0x0000_3000)
-    static let templatedActor = FormID(0x0000_3010)
-    static let outfitlessActor = FormID(0x0000_3020)
+    public static let guardActor = FormID(0x0000_3000)
+    public static let templatedActor = FormID(0x0000_3010)
+    public static let outfitlessActor = FormID(0x0000_3020)
 
-    static let chest = FormID(0x0000_4000)
-    static let leveledChest = FormID(0x0000_4010)
-    static let emptyChest = FormID(0x0000_4020)
+    public static let chest = FormID(0x0000_4000)
+    public static let leveledChest = FormID(0x0000_4010)
+    public static let emptyChest = FormID(0x0000_4020)
 
-    static func resolver() throws -> InventoryBaselineResolver {
+    public static func resolver() throws -> InventoryBaselineResolver {
         try InventoryBaselineResolver.build(from: ESMFile(data: pluginBytes()))
     }
 
-    static func pluginBytes() -> Data {
+    public static func pluginBytes() -> Data {
         var contents = ESMFixture.tes4()
         contents += ESMFixture.topGroup("MISC", contents: miscRecords())
         contents += ESMFixture.topGroup("WEAP", contents: weaponRecord())
@@ -221,7 +222,7 @@ enum InventoryBaselineFixture {
     }
 
     /// One LVLO entry: level, target and per-entry count.
-    struct LeveledEntry {
+    public struct LeveledEntry {
         let level: UInt16
         let reference: UInt32
         let count: UInt32

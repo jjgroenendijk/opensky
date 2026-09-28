@@ -21,6 +21,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 
 /// Why a transaction did not happen.

@@ -24,6 +24,8 @@ import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState

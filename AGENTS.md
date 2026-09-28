@@ -107,7 +107,8 @@ Sources/
   OpenSkyFactions*/     feature module: faction runtimes; Interface: faction state values
   OpenSkyPerception*/   feature module: perception runtime; Interface: detection values
   OpenSkyProgression*/  feature module: perk and skill runtimes; Interface: progress state
-  OpenSkyInventoryInterface/ package module: inventory state values and InventoryAccess
+  OpenSkyInventory*/    feature module: inventory and equipment runtimes; Interface: state, access
+  OpenSkyMagicInterface/ package module: magic values that features below magic read
   OpenSkyWorldInterface/ package module: interaction events and placed interactions
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
@@ -122,6 +123,7 @@ Tests/
   OpenSkyWorldStateTests/ package test target: synthetic suites for OpenSkyWorldState
   OpenSkyActorsTests/   package test target: synthetic suites for OpenSkyActors
   OpenSkyCrimeTests/    package test target: synthetic suites for OpenSkyCrime
+  OpenSkyInventoryTests/ package test target: synthetic suites for OpenSkyInventory
   OpenSkyFactionsTests/ package test target: synthetic suites for OpenSkyFactions
   OpenSkyPerceptionTests/ package test target: synthetic suites for OpenSkyPerception
   OpenSkyProgressionTests/ package test target: synthetic suites for OpenSkyProgression
@@ -131,6 +133,8 @@ Tests/
   BehaviorTesting/      package library: behavior graph fixtures
   PhysicsTesting/       package library: collision scene and ragdoll fixtures
   OpenSkyCrimeTesting/  package library: crime fixtures
+  OpenSkyInventoryTesting/ package library: inventory baseline plugin fixture
+  OpenSkyWorldTesting/  package library: fake reference source
   OpenSkyFactionsTesting/ package library: faction and hostility fixtures
   OpenSkyPerceptionTesting/ package library: perception world fake and fixtures
   OpenSkyUITests/       XCUITest smoke tests

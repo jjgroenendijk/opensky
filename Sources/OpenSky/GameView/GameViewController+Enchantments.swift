@@ -26,6 +26,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 
 /// Enchantment state the controller owns. Extensions cannot add stored
