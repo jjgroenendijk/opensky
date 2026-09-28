@@ -20,6 +20,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 @MainActor

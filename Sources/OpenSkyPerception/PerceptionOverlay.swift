@@ -25,6 +25,8 @@
 
 import Foundation
 import OpenSkyDiagnostics
+import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import simd
 
 nonisolated public enum PerceptionOverlay: Sendable {

@@ -14,6 +14,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyRendering
 
 /// The `AIOverlayStatsLabel` lines: what is switched on and what it cost.

@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyBehavior
+import OpenSkyPhysics
 
 nonisolated extension LocomotionBridge {
     /// Writes one variable to every attached graph, recording whether each one

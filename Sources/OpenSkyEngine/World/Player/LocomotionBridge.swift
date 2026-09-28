@@ -33,6 +33,7 @@
 // See docs/engine/walk-mode.md.
 
 import OpenSkyBehavior
+import OpenSkyPhysics
 import OpenSkyRendering
 import simd
 
@@ -54,17 +55,6 @@ nonisolated public struct LocomotionIntent: Equatable, Sendable {
     public var jump = false
 
     public static let still = LocomotionIntent()
-}
-
-/// Which gait the bridge resolved for a step. Sneak outranks sprint, which
-/// outranks run: crouching cancels a sprint in vanilla rather than stacking
-/// with it, and swimming replaces all three.
-nonisolated public enum LocomotionGait: String, Equatable, Sendable {
-    case walk
-    case run
-    case sprint
-    case sneak
-    case swim
 }
 
 nonisolated public final class LocomotionBridge {

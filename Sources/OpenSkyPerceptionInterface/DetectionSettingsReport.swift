@@ -7,6 +7,7 @@
 // transcript.
 
 import Foundation
+import OpenSkyPhysics
 
 nonisolated extension DetectionSettings {
     /// Every setting paired with the name it is addressed by. Load-order

@@ -34,6 +34,7 @@ import Metal
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyPhysics
 import simd
 import Testing
 

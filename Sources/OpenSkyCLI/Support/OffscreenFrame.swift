@@ -6,6 +6,7 @@ import Metal
 import MetalKit
 import OpenSkyDiagnostics
 import OpenSkyEngine
+import OpenSkyPerception
 import OpenSkyRendering
 
 /// One rendered offscreen frame + the stats the commands report.

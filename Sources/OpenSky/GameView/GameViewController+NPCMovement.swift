@@ -5,6 +5,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
+import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState
 

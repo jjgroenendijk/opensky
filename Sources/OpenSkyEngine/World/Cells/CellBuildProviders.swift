@@ -14,6 +14,7 @@ import Foundation
 import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyWorldState
 

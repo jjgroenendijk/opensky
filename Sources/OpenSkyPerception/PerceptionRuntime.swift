@@ -34,17 +34,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyPerceptionInterface
 import simd
-
-/// One observer-target pair's identity.
-nonisolated public struct DetectionPairKey: Hashable, Comparable, Sendable {
-    public let observer: ReferenceKey
-    public let target: ReferenceKey
-
-    public static func < (lhs: DetectionPairKey, rhs: DetectionPairKey) -> Bool {
-        (lhs.observer, lhs.target) < (rhs.observer, rhs.target)
-    }
-}
 
 @MainActor
 public final class PerceptionRuntime {
@@ -277,3 +268,5 @@ public final class PerceptionRuntime {
         lastEvaluatedStep[key] = stepCount
     }
 }
+
+extension PerceptionRuntime: DetectionObserving {}

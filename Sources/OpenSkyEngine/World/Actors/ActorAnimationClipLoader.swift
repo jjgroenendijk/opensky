@@ -28,6 +28,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
+import OpenSkyPhysics
 
 nonisolated public enum ActorAnimationClipLoader: Sendable {
     /// Where every character animation and skeleton lives.

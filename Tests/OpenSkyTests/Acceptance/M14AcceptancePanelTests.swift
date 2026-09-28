@@ -13,6 +13,7 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
+@testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 import simd
 import Testing

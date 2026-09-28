@@ -88,6 +88,16 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyConditions",
           "name" : "OpenSkyConditions"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyPerception",
+          "name" : "OpenSkyPerception"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyPerceptionInterface",
+          "name" : "OpenSkyPerceptionInterface"
         }
       ]
     }
@@ -203,6 +213,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyWorldStateTests",
         "name" : "OpenSkyWorldStateTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyPerceptionTests",
+        "name" : "OpenSkyPerceptionTests"
       }
     }
   ],

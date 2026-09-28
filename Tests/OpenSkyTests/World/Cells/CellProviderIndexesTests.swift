@@ -3,6 +3,7 @@ import Foundation
 import Metal
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyPhysics
 import Testing
 
 struct CellProviderIndexesTests {

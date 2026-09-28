@@ -8,6 +8,7 @@
 // translated into the one Havok's `Direction` variable uses (radians away from
 // facing, positive to the left).
 
+import OpenSkyPhysics
 import simd
 
 nonisolated extension LocomotionBridge {

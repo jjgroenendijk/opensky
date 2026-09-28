@@ -13,6 +13,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyPerceptionInterface
 
 /// One fighting actor as the panel shows it.
 nonisolated public struct CombatActorReadout: Equatable, Sendable {

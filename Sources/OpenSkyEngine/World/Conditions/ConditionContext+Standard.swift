@@ -4,6 +4,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyPerceptionInterface
 import OpenSkyWorldState
 
 nonisolated extension ConditionContext {

@@ -71,6 +71,7 @@
 // Documented in docs/engine/melee-damage.md.
 
 import Foundation
+import OpenSkyPhysics
 
 /// What the blocker was holding, which picks the formula branch.
 nonisolated public enum MeleeBlockKind: Equatable, Sendable {

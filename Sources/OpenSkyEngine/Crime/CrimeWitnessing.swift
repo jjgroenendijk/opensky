@@ -27,6 +27,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyPerceptionInterface
 
 /// Where the crime runtime asks whether anybody is watching.
 @MainActor
@@ -93,12 +94,12 @@ public struct FixedCrimeWitnesses: CrimeWitnessSource {
 public struct PerceptionCrimeWitnesses: CrimeWitnessSource {
     /// The pass whose converged pairs are read. Weak because the controller
     /// that owns the crime runtime owns this too.
-    public weak var perception: PerceptionRuntime?
+    public weak var perception: (any DetectionObserving)?
     /// Whether one observer is still alive to report. Nil accepts everybody.
     public var isAlive: ((ReferenceKey) -> Bool)?
 
     public init(
-        perception: PerceptionRuntime?,
+        perception: (any DetectionObserving)?,
         isAlive: ((ReferenceKey) -> Bool)? = nil
     ) {
         self.perception = perception

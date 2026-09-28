@@ -8,6 +8,7 @@
 // `isSneakingNow`, which the step consults but does not own.
 
 import Foundation
+import OpenSkyPhysics
 
 nonisolated extension LocomotionBridge {
     /// Raises one event on every attached graph by name, exactly as an edge

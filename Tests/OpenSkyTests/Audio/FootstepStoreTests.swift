@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyPhysics
 import Testing
 
 struct FootstepStoreTests {

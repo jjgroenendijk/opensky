@@ -23,6 +23,8 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyPerception
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyWorldState
 import simd
