@@ -50,10 +50,6 @@ nonisolated public struct EnchantedItemState: WorldStateComponent, Sendable {
         .enchantedItems
     }
 
-    public var erased: WorldStateComponentValue {
-        .enchantedItems(self)
-    }
-
     /// Normalizes on the way in, which is what makes this the save decoder's
     /// entry point too: a non-finite charge becomes zero, a negative one
     /// becomes zero, and an item recorded as wearing no effects at all is
@@ -63,11 +59,6 @@ nonisolated public struct EnchantedItemState: WorldStateComponent, Sendable {
         self.wornEffects = wornEffects
             .filter { !$0.value.isEmpty }
             .mapValues { $0.sorted() }
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .enchantedItems(value) = erased else { return nil }
-        self = value
     }
 
     public var isEmpty: Bool {
@@ -131,5 +122,21 @@ nonisolated public struct EnchantedItemState: WorldStateComponent, Sendable {
     /// alone.
     public func clearingWornEffects() -> EnchantedItemState {
         EnchantedItemState(charges: charges)
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// One owner's enchanted items: charge left per weapon, and the constant
+    /// effects each worn piece established. A slot of its own rather than fields on
+    /// `inventory` for the lifetime reason `activeEffects` is separate from
+    /// `actorValues`: the inventory component is rewritten by every take, drop and
+    /// equip, while charge moves only when an enchanted weapon actually lands a
+    /// hit.
+    public static let enchantedItems = Self(rawValue: "enchantedItems", order: 14)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func enchantedItems(_ value: EnchantedItemState) -> Self {
+        Self(value)
     }
 }

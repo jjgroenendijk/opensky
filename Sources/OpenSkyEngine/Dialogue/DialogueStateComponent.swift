@@ -70,17 +70,8 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
         .dialogue
     }
 
-    public var erased: WorldStateComponentValue {
-        .dialogue(self)
-    }
-
     public init(saidCount: UInt32 = 0) {
         self.saidCount = saidCount
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .dialogue(value) = erased else { return nil }
-        self = value
     }
 
     /// The state every INFO has before anything touches it. Unlike a quest's,
@@ -115,5 +106,18 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
     /// a say-once line to become sayable again.
     public func said() -> Self {
         DialogueRuntimeState(saidCount: saidCount == .max ? .max : saidCount + 1)
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// One dialogue response's said-state. Like `quest` it modifies no placement:
+    /// it is keyed by an INFO base record's `ReferenceKey`, because a response is
+    /// not placed anywhere and belongs to no cell.
+    public static let dialogue = Self(rawValue: "dialogue", order: 11)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func dialogue(_ value: DialogueRuntimeState) -> Self {
+        Self(value)
     }
 }

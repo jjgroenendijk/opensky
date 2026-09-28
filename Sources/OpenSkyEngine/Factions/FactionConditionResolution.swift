@@ -156,3 +156,19 @@ nonisolated public struct FactionConditionResolution: @unchecked Sendable, Senda
         return derivation.decide(mine, toward: theirs).isHostile
     }
 }
+
+nonisolated extension FactionConditionResolution: ConditionResolution {}
+
+nonisolated extension ConditionContext {
+    /// Faction memberships, relationship ranks and the hostility derivation over
+    /// them, plus the FACT store the `ptFaction` parameters resolve against
+    /// . Empty when no faction runtime is wired, which makes every
+    /// faction and relationship function a reason-tagged false rather than an
+    /// actor who belongs to nothing and is friendly with everybody.
+    public var factions: FactionConditionResolution {
+        get { self[resolution: FactionConditionResolution.self] }
+        set {
+            self[resolution: FactionConditionResolution.self] = newValue
+        }
+    }
+}

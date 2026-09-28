@@ -1,13 +1,8 @@
-// Every-component-kind coverage for `WorldStateStore` (issues #159, #176,
-// #177, #194, #197, #374, #426, #472, #497, #499, #503). Split from `WorldStateStoreTests`, which
-// sits at
-// the
-// strict-lint
-// type-length cap, and kept together because these two tests are the ones that
-// have to be updated whenever a component kind is added: both assert against
-// `WorldStateComponentKind.allCases`, so a new kind fails here until it is
-// storable, readable and resettable.
-
+// Every-component-kind coverage for `WorldStateStore`. Split from
+// `WorldStateStoreTests`, which sits at the strict-lint type-length cap, and
+// kept together because these two tests are the ones that have to be updated
+// whenever a component kind is added: both assert against `allKinds`, so a new
+// kind fails here until it is storable, readable and resettable.
 import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
@@ -19,6 +14,13 @@ import Testing
 
 @MainActor
 struct WorldStateComponentCoverageTests {
+    /// Every kind, in `WorldStateComponentKind.order`.
+    private static let allKinds: [WorldStateComponentKind] = [
+        .enableState, .transform, .activation, .deletion, .inventory, .spawn, .quest,
+        .questAliases, .actorValues, .death, .combat, .dialogue, .activeEffects, .spellbook,
+        .enchantedItems, .perks, .factions, .relationships, .playerProgress, .crimeLedger
+    ]
+
     private let whiterun = CellSceneLocation.exterior(CellCoordinate(x: 5, y: -1))
 
     private func key(_ objectID: UInt32) -> ReferenceKey {
@@ -215,7 +217,7 @@ struct WorldStateComponentCoverageTests {
         )
         #expect(store.component(PlayerProgressState.self, for: reference) == progress)
         #expect(store.component(CrimeLedgerState.self, for: reference) == crimeLedger)
-        #expect(store.delta(for: reference)?.sortedKinds == WorldStateComponentKind.allCases)
+        #expect(store.delta(for: reference)?.sortedKinds == Self.allKinds)
     }
 
     @Test func wholesaleResetDropsEveryComponent() {
@@ -244,8 +246,8 @@ struct WorldStateComponentCoverageTests {
         #expect(store.reset(reference))
         #expect(store.delta(for: reference) == nil)
         #expect(store.dirtyCount == 0)
-        // One journal entry per cleared component, in allCases order.
+        // One journal entry per cleared component, in kind order.
         let resets = store.journalEntries.filter(\.isReset)
-        #expect(resets.map(\.kind) == WorldStateComponentKind.allCases)
+        #expect(resets.map(\.kind) == Self.allKinds)
     }
 }

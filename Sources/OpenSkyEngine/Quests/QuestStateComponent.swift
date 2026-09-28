@@ -142,10 +142,6 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
         .quest
     }
 
-    public var erased: WorldStateComponentValue {
-        .quest(self)
-    }
-
     /// Normalizes on the way in: the reached stages come out sorted and unique,
     /// duplicate objective entries collapse with the last one winning, and an
     /// untouched objective drops out. This initializer is also the save
@@ -165,11 +161,6 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
             byIndex[objective.index] = objective
         }
         self.objectives = byIndex.keys.sorted().compactMap { byIndex[$0] }
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .quest(value) = erased else { return nil }
-        self = value
     }
 
     /// The state a quest has before anything touches it.
@@ -284,5 +275,19 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
             result.objectives.insert(updated, at: position ?? result.objectives.endIndex)
         }
         return result
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// One quest's running, stage and objective state. Like `spawn` this one does
+    /// not modify a placement: it is keyed by a QUST base record's `ReferenceKey`,
+    /// the same way `GlobalStore` keys a GLOB override, because a quest is not
+    /// placed anywhere and belongs to no cell.
+    public static let quest = Self(rawValue: "quest", order: 6)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func quest(_ value: QuestRuntimeState) -> Self {
+        Self(value)
     }
 }

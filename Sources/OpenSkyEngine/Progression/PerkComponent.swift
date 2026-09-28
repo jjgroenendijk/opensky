@@ -39,10 +39,6 @@ nonisolated public struct PerkState: WorldStateComponent, Sendable {
         .perks
     }
 
-    public var erased: WorldStateComponentValue {
-        .perks(self)
-    }
-
     /// True when the actor owns nothing, which is when the store drops the slot
     /// rather than keeping an empty component around.
     public var isEmpty: Bool {
@@ -65,11 +61,6 @@ nonisolated public struct PerkState: WorldStateComponent, Sendable {
         self.owned = Set(owned).sorted()
     }
 
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .perks(value) = erased else { return nil }
-        self = value
-    }
-
     public func owns(_ perk: ReferenceKey) -> Bool {
         owned.contains(perk)
     }
@@ -82,5 +73,19 @@ nonisolated public struct PerkState: WorldStateComponent, Sendable {
     public func removing(_ perk: ReferenceKey) -> PerkState {
         guard owns(perk) else { return self }
         return PerkState(owned: owned.filter { $0 != perk })
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// The perks one actor owns. A slot of its own for the reason `spellbook` is
+    /// one: owning a perk changes on a level-up, a script call or an actor's first
+    /// appearance, never per frame, while the actor values a perk goes on to modify
+    /// are rewritten sixty times a second.
+    public static let perks = Self(rawValue: "perks", order: 15)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func perks(_ value: PerkState) -> Self {
+        Self(value)
     }
 }

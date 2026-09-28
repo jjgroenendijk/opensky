@@ -243,7 +243,7 @@ nonisolated public struct ConditionTally: Equatable, Sendable {
     /// order is stable. Names come from the registry's documented list where it
     /// has one, and are the bare index otherwise.
     public func rankedUnknownFunctions(
-        in registry: ConditionFunctionRegistry = .standard
+        in registry: ConditionFunctionRegistry
     ) -> [(name: String, count: Int)] {
         unknownFunctions
             .sorted { ($0.value, $1.key) > ($1.value, $0.key) }

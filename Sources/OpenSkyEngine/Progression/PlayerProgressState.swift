@@ -63,10 +63,6 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         .playerProgress
     }
 
-    public var erased: WorldStateComponentValue {
-        .playerProgress(self)
-    }
-
     /// Normalizes on the way in, which is what makes this the save decoder's
     /// entry point: a file written by a different build, or corrupted, restores
     /// a component every reader can trust rather than a NaN that spreads.
@@ -84,11 +80,6 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         self.pendingAttributePicks = max(0, pendingAttributePicks)
         self.attributePicks = attributePicks
         self.skillIncreases = max(0, skillIncreases)
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .playerProgress(value) = erased else { return nil }
-        self = value
     }
 
     /// True when the component says nothing a fresh session would not, which is
@@ -166,5 +157,21 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         var copy = self
         change(&copy)
         return copy
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// The player's character level, banked character experience, unspent perk
+    /// points and attribute-pick history. Like `quest` it modifies no placement and
+    /// belongs to no cell: it is keyed by `ReferenceKey.player`, who has no record
+    /// in this engine. A slot of its own beside `perks` because the two answer
+    /// different questions — how many points are left to spend, and which perks
+    /// those points already bought.
+    public static let playerProgress = Self(rawValue: "playerProgress", order: 18)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func playerProgress(_ value: PlayerProgressState) -> Self {
+        Self(value)
     }
 }

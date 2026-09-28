@@ -217,7 +217,7 @@ nonisolated public struct ConditionEvaluator: Sendable {
 
     public init(
         context: ConditionContext,
-        registry: ConditionFunctionRegistry = .standard,
+        registry: ConditionFunctionRegistry,
         tally: ConditionTally = ConditionTally()
     ) {
         self.context = context

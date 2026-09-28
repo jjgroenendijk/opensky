@@ -49,10 +49,6 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
         .death
     }
 
-    public var erased: WorldStateComponentValue {
-        .death(self)
-    }
-
     public init(
         isDead: Bool,
         restingTransform: ReferenceTransformOverride? = nil,
@@ -61,11 +57,6 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
         self.isDead = isDead
         self.restingTransform = restingTransform
         self.wasLooted = wasLooted
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .death(value) = erased else { return nil }
-        self = value
     }
 
     /// This state with the ragdoll's settled root pose recorded.
@@ -85,5 +76,19 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
         ActorDeathState(
             isDead: isDead, restingTransform: restingTransform, wasLooted: true
         )
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// One actor's death and the resting transform its ragdoll settled at. A slot
+    /// of its own rather than a field on `actorValues` because the two have
+    /// different lifetimes: a current-health float is rewritten every regeneration
+    /// step, while death is a latch nothing but a resurrection clears.
+    public static let death = Self(rawValue: "death", order: 9)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func death(_ value: ActorDeathState) -> Self {
+        Self(value)
     }
 }

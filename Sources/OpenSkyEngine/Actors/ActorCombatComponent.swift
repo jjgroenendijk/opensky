@@ -54,16 +54,21 @@ nonisolated public struct ActorCombatState: WorldStateComponent, Equatable, Send
         .combat
     }
 
-    public var erased: WorldStateComponentValue {
-        .combat(self)
-    }
-
     public init(hostility: ActorHostility) {
         self.hostility = hostility
     }
+}
 
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .combat(value) = erased else { return nil }
-        self = value
+nonisolated extension WorldStateComponentKind {
+    /// One actor's hostility toward the player. A slot of its own beside
+    /// `actorValues` and `death` for the same lifetime reason those two are
+    /// separate: hostility changes on a handful of events, while the values beside
+    /// it are rewritten sixty times a second.
+    public static let combat = Self(rawValue: "combat", order: 10)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func combat(_ value: ActorCombatState) -> Self {
+        Self(value)
     }
 }

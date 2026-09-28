@@ -68,3 +68,18 @@ nonisolated public struct DialogueResolution: Sendable {
         voiceTypes.count
     }
 }
+
+nonisolated extension DialogueResolution: ConditionResolution {}
+
+nonisolated extension ConditionContext {
+    /// The one seam dialogue facts come through, shaped exactly
+    /// like the five above: an actor's voice type and who the player is talking
+    /// to. Empty in a context with no world running, which makes every dialogue
+    /// function a reason-tagged false rather than a convincing "no voice type".
+    public var dialogue: DialogueResolution {
+        get { self[resolution: DialogueResolution.self] }
+        set {
+            self[resolution: DialogueResolution.self] = newValue
+        }
+    }
+}

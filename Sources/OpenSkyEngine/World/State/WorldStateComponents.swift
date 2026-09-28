@@ -3,12 +3,10 @@
 // from what a plugin authored.
 //
 // Each component is its own value type rather than one wide "reference state"
-// blob, so a later milestone adds inventory or actor values by adding a type
-// and a `WorldStateComponentKind` case without reshaping the store: every
-// store operation is written against `WorldStateComponent` and the erased
-// `WorldStateComponentValue`, never against a fixed field list. Issue #176
-// (inventory) was the first milestone to take that route and needed no change
-// to the store at all.
+// blob, so a module adds a component by declaring a type and its
+// `WorldStateComponentKind` without reshaping the store: every store operation
+// is written against `WorldStateComponent` and the erased
+// `WorldStateComponentValue`, never against a fixed field list.
 //
 // Documented in docs/engine/runtime-state.md.
 
@@ -21,209 +19,114 @@ import simd
 ///
 /// A reference holds at most one value per kind, so this doubles as the
 /// dictionary key inside `ReferenceStateDelta` and as the addressing token for
-/// per-component reset and journal entries. Adding a component in a later
-/// milestone means adding a case here plus a conforming value type.
-nonisolated public enum WorldStateComponentKind: String, CaseIterable, Hashable, Sendable {
+/// per-component reset and journal entries.
+///
+/// The set is open: the module that owns a component declares its kind in an
+/// extension, for example `static let spellbook`. `order` fixes where the kind
+/// sorts, so iteration, the change journal and a reset never depend on
+/// dictionary ordering. Two kinds never share an order.
+nonisolated public struct WorldStateComponentKind: Hashable, Comparable, Sendable {
+    /// Stable name, printed by inspection surfaces.
+    public let rawValue: String
+    /// Position in the deterministic iteration order.
+    public let order: Int
+
+    public init(rawValue: String, order: Int) {
+        self.rawValue = rawValue
+        self.order = order
+    }
+
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        lhs.order < rhs.order
+    }
+
     /// Runtime enable/disable, overriding the record's `initiallyDisabled`
     /// header flag.
-    case enableState
+    public static let enableState = Self(rawValue: "enableState", order: 0)
     /// Position, rotation and scale override, replacing the record's DATA and
     /// XSCL placement.
-    case transform
+    public static let transform = Self(rawValue: "transform", order: 1)
     /// Activation bookkeeping: how often the reference was activated, whether
     /// it currently reads as open, and who activated it last.
-    case activation
+    public static let activation = Self(rawValue: "activation", order: 2)
     /// Runtime deletion, which is not the same thing as the record's `deleted`
     /// header flag: this one is set while the game runs.
-    case deletion
-    /// Everything one owner holds, plus its equipped set (issue #176). The
-    /// value type is `ReferenceInventoryState`, which lives in
-    /// `Sources/OpenSkyEngine/Inventory/InventoryComponent.swift` because it carries stack
-    /// arithmetic of its own rather than being a plain field bag.
-    case inventory
+    public static let deletion = Self(rawValue: "deletion", order: 3)
     /// An object the running game placed in the world — a dropped item today,
-    /// a summon later (issue #177). The value type is `ReferenceSpawnState` in
-    /// `Sources/OpenSkyEngine/World/State/SpawnedReference.swift`. Unlike every other component
-    /// this one does not modify a plugin placement; it *is* the placement, and
-    /// only a generated `ReferenceKey` ever carries it.
-    case spawn
-    /// One quest's running, stage and objective state (issue #182). The value
-    /// type is `QuestRuntimeState` in
-    /// `Sources/OpenSkyEngine/Quests/QuestStateComponent.swift`. Like `spawn` this one does
-    /// not modify a placement: it is keyed by a QUST base record's
-    /// `ReferenceKey`, the same way `GlobalStore` keys a GLOB override, because
-    /// a quest is not placed anywhere and belongs to no cell.
-    case quest
-    /// One quest's filled reference aliases (issue #183). The value type is
-    /// `QuestAliasState` in `Sources/OpenSkyEngine/Quests/QuestAliasComponent.swift`, keyed
-    /// by the same QUST `ReferenceKey` the `quest` slot uses. It is a slot of
-    /// its own because the two have different lifetimes: stage and objective
-    /// state survives a stop, while the alias table is cleared by one.
-    case questAliases
-    /// One actor's current health, magicka and stamina (issue #194). The value
-    /// type is `ActorValueState` in
-    /// `Sources/OpenSkyEngine/Actors/ActorValueComponent.swift`. Current values only: the
-    /// maximums re-derive from the RACE, CLAS and NPC_ records through
-    /// `ActorValueResolver`, exactly as an inventory baseline re-derives from
-    /// its CNTO list.
-    case actorValues
-    /// One actor's death and the resting transform its ragdoll settled at
-    /// (issue #197). The value type is `ActorDeathState` in
-    /// `Sources/OpenSkyEngine/Actors/ActorDeathComponent.swift`. A slot of its own rather than
-    /// a field on `actorValues` because the two have different lifetimes: a
-    /// current-health float is rewritten every regeneration step, while death is
-    /// a latch nothing but a resurrection clears.
-    case death
-    /// One actor's hostility toward the player (issue #374). The value type is
-    /// `ActorCombatState` in `Sources/OpenSkyEngine/Actors/ActorCombatComponent.swift`. A slot
-    /// of its own beside `actorValues` and `death` for the same lifetime reason
-    /// those two are separate: hostility changes on a handful of events, while
-    /// the values beside it are rewritten sixty times a second.
-    case combat
-    /// One dialogue response's said-state (issue #426). The value type is
-    /// `DialogueRuntimeState` in
-    /// `Sources/OpenSkyEngine/Dialogue/DialogueStateComponent.swift`. Like `quest` it
-    /// modifies no placement: it is keyed by an INFO base record's
-    /// `ReferenceKey`, because a response is not placed anywhere and belongs to
-    /// no cell.
-    case dialogue
-    /// Every magic effect currently acting on one actor (issue #469). The value
-    /// type is `ActiveEffectState` in
-    /// `Sources/OpenSkyEngine/Magic/ActiveEffectComponent.swift`. A slot of its own
-    /// beside `actorValues` for the lifetime reason `death` and `combat` are
-    /// separate slots: the values beside it are rewritten sixty times a second,
-    /// while an effect list changes only when something is applied, expires or
-    /// is dispelled.
-    case activeEffects
-    /// One actor's known spells, read tomes, readied hands and spent greater
-    /// powers (issue #470). The value type is `SpellbookState` in
-    /// `Sources/OpenSkyEngine/Magic/SpellbookComponent.swift`. A slot of its own for
-    /// the reason `activeEffects` is one: everything in it changes on a player
-    /// action, never per frame. The four fields share the slot rather than
-    /// splitting further because a readied hand must name a known spell, and
-    /// only one component can enforce that in a single write.
-    case spellbook
-    /// One owner's enchanted items: charge left per weapon, and the constant
-    /// effects each worn piece established (issue #472). The value type is
-    /// `EnchantedItemState` in
-    /// `Sources/OpenSkyEngine/Magic/EnchantedItemComponent.swift`. A slot of its own
-    /// rather than fields on `inventory` for the lifetime reason `activeEffects`
-    /// is separate from `actorValues`: the inventory component is rewritten by
-    /// every take, drop and equip, while charge moves only when an enchanted
-    /// weapon actually lands a hit.
-    case enchantedItems
-    /// The perks one actor owns (issue #497). The value type is `PerkState` in
-    /// `Sources/OpenSkyEngine/Progression/PerkComponent.swift`. A slot of its own for
-    /// the reason `spellbook` is one: owning a perk changes on a level-up, a
-    /// script call or an actor's first appearance, never per frame, while the
-    /// actor values a perk goes on to modify are rewritten sixty times a
-    /// second.
-    case perks
-    /// Every faction one actor currently belongs to, and the rank it holds in
-    /// each (issue #503). The value type is `ActorFactionState` in
-    /// `Sources/OpenSkyEngine/Factions/ActorFactionComponent.swift`. A slot of its own
-    /// for the reason `perks` is one: a membership moves on a quest stage or a
-    /// script call, while the actor values beside it are rewritten sixty times
-    /// a second. It is also the input to the hostility derivation, which is why
-    /// it must be a component and not a re-read of the NPC_ record: an actor
-    /// the player has joined to a faction has to stay joined across a reload.
-    case factions
-    /// Relationship ranks a script has set between one actor and others
-    /// (issue #508). The value type is `ActorRelationshipState` in
-    /// `Sources/OpenSkyEngine/Factions/ActorRelationshipComponent.swift`. A slot of its
-    /// own beside `factions` because the two are different facts with the same
-    /// lifetime: what an actor *belongs to*, and what it *is to somebody else*.
-    /// The Creation Kit says outright that "relationships override factions"
-    /// (<https://ck.uesp.net/wiki/Relationship>), so they cannot share a slot
-    /// and still be resolved in that order.
-    case relationships
-    /// The player's character level, banked character experience, unspent perk
-    /// points and attribute-pick history (issue #499). The value type is
-    /// `PlayerProgressState` in
-    /// `Sources/OpenSkyEngine/Progression/PlayerProgressState.swift`. Like `quest` it
-    /// modifies no placement and belongs to no cell: it is keyed by
-    /// `ReferenceKey.player`, who has no record in this engine. A slot of its
-    /// own beside `perks` because the two answer different questions — how many
-    /// points are left to spend, and which perks those points already bought.
-    case playerProgress
-    /// What one actor owes each crime faction, and how many of each crime it
-    /// has committed against them (issue #504). The value type is
-    /// `CrimeLedgerState` in
-    /// `Sources/OpenSkyEngine/Crime/CrimeLedgerComponent.swift`. Like `playerProgress`
-    /// it modifies no placement and belongs to no cell in practice: it is keyed
-    /// by the perpetrator, which is `ReferenceKey.player` for every path this
-    /// milestone builds. A slot of its own beside `factions` for the reason
-    /// `perks` is one — a bounty moves when a crime is witnessed, while the
-    /// actor values beside it are rewritten sixty times a second.
-    case crimeLedger
+    /// a summon later. The value type is `ReferenceSpawnState`. Unlike every
+    /// other component this one does not modify a plugin placement; it *is*
+    /// the placement, and only a generated `ReferenceKey` ever carries it.
+    public static let spawn = Self(rawValue: "spawn", order: 5)
 }
 
 /// A value that can occupy one component slot.
 ///
-/// Conformers are plain `Equatable`, `Sendable` value types. The two erasure
-/// members are what let the store, the journal and the snapshot stay generic:
-/// `erased` widens a concrete component into the storage representation, and
-/// `init(erased:)` narrows it back, returning nil when the value belongs to a
-/// different slot.
+/// Conformers are plain `Equatable`, `Sendable` value types. `erased` widens a
+/// concrete component into the storage representation, and `init(erased:)`
+/// narrows it back, returning nil when the value belongs to a different slot.
+/// Both come from the extension below.
 nonisolated public protocol WorldStateComponent: Equatable, Sendable {
     /// The slot this component type occupies.
     static var componentKind: WorldStateComponentKind { get }
+}
+
+nonisolated extension WorldStateComponent {
     /// This value widened into the erased storage representation.
-    var erased: WorldStateComponentValue { get }
+    public var erased: WorldStateComponentValue {
+        WorldStateComponentValue(self)
+    }
+
     /// Narrows an erased value, or nil when it is a different component kind.
-    init?(erased: WorldStateComponentValue)
+    public init?(erased: WorldStateComponentValue) {
+        guard let value = erased.base as? Self else { return nil }
+        self = value
+    }
+
+    fileprivate func isEqual(to other: any WorldStateComponent) -> Bool {
+        (other as? Self) == self
+    }
 }
 
 /// One component value with its concrete type erased.
 ///
 /// This is the representation `ReferenceStateDelta` stores and the journal
 /// records, so old/new pairs in the journal stay strongly typed without the
-/// journal needing to be generic.
-nonisolated public enum WorldStateComponentValue: Equatable, Sendable {
-    case enableState(ReferenceEnableState)
-    case transform(ReferenceTransformOverride)
-    case activation(ReferenceActivationState)
-    case deletion(ReferenceDeletionState)
-    case inventory(ReferenceInventoryState)
-    case spawn(ReferenceSpawnState)
-    case quest(QuestRuntimeState)
-    case questAliases(QuestAliasState)
-    case actorValues(ActorValueState)
-    case death(ActorDeathState)
-    case combat(ActorCombatState)
-    case dialogue(DialogueRuntimeState)
-    case activeEffects(ActiveEffectState)
-    case spellbook(SpellbookState)
-    case enchantedItems(EnchantedItemState)
-    case perks(PerkState)
-    case factions(ActorFactionState)
-    case relationships(ActorRelationshipState)
-    case playerProgress(PlayerProgressState)
-    case crimeLedger(CrimeLedgerState)
+/// journal needing to be generic. The module that owns a component adds a
+/// factory beside its kind, for example `static func spellbook(_:)`.
+nonisolated public struct WorldStateComponentValue: Equatable, Sendable {
+    public let base: any WorldStateComponent
+
+    public init(_ value: some WorldStateComponent) {
+        base = value
+    }
 
     public var kind: WorldStateComponentKind {
-        switch self {
-        case .enableState: .enableState
-        case .transform: .transform
-        case .activation: .activation
-        case .deletion: .deletion
-        case .inventory: .inventory
-        case .spawn: .spawn
-        case .quest: .quest
-        case .questAliases: .questAliases
-        case .actorValues: .actorValues
-        case .death: .death
-        case .combat: .combat
-        case .dialogue: .dialogue
-        case .activeEffects: .activeEffects
-        case .spellbook: .spellbook
-        case .enchantedItems: .enchantedItems
-        case .perks: .perks
-        case .factions: .factions
-        case .relationships: .relationships
-        case .playerProgress: .playerProgress
-        case .crimeLedger: .crimeLedger
-        }
+        type(of: base).componentKind
+    }
+
+    /// The value as `type`, or nil when it is a different component.
+    public func value<Component: WorldStateComponent>(as type: Component.Type) -> Component? {
+        base as? Component
+    }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.kind == rhs.kind && lhs.base.isEqual(to: rhs.base)
+    }
+
+    public static func enableState(_ value: ReferenceEnableState) -> Self {
+        Self(value)
+    }
+
+    public static func transform(_ value: ReferenceTransformOverride) -> Self {
+        Self(value)
+    }
+
+    public static func activation(_ value: ReferenceActivationState) -> Self {
+        Self(value)
+    }
+
+    public static func deletion(_ value: ReferenceDeletionState) -> Self {
+        Self(value)
     }
 }
 
@@ -242,17 +145,8 @@ nonisolated public struct ReferenceEnableState: WorldStateComponent, Hashable, S
         .enableState
     }
 
-    public var erased: WorldStateComponentValue {
-        .enableState(self)
-    }
-
     public init(isEnabled: Bool) {
         self.isEnabled = isEnabled
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .enableState(value) = erased else { return nil }
-        self = value
     }
 }
 
@@ -266,10 +160,6 @@ nonisolated public struct ReferenceTransformOverride: WorldStateComponent, Senda
 
     public static var componentKind: WorldStateComponentKind {
         .transform
-    }
-
-    public var erased: WorldStateComponentValue {
-        .transform(self)
     }
 
     public var position: SIMD3<Float> {
@@ -290,11 +180,6 @@ nonisolated public struct ReferenceTransformOverride: WorldStateComponent, Senda
             placement: PlacedReference.Placement(position: position, rotation: rotation),
             scale: scale
         )
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .transform(value) = erased else { return nil }
-        self = value
     }
 }
 
@@ -318,10 +203,6 @@ nonisolated public struct ReferenceActivationState: WorldStateComponent, Hashabl
         .activation
     }
 
-    public var erased: WorldStateComponentValue {
-        .activation(self)
-    }
-
     public var wasActivated: Bool {
         activationCount > 0
     }
@@ -334,11 +215,6 @@ nonisolated public struct ReferenceActivationState: WorldStateComponent, Hashabl
         self.activationCount = activationCount
         self.isOpen = isOpen
         self.lastActivator = lastActivator
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .activation(value) = erased else { return nil }
-        self = value
     }
 
     /// The state after one more activation by `activator`, toggling `isOpen`
@@ -366,17 +242,8 @@ nonisolated public struct ReferenceDeletionState: WorldStateComponent, Hashable,
         .deletion
     }
 
-    public var erased: WorldStateComponentValue {
-        .deletion(self)
-    }
-
     public init(isDeleted: Bool) {
         self.isDeleted = isDeleted
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .deletion(value) = erased else { return nil }
-        self = value
     }
 }
 
@@ -411,10 +278,10 @@ nonisolated public struct ReferenceStateDelta: Equatable, Sendable {
         components.isEmpty
     }
 
-    /// Kinds present, in `WorldStateComponentKind.allCases` order so that
-    /// iteration never depends on dictionary ordering.
+    /// Kinds present, in `WorldStateComponentKind.order` so that iteration
+    /// never depends on dictionary ordering.
     public var sortedKinds: [WorldStateComponentKind] {
-        WorldStateComponentKind.allCases.filter { components[$0] != nil }
+        components.keys.sorted()
     }
 
     public subscript(kind: WorldStateComponentKind) -> WorldStateComponentValue? {

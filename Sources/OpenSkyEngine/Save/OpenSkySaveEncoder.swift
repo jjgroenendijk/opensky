@@ -220,34 +220,26 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         _ value: WorldStateComponentValue,
         into writer: inout BinaryWriter
     ) {
-        switch value {
-        case let .enableState(state):
+        // Only the four RDLT kinds reach this: `savedKinds(of:)` drops every
+        // kind without an RDLT tag, and those travel in their own chunks.
+        if let state = value.value(as: ReferenceEnableState.self) {
             writer.writeUInt8(state.isEnabled ? 1 : 0)
-        case let .transform(state):
+        } else if let state = value.value(as: ReferenceTransformOverride.self) {
             for component in [state.position, state.rotation] {
                 writer.writeFloat32(component.x)
                 writer.writeFloat32(component.y)
                 writer.writeFloat32(component.z)
             }
             writer.writeFloat32(state.scale)
-        case let .activation(state):
+        } else if let state = value.value(as: ReferenceActivationState.self) {
             writer.writeUInt32(state.activationCount)
             writer.writeUInt8(state.isOpen ? 1 : 0)
             writer.writeUInt8(state.lastActivator == nil ? 0 : 1)
             if let activator = state.lastActivator {
                 writeKey(activator, into: &writer)
             }
-        case let .deletion(state):
+        } else if let state = value.value(as: ReferenceDeletionState.self) {
             writer.writeUInt8(state.isDeleted ? 1 : 0)
-        case .inventory, .spawn, .quest, .questAliases, .actorValues, .death,
-             .combat, .dialogue, .activeEffects, .spellbook, .enchantedItems, .perks,
-             .factions, .relationships, .playerProgress, .crimeLedger:
-            // Unreachable: `savedKinds(of:)` drops every kind without an RDLT
-            // tag, and none of these has one — they travel in the INVN, SPWN,
-            // QSTS, QALS, AVAL, DETH, CBTS, DLGS, AEFF, SPLB, ECHG, PRKS, FCTN,
-            // RELS, PLVL and CRIM chunks. The cases exist so that adding a component kind
-            // is a compile error here rather than a silently unwritten component.
-            break
         }
     }
 

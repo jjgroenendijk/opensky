@@ -134,10 +134,6 @@ nonisolated public struct QuestAliasState: WorldStateComponent, Sendable {
         .questAliases
     }
 
-    public var erased: WorldStateComponentValue {
-        .questAliases(self)
-    }
-
     /// Normalizes on the way in — duplicates collapse with the last one
     /// winning and the result comes out sorted. This is also the save
     /// decoder's entry point, so a corrupt file degrades into a valid table
@@ -160,11 +156,6 @@ nonisolated public struct QuestAliasState: WorldStateComponent, Sendable {
         self.locationFills = locationsByID.keys.sorted().compactMap { id in
             locationsByID[id].map { QuestLocationAliasFill(aliasID: id, location: $0) }
         }
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .questAliases(value) = erased else { return nil }
-        self = value
     }
 
     public var isEmpty: Bool {
@@ -207,5 +198,20 @@ nonisolated public struct QuestAliasState: WorldStateComponent, Sendable {
             locationFills: locationFills.filter { $0.aliasID != aliasID }
                 + [QuestLocationAliasFill(aliasID: aliasID, location: location)]
         )
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// One quest's filled reference aliases. The value type is `QuestAliasState` in
+    /// `Sources/OpenSkyEngine/Quests/QuestAliasComponent.swift`, keyed by the same
+    /// QUST `ReferenceKey` the `quest` slot uses. It is a slot of its own because
+    /// the two have different lifetimes: stage and objective state survives a stop,
+    /// while the alias table is cleared by one.
+    public static let questAliases = Self(rawValue: "questAliases", order: 7)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func questAliases(_ value: QuestAliasState) -> Self {
+        Self(value)
     }
 }

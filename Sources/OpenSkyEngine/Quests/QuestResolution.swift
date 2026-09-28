@@ -61,3 +61,17 @@ nonisolated public struct QuestResolution: Sendable {
         overrides.count
     }
 }
+
+nonisolated extension QuestResolution: ConditionResolution {}
+
+nonisolated extension ConditionContext {
+    /// The one seam quest state comes through, shaped exactly like
+    /// the globals seam: a value resolving overrides over plugin baselines, so
+    /// the quest functions never reach into `WorldStateStore`.
+    public var quests: QuestResolution {
+        get { self[resolution: QuestResolution.self] }
+        set {
+            self[resolution: QuestResolution.self] = newValue
+        }
+    }
+}

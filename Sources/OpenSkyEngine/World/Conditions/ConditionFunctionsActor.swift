@@ -169,3 +169,22 @@ nonisolated extension ConditionFunctions {
         }
     }
 }
+
+nonisolated extension ConditionCall {
+    /// Actor state for this condition's run-on reference, or
+    /// `.unavailableActorState`.
+    ///
+    /// Note the two-step: the run-on has to name a reference the index holds
+    /// *and* the actor seam has to carry state for it. The first failure is
+    /// `.unresolvedReference` and stays that way, because "the run-on named
+    /// nothing" and "the named thing is not an actor this session tracks" are
+    /// different gaps and only one of them is about actors.
+    public func actorState() -> Result<ActorConditionState, ConditionFailure> {
+        referenceKey().flatMap { key in
+            guard let state = context.actors.state(for: key) else {
+                return .failure(.unavailableActorState)
+            }
+            return .success(state)
+        }
+    }
+}

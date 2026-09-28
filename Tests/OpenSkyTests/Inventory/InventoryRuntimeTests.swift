@@ -329,7 +329,7 @@ struct InventoryRuntimeTests {
     }
 
     private func inventoryCount(_ value: WorldStateComponentValue?, of item: FormID) -> Int32? {
-        guard let value, case let .inventory(inventory) = value else { return nil }
+        guard let inventory = value?.value(as: ReferenceInventoryState.self) else { return nil }
         return inventory.count(of: item)
     }
 }

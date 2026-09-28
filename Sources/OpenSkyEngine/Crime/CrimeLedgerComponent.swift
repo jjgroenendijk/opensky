@@ -157,10 +157,6 @@ nonisolated public struct CrimeLedgerState: WorldStateComponent, Sendable {
         .crimeLedger
     }
 
-    public var erased: WorldStateComponentValue {
-        .crimeLedger(self)
-    }
-
     /// Normalizes on the way in, which is what makes this the save decoder's
     /// entry point: a repeated faction collapses to its last row, empty rows
     /// drop out, and the order becomes key order, so a file written under a
@@ -176,11 +172,6 @@ nonisolated public struct CrimeLedgerState: WorldStateComponent, Sendable {
             rows[entry.faction] = entry
         }
         self.entries = rows.keys.sorted().compactMap { rows[$0] }
-    }
-
-    public init?(erased: WorldStateComponentValue) {
-        guard case let .crimeLedger(value) = erased else { return nil }
-        self = value
     }
 
     // MARK: - Reading
@@ -296,5 +287,22 @@ nonisolated public struct CrimeLedgerState: WorldStateComponent, Sendable {
     /// a billion-gold bounty saturates instead of wrapping negative.
     private static func saturatingSum(_ left: Int32, _ right: Int32) -> Int32 {
         Int32(clamping: max(0, Int64(left) + Int64(right)))
+    }
+}
+
+nonisolated extension WorldStateComponentKind {
+    /// What one actor owes each crime faction, and how many of each crime it has
+    /// committed against them. Like `playerProgress` it modifies no placement and
+    /// belongs to no cell in practice: it is keyed by the perpetrator, which is
+    /// `ReferenceKey.player` for every path this milestone builds. A slot of its
+    /// own beside `factions` for the reason `perks` is one — a bounty moves when a
+    /// crime is witnessed, while the actor values beside it are rewritten sixty
+    /// times a second.
+    public static let crimeLedger = Self(rawValue: "crimeLedger", order: 19)
+}
+
+nonisolated extension WorldStateComponentValue {
+    public static func crimeLedger(_ value: CrimeLedgerState) -> Self {
+        Self(value)
     }
 }
