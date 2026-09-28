@@ -5,8 +5,9 @@
 // that holds bone 1 at a known translation, so the pose says without ambiguity
 // which state is showing and how far a crossfade has run.
 
+import BehaviorTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 import Testing
 

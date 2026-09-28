@@ -12,6 +12,7 @@
 // Documented in docs/engine/locomotion-graph.md.
 
 import Foundation
+import OpenSkyBehavior
 
 /// One key binding as the panel presents it. `label` is what the control shows;
 /// `isActive` is whether that input is asserted right now, so a user can press

@@ -13,6 +13,7 @@
 // `make realtest T='MeleeCombatRealDataTests/vanillaGraphAcceptsTheCensusNamedCombatEvents()'`.
 
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData

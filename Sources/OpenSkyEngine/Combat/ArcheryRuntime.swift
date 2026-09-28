@@ -28,6 +28,7 @@
 // Documented in docs/engine/archery.md.
 
 import Foundation
+import OpenSkyBehavior
 import OpenSkyFormats
 
 /// One frame of archery intent. Filled beside `MeleeIntent` from the same

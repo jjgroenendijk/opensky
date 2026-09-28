@@ -44,6 +44,7 @@
 //
 // Documented in docs/engine/ragdoll-solver.md.
 
+import OpenSkyBehavior
 import simd
 
 nonisolated public enum RagdollConstraintSolver: Sendable {

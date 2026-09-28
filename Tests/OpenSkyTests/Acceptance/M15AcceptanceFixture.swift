@@ -19,7 +19,9 @@
 // heights from the install (AGENTS.md "Legal & IP boundary"). The vanilla half
 // of the gate is `M15AcceptanceRealDataTests`, which is env-gated.
 
+import BehaviorTesting
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd

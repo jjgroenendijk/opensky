@@ -18,6 +18,7 @@
 // and the render side, and a body that is rebuilt (a new appearance, a new
 // equipped set) reattaches to the same running graph.
 
+import OpenSkyBehavior
 import OpenSkyFormats
 import simd
 

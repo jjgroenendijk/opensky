@@ -19,6 +19,7 @@
 //
 // Documented in docs/engine/projectiles.md.
 
+import OpenSkyBehavior
 import OpenSkyFormats
 import simd
 

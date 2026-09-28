@@ -82,6 +82,8 @@ OpenSkyFormats            parsers, binary readers, compression, geometry values
   ^
 OpenSkyGameData           virtual file system, load order, record index, record stores
   ^
+OpenSkyBehavior           Havok behavior graph evaluation, skeleton pose math
+  ^
 OpenSkyEngine             the rest of the engine, until it is split
   ^
 OpenSky app, OpenSkyCLI   composition roots
@@ -124,6 +126,10 @@ rules:
 - Tests write `@testable import` to reach `internal` members.
 
 ## Tests
+
+Shared test fixtures live in a testing library, `Tests/<Name>Testing/` (for a foundation
+module, the name the module declares, for example `BehaviorTesting`). Its declarations are
+`public`, and it may `@testable import` the module it builds fixtures for.
 
 The package test targets run in the `UnitTests` and `Sanitizers` plans next to `OpenSkyTests`. A
 test plan names a package test target with `"containerPath" : "container:."`, the package at the

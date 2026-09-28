@@ -17,6 +17,7 @@
 //
 // Documented in docs/engine/combat.md.
 
+import OpenSkyBehavior
 import OpenSkyFormats
 import simd
 

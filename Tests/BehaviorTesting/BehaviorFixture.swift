@@ -13,50 +13,50 @@
 
 import FormatsTestSupport
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 import simd
 
 /// An in-memory `BehaviorObjectSource`: objects placed at offsets the test
 /// chooses, so an assertion can name the node it is talking about.
-nonisolated struct BehaviorObjectTable: BehaviorObjectSource {
+nonisolated public struct BehaviorObjectTable: BehaviorObjectSource {
     private var objects: [HKXPointerTarget: any HKBClass] = [:]
 
-    init() {}
+    public init() {}
 
     /// Registers `object` at `offset` and returns the target that addresses it.
     @discardableResult
-    mutating func add(_ object: any HKBClass, at offset: Int) -> HKXPointerTarget {
+    public mutating func add(_ object: any HKBClass, at offset: Int) -> HKXPointerTarget {
         let target = BehaviorFixture.target(offset)
         objects[target] = object
         return target
     }
 
-    func object(at target: HKXPointerTarget) -> (any HKBClass)? {
+    public func object(at target: HKXPointerTarget) -> (any HKBClass)? {
         objects[target]
     }
 
-    func className(at target: HKXPointerTarget) -> String? {
+    public func className(at target: HKXPointerTarget) -> String? {
         objects[target]?.className
     }
 }
 
 /// A clip whose pose is a pure function of time, so a test can assert an exact
 /// bone value at an exact local time without decoding anything.
-nonisolated struct BehaviorRampClip: BehaviorClip {
-    let duration: Float
+nonisolated public struct BehaviorRampClip: BehaviorClip {
+    public let duration: Float
     /// Bone index the ramp is written to.
-    let boneIndex: Int
+    public let boneIndex: Int
     /// Translation at time t is `(t * rate, 0, 0)`.
-    let rate: Float
+    public let rate: Float
 
-    init(duration: Float = 1, boneIndex: Int = 0, rate: Float = 1) {
+    public init(duration: Float = 1, boneIndex: Int = 0, rate: Float = 1) {
         self.duration = duration
         self.boneIndex = boneIndex
         self.rate = rate
     }
 
-    func samples(at time: Float) -> [HKABoneTransformSample] {
+    public func samples(at time: Float) -> [HKABoneTransformSample] {
         let clamped = min(max(time, 0), duration)
         return [HKABoneTransformSample(
             boneIndex: boneIndex,
@@ -71,27 +71,27 @@ nonisolated struct BehaviorRampClip: BehaviorClip {
 
 /// A clip that holds one fixed pose, for blend arithmetic that must not move
 /// while it is being asserted on.
-nonisolated struct BehaviorStaticClip: BehaviorClip {
-    let duration: Float
-    let samples: [HKABoneTransformSample]
+nonisolated public struct BehaviorStaticClip: BehaviorClip {
+    public let duration: Float
+    public let samples: [HKABoneTransformSample]
 
-    init(duration: Float = 1, samples: [HKABoneTransformSample]) {
+    public init(duration: Float = 1, samples: [HKABoneTransformSample]) {
         self.duration = duration
         self.samples = samples
     }
 
-    func samples(at _: Float) -> [HKABoneTransformSample] {
+    public func samples(at _: Float) -> [HKABoneTransformSample] {
         samples
     }
 }
 
 /// One declared graph variable, for `BehaviorFixture.graphData`.
-struct BehaviorVariableSpec {
-    let name: String
-    let type: HKBVariableType
-    let initial: Float
+public struct BehaviorVariableSpec: Sendable {
+    public let name: String
+    public let type: HKBVariableType
+    public let initial: Float
 
-    init(_ name: String, _ type: HKBVariableType, _ initial: Float) {
+    public init(_ name: String, _ type: HKBVariableType, _ initial: Float) {
         self.name = name
         self.type = type
         self.initial = initial
@@ -99,30 +99,42 @@ struct BehaviorVariableSpec {
 }
 
 /// One clip trigger, for `BehaviorFixture.clipTriggers`.
-struct BehaviorTriggerSpec {
-    let localTime: Float
-    let eventId: Int
-    var relativeToEnd = false
-    var acyclic = false
+public struct BehaviorTriggerSpec: Sendable {
+    public let localTime: Float
+    public let eventId: Int
+    public var relativeToEnd = false
+    public var acyclic = false
+
+    public init(
+        localTime: Float,
+        eventId: Int,
+        relativeToEnd: Bool = false,
+        acyclic: Bool = false
+    ) {
+        self.localTime = localTime
+        self.eventId = eventId
+        self.relativeToEnd = relativeToEnd
+        self.acyclic = acyclic
+    }
 }
 
 /// One binding of a member path to a graph variable index.
-struct BehaviorBindingSpec {
-    let memberPath: String
-    let variableIndex: Int
+public struct BehaviorBindingSpec: Sendable {
+    public let memberPath: String
+    public let variableIndex: Int
 
-    init(_ memberPath: String, _ variableIndex: Int) {
+    public init(_ memberPath: String, _ variableIndex: Int) {
         self.memberPath = memberPath
         self.variableIndex = variableIndex
     }
 }
 
 /// Builders for the decoded structs a synthetic graph is made of.
-enum BehaviorFixture {
+public enum BehaviorFixture {
     /// Every fixture object lives in the data section, as in a real packfile.
-    static let section = 2
+    public static let section = 2
 
-    static func target(_ offset: Int) -> HKXPointerTarget {
+    public static func target(_ offset: Int) -> HKXPointerTarget {
         HKXPointerTarget(sectionIndex: section, dataOffset: offset)
     }
 
@@ -130,7 +142,7 @@ enum BehaviorFixture {
 
     /// A three-bone rig: root, pelvis, hand. The root is bone 0, as on every
     /// vanilla Skyrim skeleton.
-    static func skeleton() -> BehaviorSkeleton {
+    public static func skeleton() -> BehaviorSkeleton {
         BehaviorSkeleton(
             boneNames: ["NPC Root [Root]", "NPC Pelvis [Pelv]", "NPC Hand [Hand]"],
             referencePose: [
@@ -141,7 +153,7 @@ enum BehaviorFixture {
         )
     }
 
-    static func bonePose(
+    public static func bonePose(
         translation: SIMD3<Float>,
         rotation: simd_quatf = BehaviorPoseMath.identityRotation,
         scale: SIMD3<Float> = SIMD3(1, 1, 1)
@@ -154,7 +166,7 @@ enum BehaviorFixture {
     /// Builds `hkbBehaviorGraphData` from variable and event declarations. The
     /// initial value of a real variable is given as a float and stored as the
     /// bit pattern the packfile would hold.
-    static func graphData(
+    public static func graphData(
         variables: [BehaviorVariableSpec] = [],
         events: [String] = []
     ) -> HKBBehaviorGraphData {
@@ -193,14 +205,14 @@ enum BehaviorFixture {
 
     // MARK: - Nodes
 
-    static func nodeHeader(
+    public static func nodeHeader(
         _ name: String,
         bindingSet: HKXPointerTarget? = nil
     ) -> HKBNodeHeader {
         HKBNodeHeader(variableBindingSet: bindingSet, userData: 0, name: name)
     }
 
-    static func modifierHeader(
+    public static func modifierHeader(
         _ name: String,
         enable: Bool = true,
         bindingSet: HKXPointerTarget? = nil
@@ -209,7 +221,7 @@ enum BehaviorFixture {
     }
 
     /// One binding of `memberPath` to variable `variableIndex`.
-    static func bindingSet(
+    public static func bindingSet(
         _ bindings: [BehaviorBindingSpec],
         indexOfBindingToEnable: Int = -1
     ) -> HKBVariableBindingSet {
@@ -227,7 +239,7 @@ enum BehaviorFixture {
         )
     }
 
-    static func clipGenerator(
+    public static func clipGenerator(
         _ name: String,
         animationName: String,
         mode: Int = 1,
@@ -253,7 +265,7 @@ enum BehaviorFixture {
         )
     }
 
-    static func blenderChild(
+    public static func blenderChild(
         generator: HKXPointerTarget?,
         weight: Float,
         worldFromModelWeight: Float = 1,
@@ -269,7 +281,7 @@ enum BehaviorFixture {
         )
     }
 
-    static func blender(
+    public static func blender(
         _ name: String,
         children: [HKXPointerTarget?],
         threshold: Float = 0,
@@ -291,7 +303,7 @@ enum BehaviorFixture {
         )
     }
 
-    static func selector(
+    public static func selector(
         _ name: String,
         generators: [HKXPointerTarget?],
         selected: Int = 0,
@@ -306,7 +318,7 @@ enum BehaviorFixture {
         )
     }
 
-    static func modifierGenerator(
+    public static func modifierGenerator(
         _ name: String,
         modifier: HKXPointerTarget?,
         generator: HKXPointerTarget?
@@ -319,7 +331,7 @@ enum BehaviorFixture {
         )
     }
 
-    static func clipTriggers(_ triggers: [BehaviorTriggerSpec]) -> HKBClipTriggerArray {
+    public static func clipTriggers(_ triggers: [BehaviorTriggerSpec]) -> HKBClipTriggerArray {
         HKBClipTriggerArray(
             triggers: triggers.map {
                 HKBClipTrigger(
@@ -337,7 +349,7 @@ enum BehaviorFixture {
     // MARK: - Instances
 
     /// A graph instance over the three-bone rig, ready to step.
-    static func instance(
+    public static func instance(
         root: HKXPointerTarget?,
         table: BehaviorObjectTable,
         data: HKBBehaviorGraphData = BehaviorFixture.graphData(),
@@ -354,7 +366,7 @@ enum BehaviorFixture {
     }
 
     /// One bone sample at translation `(x, 0, 0)`.
-    static func sample(bone: Int, x: Float) -> HKABoneTransformSample {
+    public static func sample(bone: Int, x: Float) -> HKABoneTransformSample {
         HKABoneTransformSample(
             boneIndex: bone,
             pose: bonePose(translation: SIMD3(x, 0, 0))
@@ -363,7 +375,7 @@ enum BehaviorFixture {
 
     /// Two static clips named `left` and `right`, holding bone 1 at the given
     /// translations.
-    static func staticClipPair(left: Float, right: Float) -> BehaviorClipTable {
+    public static func staticClipPair(left: Float, right: Float) -> BehaviorClipTable {
         BehaviorClipTable(byName: [
             "left": BehaviorStaticClip(samples: [sample(bone: 1, x: left)]),
             "right": BehaviorStaticClip(samples: [sample(bone: 1, x: right)])
@@ -376,7 +388,7 @@ enum BehaviorFixture {
     /// whose translation.x ramps 0 to 30, bound onto `boneIndex`. Bone 1 by
     /// default, because bone 0 is the root and its travel is extracted rather
     /// than posed.
-    static func splineClip(
+    public static func splineClip(
         boneIndex: Int = 1,
         carriesExtractedMotion: Bool = false,
         annotations: [(time: Float, text: String)] = []
@@ -404,6 +416,6 @@ enum BehaviorFixture {
     }
 }
 
-enum BehaviorFixtureError: Error {
+public enum BehaviorFixtureError: Error {
     case noSplineAnimation
 }

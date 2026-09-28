@@ -3,8 +3,9 @@
 // the same way produce the same poses and the same event log. Synthetic graphs
 // built in code (AGENTS.md "Legal & IP boundary").
 
+import BehaviorTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyBehavior
 @testable import OpenSkyFormats
 import simd
 import Testing

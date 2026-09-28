@@ -12,6 +12,7 @@
 // point, and standing up a `StaticCollisionSet` here would test
 // `ShapeSweeper` a second time rather than testing the runtime.
 
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 import simd

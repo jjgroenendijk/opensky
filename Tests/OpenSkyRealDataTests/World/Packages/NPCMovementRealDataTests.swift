@@ -2,6 +2,7 @@
 // leave the read-only install; timings are printed into the realtest run.
 
 import Foundation
+@testable import OpenSkyBehavior
 @testable import OpenSkyEngine
 @testable import OpenSkyFormats
 @testable import OpenSkyGameData

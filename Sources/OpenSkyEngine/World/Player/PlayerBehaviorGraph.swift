@@ -11,6 +11,7 @@
 // one (docs/engine/behavior-runtime.md).
 
 import Foundation
+import OpenSkyBehavior
 import OpenSkyFormats
 import OpenSkyGameData
 
