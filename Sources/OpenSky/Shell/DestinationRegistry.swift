@@ -7,6 +7,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
 

@@ -8,6 +8,7 @@
 // `CombatSettings` for the reading that reconciles the two.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyPhysics
 import Testing
 
 struct MeleeDamageTests {

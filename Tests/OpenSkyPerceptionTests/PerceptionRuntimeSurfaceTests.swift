@@ -6,8 +6,10 @@
 // perceives, and this half is about what the pass costs and what it hands out.
 
 @testable import OpenSkyDiagnostics
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyPerception
+@testable import OpenSkyPerceptionInterface
+import OpenSkyPerceptionTesting
 import OpenSkyShaderTypes
 import simd
 import Testing

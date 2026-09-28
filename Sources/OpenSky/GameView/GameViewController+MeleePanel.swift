@@ -13,6 +13,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 
 extension GameViewController: MeleeCombatControlProviding {
     var isWeaponDrawn: Bool {

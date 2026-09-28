@@ -8,6 +8,8 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 
 enum GMSTCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

@@ -8,6 +8,7 @@
 
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyPerceptionInterface
 import simd
 import Testing
 

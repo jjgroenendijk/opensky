@@ -12,6 +12,7 @@
 // everything else is behaviour the clock could not have.
 
 import OpenSkyEngine
+@testable import OpenSkyPerceptionInterface
 import simd
 import Testing
 

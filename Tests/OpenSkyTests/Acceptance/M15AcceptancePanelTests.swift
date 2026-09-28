@@ -16,6 +16,7 @@ import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
 import simd
 import Testing

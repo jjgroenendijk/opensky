@@ -97,7 +97,11 @@ OpenSkyWorldState         runtime state store, open component set, game clock, g
   ^
 OpenSkyConditions         condition evaluator, function registry, core functions
   ^
-OpenSkyEngine             the rest of the engine, until it is split
+OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
+  ^
+OpenSkyPerception         perception runtime, detection formula, sight, overlay
+  ^
+OpenSkyEngine             the rest of the engine, until it is split; imports interfaces only
   ^
 OpenSky app, OpenSkyCLI   composition roots
 ```
@@ -114,7 +118,7 @@ because `device.makeDefaultLibrary()` reads the main bundle.
 
 ## Keeping the lines clean
 
-A lower module never imports a higher one. Three patterns keep it that way:
+A lower module never imports a higher one. These patterns keep it that way:
 
 - A value type both sides need moves down, for example `CellCoordinate`, `ModelBounds`, and
   `ActorValueIdentity` in `OpenSkyFormatsCore` and `OpenSkyFormatsESM`.
@@ -125,6 +129,9 @@ A lower module never imports a higher one. Three patterns keep it that way:
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
   to move the camera and run the world. The engine's `GameSession` is that driver.
+- A feature that another module calls into offers a protocol in its interface. Example: crime
+  asks `DetectionObserving` which observers saw an act. `PerceptionRuntime` conforms, and the app
+  hands the runtime to crime as that protocol.
 - A lower module that stores something for every feature keeps an open set instead of a closed
   enum. `OpenSkyWorldState` stores any `WorldStateComponent`, and each feature declares its own
   `WorldStateComponentKind`. `ConditionContext` stores any `ConditionResolution` by type, and each
@@ -156,9 +163,11 @@ satisfies an old `import`, and the build fails with two types of the same name, 
 
 ## Tests
 
-Shared test fixtures live in a testing library, `Tests/<Name>Testing/` (for a foundation
-module, the name the module declares, for example `BehaviorTesting`). Its declarations are
-`public`, and it may `@testable import` the module it builds fixtures for.
+Shared test fixtures live in a testing library, `Tests/<Name>Testing/`. For a foundation
+module the name is the one the module declares, for example `BehaviorTesting`. For a feature it
+is the feature name plus `Testing`, for example `OpenSkyPerceptionTesting`, and it depends on the
+feature's interface, not its implementation. Its declarations are `public`, and it may
+`@testable import` the module it builds fixtures for.
 
 A testing library changes how Xcode builds the module it uses. The app and the test bundles
 then share that module, so Xcode builds it as a dynamic framework. A module that depends on

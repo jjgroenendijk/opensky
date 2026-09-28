@@ -18,6 +18,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyWorldState
 import simd
 

@@ -5,9 +5,12 @@
 // The acceptance gate for 16.6 is exactly these behaviours over synthetic
 // geometry, so each `@Test` below names one of its clauses.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyPerception
+@testable import OpenSkyPerceptionInterface
+import OpenSkyPerceptionTesting
+@testable import OpenSkyPhysics
 import simd
 import Testing
 

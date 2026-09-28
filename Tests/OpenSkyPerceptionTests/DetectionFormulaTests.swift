@@ -7,7 +7,9 @@
 // so a change to a constant that also changes the shape fails here instead of
 // being blessed by a regenerated expectation.
 
-@testable import OpenSkyEngine
+@testable import OpenSkyPerception
+@testable import OpenSkyPerceptionInterface
+@testable import OpenSkyPhysics
 import Testing
 
 struct DetectionFormulaTests {

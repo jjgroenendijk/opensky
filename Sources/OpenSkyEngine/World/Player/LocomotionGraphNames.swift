@@ -10,6 +10,7 @@
 
 import Foundation
 import OpenSkyBehavior
+import OpenSkyPhysics
 import simd
 
 nonisolated public enum LocomotionGraphNames: Sendable {

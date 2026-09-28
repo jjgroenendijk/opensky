@@ -11,6 +11,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyRendering
 
 final class CameraSection: PanelSectionViewController {

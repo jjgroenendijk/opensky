@@ -9,11 +9,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
-
-nonisolated public struct MovementSetting: Equatable, Sendable {
-    public let value: Float
-    public let source: String
-}
+import OpenSkyPhysics
 
 nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
     public let walkSpeed: MovementSetting

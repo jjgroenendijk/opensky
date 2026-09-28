@@ -53,6 +53,36 @@ nonisolated public struct DetectionPairReadout: Equatable, Sendable {
             seen
         )
     }
+
+    public init(
+        observer: ReferenceKey,
+        observerName: String,
+        target: ReferenceKey,
+        targetName: String,
+        state: DetectionState,
+        level: Float,
+        detectionValue: Float,
+        soundFactor: Float,
+        visualFactor: Float,
+        distance: Float,
+        hasLineOfSight: Bool,
+        isInViewCone: Bool,
+        lastKnownPosition: SIMD3<Float>?
+    ) {
+        self.observer = observer
+        self.observerName = observerName
+        self.target = target
+        self.targetName = targetName
+        self.state = state
+        self.level = level
+        self.detectionValue = detectionValue
+        self.soundFactor = soundFactor
+        self.visualFactor = visualFactor
+        self.distance = distance
+        self.hasLineOfSight = hasLineOfSight
+        self.isInViewCone = isInViewCone
+        self.lastKnownPosition = lastKnownPosition
+    }
 }
 
 /// The whole pass as one value: what it tracked, what it cost, and what it
@@ -81,41 +111,20 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
     public func pairs(involving actor: ReferenceKey) -> [DetectionPairReadout] {
         pairs.filter { $0.observer == actor || $0.target == actor }
     }
-}
 
-extension PerceptionRuntime {
-    /// The pass as a flat value, in pair order.
-    public func readout() -> PerceptionReadout {
-        let names = Dictionary(uniqueKeysWithValues: observers.map { ($0.key, $0.name) })
-            .merging(
-                Dictionary(uniqueKeysWithValues: targets.map { ($0.key, $0.name) }),
-                uniquingKeysWith: { observer, _ in observer }
-            )
-        let rows = pairs.keys.sorted().compactMap { key -> DetectionPairReadout? in
-            guard let pair = pairs[key] else { return nil }
-            return DetectionPairReadout(
-                observer: key.observer,
-                observerName: names[key.observer] ?? key.observer.description,
-                target: key.target,
-                targetName: names[key.target] ?? key.target.description,
-                state: pair.state,
-                level: pair.level,
-                detectionValue: pair.breakdown.value,
-                soundFactor: pair.breakdown.soundFactor,
-                visualFactor: pair.breakdown.visualFactor,
-                distance: pair.distance,
-                hasLineOfSight: pair.hasLineOfSight,
-                isInViewCone: pair.isInViewCone,
-                lastKnownPosition: pair.lastKnownPosition
-            )
-        }
-        return PerceptionReadout(
-            pairs: rows,
-            observerCount: observers.count,
-            targetCount: targets.count,
-            droppedPairCount: droppedPairCount,
-            lineOfSightQueryCount: lineOfSightQueryCount,
-            stepCount: stepCount
-        )
+    public init(
+        pairs: [DetectionPairReadout],
+        observerCount: Int,
+        targetCount: Int,
+        droppedPairCount: Int,
+        lineOfSightQueryCount: Int,
+        stepCount: Int
+    ) {
+        self.pairs = pairs
+        self.observerCount = observerCount
+        self.targetCount = targetCount
+        self.droppedPairCount = droppedPairCount
+        self.lineOfSightQueryCount = lineOfSightQueryCount
+        self.stepCount = stepCount
     }
 }

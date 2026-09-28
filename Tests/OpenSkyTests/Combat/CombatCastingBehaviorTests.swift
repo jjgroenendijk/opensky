@@ -12,6 +12,7 @@
 // and a projectile — is `CombatLoopCastingTests`.
 
 @testable import OpenSkyEngine
+@testable import OpenSkyPerceptionInterface
 import simd
 import Testing
 

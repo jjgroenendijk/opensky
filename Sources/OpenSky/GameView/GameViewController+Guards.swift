@@ -28,6 +28,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPerception
 import OpenSkyRendering
 import OpenSkyWorldState
 import simd

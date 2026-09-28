@@ -14,6 +14,8 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPerception
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyWorldState
 import simd

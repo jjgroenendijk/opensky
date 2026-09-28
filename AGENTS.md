@@ -102,6 +102,7 @@ Sources/
   OpenSkyAudio/         package module: audio graph, decoders, sound and music stores
   OpenSkyWorldState/    package module: runtime state store, components, clock, globals
   OpenSkyConditions/    package module: condition evaluator and function registry
+  OpenSkyPerception*/   feature module: perception runtime; Interface: detection values
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
@@ -113,11 +114,13 @@ Tests/
   OpenSkyRenderingTests/ package test target: synthetic suites for OpenSkyRendering
   OpenSkyAudioTests/    package test target: synthetic suites for OpenSkyAudio
   OpenSkyWorldStateTests/ package test target: synthetic suites for OpenSkyWorldState
+  OpenSkyPerceptionTests/ package test target: synthetic suites for OpenSkyPerception
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
   BehaviorTesting/      package library: behavior graph fixtures
   PhysicsTesting/       package library: collision scene and ragdoll fixtures
+  OpenSkyPerceptionTesting/ package library: perception world fake and fixtures
   OpenSkyUITests/       XCUITest smoke tests
 ```
 

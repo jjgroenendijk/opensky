@@ -16,6 +16,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyPerceptionInterface
 
 final class AINavigationPanelViewController: InspectorPanelViewController {
     let overlaySection = AIOverlaySection()

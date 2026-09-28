@@ -15,6 +15,10 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyPerception
+@testable import OpenSkyPerceptionInterface
+import OpenSkyPerceptionTesting
+@testable import OpenSkyPhysics
 import simd
 
 @MainActor

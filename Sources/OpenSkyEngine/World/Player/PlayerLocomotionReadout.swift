@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyBehavior
+import OpenSkyPhysics
 
 nonisolated public enum PlayerLocomotionReadout: Sendable {
     /// Where the player is and what is moving them.

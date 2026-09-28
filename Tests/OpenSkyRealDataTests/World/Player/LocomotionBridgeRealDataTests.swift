@@ -18,6 +18,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyGameData
+@testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 import simd
 import Testing
