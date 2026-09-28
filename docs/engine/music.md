@@ -92,7 +92,7 @@ matter only when two playlists can play at once.
 ## Finding the shipped file
 
 A music path is the name the record gives, normalized
-([path resolution](/formats/music.md#music-paths)). On the shipped install, that name is not
+([path resolution](/formats/music.md#path-resolution)). On the shipped install, that name is not
 a file that exists. This is observed, not documented: all 242 distinct `MUST` `ANAM` and `BNAM`
 names in `Skyrim.esm` end in `.wav`, but all 269 archive entries under `music\` are `.xwm`.
 Vanilla `SNDR` sounds are the other way: they really are `.wav`, and need no rule.

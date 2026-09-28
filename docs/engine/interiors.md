@@ -14,7 +14,7 @@ One path covers both directions: outside to inside, and inside to outside. The r
 ## Building an interior
 
 The builder finds the interior `CELL` through its block and sub-block groups (see
-[finding an interior cell](/formats/world-records.md#finding-an-interior-cell)), then reads its
+[finding an interior cell](/formats/world-records.md#cell)), then reads its
 persistent and temporary children the same way as an exterior cell. The `DATA` interior flag
 must be set.
 

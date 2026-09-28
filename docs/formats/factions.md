@@ -1,29 +1,27 @@
 ---
 type: File Format
 title: Factions (FACT, NPC_ SNAM)
-description: FACT layout (relations, flags, crime values, ranks, vendor block), NPC_ faction
-  membership, and faction membership at runtime.
+description: FACT record layout - relations, crime values, ranks, and the vendor block - plus
+  NPC_ faction membership and membership at runtime.
 tags: [format, plugin, records, factions, crime, vendor, actors]
 ---
 
 # Factions (FACT, NPC_ SNAM)
 
-A `FACT` record bundles four things under one editor ID:
+A `FACT` record holds four things under one editor ID:
 
 - how its members treat other factions,
 - how it reacts to crime in its area,
 - the names of its ranks,
-- for a merchant faction, what its shop sells and when.
+- for a merchant faction: what its shop sells, and when.
 
-An actor joins a faction through `NPC_ SNAM`, which holds the faction and the rank.
+An actor joins a faction through the `NPC_ SNAM` field, which gives the faction and a rank.
+See [combat](/engine/combat.md) for hostility and [crime](/engine/crime.md) for bounties.
 
-Hostility is worked out in [combat](/engine/combat.md). Flags and crime values are used by
-[crime](/engine/crime.md). The vendor block is used by [barter](/engine/barter.md).
-
-Sources: UESP [FACT](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FACT) and
+References: UESP [FACT](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FACT) and
 [NPC_](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_); xEdit `dev-4.1.6`,
-`Core/wbDefinitionsTES5.pas` `wbRecord(FACT, ...)`, and `Core/wbDefinitionsCommon.pas`
-`wbFaction` and `wbFactionRelations`.
+`Core/wbDefinitionsTES5.pas` (`wbRecord(FACT, ...)`) and `Core/wbDefinitionsCommon.pas`
+(`wbFaction`, `wbFactionRelations`).
 
 ## Fields
 
@@ -35,22 +33,22 @@ Sources: UESP [FACT](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FACT) a
 | `DATA` | uint32 | Flags |
 | `JAIL` | `REFR` FormID | Jail marker outside |
 | `WAIT` | `REFR` FormID | Follower wait marker |
-| `STOL` | `REFR` FormID | Chest for stolen goods |
+| `STOL` | `REFR` FormID | Evidence chest for stolen goods |
 | `PLCN` | `REFR` FormID | Chest for the arrested player's items |
-| `CRGR` | `FLST` FormID | Shared crime faction list |
+| `CRGR` | `FLST` FormID | Shared list of crime factions |
 | `JOUT` | `OTFT` FormID | Jail outfit |
 | `CRVA` | 12, 16, or 20 bytes | Crime values |
 | `RNAM` | uint32 | Rank index. Starts a rank group |
-| `MNAM`, `FNAM` | lstring | Male and female rank title |
+| `MNAM` / `FNAM` | lstring | Male and female rank title |
 | `VEND` | `FLST` FormID | What the vendor buys and sells |
 | `VENC` | `REFR` FormID | Merchant chest |
 | `VENV` | 12 bytes | Vendor values |
 | `PLVD` | 12 bytes | Where the vendor trades |
-| `CITC`, `CTDA` | conditions | When the vendor trades |
+| `CITC` / `CTDA` | conditions | When the vendor trades |
 
-A null FormID means absent.
+A null FormID means the link is not set.
 
-## XNAM relations (12 bytes)
+## XNAM: relations
 
 | Offset | Type | Meaning |
 | --- | --- | --- |
@@ -58,13 +56,13 @@ A null FormID means absent.
 | 4 | int32 | Disposition modifier |
 | 8 | uint32 | Combat reaction: 0 neutral, 1 enemy, 2 ally, 3 friend |
 
-xEdit allows a `RACE` here too. So a relation that does not match a faction is normal. The
-disposition modifier has no effect in Skyrim. xEdit notes that the Creation Kit no longer
-edits it. UESP found it non-zero on only one vanilla record.
+xEdit allows a `RACE` in the link. So a link that is not a faction is normal. The
+disposition modifier does nothing in Skyrim. xEdit notes that the Creation Kit no longer
+edits it, and UESP sees it set on only one vanilla record.
 
-## DATA flags
+## DATA: flags
 
-Names follow xEdit, which says which crime each "ignore" bit covers.
+Bit names from xEdit, which says which crime each "ignore" bit covers.
 
 | Mask | Meaning |
 | --- | --- |
@@ -82,12 +80,9 @@ Names follow xEdit, which says which crime each "ignore" bit covers.
 | `0x00008000` | Can be owner |
 | `0x00010000` | Ignore werewolf |
 
-Other bits are kept raw.
+## CRVA: crime values
 
-## CRVA crime values
-
-12, 16, or 20 bytes. Newer record versions added fields at the end. OpenSky reads only the
-fields the data reaches and leaves the others empty, not zero.
+The field grew over record versions, so it is 12, 16, or 20 bytes.
 
 | Offset | Type | Meaning |
 | --- | --- | --- |
@@ -97,33 +92,37 @@ fields the data reaches and leaves the others empty, not zero.
 | 4 | uint16 | Assault |
 | 6 | uint16 | Trespass |
 | 8 | uint16 | Pickpocket |
-| 10 | uint16 | Unused. Sometimes not zero. Never read as gold |
-| 12 | float | Steal multiplier (16 bytes or more) |
+| 10 | uint16 | Unused. Sometimes not 0. Never a gold value |
+| 12 | float32 | Steal multiplier (16 bytes or more) |
 | 16 | uint16 | Escape (20 bytes) |
 | 18 | uint16 | Werewolf (20 bytes) |
 
-Example: `CrimeFactionWhiterun` has murder 1000, assault 40, trespass 5, pickpocket 25, steal
-multiplier 0.5, escape 100, and werewolf 1000.
+OpenSky reads only the fields the data reaches. A missing field stays missing, not 0, so
+each user decides what it means. For a missing steal multiplier, crime uses 1, so a 12-byte
+`CRVA` still charges the full item value.
 
-A missing steal multiplier counts as 1. So a 12-byte `CRVA` charges the item's full value, not
-nothing. Crime gold comes from these values, not from game settings. The vanilla install has
-only two `iCrimeGold*` settings, and neither prices murder, assault, trespass, or theft.
+UESP says `CRVA` is normally required, but `MS08AlikrFaction` has none. So a missing `CRVA`
+is not an error. Such a faction charges no gold, but its crimes are still counted.
 
-UESP says `CRVA` is normally required, but `MS08AlikrFaction` has none. A faction without
-`CRVA` prices nothing, but its crimes are still counted.
+These values are where crime gold comes from. It does not come from game settings: the
+install has only two `iCrimeGold*` settings, and neither prices murder, assault, trespass,
+or theft.
+
+Example, `CrimeFactionWhiterun`: murder 1000, assault 40, trespass 5, pickpocket 25, steal
+multiplier 0.5, escape 100, werewolf 1000.
 
 ## Ranks
 
-`RNAM` starts a rank group and holds the rank index. The `MNAM` and `FNAM` after it are that
-rank's male and female titles. Either may be missing. A title lookup falls back to the other
-gender. On a localized plugin the titles are string-table IDs.
+`RNAM` starts a rank group with its index. The `MNAM` and `FNAM` after it are the male and
+female titles. Either may be missing, and then the other gender's title is used. On a
+localized plugin, the titles are string IDs.
 
-A title with no open rank group is counted, not attached to the wrong rank. Vanilla has none.
-xEdit also lists an unused `INAM` insignia field. Vanilla has none of those either.
+A title with no open rank group is counted and ignored, never given to the wrong rank.
+Vanilla has none. xEdit also lists an unused `INAM` insignia; no vanilla record has one.
 
 ## Vendor block
 
-`VENV` is 12 bytes. The sources disagree about offsets 4 to 7:
+`VENV` is 12 bytes. The sources disagree on offsets 4 to 7:
 
 | Offset | xEdit | UESP |
 | --- | --- | --- |
@@ -133,56 +132,56 @@ xEdit also lists an unused `INAM` insignia field. Vanilla has none of those eith
 | 9 | uint8 not sell/buy | same |
 | 10 | 2 unknown bytes | uint16 unused |
 
-OpenSky follows xEdit and counts records where the word at offset 6 is not zero. In the
-vanilla load order there are none, so both readings give the same values. The count stays, so
-a plugin where they differ is noticed instead of getting a radius in the tens of thousands.
+OpenSky follows xEdit and counts records where the word at offset 6 is not 0. In the whole
+vanilla load order there are none, so both readings agree. The count stays so that a plugin
+that disagrees shows up, instead of giving a radius in the tens of thousands.
 
-`PLVD` is a type, one value whose meaning depends on the type, and a signed radius. The type
-list is shared with package locations and is not implemented yet. The value stays raw.
+`PLVD` is a location type, one value whose meaning depends on the type, and a signed
+radius. The type list is shared with package locations (see [packages](/formats/packages.md)).
+OpenSky keeps the middle value raw.
 
-The `CITC` and `CTDA` run is a normal [condition list](/formats/conditions.md). The vendor
-trades only while it is true.
+The `CITC`/`CTDA` conditions at the end (see [conditions](/formats/conditions.md)) must be
+true for the vendor to trade.
 
-## NPC_ SNAM membership (8 bytes, repeats)
+## NPC_ SNAM: membership
+
+8 bytes, one per faction:
 
 | Offset | Type | Meaning |
 | --- | --- | --- |
-| 0 | FormID | The `FACT` |
+| 0 | `FACT` FormID | The faction |
 | 4 | int8 | Rank |
 | 5 | 3 bytes | Unused |
 
-The rank is signed. Vanilla uses negative ranks for members that no rank title names.
+The rank is signed. Vanilla uses negative ranks for members without a rank title.
 
-The list is inherited through the template flag `useFactions` (`0x0004` in `ACBS`). A record
-takes its list from its template only when it has a `TPLT` and the flag is set. So a local
-empty list stays empty (see [actors](/formats/actors.md)).
+The list comes from a template when the `ACBS` flag "use factions" (`0x0004`) is set and the
+record has a `TPLT`. A record without the flag keeps its own list, even when it is empty.
+See [actors](/formats/actors.md).
 
-## Inspecting
+## Runtime membership
 
-`openskycli record <editorid>` and the Asset Browser type "FACT - Factions" show the flags,
-crime values and their links, the rank table, the relations, and the raw vendor block. A link
-that does not resolve prints as `[UNRESOLVED] <FormID>`, so a missing record never looks like
-a name.
+`SNAM` gives the factions an actor starts in. Scripts and quests then add, remove, and
+promote. OpenSky stores the current memberships per actor and saves them in the `FCTN`
+chunk of the [OpenSky save](/formats/opensky-save-actor-chunks.md).
 
-## Membership at runtime
+Design choices:
 
-`SNAM` says which factions an actor started in. What the actor belongs to now is stored in the
-world state, one (faction, rank) row per faction. Joining, leaving, and promotion go through
-the world state, so they are saved in the `FCTN` chunk of the
-[save file](/formats/opensky-save.md).
+- An actor's `SNAM` list is copied in the first time something asks about that actor, not
+  when the cell loads. A street of people the player never meets then writes nothing. A
+  membership that is already stored wins over the copied one, so an earlier promotion is
+  not undone.
+- Joining a faction that the load order does not have is refused. Its key could never be
+  read back.
+- A stored membership whose faction disappears (a plugin was removed) is kept but not
+  shown. Removing a plugin must not destroy progress.
+- All `XNAM` relations of the load order are put into one table keyed by the two factions.
+  Hostility asks about every pair of memberships of two actors, several times per frame,
+  and some factions have up to 85 relations.
 
-The authored list is copied into the world state the first time anything asks about that
-actor, not when the cell loads. Otherwise every townsperson would write a copy of what their
-record already says. A membership that already exists wins over the authored one. So a quest
-that promoted someone early is not undone by the later copy.
+## Vanilla counts
 
-Two rules point in opposite directions on purpose:
-
-- Joining a faction that the load order does not have is refused. Its key could never be read
-  back.
-- A stored membership whose faction stops resolving is kept. Removing a plugin must not
-  destroy progress. The membership is just not shown.
-
-Faction relations are flattened into one table from (faction, faction) to reaction, built once.
-Hostility checks ask it for every pair of memberships of two actors, several times per frame.
-Walking each faction's relation list every time would be too slow.
+On the five masters plus the Creation Club plugins of a stock install: 1,417 `FACT`
+records, all decode. 74 track crime and 286 are vendors. 5,118 `NPC_` bases have 13,157
+memberships after templates; 2,921 bases get them from a template. `GuardFactionWhiterun`
+has 61 members. There are 1,185 `XNAM` relations, and all reactions are 0 to 3.

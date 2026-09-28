@@ -1,68 +1,72 @@
 ---
 type: File Format
 title: FaceFX lip animation (.lip)
-description: Skyrim SE .lip header shapes, the slot stride in the duration field, the ambiguous
-  marker bytes and how the decoder resolves them, and the slot-to-TRI mapping.
+description: Skyrim SE .lip headers, the slot stride in the duration field, the ambiguous
+  marker bytes and how OpenSky resolves them, and the speech slot mapping.
 tags: [format, audio, voice, dialogue, facefx, animation]
 ---
 
 # FaceFX lip animation (.lip)
 
-A voice file (see [FUZ](/formats/fuz.md)) can carry a `.lip` blob next to its audio. The blob
-is a FaceFX animation: a header of at least 24 bytes, then a sparse stream of values on a
-30 Hz grid of slots. OpenSky decodes the grid and maps speech slots to the named morph targets
-of the actor's [FaceGen TRI](/formats/tri.md).
+A voice file (`.fuz`, see [FUZ](/formats/fuz.md)) may hold a `.lip` block next to the
+audio. It is a FaceFX animation: a header of at least 24 bytes, then a sparse list of
+values on a grid. The grid has 30 frames per second, and each frame has a fixed number of
+slots. OpenSky maps the speech slots to the named [FaceGen TRI targets](/formats/tri.md) of
+the actor's face.
 
 ## Sources and confidence
 
 The byte model comes from the clean-room
 [OpenFaceFX research codec](https://github.com/OpenFaceFX/OpenFaceFX/blob/main/tools/lip_codec_research.py).
-It was then checked against every `.lip` blob in the vanilla voice archive.
+It was then checked against every vanilla voice file.
 
 | Claim | Confidence | Evidence |
 | --- | --- | --- |
-| 24-byte little-endian header, field sizes | confirmed | Public codec and vanilla sweep |
-| Version `1` | confirmed | Vanilla sweep |
-| `durationTicks == 4 * slotsPerFrame * frameCount + 28` | confirmed | Vanilla sweep, both header shapes |
-| Stride 33 goes with vocabulary 16, stride 8 with vocabulary 8 | confirmed | Vanilla sweep |
-| A second header shape has 1 or 3 extra bytes before the tuple width | confirmed | Vanilla sweep |
-| Token, duplicate, and suffix marker framing | confirmed | Byte-exact public round trips and vanilla sweep |
-| Marker tag / 4 is a slot skip | confirmed for multiples of 4 | Public grid rebuild and vanilla sweep |
-| Slots are frame-major, sampled at 30 Hz | confirmed | Public grid rebuild |
-| A duplicate value is an equal tangent | inferred | Public codec. OpenSky counts it and uses the first value |
-| Tuple width 3 versus 2 changes decoding | unknown | Both decode the same. OpenSky records the value |
-| Meaning of header offset `0x16` | unknown | It varies. OpenSky keeps and counts it |
-| Low two bits of a marker tag | unknown | About 1% of tags are not multiples of 4 |
-| Even slots map to the TRI targets in the table below | inferred | 16 targets, paired slot layout, visual A/B tests |
+| 24-byte little-endian header and its field sizes | confirmed | Public codec, vanilla files |
+| Version `1` | confirmed | Vanilla files |
+| `durationTicks == 4 * slotsPerFrame * frameCount + 28` | confirmed | Vanilla files, both header families |
+| Stride 33 goes with vocabulary 16; stride 8 with vocabulary 8 | confirmed | Vanilla files |
+| A second header family has 1 or 3 extra bytes before the tuple width | confirmed | Vanilla files |
+| Value, duplicate, and marker framing | confirmed | Exact public round trips, vanilla files |
+| Marker tag / 4 is a slot skip | confirmed for multiples of 4 | Public grid rebuild, vanilla files |
+| Slots are frame by frame, 30 frames per second | confirmed | Public grid rebuild |
+| A duplicate value means equal tangents | inferred | Public codec. OpenSky uses the first value |
+| Tuple width 3 or 2 changes anything | unknown | Both decode the same. OpenSky keeps the value |
+| Meaning of header offset `0x16` | unknown | It varies. OpenSky keeps it |
+| Meaning of the low two bits of a marker tag | unknown | 1% of tags are not multiples of 4 |
+| Even slots map to the TRI targets in the table below | inferred | 16 targets, the paired grid shape, visual comparison |
 
-The payload holds no phoneme name, viseme ID, or TRI target name. The slot table is an
-inference, not an on-disk enum.
+The file stores no phoneme names and no TRI target names. So the slot table is OpenSky's
+inference, not a field on disk.
 
-About 96% of vanilla lip blobs decode. The rest fail with a typed error, and their audio
-still plays. Most failures have no header tail that can be found: the field at `0x0e` reads
-`7`, and the vocabulary field explains no stride. A few have a token stream with no framing
-that spans the payload.
+Of the 74,070 vanilla voice files with lip data, 70,939 decode. About 3,100 have no header
+tail OpenSky can find: the field at `0x0e` reads `7`, and no vocabulary value explains the
+stride. 27 more have a value list that no reading fits. These return an error, and the
+audio still plays.
 
 ## Header
 
-| Offset | Type | Field | Check |
+| Offset | Type | Name | Check |
 | --- | --- | --- | --- |
-| `0x00` | uint32 | Version | Must be 1 |
+| `0x00` | uint32 | Version | Must be `1` |
 | `0x04` | uint32 | Duration ticks | Gives the slot stride, below |
-| `0x08` | uint32 | Active curve count | Recorded, not checked |
+| `0x08` | uint32 | Active curve count | Kept, not checked |
 | `0x0c` | uint16 | Frame count | Not 0 |
-| `0x0e + n` | uint16 | Tuple width | 1 to 3. 3 for humans, 2 in the second shape |
-| `0x10 + n` | int32 | First frame | From `-frameCount` to 0 |
+| `0x0e + n` | uint16 | Tuple width | 1 to 3. 3 for humans, 2 in the second family |
+| `0x10 + n` | int32 | First frame | `-frameCount` to 0 |
 | `0x14 + n` | uint16 | Target vocabulary | Must explain the stride |
-| `0x16 + n` | uint16 | Unknown | Kept and counted |
+| `0x16 + n` | uint16 | Unknown | Kept |
 
-`n` is 0 for most files, and 1 or 3 for the second shape. The payload starts at `24 + n`.
+`n` is 0 for most files, and 1 or 3 for the second family. The values start at `24 + n`.
 
-Frame 0 is the start of the audio. A negative first frame is preroll. So the sample row for
-audio time `t` is `t * 30 - firstFrame`. The duration without preroll is
+Frame 0 is the start of the audio. A negative first frame means frames before the audio
+starts. So the grid row for audio time `t` is `t * 30 - firstFrame`. The duration is
 `(firstFrame + frameCount) / 30` seconds.
 
-## The slot stride is in the duration field
+The active curve count does not always match. 952 creature files say 9 curves with a
+vocabulary of 8. Nothing uses the field, so OpenSky does not check it.
+
+## The slot stride is in the duration
 
 The number of slots per frame is not always 33. The duration field gives it:
 
@@ -70,29 +74,26 @@ The number of slots per frame is not always 33. The duration field gives it:
 durationTicks = 4 * slotsPerFrame * frameCount + 28
 ```
 
-There are 4 ticks per slot. So 132 ticks per frame means 33 slots (4 x 33). Creature blobs
-with vocabulary 8 use 32 ticks per frame, which is 8 slots: one per target. The human files
-use two slots per target plus one extra slot.
+A slot is 4 ticks, so the common 132 ticks per frame is `4 * 33`. Files with vocabulary 8
+use 32 ticks per frame, which is `4 * 8`. That is one slot per target. The human files use
+two slots per target plus one extra slot.
 
-The vocabulary must agree with the stride: the stride is `targetCount * 2 + 1` or
-`targetCount`. This check is what makes the header search below reliable.
+The vocabulary field must agree with the stride: `targetCount * 2 + 1` or `targetCount`.
 
-## The second header shape
+## The second header family
 
-Some blobs have 1 or 3 extra bytes between the frame count and the tuple width. Their tuple
-width is 2, not 3. Read at the normal offsets, they give nonsense: tuple widths of 512, 256,
-or 1536, and vocabularies in the tens of thousands. Read at the shifted offset, they are a
-normal header.
+About 5,000 files have the normal fields at a moved offset. There are 1 or 3 extra bytes
+between the frame count and the tuple width, and the tuple width is 2. Read at the normal
+offsets, these files show tuple widths like 512, 256, or 1536, and huge vocabularies. The
+meaning of the extra bytes is unknown. So OpenSky tries offsets `0x0e` to `0x16` and takes
+the first one where the tuple width, first frame, and vocabulary all agree with the stride.
+It does not claim that the skipped bytes are padding.
 
-What the extra bytes mean is unknown. The decoder tries offsets `0x0e` to `0x16`. It takes
-the first place where the tuple width, the first frame, and the vocabulary all agree with the
-stride. It records where it found them. It does not claim the skipped bytes are padding.
+## Values
 
-## Payload
-
-Each token starts with one float32 value. If the next four bytes are the same, they are a
-duplicate and belong to the token. Then an optional three-byte marker can follow, shaped
-`00 <tag> 00` with a tag that is not 0. The position moves like this:
+Each entry starts with one float32 value. If the next four bytes are the same, the entry
+takes that duplicate too. Then an optional three-byte marker may follow: `00 <tag> 00`
+with a tag that is not 0. The position moves like this:
 
 ```text
 frame = position / slotsPerFrame
@@ -100,48 +101,44 @@ slot  = position % slotsPerFrame
 position += (duplicate ? 2 : 1) + tag / 4
 ```
 
-To sample a slot, OpenSky interpolates its stored values linearly and clamps the result to
-0...1. So negative tangent-like values and the tiny "rest" value cannot push a face outside
-its legal morph range.
+Between stored values, OpenSky interpolates linearly. It clamps the result to 0...1. Some
+values look like signed tangents, and there is a rest value near 0. The clamp keeps a face
+inside its legal morph range.
 
-## Marker bytes are ambiguous
+## The marker bytes are ambiguous
 
-The bytes `00 <tag> 00` do not say what they are. They can also be the start of the next
-float32. Example: the weight `0.1250153` is `00 04 00 3E` on disk. So "always read the
-marker" and "never read it" are both wrong, and the vanilla data shows it both ways:
+The bytes `00 <tag> 00` can also be the first three bytes of the next float32. For example,
+the small weight `0.1250153` is `00 04 00 3E` on disk. So always reading a marker is wrong,
+and never reading one is also wrong. The vanilla files show both:
 
-- Reading a marker only when `tag % 4 == 0` gets out of step on some blobs. It then reports a
-  "non-finite value". The real value starts one byte later. Going back three bytes and reading
-  again carries the rest of the stream cleanly to the end.
-- Reading a marker for every tag breaks blobs that decode with the first rule, and makes others
-  run past their slot count.
+- Accepting only tags that are multiples of 4 gets out of step on about 3,700 files. The
+  reader then sees a value that is not finite. The real value is one byte later.
+- Accepting every tag that is not 0 breaks about 1,800 files that decode with the first
+  rule, and makes about 5,200 more run past the grid.
 
-So the tag alone cannot decide. The decoder treats each possible marker as a choice and
-backtracks. A reading is accepted only if it reaches exactly the end of the payload, with no
-non-finite value, and without passing `frameCount * slotsPerFrame`. Tags that are multiples
-of 4 are tried as markers first. Other tags are tried as data first. Dead ends are remembered
-by byte offset, so the search stays linear. A step limit protects against hostile files.
+So the tag alone cannot decide. OpenSky treats each possible marker as a choice and goes
+back when a choice fails. A reading is accepted only if it reaches exactly the end of the
+data, has only finite values, and stays inside `frameCount * slotsPerFrame`. Tags that are
+multiples of 4 are tried as a marker first. Other tags are tried as data first. OpenSky
+remembers failed byte offsets, so the search stays linear. A step limit protects against a
+hostile file.
 
-One result: more than one framing can span a payload. So a blob that lost a few bytes may
-decode as a shorter track instead of failing. The bytes cannot tell these cases apart. The
-decoder does promise that every key is inside the declared grid, and that it never reads past
-the blob.
+Because more than one reading can fit, a `.lip` block that lost a few bytes may decode as a
+shorter track instead of failing. The bytes alone cannot show the difference. OpenSky does
+promise that every value lies inside the grid the header gives, and that it never reads
+past the block.
 
-The active curve count has the same problem. Some creature blobs declare nine curves for a
-vocabulary of eight. Nothing uses the field, so it is only recorded.
+99% of accepted tags are multiples of 4. The meaning of the low two bits of the others is
+unknown. They could be a time inside a slot, or flags. So the skip stays `tag / 4`.
 
-About 99% of marker tags are multiples of 4. The meaning of the low two bits of the others is
-unknown. It could be a time inside a slot or a flag. The skip stays `tag / 4`.
+## Speech slots
 
-## Slot to TRI target
-
-This mapping is a separate layer, and it covers only the 33-slot human grid. Slots not in the
-table are counted, and playback shows active unmapped slots in the Dialogue & Voice readout.
-The 8-slot creature grid decodes, but gets no human target names, because there is no
-evidence for them.
+The table covers only the 33-slot human grid. Slots not in the table are counted, and
+`World > Dialogue & Voice` shows active slots that have no mapping. The 8-target creature
+files decode but get no human mouth shapes, because there is no evidence for them.
 
 | Slot | TRI target | Slot | TRI target |
-| --- | --- | --- | --- |
+| ---: | --- | ---: | --- |
 | 0 | `Aah` | 16 | `i` |
 | 2 | `BigAah` | 18 | `k` |
 | 4 | `BMP` | 20 | `N` |
@@ -151,4 +148,4 @@ evidence for them.
 | 12 | `Eh` | 28 | `Th` |
 | 14 | `FV` | 30 | `W` |
 
-`World > Dialogue & Voice` shows the header shape and stride of the current line.
+`World > Dialogue & Voice` also shows which header family and stride the current line uses.

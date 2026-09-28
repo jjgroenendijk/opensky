@@ -174,7 +174,7 @@ the grid.
 ## Actors
 
 Actors are part of a cell, not a separate stream. The cell build resolves and builds its `ACHR`
-records on the same queue ([actor appearance](/engine/actor-appearance.md)). So actors follow the
+records on the same queue ([actor resolution](/engine/actor-resolution.md)). So actors follow the
 same rules as statics: their body and head keys are cell assets, and a body shared by two loaded
 cells survives when one leaves. Skeletons are kept by the mesh library outside cell assets,
 because they are small and shared by everyone.

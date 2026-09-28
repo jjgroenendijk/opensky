@@ -3,8 +3,8 @@
 //
 // The set is closed by measurement, not by guess: `openskycli swf action-sweep`
 // over the 53 vanilla `Interface/*.swf` movies found 533,562 action records
-// using exactly 56 distinct opcodes and no unknown code (docs/formats/swf.md,
-// "Vanilla sweep results"). Those 56 are all here, plus `ActionDefineLocal2`
+// using exactly 56 distinct opcodes and no unknown code (docs/formats/swf-actions.md,
+// "Vanilla bytecode"). Those 56 are all here, plus `ActionDefineLocal2`
 // and `ActionStackSwap`, which cost two lines each and are reachable from any
 // compiler.
 //

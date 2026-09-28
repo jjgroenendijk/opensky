@@ -105,7 +105,7 @@ does no animation, audio, or script work.
 
 Which hands a weapon fills does not come from a bit field on the item. It comes from the `WEAP`
 `ETYP` link, resolved through the `EQUP` records of the same plugin
-([shout records](/formats/shout-records.md)):
+([shout records](/formats/shouts-equip-slots.md)):
 
 | Slot | Hands |
 | --- | --- |

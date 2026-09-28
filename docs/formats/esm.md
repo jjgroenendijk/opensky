@@ -1,69 +1,64 @@
 ---
 type: File Format
 title: ESM/ESP Plugin Container (Skyrim SE)
-description: Record, group, and field layout of SSE plugin files and how OpenSky walks them.
+description: Record, group, and field layout of Skyrim SE plugin files and how OpenSky walks
+  them.
 tags: [format, plugin, esm, esp, records, io, zlib]
 ---
 
 # ESM/ESP plugin container
 
-Plugin files (`.esm`, `.esp`, `.esl`) hold all game data. Data is stored in records, and
-records are grouped in `GRUP` containers. This page covers only the container. Each record
-type has its own page (see [records](/formats/records.md)).
+A plugin file (`.esm`, `.esp`, or `.esl`) holds game data as records. Records sit inside
+groups (`GRUP`). This page covers only the container: records, groups, fields, and
+compression. [Record decoders](/formats/records.md) covers what the records mean.
 
-Source: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format). All
+Reference: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format). All
 integers are little-endian. A type code is 4 ASCII bytes.
 
 ## File shape
 
-A file is one `TES4` record (plugin info), then top-level groups until the end of the file.
-`Skyrim.esm` has 118 top groups, in the order UESP lists. Each top group holds records of
-the type in its label. Only `CELL`, `WRLD`, and `DIAL` records have child groups.
+The file starts with one `TES4` record (see [FormID](/formats/formid.md)). Top-level groups
+follow until the end of the file. `Skyrim.esm` has 118 top groups, in the order UESP lists.
+It is not known whether the game depends on this order. A top group holds records of the
+type in its label. Only `CELL`, `WRLD`, and `DIAL` records have child groups after them.
 
-## Record header (24 bytes)
+## Record: 24-byte header, then data
 
 | Offset | Type | Field | Notes |
 | --- | --- | --- | --- |
 | 0x00 | char4 | type | For example `WRLD`. `GRUP` means a group |
-| 0x04 | uint32 | dataSize | The data only, not the header |
-| 0x08 | uint32 | flags | Bits below |
+| 0x04 | uint32 | dataSize | Data only, without the header |
+| 0x08 | uint32 | flags | Below |
 | 0x0C | uint32 | formID | See [FormID](/formats/formid.md) |
-| 0x10 | uint16 | timestamp | SSE packs `0bYYYYYYYMMMMDDDDD` |
+| 0x10 | uint16 | timestamp | Skyrim SE packs `0bYYYYYYYMMMMDDDDD` |
 | 0x12 | uint16 | vcInfo | Creation Kit version-control user IDs |
-| 0x14 | uint16 | version | Form version: 43 is Skyrim LE, 44 is SSE |
-| 0x16 | uint16 | unknown | 0 to 15 seen |
+| 0x14 | uint16 | version | Form version: 43 original Skyrim, 44 Skyrim SE |
+| 0x16 | uint16 | unknown | Values 0 to 15 seen |
 
 Oblivion used 20-byte headers. OpenSky does not read them.
 
-Flags that OpenSky uses (many bits mean different things per type, see UESP):
+Flags OpenSky uses: `0x1` master (on `TES4`), `0x20` deleted, `0x80` localized (on `TES4`),
+`0x200` light (on `TES4`), `0x1000` ignored, `0x40000` data compressed. Many bits mean
+different things for different record types. See the UESP table.
 
-| Bit | Meaning |
-| --- | --- |
-| `0x1` | On `TES4`: ESM |
-| `0x20` | Deleted |
-| `0x80` | On `TES4`: localized, text in [string tables](/formats/strings.md) |
-| `0x200` | On `TES4`: ESL |
-| `0x1000` | Ignored |
-| `0x40000` | Data is compressed |
+Compressed data is a uint32 decompressed size, then a zlib stream (RFC 1950) that fills the
+rest of `dataSize`. Apple's `COMPRESSION_ZLIB` reads raw deflate only. So OpenSky checks
+and removes the 2-byte zlib header first. It does not check the Adler-32 checksum at the
+end. It checks the output size instead. A decompressed size above 256 MB is rejected.
 
-Compressed data is a uint32 decompressed size, then a zlib stream (RFC 1950) for the rest of
-`dataSize`. Apple's `COMPRESSION_ZLIB` reads raw deflate only. So OpenSky checks the 2-byte
-zlib header and removes it. The final adler32 checksum is not checked. The output length is
-checked against the decompressed size instead. A size over 256 MB is rejected.
-
-## Group header (24 bytes)
+## Group: 24-byte header
 
 | Offset | Type | Field | Notes |
 | --- | --- | --- | --- |
 | 0x00 | char4 | `GRUP` | |
 | 0x04 | uint32 | groupSize | Includes this 24-byte header |
-| 0x08 | 4 bytes | label | Meaning depends on the group type |
+| 0x08 | 4 bytes | label | Depends on the group type |
 | 0x0C | int32 | groupType | 0 to 9, below |
-| 0x10 | uint16 | timestamp | As in records |
-| 0x12 | uint16 | vcInfo | As in records |
+| 0x10 | uint16 | timestamp | Same as records |
+| 0x12 | uint16 | vcInfo | Same as records |
 | 0x14 | uint32 | unknown | Depends on the group type |
 
-Note the difference: a record's size does not count its header, but a group's size does.
+Note that `groupSize` includes the header, but a record's `dataSize` does not.
 
 | Type | Meaning | Label |
 | --- | --- | --- |
@@ -78,30 +73,33 @@ Note the difference: a record's size does not count its header, but a group's si
 | 8 | Cell persistent children | Parent `CELL` FormID |
 | 9 | Cell temporary children | Parent `CELL` FormID |
 
-For exterior blocks, Y comes before X. UESP warns that the Creation Kit "ignore" flag can
-break label bytes. So OpenSky walks by sizes only. Labels are hints.
+For types 4 and 5, Y comes before X. UESP warns that the Creation Kit "ignore" flag can
+damage label bytes. So OpenSky walks groups by size only and never trusts a label to steer
+the walk.
 
-## Field header (6 bytes)
+## Field: 6-byte header, then data
 
-A field (also called a subrecord) is a char4 type, a uint16 size, and the data. The fields
-fill the record data exactly.
+A field is a char4 type, a uint16 `dataSize`, and the data. The fields fill the record's
+(decompressed) data exactly.
 
-A field of type `XXXX` with size 4 holds a uint32. That value is the real size of the next
-field, whose own size is stored as 0. Fields larger than 64 KB use this, for example the
-navmesh geometry in `NAVM NVNM`. OpenSky applies the size to the next field and drops the
-`XXXX` marker.
+`XXXX` fields: a uint16 size cannot hold more than 64 KB. So a field of type `XXXX` with
+size 4 holds a uint32 that is the real size of the next field. That next field stores size
+0. Navmesh geometry (`NAVM NVNM`) uses this. OpenSky joins the two and never shows the
+`XXXX` field to callers.
 
-## Walking the file safely
+## Safety
 
-OpenSky memory-maps the file and first indexes only the `TES4` record and the top groups.
-It reads one level of headers at a time. It reads or decompresses record data only when a
-caller asks.
+OpenSky memory-maps the file and reads only the headers it needs. Record data is read and
+decompressed only when asked for. Every child must lie inside its parent. A size out of
+range, a cut header, or a bad `XXXX` field is an error, never a crash. Every header is 24
+bytes and the walk moves at least that far each step, so the walk always ends.
 
-Every child must fit inside its parent. A size out of range, a short header, or a bad `XXXX`
-marker is an error, never a crash. Both header kinds are 24 bytes, and each step moves at
-least that far, so the walk always ends.
+## Not supported
 
-## Not implemented
+- The `0xFE` FormID space of light masters. See [FormID](/formats/formid.md).
 
-- ESL FormIDs. The master index is the plain top byte. The `0xFE` plus 12-bit slot scheme of
-  light plugins is not decoded.
+## Vanilla Skyrim.esm
+
+Form version 44, `TES4` flags `0x81`. 50,494 groups and 869,687 records, with no unknown
+group types. About 44,000 records are compressed, and all decompress. 18 records use
+`XXXX` fields. It has 37 worldspaces, and `Tamriel` is the first.

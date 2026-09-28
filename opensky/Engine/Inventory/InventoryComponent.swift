@@ -37,7 +37,7 @@ import Foundation
 /// `ItemDefinition.stackKey` widened by the one distinction crime introduces.
 /// Per-instance data — tempering, enchanting, charge level — makes two
 /// instances of the same base distinct and will widen the key further; see
-/// docs/formats/records.md.
+/// docs/engine/runtime-state.md.
 ///
 /// The stolen flag is part of the key rather than a property of the whole item
 /// because the original tracks it per copy: "Should you steal multiple items of

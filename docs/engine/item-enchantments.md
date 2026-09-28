@@ -11,7 +11,7 @@ tags: [engine, magic, enchantments, combat, inventory]
 
 A weapon's enchantment fires on whatever it hits and spends charge. A worn item's enchantment grants
 its effects while it is worn. A fortify effect from either one moves a damage number. The records are
-on the [enchantment records](/formats/enchantment-records.md) page.
+on the [enchantment records](/formats/enchantments.md) page.
 
 ## Three shapes
 
@@ -163,10 +163,11 @@ example (four 40% items give +160%) adds. Where each one lands is on the
 
 ## Saving
 
-Charge and worn effects go in the `ECHG` chunk ([save chunks](/formats/save-chunks.md)). Charge is not
-in `INVN`: inventory entries are counts, and charge is a float per item that changes on a hit, not on
-a transfer. The worn effect list is the other half of the same fact, which `AEFF` effects each worn
-item owns. Splitting them would let a load restore effects that nothing could take off.
+Charge and worn effects go in the `ECHG` chunk ([save
+chunks](/formats/opensky-save-actor-chunks.md)). Charge is not in `INVN`: inventory entries are
+counts, and charge is a float per item that changes on a hit, not on a transfer. The worn effect
+list is the other half of the same fact, which `AEFF` effects each worn item owns. Splitting them
+would let a load restore effects that nothing could take off.
 
 ## Where it shows
 

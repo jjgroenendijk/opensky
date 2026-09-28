@@ -1,65 +1,63 @@
 ---
 type: File Format
 title: UI translation strings
-description: UTF-16 Interface/Translations/*.txt files and how OpenSky resolves $KEY UI tokens.
+description: UTF-16 Interface/Translations/*.txt files and how OpenSky resolves $KEY tokens
+  in the UI.
 tags: [format, strings, localization, ui, scaleform]
 ---
 
 # UI translation strings
 
-Scaleform menus (the in-game UI) show text through `$KEY` tokens, not literal strings. A
-token is looked up in text files at `Interface/Translations/<name>_<language>.txt`. The
-files are loose under `Data/` or inside a BSA.
+Scaleform menus and the HUD use `$KEY` tokens instead of literal text, for example
+`$Inventory`. A token is looked up in text files at
+`Interface/Translations/<name>_<language>.txt`, for example `skyui_se_english.txt`. The file
+can be loose or inside a BSA.
 
-This is not the same as the plugin [string tables](/formats/strings.md). String tables hold
-record text under a number. Translation files hold menu text under a `$` name.
+This is not the same as the plugin [string tables](/formats/strings.md). A string table
+holds record text and is keyed by a number. A translation file holds menu text and is keyed
+by a name that starts with `$`.
 
-Sources (the Creation Kit page "Translation files" was offline, so these were used):
+References. The Creation Kit wiki page "Translation files" was offline, so these community
+sources were used:
 
 - SkyUI `skyui-lib` wiki [How to](https://github.com/schlangster/skyui-lib/wiki/How-to):
-  files are "UTF16 Little Endian (aka UCS-2 Little Endian) with BOM", with
-  "tab-separated string values" and keys that start with `$`.
+  "The text files have to use the UTF16 Little Endian (aka UCS-2 Little Endian) with BOM
+  encoding", "tab-separated string values", and keys start with `$`.
 - [ScaleformTranslationPP](https://github.com/VersuchDrei/ScaleformTranslationPP):
   "Scaleform parses keys case-sensitively".
 
 ## File layout
 
-- UTF-16 little-endian, starting with the byte-order mark (BOM) `FF FE`.
-- One pair per line: `$key<TAB>value`. The key ends at the first tab. The value is the rest
-  of the line, so it can contain more tabs.
+- UTF-16 little-endian, starting with the byte-order mark `FF FE`.
+- One `$key<TAB>value` pair per line. The key ends at the first tab. The value is the rest
+  of the line and may contain more tabs.
 - Vanilla-style files end lines with CRLF.
-- Keys keep their `$` and their exact case.
-- A value can hold `{}` or `{$OtherKey}` placeholders. OpenSky stores the value as it is and
-  does not expand placeholders yet.
-
-Example line: `$Continue<TAB>Continue`.
+- A key keeps its `$` and its exact case. `$Key` and `$key` are different keys.
+- A value may hold `{}` or `{$OtherKey}` placeholders. OpenSky keeps the raw value and does
+  not expand them yet.
 
 ## Parse rules
 
-- `FF FE` means little-endian and `FE FF` means big-endian. With no BOM, OpenSky assumes
-  little-endian.
-- CRLF, a lone LF, and a final newline all work. In Swift, CRLF is one `Character`, so the
-  split must test `Character.isNewline`. A split on `"\n"` misses every CRLF line.
-- A line with no tab is skipped. An empty key is skipped. An empty value is kept.
-- When a key appears twice in a file, the later line wins.
-- `$Key` and `$key` are different keys, as in Scaleform.
-- Bytes that are not valid UTF-16, such as a lone surrogate, make the file fail. OpenSky logs
-  it and skips that file.
+- The byte-order mark sets the byte order: `FF FE` little-endian, `FE FF` big-endian. With
+  no mark, OpenSky assumes little-endian, as the source says.
+- Lines may end with CRLF or LF. In Swift, CRLF is one `Character`, so splitting on `"\n"`
+  misses CRLF lines. The parser splits on `Character.isNewline`.
+- A line without a tab is skipped. An empty key is skipped. An empty value is kept.
+- When a key appears twice in one file, the later line wins.
+- Invalid UTF-16, such as a lone surrogate, fails that file only. OpenSky logs it and skips
+  the file.
 
 ## Lookup
 
-All files for the language are merged into one map. Files are read in sorted path order,
-and on a clash the later file wins. This order is a placeholder until mod load order applies
-here too.
+OpenSky merges all files for the chosen language into one map. Files load in sorted path
+order, and the last file wins when two share a key.
 
-An unknown `$KEY`, or a token without `$`, is shown as it is. This matches what players see
-in the game: an unresolved `$KEY` stays visible on screen.
-
-`Developer > UI Lab` has a preview that shows sample strings through this lookup, including
-the unknown-key case.
+A token that is not found is shown as it is, for example `$Unknown`. A string without `$`
+is also shown as it is. The game also leaves an unknown `$KEY` visible on screen.
 
 ## Vanilla has no translation files
 
-The vanilla archives contain no files under `Interface/Translations/`. Vanilla Skyrim SE
-keeps its UI text in the `.strings` tables. Translation files come from SkyUI, other mods,
-Creation Club content, and some non-English builds.
+The vanilla archives hold no files under `Interface/Translations/`. Vanilla Skyrim SE keeps
+its UI text in the `.strings` tables. Translation files come from SkyUI, other mods,
+Creation Club content, and some localized builds. The `Developer > UI Lab` preview uses
+made-up strings for this reason.

@@ -29,7 +29,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/BOOK
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(BOOK, ...)` line 4220
 //     — flags/type/unused(2)/teaches union/value/weight.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

@@ -1,40 +1,42 @@
 ---
 type: File Format
 title: Keywords and actions (KYWD, AACT, KWDA)
-description: Keyword and action records, and how object keyword lists resolve across plugins.
+description: Keyword and action records, and how a KWDA list on an object resolves to
+  keyword editor IDs.
 tags: [format, plugin, records, keywords, actions, formid]
 ---
 
 # Keywords and actions (KYWD, AACT, KWDA)
 
-A `KYWD` record is a named tag that objects carry. An `AACT` record has the same layout and
-names an action, for example the root of an idle tree. Both turn a bare FormID into a stable
-editor ID.
+A `KYWD` record is a tag that objects carry, for example `WeapTypeSword`. An `AACT` record
+has the same layout and names an action, for example `ActionActivate`. Idle animation trees
+use actions as roots. Both records turn a FormID into a readable editor ID.
 
-Sources: UESP [KYWD](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/KYWD) and
+References: UESP [KYWD](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/KYWD) and
 [AACT](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AACT); xEdit `dev-4.1.6`,
-`Core/wbDefinitionsTES5.pas`.
+`Core/wbDefinitionsTES5.pas`, `wbRecord(KYWD, ...)` and `wbRecord(AACT, ...)`.
 
 ## Record layout
 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `EDID` | zstring | Editor ID |
-| `CNAM` | uint8 RGBA | Color used only by the editor |
+| `CNAM` | 4 x uint8 RGBA | Color shown in the Creation Kit only |
 
-xEdit says `CNAM` is required. The real install disagrees. `KYWD 00013794`
-(`ActorTypeNPC`) and `AACT 00013009` (`ActionActivate`) have only `EDID`. UESP also lists
-empty `AACT` records with no `EDID`. So both fields are optional in OpenSky.
+xEdit says `CNAM` is required. The vanilla install shows it is not: `KYWD 00013794`
+(`ActorTypeNPC`) and `AACT 00013009` (`ActionActivate`) have only `EDID`. UESP also
+describes empty AACT records with no `EDID`. So OpenSky treats both fields as optional.
 
-## Keyword lists
+## Keyword lists on objects
 
-An object stores its keywords as `KSIZ` (a count) and then `KWDA` (packed 4-byte FormIDs).
-OpenSky trusts `KWDA`, not `KSIZ`. It reads every whole FormID in `KWDA` and ignores a short
-tail. See [record decoders](/formats/records.md) for the shared item fields.
+An object record lists its keywords in two fields. `KSIZ` is the count. `KWDA` is a packed
+list of 4-byte FormIDs. OpenSky trusts `KWDA`, not `KSIZ`: it reads every whole FormID in
+`KWDA` and ignores a partial tail. See [record decoders](/formats/records.md) for the other
+item fields.
 
-A FormID in `KWDA` is resolved relative to the plugin that holds the list (see
-[FormID](/formats/formid.md)). Keyword checks compare resolved records, never hard-coded
-vanilla FormIDs. A FormID that does not resolve is shown as hexadecimal text.
+A FormID in `KWDA` is relative to the plugin that holds the `KWDA`. See
+[FormID resolution](/formats/formid.md). Compare keywords by resolved identity or editor ID,
+never by a hardcoded vanilla FormID.
 
 Examples from `Skyrim.esm`:
 
@@ -42,4 +44,4 @@ Examples from `Skyrim.esm`:
 - `ArmorIronCuirass`: `ArmorHeavy`, `ArmorMaterialIron`, `ArmorCuirass`, `VendorItemArmor`.
 - `Gold001`: `VendorItemClutter`.
 
-In the vanilla load order, every FormID in every `KWDA` resolves to a `KYWD`.
+On the vanilla load order, every FormID in every `KWDA` resolves to a `KYWD` record.

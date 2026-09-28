@@ -15,8 +15,8 @@ on the [packages](/formats/packages.md) page.
 ## Picking a package
 
 An actor's packages come from its `PKID` list. The list follows the template chain only when the
-AI packages template flag is set (see [actor records](/formats/actors.md#template-chain)). A
-local empty list stays empty when the flag is clear.
+AI packages template flag is set (see [actor records](/engine/actor-resolution.md#template-chain)).
+A local empty list stays empty when the flag is clear.
 
 OpenSky walks the list in record order. It picks the first package whose `PSDT` schedule matches
 the time and whose conditions are true.

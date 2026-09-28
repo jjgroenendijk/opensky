@@ -1,17 +1,18 @@
 ---
 type: File Format
 title: NIF particle systems (Skyrim SE)
-description: NiParticleSystem, NiPSysData, emitter and modifier blocks, and what OpenSky reads.
+description: NiParticleSystem, NiPSysData, emitter and modifier blocks, and how OpenSky
+  builds a particle system from them.
 tags: [format, mesh, particles, io]
 ---
 
 # NIF particle systems
 
-A NIF file can hold particle systems, for example fire, smoke, or magic effects. This page
-covers the particle blocks only. The NIF container and scene graph are on the
-[NIF](/formats/nif.md) page. Playback is on the [particles](/rendering/particles.md) page.
+This page covers the particle blocks inside a [NIF](/formats/nif.md) file: how many
+particles, the emitter shape, the modifiers, and the shader and alpha links. See
+[particle playback](/rendering/particles.md) for the simulation.
 
-Source: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml):
+Reference: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml):
 `NiGeometry`, `NiParticles`, `NiParticleSystem`, `BSStripParticleSystem`, `NiGeometryData`,
 `NiParticlesData`, `NiPSysData`, `BSStripPSysData`, `NiPSysModifier`, `NiPSysEmitter`,
 `NiPSysVolumeEmitter`, and the emitter and modifier blocks. NifSkope was used to view real
@@ -19,11 +20,11 @@ files. All integers are little-endian.
 
 ## Version conditions
 
-Skyrim files are version 20.2.0.7, user version 12, with Bethesda stream 100 (SSE) or 83
-(the original Skyrim). Some vanilla SSE files were never converted and still use stream 83.
-`nif.xml` has separate rows for each stream. The tokens resolve like this:
+Skyrim files are version 20.2.0.7, user version 12. The Bethesda stream (BS) is 100 for
+Skyrim SE, or 83 for the original Skyrim. Some vanilla Skyrim SE files still use 83.
+`nif.xml` has separate rows per stream. These tokens decide the layout:
 
-| Token | Expression | Stream 83 | Stream 100 |
+| Token | Condition | Stream 83 | Stream 100 |
 | --- | --- | --- | --- |
 | `#BS202#` | version 20.2 and BS > 0 | yes | yes |
 | `#BS_GTE_SSE#` | BS >= 100 | no | yes |
@@ -31,16 +32,17 @@ Skyrim files are version 20.2.0.7, user version 12, with Bethesda stream 100 (SS
 | `#BS_GTE_SKY#` | BS >= 83 | yes | yes |
 | `#BS_GT_FO3#` | BS > 34 | yes | yes |
 
-So `NiPSysData` is the same in both streams. The `NiGeometry` part of `NiParticleSystem` is
-not.
+So `NiPSysData` is the same for both Skyrim streams. The `NiGeometry` part of
+`NiParticleSystem` differs.
 
 ## NiParticleSystem and BSStripParticleSystem
 
 The chain is `NiAVObject -> NiGeometry -> NiParticles -> NiParticleSystem`.
 `BSStripParticleSystem` adds no fields. Both start with the shared `NiAVObject` fields (see
-[NIF](/formats/nif.md)).
+[NIF](/formats/nif.md)): name, extra data refs, controller ref, flags, translation, 3x3
+rotation, scale, collision ref.
 
-Stream 100, after the `NiAVObject` fields:
+The `NiGeometry` part on stream 100:
 
 | Field | Type | Bytes | Used |
 | --- | --- | --- | --- |
@@ -49,7 +51,7 @@ Stream 100, after the `NiAVObject` fields:
 | Shader Property | Ref | 4 | yes |
 | Alpha Property | Ref | 4 | yes |
 
-Stream 83, after the `NiAVObject` fields:
+The `NiGeometry` part on stream 83:
 
 | Field | Type | Bytes | Used |
 | --- | --- | --- | --- |
@@ -59,63 +61,63 @@ Stream 83, after the `NiAVObject` fields:
 | Shader Property | Ref | 4 | yes |
 | Alpha Property | Ref | 4 | yes |
 
-`MaterialData` is a uint32 count, then that many 8-byte pairs (string, int32 extra data),
-then an int32 active material and one "needs update" byte.
+`MaterialData` (version 20.2.0.7) is a uint32 count, then that many 8-byte pairs
+(`NiFixedString` name, int32 extra data), then an int32 active material and a one-byte
+"needs update" flag.
 
-Then the particle system fields:
+Then the `NiParticleSystem` fields:
 
 | Field | Type | Stream 83 | Stream 100 |
 | --- | --- | --- | --- |
 | Vertex Desc | BSVertexDesc | absent | 8 bytes |
-| Far and Near | 4 x ushort | 8 bytes | 8 bytes |
-| Data | Ref to NiPSysData | absent | 4 bytes |
+| Far/Near | 4 x uint16 | 8 bytes | 8 bytes |
+| Data | Ref to `NiPSysData` | absent | 4 bytes |
 | World Space | bool | 1 byte | 1 byte |
 | Num Modifiers | uint32 | 4 bytes | 4 bytes |
-| Modifiers | Ref x N | 4N | 4N |
+| Modifiers | N x Ref | 4N | 4N |
 
-The `NiPSysData` link is in `NiGeometry` on stream 83 and in `NiParticleSystem` on stream
-100. OpenSky gives one data link either way.
+The link to `NiPSysData` is `NiGeometry` Data on stream 83 and `NiParticleSystem` Data on
+stream 100.
 
 ## NiPSysData and BSStripPSysData
 
-The chain is `NiObject -> NiGeometryData -> NiParticlesData -> NiPSysData`. Under `#BS202#`
-the per-particle arrays (positions, normals, colors, UVs, sizes, rotations) have no length on
-disk. The game allocates them at runtime. Only the "has" flags and fixed values are stored.
+The chain is `NiObject -> NiGeometryData -> NiParticlesData -> NiPSysData`. It is the same
+on both streams. Under `#BS202#`, the per-particle arrays (positions, normals, colors, UVs,
+sizes, rotations) have no data on disk. The game creates them at runtime. Only their "has"
+flags and the fixed values are stored. In order:
 
-`NiGeometryData`: Group ID (int32), BS Max Vertices (ushort, the particle capacity), Keep and
-Compress flags (2 bytes), Has Vertices (bool), BS Data Flags (ushort), Material CRC
-(uint32), Has Normals (bool), Bounding Sphere (NiBound, 16 bytes), Has Vertex Colors (bool),
-Consistency Flags (ushort), Additional Data (Ref).
-
-`NiParticlesData`: Has Radii (bool), Num Active (ushort), Has Sizes (bool), Has Rotations
-(bool), Has Rotation Angles (bool), Has Rotation Axes (bool), Has Texture Indices (bool),
-Num Subtexture Offsets (uint32), Subtexture Offsets (Vector4 x N, UV rectangles of an atlas
-for `BSPSysSubTexModifier`), Aspect Ratio (float), Aspect Flags (ushort), three
-speed-to-aspect floats.
-
-`NiPSysData`: Has Rotation Speeds (bool). `BSStripPSysData` adds Max Point Count (ushort),
-Start Cap Size (float), End Cap Size (float), Do Z Prepass (bool).
-
-OpenSky keeps the capacity, the flags, and the subtexture offsets.
+- `NiGeometryData`: Group ID (int32), BS Max Vertices (uint16, the particle capacity), Keep
+  and Compress flags (2 bytes), Has Vertices (bool), BS Data Flags (uint16), Material CRC
+  (uint32), Has Normals (bool), Bounding Sphere (NiBound, 16 bytes), Has Vertex Colors
+  (bool), Consistency Flags (uint16), Additional Data (Ref).
+- `NiParticlesData`: Has Radii (bool), Num Active (uint16), Has Sizes (bool), Has Rotations
+  (bool), Has Rotation Angles (bool), Has Rotation Axes (bool), Has Texture Indices (bool),
+  Num Subtexture Offsets (uint32), Subtexture Offsets (N x Vector4, the atlas rectangles
+  for `BSPSysSubTexModifier`), Aspect Ratio (float32), Aspect Flags (uint16), Speed to
+  Aspect (3 x float32).
+- `NiPSysData`: Has Rotation Speeds (bool).
+- `BSStripPSysData` adds: Max Point Count (uint16), Start Cap Size (float32), End Cap Size
+  (float32), Do Z Prepass (bool).
 
 ## Modifiers and emitters
 
-Every `NiPSysModifier` starts with: Name (string ref), Order (uint32), Target (Ptr, skipped),
-Active (bool).
+Every `NiPSysModifier` starts with: Name (string ref), Order (uint32), Target (Ptr), Active
+(bool).
 
 Every `NiPSysEmitter` then adds the birth values: speed, speed variation, declination,
-declination variation, planar angle, planar angle variation (6 floats), initial color (RGBA),
-initial radius, radius variation, life span, life span variation (5 floats).
+declination variation, planar angle, planar angle variation (6 x float32), initial color
+(RGBA float32), initial radius, radius variation, life span, life span variation
+(5 x float32).
 
-`NiPSysVolumeEmitter` (box, cylinder, sphere) then adds an emitter object Ptr (skipped) and
-its shape values. The mesh emitter comes straight from `NiPSysEmitter`, with no volume Ptr.
+A `NiPSysVolumeEmitter` (box, cylinder, sphere) then adds an Emitter Object Ptr and its
+shape values. The mesh emitter comes straight from `NiPSysEmitter`, with no Emitter Object.
 
 Blocks OpenSky reads:
 
 - Emitters: `NiPSysBoxEmitter` (width, height, depth), `NiPSysCylinderEmitter` (radius,
   height), `NiPSysSphereEmitter` (radius), `NiPSysMeshEmitter` (mesh refs and a uint32
-  velocity type).
-- Modifiers with no values: `NiPSysAgeDeathModifier`, `NiPSysSpawnModifier`,
+  velocity type; it does not sample the mesh yet).
+- Modifiers known by type only: `NiPSysAgeDeathModifier`, `NiPSysSpawnModifier`,
   `NiPSysRotationModifier`, `NiPSysPositionModifier`, `NiPSysBoundUpdateModifier`,
   `NiPSysDragModifier`, `BSPSysSimpleColorModifier`, `BSPSysInheritVelocityModifier`,
   `BSPSysSubTexModifier`.
@@ -123,26 +125,25 @@ Blocks OpenSky reads:
   (strength), `BSPSysScaleModifier` (scale list), `BSPSysLODModifier` (begin and end
   distance, end emit scale, end size).
 
-An unknown modifier is recorded by name and skipped, never an error. Vanilla has four:
-`NiPSysColliderManager`, `NiPSysBombModifier`, `BSPSysRecycleBoundModifier`,
-`BSPSysStripUpdateModifier`. Broken bytes inside a known block are an error, and the mesh is
-skipped.
+## Not read
 
-## What is skipped
+- Controllers (`NiPSysUpdateCtlr`, `NiPSysEmitterCtlr`, interpolators). Playback uses a
+  fixed, limited birth rate instead.
+- Skin and material data. Particles do not need them.
+- Shader properties other than `BSEffectShaderProperty`. For example, a lit particle
+  system that uses `BSLightingShaderProperty` gets its material from the mesh material path.
+- Unknown modifier types are marked unsupported and skipped. Vanilla has four:
+  `NiPSysColliderManager`, `NiPSysBombModifier`, `BSPSysRecycleBoundModifier`, and
+  `BSPSysStripUpdateModifier`. Broken bytes inside a known block are an error, and the
+  caller skips the file.
 
-- Controllers (`NiPSysUpdateCtlr`, `NiPSysEmitterCtlr`, interpolators). Playback uses a fixed
-  birth rate until controllers are read.
-- Skin and material data.
-- Shader properties other than `BSEffectShaderProperty`. A lit particle system that uses
-  `BSLightingShaderProperty` keeps the raw link and has no effect shader.
+## From scene graph to particle system
 
-## From the scene graph
+OpenSky walks the scene graph from the footer roots, the same way as for meshes (see
+[NIF](/formats/nif.md)). It adds up the `NiNode` transforms, stops at depth 64, and stops
+on loops. Each `NiParticleSystem` or `BSStripParticleSystem` becomes one particle system
+with its world transform, capacity, emitters, modifiers, effect shader, and alpha
+property.
 
-OpenSky walks the scene graph from the footer roots, like the mesh path on the
-[NIF](/formats/nif.md) page. It multiplies node transforms down the tree, stops at depth 64,
-and detects loops. Each `NiParticleSystem` or `BSStripParticleSystem` leaf becomes one
-particle system with its world transform, capacity, emitters, modifiers, effect shader, and
-`NiAlphaProperty` blend state.
-
-In vanilla, every effect mesh decodes, and every particle system around Whiterun has an
-effect shader and an alpha property.
+All vanilla effect NIFs checked (109 files, 216 systems) decode without errors. In
+Whiterun, every particle system has an effect shader and an alpha property.

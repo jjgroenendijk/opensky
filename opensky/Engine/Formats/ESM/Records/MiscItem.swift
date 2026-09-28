@@ -10,7 +10,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MISC
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(MISC, ...)` line 8303
 //     — DATA is int32 Value + float Weight.
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/item-records.md.
 
 import Foundation
 

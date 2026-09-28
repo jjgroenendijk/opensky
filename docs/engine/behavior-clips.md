@@ -38,7 +38,7 @@ The animation's own `hkaAnnotationTrack`s are the second source. They are not th
 even though the `m_isAnnotation` flag suggests it. Skyrim's movement clip generators have an empty
 `m_triggers`. `FootLeft` and `FootRight` are annotations inside `mt_walkforward.hkx` and its
 siblings, at 0.2333 s and 0.8 s of a walk cycle
-([byte layout](/formats/hka-animation.md#annotations)). A runtime that reads only the
+([byte layout](/formats/hka-animation.md#m_annotationtracks)). A runtime that reads only the
 trigger array walks in silence ([footstep sounds](/engine/footstep-sounds.md)).
 
 Both sources use the same crossing test. An annotation is a mark on the animation, not on the

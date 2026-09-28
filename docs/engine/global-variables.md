@@ -66,7 +66,7 @@ does not roll the weather again. The game clock page explains why the clock owns
 For a `CTDA` comparison ([conditions](/formats/conditions.md)), a literal passes through and a global
 operand resolves through the seam. No answer means the condition names a global nothing defines. The
 evaluator treats that as a failure, not as a comparison with zero
-([condition evaluation](/engine/condition-evaluation.md)).
+([condition evaluation](/engine/conditions.md)).
 
 The first reader was weather: each climate weather chance can name a global, so changing that global
 changes which weather the pick returns ([weather](/engine/weather.md)). The weather store stays

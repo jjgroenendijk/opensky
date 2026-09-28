@@ -16,7 +16,7 @@
 // per-instance data exists. Tempering, enchanting, charge level and item
 // health all make two instances of the same base FormID distinct, so the key
 // grows into a compound one when the milestone that introduces per-instance
-// data lands; see docs/formats/records.md.
+// data lands; see docs/engine/runtime-state.md.
 //
 // Scope: single-plugin, raw-FormID keyed, matching the convention the actor
 // resolution indexes already use. Cross-plugin override resolution is a

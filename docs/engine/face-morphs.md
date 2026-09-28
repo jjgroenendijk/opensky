@@ -10,7 +10,7 @@ tags: [engine, facegen, morph, animation, metal, actor, app-ui]
 
 A face morph moves face vertices to make an expression, such as `Aah` for an open mouth. Each
 loaded actor has its own named weights from 0 to 1. The file format is on the [TRI](/formats/tri.md)
-page. How the head is found is on the [actor appearance](/engine/actor-appearance.md#facegen-paths)
+page. How the head is found is on the [actor records](/formats/actors.md#facegen-paths)
 page.
 
 ## Which meshes morph

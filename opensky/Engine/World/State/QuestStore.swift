@@ -10,7 +10,7 @@
 // quest is named by scripts and by the console, and Skyrim has always matched
 // those without regard to case.
 //
-// Documented in docs/formats/records.md.
+// Documented in docs/formats/quest-records.md.
 
 import Foundation
 

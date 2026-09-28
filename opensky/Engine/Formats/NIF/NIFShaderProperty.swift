@@ -10,7 +10,7 @@
 // Reference: NifTools nif.xml (BSLightingShaderProperty,
 // SkyrimShaderPropertyFlags1/2, NiObjectNET).
 //   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif.md.
+// Layout documented in docs/formats/nif-materials.md.
 
 import Foundation
 import simd

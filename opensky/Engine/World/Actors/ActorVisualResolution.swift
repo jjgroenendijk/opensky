@@ -4,7 +4,7 @@
 // FaceGen head mesh/tint paths.
 //
 // Chain shapes (UESP NPC_/RACE/ARMO/ARMA/OTFT pages + real-install probe,
-// docs/formats/actors.md):
+// docs/engine/actor-resolution.md):
 //   skin:   NPC_ WNAM else RACE WNAM -> ARMO -> race-compatible ARMA
 //   outfit: NPC_ DOFT -> OTFT INAM (ARMO or LVLI; LVLI expands via the same
 //           deterministic entry policy as LVLN) -> ARMO -> ARMA
@@ -103,7 +103,7 @@ nonisolated struct ResolvedBodyPart: Equatable {
 /// pose is sampled in (`ActorAnimationClip.namedWorldTransforms`). The vanilla
 /// character rig spells the drawn-weapon node `Weapon`, parented to
 /// `NPC R Hand [RHnd]`; the matching NIF node is `WEAPON`. Both names are
-/// observed from the install, never assumed — see docs/formats/actors.md.
+/// observed from the install, never assumed — see docs/engine/actor-resolution.md.
 nonisolated struct ResolvedAttachment: Equatable {
     /// The equipped base record the model came from (a WEAP).
     let item: FormID

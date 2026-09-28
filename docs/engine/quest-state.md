@@ -140,7 +140,7 @@ from the live store or a snapshot. A script property and a quest alias run-on ca
 
 - Conditions: run-on 5 (quest alias) takes its alias number from `CTDA` parameter 3 and its quest
   from the list's owner. A `CIS1` or `CIS2` name resolves for a filled alias and stays unresolved for
-  an empty one ([condition evaluation](/engine/condition-evaluation.md)).
+  an empty one ([condition evaluation](/engine/conditions.md)).
 - Script properties: an alias-typed `VMAD` property binds to the filled reference. An empty one keeps
   the compiler default and is counted.
 - Alias scripts: the alias script sections of the `QUST` `VMAD` start on the reference in their alias

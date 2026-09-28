@@ -16,7 +16,7 @@
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
 //     `wbRecord(LVSP, 'Leveled Spell', ...)` line 8058.
 // Layout documented in docs/formats/actors.md, and for LVSP in
-// docs/formats/magic-records.md.
+// docs/formats/shouts-equip-slots.md.
 
 import Foundation
 

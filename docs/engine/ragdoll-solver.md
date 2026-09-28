@@ -18,7 +18,7 @@ as one ragdoll.
 
 A skeleton NIF has no ragdoll container class. It has `bhkRigidBody` blocks, each under a
 `bhkBlendCollisionObject` that targets a named `NiNode`, and constraint blocks that join pairs
-of them ([NIF rigid bodies](/formats/nif-rigid-bodies.md)). The ragdoll is built from these:
+of them ([NIF rigid bodies](/formats/nif-rigid-body.md)). The ragdoll is built from these:
 
 - Each body that can be simulated becomes one dynamic body, matched to an animation bone by
   name. The `NiNode` name is spelled exactly like the `hkaSkeleton` bone, for example

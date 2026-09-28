@@ -1,30 +1,30 @@
 ---
 type: File Format
 title: Grass records (GRAS)
-description: GRAS placement controls and the LTEX GNAM links that attach grass to terrain paint.
+description: Skyrim SE GRAS placement settings and the LTEX GNAM links to them.
 tags: [format, plugin, records, grass, terrain]
 ---
 
 # Grass records (GRAS)
 
-A `GRAS` record names one grass model and the rules for placing it on
-[terrain texture layers](/formats/land.md). An `LTEX` (land texture) record lists zero or
-more `GRAS` records in repeated `GNAM` fields.
+A `GRAS` record is one grass model plus the rules for placing it on
+[LAND texture layers](/formats/land.md). A land texture (`LTEX`) lists zero or more grasses
+in repeated `GNAM` fields.
 
-Sources: xEdit `dev-4.1.5`
+Layout source: xEdit dev-4.1.5
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.5/Core/wbDefinitionsTES5.pas)
-(`wbGRAS`, with the water-rule values and flags). Field meanings checked against the
-Creation Kit page [Grass](https://ck.uesp.net/wiki/Grass).
+(`wbGRAS`, with the water rule values and flags). Field meanings checked against the
+Creation Kit wiki page [Grass](https://ck.uesp.net/wiki/Grass).
 
-## GRAS fields
+## GRAS
 
-| Field | Size | Meaning |
+| Field | Size (bytes) | Meaning |
 | --- | --- | --- |
-| `EDID` | varies | Editor ID, optional |
-| `MODL` | varies | NIF path under `Data/`, optional |
-| `DATA` | 32 | Placement rules, below |
+| `EDID` | varies | Editor ID |
+| `MODL` | varies | NIF path relative to `Data/` |
+| `DATA` | 32 | Placement settings, below |
 
-`DATA` layout:
+`DATA`:
 
 | Offset | Type | Meaning |
 | --- | --- | --- |
@@ -44,20 +44,18 @@ Creation Kit page [Grass](https://ck.uesp.net/wiki/Grass).
 
 Water rule values 0 to 7, in xEdit order: above at least, above at most, below at least,
 below at most, either at least, either at most, either at most above, either at most below.
-OpenSky keeps unknown values.
+OpenSky keeps any other value as unknown.
 
 Flags: `0x01` vertex lighting, `0x02` uniform scaling, `0x04` fit to slope.
 
-A `DATA` of any size other than 32 is an error. A record without `DATA` or `MODL` is kept,
-so the cell code can count it and skip it.
+A `DATA` of any other size is an error. A record with no `DATA` or no `MODL` is kept, so a
+cell can count it and skip it.
 
 ## LTEX GNAM
 
-Each `GNAM` is one 4-byte `GRAS` FormID. The field repeats, and OpenSky keeps the order. A
-short `GNAM` is an error, not a null link.
+Each `GNAM` is one 4-byte `GRAS` FormID. The field repeats, and the order is kept. A `GNAM`
+shorter than 4 bytes is an error, not a null reference.
 
-## Vanilla values
-
-In `Skyrim.esm` there are 27 `GRAS` and 68 `LTEX` records. 20 `LTEX` records carry 39 `GNAM`
-links, and all of them resolve. Value ranges: density 3 to 79, position range 29 to 68,
-height range 0.2 to 0.4, color range 0.05 to 0.3.
+Real data check on vanilla `Skyrim.esm`: 27 `GRAS` and 68 `LTEX` records decode. 20 `LTEX`
+records have 39 `GNAM` links, and all of them resolve. Density is 3 to 79, position range 29
+to 68, height range 0.2 to 0.4, and color range 0.05 to 0.3.

@@ -100,7 +100,7 @@ From xEdit `Core/wbDefinitionsTES5.pas`:
 The Creation Kit numbers are 4555, 4471, and 4472. The parameter may be null. A null parameter
 asks about the hold the subject stands in, not about no faction. These cases report "unavailable"
 instead of 0: no `FACT` data, a parameter naming a faction no plugin defines, and a null parameter
-outside any hold ([condition evaluation](/engine/condition-evaluation.md)).
+outside any hold ([condition evaluation](/engine/conditions.md)).
 
 ## Papyrus natives
 

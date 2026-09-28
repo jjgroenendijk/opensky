@@ -104,7 +104,7 @@ dropped, not moved to whatever row took its place.
 Measured on the user's installed movies with `openskycli swf action-run --movie containermenu`
 and `--movie bartermenu`. Both movies place `InventoryLists_mc`, `ItemCard_mc`, and
 `BottomBar_mc` as imported characters, so they need the cross-movie import merge: 3 source movies,
-675 characters, 3 placeholders bound, 0 unresolved for each ([SWF imports](/formats/swf-display-list.md#imports)).
+675 characters, 3 placeholders bound, 0 unresolved for each ([SWF imports](/formats/swf-display-list.md#importassets-57-and-importassets2-71)).
 
 | Thing | Path |
 | --- | --- |

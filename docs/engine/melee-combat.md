@@ -56,7 +56,7 @@ created on first read would find the queue already empty.
 The weapon moves on the clip mark, not on the request. `weaponDraw` starts drawing, and the weapon
 stays where it is. `BeginWeaponDraw` arrives when the hand reaches it, and that frame moves the
 model. Sheathing is the mirror. The node names are on the
-[actor appearance](/engine/actor-appearance.md) page.
+[actor resolution](/engine/actor-resolution.md) page.
 
 Not every equip clip has that mark. `1HM_Equip.hkx`, `Bow_Equip.hkx`, and `CrossBow_Equip.hkx`
 have it at time 0.0. `Dag_Equip.hkx`, `Axe_Equip.hkx`, `Mac_Equip.hkx`, `2HC_Equip.hkx`, and

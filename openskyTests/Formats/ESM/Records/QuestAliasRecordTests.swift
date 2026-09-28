@@ -4,7 +4,7 @@
 //
 // Layout: UESP "Skyrim Mod:Mod File Format/QUST", "Aliases"; xEdit dev-4.1.6
 // Core/wbDefinitionsTES5.pas reference aliases line 8869, location aliases
-// 8971. See docs/formats/records.md.
+// 8971. See docs/formats/quest-records.md.
 
 import Foundation
 @testable import opensky

@@ -4,7 +4,7 @@
 // pinned rather than described.
 //
 // The quest is `MGRArniel01`, the cheapest entry on the 13.1 census shortlist
-// (docs/formats/records.md): two stages, one objective, one forced-reference
+// (docs/formats/quest-records.md): two stages, one objective, one forced-reference
 // alias, two fragments and no conditions. Named here rather than rediscovered,
 // because the shortlist is the record of that choice.
 //

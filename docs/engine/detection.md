@@ -153,7 +153,7 @@ Creation Kit adds 4096 to each.
 The run-on reference asks about the parameter: `[Observer].GetDetected Target`. Detection is not
 symmetric. A guard may see the player while the player does not know it is there. Asking about a
 reversed pair, which is not tracked, fails as unavailable. An untracked pair is not an undetected
-one. See [condition evaluation](/engine/condition-evaluation.md).
+one. See [condition evaluation](/engine/conditions.md).
 
 When an actor in combat loses a target that perception was tracking, it goes to the stored
 position. `GetCombatState` then returns 2, "Searching". Combat music keeps playing while an actor

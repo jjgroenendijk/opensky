@@ -1,188 +1,200 @@
 ---
 type: File Format
-title: OpenSky save file (.osav)
-description: OpenSky's own save container - design goals, header, load-order fingerprint, chunk
-  stream, version rules, defensive decoding, and atomic writes.
+title: OpenSky native save container (.osav)
+description: Byte layout of OpenSky's own .osav save file — header, load-order fingerprint,
+  chunk stream, reference deltas — and its determinism, version, and error rules.
 tags: [format, save, io, world-state, determinism]
 ---
 
-# OpenSky save file (.osav)
+# OpenSky native save container
 
 `.osav` is the file OpenSky writes when it saves a session. It holds the
-[world state snapshot](/engine/runtime-state.md): every runtime change from what the plugins say.
-It also holds the load order and a small header.
+[world-state snapshot](/engine/runtime-state.md) (every runtime change to what the plugins
+say), the load order of the session, and a small header.
 
-This format is OpenSky's own. It is not Bethesda's `.ess` and does not come from it. Nothing in
-it is reverse engineered, so this page is the specification. OpenSky never writes an `.ess`
-file. Reading one is a separate idea for the future and shares nothing with this layout.
+This format is OpenSky's own, not Bethesda's `.ess`. Nothing in it is reverse engineered, so
+this page is the specification. OpenSky never writes a `.ess` file.
 
-Integers are little-endian. Floats are IEEE 754 bit patterns, little-endian. A string is a
-uint16 byte length, then that many UTF-8 bytes. The chunks are on the
-[save chunks](/formats/save-chunks.md) page.
+All integers are little-endian. Floats are IEEE 754 bit patterns, little-endian. A string is
+a `UInt16` byte length followed by that many UTF-8 bytes. The chunk payloads are on
+[save chunks: world and scripts](/formats/opensky-save-world-chunks.md) and
+[save chunks: actors](/formats/opensky-save-actor-chunks.md).
 
 ## Design goals
 
-Deterministic bytes. Everything after the header is a pure function of the world state and the
-load order. Two sessions that reach the same state in a different order write the same bytes. So
-a round-trip test is a byte comparison, and a bug report can be reproduced.
-
-Tolerance, in two directions and on purpose unequal. The body is a stream of tagged chunks with
-a length. A build that does not know a chunk skips it and loads the rest. But inside a chunk, an
-unknown component kind is an error. A world that silently lost some components looks right and
-is not.
-
-Defensive decoding. Every count is checked against the bytes left before any memory is
-reserved. A corrupt length is an error, not a huge allocation.
+- Same state, same bytes. Everything after the header is a pure function of the snapshot
+  and the fingerprint. Two sessions that reach the same state in a different order write the
+  same bytes. So a round-trip test is a byte comparison.
+- Old and new builds can read each other's files, with one exception. The body is a list of
+  tagged chunks with lengths. A build skips a chunk it does not know. But inside `RDLT`, an
+  unknown component kind is an error, because a delta that silently lost a component gives a
+  world that looks right and is wrong.
 
 ## Header
 
-| Offset | Type | Field | Meaning |
+| offset | type | field | notes |
 | --- | --- | --- | --- |
-| 0x00 | 4 chars | magic | `OSAV` |
-| 0x04 | uint32 | formatVersion | 1, the only version this build reads |
-| 0x08 | uint32 | metadataLength | Size of the metadata block |
-| 0x0C | bytes | metadata | uint64 creation time (Unix seconds), then the app version string |
+| 0x00 | char[4] | magic | ASCII `OSAV` |
+| 0x04 | uint32 | formatVersion | 1; the only version this build reads |
+| 0x08 | uint32 | metadataLength | size of the metadata block |
+| 0x0C | bytes | metadata | `metadataLength` bytes |
 
-The caller passes in the creation time. The encoder never reads the clock. So tests can make the
-same bytes twice, and a copied or migrated save keeps its original time.
+The metadata block holds a uint64 creation time (seconds since the Unix epoch) and a string
+with the app version. The caller passes the time in, so a test can write the same bytes
+twice. The decoder stops after the app version and skips any bytes left in the block, so a
+newer build can add metadata without a version change.
 
-The decoder stops after the app version, however long the block is. So a newer build can add
-metadata without a version change, and an older build skips the extra bytes.
+## The deterministic region
 
-Only the header depends on the time. Two saves of the same state differ only in their first few
-dozen bytes.
+Everything after the metadata is deterministic:
 
-## Deterministic region
+- Entries are written sorted in `ReferenceKey` order, never in the order they changed.
+- Inside an entry, components are written in ascending tag order. The decoder rejects any
+  other order, so a delta has exactly one valid spelling.
+- The encoder never reads the clock, a hash seed, or dictionary order.
 
-Everything after the metadata is deterministic. Three rules make it so:
-
-- Entries are written in `ReferenceKey` order. The store sorts its changed keys. It does not keep
-  the order of changes.
-- Components inside an entry are written in rising tag order, and the decoder rejects any other
-  order. So one state has exactly one byte form.
-- The encoder never reads a clock, a hash seed, or the order of a dictionary.
+Two saves of the same state at different times differ only in the header.
 
 ## Load-order fingerprint
 
 A uint32 plugin count, then for each plugin in load order:
 
-| Type | Field | Meaning |
+| type | field | notes |
 | --- | --- | --- |
-| string | name | Plugin file name, as on disk |
-| uint32 | hedrVersion | Bits of the `HEDR` version float (0.94, 1.7, 1.71) |
-| uint32 | recordCount | `HEDR` record and group count |
-| uint32 | nextObjectID | `HEDR` next object ID |
+| string | name | file name as on disk |
+| uint32 | hedrVersion | bit pattern of the HEDR version float (0.94, 1.7, 1.71) |
+| uint32 | recordCount | HEDR record and group count |
+| uint32 | nextObjectID | HEDR next object ID |
 
-The three numbers come from the plugin's TES4 `HEDR` field (see [FormID](/formats/formid.md)).
-The Creation Kit rewrites them whenever a plugin changes. So together they are a cheap "same
-plugin as before?" check, much cheaper than hashing archives.
+The three numbers come from the TES4 `HEDR` field ([FormID](/formats/formid.md)). The
+Creation Kit updates them whenever the file changes, so they are a cheap "same plugin?"
+check. The list is the resolved [load order](/formats/plugins-txt.md).
 
-The check compares the lists position by position and names the first difference. Name case is
-ignored, as everywhere else in the engine. Order matters. Plugin `ReferenceKey`s use names and
-survive a new order, but records, masters, and object IDs do not.
-
-Checking is separate from decoding. Decoding needs only the file. So a tool or a test can read a
-save with no game installed, and the app can show what a save holds before it explains why the
-save cannot load.
-
-The list is the resolved [load order](/formats/plugins-txt.md). A save made with a mod on does
-not match an install with that mod off.
+A load compares the lists position by position and names the first difference. Case in file
+names is ignored. Order matters: a plugin `ReferenceKey` uses the name and survives
+reordering, but FormIDs and masters do not. Decoding does not check the fingerprint, so a
+tool can read a save on a machine without the game.
 
 ## Chunks
 
-The rest of the file is chunks, up to the end of the file:
+The rest of the file is chunks, until the end of the file:
 
-| Type | Field | Meaning |
+| type | field | notes |
 | --- | --- | --- |
-| 4 chars | tag | Chunk name |
-| uint32 | payloadLength | Size of the payload |
-| bytes | payload | The data |
+| char[4] | tag | four ASCII bytes |
+| uint32 | payloadLength | size of the payload |
+| bytes | payload | `payloadLength` bytes |
 
-A length past the end of the file is an error. An unknown tag is skipped by its length. This is
-what lets an older build load a newer save.
+A chunk that runs past the end of the file is an error. A chunk with an unknown tag is
+skipped by its length. Each payload is read with its own cursor, so a bad count inside one
+chunk cannot read into the next.
 
-## Version rules
+| tag | contents | page |
+| --- | --- | --- |
+| `GALC` | next generated-reference number | below |
+| `RDLT` | reference deltas: enable, transform, activation, deletion | below |
+| `GVAR` | global variable values | world |
+| `CLOK` | game clock | world |
+| `PSCR` | Papyrus script instance state | world |
+| `PTMR` | pending Papyrus update timers | world |
+| `INVN` | inventories | world |
+| `SPWN` | spawned references | world |
+| `QSTS` | quest running, stages, objectives | world |
+| `QALS` | filled reference aliases | world |
+| `QLOC` | filled location aliases | world |
+| `AVAL` | current health, magicka, stamina | actors |
+| `AVOV` | actor-value offsets and modifiers | actors |
+| `DETH` | deaths and corpse positions | actors |
+| `CBTS` | hostility | actors |
+| `DLGS` | dialogue said counts | actors |
+| `AEFF` | active magic effects | actors |
+| `ECHG` | enchantment charge and worn effects | actors |
+| `FCTN` | faction memberships | actors |
+| `RELS` | scripted relationship ranks | actors |
+| `CRIM` | crime gold and crime counts | actors |
+| `STOL` | stolen item counts | actors |
+| `CRVG` | violent part of crime gold | actors |
 
-A new chunk tag needs no version change. An older build skips it and loses only that feature.
+The code also defines `SPLB`, `PRKS`, and `PLVL` (layouts in `opensky/Engine/Formats/Save/`).
+`AVGN` is an old tag that `AVOV` replaced; it is now skipped.
 
-A version change is needed for:
+`GALC` is exactly 8 bytes: a uint64, the next number the generated-reference allocator gives
+out. Without `GALC`, the allocator starts at 1.
 
-- a changed payload layout in an existing chunk,
-- a new component kind inside `RDLT`,
-- a changed component payload.
+`RDLT` is a uint32 entry count, then entries:
 
-An unknown component kind is rejected, not skipped. The decoder would have to guess how many
-bytes to skip, and a wrong guess breaks the rest of the entry. So new kinds of state go into
-their own chunk instead. Inventory was the first. Every later kind of state followed.
+| type | field | notes |
+| --- | --- | --- |
+| key | key | the reference |
+| cell | cell | where the reference was when it changed |
+| uint8 | componentCount | components that follow |
+| bytes | components | in strictly ascending tag order |
 
-A new meaning for existing bytes needs a new tag, not the same tag. Example: `AVOV` replaced
-`AVGN`. The two have the same shape but different meanings. Reading one as the other would turn a
-resistance of 30 into 30 points above the record value.
+A key is a tag byte: 0 plugin (string plugin name, uint32 object ID) or 1 generated (uint64
+sequence). A cell is a tag byte: 0 absent, 1 exterior (int32 x, int32 y), 2 interior (uint32
+raw cell FormID). Every chunk uses these two encodings.
 
-Widening a flat chunk also needs a new sibling chunk. Most chunks are lists of entries with no
-length per entry. Adding a field to each entry would make an older build misread the whole
-chunk. A sibling chunk is skipped whole. Examples: `QALS` beside `QSTS`, `AVOV` beside `AVAL`,
-`STOL` beside `INVN`, and `CRVG` beside `CRIM`.
+| tag | component | payload |
+| --- | --- | --- |
+| 0 | enable state | one byte, 0 or 1 |
+| 1 | transform | position x/y/z, rotation x/y/z, scale: seven float32 |
+| 2 | activation | uint32 count, open byte, has-last-activator byte, then a key if that byte is 1 |
+| 3 | deletion | one byte, 0 or 1 |
 
-`formatVersion` must match exactly. Any other value fails with "unsupported version".
+The tag numbers are written out in the code, not taken from the declaration order of the
+Swift enum, because that order can change and these bytes cannot. Inventory and spawns are
+component kinds in the store, but they have no tag here. They travel in their own chunks,
+so an older build can skip them. An entry whose only component is one of those is not in
+`RDLT` at all.
 
-## Defensive decoding
+## Version policy
 
-All reads go through one bounds-checked reader. Every read failure becomes one "truncated" error
-that names the structure being read.
+A new chunk tag needs no `formatVersion` change. An older build loses that chunk's feature
+and nothing else.
 
-- Every count is checked against the bytes left, divided by the smallest size of one element,
-  before memory is reserved.
-- Each chunk is decoded through its own reader over only its payload. A bad count cannot reach
-  into the next chunk.
-- A string length past the end is a truncation. Bytes are read before they are used.
-- A Boolean byte must be exactly 0 or 1. Reading `0x7F` as true would hide a bug.
+A version change is needed for a new payload layout in an existing chunk, a new component
+kind inside `RDLT`, or a changed component payload. So new state gets its own chunk. When
+old entries are flat and have no per-entry length, a new field cannot be appended without
+breaking older readers, so it goes into a new sibling chunk (`QALS` beside `QSTS`, `STOL`
+beside `INVN`, `CRVG` beside `CRIM`).
 
-Errors:
+`formatVersion` must match exactly. Any other value fails with `unsupportedVersion(found:)`.
 
-| Error | Meaning |
+## Errors and normalization
+
+A boolean byte must be exactly 0 or 1. Every count is checked against the remaining bytes
+divided by the smallest element size, before memory is reserved.
+
+| case | meaning |
 | --- | --- |
-| `badMagic` | The first 4 bytes are not `OSAV` |
-| `unsupportedVersion(found:)` | A version this build does not read |
-| `truncated(context:)` | The file ends inside a structure. `context` names it |
-| `invalidCount(chunk:count:remaining:)` | A count cannot fit in the bytes left |
-| `invalidValue(context:)` | A value the format does not define: a bad Boolean, an unknown tag, or components out of order |
-| `chunkBoundsViolation(tag:)` | A chunk runs past the end of the file |
-| `fingerprintMismatch(reason:)` | The save was made with a different load order |
+| `badMagic` | the first four bytes are not `OSAV` |
+| `unsupportedVersion(found:)` | a layout version this build does not read |
+| `truncated(context:)` | the file ends inside a structure; `context` names it |
+| `invalidCount(chunk:count:remaining:)` | a count cannot fit in the bytes left |
+| `invalidValue(context:)` | a value the format does not define: a bad boolean, an unknown tag, or components out of order |
+| `chunkBoundsViolation(tag:)` | a chunk runs past the end of the file |
+| `fingerprintMismatch(reason:)` | the save was made with a different load order |
 
-Some values are fixed up instead of rejected. The rule: a value the running game can really
-produce is fixed up, and a shape the build cannot read is rejected. Each chunk's rule is on the
-[save chunks](/formats/save-chunks.md) page.
+Some bad values are corrected instead of rejected, when one bad value should not cost the
+whole save. The chunk pages say which. The rule: a value this build wrote from a closed list
+(a tag, a slot, a kind) is an error when unknown. A number that is out of range is fixed.
 
-Encoding never fails. Every state has a byte form. The one loss: a string longer than 64 KiB is
-cut at the last whole UTF-8 character that fits. A plugin name or app version that long is
-already nonsense.
+Encoding never fails. A string longer than 64 KiB is cut at the last whole UTF-8 character
+that fits.
 
-## Where saves go
+## Where saves live
 
-Saves go to `~/Library/Application Support/OpenSky/Saves/`, created when needed. Never to the
-repository and never to the game folder. The game folder is read-only input, and a save is the
-user's data.
+Saves go in `~/Library/Application Support/OpenSky/Saves/`, as `<slot>.osav`. Never in the
+repository and never in the game install. A slot name may contain only a small set of
+characters, because it comes from a text field.
 
-Each save is written in three steps. Each step prevents one failure:
+A save is written in three steps:
 
-1. Write a temporary file in the same folder as the target. A rename is atomic only inside one
-   file system, and `/tmp` may be on another one.
-2. Sync the file to disk before closing it. Without this, after a power loss the folder entry
-   can reach the disk before the data, which gives a file full of zeros.
-3. Rename it over the target. This replaces the file in one step. A crash or a full disk leaves
-   the old save whole.
+1. Write a temporary file in the same folder. A rename is atomic only inside one file
+   system, and `/tmp` may be on another.
+2. Flush the file to disk before closing it. Without this, after a power loss the rename can
+   land before the data, and the file is full of zeros.
+3. Rename it over the old save. A crash or a full disk leaves the old save whole.
 
-Any failure removes the temporary file.
-
-## Save slots
-
-`OpenSkySaveStore` names saves by slot. A slot name becomes `<slot>.osav` in the saves folder.
-Loading can skip the fingerprint check, so a save can be inspected with no game installed.
-
-A slot name comes from a text field the user types in. So it is checked before it becomes a path:
-an empty name, a path separator, or a character outside a small allowed set is an error. The UI
-is under World > Runtime State (see [runtime state](/engine/runtime-state.md)).
-
-Saves are not compressed. They hold only changes, so they are small, and an uncompressed file can
-be read in a hex editor when a determinism test fails.
+On any failure the temporary file is removed. There is no compression: saves hold changes,
+not whole worlds, so they are small and easy to read in a hex editor.

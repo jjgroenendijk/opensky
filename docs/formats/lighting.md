@@ -7,17 +7,20 @@ tags: [format, plugin, cell, lighting, fog]
 
 # Interior lighting records
 
-These records feed interior lighting and fog.
+These records set the light and fog of an interior cell, and the placed lights in it.
 
-Sources: UESP [CELL and LGTM](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL),
-UESP [LIGH](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LIGH), xEdit
-[TES5 definitions](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas)
-and [common definitions](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsCommon.pas).
+Sources:
+
+- [UESP CELL and LGTM](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL)
+- [UESP LIGH](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LIGH)
+- [xEdit TES5 definitions](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas)
+- [xEdit common definitions](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsCommon.pas)
 
 ## CELL XCLL
 
-`XCLL` is 92 bytes in current SSE records. The first 40 bytes are required. After that, the
-field may end early, but only at a field boundary.
+`XCLL` is 92 bytes in current Skyrim SE records. The first 40 bytes are required. A shorter
+record may stop at any field boundary after that. A cut inside the directional ambient
+block does not move the offsets of later fields.
 
 | Offset | Bytes | Value |
 | --- | --- | --- |
@@ -32,43 +35,36 @@ field may end early, but only at a field boundary.
 | 32 | 4 | Fog clip distance, float32 |
 | 36 | 4 | Fog power, float32 |
 | 40 | 24 | Directional ambient +X, -X, +Y, -Y, +Z, -Z, RGBX each |
-| 64 | 4 | Specular RGBX, not used |
-| 68 | 4 | Fresnel power, not used |
+| 64 | 4 | Specular RGBX. Read, not used |
+| 68 | 4 | Fresnel power. Read, not used |
 | 72 | 4 | Far fog RGBX |
 | 76 | 4 | Fog maximum, float32 |
 | 80 | 4 | Light fade begin, float32 |
 | 84 | 4 | Light fade end, float32 |
 | 88 | 4 | Inheritance flags, uint32 |
 
-The rotation is in degrees, not radians. Proof: `WhiteRunIntLightingTemplate` in
-`Skyrim.esm` stores XY = 180. Read as degrees, the light points the expected way.
+The rotations are degrees, not radians. Real data shows this: `WhiteRunIntLightingTemplate`
+stores XY = 180. As degrees this gives the expected direction.
 
-## LTMP and inheritance
+## Lighting templates (LTMP and LGTM)
 
-`LTMP` is a FormID of a lighting template (`LGTM`). Each inheritance bit takes one value
-from the template instead of the cell:
+`CELL LTMP` is a FormID of a lighting template (`LGTM`). Each inheritance flag in `XCLL`
+says "take this value from the template":
 
-| Bit | Value |
-| --- | --- |
-| `0x001` | Ambient |
-| `0x002` | Directional |
-| `0x004` | Fog colors |
-| `0x008` | Fog near |
-| `0x010` | Fog far |
-| `0x020` | Directional rotation |
-| `0x040` | Directional fade |
-| `0x080` | Fog clip |
-| `0x100` | Fog power |
-| `0x200` | Fog maximum |
-| `0x400` | Light fade distances |
+| Bit | Value | Bit | Value |
+| --- | --- | --- | --- |
+| `0x001` | Ambient | `0x040` | Directional fade |
+| `0x002` | Directional | `0x080` | Fog clip |
+| `0x004` | Fog colors | `0x100` | Fog power |
+| `0x008` | Fog near | `0x200` | Fog maximum |
+| `0x010` | Fog far | `0x400` | Light fade distances |
+| `0x020` | Directional rotation | | |
 
-When one source lacks a value, the other source is used.
+When one source is missing a value, OpenSky uses the other source.
 
-## LGTM DATA and DALC
-
-`LGTM DATA` uses the same offsets as `XCLL` for bytes 0 to 87. Offset 88 is reserved, not
-flags. `DALC` is 32 bytes: six directional-ambient RGBX colors, a specular RGBX, and a
-Fresnel float32. When `DALC` exists, it replaces the directional-ambient block in `DATA`.
+`LGTM DATA` uses the same offsets 0 to 87 as `XCLL`. Offset 88 is reserved, not flags.
+`LGTM DALC` is 32 bytes: six directional ambient RGBX values, specular RGBX, and Fresnel
+float32. When `DALC` exists, it replaces the directional ambient block of `DATA`.
 
 ## LIGH
 
@@ -81,18 +77,17 @@ Fresnel float32. When `DALC` exists, it replaces the directional-ambient block i
 | 8 | 4 | Color RGBX |
 | 12 | 4 | Flags, uint32 |
 | 16 | 4 | Falloff exponent, float32 |
-| 20 | 28 | FOV, near clip, animation values, value, weight. Not read |
+| 20 | 28 | FOV, near clip, animation values, value, weight. Skipped |
 
-`FNAM` is a fade float32. Without it, fade is 1.
+`FNAM` is the fade, a float32. Without it the fade is 1.
 
-OpenSky renders omni lights, including shadow omni lights. These lights are left out:
-negative (`0x004`), spot (`0x200`), shadow spot (`0x400`), off by default (`0x020`), and
-lights with a radius that is not positive or not finite. Animation flags are read but lights
-do not animate yet.
+OpenSky draws omni lights, including shadow omni lights. It does not draw a light with any
+of these: flag `0x004` (negative), `0x200` (spot), `0x400` (shadow spot), `0x020` (off by
+default), or a radius that is not a positive finite number. The animation flags are read
+but lights do not animate yet.
 
-## REFR overrides
+## Placed lights (REFR)
 
-A `REFR` whose `NAME` is a `LIGH` places that light. A `REFR` can instead carry `XEMI`,
-which names a `LIGH` that a mesh emits. `XEMI` wins. `XRDS` (float32) overrides the radius.
-Without `XRDS`, the radius comes from the winning `LIGH`. The placement `DATA` gives the
-position.
+A `REFR` `NAME` can point at a `LIGH` directly. Or `XEMI` can name a `LIGH` that a mesh
+emits. When both exist, `XEMI` wins. `XRDS` (float32) overrides the radius. Without `XRDS`,
+the radius comes from the winning `LIGH`. The position comes from the `REFR DATA`.

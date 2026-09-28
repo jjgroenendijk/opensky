@@ -42,7 +42,7 @@ runtime uses no AppKit and also builds into `openskycli`.
    dictionary order would give the same world two different menus.
 
 Each response is checked with the speaker as subject, the player as target, and the topic's
-quest as the alias quest ([condition evaluation](/engine/condition-evaluation.md)).
+quest as the alias quest ([condition evaluation](/engine/conditions.md)).
 
 Greetings use the same rules, but are found by `DIAL` `SNAM` subtype `HELO`, not by category,
 because the player does not pick a greeting. `Skyrim.esm` has 297.
@@ -131,14 +131,14 @@ Nobody talking is a real 0. `GetIsAliasRef` compares the run-on reference with t
 table of the alias quest.
 
 The faction functions that guard and vendor lines depend on are on the
-[condition evaluation](/engine/condition-evaluation.md) page.
+[condition evaluation](/engine/conditions.md) page.
 
 ## Saving
 
 Said-state is saved in its own `DLGS` chunk, not inside `RDLT`. A component kind inside `RDLT` is
 versioned by the format version, so an older build would refuse the whole file instead of
 loading the rest. A session where nobody spoke writes no chunk
-([save chunks](/formats/save-chunks.md)).
+([save chunks](/formats/opensky-save-actor-chunks.md)).
 
 An entry is a key plus a `UInt32` count. The starting state is never written, and an entry that
 decodes as 0 is dropped. So a loaded world compares equal to the saved one.

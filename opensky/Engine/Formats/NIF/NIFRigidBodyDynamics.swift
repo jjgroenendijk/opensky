@@ -6,7 +6,7 @@
 // Reference: NifTools nif.xml (bhkRigidBodyCInfo2010, hkMotionType,
 // hkDeactivatorType, hkSolverDeactivation, hkQualityType, hkMatrix3).
 //   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-collision.md.
+// Layout documented in docs/formats/nif-rigid-body.md.
 
 import Foundation
 import simd

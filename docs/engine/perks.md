@@ -39,7 +39,7 @@ The player starts with no perks, because there is no `NPC_` record behind the pl
 
 Owned perks are saved in the `PRKS` chunk, one entry per actor with at least one perk. Only the
 identities are written. The rank is derived from the chain, and the abilities are granted again
-on load ([save chunks](/formats/save-chunks.md)).
+on load ([save chunks](/formats/opensky-save.md#chunks)).
 
 ## Ranks are chains, not numbers
 
@@ -131,7 +131,7 @@ would turn off every vanilla damage perk, which is a worse and silent error. The
 how often it happens.
 
 A bound tab is evaluated strictly by the normal
-[condition evaluator](/engine/condition-evaluation.md). An unimplemented function is false with
+[condition evaluator](/engine/conditions.md). An unimplemented function is false with
 a reason, and the effect does not apply.
 
 ## Where perks change numbers

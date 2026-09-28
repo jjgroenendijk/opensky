@@ -1,25 +1,22 @@
 ---
 type: File Format
 title: HKX Behavior Modifier Classes
-description: Byte layouts of the Havok behavior transitions, conditions, modifiers, variable
-  bindings, and Bethesda BS* classes in vanilla Skyrim SE behavior files, and the known gaps.
+description: Byte layouts of Havok behavior transitions, conditions, bindings, modifiers,
+  and Bethesda's own BS* classes in vanilla Skyrim SE player behavior files.
 tags: [format, havok, hkx, behavior, animation]
 ---
 
 # HKX behavior modifier classes
 
-A modifier changes a pose after a generator makes it, for example to twist the spine or to
-place a foot on uneven ground. This page lists the transition and condition classes, the
-modifier classes, the variable binding classes, and Bethesda's own `BS*` classes in the vanilla
-behavior files. The shared headers, the sources, and the node classes are on the
-[behavior node classes](/formats/hkx-behavior-nodes.md) page.
-
-Remember: a modifier's own members start at 0x50.
+This page continues [HKX behavior node classes](/formats/hkx-behavior-nodes.md). It covers
+transitions and conditions, variable bindings, the modifier classes, and Bethesda's own
+`BS*` classes. The shared headers and sources are on that page. A modifier's own members
+start at 0x50.
 
 ## Transition and condition classes
 
-`hkbTransitionEffect`, size 80, derives `hkbGenerator` and adds `i8 m_selfTransitionMode`
-at 0x48 and `i8 m_eventMode` at 0x49. `hkbBlendingTransitionEffect`, size 144, derives it:
+`hkbTransitionEffect`, size 80, comes from `hkbGenerator` and adds `i8 m_selfTransitionMode`
+at 0x48 and `i8 m_eventMode` at 0x49. `hkbBlendingTransitionEffect`, size 144, comes from it:
 
 | off | field | type | notes |
 | --- | --- | --- | --- |
@@ -29,7 +26,7 @@ at 0x48 and `i8 m_eventMode` at 0x49. `hkbBlendingTransitionEffect`, size 144, d
 | 0x5A | `m_endMode` | `i8` enum | |
 | 0x5B | `m_blendCurve` | `i8` enum | 0 smooth, 1 linear, 2 linear-to-ease, 3 ease-to-linear |
 
-A condition stores its test as text. The compiled form, which Havok builds at load, is
+A condition stores its test as text. Havok compiles it at load, and the compiled form is
 `SERIALIZE_IGNORED`.
 
 | class | size | members |
@@ -46,12 +43,12 @@ m_assignmentVariableIndex` 0x08, `i32 m_assignmentEventIndex` 0x0C, `i8 m_eventM
 `hkbEventRangeData`, 32 bytes: `hkReal m_upperBound` 0x00, `hkbEventProperty m_event` 0x08,
 `i8 m_eventMode` 0x18.
 
-## Variable bindings
+## Modifier classes
 
-`hkbVariableBindingSet`, size 40, is the mechanism the whole graph is driven through:
-`m_bindings` at 0x10 (`hkbVariableBindingSetBinding`, stride 40) and
-`i32 m_indexOfBindingToEnable` at 0x20. One binding maps a member path on the owning object
-to a graph variable index:
+`hkbVariableBindingSet`, size 40, is how graph variables drive the whole graph:
+`m_bindings` at 0x10 (`hkbVariableBindingSetBinding`, 40 bytes each) and
+`i32 m_indexOfBindingToEnable` at 0x20. One binding links a member of the owning object to
+a graph variable:
 
 | off | field | type | notes |
 | --- | --- | --- | --- |
@@ -60,13 +57,11 @@ to a graph variable index:
 | 0x20 | `m_bitIndex` | `i8` | -1 when not bit-addressed |
 | 0x21 | `m_bindingType` | `i8` enum | 0 graph variable, 1 character property |
 
-The two bone-list classes derive `hkbBindable`, both size 64, both with their array at
+The two bone list classes come from `hkbBindable`. Both are size 64 with their array at
 0x30: `hkbBoneWeightArray::m_boneWeights` (`hkArray<hkReal>`) and
 `hkbBoneIndexArray::m_boneIndices` (`hkArray<hkInt16>`).
 
-## Stock modifiers
-
-Stock modifiers, all deriving `hkbModifier` so their own members start at 0x50:
+Stock modifiers. All come from `hkbModifier`, so their own members start at 0x50:
 
 | class | size | members |
 | --- | --- | --- |
@@ -91,10 +86,10 @@ Stock modifiers, all deriving `hkbModifier` so their own members start at 0x50:
 `hkbEventProperty m_ungroundedEvent` 0x10, `hkReal m_verticalError` 0x20,
 `hkBool m_hitSomething` 0x24, `hkBool m_isPlantedMS` 0x25.
 
-## Bethesda classes
+## Bethesda extension classes
 
-12 of the 55 classes in the vanilla player behavior files are Bethesda's own. They register in
-the packfile like stock classes and come from the stock bases.
+12 of the 55 classes in the vanilla player behavior files are Bethesda's own. They are
+stored like stock classes and come from the stock bases.
 
 | class | size | members |
 | --- | --- | --- |
@@ -119,21 +114,28 @@ the packfile like stock classes and come from the stock bases.
 `hkReal m_limitAngleDegrees` 0x20, `m_onGain` 0x24, `m_offGain` 0x28, `hkBool m_enabled`
 0x2C.
 
-`BSSynchronizedClipGenerator` and `BSBoneSwitchGenerator` are the two that matter most for
-the player: the first drives paired animations (killmoves, furniture), the second is how
-the first-person arms run a different clip from the body.
+Two matter most for the player. `BSSynchronizedClipGenerator` drives paired animations
+(kill moves, furniture). `BSBoneSwitchGenerator` lets the first-person arms play a different
+clip from the body.
 
-## Known gaps
+## Not decoded
 
-- `hkbRigidBodyRagdollControlsModifier`: OpenSky reads `m_durationToBlend` as the blend time
-  from animation to physics (see [ragdoll](/engine/ragdoll.md)). `m_bones` is not read. The
-  ragdoll uses every bone that has a body in the skeleton NIF.
-- `hkbPoweredRagdollControlsModifier` and `BSRagdollContactListenerModifier` pass the pose
-  through unchanged.
+- `hkbRigidBodyRagdollControlsModifier`: OpenSky reads `m_durationToBlend` as the blend
+  time from animation to physics (see [ragdoll](/engine/ragdoll.md)). It does not read
+  `m_bones`: the ragdoll uses every bone that has a body in the skeleton NIF.
+  `hkbPoweredRagdollControlsModifier` and `BSRagdollContactListenerModifier` do nothing yet.
 - `hkbRigidBodyRagdollControlsModifier::m_controlData` holds a 48-byte
-  `hkaKeyFrameHierarchyUtilityControlData`. That is a physics class, and its members are not
-  confirmed against the vanilla files. OpenSky skips the block.
-- `hkbFootIkControlData::m_gains` is read as twelve floats in Havok's order, not as twelve
-  named values. Nothing reads a single gain yet.
-- `hkbStateMachineStateInfo::m_listeners` is empty in every vanilla file, so its element type
-  is not decoded.
+  `hkaKeyFrameHierarchyUtilityControlData`. This is a physics class, and its members are not
+  confirmed against vanilla files. OpenSky skips it.
+- `hkbFootIkControlData::m_gains` is read as twelve floats in Havok's order, not as named
+  members. Nothing reads a single gain, and twelve guessed names could be wrong.
+- `hkbStateMachineStateInfo::m_listeners` is empty in every vanilla file, so its elements
+  are not decoded.
+- `SERIALIZE_IGNORED` members (current state, elapsed time, cached values) are zeros on disk
+  and are not read.
+
+## Vanilla files
+
+All 35 vanilla behavior files decode: about 32,000 objects, none without a decoder, and no
+failures. The only pointer misses are "no fixup" (an optional pointer that is not set). No
+other reason appears. This is the evidence that the offsets on these pages are right.

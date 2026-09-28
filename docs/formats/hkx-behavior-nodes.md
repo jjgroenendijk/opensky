@@ -1,89 +1,75 @@
 ---
 type: File Format
 title: HKX Behavior Node Classes
-description: Byte layouts of the Havok behavior node classes in vanilla Skyrim SE behavior
-  files (shared headers, state machines, generators, transitions, conditions) and how a graph
-  is walked.
+description: Byte layouts of the Havok behavior node classes in vanilla Skyrim SE player
+  behavior files - shared headers, state machines, generators, transitions, and conditions.
 tags: [format, havok, hkx, behavior, animation, locomotion]
 ---
 
 # HKX behavior node classes
 
-The [behavior graph objects](/formats/hkx-behavior.md) page stops at the graph's root
-generator. This page covers the node tree below it. Modifiers and Bethesda's own classes are
-on the [behavior modifier classes](/formats/hkx-behavior-modifiers.md) page. Together the two
-pages cover every class in the vanilla player behavior files. The runtime is on the
-[behavior runtime](/engine/behavior-runtime.md) page.
+[HKX behavior graph objects](/formats/hkx-behavior.md) covers the top of a behavior file
+and stops at the graph's root generator. This page covers the node tree below it. Transitions,
+conditions, modifiers, and Bethesda's own classes are in
+[HKX behavior modifier classes](/formats/hkx-behavior-modifiers.md). Together the two
+pages cover every class in the vanilla player behavior files, as the
+[Havok behavior scope](/decisions/havok-behavior-scope.md) requires.
 
-`openskycli hkx <key>` prints a file's decoded nodes ([CLI](/tools/cli.md)).
+`openskycli hkx <key>` prints the decoded nodes of a file (see [CLI](/tools/cli.md)).
 
-## Sources
+## References
 
-There is no public Havok specification. Member offsets come from open-source projects and were
-checked byte by byte against the local SSE install.
+There is no public Havok specification. Member offsets come from open projects and were
+checked byte by byte against vanilla files:
 
-- ret2end/HKX2Library (MIT): an SSE packfile reader and writer, and the only one of the three
-  that has Bethesda's `BS*` classes. Its offset tables are the main source. Its class
-  signatures match the vanilla class-name tables exactly.
-- soulsmods/DSMapStudio HKX2 (MIT): a second reimplementation of the stock classes, used as a
+- ret2end/HKX2Library (MIT): a Skyrim SE packfile reader and writer, and the only one of
+  the three with Bethesda's `BS*` classes. Its member offset tables are the main source.
+  Its class signatures match the vanilla class name tables exactly.
+- soulsmods/DSMapStudio HKX2 (MIT): a separate version of the stock classes, for a
   cross-check.
-- exyorha/hkxparse (MIT): container structures.
+- exyorha/hkxparse (MIT): packfile structures.
 
-No Havok SDK, leaked source, Creation Kit internals, or SKSE internals were used. See
-[Havok behavior scope](/decisions/havok-behavior-scope.md).
-
-## How the offsets were confirmed
-
-Every vanilla behavior file under `meshes\actors\character\` decodes with no object left
-undecoded and no failure. The only unresolved fields are `noFixup`, which is a normal null
-pointer. There is no `outOfBounds`, `sectionMissing`, `negativeCount`, or `undecodableString`
-anywhere. A wrong offset would produce one of those.
-
-A graph walk from the root generator reaches every object except exactly five: the root
-container, the behavior graph, its data, its string data, and its variable value set. Those
-five sit above the node tree. So the walk misses nothing.
-
-The walk follows every pointer, and the first visit wins. A graph is not a tree: many nodes can
-share one transition effect or bone weight array.
+No Havok SDK headers, no leaked or decompiled source, and no Creation Kit or SKSE internals
+were used.
 
 ## Shared headers
 
-Sizes of pointers, arrays, and strings are on the [behavior graph](/formats/hkx-behavior.md)
-page. All offsets here are full in-memory offsets.
+Sizes and rules are as in [HKX behavior graph objects](/formats/hkx-behavior.md). Every
+offset is the offset in memory.
 
-Almost every class comes from one of three bases:
+Almost every class comes from one of these bases, so their members sit at fixed offsets:
 
-`hkbBindable` (48 bytes):
-
-| Offset | Field | Type | Notes |
-| --- | --- | --- | --- |
-| 0x10 | `m_variableBindingSet` | pointer | The graph variables bound into this object |
-| 0x18 | `m_cachedBindables` | `hkArray` | `SERIALIZE_IGNORED` |
-| 0x28 | `m_areBindablesCached` | `hkBool` | `SERIALIZE_IGNORED` |
-
-`hkbNode` (72 bytes) adds:
-
-| Offset | Field | Type |
+| Base | Size | Members |
 | --- | --- | --- |
-| 0x30 | `m_userData` | uint64 |
-| 0x38 | `m_name` | `hkStringPtr` |
-| 0x40 | `m_id`, `m_cloneState`, `m_padNode` | `SERIALIZE_IGNORED` |
+| `hkbBindable` | 48 | 0x10 `m_variableBindingSet` pointer; 0x18 `m_cachedBindables` and 0x28 `m_areBindablesCached` (ignored) |
+| `hkbNode` | 72 | adds 0x30 `m_userData` (uint64), 0x38 `m_name` (`hkStringPtr`), 0x40 ignored members |
+| `hkbGenerator` | 72 | adds nothing |
+| `hkbModifier` | 80 | adds 0x48 `m_enable` (`hkBool`) and an ignored pad |
 
-`hkbGenerator` (72 bytes) adds nothing. `hkbModifier` (80 bytes) adds `m_enable` (`hkBool`) at
-0x48 and a pad at 0x49.
-
-The most useful rule: a generator's own members start at 0x48, and a modifier's at 0x50.
+So a generator's own members start at 0x48, and a modifier's at 0x50. This is the most
+useful rule on these pages.
 
 Two inline structs repeat:
 
-- `hkbEventProperty` (same as `hkbEventBase`), 16 bytes: int32 `m_id` at 0x00, pointer
-  `m_payload` at 0x08. `m_id` indexes the graph's event list. -1 means no event.
-- `hkVector4` and `hkQuaternion`, 16 bytes: four floats, 16-byte aligned.
+- `hkbEventProperty` (same as `hkbEventBase`), 16 bytes: int32 `m_id` at 0x00 and pointer
+  `m_payload` at 0x08. `m_id` is a position in the graph's event list. -1 means no event.
+- `hkVector4` and `hkQuaternion`, 16 bytes, four floats, 16-byte aligned.
+
+## Walking a graph
+
+A behavior graph is not a tree. Many nodes share one transition effect or one bone weight
+list. So a walk from the root visits each object once. OpenSky also decodes every object
+in the file, reachable or not, and counts decoded, skipped (no decoder), and failed objects
+per class.
+
+In every vanilla behavior file, the walk reaches exactly five objects fewer than the file
+has. Those five sit above the node tree: the root container, the graph, its data, its
+string data, and its variable value set. So the walk misses nothing.
 
 ## State machine classes
 
-`hkbStateMachine` (264 bytes) comes from `hkbGenerator`. The root generator of every vanilla
-behavior file is a state machine.
+`hkbStateMachine`, size 264, comes from `hkbGenerator`. The root generator of every vanilla
+player behavior file is a state machine.
 
 | off | field | type | notes |
 | --- | --- | --- | --- |
@@ -103,9 +89,9 @@ behavior file is a state machine.
 | 0x90 | `m_states` | `hkArray<hkbStateMachineStateInfo*>` | |
 | 0xA0 | `m_wildcardTransitions` | pointer | transitions valid from any state |
 
-`hkbStateMachineStateInfo` (120 bytes) comes from `hkbBindable`, not from `hkbNode`. So its
-name is its own member at 0x60, not the inherited one at 0x38. This is the easiest offset in
-this set to get wrong.
+`hkbStateMachineStateInfo`, size 120, comes from `hkbBindable`, **not** from `hkbNode`. So
+its name is its own member at 0x60, not the inherited one at 0x38. This is the easiest
+offset in this class set to get wrong.
 
 | off | field | type |
 | --- | --- | --- |
@@ -120,8 +106,8 @@ this set to get wrong.
 | 0x70 | `m_enable` | `hkBool` |
 
 `hkbStateMachineTransitionInfoArray` and `hkbStateMachineEventPropertyArray`, both size 32,
-are `hkReferencedObject` wrappers around one hkArray at 0x10 — of
-`hkbStateMachineTransitionInfo` (stride 72) and of `hkbEventProperty` (stride 16).
+wrap one `hkArray` at 0x10: of `hkbStateMachineTransitionInfo` (72 bytes each) and of
+`hkbEventProperty` (16 bytes each).
 
 `hkbStateMachineTransitionInfo`, 72 bytes:
 
@@ -143,7 +129,7 @@ are `hkReferencedObject` wrappers around one hkArray at 0x10 — of
 
 ## Generator classes
 
-`hkbClipGenerator` (272 bytes) is a leaf node. It is the only class that names an animation.
+`hkbClipGenerator`, size 272, is a leaf. It is the only class that names an animation.
 
 | off | field | type | notes |
 | --- | --- | --- | --- |
@@ -159,11 +145,13 @@ are `hkReferencedObject` wrappers around one hkArray at 0x10 — of
 | 0x72 | `m_mode` | `i8` enum | 0 single, 1 loop, 2 user controlled, 3 ping pong |
 | 0x73 | `m_flags` | `i8` bit set | 1 continue motion, 2 sync half cycle, 4 mirror |
 
-`hkbClipTriggerArray`, size 32: `m_triggers` at 0x10, `hkbClipTrigger` stride 32 —
+`hkbClipTriggerArray`, size 32: `m_triggers` at 0x10, of `hkbClipTrigger` (32 bytes each):
 `hkReal m_localTime` at 0x00, `hkbEventProperty m_event` at 0x08, then `hkBool`
-`m_relativeToEndOfClip`, `m_acyclic`, `m_isAnnotation` at 0x18, 0x19, 0x1A.
+`m_relativeToEndOfClip`, `m_acyclic`, and `m_isAnnotation` at 0x18, 0x19, and 0x1A. The
+vanilla walk and run clips have empty triggers. Footsteps come from animation annotations
+instead (see [hkaSplineCompressedAnimation](/formats/hka-animation.md#m_annotationtracks)).
 
-`hkbBlenderGenerator` (160 bytes) runs several children at once and mixes their poses.
+`hkbBlenderGenerator`, size 160, runs several children at once and mixes their poses.
 
 | off | field | type |
 | --- | --- | --- |
@@ -176,12 +164,12 @@ are `hkReferencedObject` wrappers around one hkArray at 0x10 — of
 | 0x5C | `m_subtractLastChild` | `hkBool` |
 | 0x60 | `m_children` | `hkArray<hkbBlenderGeneratorChild*>` |
 
-`hkbBlenderGeneratorChild`, size 80, derives `hkbBindable`: `m_generator` at 0x30,
+`hkbBlenderGeneratorChild`, size 80, comes from `hkbBindable`: `m_generator` at 0x30,
 `m_boneWeights` at 0x38, `hkReal m_weight` at 0x40, `hkReal m_worldFromModelWeight` at
 0x44.
 
-`hkbPoseMatchingGenerator`, size 240, derives `hkbBlenderGenerator`, so the blender members
-above come first and its own start at 0xA0: `hkQuaternion m_worldFromModelRotation` 0xA0,
+`hkbPoseMatchingGenerator`, size 240, comes from `hkbBlenderGenerator`. Its own members
+start at 0xA0: `hkQuaternion m_worldFromModelRotation` 0xA0,
 `m_blendSpeed` 0xB0, `m_minSpeedToSwitch` 0xB4, `m_minSwitchTimeNoError` 0xB8,
 `m_minSwitchTimeFullError` 0xBC, `i32 m_startPlayingEventId` 0xC0,
 `i32 m_startMatchingEventId` 0xC4, `i16` bone indices at 0xC8, 0xCA, 0xCC, 0xCE, and
@@ -195,5 +183,5 @@ Three smaller generators:
 | `hkbModifierGenerator` | 88 | `m_modifier` 0x48, `m_generator` 0x50 |
 | `hkbBehaviorReferenceGenerator` | 88 | `m_behaviorName` `hkStringPtr` 0x48 |
 
-`hkbBehaviorReferenceGenerator` is how `0_Master.hkb` pulls in the behavior file of each
-activity. It names the file. It does not point at an object.
+`0_Master.hkb` uses `hkbBehaviorReferenceGenerator` to pull in the behavior files for each
+activity. It names the file instead of pointing at it.

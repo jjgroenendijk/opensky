@@ -4,7 +4,7 @@
 // files (AGENTS.md "Legal & IP boundary"). Layout: UESP "Skyrim Mod:Mod File
 // Format/PROJ", cross-checked against xEdit dev-4.1.6
 // Core/wbDefinitionsTES5.pas `wbRecord(PROJ, ...)` line 5449. See
-// docs/formats/records.md.
+// docs/formats/projectiles.md.
 
 import Foundation
 @testable import opensky

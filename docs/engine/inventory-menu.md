@@ -42,7 +42,7 @@ the only way to find it.
 
 `inventorymenu.swf` places `ItemCard_mc`, `InventoryLists_mc`, and `BottomBar_mc`, but defines none
 of them. They come from three movies under `Inventory components/`. Without merging those movies in,
-the menu has no list at all. See [SWF display list imports](/formats/swf-display-list.md#imports).
+the menu has no list at all. See [SWF display list imports](/formats/swf-display-list.md#importassets-57-and-importassets2-71).
 
 ## List data
 

@@ -31,7 +31,7 @@ stores that reached the same inventory in different orders give equal snapshots 
 bytes. Stacking is by base form ID alone ([inventory and equipment](/engine/inventory-equipment.md)).
 
 Inventory travels in its own `INVN` chunk, not inside `RDLT`, so an older build skips it by length
-instead of refusing the file ([save chunks](/formats/save-chunks.md)).
+instead of refusing the file ([save chunks](/formats/opensky-save-world-chunks.md)).
 
 ## Baselines
 
@@ -108,4 +108,4 @@ Unequipping something not worn is not an error: the state the caller asked for a
 Equipping moves nothing between owners, so carried weight and value do not change: worn armor is
 still carried. The write belongs to the owner's cell, so only that cell rebuilds, and the rebuilt
 actor resolves its appearance from the equipped set instead of its default outfit
-([actor appearance](/engine/actor-appearance.md)). The player uses the same API.
+([actor resolution](/engine/actor-resolution.md)). The player uses the same API.

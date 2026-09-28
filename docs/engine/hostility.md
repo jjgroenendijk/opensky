@@ -96,7 +96,7 @@ and hostility records regard.
 ## Memberships at runtime
 
 The derivation reads the runtime faction membership component
-([factions](/formats/factions.md#membership-at-runtime)), not the `NPC_` record. So an actor a quest
+([factions](/formats/factions.md#runtime-membership)), not the `NPC_` record. So an actor a quest
 added to the Companions stays in after a reload, and an actor the player was never near costs
 nothing until something asks.
 

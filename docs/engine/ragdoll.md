@@ -60,7 +60,7 @@ simulated pose is used.
 Death is its own world state component, beside actor values, not inside them. Current health is
 rewritten every regeneration step. Death is a latch that only a resurrection clears. It is saved
 in its own `DETH` chunk. A build that does not know the chunk skips it and loads the rest
-([save chunks](/formats/save-chunks.md)).
+([save chunks](/formats/opensky-save-actor-chunks.md)).
 
 The resting root transform is saved. The pose of each bone is not. 18 bodies is 144 floats per
 corpse, and each would have to survive a save, a load, and a cell rebuild.

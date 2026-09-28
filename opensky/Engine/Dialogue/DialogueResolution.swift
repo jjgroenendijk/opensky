@@ -23,7 +23,7 @@
 // both functions a reason-tagged false rather than a convincing "no voice type"
 // or "not talking", exactly as the empty actor seam does.
 //
-// Documented in docs/engine/dialogue.md and docs/formats/conditions.md.
+// Documented in docs/engine/dialogue.md and docs/engine/condition-functions.md.
 
 import Foundation
 

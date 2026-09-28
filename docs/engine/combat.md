@@ -149,10 +149,10 @@ leaves the [music](/engine/music.md) precedence chain below it alone.
 
 ## What a save keeps
 
-Hostility goes in the `CBTS` chunk, and faction memberships in `FCTN`
-([save chunks](/formats/save-chunks.md)). `CBTS` holds only the explicit override, never the derived
-answer. Saving a derived answer would freeze a decision the next load should make again: a plugin
-that changes a faction relation must change who is angry. An unknown hostility byte loads as neutral.
+Hostility goes in `CBTS` and faction memberships in `FCTN` ([actor chunks](/formats/opensky-save-actor-chunks.md)).
+`CBTS` holds only the explicit override, never the derived answer. Saving a derived answer would
+freeze a decision the next load should make again: a plugin that changes a faction relation must
+change who is angry. An unknown hostility byte loads as neutral.
 
 Before a save, and after a load, the loop drops what a reload cannot rebuild: arrows in the air,
 falling corpses, attack phases, and the damage flash. What stays is what a component holds:

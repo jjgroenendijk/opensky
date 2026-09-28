@@ -20,7 +20,7 @@
 //   while the item is a weapon, is a tallied miss and the caller applies its
 //   own documented default rather than silently dropping the item.
 //
-// Documented in docs/formats/magic-records.md and
+// Documented in docs/formats/shouts-equip-slots.md and
 // docs/engine/inventory-equipment.md.
 
 import Foundation

@@ -10,7 +10,7 @@
 // so a session whose bounties are all theft and trespass writes no chunk and
 // its bytes match what the encoder produced before the chunk existed.
 //
-// Documented in docs/formats/opensky-save.md.
+// Documented in docs/formats/opensky-save-actor-chunks.md.
 
 import Foundation
 

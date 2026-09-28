@@ -1,6 +1,6 @@
 // M9.2.2 sound-field coverage on ModelBase (DOOR/ACTI/CONT). Synthetic ESM
 // fields only. Layout: xEdit dev-4.1.6 wbDefinitionsTES5.pas lines 4921-4923
-// (DOOR), 3323-3324 (ACTI), 4519-4520 (CONT); see docs/formats/records.md.
+// (DOOR), 3323-3324 (ACTI), 4519-4520 (CONT); see docs/formats/world-records.md.
 
 import Foundation
 @testable import opensky

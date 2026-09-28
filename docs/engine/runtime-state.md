@@ -156,8 +156,9 @@ There is no patching of single instances: a rebuild is a whole cell.
 ## Save and load
 
 The snapshot is exactly what a save writes, and restoring it is exactly what a load does. The byte
-layout is on the [OpenSky save container](/formats/opensky-save.md) and
-[save chunks](/formats/save-chunks.md) pages.
+layout is on the [OpenSky save container](/formats/opensky-save.md), the
+[actor chunks](/formats/opensky-save-actor-chunks.md), and the
+[world chunks](/formats/opensky-save-world-chunks.md) pages.
 
 Saving writes the live snapshot with a load-order fingerprint, built from each plugin's `HEDR`.
 Loading decodes a slot, can check the fingerprint, and restores the snapshot. Restoring replaces

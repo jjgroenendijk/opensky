@@ -5,7 +5,7 @@
 // journal conventions invented here:
 //
 // * A quest appears at all only when its `Kind` is not `.none`. Type 0 "keeps
-//   the quest out of the journal entirely" (docs/formats/records.md, from the
+//   the quest out of the journal entirely" (docs/formats/quest-records.md, from the
 //   DNAM type field), which is why `QuestStore.journalQuests()` already filters
 //   it and why the row set is filtered the same way.
 // * An objective appears only while its `isDisplayed` flag is set, the flag

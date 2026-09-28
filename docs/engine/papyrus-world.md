@@ -114,7 +114,7 @@ its suspension records are forgotten.
 
 Instance states are sorted by key, and variables by script and name, so an unchanged runtime saves
 the same bytes. A restore makes missing instances from the library, so it works before any cell
-attaches. The bytes are the `PSCR` chunk ([save chunks](/formats/save-chunks.md)).
+attaches. The bytes are the `PSCR` chunk ([save chunks](/formats/opensky-save-world-chunks.md)).
 
 Loading restores Papyrus last, after the world state and the game clock. The world state restore
 only queues rebuilds, and those rebuilds read the fired `OnInit` set. Restoring that set first is

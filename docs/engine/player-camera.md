@@ -71,7 +71,7 @@ wall does to an eye.
 ## The player body
 
 The player resolves through the same template and appearance code as a placed `ACHR`
-([actor appearance](/engine/actor-appearance.md)). So slot masking, FaceGen, and equipment work with
+([actor resolution](/engine/actor-resolution.md)). So slot masking, FaceGen, and equipment work with
 no second copy. Two things differ:
 
 - The base record is named directly: `Skyrim.esm` `NPC_` `00000007`, editor ID `Player`. The player

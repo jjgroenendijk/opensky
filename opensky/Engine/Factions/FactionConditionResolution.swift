@@ -19,7 +19,7 @@
 // `HostilityDerivation`. Copying either into this file would be a second answer
 // to keep in step with the one the combat loop uses.
 //
-// Documented in docs/engine/hostility.md and docs/formats/conditions.md.
+// Documented in docs/engine/hostility.md and docs/engine/condition-functions.md.
 
 import Foundation
 

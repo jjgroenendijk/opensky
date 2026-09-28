@@ -7,53 +7,56 @@ tags: [engine, vfs, archive, io]
 
 # Virtual file system
 
-The virtual file system (VFS) finds the bytes for a game path such as
-`meshes\clutter\cup.nif`. The bytes can be a loose file or sit inside a BSA archive. These
-rules are OpenSky's own. They copy the behavior players and modders see. Background: UESP
+The virtual file system (VFS) turns a game resource path, for example
+`meshes\clutter\cup.nif`, into bytes. The bytes come from a loose file under `Data/` or from
+a BSA archive. The code is in `opensky/Engine/GameData/`.
+
+These rules are OpenSky's own. They match what the game and mod tools do. Background on
+archive loading: UESP
 [Archive File Format](https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format).
 
 ## Path keys
 
-- Paths are case-insensitive. `/` and `\` are the same.
-- An empty path, or a path with `.` or `..`, is rejected. Game data never uses them, and they
-  could leave the data folder.
+- Paths ignore case, and `/` is the same as `\`. The key is lowercase with backslashes and
+  no double separators.
+- An empty path, or a path with a `.` or `..` part, is rejected. Game data never uses them,
+  and they could leave the data root.
 
 ## Lookup order
 
-1. A loose file under `Data/`. Loose files override archives, as mods expect.
-2. Archives. The archive opened last wins.
-3. Otherwise the file is not found.
+1. A loose file under `Data/`. Mods expect loose files to win over archives.
+2. The archives. The archive opened last wins, so plugin archives win over base archives.
+3. Nothing found: the lookup fails.
 
-Loose lookup matches each path part case-insensitively, so it works on case-sensitive disks
-too. Folder listings are cached and never refreshed. A file added to `Data/` while OpenSky
-runs is not seen.
+Loose lookup matches each path part without case. This works on case-sensitive disks too.
+The directory listings are cached and never refreshed. A file added to `Data/` while
+OpenSky runs is not seen.
 
 ## Archive open order
 
 The first archive opened has the lowest priority.
 
-1. The INI lists `sResourceArchiveList`, then `sResourceArchiveList2`, from `[Archive]`.
-   `Skyrim_Default.ini` and `Skyrim.ini` in the install root are merged key by key. Only when
-   neither file sets a key does OpenSky use its built-in copy of the vanilla SSE 1.6 lists.
-2. Archives named after plugins. For each `.esm`, `.esp`, or `.esl` in `Data/`, OpenSky opens
-   `<plugin>.bsa` and then `<plugin> - Textures.bsa` if they exist. Plugins follow the
-   [plugin load order](/formats/plugins-txt.md), so a mod's archive overrides the archives of
-   plugins before it. A plugin that the load order does not name keeps its archive at the
-   bottom. That page explains why OpenSky differs from the game here.
+1. The INI lists `sResourceArchiveList`, then `sResourceArchiveList2`, from the `[Archive]`
+   section. Both `Skyrim_Default.ini` and `Skyrim.ini` in the install root are read, and
+   `Skyrim.ini` wins per key. When neither file has either key, OpenSky uses a built-in copy
+   of the vanilla Skyrim SE 1.6 lists.
+2. Archives named after plugins. For each `.esm`, `.esp`, or `.esl` in `Data/`, OpenSky
+   opens `<plugin>.bsa`, then `<plugin> - Textures.bsa`, when they exist. UESP describes
+   this automatic loading. Plugins go in [load order](/formats/plugins-txt.md), so a mod's
+   archive wins over the archives of every plugin before it. A plugin not in the load order
+   keeps its archive at the bottom of the list. The plugins.txt page explains why.
 
-Archive names match `Data/` case-insensitively. A name listed twice opens once.
+Archive names match the files in `Data/` without case. A name listed twice counts once. A
+listed archive that does not exist is logged and skipped. For example, the vanilla INI lists
+`Skyrim - Patch.bsa`, which current installs do not ship. `MarketplaceTextures.bsa` matches
+no plugin and no INI entry, so it is never opened. The game uses it only for Creation Club
+menu previews.
 
-Two cases seen on an SSE 1.6 install:
+## Opening and errors
 
-- The vanilla INI lists `Skyrim - Patch.bsa`, but current installs do not ship it. OpenSky
-  logs this and skips it.
-- `MarketplaceTextures.bsa` matches no plugin and no INI entry, so it never opens. The game
-  uses it only for Creation Club menu previews.
-
-## Errors
-
-- An archive opens on its first lookup, not when the VFS is created.
-- An archive that cannot be read logs one error and is skipped from then on. Lookups fall
-  through to lower sources. This is never fatal, because mods can ship broken archives.
-- A broken file inside a good archive is an error for the caller. The lookup does not fall
-  through to a hidden copy. The game behaves the same way.
+- An archive reads its tables on the first lookup, not when the VFS is built. File data is
+  read only when asked for (see [BSA](/formats/bsa.md)).
+- A broken archive is logged once and skipped from then on. Lookups fall through to the
+  archives below it. This is never fatal, because mods sometimes ship broken files.
+- A broken file inside a good archive gives an error to the caller. The lookup does not
+  fall through to a lower copy. The game behaves the same way.

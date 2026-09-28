@@ -60,7 +60,7 @@ class spreads over the three attributes.
 A player progress component holds the level, the experience toward the next level, the unspent
 perk points, the owed attribute picks, the picks already made, and a count of skill points
 gained. It is saved in the `PLVL` chunk. A session that never leveled writes no chunk
-([save chunks](/formats/save-chunks.md)).
+([save chunks](/formats/opensky-save.md#chunks)).
 
 Skill progress is not here. It lives in the `Skill Advance` actor values, because the vanilla
 table already has one slot per skill for exactly that. Nothing in that table holds a character
@@ -159,7 +159,7 @@ Indices are the stored numbers. The Creation Kit adds 4096.
 | 277 | `GetBaseActorValue` | The base value, never with modifiers |
 
 `GetBaseActorValue` reads the base on purpose. A fortified skill is not a trained one, so a
-potion cannot buy a perk requirement ([condition evaluation](/engine/condition-evaluation.md)).
+potion cannot buy a perk requirement ([condition evaluation](/engine/conditions.md)).
 
 ## Papyrus
 

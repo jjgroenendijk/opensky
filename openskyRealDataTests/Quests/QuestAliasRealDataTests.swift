@@ -3,7 +3,7 @@
 // sweep says how much of vanilla each stated deferral actually affects.
 //
 // The target quest is `MGRArniel01`, the cheapest entry on the 13.1 census
-// shortlist (docs/formats/records.md): one forced-reference alias, which is the
+// shortlist (docs/formats/quest-records.md): one forced-reference alias, which is the
 // one fill type item 13.4 implements. Named here rather than rediscovered,
 // because the shortlist is the record of that choice.
 //

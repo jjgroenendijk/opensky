@@ -71,8 +71,8 @@ containment follows. A script that leaves the world with its cell does not carry
 unseen. Persistent instances keep theirs, because they are never retired.
 
 Timers of persistent instances are saved in the `PTMR` chunk, apart from `PSCR`, because a timer is
-not a variable ([save chunks](/formats/save-chunks.md)). Each entry stores the time left, not a
-deadline, and a restore starts it from the current tick and game hour. So time between save and load
-never counts. A saved timer for an instance the session does not hold is counted as
+not a variable ([save chunks](/formats/opensky-save-world-chunks.md)). Each entry stores the time
+left, not a deadline, and a restore starts it from the current tick and game hour. So time between
+save and load never counts. A saved timer for an instance the session does not hold is counted as
 `unknownSaveTimerTarget`, not a fault. Timers restore after instances, because each timer names its
 instance.

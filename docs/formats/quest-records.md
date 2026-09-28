@@ -1,99 +1,112 @@
 ---
 type: File Format
-title: Quest records
-description: The QUST record - its order-dependent field groups for stages, log entries,
-  objectives, and aliases, the alias fill types, and how bad input is handled.
-tags: [format, esm, records, quests]
+title: Quest records (QUST)
+description: QUST layout — the grouped stage, objective, and alias runs, alias fill types,
+  and what the vanilla quests contain.
+tags: [format, plugin, records, quests]
 ---
 
-# Quest records (QUST)
+# Quest records
 
-A quest holds journal stages, objectives, and aliases. An alias is a named slot that the quest
-fills with a world object, such as "the person to talk to". The stage scripts are not in the
-record. They are in the `QUST` part of `VMAD` (see [VMAD](/formats/vmad.md)). Quest state is on
-the [runtime state](/engine/runtime-state.md) page.
+A QUST holds a quest's journal stages, its objectives, and the aliases that point at world
+objects. The stage scripts are not here. They are in the QUST part of `VMAD`
+([VMAD](/formats/vmad.md)). Quest state at runtime is on
+[runtime state](/engine/runtime-state.md). Shared decode rules are on
+[record decoders](/formats/records.md).
 
-Sources: UESP [QUST](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/QUST); xEdit
-`dev-4.1.6` `wbDefinitionsTES5.pas` `wbRecord(QUST, 'Quest', ...)`: `DNAM` at line 8763, stages
-at 8797, objectives at 8840, reference aliases at 8869, location aliases at 8971.
+Sources: UESP [`/QUST`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/QUST), and xEdit
+`dev-4.1.6` `wbDefinitionsTES5.pas` `wbRecord(QUST, 'Quest', ...)` at line 8759: `DNAM`
+8763, stages 8797, objectives 8840, reference aliases 8869, location aliases 8971.
 
-## Field order matters
+## Field order
 
-`QUST` depends on field order more than any other record. Few of its fields are a complete
-struct. Instead, a marker field opens a group, and every field after it belongs to that group
-until the next marker. Three such groups follow each other, and two separator fields control
-the rest.
+QUST depends on field order more than any other record. A marker field opens a group, and
+every field after it belongs to that group until the next marker.
 
-| Field | Type | Meaning |
+| field | type | meaning |
 | --- | --- | --- |
-| `EDID` | zstring | Editor ID |
-| `VMAD` | varies | Scripts, with the quest fragment part |
-| `FULL` | lstring | Name |
+| `EDID` | zstring | editor ID |
+| `VMAD` | struct | scripts, with the quest fragment table |
+| `FULL` | lstring | name |
 | `DNAM` | 12 bytes | uint16 flags, uint8 priority, uint8 form version, 4 unused, uint32 type |
-| `ENAM` | 4 chars | Story manager event name |
-| `QTGL` | FormID, repeats | Globals shown in journal text |
+| `ENAM` | char[4] | story manager event |
+| `QTGL` | FormID | global for text display; repeated |
 | `FLTR` | zstring | Creation Kit folder |
-| `CTDA` | 32 bytes | Dialogue conditions before `NEXT`, story manager conditions after it |
-| `NEXT` | empty | Separates the two condition runs |
-| `INDX` | 4 bytes | Opens a stage: uint16 index, uint8 flags, 1 unused |
-| `QSDT` | uint8 | Opens a log entry in the stage. Flags: `0x01` complete, `0x02` fail |
-| `CNAM` | lstring | The log entry's journal text |
-| `NAM0` | FormID | The log entry's next quest |
-| `QOBJ` | uint16 | Opens an objective, and ends the stages |
-| `FNAM` | uint32 | The objective's flags. `0x01`: OR with the previous one |
-| `NNAM` | lstring | The objective's text. See below |
-| `QSTA` | 8 bytes | Opens an objective target: int32 alias, uint8 ignores locks, 3 unused |
-| `ANAM` | uint32 | Next alias ID. Ends the objectives and starts the aliases |
-| `ALST`, `ALLS` | uint32 | Opens a reference alias or a location alias |
-| `ALED` | empty | Closes the alias |
+| `CTDA` | 32 bytes | dialogue conditions before `NEXT`, story manager conditions after |
+| `NEXT` | empty | separates the two condition runs |
+| `INDX` | 4 bytes | opens a stage: uint16 index, uint8 flags, 1 unused |
+| `QSDT` | uint8 | opens a log entry in the stage; flags `0x01` complete, `0x02` fail |
+| `CNAM` | lstring | the log entry's journal text |
+| `NAM0` | FormID | the log entry's next quest |
+| `QOBJ` | uint16 | opens an objective and ends the stages |
+| `FNAM` | uint32 | the objective's flags (`0x01` ORed with previous) |
+| `NNAM` | lstring | the objective's display text |
+| `QSTA` | 8 bytes | opens an objective target: int32 alias, uint8 ignores locks, 3 unused |
+| `ANAM` | uint32 | next alias ID; ends the objectives and starts the aliases |
+| `ALST` / `ALLS` | uint32 | opens a reference alias / location alias |
+| `ALED` | empty | closes the alias |
 
-## Fields with two meanings
+A quest with `DNAM` type 0 does not appear in the journal. Vanilla runs many type-0
+controller quests.
 
-Inside an alias, some field names mean something else. `FNAM` is the alias flags. `CTDA` is the
-alias's own match conditions. `KSIZ` and `KWDA` are keywords, and `COCT` and `CNTO` are items,
-given to the alias target while the quest runs. So the decoder gives every field to the open
-alias first.
+Inside an alias, some names mean something else: `FNAM` is alias flags, `CTDA` is the
+alias's match conditions, and `KSIZ`/`KWDA` and `COCT`/`CNTO` are keywords and items given to
+the alias target while the quest runs. So a field goes to the open alias first.
 
-`NNAM` is an lstring objective text inside the objectives. After `ANAM` it is a plain zstring
-quest description. `QSTA` after `ANAM` is an old record-level target, whose value is a reference
-FormID, not an alias ID. Vanilla `Skyrim.esm` has none.
+`NNAM` has two meanings. Inside the objectives, it is an lstring with the objective text.
+After `ANAM`, it is a plain zstring with the quest description. `QSTA` after `ANAM` is an old
+record-level target whose word is a reference FormID, not an alias ID. `Skyrim.esm` has none.
+
+The journal text tables: quest `FULL` and objective `NNAM` come from `.strings`, and the
+stage `CNAM` text comes from `.dlstrings` ([strings](/formats/strings.md)).
 
 ## Alias fill types
 
-The Creation Kit shows one "fill type" per alias. On disk, the type follows from which fields
-are present. The decoder reads each field into its own property, and works out the fill type
-afterwards, in the Creation Kit's order.
+The Creation Kit shows one "fill type" per alias. On disk, the type follows from which
+fields are present. The table uses the Creation Kit's order:
 
-| Fill type | Fields | For |
+| fill type | fields | alias kind |
 | --- | --- | --- |
-| Specific reference | `ALFR` | Reference |
-| Unique actor | `ALUA` | Reference |
-| Specific location | `ALFL` | Location |
-| Location alias reference | `ALFA` + `ALRT` | Reference |
-| Reference alias location | `ALFA` + `KNAM` | Location |
-| External alias | `ALEQ` + `ALEA` | Both |
-| Create reference to object | `ALCO` + `ALCA` + `ALCL` | Reference |
-| Near alias | `ALNA` + `ALNT` | Reference |
-| From event | `ALFE` + `ALFD` | Both |
-| None | - | Filled by script, by `ALFI`, or by conditions alone |
+| specific reference | `ALFR` | reference |
+| unique actor | `ALUA` | reference |
+| specific location | `ALFL` | location |
+| location alias reference | `ALFA` + `ALRT` | reference |
+| reference alias location | `ALFA` + `KNAM` | location |
+| external alias | `ALEQ` + `ALEA` | both |
+| create reference to object | `ALCO` + `ALCA` + `ALCL` | reference |
+| near alias | `ALNA` + `ALNT` | reference |
+| from event | `ALFE` + `ALFD` | both |
+| none | none | filled by script, by `ALFI`, or by conditions |
 
-Vanilla uses every fill type in this table.
+## Decode rules
 
-## Bad input
+A field of the wrong size is dropped. A field that arrives with no open group is dropped.
+An alias without `ALED` is kept. `SCHR`, `SCTX`, and `QNAM` inside a log entry are old
+fields that xEdit marks unused (`wbUnused(SCHR/SCTX/QNAM)`); they are skipped.
 
-- A field with the wrong size costs only its own entry.
-- A field that arrives with no group open costs only itself.
-- An alias with no closing `ALED` is kept, and counted.
-- An unknown field is skipped.
+## Vanilla quests
 
-Each case is counted, so a sweep can check for zero. Only a record that is not `QUST` throws.
+In `Skyrim.esm`:
 
-Vanilla has no bad cases. The only skipped fields are `SCHR`, `SCTX`, and `QNAM` in log entries.
-An older Creation Kit wrote them, and xEdit marks them unused.
+| measure | value |
+| --- | --- |
+| quests | 1,811 |
+| stages / with journal text | 5,220 / 726 |
+| log entries / with `CNAM` text | 5,294 / 771 |
+| objectives / objective targets | 1,452 / 1,808 |
+| aliases (reference / location) | 12,891 (11,999 / 892) |
+| fragment tables / stage fragments / alias script sections | 856 / 5,108 / 2,149 |
+| skipped fields | 53, all `SCHR`, `SCTX`, or `QNAM` |
+| conditions / different function indices | 11,427 / 90 |
 
-Three links prove the groups are read right. In vanilla, every objective target names an alias
-its own quest has. Every fragment names a stage its own quest has. Every alias script section
-names its own quest.
+No quest repeats an alias ID. Every objective target names an alias of its own quest, every
+fragment names a stage of its own quest, and every alias script section names its own quest.
+This confirms that the groups are read correctly.
 
-`openskycli record --type QUST` and the Asset Browser show a quest's name, type, priority,
-flags, and its numbers of stages, objectives, aliases, and fragments.
+Fill types used: unique actor 2,900, specific reference 2,687, from event 2,065, none 2,062,
+location alias reference 2,036, create reference to object 630, near alias 218, specific
+location 162, external alias 83, reference alias location 48. Vanilla uses every fill type.
+
+Simple quests with journal text and stage fragments include `MGRArniel01` (`0006A086`: 2
+stages, 1 objective, 1 forced-reference alias, 2 fragments, no conditions), `DBEviction`
+(`0006F9A5`), and `TGCrownMisc` (`0006D585`).

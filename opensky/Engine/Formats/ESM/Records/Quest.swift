@@ -37,7 +37,7 @@
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(QUST, 'Quest', ...)`
 //     line 8759: DNAM 8763, stages 8797, objectives 8840, aliases 8869
 //     (reference) and 8971 (location).
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/quest-records.md.
 
 import Foundation
 

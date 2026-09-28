@@ -129,7 +129,7 @@ through that write. Without that, a held modifier would last exactly one frame.
 ## Conditions
 
 An effect entry's `CTDA` list is evaluated against the target when the effect is applied, with both
-run-ons naming the receiving actor ([condition evaluation](/engine/condition-evaluation.md)). An
+run-ons naming the receiving actor ([condition evaluation](/engine/conditions.md)). An
 empty list is true. A list OpenSky cannot evaluate is a false with a reason, and the entry is
 skipped and counted, never passed quietly.
 
@@ -168,8 +168,8 @@ it, and it belongs to alchemy, not to applying effects.
 
 ## Saving
 
-Timed effects go in the `AEFF` chunk ([save chunks](/formats/save-chunks.md)). It stores elapsed
-time, not remaining time, so a loaded effect shows the same total duration as before.
+Timed effects go in the `AEFF` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)). It
+stores elapsed time, not remaining time, so a loaded effect shows the same total duration as before.
 
 The `AVOV` chunk leaves out the temporary slot, because saving both it and the effect behind it
 would double every buff. Each saved effect records how much of the slot it owns, and the slot is

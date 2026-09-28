@@ -128,6 +128,7 @@ Two separate things:
 
 - Between app launches, the time slider's hour is kept as a setting and starts the clock. The date
   starts on the 17th of Last Seed each launch.
-- In a save, the whole clock is the `CLOK` chunk ([save chunks](/formats/save-chunks.md)). A save
-  with no `CLOK` loads the vanilla start. Loading a clock also resets the weather's elapsed-time
-  mark, so a restored date does not count as months of weather.
+- In a save, the whole clock is the `CLOK` chunk ([save
+  chunks](/formats/opensky-save-world-chunks.md)). A save with no `CLOK` loads the vanilla start.
+  Loading a clock also resets the weather's elapsed-time mark, so a restored date does not count as
+  months of weather.

@@ -12,7 +12,7 @@ tags: [engine, actors, gameplay, stats, health, magicka, stamina, resistances, s
 An actor value is one number on an actor, such as health, One-Handed skill, or fire resistance. The
 vanilla table has 164 entries. This page covers what an actor value is before anything changes it:
 its baseline, derived from records. The record layouts are on the [actor records](/formats/actors.md)
-and [race and class](/formats/race-and-class.md) pages.
+and [race and class](/formats/actors.md#race) pages.
 
 Related pages:
 

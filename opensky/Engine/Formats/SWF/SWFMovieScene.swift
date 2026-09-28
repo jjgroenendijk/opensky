@@ -4,7 +4,7 @@
 // the fontlib movies (fonts_en.swf, ...), so an edit text renders through the
 // external font its placeholder name (or its FontClass) resolves to.
 // Resolution through fontconfig is observed GFx behavior — see
-// docs/formats/swf.md "fontconfig.txt".
+// docs/formats/swf-text.md "fontconfig.txt".
 
 import Foundation
 

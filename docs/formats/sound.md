@@ -1,7 +1,7 @@
 ---
 type: File Format
 title: Sound records
-description: SNDR, SNCT, and SOUN fields, the sound category tree, and how track paths resolve.
+description: Skyrim SE SNDR, SNCT, and SOUN fields, the category tree, and sound file paths.
 tags: [format, plugin, audio, sound]
 ---
 
@@ -9,33 +9,33 @@ tags: [format, plugin, audio, sound]
 
 Three records describe sounds:
 
-- `SOUN` is a sound marker. It names one descriptor.
-- `SNDR` is a sound descriptor. It lists the sound files and how to play them.
-- `SNCT` is a sound category. Categories form a tree, which is the game's volume mixer.
+- `SNDR`, a sound descriptor: the sound files and how to play them.
+- `SNCT`, a sound category: a node in the volume mixer tree, for example "Footsteps".
+- `SOUN`, a sound marker: a placed object that names one `SNDR`.
 
 Sources: UESP [`SNDR`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SNDR),
 [`SNCT`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SNCT), and
 [`SOUN`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SOUN). Field sizes and signs
-were checked against xEdit `dev-4.1.6`
+checked against xEdit `dev-4.1.6`
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas).
-The Creation Kit page [Sound Descriptor](https://ck.uesp.net/wiki/Sound_Descriptor)
-explains what the settings mean.
+The Creation Kit page [Sound Descriptor](https://ck.uesp.net/wiki/Sound_Descriptor) explains
+what the settings do.
 
-## SNDR sound descriptor
+## SNDR
 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `EDID` | zstring | Editor ID |
 | `CNAM` | uint32 | Descriptor type |
-| `GNAM` | FormID | Sound category |
+| `GNAM` | FormID | Sound category (`SNCT`) |
 | `SNAM` | FormID | Alternate descriptor |
 | `ANAM` | zstring | One sound file path. Repeats, in order |
 | `ONAM` | FormID | Output model |
 | `LNAM` | 4 bytes | Looping, in byte 1 |
-| `BNAM` | 6 bytes | Frequency, priority, variance, attenuation |
+| `BNAM` | 6 bytes | Below |
 
 `LNAM` byte 1: `0` no loop, `8` loop, `16` fast envelope, `32` slow envelope. OpenSky keeps
-any other value as unknown.
+any other value as unknown. It does not guess what it means.
 
 `BNAM`:
 
@@ -45,67 +45,65 @@ any other value as unknown.
 | 1 | int8 | Frequency variance, percent |
 | 2 | uint8 | Priority |
 | 3 | uint8 | Decibel variance |
-| 4 | uint16 | Static attenuation, in hundredths of a decibel |
+| 4 | uint16 | Static attenuation, in 1/100 dB |
 
-Example: a stored attenuation of 350 is 3.5 dB.
-
-## SNCT sound category
+## SNCT
 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `EDID` | zstring | Editor ID |
 | `FULL` | lstring | Name |
-| `FNAM` | uint32 | Flags: bit 0 mute under water, bit 1 show in the menu |
+| `FNAM` | uint32 | Flags: bit 0 mute under water, bit 1 show in menu |
 | `PNAM` | FormID | Parent `SNCT` |
 | `VNAM` | uint16 / 65535 | Static volume multiplier |
 | `UNAM` | uint16 / 65535 | Default menu value |
 
-OpenSky starts at `SNDR.GNAM` and follows `PNAM` upward. The first category that shows in
-the menu gives the sound its volume slider. A loop, a missing node, or an unknown name gives
-no slider, and the sound uses Effects.
+The `PNAM` links form a tree. To find a sound's volume slider, OpenSky starts at
+`SNDR GNAM` and walks up the parents to the first node shown in the menu. A broken mod can
+make a loop, so the walk stops at a node it has seen. If no menu node is found, the sound
+uses Effects.
 
-`Skyrim.esm` has 18 categories. Four show in the menu:
+`Skyrim.esm` has 18 `SNCT` records. Four are shown in the menu:
 
-| `SNCT.EDID` | Label | OpenSky category |
+| `SNCT` editor ID | English label | OpenSky category |
 | --- | --- | --- |
 | `AudioCategorySFX` | Effects | `effects` |
 | `AudioCategoryVOCGeneral` | Voice | `voice` |
 | `AudioCategoryMUS` | Music | `music` |
 | `AudioCategoryFST` | Footsteps | `footsteps` |
 
-`_AudioCategoryMaster` is the root. OpenSky uses it as the separate master volume.
-OpenSky reads `VNAM` and `UNAM` but does not apply them. Its volume is master x category x
-source x fade, with its own defaults.
+`_AudioCategoryMaster` is the root. OpenSky uses it as the master volume, not as a category.
+OpenSky reads `VNAM` and `UNAM` but does not use them. Its volume model and defaults are its
+own.
 
-## SOUN sound marker
+## SOUN
 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `EDID` | zstring | Editor ID |
-| `SDSC` | FormID | The `SNDR` descriptor |
+| `SDSC` | FormID | The `SNDR` to play |
 
-The older `SOUN FNAM` and `SOUN SNDD` fields are ignored. Skyrim SE uses `SDSC`.
+Skyrim SE uses `SDSC`. OpenSky ignores the older `SOUN FNAM` and `SOUN SNDD` layouts.
 
-## Track paths
+## Sound file paths
 
-Each `ANAM` path is resolved in order. The Creation Kit writes these paths in several forms:
+The Creation Kit writes `ANAM` paths in several forms. A path may be relative to
+`Data\Sound`, may start with `Sound`, or may start with a separator before either. The
+leading separator means "from the root" on Windows. It is not a drive. So OpenSky:
 
-- relative to `Data\Sound`: `fx\door\door01.wav`
-- starting at `Sound`: `sound\fx\door\door01.wav`
-- with a leading separator: `\sound\fx\door\door01.wav`
-- with an outer `Data\`
+1. Removes a leading separator and an outer `Data\`.
+2. Adds `sound\` in front if it is missing.
+3. Applies the [VFS path rules](/formats/vfs.md): backslashes, lowercase, no unsafe parts.
+4. Drops a path that still has a `:`, because that is a drive path.
 
-The leading separator means "from the root" on Windows. It is not a drive. OpenSky removes it
-and an outer `Data\`, and adds `sound\` when missing. Then the
-[VFS path rules](/formats/vfs.md) apply. A path that still has a `:` names a drive, such as
-`C:`, and is dropped. A bad path is dropped without changing the order of the others.
+A dropped path does not change the order of the others.
 
-In `Skyrim.esm`, about 6% of the paths start with a separator. Two paths name a `C:` drive
-on the authoring machine. After these rules, almost every path resolves. The few that do not
-name development files that never shipped.
+In `Skyrim.esm`, about 300 `ANAM` paths start with a separator. Two are real `C:` paths from
+an author's machine, and OpenSky drops them. Almost all other paths resolve through the VFS.
+About 20 name development files that the game does not ship.
 
-## Bad input
+## Field sizes
 
-Each decoder checks its record type. Unknown fields are skipped. The fixed-size fields
-(`SNCT FNAM`, `PNAM`, `VNAM`, `UNAM`, `SNDR LNAM`, `BNAM`, `SOUN SDSC`) are read only at
-their exact size. Any other size is ignored.
+`SNCT FNAM`, `PNAM`, `VNAM`, `UNAM`, `SNDR LNAM`, `BNAM`, and `SOUN SDSC` are read only at
+their exact documented sizes. Other sizes are ignored. This keeps a broken field from
+moving later reads.

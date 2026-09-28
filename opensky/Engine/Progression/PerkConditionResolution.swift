@@ -12,7 +12,7 @@
 // FormID parameter that has to be resolved against the load order before it can
 // be compared, exactly as the magic seam's does.
 //
-// Documented in docs/engine/perks.md and docs/formats/conditions.md.
+// Documented in docs/engine/perks.md and docs/engine/condition-functions.md.
 
 import Foundation
 

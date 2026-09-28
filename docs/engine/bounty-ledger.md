@@ -71,7 +71,7 @@ gold that comes back is honest ([vendor factions](/engine/vendor-factions.md)).
 
 ## Saving
 
-Three chunks in the [OpenSky save](/formats/save-chunks.md):
+Three chunks in the [OpenSky save](/formats/opensky-save-actor-chunks.md):
 
 - `CRIM`: one entry per actor with a ledger, one row per faction, with the gold and the four
   counts.

@@ -1,31 +1,30 @@
 ---
 type: File Format
-title: NIF materials
+title: NIF materials (Skyrim SE)
 description: BSLightingShaderProperty, BSEffectShaderProperty, BSShaderTextureSet, and
-  NiAlphaProperty in Skyrim SE NIFs, and how texture paths are cleaned.
-tags: [format, mesh, material, texture]
+  NiAlphaProperty layouts, and texture path rules.
+tags: [format, mesh, material, texture, rendering]
 ---
 
 # NIF materials
 
-A `BSTriShape` points at a shader property and an alpha property. These blocks start with only
-the `NiObjectNET` fields (name, extra data, controller), not the `NiAVObject` fields. The
-container is on the [NIF](/formats/nif.md) page.
+A `BSTriShape` links a shader property and an alpha property (see [NIF](/formats/nif.md)).
+These blocks start with the `NiObjectNET` fields only (name, extra data, controller), not
+the full node fields.
 
-Source: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml). Only the
-Skyrim layouts (BS 83 and 100) are read. Fallout 4 and later move fields around.
+Reference: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml).
+Only the Skyrim layouts (streams 83 and 100) are read. Fallout 4 and later move fields.
 
 ## BSLightingShaderProperty
 
 A quirk: for this block only, a uint32 shader type comes before the `NiObjectNET` name.
-`nif.xml` declares it inside `NiObjectNET` with `onlyT=BSLightingShaderProperty`.
-
-After the `NiObjectNET` fields. Fields in parentheses are read past, not kept:
+`nif.xml` declares it inside `NiObjectNET` with `onlyT=BSLightingShaderProperty`. After the
+`NiObjectNET` fields (fields in brackets are read but not kept):
 
 | Type | Field | Notes |
 | --- | --- | --- |
 | uint32 | Shader flags 1 | `SkyrimShaderPropertyFlags1` |
-| uint32 | Shader flags 2 | Bit 4 is double-sided, so no culling |
+| uint32 | Shader flags 2 | Bit 4: double-sided, so no culling |
 | float x 2 | UV offset | |
 | float x 2 | UV scale | |
 | int32 | Texture set ref | `BSShaderTextureSet` |
@@ -37,15 +36,15 @@ After the `NiObjectNET` fields. Fields in parentheses are read past, not kept:
 | float x 3 | Specular color | |
 | float | Specular strength | |
 
-The rest (lighting effects, and fields that depend on the shader type, such as environment map
-scale, skin tint, parallax, and eye data) is not read. The block size bounds it.
+The fields after specular strength (lighting effects, and per-shader-type fields such as
+environment map scale, skin tint, parallax, and eye data) are not read. The block size
+bounds them.
 
 ## BSEffectShaderProperty
 
-The material of an effect: glow, additive particles, unlit effects. Both Skyrim streams use the
-same layout. There is no shader type before the name here.
-
-After the `NiObjectNET` fields:
+The material of an effect: glow, additive particles, unlit effects. Both Skyrim streams use
+the same layout. There is no shader type before the name here. After the `NiObjectNET`
+fields:
 
 | Type | Field | Notes |
 | --- | --- | --- |
@@ -53,7 +52,7 @@ After the `NiObjectNET` fields:
 | uint32 | Shader flags 2 | `SkyrimShaderPropertyFlags2` |
 | float x 2 | UV offset | |
 | float x 2 | UV scale | |
-| SizedString | Source texture | The effect texture path |
+| SizedString | Source texture | Effect texture path |
 | byte | Texture clamp mode | `TexClampMode` |
 | byte | (Lighting influence) | |
 | byte | (Env map min LOD) | |
@@ -64,66 +63,65 @@ After the `NiObjectNET` fields:
 | float | Falloff stop opacity | |
 | float x 4 | Base color | Emissive color with alpha |
 | float | Base color scale | RGB multiplier |
-| float | Soft falloff depth | Soft-particle edge fade |
+| float | Soft falloff depth | Soft particle edge fade |
 | SizedString | Greyscale texture | Palette for greyscale-to-color |
 
-At BS 83 and 100 there is no refraction power (Fallout 76 only), and no extra textures or
-luminance fields (Fallout 4 and later).
+At streams 83 and 100 there is no refraction power (`nif.xml` has it only for Fallout 76),
+and no environment, normal, or mask textures or luminance fields (Fallout 4 and later).
 
 Flag bits OpenSky uses:
 
 | Flags | Bit | Meaning |
 | --- | --- | --- |
 | 2 | 4 | Double-sided |
-| 2 | 0 | Z-buffer write. Clear means no depth write |
+| 2 | 0 | Z buffer write. Cleared means no depth write |
 | 1 | 3 | Vertex alpha |
-| 1 | 4, 5 | Greyscale to palette: color, alpha |
+| 1 | 4, 5 | Greyscale to palette color, alpha |
 | 1 | 6 | Use falloff |
 | 1 | 30 | Soft effect |
-| 1 | 31 | Z-buffer test. `nif.xml` puts it in flags 1, not flags 2 |
+| 1 | 31 | Z buffer test. It is in flags 1, not flags 2 |
 
 ## BSShaderTextureSet
 
-A uint32 count, then one SizedString per slot:
+A uint32 count, then one SizedString per slot. Slot 0 is diffuse, slot 1 normal and gloss.
+Slots 2 to 7 are glow or skin, height, environment, environment mask, subsurface, and back
+light. OpenSky keeps them but uses only slots 0 and 1.
 
-| Slot | Texture |
-| --- | --- |
-| 0 | Diffuse (color) |
-| 1 | Normal and gloss |
-| 2 | Glow or skin |
-| 3 | Height |
-| 4 | Environment |
-| 5 | Environment mask |
-| 6 | Subsurface |
-| 7 | Backlight |
+Vanilla paths vary a lot: mixed case, `\` or `/`, with or without `textures\`, and
+sometimes a leading `data\`. Some are absolute paths from the exporter's machine, for
+example `textures/skyrimhd/build/pc/data/textures/...`. OpenSky makes a VFS key like this:
 
-Vanilla paths are messy: mixed case, `\` or `/`, with or without `textures\`, sometimes with a
-leading `data\`. Some even hold the export machine's full path, such as
-`textures/skyrimhd/build/pc/data/textures/...`. OpenSky cleans a path like this:
-
-1. Lowercase it, and turn `\` into `/`.
+1. Lowercase, and `\` becomes `/`.
 2. Remove a leading `/` and `data/`.
-3. Keep only the part after the last `textures/`, and make sure it starts with `textures/`.
-4. An empty path means no texture.
+3. Cut everything before the last `textures/`.
+4. Add `textures/` in front if it is missing.
+5. An empty path gives no texture.
 
-Example: `Data\Textures\Clutter\Cup.dds` becomes `textures/clutter/cup.dds`.
-
-A few vanilla paths point at textures that do not exist (`textures/err` markers and old effect
-paths). Those get a placeholder texture.
+Almost all vanilla diffuse paths resolve. About 200 name textures that do not exist
+(`textures/err` markers, old effect paths) and get the placeholder.
 
 ## NiAlphaProperty
 
-The `NiObjectNET` fields, then a uint16 of alpha flags and a uint8 threshold:
+The `NiObjectNET` fields, then uint16 alpha flags and a uint8 threshold (`nif.xml`
+`AlphaFlags`):
 
 | Bits | Meaning |
 | --- | --- |
 | 0 | Blend on |
-| 1-4 | Source blend mode |
-| 5-8 | Destination blend mode |
+| 1-4 | Source blend mode (`AlphaFunction`) |
+| 5-8 | Destination blend mode (`AlphaFunction`) |
 | 9 | Alpha test on |
 | 10-12 | Test function. 4 (greater) is the default |
 | 13 | No sorter |
 
-The threshold (0 to 255) is compared with the sampled alpha. Foliage cutouts use alpha test with
-a threshold. Example: the thatch roof of `farmhouse01.nif` is double-sided with an alpha test at
-0.5.
+The threshold (0 to 255) is compared with the sampled alpha. Foliage cutouts use alpha test
+with a threshold. For example, the thatch roof of `farmhouse01.nif` is double-sided with
+alpha test at 0.5.
+
+## Engine material
+
+Each (shader, alpha) pair becomes one material: texture keys, UV transform, alpha,
+glossiness, specular, double-sided, and alpha blend and test. Shaders other than lighting
+(effect, water, sky) get a plain fallback material, untextured but drawn. Effect shaders
+used by particles go to the particle path instead (see
+[NIF particle systems](/formats/nif-particles.md)).

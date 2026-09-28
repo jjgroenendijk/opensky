@@ -60,4 +60,4 @@ so sources 2 and 3 are a tallied failure, not a silent no-op.
 | `Actor.DoCombatSpellApply` | Not installed | It asks the combat controller to fit a spell into what it is doing. The caster AI picks its own spells, so an instant cast would bypass its decisions |
 | `Spell.RemoteCast`, `Spell.Preload`, `Spell.Unload` | Not installed | The asset lifecycle they name does not exist |
 | The `ActiveMagicEffect` script | Not installed | No script archetype `MGEF` runs yet, so there is no receiver |
-| `HasMagicEffect`, `HasMagicEffectWithKeyword` | Answer "is it acting", not "is it carried" | The same narrowing the condition functions use, cited on [condition evaluation](/engine/condition-evaluation.md) |
+| `HasMagicEffect`, `HasMagicEffectWithKeyword` | Answer "is it acting", not "is it carried" | The same narrowing the condition functions use, cited on [condition evaluation](/engine/conditions.md) |

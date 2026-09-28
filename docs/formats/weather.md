@@ -1,124 +1,144 @@
 ---
 type: File Format
 title: Weather records (WTHR, CLMT, REGN)
-description: WTHR color layers, fog, DATA, and directional ambient; CLMT weather lists and
-  timing; REGN data areas for weather, sound, and music.
-tags: [format, esm, records, weather, climate, region]
+description: Field layouts of the weather, climate, and region records.
+tags: [format, plugin, records, weather, climate, region]
 ---
 
 # Weather records (WTHR, CLMT, REGN)
 
-- `WTHR` is one weather: its sky colors, fog, wind, and light.
-- `CLMT` is a climate: a list of weathers with chances, and the sun times.
-- `REGN` is a region. It can replace the climate's weather list for part of a world.
+Three records drive the weather:
 
-A worldspace names its climate with `WRLD` `CNAM`. An exterior cell names its regions with
-`CELL` `XCLR` (see [world records](/formats/world-records.md)). The runtime is on the
-[weather](/engine/weather.md) page.
+- `WTHR`: how one weather looks (colors, fog, wind, rain).
+- `CLMT`: a climate, which is a list of weathers with chances, plus sunrise and sunset times.
+- `REGN`: a region. It can replace the climate's weather list inside its area.
 
-Sources: UESP [WTHR](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WTHR),
-[CLMT](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLMT), and
-[REGN](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REGN); xEdit
-`Core/wbDefinitionsTES5.pas` (`wbWeatherColors`, `wbAmbientColors`, WTHR `DATA`).
+A worldspace names its climate in `WRLD CNAM`. An exterior cell names its regions in
+`CELL XCLR`. See [record decoders](/formats/world-records.md) for those, and
+[weather runtime](/engine/weather.md) for how the weather is picked and blended.
 
-UESP's `DATA` list adds up to 18 bytes, but it says the field is 19. xEdit shows two "Visual
-Effect" bytes at offsets 15 and 16, where UESP shows one "unknown". OpenSky follows xEdit.
+Reference: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format),
+pages `/WTHR`, `/CLMT`, `/REGN`. `WTHR DATA` and `NAM0` were checked against xEdit
+dev-4.1.5 `Core/wbDefinitionsTES5.pas` (`wbWeatherColors`, `DATA`). The UESP `DATA` list
+adds up to 18 bytes, but UESP says 19. xEdit shows two Visual Effect bytes at offsets 15
+and 16, where UESP shows one "unknown".
 
-## WTHR NAM0: color layers
+## WTHR
 
-An array of 16-byte entries, one per sky part. Each entry is four RGBX colors: sunrise, day,
-sunset, night. The X byte is padding. The number of parts is the size / 16. Vanilla has 13, 14,
-and 17 parts. A size that is not a multiple of 16 gives no colors.
+### NAM0: colors
 
-Order (UESP and xEdit): 0 upper sky, 1 near fog, 2 unknown (cloud layer, not used, `PNAM` sets
-cloud colors), 3 ambient, 4 sunlight, 5 sun, 6 stars, 7 lower sky, 8 horizon, 9 effect
-lighting, 10 cloud LOD diffuse, 11 cloud LOD ambient, 12 far fog, 13 sky statics, 14 water
-multiplier, 15 sun glare, 16 moon glare.
+An array of 16-byte entries, one per component. Each entry is four RGBX colors: sunrise,
+day, sunset, night. The count is size / 16. `Skyrim.esm` has 208, 224, and 272-byte
+versions (13, 14, and 17 components). Any size that is not a multiple of 16 is ignored.
 
-## WTHR FNAM: fog
+Component order (UESP and xEdit `wbWeatherColors`):
 
-Eight floats: day near, day far, night near, night far, day power, night power, day maximum,
-night maximum. An older 16-byte form has only the first four.
+| Index | Component | Index | Component |
+| --- | --- | --- | --- |
+| 0 | Sky upper | 9 | Effect lighting |
+| 1 | Fog near | 10 | Cloud LOD diffuse |
+| 2 | Unknown (cloud layer; `PNAM` wins) | 11 | Cloud LOD ambient |
+| 3 | Ambient | 12 | Fog far |
+| 4 | Sunlight | 13 | Sky statics |
+| 5 | Sun | 14 | Water multiplier |
+| 6 | Stars | 15 | Sun glare |
+| 7 | Sky lower | 16 | Moon glare |
+| 8 | Horizon | | |
 
-## WTHR DATA (19 bytes)
+### FNAM: fog
 
-All bytes are uint8.
+Eight float32 values: day near, day far, night near, night far, day power, night power, day
+maximum, night maximum. An older 16-byte version has only the first four. Other sizes are
+ignored.
 
-| Offset | Meaning | Scale |
+### DATA: 19 bytes
+
+All values are uint8.
+
+| Offset | Meaning | Conversion |
 | --- | --- | --- |
 | 0 | Wind speed | / 255 |
-| 1, 2 | Unused | |
+| 1-2 | Unused | |
 | 3 | Transition delta | / 255 * 0.25 |
 | 4 | Sun glare | / 255 |
 | 5 | Sun damage | / 255 |
-| 6, 7 | Precipitation fade in, fade out | / 255 |
-| 8, 9 | Thunder fade in, fade out | / 255 |
-| 10 | Thunder frequency | Raw. 255 is rare, 15 is often |
+| 6 | Precipitation begin fade in | / 255 |
+| 7 | Precipitation end fade out | / 255 |
+| 8 | Thunder begin fade in | / 255 |
+| 9 | Thunder end fade out | / 255 |
+| 10 | Thunder frequency | Raw. 255 is low, 15 is high |
 | 11 | Classification flags | Below |
-| 12-14 | Lightning color RGB | / 255 |
-| 15, 16 | Visual effect | Not used |
+| 12-14 | Lightning RGB | / 255 |
+| 15-16 | Visual effect | Not used |
 | 17 | Wind direction | / 255 * 360 degrees |
 | 18 | Wind direction range | / 255 * 180 degrees |
 
-Classification (low 4 bits, at most one set): `0x01` pleasant, `0x02` cloudy, `0x04` rainy,
-`0x08` snow. None set means no precipitation. Every vanilla `DATA` is 19 bytes.
+Classification: at most one of `0x01` pleasant, `0x02` cloudy, `0x04` rainy, `0x08` snow.
+None set means no class. A `DATA` of another size is ignored.
 
-## WTHR DALC: directional ambient
+### DALC: directional ambient
 
-Four `DALC` fields, in the order sunrise, day, sunset, night. Each is a 32-byte
-`wbAmbientColors`: six RGBX colors, one per direction (X+, X-, Y+, Y-, Z+, Z-), one specular
-RGBX color, and a float xEdit calls "Scale". Some community notes call it a specular power.
+Four `DALC` fields, in the order sunrise, day, sunset, night. Each is 32 bytes (xEdit
+`wbAmbientColors`): six RGBX colors for +X, -X, +Y, -Y, +Z, -Z, one specular RGBX, and one
+float32 scale. Some community notes call the scale a Fresnel or specular power. With fewer
+than four full `DALC` fields, OpenSky has no time-of-day mapping and ignores them all.
 
-With fewer than four full `DALC` fields there is no directional ambient, because no time of day
-can be matched to them.
+### Not read
 
-Not read: cloud textures (`00TX` to `L0TX`), cloud layer speeds, colors, and alphas (`LNAM`,
-`MNAM`, `NNAM`, `RNAM`, `QNAM`, `PNAM`, `JNAM`), `NAM1` disabled layers, sounds (`SNAM`,
-`TNAM`), image spaces (`IMSP`), and statics and spells.
+Cloud textures (`00TX` to `L0TX`), cloud layer speeds, colors, and alphas (`LNAM`, `MNAM`,
+`NNAM`, `RNAM`, `QNAM`, `PNAM`, `JNAM`), `NAM1` disabled layers, sounds (`SNAM`, `TNAM`),
+image spaces (`IMSP`), and statics and spells (`NAM2`, `NAM3`, `MODL`).
 
 ## CLMT
 
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `EDID` | zstring | Editor ID |
-| `WLST` | 12 bytes, repeats | Weather FormID, uint32 chance in percent, `GLOB` FormID (0 is none) |
-| `TNAM` | 6 bytes | Timing, below |
-| `FNAM`, `GNAM` | zstring | Sun and sun glare textures |
-| `MODL` | zstring | Night sky model |
+| Field | Meaning |
+| --- | --- |
+| `EDID` | Editor ID |
+| `WLST` | Weather list. 12-byte entries: weather FormID, uint32 chance in percent, global FormID (0 = none) |
+| `TNAM` | Timing, 6 bytes, below |
+| `FNAM` | Sun texture path |
+| `GNAM` | Sun glare texture path |
+| `MODL` | Night sky model path. `MODT` is skipped |
 
-The chances add up to 100. Neither UESP nor xEdit says what the game does with the global. OpenSky
-lets the global replace the chance when it resolves. This is flagged on the
-[weather](/engine/weather.md) page.
+The chances in `WLST` add up to 100. A `WLST` size that is not a multiple of 12 is ignored.
+UESP and xEdit do not say what the global does. OpenSky's choice is on the
+[weather runtime](/engine/weather.md) page.
 
-`TNAM`: sunrise begin, sunrise end, sunset begin, sunset end (uint8, times 10 minutes after
-midnight), volatility (0 to 100), and a moons byte. The moons byte: bits 0 to 5 are the phase
-length in days, `0x40` Masser, `0x80` Secunda.
+`TNAM`: sunrise begin, sunrise end, sunset begin, sunset end (uint8 each, times 10 gives
+minutes after midnight), volatility (0 to 100), and a moons byte. In the moons byte, bits
+0-5 are the phase length in days, `0x40` is Masser, and `0x80` is Secunda.
 
 ## REGN
 
-A region holds data areas. Each area is an `RDAT` header, then the fields for that area. The
-decoder remembers the last `RDAT` type and gives the next fields to it.
+A region has data areas. Each area is an `RDAT` header followed by fields for that area.
+OpenSky remembers the type of the last `RDAT` and gives the next fields to it.
 
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `EDID` | zstring | Editor ID |
-| `WNAM` | FormID | Worldspace |
-| `RCLR` | RGBX | Editor map color |
-| `RDAT` | 8 bytes | uint32 type, uint8 flags (`0x01` override), uint8 priority, uint16 0 |
-| `RDWT` | 12 bytes, repeats | Weather area only: weather, uint32 chance, global (not used) |
-| `RDSA` | 12 bytes, repeats | Sound area only: sound, uint32 weather states, float32 chance |
-| `RDMO` | FormID | Region music (`MUSC`) |
+| Field | Meaning |
+| --- | --- |
+| `EDID` | Editor ID |
+| `WNAM` | Worldspace FormID |
+| `RCLR` | Map color in the editor, RGBX |
+| `RDAT` | 8 bytes: uint32 type, uint8 flags (`0x01` override), uint8 priority, uint16 0 |
+| `RDWT` | Weather area only. 12-byte entries: weather FormID, uint32 chance in percent, global FormID (not used) |
+| `RDSA` | Sound area only. 12-byte entries: sound FormID, uint32 weather conditions, float32 chance |
+| `RDMO` | Region music, a `MUSC` FormID |
 
-Area types: 2 objects, 3 weather, 4 map, 5 land, 6 grass, 7 sound.
+Area types: 2 objects, 3 weather, 4 map, 5 landscape, 6 grass, 7 sound. A short `RDAT`
+drops the area.
 
-`RDSA` weather states: `0x01` pleasant, `0x02` cloudy, `0x04` rainy, `0x08` snowy. No bit set
-means every state. The chance is a weight from 0 to 1. In vanilla it runs from 0.01 to 1.0. The
-sound is an `SNDR` or an old `SOUN`.
+`RDSA` details: the sound is an `SNDR` or an old `SOUN` marker. The conditions are
+`0x01` pleasant, `0x02` cloudy, `0x04` rainy, `0x08` snowy, and no bits means every
+weather. The chance is a weight from 0 to 1. In `Skyrim.esm` it runs from 0.01 to 1.0.
 
-`RDMO` is accepted in any area, because UESP says it "can appear with RDSA under same RDAT or on
-its own". A wrong size or a zero link is skipped. See [music](/formats/music.md).
+`RDMO` is read in any area, because UESP says it "can appear with RDSA under same RDAT or on
+its own". A wrong size or a null link is skipped, and an earlier value stays. See
+[music records](/formats/music.md).
 
-Other area fields (`RPLI`, `RPLD`, `RDOT`, `RDMP`, `RDGS`) are skipped. `RDMD` is left over from
-Oblivion and SSE does not use it.
+`RDWT` or `RDSA` with a size that is not a multiple of 12, or outside its area type, is
+skipped. OpenSky does not read `RPLI`, `RPLD`, `RDOT`, `RDMP`, or `RDGS`. `RDMD` comes from
+Oblivion and Skyrim SE does not use it.
 
-In vanilla, every weather link in every `CLMT` and `REGN` names a `WTHR`.
+## Vanilla Skyrim.esm
+
+84 `WTHR`, 6 `CLMT`, and 317 `REGN` records decode. Every `WTHR DATA` is 19 bytes. Every
+weather FormID in `WLST` and `RDWT` points at a `WTHR`. 53 regions have weather areas.

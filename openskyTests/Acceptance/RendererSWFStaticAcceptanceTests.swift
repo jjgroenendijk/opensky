@@ -3,7 +3,7 @@
 // background plate, a nested sprite, a clip layer, and an edit text over a
 // synthetic font — never an extracted game file (AGENTS.md "Legal & IP
 // boundary"). Vanilla-install figures are gathered with `openskycli swf
-// render-sweep` and quoted in docs/formats/swf.md, not committed here.
+// render-sweep` and kept under logs/, not committed here.
 //
 // The acceptance points: the movie changes the frame over a movie-free
 // baseline, a zero-alpha CXFORM reproduces that baseline exactly (the reason

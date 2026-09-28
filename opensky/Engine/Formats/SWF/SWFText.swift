@@ -5,7 +5,7 @@
 // Reference: Adobe SWF File Format Specification, version 19, chapter 10
 // "Fonts and Text" — DefineText/DefineText2 (pp. 173-174), TEXTRECORD and
 // GLYPHENTRY (pp. 174-175). DefineText2 stores RGBA where DefineText stores
-// RGB. Documented in docs/formats/swf.md.
+// RGB. Documented in docs/formats/swf-text.md.
 
 import Foundation
 

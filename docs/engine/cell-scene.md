@@ -59,7 +59,7 @@ skipped, and counted. It never crashes or stops the build.
 
 Not counted: other records in the cell group, such as `NAVM` and `PGRE`, and deleted `REFR`
 records. Actors (`ACHR`) have their own pass and count (see
-[actor appearance](/engine/actor-appearance.md#streaming)). `LAND` becomes
+[actor resolution](/engine/actor-resolution.md#streaming-and-accounting)). `LAND` becomes
 [terrain](/engine/terrain.md). A bad group under `WRLD` is skipped with a log, and the other
 blocks still load.
 

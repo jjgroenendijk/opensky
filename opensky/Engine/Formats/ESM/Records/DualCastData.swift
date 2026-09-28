@@ -12,7 +12,7 @@
 //     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DUAL
 //   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
 //     `wbRecord(DUAL, 'Dual Cast Data', ...)` line 7543.
-// Layout documented in docs/formats/magic-records.md.
+// Layout documented in docs/formats/shouts-equip-slots.md.
 
 import Foundation
 

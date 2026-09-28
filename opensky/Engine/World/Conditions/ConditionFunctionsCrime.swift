@@ -22,7 +22,7 @@
 // seam resolves that through `CrimeConditionResolution.currentCrimeFaction`,
 // which the caller fills from `CrimeFactionResolver`.
 //
-// Documented in docs/formats/conditions.md and docs/engine/guard-response.md.
+// Documented in docs/engine/condition-functions.md and docs/engine/guard-response.md.
 
 import Foundation
 

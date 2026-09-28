@@ -16,7 +16,7 @@
 //   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR
 // XTEL and XLKR struct cross-check: xEdit dev-4.1.6 wbDefinitionsTES5.pas
 //   https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-// Layout documented in docs/formats/records.md.
+// Layout documented in docs/formats/placed-references.md.
 
 import Foundation
 import simd

@@ -1,48 +1,48 @@
 ---
 type: File Format
 title: HKX Packfile Container
-description: Havok packfile container layout in Skyrim SE (header, sections, fixups, class
-  names) and how OpenSky lists the objects in it.
+description: Havok packfile layout in Skyrim SE - header, sections, fixups, and class names -
+  and how OpenSky lists the objects in a file.
 tags: [format, havok, hkx, animation]
 ---
 
 # HKX packfile container
 
-An `.hkx` file is a Havok binary packfile. Skyrim SE uses it for skeletons
-(`skeleton.hkx`), animation clips, behaviors, and ragdolls. This page covers only the
-container: the header, the sections, the fixup tables, and the class names. The objects
-inside have their own pages: [hkaSkeleton](/formats/hka-skeleton.md) and
+An HKX file is a Havok binary packfile. Skyrim SE uses it for skeletons (`skeleton.hkx`),
+animation clips, behaviors, and ragdolls. This page covers only the container: the header,
+the section table, the fixup tables, and the class names. The objects inside have their own
+pages: [hkaSkeleton](/formats/hka-skeleton.md) and
 [hkaSplineCompressedAnimation](/formats/hka-animation.md).
 
-`openskycli hkx <key>` prints a file's container ([CLI](/tools/cli.md)).
+`openskycli hkx <key>` prints the container of a file (see [CLI](/tools/cli.md)).
 
-## Sources
+## References
 
 There is no public Havok specification. The layout comes from open parsers and community
-notes. Every field was then checked against real SSE files (`skeleton.hkx`, `mt_idle.hkx`,
-`1hm_idle.hkx`, `2hm_idle.hkx` in `Skyrim - Animations.bsa`).
+notes. Every field was then checked against vanilla files (`skeleton.hkx`, `mt_idle.hkx`,
+`1hm_idle.hkx`, `2hm_idle.hkx`, all in `Skyrim - Animations.bsa`):
 
-- exyorha/hkxparse (MIT): packfile structs, fixup ranges, end markers.
-- ret2end/HKX2Library (MIT): SSE header values, the 48-byte section header, class-name
-  encoding. The most reliable source for SSE.
+- exyorha/hkxparse (MIT): packfile structs, fixup regions, and end markers.
+- ret2end/HKX2Library (MIT): Skyrim SE header values, the 48-byte section header, and the
+  class-name encoding. This is the best source for Skyrim SE.
 - ZeldaMods wiki "Havok": byte tables for the Havok 2014 (version 11) variant. The shape is
-  the same, but values differ.
-- Lukas Cone, "Havok middleware": the table of layout rules per platform.
+  the same, the values differ.
+- Lukas Cone, "Havok middleware": the table of platform layout rules.
 
 No Havok SDK or Bethesda code was used.
 
-## What SSE files look like
+## Skyrim SE profile
 
-Every vanilla SSE file checked is a 64-bit little-endian packfile with file version 8, the
-version string `hk_2010.2.0-r1`, and layout rules `8-1-0-1`. It has three sections:
-`__classnames__`, `__types__` (empty), and `__data__`. There are no export or import tables.
-The section sizes add up exactly to the file size.
+Every vanilla file checked has: 64-bit little-endian, file version 8, version string
+`hk_2010.2.0-r1`, layout rules `8-1-0-1`, and 3 sections (`__classnames__`, `__types__`,
+`__data__`). `__types__` is empty. There are no export or import tables. The section sizes
+add up exactly to the file size.
 
-## Header (64 bytes at offset 0)
+## Header: 64 bytes at offset 0
 
 All integers are little-endian.
 
-| Offset | Size | Field | SSE value |
+| Offset | Size | Field | Skyrim SE value |
 | --- | --- | --- | --- |
 | 0x00 | 4 | magic0 | `0x57E0E057` |
 | 0x04 | 4 | magic1 | `0x10C0C010` |
@@ -54,64 +54,68 @@ All integers are little-endian.
 | 0x13 | 1 | emptyBaseClassOptimization | 1 |
 | 0x14 | 4 | numSections | 3 |
 | 0x18 | 4 | contentsSectionIndex | 2 (`__data__`) |
-| 0x1C | 4 | contentsSectionOffset | 0 (the root object is at offset 0) |
+| 0x1C | 4 | contentsSectionOffset | 0 (the top object is at data offset 0) |
 | 0x20 | 4 | contentsClassNameSectionIndex | 0 (`__classnames__`) |
-| 0x24 | 4 | contentsClassNameSectionOffset | `0x4B`, the name `hkRootLevelContainer` |
-| 0x28 | 16 | contentsVersion | `hk_2010.2.0-r1`, null, then `0xFF` fill |
+| 0x24 | 4 | contentsClassNameSectionOffset | `0x4B`, which is `hkRootLevelContainer` |
+| 0x28 | 16 | contentsVersion | `hk_2010.2.0-r1`, a null, then `0xFF` bytes |
 | 0x38 | 4 | flags | 0 |
 | 0x3C | 4 | padding (two int16) | `0xFFFFFFFF` |
 
-A wrong magic, a pointer size other than 8, or big-endian data is an error. Other file
-versions parse, and the caller sees the version.
+OpenSky rejects a wrong magic, a pointer size other than 8, and big-endian files. Other file
+versions are read, and the caller can see the version.
 
-## Section headers (48 bytes each, from 0x40)
+## Section headers: 48 bytes each, from 0x40
 
-Each header is a 19-byte null-padded name, one `0xFF` byte, and seven uint32 values:
-`absoluteDataStart`, then six offsets relative to it: `localFixupsOffset`,
-`globalFixupsOffset`, `virtualFixupsOffset`, `exportsOffset`, `importsOffset`, `endOffset`.
-
-The parts of a section, in order:
+Each header is a 19-byte name padded with nulls, one `0xFF` byte, and seven uint32 values:
+`absoluteDataStart`, then six offsets from that start: `localFixupsOffset`,
+`globalFixupsOffset`, `virtualFixupsOffset`, `exportsOffset`, `importsOffset`, and
+`endOffset`. The parts of a section come in this order:
 
 ```text
 [object data | local fixups | global fixups | virtual fixups | exports | imports] end
 ```
 
-The object data ends where the local fixups start. In SSE, exports, imports, and end are
-equal (no tables). `__classnames__` has no fixups. `__types__` is all zero, and its
-`absoluteDataStart` equals the one of `__data__`.
+The data size is `localFixupsOffset`. In Skyrim SE, `exports == imports == end` always.
+`__classnames__` has no fixups (all six offsets are equal). `__types__` is all zeros, with
+the same `absoluteDataStart` as `__data__`.
 
-Havok 2014 files add 16 bytes of `0xFF` to each section header (64 bytes) and can use an
-80-byte file header. SSE files never do.
+Havok 2014 (version 11) adds 16 `0xFF` bytes to each section header, making it 64 bytes. It
+may also use an 80-byte file header. Skyrim SE never does.
 
-## Class names
+## `__classnames__`
 
-`__classnames__` is a packed list. Each entry is a uint32 signature (a hash of the class),
-the byte `0x09`, and a null-terminated ASCII name. A fixup points at the name, which is the
-entry start plus 5. The list ends at `0xFFFFFFFF`, followed by `0xFF` padding. OpenSky also
-stops at a separator that is not `0x09`, as HKX2Library does, for files with no end marker.
+Each entry is a uint32 signature (a hash of the class type), a `0x09` byte, and the class
+name as a null-terminated ASCII string. Fixups point at the name, so at entry start + 5. The
+table ends with `0xFFFFFFFF`, then `0xFF` padding. OpenSky also stops at a separator byte
+that is not `0x09`, as HKX2Library does. This handles files with no end marker.
 
-Signatures are the same in every file. Examples: `hkClass` is `0x75585EF6`, and
-`hkRootLevelContainer` is `0x2772C11E`.
+`skeleton.hkx` has 20 classes, for example `hkaSkeleton`, `hkaSkeletonMapper`, and the
+ragdoll physics classes. An idle clip has 9, for example `hkaSplineCompressedAnimation` and
+`hkaAnimationBinding`. Signatures are the same in every file, for example `hkClass`
+`0x75585EF6` and `hkRootLevelContainer` `0x2772C11E`.
 
 ## Fixup tables
 
-A first uint32 of `0xFFFFFFFF` marks an unused slot and ends the table. Tables are 16-byte
-aligned, so they often end with padding.
+A fixup tells the loader to patch a pointer. A first uint32 of `0xFFFFFFFF` is an unused
+slot and ends the table. Regions are aligned to 16 bytes, so the end is often padding. For
+example, an idle clip's virtual table has 5 entries in a 64-byte region.
 
-- Local fixup (8 bytes): `fromOffset`, `toOffset`. A pointer inside one section.
-- Global fixup (12 bytes): `fromOffset`, `toSectionIndex`, `toOffset`. A pointer to another
-  section.
-- Virtual fixup (12 bytes): `objectOffset`, `classNameSectionIndex`, `classNameOffset`.
-  It gives an object its class.
+| Kind | Size | Fields | Meaning |
+| --- | --- | --- | --- |
+| Local | 8 | `fromOffset`, `toOffset` | Pointer inside the same section |
+| Global | 12 | `fromOffset`, `toSectionIndex`, `toOffset` | Pointer to another section |
+| Virtual | 12 | `objectOffset`, `classNameSectionIndex`, `classNameOffset` | Gives an object its class |
 
-## Listing objects
+## Listing the objects
 
-Walk the virtual fixups of `__data__`. Look up each `classNameOffset` in the class-name
-table. The result is a list of (object offset, class name). The container gives only where
-each object starts. The size of an object needs the class layout.
+The virtual fixups of `__data__` give every object's start and class name. The root object
+comes from the header (offset 0, `hkRootLevelContainer`). `skeleton.hkx` has 324 objects:
+2 `hkaSkeleton`, 2 `hkaSkeletonMapper`, ragdoll physics, and resource containers. An idle
+clip has 5. The container gives only where each object starts. The size of an object needs
+knowledge of its class.
 
-A class-name offset that does not resolve gives an object with no class name. The file stays
+If a class name offset points nowhere, the object keeps no class name. The file is still
 readable.
 
-A clip name to know: `mt_idle.hkx` exists only per sex, under `animations/male/` and
-`animations/female/`. There is no `animations/mt_idle.hkx`.
+Note: `mt_idle.hkx` exists only in `animations/male/` and `animations/female/`. There is no
+`animations/mt_idle.hkx`.

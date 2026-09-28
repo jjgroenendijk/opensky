@@ -68,7 +68,7 @@ So the two share only what they collide over: hands. The spellbook runtime handl
 Readying a spell unequips the weapon or shield in that hand, and equipping a weapon unequips the
 spell in its hand.
 
-The hands a spell takes come from its `ETYP`, walked through the [EQUP graph](/formats/shout-records.md)
+The hands a spell takes come from its `ETYP`, walked through the [EQUP graph](/formats/shouts-equip-slots.md)
 like a weapon's. One distinction matters here: `BothHands` and `EitherHand` name the same two parents
 and differ only in the `DATA` "use all parents" byte.
 
@@ -166,11 +166,11 @@ The graph is told a spell is out through hand type 9 (`spell`), the value `magic
 
 ## Saving
 
-The spellbook goes in the `SPLB` chunk ([save chunks](/formats/save-chunks.md)). Readied hands are
-saved, and casts are not. A readied spell is a choice the player made. A charge in progress is frame
-state, and restoring it would put the player back mid-cast with magicka already spent. Nothing
-rejects a spellbook on content. Duplicates, a hand naming an unknown spell, and a used-power entry for
-a forgotten spell are all cleaned up by the component's initializer.
+The spellbook goes in the `SPLB` chunk ([save chunks](/formats/opensky-save.md#chunks)). Readied
+hands are saved, and casts are not. A readied spell is a choice the player made. A charge in
+progress is frame state, and restoring it would put the player back mid-cast with magicka already
+spent. Nothing rejects a spellbook on content. Duplicates, a hand naming an unknown spell, and a
+used-power entry for a forgotten spell are all cleaned up by the component's initializer.
 
 ## Script surface
 

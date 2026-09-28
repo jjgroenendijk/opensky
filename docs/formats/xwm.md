@@ -1,37 +1,36 @@
 ---
 type: File Format
 title: xWMA container (.xwm)
-description: Layout of Skyrim SE .xwm audio (RIFF/XWMA framing, the fmt chunk, the dpds packet
-  table, the data payload), and why the parser does not decode.
+description: Layout of Skyrim SE .xwm audio - RIFF/XWMA framing, the fmt chunk, the dpds
+  packet table, and the data payload.
 tags: [format, audio, xwma, riff]
 ---
 
 # xWMA container (.xwm)
 
-Skyrim SE stores music as `.xwm` files. The format is Microsoft's xWMA container. It is a
-RIFF file that carries a Windows Media Audio (WMA) stream in fixed-size packets.
+Skyrim SE stores its music as `.xwm` files. xWMA is a Microsoft RIFF container for XAudio 2.
+It holds a Windows Media Audio (WMA) stream cut into packets of equal size. The container
+parser only reads the framing. A separate WMA decoder turns the packets into sound (see
+[audio](/engine/audio.md)).
 
-The parser only reads the container. It does not decode audio. It hands the packets and the
-codec settings to the WMA decoder (see [audio](/engine/audio.md)).
-
-Sources (open sources only, no Bethesda or Microsoft code):
+References. No Bethesda or Microsoft code was used.
 
 - [Microsoft xWMA on MultimediaWiki](https://wiki.multimedia.cx/index.php/Microsoft_xWMA):
-  the `RIFF`/`XWMA` form, an 18-byte `fmt` chunk, the `dpds` table, and a `data` chunk of
-  `nBlockAlign`-sized packets. About `dpds`: "the i-th integer equals the total number of
-  bytes accumulated after the i-th packet in the data structure has been decoded".
+  the `RIFF`/`XWMA` form, an 18-byte `fmt` chunk with `WAVEFORMATEX`, the `dpds` table
+  ("the i-th integer equals the total number of bytes accumulated after the i-th packet in
+  the data structure has been decoded"), and a `data` chunk of `nBlockAlign`-sized packets.
 - [FFmpeg `libavformat/xwma.c`](https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/xwma.c),
-  read as documentation, not copied. It gives the magic checks, the `dpds` element size, the
-  rule against a second `dpds`, the short final packet, and the duration formula.
+  read as documentation, not copied: the magic and form type checks, the `dpds` element
+  size, the rule that a second `dpds` is an error, the short last packet, and the duration
+  formula.
 - [Microsoft WAVEFORMATEX](https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/ns-mmeapi-waveformatex):
   field order and sizes of `fmt`.
-- Microsoft "Multimedia Programming Interface and Data Specifications 1.0": RIFF chunks. A
-  chunk is a four-character ID, a uint32 size (not counting the 8-byte chunk header), the
-  body, and a pad byte when the body length is odd.
+- Microsoft "Multimedia Programming Interface and Data Specifications 1.0": RIFF framing
+  (4-character ID, uint32 size without the 8-byte chunk header, even-byte padding).
 
 All integers are little-endian.
 
-## File header (12 bytes)
+## File header: 12 bytes
 
 | Offset | Type | Field | Notes |
 | --- | --- | --- | --- |
@@ -39,76 +38,75 @@ All integers are little-endian.
 | 0x04 | uint32 | RIFFSize | File size minus 8 |
 | 0x08 | char4 | FormType | `XWMA` |
 
-Chunks follow the header. Unknown chunks are skipped, as RIFF requires.
+Chunks follow. Each chunk is a 4-character ID, a uint32 body size (without the 8-byte chunk
+header), the body, and one pad byte when the body size is odd. Unknown chunks are skipped.
 
-## fmt chunk (18 bytes)
+## `fmt` chunk: WAVEFORMATEX, 18 bytes
 
-The real chunk ID is `fmt` followed by a space.
+The chunk ID is `fmt` followed by a space. Markdown lint removes a trailing space in inline
+code, so this page writes `fmt`.
 
 | Offset | Type | Field | Notes |
 | --- | --- | --- | --- |
-| 0x00 | uint16 | wFormatTag | `0x0161` is WMAv2 |
+| 0x00 | uint16 | wFormatTag | `0x0161` is `WAVE_FORMAT_WMAUDIO2` (WMA version 2) |
 | 0x02 | uint16 | nChannels | 2 in all vanilla files |
-| 0x04 | uint32 | nSamplesPerSec | Sample rate of the decoded audio |
-| 0x08 | uint32 | nAvgBytesPerSec | Times 8 is the bit rate |
+| 0x04 | uint32 | nSamplesPerSec | Sample rate of the decoded sound, in hertz |
+| 0x08 | uint32 | nAvgBytesPerSec | Byte rate. Times 8 gives the bit rate |
 | 0x0C | uint16 | nBlockAlign | Size of one packet in `data` |
-| 0x0E | uint16 | wBitsPerSample | Bit depth of the decoded audio, not of the packets |
-| 0x10 | uint16 | cbSize | Size of codec extra data after this. 0 in vanilla |
+| 0x0E | uint16 | wBitsPerSample | Bits per sample of the decoded sound, not of the packets |
+| 0x10 | uint16 | cbSize | Size of codec extra data that follows. 0 in vanilla |
 
-`nBlockAlign` is the packet size. It lets a player stream the file without decoding it
-first.
+OpenSky reads only `wFormatTag == 0x0161`. `0x0162` (WMA Pro) and `0x0163` (WMA Lossless)
+are recognized but not supported. FFmpeg notes that xWMA normally holds WMA version 2 with
+one or two channels, or WMA Pro with six. So WMA Pro is a real variant, not a broken file.
+Vanilla does not use it.
 
-OpenSky accepts only `0x0161`. `0x0162` (WMA Pro) and `0x0163` (WMA Lossless) are reported as
-not supported. FFmpeg says xWMA can also carry WMA Pro with six channels. So WMA Pro is a
-real variant, not damage. Vanilla just does not use it.
+Vanilla files have `cbSize == 0`, so there is no extra data. The WMA decoder needs extra
+data. FFmpeg's xWMA reader makes a six-byte WMA version 2 block with byte 4 set to 31, and
+calls this value "experimentally obtained". OpenSky's decoder does the same. The container
+parser does not.
 
-## dpds chunk (packet table)
+## `dpds` chunk: packet table
 
 A list of uint32 values, one per packet. Each value is the total number of decoded bytes
-after that packet. It is the seek index:
+after that packet is decoded. It is the seek table: divide a value by
+`nChannels * wBitsPerSample / 8` to get a sample frame position. The matching byte offset
+in `data` is `(index + 1) * nBlockAlign`.
 
-- Divide an entry by `nChannels * wBitsPerSample / 8` to get a sample frame position.
-- The matching position in `data` is `(index + 1) * nBlockAlign`.
-- The last entry is the total decoded size. That gives the duration.
+The last value is the total decoded size, so it gives the duration. The chunk is optional.
 
-Example: a stereo 16-bit file whose last entry is 1764000. One frame is 2 x 16 / 8 = 4 bytes,
-so there are 441000 frames. At 44100 Hz that is 10 seconds.
+- A `dpds` size that is not a multiple of 4 is an error.
+- A second `dpds` chunk is an error, because two tables cannot both describe one payload.
+- A missing `dpds` is allowed. The file has no stated duration but still plays.
+- A `dpds` count that does not match the packet count is allowed and reported.
 
-A `dpds` size that is not a multiple of 4 is an error. A second `dpds` chunk is an error too,
-because two tables cannot index one payload.
+## `data` chunk: packets
 
-## data chunk
-
-The WMA stream, split into `nBlockAlign`-sized packets. The last packet may be shorter.
-OpenSky keeps it, as FFmpeg does. An empty `data` chunk is an error.
-
-## Errors
-
-A malformed file is an error: bad header, wrong magic, a chunk that runs past the end, a
-missing `fmt` or `data`, duplicate chunks, a short `fmt`, or out-of-range `fmt` values. A
-valid file in a variant OpenSky does not handle is a separate "unsupported" error.
-
-Two cases are legal and only reported:
-
-- No `dpds` chunk. The file has no stated duration but still plays.
-- A `dpds` entry count that does not match the packet count.
-
-## Extra data for the decoder
-
-Vanilla files have `cbSize == 0`, so there is no extra data. But WMA decoders expect it.
-FFmpeg's xWMA reader builds a six-byte WMAv2 extra data block with byte 4 set to 31. FFmpeg
-calls it "experimentally obtained". This choice belongs to the decoder, not the container
-parser.
+The WMA stream, cut into `nBlockAlign`-sized packets. The last packet may be short. FFmpeg
+reads what is left instead of dropping it, and so does OpenSky. An empty `data` chunk is an
+error.
 
 ## Vanilla files
 
-`openskycli audio sweep` reads every `.xwm` in the archives, one at a time. In vanilla:
+`openskycli audio sweep` reads every `.xwm` in the archives, one file at a time, and prints
+only counts.
 
-- All `.xwm` files are music, under `music\`. All are WMAv2, stereo, with `cbSize` 0 and a
-  consistent `dpds` table.
-- Sample rate and packet size go together. 2230-byte packets go with 44.1 kHz. 2304-byte
-  packets go with 32 kHz. One file uses 48 kHz with 1008-byte packets.
-- Every file decodes, and the decoded frame count equals what its `dpds` table says.
+| Measure | Value |
+| --- | --- |
+| Files | 269, all under `music\` |
+| Format tag | `0x0161` in all |
+| Channels | 2 in all |
+| Sample rates | 32000 x 133, 44100 x 135, 48000 x 1 |
+| Block align | 1008 x 1, 2230 x 135, 2304 x 133 |
+| cbSize | 0 in all |
+| Files without `dpds` | 0 |
+| `dpds` and packet count differ | 0 |
+| Short last packet | 0 |
+| Total | about 126 MB, 347 minutes |
 
-Voice lines are `.fuz` files, which wrap one xWMA file each (see [FUZ](/formats/fuz.md)). Sound
-effects are `.wav` files (see [WAV](/formats/wav.md)).
+Sample rate and block align go together: 2230-byte packets with 44.1 kHz, and 2304-byte
+packets with 32 kHz. One 48 kHz file with 1008-byte packets is different, and it still
+reads. All 269 files decode, and each decoded frame count equals what its `dpds` table says.
+
+Only music uses xWMA. Voice uses [`.fuz`](/formats/fuz.md), and sound effects use plain
+[`.wav`](/formats/wav.md).

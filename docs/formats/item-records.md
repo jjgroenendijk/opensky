@@ -1,200 +1,179 @@
 ---
 type: File Format
-title: Item records
-description: The shared item fields, MISC, BOOK, ALCH, INGR and their effect lists, WEAP, AMMO,
-  PROJ, CONT contents, and the ARMO item fields.
-tags: [format, esm, records, inventory, items, weapon, projectile]
+title: Item records (MISC, BOOK, ALCH, INGR, WEAP, AMMO, CONT, ARMO)
+description: Layouts of carried items, their shared fields, effect lists, and container
+  contents.
+tags: [format, plugin, records, inventory, items]
 ---
 
 # Item records
 
-These records are the things an actor can carry, and the containers that hold them. The shared
-decode rules are on the [record decoders](/formats/records.md) page. The runtime is on the
-[inventory and equipment](/engine/inventory-equipment.md) page.
+These records are things an actor can carry, plus container contents. The projectile an
+arrow launches is on [projectiles](/formats/projectiles.md). Shared decode rules are on
+[record decoders](/formats/records.md). The runtime is on
+[inventory and equipment](/engine/inventory-equipment.md).
 
-Sources: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format) pages
-`MISC`, `BOOK`, `ALCH`, `INGR`, `WEAP`, `AMMO`, `PROJ`, `CONT`, and `ARMO`; xEdit `dev-4.1.6`
-`Core/wbDefinitionsTES5.pas` and `Core/wbDefinitionsCommon.pas`.
+Sources: UESP "Skyrim Mod:Mod File Format" pages `/MISC`, `/BOOK`, `/ALCH`, `/INGR`,
+`/WEAP`, `/AMMO`, `/CONT`, and `/ARMO`
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>), and xEdit `dev-4.1.6`
+`wbDefinitionsTES5.pas` and `wbDefinitionsCommon.pas`. Line numbers below are in those
+files.
 
 ## Shared fields
 
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `EDID` | zstring | Editor ID |
-| `FULL` | lstring | Name |
-| `MODL` | zstring | Model path |
-| `OBND` | int16 x 6 | Bounds: minimum corner, then maximum corner (xEdit `wbOBND`) |
-| `KSIZ`, `KWDA` | uint32, FormID list | Keyword count and keywords |
-| `ICON`, `MICO` | zstring | Inventory icons |
-| `YNAM`, `ZNAM` | FormID | Pickup and drop sounds |
+Every carried item repeats the same fields:
 
-`MISC` (gems, ingots, tools, gold, clutter) has only these and `DATA`. Most items have an 8-byte
-`DATA`: int32 gold value, float32 weight. But the size of `DATA`
-depends on the record: 8 bytes on `MISC`, `INGR`, and `ARMO`, 4 on `ALCH`, 10 on `WEAP`, 16 on
-`BOOK`, and 16 or 20 on `AMMO`.
+| field | type | meaning |
+| --- | --- | --- |
+| `EDID` | zstring | editor ID |
+| `FULL` | lstring | name |
+| `MODL` | zstring | model |
+| `OBND` | 6 x int16 | bounds: minimum corner, then maximum corner (xEdit `wbOBND`, common line 8634) |
+| `KSIZ` + `KWDA` | uint32 + FormID array | keywords |
+| `ICON`, `MICO` | zstring | inventory icons |
+| `YNAM`, `ZNAM` | FormID | pickup and drop sounds |
+
+`DATA` is different for each type: 8 bytes on MISC, INGR, and ARMO (int32 value, float32
+weight), 4 on ALCH, 10 on WEAP, 16 on BOOK, and 16 or 20 on AMMO.
+
+## MISC
+
+Gems, ingots, tools, gold, and clutter. Only the shared fields and the 8-byte `DATA`
+(line 8303).
 
 ## BOOK
 
-| Field | Type | Meaning |
+| field | type | meaning |
 | --- | --- | --- |
-| `DESC` | lstring | The book's text, from `.dlstrings` |
-| `CNAM` | lstring | Short description in the inventory |
-| `DATA` | 16 bytes | Below |
+| `DESC` | lstring | book text, from the `.dlstrings` table ([strings](/formats/strings.md)) |
+| `CNAM` | lstring | inventory description |
+| `DATA` | 16 bytes | see below |
 
-`DATA`: uint8 flags (`0x01` teaches a skill, `0x02` cannot be taken, `0x04` teaches a spell),
-uint8 kind (0 book, 255 note; always 0 in SSE), 2 unused bytes, a uint32 "teaches" value, uint32
-gold value, float32 weight.
-
-The "teaches" value depends on the flags. With `0x01` it is an actor value index for a skill.
-With `0x04` it is a `SPEL` FormID. If a mod sets both, the spell wins.
+`DATA` (line 4220): uint8 flags (`0x01` teaches skill, `0x02` cannot be taken, `0x04`
+teaches spell), uint8 kind (0 book, 255 note; always 0 since SSE), 2 unused bytes, uint32
+"teaches" word, uint32 value, float32 weight. The "teaches" word is an actor-value skill
+index with flag `0x01`, a SPEL FormID with flag `0x04`, and unused otherwise. If a mod sets
+both flags, OpenSky reads a spell.
 
 ## ALCH
 
-Food, drinks, potions, and poisons. Here `DATA` is only a float32 weight. The gold value is in
-`ENIT`.
-
-`ENIT` (20 bytes): int32 value, uint32 flags (`0x00001` no auto-calc, `0x00002` food, `0x10000`
-medicine, `0x20000` poison), FormID addiction, float32 addiction chance, FormID use sound
-(`SNDR`).
+Food, drink, potions, and poisons (line 4042). Here `DATA` is only a float32 weight. The
+value is in `ENIT`, 20 bytes: int32 value, uint32 flags (`0x00001` no auto-calc, `0x00002`
+food, `0x10000` medicine, `0x20000` poison), FormID addiction, float32 addiction chance,
+FormID consume sound (`SNDR`).
 
 ## INGR
 
-Alchemy ingredients. `DATA` is the normal 8 bytes. `ENIT` is 8 bytes: int32 auto-calc value
-(not the gold value) and uint32 flags (`0x001` no auto-calc, `0x002` food, `0x100` references
-persist).
+Alchemy ingredients (line 7909). The 8-byte `DATA`, and an 8-byte `ENIT`: int32 auto-calc
+value (not the same as the value in `DATA`) and uint32 flags (`0x001` no auto-calc, `0x002`
+food, `0x100` references persist).
 
 ## Effect lists
 
-`ALCH`, `INGR`, `SPEL`, `SCRL`, and `ENCH` store effects as a run of fields, not a struct:
+ALCH, INGR, SPEL, SCRL, and ENCH store effects as a run of fields, not a struct. `EFID`
+names the MGEF, the next `EFIT` holds its numbers, and any `CTDA` after that is a condition
+on that effect ([conditions](/formats/conditions.md)). Then the run repeats. xEdit: `wbEFID`
+line 3832, `wbEFIT` 3834, `wbEffect` 4030.
 
-| Field | Type | Meaning |
+| field | type | meaning |
 | --- | --- | --- |
-| `EFID` | FormID | The magic effect (`MGEF`) |
+| `EFID` | FormID | the MGEF ([magic records](/formats/magic-records.md)) |
 | `EFIT` | 12 bytes | float32 magnitude, uint32 area, uint32 duration |
-| `CTDA` | 32 bytes | Conditions on this one effect |
+| `CTDA` | 32 bytes | condition on this effect |
 
-The run repeats. Conditions use the shared [conditions](/formats/conditions.md) decoder. An
-`EFIT` with no `EFID` before it is dropped. An `EFID` with no `EFIT` still gives an effect, with
-magnitude 0. The effect link is the part that matters most. See
-[magic records](/formats/magic-records.md).
+An `EFIT` without an `EFID` before it is dropped. An `EFID` without an `EFIT` still counts,
+with magnitude 0.
 
 ## WEAP
 
-| Field | Type | Meaning |
+| field | type | meaning |
 | --- | --- | --- |
 | `DATA` | 10 bytes | uint32 value, float32 weight, uint16 damage |
-| `DNAM` | 100 bytes | Below |
-| `CRDT` | 16 or 24 bytes | Critical hit data. Below |
-| `EITM` | FormID | Enchantment (`ENCH`) |
-| `EAMT` | uint16 | Enchantment charge |
-| `ETYP` | FormID | Equip slot (`EQUP`) |
-| `CNAM` | FormID | Template: another `WEAP` |
-| `INAM` | FormID | Impact data set for a normal swing |
-| `BIDS` | FormID | Impact data set for a block bash |
+| `DNAM` | 100 bytes | animation type, speed, reach, flags, skill, stagger |
+| `CRDT` | 16 or 24 bytes | critical hit data |
+| `EITM` | FormID | enchantment (`ENCH`) |
+| `EAMT` | uint16 | enchantment charge |
+| `ETYP` | FormID | equip slot (`EQUP`, see [shouts and equip slots](/formats/shouts-equip-slots.md)) |
+| `CNAM` | FormID | template, another WEAP |
+| `INAM` | FormID | impact data set (`IPDS`) for a normal swing |
+| `BIDS` | FormID | impact data set (`IPDS`) for a shield bash |
 
-`DNAM` offsets that OpenSky reads:
+Record at line 10499, `DATA` 10530, `DNAM` 10535, `CRDT` 10604.
 
-| Offset | Type | Meaning |
-| --- | --- | --- |
-| 0x00 | uint8 | Animation type: 0 other, 1 one-hand sword, up to 9 crossbow |
-| 0x04 | float32 | Speed |
-| 0x08 | float32 | Reach |
-| 0x0C | uint16 | Flags: `0x08` cannot drop, `0x20` embedded, `0x80` not playable |
-| 0x4C | int32 | Skill, as an actor value. -1 is none |
-| 0x60 | float32 | Stagger |
+`DNAM` offsets: `0x00` uint8 animation type (0 other, 1 one-hand sword, up to 9 crossbow),
+`0x04` float32 speed, `0x08` float32 reach, `0x0C` uint16 flags (`0x08` cannot drop, `0x20`
+embedded, `0x80` not playable), `0x4C` int32 skill as an actor value (-1 for none), `0x60`
+float32 stagger. The rest is padding, old Fallout fields, or rumble. Reach is a multiplier,
+not a distance: UESP gives melee reach as `fCombatDistance * NPCScale * WeaponReach`
+([melee combat](/engine/melee-combat.md)).
 
-Reach is a multiplier, not a distance. UESP gives melee reach as
-`fCombatDistance * NPCScale * WeaponReach` (see [melee combat](/engine/melee-combat.md)).
+`CRDT` changed in SSE. The size picks the layout, not the form version, so older mod records
+still read:
 
-`INAM` and `BIDS` choose the hit sound. UESP names `INAM` "Normal weapon swing impact set" and
-`BIDS` "Block bash impact data set". A zero link means a silent hit, which is normal in vanilla.
-
-`CRDT` changed between Skyrim and SSE. The field size picks the layout, not the form version, so
-older mods still work:
-
-| Size | Layout |
+| bytes | layout |
 | --- | --- |
-| 16 | uint16 damage, 2 unused, float32 multiplier, uint8 on death, 3 unused, FormID spell |
-| 24 | The same, but 7 unused after on death, the spell at 0x10, then 4 unused |
+| 16 | uint16 damage, 2 unused, float32 multiplier, uint8 on-death, 3 unused, FormID SPEL |
+| 24 | the same, but 7 unused after on-death, SPEL at `0x10`, then 4 unused |
 
-Any other size gives no critical data.
+UESP calls `INAM` "Normal weapon swing impact set" and `BIDS` "Block bash impact data set".
+A null link means the hit makes no impact sound. That is normal in vanilla.
 
 ## AMMO
 
-`DATA` also grew in SSE, and the size picks the layout:
+`DATA` grew in SSE, so the size picks the layout (line 4087, `IsSSE` pair at 4101):
 
-| Offset | Type | Meaning |
+| offset | type | meaning |
 | --- | --- | --- |
-| 0x00 | FormID | Projectile (`PROJ`) |
-| 0x04 | uint32 | Flags: `0x01` ignores weapon resistance, `0x02` not playable, `0x04` not a bolt |
-| 0x08 | float32 | Damage |
-| 0x0C | uint32 | Gold value |
-| 0x10 | float32 | Weight. SSE only |
+| 0x00 | FormID | projectile (`PROJ`, see [projectiles](/formats/projectiles.md)) |
+| 0x04 | uint32 | flags: `0x01` ignores weapon resistance, `0x02` not playable, `0x04` not a bolt |
+| 0x08 | float32 | damage |
+| 0x0C | uint32 | value |
+| 0x10 | float32 | weight; SSE only, the 16-byte form ends before it |
 
-An older 16-byte `DATA` gives weight 0. The game treats arrows as weightless anyway.
-
-## PROJ
-
-Everything the flight needs is in `DATA`. UESP and xEdit agree on every member. Vanilla writes
-92 bytes.
-
-| Offset | Type | Meaning |
-| --- | --- | --- |
-| 0x00 | uint16 | Flags: `0x01` hitscan, `0x02` explosion, `0x04` alternate trigger, `0x08` muzzle flash, `0x20` can be disabled, `0x40` can be picked up, `0x80` supersonic, `0x100` pins limbs, `0x200` passes small transparent, `0x400` no aim correction, `0x800` rotation |
-| 0x02 | uint16 | Kind: `0x01` missile, `0x02` lobber, `0x04` beam, `0x08` flame, `0x10` cone, `0x20` barrier, `0x40` arrow |
-| 0x04 | float32 | Gravity: a multiplier on world gravity |
-| 0x08 | float32 | Speed, units per second |
-| 0x0C | float32 | Range |
-| 0x10 | FormID x 2 | Light, muzzle flash light. Not read |
-| 0x18 | float32 x 3 | Tracer chance, explosion proximity, explosion timer. Not read |
-| 0x24 | FormID | Explosion (`EXPL`) |
-| 0x28 | FormID | Sound in flight (`SNDR`) |
-| 0x2C | float32 x 2 | Muzzle flash duration, fade duration. Not read |
-| 0x34 | float32 | Impact force |
-| 0x38 | FormID | Countdown sound. Not read |
-| 0x3C | FormID | Disable sound (`SNDR`) |
-| 0x40 | FormID | Default weapon. Not read |
-| 0x44 | float32 | Cone spread. Not read |
-| 0x48 | float32 | Collision radius |
-| 0x4C | float32 | Lifetime, seconds |
-| 0x50 | float32 | Relaunch interval. Not read |
-| 0x54 | FormID | Decal data (`TXST`). Optional |
-| 0x58 | FormID | Collision layer (`COLL`). Optional |
-
-xEdit marks `DATA` "optional from element 22", the decal link. So 84 bytes is as valid as 92.
-OpenSky reads what is there, from 16 bytes up.
-
-UESP calls 0x3C "uint32 always 0". xEdit names it `Sound - Disable`, an `SNDR` link. The offsets
-agree. OpenSky uses the xEdit name, because "always 0" describes vanilla data, not the field.
-
-Gravity has no documented unit. In vanilla arrows it is at most 1, while speed is in the
-thousands. So it is a scale, not an acceleration. See [archery](/engine/archery.md).
+Vanilla SSE gives every arrow weight 0.1, but the game treats arrows as weightless.
 
 ## CONT contents
 
-The container's model and sounds are on the [world records](/formats/world-records.md) page.
-Its contents are a run of fields:
+A container has the placeable fields ([world records](/formats/world-records.md)) plus its
+contents:
 
-| Field | Type | Meaning |
+| field | type | meaning |
 | --- | --- | --- |
-| `COCT` | uint32 | Entry count. Only a hint |
-| `CNTO` | 8 bytes, repeats | FormID item, int32 count |
-| `COED` | 12 bytes | Owner data for the `CNTO` just before it |
-| `DATA` | uint8, then more | Flags: `0x01` allow sounds, `0x02` respawns, `0x04` show owner |
+| `COCT` | uint32 | entry count; not trusted |
+| `CNTO` | 8 bytes | FormID item, int32 count; repeated |
+| `COED` | 12 bytes | owner data for the `CNTO` before it |
+| `DATA` | uint8 + float32 | flags: `0x01` allow sounds, `0x02` respawns, `0x04` show owner |
 
-An item can be a carried item or an `LVLI`, which the runtime expands. The middle word of `COED`
-is a `GLOB` when the owner is an `NPC_`, and a faction rank when it is a `FACT`. The decoder
-cannot tell which, so it keeps the word raw. A `COED` with no `CNTO` before it is dropped. UESP
-says the float after the flags is a misaligned weight that is always 0. It is not read.
+xEdit: `wbCOED` line 2305, `wbCNTO` 2315, `wbCOCT` 2329, `wbRecord(CONT, ...)` 4505. A
+`CNTO` item can be a carried item or an `LVLI`. The middle word of `COED` is a GLOB FormID
+when the owner is an NPC_, and a faction rank when it is a FACT. The `DATA` float is
+documented as a misplaced weight that is always 0.
 
-In vanilla, every `CNTO` names a record type that xEdit allows in that slot. That would not hold
-if item and count were read in the wrong order.
+## ARMO inventory fields
 
-## ARMO item fields
+The appearance fields are on [armor records](/formats/armor.md). Inventory fields: the
+8-byte `DATA`, keywords, `DNAM` (armor rating x 100, a uint32 of which only the low 16 bits
+are used), and `EITM` (enchantment). ARMO has no `EAMT`: xEdit builds both records' link
+from `wbEnchantment` and adds the charge only on WEAP. So enchanted armor has no charge.
 
-The look of armor is on the [armor records](/formats/armor.md) page. The item fields are the
-shared ones, the 8-byte `DATA`, and:
+## Vanilla items
 
-- `DNAM`: armor rating times 100. It is a uint32, but only the low 16 bits are used.
-- `EITM`: the enchantment. Armor has no `EAMT`. xEdit builds both records' link from
-  `wbEnchantment`, and only `WEAP` asks for the charge. So enchanted armor has no charge.
+In `Skyrim.esm`:
+
+| measure | value |
+| --- | --- |
+| items | 6,930 (ARMO 2,762, WEAP 2,484, BOOK 821, ALCH 363, MISC 371, INGR 94, AMMO 35) |
+| containers | 436 CONT with 9,597 `CNTO` entries |
+| `CNTO` naming an item | 6,753; the rest are LVLI, KEYM, LIGH, SLGM, APPA, and SCRL |
+| `CNTO` naming a type xEdit does not allow | 0 |
+| `COCT` that disagree with `CNTO` | 0 |
+| value / weight | 0 to 5,000 gold, 0.0 to 50.0 |
+
+Every `CNTO` names an allowed type. That would not hold if item and count were in the other
+order.
+
+Examples: `IronSword` (WEAP `00012EB7`) has value 25, weight 9, damage 7, animation type
+one-hand sword, speed 1, reach 1, critical damage 3. `SkillSmithing1` (BOOK `0001AFCE`)
+teaches skill 10. `Wheat` (INGR `0004B0BA`) has 4 effects and auto-calc value 47.
+`IronArrow` (AMMO `0001397D`) has damage 8 and projectile `0003BE11`. `BarrelFood01` (CONT
+`00000845`) has 1 entry and flags `0x2`.

@@ -18,7 +18,7 @@ step also solves a ragdoll's joints ([ragdoll joint solver](/engine/ragdoll-solv
 
 ## Which bodies simulate
 
-The [rigid body census](/formats/nif-rigid-bodies.md) decided this from real data, not from what
+The [rigid body census](/formats/nif-rigid-body.md) decided this from real data, not from what
 `nif.xml` allows. Vanilla exports most static geometry as `MO_SYS_BOX_STABILIZED` with
 `MO_QUAL_INVALID` and zero mass. So the motion byte alone would make 1027 fixed bodies move. A body
 simulates only with a known simulated motion system and a positive, finite mass. Four motion systems

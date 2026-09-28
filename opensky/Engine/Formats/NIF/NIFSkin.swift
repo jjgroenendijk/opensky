@@ -5,7 +5,7 @@
 // Reference: NifTools nif.xml (NiSkinInstance, BSDismemberSkinInstance,
 // NiSkinData, BoneData, NiSkinPartition, SkinPartition, BSVertexDataSSE).
 //   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif.md.
+// Layout documented in docs/formats/nif-skinning.md.
 
 import Foundation
 import OpenSkyShaderTypes
@@ -164,7 +164,7 @@ nonisolated struct NIFSkinPartition {
         /// SSE "Global VB" byte (nif.xml SkinPartition). Set on creature
         /// meshes whose top-level stream stores skin-instance bone indices
         /// directly; clear when indices are partition-palette-local.
-        /// Semantics probed on SabreCat.nif — see docs/formats/nif.md.
+        /// Semantics probed on SabreCat.nif — see docs/formats/nif-skinning.md.
         let usesGlobalVertexBuffer: Bool
     }
 

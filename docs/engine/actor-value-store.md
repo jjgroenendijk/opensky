@@ -160,7 +160,7 @@ Current values go in the `AVAL` chunk, one entry per actor that differs from a f
 override table goes in `AVOV`, and each `AVOV` entry travels beside that actor's `AVAL` entry. The
 temporary slot is not saved: the active effect sets it again on load, and saving both would double
 the buff. The layouts, and why these are separate chunks, are on the
-[save chunks](/formats/save-chunks.md) page.
+[save chunks](/formats/opensky-save-actor-chunks.md) page.
 
 Maximums are not saved. So a save loaded against changed records gets the new numbers. The stored
 current value is kept, and the first change clamps it into the new range.
