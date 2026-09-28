@@ -13,6 +13,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyWorldState
 

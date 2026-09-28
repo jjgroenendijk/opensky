@@ -22,6 +22,7 @@ import Foundation
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 
 /// Which inventory a grant lands in.
 ///

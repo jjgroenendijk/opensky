@@ -14,6 +14,7 @@ import Foundation
 import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 
 nonisolated public enum InventoryEquipmentReadout: Sendable {
     /// Longest inventory listing any of these readouts prints. A full player

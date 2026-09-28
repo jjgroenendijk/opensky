@@ -20,6 +20,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPhysics
 import simd
 

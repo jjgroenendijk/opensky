@@ -5,6 +5,7 @@
 import AppKit
 @testable import OpenSky
 import OpenSkyEngine
+@testable import OpenSkyInventory
 import Testing
 
 struct DestinationRegistryInventoryEquipmentTests {

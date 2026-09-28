@@ -14,6 +14,7 @@
 // Documented in docs/engine/barter.md.
 
 import Foundation
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 
 /// The transfer list one container or merchant session presents.
@@ -187,7 +188,7 @@ extension ContainerMenuModel {
         containerName: String,
         mode: Mode,
         pricing: BarterPricing,
-        runtime: InventoryRuntime
+        runtime: any InventoryAccess
     ) -> ContainerMenuModel {
         ContainerMenuModel(
             mode: mode,

@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 
 nonisolated extension InventoryMenuModel {
@@ -24,7 +25,7 @@ nonisolated extension InventoryMenuModel {
     public static func build(
         inventory: ReferenceInventoryState,
         items: ItemDefinitionStore,
-        goldFormID: FormID = InventoryRuntime.vanillaGoldFormID,
+        goldFormID: FormID = ItemDefinitionStore.vanillaGoldFormID,
         categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder
     ) -> InventoryMenuModel {
         var rows: [InventoryMenuEntry] = []
@@ -88,7 +89,7 @@ extension InventoryMenuModel {
     /// stored inventory and the definitions behind it.
     public static func build(
         holder: InventoryHolder,
-        runtime: InventoryRuntime,
+        runtime: any InventoryAccess,
         categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder
     ) -> InventoryMenuModel {
         build(

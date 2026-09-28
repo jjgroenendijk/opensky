@@ -9,6 +9,7 @@ import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering

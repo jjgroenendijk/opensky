@@ -77,13 +77,13 @@ public struct SpellbookRuntime {
     /// The worn-equipment layer, so a readied spell and a weapon cannot claim
     /// the same hand. Nil in a session with no item index, and then readying a
     /// spell arbitrates against other spells only.
-    public let equipment: EquipmentRuntime?
+    public let equipment: (any EquipmentAccess)?
 
     public init(
         store: WorldStateStore,
         spells: SpellStore,
         equipSlots: EquipSlotStore,
-        equipment: EquipmentRuntime? = nil
+        equipment: (any EquipmentAccess)? = nil
     ) {
         self.store = store
         self.spells = spells

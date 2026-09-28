@@ -7,6 +7,7 @@ import AppKit
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventory
 import Testing
 
 @MainActor

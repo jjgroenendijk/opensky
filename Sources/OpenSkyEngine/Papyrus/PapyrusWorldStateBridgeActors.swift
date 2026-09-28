@@ -31,6 +31,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {

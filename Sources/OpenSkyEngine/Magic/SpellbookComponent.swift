@@ -27,6 +27,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 /// Which hand a spell is readied in.

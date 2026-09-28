@@ -9,6 +9,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyInventory
 
 final class ItemOwnershipSection: PanelSectionViewController {
     weak var provider: (any InventoryEquipmentControlProviding)? {

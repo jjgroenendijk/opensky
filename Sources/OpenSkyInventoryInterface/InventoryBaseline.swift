@@ -44,7 +44,6 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
 
 /// Re-derives inventory baselines from plugin data.
 ///

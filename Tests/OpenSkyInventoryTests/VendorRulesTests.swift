@@ -5,10 +5,10 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 import Testing
 

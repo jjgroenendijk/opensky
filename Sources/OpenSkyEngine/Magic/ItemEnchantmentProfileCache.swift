@@ -27,6 +27,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 
 /// One session's resolved item enchantments.
 nonisolated public struct ItemEnchantmentProfileCache: Sendable {
@@ -98,22 +99,5 @@ nonisolated public struct ItemEnchantmentProfileCache: Sendable {
         self.entries = entries
         self.resolvedCount = resolvedCount
         self.reuseCount = reuseCount
-    }
-}
-
-/// One reading of the profile cache.
-nonisolated public struct EnchantmentCacheReadout: Equatable, Sendable {
-    public let itemCount: Int
-    public let resolvedCount: Int
-    public let reuseCount: Int
-
-    /// Nothing asked for yet, which is also what a session with no game data
-    /// reads.
-    public static let empty = EnchantmentCacheReadout(itemCount: 0, resolvedCount: 0, reuseCount: 0)
-
-    /// One line for a readout.
-    public var describedLine: String {
-        "Enchantment cache: \(itemCount) item(s), \(resolvedCount) resolved, "
-            + "\(reuseCount) reused"
     }
 }

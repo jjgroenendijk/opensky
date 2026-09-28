@@ -17,6 +17,7 @@ import OpenSkyActorsInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 
 extension GameViewController: CastingControlProviding {
     var castingControlSnapshot: CastingControlSnapshot {

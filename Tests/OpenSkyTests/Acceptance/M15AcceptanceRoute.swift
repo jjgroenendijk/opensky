@@ -11,7 +11,9 @@ import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyInventoryTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorldState
 import simd

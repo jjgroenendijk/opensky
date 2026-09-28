@@ -14,6 +14,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyGameData
 import OpenSkyProgressionInterface
 import simd
 

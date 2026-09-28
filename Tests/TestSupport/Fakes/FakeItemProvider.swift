@@ -5,6 +5,7 @@
 import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventory
 import Testing
 
 /// Records what the section asked the engine to do, and answers with whatever

@@ -160,6 +160,16 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyWorldInterface",
           "name" : "OpenSkyWorldInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyInventory",
+          "name" : "OpenSkyInventory"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyMagicInterface",
+          "name" : "OpenSkyMagicInterface"
         }
       ]
     }
@@ -315,6 +325,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyCrimeTests",
         "name" : "OpenSkyCrimeTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyInventoryTests",
+        "name" : "OpenSkyInventoryTests"
       }
     }
   ],

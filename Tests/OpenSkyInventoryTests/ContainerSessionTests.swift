@@ -6,8 +6,9 @@
 // stay inside the strict-lint type-length cap.
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyInventoryTesting
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing

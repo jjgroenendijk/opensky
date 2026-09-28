@@ -31,15 +31,9 @@ import OpenSkyWorldState
 /// Reads and mutates inventories on top of a `WorldStateStore`.
 @MainActor
 public struct InventoryRuntime: InventoryAccess {
-    /// Vanilla gold, `Gold001`.
-    ///
-    /// Gold is an ordinary `MISC` item and an ordinary stack — there is no
-    /// separate currency field anywhere in this engine, which is also how the
-    /// original data models it. Confirmed against the local install rather than
-    /// from memory: `openskycli record Gold001` reports
-    /// `MISC 0000000F — decoded MISC: editorID Gold001, value 1, weight 0.00`.
-    /// Cross-checked against UESP "Skyrim:Gold".
-    nonisolated public static let vanillaGoldFormID = FormID(0x0000_000F)
+    /// `ItemDefinitionStore.vanillaGoldFormID`, kept here for callers that read it
+    /// from the runtime.
+    nonisolated public static let vanillaGoldFormID = ItemDefinitionStore.vanillaGoldFormID
 
     public let store: WorldStateStore
     public let baselines: InventoryBaselineResolver

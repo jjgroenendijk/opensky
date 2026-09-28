@@ -75,7 +75,7 @@ extension ActiveEffectRuntime {
         _ item: FormID,
         from holder: InventoryHolder,
         on target: ActorValueHolder,
-        inventory: InventoryRuntime,
+        inventory: any InventoryAccess,
         fromPlugin pluginName: String
     ) throws -> MagicItemConsumeOutcome {
         guard let use = inventory.baselines.items.magicItemUse(item) else {

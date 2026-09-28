@@ -11,6 +11,7 @@ import MetalKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
 import Testing

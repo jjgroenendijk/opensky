@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyGameData
 import OpenSkyRendering
 
 nonisolated extension ContainerMenuMovieBridge {

@@ -7,6 +7,7 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 import Testing
 

@@ -89,7 +89,8 @@ OpenSkyFormatsESM         plugin records          OpenSkyFormatsMesh    NIF, TRI
 OpenSkyFormatsAnimation   HKX, LIP                OpenSkyFormatsAudio   WAV, XWM, FUZ
 OpenSkyFormatsPEX         compiled Papyrus        OpenSkyFormatsSWF     Flash menus, AS2
   ^
-OpenSkyGameData           virtual file system, load order, record stores, actor stats from records
+OpenSkyGameData           virtual file system, load order, record stores, actor stats from records,
+                          item index, equip slots, barter prices, projectile profiles
   ^
 OpenSkyBehavior           Havok behavior graph evaluation, skeleton pose math
   ^
@@ -102,8 +103,10 @@ OpenSkyWorldState         runtime state store, open component set, game clock, g
   ^
 OpenSkyConditions         condition evaluator, function registry, core functions
   ^
-OpenSkyWorldInterface     interaction events and rays, placed interactions
-OpenSkyInventoryInterface inventory state, holders, vendors, InventoryAccess
+OpenSkyWorldInterface     interaction events and rays, placed interactions, reference source
+OpenSkyInventoryInterface inventory state, holders, vendors, baselines, InventoryAccess,
+                          EquipmentAccess
+OpenSkyMagicInterface     magic values other features read
   ^
 OpenSkyActorsInterface    actor state components, ActorValueAccess, actor conditions
 OpenSkyCrimeInterface     crime events, ledger, arrest state, ownership values, CrimeReporting
@@ -113,6 +116,7 @@ OpenSkyProgressionInterface perk and progress state, skill use events, PerkAcces
   ^
 OpenSkyActors             actor value runtime
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
+OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
 OpenSkyPerception         perception runtime, detection formula, sight, overlay
 OpenSkyProgression        perk, skill, and level runtimes, perk entry-point evaluator
@@ -140,18 +144,19 @@ A lower module never imports a higher one. These patterns keep it that way:
   `ActorValueIdentity` in `OpenSkyFormatsCore` and `OpenSkyFormatsESM`.
 - Behavior that needs a higher layer stays up there as an extension of the lower type, in a file
   named `Type+Feature.swift`. Examples: `Package+Schedule.swift` in the engine over a
-  `OpenSkyFormatsESM` record, and `EquipSlotStore+Hands.swift` and `FactionStore+Templates.swift` in
-  the engine over `OpenSkyGameData` stores.
+  `OpenSkyFormatsESM` record, and `ItemDefinitionStore+MagicItemUse.swift` in the engine over an
+  `OpenSkyGameData` store.
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
   to move the camera and run the world. The engine's `GameSession` is that driver.
 - Logic that only reads plugin records, with no runtime state, is not a feature. It moves down
   into `OpenSkyGameData`. Examples: actor templates, derived actor values, resistances,
-  faction relations, and the leveling and skill formulas.
+  faction relations, the leveling and skill formulas, the item index, and barter prices.
 - A feature that another module calls into offers a protocol in its interface. Example: crime
   asks `DetectionObserving` which observers saw an act. Magic and progression change actor values
   through `ActorValueAccess`, and scripts change faction ranks through `FactionAccess`. Items
 report theft through `CrimeReporting`, and an arrest takes gold through `InventoryAccess`. The
+spellbook readies a spell in a hand through `EquipmentAccess`. The
   implementation conforms, and the app hands it over as that protocol.
 - A lower module never names a registry or default that a higher module owns. Example:
   `PerkRuntime` takes its `ConditionFunctionRegistry` as a parameter, and the caller passes
@@ -193,6 +198,10 @@ is the feature name plus `Testing`, for example `OpenSkyPerceptionTesting`, and 
 feature's interface, not its implementation. A fixture builder that needs the implementation
 stays in the test target that uses it, for example `HostilityFixture+Derivation.swift`. Its
 declarations are `public`, and it may `@testable import` the module it builds fixtures for.
+
+A testing library can come before its feature, like an interface declared early. The
+`testing` helper declares it alone. Example: `OpenSkyWorldTesting` holds `FakeWorldReferences`,
+a fixed reference index that inventory tests use in place of the cell streamer.
 
 A testing library changes how Xcode builds the module it uses. The app and the test bundles
 then share that module, so Xcode builds it as a dynamic framework. A module that depends on

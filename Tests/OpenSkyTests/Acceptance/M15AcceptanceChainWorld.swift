@@ -22,6 +22,7 @@
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
