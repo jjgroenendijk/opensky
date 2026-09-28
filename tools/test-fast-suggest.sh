@@ -42,7 +42,7 @@ if [ ! -f "$cache" ] || [ "$xctestrun" -nt "$cache" ]; then
     after="$(ls "$xcode_dd" 2>/dev/null || true)"
     printf '%s\n' "$after" | while IFS= read -r entry; do
         [ -n "$entry" ] || continue
-        case "$entry" in [Oo]pen[Ss]ky-*) ;; *) continue ;; esac
+        case "$entry" in OpenSky-*) ;; *) continue ;; esac
         printf '%s\n' "$before" | grep -qxF "$entry" \
             || rm -rf "${xcode_dd:?}/$entry"
     done
