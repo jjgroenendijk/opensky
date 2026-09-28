@@ -8,6 +8,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 import simd
 

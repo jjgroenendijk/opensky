@@ -80,7 +80,7 @@ public final class ActiveAudioSource {
         self.routing = routing
         let position = routing == .positional ? request.worldPosition : .zero
         worldPosition = position
-        cell = CellGridManager.cellCoordinate(for: position)
+        cell = CellCoordinate(containing: position)
         gain = request.gain
         loops = request.loops
         self.node = node

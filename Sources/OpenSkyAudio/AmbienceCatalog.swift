@@ -15,6 +15,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 /// Identity of the cell whose ambience should be playing. The streamer emits a
@@ -28,6 +29,12 @@ nonisolated public struct AmbienceContext: Equatable, Sendable {
     public let isInterior: Bool
 
     public static let empty = AmbienceContext(regions: [], acousticSpace: nil, isInterior: false)
+
+    public init(regions: [FormID], acousticSpace: FormID?, isInterior: Bool) {
+        self.regions = regions
+        self.acousticSpace = acousticSpace
+        self.isInterior = isInterior
+    }
 }
 
 /// Resolved ambient bed: the SNDR/SOUN FormIDs that should be the positional

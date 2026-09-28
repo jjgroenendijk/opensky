@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyGameData
 import OpenSkyRendering
 
 final class WeatherSection: PanelSectionViewController {

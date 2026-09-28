@@ -5,7 +5,7 @@
 // output device, no playback, no decode-queue timing.
 
 import AVFAudio
-@testable import OpenSkyEngine
+@testable import OpenSkyAudio
 @testable import OpenSkyFormatsCore
 import simd
 import Testing

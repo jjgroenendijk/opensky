@@ -20,6 +20,7 @@
 //   which is the truth rather than a silent no-op.
 
 import AppKit
+import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyEngine
 import OpenSkyFormatsESM

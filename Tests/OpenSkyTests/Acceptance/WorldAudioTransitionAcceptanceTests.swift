@@ -20,6 +20,7 @@ import FormatsAudioTesting
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

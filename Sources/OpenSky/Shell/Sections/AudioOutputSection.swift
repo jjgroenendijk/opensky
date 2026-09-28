@@ -3,6 +3,7 @@
 // (M9.1.3).
 
 import AppKit
+import OpenSkyAudio
 import OpenSkyEngine
 
 final class AudioOutputSection: PanelSectionViewController {

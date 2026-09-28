@@ -11,6 +11,7 @@
 
 import AVFAudio
 import Foundation
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM

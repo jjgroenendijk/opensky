@@ -22,6 +22,7 @@
 // same answer. That is what makes this surface usable as verification evidence.
 
 import AppKit
+import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyFormatsESM
 

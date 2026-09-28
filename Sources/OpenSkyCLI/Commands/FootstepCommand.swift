@@ -11,6 +11,7 @@
 // material-less surface does, through the table's representative impact.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyPhysics

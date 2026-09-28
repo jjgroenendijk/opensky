@@ -4,6 +4,7 @@
 // playing places the source ahead of the camera so panning is audible at once.
 
 import AppKit
+import OpenSkyAudio
 import OpenSkyEngine
 
 final class AudioSourcesSection: PanelSectionViewController {

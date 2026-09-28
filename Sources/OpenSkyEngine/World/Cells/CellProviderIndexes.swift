@@ -2,6 +2,7 @@
 // assembly outside AppDelegate makes additions testable without app startup.
 
 import Metal
+import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

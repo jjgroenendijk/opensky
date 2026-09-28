@@ -3,6 +3,7 @@
 // live-source-derived readout. Offline manual rendering only — no output
 // device, no decode-queue timing, explicit frame deltas.
 
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 import Testing
 

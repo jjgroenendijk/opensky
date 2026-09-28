@@ -4,6 +4,7 @@
 // main thread, gated on worldSimPaused through its own FrameSimClock so menu
 // mode freezes the tick without a time jump on resume.
 
+import OpenSkyAudio
 import OpenSkyRendering
 import QuartzCore
 import simd

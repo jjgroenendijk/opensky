@@ -9,6 +9,7 @@ import Foundation
 import OpenSkyDiagnostics
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 import simd
 

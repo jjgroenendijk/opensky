@@ -18,6 +18,7 @@
 // subscriber will subscribe alongside, not replace this one.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OSLog

@@ -8,6 +8,7 @@
 // is opened, so the walk stays flat in memory over the whole corpus.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyFormatsAudio
 import OpenSkyGameData

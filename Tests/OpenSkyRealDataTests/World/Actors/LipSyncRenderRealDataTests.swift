@@ -5,6 +5,7 @@ import CoreGraphics
 import Foundation
 import Metal
 import MetalKit
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsAudio

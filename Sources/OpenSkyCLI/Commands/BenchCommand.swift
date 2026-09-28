@@ -3,6 +3,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyRendering

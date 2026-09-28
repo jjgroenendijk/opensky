@@ -17,6 +17,7 @@
 // Documented in docs/engine/audio-decoding.md.
 
 import AppKit
+import OpenSkyAudio
 import OpenSkyEngine
 
 final class AudioVoiceSection: PanelSectionViewController {

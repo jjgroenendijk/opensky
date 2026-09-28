@@ -13,6 +13,7 @@
 // is skipped entirely while the world sim is paused.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics

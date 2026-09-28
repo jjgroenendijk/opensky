@@ -9,6 +9,7 @@
 // there is".
 
 import AppKit
+import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM

@@ -92,6 +92,7 @@ OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls
 OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkyShaderTypes
   ^
 OpenSkyRendering          Metal renderer, scenes, cameras, terrain meshes, weather values
+OpenSkyAudio              audio graph, decoders, sound and music record stores
   ^
 OpenSkyEngine             the rest of the engine, until it is split
   ^
@@ -150,6 +151,12 @@ satisfies an old `import`, and the build fails with two types of the same name, 
 Shared test fixtures live in a testing library, `Tests/<Name>Testing/` (for a foundation
 module, the name the module declares, for example `BehaviorTesting`). Its declarations are
 `public`, and it may `@testable import` the module it builds fixtures for.
+
+A testing library changes how Xcode builds the module it uses. The app and the test bundles
+then share that module, so Xcode builds it as a dynamic framework. A module that depends on
+`CFFmpeg` cannot be a framework: Xcode stops with "The workspace has a reference to a missing
+target with GUID 'PACKAGE-TARGET:CFFmpeg'". So `OpenSkyAudio` has no testing library. Its
+fixtures stay inside `OpenSkyAudioTests`.
 
 The package test targets run in the `UnitTests` and `Sanitizers` plans next to `OpenSkyTests`. A
 test plan names a package test target with `"containerPath" : "container:."`, the package at the

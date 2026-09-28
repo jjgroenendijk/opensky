@@ -4,6 +4,7 @@
 // WorldAudioDirectorFixture — synthetic plugins and a stubbed file loader, no
 // real audio device and no VFS. See docs/engine/world-sfx.md.
 
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import simd

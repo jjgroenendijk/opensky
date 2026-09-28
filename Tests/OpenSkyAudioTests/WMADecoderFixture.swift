@@ -3,7 +3,7 @@
 // bodies are deterministic pseudo-random bytes standing in for a corrupt stream.
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyAudio
 
 enum WMADecoderFixture {
     /// A plausible stereo WMAv2 header of the shape an xWMA "fmt " chunk carries.

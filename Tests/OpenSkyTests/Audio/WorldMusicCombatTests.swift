@@ -11,6 +11,7 @@
 // Offline manual rendering only, exactly like `WorldMusicDirectorTests`: no
 // output device, no decode-queue timing, explicit frame deltas.
 
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 import Testing
 

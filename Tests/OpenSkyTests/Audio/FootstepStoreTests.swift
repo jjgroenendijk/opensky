@@ -4,6 +4,7 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+@testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import Testing
