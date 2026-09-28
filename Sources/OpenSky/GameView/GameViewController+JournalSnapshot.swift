@@ -8,7 +8,8 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
+import OpenSkyFormatsSWF
 
 extension GameViewController {
     var journalSnapshot: JournalControlSnapshot {

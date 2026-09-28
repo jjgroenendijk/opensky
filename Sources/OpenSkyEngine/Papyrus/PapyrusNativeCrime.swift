@@ -20,7 +20,7 @@
 // Documented in docs/engine/papyrus-activation.md and docs/engine/crime.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension PapyrusNativeFunctions {
     public static func installCrime(into registry: inout PapyrusNativeRegistry) {

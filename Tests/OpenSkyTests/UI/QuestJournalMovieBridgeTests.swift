@@ -8,10 +8,11 @@
 // the rows, `iSelectedIndex` holds the selection with -1 for none, and
 // `InvalidateData()` and `ClearList()` are methods on the list.
 
-import FormatsTestSupport
+import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsSWF
 import Testing
 
 private final class JournalCallLog: @unchecked Sendable {

@@ -20,7 +20,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Character-level state the controller owns. Extensions cannot add stored

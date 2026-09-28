@@ -8,7 +8,7 @@
 // and the eviction goes through the already-internal
 // `removeStuckArrows(_:)` — so moving them needed no access loosened.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 extension ProjectileRuntime {

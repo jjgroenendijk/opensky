@@ -35,7 +35,7 @@
 // Documented in docs/engine/inventory-state.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Failures the equipment layer reports. Like `InventoryError`, every one is a
 /// caller mistake rather than malformed input.

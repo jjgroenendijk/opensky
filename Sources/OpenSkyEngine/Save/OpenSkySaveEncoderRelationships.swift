@@ -11,7 +11,7 @@
 // produces identical bytes.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's relationship overrides paired with the snapshot entry they

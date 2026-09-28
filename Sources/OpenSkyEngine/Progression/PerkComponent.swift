@@ -26,7 +26,7 @@
 // Documented in docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's owned perks, in ascending key order.
 ///

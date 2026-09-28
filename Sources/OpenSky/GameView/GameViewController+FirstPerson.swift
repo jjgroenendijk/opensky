@@ -5,7 +5,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 
 extension GameViewController: FirstPersonControlProviding {

@@ -48,7 +48,7 @@ conflict.
   the CLI build. `make cli-boundary` catches this.
 - A folder that builds a target has the target's name, in PascalCase: `Sources/OpenSky/`
   builds `OpenSky`, `Tests/OpenSkyTests/` builds `OpenSkyTests`. A test selector names the
-  target: `make test-fast T='OpenSkyFormatsTests/BSAArchiveTests'`. Two names stay lowercase on
+  target: `make test-fast T='OpenSkyFormatsCoreTests/BSAArchiveTests'`. Two names stay lowercase on
   purpose: the CLI binary is `openskycli`, as terminal commands usually are, and the
   bundle IDs keep their old form, because macOS stores permission grants against them.
 - The build cache is `DerivedData/` inside the checkout, not the Xcode default under
@@ -91,19 +91,21 @@ Sources/
   OpenSkyCLI/           OpenSkyCLI only: Commands/, SWF/, Support/
   Shaders/              OpenSky and OpenSkyCLI: Shaders.metal
   OpenSkyEngine/        package module: the engine not yet split, one folder per domain
-  OpenSkyFormats/       package module: format parsers, one folder per format
+  OpenSkyFormatsCore/   package module: binary readers, compression, geometry, BSA, strings
+  OpenSkyFormats*/      package modules, one per format family: ESM, Mesh, Animation, Audio,
+                        PEX, SWF; one folder per format inside
   OpenSkyGameData/      package module: virtual file system, load order, record stores
   OpenSkyBehavior/      package module: behavior graph evaluation, skeleton pose math
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
   OpenSkyTests/         synthetic unit suites for the app and engine
-  OpenSkyFormatsTests/  package test target: synthetic suites for OpenSkyFormats
+  OpenSkyFormats*Tests/ package test targets: synthetic suites, one per format module
   OpenSkyGameDataTests/ package test target: synthetic suites for OpenSkyGameData
   OpenSkyBehaviorTests/ package test target: synthetic suites for OpenSkyBehavior
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
-  FormatsTestSupport/   package library: byte-building fixtures every unit test target uses
+  Formats*Testing/      package libraries: byte-building fixtures, one per format module
   BehaviorTesting/      package library: behavior graph fixtures
   OpenSkyUITests/       XCUITest smoke tests
 ```
@@ -121,7 +123,7 @@ runner it shares a session with (`docs/testing.md`). A gated suite written outsi
 `Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would ever run it.
 
 No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngine/`,
-`Sources/OpenSkyFormats/`, or `Sources/OpenSkyEngine/World/`; each goes in a domain folder.
+`Sources/OpenSkyFormats*/`, or `Sources/OpenSkyEngine/World/`; each goes in a domain folder.
 `Sources/OpenSkyGameData/` is small enough to stay flat:
 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
@@ -130,7 +132,7 @@ No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngi
 - `Sources/OpenSkyEngine/`: one folder per domain (`Magic/`, `Dialogue/`, `Rendering/`,
   ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
   folder.
-- `Sources/OpenSkyFormats/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus
+- `Sources/OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus
   `Binary/`, `Compression/`, and `Geometry/`. A package module never imports a module above
   it; behavior that needs a higher layer goes in an extension file up there
   (`docs/tools/modules.md`).

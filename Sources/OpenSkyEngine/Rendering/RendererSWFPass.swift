@@ -9,7 +9,7 @@
 
 import Metal
 import MetalKit
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyShaderTypes
 import simd
 

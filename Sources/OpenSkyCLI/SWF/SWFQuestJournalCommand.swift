@@ -17,7 +17,9 @@
 
 import Foundation
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFQuestJournalCommand {

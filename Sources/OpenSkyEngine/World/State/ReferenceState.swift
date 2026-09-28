@@ -9,7 +9,7 @@
 // Documented in docs/engine/runtime-state.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// The state of one reference: what the plugin authored, with any runtime
 /// deltas laid over the top.

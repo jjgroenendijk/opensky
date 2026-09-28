@@ -1,5 +1,5 @@
 // `GlobalVariable` natives (issue #172): the script side of the GLOB
-// write-coercion seam in `Sources/OpenSkyFormats/ESM/Records/Global.swift`, which was
+// write-coercion seam in `Sources/OpenSkyFormatsESM/ESM/Records/Global.swift`, which was
 // written naming Papyrus as its caller.
 //
 // A `GlobalVariable` reaches script code as a VMAD object property, so its
@@ -19,7 +19,7 @@
 // available for the Creation Kit-parity work that has a reason to consult it.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension PapyrusNativeFunctions {
     public static func installGlobalVariable(into registry: inout PapyrusNativeRegistry) {

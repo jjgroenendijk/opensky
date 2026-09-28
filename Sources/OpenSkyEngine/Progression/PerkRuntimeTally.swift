@@ -9,7 +9,8 @@
 // Documented in docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public struct PerkRuntimeTally: Equatable, Sendable {
     /// Add or seed calls naming a PERK no loaded plugin carries.

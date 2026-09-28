@@ -2,7 +2,7 @@
 // tests and callers can use it without touching the filesystem.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsPEX
 
 nonisolated public final class PexScriptLoader {
     public static let scriptPrefix = "scripts\\"

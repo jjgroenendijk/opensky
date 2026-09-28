@@ -6,7 +6,8 @@
 // path policy is documented in docs/formats/music.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public enum MusicResolveError: Error, Equatable {

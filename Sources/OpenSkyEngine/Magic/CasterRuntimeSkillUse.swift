@@ -27,7 +27,7 @@
 // Documented in docs/engine/skill-advancement.md and docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension CasterRuntime {

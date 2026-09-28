@@ -18,7 +18,7 @@
 // measures it.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import simd
 
 /// The travel one update extracted from the root bone: how far the character

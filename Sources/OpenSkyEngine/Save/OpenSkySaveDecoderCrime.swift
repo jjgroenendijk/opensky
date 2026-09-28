@@ -18,7 +18,7 @@
 // length is a thrown error rather than a multi-gigabyte allocation.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's saved ledger, before it is merged back into the delta.
 nonisolated public struct SaveCrimeLedgerEntry: Equatable, Sendable {

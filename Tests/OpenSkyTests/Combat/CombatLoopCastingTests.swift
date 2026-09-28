@@ -10,7 +10,7 @@
 
 import Foundation
 import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

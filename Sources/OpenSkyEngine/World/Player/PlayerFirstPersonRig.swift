@@ -15,7 +15,8 @@
 
 import Metal
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import simd
 
 nonisolated public final class PlayerFirstPersonRig {

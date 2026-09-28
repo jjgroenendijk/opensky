@@ -1,7 +1,8 @@
 // Env-gated KYWD/KWDA resolution sweep over the user's read-only load order.
 
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

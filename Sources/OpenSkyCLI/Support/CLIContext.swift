@@ -4,7 +4,7 @@
 // shapes and the fail-loud behavior match the app exactly.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 struct CLIContext {

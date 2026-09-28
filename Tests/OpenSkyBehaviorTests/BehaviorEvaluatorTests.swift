@@ -8,7 +8,7 @@
 import BehaviorTesting
 import Foundation
 @testable import OpenSkyBehavior
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 import simd
 import Testing
 

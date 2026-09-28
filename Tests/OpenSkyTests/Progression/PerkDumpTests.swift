@@ -2,10 +2,11 @@
 // that print a perk's name rather than a raw FormID — a spell's half-cost perk,
 // a magic effect's perk to apply, and each box of an AVIF perk tree.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

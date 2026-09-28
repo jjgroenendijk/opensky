@@ -2,10 +2,10 @@
 // deterministic instantiation order, event order, rebuild reconciliation,
 // retirement, and persistent-instance survival.
 
-import FormatsTestSupport
+@testable import FormatsESMTesting
 import Foundation
 import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 @MainActor

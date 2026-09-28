@@ -12,7 +12,7 @@
 // length is a thrown error rather than a multi-gigabyte allocation.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One owner's saved inventory, before it is merged back into its delta.
 nonisolated public struct SaveInventoryEntry: Equatable, Sendable {

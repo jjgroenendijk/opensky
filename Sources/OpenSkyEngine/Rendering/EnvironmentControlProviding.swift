@@ -3,7 +3,8 @@
 // the CLI target, so a protocol added here needs no project-membership change.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 @MainActor

@@ -3,7 +3,8 @@
 // plugin definitions.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OSLog
 
 nonisolated public struct ResolvedFormList: Equatable, Sendable {

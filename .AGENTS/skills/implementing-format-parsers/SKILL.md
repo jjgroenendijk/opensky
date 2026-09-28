@@ -34,11 +34,14 @@ discipline lives here, not there.
 
 ## Testing
 
-- The parser goes in `Sources/OpenSkyFormats/<Format>/`. It never imports engine code; see
-  `docs/tools/modules.md` for `public` access, explicit `public init(...)`, and `Sendable`.
-- Unit-test in the matching `Tests/OpenSkyFormatsTests/<Format>/` folder with synthetic fixtures
-  built in code (existing patterns: `BSAFixture`, `ESMFixture`, `NIFFixture`, `StringTableFixture`,
-  all under `Tests/FormatsTestSupport/`). A test that also builds engine state goes in
+- The parser goes in `Sources/OpenSkyFormats<Family>/<Format>/`, in the family module the format
+  belongs to (`docs/tools/modules.md` lists them). It imports only `OpenSkyFormatsCore`, never
+  another family or engine code; see the same page for `public` access, explicit
+  `public init(...)`, and `Sendable`.
+- Unit-test in the matching `Tests/OpenSkyFormats<Family>Tests/<Format>/` folder with synthetic
+  fixtures built in code (existing patterns: `BSAFixture`, `ESMFixture`, `NIFFixture`,
+  `StringTableFixture`, in the `Tests/Formats<Family>Testing/` libraries). A test that also builds
+  engine state goes in
   `Tests/OpenSkyTests/Formats/<Format>/`. NEVER check in extracted game files — not even tiny ones.
 - Verify against the real install via an env-gated probe (load the `probing-real-game-data`
   skill) or `make run-cli ARGS=...`; probes never land in commits.

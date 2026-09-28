@@ -3,7 +3,8 @@
 // are copied into the repository or test products.
 
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsAudio
 @testable import OpenSkyGameData
 import Testing
 

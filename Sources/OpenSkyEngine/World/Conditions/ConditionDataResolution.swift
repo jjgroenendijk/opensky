@@ -6,7 +6,7 @@
 // function reads the same snapshot.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct ConditionDataResolution: @unchecked Sendable, Sendable {

@@ -32,7 +32,7 @@
 // its camera bone. First person uses the rig's answer, which is the one the
 // arms were authored against.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct FirstPersonCamera: Equatable, Sendable {

@@ -8,11 +8,13 @@
 // boundary). The suite's own tests are extensions of this type under
 // Tests/OpenSkyTests/. See Tests/TestSupport/AGENTS.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
+import FormatsMeshTesting
 import Foundation
 import Metal
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import simd
 import Testing

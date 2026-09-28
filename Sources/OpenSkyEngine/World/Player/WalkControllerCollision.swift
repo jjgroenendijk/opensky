@@ -1,6 +1,7 @@
 // Static mesh horizontal response + bounded step-offset helpers.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 nonisolated extension WalkController {

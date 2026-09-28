@@ -28,7 +28,7 @@
 // registration of their own.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension PapyrusNativeFunctions {
     public static func installActor(into registry: inout PapyrusNativeRegistry) {

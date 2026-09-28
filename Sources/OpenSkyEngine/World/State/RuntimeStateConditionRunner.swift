@@ -20,7 +20,7 @@
 // Documented in docs/engine/global-variables.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public enum RuntimeStateConditionRunner: Sendable {
     /// Evaluates `conditions` against `context`, accumulating into `tally` so a

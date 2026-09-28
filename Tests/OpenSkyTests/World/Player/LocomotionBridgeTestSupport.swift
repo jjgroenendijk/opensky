@@ -5,7 +5,10 @@
 import BehaviorTesting
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 import simd
 
 extension LocomotionBridgeTests {

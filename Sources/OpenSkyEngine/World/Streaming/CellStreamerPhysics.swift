@@ -12,7 +12,8 @@
 //
 // Documented in docs/engine/dynamic-bodies.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 extension CellStreamer {

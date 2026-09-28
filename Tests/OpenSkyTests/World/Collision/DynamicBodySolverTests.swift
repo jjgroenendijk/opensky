@@ -3,7 +3,9 @@
 // stays above the floor, and produces the same resting state twice.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

@@ -16,7 +16,8 @@
 // line 4345) and is what makes the second FormID droppable.
 
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

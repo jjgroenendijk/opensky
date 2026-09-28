@@ -2,7 +2,7 @@
 // #201). A package selector can pass a WorldState snapshot's answers without
 // letting the condition registry reach into the main-actor store.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public struct ReferenceEnableResolution: Sendable {
     public static let empty = ReferenceEnableResolution(states: [:])

@@ -14,12 +14,13 @@
 // Gated on a Metal 4 device; the loop's own evidence is `M12AcceptanceTests`,
 // which needs no GPU.
 
-import FormatsTestSupport
+import FormatsMeshTesting
 import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

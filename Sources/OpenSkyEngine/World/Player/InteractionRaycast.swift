@@ -3,7 +3,9 @@
 // into each shape's local space so affine placement keeps the world-ray
 // distance parameter intact.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated private struct LocalInteractionRay {

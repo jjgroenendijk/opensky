@@ -10,7 +10,8 @@
 // hip, `NPC L Calf -> NPC L Thigh` on a limited hinge at the knee).
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 
 enum RagdollFixture {

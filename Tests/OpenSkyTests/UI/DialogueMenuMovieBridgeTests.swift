@@ -10,9 +10,10 @@
 // movie still has that shape is the real-data gate's job.
 
 import AppKit
-import FormatsTestSupport
+import FormatsSWFTesting
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsSWF
 import Testing
 
 private final class DialogueCallLog: @unchecked Sendable {

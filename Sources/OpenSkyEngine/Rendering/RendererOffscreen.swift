@@ -7,7 +7,7 @@
 
 import Metal
 import MetalKit
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 
 /// Result of a sustained offscreen render run.

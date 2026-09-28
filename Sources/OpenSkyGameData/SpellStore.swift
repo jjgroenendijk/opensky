@@ -11,7 +11,8 @@
 // auto-calculated cost once, at construction, so no consumer recomputes it.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 /// One effect of a spell or scroll, joined against the effect store.
 nonisolated public struct ResolvedSpellEffect: Sendable {

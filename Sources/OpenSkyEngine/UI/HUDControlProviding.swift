@@ -2,7 +2,7 @@
 // independent of GameViewController while exposing engine-owned target state
 // and reversible presentation overrides.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct HUDControlSnapshot: Equatable, Sendable {

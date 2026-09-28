@@ -1,7 +1,8 @@
 // View-ray target state and use-key action dispatch (M8.4.1). Split from
 // CellStreamer so streaming scheduling remains below strict type/file limits.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 extension CellStreamer {

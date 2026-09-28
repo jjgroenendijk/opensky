@@ -8,7 +8,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 final class CrimeBountySection: CrimeFactionPanelSection {
     static let defaultAmount: Int32 = 100

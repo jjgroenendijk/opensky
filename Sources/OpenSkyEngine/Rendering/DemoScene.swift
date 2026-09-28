@@ -13,7 +13,7 @@
 
 import Foundation
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import OpenSkyShaderTypes
 import simd
 

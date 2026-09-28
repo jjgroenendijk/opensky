@@ -1,9 +1,9 @@
 // M11.1 headless acceptance: native dispatch, latency, fallback, determinism.
 
-import FormatsTestSupport
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 struct M11AcceptanceTests {

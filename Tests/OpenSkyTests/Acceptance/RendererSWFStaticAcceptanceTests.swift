@@ -11,12 +11,12 @@
 // `swfEnabled = false` and a cleared movie both restore the baseline byte for
 // byte, and repeated frames are byte-identical.
 
-import FormatsTestSupport
+import FormatsSWFTesting
 import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsSWF
 import simd
 import Testing
 

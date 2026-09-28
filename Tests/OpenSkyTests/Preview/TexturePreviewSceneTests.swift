@@ -2,7 +2,7 @@
 // orientation, flat-light camera framing. Pure values — no GPU needed.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 import simd
 import Testing
 

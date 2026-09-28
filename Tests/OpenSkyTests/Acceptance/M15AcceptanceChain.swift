@@ -28,7 +28,9 @@ import Foundation
 @testable import OpenSky
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

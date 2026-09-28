@@ -7,7 +7,8 @@
 // cap, and what is under test is the surface rather than the numbers.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 
 @MainActor
 enum M19Fixture {

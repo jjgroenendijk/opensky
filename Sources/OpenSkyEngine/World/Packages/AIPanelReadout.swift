@@ -13,7 +13,7 @@
 // docs/engine/detection.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// The `AIOverlayStatsLabel` lines: what is switched on and what it cost.
 nonisolated public enum AIOverlayReadout: Sendable {

@@ -20,7 +20,7 @@
 // Documented in docs/engine/projectiles.md.
 
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// Who is shooting, and from where.

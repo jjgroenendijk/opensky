@@ -1,9 +1,9 @@
 // Native registry families, fallback policy, and tally evidence.
 
-import FormatsTestSupport
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 struct PapyrusNativeRegistryTests {

@@ -8,7 +8,7 @@
 // that is unavailable *for a stated reason*.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct ProgressionReadoutTests {

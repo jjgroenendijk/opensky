@@ -8,10 +8,12 @@
 // because the two halves are no longer one file. See
 // Tests/TestSupport/AGENTS.md.
 
-import FormatsTestSupport
+@testable import FormatsESMTesting
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsPEX
 import simd
 
 @MainActor

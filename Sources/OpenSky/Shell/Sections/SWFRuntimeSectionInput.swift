@@ -9,7 +9,8 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsSWF
 
 extension SWFRuntimeSection {
     /// Wires target/action/identifier for every control. Called once from

@@ -16,7 +16,8 @@
 // showed before the save.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's effects paired with the snapshot entry they came from.

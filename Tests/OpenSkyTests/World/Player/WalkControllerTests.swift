@@ -2,7 +2,7 @@
 // gravity/snap, slope rejection, walk/run speeds, streamed-cell seams.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 import simd
 import Testing
 

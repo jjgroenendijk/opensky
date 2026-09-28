@@ -24,7 +24,7 @@
 // `docs/engine/behavior-clips.md`).
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance {
     /// The playback phase of the first clip generator below `target` that has

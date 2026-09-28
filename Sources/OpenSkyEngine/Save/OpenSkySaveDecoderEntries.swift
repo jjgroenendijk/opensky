@@ -6,7 +6,8 @@
 // walk into the next chunk's bytes.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum OpenSkySaveEntryDecoder: Sendable {

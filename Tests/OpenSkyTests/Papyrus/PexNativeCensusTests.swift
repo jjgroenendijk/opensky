@@ -1,9 +1,9 @@
 // Typed native call resolution over synthetic PEX models.
 
-import FormatsTestSupport
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 struct PexNativeCensusTests {

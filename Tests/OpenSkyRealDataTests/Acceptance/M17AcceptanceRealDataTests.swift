@@ -32,7 +32,9 @@
 
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsAudio
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

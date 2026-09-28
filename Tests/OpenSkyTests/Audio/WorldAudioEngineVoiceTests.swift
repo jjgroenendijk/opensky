@@ -5,9 +5,9 @@
 // covered by the real-data sweep instead.
 
 import AVFAudio
-import FormatsTestSupport
+import FormatsAudioTesting
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAudio
 import simd
 import Testing
 

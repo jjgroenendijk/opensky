@@ -7,7 +7,7 @@
 // sneak, sprint, and swim gaits have no GMST and come from the MOVT records the
 // player's gaits are authored in (docs/formats/records.md).
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct MovementSetting: Equatable, Sendable {

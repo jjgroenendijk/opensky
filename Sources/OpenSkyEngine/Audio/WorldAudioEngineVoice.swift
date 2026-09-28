@@ -13,7 +13,7 @@
 
 import AVFAudio
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAudio
 import simd
 
 /// What a started voice line hands back: the source to track, how long the

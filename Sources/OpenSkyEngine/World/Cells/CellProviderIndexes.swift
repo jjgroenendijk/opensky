@@ -2,7 +2,8 @@
 // assembly outside AppDelegate makes additions testable without app startup.
 
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct CellProviderIndexes {

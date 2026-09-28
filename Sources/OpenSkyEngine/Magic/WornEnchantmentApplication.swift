@@ -28,7 +28,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// What one reconciliation did.
 nonisolated public struct WornEnchantmentReport: Equatable, Sendable {

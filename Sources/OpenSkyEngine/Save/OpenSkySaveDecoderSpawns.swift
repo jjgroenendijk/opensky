@@ -9,7 +9,7 @@
 // against the bytes actually left before an array is reserved.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// One saved spawned object, before it is merged back into its delta.

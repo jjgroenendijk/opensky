@@ -2,7 +2,7 @@
 // "Testing": every math routine tested with synthetic in-code fixtures).
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 import simd
 import Testing
 

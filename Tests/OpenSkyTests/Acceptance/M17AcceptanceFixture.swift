@@ -26,10 +26,12 @@
 // The plugin is keyed under `PapyrusWorldFixture.pluginName` so an INFO's
 // `ReferenceKey` matches the Papyrus instance key its result script runs under.
 
-import FormatsTestSupport
+import FormatsESMTesting
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsPEX
 
 enum M17AcceptanceFixture {
     static let greetingTopic: UInt32 = 0x0000_1700

@@ -10,7 +10,7 @@
 // `make realtest T='HKBNodeDecodeRealDataTests/decodesEveryBehaviorNodeClass()'`.
 
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 @testable import OpenSkyGameData
 import Testing
 

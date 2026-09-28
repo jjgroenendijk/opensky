@@ -9,10 +9,11 @@
 // spell-cost perk and an ability perk — so a suite asserts against the shape
 // the real records have rather than against a shape invented to be easy.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 
 @MainActor

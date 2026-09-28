@@ -4,7 +4,8 @@
 
 import Foundation
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyShaderTypes
 import simd
 

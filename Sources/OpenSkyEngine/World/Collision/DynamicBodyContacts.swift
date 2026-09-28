@@ -19,7 +19,8 @@
 //
 // Documented in docs/engine/dynamic-narrowphase.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import simd
 
 /// Placed triangle geometry a penetration query runs against, bundled so the

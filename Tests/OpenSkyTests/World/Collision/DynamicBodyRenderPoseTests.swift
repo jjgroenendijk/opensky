@@ -5,7 +5,8 @@
 // the pixel evidence that it reaches the screen is RendererDynamicPoseTests.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

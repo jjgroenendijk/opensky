@@ -9,10 +9,10 @@
 // Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
 // boundary").
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

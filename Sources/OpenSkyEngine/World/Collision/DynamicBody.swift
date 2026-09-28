@@ -11,7 +11,9 @@
 //
 // Documented in docs/engine/dynamic-bodies.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated extension simd_quatf {

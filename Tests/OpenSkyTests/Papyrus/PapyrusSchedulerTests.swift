@@ -1,9 +1,9 @@
 // Fixed-step wake policy for real-time and game-time latent calls.
 
-import FormatsTestSupport
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsPEX
 import Testing
 
 struct PapyrusSchedulerTests {

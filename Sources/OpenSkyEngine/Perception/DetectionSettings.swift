@@ -33,7 +33,8 @@
 // Documented in docs/engine/detection.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct DetectionSettings: Equatable, Sendable {

@@ -18,7 +18,7 @@
 // Documented in docs/engine/melee-combat.md.
 
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// Who is swinging, and from where.

@@ -15,7 +15,7 @@
 // (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
 nonisolated public final class InstallBehaviorReferenceSource: BehaviorReferenceSource {

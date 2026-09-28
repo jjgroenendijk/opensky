@@ -17,7 +17,7 @@
 
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 /// How one raw function index is actually used across every CTDA seen.
 struct ConditionFunctionShape {

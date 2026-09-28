@@ -2,7 +2,9 @@
 // values only. No game content, file parsing, or Metal device required.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

@@ -5,7 +5,8 @@
 // Core/wbDefinitionsTES5.pas. Creation Kit numbers are 4096 higher.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {

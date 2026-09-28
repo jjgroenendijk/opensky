@@ -4,7 +4,8 @@
 
 import Foundation
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 

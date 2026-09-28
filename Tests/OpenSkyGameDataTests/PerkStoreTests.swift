@@ -1,9 +1,9 @@
 // Synthetic PerkStore coverage: cross-plugin override, the spell join, the
 // NNAM rank chain, and the flat entry-point index the perk runtime queries.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

@@ -24,7 +24,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 @MainActor

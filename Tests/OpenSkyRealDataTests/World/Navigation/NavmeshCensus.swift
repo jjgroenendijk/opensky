@@ -3,7 +3,7 @@
 // boundary).
 
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 /// Running totals over every NAVM decoded in the target area.
 struct NavmeshCensus {

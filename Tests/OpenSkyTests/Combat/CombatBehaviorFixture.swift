@@ -5,7 +5,8 @@
 // is. The literals both halves hand it live here so neither file owns them.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 
 @MainActor

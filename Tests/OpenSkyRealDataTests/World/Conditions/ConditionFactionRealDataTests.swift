@@ -15,10 +15,11 @@
 // Aggregate counts, editor IDs and derived verdicts only — no game bytes leave
 // the run (AGENTS.md "Legal & IP boundary").
 
-import FormatsTestSupport
+import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

@@ -24,7 +24,7 @@
 // Documented in docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's regard for another, friendliest first.
 ///

@@ -18,7 +18,7 @@
 // Documented in docs/engine/runtime-state.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One recorded component mutation.
 ///

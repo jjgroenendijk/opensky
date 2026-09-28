@@ -30,7 +30,7 @@
 // Documented in docs/engine/quest-state.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Reads and mutates quest state on top of a `WorldStateStore`.

@@ -14,7 +14,7 @@
 // mid-flight pose would put the body back in the air on reload.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's death paired with the snapshot entry it came from.

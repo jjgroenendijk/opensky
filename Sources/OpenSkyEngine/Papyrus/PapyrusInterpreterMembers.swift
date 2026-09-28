@@ -1,7 +1,7 @@
 // PEX property access opcodes.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsPEX
 
 nonisolated extension PapyrusInterpreter {
     public func memberOp(

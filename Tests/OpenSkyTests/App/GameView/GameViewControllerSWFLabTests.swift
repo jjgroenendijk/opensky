@@ -6,11 +6,12 @@
 // nil renderer as "no GPU assignment", exactly as the other control bridges).
 
 import AppKit
-import FormatsTestSupport
+import FormatsCoreTesting
+import FormatsSWFTesting
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 import Testing
 

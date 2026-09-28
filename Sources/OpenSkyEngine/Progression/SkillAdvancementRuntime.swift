@@ -40,7 +40,7 @@
 // Documented in docs/engine/skill-advancement.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Where a skill's `AVSK` advancement parameters come from.

@@ -7,7 +7,7 @@
 // `PerceptionWorld` seam.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import simd
 
 /// A world whose geometry is one closure. `blocked` returns true for a segment

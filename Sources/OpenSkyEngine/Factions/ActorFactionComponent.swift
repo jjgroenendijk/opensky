@@ -18,7 +18,7 @@
 // Documented in docs/engine/hostility.md and docs/formats/factions.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One membership: the faction and the rank the actor holds in it.
 ///

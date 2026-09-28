@@ -11,10 +11,11 @@
 // exactly five uses — the same `floor(charge / cost)` the real-data suite pins
 // against UESP's published rows.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

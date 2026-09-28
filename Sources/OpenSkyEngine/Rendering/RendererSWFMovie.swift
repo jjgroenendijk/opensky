@@ -15,7 +15,7 @@
 // held.
 
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyShaderTypes
 import simd
 

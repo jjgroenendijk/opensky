@@ -5,7 +5,7 @@
 // the gradient ramp atlas.
 
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyShaderTypes
 import simd
 

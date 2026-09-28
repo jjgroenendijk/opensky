@@ -3,7 +3,8 @@
 // Deleted or malformed records do not erase the last valid value.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedGameSetting: Equatable, Sendable {
     public let setting: GameSetting

@@ -3,7 +3,8 @@
 // departed cell's drop-set must remove only matching partition results.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

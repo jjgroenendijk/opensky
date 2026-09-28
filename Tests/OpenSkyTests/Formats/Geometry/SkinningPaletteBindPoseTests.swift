@@ -16,11 +16,13 @@
 // halves cancel either way, but every pose written over it was composed in the
 // wrong convention.
 
-import FormatsTestSupport
+import FormatsMeshTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

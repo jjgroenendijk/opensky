@@ -3,10 +3,11 @@
 // installed in code.
 
 import AppKit
-import FormatsTestSupport
+import FormatsSWFTesting
 @testable import OpenSky
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsSWF
 import simd
 import Testing
 

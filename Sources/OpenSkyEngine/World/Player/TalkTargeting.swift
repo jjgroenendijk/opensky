@@ -29,7 +29,7 @@
 // would mean this file querying the collision broad phase, which is exactly the
 // coupling the split above avoids.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// The streamer's Talk seam: who is a candidate, who is currently picked, and

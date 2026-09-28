@@ -13,7 +13,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// Perception state the controller owns. Extensions cannot add stored

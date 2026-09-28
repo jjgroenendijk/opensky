@@ -8,7 +8,7 @@
 // inspects a single movie.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFCommand {

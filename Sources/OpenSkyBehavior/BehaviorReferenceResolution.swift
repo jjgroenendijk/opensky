@@ -46,7 +46,7 @@
 // See docs/engine/behavior-clips.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 
 /// Where a named behavior file comes from. The engine answers by loading it out
 /// of the install; a test answers from a table it built in code.

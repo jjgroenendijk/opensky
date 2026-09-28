@@ -1,10 +1,11 @@
 // Footstep tag -> sound resolution over synthetic records: the chain the
 // footstep director walks (issue #352). See docs/engine/audio.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct FootstepStoreTests {

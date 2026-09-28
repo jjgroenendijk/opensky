@@ -4,7 +4,7 @@
 // synthetic positions (AGENTS.md testing rule).
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 import simd
 import Testing
 

@@ -5,7 +5,8 @@
 // frame. Concurrency confinement decision: docs/engine/cell-streaming.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Builds one cell scene by grid coordinate. The single seam scene build

@@ -13,7 +13,7 @@
 // inference are written down in docs/engine/music.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Where the listener is, expressed as the only fields music selection reads.
 /// The streamer emits a fresh value whenever the center cell changes (exterior

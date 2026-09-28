@@ -1,7 +1,7 @@
 // Shared location lookup and same-location functions for issue #455.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {

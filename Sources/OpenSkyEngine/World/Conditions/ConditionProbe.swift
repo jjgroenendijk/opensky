@@ -14,7 +14,7 @@
 // Documented in docs/engine/conditions.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public enum ConditionProbe: Sendable {
     /// Runs one function against `context` and answers with its value.

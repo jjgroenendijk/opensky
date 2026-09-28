@@ -50,7 +50,7 @@
 // Documented in docs/engine/skill-advancement.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// The two game settings skill advancement reads, resolved once.

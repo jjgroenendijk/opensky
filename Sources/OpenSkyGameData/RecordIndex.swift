@@ -4,7 +4,8 @@
 // the last valid definition.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OSLog
 
 nonisolated public struct IndexedRecord: Sendable {

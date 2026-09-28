@@ -29,7 +29,7 @@
 
 import Foundation
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One frame of archery intent. Filled beside `MeleeIntent` from the same
 /// drained camera input, because it is the same button: with a bow equipped the

@@ -5,10 +5,11 @@
 // Fixtures are built in code — never extracted game files (AGENTS.md "Legal &
 // IP boundary").
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsPEX
 import Testing
 
 @MainActor

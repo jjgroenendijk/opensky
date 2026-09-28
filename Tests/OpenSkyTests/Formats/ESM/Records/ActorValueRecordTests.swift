@@ -3,10 +3,11 @@
 // (AGENTS.md "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format"
 // per-record pages; see docs/formats/actors.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct ActorValueRecordDecodeTests {

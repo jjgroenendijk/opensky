@@ -7,7 +7,7 @@
 
 @testable import OpenSky
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 extension FakeWorldProviders {
     static let merchantList = InventoryMenuModel(

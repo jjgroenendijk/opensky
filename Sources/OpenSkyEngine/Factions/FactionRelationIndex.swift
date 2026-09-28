@@ -15,7 +15,7 @@
 // Documented in docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Directional reaction lookup between two factions.

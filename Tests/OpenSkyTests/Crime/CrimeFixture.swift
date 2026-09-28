@@ -15,10 +15,11 @@
 // makes an arithmetic mistake in the suites read as a wrong bounty rather than
 // as a fixture nobody can check.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 
 enum CrimeFixture {

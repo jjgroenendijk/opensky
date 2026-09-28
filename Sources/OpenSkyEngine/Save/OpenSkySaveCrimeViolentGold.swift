@@ -13,7 +13,8 @@
 // Documented in docs/formats/opensky-save-actor-chunks.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 /// One actor's violent gold per faction, before it splits the `CRIM` totals.
 nonisolated public struct SaveViolentCrimeGoldEntry: Equatable, Sendable {

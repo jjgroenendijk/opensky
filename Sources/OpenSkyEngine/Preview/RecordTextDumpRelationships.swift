@@ -3,7 +3,8 @@
 // Asset Browser.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated extension RecordTextDump {
     public static func relationshipSummary(_ record: ESMRecord) -> String? {

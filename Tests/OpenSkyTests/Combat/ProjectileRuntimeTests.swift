@@ -13,7 +13,8 @@
 // closes the loop on vanilla PROJ values.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

@@ -7,7 +7,8 @@
 // pane (docs/tools/preview-gui.md); one implementation, two surfaces.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {

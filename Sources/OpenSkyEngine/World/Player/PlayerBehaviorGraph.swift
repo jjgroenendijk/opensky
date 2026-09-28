@@ -12,7 +12,7 @@
 
 import Foundation
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
 nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable {

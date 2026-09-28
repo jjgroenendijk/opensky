@@ -2,10 +2,10 @@
 // handling, and the `useAIData` template inheritance the hostility derivation
 // depends on. No game-derived bytes.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct ActorAIDataTests {

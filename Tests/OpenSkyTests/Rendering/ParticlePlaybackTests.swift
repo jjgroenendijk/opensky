@@ -1,11 +1,12 @@
 // M7.3.2 CPU simulation + Metal billboard acceptance. Fixtures are engine
 // values built in code; no extracted game data.
 
-import FormatsTestSupport
+import FormatsMeshTesting
 import Metal
 import MetalKit
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

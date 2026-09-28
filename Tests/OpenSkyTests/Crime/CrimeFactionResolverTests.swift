@@ -5,10 +5,10 @@
 // names one. `WhiterunBelethorsGeneralGoodsLocation -> WhiterunLocation ->
 // WhiterunHoldLocation (FNAM)`, observed with `openskycli record`.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

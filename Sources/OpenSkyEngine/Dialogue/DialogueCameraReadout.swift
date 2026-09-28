@@ -5,7 +5,8 @@
 // `DialogueReadout` is of one `DialogueControlSnapshot`, so the wording is
 // asserted without AppKit, without a Metal device and without a game install.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum DialogueCameraReadout: Sendable {

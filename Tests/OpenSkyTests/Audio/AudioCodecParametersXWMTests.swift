@@ -5,7 +5,7 @@
 
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAudio
 import Testing
 
 struct AudioCodecParametersXWMTests {

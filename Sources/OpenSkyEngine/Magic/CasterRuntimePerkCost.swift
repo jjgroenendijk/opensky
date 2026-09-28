@@ -37,7 +37,7 @@
 // Documented in docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension CasterRuntime {

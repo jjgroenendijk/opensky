@@ -9,7 +9,8 @@
 // "Legal & IP boundary"). The shape is this machine's `AVOneHanded`, read
 // 2026-08-20 with `openskycli record AVOneHanded`.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 
 @MainActor

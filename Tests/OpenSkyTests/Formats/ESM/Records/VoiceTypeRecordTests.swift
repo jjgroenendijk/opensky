@@ -1,9 +1,10 @@
 // VTYP decoder tests over synthetic bytes. Layout: UESP VTYP and xEdit
 // dev-4.1.6 `wbRecord(VTYP, ...)`.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct VoiceTypeRecordTests {

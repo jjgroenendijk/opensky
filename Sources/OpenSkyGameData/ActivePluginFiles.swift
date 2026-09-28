@@ -8,7 +8,7 @@
 // the game.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OSLog
 
 nonisolated public enum ActivePluginFiles: Sendable {

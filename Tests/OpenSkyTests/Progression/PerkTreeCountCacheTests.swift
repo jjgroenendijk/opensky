@@ -7,7 +7,7 @@
 // a synthetic tree states both without a load order.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct PerkTreeCountCacheTests {

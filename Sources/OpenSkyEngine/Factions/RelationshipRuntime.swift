@@ -29,7 +29,7 @@
 // Documented in docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Reads and writes relationship ranks on top of a `WorldStateStore`, with the

@@ -12,7 +12,7 @@
 // AppKit-free, so it compiles into `openskycli` alongside the app.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One of the eighteen skills, as the panel spells it.
 nonisolated public struct SkillProgressReadout: Equatable, Sendable {

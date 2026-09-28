@@ -3,7 +3,7 @@
 // unload, and build-count gates live in `openskycli bench --fly-path`.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 import Testing
 
 struct CellStreamingFlyPathTests {

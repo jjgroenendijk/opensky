@@ -16,10 +16,12 @@
 // `onInteraction` seam rather than a raycast, because a view-ray hit needs
 // collision geometry that says nothing about audio.
 
-import FormatsTestSupport
+import FormatsAudioTesting
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import simd
 import Testing
 

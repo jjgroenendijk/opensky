@@ -11,10 +11,10 @@
 // clip time advance and looping are exercised through the same sampling seam
 // the engine uses.
 
-import FormatsTestSupport
+import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyBehavior
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 import simd
 
 /// An in-memory `BehaviorObjectSource`: objects placed at offsets the test

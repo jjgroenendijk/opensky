@@ -18,7 +18,7 @@
 // Documented in docs/engine/combat.md.
 
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// One resident actor as the combat loop sees it.

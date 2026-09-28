@@ -9,7 +9,7 @@
 // docs/formats/vfs.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import OSLog
 import Synchronization
 

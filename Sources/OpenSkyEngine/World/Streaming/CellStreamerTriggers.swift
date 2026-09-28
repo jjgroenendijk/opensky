@@ -11,7 +11,7 @@
 // Gate: walk mode only, matching the interaction ray. Fly mode is a developer
 // camera with no body, so it has no occupancy and emits nothing.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// The authoritative player capsule pose for one frame.

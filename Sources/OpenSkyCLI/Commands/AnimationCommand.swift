@@ -3,7 +3,7 @@
 // Any malformed, NaN/inf, or unbounded transform exits 1.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import OpenSkyGameData
 import simd
 

@@ -17,7 +17,7 @@
 // bytes are not what they claim to be.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's saved active effects, before they are merged back into the
 /// delta.

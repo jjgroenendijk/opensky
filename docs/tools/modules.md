@@ -23,7 +23,7 @@ A module boundary makes the architecture visible and lets the compiler enforce i
 `Package.swift` lists what each module depends on, and the compiler rejects an `import` of a
 module that is not listed. So an upward dependency fails the build instead of slipping in.
 
-A module can also be built and tested alone: `make test-fast T='OpenSkyFormatsTests'` builds
+A module can also be built and tested alone: `make test-fast T='OpenSkyFormatsESMTests'` builds
 only the package and runs one test target, without the app.
 
 ## The layout: The Modular Architecture
@@ -56,7 +56,7 @@ helpers. A declaration goes there only when another module uses it.
 `Package.swift` declares modules bottom-up with two helpers:
 
 ```swift
-targets += foundation("OpenSkyGameData", dependencies: ["OpenSkyFormats"], tests: [...])
+targets += foundation("OpenSkyGameData", dependencies: ["OpenSkyFormatsESM", ...], tests: [...])
 targets += feature("OpenSkyMagic", dependencies: [...], interface: [...], tests: [...])
 ```
 
@@ -78,7 +78,11 @@ has no `OTHER_LDFLAGS`. Change the settings in `Package.swift` and the xcconfig 
 ## Modules
 
 ```text
-OpenSkyFormats            parsers, binary readers, compression, geometry values
+OpenSkyFormatsCore        binary readers, compression, geometry values, BSA, string tables
+  ^
+OpenSkyFormatsESM         plugin records          OpenSkyFormatsMesh    NIF, TRI, LOD, DDS
+OpenSkyFormatsAnimation   HKX, LIP                OpenSkyFormatsAudio   WAV, XWM, FUZ
+OpenSkyFormatsPEX         compiled Papyrus        OpenSkyFormatsSWF     Flash menus, AS2
   ^
 OpenSkyGameData           virtual file system, load order, record index, record stores
   ^
@@ -88,6 +92,9 @@ OpenSkyEngine             the rest of the engine, until it is split
   ^
 OpenSky app, OpenSkyCLI   composition roots
 ```
+
+The format families depend only on `OpenSkyFormatsCore`, never on each other. A parser change
+rebuilds its family and the modules that import it, not every format.
 
 Two more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared with Metal
 ([build system](/tools/build-system.md)). `CFFmpeg` is the clang module over the vendored ffmpeg
@@ -101,10 +108,10 @@ because `device.makeDefaultLibrary()` reads the main bundle.
 A lower module never imports a higher one. Three patterns keep it that way:
 
 - A value type both sides need moves down, for example `CellCoordinate`, `ModelBounds`, and
-  `ActorValueIdentity` in `OpenSkyFormats`.
+  `ActorValueIdentity` in `OpenSkyFormatsCore` and `OpenSkyFormatsESM`.
 - Behavior that needs a higher layer stays up there as an extension of the lower type, in a file
   named `Type+Feature.swift`. Examples: `Package+Schedule.swift` in the engine over a
-  `OpenSkyFormats` record, and `EquipSlotStore+Hands.swift` and `FactionStore+Templates.swift` in
+  `OpenSkyFormatsESM` record, and `EquipSlotStore+Hands.swift` and `FactionStore+Templates.swift` in
   the engine over `OpenSkyGameData` stores.
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
 
@@ -124,6 +131,12 @@ rules:
   missing import sometimes shows as a pattern error, for example "pattern variable binding cannot
   appear in an expression".
 - Tests write `@testable import` to reach `internal` members.
+
+After a module is renamed or removed, delete its old products from `DerivedData/Build/Products`
+(including `PackageFrameworks/`) and from `.build/`. Otherwise a stale `.swiftmodule` still
+satisfies an old `import`, and the build fails with two types of the same name, for example
+"cannot convert value of type 'OpenSkyFormatsESM.FormID' to expected argument type
+'OpenSkyFormats.FormID'".
 
 ## Tests
 

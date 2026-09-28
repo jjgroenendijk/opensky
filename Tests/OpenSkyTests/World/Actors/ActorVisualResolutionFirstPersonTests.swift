@@ -1,9 +1,9 @@
 // The first-person projection of a resolved actor visual, and the ARMA
 // MOD4/MOD5 decode behind it (issue #190). Synthetic fixtures throughout.
 
-import FormatsTestSupport
+import FormatsESMTesting
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct ArmorAddonFirstPersonModelTests {

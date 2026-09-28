@@ -9,10 +9,10 @@
 // stop, plus the `SWFLabRuntimeSnapshot` the runtime section reads (movie
 // state, invoke log, op tally — see SWFLabRuntimeReadout.swift).
 
-import OpenSkyFormats
+// UI Lab SWF readout: what is selected, what decoding produced, and what the
+// last encoded frame drew.
+import OpenSkyFormatsSWF
 
-/// UI Lab SWF readout: what is selected, what decoding produced, and what the
-/// last encoded frame drew.
 nonisolated public struct SWFLabControlSnapshot: Equatable, Sendable {
     /// Archive path of the assigned movie (`interface\console.swf`); nil when
     /// no movie is assigned.

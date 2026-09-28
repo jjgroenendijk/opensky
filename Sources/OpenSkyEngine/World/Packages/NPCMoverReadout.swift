@@ -1,7 +1,8 @@
 // Transform, draw delta, readout, and persistence projections for one mover
 // (issue #423). Split from the state machine for the lint type-size cap.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 extension NPCMover {

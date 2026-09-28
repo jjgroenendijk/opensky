@@ -42,7 +42,7 @@
 // Documented in docs/engine/papyrus-quests.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 extension PapyrusWorldRuntime {
     /// Instantiates every script `quest` carries and enqueues `OnInit` for the

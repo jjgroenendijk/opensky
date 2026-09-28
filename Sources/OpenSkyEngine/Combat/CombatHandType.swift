@@ -40,7 +40,7 @@
 
 import Foundation
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One hand's contents as the behavior graph counts them.
 ///

@@ -18,7 +18,7 @@
 // subscriber will subscribe alongside, not replace this one.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OSLog
 import simd

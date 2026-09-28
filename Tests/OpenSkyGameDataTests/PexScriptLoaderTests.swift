@@ -1,8 +1,9 @@
 // Pure path policy and injected-load tests for compiled Papyrus scripts.
 
-import FormatsTestSupport
+import FormatsPEXTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 import Testing
 

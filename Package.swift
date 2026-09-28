@@ -103,7 +103,6 @@ func testing(_ name: String, dependencies: [String]) -> [Target] {
         name: name,
         dependencies: checked(name, dependencies),
         path: "Tests/\(name)",
-        exclude: ["AGENTS.md", "CLAUDE.md"],
         swiftSettings: testSettings
     )
     declared.append(name)
@@ -170,31 +169,57 @@ declared += ["OpenSkyShaderTypes", "CFFmpeg"]
 var targets: [Target] = [shaderTypes, cffmpeg]
 
 // Foundation
-targets += foundation("OpenSkyFormats", tests: ["FormatsTestSupport"])
-targets += testing("FormatsTestSupport", dependencies: ["OpenSkyFormats"])
-// The test target above names FormatsTestSupport before the helper declares it;
-// SwiftPM resolves target names lazily, so only the layering check needs the order.
-targets += foundation(
-    "OpenSkyGameData",
-    dependencies: ["OpenSkyFormats"],
-    tests: ["FormatsTestSupport"]
-)
+
+// Formats: a core of binary readers, compression, geometry values, archives and
+// string tables, then one module per format family. A family depends only on the
+// core, so a parser change rebuilds one family and the modules that use it.
+targets += foundation("OpenSkyFormatsCore", tests: ["FormatsCoreTesting"])
+targets += testing("FormatsCoreTesting", dependencies: ["OpenSkyFormatsCore"])
+/// The test target above names FormatsCoreTesting before the helper declares it;
+/// SwiftPM resolves target names lazily, so only the layering check needs the order.
+let formatFamilies = ["ESM", "Mesh", "Animation", "Audio", "PEX", "SWF"]
+for family in formatFamilies {
+    let module = "OpenSkyFormats\(family)"
+    let fixtures = "Formats\(family)Testing"
+    targets += foundation(
+        module,
+        dependencies: ["OpenSkyFormatsCore"],
+        tests: [fixtures, "FormatsCoreTesting", "OpenSkyFormatsCore"]
+    )
+    targets += testing(
+        fixtures,
+        dependencies: [module, "OpenSkyFormatsCore", "FormatsCoreTesting"]
+    )
+}
 
 targets += foundation(
+    "OpenSkyGameData",
+    dependencies: [
+        "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM",
+        "OpenSkyFormatsPEX",
+        "OpenSkyFormatsSWF"
+    ],
+    tests: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "FormatsCoreTesting", "FormatsESMTesting", "FormatsPEXTesting"
+    ]
+)
+targets += foundation(
     "OpenSkyBehavior",
-    dependencies: ["OpenSkyFormats", "OpenSkyGameData"],
-    tests: ["BehaviorTesting", "FormatsTestSupport"]
+    dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsAnimation", "OpenSkyGameData"],
+    tests: ["BehaviorTesting", "OpenSkyFormatsCore", "OpenSkyFormatsAnimation"]
 )
 targets += testing(
     "BehaviorTesting",
-    dependencies: ["OpenSkyBehavior", "OpenSkyFormats", "FormatsTestSupport"]
+    dependencies: ["OpenSkyBehavior", "OpenSkyFormatsAnimation", "FormatsAnimationTesting"]
 )
 
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
     "OpenSkyEngine",
-    dependencies: [
-        "OpenSkyFormats", "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyShaderTypes", "CFFmpeg"
+    dependencies: ["OpenSkyFormatsCore"] + formatFamilies.map { "OpenSkyFormats\($0)" } + [
+        "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

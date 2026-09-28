@@ -2,9 +2,9 @@
 // grouping, the EPFD unions, and the malformed shapes a mod can author.
 // Fixtures are built in code and contain no bytes from the game install.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct PerkRecordTests {

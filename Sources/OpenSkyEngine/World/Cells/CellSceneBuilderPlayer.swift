@@ -14,7 +14,8 @@
 // touches no cell state: what it produces outlives every scene swap.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OSLog
 import simd

@@ -8,7 +8,8 @@
 
 import Foundation
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 enum ActorCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

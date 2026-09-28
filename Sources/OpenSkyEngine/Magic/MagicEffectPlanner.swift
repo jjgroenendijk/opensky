@@ -46,7 +46,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// One MGEF entry resolved into an application the runtime can carry out.

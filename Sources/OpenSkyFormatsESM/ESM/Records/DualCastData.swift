@@ -1,0 +1,104 @@
+// DUAL record: the art a dual-cast spell swaps in. A magic effect names one
+// through its DUAL link (MGEF DATA), and the record replaces the effect's
+// projectile, explosion, shader, hit art and impact set for the dual-cast
+// variant, plus flags saying which of those inherit the caster's scale.
+//
+// The vanilla masters author two of these — `doomSerpentDualCastData` and
+// `FrostStormDualCastData` — and both were observed with a 24-byte DATA. This
+// milestone decodes the record and stops there; nothing casts yet.
+//
+// References:
+//   UESP "Skyrim Mod:Mod File Format/DUAL"
+//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DUAL
+//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
+//     `wbRecord(DUAL, 'Dual Cast Data', ...)` line 7543.
+// Layout documented in docs/formats/shouts-equip-slots.md.
+
+import Foundation
+import OpenSkyFormatsCore
+
+nonisolated public struct DualCastData: Equatable, Sendable {
+    /// DATA's uint32 inherit-scale flags, in the xEdit bit order.
+    public struct InheritScale: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
+
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        public static let hitEffectArt = InheritScale(rawValue: 0x01)
+        public static let projectile = InheritScale(rawValue: 0x02)
+        public static let explosion = InheritScale(rawValue: 0x04)
+    }
+
+    /// The five links plus the flag word, in DATA order.
+    public struct Art: Equatable, Sendable {
+        public let projectile: FormID?
+        public let explosion: FormID?
+        public let effectShader: FormID?
+        public let hitEffectArt: FormID?
+        public let impactDataSet: FormID?
+        public let inheritScale: InheritScale
+    }
+
+    /// DATA is a fixed 24-byte struct: five FormIDs then a uint32 flag word.
+    public static let dataSize = 24
+
+    public let formID: FormID
+    public let editorID: String?
+    public let bounds: ObjectBounds?
+    /// DATA. Nil when the field is absent or too short, so a malformed art
+    /// block does not discard the record's identity.
+    public let art: Art?
+    public let skipped: ReferenceRecordTally
+
+    public init(record: ESMRecord) throws {
+        guard record.type == "DUAL" else {
+            throw ESMError.malformed("expected DUAL record, got \(record.type)")
+        }
+        formID = FormID(record.formID)
+
+        var editorID: String?
+        var bounds: ObjectBounds?
+        var art: Art?
+        var tally = ReferenceRecordTally()
+        for field in try record.fields() {
+            do {
+                var reader = BinaryReader(field.data)
+                switch field.type {
+                case "EDID": editorID = try reader.readZString()
+                case "OBND": bounds = try ObjectBounds(field: field)
+                case "DATA": art = try Self.art(field)
+                default: tally.note(.unknownField(field.type))
+                }
+            } catch {
+                tally.note(.malformedField(field.type))
+            }
+        }
+        self.editorID = editorID
+        self.bounds = bounds
+        self.art = art
+        skipped = tally
+    }
+
+    private static func art(_ field: ESMField) throws -> Art {
+        guard field.data.count >= dataSize else {
+            throw ESMError.malformed(
+                "DUAL DATA has \(field.data.count) bytes, expected \(dataSize)"
+            )
+        }
+        var reader = BinaryReader(field.data)
+        func link() throws -> FormID? {
+            let id = try FormID(reader.readUInt32())
+            return id.isNull ? nil : id
+        }
+        return try Art(
+            projectile: link(),
+            explosion: link(),
+            effectShader: link(),
+            hitEffectArt: link(),
+            impactDataSet: link(),
+            inheritScale: InheritScale(rawValue: reader.readUInt32())
+        )
+    }
+}

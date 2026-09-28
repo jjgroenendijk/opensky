@@ -5,7 +5,8 @@
 // holds only value types after construction.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public final class AcousticSpaceStore {
     public let spaces: [UInt32: AcousticSpace]

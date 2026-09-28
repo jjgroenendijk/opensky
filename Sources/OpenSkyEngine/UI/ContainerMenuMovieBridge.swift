@@ -19,7 +19,7 @@
 // testable against synthetic AS2 fixtures.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 
 /// What the movie asked the engine to do.
 nonisolated public enum ContainerMenuAction: Equatable, Sendable {

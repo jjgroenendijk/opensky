@@ -1,9 +1,11 @@
 // INFO response-run, flags, condition and localization tests over synthetic
 // bytes. Layout: UESP INFO and xEdit dev-4.1.6 `wbRecord(INFO, ...)`.
 
-import FormatsTestSupport
+import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

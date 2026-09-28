@@ -9,7 +9,7 @@
 // window and no game data.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 /// The world-overlay half of the fake's stored state (issue #422).
 struct FakeAIOverlayState {

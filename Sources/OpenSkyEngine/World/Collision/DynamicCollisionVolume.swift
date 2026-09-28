@@ -20,7 +20,8 @@
 //
 // Documented in docs/engine/dynamic-bodies.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import simd
 
 /// An outward-facing half-space bounding a hull: points inside satisfy

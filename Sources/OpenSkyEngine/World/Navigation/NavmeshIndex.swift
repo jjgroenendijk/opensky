@@ -12,7 +12,8 @@
 // indexes, so it is an immutable value rather than a cache — the same shape
 // `MaterialTypeIndex` uses.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OSLog
 
 nonisolated public struct NavmeshIndex: Sendable {

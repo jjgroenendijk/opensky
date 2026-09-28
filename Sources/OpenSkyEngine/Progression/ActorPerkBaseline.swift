@@ -22,7 +22,7 @@
 // Documented in docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Re-derives actor perk lists from plugin data.
 nonisolated public struct ActorPerkBaselineResolver: Sendable {

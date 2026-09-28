@@ -18,7 +18,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 final class CombatActorValuesSection: PanelSectionViewController {
     weak var provider: (any ActorValueControlProviding)? {

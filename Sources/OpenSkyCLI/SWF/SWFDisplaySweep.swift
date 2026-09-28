@@ -7,7 +7,7 @@
 // ClipActions) are tallied so the deferral stays measured.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 import simd
 

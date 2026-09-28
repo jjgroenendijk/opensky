@@ -4,7 +4,7 @@
 // and trigger halves already use to stay inside the strict-lint type-body cap.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 @MainActor
 final class FakeFootstepControls {

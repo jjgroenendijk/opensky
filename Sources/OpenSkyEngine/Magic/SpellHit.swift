@@ -47,7 +47,7 @@
 // Documented in docs/engine/spell-delivery.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 

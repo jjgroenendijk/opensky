@@ -14,7 +14,7 @@
 // component and has to keep it, or a reload would find it angry again.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's hostility paired with the snapshot entry it came from.

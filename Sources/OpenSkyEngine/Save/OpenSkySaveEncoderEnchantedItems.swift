@@ -14,7 +14,7 @@
 // unchanged owner produces identical bytes.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 
 nonisolated extension OpenSkySaveEncoder {
     /// One owner's enchanted-item state paired with the snapshot entry it came

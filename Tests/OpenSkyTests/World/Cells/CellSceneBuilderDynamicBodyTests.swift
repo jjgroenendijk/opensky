@@ -3,10 +3,11 @@
 // the census's discriminator — a positive mass, not the motion byte alone —
 // is what decides. Synthetic ESM + NIF bytes only; no game content.
 
-import FormatsTestSupport
+import FormatsMeshTesting
 import Metal
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

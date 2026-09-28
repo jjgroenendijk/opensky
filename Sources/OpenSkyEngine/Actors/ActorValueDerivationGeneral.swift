@@ -38,7 +38,7 @@
 // Documented in docs/engine/actor-values.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated extension ActorValueDerivation {
     /// Base values for every non-primary actor value one actor's records

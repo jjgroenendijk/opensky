@@ -14,10 +14,11 @@
 // these cases pin the gate's behaviour, not this machine's speed. Measured
 // timings against the real install come from `openskycli bench --fly-path`.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

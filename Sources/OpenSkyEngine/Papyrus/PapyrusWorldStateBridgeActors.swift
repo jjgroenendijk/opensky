@@ -28,7 +28,7 @@
 // Documented in docs/engine/papyrus-actor-natives.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 extension PapyrusWorldStateBridge {
     // MARK: - Reading

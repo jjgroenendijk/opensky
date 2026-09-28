@@ -13,7 +13,7 @@
 // Documented in docs/engine/inventory-menu.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One item row: the stack plus everything the row displays.
 ///

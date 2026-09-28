@@ -2,7 +2,8 @@
 // no install, no device.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsMesh
 import simd
 import Testing
 

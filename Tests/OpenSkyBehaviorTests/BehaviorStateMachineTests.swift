@@ -8,7 +8,7 @@
 import BehaviorTesting
 import Foundation
 @testable import OpenSkyBehavior
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 import Testing
 
 /// The pieces one two-state machine is made of, so each test can vary one of

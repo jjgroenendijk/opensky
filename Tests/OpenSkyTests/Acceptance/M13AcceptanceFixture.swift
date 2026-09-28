@@ -16,10 +16,12 @@
 // * `OpenSkyGateLeverScript` reaches its quest through an automatic VMAD
 //   property, which is how an authored lever names the quest it advances.
 
-import FormatsTestSupport
+import FormatsESMTesting
+import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsPEX
 
 /// Main-actor isolated only because it reads `M13AcceptanceChain`'s constants,
 /// which belong beside the chain that names them. Nothing here needs the actor

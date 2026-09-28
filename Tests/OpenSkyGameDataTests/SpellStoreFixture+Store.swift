@@ -1,8 +1,8 @@
 // A SpellStore over the shared spell fixture records.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 
 extension SpellStoreFixture {

@@ -50,7 +50,8 @@
 // Documented in docs/engine/dialogue.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 /// Reads dialogue selection and writes said-state on top of a
 /// `WorldStateStore`.

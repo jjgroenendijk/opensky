@@ -13,7 +13,7 @@
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 @testable import OpenSkyGameData
 import Testing
 

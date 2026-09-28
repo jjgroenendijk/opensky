@@ -7,7 +7,8 @@
 // entry in the missing-API tally and an empty readout, never take the app down.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
+import OpenSkyFormatsSWF
 
 nonisolated extension QuestJournalMovieBridge {
     // MARK: - Writing

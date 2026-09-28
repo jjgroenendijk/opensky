@@ -8,7 +8,7 @@
 // about what an `EntriesA` row is.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 
 nonisolated extension ContainerMenuMovieBridge {
     // MARK: - Totals

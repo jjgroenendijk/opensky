@@ -3,7 +3,8 @@
 // cells. Ring bands begin outside loaded 5x5 and get coarser with distance.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
 

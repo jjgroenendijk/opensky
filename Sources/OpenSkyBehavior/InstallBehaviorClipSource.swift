@@ -13,7 +13,7 @@
 // (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
 /// Loads clips out of the install on demand, so only the clips the graphs

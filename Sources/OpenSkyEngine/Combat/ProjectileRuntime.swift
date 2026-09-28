@@ -19,7 +19,7 @@
 // Documented in docs/engine/projectiles.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 @MainActor

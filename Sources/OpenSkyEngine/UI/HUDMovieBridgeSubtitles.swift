@@ -36,7 +36,7 @@
 // `subtitleText(runtime:)` is here so a test can prove it did not happen.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 
 nonisolated extension HUDMovieBridge {
     /// The field the line is written into, and the holder whose visibility

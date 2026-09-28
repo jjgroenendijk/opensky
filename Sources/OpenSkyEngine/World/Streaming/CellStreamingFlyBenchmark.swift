@@ -6,7 +6,8 @@
 // milestone claims repeatable from openskycli.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 /// Deterministic path: launch center -> one cell east -> one cell north.

@@ -36,7 +36,7 @@
 // Documented in docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// What one award of character experience did.
 nonisolated public struct PlayerLevelUpReport: Equatable, Sendable {

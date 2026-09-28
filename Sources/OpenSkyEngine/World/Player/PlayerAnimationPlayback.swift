@@ -19,7 +19,7 @@
 // equipped set) reattaches to the same running graph.
 
 import OpenSkyBehavior
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import simd
 
 /// The latest pose the behavior graph produced, published by the locomotion

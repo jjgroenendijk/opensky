@@ -3,7 +3,7 @@
 // honest recorded total a truncated ring still reports.
 
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

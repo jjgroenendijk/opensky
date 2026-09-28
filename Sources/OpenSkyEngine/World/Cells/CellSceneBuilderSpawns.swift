@@ -14,7 +14,7 @@
 // Documented in docs/engine/reference-identity.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import OSLog
 
 /// The spawned half of one build's reference set.

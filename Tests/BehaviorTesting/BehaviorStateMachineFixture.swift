@@ -9,7 +9,7 @@
 
 import Foundation
 @testable import OpenSkyBehavior
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 
 /// One transition of a synthetic machine.
 public struct BehaviorTransitionSpec: Sendable {

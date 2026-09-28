@@ -48,7 +48,7 @@
 //   fragments twice.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 @MainActor
 extension PapyrusWorldStateBridge {

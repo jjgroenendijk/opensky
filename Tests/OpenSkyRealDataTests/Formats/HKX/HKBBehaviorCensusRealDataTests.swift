@@ -12,7 +12,7 @@
 // `make realtest T='HKBBehaviorCensusRealDataTests/censusesCharacterBehaviorFiles()'`.
 
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
 @testable import OpenSkyGameData
 import Testing
 

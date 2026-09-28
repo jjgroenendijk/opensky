@@ -17,7 +17,7 @@
 
 import AppKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 
 final class SWFRuntimeSection: PanelSectionViewController {
     /// Ticks the burst button applies. A vanilla menu's open and close

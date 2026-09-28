@@ -20,7 +20,7 @@ under `Config/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
-| `UnitTests.xctestplan` | `OpenSkyTests`, `OpenSkyFormatsTests`, `OpenSkyGameDataTests` | `make test`, `make test-fast`, `make test-one`. The scheme default |
+| `UnitTests.xctestplan` | `OpenSkyTests` and every package test target | `make test`, `make test-fast`, `make test-one`. The scheme default |
 | `UITests.xctestplan` | `OpenSkyUITests` | `make test-ui` |
 | `RealData.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make realtest`, `make realtest-all` |
 | `Sanitizers.xctestplan` | the unit plan's targets, one configuration per sanitizer | `make test-sanitize` |

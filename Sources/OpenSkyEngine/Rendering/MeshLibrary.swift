@@ -14,7 +14,8 @@
 
 import Foundation
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
 

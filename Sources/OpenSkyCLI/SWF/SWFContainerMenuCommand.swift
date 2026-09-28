@@ -11,7 +11,7 @@
 
 import Foundation
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFContainerMenuCommand {

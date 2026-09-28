@@ -10,7 +10,7 @@
 // length is a thrown error rather than a multi-gigabyte allocation.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One INFO's saved said-state, before it is merged back into its delta.
 nonisolated public struct SaveDialogueEntry: Equatable, Sendable {

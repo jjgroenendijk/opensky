@@ -1,9 +1,11 @@
 // Synthetic DOBJ decode and entry-granular override tests. Layout and tags:
 // UESP DOBJ and xEdit dev-4.1.6 wbDOBJObjectsTES5 / wbRecord(DOBJ, ...).
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

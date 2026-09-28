@@ -9,7 +9,7 @@
 
 import Foundation
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsAudio
 import OpenSkyGameData
 
 enum AudioSweep {

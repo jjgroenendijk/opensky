@@ -1,9 +1,11 @@
 // Synthetic COLL decode and resolved-link tests. Layout: UESP COLL and xEdit
 // dev-4.1.6 wbDefinitionsTES5.pas lines 7614-7637.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

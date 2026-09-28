@@ -10,7 +10,7 @@
 // and Quit submenus; no game-derived data is embedded here.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsSWF
 
 nonisolated public enum SystemMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\quest_journal.swf"

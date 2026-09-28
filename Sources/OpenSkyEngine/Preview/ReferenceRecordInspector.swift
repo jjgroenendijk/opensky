@@ -2,7 +2,8 @@
 // feeds the CLI record command, keeping link honesty out of the AppKit layer.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct ReferenceRecordInspector: Sendable {

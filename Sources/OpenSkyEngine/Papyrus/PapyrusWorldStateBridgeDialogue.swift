@@ -18,7 +18,7 @@
 // instead of restating them.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 @MainActor
 extension PapyrusWorldStateBridge: DialogueFragmentDispatching {

@@ -11,7 +11,7 @@
 // still reports how much it stopped naming.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Counts of everything the condition evaluator could not evaluate, plus the
 /// volume it did evaluate.

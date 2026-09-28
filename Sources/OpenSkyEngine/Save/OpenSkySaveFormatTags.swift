@@ -10,7 +10,7 @@
 // change while these byte values may not.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// On-disk tag of a component slot inside `RDLT`.
 ///

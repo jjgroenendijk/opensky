@@ -31,7 +31,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Which kind of record handed an effect to an actor.
 ///

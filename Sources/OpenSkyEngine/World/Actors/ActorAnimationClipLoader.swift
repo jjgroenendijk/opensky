@@ -27,7 +27,7 @@
 // Documented in docs/engine/combat-behavior.md and docs/engine/actor-animation.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 
 nonisolated public enum ActorAnimationClipLoader: Sendable {
     /// Where every character animation and skeleton lives.

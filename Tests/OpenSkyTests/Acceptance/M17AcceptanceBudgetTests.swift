@@ -20,10 +20,12 @@
 // numbers against the real install come from `openskycli bench --fly-path` and
 // from `make realtest-perf`.
 
-import FormatsTestSupport
+import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import Testing
 
 @MainActor

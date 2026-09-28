@@ -1,7 +1,8 @@
-import FormatsTestSupport
+@testable import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 import Testing
 

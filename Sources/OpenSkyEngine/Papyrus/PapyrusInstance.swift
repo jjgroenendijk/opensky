@@ -5,7 +5,7 @@
 // unqualified and therefore applies to the first child-to-parent match.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsPEX
 
 nonisolated public final class PapyrusInstance {
     public let handle: PapyrusObjectHandle

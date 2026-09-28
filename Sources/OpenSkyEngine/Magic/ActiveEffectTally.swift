@@ -9,7 +9,7 @@
 // Documented in docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public struct ActiveEffectTally: Equatable, Sendable {
     /// Timed effects that became components on an actor.

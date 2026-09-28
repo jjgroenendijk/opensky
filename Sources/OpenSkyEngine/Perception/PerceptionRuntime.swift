@@ -33,7 +33,7 @@
 // Documented in docs/engine/detection.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// One observer-target pair's identity.

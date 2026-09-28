@@ -15,7 +15,7 @@
 // declared type still reads and writes without loss.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsAnimation
 import simd
 
 /// One variable's value, in the shape the declared type asks for. Reading a

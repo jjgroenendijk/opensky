@@ -33,10 +33,11 @@
 //   0x00_4010  CONT LeveledChest   (the useAll bundle, twice over)
 //   0x00_4020  CONT Empty
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 
 enum InventoryBaselineFixture {
     static let gold = FormID(0x0000_000F)

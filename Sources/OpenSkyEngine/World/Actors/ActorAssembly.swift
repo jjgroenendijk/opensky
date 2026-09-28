@@ -5,7 +5,9 @@
 // rejected. Cell discovery/lifecycle stays in milestone 5.5.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated public enum ActorAssetFailure: Error, Equatable {

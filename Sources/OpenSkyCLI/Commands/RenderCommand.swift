@@ -8,7 +8,7 @@ import Foundation
 import Metal
 import MetalKit
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 
 enum RenderCommand {

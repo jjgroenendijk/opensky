@@ -10,7 +10,7 @@
 // UI translation-token files. Format and decisions: docs/formats/translation-strings.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import OSLog
 
 nonisolated public final class LocalizedLabels: Sendable {

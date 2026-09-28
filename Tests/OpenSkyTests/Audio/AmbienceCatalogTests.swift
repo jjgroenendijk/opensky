@@ -2,10 +2,11 @@
 // value logic; no engine, no file system. Source: docs/engine/world-sfx.md
 // and docs/formats/acoustic-space.md.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct AmbienceCatalogTests {

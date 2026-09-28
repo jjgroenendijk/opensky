@@ -5,7 +5,7 @@
 // from the async build/streaming controller that will drive this on later
 // commits of this branch. See docs/engine/cell-streaming.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsCore
 import simd
 
 /// Cells to load and cells to unload, computed fresh each call against

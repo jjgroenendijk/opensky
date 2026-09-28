@@ -7,7 +7,7 @@
 // https://github.com/niftools/nifxml/blob/develop/nif.xml
 
 import Metal
-import OpenSkyFormats
+import OpenSkyFormatsMesh
 import OpenSkyShaderTypes
 import simd
 

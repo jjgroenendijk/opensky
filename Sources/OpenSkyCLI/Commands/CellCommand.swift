@@ -6,7 +6,8 @@
 
 import Foundation
 import OpenSkyEngine
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 enum CellCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

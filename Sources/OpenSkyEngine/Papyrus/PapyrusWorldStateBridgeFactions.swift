@@ -20,7 +20,7 @@
 // `derivedHostilityDecision(of:)` does for the combat loop.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 extension PapyrusWorldStateBridge {
     @discardableResult

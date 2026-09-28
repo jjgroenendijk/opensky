@@ -3,7 +3,8 @@
 // vanilla keyword IDs.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedKeyword: Equatable, Sendable {
     public let id: ResolvedFormID

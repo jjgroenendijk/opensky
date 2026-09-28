@@ -1,7 +1,7 @@
 // Main-app inspection seam for actor-local FaceGen expression weights.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 nonisolated public struct FaceMorphControlSnapshot: Equatable, Sendable {
     public static let empty = FaceMorphControlSnapshot(

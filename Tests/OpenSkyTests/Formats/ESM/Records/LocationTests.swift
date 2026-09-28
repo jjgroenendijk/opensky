@@ -1,9 +1,11 @@
 // Synthetic LCTN/LCRT layout coverage. No game-derived bytes.
 
-import FormatsTestSupport
+@testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 import Testing
 
 struct LocationTests {

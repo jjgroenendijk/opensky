@@ -15,7 +15,7 @@
 // progress.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One actor's saved perks, before they are merged back into the delta.
 nonisolated public struct SavePerkEntry: Equatable, Sendable {

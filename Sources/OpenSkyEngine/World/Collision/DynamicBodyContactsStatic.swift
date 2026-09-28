@@ -5,7 +5,7 @@
 //
 // Documented in docs/engine/dynamic-narrowphase.md.
 
-import OpenSkyFormats
+import OpenSkyFormatsMesh
 import simd
 
 /// How a triangle's plane normal becomes a surface normal.

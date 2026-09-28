@@ -12,10 +12,11 @@
 // Layouts: UESP "Skyrim Mod:Mod File Format" subpages /SPEL, /EQUP, /MGEF and
 // /BOOK.
 
-import FormatsTestSupport
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 
 @MainActor

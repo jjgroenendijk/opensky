@@ -2,9 +2,10 @@
 // synthetic tables in a temp data root — never extracted game files
 // (AGENTS.md "Legal & IP boundary").
 
-import FormatsTestSupport
+import FormatsCoreTesting
 import Foundation
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 

@@ -23,7 +23,7 @@
 //
 // AppKit-free, so it compiles into `openskycli` beside the app.
 
-import OpenSkyFormats
+import OpenSkyFormatsESM
 import simd
 
 /// One resident actor as the gate panel's selector offers it.

@@ -3,7 +3,8 @@
 // extraction and sorting stay AppKit-free and deterministic.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {

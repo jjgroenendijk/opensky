@@ -8,7 +8,8 @@
 import BehaviorTesting
 import Foundation
 @testable import OpenSkyBehavior
-@testable import OpenSkyFormats
+@testable import OpenSkyFormatsAnimation
+@testable import OpenSkyFormatsCore
 import Testing
 
 struct BehaviorConditionExpressionTests {

@@ -27,7 +27,7 @@
 // Documented in docs/engine/crime.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// One kind of crime the engine can witness happening.
 nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparable {

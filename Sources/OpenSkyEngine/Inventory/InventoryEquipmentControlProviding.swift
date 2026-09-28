@@ -19,7 +19,7 @@
 // Documented in docs/engine/inventory-equipment.md.
 
 import Foundation
-import OpenSkyFormats
+import OpenSkyFormatsESM
 
 /// Which inventory a grant lands in.
 ///
