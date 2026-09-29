@@ -1,3 +1,3 @@
 #!/bin/sh
-# Tiny wrapper -> runs .githooks/pre-commit/*.sh in order (AGENTS.md "Git workflow").
+# Tiny wrapper -> runs .githooks/pre-commit/*.sh in order (committing-and-landing-work skill).
 exec "$(git rev-parse --show-toplevel)/.githooks/run-hook.sh" pre-commit "$@"

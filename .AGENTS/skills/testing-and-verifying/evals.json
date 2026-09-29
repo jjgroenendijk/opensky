@@ -1,0 +1,44 @@
+[
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "I changed BSAArchive's header parsing. Is it safe to push?",
+    "files": [],
+    "expected_behavior": [
+      "Runs make test-fast T='OpenSkyFormatsCoreTests/BSAArchiveTests' in a background shell",
+      "Runs only one xcodebuild at a time",
+      "Lists the exact commands and results in the commit's Tests: section"
+    ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "Run the full real-data suite.",
+    "files": [],
+    "expected_behavior": [
+      "Uses make realtest-all under the memory watchdog, never a raw xcodebuild against the install",
+      "Runs it in a background shell and waits for the notification"
+    ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "make test-fast failed. What broke?",
+    "files": [],
+    "expected_behavior": [
+      "Runs make test-report instead of hand-parsing .xcresult JSON",
+      "Names the failing tests and their messages"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "What does the BSA folder record contain?",
+    "files": [],
+    "expected_behavior": [
+      "Answers from docs/formats/bsa.md or the code without running any test or build"
+    ]
+  }
+]

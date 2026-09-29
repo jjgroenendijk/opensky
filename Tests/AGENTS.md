@@ -37,7 +37,24 @@ have:
 - the app module (`@testable import OpenSky`),
 - an acceptance chain in `Tests/OpenSkyTests/Acceptance/`.
 
+Inside a target, test folders use the subfolder names of the source they test: tests for
+`Sources/OpenSkyWorld/Terrain/DistantLOD.swift` live in `Tests/OpenSkyWorldTests/Terrain/`,
+and tests for app code live under `Tests/OpenSkyTests/App/`. Only cross-cutting folders are
+test-only: `Acceptance/` (milestone gates), `Fakes/`, and `Support/`.
+
 A suite that builds a `Renderer` goes in a package test target too. It passes
 `shaderLibrary: ShaderLibraryFixture.library(device: device)` from `RenderingTesting`, because a
 package test has no app bundle to load `default.metallib` from. `make test-fast` compiles the
 shaders first (`make shader-library`).
+
+## Test plans
+
+`Config/TestPlans/` holds the checked-in plans, so which bundles a run touches is
+reviewable configuration, not a flag. `UnitTests` lists `OpenSkyTests` and the package test
+targets, `UITests` lists `OpenSkyUITests` alone, and `RealData` lists `OpenSkyRealDataTests`
+alone and carries the data root into the test host.
+
+Never list the UI bundle in a plan beside an app-hosted unit bundle: the app blocks as a
+test host while the UI runner waits for it, and the run deadlocks
+(`docs/tools/test-runs.md`). An env-gated suite outside `Tests/OpenSkyRealDataTests/` fails
+`make lint`, because no plan would ever run it.

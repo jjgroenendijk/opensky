@@ -32,13 +32,8 @@ again. If a fact is only about one parser or type, put it in a doc comment there
 
 ## Writing style
 
-Write for young, capable students who learn English as a second language.
-
-- Short sentences. One idea per sentence.
-- Common words. Explain a technical term the first time you use it.
-- No aphorisms, idioms, or clever phrases.
-- Show an example instead of a long explanation.
-- No `## Contents` list. Headings are enough.
+Use the writing style in the root `AGENTS.md`. A docs page adds one rule: no
+`## Contents` list, because the headings are enough.
 
 Bad:
 
@@ -56,6 +51,9 @@ The bad version gives history, repeats the code, lists tests, and gives a timing
 change. The good version gives facts and their source.
 
 ## Page shape
+
+`docs/formats/bsa.md` is a model page: a spec citation, byte layout tables, and what was
+confirmed on the real install. Its frontmatter and opening look like this:
 
 ```markdown
 ---

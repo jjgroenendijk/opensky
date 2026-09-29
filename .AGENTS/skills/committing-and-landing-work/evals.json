@@ -1,0 +1,38 @@
+[
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "Commit this change.",
+    "files": [],
+    "expected_behavior": [
+      "Writes a type(scope): subject line in imperative mood",
+      "Writes a body with Context, Change, Rationale, Impact/Risk, and Tests sections",
+      "Adds no Co-authored-by or other AI attribution trailer"
+    ]
+  },
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "Push this to main, it is a one-line fix.",
+    "files": [],
+    "expected_behavior": [
+      "Does not push to main",
+      "Creates a fix/<slug> branch from origin/main and opens a PR with gh pr create",
+      "Does not use --no-verify"
+    ]
+  },
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "gh pr merge failed with 'main' is already used by worktree. Did the merge fail?",
+    "files": [],
+    "expected_behavior": [
+      "Checks gh pr view <n> --json mergedAt before assuming failure",
+      "Explains that the failed local branch delete is cosmetic",
+      "Syncs with git switch --detach origin/main rather than git checkout main"
+    ]
+  }
+]

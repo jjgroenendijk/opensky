@@ -131,6 +131,7 @@ format-check: ## Fail if anything is unformatted, without writing
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
 lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content docs-length ## Run every linter (warnings fail)
+	@./tools/lint/agent-files.sh
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
 	@./tools/lint/swift-baseline.sh

@@ -1,0 +1,37 @@
+[
+  {
+    "skills": [
+      "probing-real-game-data"
+    ],
+    "query": "Check what the LAND record for Whiterun's cell looks like on my install.",
+    "files": [],
+    "expected_behavior": [
+      "Uses make run-cli ARGS=\"record --type LAND ...\" before writing a probe",
+      "Does not write a Swift script run with swift path/to/script.swift"
+    ]
+  },
+  {
+    "skills": [
+      "probing-real-game-data",
+      "testing-and-verifying"
+    ],
+    "query": "Verify that the new shadow pass renders on the real install.",
+    "files": [],
+    "expected_behavior": [
+      "Renders offscreen or through openskycli render into a logs/ run directory from tools/run-dir.sh",
+      "Does not launch the app without telling the user",
+      "Does not commit the captured frame"
+    ]
+  },
+  {
+    "skills": [
+      "probing-real-game-data"
+    ],
+    "query": "The real-data test host is stuck at 0% CPU again.",
+    "files": [],
+    "expected_behavior": [
+      "Treats it as the known environment failure in docs/tools/environment.md",
+      "Moves the check into openskycli and runs it with make run-cli instead of retrying the test host"
+    ]
+  }
+]

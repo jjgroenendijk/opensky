@@ -1,0 +1,39 @@
+[
+  {
+    "skills": [
+      "implementing-format-parsers"
+    ],
+    "query": "Add a parser for the IDLE record.",
+    "files": [],
+    "expected_behavior": [
+      "Looks up the layout in an open spec such as xEdit wbDefinitionsTES5.pas or UESP before writing code, and cites it at the parse site",
+      "Places the parser in Sources/OpenSkyFormatsESM/ESM/Records/ and follows the shape of Footstep.swift",
+      "Adds synthetic-fixture tests built in code and a docs/formats page, with no extracted game file"
+    ]
+  },
+  {
+    "skills": [
+      "implementing-format-parsers"
+    ],
+    "query": "The NIF parser crashes on a mod mesh with an unknown block type. Fix it.",
+    "files": [],
+    "expected_behavior": [
+      "Makes the parser skip and note the unknown block instead of trapping",
+      "Uses throws with a typed error and no force-unwrap on file data",
+      "Adds a synthetic fixture that reproduces the unknown block, not a copy of the mod file"
+    ]
+  },
+  {
+    "skills": [
+      "implementing-format-parsers",
+      "probing-real-game-data"
+    ],
+    "query": "No spec documents this DATA subfield. Figure out its layout.",
+    "files": [],
+    "expected_behavior": [
+      "Writes a throwaway probe against the real install instead of guessing",
+      "Flags the uncertainty in the code comment and the docs page",
+      "Deletes the probe before committing"
+    ]
+  }
+]

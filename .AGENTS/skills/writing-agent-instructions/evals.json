@@ -1,0 +1,48 @@
+[
+  {
+    "skills": [
+      "writing-agent-instructions"
+    ],
+    "query": "You keep running xcodebuild in the foreground. Remember not to do that.",
+    "files": [],
+    "expected_behavior": [
+      "Loads writing-agent-instructions",
+      "Finds the existing background-shell rule in the root AGENTS.md instead of adding a second copy",
+      "Checks whether the rule is hard to find or missing its reason before adding words"
+    ]
+  },
+  {
+    "skills": [
+      "writing-agent-instructions"
+    ],
+    "query": "Add a rule that every Metal shader file must have a header comment.",
+    "files": [],
+    "expected_behavior": [
+      "Considers a lint check or hook first, because a machine can check the rule",
+      "If prose is still needed, places it in the nested AGENTS.md or skill where it applies, not the root AGENTS.md",
+      "States the reason with the rule"
+    ]
+  },
+  {
+    "skills": [
+      "writing-agent-instructions"
+    ],
+    "query": "Create a skill for adding a new Papyrus native function.",
+    "files": [],
+    "expected_behavior": [
+      "Names the folder and name field with a gerund such as implementing-papyrus-natives",
+      "Writes a third-person description that says what it does and when to load it",
+      "Adds evals.json with at least three scenarios and a row in the root AGENTS.md skills table",
+      "Runs make check"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Fix the off-by-one in BSAArchive's folder record loop.",
+    "files": [],
+    "expected_behavior": [
+      "Does not load writing-agent-instructions",
+      "Fixes the code and tests it"
+    ]
+  }
+]

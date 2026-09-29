@@ -1,0 +1,38 @@
+[
+  {
+    "skills": [
+      "writing-wiki-docs"
+    ],
+    "query": "Document the new FSTS parser in docs/.",
+    "files": [],
+    "expected_behavior": [
+      "Writes frontmatter with type, title, and description and no timestamp",
+      "Gives the spec source and how the layout was confirmed, not issue numbers, test lists, or timings",
+      "Uses short plain sentences in the root AGENTS.md writing style"
+    ]
+  },
+  {
+    "skills": [
+      "writing-wiki-docs"
+    ],
+    "query": "docs/engine/papyrus-world.md fails make docs-length. Fix it.",
+    "files": [],
+    "expected_behavior": [
+      "Splits the page by topic or cuts content",
+      "Does not raise the limit in tools/lint/docs-length.sh",
+      "Fixes links so make docs-links passes"
+    ]
+  },
+  {
+    "skills": [
+      "writing-wiki-docs"
+    ],
+    "query": "Add a changelog page to docs/ listing what each milestone added.",
+    "files": [],
+    "expected_behavior": [
+      "Explains that history lives in git, merged PRs, and closed issues, not docs/",
+      "Does not create the changelog page",
+      "Offers gh pr list --milestone as the way to see what a milestone added"
+    ]
+  }
+]
