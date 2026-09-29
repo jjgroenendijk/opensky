@@ -5,6 +5,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class AudioSfxSection: PanelSectionViewController {
     weak var provider: (any AudioControlProviding)? {

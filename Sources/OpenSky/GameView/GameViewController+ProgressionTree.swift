@@ -23,6 +23,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkyWorld
 
 extension GameViewController {
     /// The AVIF record describing a vanilla actor value, when the session has

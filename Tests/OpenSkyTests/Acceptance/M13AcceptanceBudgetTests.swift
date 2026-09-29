@@ -24,6 +24,7 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+@testable import OpenSkyWorld
 import Testing
 
 @MainActor

@@ -25,6 +25,7 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

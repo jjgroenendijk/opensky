@@ -12,6 +12,7 @@ import OpenSkyCrimeInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

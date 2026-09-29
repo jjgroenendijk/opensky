@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyRendering
+import OpenSkyWorld
 
 extension BenchCommand {
     static func reportWalkPath(

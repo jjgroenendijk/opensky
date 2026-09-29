@@ -6,6 +6,7 @@
 import AppKit
 @testable import OpenSkyAudio
 @testable import OpenSkyEngine
+@testable import OpenSkyWorld
 import Testing
 
 /// Shared with the M9.2.4 mute/solo satellite file

@@ -9,6 +9,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class LocomotionGraphSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

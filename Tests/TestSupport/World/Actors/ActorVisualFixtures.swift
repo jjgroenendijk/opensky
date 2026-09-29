@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyWorld
 
 /// Standard scenario: one race (skin torso+feet), an alternate skin, clothes
 /// covering the body slot reachable directly (outfit) or through an LVLI

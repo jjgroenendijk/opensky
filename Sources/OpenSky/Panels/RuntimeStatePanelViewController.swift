@@ -16,6 +16,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class RuntimeStatePanelViewController: InspectorPanelViewController {
     let inspectSection = RuntimeStateInspectSection()

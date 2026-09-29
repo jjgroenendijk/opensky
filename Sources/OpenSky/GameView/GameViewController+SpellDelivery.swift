@@ -30,6 +30,7 @@ import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 

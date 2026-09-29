@@ -20,6 +20,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldState
 import OSLog
 

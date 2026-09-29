@@ -18,6 +18,7 @@ import OpenSkyProgression
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 
 /// Sidebar grouping. Rows render under their section's group header, in
 /// `allCases` order.

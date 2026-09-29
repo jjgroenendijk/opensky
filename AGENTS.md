@@ -111,7 +111,7 @@ Sources/
   OpenSkyProgression*/  feature module: perk and skill runtimes; Interface: progress state
   OpenSkyInventory*/    feature module: inventory and equipment runtimes; Interface: state, access
   OpenSkyMagic*/        feature module: effect and caster runtimes; Interface: spell hits, seams
-  OpenSkyWorldInterface/ package module: interaction events and placed interactions
+  OpenSkyWorld*/        feature module: cells, streaming, player, weather; Interface: events
   OpenSkyQuests*/       feature module: quest runtime; Interface: quest state, QuestAccess
   OpenSkyScripting*/    feature module: Papyrus interpreter, natives; Interface: script values
   OpenSkyPreview/       composition module: asset catalog, record dumps; app and CLI only
@@ -138,6 +138,7 @@ Tests/
   OpenSkyQuestsTests/   package test target: synthetic suites for OpenSkyQuests
   OpenSkyScriptingTests/ package test target: synthetic suites for OpenSkyScripting
   OpenSkyPreviewTests/  package test target: synthetic suites for OpenSkyPreview
+  OpenSkyWorldTests/    package test target: synthetic suites for OpenSkyWorld
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
@@ -165,22 +166,23 @@ runner it shares a session with (`docs/testing.md`). A gated suite written outsi
 `Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would ever run it.
 
 No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngine/`,
-`Sources/OpenSkyFormats*/`, or `Sources/OpenSkyEngine/World/`; each goes in a domain folder.
+`Sources/OpenSkyFormats*/`, or `Sources/OpenSkyWorld/`; each goes in a domain folder.
 `Sources/OpenSkyGameData/` is small enough to stay flat. `Sources/OpenSkyRendering/` keeps the
 renderer at its root and puts `UI/`, `Terrain/`, and `Weather/` in folders. The others:
 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
   and `Resources/` (`Assets.xcassets`, `Branding/`).
-- `Sources/OpenSkyEngine/`: one folder per domain (`UI/`, `Save/`, `World/`,
+- `Sources/OpenSkyEngine/`: one folder per domain (`UI/`, `Save/`,
   ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
   folder.
 - `Sources/OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus
   `Binary/`, `Compression/`, and `Geometry/`. A package module never imports a module above
   it; behavior that needs a higher layer goes in an extension file up there
   (`docs/tools/modules.md`).
-- `Sources/OpenSkyEngine/World/`: `Actors/`, `Cells/`, `Conditions/`,
-  `Navigation/`, `Packages/`, `Player/`, `State/`, `Streaming/`, `Terrain/`, and `Weather/`.
+- `Sources/OpenSkyWorld/`: `Actors/`, `Cells/`, `Conditions/`,
+  `Navigation/`, `Packages/`, `Player/`, `Session/`, `State/`, `Streaming/`, `Terrain/`, and
+  `Weather/`.
 - `Sources/OpenSkyCLI/`: `OpenSkyCLI.swift` (dispatch) and `OpenSkyCLIUsage.swift` at the
   root, one file per subcommand in `Commands/`, the Flash (SWF) probes in `SWF/`, and
   shared plumbing in `Support/`.
@@ -188,8 +190,8 @@ renderer at its root and puts `UI/`, `Terrain/`, and `Weather/` in folders. The 
 An extension file is named `Type+Feature.swift`, for example
 `GameView/GameViewController+Magic.swift`. Test folders use the same subfolder names as the
 source file they test: the tests for
-`Sources/OpenSkyEngine/World/Terrain/DistantLOD.swift` live in
-`Tests/OpenSkyTests/World/Terrain/`, and tests for app code live under `Tests/OpenSkyTests/App/`. Only
+`Sources/OpenSkyWorld/Terrain/DistantLOD.swift` live in
+`Tests/OpenSkyWorldTests/Terrain/`, and tests for app code live under `Tests/OpenSkyTests/App/`. Only
 cross-cutting folders are test-only: `Acceptance/` (milestone gates), `Fakes/`, and
 `Support/`. File names stay unique inside a target, because Swift rejects two files with
 one name in the same module. Skills live in `.AGENTS/skills/` (`.claude/skills` symlinks

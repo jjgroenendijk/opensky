@@ -22,6 +22,7 @@ import Foundation
 @testable import OpenSkyPerceptionInterface
 import OpenSkyPerceptionTesting
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 import simd
 
 @MainActor

@@ -26,6 +26,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldState
 
 /// Casting state the controller owns. Extensions cannot add stored properties,

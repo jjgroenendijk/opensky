@@ -109,7 +109,7 @@ OpenSkyWorldState         runtime state store, open component set, game clock, g
 OpenSkyConditions         condition evaluator, function registry, core functions
   ^
 OpenSkyWorldInterface     interaction events and rays, placed interactions, reference source,
-                          movement limits
+                          movement limits, dialogue camera pose
 OpenSkyInventoryInterface inventory state, holders, vendors, baselines, InventoryAccess,
                           EquipmentAccess
   ^
@@ -130,6 +130,8 @@ OpenSkyCombat             melee, archery, projectile, combat loop, and ragdoll r
 OpenSkyQuests             quest runtime, alias filler
 OpenSkyDialogue           dialogue runtime, voice file lookup
 OpenSkyScripting          Papyrus interpreter, script world runtime, native functions
+OpenSkyWorld              cells, streaming, terrain, navigation, packages, player, weather,
+                          the whole-game condition registry
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
@@ -187,8 +189,9 @@ A lower module never imports a higher one. These patterns keep it that way:
 - A lower module never names a registry or default that a higher module owns. Example:
   `PerkRuntime`, `ActiveEffectRuntime`, and `DialogueRuntime` take their
   `ConditionFunctionRegistry` as a parameter, and the caller passes `.standard`, which lives
-  above every feature. A package test target builds its own registry from the install
-  functions it can reach, for example `.magicTests` in `OpenSkyMagicTests`.
+  in `OpenSkyWorld`, above every feature interface. A package test target builds its own
+  registry from the install functions it can reach, for example `.magicTests` in
+  `OpenSkyMagicTests`.
 - A lower module that stores something for every feature keeps an open set instead of a closed
   enum. `OpenSkyWorldState` stores any `WorldStateComponent`, and each feature declares its own
   `WorldStateComponentKind`. `ConditionContext` stores any `ConditionResolution` by type, and each

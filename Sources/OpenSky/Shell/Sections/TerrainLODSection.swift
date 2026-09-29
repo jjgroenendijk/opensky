@@ -5,6 +5,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyWorld
 
 final class TerrainLODSection: PanelSectionViewController {
     weak var provider: (any TerrainLODControlProviding)? {

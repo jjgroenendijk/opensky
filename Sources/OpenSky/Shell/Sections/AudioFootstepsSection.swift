@@ -9,6 +9,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
+import OpenSkyWorld
 
 final class AudioFootstepsSection: PanelSectionViewController {
     weak var provider: (any AudioControlProviding)? {

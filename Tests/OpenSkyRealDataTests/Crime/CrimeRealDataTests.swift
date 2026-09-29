@@ -25,6 +25,7 @@ import Metal
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import Testing
 

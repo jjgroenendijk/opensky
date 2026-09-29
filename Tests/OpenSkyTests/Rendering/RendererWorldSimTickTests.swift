@@ -14,6 +14,7 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+@testable import OpenSkyWorld
 import Testing
 
 struct RendererWorldSimTickTests {

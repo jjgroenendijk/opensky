@@ -41,6 +41,7 @@ import Foundation
 import OpenSkyInventoryTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

@@ -16,6 +16,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 
 /// Which actor the force toggle aims at. Two rows rather than a free-text

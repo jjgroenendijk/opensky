@@ -7,9 +7,15 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum DialogueCameraReadout: Sendable {
+    /// The field of view the dialogue camera projects with. `DialogueCamera`
+    /// uses the same shared world value, and `DialogueCameraTests` asserts it.
+    private static let fieldOfView = FirstPersonCamera.defaultFOVYRadians
+
     /// Who the camera is framing, from where, and what it hands back when it
     /// lets go — the three things the acceptance question "did entering and
     /// leaving a conversation restore the previous camera" is answered from.
@@ -42,8 +48,8 @@ nonisolated public enum DialogueCameraReadout: Sendable {
             "Framing: \(rounded(pose.distance)) units, \(squeeze) · "
                 + "yaw \(rounded(MatrixMath.degrees(fromRadians: pose.yaw))) · "
                 + "pitch \(rounded(MatrixMath.degrees(fromRadians: pose.pitch)))",
-            "Field of view: \(rounded(MatrixMath.degrees(fromRadians: DialogueCamera.fovYRadians)))"
-                + " degrees while engaged"
+            "Field of view: \(rounded(MatrixMath.degrees(fromRadians: fieldOfView))) degrees"
+                + " while engaged"
         ]
     }
 

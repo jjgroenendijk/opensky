@@ -9,10 +9,10 @@
 // real-data streaming suites (issue #418).
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 import Testing
 

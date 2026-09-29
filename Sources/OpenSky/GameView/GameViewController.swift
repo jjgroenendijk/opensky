@@ -10,6 +10,7 @@ import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OpenSkyWorldState
 import OSLog
 import simd

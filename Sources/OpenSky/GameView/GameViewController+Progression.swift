@@ -24,6 +24,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkyWorld
 
 /// Character-level state the controller owns. Extensions cannot add stored
 /// properties, so it lives as one value on `GameViewController`.

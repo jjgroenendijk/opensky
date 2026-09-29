@@ -11,6 +11,7 @@ import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 
 /// Builds a `DialogueCameraSnapshot` from only the fields a test cares about.

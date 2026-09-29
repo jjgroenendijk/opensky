@@ -19,6 +19,7 @@ import AppKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 import Testing
 

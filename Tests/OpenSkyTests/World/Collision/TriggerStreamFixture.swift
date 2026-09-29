@@ -8,6 +8,7 @@
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 import simd
 
 enum TriggerStreamFixture {

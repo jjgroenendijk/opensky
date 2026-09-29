@@ -16,6 +16,7 @@ import Foundation
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 import OpenSkyInventoryTesting
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

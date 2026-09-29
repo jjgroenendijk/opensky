@@ -12,6 +12,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class AIOverlaySection: PanelSectionViewController {
     weak var provider: (any AIOverlayControlProviding)? {

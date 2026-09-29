@@ -24,6 +24,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
     let stateSection = LocomotionStateSection()

@@ -21,6 +21,7 @@ import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import simd
 

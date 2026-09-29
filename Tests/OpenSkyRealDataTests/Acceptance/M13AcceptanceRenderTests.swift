@@ -27,6 +27,7 @@ import MetalKit
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import Testing
 
 struct M13AcceptanceRenderTests {

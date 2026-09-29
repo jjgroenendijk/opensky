@@ -27,6 +27,7 @@ import MetalKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 import Testing
 import UniformTypeIdentifiers

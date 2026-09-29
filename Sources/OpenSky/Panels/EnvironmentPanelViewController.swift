@@ -8,6 +8,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class EnvironmentPanelViewController: InspectorPanelViewController {
     let shadowSection = ShadowSection()

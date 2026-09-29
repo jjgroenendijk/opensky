@@ -13,6 +13,7 @@
 
 import AppKit
 @testable import OpenSkyEngine
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 
 /// Sends a control's action the way a click would, so a test drives the panel

@@ -14,6 +14,7 @@
 @testable import OpenSkyConditions
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorld
 import Testing
 
 struct RuntimeStateConditionRunnerTests {

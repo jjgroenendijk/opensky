@@ -2,6 +2,7 @@
 
 import Foundation
 @testable import OpenSkyEngine
+@testable import OpenSkyWorld
 
 extension FakeWorldProviders {
     func setFaceMorphWeight(_ weight: Float, target: String) {

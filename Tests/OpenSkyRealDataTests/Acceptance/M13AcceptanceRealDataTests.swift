@@ -30,6 +30,7 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing
 

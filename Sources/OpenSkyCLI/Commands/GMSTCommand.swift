@@ -11,6 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyWorld
 
 enum GMSTCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

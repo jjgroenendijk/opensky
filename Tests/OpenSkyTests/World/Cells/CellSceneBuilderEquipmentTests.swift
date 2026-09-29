@@ -13,10 +13,10 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

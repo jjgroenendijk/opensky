@@ -13,6 +13,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuestsInterface
+@testable import OpenSkyWorld
 import Testing
 
 @Suite("Quest condition functions")

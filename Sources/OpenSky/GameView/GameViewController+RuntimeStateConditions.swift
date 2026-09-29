@@ -33,6 +33,7 @@ import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OpenSkyWorldState
 
 extension GameViewController {

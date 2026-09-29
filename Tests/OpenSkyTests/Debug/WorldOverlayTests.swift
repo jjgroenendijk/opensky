@@ -9,6 +9,7 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 import OpenSkyShaderTypes
+@testable import OpenSkyWorld
 import simd
 import Testing
 

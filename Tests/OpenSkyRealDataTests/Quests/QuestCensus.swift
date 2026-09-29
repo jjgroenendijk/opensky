@@ -13,6 +13,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorld
 
 struct QuestCensus {
     /// One quest reduced to the numbers the shortlist ranks on.

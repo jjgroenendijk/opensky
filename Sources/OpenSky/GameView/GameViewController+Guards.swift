@@ -36,6 +36,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPerception
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 

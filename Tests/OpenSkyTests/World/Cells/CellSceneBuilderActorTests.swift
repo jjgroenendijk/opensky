@@ -7,9 +7,9 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Metal
-import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 import Testing
 

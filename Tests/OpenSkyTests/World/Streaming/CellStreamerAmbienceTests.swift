@@ -4,9 +4,9 @@
 // runner + CellScene helpers without growing that file past the length limit.
 
 @testable import OpenSkyAudio
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyWorld
 import Testing
 
 extension CellStreamerTests {

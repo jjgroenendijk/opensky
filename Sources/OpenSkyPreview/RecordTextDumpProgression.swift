@@ -4,10 +4,10 @@
 
 import Foundation
 import OpenSkyConditions
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorld
 
 nonisolated extension RecordTextDump {
     public static func progressionSummary(

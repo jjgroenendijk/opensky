@@ -10,6 +10,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
+@testable import OpenSkyWorld
 import Testing
 
 struct RuntimeStatePanelConditionsTests {

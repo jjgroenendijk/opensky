@@ -4,6 +4,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class FaceMorphSection: PanelSectionViewController {
     weak var provider: (any FaceMorphControlProviding)? {

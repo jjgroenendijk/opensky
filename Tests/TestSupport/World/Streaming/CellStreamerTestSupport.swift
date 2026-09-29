@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 
 /// Test build runner: the test stages completions and controls their order,

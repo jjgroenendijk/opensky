@@ -30,6 +30,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyRendering
+import OpenSkyWorld
 import simd
 
 /// Archery state the controller owns. Extensions cannot add stored properties,

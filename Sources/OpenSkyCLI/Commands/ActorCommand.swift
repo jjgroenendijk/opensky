@@ -3,7 +3,7 @@
 // visuals — skeleton, skin/outfit body parts with slot masking, FaceGen
 // paths (milestone 5.2). WRLD tree walk mirrors CellCommand; persistent-cell
 // ACHRs map in by physical position like door handling. Resolution + policy
-// live in ActorTemplateResolver / ActorVisualResolver (Sources/OpenSkyEngine/World/);
+// live in ActorTemplateResolver / ActorVisualResolver (Sources/OpenSkyWorld/);
 // this file only parses args and prints.
 
 import Foundation
@@ -11,6 +11,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorld
 
 enum ActorCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

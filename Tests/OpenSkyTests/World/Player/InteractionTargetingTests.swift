@@ -1,8 +1,8 @@
 // Walk-mode targeting and engine-owned activation events over synthetic
 // streamed scenes. A nil interaction ray represents fly mode.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import simd
 import Testing

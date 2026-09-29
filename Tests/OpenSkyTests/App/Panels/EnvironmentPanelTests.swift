@@ -6,6 +6,7 @@ import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import Testing
 
 /// Conforms to both protocols the panel's `provider` requires, so assigning it

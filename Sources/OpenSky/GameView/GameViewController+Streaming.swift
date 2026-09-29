@@ -5,6 +5,7 @@
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import OSLog

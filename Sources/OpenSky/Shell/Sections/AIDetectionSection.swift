@@ -16,6 +16,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyPerceptionInterface
+import OpenSkyWorld
 
 final class AIDetectionSection: PanelSectionViewController {
     weak var provider: (any PerceptionControlProviding)? {

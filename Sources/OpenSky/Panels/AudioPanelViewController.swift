@@ -11,6 +11,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class AudioPanelViewController: InspectorPanelViewController {
     let outputSection = AudioOutputSection()

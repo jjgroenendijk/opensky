@@ -10,6 +10,7 @@
 @testable import OpenSkyEngine
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import Testing
 
 struct DestinationRegistryLocomotionTests {

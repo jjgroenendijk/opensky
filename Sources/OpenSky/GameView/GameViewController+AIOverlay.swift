@@ -4,6 +4,7 @@
 import OpenSkyDiagnostics
 import OpenSkyEngine
 import OpenSkyRendering
+import OpenSkyWorld
 
 extension GameViewController: AIOverlayControlProviding {
     var navmeshOverlayEnabled: Bool {

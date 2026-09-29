@@ -16,6 +16,7 @@ import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

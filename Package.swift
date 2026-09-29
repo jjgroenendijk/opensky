@@ -545,6 +545,28 @@ targets += feature(
     ]
 )
 
+targets += feature(
+    "OpenSkyWorld",
+    dependencies: ["OpenSkyFormatsCore"] + formatFamilies.map { "OpenSkyFormats\($0)" } + [
+        "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyDiagnostics", "OpenSkyPhysics",
+        "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyConditions",
+        "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
+        "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
+        "OpenSkyMagicInterface", "OpenSkyCombatInterface", "OpenSkyQuestsInterface",
+        "OpenSkyDialogueInterface", "OpenSkyScriptingInterface", "OpenSkyShaderTypes"
+    ],
+    tests: [
+        "OpenSkyWorldInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "OpenSkyFormatsAnimation", "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics",
+        "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyActorsInterface",
+        "OpenSkyCombat", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
+        "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
+        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyShaderTypes",
+        "FormatsCoreTesting", "FormatsESMTesting", "FormatsMeshTesting", "FormatsAnimationTesting",
+        "BehaviorTesting", "PhysicsTesting"
+    ]
+)
+
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
     "OpenSkyEngine",
@@ -564,7 +586,7 @@ targets += composition(
     "OpenSkyPreview",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
-        "OpenSkyConditions", "OpenSkyRendering", "OpenSkyEngine"
+        "OpenSkyConditions", "OpenSkyRendering", "OpenSkyWorld"
     ],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",

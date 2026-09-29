@@ -4,6 +4,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class SceneStatsSection: PanelSectionViewController {
     weak var provider: (any SceneStatsProviding)? {

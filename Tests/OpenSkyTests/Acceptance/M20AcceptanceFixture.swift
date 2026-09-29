@@ -12,6 +12,7 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyEngine
 @testable import OpenSkyProgression
+@testable import OpenSkyWorld
 
 @MainActor
 enum M20Fixture {

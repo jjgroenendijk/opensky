@@ -6,6 +6,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class AudioMusicSection: PanelSectionViewController {
     weak var provider: (any AudioControlProviding)? {
