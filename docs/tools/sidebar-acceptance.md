@@ -8,8 +8,8 @@ tags: [app-ui, verification, acceptance, convention]
 
 # Sidebar acceptance record
 
-Every milestone ships a surface in the main-app sidebar (`AGENTS.md`, "Main-app verification
-surface"). When the milestone is accepted, the closing PR or issue carries one record that
+Every milestone ships a surface in the main-app sidebar (`AGENTS.md`, "Open work, docs, and
+the app sidebar"). When the milestone is accepted, the closing PR or issue carries one record that
 says how a user reaches that surface. The record does not go in `docs/`. How to build the
 surface is in [Main-app UI framework](/tools/app-ui.md).
 

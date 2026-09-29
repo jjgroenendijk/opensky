@@ -1,0 +1,48 @@
+[
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "What should I work on next?",
+    "files": [],
+    "expected_behavior": [
+      "Loads starting-roadmap-work before answering",
+      "Lists open issues with gh issue list for the current milestone instead of reading a roadmap file in docs/",
+      "Picks the lowest open item by roadmap number, not by issue number"
+    ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work",
+      "committing-and-landing-work"
+    ],
+    "query": "Start issue 9.1.2 and open a PR when it is done.",
+    "files": [],
+    "expected_behavior": [
+      "Creates one branch for the one issue",
+      "Puts Closes #NNN for that issue in the PR body",
+      "Does not bundle a second issue into the same PR"
+    ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "Every issue in milestone M9 is merged. Wrap it up.",
+    "files": [],
+    "expected_behavior": [
+      "Checks that the closing PR carries the acceptance record from docs/tools/sidebar-acceptance.md",
+      "Records the outcome in the milestone description or the closing PR, not in docs/",
+      "Closes the milestone with gh"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Rename the local variable `idx` to `index` in BSAArchive.swift.",
+    "files": [],
+    "expected_behavior": [
+      "Does not load starting-roadmap-work or query GitHub milestones",
+      "Makes the rename directly"
+    ]
+  }
+]

@@ -2,7 +2,7 @@
 # Env-gated smoke probe: drive openskycli against the local Skyrim SE
 # install (docs/tools/cli.md). Self-skips with [INFO] when no install is
 # present (CI has no game data). Install is read-only external input;
-# outputs go to logs/ only (AGENTS.md Legal & IP + Code scripts).
+# outputs go to logs/ only (AGENTS.md "Legal & IP boundary").
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
