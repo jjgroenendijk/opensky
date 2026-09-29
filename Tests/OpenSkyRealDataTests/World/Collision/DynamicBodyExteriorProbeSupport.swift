@@ -1,7 +1,6 @@
 // Real exterior cell selection and boundary direction for issue #401's
 // env-gated dynamic-body probe. The test itself stays with its suite.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics

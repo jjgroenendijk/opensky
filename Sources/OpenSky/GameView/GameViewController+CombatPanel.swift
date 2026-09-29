@@ -17,7 +17,6 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombat
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd

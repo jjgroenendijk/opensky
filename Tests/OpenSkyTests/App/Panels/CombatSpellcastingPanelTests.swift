@@ -7,7 +7,6 @@
 
 import AppKit
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
 import Testing

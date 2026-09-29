@@ -7,7 +7,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
-import OpenSkyEngine
 import Testing
 
 struct AudioPanelMuteSoloTests {

@@ -7,11 +7,10 @@
 // which is where the documented player fallback in
 // `ActorValueBaselineResolver` was probed from.
 //
-// Derivation and resolution live in Sources/OpenSkyEngine/Actors/; this file only parses
-// arguments and prints.
+// Derivation lives in Sources/OpenSkyGameData/ and resolution in Sources/OpenSkyActors/;
+// this file only parses arguments and prints.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

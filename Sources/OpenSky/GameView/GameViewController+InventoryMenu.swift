@@ -12,10 +12,10 @@
 // cannot diverge on what equipping means. See docs/engine/inventory-menu.md.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyRendering
 import OSLog
 

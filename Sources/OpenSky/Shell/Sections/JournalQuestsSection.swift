@@ -8,7 +8,7 @@
 // component so a quest is named the same way on both surfaces.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 

@@ -4,7 +4,6 @@
 // used to hold this lives on in OpenSkyTests. See Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import OpenSkyEngine
 @testable import OpenSkyWorld
 import Testing
 

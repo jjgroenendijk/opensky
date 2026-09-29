@@ -12,7 +12,6 @@
 // output device, no decode-queue timing, explicit frame deltas.
 
 @testable import OpenSkyAudio
-@testable import OpenSkyEngine
 @testable import OpenSkyWorld
 import Testing
 

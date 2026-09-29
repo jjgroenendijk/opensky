@@ -6,7 +6,6 @@
 // renderer, no window and no game data.
 
 @testable import OpenSkyCrime
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 
 /// The crime and faction half of the fake's stored state.

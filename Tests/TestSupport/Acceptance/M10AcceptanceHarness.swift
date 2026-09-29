@@ -7,7 +7,6 @@
 import AppKit
 import Foundation
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyWorld
 import Testing
 

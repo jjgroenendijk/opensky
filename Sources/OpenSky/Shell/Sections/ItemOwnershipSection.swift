@@ -8,7 +8,6 @@
 // readout says that too rather than letting silence imply enforcement.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyInventory
 
 final class ItemOwnershipSection: PanelSectionViewController {

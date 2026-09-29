@@ -27,7 +27,7 @@ the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-r
   game data alert.
 
 `Tests/TestSupport/` is not a target. Both `OpenSkyTests` and `OpenSkyRealDataTests` compile it,
-the way `Sources/OpenSkyEngine/` is shared by the app and `OpenSkyCLI`. It has no `@Test`, because
+the way the package modules are shared by the app and `OpenSkyCLI`. It has no `@Test`, because
 a test there would run in both bundles. Each `Tests/<Name>Testing/` folder is a package library of
 shared fixtures, for example `FormatsESMTesting` with the plugin byte builders. Every unit test
 target that needs one links it.

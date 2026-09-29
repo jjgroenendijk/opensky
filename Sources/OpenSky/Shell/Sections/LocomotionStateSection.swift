@@ -13,7 +13,6 @@
 // for one setting.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyRendering
 import OpenSkyWorld
 

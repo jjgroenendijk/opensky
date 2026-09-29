@@ -3,7 +3,6 @@
 // CLI command.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class SceneStatsSection: PanelSectionViewController {

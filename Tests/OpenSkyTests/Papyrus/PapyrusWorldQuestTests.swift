@@ -6,7 +6,6 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 @testable import OpenSkyScripting

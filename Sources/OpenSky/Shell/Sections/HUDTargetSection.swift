@@ -2,7 +2,7 @@
 // and the exact prompt/marker state published to the vanilla movie.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 
 final class HUDTargetSection: PanelSectionViewController {
     weak var provider: (any HUDControlProviding)? {

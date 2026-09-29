@@ -15,7 +15,7 @@
 // keeps each section's dependency honest.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 import OpenSkyWorld
 
 final class DialoguePanelViewController: InspectorPanelViewController {

@@ -7,7 +7,6 @@
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import simd
 

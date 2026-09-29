@@ -25,7 +25,7 @@ Related pages:
   writes.
 - [First person](/engine/first-person.md): the second graph that drives the arms.
 
-The code lives in `Sources/OpenSkyEngine/Behavior/`, apart from the format parsers in
+The code lives in `Sources/OpenSkyBehavior/`, apart from the format parsers in
 `Sources/OpenSkyFormatsAnimation/HKX/`. Decoding a file and running a graph are different jobs, and
 they fail in different ways.
 

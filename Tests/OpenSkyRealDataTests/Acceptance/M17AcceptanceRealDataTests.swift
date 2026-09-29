@@ -34,7 +34,6 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM

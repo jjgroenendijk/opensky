@@ -5,7 +5,6 @@
 
 import AppKit
 import OpenSkyBehavior
-import OpenSkyEngine
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld

@@ -5,7 +5,6 @@
 import Metal
 import MetalKit
 import OpenSkyDiagnostics
-import OpenSkyEngine
 import OpenSkyPerception
 import OpenSkyRendering
 import OpenSkyWorld

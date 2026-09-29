@@ -5,15 +5,15 @@
 // This is the bring-up gate for the menu's data contract, in the CLI rather
 // than only in a test because the real-data XCTest host is unreliable on this
 // machine (docs/tools/environment.md). It only parses args and prints; the
-// bridge and the row list it publishes live in `Sources/OpenSkyEngine/UI/` and are unit
+// bridge and the row list it publishes live in `Sources/OpenSkyMenus/` and are unit
 // tested there against synthetic fixtures.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyWorldState
 
 enum SWFInventoryMenuCommand {

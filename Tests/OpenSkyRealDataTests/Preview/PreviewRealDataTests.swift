@@ -11,7 +11,6 @@ import ImageIO
 import Metal
 import MetalKit
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData

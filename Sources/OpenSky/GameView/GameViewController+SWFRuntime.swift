@@ -15,7 +15,6 @@
 // the app surface.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsSWF
 import OpenSkyRendering
 

@@ -12,10 +12,10 @@ import Foundation
 import Metal
 import MetalKit
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
+@testable import OpenSkyMenus
 @testable import OpenSkyQuests
 @testable import OpenSkyRendering
 @testable import OpenSkyWorldState

@@ -7,7 +7,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyCombat
-@testable import OpenSkyEngine
 import Testing
 
 struct CombatArcheryPanelTests {

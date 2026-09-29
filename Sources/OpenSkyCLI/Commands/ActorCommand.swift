@@ -7,7 +7,6 @@
 // this file only parses args and prints.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

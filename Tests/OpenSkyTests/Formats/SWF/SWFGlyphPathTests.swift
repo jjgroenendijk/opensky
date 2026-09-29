@@ -4,7 +4,6 @@
 
 import CoreGraphics
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyRendering
 import Testing

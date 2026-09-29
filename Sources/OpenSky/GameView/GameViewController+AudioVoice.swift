@@ -10,10 +10,10 @@
 
 import AppKit
 import OpenSkyAudio
-import OpenSkyEngine
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState

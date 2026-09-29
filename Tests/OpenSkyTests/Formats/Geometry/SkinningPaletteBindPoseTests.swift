@@ -19,7 +19,6 @@
 import FormatsMeshTesting
 import Foundation
 @testable import OpenSkyBehavior
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

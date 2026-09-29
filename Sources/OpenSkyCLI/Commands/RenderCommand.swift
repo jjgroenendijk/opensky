@@ -7,9 +7,9 @@
 import Foundation
 import Metal
 import MetalKit
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import simd

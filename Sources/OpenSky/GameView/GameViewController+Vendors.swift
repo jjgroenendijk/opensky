@@ -12,12 +12,12 @@
 // do — and that native lands in `openBarter(with:)`.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyWorld
 import OpenSkyWorldState
 

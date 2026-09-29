@@ -3,7 +3,6 @@
 
 import Foundation
 import Metal
-import OpenSkyEngine
 import OpenSkyRendering
 
 extension RenderCommand {

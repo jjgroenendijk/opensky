@@ -30,9 +30,9 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyDialogueInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyMenus
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 @testable import OpenSkyWorld

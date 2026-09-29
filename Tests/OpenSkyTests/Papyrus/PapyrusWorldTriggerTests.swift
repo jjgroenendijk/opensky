@@ -6,7 +6,6 @@
 // lives in M11TriggerVolumeWalkTests.
 
 import FormatsESMTesting
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyPhysics

@@ -1,6 +1,5 @@
 import FormatsPEXTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface

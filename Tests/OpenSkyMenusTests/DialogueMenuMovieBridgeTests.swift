@@ -11,9 +11,9 @@
 
 import AppKit
 import FormatsSWFTesting
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyMenus
 import Testing
 
 private final class DialogueCallLog: @unchecked Sendable {

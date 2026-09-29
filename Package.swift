@@ -584,17 +584,19 @@ targets += feature(
     ]
 )
 
-// The rest of the engine, until it is split into the modules above it.
-targets += foundation(
-    "OpenSkyEngine",
-    dependencies: ["OpenSkyFormatsCore"] + formatFamilies.map { "OpenSkyFormats\($0)" } + [
-        "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyDiagnostics", "OpenSkyPhysics",
-        "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyConditions",
-        "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
-        "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
-        "OpenSkyWorldInterface", "OpenSkyMagicInterface", "OpenSkyCombatInterface",
-        "OpenSkyQuestsInterface", "OpenSkyDialogueInterface", "OpenSkyScriptingInterface",
-        "OpenSkyShaderTypes", "CFFmpeg"
+targets += feature(
+    "OpenSkyMenus",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData",
+        "OpenSkyRendering", "OpenSkyActorsInterface", "OpenSkyDialogueInterface",
+        "OpenSkyInventoryInterface", "OpenSkyQuestsInterface", "OpenSkyScriptingInterface",
+        "OpenSkyWorldInterface"
+    ],
+    tests: [
+        "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering",
+        "OpenSkyWorldState", "OpenSkyInventoryInterface", "OpenSkyInventory",
+        "OpenSkyInventoryTesting", "OpenSkyQuestsInterface", "OpenSkyQuests", "OpenSkyShaderTypes",
+        "FormatsESMTesting", "FormatsSWFTesting"
     ]
 )
 

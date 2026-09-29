@@ -12,7 +12,6 @@
 // `menuMode` itself.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory

@@ -19,7 +19,6 @@
 // Not overridden: an owned perk is world state, not a panel setting.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyProgression
 
 final class ProgressionPerkTreeSection: ProgressionPanelSection {

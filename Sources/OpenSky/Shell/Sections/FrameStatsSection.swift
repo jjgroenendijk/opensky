@@ -3,7 +3,6 @@
 // can never quote different numbers for the same frame.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyRendering
 import OpenSkyWorld
 

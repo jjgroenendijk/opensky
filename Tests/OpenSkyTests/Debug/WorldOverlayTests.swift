@@ -4,7 +4,6 @@
 import Metal
 import MetalKit
 @testable import OpenSkyDiagnostics
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering

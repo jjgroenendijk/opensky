@@ -4,7 +4,6 @@
 // produced before the chunk existed.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMagicInterface
 @testable import OpenSkySave

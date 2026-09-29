@@ -7,7 +7,6 @@
 // engine just do, in order. Read-only, so it is never overridden.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 

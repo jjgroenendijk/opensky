@@ -14,7 +14,6 @@
 import Foundation
 import Metal
 @testable import OpenSkyActorsInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFactions
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM

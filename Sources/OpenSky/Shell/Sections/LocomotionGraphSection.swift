@@ -8,7 +8,6 @@
 // make "what the graph did" and "what the panel did to it" hard to separate.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class LocomotionGraphSection: PanelSectionViewController {

@@ -14,7 +14,6 @@
 // `make realtest T='NIFDynamicsCensusRealDataTests/censusesHavokDynamics()'`.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData

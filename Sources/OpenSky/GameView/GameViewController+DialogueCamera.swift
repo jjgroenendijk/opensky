@@ -22,9 +22,9 @@
 
 import AppKit
 import OpenSkyDiagnostics
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld

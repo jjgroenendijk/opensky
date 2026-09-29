@@ -5,7 +5,6 @@
 // as the other audio sections. Sidebar path and controls: docs/engine/music.md.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class AudioMusicSection: PanelSectionViewController {

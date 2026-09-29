@@ -5,7 +5,6 @@
 // destination drives all of them.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

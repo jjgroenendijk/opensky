@@ -13,11 +13,11 @@
 // See docs/engine/barter.md.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import OSLog

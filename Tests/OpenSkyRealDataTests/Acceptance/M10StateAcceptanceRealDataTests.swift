@@ -17,7 +17,6 @@
 // it; the report goes to gitignored `logs/`.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

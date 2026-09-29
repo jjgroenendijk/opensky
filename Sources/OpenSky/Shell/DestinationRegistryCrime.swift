@@ -13,7 +13,7 @@
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyEngine
+import OpenSkyWorld
 
 extension DestinationRegistry {
     static let crimeDestinations: [DestinationDescriptor] = [

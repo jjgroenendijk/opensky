@@ -9,7 +9,6 @@
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyEngine
 
 final class FactionVendorSection: CrimeFactionPanelSection {
     static let resolvedTitle = "Resolved from memberships"

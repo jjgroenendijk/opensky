@@ -9,7 +9,6 @@
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyEngine
 import OpenSkyFormatsESM
 
 /// One section of the Crime & Factions panel.

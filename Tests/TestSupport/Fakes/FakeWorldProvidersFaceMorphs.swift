@@ -1,7 +1,6 @@
 // FaceMorphControlProviding half of the shared panel fake (issue #207).
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyWorld
 
 extension FakeWorldProviders {

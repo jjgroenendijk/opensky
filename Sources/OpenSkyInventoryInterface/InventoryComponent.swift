@@ -365,7 +365,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
 nonisolated extension WorldStateComponentKind {
     /// Everything one owner holds, plus its equipped set. The value type is
     /// `ReferenceInventoryState`, which lives in
-    /// `Sources/OpenSkyEngine/Inventory/InventoryComponent.swift` because it
+    /// `Sources/OpenSkyInventoryInterface/InventoryComponent.swift` because it
     /// carries stack arithmetic of its own rather than being a plain field bag.
     public static let inventory = Self(rawValue: "inventory", order: 4)
 }

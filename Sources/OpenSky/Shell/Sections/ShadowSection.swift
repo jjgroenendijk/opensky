@@ -3,7 +3,6 @@
 // live renderer, plus a 2 Hz shadow-draw readout.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyRendering
 import OpenSkyWorld
 

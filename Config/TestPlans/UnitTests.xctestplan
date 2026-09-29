@@ -218,6 +218,11 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkySave",
           "name" : "OpenSkySave"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyMenus",
+          "name" : "OpenSkyMenus"
         }
       ]
     }
@@ -445,6 +450,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkySaveTests",
         "name" : "OpenSkySaveTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyMenusTests",
+        "name" : "OpenSkyMenusTests"
       }
     }
   ],

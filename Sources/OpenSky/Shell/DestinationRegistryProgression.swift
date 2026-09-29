@@ -17,7 +17,7 @@
 // take a character's levels away rather than restore a knob.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyWorld
 
 extension DestinationRegistry {
     static let progressionDestinations: [DestinationDescriptor] = [

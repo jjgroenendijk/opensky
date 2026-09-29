@@ -4,7 +4,6 @@
 
 import Foundation
 import Metal
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyPhysics

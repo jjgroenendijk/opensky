@@ -14,7 +14,6 @@
 // which supplies the data root and the RSS watchdog.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests

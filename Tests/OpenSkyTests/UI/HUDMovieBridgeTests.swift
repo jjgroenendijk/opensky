@@ -5,9 +5,9 @@
 import AppKit
 import FormatsSWFTesting
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyMenus
 @testable import OpenSkyWorldInterface
 import simd
 import Testing

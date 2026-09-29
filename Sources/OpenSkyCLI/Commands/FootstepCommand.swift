@@ -12,7 +12,6 @@
 
 import Foundation
 import OpenSkyAudio
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 

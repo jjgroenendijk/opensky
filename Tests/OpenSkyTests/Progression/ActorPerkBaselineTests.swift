@@ -5,7 +5,6 @@
 // (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression

@@ -9,7 +9,6 @@
 // it is never overridden and its reset is a no-op.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 

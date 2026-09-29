@@ -10,7 +10,6 @@
 // narrow provider protocol.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld

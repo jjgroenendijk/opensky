@@ -16,8 +16,8 @@
 // and every control talks to the engine only through `SWFLabControlProviding`.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsSWF
+import OpenSkyMenus
 
 final class SWFRuntimeSection: PanelSectionViewController {
     /// Ticks the burst button applies. A vanilla menu's open and close

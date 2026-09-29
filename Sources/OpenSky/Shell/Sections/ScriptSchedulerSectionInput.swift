@@ -8,7 +8,6 @@
 // keyboard focus returns to the game view.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 

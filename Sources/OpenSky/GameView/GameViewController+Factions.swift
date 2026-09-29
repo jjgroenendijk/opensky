@@ -28,7 +28,6 @@
 
 import AppKit
 import OpenSkyCombat
-import OpenSkyEngine
 import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM

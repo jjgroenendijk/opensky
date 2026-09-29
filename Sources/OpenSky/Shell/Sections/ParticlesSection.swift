@@ -2,7 +2,6 @@
 // live system readout (issue #98 decomposition of EnvironmentParticleControls).
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class ParticlesSection: PanelSectionViewController {

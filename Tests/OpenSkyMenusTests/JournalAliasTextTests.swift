@@ -8,8 +8,8 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyMenus
 import Testing
 
 @Suite("Journal alias text")

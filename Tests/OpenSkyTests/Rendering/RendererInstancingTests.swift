@@ -8,7 +8,6 @@
 import Foundation
 import Metal
 import MetalKit
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

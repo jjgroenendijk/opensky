@@ -23,7 +23,6 @@
 // boundary").
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting

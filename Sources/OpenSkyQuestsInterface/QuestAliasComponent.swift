@@ -218,7 +218,7 @@ nonisolated public struct QuestAliasState: WorldStateComponent, Sendable {
 
 nonisolated extension WorldStateComponentKind {
     /// One quest's filled reference aliases. The value type is `QuestAliasState` in
-    /// `Sources/OpenSkyEngine/Quests/QuestAliasComponent.swift`, keyed by the same
+    /// `Sources/OpenSkyQuestsInterface/QuestAliasComponent.swift`, keyed by the same
     /// QUST `ReferenceKey` the `quest` slot uses. It is a slot of its own because
     /// the two have different lifetimes: stage and objective state survives a stop,
     /// while the alias table is cleared by one.

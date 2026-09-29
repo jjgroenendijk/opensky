@@ -18,7 +18,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
-@testable import OpenSkyEngine
 import Testing
 
 /// One M9 acceptance session: the provider set the panel binds to, the real

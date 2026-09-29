@@ -7,7 +7,6 @@
 // override dot and "Reset all" act on.
 
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

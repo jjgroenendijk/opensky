@@ -7,10 +7,10 @@
 // sample and two sections can never show a half-updated session.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering

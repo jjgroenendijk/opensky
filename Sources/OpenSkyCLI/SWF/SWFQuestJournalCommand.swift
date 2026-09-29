@@ -5,7 +5,7 @@
 // The bring-up gate for the page's data contract, in the CLI rather than only
 // in a test because the real-data XCTest host is unreliable on this machine
 // (docs/tools/environment.md). It only parses args and prints; the bridge and
-// the model it publishes live in `Sources/OpenSkyEngine/UI/` and are unit tested there
+// the model it publishes live in `Sources/OpenSkyMenus/` and are unit tested there
 // against synthetic fixtures.
 //
 // `--text` is the measurement mode the contract was pinned with: it resolves
@@ -16,11 +16,11 @@
 // property the movie reads off a row it was handed lands in that tally.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyWorldState
 

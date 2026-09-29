@@ -11,7 +11,6 @@
 // otherwise reads as a rendering bug rather than as a control someone left on.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class AIOverlaySection: PanelSectionViewController {

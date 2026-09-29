@@ -3,7 +3,6 @@
 // here at file scope, away from that file's size cap.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld

@@ -9,7 +9,7 @@ tags: [engine, vfs, archive, io]
 
 The virtual file system (VFS) turns a game resource path, for example
 `meshes\clutter\cup.nif`, into bytes. The bytes come from a loose file under `Data/` or from
-a BSA archive. The code is in `Sources/OpenSkyEngine/GameData/`.
+a BSA archive. The code is in `Sources/OpenSkyGameData/`.
 
 These rules are OpenSky's own. They match what the game and mod tools do. Background on
 archive loading: UESP

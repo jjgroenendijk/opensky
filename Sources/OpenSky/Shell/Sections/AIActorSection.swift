@@ -14,7 +14,6 @@
 // destination's overridden-ness.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class AIActorSection: PanelSectionViewController {

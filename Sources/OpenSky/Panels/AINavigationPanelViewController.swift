@@ -16,7 +16,6 @@
 
 import AppKit
 import OpenSkyCombat
-import OpenSkyEngine
 import OpenSkyPerceptionInterface
 import OpenSkyWorld
 

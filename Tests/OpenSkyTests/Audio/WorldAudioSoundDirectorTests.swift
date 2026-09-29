@@ -5,7 +5,6 @@
 // real audio device and no VFS. See docs/engine/world-sfx.md.
 
 @testable import OpenSkyAudio
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface

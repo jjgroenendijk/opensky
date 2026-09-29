@@ -13,7 +13,6 @@
 // through the same code path, with no second set of rules.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory

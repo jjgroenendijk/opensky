@@ -1,7 +1,6 @@
 import CoreGraphics
 import Metal
 import MetalKit
-@testable import OpenSkyEngine
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 

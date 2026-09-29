@@ -16,7 +16,6 @@
 // Not overridden: a trained skill is world state, not a panel setting.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyProgression
 
 final class ProgressionSkillsSection: ProgressionPanelSection {

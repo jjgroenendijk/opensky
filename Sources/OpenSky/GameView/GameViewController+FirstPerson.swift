@@ -4,7 +4,6 @@
 // there is no renderer (Metal 4 missing).
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyRendering
 import OpenSkyWorld

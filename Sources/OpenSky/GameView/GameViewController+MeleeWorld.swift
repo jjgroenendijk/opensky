@@ -26,7 +26,6 @@ import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics

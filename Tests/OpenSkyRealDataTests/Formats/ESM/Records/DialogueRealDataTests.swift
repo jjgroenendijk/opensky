@@ -8,7 +8,6 @@
 // sweep counts the decoded result scripts instead.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

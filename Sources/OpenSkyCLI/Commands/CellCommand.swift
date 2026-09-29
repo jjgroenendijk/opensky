@@ -5,7 +5,6 @@
 // cell (docs/decisions/first-render-cell.md).
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorld

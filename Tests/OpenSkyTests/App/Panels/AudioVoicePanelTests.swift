@@ -10,7 +10,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 import Testing

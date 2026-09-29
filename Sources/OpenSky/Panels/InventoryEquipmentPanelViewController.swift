@@ -18,7 +18,6 @@
 // both.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyInventory
 
 final class InventoryEquipmentPanelViewController: InspectorPanelViewController {

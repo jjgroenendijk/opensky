@@ -133,13 +133,12 @@ OpenSkyScripting          Papyrus interpreter, script world runtime, native func
 OpenSkyWorld              cells, streaming, terrain, navigation, packages, player, weather,
                           the whole-game condition registry
 OpenSkySave               OpenSky save files: encoder, decoders, store
+OpenSkyMenus              menu models, movie bridges, panel seams that name several features
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
 OpenSkyPerception         perception runtime, detection formula, sight, overlay
 OpenSkyProgression        perk, skill, and level runtimes, perk entry-point evaluator
-  ^
-OpenSkyEngine             the rest of the engine, until it is split; imports interfaces only
   ^
 OpenSkyPreview            asset catalog, record text dumps, reference inspector (composition)
   ^
@@ -163,12 +162,12 @@ A lower module never imports a higher one. These patterns keep it that way:
 - A value type both sides need moves down, for example `CellCoordinate`, `ModelBounds`, and
   `ActorValueIdentity` in `OpenSkyFormatsCore` and `OpenSkyFormatsESM`.
 - Behavior that needs a higher layer stays up there as an extension of the lower type, in a file
-  named `Type+Feature.swift`. Examples: `Package+Schedule.swift` in the engine over a
+  named `Type+Feature.swift`. Examples: `Package+Schedule.swift` in `OpenSkyWorld` over a
   `OpenSkyFormatsESM` record, and `ItemDefinitionStore+MagicItemUse.swift` in `OpenSkyMagic` over an
   `OpenSkyGameData` store.
 - A lower module that must call up defines a protocol, and the higher module conforms to it.
   Example: `Renderer` draws, and it calls a `RenderFrameDriver` at fixed points of each frame
-  to move the camera and run the world. The engine's `GameSession` is that driver.
+  to move the camera and run the world. `GameSession` in `OpenSkyWorld` is that driver.
 - Logic that only reads plugin records, with no runtime state, is not a feature. It moves down
   into `OpenSkyGameData`. Examples: actor templates, derived actor values, resistances,
   faction relations, the leveling and skill formulas, the item index, and barter prices.

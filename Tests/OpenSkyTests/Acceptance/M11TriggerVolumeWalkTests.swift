@@ -8,7 +8,6 @@
 // No game content, no Metal.
 
 import FormatsESMTesting
-@testable import OpenSkyEngine
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering

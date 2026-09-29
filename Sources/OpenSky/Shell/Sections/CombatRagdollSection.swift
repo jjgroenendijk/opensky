@@ -17,7 +17,6 @@
 
 import AppKit
 import OpenSkyCombat
-import OpenSkyEngine
 import OpenSkyPhysics
 
 final class CombatRagdollSection: PanelSectionViewController {

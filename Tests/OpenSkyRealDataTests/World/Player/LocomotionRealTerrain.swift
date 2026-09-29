@@ -6,7 +6,6 @@
 // the user's own install and never leave `logs/` (AGENTS.md "Legal & IP").
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

@@ -6,7 +6,7 @@
 // in a test for the reason `swf quest-journal` and `swf inventory-menu` are:
 // the real-data XCTest host is unreliable on this machine
 // (docs/tools/environment.md). It only parses arguments and prints; the bridge
-// and the model it publishes live in `Sources/OpenSkyEngine/UI/` and are unit tested
+// and the model it publishes live in `Sources/OpenSkyMenus/` and are unit tested
 // there against synthetic fixtures.
 //
 // Rows are built straight off the store rather than through
@@ -26,11 +26,11 @@
 // entry clip's own `SetEntryText`.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 
 enum SWFDialogueMenuCommand {
     private static let defaultTicks = 20

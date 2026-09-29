@@ -2,7 +2,6 @@
 // bounded repathing over synthetic in-code geometry (issue #200).
 
 import FormatsESMTesting
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

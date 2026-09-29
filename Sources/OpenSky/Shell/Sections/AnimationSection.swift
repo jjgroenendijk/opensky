@@ -2,7 +2,6 @@
 // playback readout (issue #98 decomposition).
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class AnimationSection: PanelSectionViewController {

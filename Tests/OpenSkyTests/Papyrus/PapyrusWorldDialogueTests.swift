@@ -16,7 +16,6 @@ import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData

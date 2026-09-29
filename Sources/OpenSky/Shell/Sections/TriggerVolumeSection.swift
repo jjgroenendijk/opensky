@@ -9,7 +9,6 @@
 // behind, so the section deliberately inherits the base no-override hooks.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyPhysics
 
 final class TriggerVolumeSection: PanelSectionViewController {

@@ -11,9 +11,9 @@
 // a missing install degrades to an empty list and an explanatory readout.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyRendering
 
 extension GameViewController {

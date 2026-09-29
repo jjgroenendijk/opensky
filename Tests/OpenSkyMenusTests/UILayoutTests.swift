@@ -4,7 +4,7 @@
 // needed (CoreText/CoreGraphics run headless), so these always execute.
 
 import CoreText
-@testable import OpenSkyEngine
+@testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import OpenSkyShaderTypes
 import simd

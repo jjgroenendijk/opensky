@@ -8,7 +8,7 @@
 
 import AppKit
 import MetalKit
-import OpenSkyEngine
+import OpenSkyMenus
 import OpenSkyRendering
 
 final class GameMetalView: MTKView {

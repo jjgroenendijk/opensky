@@ -7,7 +7,6 @@
 import AppKit
 import Metal
 import MetalKit
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData

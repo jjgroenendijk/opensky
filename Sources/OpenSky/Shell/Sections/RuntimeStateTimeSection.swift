@@ -16,7 +16,6 @@
 // been played, not a knob left in a non-default position.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 import OpenSkyWorldState
 

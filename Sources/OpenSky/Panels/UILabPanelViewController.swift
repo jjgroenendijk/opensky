@@ -13,7 +13,7 @@
 // seams.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 import OpenSkyRendering
 
 final class UILabControlsSection: PanelSectionViewController {

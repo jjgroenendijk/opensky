@@ -2,7 +2,6 @@
 // readout (issue #98 decomposition of EnvironmentPrecipitationControls).
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyRendering
 import OpenSkyWorld
 

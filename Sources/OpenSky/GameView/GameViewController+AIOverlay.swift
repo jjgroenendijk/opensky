@@ -2,7 +2,6 @@
 // issue #203 and consumes only AIOverlayControlProviding.
 
 import OpenSkyDiagnostics
-import OpenSkyEngine
 import OpenSkyRendering
 import OpenSkyWorld
 

@@ -7,7 +7,6 @@
 // conformance follows.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic

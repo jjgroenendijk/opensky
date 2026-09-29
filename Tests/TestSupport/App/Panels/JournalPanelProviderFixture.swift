@@ -7,7 +7,7 @@
 // file-length limit.
 
 import AppKit
-@testable import OpenSkyEngine
+@testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import OpenSkyScriptingInterface
 

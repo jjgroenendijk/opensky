@@ -13,7 +13,6 @@
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyEngine
 import OpenSkyFormatsCore
 
 final class FactionMembershipSection: CrimeFactionPanelSection {

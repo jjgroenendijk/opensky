@@ -28,7 +28,6 @@ import AppKit
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyEngine
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData

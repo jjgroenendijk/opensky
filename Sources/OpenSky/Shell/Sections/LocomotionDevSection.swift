@@ -15,7 +15,6 @@
 // therefore not an override.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyPhysics
 import OpenSkyWorld
 

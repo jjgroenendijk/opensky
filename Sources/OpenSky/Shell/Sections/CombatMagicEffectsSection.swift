@@ -16,7 +16,6 @@
 // purpose. `MagicEffectDispelControl` is the deliberate way back.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyMagic
 
 final class CombatMagicEffectsSection: PanelSectionViewController {
