@@ -54,6 +54,7 @@ import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 /// Reads dialogue selection and writes said-state on top of a

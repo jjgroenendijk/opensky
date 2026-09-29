@@ -111,6 +111,7 @@ OpenSkyInventoryInterface inventory state, holders, vendors, baselines, Inventor
 OpenSkyActorsInterface    actor state components, ActorValueAccess, actor conditions
 OpenSkyMagicInterface     active effects, spell hits, enchantments, SpellCasting, SpellHitApplying
 OpenSkyCombatInterface    combat settings, intents, script hits, CombatControlling, DeathReporting
+OpenSkyQuestsInterface    quest and alias state, quest conditions, QuestAccess
 OpenSkyCrimeInterface     crime events, ledger, arrest state, ownership values, CrimeReporting
 OpenSkyFactionsInterface  membership and relationship state, hostility values, seams
 OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
@@ -119,6 +120,7 @@ OpenSkyProgressionInterface perk and progress state, skill use events, PerkAcces
 OpenSkyActors             actor value runtime
 OpenSkyMagic              active effect, caster, spellbook, and enchantment runtimes
 OpenSkyCombat             melee, archery, projectile, combat loop, and ragdoll runtimes
+OpenSkyQuests             quest runtime, alias filler
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
@@ -164,8 +166,12 @@ A lower module never imports a higher one. These patterns keep it that way:
   - Items report theft through `CrimeReporting`, and an arrest takes gold through
     `InventoryAccess`.
   - The spellbook readies a spell in a hand through `EquipmentAccess`.
+  - Scripts and the journal menu set quest stages through `QuestAccess`.
 
   The implementation conforms, and the app hands it over as that protocol.
+
+  The app is the composition root, so it may downcast to the implementation it built, for
+  example `questRuntime as? QuestRuntime` for the journal panel.
 - A lower module never names a registry or default that a higher module owns. Example:
   `PerkRuntime` and `ActiveEffectRuntime` take their `ConditionFunctionRegistry` as a
   parameter, and the caller passes `.standard`, which lives above every feature. A package test

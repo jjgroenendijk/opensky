@@ -19,6 +19,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 extension QuestRuntime {

@@ -41,6 +41,11 @@ nonisolated public struct QuestAliasFill: Equatable, Sendable {
     public let aliasID: UInt32
     /// Reference currently in the alias.
     public let reference: ReferenceKey
+
+    public init(aliasID: UInt32, reference: ReferenceKey) {
+        self.aliasID = aliasID
+        self.reference = reference
+    }
 }
 
 /// One filled location alias. Locations are base records rather than placed
@@ -49,6 +54,11 @@ nonisolated public struct QuestAliasFill: Equatable, Sendable {
 nonisolated public struct QuestLocationAliasFill: Equatable, Sendable {
     public let aliasID: UInt32
     public let location: ResolvedFormID
+
+    public init(aliasID: UInt32, location: ResolvedFormID) {
+        self.aliasID = aliasID
+        self.location = location
+    }
 }
 
 /// Why one alias was left unfilled. Every case is a recorded, tallied skip
@@ -117,6 +127,10 @@ nonisolated public struct QuestAliasTally: Equatable, Sendable {
         for (kind, count) in other.counts {
             note(kind, count: count)
         }
+    }
+
+    public init(counts: [QuestAliasSkipKind: Int] = [:]) {
+        self.counts = counts
     }
 }
 

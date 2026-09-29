@@ -32,11 +32,12 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 /// Reads and mutates quest state on top of a `WorldStateStore`.
 @MainActor
-public struct QuestRuntime {
+public struct QuestRuntime: QuestAccess {
     public let store: WorldStateStore
     /// Plugin-side index every mutation validates against and takes its
     /// session-stable keys from.

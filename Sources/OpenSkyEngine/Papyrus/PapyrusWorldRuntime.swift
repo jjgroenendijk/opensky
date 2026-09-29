@@ -19,6 +19,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 
 @MainActor
 public final class PapyrusWorldRuntime {

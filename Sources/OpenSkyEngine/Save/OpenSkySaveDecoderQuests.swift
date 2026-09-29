@@ -11,6 +11,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 /// One quest's saved state, before it is merged back into its delta.

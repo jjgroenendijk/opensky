@@ -29,6 +29,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 
 nonisolated extension PapyrusNativeFunctions {
     public static func installQuest(into registry: inout PapyrusNativeRegistry) {

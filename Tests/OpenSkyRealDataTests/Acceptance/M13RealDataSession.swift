@@ -14,6 +14,8 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyQuests
+@testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldState
 
 /// One headless engine over the user's install: the plugin's quests, the
@@ -51,7 +53,7 @@ final class M13RealDataSession {
         world.scriptProvider = { try? loader.load($0) }
     }
 
-    var runtime: QuestRuntime {
+    var runtime: any QuestAccess {
         get throws {
             guard let questRuntime = bridge.questRuntime else {
                 throw M13RealDataError.noQuestRuntime

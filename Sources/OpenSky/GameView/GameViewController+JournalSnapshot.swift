@@ -11,6 +11,8 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRendering
 
 extension GameViewController {

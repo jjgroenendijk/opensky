@@ -18,6 +18,8 @@
 import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyQuests
+@testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldState
 import Testing
 

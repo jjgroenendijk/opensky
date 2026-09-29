@@ -21,6 +21,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyQuests
 import OpenSkyWorldState
 
 enum SWFQuestJournalCommand {

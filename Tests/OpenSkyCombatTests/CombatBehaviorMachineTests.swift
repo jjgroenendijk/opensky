@@ -13,7 +13,6 @@
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
-import OpenSkyEngine
 @testable import OpenSkyPerceptionInterface
 import simd
 import Testing

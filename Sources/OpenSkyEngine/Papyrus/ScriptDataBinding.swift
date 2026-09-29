@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
+import OpenSkyQuestsInterface
 import OSLog
 
 nonisolated public enum ScriptBindingError: Error, Equatable {

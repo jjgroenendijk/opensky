@@ -173,6 +173,16 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyCombatInterface",
           "name" : "OpenSkyCombatInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyQuests",
+          "name" : "OpenSkyQuests"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyQuestsInterface",
+          "name" : "OpenSkyQuestsInterface"
         }
       ]
     }
@@ -352,6 +362,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyCombatTests",
         "name" : "OpenSkyCombatTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyQuestsTests",
+        "name" : "OpenSkyQuestsTests"
       }
     }
   ],

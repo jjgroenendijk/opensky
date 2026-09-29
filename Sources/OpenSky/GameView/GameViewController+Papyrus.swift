@@ -13,6 +13,7 @@ import OpenSkyFormatsPEX
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyQuests
 import OpenSkyRendering
 import OSLog
 
