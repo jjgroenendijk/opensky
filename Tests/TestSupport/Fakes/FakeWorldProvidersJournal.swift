@@ -5,6 +5,7 @@
 
 import AppKit
 @testable import OpenSkyEngine
+import OpenSkyScriptingInterface
 import Testing
 
 /// Forwards the journal seam to the panel tests' recorder rather than

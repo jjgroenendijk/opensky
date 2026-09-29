@@ -22,6 +22,8 @@ import OpenSkyGameData
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import OSLog
 

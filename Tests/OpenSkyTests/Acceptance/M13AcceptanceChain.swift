@@ -30,6 +30,8 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
+@testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd

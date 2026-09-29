@@ -16,6 +16,8 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 
 extension GameViewController: ProgressionControlProviding {
     var progressionSkillSelection: Int32 {

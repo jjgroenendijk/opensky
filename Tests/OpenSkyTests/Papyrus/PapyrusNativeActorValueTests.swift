@@ -16,6 +16,8 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import Testing
 
 @MainActor

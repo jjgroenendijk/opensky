@@ -505,6 +505,23 @@ targets += feature(
         "OpenSkyGameData"
     ]
 )
+targets += feature(
+    "OpenSkyScripting",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsPEX", "OpenSkyGameData",
+        "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyPhysics", "OpenSkyActorsInterface",
+        "OpenSkyCombatInterface", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
+        "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
+        "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
+        "OpenSkyWorldInterface"
+    ],
+    interface: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyWorldState"],
+    tests: [
+        "OpenSkyScriptingInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsPEX", "OpenSkyGameData", "OpenSkyWorldState", "OpenSkyQuestsInterface",
+        "OpenSkyQuests", "FormatsESMTesting", "FormatsPEXTesting"
+    ]
+)
 
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
@@ -515,7 +532,8 @@ targets += foundation(
         "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
         "OpenSkyWorldInterface", "OpenSkyMagicInterface", "OpenSkyCombatInterface",
-        "OpenSkyQuestsInterface", "OpenSkyDialogueInterface", "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyQuestsInterface", "OpenSkyDialogueInterface", "OpenSkyScriptingInterface",
+        "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

@@ -9,6 +9,7 @@
 // before anything reserves storage.
 
 import Foundation
+import OpenSkyScriptingInterface
 
 nonisolated public enum OpenSkySaveScriptDecoder: Sendable {
     /// `PSCR` chunk: an instance count, then one entry per live script

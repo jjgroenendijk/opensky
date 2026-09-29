@@ -9,6 +9,7 @@
 // before anything reserves storage.
 
 import Foundation
+import OpenSkyScriptingInterface
 
 nonisolated public enum OpenSkySaveTimerDecoder: Sendable {
     /// `PTMR` chunk: a timer count, then one entry per armed slot.

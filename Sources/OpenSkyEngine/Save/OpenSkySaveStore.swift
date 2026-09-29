@@ -16,6 +16,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 /// Failure modes introduced by the slot layer, distinct from

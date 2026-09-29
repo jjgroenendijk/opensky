@@ -9,6 +9,7 @@
 import AppKit
 @testable import OpenSkyEngine
 @testable import OpenSkyRendering
+import OpenSkyScriptingInterface
 
 /// Builds a `JournalControlSnapshot` from only the fields a test cares about.
 /// The snapshot is immutable by design and its memberwise initializer takes

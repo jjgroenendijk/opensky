@@ -193,6 +193,16 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyDialogueInterface",
           "name" : "OpenSkyDialogueInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyScripting",
+          "name" : "OpenSkyScripting"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyScriptingInterface",
+          "name" : "OpenSkyScriptingInterface"
         }
       ]
     }
@@ -388,6 +398,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyDialogueTests",
         "name" : "OpenSkyDialogueTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyScriptingTests",
+        "name" : "OpenSkyScriptingTests"
       }
     }
   ],

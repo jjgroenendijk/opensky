@@ -9,6 +9,8 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyQuestsInterface
+@testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import Testing
 
 @MainActor

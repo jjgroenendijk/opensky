@@ -13,6 +13,8 @@ import Foundation
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyScripting
+@testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd

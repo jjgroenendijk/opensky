@@ -15,6 +15,8 @@ import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyQuests
 import OpenSkyRendering
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OSLog
 
 extension GameViewController {

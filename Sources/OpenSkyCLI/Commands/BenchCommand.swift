@@ -7,6 +7,8 @@ import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyRendering
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 
 enum BenchCommand {
     /// 30 fps -> 33.33 ms per frame.

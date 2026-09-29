@@ -17,6 +17,8 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 
 final class ScriptSchedulerSection: PanelSectionViewController {
     /// Ticks the burst button applies. Twenty fixed steps is two thirds of a

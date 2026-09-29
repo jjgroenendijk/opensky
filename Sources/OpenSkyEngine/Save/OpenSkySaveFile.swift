@@ -9,6 +9,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
