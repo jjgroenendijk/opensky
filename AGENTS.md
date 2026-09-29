@@ -105,6 +105,7 @@ Sources/
   OpenSkyActors*/       feature module: actor value runtime; Interface: actor state values
   OpenSkyCombat*/       feature module: melee, archery, projectiles; Interface: settings, seams
   OpenSkyCrime*/        feature module: crime runtime, ownership; Interface: CrimeReporting
+  OpenSkyDialogue*/     feature module: dialogue runtime; Interface: dialogue state, access
   OpenSkyFactions*/     feature module: faction runtimes; Interface: faction state values
   OpenSkyPerception*/   feature module: perception runtime; Interface: detection values
   OpenSkyProgression*/  feature module: perk and skill runtimes; Interface: progress state
@@ -128,6 +129,7 @@ Tests/
   OpenSkyCrimeTests/    package test target: synthetic suites for OpenSkyCrime
   OpenSkyInventoryTests/ package test target: synthetic suites for OpenSkyInventory
   OpenSkyMagicTests/    package test target: synthetic suites for OpenSkyMagic
+  OpenSkyDialogueTests/ package test target: synthetic suites for OpenSkyDialogue
   OpenSkyFactionsTests/ package test target: synthetic suites for OpenSkyFactions
   OpenSkyPerceptionTests/ package test target: synthetic suites for OpenSkyPerception
   OpenSkyProgressionTests/ package test target: synthetic suites for OpenSkyProgression
@@ -166,7 +168,7 @@ renderer at its root and puts `UI/`, `Terrain/`, and `Weather/` in folders. The 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
   and `Resources/` (`Assets.xcassets`, `Branding/`).
-- `Sources/OpenSkyEngine/`: one folder per domain (`Papyrus/`, `Dialogue/`, `Save/`,
+- `Sources/OpenSkyEngine/`: one folder per domain (`Papyrus/`, `UI/`, `Save/`,
   ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
   folder.
 - `Sources/OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus

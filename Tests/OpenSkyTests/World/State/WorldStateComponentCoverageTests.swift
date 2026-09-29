@@ -6,6 +6,7 @@
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCrimeInterface
+@testable import OpenSkyDialogueInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsCore

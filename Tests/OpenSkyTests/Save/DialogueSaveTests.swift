@@ -10,6 +10,8 @@
 // write the bytes this encoder produced before the chunk existed.
 
 import Foundation
+@testable import OpenSkyDialogue
+@testable import OpenSkyDialogueInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

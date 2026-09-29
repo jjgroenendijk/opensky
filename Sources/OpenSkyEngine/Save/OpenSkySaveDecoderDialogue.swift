@@ -10,6 +10,7 @@
 // length is a thrown error rather than a multi-gigabyte allocation.
 
 import Foundation
+import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 

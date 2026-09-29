@@ -5,7 +5,7 @@
 // derived — see docs/formats/fuz.md for the evidence and the measured coverage.
 
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkyDialogue
 @testable import OpenSkyFormatsESM
 import Testing
 

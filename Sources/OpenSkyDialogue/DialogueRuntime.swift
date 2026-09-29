@@ -51,6 +51,7 @@
 
 import Foundation
 import OpenSkyConditions
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -60,7 +61,7 @@ import OpenSkyWorldState
 /// Reads dialogue selection and writes said-state on top of a
 /// `WorldStateStore`.
 @MainActor
-public struct DialogueRuntime {
+public struct DialogueRuntime: DialogueAccess {
     public let store: WorldStateStore
     /// Plugin-side index every selection reads and every mutation takes its
     /// session-stable keys from.
@@ -87,7 +88,7 @@ public struct DialogueRuntime {
         quests: QuestStore,
         questStates: QuestResolution = .empty,
         context: ConditionContext = ConditionContext(),
-        registry: ConditionFunctionRegistry = .standard,
+        registry: ConditionFunctionRegistry,
         fragments: (any DialogueFragmentDispatching)? = nil
     ) {
         self.store = store

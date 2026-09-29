@@ -3,6 +3,7 @@
 // whole voice corpus. Satellite of AudioVoiceSweep.swift.
 
 import Foundation
+import OpenSkyDialogue
 import OpenSkyEngine
 import OpenSkyFormatsAudio
 

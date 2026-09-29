@@ -15,6 +15,8 @@
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyConditions
+@testable import OpenSkyDialogue
+@testable import OpenSkyDialogueInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -107,6 +109,7 @@ enum DialogueRuntimeFixture {
             quests: quests,
             questStates: QuestResolution(defaults: quests),
             context: context(),
+            registry: .standard,
             fragments: fragments
         )
     }

@@ -14,6 +14,8 @@
 import FormatsESMTesting
 import FormatsPEXTesting
 import Foundation
+@testable import OpenSkyDialogue
+@testable import OpenSkyDialogueInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
@@ -169,6 +171,7 @@ struct PapyrusWorldDialogueTests {
             store: session.worldState,
             dialogue: dialogueStore(),
             quests: PapyrusQuestFixture.store(PapyrusQuestFixture.quest()),
+            registry: .standard,
             fragments: session.bridge
         )
 

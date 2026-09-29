@@ -15,6 +15,8 @@
 // See docs/engine/dialogue-menu.md.
 
 import AppKit
+import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData

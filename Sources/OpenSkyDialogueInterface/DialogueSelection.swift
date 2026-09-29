@@ -49,6 +49,12 @@ nonisolated public struct DialogueInfoTrace: Equatable, Sendable {
     public var isWinner: Bool {
         rejection == nil
     }
+
+    public init(info: FormID, outcome: ConditionOutcome?, rejection: DialogueRejection?) {
+        self.info = info
+        self.outcome = outcome
+        self.rejection = rejection
+    }
 }
 
 /// One topic a speaker offers, with the response that won it.
@@ -66,6 +72,12 @@ nonisolated public struct DialogueTopicOffer: Equatable, Sendable {
     /// answers, which is what makes coverage measurable rather than assumed.
     public var failures: [ConditionFailure] {
         considered.flatMap { $0.outcome?.failures ?? [] }
+    }
+
+    public init(topic: FormID, info: FormID, considered: [DialogueInfoTrace]) {
+        self.topic = topic
+        self.info = info
+        self.considered = considered
     }
 }
 
@@ -86,6 +98,16 @@ nonisolated public struct DialogueSelection: Equatable, Sendable {
 
     public var isEmpty: Bool {
         offers.isEmpty
+    }
+
+    public init(
+        offers: [DialogueTopicOffer],
+        rejected: [DialogueTopicOffer],
+        tally: ConditionTally
+    ) {
+        self.offers = offers
+        self.rejected = rejected
+        self.tally = tally
     }
 }
 
@@ -111,4 +133,20 @@ nonisolated public struct DialogueChoice: Equatable, Sendable {
     /// dropped: a result script that never runs is exactly the gap this number
     /// exists to surface.
     public let unrunFragmentCount: Int
+
+    public init(
+        info: FormID,
+        state: DialogueRuntimeState,
+        next: DialogueSelection,
+        endsConversation: Bool,
+        dispatchedFragments: [String],
+        unrunFragmentCount: Int
+    ) {
+        self.info = info
+        self.state = state
+        self.next = next
+        self.endsConversation = endsConversation
+        self.dispatchedFragments = dispatchedFragments
+        self.unrunFragmentCount = unrunFragmentCount
+    }
 }
