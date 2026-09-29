@@ -10,6 +10,7 @@ import Metal
 import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import Testing
 
 struct RendererMenuModeTests {
@@ -82,7 +83,7 @@ struct RendererMenuModeTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
+        return try Renderer(view: view, shaderLibrary: ShaderLibraryFixture.library(device: device))
     }
 
     @MainActor

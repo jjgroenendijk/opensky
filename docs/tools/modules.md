@@ -152,8 +152,16 @@ Two more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared w
 ([build system](/tools/build-system.md)). `CFFmpeg` is the clang module over the vendored ffmpeg
 ([ffmpeg](/decisions/ffmpeg-audio.md)).
 
-`Sources/Shaders/Shaders.metal` is not in the package. The app and the CLI each compile it,
-because `device.makeDefaultLibrary()` reads the main bundle.
+`Sources/Shaders/Shaders.metal` is not in the package. The app and the CLI each compile it into
+the `default.metallib` of their own bundle, and `Renderer` loads it with
+`device.makeDefaultLibrary()` unless the caller passes a `shaderLibrary`. A package test has no
+such bundle. `make shader-library` compiles the same file with `xcrun metal`
+(`tools/shader-library.sh`), and `ShaderLibraryFixture` in `Tests/RenderingTesting/` loads it from
+the path in `OPENSKY_SHADER_LIBRARY`. `make` sets that variable for `swift test`, and the
+`UnitTests` plan sets it for xcodebuild. A test that runs without it fails; it does not skip.
+
+SwiftPM can compile a `.metal` resource, but it ignores header search paths and the Metal settings
+in `Config/Build/`, such as warnings as errors. So the shaders stay outside the package.
 
 ## Keeping the lines clean
 
@@ -249,5 +257,5 @@ test plan or scheme".
 (`tools/test-package.sh`). It builds only the package, into `.build/`, and needs no app host.
 
 A suite goes in the test target of the highest module it imports, in `Package.swift` order. A
-suite that needs the app, the shader library in the app bundle, or an acceptance chain stays in
-`Tests/OpenSkyTests/`.
+suite that builds a `Renderer` passes `ShaderLibraryFixture.library(device:)` as its
+`shaderLibrary`. A suite that needs the app or an acceptance chain stays in `Tests/OpenSkyTests/`.

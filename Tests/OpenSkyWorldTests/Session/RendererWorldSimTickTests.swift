@@ -15,6 +15,7 @@ import MetalKit
 import OpenSkyScriptingInterface
 import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
+import RenderingTesting
 import Testing
 
 struct RendererWorldSimTickTests {
@@ -37,7 +38,7 @@ struct RendererWorldSimTickTests {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 64, height: 64), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
+        return try Renderer(view: view, shaderLibrary: ShaderLibraryFixture.library(device: device))
     }
 
     /// A script whose `OnLoad` waits one second and then records a note, so

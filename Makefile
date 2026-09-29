@@ -57,6 +57,12 @@ XCB_TEST         := $(XCB_APP) -destination '$(DESTINATION)'
 # Where xcodebuild puts built products. Derived rather than asked for, because
 # `xcodebuild -showBuildSettings` costs several seconds per call.
 PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
+# The shaders compiled for the package test targets, which have no app bundle to
+# load default.metallib from (tools/shader-library.sh). The unit test plan points
+# at the same path as $(BUILD_DIR)/OpenSkyShaders.metallib.
+SHADER_LIBRARY   := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
+export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
+SHADER_SOURCES   := Sources/Shaders/Shaders.metal Sources/OpenSkyShaderTypes/ShaderTypes.h
 
 # Test plans (Config/TestPlans/*.xctestplan) choose which test bundles a run builds and
 # runs, instead of -only-testing flags (issue #346). Each plan holds exactly one
@@ -166,7 +172,7 @@ docs-length: ## Check no docs page is longer than the limit
 
 ##@ Build checks
 
-.PHONY: verify-build
+.PHONY: verify-build shader-library
 
 # Every target compiled, no test run: OpenSkyTests, the app with
 # OpenSkyRealDataTests, and openskycli. Catches a change that breaks a target it
@@ -175,6 +181,12 @@ verify-build: vendor-link cache-link ## Compile app, CLI, and both unit bundles 
 	@$(XCB_RUN) verify-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 	@$(XCB_RUN) verify-realdata $(XCB_TEST) -testPlan RealData build-for-testing
 	@$(XCB_RUN) verify-cli $(XCB_CLI) build
+
+shader-library: $(SHADER_LIBRARY) ## Compile the shaders the package tests load
+
+# Rebuilt only when a shader source is newer, so a warm test run pays nothing.
+$(SHADER_LIBRARY): $(SHADER_SOURCES)
+	@./tools/shader-library.sh $@
 
 ##@ Build and run
 
@@ -213,7 +225,7 @@ icon: ## Regenerate the AppIcon PNGs from Sources/OpenSky/Resources/Branding/ope
 
 .PHONY: test test-fast test-one test-ui test-report test-sanitize test-perms
 
-test: vendor-link cache-link ## Build and run the unit tests through the build system
+test: vendor-link cache-link $(SHADER_LIBRARY) ## Build and run the unit tests through the build system
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
 		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
@@ -225,7 +237,7 @@ test: vendor-link cache-link ## Build and run the unit tests through the build s
 # default for every unit run, filtered or whole plan. A selector that names a
 # package test target, T='OpenSkyFormatsCoreTests/...', runs that target alone through
 # `swift test`, without the app host (issue #582).
-test-fast: vendor-link cache-link ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
+test-fast: vendor-link cache-link $(SHADER_LIBRARY) ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
 	@case "$(T)" in \
 		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
 		OpenSkyTests/* | OpenSkyRealDataTests/* | OpenSkyUITests/*) \
@@ -237,7 +249,7 @@ test-fast: vendor-link cache-link ## Rerun tests without rebuilding [T='Suite/te
 
 # A selector under OpenSkyUITests switches to the UI plan; anything else runs in
 # the unit plan. Keeping the plans apart avoids the deadlock described above.
-test-one: vendor-link cache-link ## Build and run one test: T=Class[/method] or T=Target/Class/method
+test-one: vendor-link cache-link $(SHADER_LIBRARY) ## Build and run one test: T=Class[/method] or T=Target/Class/method
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
 		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
@@ -260,7 +272,7 @@ test-report: ## Summarize the newest test result bundle, failures included
 # OpenSkyTests under TSan, then under ASan with UBSan (issue #383); the two cannot
 # share a build. Too slow for routine runs, so run it periodically and
 # before a milestone acceptance.
-test-sanitize: vendor-link cache-link ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
+test-sanitize: vendor-link cache-link $(SHADER_LIBRARY) ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
 	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
 
 test-perms: ## Check the one-time macOS permission grants tests need

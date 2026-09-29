@@ -7,6 +7,7 @@ import MetalKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -81,7 +82,12 @@ struct GrassRenderingTests {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 320, height: 200), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: scene, camera: camera)
+        let renderer = try Renderer(
+            view: view,
+            scene: scene,
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
         renderer.shadowQuality = .off
         renderer.grassInstanceBudget = 2
         _ = try renderer.renderOffscreen(width: 320, height: 200)

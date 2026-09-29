@@ -182,7 +182,7 @@ struct M12AcceptanceRenderTests {
         renderer.grassEnabled = false
         renderer.sunShadowsEnabled = false
         let texture = try renderer.renderOffscreen(width: width, height: height)
-        return RendererShadowTests.readPixels(texture: texture)
+        return ShadowSceneFixture.readPixels(texture: texture)
     }
 
     private static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {

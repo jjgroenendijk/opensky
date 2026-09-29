@@ -7,10 +7,10 @@
 import Foundation
 import Metal
 import MetalKit
-@testable import OpenSky
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -41,7 +41,10 @@ struct RendererOffscreenTests {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
 
-        let renderer = try Renderer(view: view)
+        let renderer = try Renderer(
+            view: view,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
         // Synchronous offscreen frame — no window, no drawable, no timing
         // races. Render twice to prove the ring/event bookkeeping survives
         // consecutive frames.
@@ -83,22 +86,6 @@ struct RendererOffscreenTests {
         let data = try Data(contentsOf: url)
         #expect(data.starts(with: [0x89, 0x50, 0x4E, 0x47]))
         print("[INFO] offscreen frame: \(url.path)")
-    }
-
-    @Test(.enabled(if: Self.hasMetal4Device))
-    @MainActor
-    func appWorldWritesScreenshot() throws {
-        let controller = GameViewController()
-        _ = controller.view // load renderer through production app wiring
-        let url = FileManager.default.temporaryDirectory
-            .appending(path: "opensky-app-\(UUID().uuidString).png")
-        defer { try? FileManager.default.removeItem(at: url) }
-
-        try controller.writeScreenshot(to: url)
-
-        let data = try Data(contentsOf: url)
-        #expect(data.starts(with: [0x89, 0x50, 0x4E, 0x47]))
-        #expect(data.count > 1024)
     }
 
     @Test(.enabled(if: Self.hasMetal4Device))
@@ -179,7 +166,8 @@ struct RendererOffscreenTests {
             view: view,
             scene: scene,
             camera: camera,
-            timeOfDay: timeOfDay
+            timeOfDay: timeOfDay,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
         let texture = try renderer.renderOffscreen(width: width, height: height)
         var pixels = [UInt8](repeating: 0, count: width * height * 4)

@@ -28,6 +28,7 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 import WorldStateTesting
 
@@ -90,10 +91,10 @@ extension M10AcceptanceTests {
     /// `WeatherSystem.update(deltaTime:hour:elapsedGameHours:)`, with the
     /// timescale read through `Renderer.currentTimescale` off the global
     /// resolution rather than passed in.
-    @Test(.enabled(if: RendererShadowTests.hasMetal4Device)) @MainActor
+    @Test(.enabled(if: ShadowSceneFixture.hasMetal4Device)) @MainActor
     func theRendererFeedsWeatherTheClocksOwnElapsedGameHours() throws {
-        let device = try #require(RendererShadowTests.device)
-        let renderer = try RendererShadowTests.makeRenderer(device: device)
+        let device = try #require(ShadowSceneFixture.device)
+        let renderer = try ShadowSceneFixture.makeRenderer(device: device)
         let defaults = try Self.weatherTimeGlobals()
         renderer.gameClock = GameClock(hour: M10AcceptanceClock.startHour)
         renderer.gameTime.globalResolution = GlobalResolution(

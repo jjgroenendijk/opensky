@@ -9,6 +9,7 @@ import MetalKit
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -92,26 +93,26 @@ struct PrecipitationTests {
     @MainActor
     func rainVolumeChangesPixelsThroughSharedParticlePass() throws {
         let device = try #require(Self.device)
-        let baseline = try RendererShadowTests.makeRenderer(device: device)
-        let baselinePixels = try RendererShadowTests.readPixels(
+        let baseline = try ShadowSceneFixture.makeRenderer(device: device)
+        let baselinePixels = try ShadowSceneFixture.readPixels(
             texture: baseline.renderOffscreen(
-                width: RendererShadowTests.width,
-                height: RendererShadowTests.height,
+                width: ShadowSceneFixture.width,
+                height: ShadowSceneFixture.height,
                 animationTime: 0
             )
         )
 
-        let rainy = try RendererShadowTests.makeRenderer(device: device)
+        let rainy = try ShadowSceneFixture.makeRenderer(device: device)
         for _ in 0 ..< 15 {
             rainy.precipitation.update(update(
                 camera: rainy.freeFlyCamera.position,
                 state: .init(.rainy)
             ))
         }
-        let rainyPixels = try RendererShadowTests.readPixels(
+        let rainyPixels = try ShadowSceneFixture.readPixels(
             texture: rainy.renderOffscreen(
-                width: RendererShadowTests.width,
-                height: RendererShadowTests.height,
+                width: ShadowSceneFixture.width,
+                height: ShadowSceneFixture.height,
                 animationTime: 0
             )
         )
@@ -122,20 +123,20 @@ struct PrecipitationTests {
         #expect(changed > 100, "rain changed only \(changed) channels")
 
         rainy.particlesEnabled = false
-        let worldParticlesOff = try RendererShadowTests.readPixels(
+        let worldParticlesOff = try ShadowSceneFixture.readPixels(
             texture: rainy.renderOffscreen(
-                width: RendererShadowTests.width,
-                height: RendererShadowTests.height,
+                width: ShadowSceneFixture.width,
+                height: ShadowSceneFixture.height,
                 animationTime: 0
             )
         )
         #expect(worldParticlesOff == rainyPixels)
 
         rainy.precipitationEnabled = false
-        let precipitationOff = try RendererShadowTests.readPixels(
+        let precipitationOff = try ShadowSceneFixture.readPixels(
             texture: rainy.renderOffscreen(
-                width: RendererShadowTests.width,
-                height: RendererShadowTests.height,
+                width: ShadowSceneFixture.width,
+                height: ShadowSceneFixture.height,
                 animationTime: 0
             )
         )

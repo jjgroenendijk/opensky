@@ -2,7 +2,7 @@
 // weather sky path. No active weather reproduces the procedural baseline
 // bit-for-bit; a forced synthetic weather repaints the sky; two distinct
 // weathers differ. Synthetic fixtures only (AGENTS.md "Legal & IP boundary");
-// skips without a Metal 4 device (paravirtual CI), like RendererShadowTests.
+// skips without a Metal 4 device (paravirtual CI), like ShadowSceneFixture.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -13,16 +13,17 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
 struct RendererWeatherTests {
     static var hasMetal4Device: Bool {
-        RendererShadowTests.hasMetal4Device
+        ShadowSceneFixture.hasMetal4Device
     }
 
-    private static let width = RendererShadowTests.width
-    private static let height = RendererShadowTests.height
+    private static let width = ShadowSceneFixture.width
+    private static let height = ShadowSceneFixture.height
 
     /// Sky occupies the top of the frame; compare only those rows.
     private static var skyBand: Int {
@@ -32,18 +33,18 @@ struct RendererWeatherTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func inactiveWeatherMatchesProceduralBaseline() throws {
-        let device = try #require(RendererShadowTests.device)
+        let device = try #require(ShadowSceneFixture.device)
 
-        let baseline = try RendererShadowTests.makeRenderer(device: device)
-        let baselinePixels = try RendererShadowTests.readPixels(
+        let baseline = try ShadowSceneFixture.makeRenderer(device: device)
+        let baselinePixels = try ShadowSceneFixture.readPixels(
             texture: baseline.renderOffscreen(width: Self.width, height: Self.height)
         )
 
         // A weather system pinned to a worldspace with no candidates resolves
         // to nil -> the sky must be byte-identical to the never-weather render.
-        let withInactive = try RendererShadowTests.makeRenderer(device: device)
+        let withInactive = try ShadowSceneFixture.makeRenderer(device: device)
         withInactive.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x999)
-        let inactivePixels = try RendererShadowTests.readPixels(
+        let inactivePixels = try ShadowSceneFixture.readPixels(
             texture: withInactive.renderOffscreen(width: Self.width, height: Self.height)
         )
 
@@ -57,17 +58,17 @@ struct RendererWeatherTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func forcedWeatherRepaintsSky() throws {
-        let device = try #require(RendererShadowTests.device)
+        let device = try #require(ShadowSceneFixture.device)
 
-        let baseline = try RendererShadowTests.makeRenderer(device: device)
-        let baselinePixels = try RendererShadowTests.readPixels(
+        let baseline = try ShadowSceneFixture.makeRenderer(device: device)
+        let baselinePixels = try ShadowSceneFixture.readPixels(
             texture: baseline.renderOffscreen(width: Self.width, height: Self.height)
         )
 
-        let forced = try RendererShadowTests.makeRenderer(device: device)
+        let forced = try ShadowSceneFixture.makeRenderer(device: device)
         forced.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         forced.weather?.forceWeather(FormID(0x100), transition: .instant)
-        let forcedPixels = try RendererShadowTests.readPixels(
+        let forcedPixels = try ShadowSceneFixture.readPixels(
             texture: forced.renderOffscreen(width: Self.width, height: Self.height)
         )
 
@@ -81,15 +82,15 @@ struct RendererWeatherTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func disabledWeatherRestoresProceduralSkyAndCalmWind() throws {
-        let device = try #require(RendererShadowTests.device)
-        let renderer = try RendererShadowTests.makeRenderer(device: device)
+        let device = try #require(ShadowSceneFixture.device)
+        let renderer = try ShadowSceneFixture.makeRenderer(device: device)
         renderer.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         renderer.weather?.forceWeather(FormID(0x100), transition: .instant)
-        let active = try RendererShadowTests.readPixels(
+        let active = try ShadowSceneFixture.readPixels(
             texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
         renderer.weatherEnabled = false
-        let disabled = try RendererShadowTests.readPixels(
+        let disabled = try ShadowSceneFixture.readPixels(
             texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
         #expect(active != disabled)
@@ -100,13 +101,13 @@ struct RendererWeatherTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func twoWeathersProduceDifferentSkies() throws {
-        let device = try #require(RendererShadowTests.device)
+        let device = try #require(ShadowSceneFixture.device)
 
         func skyPixels(weather: UInt32) throws -> [UInt8] {
-            let renderer = try RendererShadowTests.makeRenderer(device: device)
+            let renderer = try ShadowSceneFixture.makeRenderer(device: device)
             renderer.weather = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
             renderer.weather?.forceWeather(FormID(weather), transition: .instant)
-            return try RendererShadowTests.readPixels(
+            return try ShadowSceneFixture.readPixels(
                 texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
             )
         }

@@ -146,3 +146,14 @@ Observed 2026-08-08 on Xcode 26.6 and macOS 26.6.1:
   on the boot volume, so the flag stays.
 
 Retires if a later Xcode lets `-enumerate-tests` take `-derivedDataPath`.
+
+## A cached module emit can leave a stale module in Products
+
+Observed 2026-09-29 on Xcode 26. A change to the public interface of a package module, for example
+a new parameter on `Renderer.init`, built fine through `swift test`. Through xcodebuild, the next
+module up failed with "extra argument" errors. The "Emitting module" step was a compilation cache
+hit. It wrote the new module under `DerivedData/Build/Intermediates.noindex/`, but the copy in
+`DerivedData/Build/Products/Debug/<Module>.swiftmodule` kept the old interface, and `B=1` did not
+replace it. Deleting that one `.swiftmodule` folder and building again fixed it.
+
+Retires when an interface change builds through xcodebuild without a manual delete.

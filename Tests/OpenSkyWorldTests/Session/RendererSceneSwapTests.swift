@@ -12,6 +12,7 @@ import MetalKit
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -77,7 +78,8 @@ struct RendererSceneSwapTests {
         let renderer = try Renderer(
             view: view,
             scene: Self.crateScene(device: device, count: 1),
-            camera: Self.camera
+            camera: Self.camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
         #expect(renderer.drawUniformSlotCapacity == 1)
         #expect(renderer.instanceSlotCapacity == 1)
@@ -117,7 +119,8 @@ struct RendererSceneSwapTests {
         let renderer = try Renderer(
             view: view,
             scene: Self.crateScene(device: device, count: 3),
-            camera: Self.camera
+            camera: Self.camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
 
@@ -140,7 +143,8 @@ struct RendererSceneSwapTests {
         let renderer = try Renderer(
             view: view,
             scene: RenderScene(instances: []),
-            camera: Self.camera
+            camera: Self.camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
 
         // Camera facing away from the crates: nothing on screen even after
@@ -173,7 +177,8 @@ struct RendererSceneSwapTests {
         let renderer = try Renderer(
             view: view,
             scene: RenderScene(instances: []),
-            camera: Self.camera
+            camera: Self.camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
         let groundHeight = renderer.walkController.feetPosition.z
         renderer.walkController.update(
@@ -207,7 +212,11 @@ struct RendererSceneSwapTests {
             frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
             device: device
         )
-        let renderer = try Renderer(view: view, scene: RenderScene(instances: []))
+        let renderer = try Renderer(
+            view: view,
+            scene: RenderScene(instances: []),
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
         renderer.movementMode = .walk
         let placement = PlacedReference.Placement(
             position: SIMD3(10, 20, 30),

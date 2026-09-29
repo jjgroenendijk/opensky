@@ -1,10 +1,5 @@
-// Cascaded sun-shadow renderer integration (M7.1.1): offscreen A/B renders of
-// a synthetic ground + caster scene, deterministic pixel checks (AGENTS.md
-// testing rule). Proves the depth pre-pass + PCF sampling actually darkens the
-// receiver under a caster, only ever darkens (monotonic), and leaves the sky
-// untouched — and that disabling shadows reproduces a never-enabled baseline.
-// Skips without a Metal 4 device (paravirtual CI), pattern from
-// RendererCullingTests / RendererOffscreenTests.
+// A synthetic ground and tower under a low sun, shared by the sun-shadow suites
+// and the acceptance chains that render it. Everything is built in code.
 
 import Foundation
 import Metal
@@ -12,23 +7,28 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
-import Testing
 
-struct RendererShadowTests {
-    static let device: MTLDevice? = {
+public enum ShadowSceneFixtureError: Error {
+    case textureAllocationFailed
+    case emptyModel
+}
+
+public enum ShadowSceneFixture {
+    public static let device: MTLDevice? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4) else { return nil }
         return device
     }()
 
-    static var hasMetal4Device: Bool {
+    public static var hasMetal4Device: Bool {
         device != nil
     }
 
-    static let width = 320
-    static let height = 240
+    public static let width = 320
+    public static let height = 240
 
     /// Sun high in the west, travelling east + down: a tall thin tower at the
     /// origin throws a long shadow streak east across the flat ground.
@@ -44,89 +44,8 @@ struct RendererShadowTests {
         ambientColor: SIMD3(0.25, 0.25, 0.28)
     )
 
-    // MARK: - Tests
-
-    @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
-    func shadowsDarkenReceiverUnderCasterAndSpareSky() throws {
-        let device = try #require(Self.device)
-        let renderer = try Self.makeRenderer(device: device)
-
-        renderer.sunShadowsEnabled = true
-        let onTexture = try renderer.renderOffscreen(width: Self.width, height: Self.height)
-        let on = Self.readPixels(texture: onTexture)
-
-        renderer.sunShadowsEnabled = false
-        let offTexture = try renderer.renderOffscreen(width: Self.width, height: Self.height)
-        let off = Self.readPixels(texture: offTexture)
-
-        // Shadows only ever remove the direct sun term: no channel may be
-        // brighter with shadows on (allow 1 LSB of rounding).
-        var brighter = 0
-        var darkerPixels = 0
-        for pixel in stride(from: 0, to: on.count, by: 4) {
-            var pixelDarker = 0
-            for channel in 0 ..< 3 {
-                let onValue = Int(on[pixel + channel])
-                let offValue = Int(off[pixel + channel])
-                if onValue > offValue + 1 {
-                    brighter += 1
-                }
-                pixelDarker += offValue - onValue
-            }
-            if pixelDarker > 40 {
-                darkerPixels += 1
-            }
-        }
-        #expect(brighter == 0, "shadows brightened \(brighter) channels — sun term math wrong")
-        #expect(
-            darkerPixels > 50,
-            "only \(darkerPixels) pixels darkened — caster cast no visible shadow"
-        )
-
-        // The procedural sky ignores shadows entirely: the top band must be
-        // bit-identical between the two renders.
-        let topBand = Self.width * 6 * 4
-        var skyDifferences = 0
-        for index in 0 ..< topBand where on[index] != off[index] {
-            skyDifferences += 1
-        }
-        #expect(skyDifferences == 0, "sky band changed with shadows — non-receiver was shaded")
-    }
-
-    @Test(.enabled(if: Self.hasMetal4Device))
-    @MainActor
-    func disabledShadowsMatchNeverEnabledBaseline() throws {
-        let device = try #require(Self.device)
-
-        // Enable shadows (populates the shadow map), then disable and render.
-        let toggled = try Self.makeRenderer(device: device)
-        toggled.sunShadowsEnabled = true
-        _ = try toggled.renderOffscreen(width: Self.width, height: Self.height)
-        toggled.sunShadowsEnabled = false
-        let afterToggle = try Self.readPixels(
-            texture: toggled.renderOffscreen(width: Self.width, height: Self.height)
-        )
-
-        // A renderer that never enabled shadows, matched frame count.
-        let baseline = try Self.makeRenderer(device: device)
-        baseline.sunShadowsEnabled = false
-        _ = try baseline.renderOffscreen(width: Self.width, height: Self.height)
-        let never = try Self.readPixels(
-            texture: baseline.renderOffscreen(width: Self.width, height: Self.height)
-        )
-
-        var differences = 0
-        for index in afterToggle.indices where afterToggle[index] != never[index] {
-            differences += 1
-        }
-        #expect(differences == 0, "disabling shadows left \(differences) stale pixels")
-    }
-
-    // MARK: - Helpers
-
-    @MainActor
-    static func makeRenderer(
+    public static func makeRenderer(
         device: MTLDevice,
         scene: RenderScene? = nil
     ) throws -> Renderer {
@@ -139,7 +58,8 @@ struct RendererShadowTests {
         return try Renderer(
             view: view,
             scene: scene ?? shadowScene(device: device),
-            camera: camera
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
     }
 
@@ -147,7 +67,7 @@ struct RendererShadowTests {
     /// The two towers share one RenderModel -> one DrawGroup with two
     /// instances, so per-cascade culling must keep the near instance and drop
     /// the far one from every cascade.
-    static func cullingScene(device: MTLDevice) throws -> RenderScene {
+    public static func cullingScene(device: MTLDevice) throws -> RenderScene {
         let texture = try solidTexture(device: device)
         let provider: TextureProvider = { _, _ in texture }
         let groundModel = Model(
@@ -162,8 +82,8 @@ struct RendererShadowTests {
         )
         let ground = try RenderModel(device: device, model: groundModel, textureProvider: provider)
         let tower = try RenderModel(device: device, model: towerModel, textureProvider: provider)
-        let groundBounds = try #require(ModelBounds.containing(model: groundModel))
-        let towerBounds = try #require(ModelBounds.containing(model: towerModel))
+        let groundBounds = try bounds(of: groundModel)
+        let towerBounds = try bounds(of: towerModel)
         let identity = matrix_identity_float4x4
         let far = MatrixMath.translation(SIMD3<Float>(200_000, 0, 0))
         return RenderScene(
@@ -186,7 +106,7 @@ struct RendererShadowTests {
     }
 
     /// Count of pixels the shadowed render darkened past a small threshold.
-    static func darkerPixelCount(on: [UInt8], off: [UInt8]) -> Int {
+    public static func darkerPixelCount(on: [UInt8], off: [UInt8]) -> Int {
         var darker = 0
         for pixel in stride(from: 0, to: on.count, by: 4) {
             var delta = 0
@@ -217,8 +137,8 @@ struct RendererShadowTests {
         )
         let ground = try RenderModel(device: device, model: groundModel, textureProvider: provider)
         let tower = try RenderModel(device: device, model: towerModel, textureProvider: provider)
-        let groundBounds = try #require(ModelBounds.containing(model: groundModel))
-        let towerBounds = try #require(ModelBounds.containing(model: towerModel))
+        let groundBounds = try bounds(of: groundModel)
+        let towerBounds = try bounds(of: towerModel)
         let identity = matrix_identity_float4x4
         return RenderScene(
             instances: [
@@ -245,7 +165,9 @@ struct RendererShadowTests {
         descriptor.height = 2
         descriptor.usage = .shaderRead
         descriptor.storageMode = .shared
-        let texture = try #require(device.makeTexture(descriptor: descriptor))
+        guard let texture = device.makeTexture(descriptor: descriptor) else {
+            throw ShadowSceneFixtureError.textureAllocationFailed
+        }
         let bytes = [UInt8](repeating: 200, count: 2 * 2 * 4)
         texture.replace(
             region: MTLRegionMake2D(0, 0, 2, 2),
@@ -256,7 +178,7 @@ struct RendererShadowTests {
         return texture
     }
 
-    static func readPixels(texture: MTLTexture) -> [UInt8] {
+    public static func readPixels(texture: MTLTexture) -> [UInt8] {
         var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return } // non-empty
@@ -268,5 +190,12 @@ struct RendererShadowTests {
             )
         }
         return pixels
+    }
+
+    private static func bounds(of model: Model) throws -> ModelBounds {
+        guard let bounds = ModelBounds.containing(model: model) else {
+            throw ShadowSceneFixtureError.emptyModel
+        }
+        return bounds
     }
 }
