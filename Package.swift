@@ -170,6 +170,28 @@ func feature(
     return targets
 }
 
+/// A module the composition roots share, for code both the app and OpenSkyCLI
+/// need that names feature implementations. It may depend on implementations, and
+/// no module may depend on it. `tests` adds `<name>Tests`.
+func composition(_ name: String, dependencies: [String], tests: [String]? = nil) -> [Target] {
+    for dependency in dependencies {
+        precondition(
+            declared.contains(dependency),
+            "\(name) depends on \(dependency), which is not declared below it"
+        )
+    }
+    let library = Target.target(
+        name: name,
+        dependencies: dependencies.map { .target(name: $0) },
+        swiftSettings: librarySettings
+    )
+    declared.append(name)
+    libraryTargets.append(name)
+    featureImplementations.insert(name)
+    guard let tests else { return [library] }
+    return [library, testTarget("\(name)Tests", dependencies: [name] + tests)]
+}
+
 // MARK: - Modules, bottom-up
 
 /// The structs shared with Metal. Shaders.metal includes the same header.
@@ -534,6 +556,19 @@ targets += foundation(
         "OpenSkyWorldInterface", "OpenSkyMagicInterface", "OpenSkyCombatInterface",
         "OpenSkyQuestsInterface", "OpenSkyDialogueInterface", "OpenSkyScriptingInterface",
         "OpenSkyShaderTypes", "CFFmpeg"
+    ]
+)
+
+// Composition: code the app and OpenSkyCLI share.
+targets += composition(
+    "OpenSkyPreview",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
+        "OpenSkyConditions", "OpenSkyRendering", "OpenSkyEngine"
+    ],
+    tests: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",
+        "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
 

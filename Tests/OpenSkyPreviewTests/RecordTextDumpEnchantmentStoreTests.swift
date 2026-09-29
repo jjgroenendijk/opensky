@@ -2,9 +2,9 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
+@testable import OpenSkyPreview
 import Testing
 
 struct RecordTextDumpEnchantmentStoreTests {
