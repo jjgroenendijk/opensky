@@ -375,7 +375,8 @@ targets += feature(
     tests: [
         "OpenSkyFactionsInterface", "OpenSkyActorsInterface", "OpenSkyFormatsCore",
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState", "OpenSkyConditions",
-        "FormatsCoreTesting", "FormatsESMTesting"
+        "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyFormatsMesh",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics"
     ]
 )
 targets += feature(
@@ -469,7 +470,7 @@ targets += feature(
         "OpenSkyInventoryInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
         "OpenSkyWorldState", "OpenSkyFactionsInterface", "OpenSkyCrimeInterface",
         "OpenSkyMagicInterface", "OpenSkyWorldInterface", "OpenSkyWorldTesting",
-        "FormatsCoreTesting", "FormatsESMTesting"
+        "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyPerceptionInterface"
     ]
 )
 targets += feature(
@@ -580,7 +581,7 @@ targets += feature(
         "OpenSkyActorsInterface", "OpenSkyActors", "OpenSkyCrimeInterface",
         "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyProgressionInterface", "OpenSkyProgression", "OpenSkyQuestsInterface",
-        "FormatsCoreTesting", "FormatsESMTesting"
+        "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyPerceptionInterface"
     ]
 )
 
@@ -596,7 +597,7 @@ targets += feature(
         "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering",
         "OpenSkyWorldState", "OpenSkyInventoryInterface", "OpenSkyInventory",
         "OpenSkyInventoryTesting", "OpenSkyQuestsInterface", "OpenSkyQuests", "OpenSkyShaderTypes",
-        "FormatsESMTesting", "FormatsSWFTesting"
+        "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyPerceptionInterface"
     ]
 )
 
