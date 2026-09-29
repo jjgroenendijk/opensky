@@ -32,6 +32,8 @@
 
 import Foundation
 @testable import OpenSkyConditions
+@testable import OpenSkyDialogue
+@testable import OpenSkyDialogueInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsAudio
@@ -242,7 +244,8 @@ struct M17AcceptanceRealDataTests {
             dialogue: world.dialogue,
             quests: world.questStore,
             questStates: quests.resolution(),
-            context: conditionContext()
+            context: conditionContext(),
+            registry: .standard
         )
         #expect(runtime.hasBeenSaid(offer.info), "the said line came back unsaid")
         #expect(runtime.saidState(of: offer.info).saidCount == 1)
@@ -316,7 +319,8 @@ extension M17AcceptanceRealDataTests {
             dialogue: dialogue,
             quests: questStore,
             questStates: quests.resolution(),
-            context: conditionContext()
+            context: conditionContext(),
+            registry: .standard
         )
         let vfs = VirtualFileSystem(root: root)
         return World(

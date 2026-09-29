@@ -10,6 +10,7 @@
 // No AppKit import on purpose: the file compiles into both the app and the CLI
 // target, so it needs no project-membership exception.
 
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 
 nonisolated public enum DialogueReadout: Sendable {

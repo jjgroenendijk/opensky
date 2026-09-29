@@ -29,6 +29,7 @@
 
 import AppKit
 @testable import OpenSky
+@testable import OpenSkyDialogueInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

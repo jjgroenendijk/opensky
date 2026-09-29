@@ -18,6 +18,7 @@
 // instead of restating them.
 
 import Foundation
+import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 
 @MainActor

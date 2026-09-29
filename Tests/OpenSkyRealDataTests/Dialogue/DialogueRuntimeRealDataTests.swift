@@ -23,6 +23,8 @@
 
 import Foundation
 @testable import OpenSkyConditions
+@testable import OpenSkyDialogue
+@testable import OpenSkyDialogueInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -177,7 +179,8 @@ struct DialogueRuntimeRealDataTests {
                 ]),
                 subject: speakerKey,
                 target: .player
-            )
+            ),
+            registry: .standard
         )
         return World(dialogue: dialogue, quests: quests, runtime: runtime)
     }

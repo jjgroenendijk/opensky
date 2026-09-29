@@ -10,6 +10,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData

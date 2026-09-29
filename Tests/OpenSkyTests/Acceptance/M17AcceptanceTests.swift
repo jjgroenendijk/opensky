@@ -17,6 +17,7 @@
 // on a device-less runner with no install.
 
 import Foundation
+@testable import OpenSkyDialogueInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyQuests

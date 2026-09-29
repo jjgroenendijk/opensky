@@ -18,6 +18,8 @@ import AppKit
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyConditions
+import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -148,6 +150,7 @@ extension GameViewController {
             quests: quests.quests,
             questStates: quests.resolution(),
             context: runtimeStateConditionContext(),
+            registry: .standard,
             fragments: papyrusBridge
         )
     }

@@ -13,6 +13,7 @@
 // exactly how many entries were skipped.
 
 import Foundation
+import OpenSkyDialogue
 import OpenSkyEngine
 import OpenSkyFormatsAudio
 import OpenSkyFormatsESM

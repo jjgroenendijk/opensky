@@ -24,6 +24,7 @@
 // Documented in docs/engine/dialogue-menu.md.
 
 import Foundation
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -92,7 +93,7 @@ extension DialogueMenuModel {
     /// here would be a second ordering rule to keep in step with that one.
     public static func rows(
         _ selection: DialogueSelection,
-        runtime: DialogueRuntime,
+        runtime: any DialogueAccess,
         strings: LocalizedStrings?
     ) -> [DialogueTopicEntry] {
         selection.offers.compactMap { offer in
@@ -118,7 +119,7 @@ extension DialogueMenuModel {
     public static func build(
         speaker: ReferenceKey,
         name: String,
-        runtime: DialogueRuntime,
+        runtime: any DialogueAccess,
         strings: LocalizedStrings?
     ) -> DialogueMenuModel {
         var model = DialogueMenuModel(

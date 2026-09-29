@@ -5,6 +5,7 @@
 import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface

@@ -9,6 +9,7 @@
 // and writing the tag would be a byte that can only ever hold one value.
 
 import Foundation
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState
