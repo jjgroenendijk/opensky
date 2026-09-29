@@ -15,6 +15,7 @@ import Metal
 @testable import OpenSkyPerceptionInterface
 import OpenSkyPerceptionTesting
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 import simd
 import Testing
 

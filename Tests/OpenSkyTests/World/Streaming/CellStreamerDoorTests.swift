@@ -1,9 +1,9 @@
 // Proximity door activation + interior streaming suspension/resume.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import simd
 import Testing

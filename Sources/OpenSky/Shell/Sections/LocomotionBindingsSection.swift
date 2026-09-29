@@ -16,6 +16,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class LocomotionBindingsSection: PanelSectionViewController {
     weak var provider: (any PlayerLocomotionControlProviding)? {

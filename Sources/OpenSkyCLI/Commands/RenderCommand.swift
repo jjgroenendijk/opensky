@@ -11,6 +11,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorld
 import simd
 
 enum RenderCommand {

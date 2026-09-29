@@ -15,6 +15,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class AIActorSection: PanelSectionViewController {
     weak var provider: (any AINavigationControlProviding)? {

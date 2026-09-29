@@ -25,6 +25,7 @@ import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OpenSkyWorldState
 import simd
 

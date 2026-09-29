@@ -8,13 +8,13 @@ import FormatsESMTesting
 import FormatsMeshTesting
 import Foundation
 import Metal
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 import Testing
 

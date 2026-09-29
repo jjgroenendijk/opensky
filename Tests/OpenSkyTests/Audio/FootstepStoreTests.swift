@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 import Testing
 
 struct FootstepStoreTests {

@@ -3,11 +3,11 @@
 
 import FormatsMeshTesting
 import Metal
-import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 import simd
 import Testing
 

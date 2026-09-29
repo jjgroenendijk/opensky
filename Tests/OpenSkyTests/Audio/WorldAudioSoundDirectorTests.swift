@@ -7,6 +7,7 @@
 @testable import OpenSkyAudio
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import simd
 import Testing

@@ -13,6 +13,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorld
 
 final class CameraSection: PanelSectionViewController {
     weak var provider: (any CameraControlProviding)? {

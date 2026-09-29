@@ -24,6 +24,7 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

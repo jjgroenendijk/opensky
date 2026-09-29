@@ -8,6 +8,7 @@ import OpenSkyBehavior
 import OpenSkyEngine
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorld
 
 extension GameViewController: PlayerLocomotionControlProviding {
     var playerLocomotionSnapshot: PlayerLocomotionSnapshot {

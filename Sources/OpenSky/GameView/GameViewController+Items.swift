@@ -19,6 +19,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

@@ -17,6 +17,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 
 @MainActor

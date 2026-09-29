@@ -30,6 +30,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPerception
+import OpenSkyWorld
 import OpenSkyWorldState
 
 /// Crime state the controller owns. Extensions cannot add stored properties, so

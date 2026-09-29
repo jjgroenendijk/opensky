@@ -220,6 +220,11 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyPreview",
           "name" : "OpenSkyPreview"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyWorld",
+          "name" : "OpenSkyWorld"
         }
       ]
     }
@@ -431,6 +436,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyPreviewTests",
         "name" : "OpenSkyPreviewTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyWorldTests",
+        "name" : "OpenSkyWorldTests"
       }
     }
   ],

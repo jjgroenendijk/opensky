@@ -23,6 +23,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyWorld
 
 extension GameViewController {
     /// One probe: which function to run and how to spell its parameter.

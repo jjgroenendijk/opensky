@@ -17,6 +17,7 @@ import OpenSkyGameData
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

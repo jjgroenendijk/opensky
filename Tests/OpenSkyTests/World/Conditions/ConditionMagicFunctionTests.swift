@@ -13,6 +13,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagicInterface
+@testable import OpenSkyWorld
 import Testing
 
 @MainActor

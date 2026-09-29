@@ -23,6 +23,7 @@ import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

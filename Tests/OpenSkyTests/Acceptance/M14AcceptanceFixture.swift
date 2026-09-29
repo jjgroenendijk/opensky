@@ -17,6 +17,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 
 /// The synthetic terrain and water the route runs over.

@@ -19,6 +19,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldState
 
 extension GameViewController {

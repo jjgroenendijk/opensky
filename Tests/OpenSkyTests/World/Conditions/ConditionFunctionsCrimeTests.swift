@@ -14,6 +14,7 @@ import Foundation
 @testable import OpenSkyCrimeTesting
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyWorld
 import Testing
 
 @MainActor

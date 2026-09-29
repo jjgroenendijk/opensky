@@ -18,6 +18,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyWorld
 import OpenSkyWorldState
 
 extension GameViewController {

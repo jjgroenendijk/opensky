@@ -27,6 +27,7 @@ import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

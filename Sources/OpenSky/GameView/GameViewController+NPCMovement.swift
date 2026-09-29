@@ -7,6 +7,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldState
 
 struct NPCMovementBridgeState {

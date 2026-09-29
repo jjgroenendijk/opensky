@@ -30,6 +30,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyWorld
 
 /// Enchantment state the controller owns. Extensions cannot add stored
 /// properties, so it lives as one value on `GameViewController`.

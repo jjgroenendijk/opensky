@@ -11,6 +11,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyRendering
+import OpenSkyWorld
 
 final class FirstPersonSection: PanelSectionViewController {
     weak var provider: (any FirstPersonControlProviding)? {

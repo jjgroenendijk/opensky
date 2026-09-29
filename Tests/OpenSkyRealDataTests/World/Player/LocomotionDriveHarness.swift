@@ -11,6 +11,7 @@
 @testable import OpenSkyEngine
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 
 /// One held input driven for a number of fixed steps.

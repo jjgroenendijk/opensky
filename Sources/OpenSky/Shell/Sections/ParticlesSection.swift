@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class ParticlesSection: PanelSectionViewController {
     weak var provider: (any ParticleControlProviding)? {

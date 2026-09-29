@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 
 enum LocomotionRealTerrain {

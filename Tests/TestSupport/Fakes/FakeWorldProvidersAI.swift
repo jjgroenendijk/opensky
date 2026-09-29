@@ -12,6 +12,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 
 /// The world-overlay half of the fake's stored state (issue #422).
 struct FakeAIOverlayState {

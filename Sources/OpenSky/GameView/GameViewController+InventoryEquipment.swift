@@ -28,6 +28,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

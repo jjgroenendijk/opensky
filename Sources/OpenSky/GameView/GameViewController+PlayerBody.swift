@@ -15,6 +15,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyRendering
+import OpenSkyWorld
 import OSLog
 
 /// What the player-body wiring keeps between frames. Stored on the controller

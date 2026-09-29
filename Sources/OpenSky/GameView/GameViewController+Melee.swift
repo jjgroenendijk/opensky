@@ -26,6 +26,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyRendering
+import OpenSkyWorld
 import simd
 
 /// Melee state the controller owns. Extensions cannot add stored properties, so

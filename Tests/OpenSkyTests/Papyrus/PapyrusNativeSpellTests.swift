@@ -21,6 +21,7 @@ import Foundation
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

@@ -34,6 +34,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 import Testing
 

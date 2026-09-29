@@ -9,6 +9,7 @@ import OpenSkyDiagnostics
 import OpenSkyEngine
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyWorld
 
 extension GameViewController: CameraControlProviding {
     var cameraPose: CameraPoseSnapshot {

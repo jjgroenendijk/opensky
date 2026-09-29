@@ -8,6 +8,7 @@
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyEngine
+@testable import OpenSkyWorld
 
 extension ConditionCoverage {
     /// How many unimplemented functions the ranked table shows.

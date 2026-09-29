@@ -3,8 +3,8 @@
 
 import FormatsESMTesting
 import Foundation
-import OpenSkyEngine
 @testable import OpenSkyRendering
+@testable import OpenSkyWorld
 import simd
 import Testing
 

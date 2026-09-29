@@ -3,6 +3,7 @@ import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+@testable import OpenSkyWorld
 import simd
 import Testing
 

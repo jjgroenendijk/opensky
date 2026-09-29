@@ -5,6 +5,7 @@
 
 import AppKit
 @testable import OpenSkyEngine
+@testable import OpenSkyWorld
 import Testing
 
 /// Forwards the runtime-state seam to the panel tests' recorder rather than

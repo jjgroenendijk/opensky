@@ -28,6 +28,7 @@ import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OpenSkyWorldState
 
 /// Skill-advancement state the controller owns. Extensions cannot add stored

@@ -20,6 +20,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyWorld
 import OpenSkyWorldState
 
 extension GameViewController {

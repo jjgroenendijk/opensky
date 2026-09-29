@@ -27,6 +27,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing

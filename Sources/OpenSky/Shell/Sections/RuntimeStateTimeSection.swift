@@ -17,6 +17,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 import OpenSkyWorldState
 
 final class RuntimeStateTimeSection: PanelSectionViewController {

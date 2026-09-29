@@ -2,9 +2,9 @@
 // (issue #173): line format, newest-last ordering, the bounded ring, and the
 // honest recorded total a truncated ring still reports.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 import Testing
 
 @MainActor

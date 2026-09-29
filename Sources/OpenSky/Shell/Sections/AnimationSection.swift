@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class AnimationSection: PanelSectionViewController {
     weak var provider: (any AnimationControlProviding)? {

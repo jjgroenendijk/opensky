@@ -5,6 +5,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldState
 
 extension GameViewController: FaceMorphControlProviding {

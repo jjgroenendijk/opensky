@@ -7,6 +7,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class RuntimeStateInspectSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

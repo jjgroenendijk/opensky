@@ -6,6 +6,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyWorld
 
 enum LODCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

@@ -10,6 +10,7 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyWorld
 
 final class RuntimeStateResetSection: PanelSectionViewController {
     weak var provider: (any RuntimeStateControlProviding)? {

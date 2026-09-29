@@ -17,6 +17,7 @@ import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OSLog
 
 extension GameViewController {

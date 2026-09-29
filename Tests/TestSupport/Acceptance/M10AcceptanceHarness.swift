@@ -8,6 +8,7 @@ import AppKit
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyEngine
+@testable import OpenSkyWorld
 import Testing
 
 /// One M10.1 acceptance session: the provider set the panel binds to, the real

@@ -18,6 +18,7 @@
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 import simd
 
 extension M16AcceptanceChain: PerceptionWorld {

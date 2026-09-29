@@ -5,6 +5,7 @@
 import AppKit
 import OpenSkyEngine
 import OpenSkyRendering
+import OpenSkyWorld
 
 final class GrassSection: PanelSectionViewController {
     weak var provider: (any GrassControlProviding)? {

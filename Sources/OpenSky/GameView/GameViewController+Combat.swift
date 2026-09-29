@@ -20,6 +20,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorld
 import simd
 
 /// Combat-loop state the controller owns. Extensions cannot add stored

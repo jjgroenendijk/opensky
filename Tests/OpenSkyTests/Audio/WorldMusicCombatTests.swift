@@ -13,6 +13,7 @@
 
 @testable import OpenSkyAudio
 @testable import OpenSkyEngine
+@testable import OpenSkyWorld
 import Testing
 
 @MainActor

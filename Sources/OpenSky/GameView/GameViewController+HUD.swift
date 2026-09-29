@@ -7,6 +7,7 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OSLog
 import simd
