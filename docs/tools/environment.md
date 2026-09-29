@@ -2,7 +2,7 @@
 type: Reference
 title: Local environment and external state
 description: Dated record of machine-specific and third-party facts that skills and AGENTS.md must
-  not hardcode - permissions, CI suspension, upstream spec host quirks, and xcodebuild behaviors -
+  not hardcode - permissions, upstream spec host quirks, and xcodebuild behaviors -
   each with the condition that retires it.
 tags: [environment, tooling, ci, gotchas]
 ---
@@ -30,14 +30,6 @@ So the playback position is counted from `manualRenderingSampleTime` instead of 
 this first.
 
 Retires when a later macOS or Xcode answers the query under offline rendering.
-
-## Continuous integration suspended
-
-Observed 2026-07-20. The GitHub Actions CPU quota is used up. `ci.yml` runs only on manual dispatch,
-and `main` has no required status checks, so the git hooks from `make bootstrap` are the only gate.
-`ci.yml` is still kept in sync with the hooks, so turning it back on is only a quota change.
-
-Retires when the quota returns.
 
 ## Upstream spec hosts
 

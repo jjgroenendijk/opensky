@@ -12,7 +12,7 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 
 # Formatters + linters are mandatory (AGENTS.md "Code quality").
-for tool in swiftformat swiftlint markdownlint-cli2 shellcheck; do
+for tool in swiftformat swiftlint markdownlint-cli2 shellcheck actionlint; do
   if command -v "$tool" >/dev/null 2>&1; then
     echo "  [ OK ] $tool"
   else

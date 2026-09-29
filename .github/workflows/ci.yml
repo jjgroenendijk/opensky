@@ -1,54 +1,159 @@
 name: CI
 
-# GH Actions CPU quota exhausted (2026-07-20) -> automatic runs disabled.
-# The git hooks (.githooks/, wired by `make bootstrap`) format and lint; no hook
-# builds or runs the tests (testing-and-verifying skill). Manual dispatch kept so the workflow can verify a branch when quota
-# returns; restoring pull_request/push triggers + required status checks on
-# main re-enables CI (see GitHub issue #70).
+# The lint jobs run the checks that only read files, one job per check, so the
+# slowest one sets the wall-clock time. All but SwiftFormat run on Linux. Each
+# job runs the same make target as the git hooks (docs/tools/ci.md). The macOS
+# build-and-test job runs only on manual dispatch.
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+# Pinned tool versions. Change a pin together with the local Homebrew version.
+env:
+  SWIFTFORMAT_VERSION: 0.63.0
+  SWIFTLINT_VERSION: 0.65.1
+  CLANG_FORMAT_VERSION: 21.1.8
+  MARKDOWNLINT_VERSION: 0.23.3
+  SHELLCHECK_VERSION: v0.11.0
+  ACTIONLINT_VERSION: 1.7.12
+
 jobs:
-  quality:
-    name: Format & lint
+  # macOS, not Linux: the Linux SwiftFormat binary took 2-3.5 min on this tree and
+  # hit its fixed per-rule timeout at random (docs/tools/ci.md).
+  swift-format:
+    name: SwiftFormat
     runs-on: macos-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Install tools
-        run: brew install swiftformat swiftlint markdownlint-cli2 shellcheck
-      - name: Format check
-        run: make format-check
-      - name: Lint (strict)
-        run: make lint
-      - name: Docs links
-        run: make docs-links
+      - name: Install SwiftFormat
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/swiftformat.zip" \
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/$SWIFTFORMAT_VERSION/swiftformat.zip"
+          mkdir -p "$RUNNER_TEMP/bin"
+          unzip -q -o -d "$RUNNER_TEMP/bin" "$RUNNER_TEMP/swiftformat.zip" swiftformat
+          echo "$RUNNER_TEMP/bin" >>"$GITHUB_PATH"
+      - run: make swift-format-check
+
+  swift-lint:
+    name: SwiftLint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pull SwiftLint image
+        run: docker pull -q "ghcr.io/realm/swiftlint:$SWIFTLINT_VERSION"
+      - run: >-
+          make swift-lint
+          SWIFTLINT="docker run --rm -v $PWD:$PWD -w $PWD ghcr.io/realm/swiftlint:$SWIFTLINT_VERSION"
+
+  metal-format:
+    name: Metal format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # Upstream clang-format 21 formats the shaders the same as Apple's (docs/tools/ci.md).
+      - name: Install clang-format
+        run: pipx install "clang-format==$CLANG_FORMAT_VERSION"
+      - run: make metal-format-check CLANG_FORMAT=clang-format
+
+  markdown:
+    name: Markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-markdownlint-cli2-${{ env.MARKDOWNLINT_VERSION }}
+      - name: Install markdownlint-cli2
+        run: npm install --global --no-audit --no-fund "markdownlint-cli2@$MARKDOWNLINT_VERSION"
+      - run: make md-lint
+
+  shell-and-workflows:
+    name: Shell and workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # actionlint also runs shellcheck on each `run:` script, so both share the pin.
+      - name: Install shellcheck and actionlint
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL \
+            "https://github.com/koalaman/shellcheck/releases/download/$SHELLCHECK_VERSION/shellcheck-$SHELLCHECK_VERSION.linux.x86_64.tar.xz" \
+            | tar -xJ -C "$RUNNER_TEMP/bin" --strip-components=1 "shellcheck-$SHELLCHECK_VERSION/shellcheck"
+          curl -fsSL \
+            "https://github.com/rhysd/actionlint/releases/download/v$ACTIONLINT_VERSION/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/bin" actionlint
+          echo "$RUNNER_TEMP/bin" >>"$GITHUB_PATH"
+      - run: make sh-lint workflow-lint
+
+  module-graph:
+    name: Module graph
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # The runner image ships a Swift toolchain; dump-package needs no build.
+      - run: swift --version
+      - run: make module-graph
+
+  repo-rules:
+    name: Repository rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: make cli-boundary realdata-plan no-game-content docs-links docs-length agent-files
+
+  # The one required status check on main. A new lint job goes into `needs`, and
+  # branch protection needs no change.
+  lint:
+    name: Lint
+    if: always()
+    needs:
+      [swift-format, swift-lint, metal-format, markdown, shell-and-workflows, module-graph, repo-rules]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail unless every lint job passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "$RESULTS"
+          for result in $RESULTS; do
+            [ "$result" = success ] || exit 1
+          done
 
   build-test:
     name: Build & test
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Check Xcode version
         id: xcode
-        # Project needs Xcode 26+ (macOS 26 SDK, Metal 4, project format 26.3).
-        # Hosted runners may lag; skip the build explicitly instead of failing
-        # on an unbuildable toolchain.
+        # Project needs Xcode 26+ (macOS 26 SDK, Metal 4). Hosted runners may lag;
+        # skip the build explicitly instead of failing on an unbuildable toolchain.
         run: |
           major=$(xcodebuild -version | awk '/^Xcode/{print int($2)}')
           echo "major=$major" >> "$GITHUB_OUTPUT"
           if [ "$major" -lt 26 ]; then
-            echo "::warning::Xcode $major < 26 on runner; build/test skipped." \
-              "A future macos-26 runner covers this job."
+            echo "::warning::Xcode $major < 26 on runner; build/test skipped."
           fi
       - name: Swift baseline (>= 6.3.3, Swift 6 language mode)
-        # Gated with the rest of this job: a runner too old for Xcode 26 is also
-        # too old for the compiler baseline, and skipping is already the policy
-        # there. The same script runs unconditionally in the local pre-commit
-        # hook and in `make check`.
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: make swift-baseline
       - name: Install Metal Toolchain
@@ -56,14 +161,12 @@ jobs:
         run: xcodebuild -downloadComponent MetalToolchain
       - name: Build vendored ffmpeg
         if: ${{ steps.xcode.outputs.major >= 26 }}
-        # The app and CLI targets link the vendored decode-only ffmpeg, and a fresh
-        # checkout has no .vendor, so the "Check vendored ffmpeg" build phase would
-        # fail the build before any test runs.
+        # The app and CLI link the vendored ffmpeg, and a fresh checkout has none.
         run: make ffmpeg
       - name: Build & test (unit)
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: make test XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
-      - name: Compile real-data suites (never run: no install on a runner)
+      - name: "Compile real-data suites (never run: no install on a runner)"
         if: ${{ steps.xcode.outputs.major >= 26 }}
         run: make realdata-build XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
       - name: UI tests
