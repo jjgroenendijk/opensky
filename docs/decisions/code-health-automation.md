@@ -1,14 +1,14 @@
 ---
 type: Decision
 title: Code-health automation
-description: Which code-health and security checks OpenSky runs, where each one runs, what it
+description: Which code-health checks OpenSky runs, where each one runs, what it
   costs, and which issue turns it on. Gates start at zero findings and use no baseline files.
-tags: [decision, tooling, lint, code-quality, security]
+tags: [decision, tooling, lint, code-quality]
 ---
 
 # Code-health automation
 
-This page lists the checks that keep the code healthy and safe, where each runs, and why.
+This page lists the checks that keep the code healthy, where each runs, and why.
 It replaces the old jscpd and Periphery gates. Those gates compared against checked-in
 baseline files, and updating the baselines after each refactor cost too much.
 
@@ -42,12 +42,7 @@ the check on as a gate.
 | No lint suppressions | `grep` in `make lint` | Pre-commit | Instant | 30.39, after 30.11 |
 | New SwiftLint rules | SwiftLint | Pre-commit | Part of the current lint | 30.39 |
 | No new `GameViewController` extensions | SwiftLint `custom_rules` | Pre-commit | Part of the current lint | 30.39, after 30.34 |
-| Secrets in commits | gitleaks | Pre-commit | Instant on staged changes | 30.39 |
 | Test coverage floor | `xccov`, `llvm-cov` | `make test-report`, Linux CI | Part of the test run | Report 30.38, floor 30.39 |
-| Fuzzing the parsers | libFuzzer | Linux CI | Minutes, time-boxed | 30.38.1 |
-| CodeQL | CodeQL | GitHub, weekly | Full uncached macOS build | 30.38.2, advisory |
-| Secret scanning, push protection | GitHub | GitHub | None | 30.38.2 |
-| Dependency updates | Dependabot | GitHub, weekly | None | 30.38.2 |
 
 ## Duplicated code: jscpd
 
@@ -144,38 +139,9 @@ The floor is only for the parsers. They read untrusted files, and a gap there ca
 the app. A floor for the whole codebase is not used. It pushes people to write tests that
 execute code without checking anything.
 
-## Security checks
+## Not used
 
-OpenSky is a desktop app without a server. Its attack surface is the files it reads.
-Mods from the internet can hold any bytes, and every `OpenSkyFormats*` parser reads them.
-
-**Static analysis (SAST)** reads the code without running it.
-
-- The Swift 6 compiler with strict concurrency finds data races at compile time.
-  SwiftLint's `force_unwrapping`, `force_try`, and `force_cast` errors block the most
-  common crash on bad input.
-- CodeQL analyses Swift and C, including `CFFmpeg.c` and `ShaderTypes.m`. It traces a
-  full uncached macOS build, so it runs weekly, not on each PR. Its findings are
-  advisory alerts in the GitHub Security tab.
-- gitleaks finds secrets such as tokens and keys. The whole history is clean today, so it
-  starts as a gate on staged changes. GitHub secret scanning with push protection is a
-  second layer.
-- Semgrep was rejected. Its free rule registry has few Swift rules, so it adds little
-  over SwiftLint and CodeQL.
-- The Clang static analyzer was rejected for now. The C code is two small files, and
-  CodeQL covers them.
-
-**Dynamic analysis** runs the code. Web DAST tools such as OWASP ZAP attack a running
-server, so they do not apply. The desktop-app equivalent is:
-
-- **Fuzzing** (30.38.1). libFuzzer feeds each parser millions of changed inputs under
-  Address Sanitizer. It finds the inputs that crash, loop, or read out of bounds. It
-  needs the portable format modules from 30.38, because it runs on Linux. The Xcode
-  toolchain may not ship the libFuzzer runtime for Swift; 30.38.1 checks this.
-- **Sanitizers.** `make test-sanitize` already runs the tests under Thread Sanitizer or
-  Address Sanitizer with Undefined Behavior Sanitizer. It stays a manual target, because
-  a sanitized build is slow.
-
-**Dependencies.** There are no SwiftPM package dependencies. Dependabot updates the
-GitHub Actions versions. The vendored ffmpeg is pinned in `tools/vendor-ffmpeg.sh`, which
-no scanner reads. A bump of that version checks the ffmpeg security page by hand.
+- **Security scanning and fuzzing** (CodeQL, gitleaks, libFuzzer). Out of scope for this
+  project.
+- **Dependabot.** There are no SwiftPM package dependencies. The vendored ffmpeg is
+  pinned in `tools/vendor-ffmpeg.sh`, which Dependabot cannot read.
