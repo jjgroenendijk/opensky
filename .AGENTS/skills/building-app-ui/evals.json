@@ -1,0 +1,37 @@
+[
+  {
+    "skills": [
+      "building-app-ui"
+    ],
+    "query": "Add a toggle to force rain in the weather panel.",
+    "files": [],
+    "expected_behavior": [
+      "Adds the control to the existing weather section rather than a new destination",
+      "Builds it from PanelComponents and PanelMetrics",
+      "Gives it a <Thing>Control accessibility id and pins it in DestinationRegistryTests"
+    ]
+  },
+  {
+    "skills": [
+      "building-app-ui"
+    ],
+    "query": "Add a new sidebar destination for the navmesh debugger.",
+    "files": [],
+    "expected_behavior": [
+      "Registers one DestinationDescriptor in DestinationRegistry.all without editing shell view controllers",
+      "Follows the shape of ScriptsPanelViewController",
+      "Keeps the AppKit code under Sources/OpenSky/"
+    ]
+  },
+  {
+    "skills": [
+      "building-app-ui"
+    ],
+    "query": "Add a hidden Cmd-Shift-D shortcut that toggles the debug overlay.",
+    "files": [],
+    "expected_behavior": [
+      "Refuses a keystroke-only toggle",
+      "Adds a panel control first, and registers the shortcut in the main menu only as an accelerator for it"
+    ]
+  }
+]

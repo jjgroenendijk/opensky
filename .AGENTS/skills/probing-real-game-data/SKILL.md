@@ -19,7 +19,8 @@ and the CLI subcommand reference (`docs/tools/cli.md`).
 
 `vfs ls|cat`, `record`, `cell`, `nif`, `dds`, `render`, `bench` cover most lookups:
 `make run-cli ARGS="record --type LAND ..."` beats writing a probe. A probe that recurs
-across sessions gets promoted to an `openskycli` subcommand (rules in `Sources/OpenSkyCLI/AGENTS.md`).
+across sessions gets promoted to an `openskycli` subcommand (rules in `Sources/OpenSkyCLI/AGENTS.md`;
+`Sources/OpenSkyCLI/Commands/GMSTCommand.swift` is a small model).
 
 Otherwise probe from a scratch test class in `Tests/OpenSkyRealDataTests/`, copying the shape of
 `CellRenderRealDataTests.swift`. That folder is the whole `RealData` plan, so a class there
@@ -29,8 +30,8 @@ script cannot import `OpenSky` and dies on top-level statement rules.
 
 ## Rendering verification
 
-Reliable paths, in order. Captures are temporary or `logs/`-local; a rendered frame embeds
-the user's game assets, so it is never committed.
+Reliable paths, in order. Captures stay in `logs/`, because a rendered frame is game
+content (root `AGENTS.md`, Legal & IP boundary).
 
 1. `Renderer.renderOffscreen` from a scratch test class — deterministic pixel assertions
    first, with an optional local temp capture for human review (`RendererOffscreenTests`).

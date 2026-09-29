@@ -53,13 +53,10 @@ test first, watch it fail, then fix.
 
 ## Long runs
 
-Anything that builds (`make test-fast` after an edit, `make test`, `make verify-build`,
-`make cli`, `make realtest`, `make install`) can pass the
-two-minute tool timeout. Start it with `run_in_background` and wait for the completion
+These commands build, so the background-shell and one-`xcodebuild` rules in the root
+`AGENTS.md` apply to them: `make test-fast` after an edit, `make test`, `make verify-build`,
+`make cli`, `make realtest`, `make install`, and `git push`. Wait for the completion
 notification rather than polling a log.
-
-Only one `xcodebuild` per derived-data tree at a time; two deadlock. That includes
-`git push`, whose hook builds. Start nothing until the running build reports done.
 
 ## Real-data runs
 
@@ -70,7 +67,7 @@ These guard the machine and are not optional:
   machine.
 - Iterate with `make realtest T=...` on one test. Rerun it only after a change that could
   alter the result; a flaky result needs its cause found, not a second run.
-- Captures and probe output go under `logs/` and never into a commit (`AGENTS.md`, Legal).
+- Captures and probe output go under `logs/` (root `AGENTS.md`, Legal & IP boundary).
 
 ## Report it
 

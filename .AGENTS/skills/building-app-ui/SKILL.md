@@ -27,6 +27,9 @@ Decide before building, because the configuration surface grows without bound:
 3. A new destination only for full-height or full-content space, a distinct milestone surface
    named as a top-level path, or a section that has outgrown its destination.
 
+Parser, math, and infrastructure-only work may wait for its first visible consumer. If its
+output is useful alone, expose it in the Asset Browser or an inspector.
+
 A section is promoted to its own destination at roughly 8 controls, when it needs
 sub-navigation, or when a milestone acceptance names it top-level. Sections are standalone
 (each owns its sync, readout, and ticker), so promotion is free and control ids do not
@@ -68,7 +71,10 @@ each lives in "Layout invariants" and "Interaction rules" in `docs/tools/app-ui.
 ## How to build a panel
 
 Subclass `InspectorPanelViewController` for a destination panel and
-`PanelSectionViewController` for one control group. Build controls only from
+`PanelSectionViewController` for one control group. Model files:
+`Panels/ScriptsPanelViewController.swift` is a thin panel that composes sections,
+`Shell/Sections/AudioFootstepsSection.swift` is one section, and
+`Tests/OpenSkyTests/App/Panels/AudioFootstepsPanelTests.swift` tests it. Build controls only from
 `PanelComponents` and `PanelMetrics` — if the widget you need is missing, add it there rather
 than hand-rolling it in a section, and do not hand-roll fonts, widths, or timers
 (`InspectionTicker` owns the 2 Hz readout). The base-class hooks, the component inventory

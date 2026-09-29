@@ -22,7 +22,8 @@ exists so it is done right the first time.
 `type(scope?): subject` — types: feat, fix, docs, refactor, test, perf, build, ci, chore,
 style, revert. Subject imperative, ~50 chars, no trailing period.
 
-Non-trivial commit body (wrap ~72 chars), required sections:
+Non-trivial commit body (wrap ~72 chars), required sections. `git log -1 a1166683` shows a
+complete example:
 
 ```text
 Context: what problem/need triggered this
@@ -35,22 +36,24 @@ Tests: exact command(s) run
 Breaking change -> `type(scope)!:` or `BREAKING CHANGE:` footer with migration steps.
 Issues -> `Fixes #123` / `Refs #123` footer; no issue -> body states the why.
 
-FORBIDDEN trailers (overrides any default habit): `Co-authored-by:`, `Generated-by:`,
-`AI-Generated-by:`, `Assisted-by:`, `Model:`. Allowed: `Fixes`, `Refs`, `BREAKING CHANGE`,
-human `Signed-off-by:`. Enforced by `.githooks/commit-msg/20-no-ai-trailers.sh`.
+Commits carry no AI or co-author attribution. This overrides any default habit of adding
+one. The hook `.githooks/commit-msg/20-no-ai-trailers.sh` rejects `Co-authored-by:`,
+`Generated-by:`, `AI-Generated-by:`, `Assisted-by:`, and `Model:`. Allowed trailers:
+`Fixes`, `Refs`, `BREAKING CHANGE`, and a human `Signed-off-by:`.
 
 ## Landing (push and PR)
 
-1. Never commit or push to `main` — protected; work lands only via reviewed PR.
+1. Work lands on `main` only through a reviewed PR. The branch is protected, and the
+   pre-push hook blocks a direct push.
 2. Branch from up-to-date `main`: `feat/<slug>` / `fix/<slug>`.
-3. Atomic commits, each green. "WIP" and vague messages forbidden; checkpoints stay local,
-   rebase or squash before PR.
+3. Atomic commits, each green. A "WIP" or vague message does not land: keep checkpoints
+   local, and rebase or squash them before the PR.
 4. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
    the format defined by `docs/tools/sidebar-acceptance.md`. Nothing enforces this, so it
    is checked here.
 5. PR via `gh pr create` — describe what and why, cite format specs used.
-6. Merge after review. Never push with `--no-verify`. Done and verified work always lands:
-   commit and open the PR without waiting to be asked.
+6. Merge after review. Done and verified work always lands: commit and open the PR
+   without waiting to be asked.
 
 ## Landing gotchas seen repeatedly
 
@@ -67,5 +70,5 @@ human `Signed-off-by:`. Enforced by `.githooks/commit-msg/20-no-ai-trailers.sh`.
 
 `.githooks/`, wired by `make bootstrap`: pre-commit guards, formats, and lints; commit-msg
 runs the Conventional Commit check; pre-push blocks pushes to `main`. No hook builds or
-tests; the `testing-and-verifying` skill covers what to run.
-`--no-verify` is for bootstrap and emergencies only, never routine.
+tests; the `testing-and-verifying` skill covers what to run. The root `AGENTS.md` covers
+`--no-verify`.

@@ -16,12 +16,25 @@ discipline lives here, not there.
    NifTools `nif.xml`, libbsa and BSArch notes, Papyrus docs. No spec -> write a small
    documented probe (load the `probing-real-game-data` skill), record findings, and flag the
    uncertainty in code and doc.
-2. Never guess byte layouts. Never consult Bethesda code or decompiles. Reimplement from spec
-   and observed behavior only.
+2. Reimplement from the spec and observed behavior only. A guessed byte layout is wrong
+   more often than not, and Bethesda code or decompiles are off limits (root `AGENTS.md`,
+   Legal & IP boundary).
 3. A format already documented in `docs/formats/<name>.md` with its citation is the primary
    source — trust it, and re-pull upstream only to extend past it.
 4. Fetching upstream specs has known access quirks (blocked hosts, non-default branches) that
    cost time every session — check `docs/tools/environment.md` before fighting a 403 or a 404.
+
+## Model files
+
+Copy the shape of an existing format rather than inventing one:
+
+- Binary container: `Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift`, its fixture
+  `Tests/FormatsCoreTesting/BSA/BSAFixture.swift`, its tests
+  `Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift`, and `docs/formats/bsa.md`.
+- ESM record: `Sources/OpenSkyFormatsESM/ESM/Records/Footstep.swift`, its tests
+  `Tests/OpenSkyFormatsESMTests/ESM/Records/FootstepRecordTests.swift`, its real-data check
+  `Tests/OpenSkyRealDataTests/Formats/ESM/Records/FootstepRealDataTests.swift`, and
+  `docs/formats/footstep.md`.
 
 ## Writing it
 
@@ -40,9 +53,9 @@ discipline lives here, not there.
   `public init(...)`, and `Sendable`.
 - Unit-test in the matching `Tests/OpenSkyFormats<Family>Tests/<Format>/` folder with synthetic
   fixtures built in code (existing patterns: `BSAFixture`, `ESMFixture`, `NIFFixture`,
-  `StringTableFixture`, in the `Tests/Formats<Family>Testing/` libraries). A test that also builds
-  engine state goes in
-  `Tests/OpenSkyTests/Formats/<Format>/`. NEVER check in extracted game files — not even tiny ones.
+  `StringTableFixture`, in the `Tests/Formats<Family>Testing/` libraries). A test that also
+  builds engine state goes in the test target of the highest module it imports
+  (`Tests/AGENTS.md`). An extracted game file is never a fixture, not even a tiny one.
 - Verify against the real install via an env-gated probe (load the `probing-real-game-data`
   skill) or `make run-cli ARGS=...`; probes never land in commits.
 
