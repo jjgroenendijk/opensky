@@ -5,7 +5,7 @@
 // `MenuWorldPolicy.leavesWorldRunning` captures input without stopping the
 // world. Pure reference type, no AppKit or GPU.
 
-@testable import OpenSkyEngine
+@testable import OpenSkyMenus
 import Testing
 
 @MainActor

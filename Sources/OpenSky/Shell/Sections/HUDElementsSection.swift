@@ -2,7 +2,7 @@
 // HUD layer. Every override feeds the same bridge used by gameplay.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 import OpenSkyRendering
 
 final class HUDElementsSection: PanelSectionViewController {

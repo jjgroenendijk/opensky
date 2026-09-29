@@ -15,7 +15,6 @@
 // change-and-restore surfaces.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class RuntimeStatePanelViewController: InspectorPanelViewController {

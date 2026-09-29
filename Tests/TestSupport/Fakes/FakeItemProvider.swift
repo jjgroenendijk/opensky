@@ -3,7 +3,6 @@
 // OpenSkyRealDataTests. See Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 import Testing

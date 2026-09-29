@@ -5,8 +5,8 @@
 // fallback), the long-string case wraps at its point width, the clip case runs
 // past the frame edge, and resolve stays byte-deterministic. No Metal device.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import OpenSkyShaderTypes
 import simd

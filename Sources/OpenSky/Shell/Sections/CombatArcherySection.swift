@@ -20,7 +20,6 @@
 
 import AppKit
 import OpenSkyCombat
-import OpenSkyEngine
 
 final class CombatArcherySection: PanelSectionViewController {
     weak var provider: (any ArcheryControlProviding)? {

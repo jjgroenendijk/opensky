@@ -10,9 +10,9 @@ import FormatsCoreTesting
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
+@testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import Testing
 

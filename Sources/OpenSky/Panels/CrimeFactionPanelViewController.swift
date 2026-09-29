@@ -18,7 +18,6 @@
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyEngine
 
 final class CrimeFactionPanelViewController: InspectorPanelViewController {
     let bountySection = CrimeBountySection()

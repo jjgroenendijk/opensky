@@ -6,9 +6,9 @@
 // panel is showing without inspecting the model.
 
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyMenus
 @testable import OpenSkyRendering
 
 extension FakeWorldProviders {

@@ -9,7 +9,6 @@
 import AppKit
 import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorld

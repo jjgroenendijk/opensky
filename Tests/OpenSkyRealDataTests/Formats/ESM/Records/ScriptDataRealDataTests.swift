@@ -3,7 +3,6 @@
 // aggregate counts and sampled ReferenceKeys reach gitignored logs/.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX

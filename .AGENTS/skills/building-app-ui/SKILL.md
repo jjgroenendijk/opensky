@@ -47,7 +47,7 @@ direct-content panels" in `docs/tools/app-ui.md`.
   construct an unopened panel. Details in "Override provenance and reset" in
   `docs/tools/app-ui.md`.
 - Put app-only AppKit code under `Sources/OpenSky/`, which only the app target builds. No
-  project file edit is needed. `make cli-boundary` fails if it lands under `Sources/OpenSkyEngine/`.
+  project file edit is needed. `make cli-boundary` fails if it lands in a package module.
 
 ## Invariants you cannot break
 

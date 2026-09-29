@@ -5,7 +5,6 @@
 
 import AppKit
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing

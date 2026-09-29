@@ -10,7 +10,6 @@
 // performed: what these suites need to know is what a cast *handed* the world,
 // entry by entry, not what the world then did with it.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

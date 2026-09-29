@@ -15,7 +15,6 @@
 // cell scene from synthetic ESM and NIF bytes and is gated on a Metal device.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

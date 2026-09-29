@@ -9,11 +9,11 @@
 // than one that says why it did nothing.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface

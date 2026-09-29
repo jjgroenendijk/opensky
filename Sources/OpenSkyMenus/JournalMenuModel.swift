@@ -1,7 +1,7 @@
 // Engine-side model of the journal's Quests page (issue #184, roadmap item
 // 13.5): what the player would see listed, independent of any movie.
 //
-// The same split every other menu in `Sources/OpenSkyEngine/UI/` uses. `JournalMenuModel` is
+// The same split every other menu in `Sources/OpenSkyMenus/` uses. `JournalMenuModel` is
 // a `nonisolated struct` holding rows, selection and the completed-quests
 // toggle; `QuestJournalMovieBridge` is what pushes those rows through the
 // measured `quest_journal.swf` contract. Keeping the two apart is what lets the

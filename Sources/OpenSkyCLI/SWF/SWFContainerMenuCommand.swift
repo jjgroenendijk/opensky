@@ -5,16 +5,16 @@
 //
 // The bring-up gate for both menus' data contract, in the CLI rather than only
 // in a test because the real-data XCTest host is unreliable on this machine
-// (docs/tools/environment.md). It only parses args and prints: the bridge, the
-// two-pane list and the pricing all live in `Sources/OpenSkyEngine/` and are unit tested
-// there against synthetic fixtures.
+// (docs/tools/environment.md). It only parses args and prints: the bridge and the
+// two-pane list live in `Sources/OpenSkyMenus/`, the pricing in `Sources/OpenSkyGameData/`,
+// and both are unit tested there against synthetic fixtures.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyWorldState
 
 enum SWFContainerMenuCommand {

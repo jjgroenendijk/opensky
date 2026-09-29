@@ -16,7 +16,6 @@
 // deviations from it are what the indicator reports.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class RuntimeStateGlobalsSection: PanelSectionViewController {

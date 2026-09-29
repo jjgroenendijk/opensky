@@ -4,7 +4,6 @@
 // recent SFX and the current bed. Same shape as the other audio sections.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class AudioSfxSection: PanelSectionViewController {

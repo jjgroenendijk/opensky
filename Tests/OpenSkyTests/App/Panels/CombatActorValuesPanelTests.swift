@@ -8,7 +8,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyActorsInterface
-import OpenSkyEngine
 @testable import OpenSkyGameData
 import Testing
 

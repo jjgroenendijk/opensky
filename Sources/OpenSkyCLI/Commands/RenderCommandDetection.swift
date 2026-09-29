@@ -10,7 +10,6 @@
 // placement and facing.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

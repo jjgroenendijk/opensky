@@ -15,7 +15,6 @@
 // as a bug in the simulation rather than as a control someone left on.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyPhysics
 
 final class CombatPhysicsSection: PanelSectionViewController {

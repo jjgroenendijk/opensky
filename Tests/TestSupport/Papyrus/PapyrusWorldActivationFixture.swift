@@ -11,7 +11,6 @@
 @testable import FormatsESMTesting
 import FormatsPEXTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyWorldInterface

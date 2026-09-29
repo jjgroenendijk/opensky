@@ -7,7 +7,6 @@
 // same resolution against a vanilla caster.
 
 import Foundation
-import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

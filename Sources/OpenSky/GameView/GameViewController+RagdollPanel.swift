@@ -11,7 +11,6 @@
 
 import Foundation
 import OpenSkyCombat
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyPhysics

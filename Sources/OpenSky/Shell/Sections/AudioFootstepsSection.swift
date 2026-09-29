@@ -7,7 +7,6 @@
 // Documented in docs/engine/footstep-sounds.md.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyWorld
 

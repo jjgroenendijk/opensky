@@ -13,7 +13,6 @@
 // level back would undo the demonstration rather than a knob.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyProgression
 

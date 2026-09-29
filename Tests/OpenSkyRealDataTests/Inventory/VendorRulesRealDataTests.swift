@@ -7,7 +7,6 @@
 // "Legal & IP boundary").
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

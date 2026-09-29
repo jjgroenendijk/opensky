@@ -6,8 +6,8 @@
 // stopped showing.
 
 import FormatsSWFTesting
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import Testing
 

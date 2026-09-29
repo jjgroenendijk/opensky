@@ -21,7 +21,6 @@
 import Foundation
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface

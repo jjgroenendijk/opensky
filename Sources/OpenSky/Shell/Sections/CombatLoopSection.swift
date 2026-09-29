@@ -24,7 +24,6 @@
 
 import AppKit
 import OpenSkyCombat
-import OpenSkyEngine
 
 final class CombatLoopSection: PanelSectionViewController {
     weak var provider: (any CombatLoopControlProviding)? {

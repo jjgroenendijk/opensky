@@ -5,7 +5,6 @@
 
 import AppKit
 import OpenSkyAudio
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics

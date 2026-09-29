@@ -14,7 +14,6 @@
 // section under this destination answers for.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyPerceptionInterface
 import OpenSkyWorld
 

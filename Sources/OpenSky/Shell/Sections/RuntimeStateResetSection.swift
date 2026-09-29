@@ -9,7 +9,6 @@
 // other three sections report false so a fresh session reads as not overridden.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class RuntimeStateResetSection: PanelSectionViewController {

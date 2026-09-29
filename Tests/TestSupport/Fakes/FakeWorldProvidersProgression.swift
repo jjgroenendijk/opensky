@@ -6,7 +6,6 @@
 // performed, which is what lets a panel test drive the whole `World >
 // Progression` destination with no renderer, no window and no game data.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
 

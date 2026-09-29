@@ -6,7 +6,6 @@
 
 import Foundation
 import OpenSkyCombatInterface
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPerceptionInterface

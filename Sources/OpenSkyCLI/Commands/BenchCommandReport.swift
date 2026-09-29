@@ -3,7 +3,6 @@
 // pass or fail live in BenchCommand.swift and in the shared engine drivers.
 
 import Foundation
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyRendering
 import OpenSkyWorld

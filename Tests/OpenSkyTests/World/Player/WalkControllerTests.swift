@@ -1,7 +1,6 @@
 // Walk controller math over synthetic terrain only: fixed/clamped stepping,
 // gravity/snap, slope rejection, walk/run speeds, streamed-cell seams.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering

@@ -12,7 +12,6 @@
 // synthetic and built in code; no game data is read.
 
 @testable import OpenSkyConditions
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 import Testing

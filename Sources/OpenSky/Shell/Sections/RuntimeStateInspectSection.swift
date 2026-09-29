@@ -6,7 +6,6 @@
 // here is a setting the user can leave in a non-default position.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class RuntimeStateInspectSection: PanelSectionViewController {

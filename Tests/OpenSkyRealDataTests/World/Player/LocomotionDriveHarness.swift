@@ -8,7 +8,6 @@
 // already loaded from the user's install (never committed — AGENTS.md
 // "Legal & IP").
 
-@testable import OpenSkyEngine
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

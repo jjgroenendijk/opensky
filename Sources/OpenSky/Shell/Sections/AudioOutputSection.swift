@@ -4,7 +4,6 @@
 
 import AppKit
 import OpenSkyAudio
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class AudioOutputSection: PanelSectionViewController {

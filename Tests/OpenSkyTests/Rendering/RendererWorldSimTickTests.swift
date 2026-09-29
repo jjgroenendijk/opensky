@@ -10,7 +10,6 @@
 import Foundation
 import Metal
 import MetalKit
-@testable import OpenSkyEngine
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface

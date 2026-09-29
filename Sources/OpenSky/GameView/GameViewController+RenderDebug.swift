@@ -1,7 +1,6 @@
 // Render-debug bridge over the live renderer (issue #144), consumed only by
 // `World > Render Debug` through `RenderDebugControlProviding`.
 
-import OpenSkyEngine
 import OpenSkyRendering
 
 extension GameViewController: RenderDebugControlProviding {

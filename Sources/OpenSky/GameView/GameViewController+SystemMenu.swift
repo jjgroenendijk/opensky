@@ -6,8 +6,8 @@
 // into the CLI target. See docs/engine/system-menu.md.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyRendering
 import OSLog
 

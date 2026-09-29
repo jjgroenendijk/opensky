@@ -90,7 +90,6 @@ Sources/
   OpenSky/              OpenSky (app) only: Shell/, Panels/, GameView/, Resources/
   OpenSkyCLI/           OpenSkyCLI only: Commands/, SWF/, Support/
   Shaders/              OpenSky and OpenSkyCLI: Shaders.metal
-  OpenSkyEngine/        package module: the engine not yet split, one folder per domain
   OpenSkyFormatsCore/   package module: binary readers, compression, geometry, BSA, strings
   OpenSkyFormats*/      package modules, one per format family: ESM, Mesh, Animation, Audio,
                         PEX, SWF; one folder per format inside
@@ -114,12 +113,13 @@ Sources/
   OpenSkyWorld*/        feature module: cells, streaming, player, weather; Interface: events
   OpenSkyQuests*/       feature module: quest runtime; Interface: quest state, QuestAccess
   OpenSkyScripting*/    feature module: Papyrus interpreter, natives; Interface: script values
+  OpenSkyMenus/         feature module: menu models, movie bridges, panel seams; no interface
   OpenSkySave/          feature module: OpenSky save files, store, and decoders; no interface
   OpenSkyPreview/       composition module: asset catalog, record dumps; app and CLI only
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
-  OpenSkyTests/         synthetic unit suites for the app and engine
+  OpenSkyTests/         synthetic suites for the app and for code that needs many modules
   OpenSkyFormats*Tests/ package test targets: synthetic suites, one per format module
   OpenSkyGameDataTests/ package test target: synthetic suites for OpenSkyGameData
   OpenSkyBehaviorTests/ package test target: synthetic suites for OpenSkyBehavior
@@ -141,6 +141,7 @@ Tests/
   OpenSkyPreviewTests/  package test target: synthetic suites for OpenSkyPreview
   OpenSkyWorldTests/    package test target: synthetic suites for OpenSkyWorld
   OpenSkySaveTests/     package test target: synthetic suites for OpenSkySave
+  OpenSkyMenusTests/    package test target: synthetic suites for OpenSkyMenus
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
@@ -167,17 +168,17 @@ the UI bundle beside an app-hosted unit bundle, because such a bundle deadlocks 
 runner it shares a session with (`docs/testing.md`). A gated suite written outside
 `Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would ever run it.
 
-No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyEngine/`,
-`Sources/OpenSkyFormats*/`, or `Sources/OpenSkyWorld/`; each goes in a domain folder.
-`Sources/OpenSkyGameData/` is small enough to stay flat. `Sources/OpenSkyRendering/` keeps the
+No Swift file sits loose at the root of `Sources/OpenSky/`, `Sources/OpenSkyFormats*/`, or
+`Sources/OpenSkyWorld/`; each goes in a domain folder. `Sources/OpenSkyGameData/` and the
+feature modules are small enough to stay flat. `Sources/OpenSkyRendering/` keeps the
 renderer at its root and puts `UI/`, `Terrain/`, and `Weather/` in folders. The others:
 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
   and `Resources/` (`Assets.xcassets`, `Branding/`).
-- `Sources/OpenSkyEngine/`: one folder per domain (`UI/`,
-  ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
-  folder.
+- A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in the module of its
+  domain. A seam that names a higher layer, such as menus, cameras, or scripts, lives in
+  `Sources/OpenSkyMenus/`.
 - `Sources/OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus
   `Binary/`, `Compression/`, and `Geometry/`. A package module never imports a module above
   it; behavior that needs a higher layer goes in an extension file up there

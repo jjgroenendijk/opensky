@@ -11,7 +11,6 @@
 // something the user did on purpose.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyMagic
 import OpenSkyMagicInterface
 

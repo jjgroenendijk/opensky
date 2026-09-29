@@ -10,7 +10,6 @@
 // in `RagdollRealDataTests`, which is the half that needs the install.
 
 @testable import OpenSkyCombat
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld

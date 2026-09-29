@@ -3,7 +3,6 @@
 
 import AppKit
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyPreview
 import Testing
 

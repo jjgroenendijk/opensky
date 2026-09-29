@@ -8,9 +8,9 @@
 // malformed movie from taking a control action down with it.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
+import OpenSkyMenus
 
 extension SWFRuntimeSection {
     /// Wires target/action/identifier for every control. Called once from

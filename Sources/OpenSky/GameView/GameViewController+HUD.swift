@@ -4,8 +4,8 @@
 // UI/HUDMovieBridge.swift and builds into both app and CLI targets.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface

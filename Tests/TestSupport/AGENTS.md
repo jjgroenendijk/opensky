@@ -5,7 +5,7 @@ Test support compiled into two unit-test bundles: `OpenSkyTests` and
 no way to import each other, while a fixture like `FakeWorldProviders` is needed by both
 (issue #418). A fixture that only builds bytes and needs no engine code goes in
 a `Tests/<Name>Testing/` library instead, so the package test targets can use it too. Membership follows
-the folder, exactly as `Sources/OpenSkyEngine/` builds into the app and `OpenSkyCLI`.
+the folder, exactly as `Sources/OpenSky/` builds into the app alone.
 
 ## What belongs here
 

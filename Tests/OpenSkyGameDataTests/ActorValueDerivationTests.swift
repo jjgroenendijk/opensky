@@ -4,7 +4,7 @@
 // Every expected number below is either quoted from the source that documents
 // it or hand-computed from the quoted formula, never taken from an
 // implementation run. The sources are cited in
-// `Sources/OpenSkyEngine/Actors/ActorValueDerivation.swift`.
+// `Sources/OpenSkyGameData/ActorValueDerivation.swift`.
 
 import Foundation
 @testable import OpenSkyFormatsESM

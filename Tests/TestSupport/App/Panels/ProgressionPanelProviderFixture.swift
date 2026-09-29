@@ -6,7 +6,6 @@
 // would otherwise have to spell out the other fifteen.
 
 import AppKit
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression

@@ -9,7 +9,6 @@
 // screenshot.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class RuntimeStateSaveSection: PanelSectionViewController {

@@ -8,7 +8,6 @@
 // never overridden.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 

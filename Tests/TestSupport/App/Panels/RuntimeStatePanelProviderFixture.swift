@@ -12,7 +12,6 @@
 // than on rendered text alone.
 
 import AppKit
-@testable import OpenSkyEngine
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 

@@ -10,7 +10,6 @@
 
 import FormatsESMTesting
 import FormatsPEXTesting
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface

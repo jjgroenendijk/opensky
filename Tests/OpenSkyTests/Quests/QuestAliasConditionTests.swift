@@ -8,7 +8,6 @@
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyConditions
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyQuests
 @testable import OpenSkyWorld

@@ -7,7 +7,6 @@
 // shared `ManualCellBuildRunner`, so residency, the shove, the solver step and
 // the settled-pose drain are all the engine's own.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

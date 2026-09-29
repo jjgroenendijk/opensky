@@ -4,7 +4,6 @@
 // `PapyrusNativeObjectReferenceLinkTests`.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState

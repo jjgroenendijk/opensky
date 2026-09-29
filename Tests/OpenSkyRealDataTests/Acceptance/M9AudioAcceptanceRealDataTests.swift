@@ -22,7 +22,6 @@
 
 import Foundation
 @testable import OpenSkyAudio
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

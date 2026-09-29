@@ -1,4 +1,3 @@
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData

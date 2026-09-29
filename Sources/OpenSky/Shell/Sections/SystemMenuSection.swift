@@ -4,7 +4,7 @@
 // diverge from live input.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 import OpenSkyRendering
 
 final class SystemMenuSection: PanelSectionViewController {

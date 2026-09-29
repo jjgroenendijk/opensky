@@ -11,7 +11,7 @@
 
 import AppKit
 @testable import OpenSky
-@testable import OpenSkyEngine
+@testable import OpenSkyMenus
 import OpenSkyScriptingInterface
 import Testing
 

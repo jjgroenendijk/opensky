@@ -16,9 +16,9 @@
 // See docs/engine/journal.md.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering

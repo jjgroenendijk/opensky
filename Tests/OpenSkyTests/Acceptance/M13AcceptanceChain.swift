@@ -22,11 +22,11 @@
 // nothing here needs a Metal device or game data.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
+@testable import OpenSkyMenus
 @testable import OpenSkyPhysics
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface

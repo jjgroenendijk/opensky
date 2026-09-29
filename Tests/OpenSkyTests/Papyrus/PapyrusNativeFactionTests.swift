@@ -11,7 +11,6 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFactions
 @testable import OpenSkyFactionsInterface
 import OpenSkyFactionsTesting

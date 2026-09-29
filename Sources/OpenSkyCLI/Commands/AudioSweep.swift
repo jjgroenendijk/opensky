@@ -9,7 +9,6 @@
 
 import Foundation
 import OpenSkyAudio
-import OpenSkyEngine
 import OpenSkyFormatsAudio
 import OpenSkyGameData
 

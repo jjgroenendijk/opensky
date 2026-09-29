@@ -11,7 +11,6 @@
 // are compiled into OpenSkyRealDataTests too (issue #418).
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
 @testable import OpenSkyScripting

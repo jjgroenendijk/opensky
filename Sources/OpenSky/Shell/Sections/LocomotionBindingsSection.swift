@@ -15,7 +15,6 @@
 // purpose.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class LocomotionBindingsSection: PanelSectionViewController {

@@ -13,7 +13,6 @@
 // panel setting.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class AIPackageSection: PanelSectionViewController {

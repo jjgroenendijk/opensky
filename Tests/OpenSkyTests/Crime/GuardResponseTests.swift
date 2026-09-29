@@ -8,7 +8,6 @@ import Foundation
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyCrimeTesting
-@testable import OpenSkyEngine
 @testable import OpenSkyFactions
 @testable import OpenSkyFactionsInterface
 import OpenSkyFactionsTesting

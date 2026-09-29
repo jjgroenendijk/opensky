@@ -5,7 +5,7 @@
 // Every expected number is either quoted from the source that documents it or
 // hand-computed from the quoted formula, never taken from an implementation
 // run. The sources are cited in
-// `Sources/OpenSkyEngine/Actors/ActorValueDerivationGeneral.swift`. Records are
+// `Sources/OpenSkyGameData/ActorValueDerivationGeneral.swift`. Records are
 // synthetic and built in code — never extracted game files (AGENTS.md "Legal &
 // IP boundary").
 

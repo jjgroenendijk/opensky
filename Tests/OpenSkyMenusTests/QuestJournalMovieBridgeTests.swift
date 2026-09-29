@@ -10,9 +10,9 @@
 
 import FormatsSWFTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyMenus
 import Testing
 
 private final class JournalCallLog: @unchecked Sendable {

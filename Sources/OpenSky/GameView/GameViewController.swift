@@ -5,8 +5,8 @@
 import AppKit
 import MetalKit
 import OpenSkyAudio
-import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
@@ -122,16 +122,16 @@ final class GameViewController: NSViewController {
     var worldAudio: WorldAudioEngine?
     /// World SFX + ambience director (M9.2.2), built beside the engine on
     /// first enable. Subscribed to streamer callbacks; lives in
-    /// `Sources/OpenSkyEngine/Audio/WorldAudioSoundDirector.swift`.
+    /// `Sources/OpenSkyWorld/Session/WorldAudioSoundDirector.swift`.
     var soundDirector: WorldAudioSoundDirector?
     /// Music director (M9.2.3), built beside the engine on first enable.
     /// Subscribed to the streamer's music-context callback and ticked by the
-    /// renderer; lives in `Sources/OpenSkyEngine/Audio/WorldMusicDirector.swift`.
+    /// renderer; lives in `Sources/OpenSkyWorld/Session/WorldMusicDirector.swift`.
     var musicDirector: WorldMusicDirector?
     /// Footstep director (issue #352), built beside the engine on first
     /// enable. Fed by the renderer's audio tick from the locomotion bridge's
     /// fired graph events; lives in
-    /// `Sources/OpenSkyEngine/Audio/WorldAudioFootstepDirector.swift`.
+    /// `Sources/OpenSkyWorld/Session/WorldAudioFootstepDirector.swift`.
     var footstepDirector: WorldAudioFootstepDirector?
     /// Cell provider the audio bridge reads sound/aspc stores off when it
     /// constructs the SFX director (M9.2.2). Held weakly because the build

@@ -16,7 +16,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyActorsInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyInventory
 @testable import OpenSkyMagicInterface

@@ -16,8 +16,8 @@ import FormatsSWFTesting
 import Foundation
 import Metal
 import MetalKit
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd

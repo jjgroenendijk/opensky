@@ -10,7 +10,6 @@
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyEngine
 
 final class CrimeTheftSection: CrimeFactionPanelSection {
     private let statsLabel = PanelComponents.statsLabel(identifier: "CrimeTheftStatsLabel")

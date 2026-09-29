@@ -12,7 +12,6 @@
 // two is exactly what a separate path prevents.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 

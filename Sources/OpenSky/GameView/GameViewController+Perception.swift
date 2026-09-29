@@ -15,7 +15,6 @@ import AppKit
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyDiagnostics
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyPerception
 import OpenSkyPerceptionInterface

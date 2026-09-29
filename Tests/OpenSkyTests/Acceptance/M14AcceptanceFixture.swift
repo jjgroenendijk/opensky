@@ -14,7 +14,6 @@
 import BehaviorTesting
 import Foundation
 @testable import OpenSkyBehavior
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

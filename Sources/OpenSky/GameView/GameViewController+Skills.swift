@@ -19,7 +19,6 @@
 // Documented in docs/engine/skill-advancement.md.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory

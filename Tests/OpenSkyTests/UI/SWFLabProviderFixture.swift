@@ -3,8 +3,8 @@
 // only through `SWFLabControlProviding`, so one recording fake covers the whole
 // control surface without a renderer, a Metal device, or a game install.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsSWF
+@testable import OpenSkyMenus
 @testable import OpenSkyRendering
 
 @MainActor

@@ -20,10 +20,10 @@ import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface

@@ -19,7 +19,6 @@
 
 import AppKit
 import OpenSkyCombat
-import OpenSkyEngine
 
 final class CombatMeleeSection: PanelSectionViewController {
     weak var provider: (any MeleeCombatControlProviding)? {

@@ -4,7 +4,6 @@
 // override. See docs/engine/game-clock.md.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing

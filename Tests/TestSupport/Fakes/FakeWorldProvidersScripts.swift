@@ -4,7 +4,6 @@
 // Tests/TestSupport/AGENTS.md.
 
 import AppKit
-@testable import OpenSkyEngine
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
 import Testing

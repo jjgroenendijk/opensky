@@ -3,7 +3,6 @@
 // paths and misses.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class FaceMorphSection: PanelSectionViewController {

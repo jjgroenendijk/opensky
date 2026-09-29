@@ -19,7 +19,6 @@
 // Documented in docs/engine/character-leveling.md.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgression

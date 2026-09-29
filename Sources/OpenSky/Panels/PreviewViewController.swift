@@ -6,7 +6,6 @@
 // Sources/OpenSkyPreview/ (AppKit-free, unit-tested); this file is the main-app UI shell.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyPreview
 

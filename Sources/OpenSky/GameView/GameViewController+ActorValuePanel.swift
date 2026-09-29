@@ -10,7 +10,6 @@
 import Foundation
 import OpenSkyActors
 import OpenSkyActorsInterface
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

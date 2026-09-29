@@ -4,7 +4,6 @@
 // MusicCatalogTests for the strict type-length limit; same synthetic fixtures.
 
 @testable import OpenSkyAudio
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 import Testing
 

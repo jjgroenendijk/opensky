@@ -8,8 +8,8 @@
 
 import Foundation
 @testable import OpenSkyActors
-@testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkyMenus
 @testable import OpenSkyWorldState
 import Testing
 

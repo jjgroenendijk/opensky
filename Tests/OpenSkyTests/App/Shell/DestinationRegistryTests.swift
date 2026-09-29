@@ -6,7 +6,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
-import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering

@@ -12,7 +12,6 @@
 import Foundation
 import Metal
 import MetalKit
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData

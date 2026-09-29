@@ -8,7 +8,6 @@ import Foundation
 import ImageIO
 import Metal
 import MetalKit
-@testable import OpenSkyEngine
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

@@ -12,7 +12,7 @@
 // "Reset all" should do.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 
 final class JournalQuestControlsSection: PanelSectionViewController {
     weak var provider: (any JournalControlProviding)? {

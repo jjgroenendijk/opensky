@@ -13,7 +13,6 @@
 // State > Reset` already owns dropping reference transforms.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class AIMovementSection: PanelSectionViewController {

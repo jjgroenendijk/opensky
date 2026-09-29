@@ -9,7 +9,6 @@ import FormatsESMTesting
 import Foundation
 import Metal
 import MetalKit
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering

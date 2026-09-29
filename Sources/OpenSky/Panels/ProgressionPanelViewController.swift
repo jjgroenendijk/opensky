@@ -15,7 +15,6 @@
 // levels land on, the skills that earn them, and the perks they buy.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyProgression
 
 final class ProgressionPanelViewController: InspectorPanelViewController {

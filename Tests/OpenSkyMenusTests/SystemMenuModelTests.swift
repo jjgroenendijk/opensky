@@ -1,7 +1,7 @@
 // The system menu selector (M8.5.1) is toolkit-free and movie-free, so its
 // transitions are pinned here without AppKit, a renderer, or the install.
 
-@testable import OpenSkyEngine
+@testable import OpenSkyMenus
 import Testing
 
 struct SystemMenuModelTests {

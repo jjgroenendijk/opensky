@@ -14,7 +14,6 @@
 
 import Foundation
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface

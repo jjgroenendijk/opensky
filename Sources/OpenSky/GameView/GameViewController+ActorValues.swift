@@ -14,11 +14,11 @@
 import AppKit
 import OpenSkyActors
 import OpenSkyActorsInterface
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState

@@ -3,7 +3,7 @@
 // and audio-volume placeholders behind the menu's Settings row.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 
 final class SystemMenuPanelViewController: InspectorPanelViewController {
     let menuSection = SystemMenuSection()

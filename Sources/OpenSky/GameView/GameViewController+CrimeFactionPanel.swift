@@ -11,7 +11,6 @@
 import AppKit
 import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyEngine
 import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM

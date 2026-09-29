@@ -15,7 +15,6 @@
 // it, so there is nothing here for the sidebar's reset to restore.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class RuntimeStateConditionsSection: PanelSectionViewController {

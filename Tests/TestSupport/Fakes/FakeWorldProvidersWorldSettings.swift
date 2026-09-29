@@ -3,7 +3,6 @@
 // are: that class body is at the strict-lint size cap, and only stored state has
 // to live there.
 
-@testable import OpenSkyEngine
 @testable import OpenSkyGameData
 
 extension FakeWorldProviders {

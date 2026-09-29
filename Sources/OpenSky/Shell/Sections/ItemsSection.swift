@@ -12,7 +12,6 @@
 // Adding a second reset here would give the same deltas two owners.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyInventory
 import OpenSkyInventoryInterface

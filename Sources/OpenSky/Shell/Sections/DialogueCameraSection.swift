@@ -14,7 +14,7 @@
 // actor in the cell.
 
 import AppKit
-import OpenSkyEngine
+import OpenSkyMenus
 
 final class DialogueCameraSection: PanelSectionViewController {
     weak var provider: (any DialogueCameraControlProviding)? {

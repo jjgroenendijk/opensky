@@ -23,7 +23,6 @@ import AppKit
 import FormatsESMTesting
 import Foundation
 @testable import OpenSky
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering

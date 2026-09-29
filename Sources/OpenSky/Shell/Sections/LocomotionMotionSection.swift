@@ -10,7 +10,6 @@
 // that does carry extracted motion shows up here rather than looking identical.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyWorld
 
 final class LocomotionMotionSection: PanelSectionViewController {

@@ -12,7 +12,6 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyBehavior
-@testable import OpenSkyEngine
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

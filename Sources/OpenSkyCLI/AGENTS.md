@@ -21,7 +21,7 @@ behavior.
 - One file per subcommand (`<Name>Command.swift`). Args parsed with stdlib
   `ArgumentScanner` — no swift-argument-parser (decision in `docs/tools/cli.md`).
   User-facing failures -> throw `CLIError`.
-- CLI files only parse args + print. Reusable logic -> `Sources/OpenSkyEngine/` shared engine tree,
+- CLI files only parse args + print. Reusable logic -> the package module of its domain,
   unit-tested there.
 - Output is plain text, stable enough for `tools/probe.sh` to grep. Output format
   change -> update probe same commit.

@@ -16,7 +16,6 @@
 // `ScriptSchedulerSectionInput.swift`, the same split `SWFRuntimeSection` uses.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 

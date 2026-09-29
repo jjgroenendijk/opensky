@@ -15,7 +15,6 @@
 // unavailable instead of silently doing nothing.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory

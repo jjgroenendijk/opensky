@@ -3,7 +3,6 @@
 // Controls). Renderer policy clamps every value again.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyRendering
 import OpenSkyWorld
 

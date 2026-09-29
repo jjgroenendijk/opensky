@@ -23,7 +23,6 @@
 import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyAudio
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

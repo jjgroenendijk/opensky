@@ -14,7 +14,6 @@
 // provider live rather than a value from the last tick.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyProgression
 
 /// One section of the Progression panel.

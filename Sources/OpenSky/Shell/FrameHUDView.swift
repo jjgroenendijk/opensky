@@ -15,7 +15,6 @@
 // its own.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyRendering
 import OpenSkyWorld
 

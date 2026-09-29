@@ -17,9 +17,9 @@
 import AppKit
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState

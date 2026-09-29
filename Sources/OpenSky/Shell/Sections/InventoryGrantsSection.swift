@@ -15,7 +15,6 @@
 // would give the same deltas two owners.
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyInventory
 

@@ -2,7 +2,7 @@
 // topics the player would see listed, the one they picked, and the line being
 // said back, independent of any movie.
 //
-// The same split every other menu in `Sources/OpenSkyEngine/UI/` uses.
+// The same split every other menu in `Sources/OpenSkyMenus/` uses.
 // `DialogueMenuModel` is a `nonisolated struct`; `DialogueMenuMovieBridge` is
 // what pushes it through the measured `dialoguemenu.swf` contract. Keeping the
 // two apart is what lets the panel, the unit suites and the CLI probe assert

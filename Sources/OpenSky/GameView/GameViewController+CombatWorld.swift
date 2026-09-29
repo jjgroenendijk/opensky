@@ -25,7 +25,6 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyEngine
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData

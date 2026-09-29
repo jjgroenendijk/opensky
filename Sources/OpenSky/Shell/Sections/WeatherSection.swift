@@ -2,7 +2,6 @@
 // weather + wind readout (issue #98 decomposition of EnvironmentWeatherControls).
 
 import AppKit
-import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorld
