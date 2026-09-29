@@ -22,8 +22,8 @@ baseline files, and updating the baselines after each refactor cost too much.
   files only and takes about a second or less. A check that needs a build runs in the
   pre-push hook or in a `make` target. A check that needs GitHub runs there.
 - **Hooks and CI mirror each other.** Every hook check has the same step in `ci.yml`,
-  as AGENTS.md requires. CI runs only on manual dispatch
-  ([environment](/tools/environment.md)), so the hooks are the real gate.
+  as AGENTS.md requires. The Linux jobs are required checks on `main`
+  ([continuous integration](/tools/ci.md)).
 - **No new suppression comments.** No `periphery:ignore` and no new `swiftlint:disable`.
   Fix the finding instead.
 

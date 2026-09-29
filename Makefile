@@ -78,6 +78,10 @@ SWIFTLINT_CFG    := tools/lint/.swiftlint.yml
 CLANGFORMAT_CFG  := tools/format/.clang-format
 MD_CFG           := tools/markdown/.markdownlint-cli2.yaml
 MD_GLOB          := **/*.md
+# The tool commands. Linux CI overrides these two, because it has no xcrun and runs
+# SwiftLint from its container image (docs/tools/ci.md).
+SWIFTLINT        ?= swiftlint
+CLANG_FORMAT     ?= xcrun clang-format
 METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)
 
 .DEFAULT_GOAL := help
@@ -114,9 +118,10 @@ cache-link: ## Point this worktree's compilation cache at the main checkout's
 
 ##@ Format and lint
 
-.PHONY: fix check format format-check lint swift-baseline swift-format swift-lint \
-        metal-format md-format md-lint sh-lint cli-boundary module-graph realdata-plan \
-        no-game-content docs-links docs-length
+.PHONY: fix check format format-check swift-format-check metal-format-check lint \
+        swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
+        cli-boundary module-graph realdata-plan no-game-content docs-links docs-length \
+        agent-files workflow-lint
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -124,14 +129,16 @@ check: swift-baseline format-check lint docs-links ## The same gate without writ
 
 format: swift-format metal-format md-format ## Autoformat Swift, Metal, and Markdown
 
-format-check: ## Fail if anything is unformatted, without writing
-	@swiftformat --lint --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
-	@[ -z "$(METAL_FILES)" ] || xcrun clang-format --style=file:$(CLANGFORMAT_CFG) \
-		--dry-run --Werror $(METAL_FILES)
-	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
+format-check: swift-format-check metal-format-check md-lint ## Fail if anything is unformatted, without writing
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content docs-length ## Run every linter (warnings fail)
-	@./tools/lint/agent-files.sh
+swift-format-check: ## Fail if any Swift is unformatted
+	@swiftformat --lint --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
+
+metal-format-check: ## Fail if any Metal shader is unformatted
+	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
+		--dry-run --Werror $(METAL_FILES)
+
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content docs-length agent-files workflow-lint ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
@@ -141,10 +148,10 @@ swift-format: ## Autoformat Swift
 	@swiftformat --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
 
 swift-lint: ## Lint Swift strictly
-	@swiftlint lint --strict --quiet --config $(SWIFTLINT_CFG) $(SWIFT_PATHS)
+	@$(SWIFTLINT) lint --strict --quiet --config $(SWIFTLINT_CFG) $(SWIFT_PATHS)
 
 metal-format: ## Autoformat Metal shaders
-	@[ -z "$(METAL_FILES)" ] || xcrun clang-format --style=file:$(CLANGFORMAT_CFG) \
+	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		-i $(METAL_FILES)
 
 md-format: ## Autofix Markdown
@@ -174,6 +181,12 @@ docs-links: ## Check links inside docs/ resolve
 
 docs-length: ## Check no docs page is longer than the limit
 	@./tools/lint/docs-length.sh
+
+agent-files: ## Check AGENTS.md symlinks and the skill format limits
+	@./tools/lint/agent-files.sh
+
+workflow-lint: ## Lint the GitHub Actions workflows with actionlint
+	@actionlint && echo "[ OK ] workflows clean"
 
 ##@ Build checks
 

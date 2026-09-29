@@ -10,7 +10,11 @@ export MODULE_GRAPH_REPORT
 
 cd "$(git rev-parse --show-toplevel)"
 
-MODULE_GRAPH="$(swift package dump-package)"
+# A file, not an environment variable: Linux caps one variable at 128 KiB, and
+# the graph is larger.
+MODULE_GRAPH="$(mktemp)"
+trap 'rm -f "$MODULE_GRAPH"' EXIT
+swift package dump-package >"$MODULE_GRAPH"
 export MODULE_GRAPH
 
 python3 - <<'PY'
@@ -45,7 +49,7 @@ MISSING = {
 }
 
 layer = {name: index for index, names in enumerate(LAYERS) for name in names}
-targets = json.loads(os.environ["MODULE_GRAPH"])["targets"]
+targets = json.loads(pathlib.Path(os.environ["MODULE_GRAPH"]).read_text())["targets"]
 names = {target["name"] for target in targets}
 deps = {
     target["name"]: [dep.get("target", dep.get("byName", [None]))[0]

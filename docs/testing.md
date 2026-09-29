@@ -52,8 +52,8 @@ Prefer `make test-fast T=...` while iterating. `make test-one` pays a whole buil
 the same selection.
 
 No hook runs the tests. What to test for a change is the author's judgment, guided by the
-`testing-and-verifying` skill, and the commit's `Tests:` section records what ran. `ci.yml` is kept
-in sync with the local gates ([environment](/tools/environment.md)).
+`testing-and-verifying` skill, and the commit's `Tests:` section records what ran. CI runs the lint
+checks, not the tests ([continuous integration](/tools/ci.md)).
 
 ## Real-data suites and the data root
 
