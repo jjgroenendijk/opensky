@@ -156,4 +156,7 @@ hit. It wrote the new module under `DerivedData/Build/Intermediates.noindex/`, b
 `DerivedData/Build/Products/Debug/<Module>.swiftmodule` kept the old interface, and `B=1` did not
 replace it. Deleting that one `.swiftmodule` folder and building again fixed it.
 
+Seen again the same day for `OpenSkyWorld`: a new method that tests reach through
+`@testable import` failed with "has no member" until the same delete.
+
 Retires when an interface change builds through xcodebuild without a manual delete.
