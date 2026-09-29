@@ -115,7 +115,7 @@ cache-link: ## Point this worktree's compilation cache at the main checkout's
 ##@ Format and lint
 
 .PHONY: fix check format format-check lint swift-baseline swift-format swift-lint \
-        metal-format md-format md-lint sh-lint cli-boundary realdata-plan \
+        metal-format md-format md-lint sh-lint cli-boundary module-graph realdata-plan \
         no-game-content docs-links docs-length
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
@@ -132,6 +132,7 @@ format-check: ## Fail if anything is unformatted, without writing
 
 lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content docs-length ## Run every linter (warnings fail)
 	@./tools/lint/agent-files.sh
+	@./tools/lint/module-graph.sh
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
 	@./tools/lint/swift-baseline.sh
@@ -157,6 +158,9 @@ sh-lint: ## Shellcheck the hooks and tools/ scripts
 
 cli-boundary: ## Keep AppKit out of the engine and format sources the CLI also builds
 	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
+
+module-graph: ## Check the package graph follows The Modular Architecture, with the report
+	@./tools/lint/module-graph.sh --report
 
 realdata-plan: ## Check every env-gated suite is in the RealData plan
 	@./tools/lint/realdata-plan.sh \

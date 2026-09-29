@@ -83,7 +83,10 @@ The repo root holds this file, `Makefile`, the Xcode project and workspace, `Pac
 `Config/`, `Sources/`, `Tests/`, `docs/`, `tools/`, and dotfiles.
 
 - `Package.swift` declares every engine module. `docs/tools/modules.md` lists each one with
-  its layer and gives the import rules. Read it before you add a module or an import.
+  its layer and gives the import rules. Read it before you add a module or an import. The
+  modules follow The Modular Architecture (TMA): a feature uses another feature only
+  through its `Interface` module. `make module-graph` checks this
+  (`docs/decisions/modular-architecture.md`).
 - `Config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
   (`docs/tools/build-system.md`). `Config/TestPlans/` holds the test plans
   (`docs/tools/test-runs.md`).
