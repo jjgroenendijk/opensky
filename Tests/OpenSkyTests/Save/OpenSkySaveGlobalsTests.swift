@@ -7,6 +7,7 @@
 import Foundation
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkySave
 @testable import OpenSkyWorldState
 import Testing
 

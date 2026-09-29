@@ -41,6 +41,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
+@testable import OpenSkySave
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing

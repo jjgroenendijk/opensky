@@ -7,8 +7,8 @@
 // cells and component values — live in OpenSkySaveEntryCorruptionTests.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
+@testable import OpenSkySave
 import Testing
 
 struct OpenSkySaveCorruptionTests {

@@ -7,8 +7,8 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyGameData
+@testable import OpenSkySave
 import Testing
 
 struct OpenSkySaveStoreFingerprintTests {

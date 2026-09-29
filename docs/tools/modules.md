@@ -132,6 +132,7 @@ OpenSkyDialogue           dialogue runtime, voice file lookup
 OpenSkyScripting          Papyrus interpreter, script world runtime, native functions
 OpenSkyWorld              cells, streaming, terrain, navigation, packages, player, weather,
                           the whole-game condition registry
+OpenSkySave               OpenSky save files: encoder, decoders, store
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation

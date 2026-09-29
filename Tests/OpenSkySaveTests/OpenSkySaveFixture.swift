@@ -1,3 +1,7 @@
+// A copy of Tests/TestSupport/Save/OpenSkySaveFixture.swift. OpenSkyTests and
+// OpenSkySaveTests are separate targets, and each needs it. A testing library cannot
+// hold it, because it builds OpenSkySave types.
+
 // Synthetic fixtures for the OpenSky native save container tests (issue #161).
 //
 // Everything here is built in code: a save is OpenSky's own format, so no game
@@ -9,7 +13,6 @@
 // value at an exact offset instead of hunting for one in encoder output.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

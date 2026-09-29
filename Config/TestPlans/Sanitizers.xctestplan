@@ -225,6 +225,11 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyWorld",
           "name" : "OpenSkyWorld"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkySave",
+          "name" : "OpenSkySave"
         }
       ]
     }
@@ -444,6 +449,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyWorldTests",
         "name" : "OpenSkyWorldTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkySaveTests",
+        "name" : "OpenSkySaveTests"
       }
     }
   ],
