@@ -1,8 +1,9 @@
-// The record-dump inspector context over one enchantment fixture plugin.
+// The record-dump inspector context over one enchantment fixture plugin. A copy of
+// Tests/OpenSkyTests/Magic/EnchantmentFixture+Inspector.swift: the package tests and
+// OpenSkyTests are separate targets, and each needs it.
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData

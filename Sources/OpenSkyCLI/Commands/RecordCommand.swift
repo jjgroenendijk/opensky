@@ -8,6 +8,7 @@ import Foundation
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPreview
 
 enum RecordCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {

@@ -15,6 +15,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
+@testable import OpenSkyPreview
 @testable import OpenSkyRendering
 import simd
 import Testing

@@ -75,6 +75,11 @@ later than a module that already needs its interface. Example: crime needs `Inve
 before inventory is split, so `interface("OpenSkyInventory", ...)` comes first, and a later
 `feature("OpenSkyInventory", ...)` uses that interface instead of declaring a second one.
 
+A fourth helper, `composition`, declares a module that the app and `OpenSkyCLI` share. It may
+import feature implementations, because it is part of the composition roots, and no module may
+import it. Example: `OpenSkyPreview` prints records with the whole-game condition registry, and
+both the Preview panel and `openskycli record` use it.
+
 The helpers also give every target the same settings: the language settings of
 `Config/Build/Base.xcconfig`, `MainActor` default isolation for library code, and the header
 path of the vendored ffmpeg. Test targets also link ffmpeg, because a package test executable
@@ -132,6 +137,8 @@ OpenSkyPerception         perception runtime, detection formula, sight, overlay
 OpenSkyProgression        perk, skill, and level runtimes, perk entry-point evaluator
   ^
 OpenSkyEngine             the rest of the engine, until it is split; imports interfaces only
+  ^
+OpenSkyPreview            asset catalog, record text dumps, reference inspector (composition)
   ^
 OpenSky app, OpenSkyCLI   composition roots
 ```

@@ -3,11 +3,12 @@
 // image + info text. The catalog loads off the main thread (opening every
 // archive and walking Skyrim.esm takes seconds); filtering the ~870k record
 // rows runs off-main too, latest generation wins. Browse logic lives in
-// Sources/OpenSkyEngine/Preview/ (AppKit-free, unit-tested); this file is the main-app UI shell.
+// Sources/OpenSkyPreview/ (AppKit-free, unit-tested); this file is the main-app UI shell.
 
 import AppKit
 import OpenSkyEngine
 import OpenSkyGameData
+import OpenSkyPreview
 
 final class PreviewViewController: NSViewController {
     /// Located install, set by the app delegate before the view loads;

@@ -20,6 +20,7 @@ import AppKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyInventory
 @testable import OpenSkyMagicInterface
+@testable import OpenSkyPreview
 import Testing
 
 @MainActor

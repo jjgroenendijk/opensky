@@ -4,10 +4,10 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
+@testable import OpenSkyPreview
 import Testing
 
 struct RecordTextDumpStoreTests {

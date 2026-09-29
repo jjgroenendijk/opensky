@@ -20,6 +20,7 @@ import AppKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkyPreview
 @testable import OpenSkyProgression
 import Testing
 
