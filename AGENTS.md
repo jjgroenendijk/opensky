@@ -180,3 +180,4 @@ the skill.
 | `probing-real-game-data` | Running engine code against the real Skyrim SE install |
 | `building-app-ui` | Adding or changing main-app UI — sidebar destinations, control panels, inspectors |
 | `testing-and-verifying` | Running any test, build check, or verification, and before pushing |
+| `writing-agent-instructions` | Adding, editing, or reviewing an `AGENTS.md`, skill, or memory, or learning a new rule |
