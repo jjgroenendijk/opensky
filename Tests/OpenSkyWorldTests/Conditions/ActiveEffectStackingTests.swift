@@ -18,6 +18,7 @@ import Foundation
 import OpenSkyMagicTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor

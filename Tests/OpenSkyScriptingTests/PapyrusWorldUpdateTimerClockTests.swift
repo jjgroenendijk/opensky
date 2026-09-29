@@ -6,6 +6,7 @@
 
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 import Testing
 

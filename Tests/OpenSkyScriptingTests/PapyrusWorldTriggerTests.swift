@@ -11,42 +11,19 @@ import FormatsESMTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 import simd
 import Testing
 
 @MainActor
 struct PapyrusWorldTriggerTests {
-    static let scriptName = "TriggerScript"
-    static let volumeID: UInt32 = 0x501
-
-    static var volumeKey: ReferenceKey {
-        TriggerStreamFixture.key(volumeID)
-    }
-
-    /// Script whose `OnTriggerEnter` and `OnTriggerLeave` record a note each.
-    static func triggerScript(_ name: String = scriptName) -> PexObject {
-        let key = PapyrusRuntime.key(name)
-        return PapyrusWorldFixture.eventScript(name, events: [
-            ("OnTriggerEnter", PapyrusWorldFixture.probeBody(note: "\(key).enter")),
-            ("OnTriggerLeave", PapyrusWorldFixture.probeBody(note: "\(key).leave"))
-        ])
-    }
-
-    /// Script that implements neither handler, so both queue and both are
-    /// counted no-ops rather than faults.
-    static func silentScript(_ name: String) -> PexObject {
-        PapyrusWorldFixture.eventScript(name, events: [
-            ("OnInit", PapyrusWorldFixture.probeBody(note: "silent.oninit"))
-        ])
-    }
-
     private static func session(
         scripts: [VMADFixture.Script],
         objects: [PexObject],
         isPersistent: Bool = false
     ) throws -> PapyrusWorldFixture.Session {
         let entry = try PapyrusWorldFixture.referenceEntry(
-            objectID: volumeID, scripts: scripts, isPersistent: isPersistent
+            objectID: TriggerStreamFixture.volumeID, scripts: scripts, isPersistent: isPersistent
         )
         let session = PapyrusWorldFixture.session(objects: objects, entries: [entry])
         PapyrusWorldFixture.drain(session.world)
@@ -59,13 +36,16 @@ struct PapyrusWorldTriggerTests {
     func enterQueuesOneEventPerScriptWithThePlayerAsActionRef() throws {
         let session = try Self.session(
             scripts: [
-                VMADFixture.Script(Self.scriptName, properties: []),
+                VMADFixture.Script(TriggerStreamFixture.scriptName, properties: []),
                 VMADFixture.Script("OtherTrigger", properties: [])
             ],
-            objects: [Self.triggerScript(), Self.triggerScript("OtherTrigger")]
+            objects: [
+                TriggerStreamFixture.triggerScript(),
+                TriggerStreamFixture.triggerScript("OtherTrigger")
+            ]
         )
         let queued = session.world.queueOnTriggerEnter(
-            volume: Self.volumeKey, actor: .player
+            volume: TriggerStreamFixture.volumeKey, actor: .player
         )
         #expect(queued == 2)
         let events = session.world.eventQueue
@@ -84,11 +64,11 @@ struct PapyrusWorldTriggerTests {
     @Test
     func leaveQueuesTheMatchingEventName() throws {
         let session = try Self.session(
-            scripts: [VMADFixture.Script(Self.scriptName, properties: [])],
-            objects: [Self.triggerScript()]
+            scripts: [VMADFixture.Script(TriggerStreamFixture.scriptName, properties: [])],
+            objects: [TriggerStreamFixture.triggerScript()]
         )
         #expect(session.world.queueOnTriggerLeave(
-            volume: Self.volumeKey, actor: .player
+            volume: TriggerStreamFixture.volumeKey, actor: .player
         ) == 1)
         #expect(session.world.eventQueue.first?.functionName == "OnTriggerLeave")
         #expect(PapyrusWorldRuntime.onTriggerEnterEventName == "OnTriggerEnter")
@@ -98,8 +78,8 @@ struct PapyrusWorldTriggerTests {
     @Test
     func aVolumeWithNoScriptsQueuesNothing() throws {
         let session = try Self.session(
-            scripts: [VMADFixture.Script(Self.scriptName, properties: [])],
-            objects: [Self.triggerScript()]
+            scripts: [VMADFixture.Script(TriggerStreamFixture.scriptName, properties: [])],
+            objects: [TriggerStreamFixture.triggerScript()]
         )
         let queued = session.world.queueOnTriggerEnter(
             volume: TriggerStreamFixture.key(0x999), actor: .player
@@ -112,10 +92,10 @@ struct PapyrusWorldTriggerTests {
     func aScriptWithoutTheHandlerIsACountedNoOpAndNotAFault() throws {
         let session = try Self.session(
             scripts: [VMADFixture.Script("SilentScript", properties: [])],
-            objects: [Self.silentScript("SilentScript")]
+            objects: [TriggerStreamFixture.silentScript("SilentScript")]
         )
-        session.world.queueOnTriggerEnter(volume: Self.volumeKey, actor: .player)
-        session.world.queueOnTriggerLeave(volume: Self.volumeKey, actor: .player)
+        session.world.queueOnTriggerEnter(volume: TriggerStreamFixture.volumeKey, actor: .player)
+        session.world.queueOnTriggerLeave(volume: TriggerStreamFixture.volumeKey, actor: .player)
         let before = session.world.skips.counts[.undefinedEventFunction] ?? 0
         PapyrusWorldFixture.drain(session.world)
         let after = session.world.skips.counts[.undefinedEventFunction] ?? 0
@@ -128,17 +108,17 @@ struct PapyrusWorldTriggerTests {
     @Test
     func theBridgeTurnsAnOccupancyEdgeIntoQueuedEvents() throws {
         let session = try Self.session(
-            scripts: [VMADFixture.Script(Self.scriptName, properties: [])],
-            objects: [Self.triggerScript()]
+            scripts: [VMADFixture.Script(TriggerStreamFixture.scriptName, properties: [])],
+            objects: [TriggerStreamFixture.triggerScript()]
         )
         #expect(session.bridge.handleTriggerTransition(
-            TriggerTransitionEvent(reference: Self.volumeKey, phase: .enter)
+            TriggerTransitionEvent(reference: TriggerStreamFixture.volumeKey, phase: .enter)
         ) == 1)
         #expect(session.bridge.handleTriggerTransition(
-            TriggerTransitionEvent(reference: Self.volumeKey, phase: .leave)
+            TriggerTransitionEvent(reference: TriggerStreamFixture.volumeKey, phase: .leave)
         ) == 1)
         PapyrusWorldFixture.drain(session.world)
-        let key = PapyrusRuntime.key(Self.scriptName)
+        let key = PapyrusRuntime.key(TriggerStreamFixture.scriptName)
         #expect(session.dispatch.notes == ["\(key).enter", "\(key).leave"])
     }
 }

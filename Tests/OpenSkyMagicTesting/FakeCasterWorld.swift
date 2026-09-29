@@ -18,43 +18,57 @@
 import simd
 
 @MainActor
-final class FakeCasterWorld: CasterWorld {
-    struct Application: Equatable {
-        let entries: Int
-        let source: ActiveEffectSource
-        let caster: ReferenceKey
-        let target: ReferenceKey
+public final class FakeCasterWorld: CasterWorld {
+    public struct Application: Equatable {
+        public let entries: Int
+        public let source: ActiveEffectSource
+        public let caster: ReferenceKey
+        public let target: ReferenceKey
+
+        public init(
+            entries: Int,
+            source: ActiveEffectSource,
+            caster: ReferenceKey,
+            target: ReferenceKey
+        ) {
+            self.entries = entries
+            self.source = source
+            self.caster = caster
+            self.target = target
+        }
     }
 
-    var castingGameDay: Int32 = 0
+    public var castingGameDay: Int32 = 0
     /// How many timed effects each application reports storing.
-    var storedPerApplication = 1
+    public var storedPerApplication = 1
     /// False makes every projectile launch fail, which is what a spell whose
     /// MGEF names no resolvable PROJ does.
-    var canFireProjectile = true
+    public var canFireProjectile = true
     /// What the caster's aim ray finds. `.none` reaches nobody.
-    var aim = SpellAim.none
+    public var aim = SpellAim.none
     /// How many timed effects each landed spell reports storing, per target.
-    var storedPerHitTarget = 1
+    public var storedPerHitTarget = 1
 
     /// Skill uses the cast loop reported (issue #498), recorded rather than
     /// converted.
-    private(set) var skillUses: [SkillUseEvent] = []
+    public private(set) var skillUses: [SkillUseEvent] = []
 
     @discardableResult
-    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+    public func reportSkillUse(_ use: SkillUseEvent) -> Float {
         skillUses.append(use)
         return 0
     }
 
-    private(set) var applications: [Application] = []
-    private(set) var firedProjectiles: [SpellPayload] = []
-    private(set) var spellHits: [SpellHit] = []
-    private(set) var aimRanges: [Float] = []
+    public private(set) var applications: [Application] = []
+    public private(set) var firedProjectiles: [SpellPayload] = []
+    public private(set) var spellHits: [SpellHit] = []
+    public private(set) var aimRanges: [Float] = []
     /// Who each aim query was made for (issue #473).
-    private(set) var aimCasters: [ReferenceKey] = []
+    public private(set) var aimCasters: [ReferenceKey] = []
 
-    func applyCastEffects(
+    public init() {}
+
+    public func applyCastEffects(
         _ entries: [MagicItemEffect],
         fromPlugin pluginName: String,
         source: ActiveEffectSource,
@@ -71,20 +85,20 @@ final class FakeCasterWorld: CasterWorld {
     }
 
     @discardableResult
-    func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
+    public func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
         guard canFireProjectile else { return false }
         firedProjectiles.append(payload)
         return true
     }
 
-    func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
+    public func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
         aimRanges.append(range)
         aimCasters.append(caster)
         return aim
     }
 
     @discardableResult
-    func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
+    public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
         spellHits.append(hit)
         var report = SpellHitReport()
         for _ in hit.targets {

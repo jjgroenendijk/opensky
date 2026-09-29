@@ -18,6 +18,7 @@
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyCombatTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics

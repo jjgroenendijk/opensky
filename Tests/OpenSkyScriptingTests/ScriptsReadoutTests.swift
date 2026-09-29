@@ -6,6 +6,7 @@
 
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 import Testing
 
 struct ScriptsReadoutTests {

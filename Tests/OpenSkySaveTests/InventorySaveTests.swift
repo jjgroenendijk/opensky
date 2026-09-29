@@ -14,6 +14,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorldState
 import simd
 import Testing

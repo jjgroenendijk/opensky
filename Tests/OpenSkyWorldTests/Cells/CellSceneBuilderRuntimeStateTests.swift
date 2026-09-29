@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -33,16 +34,6 @@ extension CellSceneBuilderTests {
         return WorldStateSnapshot(
             entries: entries, nextGeneratedSequence: 1, sequence: sequence
         )
-    }
-
-    /// The world-space translation of every drawn instance, in draw order.
-    func instanceTranslations(_ scene: CellScene) -> [SIMD3<Float>] {
-        scene.renderScene.opaque.flatMap { group in
-            group.instances.map { instance in
-                let column = instance.modelMatrix.columns.3
-                return SIMD3(column.x, column.y, column.z)
-            }
-        }
     }
 
     /// One collision-bearing plugin with a single REFR, so each test below

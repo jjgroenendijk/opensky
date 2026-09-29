@@ -8,12 +8,15 @@
 
 import FormatsESMTesting
 import Foundation
+import GameDataTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import Testing
+import WorldStateTesting
 
 @Suite("Quest condition functions")
 struct QuestConditionFunctionTests {

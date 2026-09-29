@@ -10,8 +10,10 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
+import OpenSkyDialogueTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor

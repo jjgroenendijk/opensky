@@ -3,10 +3,12 @@
 // `setGlobal` on a clock-owned editor ID moves the clock instead of storing an
 // override. See docs/engine/game-clock.md.
 
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing
+import WorldStateTesting
 
 @MainActor
 struct GameClockGlobalsTests {

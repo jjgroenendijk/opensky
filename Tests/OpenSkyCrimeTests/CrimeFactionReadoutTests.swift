@@ -5,6 +5,7 @@
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCrime
+import OpenSkyCrimeTesting
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyGameData
 import Testing
@@ -40,9 +41,9 @@ struct CrimeFactionReadoutTests {
 
     @Test
     func theVendorWindowIsJudgedAtTheGameHour() {
-        let open = CrimeFactionPanelTests.snapshot(hour: 12)
+        let open = CrimeFactionSnapshotFixture.snapshot(hour: 12)
         #expect(CrimeFactionReadout.vendorText(for: open).contains("Hours: 8-20 · open now"))
-        let closed = CrimeFactionPanelTests.snapshot(hour: 22)
+        let closed = CrimeFactionSnapshotFixture.snapshot(hour: 22)
         #expect(CrimeFactionReadout.vendorText(for: closed).contains("closed now"))
         #expect(CrimeFactionReadout.vendorText(for: closed).contains("Fence: no"))
     }

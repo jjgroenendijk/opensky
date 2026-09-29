@@ -5,23 +5,26 @@
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
+@testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyScripting
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 
-enum TriggerStreamFixture {
+public enum TriggerStreamFixture {
     /// Same plugin name `PapyrusWorldFixture` uses, so a volume's
     /// `ReferenceKey` matches the key a scripted reference entry gets.
-    static let pluginName = PapyrusWorldFixture.pluginName
+    public static let pluginName = PapyrusWorldFixture.pluginName
 
-    static func key(_ objectID: UInt32) -> ReferenceKey {
+    public static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: pluginName, objectID: objectID)
     }
 
     /// Axis-aligned box volume centred on `center`. Nil only for degenerate
     /// geometry, which none of these fixtures build.
-    static func boxVolume(
+    public static func boxVolume(
         objectID: UInt32,
         center: SIMD3<Float>,
         halfExtents: SIMD3<Float> = SIMD3(repeating: 128)
@@ -34,7 +37,7 @@ enum TriggerStreamFixture {
         )
     }
 
-    static func volumeSet(
+    public static func volumeSet(
         _ volumes: [TriggerVolume],
         location: CellSceneLocation? = nil
     ) -> TriggerVolumeSet {
@@ -44,19 +47,19 @@ enum TriggerStreamFixture {
     }
 
     /// Standard-capsule pose with its feet at `feet`.
-    static func capsule(feetAt feet: SIMD3<Float>) -> PlayerCapsuleState {
+    public static func capsule(feetAt feet: SIMD3<Float>) -> PlayerCapsuleState {
         PlayerCapsuleState(capsule: .standard, feetPosition: feet)
     }
 
     /// Eye position the streamer is driven with for a given feet position.
-    static func eye(feetAt feet: SIMD3<Float>) -> SIMD3<Float> {
+    public static func eye(feetAt feet: SIMD3<Float>) -> SIMD3<Float> {
         feet + SIMD3<Float>(0, 0, PlayerCapsule.standard.eyeHeight)
     }
 
     /// Drives the streamer until every cell it asked for has been completed,
     /// so a multi-cell grid is fully resident before a test walks through it.
     @MainActor
-    static func settle(
+    public static func settle(
         streamer: CellStreamer,
         runner: ManualCellBuildRunner,
         eye position: SIMD3<Float>,
@@ -71,5 +74,32 @@ enum TriggerStreamFixture {
                 runner.complete(coordinate, with: .success(sceneFor(coordinate)))
             }
         }
+    }
+}
+
+/// The trigger volume and its scripts the trigger suites and the M11 walk share.
+extension TriggerStreamFixture {
+    public static let scriptName = "TriggerScript"
+    public static let volumeID: UInt32 = 0x501
+
+    public static var volumeKey: ReferenceKey {
+        key(volumeID)
+    }
+
+    /// Script whose `OnTriggerEnter` and `OnTriggerLeave` record a note each.
+    public static func triggerScript(_ name: String = scriptName) -> PexObject {
+        let key = PapyrusRuntime.key(name)
+        return PapyrusWorldFixture.eventScript(name, events: [
+            ("OnTriggerEnter", PapyrusWorldFixture.probeBody(note: "\(key).enter")),
+            ("OnTriggerLeave", PapyrusWorldFixture.probeBody(note: "\(key).leave"))
+        ])
+    }
+
+    /// Script that implements neither handler, so both queue and both are
+    /// counted no-ops rather than faults.
+    public static func silentScript(_ name: String) -> PexObject {
+        PapyrusWorldFixture.eventScript(name, events: [
+            ("OnInit", PapyrusWorldFixture.probeBody(note: "silent.oninit"))
+        ])
     }
 }

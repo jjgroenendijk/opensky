@@ -16,25 +16,43 @@ import simd
 import Testing
 
 @MainActor
-enum WorldAudioDirectorFixture {
-    static let sampleRate = 44100.0
+public enum WorldAudioDirectorFixture {
+    public static let sampleRate = 44100.0
 
     /// Synthetic region shape for the ambience cases.
-    struct Region {
-        let id: UInt32
-        let sounds: [Sound]
+    public struct Region {
+        public let id: UInt32
+        public let sounds: [Sound]
+
+        public init(
+            id: UInt32,
+            sounds: [Sound]
+        ) {
+            self.id = id
+            self.sounds = sounds
+        }
     }
 
     /// Synthetic RDSA entry.
-    struct Sound {
-        let sound: UInt32
-        let flags: UInt32
-        let chance: Float
+    public struct Sound {
+        public let sound: UInt32
+        public let flags: UInt32
+        public let chance: Float
+
+        public init(
+            sound: UInt32,
+            flags: UInt32,
+            chance: Float
+        ) {
+            self.sound = sound
+            self.flags = flags
+            self.chance = chance
+        }
     }
 
     /// Engine in manual offline-rendering mode, so tests never touch an output
     /// device and never depend on decode-queue timing.
-    static func makeRunningEngine() throws -> WorldAudioEngine {
+    public static func makeRunningEngine() throws -> WorldAudioEngine {
         let format = try #require(
             AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
         )
@@ -44,7 +62,7 @@ enum WorldAudioDirectorFixture {
         return engine
     }
 
-    static func makeDirector(
+    public static func makeDirector(
         engine: WorldAudioEngine,
         soundStore: SoundRecordStore?,
         weatherStore: WeatherStore? = nil
@@ -60,7 +78,7 @@ enum WorldAudioDirectorFixture {
 
     /// Director wired to one region (`0x100`) whose sound area names sound
     /// `0xAAA`, the shape every ambience case needs.
-    static func makeAmbienceDirector(engine: WorldAudioEngine) -> WorldAudioSoundDirector {
+    public static func makeAmbienceDirector(engine: WorldAudioEngine) -> WorldAudioSoundDirector {
         makeDirector(
             engine: engine,
             soundStore: makeSoundStore(
@@ -74,11 +92,11 @@ enum WorldAudioDirectorFixture {
 
     /// Ambience context naming region `0x100`, the one `makeAmbienceDirector`
     /// knows about.
-    static let regionContext = AmbienceContext(
+    public static let regionContext = AmbienceContext(
         regions: [FormID(0x100)], acousticSpace: nil, isInterior: false
     )
 
-    static func makeWeatherStore(regions: [Region]) -> WeatherStore {
+    public static func makeWeatherStore(regions: [Region]) -> WeatherStore {
         var bytes = Data()
         for region in regions {
             var soundHeader = Data()
@@ -106,7 +124,7 @@ enum WorldAudioDirectorFixture {
         }
     }
 
-    static func makeSoundStore(
+    public static func makeSoundStore(
         soundID: UInt32,
         descriptorID: UInt32,
         tracks: [String],
@@ -138,7 +156,7 @@ enum WorldAudioDirectorFixture {
         }
     }
 
-    static func makeInteractionEvent(
+    public static func makeInteractionEvent(
         sounds: ModelBase.Sounds?,
         action: InteractionAction = .open
     ) -> InteractionEvent {

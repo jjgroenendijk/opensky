@@ -35,9 +35,12 @@ import AppKit
 @testable import OpenSkyMenus
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
+import OpenSkySaveTesting
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -55,7 +58,7 @@ final class M17AcceptanceChain {
     init() throws {
         session = try M17AcceptanceFixture.session(worldState: controller.worldState)
         controller.papyrusBridge = session.bridge
-        streamer = CellStreamerTests.makeStreamer(runner: runner)
+        streamer = CellStreamerFixture.makeStreamer(runner: runner)
         controller.streamer = streamer
         controller.wireDialogue(provider: DialogueOnlyProvider(), streamer: streamer)
         // The provider seam carries a store only in a session with game data;

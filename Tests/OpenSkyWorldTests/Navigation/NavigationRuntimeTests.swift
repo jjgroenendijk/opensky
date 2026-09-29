@@ -6,6 +6,7 @@ import FormatsESMTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -160,7 +161,7 @@ struct NavigationRuntimeTests {
     func unloadInvalidationQueuesOnlyBoundedRepaths() throws {
         let fixture = try Self.crossCellFixture()
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 1)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 1)
         streamer.composition.setCell(fixture.firstScene, at: CellCoordinate(x: 0, y: 0))
         streamer.composition.setCell(fixture.secondScene, at: CellCoordinate(x: 1, y: 0))
         let path = try #require(streamer.findPath(Self.crossCellQuery).path)

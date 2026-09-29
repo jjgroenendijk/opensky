@@ -23,64 +23,64 @@ import Foundation
 @testable import OpenSkyWorldState
 
 @MainActor
-enum SpellbookFixture {
-    static let pluginName = "Base.esm"
+public enum SpellbookFixture {
+    public static let pluginName = "Base.esm"
 
-    enum Slot {
-        static let rightHand: UInt32 = 0x0100
-        static let leftHand: UInt32 = 0x0110
-        static let eitherHand: UInt32 = 0x0120
-        static let bothHands: UInt32 = 0x0130
-        static let voice: UInt32 = 0x0150
+    public enum Slot {
+        public static let rightHand: UInt32 = 0x0100
+        public static let leftHand: UInt32 = 0x0110
+        public static let eitherHand: UInt32 = 0x0120
+        public static let bothHands: UInt32 = 0x0130
+        public static let voice: UInt32 = 0x0150
     }
 
-    enum Spell {
+    public enum Spell {
         /// Fire and forget, self, 0.5 s charge, one instant restore-health
         /// entry. The acceptance picture's spell.
-        static let fastHealing: UInt32 = 0x0200
+        public static let fastHealing: UInt32 = 0x0200
         /// Concentration, self, no charge, one one-second restore entry.
-        static let healing: UInt32 = 0x0210
+        public static let healing: UInt32 = 0x0210
         /// Fire and forget, self, two-handed slot.
-        static let masterHeal: UInt32 = 0x0220
+        public static let masterHeal: UInt32 = 0x0220
         /// Fire and forget, aimed — the delivery 19.8 owns.
-        static let firebolt: UInt32 = 0x0230
+        public static let firebolt: UInt32 = 0x0230
         /// A greater power, self, once per day.
-        static let dragonskin: UInt32 = 0x0240
+        public static let dragonskin: UInt32 = 0x0240
         /// An ability with one timed entry and one zero-duration entry.
-        static let resistFire: UInt32 = 0x0250
+        public static let resistFire: UInt32 = 0x0250
         /// Fire and forget, self, named `Flames` so the load-order lookup
         /// `SpellStore.vanillaStartSpellEditorIDs` performs finds it.
-        static let flames: UInt32 = 0x0260
+        public static let flames: UInt32 = 0x0260
         /// Fire and forget, aimed, one hostile fire entry with an area, plus a
         /// point entry — the shape vanilla `Fireball` is authored in
         /// (issue #471).
-        static let fireball: UInt32 = 0x0270
+        public static let fireball: UInt32 = 0x0270
         /// Fire and forget, aimed, hostile, with the SPEL "Ignore Resistance"
         /// flag set.
-        static let unresistedBolt: UInt32 = 0x0280
+        public static let unresistedBolt: UInt32 = 0x0280
         /// Concentration, aimed — the flamethrower shape.
-        static let flamestream: UInt32 = 0x0290
+        public static let flamestream: UInt32 = 0x0290
         /// Fire and forget, target actor.
-        static let sparkAtTarget: UInt32 = 0x02A0
+        public static let sparkAtTarget: UInt32 = 0x02A0
         /// Fire and forget, touch — a delivery 19.8 counts rather than carries
         /// out.
-        static let touchOfDeath: UInt32 = 0x02B0
+        public static let touchOfDeath: UInt32 = 0x02B0
     }
 
-    enum Book {
+    public enum Book {
         /// Teaches `Spell.healing`.
-        static let healingTome: UInt32 = 0x0300
+        public static let healingTome: UInt32 = 0x0300
         /// Teaches nothing, so reading it marks the book and grants no spell.
-        static let novel: UInt32 = 0x0310
+        public static let novel: UInt32 = 0x0310
     }
 
-    static func key(_ objectID: UInt32) -> ReferenceKey {
+    public static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: pluginName.lowercased(), objectID: objectID)
     }
 
     // MARK: - Stores
 
-    static func plugin(extraRecords: [Data] = []) throws -> ESMFile {
+    public static func plugin(extraRecords: [Data] = []) throws -> ESMFile {
         let records = equipSlots + magicEffects + projectiles + spells + books + extraRecords
         let grouped = Dictionary(grouping: records) { record in
             String(bytes: record.prefix(4), encoding: .ascii) ?? "SPEL"
@@ -95,7 +95,7 @@ enum SpellbookFixture {
     /// Every fixture record in one index, which is what each store below is
     /// built over. Built once per call rather than cached, so a suite that
     /// mutates nothing shares nothing.
-    static func index() throws -> RecordIndex {
+    public static func index() throws -> RecordIndex {
         try RecordIndex(
             plugins: [(pluginName, plugin())],
             recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "PROJ"]
@@ -104,19 +104,19 @@ enum SpellbookFixture {
 
     /// The MGEF lookup behind every EFID, for a suite that needs a real effect
     /// runtime rather than a fake world (issue #471).
-    static func effectStore(index: RecordIndex) -> MagicEffectStore {
+    public static func effectStore(index: RecordIndex) -> MagicEffectStore {
         MagicEffectStore(index: index)
     }
 
     /// The PROJ lookup an aimed cast resolves its projectile through — the
     /// same index the arrow path reads, over the fixture's own records.
-    static func projectileStore() throws -> ItemDefinitionStore {
+    public static func projectileStore() throws -> ItemDefinitionStore {
         try ItemDefinitionStore(file: plugin())
     }
 
     /// A spellbook runtime over a fresh store, plus the store so a suite can
     /// snapshot it.
-    static func runtime(
+    public static func runtime(
         store: WorldStateStore = WorldStateStore(),
         equipment: EquipmentRuntime? = nil
     ) throws -> (SpellbookRuntime, WorldStateStore) {
@@ -135,7 +135,7 @@ enum SpellbookFixture {
     /// An actor-value runtime whose subjects all start at 100 of everything and
     /// regenerate nothing, so a magicka number in a suite is only ever what a
     /// cast spent.
-    static func values(store: WorldStateStore) -> ActorValueRuntime {
+    public static func values(store: WorldStateStore) -> ActorValueRuntime {
         ActorValueRuntime(
             store: store,
             baselines: ActorValueBaselineResolver(

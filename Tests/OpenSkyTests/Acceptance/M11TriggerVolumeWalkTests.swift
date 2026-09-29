@@ -13,15 +13,17 @@ import FormatsESMTesting
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
 @MainActor
 struct M11TriggerVolumeWalkTests {
-    private static let volumeID = PapyrusWorldTriggerTests.volumeID
-    private static let scriptName = PapyrusWorldTriggerTests.scriptName
+    private static let volumeID = TriggerStreamFixture.volumeID
+    private static let scriptName = TriggerStreamFixture.scriptName
     private static var enterNote: String {
         "\(PapyrusRuntime.key(scriptName)).enter"
     }
@@ -31,7 +33,7 @@ struct M11TriggerVolumeWalkTests {
     }
 
     private static var center: SIMD3<Float> {
-        CellStreamerTests.center
+        CellStreamerFixture.center
     }
 
     private struct Harness {
@@ -60,12 +62,12 @@ struct M11TriggerVolumeWalkTests {
             halfExtents: SIMD3(repeating: 64)
         ))
         let session = PapyrusWorldFixture.session(
-            objects: [PapyrusWorldTriggerTests.triggerScript()],
+            objects: [TriggerStreamFixture.triggerScript()],
             entries: [entry],
             attach: false
         )
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         session.bridge.references = streamer
         let witness = DetachWitness()
         wire(streamer: streamer, session: session, witness: witness)
@@ -104,15 +106,15 @@ struct M11TriggerVolumeWalkTests {
         entry: RuntimeReferenceEntry,
         volume: TriggerVolume
     ) {
-        let scene = CellStreamerTests.cellScene(
-            location: .exterior(CellStreamerTests.coordinate(0, 0)),
+        let scene = CellStreamerFixture.cellScene(
+            location: .exterior(CellStreamerFixture.coordinate(0, 0)),
             triggerVolumes: TriggerStreamFixture.volumeSet(
-                [volume], location: .exterior(CellStreamerTests.coordinate(0, 0))
+                [volume], location: .exterior(CellStreamerFixture.coordinate(0, 0))
             ),
             references: RuntimeReferenceIndex(entries: [entry])
         )
         streamer.update(cameraPosition: center)
-        runner.complete(CellStreamerTests.coordinate(0, 0), with: .success(scene))
+        runner.complete(CellStreamerFixture.coordinate(0, 0), with: .success(scene))
         streamer.update(cameraPosition: center)
     }
 
@@ -191,7 +193,7 @@ struct M11TriggerVolumeWalkTests {
         )
         // Deliver the enter, so what the detach witness sees is only the leave.
         PapyrusWorldFixture.drain(harness.session.world)
-        let departed = CellGridManager.cellCenter(of: CellStreamerTests.coordinate(8, 0))
+        let departed = CellGridManager.cellCenter(of: CellStreamerFixture.coordinate(8, 0))
         harness.streamer.update(
             cameraPosition: TriggerStreamFixture.eye(feetAt: departed),
             playerCapsule: TriggerStreamFixture.capsule(feetAt: departed)

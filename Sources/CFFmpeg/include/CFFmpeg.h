@@ -1,6 +1,6 @@
 // Umbrella header for the CFFmpeg module: the decode-only slice of the vendored ffmpeg
-// build that Sources/OpenSkyAudio uses. Built by tools/vendor-ffmpeg.sh into .vendor/ffmpeg;
-// SWIFT_INCLUDE_PATHS puts that prefix's include directory on the header search path.
+// build that Sources/OpenSkyAudio uses. Built by tools/vendor-ffmpeg.sh into .vendor/ffmpeg.
+// Package.swift puts that prefix's include directory on the header search path.
 // See docs/decisions/ffmpeg-audio.md.
 
 #ifndef OPENSKY_CFFMPEG_SHIM_H

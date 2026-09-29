@@ -14,37 +14,65 @@ import Foundation
 @testable import OpenSkyWorld
 import Testing
 
-enum MusicFixture {
+public enum MusicFixture {
     /// One synthetic MUSC.
-    struct TypeSpec {
-        let formID: UInt32
-        var editorID = "MUSExplore"
+    public struct TypeSpec {
+        public let formID: UInt32
+        public var editorID = "MUSExplore"
         /// FNAM bits. 0x0004 = cycle tracks, 0x0008 = maintain order,
         /// 0x0001 = plays one selection, 0x0002 = abrupt transition.
-        var flags: UInt32 = 0
+        public var flags: UInt32 = 0
         /// WNAM fade duration in seconds; nil omits the field.
-        var fadeSeconds: Float?
+        public var fadeSeconds: Float?
         /// TNAM links in authored order. Zero entries are null separators.
-        var tracks: [UInt32] = []
+        public var tracks: [UInt32] = []
+
+        public init(
+            formID: UInt32,
+            editorID: String = "MUSExplore",
+            flags: UInt32 = 0,
+            fadeSeconds: Float? = nil,
+            tracks: [UInt32] = []
+        ) {
+            self.formID = formID
+            self.editorID = editorID
+            self.flags = flags
+            self.fadeSeconds = fadeSeconds
+            self.tracks = tracks
+        }
     }
 
     /// One synthetic MUST.
-    struct TrackSpec {
-        let formID: UInt32
-        var editorID = "Track"
+    public struct TrackSpec {
+        public let formID: UInt32
+        public var editorID = "Track"
         /// CNAM tag: single track, palette, or silent.
-        var type: UInt32 = 0x6ED7_E048
+        public var type: UInt32 = 0x6ED7_E048
         /// ANAM filename; nil omits the field (a silent or palette track).
-        var file: String?
+        public var file: String?
         /// SNAM palette children.
-        var children: [UInt32] = []
+        public var children: [UInt32] = []
+
+        public init(
+            formID: UInt32,
+            editorID: String = "Track",
+            type: UInt32 = 0x6ED7_E048,
+            file: String? = nil,
+            children: [UInt32] = []
+        ) {
+            self.formID = formID
+            self.editorID = editorID
+            self.type = type
+            self.file = file
+            self.children = children
+        }
     }
 
-    static let singleTrackTag: UInt32 = 0x6ED7_E048
-    static let paletteTag: UInt32 = 0x23F6_78C3
-    static let silentTag: UInt32 = 0xA1A9_C4D5
+    public static let singleTrackTag: UInt32 = 0x6ED7_E048
+    public static let paletteTag: UInt32 = 0x23F6_78C3
+    public static let silentTag: UInt32 = 0xA1A9_C4D5
 
-    static func makeStore(types: [TypeSpec], tracks: [TrackSpec]) -> MusicRecordStore {
+    public static func makeStore(types: [TypeSpec], tracks: [TrackSpec]) -> MusicRecordStore {
         var muscBytes = Data()
         for type in types {
             var fields = ESMFixture.field("EDID", ESMFixture.zstring(type.editorID))
@@ -84,7 +112,7 @@ enum MusicFixture {
     }
 
     /// REGN records carrying only an RDMO music link.
-    static func makeWeatherStore(regionMusic: [UInt32: UInt32]) -> WeatherStore {
+    public static func makeWeatherStore(regionMusic: [UInt32: UInt32]) -> WeatherStore {
         var bytes = Data()
         for (regionID, musicID) in regionMusic.sorted(by: { $0.key < $1.key }) {
             let fields = ESMFixture.field("EDID", ESMFixture.zstring("Region\(regionID)"))
@@ -101,7 +129,7 @@ enum MusicFixture {
 
     /// The shape most cases need: one cycling MUSC (`0x20`, two tracks) and one
     /// town MUSC (`0x30`, one track).
-    static func makeDefaultStore() -> MusicRecordStore {
+    public static func makeDefaultStore() -> MusicRecordStore {
         makeStore(
             types: [
                 TypeSpec(
@@ -130,7 +158,7 @@ enum MusicFixture {
     /// names a `\Data\Music\...\*.wav` the archives do not ship. Used with
     /// `MusicDirectorFixture.makeDirector(engine:musicStore:availablePaths:)`
     /// to model an install that holds only the `.xwm` sibling.
-    static func makeWavAuthoredStore() -> MusicRecordStore {
+    public static func makeWavAuthoredStore() -> MusicRecordStore {
         makeStore(
             types: [TypeSpec(formID: 0x20, editorID: "MUSExploreTundra", tracks: [0x100])],
             tracks: [
@@ -144,11 +172,11 @@ enum MusicFixture {
     }
 
     /// Canonical key `makeWavAuthoredStore`'s single track resolves to.
-    static let wavAuthoredPath = "music\\explore\\mus_explore_day_07.wav"
+    public static let wavAuthoredPath = "music\\explore\\mus_explore_day_07.wav"
     /// The file such an install actually ships.
-    static let shippedAuthoredPath = "music\\explore\\mus_explore_day_07.xwm"
+    public static let shippedAuthoredPath = "music\\explore\\mus_explore_day_07.xwm"
 
-    static func context(
+    public static func context(
         cellMusicType: UInt32? = nil,
         regions: [UInt32] = [],
         worldspaceMusicType: UInt32? = nil,
@@ -171,9 +199,9 @@ enum MusicFixture {
 }
 
 @MainActor
-enum MusicDirectorFixture {
+public enum MusicDirectorFixture {
     /// An offline stereo engine, the same one the OpenSkyAudio suites build.
-    static func makeRunningEngine() throws -> WorldAudioEngine {
+    public static func makeRunningEngine() throws -> WorldAudioEngine {
         let format = try #require(
             AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
         )
@@ -185,7 +213,7 @@ enum MusicDirectorFixture {
 
     /// Director over the default store. `missingPaths` fail to load, so a test
     /// can exercise the degrade-to-silence and skip-a-bad-track paths.
-    static func makeDirector(
+    public static func makeDirector(
         engine: WorldAudioEngine,
         musicStore: MusicRecordStore? = MusicFixture.makeDefaultStore(),
         weatherStore: WeatherStore? = nil,
@@ -207,7 +235,7 @@ enum MusicDirectorFixture {
     /// Director whose loader serves exactly `availablePaths` and throws
     /// `VFSError.fileNotFound` for everything else, so a test can model an
     /// install that ships only some of the names the records author.
-    static func makeDirector(
+    public static func makeDirector(
         engine: WorldAudioEngine,
         musicStore: MusicRecordStore,
         availablePaths: Set<String>
@@ -226,7 +254,7 @@ enum MusicDirectorFixture {
     }
 
     /// Ids of the music sources the engine currently holds, in start order.
-    static func musicSourceIDs(_ engine: WorldAudioEngine) -> [Int] {
+    public static func musicSourceIDs(_ engine: WorldAudioEngine) -> [Int] {
         engine.sources.filter { $0.category == .music }.map(\.id)
     }
 }

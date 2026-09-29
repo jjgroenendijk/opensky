@@ -18,11 +18,13 @@ import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyCombatTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 import simd
 import Testing

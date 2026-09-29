@@ -17,6 +17,7 @@ import Foundation
 import OpenSkyInventoryTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd

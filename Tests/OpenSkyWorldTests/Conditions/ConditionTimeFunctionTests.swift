@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 struct ConditionTimeFunctionTests {

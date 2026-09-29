@@ -2,10 +2,12 @@
 // mutation and its rounding, reset to plugin default, the change journal, the
 // snapshot, and restore. See docs/engine/global-variables.md.
 
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing
+import WorldStateTesting
 
 @MainActor
 struct WorldStateGlobalsTests {

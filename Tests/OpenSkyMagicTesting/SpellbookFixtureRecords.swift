@@ -17,7 +17,7 @@ import Foundation
 @testable import OpenSkyGameData
 
 extension SpellbookFixture {
-    static var equipSlots: [Data] {
+    public static var equipSlots: [Data] {
         [
             EquipSlotFixture.record(formID: Slot.rightHand, editorID: "RightHand"),
             EquipSlotFixture.record(formID: Slot.leftHand, editorID: "LeftHand"),
@@ -34,25 +34,25 @@ extension SpellbookFixture {
     }
 
     /// Restore Health: value modifier on health, Recover clear, base cost 1.
-    static let restoreHealth: UInt32 = 0x0010
+    public static let restoreHealth: UInt32 = 0x0010
     /// Fortify Resist Fire: value modifier on a non-primary value with Recover
     /// set, which is the held-modifier behaviour an ability wants.
-    static let fortifyResistFire: UInt32 = 0x0011
+    public static let fortifyResistFire: UInt32 = 0x0011
     /// Fire Damage: hostile and detrimental, resisted by `Resist Fire`, and
     /// naming a projectile — everything an aimed delivery reads (issue #471).
-    static let fireDamage: UInt32 = 0x0012
+    public static let fireDamage: UInt32 = 0x0012
     /// The PROJ `fireDamage` names.
-    static let fireBoltProjectile: UInt32 = 0x0020
+    public static let fireBoltProjectile: UInt32 = 0x0020
     /// A KYWD the restore-health effect carries, so
     /// `HasMagicEffectKeyword` has something to find (issue #474). No KYWD
     /// record is authored behind it: the condition compares runtime identities,
     /// and a keyword that resolves is all either side needs.
-    static let restorationKeyword: UInt32 = 0x0030
+    public static let restorationKeyword: UInt32 = 0x0030
 
     /// The two MGEF records every spell here points at. Both carry base cost 1,
     /// so every spell cost in the suites comes out of the documented formula
     /// with one term rather than from a number nobody can check.
-    static var magicEffects: [Data] {
+    public static var magicEffects: [Data] {
         [
             magicEffect(
                 formID: restoreHealth, editorID: "RestoreHealth",
@@ -87,7 +87,7 @@ extension SpellbookFixture {
     /// One PROJ: a flat, fast, short-lived bolt. The numbers are a fixture's,
     /// not a record's — what the suites assert is that the flight model reads
     /// the projectile the MGEF named, not that a particular speed is vanilla's.
-    static var projectiles: [Data] {
+    public static var projectiles: [Data] {
         [ESMFixture.record(
             "PROJ",
             formID: fireBoltProjectile,
@@ -98,7 +98,7 @@ extension SpellbookFixture {
 
     /// PROJ DATA, flags through range — the shortest payload the decoder
     /// accepts, which is all the flight model needs.
-    static func projectileData(
+    public static func projectileData(
         speed: Float = 3000,
         gravity: Float = 0,
         range: Float = 4000
@@ -116,7 +116,7 @@ extension SpellbookFixture {
     /// 0x40 archetype, 0x44 primary actor value. Everything else is zero, which
     /// is a valid record and keeps the fixture honest about what the planner
     /// and the cost formula actually read.
-    static func effectData(
+    public static func effectData(
         flags: MagicEffectFlags = [],
         baseCost: Float = 1,
         archetype: UInt32 = 0,
@@ -150,7 +150,7 @@ extension SpellbookFixture {
     /// KSIZ/KWDA are written only when `keywords` is non-empty, because a
     /// record with an empty keyword list and a record with none are different
     /// bytes and the decoder tolerates both (issue #474).
-    static func magicEffect(
+    public static func magicEffect(
         formID: UInt32,
         editorID: String,
         data: Data,
@@ -174,7 +174,7 @@ extension SpellbookFixture {
         )
     }
 
-    static var spells: [Data] {
+    public static var spells: [Data] {
         [
             spell(
                 formID: Spell.fastHealing, editorID: "FastHealing", equipType: Slot.eitherHand,
@@ -253,7 +253,7 @@ extension SpellbookFixture {
         ]
     }
 
-    static var books: [Data] {
+    public static var books: [Data] {
         [
             book(formID: Book.healingTome, editorID: "SpellTomeHealing", teaches: Spell.healing),
             book(formID: Book.novel, editorID: "ANovel", teaches: nil)
@@ -264,7 +264,7 @@ extension SpellbookFixture {
 
     /// SPIT: base cost, flags, type, charge time, casting type, delivery, cast
     /// duration, range, half-cost perk.
-    static func spit(
+    public static func spit(
         type: UInt32,
         chargeTime: Float,
         casting: UInt32,
@@ -288,14 +288,14 @@ extension SpellbookFixture {
 
     /// One EFID/EFIT entry of a fixture spell. A named type rather than a
     /// tuple because three members is past the strict-lint tuple cap.
-    struct EffectSpec {
-        let effect: UInt32
-        let magnitude: Float
-        let duration: UInt32
+    public struct EffectSpec {
+        public let effect: UInt32
+        public let magnitude: Float
+        public let duration: UInt32
         /// EFIT area, authored in feet (issue #471). Zero is a point effect.
-        let area: UInt32
+        public let area: UInt32
 
-        init(_ effect: UInt32, _ magnitude: Float, _ duration: UInt32, area: UInt32 = 0) {
+        public init(_ effect: UInt32, _ magnitude: Float, _ duration: UInt32, area: UInt32 = 0) {
             self.effect = effect
             self.magnitude = magnitude
             self.duration = duration
@@ -303,7 +303,7 @@ extension SpellbookFixture {
         }
     }
 
-    static func spell(
+    public static func spell(
         formID: UInt32,
         editorID: String,
         equipType: UInt32,
@@ -326,7 +326,7 @@ extension SpellbookFixture {
     }
 
     /// A BOOK whose DATA carries the "teaches spell" flag when it names one.
-    static func book(formID: UInt32, editorID: String, teaches: UInt32?) -> Data {
+    public static func book(formID: UInt32, editorID: String, teaches: UInt32?) -> Data {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
             + ESMFixture.field("FULL", ESMFixture.zstring(editorID))
             + ESMFixture.field("DATA", InventoryFixture.bookData(

@@ -5,6 +5,7 @@
 
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
+import OpenSkyWorldTesting
 import Testing
 
 struct MusicCatalogPlaylistTests {

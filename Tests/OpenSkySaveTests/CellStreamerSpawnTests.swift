@@ -18,6 +18,7 @@ import OpenSkyInventoryTesting
 @testable import OpenSkySave
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -39,7 +40,7 @@ struct CellStreamerSpawnTests {
     private static func makeHarness() throws -> Harness {
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         streamer.stateSource = { store.snapshot() }
         store.onMutation = { [weak streamer] location, sequence in
             streamer?.noteStateMutation(in: location, sequence: sequence)
@@ -72,7 +73,7 @@ struct CellStreamerSpawnTests {
             let index = harness.completedCount
             harness.runner.complete(
                 harness.runner.enqueued[index],
-                with: .success(CellStreamerTests.cellScene(
+                with: .success(CellStreamerFixture.cellScene(
                     stateSequence: harness.runner.enqueuedStates[index].sequence
                 ))
             )

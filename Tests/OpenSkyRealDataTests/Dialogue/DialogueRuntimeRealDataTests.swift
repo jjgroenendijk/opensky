@@ -30,6 +30,7 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 struct DialogueRuntimeRealDataTests {

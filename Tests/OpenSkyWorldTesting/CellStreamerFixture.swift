@@ -1,10 +1,9 @@
-// The `CellStreamerTests` fixture: cell coordinates, the synthetic built cell
-// every streaming suite feeds through the manual build runner, and the streamer
-// factory. Both test targets compile this folder, because the real-data
-// streaming and interaction suites drive a streamer built exactly this way.
+// The cell-streamer fixture: cell coordinates, the synthetic built cell every
+// streaming suite feeds through the manual build runner, and the streamer
+// factory. The acceptance and real-data streaming suites drive a streamer built
+// exactly this way.
 //
-// No Metal and no game data are involved. The suite's own tests are extensions
-// of this type under Tests/OpenSkyTests/. See Tests/TestSupport/AGENTS.md.
+// No Metal and no game data are involved.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -20,14 +19,14 @@ import simd
 import Testing
 
 @MainActor
-struct CellStreamerTests {
-    static func coordinate(_ x: Int32, _ y: Int32) -> CellCoordinate {
+public enum CellStreamerFixture {
+    public static func coordinate(_ x: Int32, _ y: Int32) -> CellCoordinate {
         CellCoordinate(x: x, y: y)
     }
 
     /// Synthetic built cell: empty draw list, optional bounds (so the first
     /// integrated cell can frame a camera) and asset keys (for eviction tests).
-    static func cellScene(
+    public static func cellScene(
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)? = (SIMD3(0, 0, 0), SIMD3(10, 10, 10)),
         meshKeys: Set<String> = [],
         textureKeys: Set<String> = [],
@@ -73,9 +72,9 @@ struct CellStreamerTests {
     }
 
     /// World center of cell (0,0); keeps the grid centered without recentering.
-    static let center = CellGridManager.cellCenter(of: coordinate(0, 0))
+    public static let center = CellGridManager.cellCenter(of: coordinate(0, 0))
 
-    static func makeStreamer(
+    public static func makeStreamer(
         runner: ManualCellBuildRunner,
         radius: Int32 = 1,
         sink: @escaping CellStreamer.SceneSink = { _, _ in }
@@ -88,8 +87,8 @@ struct CellStreamerTests {
 
 /// The placed-interaction, static-collision and interaction-ray builders the
 /// walk-mode targeting suites share with the real-data interaction suites.
-extension CellStreamerTests {
-    static func interaction(
+extension CellStreamerFixture {
+    public static func interaction(
         reference: UInt32,
         base: UInt32 = 0x100,
         position: SIMD3<Float>,
@@ -109,21 +108,21 @@ extension CellStreamerTests {
         )
     }
 
-    static func collision(
+    public static func collision(
         reference: UInt32,
         position: SIMD3<Float>
     ) -> StaticCollisionSet {
         collisionSet(shapes: [collisionShape(reference: reference, position: position)])
     }
 
-    static func interactionRay(
+    public static func interactionRay(
         from origin: SIMD3<Float>,
         to target: SIMD3<Float>
     ) -> InteractionRay? {
         InteractionRay(origin: origin, direction: target - origin)
     }
 
-    static func collisionShape(
+    public static func collisionShape(
         reference: UInt32,
         position: SIMD3<Float>
     ) -> StaticCollisionShape {
@@ -136,7 +135,7 @@ extension CellStreamerTests {
         )
     }
 
-    static func collisionSet(
+    public static func collisionSet(
         shapes: [StaticCollisionShape]
     ) -> StaticCollisionSet {
         var stats = StaticCollisionStats()
@@ -145,6 +144,25 @@ extension CellStreamerTests {
             location: nil,
             shapes: shapes,
             stats: stats
+        )
+    }
+}
+
+/// A placed door that teleports to `destination`.
+extension CellStreamerFixture {
+    public static func door(
+        reference: UInt32,
+        destination: UInt32,
+        position: SIMD3<Float>
+    ) -> PlacedDoor {
+        PlacedDoor(
+            reference: FormID(reference),
+            position: position,
+            destination: PlacedReference.TeleportDestination(
+                door: FormID(destination),
+                placement: PlacedReference.Placement(position: position, rotation: .zero),
+                flags: []
+            )
         )
     }
 }

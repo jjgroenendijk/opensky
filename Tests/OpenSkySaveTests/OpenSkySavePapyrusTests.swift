@@ -12,8 +12,10 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 import Testing
 

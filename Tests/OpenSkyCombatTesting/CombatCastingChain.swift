@@ -29,38 +29,39 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyMagicTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 
 @MainActor
-final class CombatCastingChain {
-    static let caster = ReferenceKey.plugin(name: "base.esm", objectID: 0x0901)
-    static let casterBase = FormID(0x0000_0F01)
+public final class CombatCastingChain {
+    public static let caster = ReferenceKey.plugin(name: "base.esm", objectID: 0x0901)
+    public static let casterBase = FormID(0x0000_0F01)
 
-    let store: WorldStateStore
-    let spellbook: SpellbookRuntime
-    let values: ActorValueRuntime
-    let caster: CasterRuntime
-    let combat: CombatLoopRuntime
-    var effects: ActiveEffectRuntime
+    public let store: WorldStateStore
+    public let spellbook: SpellbookRuntime
+    public let values: ActorValueRuntime
+    public let caster: CasterRuntime
+    public let combat: CombatLoopRuntime
+    public var effects: ActiveEffectRuntime
 
     /// Where the two stand. The player never moves in these cases; the caster
     /// is placed where a case wants it and stays there, because the mover is
     /// 16.4's and a fake that walked would be simulating it.
-    var playerFeet = SIMD3<Float>()
-    var casterFeet = SIMD3<Float>(1200, 0, 0)
-    var casterIsDead = false
-    var hostility: [ReferenceKey: ActorHostility] = [CombatCastingChain.caster: .hostile]
+    public var playerFeet = SIMD3<Float>()
+    public var casterFeet = SIMD3<Float>(1200, 0, 0)
+    public var casterIsDead = false
+    public var hostility: [ReferenceKey: ActorHostility] = [CombatCastingChain.caster: .hostile]
 
     /// Every projectile a cast put in the air, and every spell that landed.
-    private(set) var firedProjectiles: [SpellPayload] = []
-    private(set) var spellHits: [SpellHit] = []
-    private(set) var resumedPackages: [ReferenceKey] = []
+    public private(set) var firedProjectiles: [SpellPayload] = []
+    public private(set) var spellHits: [SpellHit] = []
+    public private(set) var resumedPackages: [ReferenceKey] = []
 
     /// Over `SpellbookFixture`'s synthetic records.
-    convenience init() throws {
+    public convenience init() throws {
         let index = try SpellbookFixture.index()
         let store = WorldStateStore()
         let values = SpellbookFixture.values(store: store)
@@ -78,7 +79,7 @@ final class CombatCastingChain {
 
     /// Over whatever records the caller indexed, which is how the real-data
     /// suite drives the same pipeline against the install.
-    init(
+    public init(
         store: WorldStateStore,
         spellbook: SpellbookRuntime,
         values: ActorValueRuntime,
@@ -97,29 +98,29 @@ final class CombatCastingChain {
 
     /// The caster's holder, which is an actor rather than the player so the
     /// player's own damage cap never enters the arithmetic.
-    var casterHolder: ActorValueHolder {
+    public var casterHolder: ActorValueHolder {
         ActorValueHolder(key: Self.caster, subject: .actor(base: Self.casterBase), cell: nil)
     }
 
     /// Teaches the caster one fixture spell.
-    func teach(_ objectID: UInt32) {
+    public func teach(_ objectID: UInt32) {
         spellbook.learn(SpellbookFixture.key(objectID), on: casterHolder)
     }
 
     /// Grants a whole authored list, which is what the combat loop does the
     /// first time an actor is asked what it can cast.
-    func grant(_ spells: [ReferenceKey]) {
+    public func grant(_ spells: [ReferenceKey]) {
         spellbook.grant(spells, to: casterHolder)
     }
 
     /// Every option the caster would have from where it is standing.
-    var options: [CombatSpellOption] {
+    public var options: [CombatSpellOption] {
         combatCasting(of: Self.caster).options
     }
 
     /// Advances the fight and every cast in flight by `seconds`, in the fixed
     /// steps the runtime itself uses.
-    func advance(seconds: Float) {
+    public func advance(seconds: Float) {
         var elapsed: Float = 0
         while elapsed < seconds {
             let step = CombatLoopRuntime.fixedStepSeconds
@@ -129,11 +130,11 @@ final class CombatCastingChain {
         }
     }
 
-    var playerHealth: Float {
+    public var playerHealth: Float {
         values.current(of: .player).health
     }
 
-    var casterMagicka: Float {
+    public var casterMagicka: Float {
         values.current(of: casterHolder).magicka
     }
 }
@@ -141,53 +142,53 @@ final class CombatCastingChain {
 // MARK: - The fight
 
 extension CombatCastingChain: CombatLoopWorld {
-    var combatPlayer: MeleeAttacker {
+    public var combatPlayer: MeleeAttacker {
         MeleeAttacker(key: .player, feet: playerFeet, facing: 0)
     }
 
-    func combatActors() -> [CombatActorObservation] {
+    public func combatActors() -> [CombatActorObservation] {
         [CombatActorObservation(
             key: Self.caster, feet: casterFeet, isDead: casterIsDead, name: "Caster"
         )]
     }
 
-    func combatHostility(of key: ReferenceKey) -> ActorHostility {
+    public func combatHostility(of key: ReferenceKey) -> ActorHostility {
         hostility[key] ?? .neutral
     }
 
     @discardableResult
-    func setCombatHostility(_ value: ActorHostility, on key: ReferenceKey) -> Bool {
+    public func setCombatHostility(_ value: ActorHostility, on key: ReferenceKey) -> Bool {
         guard hostility[key] != value else { return false }
         hostility[key] = value
         return true
     }
 
     @discardableResult
-    func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool {
+    public func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool {
         guard amount > 0 else { return false }
         values.damage(.health, by: amount, on: holder(for: key))
         return true
     }
 
-    func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
+    public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
         combat.blockKind(of: key)
     }
 
-    func combatAwareness(
+    public func combatAwareness(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> CombatAwareness {
         .detected(at: playerFeet)
     }
 
-    func combatHealthFraction(of key: ReferenceKey) -> Float {
+    public func combatHealthFraction(of key: ReferenceKey) -> Float {
         1
     }
 
-    func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
+    public func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
         .unarmed
     }
 
-    func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
+    public func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
         guard key == Self.caster else { return .none }
         return CombatCastingProfile(
             magicka: casterMagicka,
@@ -198,7 +199,7 @@ extension CombatCastingChain: CombatLoopWorld {
     /// One known spell as a combat option, on the same four gates the app's
     /// bridge applies: a spell rather than an ability or a power, delivered
     /// away from the caster, hostile, and something this build carries out.
-    static func option(for spell: ResolvedSpell) -> CombatSpellOption? {
+    public static func option(for spell: ResolvedSpell) -> CombatSpellOption? {
         let delivery = spell.data?.delivery ?? .selfTarget
         guard
             spell.spellType == .spell,
@@ -219,14 +220,14 @@ extension CombatCastingChain: CombatLoopWorld {
     }
 
     @discardableResult
-    func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
+    public func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
         guard (try? spellbook.equip(option.spell, in: .right, on: casterHolder)) != nil
         else { return false }
         return caster.begin(.right, on: casterHolder).failure == nil
     }
 
     @discardableResult
-    func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
+    public func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
         let outcome = caster.release(.right, on: casterHolder)
         if caster.phase(of: .right, on: key).isCasting {
             caster.cancel(.right, on: casterHolder)
@@ -234,49 +235,49 @@ extension CombatCastingChain: CombatLoopWorld {
         return outcome.isFinished
     }
 
-    func cancelCombatCast(by key: ReferenceKey) {
+    public func cancelCombatCast(by key: ReferenceKey) {
         caster.cancel(.right, on: casterHolder)
     }
 
     @discardableResult
-    func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
+    public func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
         true
     }
 
-    func stopCombatMovement(of key: ReferenceKey) {}
+    public func stopCombatMovement(of key: ReferenceKey) {}
 
-    func resumeCombatPackage(for key: ReferenceKey) {
+    public func resumeCombatPackage(for key: ReferenceKey) {
         resumedPackages.append(key)
     }
 
     @discardableResult
-    func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
+    public func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
         false
     }
 
-    func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {}
+    public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {}
 
     @discardableResult
-    func playCombatClip(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
+    public func playCombatClip(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
         false
     }
 
-    var combatTransients: CombatTransientCounts {
+    public var combatTransients: CombatTransientCounts {
         .none
     }
 
     @discardableResult
-    func trimCombatTransients(to limits: CombatTransientLimits) -> CombatTransientCounts {
+    public func trimCombatTransients(to limits: CombatTransientLimits) -> CombatTransientCounts {
         .none
     }
 
-    func despawnCombatTransients() {}
+    public func despawnCombatTransients() {}
 
-    func setCombatMusicActive(_ active: Bool) {}
+    public func setCombatMusicActive(_ active: Bool) {}
 
     /// The holder behind a key: the player is the player, and everybody else is
     /// the one caster this chain has.
-    func holder(for key: ReferenceKey) -> ActorValueHolder {
+    public func holder(for key: ReferenceKey) -> ActorValueHolder {
         key == .player ? .player : casterHolder
     }
 }
@@ -284,11 +285,11 @@ extension CombatCastingChain: CombatLoopWorld {
 // MARK: - The cast
 
 extension CombatCastingChain: CasterWorld {
-    var castingGameDay: Int32 {
+    public var castingGameDay: Int32 {
         0
     }
 
-    func applyCastEffects(
+    public func applyCastEffects(
         _ entries: [MagicItemEffect],
         fromPlugin pluginName: String,
         source: ActiveEffectSource,
@@ -309,7 +310,7 @@ extension CombatCastingChain: CasterWorld {
     /// payload that damages who it was aimed at. Both the launch and the
     /// landing are recorded, so a case can assert on either.
     @discardableResult
-    func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
+    public func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
         firedProjectiles.append(payload)
         let aim = aimedSpellTarget(within: 0, for: payload.caster)
         let targets = SpellHitTargeting.targets(
@@ -327,7 +328,7 @@ extension CombatCastingChain: CasterWorld {
     /// The caster's aim ray reaches the player, which is what a fight of one
     /// NPC against one player means. The position is the player's feet, so an
     /// area entry measures its radius from where the player is standing.
-    func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
+    public func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
         SpellAim(
             target: .player,
             position: playerFeet,
@@ -336,7 +337,7 @@ extension CombatCastingChain: CasterWorld {
     }
 
     @discardableResult
-    func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
+    public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
         spellHits.append(hit)
         var holders: [ReferenceKey: ActorValueHolder] = [:]
         for target in hit.targets {

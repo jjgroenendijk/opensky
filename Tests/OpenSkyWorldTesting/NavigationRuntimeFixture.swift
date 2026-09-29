@@ -10,8 +10,8 @@ import FormatsESMTesting
 import simd
 
 @MainActor
-enum NavigationRuntimeFixture {
-    static func navmesh(
+public enum NavigationRuntimeFixture {
+    public static func navmesh(
         id: UInt32,
         vertices: [SIMD3<Float>],
         triangles: [NavmeshFixture.Triangle],
@@ -29,21 +29,26 @@ enum NavigationRuntimeFixture {
         ))
     }
 
-    static func grid(id: UInt32, columns: Int, rows: Int, spacing: Float = 10) throws -> Navmesh {
+    public static func grid(
+        id: UInt32,
+        columns: Int,
+        rows: Int,
+        spacing: Float = 10
+    ) throws -> Navmesh {
         let vertices = gridVertices(columns: columns, rows: rows, spacing: spacing)
         var triangles = gridTriangles(columns: columns, rows: rows)
         connectSharedEdges(in: &triangles)
         return try navmesh(id: id, vertices: vertices, triangles: triangles)
     }
 
-    static func scene(
+    public static func scene(
         location: CellSceneLocation,
         navmeshes: [Navmesh],
         sequence: UInt64 = 0,
         doors: [PlacedDoor] = [],
         interactions: [FormID: PlacedInteraction] = [:]
     ) -> CellScene {
-        CellStreamerTests.cellScene(
+        CellStreamerFixture.cellScene(
             location: location,
             doors: doors,
             interactions: interactions,
@@ -52,7 +57,7 @@ enum NavigationRuntimeFixture {
         )
     }
 
-    static func placedDoor(
+    public static func placedDoor(
         reference: UInt32,
         destination: UInt32,
         position: SIMD3<Float>
@@ -71,11 +76,11 @@ enum NavigationRuntimeFixture {
         )
     }
 
-    static func doorInteraction(
+    public static func doorInteraction(
         reference: UInt32,
         position: SIMD3<Float>
     ) -> PlacedInteraction {
-        CellStreamerTests.interaction(reference: reference, position: position)
+        CellStreamerFixture.interaction(reference: reference, position: position)
     }
 
     private static func gridVertices(

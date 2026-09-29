@@ -4,11 +4,14 @@
 // See docs/formats/opensky-save-world-chunks.md.
 
 @testable import FormatsCoreTesting
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorldState
 import Testing
+import WorldStateTesting
 
 @MainActor
 struct OpenSkySaveGlobalsTests {

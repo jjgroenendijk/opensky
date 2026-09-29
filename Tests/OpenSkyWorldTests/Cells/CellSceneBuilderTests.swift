@@ -4,19 +4,25 @@
 // boundary). Needs a Metal device (RenderModel upload), gated like
 // MeshLibraryTests.
 //
-// The fixture half of this suite -- the type itself, the temp-dir VFS and every
-// record and mesh builder -- is `Tests/TestSupport/World/Cells/CellSceneBuilderFixture.swift`,
-// because the M11 real-data acceptance suite builds the same synthetic cell
-// (issue #418).
+// The temp-dir VFS and every record and mesh builder come from
+// `CellSceneBuilderFixture` in OpenSkyWorldTesting, because the acceptance suites
+// build the same synthetic cell.
 
 import Foundation
 import Metal
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
-extension CellSceneBuilderTests {
+struct CellSceneBuilderTests: CellSceneBuilderFixture {
+    let dataURL: URL
+
+    init() throws {
+        dataURL = try Self.makeDataDirectory()
+    }
+
     // MARK: - Happy path
 
     @Test(.enabled(if: Self.hasDevice)) func drawsAllResolvableRefs() throws {

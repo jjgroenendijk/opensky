@@ -18,8 +18,10 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyMagicTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd

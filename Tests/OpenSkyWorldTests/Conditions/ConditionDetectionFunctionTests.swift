@@ -13,6 +13,7 @@ import Foundation
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 

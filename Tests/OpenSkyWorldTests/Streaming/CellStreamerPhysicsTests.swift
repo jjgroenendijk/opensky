@@ -10,6 +10,7 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -33,20 +34,25 @@ struct CellStreamerPhysicsTests {
         at coordinate: CellCoordinate,
         scene: CellScene
     ) {
-        streamer.update(cameraPosition: CellStreamerTests.center)
+        streamer.update(cameraPosition: CellStreamerFixture.center)
         runner.complete(coordinate, with: .success(scene))
-        streamer.update(cameraPosition: CellStreamerTests.center)
+        streamer.update(cameraPosition: CellStreamerFixture.center)
     }
 
     @Test
     func aResidentCellInstallsItsBodiesAndAnUnloadedOneDropsThem() {
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
-        let coordinate = CellStreamerTests.coordinate(0, 0)
-        Self.integrate(streamer, runner: runner, at: coordinate, scene: CellStreamerTests.cellScene(
-            location: .exterior(coordinate),
-            dynamicBodies: [Self.placement(key: .generated(1))]
-        ))
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
+        let coordinate = CellStreamerFixture.coordinate(0, 0)
+        Self.integrate(
+            streamer,
+            runner: runner,
+            at: coordinate,
+            scene: CellStreamerFixture.cellScene(
+                location: .exterior(coordinate),
+                dynamicBodies: [Self.placement(key: .generated(1))]
+            )
+        )
 
         #expect(streamer.dynamicBodies.bodyCount == 1)
         #expect(
@@ -55,7 +61,7 @@ struct CellStreamerPhysicsTests {
 
         // Walk far enough that the one-cell grid recenters and drops it.
         streamer.update(
-            cameraPosition: CellGridManager.cellCenter(of: CellStreamerTests.coordinate(9, 9))
+            cameraPosition: CellGridManager.cellCenter(of: CellStreamerFixture.coordinate(9, 9))
         )
 
         #expect(streamer.dynamicBodies.bodyCount == 0)
@@ -66,15 +72,20 @@ struct CellStreamerPhysicsTests {
     @Test
     func aRebuiltSceneDoesNotResetABodyThatHasAlreadyMoved() {
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
-        let coordinate = CellStreamerTests.coordinate(0, 0)
-        Self.integrate(streamer, runner: runner, at: coordinate, scene: CellStreamerTests.cellScene(
-            location: .exterior(coordinate),
-            stateSequence: 1,
-            dynamicBodies: [Self.placement(key: .generated(1))]
-        ))
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
+        let coordinate = CellStreamerFixture.coordinate(0, 0)
+        Self.integrate(
+            streamer,
+            runner: runner,
+            at: coordinate,
+            scene: CellStreamerFixture.cellScene(
+                location: .exterior(coordinate),
+                stateSequence: 1,
+                dynamicBodies: [Self.placement(key: .generated(1))]
+            )
+        )
         for _ in 0 ..< 20 {
-            streamer.update(cameraPosition: CellStreamerTests.center, frameTime: 1.0 / 60)
+            streamer.update(cameraPosition: CellStreamerFixture.center, frameTime: 1.0 / 60)
         }
         let fallen = streamer.dynamicBodies.body(for: .generated(1))?.position.z ?? 0
         #expect(fallen < 100)
@@ -93,8 +104,8 @@ struct CellStreamerPhysicsTests {
     @Test
     func theCollisionQueryUnionsStaticShapesWithMovingBodies() {
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
-        let coordinate = CellStreamerTests.coordinate(0, 0)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
+        let coordinate = CellStreamerFixture.coordinate(0, 0)
         let volume = DynamicCollisionVolume.box(halfExtents: SIMD3(repeating: 10))
             ?? .radial(first: .zero, second: .zero, radius: 10)
         let placement = DynamicBodyPlacement(
@@ -112,10 +123,15 @@ struct CellStreamerPhysicsTests {
             originPosition: SIMD3(0, 0, 100),
             orientation: .identityRotation
         )
-        Self.integrate(streamer, runner: runner, at: coordinate, scene: CellStreamerTests.cellScene(
-            location: .exterior(coordinate),
-            dynamicBodies: [placement]
-        ))
+        Self.integrate(
+            streamer,
+            runner: runner,
+            at: coordinate,
+            scene: CellStreamerFixture.cellScene(
+                location: .exterior(coordinate),
+                dynamicBodies: [placement]
+            )
+        )
 
         let bounds = ModelBounds(min: SIMD3(-40, -40, 60), max: SIMD3(40, 40, 140))
         #expect(streamer.collisionCandidates(overlapping: bounds).count == 1)

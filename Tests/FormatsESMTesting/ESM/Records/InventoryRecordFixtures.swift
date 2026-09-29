@@ -94,6 +94,15 @@ public enum InventoryFixture: Sendable {
 
     /// WEAP DNAM: 100 bytes; only 0x00, 0x04, 0x08, 0x0C, 0x4C and 0x60 are
     /// read. Stagger is fixed at 0.75 so its offset is asserted too.
+    /// ARMA DNAM, 12 bytes: male priority, female priority, four bytes of weight
+    /// slider flags, detection sound, one unused byte, then the weapon-adjust
+    /// float (UESP + xEdit; see ArmorAddon.swift).
+    public static func armorAddonDNAM(male: UInt8, female: UInt8, weaponAdjust: Float = 0) -> Data {
+        var data = Data([male, female, 0, 0, 0, 0, 0, 0])
+        data.appendFloat32(weaponAdjust)
+        return ESMFixture.field("DNAM", data)
+    }
+
     public static func weaponDNAM(
         animation: UInt8, speed: Float, reach: Float, flags: UInt16, skill: Int32
     ) -> Data {

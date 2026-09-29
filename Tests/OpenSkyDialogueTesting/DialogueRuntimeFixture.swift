@@ -14,6 +14,7 @@
 
 import FormatsESMTesting
 import Foundation
+import GameDataTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
@@ -22,65 +23,66 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 
-enum DialogueRuntimeFixture {
+public enum DialogueRuntimeFixture {
     /// Start-game-enabled, so it runs off its DNAM flag with nothing started.
-    static let runningQuest: UInt32 = 0x0000_0100
+    public static let runningQuest: UInt32 = 0x0000_0100
     /// Not start-game-enabled, so every topic it owns is filtered out.
-    static let dormantQuest: UInt32 = 0x0000_0101
+    public static let dormantQuest: UInt32 = 0x0000_0101
 
-    static let greetingTopic: UInt32 = 0x0000_1000
+    public static let greetingTopic: UInt32 = 0x0000_1000
     /// Priority 90, so it leads the offered list.
-    static let urgentTopic: UInt32 = 0x0000_1001
+    public static let urgentTopic: UInt32 = 0x0000_1001
     /// Priority 50, and the one whose responses compete in file order.
-    static let ordinaryTopic: UInt32 = 0x0000_1002
+    public static let ordinaryTopic: UInt32 = 0x0000_1002
     /// Owned by the dormant quest.
-    static let gatedTopic: UInt32 = 0x0000_1003
+    public static let gatedTopic: UInt32 = 0x0000_1003
     /// A scene topic, which is never a player choice whatever its conditions
     /// say.
-    static let sceneTopic: UInt32 = 0x0000_1004
+    public static let sceneTopic: UInt32 = 0x0000_1004
 
-    static let greetingInfo: UInt32 = 0x0000_2000
+    public static let greetingInfo: UInt32 = 0x0000_2000
     /// Say-once, and first in file order under the urgent topic.
-    static let urgentFirstInfo: UInt32 = 0x0000_2001
+    public static let urgentFirstInfo: UInt32 = 0x0000_2001
     /// The fallback the urgent topic offers once the say-once line is spent.
-    static let urgentSecondInfo: UInt32 = 0x0000_2002
+    public static let urgentSecondInfo: UInt32 = 0x0000_2002
     /// Conditions name a different speaker, so it never wins.
-    static let ordinaryWrongSpeakerInfo: UInt32 = 0x0000_2003
+    public static let ordinaryWrongSpeakerInfo: UInt32 = 0x0000_2003
     /// The winner under the ordinary topic; links to the urgent topic and
     /// carries a result script.
-    static let ordinaryInfo: UInt32 = 0x0000_2004
+    public static let ordinaryInfo: UInt32 = 0x0000_2004
     /// After the winner in file order, so it is never reached.
-    static let ordinaryUnreachedInfo: UInt32 = 0x0000_2005
-    static let gatedInfo: UInt32 = 0x0000_2006
-    static let sceneInfo: UInt32 = 0x0000_2007
+    public static let ordinaryUnreachedInfo: UInt32 = 0x0000_2005
+    public static let gatedInfo: UInt32 = 0x0000_2006
+    public static let sceneInfo: UInt32 = 0x0000_2007
 
     /// Generated result script of `ordinaryInfo`, named the way the Creation
     /// Kit names one for a record with no editor ID.
-    static let resultScript = "TIF__00002004"
-    static let beginFunction = "Fragment_0"
-    static let endFunction = "Fragment_1"
+    public static let resultScript = "TIF__00002004"
+    public static let beginFunction = "Fragment_0"
+    public static let endFunction = "Fragment_1"
 
     /// Base NPC_ the speaker is a placement of, and the one every winning
     /// response's `GetIsID` names.
-    static let speakerBase = ConditionEvaluatorFixture.subjectBase
-    static let otherBase = ConditionEvaluatorFixture.targetBase
+    public static let speakerBase = ConditionEvaluatorFixture.subjectBase
+    public static let otherBase = ConditionEvaluatorFixture.targetBase
 
-    static var speakerKey: ReferenceKey {
+    public static var speakerKey: ReferenceKey {
         ConditionEvaluatorFixture.key(ConditionEvaluatorFixture.subjectFormID)
     }
 
-    static func infoKey(_ objectID: UInt32) -> ReferenceKey {
+    public static func infoKey(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: DialogueFixture.pluginName, objectID: objectID)
     }
 
     // MARK: - Stores
 
-    static func dialogueStore() throws -> DialogueStore {
+    public static func dialogueStore() throws -> DialogueStore {
         try DialogueFixture.store(dialogueChildren: topics())
     }
 
-    static func questStore() throws -> QuestStore {
+    public static func questStore() throws -> QuestStore {
         try QuestFixture.store(
             QuestFixture.record(
                 formID: runningQuest,
@@ -98,7 +100,7 @@ enum DialogueRuntimeFixture {
     /// A runtime over a fresh store, with the speaker placed and the two
     /// quests reading from plugin data.
     @MainActor
-    static func runtime(
+    public static func runtime(
         store: WorldStateStore = WorldStateStore(),
         fragments: (any DialogueFragmentDispatching)? = nil
     ) throws -> DialogueRuntime {
@@ -114,7 +116,7 @@ enum DialogueRuntimeFixture {
         )
     }
 
-    static func context() throws -> ConditionContext {
+    public static func context() throws -> ConditionContext {
         try ConditionContext(
             quests: .empty,
             references: ConditionEvaluatorFixture.references([

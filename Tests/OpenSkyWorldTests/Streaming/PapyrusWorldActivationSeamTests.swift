@@ -14,9 +14,11 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -33,12 +35,13 @@ struct PapyrusWorldActivationSeamTests {
     @Test("the interaction fan-out reaches world audio and Papyrus alike")
     func fanOutReachesBothSubscribers() throws {
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         let entry = try PapyrusWorldFixture.referenceEntry(
             objectID: Self.doorID, scripts: [.init("DoorScript", properties: [])]
         )
         let session = PapyrusWorldFixture.session(
-            objects: [PapyrusWorldActivationTests.onActivateScript("DoorScript")], entries: [entry]
+            objects: [PapyrusWorldActivationFixture.onActivateScript("DoorScript")],
+            entries: [entry]
         )
         session.bridge.references = streamer
 
@@ -51,27 +54,27 @@ struct PapyrusWorldActivationSeamTests {
         }
         #expect(streamer.onInteraction.handlerCount == 2)
 
-        let position = CellStreamerTests.center + SIMD3<Float>(10, 0, 0)
-        let placed = PapyrusWorldActivationTests.interaction(
+        let position = CellStreamerFixture.center + SIMD3<Float>(10, 0, 0)
+        let placed = PapyrusWorldActivationFixture.interaction(
             reference: Self.doorID,
             action: .activate
         )
-        streamer.update(cameraPosition: CellStreamerTests.center)
+        streamer.update(cameraPosition: CellStreamerFixture.center)
         runner.complete(
-            CellStreamerTests.coordinate(0, 0),
-            with: .success(CellStreamerTests.cellScene(
-                location: .exterior(CellStreamerTests.coordinate(0, 0)),
+            CellStreamerFixture.coordinate(0, 0),
+            with: .success(CellStreamerFixture.cellScene(
+                location: .exterior(CellStreamerFixture.coordinate(0, 0)),
                 interactions: [placed.reference: placed],
                 staticCollision: Self.collision(reference: Self.doorID, position: position),
                 references: RuntimeReferenceIndex(entries: [entry])
             ))
         )
-        let ray = CellStreamerTests.interactionRay(
-            from: CellStreamerTests.center, to: position
+        let ray = CellStreamerFixture.interactionRay(
+            from: CellStreamerFixture.center, to: position
         )
-        streamer.update(cameraPosition: CellStreamerTests.center, interactionRay: ray)
+        streamer.update(cameraPosition: CellStreamerFixture.center, interactionRay: ray)
         streamer.update(
-            cameraPosition: CellStreamerTests.center, interactionRay: ray, activate: true
+            cameraPosition: CellStreamerFixture.center, interactionRay: ray, activate: true
         )
 
         #expect(audible.count == 1)
@@ -83,7 +86,7 @@ struct PapyrusWorldActivationSeamTests {
         #expect(activation.lastActivator == ReferenceKey.player)
         // The streamer, not the fixture, attributed the cell this time.
         #expect(session.worldState.dirtyCount(
-            in: .exterior(CellStreamerTests.coordinate(0, 0))
+            in: .exterior(CellStreamerFixture.coordinate(0, 0))
         ) == 1)
         #expect(session.world.eventQueue.contains { $0.functionName == "OnActivate" })
     }

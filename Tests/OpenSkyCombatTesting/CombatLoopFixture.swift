@@ -11,24 +11,24 @@
 import simd
 
 @MainActor
-enum CombatLoopFixture {
-    static let opponent = ReferenceKey.generated(1)
-    static let second = ReferenceKey.generated(2)
+public enum CombatLoopFixture {
+    public static let opponent = ReferenceKey.generated(1)
+    public static let second = ReferenceKey.generated(2)
     /// Inside unarmed reach — `fCombatDistance` is 141 in the synthetic
     /// settings and the machine closes to within 24 of that.
-    static let closeFeet = SIMD3<Float>(60, 0, 0)
+    public static let closeFeet = SIMD3<Float>(60, 0, 0)
     /// Well outside it, so the actor has to walk.
-    static let farFeet = SIMD3<Float>(4000, 0, 0)
+    public static let farFeet = SIMD3<Float>(4000, 0, 0)
 
     /// One full attack cycle, plus a step of slack.
-    static let cycleSeconds = CombatBehaviorSettings.standard.attackIntervalSeconds
+    public static let cycleSeconds = CombatBehaviorSettings.standard.attackIntervalSeconds
         + CombatBehaviorSettings.standard.windupSeconds
         + CombatBehaviorSettings.standard.recoverySeconds
         + CombatLoopRuntime.fixedStepSeconds
 
     /// A runtime over one opponent, with the block roll pinned off so a case
     /// that asserts on an attack is not waiting out a guard it did not ask for.
-    static func session(
+    public static func session(
         weaponDamage: Float = 12,
         feet: SIMD3<Float> = closeFeet,
         blockChance: Float = 0
@@ -43,7 +43,7 @@ enum CombatLoopFixture {
 
     /// Makes `key` hostile and lets it perceive the player, which is the whole
     /// of 16.7's combat entry: no spawn, no designation, no clock.
-    static func engage(
+    public static func engage(
         _ runtime: CombatLoopRuntime,
         _ world: FakeCombatWorld,
         _ key: ReferenceKey = opponent
@@ -58,7 +58,7 @@ enum CombatLoopFixture {
     /// deliberately caps a single call at `maximumStepsPerAdvance` — that is the
     /// stall guard, and driving a two-second fight through it would silently
     /// simulate an eighth of a second.
-    static func run(_ runtime: CombatLoopRuntime, seconds: Float) {
+    public static func run(_ runtime: CombatLoopRuntime, seconds: Float) {
         var elapsed: Float = 0
         while elapsed < seconds {
             runtime.advance(by: CombatLoopRuntime.fixedStepSeconds)

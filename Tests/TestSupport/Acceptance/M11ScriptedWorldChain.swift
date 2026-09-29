@@ -16,9 +16,11 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -76,7 +78,7 @@ struct M11ScriptedWorldChain {
             cell: Self.cell
         )
         let runner = ManualCellBuildRunner()
-        streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
+        streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         // The streamer answers every world lookup from here on, so cell
         // attribution is the engine's answer and not the fixture's.
         session.bridge.references = streamer
@@ -108,13 +110,13 @@ struct M11ScriptedWorldChain {
         runner: ManualCellBuildRunner,
         entries: [RuntimeReferenceEntry]
     ) {
-        let lever = PapyrusWorldActivationTests.interaction(
+        let lever = PapyrusWorldActivationFixture.interaction(
             reference: leverID, action: .activate
         )
-        streamer.update(cameraPosition: CellStreamerTests.center)
+        streamer.update(cameraPosition: CellStreamerFixture.center)
         runner.complete(
-            CellStreamerTests.coordinate(0, 0),
-            with: .success(CellStreamerTests.cellScene(
+            CellStreamerFixture.coordinate(0, 0),
+            with: .success(CellStreamerFixture.cellScene(
                 location: cell,
                 interactions: [lever.reference: lever],
                 staticCollision: collision(reference: leverID, position: leverTarget),
@@ -130,19 +132,19 @@ struct M11ScriptedWorldChain {
     /// test can honestly drive, so the raycast, the interaction target, the
     /// `InteractionEvent`, and the multicast fan-out are all real from here.
     private static func pressUseKey(_ streamer: CellStreamer) {
-        let ray = CellStreamerTests.interactionRay(
-            from: CellStreamerTests.center, to: leverTarget
+        let ray = CellStreamerFixture.interactionRay(
+            from: CellStreamerFixture.center, to: leverTarget
         )
-        streamer.update(cameraPosition: CellStreamerTests.center, interactionRay: ray)
+        streamer.update(cameraPosition: CellStreamerFixture.center, interactionRay: ray)
         streamer.update(
-            cameraPosition: CellStreamerTests.center, interactionRay: ray, activate: true
+            cameraPosition: CellStreamerFixture.center, interactionRay: ray, activate: true
         )
     }
 
     /// Where the lever's collision shape sits, a short walk from the camera so
     /// the view ray reaches it.
     private static var leverTarget: SIMD3<Float> {
-        CellStreamerTests.center + SIMD3<Float>(10, 0, 0)
+        CellStreamerFixture.center + SIMD3<Float>(10, 0, 0)
     }
 
     private static func collision(
@@ -250,7 +252,7 @@ struct M11ScriptedWorldChain {
     /// The same two references the Papyrus session knows, spelled as a plugin
     /// the real `CellSceneBuilder` reads. Object IDs match, so the world-state
     /// snapshot the script wrote keys straight onto these records.
-    static func rebuildPlugin(_ cells: CellSceneBuilderTests) -> Data {
+    static func rebuildPlugin(_ cells: CellSceneFixture) -> Data {
         cells.plugin(
             grid: (0, 0),
             temporaryRefs: cells.refrRecord(

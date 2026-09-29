@@ -19,6 +19,7 @@
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyCombatTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import simd

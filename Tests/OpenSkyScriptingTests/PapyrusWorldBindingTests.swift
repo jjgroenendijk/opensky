@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 import Testing
 
 @MainActor

@@ -13,10 +13,12 @@ import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyCombatTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyMagicTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState

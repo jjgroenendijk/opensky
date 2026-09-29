@@ -21,6 +21,7 @@ import AppKit
 import Foundation
 @testable import OpenSky
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorld
 import Testing
 

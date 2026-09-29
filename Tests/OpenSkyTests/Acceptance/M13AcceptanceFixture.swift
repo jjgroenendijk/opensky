@@ -21,6 +21,7 @@ import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 
 /// Main-actor isolated only because it reads `M13AcceptanceChain`'s constants,

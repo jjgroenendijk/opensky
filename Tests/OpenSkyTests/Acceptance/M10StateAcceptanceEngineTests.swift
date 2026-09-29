@@ -20,8 +20,10 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -36,7 +38,7 @@ private struct M10EngineHarness {
     var completedCount = 0
 
     init(radius: Int32 = 0) {
-        streamer = CellStreamerTests.makeStreamer(runner: runner, radius: radius)
+        streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
         let liveStore = store
         streamer.stateSource = { liveStore.snapshot() }
         store.onMutation = { [weak streamer] location, sequence in
@@ -64,7 +66,7 @@ private struct M10EngineHarness {
             let index = harness.completedCount
             harness.runner.complete(
                 harness.runner.enqueued[index],
-                with: .success(CellStreamerTests.cellScene(
+                with: .success(CellStreamerFixture.cellScene(
                     stateSequence: harness.runner.enqueuedStates[index].sequence
                 ))
             )
@@ -225,9 +227,9 @@ extension M10StateAcceptanceTests {
     /// the original snapshot does. Real ESM and NIF bytes, both synthetic, and a
     /// real `CellSceneBuilder`, so this is the step where the round trip becomes
     /// something a user would see on screen.
-    @Test(.enabled(if: CellSceneBuilderTests.hasDevice)) @MainActor
+    @Test(.enabled(if: CellSceneFixture.hasDevice)) @MainActor
     func restoredStateReappliesInARealCellBuild() throws {
-        let builder = try CellSceneBuilderTests()
+        let builder = try CellSceneFixture()
         try builder.writeLooseFile("meshes/arch/solid.nif", builder.collisionRenderNIF())
         let pluginData = builder.plugin(
             temporaryRefs: builder.refrRecord(

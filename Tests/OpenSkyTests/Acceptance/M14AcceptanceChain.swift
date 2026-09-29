@@ -29,6 +29,7 @@ import AppKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -351,26 +352,26 @@ final class M14AcceptanceChain {
 
     private static func scene(location: CellSceneLocation, door: PlacedDoor?) -> CellScene {
         guard let door else {
-            return CellStreamerTests.cellScene(location: location)
+            return CellStreamerFixture.cellScene(location: location)
         }
-        return CellStreamerTests.cellScene(
+        return CellStreamerFixture.cellScene(
             location: location,
             doors: [door],
-            interactions: [door.reference: CellStreamerTests.interaction(
+            interactions: [door.reference: CellStreamerFixture.interaction(
                 reference: door.reference.rawValue,
                 position: door.position,
                 action: .open,
                 name: "Gate Door",
                 actionLabel: "Open"
             )],
-            staticCollision: CellStreamerTests.collision(
+            staticCollision: CellStreamerFixture.collision(
                 reference: door.reference.rawValue, position: door.position
             )
         )
     }
 
     private static func door() -> PlacedDoor {
-        CellStreamerTests.door(
+        CellStreamerFixture.door(
             reference: doorReference,
             destination: interiorDoorReference,
             position: doorPosition
@@ -378,7 +379,7 @@ final class M14AcceptanceChain {
     }
 
     private static func interiorDoor() -> PlacedDoor {
-        CellStreamerTests.door(
+        CellStreamerFixture.door(
             reference: interiorDoorReference,
             destination: doorReference,
             position: interiorPosition

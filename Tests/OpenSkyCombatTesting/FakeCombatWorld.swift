@@ -19,61 +19,63 @@
 import simd
 
 @MainActor
-final class FakeCombatWorld: CombatLoopWorld {
-    var player = MeleeAttacker(key: .player, feet: SIMD3<Float>(), facing: 0)
-    var actors: [CombatActorObservation] = []
-    var hostility: [ReferenceKey: ActorHostility] = [:]
-    var blocks: [ReferenceKey: MeleeBlockKind] = [:]
-    var awareness: [ReferenceKey: CombatAwareness] = [:]
-    var healthFractions: [ReferenceKey: Float] = [:]
-    var weapons: [ReferenceKey: MeleeWeaponProfile] = [:]
+public final class FakeCombatWorld: CombatLoopWorld {
+    public var player = MeleeAttacker(key: .player, feet: SIMD3<Float>(), facing: 0)
+    public var actors: [CombatActorObservation] = []
+    public var hostility: [ReferenceKey: ActorHostility] = [:]
+    public var blocks: [ReferenceKey: MeleeBlockKind] = [:]
+    public var awareness: [ReferenceKey: CombatAwareness] = [:]
+    public var healthFractions: [ReferenceKey: Float] = [:]
+    public var weapons: [ReferenceKey: MeleeWeaponProfile] = [:]
     /// What each actor could cast, and what it can pay for (issue #473).
-    var casting: [ReferenceKey: CombatCastingProfile] = [:]
+    public var casting: [ReferenceKey: CombatCastingProfile] = [:]
     /// Whether a begun cast is accepted. False is the world refusing a cast the
     /// machine chose — magicka that fell between the decision and the call —
     /// which the machine has to fall back from rather than stall on.
-    var castingBegins = true
+    public var castingBegins = true
     /// Whether a released cast actually left the hand.
-    var castingReleases = true
-    var transients = CombatTransientCounts.none
+    public var castingReleases = true
+    public var transients = CombatTransientCounts.none
     /// Whether a move request finds a path. False is a world with no navmesh
     /// under the point asked for, which the machine has to survive.
-    var movementSucceeds = true
+    public var movementSucceeds = true
 
     /// Skill uses the runtime reported (issue #498), recorded rather than
     /// converted: what a combat suite needs is that the exchange reached
     /// progression with the right amounts, and `SkillAdvancementRuntimeTests`
     /// asks what converting one does.
-    private(set) var skillUses: [SkillUseEvent] = []
+    public private(set) var skillUses: [SkillUseEvent] = []
+
+    public init() {}
 
     @discardableResult
-    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+    public func reportSkillUse(_ use: SkillUseEvent) -> Float {
         skillUses.append(use)
         return 0
     }
 
-    private(set) var hostilityWrites = 0
-    private(set) var damage: [ReferenceKey: Float] = [:]
-    private(set) var raised: [String] = []
-    private(set) var variables: [String: BehaviorVariableValue] = [:]
-    private(set) var clips: [(clip: CombatActorClip, key: ReferenceKey)] = []
-    private(set) var musicChanges: [Bool] = []
-    private(set) var moveRequests: [(key: ReferenceKey, point: SIMD3<Float>)] = []
-    private(set) var stopRequests: [ReferenceKey] = []
-    private(set) var packageResumes: [ReferenceKey] = []
+    public private(set) var hostilityWrites = 0
+    public private(set) var damage: [ReferenceKey: Float] = [:]
+    public private(set) var raised: [String] = []
+    public private(set) var variables: [String: BehaviorVariableValue] = [:]
+    public private(set) var clips: [(clip: CombatActorClip, key: ReferenceKey)] = []
+    public private(set) var musicChanges: [Bool] = []
+    public private(set) var moveRequests: [(key: ReferenceKey, point: SIMD3<Float>)] = []
+    public private(set) var stopRequests: [ReferenceKey] = []
+    public private(set) var packageResumes: [ReferenceKey] = []
     /// Casts begun, released and dropped, in the order they happened.
-    private(set) var castBegins: [(option: CombatSpellOption, key: ReferenceKey)] = []
-    private(set) var castReleases: [(option: CombatSpellOption, key: ReferenceKey)] = []
-    private(set) var castCancels: [ReferenceKey] = []
-    private(set) var trimRequests = 0
-    private(set) var despawnRequests = 0
+    public private(set) var castBegins: [(option: CombatSpellOption, key: ReferenceKey)] = []
+    public private(set) var castReleases: [(option: CombatSpellOption, key: ReferenceKey)] = []
+    public private(set) var castCancels: [ReferenceKey] = []
+    public private(set) var trimRequests = 0
+    public private(set) var despawnRequests = 0
     /// True when `recoilMagnitude` was written before `recoilStart` was raised,
     /// which is the write-then-raise order the graph depends on.
-    private(set) var wroteMagnitudeBeforeRecoil = false
+    public private(set) var wroteMagnitudeBeforeRecoil = false
 
     /// Moves one actor to `feet`, which is what a fake mover that actually
     /// walked would have done by the next step.
-    func place(_ key: ReferenceKey, at feet: SIMD3<Float>) {
+    public func place(_ key: ReferenceKey, at feet: SIMD3<Float>) {
         guard let index = actors.firstIndex(where: { $0.key == key }) else { return }
         let previous = actors[index]
         actors[index] = CombatActorObservation(
@@ -88,7 +90,7 @@ final class FakeCombatWorld: CombatLoopWorld {
     }
 
     /// Marks one actor dead, which is what the death latch does.
-    func kill(_ key: ReferenceKey) {
+    public func kill(_ key: ReferenceKey) {
         guard let index = actors.firstIndex(where: { $0.key == key }) else { return }
         let previous = actors[index]
         actors[index] = CombatActorObservation(
@@ -102,20 +104,20 @@ final class FakeCombatWorld: CombatLoopWorld {
         )
     }
 
-    var combatPlayer: MeleeAttacker {
+    public var combatPlayer: MeleeAttacker {
         player
     }
 
-    func combatActors() -> [CombatActorObservation] {
+    public func combatActors() -> [CombatActorObservation] {
         actors
     }
 
-    func combatHostility(of key: ReferenceKey) -> ActorHostility {
+    public func combatHostility(of key: ReferenceKey) -> ActorHostility {
         hostility[key] ?? .neutral
     }
 
     @discardableResult
-    func setCombatHostility(_ value: ActorHostility, on key: ReferenceKey) -> Bool {
+    public func setCombatHostility(_ value: ActorHostility, on key: ReferenceKey) -> Bool {
         guard hostility[key] != value else { return false }
         hostility[key] = value
         hostilityWrites += 1
@@ -123,66 +125,66 @@ final class FakeCombatWorld: CombatLoopWorld {
     }
 
     @discardableResult
-    func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool {
+    public func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool {
         guard amount > 0 else { return false }
         damage[key, default: 0] += amount
         return true
     }
 
-    func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
+    public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
         blocks[key]
     }
 
-    func combatAwareness(
+    public func combatAwareness(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> CombatAwareness {
         awareness[observer] ?? .unaware
     }
 
-    func combatHealthFraction(of key: ReferenceKey) -> Float {
+    public func combatHealthFraction(of key: ReferenceKey) -> Float {
         healthFractions[key] ?? 1
     }
 
-    func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
+    public func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile {
         weapons[key] ?? .unarmed
     }
 
-    func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
+    public func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
         casting[key] ?? .none
     }
 
     @discardableResult
-    func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
+    public func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
         castBegins.append((option: option, key: key))
         return castingBegins
     }
 
     @discardableResult
-    func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
+    public func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
         castReleases.append((option: option, key: key))
         return castingReleases
     }
 
-    func cancelCombatCast(by key: ReferenceKey) {
+    public func cancelCombatCast(by key: ReferenceKey) {
         castCancels.append(key)
     }
 
     @discardableResult
-    func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
+    public func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
         moveRequests.append((key: key, point: point))
         return movementSucceeds
     }
 
-    func stopCombatMovement(of key: ReferenceKey) {
+    public func stopCombatMovement(of key: ReferenceKey) {
         stopRequests.append(key)
     }
 
-    func resumeCombatPackage(for key: ReferenceKey) {
+    public func resumeCombatPackage(for key: ReferenceKey) {
         packageResumes.append(key)
     }
 
     @discardableResult
-    func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
+    public func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
         if
             name == CombatGraphNames.recoilStart,
             variables[CombatGraphNames.recoilMagnitude] != nil
@@ -193,22 +195,22 @@ final class FakeCombatWorld: CombatLoopWorld {
         return target == nil
     }
 
-    func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
+    public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
         variables[name] = value
     }
 
     @discardableResult
-    func playCombatClip(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
+    public func playCombatClip(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool {
         clips.append((clip: clip, key: key))
         return true
     }
 
-    var combatTransients: CombatTransientCounts {
+    public var combatTransients: CombatTransientCounts {
         transients
     }
 
     @discardableResult
-    func trimCombatTransients(to limits: CombatTransientLimits) -> CombatTransientCounts {
+    public func trimCombatTransients(to limits: CombatTransientLimits) -> CombatTransientCounts {
         trimRequests += 1
         let removed = limits.excess(over: transients)
         transients = CombatTransientCounts(
@@ -220,12 +222,12 @@ final class FakeCombatWorld: CombatLoopWorld {
         return removed
     }
 
-    func despawnCombatTransients() {
+    public func despawnCombatTransients() {
         despawnRequests += 1
         transients = .none
     }
 
-    func setCombatMusicActive(_ active: Bool) {
+    public func setCombatMusicActive(_ active: Bool) {
         musicChanges.append(active)
     }
 }

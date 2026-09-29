@@ -18,93 +18,11 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
 extension CellSceneBuilderTests {
-    /// The NPC chain of `actorChainRecords`, plus an OTFT default outfit
-    /// (cuirass) and a second ARMO the runtime can equip instead (robes), plus
-    /// a WEAP for the hand attachment.
-    ///
-    /// Slots: the skin torso ARMA, the cuirass and the robes all claim slot 32,
-    /// so whichever piece is worn masks the skin and the other piece is simply
-    /// not resolved.
-    func equipmentActorRecords(npc: UInt32) -> [String: Data] {
-        var records = actorChainRecords(npc: npc)
-        records["NPC_"] = npcWithOutfit(npc: npc, outfit: 0x400)
-
-        var bod2 = Data()
-        bod2.appendUInt32(0b0100)
-        bod2.appendUInt32(2)
-
-        func piece(armo: UInt32, arma: UInt32, model: String) -> (Data, Data) {
-            let armoRecord = ESMFixture.record(
-                "ARMO",
-                formID: armo,
-                data: equipmentFormID("RNAM", 0x19)
-                    + ESMFixture.field("BOD2", bod2)
-                    + equipmentFormID("MODL", arma)
-            )
-            let armaRecord = ESMFixture.record(
-                "ARMA",
-                formID: arma,
-                data: ESMFixture.field("BOD2", bod2)
-                    + equipmentFormID("RNAM", 0x19)
-                    + ESMFixture.field("MOD2", ESMFixture.zstring(model))
-                    + equipmentFormID("MODL", 0x100)
-            )
-            return (armoRecord, armaRecord)
-        }
-
-        let (cuirass, cuirassAA) = piece(armo: 0x300, arma: 0x310, model: "cuirass_m.nif")
-        let (robes, robesAA) = piece(armo: 0x320, arma: 0x330, model: "robes_m.nif")
-        records["ARMO"] = (records["ARMO"] ?? Data()) + cuirass + robes
-        records["ARMA"] = (records["ARMA"] ?? Data()) + cuirassAA + robesAA
-
-        var inam = Data()
-        inam.appendUInt32(0x300)
-        records["OTFT"] = ESMFixture.record(
-            "OTFT", formID: 0x400, data: ESMFixture.field("INAM", inam)
-        )
-
-        var weaponData = Data()
-        weaponData.appendUInt32(25)
-        weaponData.appendFloat32(9)
-        weaponData.appendUInt16(7)
-        var dnam = Data([1, 0, 0, 0])
-        dnam.append(Data(count: 96))
-        records["WEAP"] = ESMFixture.record(
-            "WEAP",
-            formID: 0x500,
-            data: ESMFixture.field("EDID", ESMFixture.zstring("TestSword"))
-                + ESMFixture.field("MODL", ESMFixture.zstring("sword.nif"))
-                + ESMFixture.field("DATA", weaponData)
-                + ESMFixture.field("DNAM", dnam)
-        )
-        return records
-    }
-
-    private func npcWithOutfit(npc: UInt32, outfit: UInt32) -> Data {
-        var acbs = Data()
-        acbs.appendUInt32(0)
-        for _ in 0 ..< 10 {
-            acbs.appendUInt16(0)
-        }
-        return ESMFixture.record(
-            "NPC_",
-            formID: npc,
-            data: ESMFixture.field("ACBS", acbs)
-                + equipmentFormID("RNAM", 0x100)
-                + equipmentFormID("DOFT", outfit)
-        )
-    }
-
-    private func equipmentFormID(_ type: String, _ value: UInt32) -> Data {
-        var data = Data()
-        data.appendUInt32(value)
-        return ESMFixture.field(type, data)
-    }
-
     /// A snapshot giving one actor an inventory component with `equipped` worn.
     private func equippedState(actor: UInt32, equipped: [UInt32]) -> WorldStateSnapshot {
         runtimeState([

@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing
+import WorldStateTesting
 
 struct GlobalStoreTests {
     @Test func indexesByFormIDAndEditorID() throws {

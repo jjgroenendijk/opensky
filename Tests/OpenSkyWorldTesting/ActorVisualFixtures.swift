@@ -13,7 +13,7 @@ import Foundation
 /// covering the body slot reachable directly (outfit) or through an LVLI
 /// (leveledOutfit), plus broken lists for failure tests. Parameters carve
 /// out the variants individual tests need.
-func makeResolver(
+public func makeResolver(
     raceSkin: UInt32? = 0x200,
     raceFaceGenHead: Bool = true,
     femaleSkeleton: String? = "skel_f.nif",
@@ -121,7 +121,7 @@ private func makeArmorAddons(
 /// Built by hand rather than through `EquipmentCatalog.build(from:)`, because
 /// these fixtures are decoded records rather than an `ESMFile` — the builder is
 /// covered separately against synthetic plugin bytes.
-func makeEquipmentCatalog(
+public func makeEquipmentCatalog(
     swordModel: String? = "sword.nif",
     extra: [UInt32: EquippableItem] = [:]
 ) -> EquipmentCatalog {
@@ -159,7 +159,7 @@ private func equippable(_ raw: UInt32, slots: UInt32) -> EquippableItem {
 }
 
 /// Template-resolved appearance with every field sourced from the base NPC_.
-func appearance(
+public func appearance(
     female: Bool = false,
     race: UInt32? = 0x100,
     voiceType: UInt32? = nil,
@@ -197,15 +197,6 @@ private func formIDField(_ type: String, _ value: UInt32) -> Data {
     var data = Data()
     data.appendUInt32(value)
     return ESMFixture.field(type, data)
-}
-
-/// ARMA DNAM, 12 bytes: male priority, female priority, four bytes of weight
-/// slider flags, detection sound, one unused byte, then the weapon-adjust
-/// float (UESP + xEdit; see ArmorAddon.swift).
-func dnamField(male: UInt8, female: UInt8, weaponAdjust: Float = 0) -> Data {
-    var data = Data([male, female, 0, 0, 0, 0, 0, 0])
-    data.appendFloat32(weaponAdjust)
-    return ESMFixture.field("DNAM", data)
 }
 
 private func bod2Field(slots: UInt32) -> Data {
@@ -268,7 +259,7 @@ private func arma(
 ) throws -> ArmorAddon {
     var fields = bod2Field(slots: slots) + formIDField("RNAM", race)
     if priority > 0 {
-        fields += dnamField(male: priority, female: priority)
+        fields += InventoryFixture.armorAddonDNAM(male: priority, female: priority)
     }
     if let male = models.male {
         fields += ESMFixture.field("MOD2", ESMFixture.zstring(male))
@@ -333,7 +324,7 @@ extension Array {
 }
 
 /// One ACHR placement, shared by the assembly suites.
-func placedActor(
+public func placedActor(
     position: SIMD3<Float> = .zero,
     rotation: SIMD3<Float> = .zero,
     scale: Float = 1

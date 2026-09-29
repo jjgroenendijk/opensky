@@ -12,9 +12,11 @@
 import Foundation
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
+import OpenSkyDialogueTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorldState
 import Testing
 

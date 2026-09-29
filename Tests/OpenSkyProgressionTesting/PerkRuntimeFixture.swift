@@ -11,97 +11,99 @@
 
 import FormatsESMTesting
 import Foundation
+import GameDataTesting
 @testable import OpenSkyActors
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyMagicTesting
 @testable import OpenSkyProgression
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 
 @MainActor
-enum PerkRuntimeFixture {
-    static let pluginName = "PerkRuntime.esm"
+public enum PerkRuntimeFixture {
+    public static let pluginName = "PerkRuntime.esm"
 
     /// PERK identities.
-    enum Perk {
-        static let damageRank1: UInt32 = 0x0100
-        static let damageRank2: UInt32 = 0x0101
-        static let blocking: UInt32 = 0x0102
-        static let halfCost: UInt32 = 0x0103
-        static let spellCost: UInt32 = 0x0104
-        static let ability: UInt32 = 0x0105
-        static let actorValueDamage: UInt32 = 0x0106
+    public enum Perk {
+        public static let damageRank1: UInt32 = 0x0100
+        public static let damageRank2: UInt32 = 0x0101
+        public static let blocking: UInt32 = 0x0102
+        public static let halfCost: UInt32 = 0x0103
+        public static let spellCost: UInt32 = 0x0104
+        public static let ability: UInt32 = 0x0105
+        public static let actorValueDamage: UInt32 = 0x0106
         /// A tree box gated on a skill requirement, shaped like `Armsman20`'s
         /// `GetBaseActorValue One-Handed >= 50` (issue #499).
-        static let skillGated: UInt32 = 0x0107
+        public static let skillGated: UInt32 = 0x0107
     }
 
     /// AVIF identities. One record, carrying the One-Handed perk tree the
     /// spend suites climb.
-    enum ActorValueInformation {
-        static let oneHanded: UInt32 = 0x0300
+    public enum ActorValueInformation {
+        public static let oneHanded: UInt32 = 0x0300
     }
 
     /// The One-Handed actor-value index, which the fixture AVIF record claims
     /// by editor ID so a skill requirement stated against it resolves.
-    static let oneHandedIndex = ActorValueIdentity.firstSkillIndex
+    public static let oneHandedIndex = ActorValueIdentity.firstSkillIndex
 
     /// SPEL identities.
-    enum Spell {
+    public enum Spell {
         /// A manual-cost spell whose SPIT names `Perk.halfCost`.
         ///
         /// Numbered clear of `SpellbookFixture`'s MGEF ids, which this fixture
         /// reuses: two records of different types may not share an object id in
         /// one plugin, and a collision reads as a record that does not resolve.
-        static let flames: UInt32 = 0x0210
+        public static let flames: UInt32 = 0x0210
         /// The ability `Perk.ability` grants: one timed fortify entry.
-        static let stoneskin: UInt32 = 0x0211
+        public static let stoneskin: UInt32 = 0x0211
         /// A spell whose SPIT names the perk that *also* hooks `Mod Spell Cost`,
         /// which is the shape every vanilla school perk has.
-        static let selfHalving: UInt32 = 0x0212
+        public static let selfHalving: UInt32 = 0x0212
     }
 
     /// The keyword the damage chain's weapon tab asks for. No KYWD record is
     /// authored behind it: the tab exists to be *unbindable*, which is the
     /// documented gap the runtime counts.
-    static let weaponKeyword: UInt32 = 0x0030
+    public static let weaponKeyword: UInt32 = 0x0030
 
     /// Entry points the fixture hooks, by their documented ids.
-    static let attackDamage = PerkEntryPoint(rawValue: 35)
-    static let percentBlocked = PerkEntryPoint(rawValue: 39)
-    static let spellCost = PerkEntryPoint(rawValue: 38)
+    public static let attackDamage = PerkEntryPoint(rawValue: 35)
+    public static let percentBlocked = PerkEntryPoint(rawValue: 39)
+    public static let spellCost = PerkEntryPoint(rawValue: 38)
 
-    static func key(_ objectID: UInt32) -> ReferenceKey {
+    public static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: pluginName.lowercased(), objectID: objectID)
     }
 
     // MARK: - Stores
 
-    static func index() throws -> RecordIndex {
+    public static func index() throws -> RecordIndex {
         try RecordIndex(
             plugins: [(pluginName, plugin())],
             recordTypes: ["MGEF", "SPEL", "SCRL", "PERK", "AVIF"]
         )
     }
 
-    static func informationStore(index: RecordIndex) -> ActorValueInformationStore {
+    public static func informationStore(index: RecordIndex) -> ActorValueInformationStore {
         ActorValueInformationStore(index: index)
     }
 
     /// Where each fixture perk sits in the fixture tree (issue #499).
-    static func trees(index: RecordIndex) -> PerkTreeIndex {
+    public static func trees(index: RecordIndex) -> PerkTreeIndex {
         PerkTreeIndex(
             information: informationStore(index: index),
             perks: perkStore(index: index)
         )
     }
 
-    static func spellStore(index: RecordIndex) -> SpellStore {
+    public static func spellStore(index: RecordIndex) -> SpellStore {
         SpellStore(index: index, effects: MagicEffectStore(index: index))
     }
 
-    static func perkStore(index: RecordIndex) -> PerkStore {
+    public static func perkStore(index: RecordIndex) -> PerkStore {
         PerkStore(index: index, spells: spellStore(index: index))
     }
 
@@ -110,7 +112,7 @@ enum PerkRuntimeFixture {
     ///
     /// The store argument is optional rather than defaulted because a
     /// main-actor default value cannot be written in a nonisolated context.
-    static func runtime(
+    public static func runtime(
         store: WorldStateStore? = nil
     ) throws -> (PerkRuntime, WorldStateStore) {
         let worldState = store ?? WorldStateStore()
@@ -126,7 +128,7 @@ enum PerkRuntimeFixture {
 
     /// An actor-value runtime whose subjects start at 100 of everything and
     /// regenerate nothing, matching `SpellbookFixture.values`.
-    static func values(store: WorldStateStore) -> ActorValueRuntime {
+    public static func values(store: WorldStateStore) -> ActorValueRuntime {
         ActorValueRuntime(
             store: store,
             baselines: ActorValueBaselineResolver(
@@ -140,7 +142,7 @@ enum PerkRuntimeFixture {
 
     // MARK: - Records
 
-    static func plugin() throws -> ESMFile {
+    public static func plugin() throws -> ESMFile {
         try PerkFixture.plugin(
             perks: perkRecords,
             spells: spellRecords,
@@ -157,7 +159,7 @@ enum PerkRuntimeFixture {
         )
     }
 
-    static var spellRecords: [Data] {
+    public static var spellRecords: [Data] {
         [
             spellRecord(
                 formID: Spell.flames,
@@ -182,7 +184,7 @@ enum PerkRuntimeFixture {
         ]
     }
 
-    static var perkRecords: [Data] {
+    public static var perkRecords: [Data] {
         [
             PerkFixture.perkRecord(
                 formID: Perk.damageRank1,

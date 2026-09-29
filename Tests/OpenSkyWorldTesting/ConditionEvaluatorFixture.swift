@@ -14,11 +14,12 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import WorldStateTesting
 
-enum ConditionEvaluatorFixture {
+public enum ConditionEvaluatorFixture {
     /// A well-formed 32-byte CTDA field. `operatorBits` are the top 3 bits of
     /// the operator byte and `flags` the low 5.
-    static func field(
+    public static func field(
         operatorBits: UInt8 = 0,
         flags: UInt8 = 0,
         comparisonValue: UInt32 = 0,
@@ -42,7 +43,7 @@ enum ConditionEvaluatorFixture {
     }
 
     /// The same payload, decoded. Throws only if the fixture itself is broken.
-    static func condition(
+    public static func condition(
         operatorBits: UInt8 = 0,
         flags: UInt8 = 0,
         comparisonValue: UInt32 = 0,
@@ -71,7 +72,7 @@ enum ConditionEvaluatorFixture {
     }
 
     /// Condition comparing a function's return against a float literal.
-    static func comparing(
+    public static func comparing(
         functionIndex: UInt16,
         _ comparison: UInt8,
         _ value: Float,
@@ -90,23 +91,36 @@ enum ConditionEvaluatorFixture {
     // MARK: - Shared world state
 
     /// One synthetic float GLOB.
-    struct GlobalSpec {
-        let formID: UInt32
-        let editorID: String
-        let value: Float
+    public struct GlobalSpec {
+        public let formID: UInt32
+        public let editorID: String
+        public let value: Float
+
+        public init(
+            formID: UInt32,
+            editorID: String,
+            value: Float
+        ) {
+            self.formID = formID
+            self.editorID = editorID
+            self.value = value
+        }
     }
 
     /// GLOB the shared context defines: `OpenSkyTestFlag` is 1.
-    static let flagFormID: UInt32 = 0x0000_0100
+    public static let flagFormID: UInt32 = 0x0000_0100
     /// `OpenSkyTestHalf` is 0.5.
-    static let halfFormID: UInt32 = 0x0000_0101
-    static let subjectFormID: UInt32 = 0x0001_0000
-    static let targetFormID: UInt32 = 0x0001_0001
-    static let subjectBase: UInt32 = 0x0002_0000
-    static let targetBase: UInt32 = 0x0002_0001
+    public static let halfFormID: UInt32 = 0x0000_0101
+    public static let subjectFormID: UInt32 = 0x0001_0000
+    public static let targetFormID: UInt32 = 0x0001_0001
+    public static let subjectBase: UInt32 = 0x0002_0000
+    public static let targetBase: UInt32 = 0x0002_0001
 
     /// Globals resolution over synthetic float GLOB records.
-    static func globals(_ specs: [GlobalSpec], clock: GameClock? = nil) throws -> GlobalResolution {
+    public static func globals(
+        _ specs: [GlobalSpec],
+        clock: GameClock? = nil
+    ) throws -> GlobalResolution {
         var records = Data()
         for spec in specs {
             records += GlobalFixture.record(
@@ -120,7 +134,7 @@ enum ConditionEvaluatorFixture {
     }
 
     /// The two globals every condition test reads.
-    static func standardGlobals() throws -> GlobalResolution {
+    public static func standardGlobals() throws -> GlobalResolution {
         try globals([
             GlobalSpec(formID: flagFormID, editorID: "OpenSkyTestFlag", value: 1),
             GlobalSpec(formID: halfFormID, editorID: "OpenSkyTestHalf", value: 0.5)
@@ -128,7 +142,7 @@ enum ConditionEvaluatorFixture {
     }
 
     /// Context with the standard globals, a placed subject and a placed target.
-    static func populatedContext(clock: GameClock? = nil) throws -> ConditionContext {
+    public static func populatedContext(clock: GameClock? = nil) throws -> ConditionContext {
         try ConditionContext(
             globals: standardGlobals(),
             clock: clock,
@@ -142,7 +156,7 @@ enum ConditionEvaluatorFixture {
     }
 
     /// Evaluator over `populatedContext(clock:)`.
-    static func evaluator(
+    public static func evaluator(
         clock: GameClock? = nil,
         tally: ConditionTally = ConditionTally()
     ) throws -> ConditionEvaluator {
@@ -151,7 +165,11 @@ enum ConditionEvaluatorFixture {
 
     /// `GetIsID(base) == 1` under `runOn`. The condition's own reference word
     /// points at the subject placement, which is what run-on 2 reads.
-    static func isID(_ base: UInt32, runOn: UInt32 = 0, flags: UInt8 = 0) throws -> Condition {
+    public static func isID(
+        _ base: UInt32,
+        runOn: UInt32 = 0,
+        flags: UInt8 = 0
+    ) throws -> Condition {
         try condition(
             operatorBits: 0,
             flags: flags,
@@ -165,7 +183,7 @@ enum ConditionEvaluatorFixture {
 
     /// Reference index holding one REFR per `(formID, base)` pair, keyed the way
     /// a `skyrim.esm` placement would be.
-    static func references(
+    public static func references(
         _ entries: [(formID: UInt32, base: UInt32)],
         plugin: String = "skyrim.esm"
     ) throws -> RuntimeReferenceIndex {
@@ -180,7 +198,7 @@ enum ConditionEvaluatorFixture {
         })
     }
 
-    static func key(_ formID: UInt32, plugin: String = "skyrim.esm") -> ReferenceKey {
+    public static func key(_ formID: UInt32, plugin: String = "skyrim.esm") -> ReferenceKey {
         .plugin(name: plugin, objectID: FormID(formID).objectID)
     }
 

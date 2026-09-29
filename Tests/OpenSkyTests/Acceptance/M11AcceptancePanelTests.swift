@@ -5,6 +5,7 @@
 
 import AppKit
 @testable import OpenSky
+import OpenSkyScriptingTesting
 import Testing
 
 @MainActor

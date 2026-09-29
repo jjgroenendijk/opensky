@@ -11,10 +11,12 @@
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyCombat
+import OpenSkyCombatTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyMagicTesting
 import Testing
 
 @MainActor

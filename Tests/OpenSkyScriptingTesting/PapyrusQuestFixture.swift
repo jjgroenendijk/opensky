@@ -26,41 +26,41 @@ import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState
 import Testing
 
-enum PapyrusQuestFixture {
-    static let questObjectID: UInt32 = 0x0000_0700
-    static let questEditorID = "OpenSkyProbeQuest"
-    static let questScript = "OpenSkyProbeQuestScript"
-    static let fragmentScript = "QF_OpenSkyProbeQuest_00000700"
+public enum PapyrusQuestFixture {
+    public static let questObjectID: UInt32 = 0x0000_0700
+    public static let questEditorID = "OpenSkyProbeQuest"
+    public static let questScript = "OpenSkyProbeQuestScript"
+    public static let fragmentScript = "QF_OpenSkyProbeQuest_00000700"
     /// Stage the fragment hangs off, and the one the gate loop sets.
-    static let fragmentStage: UInt16 = 10
+    public static let fragmentStage: UInt16 = 10
     /// A stage flagged `startUpStage`, so setting it starts a dormant quest.
-    static let startUpStage: UInt16 = 5
+    public static let startUpStage: UInt16 = 5
     /// A stage flagged `shutDownStage`.
-    static let shutDownStage: UInt16 = 90
-    static let objectiveIndex: UInt16 = 10
+    public static let shutDownStage: UInt16 = 90
+    public static let objectiveIndex: UInt16 = 10
     /// Reference the quest's one alias is forced onto (issue #183), and the
     /// `ReferenceAlias` script that rides on it.
-    static let aliasReferenceObjectID: UInt32 = 0x0000_0701
-    static let aliasScript = "OpenSkyProbeAliasScript"
-    static let aliasID: UInt32 = 0
+    public static let aliasReferenceObjectID: UInt32 = 0x0000_0701
+    public static let aliasScript = "OpenSkyProbeAliasScript"
+    public static let aliasID: UInt32 = 0
 
-    static var aliasReferenceKey: ReferenceKey {
+    public static var aliasReferenceKey: ReferenceKey {
         .plugin(name: PapyrusWorldFixture.pluginName, objectID: aliasReferenceObjectID)
     }
 
-    static func aliasInstanceKey(_ scriptName: String) -> PapyrusInstanceKey {
+    public static func aliasInstanceKey(_ scriptName: String) -> PapyrusInstanceKey {
         PapyrusInstanceKey(reference: aliasReferenceKey, scriptName: scriptName)
     }
 
-    static var questFormID: FormID {
+    public static var questFormID: FormID {
         FormID(questObjectID)
     }
 
-    static var questKey: ReferenceKey {
+    public static var questKey: ReferenceKey {
         .plugin(name: PapyrusWorldFixture.pluginName, objectID: questObjectID)
     }
 
-    static func instanceKey(_ scriptName: String) -> PapyrusInstanceKey {
+    public static func instanceKey(_ scriptName: String) -> PapyrusInstanceKey {
         PapyrusInstanceKey(reference: questKey, scriptName: scriptName)
     }
 
@@ -73,7 +73,7 @@ enum PapyrusQuestFixture {
     /// - Parameter aliases: ALST groups appended after the ANAM separator; a
     ///   quest with none behaves exactly as it did before issue #183.
     /// - Parameter aliasScripts: alias-script sections in the VMAD tail.
-    static func quest(
+    public static func quest(
         startGameEnabled: Bool = true,
         scripts: [VMADFixture.Script]? = nil,
         fragments: [QuestFixture.Fragment]? = nil,
@@ -116,7 +116,7 @@ enum PapyrusQuestFixture {
 
     /// A store over one quest, keyed by the same resolver every other Papyrus
     /// fixture uses so quest keys and reference keys agree.
-    static func store(_ quest: Quest) -> QuestStore {
+    public static func store(_ quest: Quest) -> QuestStore {
         QuestStore(quests: [quest], resolver: PapyrusWorldFixture.resolver)
     }
 
@@ -124,7 +124,7 @@ enum PapyrusQuestFixture {
 
     /// `Quest.psc` as far as these tests need it: every member declared
     /// `native`, so the interpreter resolves the call and names the family.
-    static func questClassObject() -> PexObject {
+    public static func questClassObject() -> PexObject {
         let natives = [
             ("SetStage", "Bool"), ("SetCurrentStageID", "Bool"),
             ("GetStage", "Int"), ("GetCurrentStageID", "Int"),
@@ -146,7 +146,7 @@ enum PapyrusQuestFixture {
 
     /// The quest's own script: records its `OnInit`, and advances the quest to
     /// the fragment stage when something sends it `OnProbeAdvance`.
-    static func questScriptObject() -> PexObject {
+    public static func questScriptObject() -> PexObject {
         PexFixture.runtimeObject(
             name: questScript,
             parent: "Quest",
@@ -158,7 +158,7 @@ enum PapyrusQuestFixture {
     }
 
     /// The generated fragment script, which records the stage it ran for.
-    static func fragmentScriptObject(
+    public static func fragmentScriptObject(
         functions: [(String, PexFunction)]? = nil
     ) -> PexObject {
         PexFixture.runtimeObject(
@@ -175,7 +175,7 @@ enum PapyrusQuestFixture {
     ///
     /// - Parameter fragmentFunctions: replaces the fragment script's functions,
     ///   for a test that runs a different fragment set.
-    static func objects(
+    public static func objects(
         _ extra: [PexObject] = [],
         fragmentFunctions: [(String, PexFunction)]? = nil
     ) -> [PexObject] {
@@ -187,7 +187,7 @@ enum PapyrusQuestFixture {
     }
 
     /// One forced-reference alias onto `aliasReferenceObjectID`.
-    static func forcedAlias(
+    public static func forcedAlias(
         id: UInt32 = aliasID,
         name: String = "ProbeTarget",
         reference: UInt32 = aliasReferenceObjectID,
@@ -202,7 +202,7 @@ enum PapyrusQuestFixture {
     }
 
     /// One alias-script section naming this quest's alias `id`.
-    static func aliasScriptSection(
+    public static func aliasScriptSection(
         id: UInt32 = aliasID,
         scripts: [VMADFixture.Script]? = nil
     ) -> QuestFixture.AliasScripts {
@@ -216,7 +216,7 @@ enum PapyrusQuestFixture {
 
     /// The `ReferenceAlias` script the alias carries, which records its
     /// `OnInit` the way every other probe script does.
-    static func aliasScriptObject() -> PexObject {
+    public static func aliasScriptObject() -> PexObject {
         PexFixture.runtimeObject(
             name: aliasScript,
             states: [PapyrusTestSupport.state(functions: [
@@ -226,7 +226,7 @@ enum PapyrusQuestFixture {
     }
 
     /// `self.SetStage(stage)`, the call a quest script makes to advance itself.
-    static func setStageBody(_ stage: UInt16) -> PexFunction {
+    public static func setStageBody(_ stage: UInt16) -> PexFunction {
         PexFixture.runtimeFunction(instructions: [
             PapyrusTestSupport.instruction(
                 .callMethod,
@@ -246,7 +246,7 @@ enum PapyrusQuestFixture {
     ///
     /// `OnInit` is left queued: call `PapyrusWorldFixture.drain(_:)` to run it.
     @MainActor
-    static func session(
+    public static func session(
         quest: Quest,
         objects questObjects: [PexObject]? = nil,
         entries: [RuntimeReferenceEntry] = [],
@@ -270,7 +270,7 @@ enum PapyrusQuestFixture {
 
     /// The quest's effective state in a session, or a recorded failure.
     @MainActor
-    static func state(
+    public static func state(
         _ session: PapyrusWorldFixture.Session
     ) throws -> QuestRuntimeState {
         try #require(session.bridge.questRuntime).state(of: questFormID)

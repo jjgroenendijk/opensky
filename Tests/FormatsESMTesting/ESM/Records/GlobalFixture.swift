@@ -3,14 +3,12 @@
 // Layout: UESP "Skyrim Mod:Mod File Format/GLOB".
 
 @testable import FormatsCoreTesting
-import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorldState
 
-enum GlobalFixture {
+public enum GlobalFixture {
     /// GLOB record: EDID zstring, FNAM type character, FLTV float32.
-    static func record(
+    public static func record(
         formID: UInt32,
         editorID: String?,
         type: Global.ValueType,
@@ -34,27 +32,16 @@ enum GlobalFixture {
     }
 
     /// Plugin carrying a TES4 header and one GLOB top group.
-    static func plugin(_ records: Data) -> Data {
+    public static func plugin(_ records: Data) -> Data {
         ESMFixture.tes4() + ESMFixture.topGroup("GLOB", contents: records)
     }
 
     /// First record parsed out of raw fixture bytes.
-    static func parse(_ bytes: Data) throws -> ESMRecord {
+    public static func parse(_ bytes: Data) throws -> ESMRecord {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {
             throw ESMError.malformed("fixture did not produce a record")
         }
         return record
-    }
-
-    /// Store over `records` with no masters, so every GLOB resolves to
-    /// `ReferenceKey.plugin(name: "test.esm", objectID:)`.
-    static func store(_ records: Data) throws -> GlobalStore {
-        try GlobalStore(file: ESMFile(data: plugin(records)), pluginName: "Test.esm")
-    }
-
-    /// The key a fixture FormID resolves to under `store(_:)`.
-    static func key(_ objectID: UInt32) -> ReferenceKey {
-        .plugin(name: "test.esm", objectID: objectID)
     }
 }

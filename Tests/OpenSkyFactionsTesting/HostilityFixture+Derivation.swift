@@ -1,13 +1,11 @@
-// The one fixture builder that needs the Factions implementation. The rest of
-// HostilityFixture is in OpenSkyFactionsTesting, which may import only the interface.
+// The one fixture builder that needs the Factions implementation.
 
 @testable import OpenSkyFactions
-@testable import OpenSkyFactionsTesting
 @testable import OpenSkyGameData
 
 extension HostilityFixture {
     /// The derivation over one such load order.
-    static func derivation(
+    public static func derivation(
         relations: [Relation] = [],
         pairs: [Pair] = []
     ) throws -> HostilityDerivation {

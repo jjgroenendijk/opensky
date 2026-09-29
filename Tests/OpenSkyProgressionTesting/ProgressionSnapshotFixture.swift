@@ -1,16 +1,15 @@
-// Snapshot builder for the World > Progression seam (issue #500), shared by the
-// panel suite and by the M20 acceptance suite.
+// Snapshot builders for the World > Progression seam, shared by the readout suite,
+// the panel suite, and the M20 acceptance suite.
 //
 // `ProgressionControlSnapshot` is immutable by design and its memberwise
 // initializer takes sixteen arguments, so a test that wants one non-zero field
 // would otherwise have to spell out the other fifteen.
 
-import AppKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
 
-nonisolated func makeProgressionSnapshot(
+nonisolated public func makeProgressionSnapshot(
     isAvailable: Bool = true,
     level: Int = 1,
     experience: Float = 0,
@@ -49,7 +48,7 @@ nonisolated func makeProgressionSnapshot(
 }
 
 /// One skill line, defaulted so a test states only what it is about.
-nonisolated func makeSkillReadout(
+nonisolated public func makeSkillReadout(
     name: String,
     index: Int32,
     current: Float = 20,
@@ -72,7 +71,7 @@ nonisolated func makeSkillReadout(
 }
 
 /// One perk-tree box, defaulted the same way.
-nonisolated func makePerkTreeNode(
+nonisolated public func makePerkTreeNode(
     node: UInt32,
     name: String,
     grantsNoPerk: Bool = false,

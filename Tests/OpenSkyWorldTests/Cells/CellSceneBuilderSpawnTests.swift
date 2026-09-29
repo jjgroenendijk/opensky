@@ -14,46 +14,11 @@ import Foundation
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
 extension CellSceneBuilderTests {
-    // MARK: - Fixtures
-
-    /// The exterior cell every build in this file targets.
-    static var spawnCell: CellSceneLocation {
-        .exterior(CellCoordinate(x: 6, y: -2))
-    }
-
-    /// A snapshot holding one spawned object, keyed the way the store keys a
-    /// runtime-created reference.
-    func spawnState(
-        sequence: UInt64 = 1,
-        base: UInt32,
-        position: SIMD3<Float>,
-        scale: Float = 1,
-        count: Int32 = 1,
-        location: CellSceneLocation = CellSceneBuilderTests.spawnCell,
-        deltas extra: [WorldStateComponentKind: WorldStateComponentValue] = [:]
-    ) -> WorldStateSnapshot {
-        var components = extra
-        components[.spawn] = ReferenceSpawnState(
-            base: FormID(base),
-            location: location,
-            placement: PlacedReference.Placement(position: position, rotation: .zero),
-            scale: scale,
-            count: count
-        ).erased
-        return WorldStateSnapshot(
-            entries: [WorldStateSnapshotEntry(
-                key: .generated(sequence),
-                delta: ReferenceStateDelta(components: components, cell: location)
-            )],
-            nextGeneratedSequence: sequence + 1,
-            sequence: 1
-        )
-    }
-
     /// A plugin with one MISC base and, optionally, one authored REFR placing
     /// it. Item bases carry the same EDID/FULL/MODL shape MSTT does, which is
     /// why `modelBaseRecord` builds them unchanged.

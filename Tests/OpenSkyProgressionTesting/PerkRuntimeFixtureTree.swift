@@ -26,7 +26,7 @@ extension PerkRuntimeFixture {
     ///     #1 DamageRank1   -> [2, 3]
     ///     #2 ShieldWall    -> []
     ///     #3 SkillGated    -> []
-    static var actorValueInformationRecord: Data {
+    public static var actorValueInformationRecord: Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("AVOneHanded"))
         fields += ESMFixture.field("FULL", ESMFixture.zstring("One-Handed"))
         fields += ESMFixture.field("CNAM", PerkFixture.word(1))
@@ -62,15 +62,15 @@ extension PerkRuntimeFixture {
 
     /// One EFID/EFIT entry of a fixture spell. A named type rather than a tuple
     /// because three members is past the strict-lint tuple cap.
-    struct EffectSpec {
-        let effect: UInt32
-        let magnitude: Float
-        let duration: UInt32
+    public struct EffectSpec {
+        public let effect: UInt32
+        public let magnitude: Float
+        public let duration: UInt32
     }
 
     /// A SPEL with an authored manual cost, an optional half-cost perk link and
     /// an optional effect list.
-    static func spellRecord(
+    public static func spellRecord(
         formID: UInt32,
         editorID: String,
         baseCost: UInt32,

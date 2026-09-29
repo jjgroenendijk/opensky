@@ -23,6 +23,7 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 import Testing
 

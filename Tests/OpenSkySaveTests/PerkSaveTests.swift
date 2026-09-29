@@ -6,7 +6,9 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyProgressionInterface
+import OpenSkyProgressionTesting
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorldState
 import Testing
 

@@ -8,7 +8,9 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -17,7 +19,7 @@ struct CellStreamerTriggerTests {
     private static let volumeID: UInt32 = 0x501
     /// World centre of cell (0,0), where the single-cell fixtures put the box.
     private static var center: SIMD3<Float> {
-        CellStreamerTests.center
+        CellStreamerFixture.center
     }
 
     private struct Harness {
@@ -44,15 +46,15 @@ struct CellStreamerTriggerTests {
             center: center + SIMD3<Float>(0, 0, 64)
         ))
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         let recorder = TriggerRecorder()
         streamer.onTriggerTransition.add { recorder.note($0) }
-        let scene = CellStreamerTests.cellScene(
-            location: .exterior(CellStreamerTests.coordinate(0, 0)),
+        let scene = CellStreamerFixture.cellScene(
+            location: .exterior(CellStreamerFixture.coordinate(0, 0)),
             triggerVolumes: TriggerStreamFixture.volumeSet([volume])
         )
         streamer.update(cameraPosition: center)
-        runner.complete(CellStreamerTests.coordinate(0, 0), with: .success(scene))
+        runner.complete(CellStreamerFixture.coordinate(0, 0), with: .success(scene))
         streamer.update(cameraPosition: center)
         return Harness(runner: runner, streamer: streamer, recorder: recorder)
     }
@@ -134,15 +136,15 @@ struct CellStreamerTriggerTests {
             ))
         ]
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 1)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 1)
         var log: [TriggerTransitionEvent] = []
         streamer.onTriggerTransition.add { log.append($0) }
         TriggerStreamFixture.settle(
             streamer: streamer, runner: runner, eye: Self.center
         ) { coordinate in
-            CellStreamerTests.cellScene(
+            CellStreamerFixture.cellScene(
                 location: .exterior(coordinate),
-                triggerVolumes: coordinate == CellStreamerTests.coordinate(0, 0)
+                triggerVolumes: coordinate == CellStreamerFixture.coordinate(0, 0)
                     ? TriggerStreamFixture.volumeSet(volumes)
                     : .empty
             )
@@ -197,16 +199,16 @@ struct CellStreamerTriggerTests {
             halfExtents: SIMD3<Float>(256, 256, 128)
         ))
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 1)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 1)
         var log: [TriggerTransitionEvent] = []
         streamer.onTriggerTransition.add { log.append($0) }
         let away = SIMD3<Float>(boundaryX - 600, Self.center.y, 0)
         TriggerStreamFixture.settle(
             streamer: streamer, runner: runner, eye: TriggerStreamFixture.eye(feetAt: away)
         ) { coordinate in
-            CellStreamerTests.cellScene(
+            CellStreamerFixture.cellScene(
                 location: .exterior(coordinate),
-                triggerVolumes: coordinate == CellStreamerTests.coordinate(1, 0)
+                triggerVolumes: coordinate == CellStreamerFixture.coordinate(1, 0)
                     ? TriggerStreamFixture.volumeSet([volume], location: .exterior(coordinate))
                     : .empty
             )
@@ -223,7 +225,7 @@ struct CellStreamerTriggerTests {
             cameraPosition: TriggerStreamFixture.eye(feetAt: straddling),
             playerCapsule: TriggerStreamFixture.capsule(feetAt: straddling)
         )
-        #expect(streamer.grid.center == CellStreamerTests.coordinate(0, 0))
+        #expect(streamer.grid.center == CellStreamerFixture.coordinate(0, 0))
         #expect(log.map(\.phase) == [.enter])
         #expect(log.first?.reference == TriggerStreamFixture.key(Self.volumeID))
     }
@@ -239,7 +241,7 @@ struct CellStreamerTriggerTests {
         #expect(recorder.log == ["enter"])
 
         // Walk far enough that cell (0,0) leaves the grid entirely.
-        let departed = CellGridManager.cellCenter(of: CellStreamerTests.coordinate(8, 0))
+        let departed = CellGridManager.cellCenter(of: CellStreamerFixture.coordinate(8, 0))
         Self.step(harness, feetAt: departed)
         #expect(recorder.log == ["enter", "leave", "detach"])
         #expect(harness.streamer.occupiedTriggers.isEmpty)

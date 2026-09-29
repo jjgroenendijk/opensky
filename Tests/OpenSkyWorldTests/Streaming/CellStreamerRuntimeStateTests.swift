@@ -13,6 +13,7 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -21,7 +22,7 @@ struct CellStreamerRuntimeStateTests {
     // MARK: - Fixtures
 
     private static func coordinate(_ x: Int32, _ y: Int32) -> CellCoordinate {
-        CellStreamerTests.coordinate(x, y)
+        CellStreamerFixture.coordinate(x, y)
     }
 
     private static func key(_ objectID: UInt32) -> ReferenceKey {
@@ -45,7 +46,7 @@ struct CellStreamerRuntimeStateTests {
     private static func makeHarness(radius: Int32 = 0) -> Harness {
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: radius)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
         streamer.stateSource = { store.snapshot() }
         store.onMutation = { [weak streamer] location, sequence in
             streamer?.noteStateMutation(in: location, sequence: sequence)
@@ -74,7 +75,7 @@ struct CellStreamerRuntimeStateTests {
             let index = harness.completedCount
             harness.runner.complete(
                 harness.runner.enqueued[index],
-                with: .success(CellStreamerTests.cellScene(
+                with: .success(CellStreamerFixture.cellScene(
                     stateSequence: harness.runner.enqueuedStates[index].sequence
                 ))
             )
@@ -108,7 +109,7 @@ struct CellStreamerRuntimeStateTests {
     @Test
     func dispatchWithNoStateSourceStillCarriesThePluginBaseline() {
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
 
         streamer.update(cameraPosition: Self.position(of: Self.coordinate(0, 0)))
 
@@ -123,7 +124,7 @@ struct CellStreamerRuntimeStateTests {
         Self.disable(0x20, in: harness, at: cell)
 
         harness.streamer.requestDoorTransition(
-            CellStreamerTests.door(reference: 0x900, destination: 0x901, position: .zero)
+            CellStreamerFixture.door(reference: 0x900, destination: 0x901, position: .zero)
         )
 
         let state = try #require(harness.runner.enqueuedDoorTransitionStates.first)
@@ -139,7 +140,7 @@ struct CellStreamerRuntimeStateTests {
         let camera = Self.position(of: cell)
         harness.streamer.update(cameraPosition: camera)
         harness.runner.complete(cell, with: .success(
-            CellStreamerTests.cellScene(meshKeys: ["before"])
+            CellStreamerFixture.cellScene(meshKeys: ["before"])
         ))
         harness.completedCount = 1
         harness.streamer.update(cameraPosition: camera)
@@ -160,7 +161,7 @@ struct CellStreamerRuntimeStateTests {
 
         // The replacement displaces the old scene on the next integration.
         harness.runner.complete(cell, with: .success(
-            CellStreamerTests.cellScene(meshKeys: ["after"], stateSequence: state.sequence)
+            CellStreamerFixture.cellScene(meshKeys: ["after"], stateSequence: state.sequence)
         ))
         harness.completedCount = 2
         harness.streamer.update(cameraPosition: camera)
@@ -180,7 +181,7 @@ struct CellStreamerRuntimeStateTests {
         // Resolve just the center cell; the other eight stay in flight.
         harness.streamer.update(cameraPosition: camera)
         harness.runner.complete(Self.coordinate(0, 0), with: .success(
-            CellStreamerTests.cellScene()
+            CellStreamerFixture.cellScene()
         ))
         harness.completedCount = 1
         harness.streamer.update(cameraPosition: camera)
@@ -215,7 +216,7 @@ struct CellStreamerRuntimeStateTests {
         #expect(harness.runner.enqueued.count == 1)
 
         harness.runner.complete(cell, with: .success(
-            CellStreamerTests.cellScene(meshKeys: ["stale"], stateSequence: 1)
+            CellStreamerFixture.cellScene(meshKeys: ["stale"], stateSequence: 1)
         ))
         harness.completedCount = 1
         harness.streamer.update(cameraPosition: camera)

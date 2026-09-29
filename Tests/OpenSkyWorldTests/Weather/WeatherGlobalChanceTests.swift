@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing
+import WorldStateTesting
 
 @MainActor
 struct WeatherGlobalChanceTests {

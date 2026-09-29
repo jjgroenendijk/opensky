@@ -5,6 +5,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor
@@ -65,7 +66,7 @@ struct TriggerEventLogTests {
     /// reaches it without any app-side wiring.
     @Test
     func streamerRecordsItsOwnTransitions() {
-        let streamer = CellStreamerTests.makeStreamer(
+        let streamer = CellStreamerFixture.makeStreamer(
             runner: ManualCellBuildRunner(), radius: 0
         )
         streamer.onTriggerTransition(TriggerTransitionEvent(reference: key, phase: .enter))

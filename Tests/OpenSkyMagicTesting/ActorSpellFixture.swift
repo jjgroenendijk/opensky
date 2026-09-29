@@ -17,10 +17,10 @@ import Foundation
 @testable import OpenSkyMagic
 @testable import OpenSkyProgression
 
-enum ActorSpellFixture {
+public enum ActorSpellFixture {
     /// ACBS, 24 bytes: uint32 flags, 7 stat words, uint16 template flags, two
     /// tail words.
-    static func acbs(templateFlags: UInt16) -> Data {
+    public static func acbs(templateFlags: UInt16) -> Data {
         var data = Data()
         data.appendUInt32(0)
         for _ in 0 ..< 7 {
@@ -32,14 +32,14 @@ enum ActorSpellFixture {
         return data
     }
 
-    static func formIDField(_ type: String, _ value: UInt32) -> Data {
+    public static func formIDField(_ type: String, _ value: UInt32) -> Data {
         var data = Data()
         data.appendUInt32(value)
         return ESMFixture.field(type, data)
     }
 
     /// The one record a fixture byte string contains.
-    static func record(_ bytes: Data) throws -> ESMRecord {
+    public static func record(_ bytes: Data) throws -> ESMRecord {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {
             throw ESMError.malformed("fixture did not produce a record")
@@ -47,7 +47,7 @@ enum ActorSpellFixture {
         return record
     }
 
-    static func npc(
+    public static func npc(
         formID: UInt32,
         templateFlags: UInt16 = 0,
         template: UInt32? = nil,
@@ -91,7 +91,7 @@ enum ActorSpellFixture {
         )
     }
 
-    static func race(formID: UInt32, spells: [UInt32]) throws -> Race {
+    public static func race(formID: UInt32, spells: [UInt32]) throws -> Race {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("TestRace"))
         for spell in spells {
             fields += formIDField("SPLO", spell)
@@ -102,7 +102,7 @@ enum ActorSpellFixture {
         )
     }
 
-    static func lvsp(
+    public static func lvsp(
         formID: UInt32,
         entries: [LeveledList.Entry]
     ) throws -> LeveledList {
@@ -125,7 +125,7 @@ enum ActorSpellFixture {
 
     /// The perk half of the same template resolution (issue #497), over the
     /// same NPC_ records.
-    static func perkResolver(npcs: [ActorBase]) -> ActorPerkBaselineResolver {
+    public static func perkResolver(npcs: [ActorBase]) -> ActorPerkBaselineResolver {
         ActorPerkBaselineResolver(
             templates: ActorTemplateResolver(
                 actors: Dictionary(uniqueKeysWithValues: npcs.map { ($0.formID.rawValue, $0) }),
@@ -134,7 +134,7 @@ enum ActorSpellFixture {
         )
     }
 
-    static func resolver(
+    public static func resolver(
         npcs: [ActorBase],
         races: [Race] = [],
         leveledSpells: [LeveledList] = []

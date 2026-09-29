@@ -1,6 +1,3 @@
-// A copy of the fake in OpenSkyCombatTests. Both test targets need it, and a
-// testing library cannot hold it, because it conforms to an implementation protocol.
-
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyFormatsCore
@@ -12,22 +9,24 @@ import PhysicsTesting
 import simd
 
 @MainActor
-final class FakeRagdollWorld: RagdollWorldSeam {
-    var actor: RagdollActor?
+public final class FakeRagdollWorld: RagdollWorldSeam {
+    public var actor: RagdollActor?
     /// Which event names a graph is pretending to declare. Empty means no graph
     /// is attached, which is what routes a death down the fallback.
-    var declaredEvents: Set<String> = []
-    private(set) var raised: [String] = []
-    private(set) var writes: [(key: ReferenceKey, state: ActorDeathState)] = []
-    var states: [ReferenceKey: ActorDeathState] = [:]
-    var ragdollStepWorld = DynamicStepWorld()
+    public var declaredEvents: Set<String> = []
+    public private(set) var raised: [String] = []
+    public private(set) var writes: [(key: ReferenceKey, state: ActorDeathState)] = []
+    public var states: [ReferenceKey: ActorDeathState] = [:]
+    public var ragdollStepWorld = DynamicStepWorld()
 
-    func ragdollActor(for key: ReferenceKey) -> RagdollActor? {
+    public init() {}
+
+    public func ragdollActor(for key: ReferenceKey) -> RagdollActor? {
         actor?.key == key ? actor : nil
     }
 
     @discardableResult
-    func raiseRagdollEvent(_ name: String, on key: ReferenceKey) -> Bool {
+    public func raiseRagdollEvent(_ name: String, on key: ReferenceKey) -> Bool {
         raised.append(name)
         return declaredEvents.contains(name)
     }
@@ -36,9 +35,9 @@ final class FakeRagdollWorld: RagdollWorldSeam {
     /// the death latch back through `WorldStateStore` — the Papyrus `IsDead`
     /// native, above all. Nil for the ragdoll tests themselves, which only ever
     /// read `states` back.
-    var store: WorldStateStore?
+    public var store: WorldStateStore?
 
-    func writeDeathState(
+    public func writeDeathState(
         _ state: ActorDeathState, for key: ReferenceKey, in cell: CellSceneLocation
     ) {
         states[key] = state
@@ -46,17 +45,17 @@ final class FakeRagdollWorld: RagdollWorldSeam {
         store?.set(state, for: key, in: cell)
     }
 
-    func deathState(of key: ReferenceKey) -> ActorDeathState? {
+    public func deathState(of key: ReferenceKey) -> ActorDeathState? {
         states[key]
     }
 
     /// Where a death's script events go (issue #375). Nil is the seam's own
     /// default — a world with no VM — and a test that cares about the events
     /// installs a closure into the real `PapyrusWorldRuntime`.
-    var deathEvents: ((ReferenceKey, ReferenceKey?) -> Int)?
+    public var deathEvents: ((ReferenceKey, ReferenceKey?) -> Int)?
 
     @discardableResult
-    func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
+    public func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
         deathEvents?(key, killer) ?? 0
     }
 }

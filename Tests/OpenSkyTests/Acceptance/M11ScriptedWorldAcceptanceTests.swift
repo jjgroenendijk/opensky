@@ -24,8 +24,10 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -94,9 +96,9 @@ struct M11ScriptedWorldAcceptanceTests {
     /// Step five: the same delta run back through the real `CellSceneBuilder`.
     /// Gated on a Metal device because a cell build uploads meshes; the
     /// assertions above carry the gate when no device is present.
-    @Test(.enabled(if: CellSceneBuilderTests.hasDevice))
+    @Test(.enabled(if: CellSceneFixture.hasDevice))
     func theDisabledDoorLeavesTheDrawnSet() throws {
-        let cells = try CellSceneBuilderTests()
+        let cells = try CellSceneFixture()
         try cells.writeLooseFile("meshes/arch/solid.nif", cells.collisionRenderNIF())
         let pluginData = M11ScriptedWorldChain.rebuildPlugin(cells)
 

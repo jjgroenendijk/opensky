@@ -13,8 +13,10 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+import OpenSkyMagicTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 import simd
 import Testing
 

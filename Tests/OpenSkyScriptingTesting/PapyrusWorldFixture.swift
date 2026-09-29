@@ -20,24 +20,24 @@ import Testing
 /// Records "Probe.Note" calls in dispatch order while forwarding everything
 /// else (Utility.Wait among them) to the standard native registry, so tests
 /// can assert global event order and latent resumes together.
-nonisolated final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch {
+nonisolated public final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch {
     private let registry: PapyrusNativeRegistry
-    private(set) var notes: [String] = []
+    public private(set) var notes: [String] = []
     /// Stands in for a not-yet-written native (issue #172): consulted before
     /// the "Probe.Note" recorder, so a test can implement one `Probe.*` call
     /// against the world through `context.world` without waiting for the real
     /// `ObjectReference` family.
-    var probeHandler: (
+    public var probeHandler: (
         (PapyrusNativeCall, PapyrusNativeContext) -> PapyrusNativeResult?
     )?
 
     /// - Parameter context: pass a context carrying a `PapyrusWorldAccess` to
     ///   give both the standard natives and `probeHandler` world access.
-    init(context: PapyrusNativeContext = PapyrusNativeContext()) {
+    public init(context: PapyrusNativeContext = PapyrusNativeContext()) {
         registry = .standard(context: context)
     }
 
-    func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
+    public func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         if PapyrusRuntime.matches(call.scriptName, "Probe") {
             if let result = probeHandler?(call, registry.context) {
                 return result
@@ -51,16 +51,16 @@ nonisolated final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch {
     }
 }
 
-enum PapyrusWorldFixture {
-    static let pluginName = "skyrim.esm"
-    static let cell = FakeWorldReferences.defaultCell
-    static let otherCell = CellSceneLocation.interior(FormID(0x2000))
+public enum PapyrusWorldFixture {
+    public static let pluginName = "skyrim.esm"
+    public static let cell = FakeWorldReferences.defaultCell
+    public static let otherCell = CellSceneLocation.interior(FormID(0x2000))
 
-    static var resolver: FormIDResolver {
+    public static var resolver: FormIDResolver {
         FormIDResolver(pluginName: pluginName, masters: [])
     }
 
-    static func key(objectID: UInt32, script: String) -> PapyrusInstanceKey {
+    public static func key(objectID: UInt32, script: String) -> PapyrusInstanceKey {
         PapyrusInstanceKey(
             reference: .plugin(name: pluginName, objectID: objectID),
             scriptName: script
@@ -69,7 +69,7 @@ enum PapyrusWorldFixture {
 
     /// One XLKR payload: keyword FormID then linked-reference FormID, or just
     /// the linked reference for the untagged short form.
-    static func linkedReferenceField(keyword: UInt32?, ref: UInt32) -> Data {
+    public static func linkedReferenceField(keyword: UInt32?, ref: UInt32) -> Data {
         var payload = Data()
         if let keyword {
             payload.appendUInt32(keyword)
@@ -86,7 +86,7 @@ enum PapyrusWorldFixture {
     /// - Parameter linkedReferences: XLKR entries in file order, each a
     ///   `(keyword, ref)` pair of raw FormID values with a nil keyword meaning
     ///   an untagged link.
-    static func referenceEntry(
+    public static func referenceEntry(
         objectID: UInt32,
         scripts: [VMADFixture.Script],
         isPersistent: Bool = false,
@@ -123,7 +123,7 @@ enum PapyrusWorldFixture {
     /// The same thing as an ACHR rather than a REFR (issue #375), which is what
     /// the `Actor` natives need: only a placed actor carries the NPC_ base an
     /// `ActorValueHolder` derives its baseline from.
-    static func actorEntry(
+    public static func actorEntry(
         objectID: UInt32,
         base: UInt32,
         scripts: [VMADFixture.Script],
@@ -147,13 +147,13 @@ enum PapyrusWorldFixture {
         )
     }
 
-    static func index(_ entries: [RuntimeReferenceEntry]) -> RuntimeReferenceIndex {
+    public static func index(_ entries: [RuntimeReferenceEntry]) -> RuntimeReferenceIndex {
         RuntimeReferenceIndex(entries: entries)
     }
 
     /// Event-handler body: optionally `Utility.Wait(waitSeconds)`, then a
     /// "Probe.Note" call recording `note`.
-    static func probeBody(note: String, waitSeconds: Float? = nil) -> PexFunction {
+    public static func probeBody(note: String, waitSeconds: Float? = nil) -> PexFunction {
         var instructions: [PexInstruction] = []
         if let waitSeconds {
             instructions.append(PapyrusTestSupport.instruction(
@@ -176,7 +176,7 @@ enum PapyrusWorldFixture {
         return PexFixture.runtimeFunction(instructions: instructions)
     }
 
-    static func eventScript(
+    public static func eventScript(
         _ name: String,
         events: [(String, PexFunction)],
         variables: [PexVariable] = [],
@@ -192,7 +192,7 @@ enum PapyrusWorldFixture {
 
     /// Script whose `OnInit`, `OnCellAttach`, and `OnLoad` each record
     /// "<name>.<event>", lowercased.
-    static func fullEventScript(_ name: String) -> PexObject {
+    public static func fullEventScript(_ name: String) -> PexObject {
         let key = PapyrusRuntime.key(name)
         return eventScript(name, events: [
             ("OnInit", probeBody(note: "\(key).oninit")),
@@ -202,7 +202,7 @@ enum PapyrusWorldFixture {
     }
 
     @MainActor
-    static func worldRuntime(
+    public static func worldRuntime(
         objects: [PexObject],
         nativeDispatch: PapyrusNativeDispatch,
         fixedStepSeconds: Double = 1.0 / 30.0
@@ -219,12 +219,26 @@ enum PapyrusWorldFixture {
     /// A whole world-aware Papyrus session over synthetic data (issue #172):
     /// the store the natives write through, the bridge they reach it by, the
     /// reference source standing in for the streamer, and the runtime.
-    struct Session {
-        let world: PapyrusWorldRuntime
-        let bridge: PapyrusWorldStateBridge
-        let worldState: WorldStateStore
-        let references: FakeWorldReferences
-        let dispatch: PapyrusWorldProbeDispatch
+    public struct Session {
+        public let world: PapyrusWorldRuntime
+        public let bridge: PapyrusWorldStateBridge
+        public let worldState: WorldStateStore
+        public let references: FakeWorldReferences
+        public let dispatch: PapyrusWorldProbeDispatch
+
+        public init(
+            world: PapyrusWorldRuntime,
+            bridge: PapyrusWorldStateBridge,
+            worldState: WorldStateStore,
+            references: FakeWorldReferences,
+            dispatch: PapyrusWorldProbeDispatch
+        ) {
+            self.world = world
+            self.bridge = bridge
+            self.worldState = worldState
+            self.references = references
+            self.dispatch = dispatch
+        }
     }
 
     /// Builds that session and attaches `entries` to the cell, so every VMAD
@@ -237,7 +251,7 @@ enum PapyrusWorldFixture {
     ///   session over state a first one wrote, which is what a save/load test
     ///   does.
     @MainActor
-    static func session(
+    public static func session(
         objects: [PexObject],
         entries: [RuntimeReferenceEntry],
         cell: CellSceneLocation? = cell,
@@ -276,7 +290,7 @@ enum PapyrusWorldFixture {
     /// is how a natives test invokes one function directly instead of through
     /// compiled bytecode.
     @MainActor
-    static func registry(for session: Session) -> PapyrusNativeRegistry {
+    public static func registry(for session: Session) -> PapyrusNativeRegistry {
         .standard(context: PapyrusNativeContext(
             world: PapyrusWorldAccess(bridge: session.bridge)
         ))
@@ -284,7 +298,7 @@ enum PapyrusWorldFixture {
 
     /// One `.method` native call, the shape the interpreter builds for
     /// `someReference.Disable()`.
-    static func methodCall(
+    public static func methodCall(
         _ scriptName: String,
         _ functionName: String,
         receiver: PapyrusObjectHandle?,
@@ -303,7 +317,7 @@ enum PapyrusWorldFixture {
 
     /// True when `result` is a failure of the invalid-arguments kind, which is
     /// what every world native returns rather than crashing or guessing.
-    static func isInvalidArguments(_ result: PapyrusNativeResult) -> Bool {
+    public static func isInvalidArguments(_ result: PapyrusNativeResult) -> Bool {
         guard case .failed(.invalidArguments) = result else { return false }
         return true
     }
@@ -311,7 +325,7 @@ enum PapyrusWorldFixture {
     /// Steps until a tick neither dispatches, resumes, nor leaves anything
     /// queued, bounded so a broken queue fails the test instead of hanging.
     @MainActor
-    static func drain(_ world: PapyrusWorldRuntime, maxSteps: Int = 64) {
+    public static func drain(_ world: PapyrusWorldRuntime, maxSteps: Int = 64) {
         for _ in 0 ..< maxSteps {
             let report = world.stepFixed()
             if report.dispatched == 0, report.resumed == 0, report.queued == 0 {

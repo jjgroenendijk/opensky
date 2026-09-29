@@ -4,7 +4,7 @@
 //
 // Split from CellStreamerRuntimeStateTests so both stay inside the type-body
 // limit. Scenes are built here rather than through
-// `CellStreamerTests.cellScene` because that fixture retains no references, and
+// `CellStreamerFixture.cellScene` because that fixture retains no references, and
 // `CellScene.references` is immutable once built.
 
 @testable import FormatsCoreTesting
@@ -14,6 +14,7 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -22,8 +23,8 @@ struct CellStreamerResidentReferenceTests {
     @Test
     func residentReferenceCountFollowsScenesInAndOutOfResidency() throws {
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
-        let cell = CellStreamerTests.coordinate(0, 0)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
+        let cell = CellStreamerFixture.coordinate(0, 0)
         let camera = CellGridManager.cellCenter(of: cell)
         #expect(streamer.residentReferenceCount == 0)
 
@@ -37,7 +38,7 @@ struct CellStreamerResidentReferenceTests {
         // Walking far enough away unloads the cell, and the count follows
         // residency rather than history.
         streamer.update(cameraPosition: CellGridManager.cellCenter(
-            of: CellStreamerTests.coordinate(40, 40)
+            of: CellStreamerFixture.coordinate(40, 40)
         ))
         #expect(streamer.residentCellCount == 0)
         #expect(streamer.residentReferenceCount == 0)
@@ -46,8 +47,8 @@ struct CellStreamerResidentReferenceTests {
     @Test
     func anEmptyIndexContributesNothing() {
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
-        let cell = CellStreamerTests.coordinate(0, 0)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
+        let cell = CellStreamerFixture.coordinate(0, 0)
         let camera = CellGridManager.cellCenter(of: cell)
 
         streamer.update(cameraPosition: camera)

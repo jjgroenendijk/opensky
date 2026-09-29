@@ -225,20 +225,19 @@ satisfies an old `import`, and the build fails with two types of the same name, 
 
 Shared test fixtures live in a testing library, `Tests/<Name>Testing/`. For a foundation
 module the name is the one the module declares, for example `BehaviorTesting`. For a feature it
-is the feature name plus `Testing`, for example `OpenSkyPerceptionTesting`, and it depends on the
-feature's interface, not its implementation. A fixture builder that needs the implementation
-stays in the test target that uses it, for example `HostilityFixture+Derivation.swift`. Its
-declarations are `public`, and it may `@testable import` the module it builds fixtures for.
+is the feature name plus `Testing`, for example `OpenSkyPerceptionTesting`. Its declarations are
+`public`, and it may `@testable import` the module it builds fixtures for.
 
-A testing library can come before its feature, like an interface declared early. The
-`testing` helper declares it alone. Example: `OpenSkyWorldTesting` holds `FakeWorldReferences`,
-a fixed reference index that inventory tests use in place of the cell streamer.
+A testing library may depend on feature implementations, its own and others', because only
+tests link it. The `testing` helper allows that, and it is the only helper that does. A module
+that ships in the app can never depend on a testing library. The library is declared after
+every implementation it uses. Example: `OpenSkyWorldTesting` comes after `OpenSkyWorld`, because
+`CellSceneBuilderFixture` builds real cell scenes.
 
 A testing library changes how Xcode builds the module it uses. The app and the test bundles
-then share that module, so Xcode builds it as a dynamic framework. A module that depends on
-`CFFmpeg` cannot be a framework: Xcode stops with "The workspace has a reference to a missing
-target with GUID 'PACKAGE-TARGET:CFFmpeg'". So `OpenSkyAudio` has no testing library. Its
-fixtures stay inside `OpenSkyAudioTests`.
+then share that module, so Xcode builds it as a dynamic framework. A framework cannot use a
+system-library target, so `CFFmpeg` is a C target that carries its own link flags
+([ffmpeg audio](/decisions/ffmpeg-audio.md)).
 
 The package test targets run in the `UnitTests` and `Sanitizers` plans next to `OpenSkyTests`. A
 test plan names a package test target with `"containerPath" : "container:."`, the package at the
@@ -249,5 +248,6 @@ test plan or scheme".
 `make test-fast T='<Target>Tests/...'` runs one package test target through `swift test`
 (`tools/test-package.sh`). It builds only the package, into `.build/`, and needs no app host.
 
-A test that needs only one module goes in that module's test target. A test that needs the app,
-the shader library in the app bundle, or the whole object graph stays in `Tests/OpenSkyTests/`.
+A suite goes in the test target of the highest module it imports, in `Package.swift` order. A
+suite that needs the app, the shader library in the app bundle, or an acceptance chain stays in
+`Tests/OpenSkyTests/`.

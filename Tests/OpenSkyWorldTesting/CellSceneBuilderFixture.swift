@@ -1,12 +1,10 @@
-// The `CellSceneBuilderTests` fixture: a temp-dir VFS, the synthetic plugin and
-// NIF builders every cell-scene suite composes, and the two Metal gates. Both
-// test targets compile this folder, because the M11 real-data acceptance suite
-// builds the same synthetic cell to compare a real render against.
+// The cell-scene fixture: a temp-dir VFS, the synthetic plugin and NIF builders
+// every cell-scene suite composes, and the two Metal gates. The M11 acceptance
+// suites build the same synthetic cell, so the builders live in this library.
 //
 // Fixtures are synthetic throughout — ESMFixture plugin bytes and NIFFixture
 // meshes in a temp directory, never extracted game files (AGENTS.md Legal & IP
-// boundary). The suite's own tests are extensions of this type under
-// Tests/OpenSkyTests/. See Tests/TestSupport/AGENTS.md.
+// boundary).
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -21,36 +19,70 @@ import Metal
 import simd
 import Testing
 
-struct TeleportFixture {
-    let door: UInt32
-    let position: SIMD3<Float>
-    let rotation: SIMD3<Float>
+public struct TeleportFixture: Sendable {
+    public let door: UInt32
+    public let position: SIMD3<Float>
+    public let rotation: SIMD3<Float>
+
+    public init(door: UInt32, position: SIMD3<Float>, rotation: SIMD3<Float>) {
+        self.door = door
+        self.position = position
+        self.rotation = rotation
+    }
 }
 
-struct CellSceneBuilderTests {
-    static let device = MTLCreateSystemDefaultDevice()
-    static var hasDevice: Bool {
+private let cellSceneDevice = MTLCreateSystemDefaultDevice()
+
+/// The record and mesh builders of the cell-scene suites. A suite conforms and
+/// gets every builder as its own member; `CellSceneFixture` is the conformer for
+/// code outside a suite.
+public protocol CellSceneBuilderFixture {
+    /// The scratch folder the fixture's virtual file system reads loose files from.
+    var dataURL: URL { get }
+}
+
+/// A scratch data folder with every cell-scene builder, for callers that are not
+/// a cell-scene suite themselves.
+public struct CellSceneFixture: CellSceneBuilderFixture {
+    public let dataURL: URL
+
+    public init() throws {
+        dataURL = try Self.makeDataDirectory()
+    }
+}
+
+extension CellSceneBuilderFixture {
+    public static var device: (any MTLDevice)? {
+        cellSceneDevice
+    }
+
+    public static var hasDevice: Bool {
         device != nil
     }
 
-    static let staticAttributes: UInt16 = 0x1B
-    static let staticStrideDwords = 7
+    public static var staticAttributes: UInt16 {
+        0x1B
+    }
 
-    fileprivate let dataURL: URL
+    public static var staticStrideDwords: Int {
+        7
+    }
 
-    init() throws {
-        dataURL = FileManager.default.temporaryDirectory
+    /// A new, empty folder under the temporary directory.
+    public static func makeDataDirectory() throws -> URL {
+        let url = FileManager.default.temporaryDirectory
             .appending(path: "opensky-cellscene-\(UUID().uuidString)", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(at: dataURL, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
     }
 }
 
 /// Fixture builders live in an extension to keep the test type body small;
 /// they hold no assertions of their own.
-extension CellSceneBuilderTests {
+extension CellSceneBuilderFixture {
     // MARK: - NIF fixtures
 
-    func writeLooseFile(_ relativePath: String, _ contents: Data) throws {
+    public func writeLooseFile(_ relativePath: String, _ contents: Data) throws {
         let url = dataURL.appending(path: relativePath)
         try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(),
@@ -61,7 +93,7 @@ extension CellSceneBuilderTests {
 
     /// One static-layout vertex record at the given position (see
     /// MeshLibraryTests for the interleaved layout the attributes select).
-    func vertexRecord(position: SIMD3<Float>) -> Data {
+    public func vertexRecord(position: SIMD3<Float>) -> Data {
         var record = Data()
         record.appendFloat32(position.x)
         record.appendFloat32(position.y)
@@ -76,7 +108,7 @@ extension CellSceneBuilderTests {
 
     /// Static one-triangle NIF spanning the given three positions — known
     /// extents for bounds assertions.
-    func staticNIF(positions: [SIMD3<Float>]) -> Data {
+    public func staticNIF(positions: [SIMD3<Float>]) -> Data {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1])),
             .init("BSTriShape", NIFFixture.bsTriShape(
@@ -88,13 +120,13 @@ extension CellSceneBuilderTests {
         ])
     }
 
-    func unitNIF() -> Data {
+    public func unitNIF() -> Data {
         staticNIF(positions: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 1)])
     }
 
     // MARK: - Plugin fixtures
 
-    func statRecord(formID: UInt32, modelPath: String?) -> Data {
+    public func statRecord(formID: UInt32, modelPath: String?) -> Data {
         var fields = Data()
         if let modelPath {
             fields += ESMFixture.field("MODL", ESMFixture.zstring(modelPath))
@@ -103,7 +135,7 @@ extension CellSceneBuilderTests {
     }
 
     /// One MSTT/TREE/FURN/ACTI/CONT record, same EDID/MODL shape as STAT.
-    func modelBaseRecord(
+    public func modelBaseRecord(
         type: String,
         formID: UInt32,
         modelPath: String?,
@@ -125,7 +157,7 @@ extension CellSceneBuilderTests {
         return ESMFixture.record(type, formID: formID, data: fields)
     }
 
-    func refrRecord(
+    public func refrRecord(
         formID: UInt32,
         base: UInt32,
         position: SIMD3<Float> = .zero,
@@ -167,7 +199,7 @@ extension CellSceneBuilderTests {
         return ESMFixture.record("REFR", formID: formID, data: fields)
     }
 
-    func interiorCellGroup(
+    public func interiorCellGroup(
         formID: UInt32,
         refs: Data,
         blockLabel: UInt32? = nil,
@@ -201,7 +233,7 @@ extension CellSceneBuilderTests {
     /// top group per non-empty entry in `modelBaseRecords` (keyed by record
     /// type, e.g. "TREE") — mirrors the real plugin's one-group-per-type
     /// layout instead of mixing types under a single label.
-    func plugin(
+    public func plugin(
         worldspaceEditorID: String = "Tamriel",
         cellEditorID: String = "TestCell06",
         grid: (x: Int32, y: Int32) = (6, -2),
@@ -281,7 +313,7 @@ extension CellSceneBuilderTests {
                 : ESMFixture.topGroup("CELL", contents: interiorRecords))
     }
 
-    func makeBuilder(pluginData: Data, device: MTLDevice) throws -> CellSceneBuilder {
+    public func makeBuilder(pluginData: Data, device: MTLDevice) throws -> CellSceneBuilder {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
         let textures = TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
@@ -293,7 +325,7 @@ extension CellSceneBuilderTests {
         )
     }
 
-    func build(
+    public func build(
         pluginData: Data,
         gridX: Int32 = 6,
         gridY: Int32 = -2,
@@ -310,8 +342,8 @@ extension CellSceneBuilderTests {
 /// Worldspace and interior-cell record builders. The M11 real-data acceptance
 /// suite composes the same synthetic worldspace, so these live beside the rest of
 /// the fixture rather than with the water suite that first needed them.
-extension CellSceneBuilderTests {
-    func worldRecord(
+extension CellSceneBuilderFixture {
+    public func worldRecord(
         formID: UInt32,
         editorID: String,
         defaultWaterHeight: Float? = nil,
@@ -344,7 +376,7 @@ extension CellSceneBuilderTests {
         return ESMFixture.record("WRLD", formID: formID, data: fields)
     }
 
-    func cellFields(
+    public func cellFields(
         editorID: String,
         grid: (x: Int32, y: Int32),
         flags: UInt16,
@@ -375,7 +407,7 @@ extension CellSceneBuilderTests {
         return fields
     }
 
-    func collisionRenderNIF() -> Data {
+    public func collisionRenderNIF() -> Data {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(
                 prefix: NIFFixture.avObjectPrefix(collisionRef: 2),

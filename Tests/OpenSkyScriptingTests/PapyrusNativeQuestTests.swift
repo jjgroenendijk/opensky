@@ -10,6 +10,7 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 import Testing
 
 @MainActor

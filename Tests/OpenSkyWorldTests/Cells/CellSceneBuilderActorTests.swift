@@ -10,6 +10,7 @@ import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -148,123 +149,5 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.actorAccountingIsExact)
         #expect(scene.summary.actorAnimationAccountingIsExact)
         #expect(scene.assets.meshKeys.contains { $0.contains("torso_m.nif") })
-    }
-}
-
-// MARK: - Actor fixture builders
-
-extension CellSceneBuilderTests {
-    /// ACHR record bytes; headerFlags carries record-header bits (0x800
-    /// initially disabled, 0x20 deleted — UESP record flags).
-    func achrRecord(
-        formID: UInt32,
-        base: UInt32,
-        position: SIMD3<Float> = .zero,
-        headerFlags: UInt32 = 0,
-        includePlacement: Bool = true
-    ) -> Data {
-        var name = Data()
-        name.appendUInt32(base)
-        var fields = ESMFixture.field("NAME", name)
-        if includePlacement {
-            var data = Data()
-            for value in [position.x, position.y, position.z, 0, 0, 0] {
-                data.appendFloat32(value)
-            }
-            fields += ESMFixture.field("DATA", data)
-        }
-        return ESMFixture.record("ACHR", formID: formID, flags: headerFlags, data: fields)
-    }
-
-    /// Minimal resolvable appearance chain: NPC_ -> RACE (skin WNAM) ->
-    /// ARMO -> ARMA with a male body model. Keys feed plugin()'s
-    /// one-top-group-per-type layout. Race skeleton is intentionally absent
-    /// on disk — a skeleton miss degrades, it never blocks the body.
-    func actorChainRecords(npc: UInt32) -> [String: Data] {
-        var acbs = Data()
-        acbs.appendUInt32(0)
-        for _ in 0 ..< 7 {
-            acbs.appendUInt16(0)
-        }
-        acbs.appendUInt16(0)
-        acbs.appendUInt16(0)
-        acbs.appendUInt16(0)
-        let npcRecord = ESMFixture.record(
-            "NPC_",
-            formID: npc,
-            data: ESMFixture.field("ACBS", acbs) + formIDField("RNAM", 0x100)
-        )
-
-        // RACE: WNAM skin, DATA (0x20 stat bytes + flags word, no FaceGen
-        // head), MNAM + ANAM male skeleton path (UESP RACE).
-        var raceData = Data(count: 0x20)
-        raceData.appendUInt32(0x100)
-        let raceRecord = ESMFixture.record(
-            "RACE",
-            formID: 0x100,
-            data: formIDField("WNAM", 0x200)
-                + ESMFixture.field("DATA", raceData)
-                + ESMFixture.field("MNAM", Data())
-                + ESMFixture.field("ANAM", ESMFixture.zstring("skel_m.nif"))
-        )
-
-        var bod2 = Data()
-        bod2.appendUInt32(0b0100)
-        bod2.appendUInt32(2)
-        let armoRecord = ESMFixture.record(
-            "ARMO",
-            formID: 0x200,
-            data: formIDField("RNAM", 0x19)
-                + ESMFixture.field("BOD2", bod2)
-                + formIDField("MODL", 0x210)
-        )
-        let armaRecord = ESMFixture.record(
-            "ARMA",
-            formID: 0x210,
-            data: ESMFixture.field("BOD2", bod2)
-                + formIDField("RNAM", 0x19)
-                + ESMFixture.field("MOD2", ESMFixture.zstring("torso_m.nif"))
-                + formIDField("MODL", 0x100)
-        )
-        return [
-            "NPC_": npcRecord,
-            "RACE": raceRecord,
-            "ARMO": armoRecord,
-            "ARMA": armaRecord
-        ]
-    }
-
-    private func formIDField(_ type: String, _ value: UInt32) -> Data {
-        var data = Data()
-        data.appendUInt32(value)
-        return ESMFixture.field(type, data)
-    }
-
-    /// Worldspace persistent CELL at grid (0,0) holding cross-cell ACHRs in
-    /// its persistent children group (door-handling storage pattern).
-    func persistentActorCell(refs: Data) -> Data {
-        let cellID: UInt32 = 0x41
-        let cell = ESMFixture.record(
-            "CELL",
-            formID: cellID,
-            data: cellFields(
-                editorID: "PersistentActors",
-                grid: (0, 0),
-                flags: 0,
-                waterHeightBits: nil,
-                waterType: nil
-            )
-        )
-        let children = ESMFixture.childGroup(
-            parent: cellID,
-            groupType: 6,
-            contents: ESMFixture.childGroup(parent: cellID, groupType: 8, contents: refs)
-        )
-        let subBlock = ESMFixture.exteriorBlock(
-            x: 0, y: 0, groupType: 5, contents: cell + children
-        )
-        return ESMFixture.exteriorBlock(
-            x: 0, y: 0, groupType: 4, contents: subBlock
-        )
     }
 }

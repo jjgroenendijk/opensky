@@ -13,26 +13,30 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing
 
+private typealias Fixture = PapyrusWorldActivationFixture
+
 @MainActor
-extension PapyrusWorldActivationTests {
+struct PapyrusWorldActivationTests {
     // MARK: - Recording an activation
 
     @Test("an interaction event records an activation by the player")
     func interactionRecordsActivation() throws {
-        let session = try Self.doorSession(scripts: ["DoorScript"])
-        let outcome = session.bridge.handleInteraction(Self.event(reference: Self.doorID))
+        let session = try Fixture.doorSession(scripts: ["DoorScript"])
+        let outcome = session.bridge.handleInteraction(Fixture.event(reference: Fixture.doorID))
 
         #expect(outcome.recorded)
         #expect(outcome.cappedByRecursion == false)
         let activation = try #require(session.worldState.component(
-            ReferenceActivationState.self, for: Self.key(Self.doorID)
+            ReferenceActivationState.self, for: Fixture.key(Fixture.doorID)
         ))
         #expect(activation.activationCount == 1)
         #expect(activation.lastActivator == ReferenceKey.player)
@@ -43,16 +47,16 @@ extension PapyrusWorldActivationTests {
 
     @Test("a non-door activation counts without toggling the open marker")
     func activateActionLeavesOpenAlone() throws {
-        let session = try Self.doorSession(scripts: ["DoorScript"])
+        let session = try Fixture.doorSession(scripts: ["DoorScript"])
         session.bridge.handleInteraction(
-            Self.event(reference: Self.doorID, action: .activate)
+            Fixture.event(reference: Fixture.doorID, action: .activate)
         )
         session.bridge.handleInteraction(
-            Self.event(reference: Self.doorID, action: .activate)
+            Fixture.event(reference: Fixture.doorID, action: .activate)
         )
 
         let activation = try #require(session.worldState.component(
-            ReferenceActivationState.self, for: Self.key(Self.doorID)
+            ReferenceActivationState.self, for: Fixture.key(Fixture.doorID)
         ))
         #expect(activation.activationCount == 2)
         #expect(activation.isOpen == false)
@@ -60,8 +64,8 @@ extension PapyrusWorldActivationTests {
 
     @Test("the activation write is attributed to the reference's cell")
     func activationIsAttributedToItsCell() throws {
-        let session = try Self.doorSession(scripts: ["DoorScript"])
-        session.bridge.handleInteraction(Self.event(reference: Self.doorID))
+        let session = try Fixture.doorSession(scripts: ["DoorScript"])
+        session.bridge.handleInteraction(Fixture.event(reference: Fixture.doorID))
 
         #expect(session.worldState.dirtyCount == 1)
         #expect(session.worldState.dirtyCount(in: PapyrusWorldFixture.cell) == 1)
@@ -70,13 +74,13 @@ extension PapyrusWorldActivationTests {
         #expect(entries.count == 1)
         #expect(entries.last?.kind == .activation)
         #expect(entries.last?.cell == PapyrusWorldFixture.cell)
-        #expect(entries.last?.key == Self.key(Self.doorID))
+        #expect(entries.last?.key == Fixture.key(Fixture.doorID))
     }
 
     @Test("a reference no resident cell knows records nothing")
     func unknownReferenceIsDropped() throws {
-        let session = try Self.doorSession(scripts: ["DoorScript"])
-        let outcome = session.bridge.handleInteraction(Self.event(reference: 0xFFF))
+        let session = try Fixture.doorSession(scripts: ["DoorScript"])
+        let outcome = session.bridge.handleInteraction(Fixture.event(reference: 0xFFF))
 
         #expect(outcome == .none)
         #expect(session.worldState.dirtyCount == 0)
@@ -87,9 +91,9 @@ extension PapyrusWorldActivationTests {
 
     @Test("OnActivate is queued once per attached script, with akActionRef")
     func onActivateQueuedPerScript() throws {
-        let session = try Self.doorSession(scripts: ["AScript", "BScript"])
+        let session = try Fixture.doorSession(scripts: ["AScript", "BScript"])
         PapyrusWorldFixture.drain(session.world)
-        session.bridge.handleInteraction(Self.event(reference: Self.doorID))
+        session.bridge.handleInteraction(Fixture.event(reference: Fixture.doorID))
 
         let playerHandle = session.world.objectHandle(for: .player)
         let queued = session.world.eventQueue
@@ -99,19 +103,19 @@ extension PapyrusWorldActivationTests {
         #expect(queued.allSatisfy { $0.activationDepth == 1 })
         // Sorted instance order, so the queue is deterministic.
         #expect(queued.map(\.target.scriptName) == ["ascript", "bscript"])
-        #expect(queued.allSatisfy { $0.target.reference == Self.key(Self.doorID) })
+        #expect(queued.allSatisfy { $0.target.reference == Fixture.key(Fixture.doorID) })
     }
 
     @Test("script code receives the player handle as akActionRef")
     func scriptSeesPlayerHandle() throws {
-        let session = try Self.doorSession(scripts: ["DoorScript"])
+        let session = try Fixture.doorSession(scripts: ["DoorScript"])
         var seen: [PapyrusValue] = []
         session.dispatch.probeHandler = { call, _ in
             seen.append(contentsOf: call.arguments)
             return .returned(.none)
         }
         PapyrusWorldFixture.drain(session.world)
-        session.bridge.handleInteraction(Self.event(reference: Self.doorID))
+        session.bridge.handleInteraction(Fixture.event(reference: Fixture.doorID))
         PapyrusWorldFixture.drain(session.world)
 
         #expect(seen.count == 1)
@@ -124,9 +128,9 @@ extension PapyrusWorldActivationTests {
 
     @Test("the player handle is stable and resolves back to the player key")
     func playerHandleIsStable() throws {
-        let session = try Self.doorSession(scripts: ["DoorScript"])
+        let session = try Fixture.doorSession(scripts: ["DoorScript"])
         let first = session.world.objectHandle(for: .player)
-        session.bridge.handleInteraction(Self.event(reference: Self.doorID))
+        session.bridge.handleInteraction(Fixture.event(reference: Fixture.doorID))
         let second = session.world.objectHandle(for: .player)
 
         #expect(first == second)
@@ -135,9 +139,9 @@ extension PapyrusWorldActivationTests {
         #expect(session.world.runtime.instance(for: first) == nil)
         #expect(!session.world.instancesByKey.values.contains(first))
         // A reference carrying a script answers with its instance handle.
-        let doorHandle = session.world.objectHandle(for: Self.key(Self.doorID))
+        let doorHandle = session.world.objectHandle(for: Fixture.key(Fixture.doorID))
         #expect(session.world.instancesByKey.values.contains(doorHandle))
-        #expect(session.world.referenceKey(for: doorHandle) == Self.key(Self.doorID))
+        #expect(session.world.referenceKey(for: doorHandle) == Fixture.key(Fixture.doorID))
     }
 
     @Test("a target with no scripts still records its activation")
@@ -145,10 +149,10 @@ extension PapyrusWorldActivationTests {
         let session = try PapyrusWorldFixture.session(
             objects: [],
             entries: [PapyrusWorldFixture.referenceEntry(
-                objectID: Self.leverID, scripts: []
+                objectID: Fixture.leverID, scripts: []
             )]
         )
-        let outcome = session.bridge.handleInteraction(Self.event(reference: Self.leverID))
+        let outcome = session.bridge.handleInteraction(Fixture.event(reference: Fixture.leverID))
 
         #expect(outcome.recorded)
         #expect(outcome.queuedEvents == 0)
@@ -160,8 +164,8 @@ extension PapyrusWorldActivationTests {
 
     @Test("a self-activating script chain is capped and tallied")
     func activationRecursionIsCapped() throws {
-        let session = try Self.doorSession(scripts: ["DoorScript"])
-        let door = Self.key(Self.doorID)
+        let session = try Fixture.doorSession(scripts: ["DoorScript"])
+        let door = Fixture.key(Fixture.doorID)
         // Stands in for the `Activate` native the next slice installs: every
         // OnActivate activates the same reference again.
         session.dispatch.probeHandler = { _, context in
@@ -169,7 +173,7 @@ extension PapyrusWorldActivationTests {
             return .returned(.none)
         }
         PapyrusWorldFixture.drain(session.world)
-        session.bridge.handleInteraction(Self.event(reference: Self.doorID))
+        session.bridge.handleInteraction(Fixture.event(reference: Fixture.doorID))
         PapyrusWorldFixture.drain(session.world)
 
         let tally = session.world.runtime.tally
@@ -188,9 +192,9 @@ extension PapyrusWorldActivationTests {
 
     @Test("activation count and the player activator round-trip the save")
     func activationRoundTripsTheSave() throws {
-        let session = try Self.doorSession(scripts: ["DoorScript"])
-        session.bridge.handleInteraction(Self.event(reference: Self.doorID))
-        session.bridge.handleInteraction(Self.event(reference: Self.doorID))
+        let session = try Fixture.doorSession(scripts: ["DoorScript"])
+        session.bridge.handleInteraction(Fixture.event(reference: Fixture.doorID))
+        session.bridge.handleInteraction(Fixture.event(reference: Fixture.doorID))
 
         let encoded = OpenSkySaveEncoder.encode(
             snapshot: session.worldState.snapshot(),
@@ -202,7 +206,7 @@ extension PapyrusWorldActivationTests {
         restored.restore(from: decoded.snapshot)
 
         let activation = try #require(restored.component(
-            ReferenceActivationState.self, for: Self.key(Self.doorID)
+            ReferenceActivationState.self, for: Fixture.key(Fixture.doorID)
         ))
         #expect(activation.activationCount == 2)
         #expect(activation.lastActivator == ReferenceKey.player)

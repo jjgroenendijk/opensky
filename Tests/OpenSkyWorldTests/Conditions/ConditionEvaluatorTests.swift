@@ -13,6 +13,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 struct ConditionEvaluatorTests {

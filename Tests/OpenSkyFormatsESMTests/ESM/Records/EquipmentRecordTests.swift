@@ -239,7 +239,7 @@ struct ArmorAddonRecordTests {
         bod2.appendUInt32(1)
         fields += ESMFixture.field("BOD2", bod2)
         fields += armaFormID("RNAM", 0x19)
-        fields += dnamField(male: 5, female: 7, weaponAdjust: 0.8)
+        fields += InventoryFixture.armorAddonDNAM(male: 5, female: 7, weaponAdjust: 0.8)
         fields += ESMFixture.field("MOD2", ESMFixture.zstring("armor\\iron\\m.nif"))
         fields += ESMFixture.field("MOD3", ESMFixture.zstring("armor\\iron\\f.nif"))
         fields += armaFormID("MODL", 0x0001_D4D4)

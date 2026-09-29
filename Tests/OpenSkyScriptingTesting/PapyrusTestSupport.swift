@@ -5,15 +5,15 @@ import Foundation
 import OpenSkyScriptingInterface
 import Testing
 
-enum PapyrusTestSupport {
-    static func instruction(
+public enum PapyrusTestSupport {
+    public static func instruction(
         _ opcode: PexOpcode,
         _ operands: PexValue...
     ) -> PexInstruction {
         PexInstruction(opcode: opcode, operands: operands)
     }
 
-    static func state(
+    public static func state(
         _ name: String = "",
         functions: [(String, PexFunction)]
     ) -> PexState {
@@ -23,7 +23,7 @@ enum PapyrusTestSupport {
         )
     }
 
-    static func runtime(
+    public static func runtime(
         objects: [PexObject],
         nativeDispatch: PapyrusNativeDispatch = PapyrusRecordingNativeDispatch(),
         limits: PapyrusLimits = .standard
@@ -43,14 +43,14 @@ enum PapyrusTestSupport {
         return (runtime, handle)
     }
 
-    static func value(_ outcome: PapyrusRunOutcome) -> PapyrusValue? {
+    public static func value(_ outcome: PapyrusRunOutcome) -> PapyrusValue? {
         guard case let .completed(value) = outcome else {
             return nil
         }
         return value
     }
 
-    static func fault(_ outcome: PapyrusRunOutcome) -> PapyrusFault? {
+    public static func fault(_ outcome: PapyrusRunOutcome) -> PapyrusFault? {
         guard case let .faulted(fault) = outcome else {
             return nil
         }

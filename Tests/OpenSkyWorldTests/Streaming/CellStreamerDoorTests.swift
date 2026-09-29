@@ -5,20 +5,23 @@
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
+import OpenSkyWorldTesting
 import simd
 import Testing
+
+private typealias Fixture = CellStreamerFixture
 
 extension CellStreamerTests {
     @Test
     func playerDoorTransitionPublishesMotionAndCloseBoundaries() {
         let runner = ManualCellBuildRunner()
-        let streamer = Self.makeStreamer(runner: runner, radius: 0)
+        let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
         var phases: [InteractionAnimationPhase] = []
         streamer.onInteractionAnimation = { phases.append($0.phase) }
-        streamer.update(cameraPosition: Self.center)
-        let door = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
-        runner.complete(Self.coordinate(0, 0), with: .success(Self.interactiveScene(
-            location: .exterior(Self.coordinate(0, 0)),
+        streamer.update(cameraPosition: Fixture.center)
+        let door = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
+        runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Fixture.coordinate(0, 0)),
             door: door,
             sounds: ModelBase.Sounds(
                 activation: FormID(0xA01),
@@ -26,21 +29,21 @@ extension CellStreamerTests {
                 loop: FormID(0xA03)
             )
         )))
-        streamer.update(cameraPosition: Self.center)
+        streamer.update(cameraPosition: Fixture.center)
 
-        let usePosition = Self.center - SIMD3<Float>(10, 0, 0)
-        Self.activate(streamer, from: usePosition, toward: Self.center)
+        let usePosition = Fixture.center - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: usePosition, toward: Fixture.center)
         #expect(phases == [.motionStarted])
 
         runner.completeDoorTransition(from: FormID(0x10), with: .success(DoorTransition(
             sourceDoor: FormID(0x10),
             destinationDoor: FormID(0x20),
             destinationPlacement: PlacedReference.Placement(
-                position: Self.center, rotation: .zero
+                position: Fixture.center, rotation: .zero
             ),
-            scene: Self.cellScene(location: .interior(FormID(0x138CA)))
+            scene: Fixture.cellScene(location: .interior(FormID(0x138CA)))
         )))
-        streamer.update(cameraPosition: Self.center)
+        streamer.update(cameraPosition: Fixture.center)
 
         #expect(phases == [.motionStarted, .closed])
     }
@@ -50,20 +53,20 @@ extension CellStreamerTests {
         enum DoorFailure: Error { case broken }
 
         let runner = ManualCellBuildRunner()
-        let streamer = Self.makeStreamer(runner: runner, radius: 0)
+        let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
         var phases: [InteractionAnimationPhase] = []
         streamer.onInteractionAnimation = { phases.append($0.phase) }
-        streamer.update(cameraPosition: Self.center)
-        let door = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
-        runner.complete(Self.coordinate(0, 0), with: .success(Self.interactiveScene(
-            location: .exterior(Self.coordinate(0, 0)), door: door
+        streamer.update(cameraPosition: Fixture.center)
+        let door = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
+        runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Fixture.coordinate(0, 0)), door: door
         )))
-        streamer.update(cameraPosition: Self.center)
+        streamer.update(cameraPosition: Fixture.center)
 
-        let usePosition = Self.center - SIMD3<Float>(10, 0, 0)
-        Self.activate(streamer, from: usePosition, toward: Self.center)
+        let usePosition = Fixture.center - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: usePosition, toward: Fixture.center)
         runner.completeDoorTransition(from: FormID(0x10), with: .failure(DoorFailure.broken))
-        streamer.update(cameraPosition: Self.center)
+        streamer.update(cameraPosition: Fixture.center)
 
         #expect(phases == [.motionStarted, .cancelled])
     }
@@ -73,17 +76,17 @@ extension CellStreamerTests {
         enum DoorFailure: Error { case broken }
 
         let runner = ManualCellBuildRunner()
-        let streamer = Self.makeStreamer(runner: runner, radius: 0)
-        streamer.update(cameraPosition: Self.center)
-        let outside = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
-        runner.complete(Self.coordinate(0, 0), with: .success(Self.interactiveScene(
-            location: .exterior(Self.coordinate(0, 0)), door: outside
+        let streamer = Fixture.makeStreamer(runner: runner, radius: 0)
+        streamer.update(cameraPosition: Fixture.center)
+        let outside = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
+        runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Fixture.coordinate(0, 0)), door: outside
         )))
-        streamer.update(cameraPosition: Self.center)
-        let usePosition = Self.center - SIMD3<Float>(10, 0, 0)
-        Self.activate(streamer, from: usePosition, toward: Self.center)
+        streamer.update(cameraPosition: Fixture.center)
+        let usePosition = Fixture.center - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: usePosition, toward: Fixture.center)
         runner.completeDoorTransition(from: FormID(0x10), with: .failure(DoorFailure.broken))
-        streamer.update(cameraPosition: Self.center)
+        streamer.update(cameraPosition: Fixture.center)
 
         #expect(streamer.doorTransitionFailureCount == 1)
         #expect(!streamer.isInterior)
@@ -93,25 +96,25 @@ extension CellStreamerTests {
     func selectedDoorEntersInteriorSuspendsGridThenReturns() {
         let runner = ManualCellBuildRunner()
         var cameras: [SceneCamera?] = []
-        let streamer = Self.makeStreamer(runner: runner, radius: 0) { _, camera in
+        let streamer = Fixture.makeStreamer(runner: runner, radius: 0) { _, camera in
             cameras.append(camera)
         }
-        streamer.update(cameraPosition: Self.center)
-        let outside = Self.door(reference: 0x10, destination: 0x20, position: Self.center)
-        runner.complete(Self.coordinate(0, 0), with: .success(Self.interactiveScene(
-            location: .exterior(Self.coordinate(0, 0)), door: outside
+        streamer.update(cameraPosition: Fixture.center)
+        let outside = Fixture.door(reference: 0x10, destination: 0x20, position: Fixture.center)
+        runner.complete(Fixture.coordinate(0, 0), with: .success(Self.interactiveScene(
+            location: .exterior(Fixture.coordinate(0, 0)), door: outside
         )))
-        streamer.update(cameraPosition: Self.center)
+        streamer.update(cameraPosition: Fixture.center)
 
-        let farPosition = Self.center + SIMD3<Float>(500, 0, 0)
-        Self.activate(streamer, from: farPosition, toward: Self.center)
+        let farPosition = Fixture.center + SIMD3<Float>(500, 0, 0)
+        Self.activate(streamer, from: farPosition, toward: Fixture.center)
         #expect(runner.enqueuedDoorTransitions.isEmpty)
-        let outsideUsePosition = Self.center - SIMD3<Float>(10, 0, 0)
-        Self.activate(streamer, from: outsideUsePosition, toward: Self.center)
+        let outsideUsePosition = Fixture.center - SIMD3<Float>(10, 0, 0)
+        Self.activate(streamer, from: outsideUsePosition, toward: Fixture.center)
         #expect(runner.enqueuedDoorTransitions == [FormID(0x10)])
 
         let insidePosition = SIMD3<Float>(100, 200, 300)
-        let inside = Self.door(reference: 0x20, destination: 0x10, position: insidePosition)
+        let inside = Fixture.door(reference: 0x20, destination: 0x10, position: insidePosition)
         let interior = Self.interactiveScene(
             location: .interior(FormID(0x138CA)), door: inside
         )
@@ -123,31 +126,31 @@ extension CellStreamerTests {
             ),
             scene: interior
         )))
-        streamer.update(cameraPosition: Self.center)
+        streamer.update(cameraPosition: Fixture.center)
         #expect(streamer.isInterior)
         #expect(cameras.last.flatMap(\.self)?.eye == insidePosition)
 
         let exteriorBuildCount = runner.enqueued.count
-        streamer.update(cameraPosition: CellGridManager.cellCenter(of: Self.coordinate(20, 20)))
+        streamer.update(cameraPosition: CellGridManager.cellCenter(of: Fixture.coordinate(20, 20)))
         #expect(runner.enqueued.count == exteriorBuildCount)
 
         let insideUsePosition = insidePosition - SIMD3<Float>(10, 0, 0)
         Self.activate(streamer, from: insideUsePosition, toward: insidePosition)
         #expect(runner.enqueuedDoorTransitions == [FormID(0x10), FormID(0x20)])
         let outsideScene = Self.interactiveScene(
-            location: .exterior(Self.coordinate(0, 0)), door: outside
+            location: .exterior(Fixture.coordinate(0, 0)), door: outside
         )
         runner.completeDoorTransition(from: FormID(0x20), with: .success(DoorTransition(
             sourceDoor: FormID(0x20),
             destinationDoor: FormID(0x10),
             destinationPlacement: PlacedReference.Placement(
-                position: Self.center, rotation: .zero
+                position: Fixture.center, rotation: .zero
             ),
             scene: outsideScene
         )))
         streamer.update(cameraPosition: insidePosition)
         #expect(!streamer.isInterior)
-        #expect(cameras.last.flatMap(\.self)?.eye == Self.center)
+        #expect(cameras.last.flatMap(\.self)?.eye == Fixture.center)
     }
 
     private static func interactiveScene(
@@ -156,17 +159,17 @@ extension CellStreamerTests {
         sounds: ModelBase.Sounds? = nil
     ) -> CellScene {
         let reference = door.reference
-        return cellScene(
+        return Fixture.cellScene(
             location: location,
             doors: [door],
             interactions: [
-                reference: interaction(
+                reference: Fixture.interaction(
                     reference: reference.rawValue,
                     position: door.position,
                     sounds: sounds
                 )
             ],
-            staticCollision: collision(
+            staticCollision: Fixture.collision(
                 reference: reference.rawValue,
                 position: door.position
             )
@@ -180,7 +183,7 @@ extension CellStreamerTests {
     ) {
         streamer.update(
             cameraPosition: origin,
-            interactionRay: interactionRay(from: origin, to: target),
+            interactionRay: Fixture.interactionRay(from: origin, to: target),
             activate: true
         )
     }

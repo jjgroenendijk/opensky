@@ -8,6 +8,7 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 import Testing
 
 struct ScriptsPanelTests {

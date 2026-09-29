@@ -9,6 +9,7 @@
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkySave
+import OpenSkySaveTesting
 import Testing
 
 struct OpenSkySaveCorruptionTests {

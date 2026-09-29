@@ -10,6 +10,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
+import OpenSkyProgressionTesting
 import Testing
 
 struct ProgressionReadoutTests {

@@ -16,15 +16,15 @@ import Foundation
 @testable import OpenSkyWorldState
 import simd
 
-nonisolated enum OpenSkySaveFixture {
+nonisolated public enum OpenSkySaveFixture {
     // MARK: - Logical fixtures
 
-    static let metadata = SaveCreationMetadata(
+    public static let metadata = SaveCreationMetadata(
         creationTimestamp: 1_700_000_000,
         appVersion: "0.1.0-test"
     )
 
-    static let fingerprint = [
+    public static let fingerprint = [
         SavePluginFingerprint(
             name: "Skyrim.esm",
             hedrVersion: 1.71,
@@ -39,16 +39,16 @@ nonisolated enum OpenSkySaveFixture {
         )
     ]
 
-    static let whiterun = CellSceneLocation.exterior(CellCoordinate(x: -12, y: -3))
-    static let riverwood = CellSceneLocation.exterior(CellCoordinate(x: 6, y: 1))
-    static let inn = CellSceneLocation.interior(FormID(0xDEAD_BEEF))
+    public static let whiterun = CellSceneLocation.exterior(CellCoordinate(x: -12, y: -3))
+    public static let riverwood = CellSceneLocation.exterior(CellCoordinate(x: 6, y: 1))
+    public static let inn = CellSceneLocation.interior(FormID(0xDEAD_BEEF))
 
-    static let activator = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x14)
+    public static let activator = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x14)
 
     /// One entry per shape the format can encode: both key kinds, all three
     /// cell tags, every component kind, `lastActivator` present and absent,
     /// negative exterior coordinates and a non-ASCII plugin name.
-    static func richSnapshot(nextGeneratedSequence: UInt64 = 77) -> WorldStateSnapshot {
+    public static func richSnapshot(nextGeneratedSequence: UInt64 = 77) -> WorldStateSnapshot {
         let entries = [
             entry(
                 key: .plugin(name: "dawnguard.esm", objectID: 0x000A_BCDE),
@@ -96,7 +96,7 @@ nonisolated enum OpenSkySaveFixture {
         )
     }
 
-    static func entry(
+    public static func entry(
         key: ReferenceKey,
         cell: CellSceneLocation?,
         components: [WorldStateComponentValue]
@@ -108,7 +108,7 @@ nonisolated enum OpenSkySaveFixture {
         return WorldStateSnapshotEntry(key: key, delta: delta)
     }
 
-    static func encodedRichSave() -> Data {
+    public static func encodedRichSave() -> Data {
         OpenSkySaveEncoder.encode(
             snapshot: richSnapshot(),
             fingerprint: fingerprint,
@@ -120,7 +120,7 @@ nonisolated enum OpenSkySaveFixture {
 
     /// Header + fingerprint + the given chunk bytes, with everything valid
     /// except what a caller deliberately breaks.
-    static func file(
+    public static func file(
         chunks: [Data],
         plugins: [SavePluginFingerprint] = fingerprint,
         version: UInt32 = OpenSkySaveFormat.currentVersion
@@ -146,7 +146,11 @@ nonisolated enum OpenSkySaveFixture {
         return writer.data
     }
 
-    static func chunk(_ tag: String, _ payload: Data, declaredLength: UInt32? = nil) -> Data {
+    public static func chunk(
+        _ tag: String,
+        _ payload: Data,
+        declaredLength: UInt32? = nil
+    ) -> Data {
         var writer = BinaryWriter()
         writer.write(Data(tag.utf8))
         writer.writeUInt32(declaredLength ?? UInt32(payload.count))
@@ -154,7 +158,7 @@ nonisolated enum OpenSkySaveFixture {
         return writer.data
     }
 
-    static func allocatorChunk(_ sequence: UInt64 = 1) -> Data {
+    public static func allocatorChunk(_ sequence: UInt64 = 1) -> Data {
         var writer = BinaryWriter()
         writer.writeUInt64(sequence)
         return chunk(OpenSkySaveFormat.ChunkTag.allocator, writer.data)
@@ -162,7 +166,7 @@ nonisolated enum OpenSkySaveFixture {
 
     /// An `RDLT` payload whose declared entry count can differ from the bytes
     /// that follow it, which is exactly what a corrupt count looks like.
-    static func entriesPayload(count: UInt32, entries: Data = Data()) -> Data {
+    public static func entriesPayload(count: UInt32, entries: Data = Data()) -> Data {
         var writer = BinaryWriter()
         writer.writeUInt32(count)
         writer.write(entries)
@@ -171,7 +175,7 @@ nonisolated enum OpenSkySaveFixture {
 
     /// A single entry: plugin key, "no cell", then the caller's raw component
     /// bytes with the caller's own component count.
-    static func entryBytes(componentCount: UInt8, components: Data) -> Data {
+    public static func entryBytes(componentCount: UInt8, components: Data) -> Data {
         var writer = BinaryWriter()
         writer.writeUInt8(OpenSkySaveFormat.KeyTag.plugin)
         writeString("skyrim.esm", into: &writer)
@@ -183,7 +187,7 @@ nonisolated enum OpenSkySaveFixture {
     }
 
     /// An `RDLT` chunk wrapped around a hand-built entry payload.
-    static func deltasChunk(count: UInt32, entries: Data = Data()) -> Data {
+    public static func deltasChunk(count: UInt32, entries: Data = Data()) -> Data {
         chunk(
             OpenSkySaveFormat.ChunkTag.referenceDeltas,
             entriesPayload(count: count, entries: entries)
@@ -192,7 +196,7 @@ nonisolated enum OpenSkySaveFixture {
 
     /// A single entry whose key and cell bytes are supplied raw, so a test can
     /// put an undefined discriminator in either position.
-    static func rawEntry(
+    public static func rawEntry(
         key: Data,
         cell: Data,
         componentCount: UInt8,
@@ -207,7 +211,10 @@ nonisolated enum OpenSkySaveFixture {
     }
 
     /// A well-formed plugin reference key.
-    static func pluginKeyBytes(name: String = "skyrim.esm", objectID: UInt32 = 0x0BAD) -> Data {
+    public static func pluginKeyBytes(
+        name: String = "skyrim.esm",
+        objectID: UInt32 = 0x0BAD
+    ) -> Data {
         var writer = BinaryWriter()
         writer.writeUInt8(OpenSkySaveFormat.KeyTag.plugin)
         writeString(name, into: &writer)
@@ -215,7 +222,7 @@ nonisolated enum OpenSkySaveFixture {
         return writer.data
     }
 
-    static func bytes(_ values: [UInt8]) -> Data {
+    public static func bytes(_ values: [UInt8]) -> Data {
         Data(values)
     }
 
@@ -223,7 +230,7 @@ nonisolated enum OpenSkySaveFixture {
 
     /// Length of the length-delimited metadata block, read from the file
     /// rather than assumed, so a test never hardcodes a header offset.
-    static func metadataBlockLength(in data: Data) -> Int {
+    public static func metadataBlockLength(in data: Data) -> Int {
         let start = data.startIndex + 8
         var length = 0
         for offset in (0 ..< 4).reversed() {
@@ -234,16 +241,16 @@ nonisolated enum OpenSkySaveFixture {
 
     /// Offset of the fingerprint plugin count: magic, version, metadata length
     /// prefix and the metadata block itself.
-    static func fingerprintOffset(in data: Data) -> Int {
+    public static func fingerprintOffset(in data: Data) -> Int {
         12 + metadataBlockLength(in: data)
     }
 
     /// On-disk size of one fingerprint plugin entry: name plus three stats.
-    static func pluginEntrySize(_ plugin: SavePluginFingerprint) -> Int {
+    public static func pluginEntrySize(_ plugin: SavePluginFingerprint) -> Int {
         2 + Data(plugin.name.utf8).count + 12
     }
 
-    static func writeString(_ string: String, into writer: inout BinaryWriter) {
+    public static func writeString(_ string: String, into writer: inout BinaryWriter) {
         let raw = Data(string.utf8)
         writer.writeUInt16(UInt16(raw.count))
         writer.write(raw)
@@ -251,11 +258,11 @@ nonisolated enum OpenSkySaveFixture {
 
     // MARK: - Corruption helpers
 
-    static func truncating(_ data: Data, to length: Int) -> Data {
+    public static func truncating(_ data: Data, to length: Int) -> Data {
         Data(data.prefix(length))
     }
 
-    static func patching(_ data: Data, at offset: Int, with replacement: [UInt8]) -> Data {
+    public static func patching(_ data: Data, at offset: Int, with replacement: [UInt8]) -> Data {
         var copy = data
         copy.replaceSubrange(
             (copy.startIndex + offset) ..< (copy.startIndex + offset + replacement.count),
@@ -264,14 +271,14 @@ nonisolated enum OpenSkySaveFixture {
         return copy
     }
 
-    static func inserting(_ inserted: Data, into data: Data, at offset: Int) -> Data {
+    public static func inserting(_ inserted: Data, into data: Data, at offset: Int) -> Data {
         var copy = data
         copy.insert(contentsOf: inserted, at: copy.startIndex + offset)
         return copy
     }
 
     /// Offset of a chunk's four-byte tag inside an encoded file.
-    static func offset(ofChunk tag: String, in data: Data) -> Int? {
+    public static func offset(ofChunk tag: String, in data: Data) -> Int? {
         guard let range = data.range(of: Data(tag.utf8)) else { return nil }
         return range.lowerBound - data.startIndex
     }

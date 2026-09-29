@@ -1,12 +1,6 @@
-// The activation fixtures for issue #172: the placed interaction, the
-// `OnActivate` script and the door session every activation test builds on.
-// The M11 and M13 scripted-world chains reuse `interaction(reference:action:)`,
-// and those chains are compiled into OpenSkyRealDataTests as well, so the
-// fixture half of the suite lives in the folder both test targets compile.
-// The suite's tests are extensions of this type in
-// `Tests/OpenSkyTests/Papyrus/PapyrusWorldActivationTests.swift`; nothing here is private,
-// because the two halves are no longer one file. See
-// Tests/TestSupport/AGENTS.md.
+// The activation fixtures: the placed interaction, the `OnActivate` script and
+// the door session every activation test builds on. The M11 and M13
+// scripted-world chains reuse `interaction(reference:action:)`.
 
 @testable import FormatsESMTesting
 import FormatsPEXTesting
@@ -17,17 +11,17 @@ import Foundation
 import simd
 
 @MainActor
-struct PapyrusWorldActivationTests {
+public enum PapyrusWorldActivationFixture {
     // MARK: - Fixtures
 
-    static let doorID: UInt32 = 0x21
-    static let leverID: UInt32 = 0x22
+    public static let doorID: UInt32 = 0x21
+    public static let leverID: UInt32 = 0x22
 
-    static func key(_ objectID: UInt32) -> ReferenceKey {
+    public static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: PapyrusWorldFixture.pluginName, objectID: objectID)
     }
 
-    static func interaction(
+    public static func interaction(
         reference: UInt32,
         action: InteractionAction
     ) -> PlacedInteraction {
@@ -42,7 +36,7 @@ struct PapyrusWorldActivationTests {
         )
     }
 
-    static func event(
+    public static func event(
         reference: UInt32,
         action: InteractionAction = .open
     ) -> InteractionEvent {
@@ -55,7 +49,7 @@ struct PapyrusWorldActivationTests {
 
     /// `OnActivate(ObjectReference akActionRef)` forwarding its activator to
     /// `Probe.Seen`, so a test can watch the exact handle script code sees.
-    static func onActivateScript(_ name: String) -> PexObject {
+    public static func onActivateScript(_ name: String) -> PexObject {
         let body = PexFixture.runtimeFunction(
             parameters: [PexTypedName(name: "akActionRef", typeName: "ObjectReference")],
             instructions: [PapyrusTestSupport.instruction(
@@ -70,7 +64,7 @@ struct PapyrusWorldActivationTests {
         return PapyrusWorldFixture.eventScript(name, events: [("OnActivate", body)])
     }
 
-    static func doorSession(
+    public static func doorSession(
         scripts: [String]
     ) throws -> PapyrusWorldFixture.Session {
         try PapyrusWorldFixture.session(

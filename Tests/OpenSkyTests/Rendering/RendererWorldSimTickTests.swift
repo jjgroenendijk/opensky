@@ -13,6 +13,7 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 import Testing
 

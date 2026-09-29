@@ -16,8 +16,10 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -42,7 +44,7 @@ struct CellStreamerPapyrusTests {
         )
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
-        let streamer = CellStreamerTests.makeStreamer(runner: runner, radius: radius)
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
         streamer.stateSource = { store.snapshot() }
         store.onMutation = { [weak streamer] location, sequence in
             streamer?.noteStateMutation(in: location, sequence: sequence)
@@ -71,7 +73,7 @@ struct CellStreamerPapyrusTests {
             objectID: referenceID,
             scripts: [VMADFixture.Script(scriptName, properties: [])]
         )
-        return CellStreamerTests.cellScene(
+        return CellStreamerFixture.cellScene(
             location: .exterior(coordinate),
             references: PapyrusWorldFixture.index([entry]),
             stateSequence: stateSequence
@@ -203,7 +205,7 @@ struct CellStreamerPapyrusTests {
             objectID: Self.referenceID,
             scripts: [VMADFixture.Script(Self.scriptName, properties: [])]
         )
-        let interior = CellStreamerTests.cellScene(
+        let interior = CellStreamerFixture.cellScene(
             location: .interior(FormID(0x2000)),
             references: PapyrusWorldFixture.index([entry])
         )

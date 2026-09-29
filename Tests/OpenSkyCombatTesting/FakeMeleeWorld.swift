@@ -1,6 +1,3 @@
-// A copy of the fake in OpenSkyCombatTests. Both test targets need it, and a
-// testing library cannot hold it, because it conforms to an implementation protocol.
-
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
@@ -14,61 +11,63 @@ import simd
 /// A `MeleeCombatWorld` that records rather than acts, so the runtime can be
 /// driven with no renderer, no window, and no game data.
 @MainActor
-final class FakeMeleeWorld: MeleeCombatWorld {
-    var attacker = MeleeAttacker(key: .generated(0), feet: SIMD3<Float>(), facing: 0)
-    var targets: [MeleeTarget] = []
-    var blocks: [ReferenceKey: MeleeBlockKind] = [:]
-    var material: FormID?
+public final class FakeMeleeWorld: MeleeCombatWorld {
+    public var attacker = MeleeAttacker(key: .generated(0), feet: SIMD3<Float>(), facing: 0)
+    public var targets: [MeleeTarget] = []
+    public var blocks: [ReferenceKey: MeleeBlockKind] = [:]
+    public var material: FormID?
     /// The fortify multiplier the runtime asks for (issue #472). 1 is what the
     /// formula reduces to for a character with no fortify effect.
-    var attackMultiplier: Float = 1
+    public var attackMultiplier: Float = 1
 
     /// Skill uses the runtime reported (issue #498), recorded rather than
     /// converted.
-    private(set) var skillUses: [SkillUseEvent] = []
+    public private(set) var skillUses: [SkillUseEvent] = []
+
+    public init() {}
 
     @discardableResult
-    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+    public func reportSkillUse(_ use: SkillUseEvent) -> Float {
         skillUses.append(use)
         return 0
     }
 
-    private(set) var damage: [ReferenceKey: Float] = [:]
-    private(set) var raised: [String] = []
-    private(set) var raisedOnTarget: [ReferenceKey: [String]] = [:]
-    private(set) var variables: [String: BehaviorVariableValue] = [:]
-    private(set) var impacts: [ResolvedMeleeImpact] = []
+    public private(set) var damage: [ReferenceKey: Float] = [:]
+    public private(set) var raised: [String] = []
+    public private(set) var raisedOnTarget: [ReferenceKey: [String]] = [:]
+    public private(set) var variables: [String: BehaviorVariableValue] = [:]
+    public private(set) var impacts: [ResolvedMeleeImpact] = []
     /// Enchanted hits the runtime handed out (issue #472), recorded rather than
     /// applied: what the melee suites need is that the swing reached the seam with
     /// the struck target and the contact point, and `EnchantmentRuntimeTests` asks
     /// what applying one does against a real effect runtime.
-    private(set) var enchantedHits: [WeaponEnchantmentHit] = []
+    public private(set) var enchantedHits: [WeaponEnchantmentHit] = []
     /// Variable names written before the first event of the session was
     /// raised, so a test can pin the write-then-raise order.
-    private(set) var writesBeforeFirstRaise: Set<String> = []
+    public private(set) var writesBeforeFirstRaise: Set<String> = []
 
-    var meleeAttacker: MeleeAttacker {
+    public var meleeAttacker: MeleeAttacker {
         attacker
     }
 
-    func meleeTargets() -> [MeleeTarget] {
+    public func meleeTargets() -> [MeleeTarget] {
         targets
     }
 
-    func meleeMaterial(at position: SIMD3<Float>) -> FormID? {
+    public func meleeMaterial(at position: SIMD3<Float>) -> FormID? {
         material
     }
 
-    func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
+    public func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
         blocks[target]
     }
 
-    func meleeAttackMultiplier(handType: CombatHandType) -> Float {
+    public func meleeAttackMultiplier(handType: CombatHandType) -> Float {
         attackMultiplier
     }
 
     @discardableResult
-    func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
+    public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
         enchantedHits.append(hit)
         return WeaponEnchantmentReport(
             item: hit.profile.item,
@@ -82,17 +81,17 @@ final class FakeMeleeWorld: MeleeCombatWorld {
     }
 
     @discardableResult
-    func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
+    public func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
         damage[target, default: 0] += amount
         return true
     }
 
-    func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
+    public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         impacts.append(impact)
     }
 
     @discardableResult
-    func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
+    public func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
         guard let target else {
             raised.append(name)
             return true
@@ -101,7 +100,7 @@ final class FakeMeleeWorld: MeleeCombatWorld {
         return true
     }
 
-    func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
+    public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
         variables[name] = value
         if raised.isEmpty, raisedOnTarget.isEmpty {
             writesBeforeFirstRaise.insert(name)

@@ -7,11 +7,13 @@
 
 import FormatsESMTesting
 import Foundation
+import GameDataTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyQuests
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor
