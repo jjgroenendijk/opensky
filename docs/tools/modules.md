@@ -69,6 +69,9 @@ says. Both helpers check each dependency before the package loads:
 - The dependency must not be a feature implementation.
 
 A broken rule stops the manifest with a message that names both modules.
+`tools/lint/module-graph.sh` checks the rest on every `make lint`: the layer order, the
+Interface rules, the complete feature sets, and that every `import` names a declared dependency
+([The Modular Architecture](/decisions/modular-architecture.md)).
 
 A third helper, `interface`, declares only `XInterface`. It is for a feature that is split
 later than a module that already needs its interface. Example: crime needs `InventoryAccess`

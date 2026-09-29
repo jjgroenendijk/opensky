@@ -88,8 +88,8 @@ Settings:
 
 ## Module graph
 
-30.5 owns this check and its decision page. It runs from `swift package dump-package` and
-the `import` lines, with no build.
+The rules, the layer list, and the exceptions are in
+[The Modular Architecture](/decisions/modular-architecture.md).
 
 ## Comment length
 
