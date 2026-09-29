@@ -16,6 +16,8 @@ import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyAudio
 @testable import OpenSkyBehavior
+@testable import OpenSkyCombat
+@testable import OpenSkyCombatInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

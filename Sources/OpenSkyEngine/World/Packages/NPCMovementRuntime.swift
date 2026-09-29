@@ -4,6 +4,7 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -27,7 +28,7 @@ public struct NPCMoveStart {
 
 public struct NPCMovementRuntime {
     /// Named crowd cap. Only actors with an active request own a controller.
-    public static let maximumSimultaneousMovers = 8
+    public static let maximumSimultaneousMovers = ActorMovementLimits.maximumSimultaneousMovers
     /// CPU slice reserved for all NPC locomotion at the cap in a 16.67 ms
     /// frame. The optimized real-data measurement decides the drive against
     /// this number; item 16.8 consumes it in the complete frame ledger.

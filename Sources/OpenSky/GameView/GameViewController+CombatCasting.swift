@@ -31,6 +31,7 @@
 
 import AppKit
 import OpenSkyActors
+import OpenSkyCombat
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData

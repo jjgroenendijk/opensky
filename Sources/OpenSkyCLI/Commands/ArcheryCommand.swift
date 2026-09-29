@@ -14,6 +14,8 @@
 // Read-only. Output is plain text and stable enough to grep.
 
 import Foundation
+import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

@@ -27,6 +27,7 @@
 // Documented in docs/engine/combat-behavior.md and docs/engine/actor-animation.md.
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyFormatsAnimation
 import OpenSkyPhysics
 

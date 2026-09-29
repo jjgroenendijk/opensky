@@ -6,6 +6,7 @@
 // registry tests keep compiling.
 
 @testable import OpenSkyBehavior
+@testable import OpenSkyCombat
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

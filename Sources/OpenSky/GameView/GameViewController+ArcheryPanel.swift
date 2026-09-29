@@ -8,6 +8,8 @@
 // the sidebar is indistinguishable downstream from one the player took.
 
 import Foundation
+import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData

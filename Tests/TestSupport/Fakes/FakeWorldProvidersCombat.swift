@@ -9,6 +9,7 @@
 // whole destination with no renderer, no window and no game data.
 
 @testable import OpenSkyActorsInterface
+@testable import OpenSkyCombat
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

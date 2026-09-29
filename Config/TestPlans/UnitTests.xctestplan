@@ -163,6 +163,16 @@
           "containerPath" : "container:.",
           "identifier" : "OpenSkyMagic",
           "name" : "OpenSkyMagic"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyCombat",
+          "name" : "OpenSkyCombat"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyCombatInterface",
+          "name" : "OpenSkyCombatInterface"
         }
       ]
     }
@@ -334,6 +344,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyMagicTests",
         "name" : "OpenSkyMagicTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyCombatTests",
+        "name" : "OpenSkyCombatTests"
       }
     }
   ],

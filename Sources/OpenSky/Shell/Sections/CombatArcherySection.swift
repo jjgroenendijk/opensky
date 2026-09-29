@@ -19,6 +19,7 @@
 // deleted it would undo something the user did on purpose.
 
 import AppKit
+import OpenSkyCombat
 import OpenSkyEngine
 
 final class CombatArcherySection: PanelSectionViewController {

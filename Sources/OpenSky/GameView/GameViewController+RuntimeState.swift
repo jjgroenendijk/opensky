@@ -15,6 +15,7 @@
 // just broader than necessary.
 
 import AppKit
+import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM

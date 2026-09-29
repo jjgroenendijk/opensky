@@ -14,6 +14,7 @@
 
 import AppKit
 import OpenSkyActorsInterface
+import OpenSkyCombat
 import OpenSkyEngine
 import OpenSkyMagic
 import OpenSkyPhysics

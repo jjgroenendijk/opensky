@@ -34,6 +34,7 @@
 // still more than the `None` the parameter would otherwise carry.
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 
 extension PapyrusWorldRuntime {

@@ -15,6 +15,7 @@
 // what it notices is an enemy.
 
 import AppKit
+import OpenSkyCombat
 import OpenSkyEngine
 import OpenSkyPerceptionInterface
 

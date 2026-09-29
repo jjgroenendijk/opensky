@@ -23,6 +23,7 @@
 // the deliberate way back.
 
 import AppKit
+import OpenSkyCombat
 import OpenSkyEngine
 
 final class CombatLoopSection: PanelSectionViewController {

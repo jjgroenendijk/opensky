@@ -25,6 +25,7 @@ import AppKit
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAudio
+import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM

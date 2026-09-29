@@ -31,6 +31,8 @@ import Foundation
 import Metal
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
+@testable import OpenSkyCombat
+@testable import OpenSkyCombatInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM

@@ -6,6 +6,7 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
