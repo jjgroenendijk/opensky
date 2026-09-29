@@ -41,6 +41,8 @@ UESP and xEdit agree on every member. Vanilla writes 92 bytes:
 | 0x54, 0x58 | FormID | decal data (`TXST`), collision layer (`COLL`); optional |
 
 xEdit marks `DATA` "optional from element 22", the decal link, so 84 bytes is also valid.
+OpenSky accepts any `DATA` of 16 bytes or more, because flags through range hold the whole
+flight model, and a mod may write a short struct.
 UESP calls 0x3C "uint32 always 0"; xEdit calls it `Sound - Disable`. The offset is the same.
 "Always 0" describes vanilla data, not the field, so OpenSky follows xEdit. `VNAM` is the
 sound level.

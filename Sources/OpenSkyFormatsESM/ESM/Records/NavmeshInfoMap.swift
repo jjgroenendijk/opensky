@@ -1,52 +1,6 @@
-// NAVI, the navmesh info map: one record for the whole plugin, listing every
-// NAVM it defines, where each one lives, and which of them link to which. It
-// is what makes cross-navmesh resolution possible without walking every cell
-// in the file first (16.2, issue #200).
-//
-// NAVI fields:
-//   EDID  zstring  editor ID
-//   NVER  uint32   version (0x0C in Skyrim.esm)
-//   NVMI  struct   one per navmesh, repeated; layout below
-//   NVPP  struct   precomputed preferred pathing
-//   NVSI  FormID[] navmeshes deleted by this plugin
-//
-// NVMI, variable size. Counts are uint32 and precede their arrays:
-//   00 FormID  the NAVM this entry describes
-//   04 uint32  flags — bit 5 is-island, bit 6 not-edited
-//   08 float32[3] approximate centre of the navmesh, in game units
-//   14 float32 preferred-pathing percentage
-//   18 uint32 count + count * FormID   navmeshes linked by a shared edge
-//      uint32 count + count * FormID   the preferred subset of those
-//      uint32 count + count * 8 bytes  door links: uint32 CRC hash of
-//                                      "PathingDoor" then the DOOR REFR
-//      uint8  has-island-data; when non-zero the island block follows:
-//               float32[3] bounds minimum, float32[3] bounds maximum,
-//               uint32 count + count * 3 uint16 triangle vertex indices,
-//               uint32 count + count * float32[3] vertices
-//      the same "pathing cell" struct NVNM ends its header with: a constant
-//      CRC marker, the parent worldspace, then either the parent CELL FormID
-//      or int16 grid Y and int16 grid X
-//
-// NVPP: uint32 path count, then that many (uint32 FormID count + that many
-// NAVM FormIDs); then uint32 road-marker count, then that many (FormID navmesh
-// + uint32 index).
-//
-// Skipped: the island block's own bounds, triangles and vertices — a coarse
-// summary mesh nothing consumes — decoded only far enough to reach the pathing
-// cell behind it, with `hasIslandData` retained so the census can tally it.
-// NVPP is skipped the same way, tallied as `precomputedPathCount` and
-// `roadMarkerCount` and otherwise dropped: preferred pathing is a routing
-// preference, not a connectivity fact, and 16.2 does not read it.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/NAVI"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NAVI
-//   UESP "Skyrim Mod:Mod File Format/NVMI Field"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NVMI_Field
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(NAVI, ...)` at line
-//     5672; the island-data and parent unions are `wbNAVIIslandDataDecider`
-//     and `wbNAVIParentDecider` in Core/wbDefinitionsCommon.pas, lines 5329
-//     and 5350.
+// NAVI record, the navmesh info map: one per plugin, listing every NAVM, where it
+// lives, and which navmeshes link to which. It resolves links across navmeshes
+// without walking every cell first.
 // Layout documented in docs/formats/navmesh.md.
 
 import Foundation

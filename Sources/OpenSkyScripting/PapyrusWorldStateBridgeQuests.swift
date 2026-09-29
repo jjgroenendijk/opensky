@@ -1,51 +1,7 @@
-// `PapyrusWorldQuestBridge` as the session implements it (issue #322): the
-// join between the `Quest` natives, the #182 quest state and the #322 script
-// instances.
-//
-// Every mutation goes through `QuestRuntime`, never straight into
-// `WorldStateStore`, so the stage rules, the objective rules and the typed
-// failures are the ones item 13.2 wrote and this file adds none of its own.
-// What it adds is the script side of each mutation: starting a quest
-// instantiates its scripts, stopping one retires them, and setting a stage
-// runs that stage's fragments.
-//
-// Documented semantics and the deviations from them, cited from the Creation
-// Kit wiki's Quest script reference:
-//
-// * `bool Function SetCurrentStageID(int aiStage)` (and its `SetStage`
-//   wrapper) "attempts to set the quest's current stage. If the stage exists,
-//   and was successfully set, the function returns true. Otherwise, the
-//   function returns false and the stage is unchanged."
-//   (<https://ck.uesp.net/wiki/SetStage_-_Quest>)
-// * The same page: the call "is latent and will wait for the quest to start if
-//   it has to start the quest. If the stage has any fragments attached to it,
-//   the function will also wait for those fragments to finish running before
-//   returning", and fragments of several log entries on one stage "will start
-//   at the same time, and will NOT wait on the 'previous' item in the list to
-//   finish running".
-//   **Deviation:** OpenSky's `SetStage` returns as soon as the state is
-//   written and the fragments are *enqueued*. Fragments run on a later tick,
-//   in fragment-table order, through the one FIFO every other script event
-//   uses, so the per-tick budget and per-instance serialization apply to them
-//   too. A script that read state back expecting its fragment to have run
-//   already sees the pre-fragment value. Making the call latent needs the
-//   interpreter to suspend on a world callback, which is not something the
-//   M11 suspension machinery does yet.
-// * `bool Function Start()` "starts this quest ... is latent and will not
-//   return until the quest is actually started (and any start-up stage
-//   fragments run)" (<https://ck.uesp.net/wiki/Start_-_Quest>), and
-//   `IsRunning` "remains false until the fragment scripts of this stage end
-//   their execution" (<https://ck.uesp.net/wiki/IsRunning_-_Quest>).
-//   **Deviation:** the same one. `Start` writes the running flag and returns,
-//   so `IsRunning` is true immediately.
-// * A fragment runs when its stage *transitions* to set. A stage already in
-//   the reached set is not re-run, because item 13.2's `setStage` is
-//   documented-idempotent (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>)
-//   and there is nothing to observe a repeat by. The QUST `allowRepeatedStages`
-//   flag, which is what the Creation Kit offers for the repeat case, is
-//   decoded and deliberately not consulted: no open documentation states what
-//   the engine does with it at `SetStage` time, and guessing would run
-//   fragments twice.
+// The session's `PapyrusWorldQuestBridge`. Every change goes through
+// `QuestRuntime`. This file adds the script side: start makes scripts, stop
+// retires them, and a stage change queues its fragments. Unlike the game,
+// `SetStage` and `Start` do not wait (docs/engine/papyrus-quests.md).
 
 import Foundation
 import OpenSkyFormatsESM

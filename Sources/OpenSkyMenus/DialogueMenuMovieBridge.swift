@@ -1,58 +1,7 @@
-// Vanilla presentation layer for the dialogue menu (issue #205, roadmap item
-// 17.3): the measured AS2 contract of `Interface\dialoguemenu.swf`.
-//
-// Device-free and AppKit-free so it builds into the CLI target and can be unit
-// tested against synthetic AS2 fixtures; it owns no renderer and no movie
-// lifetime. The engine-side model it publishes is UI/DialogueMenuModel.swift.
-//
-// `docs/decisions/swf-as2-scope.md` deferred this movie's host APIs to the
-// milestone that owns its data and set the rule every unimplemented one follows
-// here: a logged no-op plus a tally entry, never a crash.
-//
-// ## What was measured, and how
-//
-// `openskycli swf action-run --movie dialoguemenu.swf` brings the movie up
-// through the same `SWFMovieRuntime` the app uses. It starts and ticks with
-// **zero faults and zero unimplemented opcodes**, 57 display nodes, and 18
-// distinct unresolved names, none of which is an engine entry point. Nothing
-// below is taken from memory of the shipped game.
-//
-// Display shape (`--tree-depth 5`):
-//
-//   /DialogueMenu_mc                        the menu, class `DialogueMenuObj`
-//   /DialogueMenu_mc/SpeakerName            who is talking
-//   /DialogueMenu_mc/SubtitleText           the line being said
-//   /DialogueMenu_mc/ExitButton             frame labels up/over/down/disabled
-//   /DialogueMenu_mc/TopicListHolder        frame labels moveDown, moveUp,
-//                                           topicClicked, fadeListIn,
-//                                           slideListIn
-//   /DialogueMenu_mc/TopicListHolder/List_mc  class `TopicList`; the topic rows
-//
-// The registered classes are `DialogueMenuObj`, `TopicList` and `Button`
-// (`--dump-class`). `DialogueMenuObj` publishes its own state vocabulary as
-// class constants — `SHOW_GREETING` 0, `TOPIC_LIST_SHOWN` 1, `TOPIC_CLICKED` 2,
-// `TRANSITIONING` 3 — and the live instance carries `eMenuState`, so the menu's
-// state is read off the movie rather than tracked twice.
-//
-// The list is the same CLIK family every other OpenSky menu drives
-// (`--dump-proto`): `TopicList` adds `UpdateList`, `SetSelectedTopic`,
-// `SetEntryText` and `RepositionEntries` over a `BSScrollingList` base that
-// carries `EntriesA`, `iSelectedIndex` with -1 for none, `InvalidateData` and
-// `ClearList`. `iMaxItemsShown` is 8 and `iNumTopHalfEntries` is 4, which is
-// why the movie ships eight `Entry` clips and centres the selection.
-//
-// The row field names are measured rather than guessed: `swf action-sweep
-// --movie dialoguemenu.swf` structurally resolves `text`, `topicIndex`,
-// `topicIsNew` and `responseHash` off the rows the movie is handed.
-// `swf dialogue-menu --probe-rows` is the cross-check the journal used, and on
-// this list it reports something worth writing down: publishing rows with no
-// fields at all moves no row-field name into the missing tally at all. The
-// centred list draws a row through the entry clip's own `SetEntryText` rather
-// than by reading named properties off the row on the way past, so the
-// structural sweep is the measurement here and the probe only confirms that
-// nothing else is read.
-//
-// Documented in docs/engine/dialogue-menu.md.
+// Runs the vanilla `Interface\dialoguemenu.swf` through the AS2 names we measured.
+// It has no AppKit, so the CLI builds it and tests use synthetic AS2.
+// An unimplemented host call is a logged no-op plus a tally entry.
+// The measured contract is in docs/engine/dialogue-menu.md.
 
 import Foundation
 import OpenSkyFormatsSWF

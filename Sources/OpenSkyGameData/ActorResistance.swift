@@ -1,58 +1,6 @@
-// Reading an actor's resistance as a fraction (issue #468, roadmap item 19.5):
-// the one place the cap and the composition rule live, so items 19.8 and 19.9
-// call a function rather than each re-deriving a formula.
-//
-// ## What a resistance actor value holds
-//
-// Percentage points. `Resist Fire` 85 means 85% of incoming fire damage is
-// removed. MGEF names the value an effect is resisted by in its DATA
-// "Resistance Actor Value" field (`MagicEffect.resistanceActorValue`), which is
-// why the query below takes an index rather than an enumeration of damage
-// types: the record picks the actor value, and any of them may appear.
-//
-// ## The cap
-//
-// 85%, and only for the player:
-//
-//   "Similar to Resist Fire, Resist Frost, and Resist Shock, Resist Magic is
-//   capped at 85%. The cap only applies to you; followers and enemies with
-//   100% resistance are truly immune."
-//   (<https://en.uesp.net/wiki/Skyrim:Resist_Magic>)
-//
-//   "Resist Poison is capped at 85%; i.e., you cannot gain poison immunity."
-//   (<https://en.uesp.net/wiki/Skyrim:Resist_Poison>)
-//
-// Resist Disease is the exception and is not capped at 85: "Resist Disease 100%
-// provides disease immunity ... values above 100% provide no additional
-// benefit." (<https://en.uesp.net/wiki/Skyrim:Resist_Disease>)
-//
-// The cap is an OpenSky constant, not a game setting, and that is a probed fact
-// rather than an omission: the local install's whole resolved game-setting
-// table carries no resistance cap under any editor ID (2026-08-16,
-// `openskycli gmst list` — 1649 settings, the only two matching "resist" are
-// the strings `sMagicEffectResisted` and `sNormalWeaponsResisted`). A plugin
-// cannot move this number, so it is stated here with its source the way
-// `DetectionSettings` states its own constants.
-//
-// ## The composition rule
-//
-// Resist Magic and the elemental resistance both apply, multiplicatively, magic
-// first: "Damage reduction from Resist Fire, Resist Frost, and Resist Shock is
-// applied after damage reduction from Resist Magic ... a 100-point Fire Damage
-// spell would deal only 15 points of damage with Resist Magic 85%; Resist Fire
-// 85% would then reduce the 15 points by a further 85% to 2.25 points of final
-// damage, resulting in 97.75% total resistance."
-// (<https://en.uesp.net/wiki/Skyrim:Resist_Magic>)
-//
-// ## What is deliberately not here
-//
-// `Damage Resist` (index 39) is an armor rating, not a percentage: UESP's armor
-// formula turns it into a damage reduction with its own 80% cap, which the
-// install does carry as a game setting (`fMaxArmorRating = 80`). Feeding it to
-// a percentage query would read 40 points of armor as 40% resistance, so it is
-// rejected here and belongs with the armor formula when that lands.
-//
-// Documented in docs/engine/actor-values.md.
+// An actor's resistance as a fraction. The player's cap is 85%. Resist Magic
+// applies first, then the fire, frost, or shock resistance. The cap is a constant
+// because no game setting holds it. Sources are in docs/engine/actor-values.md.
 
 import Foundation
 

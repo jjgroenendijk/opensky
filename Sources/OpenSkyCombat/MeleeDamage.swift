@@ -1,74 +1,7 @@
-// How much health a landed swing takes off, and what a block leaves of it
-// (issue #195, roadmap item 15.4, scope point 6).
-//
-// The formula's *shape* is UESP's, quoted rather than paraphrased.
-// "Skyrim:Block" gives two, one per block type, and both are the same:
-//
-//   weapon: blocked = fBlockWeaponBase
-//                     + fBlockWeaponScaling * attackerWeaponBaseDamage
-//                       * (1 + blockSkill * fBlockSkillMult / 100) / 100
-//   shield: blocked = fShieldBaseFactor
-//                     + fShieldScalingFactor * shieldBaseArmorRating
-//                       * (1 + blockSkill * fBlockSkillMult / 100) / 100
-//
-// then multiplied by the Shield Wall perk term, the Fortify Block enchantment
-// and potion terms, and by `fBlockPowerAttackMult` when the incoming attack is
-// a power attack, and finally capped at `fBlockMax`.
-//
-// The formula's *numbers* are the install's, and they are not the ones UESP
-// prints — see `CombatSettings` for the full reading and the values. The one
-// consequence visible here is the trailing `/ 100` on each scaling term: the
-// install states the base terms and the cap as fractions (0.300, 0.450, 0.700)
-// while the scaling terms stay percentage points per unit, so mixing them
-// needs exactly one conversion and this is where it goes. Every quantity this
-// file returns is a fraction in `0...1`; nothing here is a percentage, and the
-// readout multiplies by 100 at the very end.
-//
-// Two terms were deliberately absent when this was written. Perks and Fortify
-// Block effects were M18's — there was no perk tree and no magic effect in this
-// engine to read them from — so they enter as a single `bonusMultiplier`
-// defaulting to 1, which is exactly what the formula reduces to for a character
-// with neither. The Block *skill* is in the same position: `ActorValues` carries
-// health, magicka and stamina only, and the rest of the actor-value table is
-// M18. So `blockSkill` is a parameter with a documented default of 15, the value
-// UESP gives for a starting skill, rather than a number invented here or
-// silently taken as zero.
-//
-// Issue #472 (roadmap item 19.9) fills in the enchantment and potion halves of
-// both open terms, and adds the one the attacker's side of the formula was
-// missing:
-//
-// * `bonusMultiplier` is the *block* bonus, which is where the quoted formula
-//   puts it, and `CombatFortifyBonus.block` now supplies it from Block Modifier
-//   and Block Power Modifier.
-// * `attackMultiplier` is new. UESP "Skyrim:Weapons" gives the attacker's side as
-//   `... * (1 + perk effects) * (1 + item effects) * (1 + potion effect)`, and
-//   `ArcheryDamage` has carried that term since item 15.5 while this file had
-//   nowhere to put it — a Fortify One-Handed effect had no way to change a melee
-//   number. `CombatFortifyBonus.melee(handType:)` supplies it.
-//
-// The two are separate parameters rather than one because they act on opposite
-// sides of the exchange: an attacker's fortify raises the damage dealt, and a
-// blocker's fortify raises the fraction absorbed. Folding them together would
-// let the target's ring change the attacker's damage.
-//
-// The attack term multiplies *after* the blocked fraction is computed, not
-// before: the quoted block formula scales on "attackerWeaponBaseDamage", which is
-// the WEAP number rather than the enchanted one, so a fortified attacker deals
-// more through a block without the block growing to meet it.
-//
-// One surprising thing about the weapon branch is worth stating because it
-// looks like a bug: the scaling term uses the *attacker's* weapon damage, not
-// the blocker's. UESP is explicit about this and works through the creature
-// case (an unarmed attacker gives a flat base) to show it is intended. Reading
-// it the other way would make a warhammer the best thing to block with.
-//
-// Nothing here throws and nothing here reaches the world. It is a pure
-// function of numbers, which is what makes the acceptance test's "damage
-// matches WEAP data, blocking reduces it per the pinned formula" a plain
-// arithmetic assertion.
-//
-// Documented in docs/engine/melee-damage.md.
+// How much health a landed swing takes off, and what a block leaves of it.
+// Every result is a fraction in `0...1`; the readout multiplies by 100.
+// The blocker's and the attacker's bonus terms stay separate, because they act
+// on opposite sides of the hit. Documented in docs/engine/melee-damage.md.
 
 import Foundation
 import OpenSkyCombatInterface

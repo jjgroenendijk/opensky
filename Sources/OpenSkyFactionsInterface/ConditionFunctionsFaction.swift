@@ -1,55 +1,7 @@
-// The faction and relationship condition functions (issue #508, roadmap item
-// 21.4), split out of `ConditionFunctions` the way the actor, crime, data, magic
-// and perk families are.
-//
-// Six functions, from the xEdit TES5 condition table
-// (dev-4.1.6 Core/wbDefinitionsTES5.pas):
-//
-//   (Index:  60; Name: 'GetFactionRankDifference'; ParamType1: ptFaction; ParamType2: ptActor)
-//   (Index:  71; Name: 'GetInFaction'; ParamType1: ptFaction)
-//   (Index:  73; Name: 'GetFactionRank'; ParamType1: ptFaction)
-//   (Index: 403; Name: 'GetRelationshipRank'; ParamType1: ptReference)
-//   (Index: 449; Name: 'GetFactionRelation'; ParamType1: ptActor)
-//   (Index: 719; Name: 'IsHostileToActor'; ParamType1: ptActor)
-//
-// The indices are the raw stored numbers; the Creation Kit spells each 4096
-// higher.
-//
-// ## Two numbering systems that are not the same
-//
-// `GetFactionRelation` returns "0 = Neutral, 1 = Enemy, 2 = Ally, 3 = Friend"
-// (<https://ck.uesp.net/wiki/GetFactionRelation>), and the Papyrus counterpart
-// `GetFactionReaction` lists the same four in the same order. That is *not* the
-// order the `XNAM` combat-reaction word uses, which `ActorReaction` carries as
-// Ally 0, Friend 1, Neutral 2, Enemy 3. Mapping between the two is written out
-// case by case below rather than done with arithmetic, because the two tables
-// come from different sources and nothing guarantees they stay related.
-//
-// A second disagreement, between the console function and its Papyrus twin:
-// `GetFactionRank` "returns -1" for an actor not in the faction
-// (<https://ck.uesp.net/wiki/GetFactionRank>), while `Actor.GetFactionRank`
-// returns "-2 if the Actor is not in the faction" and reserves -1 for a member
-// whose rank really is -1
-// (<https://ck.uesp.net/wiki/GetFactionRank_-_Actor>). Both are implemented as
-// documented, which is why this file and `PapyrusNativeFaction.swift` spell the
-// same question two ways.
-//
-// ## What is deliberately not installed
-//
-// `GetIsInFactionList` does not exist. The xEdit table carries no function of
-// that name at any index; the list-shaped sibling is `IsInList` (index 372,
-// `ptFormList`), which is about the run-on's *base object* rather than about
-// memberships, and it belongs with the M18 data family rather than here.
-//
-// The five `GetPC*` faction functions (193, 195, 197, 199 and 132) are absent
-// because the state behind them is: expulsion, faction murder and faction attack
-// are player-versus-faction bookkeeping no component in this engine records, and
-// registering them over the membership list would answer every one of them
-// "no" — a convincing wrong answer rather than a measurable gap. `ConditionTally`
-// counts them by index, which is what the real-data sweep ranks the next
-// implementation from.
-//
-// Documented in docs/engine/condition-functions.md and docs/engine/hostility.md.
+// The faction and relationship condition functions. `GetFactionRelation` counts
+// 0 Neutral, 1 Enemy, 2 Ally, 3 Friend, which is not the `XNAM` order, so the
+// mapping is written case by case. Indices, return values, and the functions
+// left out are in docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyConditions

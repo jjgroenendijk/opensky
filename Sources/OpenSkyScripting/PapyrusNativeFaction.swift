@@ -1,57 +1,7 @@
-// The faction and relationship natives (issue #508, roadmap item 21.4): the
-// `Actor` membership family, the two relationship accessors, the two pair
-// questions, and the one `Faction` reaction read — over 21.3's faction runtime
-// and this item's relationship runtime.
-//
-// `PapyrusNativeActor.swift` recorded the absence this file ends: "SetRelationshipRank
-// and the faction natives are absent with the factions themselves". They are not
-// any more.
-//
-// Policy is the `Actor`, perk and crime families', unchanged: `self` arrives as
-// `PapyrusNativeCall.receiver` and becomes a `ReferenceKey`; a headless runtime,
-// a handle with no world identity, or a session with no faction data is a
-// failure with a reason rather than a guess, and the interpreter substitutes the
-// call's declared default so the script keeps running.
-//
-// Every signature below is quoted from the Creation Kit wiki at the registration
-// site rather than recalled, because a Papyrus signature is an interface a mod's
-// compiled bytecode already agrees with: a wrong argument count is a script that
-// stops working, not a number that reads slightly off.
-// `PapyrusNativeSignatureRealDataTests` checks each one against the declaration
-// in the install's own `Actor.pex` and `Faction.pex`, which is the only source
-// that cannot have drifted from the game.
-//
-// ## `AddToFaction` is not native, and is registered anyway
-//
-// The install's own `Actor.pex` declares `AddToFaction` as an ordinary Papyrus
-// wrapper rather than a native, and its whole compiled body is
-// `if !IsInFaction(akFaction); SetFactionRank(akFaction, 0); endIf` — read off
-// the bytecode by `PapyrusNativeSignatureRealDataTests`, which is also where the
-// "does nothing when already a member" rule below comes from. Registering it is
-// therefore not an invention: it is that body, and it means the call works
-// whether or not this session could load the game's own script.
-//
-// ## What is deliberately absent, and why
-//
-// * `Faction.SetReaction` and `Faction.ModReaction`. Both write the interfaction
-//   `XNAM` table, and `FactionRelationIndex` is a derived read-only index built
-//   once from the records. Backing them needs a runtime relation override this
-//   item does not build, and a writer that silently did nothing would be worse
-//   than a counted gap. `Faction.GetReaction` is registered, because reading is
-//   already backed.
-// * `Actor.ModFactionRank`. It reads the current rank, adds a delta and writes
-//   the result — arithmetic over `SetFactionRank`, whose semantics for a
-//   non-member the Creation Kit wiki does not state on any reachable mirror, and
-//   the sweep can report the shipped signature but not what the number means.
-//   Guessing whether a delta joins an outsider at the delta or at zero would put
-//   a wrong rank in the save, so it stays counted.
-// * The `Faction` crime-gold family, which is #504's and already registered in
-//   `PapyrusNativeCrime.swift`.
-//
-// An unimplemented native is counted by name in `PapyrusNativeLog`, which is
-// what ranks the next one to build.
-//
-// Documented in docs/engine/papyrus-actor-natives.md and docs/engine/hostility.md.
+// The faction and relationship Papyrus natives. A call that cannot be answered
+// fails with a reason, and the interpreter returns the declared default.
+// `AddToFaction` is not native in `Actor.pex`; it is registered as that same body.
+// The natives left out, and why, are in docs/engine/papyrus-actor-natives.md.
 
 import Foundation
 import OpenSkyFormatsESM

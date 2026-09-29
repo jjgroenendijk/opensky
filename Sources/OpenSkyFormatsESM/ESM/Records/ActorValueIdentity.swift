@@ -1,51 +1,6 @@
-// How the rest of the engine names an actor value (issue #375, roadmap item
-// 15.8).
-//
-// Two surfaces address actor values by vanilla identity rather than by
-// `ActorValueKind`, and they spell that identity differently. A CTDA parameter
-// carries the *index* — a signed 32-bit word, -1 meaning none — while a Papyrus
-// native carries the *name* as a string. Both have to land on the same three
-// values 15.3 actually stores, so the mapping lives in one place instead of
-// being written twice with two chances to disagree.
-//
-// ## Where the table came from
-//
-// The index list is xEdit's `wbActorValueEnum`, dev-4.1.6
-// `Core/wbDefinitionsTES5.pas`, which numbers 0 `Aggression` through 163
-// `Reflect Damage` with -1 spelled `None`. It is reproduced verbatim, including
-// the `Unknown NN` placeholders xEdit carries for the indices Skyrim leaves
-// unnamed, because a table that silently renumbers around a gap would put every
-// later index one off. Nothing here was recalled from memory: `Health` is 24,
-// `Magicka` is 25 and `Stamina` is 26 because that file says so.
-//
-// ## Which values are stored
-//
-// Every one of the 164 (issue #468, roadmap item 19.5). Health, magicka and
-// stamina keep the typed `ActorValueKind` fast path 15.3 built for them, which
-// is what `kind(at:)` still answers; every other index is stored by
-// `ActorValueState`'s general table and read through `defaultValue(at:)` when
-// nothing has touched it. `kind(at:)` returning nil therefore no longer means
-// "unreadable" — it means "not one of the three primaries", and the question a
-// caller actually asks first is `isVanilla(index:)`.
-//
-// An index *outside* the table stays the documented miss it always was: a
-// reason-tagged false and a `ConditionTally` bucket on the condition side, a
-// tallied native failure and the call's declared default on the Papyrus side.
-// That bucket now counts only genuinely unknown indices and names.
-//
-// ## Name matching
-//
-// Names are compared with every non-alphanumeric character removed and the rest
-// lowercased, so xEdit's `One-Handed` and Papyrus's `OneHanded` are one name and
-// a script's `"health"` matches the table's `Health`. Papyrus does use a handful
-// of *different* words for the same value — `Marksman` for index 8, which xEdit
-// spells `Archery` — and `index(named:)` deliberately still does not alias
-// those, so the measured condition and native miss buckets do not move.
-//
-// The AVIF records use three of the same legacy words in their editor ids, and
-// those *are* mapped, in `recordNameAliases` behind the separate
-// `index(recordName:)` entry point (issue #494, roadmap item 20.1).
-//
+// Maps a vanilla actor-value index (used by CTDA) or name (used by Papyrus) to
+// one actor value. The table is xEdit's `wbActorValueEnum` unchanged, with its
+// `Unknown NN` gaps, so no later index moves by one.
 // Documented in docs/engine/actor-value-names.md.
 
 import Foundation
