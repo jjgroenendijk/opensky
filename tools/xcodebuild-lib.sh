@@ -13,6 +13,7 @@
 #   xcodebuild_summary               stdin -> the lines a green run needs
 #   xcodebuild_xctestrun PLAN        newest .xctestrun for a test plan, or nothing
 #   xcodebuild_xctestrun_stale FILE ROOT   exit 0 when FILE must be regenerated
+#   xcodebuild_xctestrun_products_missing FILE   exit 0 when a named product is gone
 #   xcodebuild_result_counts BUNDLE  "total passed skipped failed" from a bundle
 # shellcheck shell=sh
 
@@ -60,17 +61,43 @@ xcodebuild_xctestrun() {
 # changed since it was written. Sources, xcconfig and test plans under Config/,
 # the project file, Package.swift, and the vendored ffmpeg cover every input; the sweep costs
 # around a tenth of a second where a "null" build-for-testing costs tens of
-# seconds. Missing file or any newer input -> stale (exit 0). Biased toward
-# rebuilding: a false "stale" wastes one incremental build, a false "fresh"
-# would test old code.
+# seconds. Missing file, a missing test bundle or host it names, or any newer
+# input -> stale (exit 0). Biased toward rebuilding: a false "stale" wastes one
+# incremental build, a false "fresh" would test old code.
 xcodebuild_xctestrun_stale() {
     xctestrun="$1"
     root="$2"
     [ -f "$xctestrun" ] || return 0
+    xcodebuild_xctestrun_products_missing "$xctestrun" && return 0
     [ -n "$(find -H "$root/Sources" "$root/Tests" \
         "$root/Config" "$root/OpenSky.xcodeproj/project.pbxproj" "$root/Package.swift" \
         "$root/.vendor/ffmpeg" \
         -newer "$xctestrun" -print 2>/dev/null | head -n 1)" ]
+}
+
+# Exit 0 when a TestBundlePath or TestHostPath in the .xctestrun is missing.
+# `make test-ui` rebuilds OpenSky.app without Contents/PlugIns, which removes
+# OpenSkyTests.xctest while the .xctestrun stays newer than every source.
+# Paths under __PLATFORMS__ belong to Xcode and are not checked.
+xcodebuild_xctestrun_products_missing() {
+    plutil -convert json -o - "$1" 2>/dev/null | python3 -c '
+import json, os, sys
+root = os.path.dirname(sys.argv[1])
+try:
+    configs = json.load(sys.stdin)["TestConfigurations"]
+except (ValueError, KeyError):
+    sys.exit(0)
+for config in configs:
+    for target in config.get("TestTargets", []):
+        host = target.get("TestHostPath", "").replace("__TESTROOT__", root)
+        bundle = target.get("TestBundlePath", "")
+        bundle = bundle.replace("__TESTROOT__", root).replace("__TESTHOST__", host)
+        for path in (host, bundle):
+            if path and "__PLATFORMS__" not in path and not os.path.exists(path):
+                print("[INFO] missing test product: " + path, file=sys.stderr)
+                sys.exit(0)
+sys.exit(1)
+' "$1"
 }
 
 # The four counts a caller asserts on, straight from the result bundle. Trust
