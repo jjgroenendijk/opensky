@@ -165,6 +165,11 @@ long explanation. Keep code comments short.
 - A performance idea, or a performance problem spotted mid-task, becomes a GitHub issue
   (`gh issue create`) rather than an inline fix. One issue per idea; the title states the
   win, the body states where and why.
+- A pre-existing bug found mid-task, one the current change did not cause, becomes a GitHub
+  issue with the `bug` label (`gh issue create --label bug`). One issue per bug; the body
+  states where it is, how to reproduce it, and what was observed. This keeps the bug from
+  being lost and keeps the fix out of an unrelated PR. Fix it inline only when it blocks
+  the task, and say so in the commit.
 - Do the whole task in the main session. Do not split work across sub-agents: parallel
   agents have edited the same worktree and collided.
 
