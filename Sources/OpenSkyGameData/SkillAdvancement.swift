@@ -1,53 +1,7 @@
-// Skill experience arithmetic (issue #498, roadmap item 20.5): what one use of
-// a skill is worth, what the next skill level costs, and what a skill level-up
-// contributes toward the character's own level.
-//
-// Pure functions over numbers, in the shape `MeleeDamage` and `ArcheryDamage`
-// take: nothing here reaches the world, so every assertion about the formula is
-// plain arithmetic rather than something only a running session shows.
-//
-// ## The three formulas, quoted
-//
-// UESP "Skyrim:Leveling" states all three. Skill experience for one use, with
-// the two per-skill numbers coming from the skill's own AVIF `AVSK` field:
-//
-//   Skill Use Mult * (base XP * skill specific multipliers) + Skill Use Offset
-//
-// The experience the next skill level costs, with the exponent coming from a
-// game setting that "applies globally to all of the skills":
-//
-//   Cost(level) = Skill Improve Mult * level ^ fSkillUseCurve
-//                 + Skill Improve Offset
-//
-// and the character experience a skill level-up banks:
-//
-//   Character XP gained = Skill level acquired * fXPPerSkillRank
-//
-// The same page works one threshold through by hand, which is what pins the
-// reading of `level` in the cost formula to the level being left rather than
-// the one being reached: "if you want to level Lockpicking (Skill Improve Mult
-// 0.25, Skill Improve Offset 300) from level 15 to 16: 0.25 * 15^1.95 + 300 =
-// 349.1267420446517". The prose above that example writes `(level-1)^1.95`
-// while its own worked numbers, its graph caption and its per-skill totals all
-// use the current level; the worked example is the one this file follows,
-// because it is the one with numbers attached.
-//
-// ## Where the numbers come from
-//
-// The two per-skill pairs are AVIF `AVSK` (`SkillUseParameters`, decoded in
-// item 20.1), read off the user's own install rather than from the table on
-// that page: this machine's `Skyrim.esm` gives `AVOneHanded` 6.3 / 0 / 2 / 0
-// and `AVLockpicking` 45 / 10 / 0.25 / 300, measured 2026-08-19, and the wiki's
-// own Smithing footnote ("in the original Skyrim.esm the skill use multiplier
-// is 160") is confirmed by the same read. `SkillAdvancementRealDataTests` pins
-// them.
-//
-// `fSkillUseCurve` is authored at 1.95 in that install. `fXPPerSkillRank` is
-// *not* authored by any active plugin on this machine, so it takes the
-// documented default of 1 — which is exactly the typed-read-with-a-documented-
-// fallback shape `ActorValueLevelSettings` already uses.
-//
-// Documented in docs/engine/skill-advancement.md.
+// Skill experience arithmetic from UESP "Skyrim:Leveling": what one use is worth,
+// what the next level costs, and what a level-up adds toward the character
+// level. The cost curve uses the level being left, as the wiki's worked example
+// does. Documented in docs/engine/skill-advancement.md.
 
 import Foundation
 import OpenSkyFormatsESM

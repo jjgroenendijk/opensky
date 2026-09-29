@@ -1,53 +1,7 @@
-// Dialogue selection (issue #426, roadmap item 17.2): the layer that answers
-// "what does this speaker have to say right now?".
-//
-// A thin layer beside `WorldStateStore` rather than methods on it, following
-// the `QuestRuntime` precedent this issue names. The store is the generic
-// substrate that knows about keys, components, journalling and snapshots and
-// deliberately knows nothing about records; dialogue needs `DialogueStore` for
-// the records and for the session-stable key said-state is filed under,
-// `QuestStore` for the quest a topic belongs to, and a `ConditionContext` for
-// everything a CTDA may read. None of those belong inside the store.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the store it writes to is. No
-// audio, no camera, no menu — item 17.8's panel and the voice work above it sit
-// on top of this, and nothing here knows they exist.
-//
-// ## The selection rules, and where each comes from
-//
-// * A topic belongs to a quest (DIAL QNAM) and is only offered while that quest
-//   runs. Every one of the 15,037 DIAL records in `Skyrim.esm` names one, so
-//   this is the primary filter rather than an edge case. The Creation Kit's
-//   dialogue documentation states the rule plainly: "Dialogue is organized by
-//   quest" and a topic's lines are available when its quest is running
-//   (<https://ck.uesp.net/wiki/Dialogue_Views>).
-// * Inside a topic the INFO records are evaluated in file order and the first
-//   one whose conditions pass wins. That is why `DialogueStore` preserves the
-//   order of the type-7 child group rather than sorting it, and why this file
-//   never re-orders `infos(for:)`.
-// * A response flagged say-once that has already been said is skipped before
-//   its conditions are evaluated. "Say Once: If checked, this info will only be
-//   said once. Once said, it will never be said again."
-//   (<https://ck.uesp.net/wiki/Dialogue_Views>, Response Data.)
-// * A response whose ANAM names a speaker other than this one is skipped. ANAM
-//   is the forced-speaker link, carried by 223 of `Skyrim.esm`'s 31,465 INFOs.
-// * The offered topics are ordered by DIAL PNAM priority, descending, and by
-//   FormID within a priority so the list is deterministic. Priority is what the
-//   field is called and what it is for; the FormID tie-break is OpenSky's,
-//   because the Creation Kit documents no order between equal priorities and a
-//   dictionary order would make the same world produce two different menus.
-//
-// ## What this deliberately does not do
-//
-// Scenes (SCEN) are not played: the M17 gate is satisfied by a conversation,
-// and 17.1's sweep found 7,426 DIAL records in the scene category that belong
-// to that separate machinery. Shared responses (INFO DNAM) replace another
-// record's *response data* and therefore change what a chosen line says rather
-// than whether it is offered, so they are a concern of the text layer above.
-// Neither is missing by accident; see docs/engine/dialogue.md.
-//
-// Documented in docs/engine/dialogue.md.
+// Dialogue selection: what a speaker has to say right now. It sits beside
+// `WorldStateStore` rather than in it, because the store knows nothing about
+// records. Inside a topic the first INFO in file order whose conditions pass wins.
+// The selection rules are in docs/engine/dialogue.md.
 
 import Foundation
 import OpenSkyConditions

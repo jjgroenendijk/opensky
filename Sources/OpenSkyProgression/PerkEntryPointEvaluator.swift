@@ -1,60 +1,7 @@
-// The perk entry-point evaluator (issue #497, roadmap item 20.4): given a
-// number a formula is about to use and the perk effects that hook the entry
-// point it is asking about, what number should the formula use instead.
-//
-// Pure arithmetic over values, with no store, no world and no conditions in it.
-// Whether an effect is owned and whether its condition tabs pass is the
-// runtime's question (`PerkRuntime`); this file answers only "what does this
-// function do to this value", which is what makes every rule below a plain
-// assertion in a test rather than something only a running session can show.
-//
-// ## The functions, quoted
-//
-// UESP "Skyrim Mod:Mod File Format/PERK", "Function Types", gives the new value
-// per function id verbatim, and this is the whole table:
-//
-//   01 Set Value                VALUE
-//   02 Add Value                Value + AMOUNT
-//   03 Multiply Value           Value * FACTOR
-//   04 Add Range to Value       Value + random(MIN, MAX)
-//   05 Add Actor Value Mult     Value + AV * FACTOR
-//   06 Absolute                 Abs(Value)
-//   07 Negative ABS Value       -Abs(Value)
-//   08 Add Level List           (list-valued, not a number)
-//   09 Add Activate Choice      (button-valued, not a number)
-//   0A Select Spell             (spell-valued, not a number)
-//   0B Select Text              (text-valued, not a number)
-//   0C Set AV Mult              AV * FACTOR
-//   0D Multiply AV Mult         Value * AV * FACTOR
-//   0E Multiply 1 + AV Mult     Value * (1 + AV * FACTOR)
-//   0F Set Text                 (text-valued, not a number)
-//
-// Nine of the fifteen produce a number and are implemented. The five
-// list-, spell-, button- and text-valued functions are not numbers at all: the
-// perk effects that carry them hook entry points a formula never asks a float
-// of (Apply Combat Hit Spell casts a spell, Set Activate Label writes a button
-// label), so they are reported as `unsupportedFunction` and leave the value
-// exactly as it arrived rather than being folded in as a zero.
-//
-// `Add Range to Value` is the one *numeric* function left out. Neither UESP nor
-// xEdit documents the distribution or where the draw is seeded from, and
-// inventing one would make a formula that is supposed to be reproducible depend
-// on a number this engine made up. It is reported and skipped, and the count is
-// what would justify implementing it.
-//
-// ## Ordering
-//
-// The PRKE priority byte is the only ordering the record carries, and UESP is
-// candid about it: "Priority - Assumed to be how to order/iterate through perk
-// sections". So the evaluator applies effects in descending priority, with ties
-// broken by the caller's order — which `PerkStore`'s entry-point index has
-// already fixed to (priority, plugin, object id, effect position), so the same
-// load order always folds the same effects in the same sequence. Ordering only
-// changes an answer when a `Set Value` competes with something else, since
-// addition and multiplication over the rest commute; the choice is recorded in
-// docs/engine/perks.md rather than presented as certain.
-//
-// Documented in docs/engine/perks.md.
+// Applies the perk effects of one entry point to the value a formula is about to
+// use. `PerkRuntime` decides which effects the actor owns and which pass their
+// conditions. The function table and the priority order are in
+// docs/engine/perks.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -146,7 +93,7 @@ nonisolated public enum PerkEntryPointEvaluator: Sendable {
     // MARK: - Private
 
     /// The four `AV` functions, which share a payload shape and differ only in
-    /// the arithmetic. Quoted per case in the file header.
+    /// the arithmetic.
     private static func actorValueResult(
         _ operand: PerkEntryPointOperand,
         value: Float,

@@ -1,53 +1,6 @@
-// What an enchanted weapon spends when it lands a hit (issue #472, roadmap item
-// 19.9): where the charge comes from, what one use costs, and when the
-// enchantment stops firing.
-//
-// ## The model, and how it was settled
-//
-// Two numbers, both already decoded, and no formula invented here:
-//
-// * The fully charged value is the weapon's own `EAMT`, which
-//   `ItemEnchantment.charge` carries. ARMO has no such field, which is
-//   consistent with an armour enchantment being a constant effect that spends
-//   nothing (<https://ck.uesp.net/wiki/Enchantment>: "Armor Enchantments must
-//   use the 'Constant Effect' casting type").
-// * One use costs the enchantment's own cost — `ENIT`'s authored value under the
-//   manual-cost flag and `SpellCost`'s auto-calculated total otherwise, which is
-//   exactly what `ResolvedEnchantment.cost` already resolves.
-//
-// So the number of uses is `floor(EAMT / cost)`, and that was *measured* rather
-// than assumed. UESP's "Skyrim:Generic Magic Weapons" prints a "Charge/Cost =
-// Uses" column for every randomly generated magic weapon
-// (<https://en.uesp.net/wiki/Skyrim:Generic_Magic_Weapons>), stating that its
-// numbers are "base values, equivalent to the values for a player with 0 in all
-// skills". Five of its rows were checked against this machine's install on
-// 2026-08-17 and every one agreed on all three numbers:
-//
-//   Dwarven Warhammer of Absorption   1000 / 18  = 55
-//   Ebony Battleaxe of the Vampire    3000 / 109 = 27
-//   Iron Battleaxe of Dismay           500 / 7   = 71
-//   Imperial Bow of Cowardice          300 / 11  = 27
-//   Elven Battleaxe of Banishing      2000 / 138 = 14
-//
-// The measurement is in `EnchantmentRuntimeRealDataTests`, so the agreement is a
-// gate rather than a comment.
-//
-// ## What is deliberately not modelled
-//
-// The cost is *not* scaled by the wielder's skill. UESP states plainly that the
-// uses go up with "a relevant magic skill" and that at skill 100 a weapon gets
-// "about 1.7 times the uses documented here", and the same page's charge-per-use
-// formula for a *player-created* enchantment carries an Enchanting-skill term.
-// Neither statement pins the runtime multiplier: the two disagree about which
-// skill is read, and 1.7 is quoted as an approximation with no formula beside it.
-// Rather than invent one, this engine charges the base cost, which is the number
-// the published tables print, and records the gap in docs/engine/item-enchantments.md.
-//
-// Recharging is out of this item's scope: an empty weapon stays empty, because
-// soul gems are not in this milestone. `restoring(to:)` exists for the load path
-// and for a dev control, not for a soul gem.
-//
-// Documented in docs/engine/item-enchantments.md.
+// What an enchanted weapon spends per hit. Full charge is the weapon's `EAMT`, one
+// use costs the enchantment's cost, and the cost is not scaled by skill, because
+// no source gives that formula. Documented in docs/engine/item-enchantments.md.
 
 import Foundation
 

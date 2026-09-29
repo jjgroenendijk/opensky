@@ -1,59 +1,6 @@
-// Quest runtime state as a world-state component (issue #182, roadmap item
-// 13.2): the value type that holds one quest's running, stage and objective
-// state once anything has touched it.
-//
-// The component lives here rather than in `WorldStateComponents.swift` for the
-// same reason `ReferenceInventoryState` lives beside the inventory code: it
-// carries behaviour of its own — the reached-stage set and the objective table —
-// rather than being a plain field bag. Only the `WorldStateComponentKind` case
-// and the `WorldStateComponentValue` case sit with the rest, so every store
-// operation stays generic over the protocol.
-//
-// Quests are base records rather than placed references, which the store does
-// not care about: state is keyed by the QUST record's session-stable
-// `ReferenceKey`, exactly as `GlobalStore` keys GLOB overrides, so journalling,
-// snapshot ordering and the mutation callbacks apply unchanged.
-//
-// Full-override model, like inventory: an untouched quest has no component at
-// all and re-derives its baseline from plugin data through `baseline(for:)`; the
-// first mutation materializes that baseline and everything afterwards edits it.
-//
-// Two invariants hold for every value of this type, enforced in `init` rather
-// than checked at use sites, because they are what make a snapshot of two
-// stores that reached the same end state byte-identical:
-//
-// * `stagesReached` is sorted ascending and free of duplicates.
-// * `objectives` is sorted by objective index, holds one entry per index, and
-//   never holds an entry whose three flags are all false — that is the state an
-//   objective has before anything touches it, so storing it would make two
-//   equal worlds compare unequal.
-//
-// Documented semantics, from the Creation Kit wiki rather than from memory:
-//
-//   "Current stage" is the *highest* stage ever reached, not the last one set.
-//   `GetCurrentStageID` "obtains the highest completed stage in this quest", and
-//   the condition function `GetStage` documents the same rule by example: with
-//   stages 10, 30 and 75 reached it returns 75 "even when stage 30 is completed
-//   after stage 75".
-//   (<https://ck.uesp.net/wiki/GetCurrentStageID_-_Quest>,
-//   <https://ck.uesp.net/wiki/GetStage>)
-//
-//   A stage is "done" only if it was explicitly visited. `IsStageDone` "returns
-//   false for stages 10, 30 and 50" after setting 0, 40, 20 and 60, "because
-//   these stages have not yet been visited" — a lower-numbered stage is not
-//   implied by a higher one. That is why the reached set is a set rather than a
-//   high-water mark. (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>)
-//
-//   Setting a stage twice is idempotent for this state: the stage is already in
-//   the reached set and the highest reached stage cannot move backwards, so
-//   `SetStage(30)` after stage 60 leaves `GetCurrentStageID` at 60 and only
-//   turns `IsStageDone(30)` true. (Same page.)
-//
-//   `CompleteQuest()` "flags this quest as completed" and says nothing about
-//   stopping it, so completing leaves the running flag alone here.
-//   (<https://ck.uesp.net/wiki/CompleteQuest_-_Quest>)
-//
-// Documented in docs/engine/quest-state.md.
+// One quest's running, stage, and objective state as a world-state component,
+// keyed by the QUST record's `ReferenceKey`. An untouched quest has no component.
+// The stage rules from the Creation Kit wiki are in docs/engine/quest-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -195,7 +142,7 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
     }
 
     /// Whether `index` was explicitly visited. A lower stage is never implied by
-    /// a higher one (see the file header).
+    /// a higher one (`IsStageDone`).
     public func isStageDone(_ index: UInt16) -> Bool {
         stagesReached.contains(index)
     }
@@ -230,8 +177,8 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
         return result
     }
 
-    /// This state with the quest flagged completed, leaving the running flag
-    /// alone (see the file header).
+    /// This state with the quest flagged completed. `CompleteQuest()` does not
+    /// stop a quest, so the running flag stays.
     public func completing() -> Self {
         var result = self
         result.isCompleted = true

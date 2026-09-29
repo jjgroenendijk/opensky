@@ -161,6 +161,10 @@ multiplier is `1 + points / 100`, with points added first: the actor value is on
 example (four 40% items give +160%) adds. Where each one lands is on the
 [melee damage](/engine/melee-damage.md) and [projectiles](/engine/projectiles.md) pages.
 
+Not read here: `Melee Damage` (34) and `Unarmed Damage` (35) are flat point adds, not
+percentages, and `Attack Damage Mult` (159) is the value vanilla perks write. Adding a flat value
+into a multiplier would be a different formula.
+
 ## Saving
 
 Charge and worn effects go in the `ECHG` chunk ([save
