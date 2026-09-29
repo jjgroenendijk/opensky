@@ -1,18 +1,7 @@
-// Timeline execution for the runtime display list (milestone 8.3.2 phase 2):
-// entering a frame, applying that frame's control tags, running its DoAction
-// blocks, and the four goto forms `AS2Host.perform` routes here.
-//
-// Stepping forward by one frame applies only that frame's control tags, which
-// is what a player does. Any other jump accumulates the destination state from
-// frame 1 — a display list is the sum of every step before it and the tags carry
-// no undo — and then reconciles the live children against it, keeping every
-// instance the destination frame still places at the same depth (see
-// `SWFRuntimeGoto.swift`). The destination frame's DoAction blocks run either
-// way; the skipped frames' do not, matching how `gotoAndStop` behaves in Flash.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
-// display list" (place/modify/replace/remove at a depth) and chapter 5
-// "Actions" — "ActionPlay", "ActionStop", "ActionGotoFrame", "ActionGoToLabel".
+// Timeline execution: entering a frame, its control tags, its DoAction blocks,
+// and the four goto forms. One step forward applies one frame's tags; any other
+// jump replays from frame 1 and reconciles (`SWFRuntimeGoto.swift`). Only the
+// destination frame's DoAction blocks run.
 
 import Foundation
 
@@ -150,9 +139,6 @@ nonisolated extension SWFMovieRuntime {
         }
         if let colorTransform = placement.colorTransform {
             node.colorTransform = colorTransform
-        }
-        if let ratio = placement.ratio {
-            node.ratio = ratio
         }
         if let name = placement.name {
             node.name = name

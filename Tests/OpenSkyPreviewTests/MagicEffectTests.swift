@@ -13,6 +13,7 @@ struct MagicEffectTests {
     func decodesIdentityDataLinksAndLists() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("TestDamageHealth"))
         fields += ESMFixture.field("FULL", ESMFixture.zstring("Damage Health"))
+        fields += ESMFixture.field("MDOB", MagicEffectFixture.words([0x50]))
         fields += ESMFixture.field("KSIZ", MagicEffectFixture.words([1]))
         fields += ESMFixture.field("KWDA", MagicEffectFixture.words([0x20]))
         fields += ESMFixture.field("DATA", MagicEffectFixture.data())
@@ -32,30 +33,13 @@ struct MagicEffectTests {
         #expect(effect.description == .inline("Deals <mag> damage."))
         #expect(effect.keywords.keywords == [FormID(0x20)])
         #expect(effect.counterEffects == [FormID(0x30)])
-        #expect(effect.sounds == [
-            MagicEffectSound(kind: 3, descriptor: FormID(0x40)),
-            MagicEffectSound(kind: 5, descriptor: FormID(0x41))
-        ])
+        #expect(effect.menuDisplayObject == FormID(0x50))
+        #expect(effect.sounds.map(\.kind) == [3, 5])
+        #expect(effect.sounds.map(\.descriptor) == [FormID(0x40), FormID(0x41)])
         #expect(effect.conditions.conditions.count == 1)
         #expect(effect.skipped.counts[.unknownField("ZZZZ")] == 1)
 
-        let data = try #require(effect.data)
-        #expect(data.flags.contains(.hostile))
-        #expect(data.baseCost == 12.5)
-        #expect(data.associatedItem == FormID(0x100))
-        #expect(data.magicSkill == 20)
-        #expect(data.resistanceActorValue == 44)
-        #expect(data.counterEffectCount == 0)
-        #expect(data.archetype == .valueModifier)
-        #expect(data.relatedActorValue == 24)
-        #expect(data.projectile == FormID(0x200))
-        #expect(data.explosion == FormID(0x201))
-        #expect(data.castingType == .fireAndForget)
-        #expect(data.delivery == .aimed)
-        #expect(data.impactData == FormID(0x204))
-        #expect(data.dualCastArt == FormID(0x205))
-        #expect(data.equipAbility == FormID(0x209))
-        #expect(data.unknownEnumCount == 0)
+        try expectFixtureData(effect.data)
     }
 
     @Test
@@ -120,5 +104,59 @@ struct MagicEffectTests {
         #expect(dump.contains("delivery aimed"))
         #expect(dump.contains("related actor value Health"))
         #expect(dump.contains("resistance Resist Magic"))
+    }
+
+    /// The flags docs/formats/magic-records.md names, at their xEdit bits.
+    @Test
+    func flagBitsMatchXEdit() {
+        let named: [(MagicEffectFlags, Int)] = [
+            (.hostile, 0), (.recover, 1), (.detrimental, 2), (.snapToNavmesh, 3),
+            (.noHitEvent, 4), (.dispelWithKeywords, 8), (.noDuration, 9), (.noMagnitude, 10),
+            (.noArea, 11), (.effectsPersist, 12), (.goryVisuals, 14), (.hideInUI, 15),
+            (.noRecast, 17), (.powerAffectsMagnitude, 21), (.powerAffectsDuration, 22),
+            (.painless, 26), (.noHitEffect, 27), (.noDeathDispel, 28)
+        ]
+        for (flag, bit) in named {
+            #expect(flag.rawValue == 1 << bit)
+        }
+    }
+
+    private func expectFixtureData(_ decoded: MagicEffectData?) throws {
+        let data = try #require(decoded)
+        #expect(data.flags.contains(.hostile))
+        #expect(data.baseCost == 12.5)
+        #expect(data.associatedItem == FormID(0x100))
+        #expect(data.magicSkill == 20)
+        #expect(data.resistanceActorValue == 44)
+        #expect(data.counterEffectCount == 0)
+        #expect(data.castingLight == FormID(0x101))
+        #expect(data.taperWeight == 0.5)
+        #expect(data.hitShader == FormID(0x102))
+        #expect(data.enchantShader == FormID(0x103))
+        #expect(data.minimumSkillLevel == 25)
+        #expect(data.spellmakingArea == 10)
+        #expect(data.castingTime == 0.75)
+        #expect(data.taperCurve == 1.25)
+        #expect(data.taperDuration == 2)
+        #expect(data.archetype == .valueModifier)
+        #expect(data.relatedActorValue == 24)
+        #expect(data.projectile == FormID(0x200))
+        #expect(data.explosion == FormID(0x201))
+        #expect(data.castingType == .fireAndForget)
+        #expect(data.delivery == .aimed)
+        #expect(data.castingArt == FormID(0x202))
+        #expect(data.hitEffectArt == FormID(0x203))
+        #expect(data.impactData == FormID(0x204))
+        #expect(data.dualCastArt == FormID(0x205))
+        #expect(data.dualCastScale == 2.5)
+        #expect(data.enchantArt == FormID(0x206))
+        #expect(data.hitVisuals == FormID(0x207))
+        #expect(data.enchantVisuals == FormID(0x208))
+        #expect(data.equipAbility == FormID(0x209))
+        #expect(data.imageSpaceModifier == FormID(0x20A))
+        #expect(data.castingSoundLevel == 1)
+        #expect(data.scriptAIScore == 50)
+        #expect(data.scriptAIDelay == 1)
+        #expect(data.unknownEnumCount == 0)
     }
 }

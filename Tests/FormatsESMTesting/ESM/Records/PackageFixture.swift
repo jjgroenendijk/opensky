@@ -18,11 +18,17 @@ public enum PackageFixture: Sendable {
         return record
     }
 
-    public static func general(flags: UInt32 = 0, kind: UInt8 = 18, speed: UInt8 = 0) -> Data {
+    public static func general(
+        flags: UInt32 = 0,
+        kind: UInt8 = 18,
+        interruptOverride: UInt8 = 0,
+        speed: UInt8 = 0,
+        interruptFlags: UInt16 = 0
+    ) -> Data {
         var data = Data()
         data.appendUInt32(flags)
-        data.append(contentsOf: [kind, 0, speed, 0])
-        data.appendUInt16(0)
+        data.append(contentsOf: [kind, interruptOverride, speed, 0])
+        data.appendUInt16(interruptFlags)
         data.appendUInt16(0)
         return ESMFixture.field("PKDT", data)
     }

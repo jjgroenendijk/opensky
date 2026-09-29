@@ -1,14 +1,7 @@
-// Behavior-file census (todo 14.1): the one-pass summary of what a Havok
-// packfile declares, shared by the env-gated sweep over the real install and
-// by `openskycli hkx`. It answers the questions item 14.2 needs answered
-// before node classes are written — which classes actually appear in the
-// vanilla player graph, which variables and events the graph exposes, and
-// which other files a project or character pulls in.
-//
-// The role is read from the root object's named variants, never from the
-// filename and never from the container header's root class (every behavior,
-// character, and project file declares the same `hkRootLevelContainer` root).
-// Nothing is evaluated: this is inventory, not runtime.
+// Behavior-file census: a one-pass summary of the classes, variables, events,
+// and referenced files a Havok packfile declares. The sweep and `openskycli hkx`
+// share it. The role comes from the root object's named variants, because every
+// behavior file declares the same `hkRootLevelContainer` root.
 
 import Foundation
 
@@ -71,13 +64,6 @@ nonisolated public struct HKBBehaviorCensus: Equatable, Sendable {
 
     public var variableNames: [String] {
         variables.compactMap(\.name)
-    }
-
-    /// Class names in report order: most frequent first, ties alphabetical.
-    public var classCountsByFrequency: [(name: String, count: Int)] {
-        classCounts
-            .map { (name: $0.key, count: $0.value) }
-            .sorted { ($0.count, $1.name) > ($1.count, $0.name) }
     }
 
     /// Builds the census for an already-parsed packfile. Never throws: a file

@@ -151,4 +151,8 @@ replace it. Deleting that one `.swiftmodule` folder and building again fixed it.
 Seen again the same day for `OpenSkyWorld`: a new method that tests reach through
 `@testable import` failed with "has no member" until the same delete.
 
+Seen again the same day for `OpenSkyFormatsSWF`, with the emit a cache miss this time. `make
+test` failed the same way. Every `OpenSkyFormats*` copy in Products was a day older than its
+`Intermediates.noindex` module. Deleting those folders fixed the next build.
+
 Retires when an interface change builds through xcodebuild without a manual delete.

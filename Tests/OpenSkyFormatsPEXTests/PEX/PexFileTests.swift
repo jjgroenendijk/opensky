@@ -25,14 +25,21 @@ struct PexFileTests {
         #expect(debug.modificationTime == 1_700_000_001)
         #expect(debug.functions.count == 1)
         #expect(debug.functions[0].objectName == "FixtureObject")
+        #expect(debug.functions[0].stateName == "state")
+        #expect(debug.functions[0].functionName == "function")
+        #expect(debug.functions[0].functionType == 0)
         #expect(debug.functions[0].lineNumbers.count == 36)
-        #expect(file.userFlags == [PexUserFlag(name: "UserFlag", bitIndex: 3)])
+        #expect(file.userFlags.map(\.name) == ["UserFlag"])
+        #expect(file.userFlags.map(\.bitIndex) == [3])
 
         let object = try #require(file.objects.first)
         #expect(object.name == "FixtureObject")
         #expect(object.parentClassName == "ParentObject")
+        #expect(object.documentation == "Fixture documentation")
+        #expect(object.userFlags == 1 << 3)
         #expect(object.automaticStateName == "AutoState")
         #expect(object.variables.count == 6)
+        #expect(object.variables.map(\.userFlags) == [0, 1, 2, 3, 4, 5])
         #expect(object.variables.map(\.initialValue) == [
             .null,
             .identifier("literal"),
@@ -42,6 +49,8 @@ struct PexFileTests {
             .boolean(true)
         ])
         let property = try #require(object.properties.first)
+        #expect(property.documentation == "Fixture documentation")
+        #expect(property.userFlags == 0)
         #expect(property.flags == .automatic)
         #expect(property.automaticVariableName == "::property_var")
         #expect(property.readHandler == nil)
@@ -54,6 +63,8 @@ struct PexFileTests {
 
         let namedFunction = try #require(object.states.first?.functions.first)
         #expect(namedFunction.name == "function")
+        #expect(namedFunction.function.documentation == "Fixture documentation")
+        #expect(namedFunction.function.userFlags == 0)
         #expect(namedFunction.function.parameters == [
             PexTypedName(name: "parameter", typeName: "Int")
         ])

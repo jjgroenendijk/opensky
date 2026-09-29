@@ -1,10 +1,6 @@
-// hkaSplineCompressedAnimation object decode (todo 6.3): metadata + block
-// tables + per-track local-transform sampling. Object layout comes from
-// hkxparse (MIT) + HKX2Library (MIT); spline block grammar + quantization
-// comes from PredatorCZ/HavokLib (GPLv3), independently reimplemented here.
-// Every field/block boundary was probe-verified against Skyrim SE's male
-// mt_idle.hkx (hk_2010.2.0-r1, 64-bit LE). No Havok SDK or Bethesda code
-// consulted. Full byte map + citations: docs/formats/hka-animation.md.
+// hkaSplineCompressedAnimation decode: metadata, block tables, and per-track
+// transform sampling. Layout from hkxparse and HKX2Library (MIT); the spline
+// grammar is reimplemented from HavokLib. Byte map: docs/formats/hka-animation.md.
 
 import Foundation
 import simd
@@ -37,16 +33,9 @@ nonisolated public struct HKASplineCompressedAnimation: Sendable {
     public let frameCount: Int
     public let maxFramesPerBlock: Int
     public let transformTrackCount: Int
-    public let floatTrackCount: Int
-    /// True when `hkaAnimation.m_extractedMotion` points at an
-    /// `hkaAnimatedReferenceFrame`, which is Havok's statement that this clip
-    /// carries authored travel rather than animating in place.
-    ///
-    /// Only the presence is read. The reference frame's own contents are not
-    /// decoded, because no file in a vanilla Skyrim SE install carries one:
-    /// the flag exists so a consumer can tell an in-place clip from a
-    /// root-motion clip without inferring it from how far the root bone
-    /// happens to drift. See docs/engine/walk-mode.md.
+    /// True when `m_extractedMotion` points at an `hkaAnimatedReferenceFrame`: the
+    /// clip carries authored travel. Only presence is read; no vanilla file has
+    /// one (docs/engine/walk-mode.md).
     public let carriesExtractedMotion: Bool
     /// `hkaAnimation.m_annotationTracks`. Havok exports one track per transform
     /// track and vanilla Skyrim leaves all but the first empty, so consumers
@@ -191,7 +180,6 @@ nonisolated private enum HKASplineObjectDecoder {
             frameCount: metadata.frameCount,
             maxFramesPerBlock: metadata.maxFramesPerBlock,
             transformTrackCount: metadata.transformTrackCount,
-            floatTrackCount: metadata.floatTrackCount,
             carriesExtractedMotion: extractedMotion,
             annotationTracks: annotationTracks,
             blocks: decodeBlocks(metadata: metadata, tables: tables)

@@ -51,6 +51,7 @@ struct RegionRecordTests {
             Region.WeatherChance(weather: FormID(0x40), chance: 70, global: FormID(0x50)),
             Region.WeatherChance(weather: FormID(0x41), chance: 30, global: nil)
         ])
+        #expect(region.weatherList.map(\.global) == [FormID(0x50), nil])
     }
 
     @Test func skipsWeatherEntriesWithBadSize() throws {
@@ -121,6 +122,16 @@ struct RegionRecordTests {
         #expect(second.chance == 1.0)
     }
 
+    /// The RDSA condition bits docs/formats/weather.md lists.
+    @Test func soundConditionBitsMatchTheDocumentedList() {
+        let documented: [(Region.SoundEntry.Conditions, UInt32)] = [
+            (.pleasant, 0x01), (.cloudy, 0x02), (.rainy, 0x04), (.snowy, 0x08)
+        ]
+        for (condition, bits) in documented {
+            #expect(condition.rawValue == bits)
+        }
+    }
+
     @Test func skipsSoundEntriesWithBadSize() throws {
         var soundHeader = Data()
         soundHeader.appendUInt32(7)
@@ -148,7 +159,7 @@ struct RegionRecordTests {
     }
 
     @Test func decodesRegionMusicInSoundArea() throws {
-        // RDMO (M9.2.3) alongside RDSA under the same sound-area RDAT.
+        // RDMO alongside RDSA under the same sound-area RDAT.
         var soundHeader = Data()
         soundHeader.appendUInt32(7)
         soundHeader.append(contentsOf: [0x00, 2])

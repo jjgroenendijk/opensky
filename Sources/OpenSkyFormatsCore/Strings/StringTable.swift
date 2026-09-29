@@ -1,11 +1,7 @@
-// Skyrim SE localized string table reader. Plugins with the TES4 "localized"
-// flag (0x80) keep display text out-of-band in per-language tables at
-// Strings/<plugin>_<language>.{strings,dlstrings,ilstrings} (loose or in BSA);
-// records store a uint32 string ID where an inline zstring would sit.
-//
-// Reference: UESP "Skyrim Mod:String Table File Format"
-//   https://en.uesp.net/wiki/Skyrim_Mod:String_Table_File_Format
-// Layout documented in docs/formats/strings.md.
+// Skyrim SE localized string table reader. A plugin with the TES4 localized
+// flag (0x80) stores a uint32 string ID where a zstring would sit, and the text
+// lives in Strings/<plugin>_<language>.{strings,dlstrings,ilstrings}.
+// Layout and sources: docs/formats/strings.md.
 
 import Foundation
 
@@ -53,10 +49,6 @@ nonisolated public struct StringTable: Sendable {
 
     public var isEmpty: Bool {
         offsets.isEmpty
-    }
-
-    public var ids: [UInt32] {
-        Array(offsets.keys)
     }
 
     public init(data: Data, kind: Kind) throws {

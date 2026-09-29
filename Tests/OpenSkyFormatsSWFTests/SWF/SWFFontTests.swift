@@ -135,7 +135,7 @@ struct SWFFontTests {
     @Test func parsesCSMTextSettings() throws {
         var body = Data()
         body.appendUInt16(9)
-        body.append(0x40) // UseFlashType = 1, GridFit = 0
+        body.append(0x48) // UseFlashType = 1, GridFit = 1
         body.appendFloat32(0.5)
         body.appendFloat32(-0.25)
         body.append(0) // reserved
@@ -144,6 +144,7 @@ struct SWFFontTests {
         )
         #expect(settings.textID == 9)
         #expect(settings.useFlashType == 1)
+        #expect(settings.gridFit == 1)
         #expect(settings.thickness == 0.5)
         #expect(settings.sharpness == -0.25)
     }

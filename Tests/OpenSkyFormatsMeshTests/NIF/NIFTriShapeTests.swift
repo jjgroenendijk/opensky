@@ -109,6 +109,22 @@ struct NIFTriShapeTests {
         #expect(shape.normals.isEmpty)
     }
 
+    /// Skyrim SE sets 0x400 but still writes full-float positions.
+    @Test func fullPrecisionFlagIsKeptAndChangesNoLayout() throws {
+        var record = Data()
+        for value: Float in [1, 2, 3, 0] {
+            record.appendFloat32(value)
+        }
+        let payload = NIFFixture.bsTriShape(
+            attributes: 0x401, // vertex|full precision
+            strideDwords: 4,
+            vertexRecords: [record]
+        )
+        let shape = try NIFTriShape(data: payload, header: header())
+        #expect(shape.attributes == [.vertex, .fullPrecision])
+        #expect(shape.positions == [SIMD3(1, 2, 3)])
+    }
+
     @Test func decodesSkinningDataAndReadsColors() throws {
         // vertex|uvs|colors|skinned: decode four half weights + byte indices
         // without shifting the following vertex's fields.

@@ -1,18 +1,7 @@
-// The mutable runtime display list (milestone 8.3.2 phase 2). Everything under
-// `Formats/SWF/` up to now was immutable: `SWFMovie.frame1` is resolved once and
-// `SWFScene.build(movie:)` is a pure function of it. ActionScript needs a tree
-// it can move, hide, retarget, and re-parent, so this is that tree.
-//
-// One node is one placed character. A clip node additionally owns a timeline
-// (its own frames, their control tags, and their DoAction blocks) and a
-// playhead. Every node carries an `AS2Object` face so ActionScript can address
-// it; the two point at each other through `SWFDisplayHandle`, which holds the
-// display object weakly so the AS2 object graph cannot keep a removed clip
-// alive.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
-// display list" for depth semantics, and chapter 13 "Sprites and movie clips"
-// for a sprite owning its own timeline and playhead.
+// The mutable runtime display list: a tree ActionScript can move, hide, and
+// re-parent. One node is one placed character; a clip node also owns a timeline
+// and a playhead. `SWFDisplayHandle` links a node and its `AS2Object` weakly,
+// so script objects cannot keep a removed clip alive (SWF spec v19, ch. 3, 13).
 
 import Foundation
 
@@ -51,13 +40,11 @@ nonisolated public final class SWFDisplayObject {
     public var colorTransform = SWFColorTransform.identity
     /// PlaceObject `ClipDepth`: this node masks depths (depth, clipDepth].
     public var clipDepth: UInt16?
-    public var ratio: UInt16?
     public var isVisible = true
     /// Runtime text for an edit-text node, overriding the character's
     /// `InitialText`.
     public var textOverride: String?
-    /// CLIPACTIONS handlers the placement attached, if any. Parsed since
-    /// milestone 8.3.1 and dispatched since phase 3.
+    /// CLIPACTIONS handlers the placement attached, if any.
     public var clipActions: SWFClipActions?
 
     /// The sprite's frames; nil for a leaf.
@@ -161,15 +148,6 @@ nonisolated public final class SWFDisplayObject {
         unbindName(of: removed)
         sortedChildren = nil
         return removed
-    }
-
-    public func removeAllChildren() {
-        for child in byDepth.values {
-            child.parent = nil
-            unbindName(of: child)
-        }
-        byDepth.removeAll()
-        sortedChildren = nil
     }
 
     /// A named instance is a property of its parent timeline, which is what

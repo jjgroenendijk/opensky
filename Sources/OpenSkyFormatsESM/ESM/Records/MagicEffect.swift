@@ -1,12 +1,6 @@
-// MGEF magic-effect record. DATA is the fixed 152-byte struct used by every
-// spell, enchantment, potion and ingredient effect link.
-//
-// References: UESP "Skyrim Mod:Mod File Format/MGEF"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF
-// Cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas:
-//   `wbRecord(MGEF, 'Magic Effect', [...])`, including the ordered DATA struct,
-//   `wbMagicEffectSounds`, DNAM and `wbConditions`.
-// Layout and real-install evidence: docs/formats/magic-records.md.
+// MGEF magic-effect record. DATA is the fixed 152-byte struct every spell,
+// enchantment, potion and ingredient effect links to. Layout from UESP and
+// xEdit: docs/formats/magic-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -204,20 +198,6 @@ nonisolated public struct MagicEffect: Equatable, Sendable {
         sounds = decoder.sounds
         conditions = decoder.conditions
         skipped = decoder.skipped
-    }
-
-    public init(formID: FormID, editorID: String?, name: LString?, data: MagicEffectData?) {
-        self.formID = formID
-        self.editorID = editorID
-        self.name = name
-        description = nil
-        menuDisplayObject = nil
-        keywords = KeywordList()
-        self.data = data
-        counterEffects = []
-        sounds = []
-        conditions = ConditionList()
-        skipped = MagicEffectTally()
     }
 }
 

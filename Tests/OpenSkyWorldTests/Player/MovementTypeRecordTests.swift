@@ -1,4 +1,4 @@
-// MOVT decode and the movement-type index (issue #188), over synthetic record
+// MOVT decode and the movement-type index, over synthetic record
 // bytes built in code — never extracted game data (AGENTS.md "Legal & IP
 // boundary"). Layout: UESP "Skyrim Mod:Mod File Format/MOVT".
 
@@ -25,6 +25,7 @@ struct MovementTypeRecordTests {
         ))
         let decoded = try MovementType(record: record)
 
+        #expect(decoded.formID == FormID(0x0100))
         #expect(decoded.editorID == "NPC_Sneaking_MT")
         #expect(decoded.name == "NPCSneaking")
         #expect(decoded.speeds?.values == Self.speeds)

@@ -37,6 +37,7 @@ struct KeywordTests {
         )
         let empty = try ActionRecord(record: fixtureRecord(type: "AACT", fields: Data()))
 
+        #expect(populated.formID == FormID(0x123))
         #expect(populated.editorID == "ActionActivate")
         #expect(populated.editorColor?.alpha == 4)
         #expect(empty.editorID == nil)

@@ -72,7 +72,7 @@ struct NavmeshRecordTests {
     @Test func decodesCoverAndGridTallies() throws {
         let geometry = NavmeshFixture.geometry(
             vertices: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
-            triangles: [NavmeshFixture.Triangle(vertices: SIMD3(0, 1, 2))],
+            triangles: [NavmeshFixture.Triangle(vertices: SIMD3(0, 1, 2), coverFlags: 0x0A05)],
             coverTriangles: [0],
             divisor: 2,
             gridSquares: [[0], [], [0], []]
@@ -84,6 +84,8 @@ struct NavmeshRecordTests {
         #expect(navmesh.geometry.coverTriangleCount == 1)
         #expect(navmesh.geometry.gridDivisor == 2)
         #expect(navmesh.geometry.gridSize == SIMD2(64, 64))
+        #expect(navmesh.geometry.triangles[0].coverFlags == 0x0A05)
+        #expect(navmesh.geometry.boundsMin == SIMD3(0, 0, 0))
         #expect(navmesh.geometry.boundsMax == SIMD3(1, 1, 1))
         #expect(navmesh.geometry.gridTriangleIndexCount == 2)
     }

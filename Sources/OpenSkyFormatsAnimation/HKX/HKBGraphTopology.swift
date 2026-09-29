@@ -1,19 +1,12 @@
-// Walking a decoded behavior graph (todo 14.2). Two views over the same
-// registry: `HKBGraphTopology` follows the node tree down from a root
-// generator, which is what the CLI dump and the 14.3 evaluator want, and
-// `HKBDecodeReport` decodes every registered object in a file regardless of
-// reachability, which is what the env-gated sweep asserts against.
-//
-// Both are counts and names only. Nothing extracted from the install may enter
-// the repository (AGENTS.md Legal & IP), so a report carries class names,
-// node names, and totals, never sample bytes.
+// Two walks over a decoded behavior graph. `HKBGraphTopology` follows the node
+// tree from a root generator. `HKBDecodeReport` decodes every registered object,
+// reachable or not, for the sweep. Reports hold names and counts, never bytes.
 
 import Foundation
 
-/// One node of a walked graph: where it lives, what it decoded to, and how deep
-/// below the root it was first reached.
+/// One node of a walked graph: what it decoded to, and how deep below the root
+/// it was first reached.
 nonisolated public struct HKBGraphNode: Sendable {
-    public let target: HKXPointerTarget
     public let object: any HKBClass
     public let depth: Int
 }
@@ -25,7 +18,6 @@ nonisolated public struct HKBGraphTopology: Sendable {
     public let skippedClassCounts: [String: Int]
     /// References that pointed at a location registering no class at all.
     public let unregisteredTargetCount: Int
-    public let unresolved: [HKXUnresolvedReference]
 
     /// Depth-first, first-visit-wins walk from `root`. A behavior graph is a
     /// DAG rather than a tree — a transition effect or a bone weight array is
@@ -37,7 +29,6 @@ nonisolated public struct HKBGraphTopology: Sendable {
         var nodes: [HKBGraphNode] = []
         var skipped: [String: Int] = [:]
         var unregistered = 0
-        var unresolved: [HKXUnresolvedReference] = []
         var visited: Set<HKXPointerTarget> = []
         var stack: [(target: HKXPointerTarget, depth: Int)] = [(root, 0)]
 
@@ -52,8 +43,7 @@ nonisolated public struct HKBGraphTopology: Sendable {
                 skipped[className, default: 0] += 1
                 continue
             }
-            nodes.append(HKBGraphNode(target: target, object: object, depth: depth))
-            unresolved += object.unresolved
+            nodes.append(HKBGraphNode(object: object, depth: depth))
             // Reversed so the first member is popped first and the dump reads
             // in the order the class declares its members.
             for reference in object.references.reversed() {
@@ -63,8 +53,7 @@ nonisolated public struct HKBGraphTopology: Sendable {
         return HKBGraphTopology(
             nodes: nodes,
             skippedClassCounts: skipped,
-            unregisteredTargetCount: unregistered,
-            unresolved: unresolved
+            unregisteredTargetCount: unregistered
         )
     }
 
@@ -107,7 +96,7 @@ nonisolated public struct HKBDecodeReport: Sendable {
     }
 
     /// Decodes every object the packfile registers. Graph-level classes from
-    /// item 14.1 are counted as covered rather than decoded again, because
+    /// the census are counted as covered rather than decoded again, because
     /// `HKBBehaviorCensus` already walks those and decoding them twice would
     /// double-count their misses.
     public static func decodeAll(in graph: HKXObjectGraph) -> HKBDecodeReport {

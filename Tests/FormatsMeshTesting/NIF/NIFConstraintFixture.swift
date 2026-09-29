@@ -4,7 +4,6 @@
 
 import FormatsCoreTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 import simd
 
 public enum NIFConstraintFixture: Sendable {

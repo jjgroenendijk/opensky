@@ -1,24 +1,7 @@
-// NPC_ AIDT: the AI attributes that decide when an actor starts a fight, how
-// long it stays in one, and who it helps (issue #503, roadmap item 21.3).
-//
-// The faction and relationship records say how two actors *regard* each other.
-// They do not say whether that regard turns into a drawn weapon: the Creation
-// Kit puts that on the actor, in the Aggression value, "in conjunction with
-// Faction Relationships, determines when the Actor will initiate combat"
-// (<https://ck.uesp.net/wiki/AI_Data_Tab>). So the hostility derivation reads
-// this struct beside the reaction, and `ActorReactionResolver` is where the two
-// meet.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/NPC_", AIDT: 20-byte struct, uint8
-//   Aggression, uint8 Confidence, uint8 Energy, uint8 Morality, uint8 Mood,
-//   uint8 Assistance, uint8 flags, uint8 unknown, uint32 Warn, uint32
-//   Warn/Attack, uint32 Attack.
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbAIDT`, which reads the same
-//   eight bytes and names offset 7 "Unused".
-//   Value names per <https://ck.uesp.net/wiki/AI_Data_Tab>.
-// Layout documented in docs/formats/actors.md.
+// NPC_ AIDT: when an actor starts a fight, how long it stays in one, and whom
+// it helps. Factions say how two actors regard each other; Aggression decides
+// whether that becomes combat, so `ActorReactionResolver` reads both.
+// Layout from UESP and xEdit `wbAIDT`: docs/formats/actors.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -95,17 +78,6 @@ nonisolated public enum ActorConfidence: Equatable, Sendable, CustomStringConver
         }
     }
 
-    public var rawValue: UInt8 {
-        switch self {
-        case .cowardly: 0
-        case .cautious: 1
-        case .average: 2
-        case .brave: 3
-        case .foolhardy: 4
-        case let .unknown(raw): raw
-        }
-    }
-
     public var description: String {
         switch self {
         case .cowardly: "cowardly"
@@ -134,15 +106,6 @@ nonisolated public enum ActorAssistance: Equatable, Sendable, CustomStringConver
         }
     }
 
-    public var rawValue: UInt8 {
-        switch self {
-        case .helpsNobody: 0
-        case .helpsAllies: 1
-        case .helpsFriendsAndAllies: 2
-        case let .unknown(raw): raw
-        }
-    }
-
     public var description: String {
         switch self {
         case .helpsNobody: "helps nobody"
@@ -154,7 +117,6 @@ nonisolated public enum ActorAssistance: Equatable, Sendable, CustomStringConver
 }
 
 /// AIDT offset 3. Which crimes the actor will commit on the player's orders.
-/// Decoded for completeness and for the crime work of issues #504 and #505.
 nonisolated public enum ActorMorality: Equatable, Sendable, CustomStringConvertible {
     case anyCrime
     case violenceAgainstEnemies
@@ -169,16 +131,6 @@ nonisolated public enum ActorMorality: Equatable, Sendable, CustomStringConverti
         case 2: self = .propertyCrimeOnly
         case 3: self = .noCrime
         default: self = .unknown(raw: rawValue)
-        }
-    }
-
-    public var rawValue: UInt8 {
-        switch self {
-        case .anyCrime: 0
-        case .violenceAgainstEnemies: 1
-        case .propertyCrimeOnly: 2
-        case .noCrime: 3
-        case let .unknown(raw): raw
         }
     }
 

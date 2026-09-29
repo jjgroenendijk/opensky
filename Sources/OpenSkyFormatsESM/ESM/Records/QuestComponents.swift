@@ -20,7 +20,6 @@ nonisolated extension Quest {
             public static let startUpStage = Flags(rawValue: 1 << 1)
             /// Setting this stage stops the quest.
             public static let shutDownStage = Flags(rawValue: 1 << 2)
-            public static let keepInstanceDataFromHereOn = Flags(rawValue: 1 << 3)
         }
 
         /// INDX word 0. uint16 per xEdit, and never negative in vanilla data.
@@ -31,7 +30,7 @@ nonisolated extension Quest {
         public var logEntries: [LogEntry] = []
 
         /// The first log entry whose conditions the journal would evaluate.
-        /// Choosing between several is the runtime's job (#182), not the
+        /// Choosing between several is the runtime's job, not the
         /// decoder's; this is only the file-order default.
         public var primaryLogEntry: LogEntry? {
             logEntries.first { $0.text != nil } ?? logEntries.first
@@ -109,15 +108,9 @@ nonisolated extension Quest {
         }
     }
 
-    /// One ALST (reference) or ALLS (location) group.
-    ///
-    /// The Creation Kit presents an alias as having exactly one "fill type",
-    /// but on disk that choice is implied by which of a dozen mutually
-    /// exclusive subrecords appear. Rather than guess the intent while
-    /// parsing, every slot is decoded into its own property and `fillType`
-    /// reports the choice afterwards. That keeps a mod that writes an
-    /// unexpected combination readable instead of throwing, and it gives the
-    /// census a fill-type axis without a second pass over the bytes.
+    /// One ALST (reference) or ALLS (location) group. The fill type is implied by
+    /// which exclusive subrecords appear, so each slot decodes into its own
+    /// property and `fillType` reports the choice afterwards.
     public struct Alias: Equatable, Sendable {
         /// Which subrecord opened the group. Location aliases resolve to an
         /// LCTN, reference aliases to a placed ACHR or REFR.
@@ -133,29 +126,13 @@ nonisolated extension Quest {
                 self.rawValue = rawValue
             }
 
-            /// Loc/Ref. Reserves the location or reference for this quest.
-            public static let reserves = Flags(rawValue: 1 << 0)
             public static let optional = Flags(rawValue: 1 << 1)
             /// Ref. The alias target is a quest object, undroppable while the
             /// quest runs.
             public static let questObject = Flags(rawValue: 1 << 2)
             public static let allowReuseInQuest = Flags(rawValue: 1 << 3)
-            public static let allowDead = Flags(rawValue: 1 << 4)
-            public static let matchingRefInLoadedArea = Flags(rawValue: 1 << 5)
             /// Ref. Makes the target essential while the quest runs.
             public static let essential = Flags(rawValue: 1 << 6)
-            public static let allowDisabled = Flags(rawValue: 1 << 7)
-            public static let storesText = Flags(rawValue: 1 << 8)
-            public static let allowReserved = Flags(rawValue: 1 << 9)
-            public static let protected = Flags(rawValue: 1 << 10)
-            public static let forcedByAliases = Flags(rawValue: 1 << 11)
-            public static let allowDestroyed = Flags(rawValue: 1 << 12)
-            public static let matchingRefClosest = Flags(rawValue: 1 << 13)
-            public static let usesStoredText = Flags(rawValue: 1 << 14)
-            public static let initiallyDisabled = Flags(rawValue: 1 << 15)
-            /// Loc only; the same bit is unnamed for reference aliases.
-            public static let allowCleared = Flags(rawValue: 1 << 16)
-            public static let clearsNameWhenRemoved = Flags(rawValue: 1 << 17)
         }
 
         /// How the alias gets its value, derived from which slots were filled.

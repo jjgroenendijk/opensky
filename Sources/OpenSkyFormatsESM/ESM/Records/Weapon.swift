@@ -1,49 +1,7 @@
-// WEAP record decoded into engine types: swords, axes, bows, staves, and the
-// unarmed pseudo-weapon.
-//
-// Three payloads matter here and each has its own quirk.
-//
-// DATA, 10 bytes — the inventory numbers:
-//   00 uint32  gold value
-//   04 float32 weight
-//   08 uint16  base damage
-//
-// DNAM, 100 bytes — the combat numbers. Only the fields the engine needs are
-// read; the rest is padding, obsolete Fallout carry-over, or rumble data:
-//   00 uint8   animation type (0 other ... 9 crossbow)
-//   01 3 bytes unused
-//   04 float32 speed
-//   08 float32 reach (multiplier in fCombatDistance * NPCScale * reach)
-//   0C uint16  flags — 0x08 can't drop, 0x20 embedded, 0x80 non-playable
-//   4C int32   governing skill as an actor-value index, -1 for none
-//   60 float32 stagger
-//
-// CRDT, critical-hit data — the one field whose SSE layout differs from
-// Skyrim classic, so it is decoded by payload size rather than assumed:
-//   classic, 16 bytes: uint16 damage, 2 unused, float32 percent multiplier,
-//                      uint8 on-death, 3 unused, FormID SPEL effect
-//   SSE,     24 bytes: same through the on-death byte, then 7 unused, the
-//                      SPEL FormID at offset 0x10, then 4 more unused
-// Anything else decodes as no critical data rather than being force-fit.
-//
-// INAM and BIDS, 4 bytes each — the two IPDS links a landed hit resolves its
-// impact sound through (issue #195). UESP names INAM "Normal weapon swing
-// impact set. Points to a IPDS" and BIDS "Block bash impact data set. Points to
-// a IPDS", so the ordinary swing reads INAM and only a shield bash reads BIDS.
-// Both are ordinary optional FormID subrecords; a null one means the weapon
-// names no set and the hit is silent, which is normal vanilla data.
-//
-// Skipped: VMAD, DEST, MOD3 scope model, BAMT bash material, the seven SNDR
-// attack-sound links, NNAM embedded-weapon node, WNAM first-person model, VNAM
-// detection level.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/WEAP"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WEAP
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(WEAP, ...)` line
-//     10499 — DATA at 10530, DNAM at 10535 (member-by-member offsets), CRDT
-//     at 10604 with the `IsSSE` unused-byte split.
-// Layout documented in docs/formats/item-records.md.
+// WEAP record decoded into engine types: weapons and the unarmed pseudo-weapon.
+// DATA holds the inventory numbers, DNAM the combat numbers. CRDT is 16 bytes
+// classic and 24 in SSE, so its size picks the layout. INAM names the swing
+// impact set and BIDS the shield-bash set. Layout: docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -71,7 +29,6 @@ nonisolated public struct Weapon: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let ignoresNormalWeaponResistance = Flags(rawValue: 0x0001)
         public static let cannotDrop = Flags(rawValue: 0x0008)
         public static let embeddedWeapon = Flags(rawValue: 0x0020)
         public static let nonPlayable = Flags(rawValue: 0x0080)
@@ -110,7 +67,7 @@ nonisolated public struct Weapon: Sendable {
     public let criticalData: CriticalData?
     /// EITM — ENCH applied by the weapon; nil on unenchanted weapons.
     public let enchantment: FormID?
-    /// EAMT — enchantment charge; feeds the gold-value formula in #179.
+    /// EAMT — enchantment charge; feeds the gold-value formula.
     public let enchantmentCharge: UInt16?
     /// ETYP — EQUP slot ("BothHands", "EitherHand").
     public let equipType: FormID?

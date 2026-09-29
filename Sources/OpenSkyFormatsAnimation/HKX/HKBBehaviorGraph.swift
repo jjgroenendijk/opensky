@@ -1,17 +1,7 @@
-// hkbBehaviorGraph and hkbBehaviorGraphData decode (todo 14.1): the top of a
-// Havok behavior file. The graph object names the file, points at its root
-// generator (the node tree item 14.2 decodes), and points at its data; the
-// data object holds the variable and event declarations that every node binds
-// against. Nothing here evaluates anything — evaluation is 14.3 and 14.4.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT), whose class signatures
-// match the local SSE files exactly (hkbBehaviorGraph 0xB1218F86,
-// hkbBehaviorGraphData 0x095ACA5D), cross-checked against soulsmods/DSMapStudio
-// HKX2 (MIT) for the VariableType ordering. Members flagged SERIALIZE_IGNORED
-// by Havok still occupy their bytes in a packfile, so the offsets below are
-// absolute in-memory offsets, not a packed sequence. No Havok SDK or Bethesda
-// code consulted (AGENTS.md Legal & IP). Byte map and citations:
-// docs/formats/hkx-behavior.md.
+// hkbBehaviorGraph and hkbBehaviorGraphData decode: the root generator plus the
+// variable and event declarations every node binds against. Offsets from
+// HKX2Library (MIT) are absolute: SERIALIZE_IGNORED members still take bytes.
+// Byte map: docs/formats/hkx-behavior.md.
 
 import Foundation
 
@@ -31,12 +21,6 @@ nonisolated public enum HKBVariableType: Int, Equatable, Sendable {
     case vector3 = 6
     case vector4 = 7
     case quaternion = 8
-
-    /// True when the variable's initial value lives in the quad list rather
-    /// than the word list of `hkbVariableValueSet`.
-    public var isQuad: Bool {
-        self == .vector3 || self == .vector4 || self == .quaternion
-    }
 }
 
 nonisolated extension HKBVariableType: CustomStringConvertible {
@@ -174,7 +158,7 @@ nonisolated public struct HKBBehaviorGraphData: Equatable, Sendable {
 }
 
 /// Decoded `hkbBehaviorGraph`: the top-level generator of a behavior file.
-/// `rootGenerator` is the entry point of the node tree that item 14.2 decodes;
+/// `rootGenerator` is the entry point of the node tree;
 /// this item records where it is and what class it is, not what it does.
 nonisolated public struct HKBBehaviorGraph: Equatable, Sendable {
     public let name: String?

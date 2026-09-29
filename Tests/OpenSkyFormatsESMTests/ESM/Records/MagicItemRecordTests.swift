@@ -1,10 +1,5 @@
-// ALCH and INGR decoders plus the shared EFID/EFIT/CTDA effect run. Fixtures
-// are synthetic in-code records (InventoryFixture) — never extracted game
-// files (AGENTS.md "Legal & IP boundary").
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format" subpages /ALCH and /INGR,
-// cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas.
-// See docs/formats/item-records.md.
+// ALCH and INGR decoders plus the shared EFID/EFIT/CTDA effect run, over
+// synthetic InventoryFixture records. Layout: docs/formats/item-records.md.
 
 import FormatsCoreTesting
 import FormatsESMTesting
@@ -22,7 +17,7 @@ struct IngestibleRecordTests {
         weight.appendUInt32(Float(0.5).bitPattern)
         fields += ESMFixture.field("DATA", weight)
         fields += ESMFixture.field(
-            "ENIT", InventoryFixture.enitData(value: 36, flags: 0x10000)
+            "ENIT", InventoryFixture.enitData(value: 36, flags: 0x10000, addictionChance: 0.25)
         )
         fields += InventoryFixture.effectFields(
             effect: 0x0003_EAF3, magnitude: 5, area: 0, duration: 0
@@ -39,6 +34,7 @@ struct IngestibleRecordTests {
         #expect(item.itemValue == ItemValue(value: 36, weight: 0.5))
         #expect(item.flags == [.medicine])
         #expect(item.addiction == nil)
+        #expect(item.addictionChance == 0.25)
         #expect(item.consumeSound == FormID(0x0002_0000))
         #expect(item.effects.count == 2)
         #expect(item.effects[0].effect == FormID(0x0003_EAF3))
@@ -61,6 +57,16 @@ struct IngestibleRecordTests {
                 ),
                 localized: false
             )
+        }
+    }
+
+    /// The ENIT flag bits docs/formats/item-records.md lists.
+    @Test func flagBitsMatchTheDocumentedList() {
+        let documented: [(Ingestible.Flags, UInt32)] = [
+            (.noAutoCalc, 0x00001), (.food, 0x00002), (.medicine, 0x10000), (.poison, 0x20000)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
         }
     }
 
@@ -139,5 +145,15 @@ struct IngredientRecordTests {
         #expect(ingredient.effects.count == 1)
         #expect(ingredient.effects[0].effect == FormID(0x0AA))
         #expect(ingredient.effects[0].magnitude == 0)
+    }
+
+    /// The INGR ENIT flag bits docs/formats/item-records.md lists.
+    @Test func flagBitsMatchTheDocumentedList() {
+        let documented: [(Ingredient.Flags, UInt32)] = [
+            (.noAutoCalc, 0x001), (.food, 0x002), (.referencesPersist, 0x100)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
     }
 }

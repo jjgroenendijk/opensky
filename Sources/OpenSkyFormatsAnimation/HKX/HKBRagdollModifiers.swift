@@ -1,25 +1,7 @@
-// The foot-IK and ragdoll control modifiers (todo 14.2). These are the
-// modifiers that hand the behavior graph's intent to the physics side: which
-// bones the ragdoll drives, how hard, and where each foot should be planted.
-//
-// They are decoded because the milestone's full-graph rule gives every census
-// class a decoder. What they *mean* is physics, which the scope decision puts in
-// M15, so nothing here interprets a gain or a control-data block; the fields are
-// read and named and that is all.
-//
-// `hkbRigidBodyRagdollControlsModifier::m_controlData` embeds a 48-byte
-// `hkaKeyFrameHierarchyUtilityControlData`, an hka physics class rather than an
-// hkb behavior one. Its members are not confirmed against the local files, so
-// this decoder reads the two members the behavior graph itself addresses —
-// `m_durationToBlend` past the block, and the bone list — and leaves the block
-// itself undecoded. See the "Known gaps" section of
-// docs/formats/hkx-behavior-modifiers.md.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbFootIkControlsModifier 0xE5B6F544,
-// hkbPoweredRagdollControlsModifier 0x7CB54065,
-// hkbRigidBodyRagdollControlsModifier 0xAA87D1EB, hkbFootIkGains 0xA681B7F0).
-// Byte map: docs/formats/hkx-behavior-modifiers.md.
+// Foot-IK and ragdoll control modifiers. They are read and named only; what
+// they mean is physics. The 48-byte rigid-body control block stays undecoded
+// (Known gaps in docs/formats/hkx-behavior-modifiers.md, which holds the byte
+// map). Offsets from HKX2Library (MIT).
 
 import Foundation
 
@@ -35,7 +17,6 @@ nonisolated public struct HKBFootIkGains: Equatable, Sendable {
     public let gains: [Float]
 
     public static let count = 12
-    public static let stride = 48
 
     public static func decode(
         _ cursor: inout HKXObjectCursor,
@@ -243,7 +224,7 @@ nonisolated public struct HKBRigidBodyRagdollControlsModifier: HKBClass, Equatab
     /// The blend `0_master.hkx` authors on its one instance of this class,
     /// `DriveRagdollRB`, read off the local install through
     /// `openskycli hkx meshes\actors\character\behaviors\0_master.hkx`. It is
-    /// what a session with no evaluated graph falls back to (issue #197), so
+    /// what a session with no evaluated graph falls back to, so
     /// that the fallback is vanilla's own number rather than an invented one.
     public static let vanillaBlendDuration: Float = 0.5
 

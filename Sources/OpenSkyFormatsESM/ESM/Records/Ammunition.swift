@@ -1,26 +1,7 @@
-// AMMO record decoded into engine types: arrows and bolts.
-//
-// DATA grew by one field in SSE, so — as with WEAP CRDT — the payload size
-// picks the layout rather than the plugin's form version, because an SSE-only
-// engine still has to read classic-era mod records:
-//   00 FormID  PROJ fired by this ammunition
-//   04 uint32  flags — 0x01 ignores normal weapon resistance,
-//                      0x02 non-playable, 0x04 non-bolt (i.e. an arrow)
-//   08 float32 damage
-//   0C uint32  gold value
-//   10 float32 weight — SSE only; classic's 16-byte DATA stops at the value
-// A classic 16-byte payload decodes with weight 0, which is what the engine
-// would have used anyway: vanilla SSE writes 0.1 for every arrow and the
-// carry system treats arrows as weightless.
-//
-// Skipped: DEST destruction data, ONAM short name.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/AMMO"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AMMO
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(AMMO, ...)` line 4087
-//     — the `IsSSE(...)` pair at 4101 is the authority for the two sizes.
-// Layout documented in docs/formats/item-records.md.
+// AMMO record decoded into engine types: arrows and bolts. DATA is 16 bytes in
+// classic plugins and 20 in SSE, which adds weight, so the payload size picks
+// the layout. A classic payload decodes with weight 0.
+// Layout from UESP and xEdit: docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -41,8 +22,6 @@ nonisolated public struct Ammunition: Sendable {
 
     public let formID: FormID
     public let fields: InventoryItemFields
-    /// DESC — flavour text; blank on vanilla arrows.
-    public let description: LString?
     /// DATA gold value and weight (weight 0 on a classic 16-byte payload).
     public let itemValue: ItemValue
     /// DATA — the PROJ this ammunition launches; nil when unset.
@@ -58,15 +37,12 @@ nonisolated public struct Ammunition: Sendable {
         formID = FormID(record.formID)
 
         var fields = InventoryItemFields()
-        var description: LString?
         var data = AmmoData()
         for field in try record.fields() {
             if try fields.decode(field: field, localized: localized) {
                 continue
             }
             switch field.type {
-            case "DESC":
-                description = try LString(field: field, localized: localized)
             case "DATA":
                 data = try AmmoData(field: field)
             default:
@@ -74,7 +50,6 @@ nonisolated public struct Ammunition: Sendable {
             }
         }
         self.fields = fields
-        self.description = description
         itemValue = ItemValue(value: data.value, weight: data.weight)
         projectile = data.projectile
         damage = data.damage

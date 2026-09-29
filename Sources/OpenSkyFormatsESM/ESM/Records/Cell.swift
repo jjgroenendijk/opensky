@@ -1,11 +1,6 @@
-// CELL record decoded into engine types: flags (interior/water), exterior
-// grid coordinates, display name. Shared by interior cells (CELL top group)
-// and exterior cells (inside WRLD children); references live in the cell
-// children group that follows the record.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/CELL"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL
-// Layout documented in docs/formats/world-records.md.
+// CELL record decoded into engine types: flags, exterior grid coordinates, and
+// display name, for interior and exterior cells. References live in the child
+// group after the record. Layout: docs/formats/world-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -28,10 +23,7 @@ nonisolated public struct Cell: Sendable {
 
         public static let interior = Flags(rawValue: 0x0001)
         public static let hasWater = Flags(rawValue: 0x0002)
-        public static let noTravelFromHere = Flags(rawValue: 0x0004)
         public static let noLODWater = Flags(rawValue: 0x0008)
-        public static let publicArea = Flags(rawValue: 0x0020)
-        public static let handChanged = Flags(rawValue: 0x0040)
         public static let showSky = Flags(rawValue: 0x0080)
         public static let useSkyLighting = Flags(rawValue: 0x0100)
     }
@@ -61,14 +53,14 @@ nonisolated public struct Cell: Sendable {
     /// LTMP -> LGTM lighting template.
     public let lightingTemplate: FormID?
     /// XCLR — REGN regions overlapping this exterior cell (empty on interiors
-    /// and cells without XCLR). Feeds region weather selection (M7.2.2) and
-    /// region ambient sound selection (M9.2.2).
+    /// and cells without XCLR). Feeds region weather and
+    /// ambient sound selection.
     public let regions: [FormID]
-    /// XCAS — acoustic space (ASPC) reference, the interior-ambience hook
-    /// (M9.2.2). Exterior cells generally carry none; interiors point at an
-    /// ASPC whose SNAM/RDAT drive the per-cell ambient bed. nil when absent.
+    /// XCAS — acoustic space (ASPC) reference, the interior-ambience hook.
+    /// Exterior cells generally carry none; interiors point at an ASPC whose SNAM/RDAT drive the
+    /// per-cell ambient bed. nil when absent.
     public let acousticSpace: FormID?
-    /// XCMO — music type (MUSC) override for this cell (M9.2.3). nil when
+    /// XCMO — music type (MUSC) override for this cell. nil when
     /// absent or null; the music director then falls back to the worldspace
     /// or region music.
     public let musicType: FormID?
@@ -77,7 +69,7 @@ nonisolated public struct Cell: Sendable {
     /// XEZN — the ECZN governing this cell's encounter level and reset data.
     public let encounterZone: FormID?
     /// XOWN — the NPC_ or FACT that owns everything in this cell, which is what
-    /// a reference with no `XOWN` of its own inherits (issue #504). nil when
+    /// a reference with no `XOWN` of its own inherits. nil when
     /// the cell is unowned, which is the normal state for a dungeon and for the
     /// player's own house.
     public let owner: FormID?
@@ -120,7 +112,7 @@ nonisolated public struct Cell: Sendable {
 
     /// Mutable accumulator for the field loop. Split out so the field switch
     /// does not push init past the strict-lint cyclomatic-complexity cap
-    /// (XCAS, added in M9.2.2, tipped it over).
+    /// (XCAS, tipped it over).
     private struct CellFields {
         var editorID: String?
         var name: LString?
@@ -165,7 +157,7 @@ nonisolated public struct Cell: Sendable {
 
         /// Fields that are a plain FormID link or an array of them. Split out
         /// of `decode` so neither switch passes the strict-lint cyclomatic-
-        /// complexity cap (XCMO, added in M9.2.3, tipped it over).
+        /// complexity cap (XCMO, tipped it over).
         private mutating func decodeReference(field: ESMField) throws {
             switch field.type {
             case "XCWT":

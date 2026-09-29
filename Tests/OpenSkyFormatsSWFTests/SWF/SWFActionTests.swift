@@ -1,4 +1,4 @@
-// ACTIONRECORD framing and operand-decode tests (milestone 8.3.1): short and
+// ACTIONRECORD framing and operand-decode tests: short and
 // long record headers, every ActionPush value type, the constant pool, branch
 // offsets, the block-shaped actions, byte-offset seeking, and the degradations
 // a malformed stream must survive. Synthetic fixtures only.
@@ -215,6 +215,10 @@ struct SWFActionTests {
                 SWFGetURL2Flags(sendVarsMethod: 2, loadTarget: true, loadVariables: false)
             )
         )
+        if case let .getURL2(flags) = block.records[5].operands {
+            #expect(flags.sendVarsMethod == 2)
+            #expect(flags.loadTarget && !flags.loadVariables)
+        }
         #expect(block.records[6].operands == .storeRegister(6))
         #expect(block.records[7].operands == .setTarget("spinner"))
         #expect(block.records[8].operands == .goToLabel("Start"))

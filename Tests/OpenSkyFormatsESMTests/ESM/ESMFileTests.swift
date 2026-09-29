@@ -190,4 +190,53 @@ struct ESMFileTests {
         }
         #expect(throws: BinaryReaderError.self) { _ = try gmst.fields() }
     }
+
+    /// The 24-byte record header in docs/formats/esm.md, every field distinct.
+    @Test func readsEveryRecordHeaderField() throws {
+        var bytes = Data("STAT".utf8)
+        for word: UInt32 in [0x10, 0x0000_1200, 0x0001_0203] {
+            bytes.appendUInt32(word)
+        }
+        for half: UInt16 in [0x4E21, 0x0102, 44, 7] {
+            bytes.appendUInt16(half)
+        }
+        var reader = BinaryReader(bytes)
+        let header = try ESMRecord.Header(reader: &reader)
+
+        #expect(header.formID == 0x0001_0203)
+        #expect(header.flags.contains(.esl))
+        #expect(header.flags.contains(.ignored))
+        #expect(header.timestamp == 0x4E21)
+        #expect(header.versionControl == 0x0102)
+        #expect(header.version == 44)
+        #expect(header.unknown == 7)
+    }
+
+    /// The flag bits docs/formats/esm.md lists.
+    @Test func recordFlagBitsMatchTheDocumentedList() {
+        let documented: [(ESMRecord.Flags, UInt32)] = [
+            (.esm, 0x1), (.deleted, 0x20), (.localized, 0x80), (.esl, 0x200),
+            (.ignored, 0x1000), (.compressed, 0x40000)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
+    }
+
+    /// The group header after `GRUP` and the size: label, type, stamp, VC info.
+    @Test func readsEveryGroupHeaderField() throws {
+        var bytes = Data()
+        bytes.appendUInt32(0x3C)
+        bytes.appendUInt32(1)
+        bytes.appendUInt16(0x4E21)
+        bytes.appendUInt16(0x0102)
+        bytes.appendUInt32(0)
+        var reader = BinaryReader(bytes)
+        let header = try ESMGroup.Header(reader: &reader)
+
+        #expect(header.label == 0x3C)
+        #expect(header.groupType == 1)
+        #expect(header.timestamp == 0x4E21)
+        #expect(header.versionControl == 0x0102)
+    }
 }

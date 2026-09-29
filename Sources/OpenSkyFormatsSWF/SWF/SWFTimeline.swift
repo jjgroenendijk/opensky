@@ -1,17 +1,7 @@
-// Timeline model shared by the main movie and every DefineSprite (39): the
-// control tags and action blocks of each frame, plus the resolved frame-1
-// display list. Milestone 8.2.4 kept only frame 1 and threw the rest away;
-// 8.3.1 retains every frame so a later runtime can step a timeline
-// (`gotoAndStop`, `play`) and run the DoAction blocks attached to each frame.
-//
-// The frame-1 display list and every counter in `SWFMovieTally` are still built
-// exactly as before — from the tags up to and including the first ShowFrame —
-// so retaining the later frames changes no existing number.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
-// display list" (pp. 33-51) for the control tags, chapter 5 "Actions" (p. 63)
-// for DoAction, and chapter 13 "Sprites and movie clips" (p. 201) for
-// DefineSprite's nested tag stream.
+// Timeline model for the main movie and every DefineSprite (39): each frame's
+// control tags and action blocks, plus the resolved frame-1 display list.
+// `SWFMovieTally` counts only up to the first ShowFrame (SWF spec v19, ch. 3,
+// 5, 13).
 
 import Foundation
 
@@ -62,8 +52,6 @@ nonisolated public struct SWFTimeline: Equatable, Sendable {
     public let frame1: [SWFPlacedObject]
     /// Display-list counters for frame 1 only.
     public let tally: SWFMovieTally
-
-    public static let empty = SWFTimeline(frames: [], frame1: [], tally: SWFMovieTally())
 
     /// Zero-based index of the frame carrying `label`. Matched exactly first,
     /// then case-insensitively: ActionScript path and label matching is

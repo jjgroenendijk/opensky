@@ -102,7 +102,7 @@ struct FactionTests {
 
     @Test
     func crimeValuesDropTheirTailAtEveryDocumentedLength() throws {
-        let full = try decode(body: FactionFixture.crimeValues())
+        let full = try decode(body: FactionFixture.crimeValues(unknown: 7))
         let values = try #require(full.crimeValues)
         #expect(values.arrest)
         #expect(!values.attackOnSight)
@@ -110,6 +110,7 @@ struct FactionTests {
         #expect(values.assault == 40)
         #expect(values.trespass == 5)
         #expect(values.pickpocket == 25)
+        #expect(values.unknown == 7)
         #expect(values.stealMultiplier == 0.5)
         #expect(values.escape == 100)
         #expect(values.werewolf == 1000)

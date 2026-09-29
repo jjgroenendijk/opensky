@@ -3,7 +3,6 @@
 
 import FormatsCoreTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 
 extension HKXFixture {
     /// Deterministic payload pattern so slice tests can assert exact bytes,

@@ -1,16 +1,6 @@
-// The two array classes an `hkbStateMachine` state points at (todo 14.2):
-// `hkbStateMachineTransitionInfoArray`, which holds the transitions out of a
-// state (or the wildcard transitions of the machine), and
-// `hkbStateMachineEventPropertyArray`, which holds the events a state raises on
-// entry and on exit. Both are thin `hkReferencedObject` wrappers around one
-// hkArray of inline structs, which is why the structs carry the interesting
-// layout and the classes almost none.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbStateMachineTransitionInfoArray 0xE397B11E,
-// hkbStateMachineEventPropertyArray 0xB07B4388, hkbStateMachineTransitionInfo
-// 0xCDEC8025, hkbStateMachineTimeInterval 0x60A881E5). Byte map and citations:
-// docs/formats/hkx-behavior-nodes.md.
+// The transition array and the event property array a state machine state
+// points at. Both wrap one hkArray of inline structs. Offsets from HKX2Library
+// (MIT). Byte map: docs/formats/hkx-behavior-nodes.md.
 
 import Foundation
 
@@ -21,8 +11,6 @@ nonisolated public struct HKBStateMachineTimeInterval: Equatable, Sendable {
     public let exitEventId: Int
     public let enterTime: Float
     public let exitTime: Float
-
-    public static let stride = 16
 
     public static func decode(
         _ cursor: inout HKXObjectCursor,

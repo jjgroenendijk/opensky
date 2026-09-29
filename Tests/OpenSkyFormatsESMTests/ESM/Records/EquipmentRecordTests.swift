@@ -1,10 +1,5 @@
-// WEAP and AMMO decoders plus the inventory-facing ARMO fields added in
-// M12.1.1. Fixtures are synthetic in-code records (InventoryFixture) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format" subpages /WEAP, /AMMO and /ARMO,
-// cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas.
-// See docs/formats/item-records.md.
+// WEAP and AMMO decoders plus the inventory ARMO fields, over synthetic
+// InventoryFixture records. Layout: docs/formats/item-records.md.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -36,6 +31,7 @@ struct WeaponRecordTests {
         fields += ESMFixture.field("EAMT", charge)
         fields += InventoryFixture.formIDField("ETYP", 0x0001_3F42)
         fields += InventoryFixture.formIDField("CNAM", 0x0002_0000)
+        fields += InventoryFixture.formIDField("BIDS", 0x0002_0001)
         let weapon = try Weapon(
             record: InventoryFixture.record(
                 ESMFixture.record("WEAP", formID: 0x55, data: fields)
@@ -54,6 +50,8 @@ struct WeaponRecordTests {
         #expect(weapon.stagger == 0.75)
         #expect(weapon.criticalData?.damage == 3)
         #expect(weapon.criticalData?.effect == FormID(0x0AB))
+        #expect(weapon.criticalData?.percentMultiplier == 1)
+        #expect(weapon.blockBashImpactDataSet == FormID(0x0002_0001))
         #expect(weapon.enchantment == FormID(0x0CD))
         #expect(weapon.enchantmentCharge == 400)
         #expect(weapon.equipType == FormID(0x0001_3F42))
@@ -86,6 +84,16 @@ struct WeaponRecordTests {
             localized: false
         )
         #expect(weapon.criticalData == nil)
+    }
+
+    /// The DNAM flag bits docs/formats/item-records.md lists.
+    @Test func flagBitsMatchTheDocumentedList() {
+        let documented: [(Weapon.Flags, UInt16)] = [
+            (.cannotDrop, 0x08), (.embeddedWeapon, 0x20), (.nonPlayable, 0x80)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
     }
 
     @Test func skillNegativeOneDecodesAsNoSkill() throws {
@@ -163,6 +171,16 @@ struct AmmunitionRecordTests {
     }
 
     /// A classic 16-byte DATA stops after the gold value; weight decodes as 0.
+    /// The DATA flag bits docs/formats/item-records.md lists.
+    @Test func flagBitsMatchTheDocumentedList() {
+        let documented: [(Ammunition.Flags, UInt32)] = [
+            (.ignoresNormalWeaponResistance, 0x01), (.nonPlayable, 0x02), (.nonBolt, 0x04)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
+    }
+
     @Test func classicLayoutLeavesWeightZero() throws {
         let fields = ESMFixture.field(
             "DATA",
@@ -228,7 +246,7 @@ struct ArmorInventoryFieldTests {
 }
 
 /// ARMA decode, including the DNAM draw priorities equip-slot resolution
-/// compares (issue #178). Split out of `AppearanceRecordDecodeTests` when that
+/// compares. Split out of `AppearanceRecordDecodeTests` when that
 /// suite outgrew the strict-lint type-body cap; the ARMA record is equipment
 /// data, so this is also where it belongs.
 struct ArmorAddonRecordTests {

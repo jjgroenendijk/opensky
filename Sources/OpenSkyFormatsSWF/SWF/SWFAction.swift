@@ -1,11 +1,6 @@
-// ActionScript 1/2 bytecode model (milestone 8.3.1): the value types a parsed
-// ACTIONRECORD stream decodes into. This layer frames and names bytecode; it
-// executes nothing. A later interpreter walks `SWFActionBlock.records` in order
-// and resolves branch targets through `SWFActionBlock.record(atOffset:)`.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ACTIONRECORD" (p. 63) for the record framing and the per-action
-// field tables in the SWF 3 through SWF 7 action-model sections (pp. 63-118).
+// ActionScript 1/2 bytecode model: the values an ACTIONRECORD stream decodes
+// into. This layer frames and names bytecode and runs nothing (SWF spec v19,
+// ch. 5, pp. 63-118; docs/formats/swf-actions.md).
 
 import Foundation
 
@@ -31,11 +26,9 @@ nonisolated public struct SWFDefineFunctionFlags: OptionSet, Equatable, Sendable
 
     public static let preloadParent = SWFDefineFunctionFlags(rawValue: 0x8000)
     public static let preloadRoot = SWFDefineFunctionFlags(rawValue: 0x4000)
-    public static let suppressSuper = SWFDefineFunctionFlags(rawValue: 0x2000)
     public static let preloadSuper = SWFDefineFunctionFlags(rawValue: 0x1000)
     public static let suppressArguments = SWFDefineFunctionFlags(rawValue: 0x0800)
     public static let preloadArguments = SWFDefineFunctionFlags(rawValue: 0x0400)
-    public static let suppressThis = SWFDefineFunctionFlags(rawValue: 0x0200)
     public static let preloadThis = SWFDefineFunctionFlags(rawValue: 0x0100)
     public static let preloadGlobal = SWFDefineFunctionFlags(rawValue: 0x0001)
 }
@@ -224,8 +217,6 @@ nonisolated public struct SWFActionBlock: Equatable, Sendable {
     /// Framing problems recorded instead of thrown. Non-empty means the stream
     /// stopped early or a record lost its typed operands.
     public let warnings: [SWFActionWarning]
-
-    public static let empty = SWFActionBlock(records: [], byteCount: 0, warnings: [])
 
     /// Index into `records` of the record that starts exactly at `offset`, or
     /// nil when nothing starts there — a branch into the middle of a record,

@@ -1,11 +1,5 @@
-// CONT contents (COCT/CNTO/COED) and REFR reference-level ownership
-// (XOWN/XRNK/XCNT). Fixtures are synthetic in-code records
-// (InventoryFixture) — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format" subpages /CONT and /REFR,
-// cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas and
-// Core/wbDefinitionsCommon.pas `wbOwnership`. See docs/formats/item-records.md.
+// CONT contents (COCT/CNTO/COED) and REFR ownership (XOWN/XRNK/XCNT), over
+// synthetic InventoryFixture records. Layout: docs/formats/item-records.md.
 
 import FormatsCoreTesting
 import FormatsESMTesting
@@ -26,7 +20,7 @@ struct ContainerRecordTests {
         fields += ESMFixture.field("CNTO", InventoryFixture.cntoData(item: 0x0AA, count: 3))
         fields += ESMFixture.field("CNTO", InventoryFixture.cntoData(item: 0x0BB, count: 1))
         fields += ESMFixture.field(
-            "COED", InventoryFixture.coedData(owner: 0x0CC, condition: 0.5)
+            "COED", InventoryFixture.coedData(owner: 0x0CC, ownerCondition: 3, condition: 0.5)
         )
         var flags = Data([0x02])
         flags.appendUInt32(0)
@@ -48,10 +42,21 @@ struct ContainerRecordTests {
         ))
         // COED attaches to the CNTO immediately before it, not the first.
         #expect(container.entries[1].owner == FormID(0x0CC))
+        #expect(container.entries[1].ownerCondition == 3)
         #expect(container.entries[1].condition == 0.5)
         #expect(container.declaredEntryCount == 2)
         #expect(!container.entryCountMismatch)
         #expect(container.flags == [.respawns])
+    }
+
+    /// The DATA flag bits docs/formats/item-records.md lists.
+    @Test func flagBitsMatchTheDocumentedList() {
+        let documented: [(Container.Flags, UInt8)] = [
+            (.allowSoundsWhenAnimation, 0x01), (.respawns, 0x02), (.showOwner, 0x04)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
     }
 
     @Test func countMismatchIsReportedNotEnforced() throws {

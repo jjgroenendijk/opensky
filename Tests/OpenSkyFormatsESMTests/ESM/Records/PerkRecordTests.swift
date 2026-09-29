@@ -14,6 +14,7 @@ struct PerkRecordTests {
             editorID: "AlchemySkillBoosts",
             name: "Physician",
             description: "Potions you mix are more powerful.",
+            iconPath: "Textures\\Perk.dds",
             conditions: [DialogueFixture.condition(functionIndex: 448, comparisonValue: 1)],
             header: PerkFixture.header(level: 20, rankCount: 3),
             nextPerk: 0x51,
@@ -35,6 +36,7 @@ struct PerkRecordTests {
         #expect(perk.editorID == "AlchemySkillBoosts")
         #expect(perk.name == .inline("Physician"))
         #expect(perk.description == .inline("Potions you mix are more powerful."))
+        #expect(perk.iconPath == "Textures\\Perk.dds")
         #expect(perk.nextPerk == FormID(0x51))
         #expect(perk.conditions.conditions.count == 1)
         #expect(perk.skipped.total == 0)

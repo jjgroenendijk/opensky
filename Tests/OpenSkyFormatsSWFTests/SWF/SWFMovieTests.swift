@@ -1,4 +1,4 @@
-// Movie-model and scene-flattening tests (milestone 8.2.4): dictionary
+// Movie-model and scene-flattening tests: dictionary
 // building, place/move/replace/remove semantics up to the first ShowFrame,
 // DefineSprite nesting, clip-depth command generation with the counting
 // stencil scheme, and the recorded-feature tallies. Synthetic fixtures only.
@@ -19,6 +19,8 @@ struct SWFMovieTests {
         var placeOne = SWFDisplayFixture.Place2()
         placeOne.depth = 1
         placeOne.characterId = 10
+        placeOne.ratio = 7
+        placeOne.name = "backdrop"
         let movie = try SWFDisplayFixture.movie(tags: [
             SWFDisplayFixture.rectangleShapeTag(
                 characterId: 10, width: 1000, height: 1000, color: Self.red
@@ -32,6 +34,9 @@ struct SWFMovieTests {
         ])
         #expect(movie.frame1.map(\.depth) == [1, 2])
         #expect(movie.frame1.map(\.characterId) == [10, 20])
+        #expect(movie.frame1.map(\.ratio) == [7, nil])
+        #expect(movie.frame1.map(\.name) == ["backdrop", nil])
+        #expect(movie.frameCount == 1)
         #expect(movie.characters.count == 2)
         #expect(movie.tally.placeObject2 == 2)
         #expect(movie.tally.showFrames == 1)

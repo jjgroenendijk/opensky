@@ -1,10 +1,6 @@
-// The stand-in host for milestone 8.3.2: it answers nothing and records
-// everything. Every request the interpreter makes is appended to a bounded
-// event list and declined, so a movie's demands on the display layer are
-// measurable before the display layer exists.
-//
-// A later milestone replaces this with a host backed by a mutable display
-// list. Nothing in the interpreter changes when it does.
+// A host that answers nothing and records everything: each request goes into a
+// bounded event list and is declined, so a movie's demands are measurable
+// without a display layer.
 
 import Foundation
 
@@ -92,11 +88,6 @@ nonisolated public final class AS2RecordingHost: AS2Host {
         _ = (object, value)
         record(.memberWrite(name))
         return false
-    }
-
-    public func clear() {
-        events.removeAll()
-        eventTotal = 0
     }
 
     private func record(_ event: AS2HostEvent) {

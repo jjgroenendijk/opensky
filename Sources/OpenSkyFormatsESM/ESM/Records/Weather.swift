@@ -1,17 +1,7 @@
-// WTHR weather record decoded into the fields the sky needs: per-time-of-day
-// color layers (NAM0), fog distances (FNAM), the DATA block's wind,
-// precipitation, and lightning parameters, and the four DALC directional
-// ambient keyframes (M7.2.2). Cloud textures, cloud-layer colors/alphas
-// (PNAM/JNAM), sounds (SNAM/TNAM), image spaces (IMSP), and static/spell/
-// effect refs are skipped — the weather runtime does not consume them.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/WTHR"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WTHR
-// Cross-checked against xEdit dev Core/wbDefinitionsTES5.pas WTHR: the record
-// holds four DALC subrecords in order Sunrise/Day/Sunset/Night, each a
-// wbAmbientColors struct (6 directional wbByteColors X+/X-/Y+/Y-/Z+/Z-, one
-// Specular wbByteColors, one float Scale). wbByteColors = R,G,B,unused bytes.
-// Layout documented in docs/formats/weather.md.
+// WTHR decoded into what the sky needs: NAM0 color layers, FNAM fog, DATA
+// wind, precipitation and lightning, and the four DALC ambient keyframes
+// (Sunrise, Day, Sunset, Night). Clouds, sounds and image spaces are skipped.
+// Layout: docs/formats/weather.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -316,35 +306,11 @@ nonisolated extension Weather {
         colors(for: .skyUpper)
     }
 
-    public var skyLower: Colors? {
-        colors(for: .skyLower)
-    }
-
     public var horizon: Colors? {
         colors(for: .horizon)
     }
 
-    public var ambient: Colors? {
-        colors(for: .ambient)
-    }
-
-    public var sun: Colors? {
-        colors(for: .sun)
-    }
-
     public var sunGlare: Colors? {
         colors(for: .sunGlare)
-    }
-
-    public var stars: Colors? {
-        colors(for: .stars)
-    }
-
-    public var fogNear: Colors? {
-        colors(for: .fogNear)
-    }
-
-    public var fogFar: Colors? {
-        colors(for: .fogFar)
     }
 }

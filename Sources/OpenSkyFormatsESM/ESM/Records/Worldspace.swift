@@ -1,13 +1,6 @@
-// WRLD record decoded into engine types: editor ID, display name, parent
-// worldspace link, behavior flags. A WRLD record is followed by a world
-// children group holding exterior cell blocks (ESMGroup walks those).
-// DNAM carries the default land/water heights terrain build falls back to.
-// Fields OpenSky does not need yet (map size, LOD water, climate, ...) are
-// skipped; unknown modder fields are ignored by the same loop.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/WRLD"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WRLD
-// Layout documented in docs/formats/world-records.md.
+// WRLD record decoded into engine types: editor ID, name, parent link, flags,
+// and the DNAM default land and water heights. Exterior cells follow in the
+// world children group. Layout: docs/formats/world-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -23,11 +16,7 @@ nonisolated public struct Worldspace: Sendable {
         }
 
         public static let useLandData = ParentFlags(rawValue: 0x0001)
-        public static let useLODData = ParentFlags(rawValue: 0x0002)
-        public static let useMapData = ParentFlags(rawValue: 0x0004)
         public static let useWaterData = ParentFlags(rawValue: 0x0008)
-        public static let useClimateData = ParentFlags(rawValue: 0x0010)
-        public static let useSkyCell = ParentFlags(rawValue: 0x0040)
     }
 
     /// DATA field (uint8).
@@ -68,7 +57,7 @@ nonisolated public struct Worldspace: Sendable {
     /// CNAM — default CLMT climate for this worldspace; the weather runtime's
     /// climate fallback when no region weather applies. nil when absent.
     public let climate: FormID?
-    /// ZNAM — default music type (MUSC) for this worldspace (M9.2.3). The
+    /// ZNAM — default music type (MUSC) for this worldspace. The
     /// music director's fallback when the cell carries no XCMO and no region
     /// music applies. nil when absent or null.
     public let musicType: FormID?
@@ -102,7 +91,7 @@ nonisolated public struct Worldspace: Sendable {
 
     /// Mutable accumulator for the field loop, matching `Cell`/`Region`. Split
     /// out so the field switch stays under the strict-lint cyclomatic-
-    /// complexity cap (ZNAM, added in M9.2.3, tipped it over).
+    /// complexity cap (ZNAM, tipped it over).
     private struct WorldspaceFields {
         var editorID: String?
         var name: LString?

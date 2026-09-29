@@ -139,7 +139,7 @@ struct QuestRecordTests {
         fields += QuestFixture.logEntry(text: "second")
         fields += QuestFixture.word("NAM0", 0x0200)
         fields += QuestFixture.stage(20)
-        fields += QuestFixture.logEntry(text: "third")
+        fields += QuestFixture.logEntry(flags: 0x02, text: "third")
         let quest = try QuestFixture.quest(fields: fields)
 
         #expect(quest.stages.count == 2)
@@ -151,6 +151,7 @@ struct QuestRecordTests {
         #expect(quest.stages[0].logEntries[1].conditions.isEmpty)
         #expect(quest.stages[0].logEntries[1].nextQuest == FormID(0x0200))
         #expect(quest.stages[1].logEntries.count == 1)
+        #expect(quest.stages[1].logEntries[0].flags == .failQuest)
         #expect(quest.dialogueConditions.isEmpty)
         #expect(quest.skipped.isEmpty)
     }

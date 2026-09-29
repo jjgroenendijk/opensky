@@ -1,4 +1,4 @@
-// Shared HKX object-graph resolution tests (todo 14.1) over synthetic in-code
+// Shared HKX object-graph resolution tests over synthetic in-code
 // packfiles — never extracted game files (AGENTS.md "Legal & IP boundary").
 // Covers the three operations every class decoder shares: pointer resolution
 // through local and global fixups, hkArray element location, and in-place
@@ -121,7 +121,7 @@ struct HKXObjectGraphTests {
         var (cursor, _) = try cursor()
         #expect(cursor.pointer(at: HKXCursorFixture.nullPointer) == nil)
         #expect(cursor.unresolved == [HKXUnresolvedReference(
-            sectionIndex: 2, objectOffset: 0, field: "m_nullPointer", miss: .noFixup
+            objectOffset: 0, field: "m_nullPointer", miss: .noFixup
         )])
     }
 

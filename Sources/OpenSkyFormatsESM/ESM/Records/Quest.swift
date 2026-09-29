@@ -1,51 +1,15 @@
-// QUST, the quest record: journal stages, objectives, and the alias slots the
-// quest resolves world objects through.
-//
-// QUST is the most order-dependent record in the plugin format. Almost nothing
-// in it is a self-describing struct; instead a marker subrecord opens a group
-// and every following subrecord belongs to that group until the next marker.
-// Three of those sequences stack up:
-//
-//   INDX        opens a quest stage; QSDT opens a log entry inside it, and the
-//               log entry owns the CTDA run, the CNAM journal text and NAM0.
-//   QOBJ        opens an objective; FNAM and NNAM describe it and each QSTA
-//               opens a target that owns its own CTDA run.
-//   ALST/ALLS   opens an alias (reference or location); ALED closes it, and
-//               everything between belongs to that alias — including FNAM,
-//               CTDA, KSIZ/KWDA and COCT/CNTO, all of which mean something
-//               different at quest level.
-//
-// The decoder therefore keeps explicit open-group state rather than a flat
-// field switch, and the three accumulators live in QuestDecoder.swift. Two
-// separator fields drive the rest: NEXT splits the quest's own dialogue
-// conditions from its story-manager event conditions, and ANAM ends the
-// objective run and begins the alias run — which is also what makes the
-// trailing NNAM the quest description rather than an objective's display text.
-//
-// Ambiguity policy, from the same rule the rest of the record decoders follow:
-// a wrong-size subrecord costs its own entry, a subrecord that arrives with no
-// group open costs itself, and an unknown or later-game subrecord is skipped.
-// All three are counted in `QuestTally` so a sweep can assert zero instead of
-// discovering the loss silently. Only a non-QUST record throws.
-//
-// The stage scripts are *not* here. They live in the QUST tail of the VMAD
-// field, decoded into `QuestFragmentSection`; `fragments` surfaces them.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/QUST"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/QUST
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(QUST, 'Quest', ...)`
-//     line 8759: DNAM 8763, stages 8797, objectives 8840, aliases 8869
-//     (reference) and 8971 (location).
-// Layout documented in docs/formats/quest-records.md.
+// QUST: journal stages, objectives, and alias slots. Marker subrecords (INDX,
+// QSDT, QOBJ, QSTA, ALST/ALLS...ALED) open groups that own what follows, so
+// QuestDecoder.swift keeps open-group state. Bad subrecords cost only
+// themselves and are counted in `QuestTally`. Stage scripts come from VMAD.
+// Layout: docs/formats/quest-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct Quest: Sendable {
-    /// DNAM's leading uint16. UESP splits the same two bytes into a pair of
-    /// uint8 flag fields and names only five of the bits; xEdit names all
-    /// sixteen, and those names are used here.
+    /// DNAM's leading uint16. Names follow xEdit; only the bits OpenSky reads
+    /// are declared.
     public struct Flags: OptionSet, Equatable, Sendable {
         public let rawValue: UInt16
 
@@ -54,21 +18,7 @@ nonisolated public struct Quest: Sendable {
         }
 
         public static let startGameEnabled = Flags(rawValue: 1 << 0)
-        public static let completed = Flags(rawValue: 1 << 1)
-        public static let addIdleTopicToHello = Flags(rawValue: 1 << 2)
-        public static let allowRepeatedStages = Flags(rawValue: 1 << 3)
-        public static let startsEnabled = Flags(rawValue: 1 << 4)
-        public static let displayedInHUD = Flags(rawValue: 1 << 5)
-        public static let failed = Flags(rawValue: 1 << 6)
-        public static let stageWait = Flags(rawValue: 1 << 7)
         public static let runOnce = Flags(rawValue: 1 << 8)
-        public static let excludeFromDialogueExport = Flags(rawValue: 1 << 9)
-        public static let warnOnAliasFillFailure = Flags(rawValue: 1 << 10)
-        public static let active = Flags(rawValue: 1 << 11)
-        public static let repeatsConditions = Flags(rawValue: 1 << 12)
-        public static let keepInstance = Flags(rawValue: 1 << 13)
-        public static let wantDormant = Flags(rawValue: 1 << 14)
-        public static let hasDialogueData = Flags(rawValue: 1 << 15)
     }
 
     /// DNAM's trailing uint32. Type 0 keeps the quest out of the journal

@@ -1,12 +1,6 @@
-// XPRM (primitive volume) decode on REFR. Fixtures are synthetic bytes built
-// in code — never extracted game files (AGENTS.md "Legal & IP boundary").
-//
-// Layout under test: UESP "Skyrim Mod:Mod File Format/REFR" XPRM row (32-byte
-// struct: float[3] bounds, float[3] color, float unknown, uint32 type) and
-// xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas line 9701 `wbStruct(XPRM,
-// 'Primitive', [wbStruct('Bounds', ...), wbFloatRGBA, wbInteger('Type',
-// itU32, wbEnum(['None', 'Box', 'Sphere', 'Portal Box', 'Line']))])`.
-// Documented in docs/formats/placed-references.md.
+// XPRM primitive-volume decode on REFR, over synthetic bytes. XPRM is 32
+// bytes: 3 bound floats, 3 color floats, an unknown float, a uint32 type.
+// Layout: docs/formats/placed-references.md.
 
 import FormatsCoreTesting
 import FormatsESMTesting
@@ -56,13 +50,11 @@ struct PlacedReferenceXPRMTests {
     }
 
     @Test func decodesEveryFieldOfAPrimitive() throws {
-        let refr = try reference(xprm())
-        #expect(refr.primitive == Primitive(
-            halfExtents: SIMD3(64, 128, 256),
-            color: SIMD3(0.25, 0.5, 1),
-            unknown: 0.15,
-            type: .box
-        ))
+        let primitive = try #require(try reference(xprm()).primitive)
+        #expect(primitive.halfExtents == SIMD3(64, 128, 256))
+        #expect(primitive.color == SIMD3(0.25, 0.5, 1))
+        #expect(primitive.unknown == 0.15)
+        #expect(primitive.type == .box)
     }
 
     /// Every shape Skyrim.esm carries, plus the `none` value xEdit names but

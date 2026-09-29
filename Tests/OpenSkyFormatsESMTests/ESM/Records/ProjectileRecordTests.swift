@@ -1,10 +1,5 @@
-// PROJ decode (issue #196, roadmap item 15.5, scope point 1).
-//
-// Fixtures are built in code from the published layout — never extracted game
-// files (AGENTS.md "Legal & IP boundary"). Layout: UESP "Skyrim Mod:Mod File
-// Format/PROJ", cross-checked against xEdit dev-4.1.6
-// Core/wbDefinitionsTES5.pas `wbRecord(PROJ, ...)` line 5449. See
-// docs/formats/projectiles.md.
+// PROJ decode over fixtures built from the published layout.
+// Layout: docs/formats/projectiles.md.
 
 import FormatsCoreTesting
 import FormatsESMTesting
@@ -201,5 +196,18 @@ struct ProjectileRecordTests {
         #expect(projectile.modelPath == nil)
         #expect(projectile.soundLevel == nil)
         #expect(projectile.speed == 3600)
+    }
+
+    /// The DATA flag bits docs/formats/projectiles.md lists.
+    @Test func flagBitsMatchTheDocumentedTable() {
+        let documented: [(Projectile.Flags, UInt16)] = [
+            (.hitscan, 0x01), (.explosion, 0x02), (.alternateTrigger, 0x04),
+            (.muzzleFlash, 0x08), (.canBeDisabled, 0x20), (.canBePickedUp, 0x40),
+            (.supersonic, 0x80), (.pinsLimbs, 0x100), (.passThroughSmallTransparent, 0x200),
+            (.disableCombatAimCorrection, 0x400), (.rotation, 0x800)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
     }
 }

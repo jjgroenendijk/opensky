@@ -1,4 +1,4 @@
-// Stat-record decode + stat-side template resolution tests (issue #194) over
+// Stat-record decode + stat-side template resolution tests over
 // synthetic in-code records (ESMFixture) — never extracted game files
 // (AGENTS.md "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format"
 // per-record pages; see docs/formats/actors.md.
@@ -145,6 +145,7 @@ struct ActorValueRecordDecodeTests {
             )),
             localized: false
         )
+        #expect(decoded.formID == FormID(0x301))
         #expect(decoded.attributeWeights.sum == 0)
         #expect(decoded.bleedoutDefault == 0)
     }

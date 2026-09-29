@@ -1,12 +1,7 @@
-// The interpreter's call path (issue #132): starting a call, the two shapes a
-// call's result can take, and the one place Swift recursion is still used.
-//
-// `startCall` never recurses — a bytecode callee becomes a frame on
-// `AS2Interpreter.frames` and the loop in `AS2Interpreter.runFrames` picks it
-// up. `call` is the exception: a built-in re-entering bytecode
-// (`Function.prototype.apply`) or a property accessor answering a member read
-// needs the value inside a Swift call, so it runs a nested loop and is bounded
-// by `AS2Limits.reentryDepth` rather than by `callDepth`.
+// The interpreter's call path. `startCall` never recurses: a bytecode callee
+// becomes a frame for `AS2Interpreter.runFrames`. `call` is the exception: a
+// built-in or accessor that needs a value in Swift runs a nested loop, bounded
+// by `AS2Limits.reentryDepth`.
 
 import Foundation
 
@@ -42,7 +37,7 @@ nonisolated extension AS2Interpreter {
         }
         switch callable {
         case let .native(body):
-            return try .value(runNative(body, function: function, site: site))
+            return try .value(runNative(body, site: site))
         case let .bytecode(body):
             guard let frame = try makeFrame(body, function: function, site: site) else {
                 return .value(.undefined)
@@ -57,7 +52,6 @@ nonisolated extension AS2Interpreter {
 
     private func runNative(
         _ body: AS2NativeBody,
-        function: AS2Object,
         site: AS2CallSite
     ) throws(AS2Fault) -> AS2Value {
         var constructing = false
@@ -66,7 +60,6 @@ nonisolated extension AS2Interpreter {
         }
         let context = AS2CallContext(
             interpreter: self,
-            callee: function,
             thisValue: site.thisValue,
             arguments: site.arguments,
             isConstructing: constructing

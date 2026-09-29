@@ -15,7 +15,9 @@ struct CollisionLayerTests {
             record: record(type: "COLL", fields: fields(editorID: "L_ACTORZONE")),
             localized: false
         )
+        #expect(layer.formID == FormID(1))
         #expect(layer.editorID == "L_ACTORZONE")
+        #expect(layer.name == "L_ACTORZONE")
         #expect(layer.recordDescription == .inline("Actors"))
         #expect(layer.index == 7)
         #expect(layer.flags.contains(.sensor))
@@ -28,6 +30,16 @@ struct CollisionLayerTests {
         let wrong = try record(type: "KYWD", fields: Data())
         #expect(throws: ESMError.self) {
             try CollisionLayer(record: wrong, localized: false)
+        }
+    }
+
+    /// The GNAM flag bits docs/formats/records.md lists.
+    @Test func flagBitsMatchTheDocumentedList() {
+        let documented: [(CollisionLayer.Flags, UInt32)] = [
+            (.triggerVolume, 0x01), (.sensor, 0x02), (.navmeshObstacle, 0x04)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
         }
     }
 

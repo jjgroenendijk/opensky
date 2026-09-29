@@ -1,4 +1,4 @@
-// Synthetic ACTIONRECORD stream builders (milestone 8.3.1): opcode framing,
+// Synthetic ACTIONRECORD stream builders: opcode framing,
 // every ActionPush value type, the block-shaped actions, and the CLIPACTIONS
 // wrapper — assembled byte by byte following the Adobe SWF File Format
 // Specification v19 chapters 3 and 5, never extracted game files (AGENTS.md
@@ -227,11 +227,6 @@ extension SWFActionFixture {
     /// DoAction (12).
     public static func doActionTag(_ actions: [Action]) -> SWFFixture.Tag {
         SWFFixture.Tag(code: 12, body: stream(actions))
-    }
-
-    /// DoAction (12) over a hand-built byte stream, for malformed cases.
-    public static func doActionTag(bytes: Data) -> SWFFixture.Tag {
-        SWFFixture.Tag(code: 12, body: bytes)
     }
 
     /// DoInitAction (59): `Sprite ID` UI16 then the action stream.

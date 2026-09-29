@@ -80,7 +80,8 @@ struct ActorRecordDecodeTests {
         let actor = try npc(
             formID: 0x0001_3BBF,
             editorID: "Adrianne",
-            flags: 0x0000_0001,
+            name: "Adrianne Avenicci",
+            flags: 0x0000_0021,
             templateFlags: 0x0101,
             template: 0x0001_B0B0,
             race: 0x0001_3746,
@@ -91,7 +92,9 @@ struct ActorRecordDecodeTests {
         )
         #expect(actor.formID == FormID(0x0001_3BBF))
         #expect(actor.editorID == "Adrianne")
+        #expect(actor.name == .inline("Adrianne Avenicci"))
         #expect(actor.isFemale)
+        #expect(actor.flags.contains(.unique))
         #expect(actor.templateFlags == [.useTraits, .useInventory])
         #expect(actor.template == FormID(0x0001_B0B0))
         #expect(actor.race == FormID(0x0001_3746))
@@ -99,6 +102,20 @@ struct ActorRecordDecodeTests {
         #expect(actor.wornArmor == FormID(0x0009_BAAC))
         #expect(actor.headParts == [FormID(0x0005_1111), FormID(0x0005_2222)])
         #expect(actor.defaultOutfit == FormID(0x000C_BE2E))
+    }
+
+    /// The template flag masks docs/formats/actors.md lists.
+    @Test func templateFlagBitsMatchTheDocumentedList() {
+        let documented: [(ActorBase.TemplateFlags, UInt16)] = [
+            (.useTraits, 0x0001), (.useStats, 0x0002), (.useFactions, 0x0004),
+            (.useSpellList, 0x0008), (.useAIData, 0x0010), (.useAIPackages, 0x0020),
+            (.useModelAnimation, 0x0040), (.useBaseData, 0x0080), (.useInventory, 0x0100),
+            (.useScript, 0x0200), (.useDefPackList, 0x0400), (.useAttackData, 0x0800),
+            (.useKeywords, 0x1000)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
     }
 
     @Test func actorBaseRequiresACBS() throws {
@@ -383,6 +400,7 @@ private func formIDField(_ type: String, _ value: UInt32) -> Data {
 private func npc(
     formID: UInt32,
     editorID: String? = nil,
+    name: String? = nil,
     flags: UInt32 = 0,
     templateFlags: UInt16 = 0,
     template: UInt32? = nil,
@@ -395,6 +413,9 @@ private func npc(
     var fields = Data()
     if let editorID {
         fields += ESMFixture.field("EDID", ESMFixture.zstring(editorID))
+    }
+    if let name {
+        fields += ESMFixture.field("FULL", ESMFixture.zstring(name))
     }
     fields += ESMFixture.field("ACBS", acbs(flags: flags, templateFlags: templateFlags))
     if let template {

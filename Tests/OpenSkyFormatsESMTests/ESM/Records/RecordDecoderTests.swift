@@ -71,7 +71,7 @@ struct RecordDecoderTests {
             + ESMFixture.field("NAM2", nam2)
             + ESMFixture.field("CNAM", cnam)
             + ESMFixture.field("DATA", Data([0x02]))
-            + ESMFixture.field("ZNAM", znam) // default music type (M9.2.3)
+            + ESMFixture.field("ZNAM", znam) // default music type
         let world = try Worldspace(
             record: record(ESMFixture.record("WRLD", formID: 0x3C, data: fields)),
             localized: true
@@ -87,6 +87,17 @@ struct RecordDecoderTests {
         #expect(world.waterType == FormID(0x18))
         #expect(world.climate == FormID(0x2A))
         #expect(world.musicType == FormID(0x2B))
+    }
+
+    /// The WRLD DATA bits docs/formats/world-records.md lists.
+    @Test func worldspaceFlagBitsMatchTheDocumentedList() {
+        let documented: [(Worldspace.Flags, UInt8)] = [
+            (.smallWorld, 0x01), (.noFastTravel, 0x02), (.noLODWater, 0x08),
+            (.noLandscape, 0x10), (.noSky, 0x20), (.fixedDimensions, 0x40), (.noGrass, 0x80)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
     }
 
     @Test func worldspaceIgnoresNullMusicType() throws {

@@ -1,23 +1,7 @@
-// Reconciling a clip's children across a timeline jump (milestone 8.3.2 phase
-// 3), replacing the phase-2 shortcut that tore the whole child list down and
-// replayed every frame from scratch.
-//
-// The shortcut was wrong in a way that only shows once ActionScript is running.
-// A display list is the accumulation of every frame before it and the control
-// tags carry no undo, so computing the destination state does mean replaying
-// from frame 1 — but *applying* that state must keep the instances that survive
-// it. Flash keeps an instance when the destination frame places the same
-// character at the same depth, which is why a clip can attach a handler to a
-// child, jump its own timeline, and still find the handler there.
-//
-// Vanilla depends on it. `tweenmenu.swf` wires `onRollOver` and `onMouseDown`
-// onto its four input rectangles in `InitExtensions`, then opens itself with a
-// `gotoAndPlay` that lands two frames further on. Rebuilding from scratch
-// discarded both handlers and left the menu unclickable; reconciling keeps them.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
-// display list" — the place / modify / replace / remove rules for a depth, which
-// are what the accumulation below implements.
+// Reconciles a clip's children across a timeline jump. The destination state
+// is replayed from frame 1, but an instance the destination places with the
+// same character at the same depth is kept, as Flash does, so handlers
+// attached to it survive (SWF spec v19, ch. 3).
 
 import Foundation
 
@@ -68,9 +52,6 @@ nonisolated extension SWFMovieRuntime {
         }
         if let colorTransform = placement.colorTransform {
             existing.colorTransform = colorTransform
-        }
-        if let ratio = placement.ratio {
-            existing.ratio = ratio
         }
         if let name = placement.name {
             existing.name = name

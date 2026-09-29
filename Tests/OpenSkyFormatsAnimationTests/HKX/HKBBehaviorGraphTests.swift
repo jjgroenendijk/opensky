@@ -1,4 +1,4 @@
-// Behavior graph-level decode + census tests (todo 14.1) over a synthetic
+// Behavior graph-level decode + census tests over a synthetic
 // in-code packfile — never an extracted game file (AGENTS.md "Legal & IP
 // boundary"). Every name below is invented; the byte layout follows
 // docs/formats/hkx-behavior.md. Class-name signatures are invented hashes, as
@@ -280,7 +280,6 @@ struct HKBBehaviorGraphTests {
         #expect(behavior.data?.stringData == nil)
         #expect(behavior.data?.variableInfos.count == 3)
         #expect(behavior.unresolved.contains(HKXUnresolvedReference(
-            sectionIndex: 2,
             objectOffset: HKBBehaviorFixture.graphData,
             field: "m_stringData",
             miss: .noFixup

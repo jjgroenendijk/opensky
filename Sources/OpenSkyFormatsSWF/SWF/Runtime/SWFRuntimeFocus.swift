@@ -1,26 +1,8 @@
-// Focus and keyboard navigation (milestone 8.3.2 phase 3).
-//
-// Vanilla menus navigate through CLIK, not through clip events: `NavigationCode`
-// is referenced 1,669 times across 34 movies and `FocusHandler` 420 times. The
-// framework's own path is `gfx.managers.InputDelegate` listening on `Key`,
-// translating a key code into a `gfx.ui.NavigationCode` string, wrapping it in a
-// `gfx.ui.InputDetails`, and dispatching an `input` event that
-// `gfx.managers.FocusHandler` routes down the focus path to the focused
-// component's `handleInput`.
-//
-// A probe over `startmenu.swf` shows only half of that chain wakes up on its
-// own: `FocusHandler._instance` exists after bring-up, while
-// `InputDelegate._instance` does not, so nothing has registered on `Key` and a
-// key event delivered only to the broadcaster reaches nobody. The engine
-// therefore does the step the absent `InputDelegate` would have done — build the
-// `InputDetails` and hand it to `FocusHandler.instance.handleInput` — using the
-// movie's *own* `NavigationCode` constants rather than strings invented here.
-// When a movie does register a `Key` listener, that path runs first and this one
-// is never reached.
-//
-// None of this is specified anywhere: the Scaleform GFx component library has no
-// public runtime contract. Every name below is read back from the vanilla
-// bytecode the interpreter already executes.
+// Focus and keyboard navigation through CLIK. Vanilla movies create
+// `FocusHandler` but not `InputDelegate`, so the engine builds the
+// `InputDetails` from the movie's own `NavigationCode` constants and hands it to
+// `FocusHandler`. A movie's own `Key` listener runs first. Observed, not
+// specified: docs/engine/as2-input.md.
 
 import Foundation
 
@@ -61,28 +43,6 @@ nonisolated extension SWFMovieRuntime {
             return nil
         }
         return resolve("instance", on: handlerClass).objectValue
-    }
-
-    /// The focus path CLIK routes input along, outermost first. Empty when the
-    /// movie has no focus handler or nothing has focus.
-    public var pathToFocus: [String] {
-        guard let handler = focusHandler else {
-            return []
-        }
-        guard
-            let function = handler.lookup("getPathToFocus")?.property.value.functionValue
-        else {
-            return []
-        }
-        let result = runtime.invoke(
-            .object(function), thisValue: .object(handler), arguments: [.integer(0)]
-        )
-        guard let list = result.value.objectValue else {
-            return []
-        }
-        return list.elements.compactMap { element in
-            SWFDisplayObject.resolve(element.objectValue)?.targetPath
-        }
     }
 
     /// Hands a key to the CLIK focus path as `InputDelegate` would have.
@@ -126,7 +86,7 @@ nonisolated extension SWFMovieRuntime {
         // list under a plain holder clip (`startmenu.swf`:
         // `[MainListHolder, List_mc]`); the movie's own `handleInput` forwards
         // down `pathToFocus[0]`, so an unfiltered path hands it a clip that
-        // defines none and the key is dropped (issue #229).
+        // defines none and the key is dropped.
         let path = runtime.makeArray(
             focusChain(under: node).filter { definesHandleInput($0) }
                 .map { .object($0.object) }
@@ -160,7 +120,7 @@ nonisolated extension SWFMovieRuntime {
     /// routing contract. A holder clip that defines none is skipped both by the
     /// menu-handler search and by the focus-path filter, because the movie's own
     /// `handleInput` forwards down `pathToFocus[0]` and a clip without one drops
-    /// the key (issue #229).
+    /// the key.
     public func definesHandleInput(_ node: SWFDisplayObject) -> Bool {
         node.object.lookup("handleInput")?.property.value.functionValue != nil
     }

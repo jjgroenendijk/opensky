@@ -1,28 +1,7 @@
-// PERK, the record behind every perk the player picks and every passive an
-// actor carries. A perk is a header, an availability condition run, and a list
-// of typed effects: set a quest stage, grant an ability spell, or hook an
-// entry point that combat and magic formulas query while they compute a value.
-//
-// PERK is field-order-dependent in the same way QUST is. PRKE opens an effect
-// and PRKF closes it, which is what disambiguates the two meanings of DATA
-// (the record's five-byte header before the first PRKE, the effect's typed
-// payload after one) and the two meanings of a CTDA run (the perk's own
-// availability conditions before the first PRKE, an entry-point condition tab
-// after one). The decoder therefore keeps explicit open-effect state; it lives
-// in PerkDecoder.swift, and the effect types in PerkEffect.swift.
-//
-// Ambiguity policy follows QUST: a wrong-size subrecord costs its own entry, a
-// subrecord that arrives with no effect open costs itself, and an unknown
-// subrecord is skipped. All three are counted in `PerkTally` so a sweep can
-// assert zero rather than discover the loss silently. Only a non-PERK record
-// throws.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/PERK"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PERK
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(PERK, 'Perk', ...)`
-//     line 5908.
-// Layout and real-install evidence: docs/formats/perks.md.
+// PERK: a header, an availability condition run, and a list of typed effects.
+// PRKE opens an effect and PRKF closes it, which decides what DATA and CTDA
+// mean, so PerkDecoder.swift keeps open-effect state. Bad subrecords cost only
+// themselves and are counted in `PerkTally`. Layout: docs/formats/perks.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -81,19 +60,9 @@ nonisolated public struct PerkTally: Equatable, Sendable {
     }
 }
 
-/// DATA at record level: five bytes, one per field. UESP and xEdit agree on
-/// the order — trait, level, rank count, playable, hidden — and vanilla reads
-/// back consistently under it: every perk drawn in a skill tree is playable,
-/// and the records that are not are the hidden ones quests and scripts add.
-///
-/// Two of the five fields mean less than their names suggest, measured across
-/// the vanilla load order in `PerkRealDataTests`: `level` is zero on every
-/// record (a perk's skill requirement is a condition on the record, not a
-/// header field), and `rankCount` does not track the NNAM chain — `Armsman00`
-/// declares 1 while its chain is five records long. xEdit recomputes the rank
-/// count it displays after load, which is why its editor disagrees with the
-/// bytes. Both are exposed verbatim; anything wanting the ranks walks the
-/// chain through `PerkStore.rankChain(from:)`.
+/// Record-level DATA: trait, level, rank count, playable, hidden. Measured on
+/// vanilla, `level` is always 0 and `rankCount` does not track the NNAM chain;
+/// walk `PerkStore.rankChain(from:)` for ranks.
 nonisolated public struct PerkHeaderData: Equatable, Sendable {
     public static let byteCount = 5
 
@@ -118,20 +87,6 @@ nonisolated public struct PerkHeaderData: Equatable, Sendable {
         rankCount = try reader.readUInt8()
         isPlayable = try reader.readUInt8() != 0
         isHidden = try reader.readUInt8() != 0
-    }
-
-    public init(
-        isTrait: Bool,
-        level: UInt8,
-        rankCount: UInt8,
-        isPlayable: Bool,
-        isHidden: Bool
-    ) {
-        self.isTrait = isTrait
-        self.level = level
-        self.rankCount = rankCount
-        self.isPlayable = isPlayable
-        self.isHidden = isHidden
     }
 }
 

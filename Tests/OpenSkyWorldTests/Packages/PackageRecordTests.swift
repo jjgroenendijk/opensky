@@ -17,9 +17,17 @@ struct PackageRecordTests {
             runOn: 2,
             reference: 0x700
         ).data
-        var fields = PackageFixture.general(flags: 0x2404, kind: 18, speed: 2)
+        var fields = PackageFixture.general(
+            flags: 0x2404, kind: 18, interruptOverride: 4, speed: 2, interruptFlags: 0x0102
+        )
         fields += PackageFixture.schedule(hour: 20, minute: 10, duration: 240)
         fields += ESMFixture.field("CTDA", condition)
+        fields += ESMFixture.field(
+            "VMAD", VMADFixture.payload(scripts: [VMADFixture.Script(
+                "PackageScript",
+                properties: []
+            )])
+        )
         fields += PackageFixture.counter(template: 0x200)
         fields += ESMFixture.field("ANAM", ESMFixture.zstring("Location"))
         let locationBytes = PackageFixture.location(kind: 0, value: 0x300, radius: 512)
@@ -39,6 +47,9 @@ struct PackageRecordTests {
         #expect(package.general.flags.contains(.mustComplete))
         #expect(package.general.kind == .package)
         #expect(package.general.preferredSpeed == .run)
+        #expect(package.general.interruptOverride == 4)
+        #expect(package.general.interruptFlags == 0x0102)
+        #expect(package.scriptData.scripts.map(\.name) == ["PackageScript"])
         #expect(package.schedule.hour == 20)
         #expect(package.schedule.minute == 10)
         #expect(package.schedule.durationMinutes == 240)
@@ -59,7 +70,23 @@ struct PackageRecordTests {
             return
         }
         #expect(target.kind == .actor)
+        #expect(target.value == 0)
         #expect(target.countOrDistance == 1)
+        #expect(package.dataInputs.map(\.type) == ["Location", "SingleRef"])
+    }
+
+    /// The flags docs/formats/packages.md names, at their xEdit bits.
+    @Test func generalFlagBitsMatchXEdit() {
+        let named: [(Package.GeneralFlags, UInt32)] = [
+            (.mustComplete, 0x0000_0004), (.maintainSpeedAtGoal, 0x0000_0008),
+            (.oncePerDay, 0x0000_0400), (.usesPreferredSpeed, 0x0000_2000),
+            (.alwaysSneak, 0x0002_0000), (.ignoreCombat, 0x0010_0000),
+            (.weaponsUnequipped, 0x0020_0000), (.weaponDrawn, 0x0080_0000),
+            (.wearSleepOutfit, 0x2000_0000)
+        ]
+        for (flag, bits) in named {
+            #expect(flag.rawValue == bits)
+        }
     }
 
     @Test func preservesUnknownGeneralAndPublicKinds() throws {

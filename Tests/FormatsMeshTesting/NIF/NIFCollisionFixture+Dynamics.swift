@@ -1,7 +1,6 @@
 // The rigid-body dynamics values NIFCollisionFixture.rigidBody writes.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 import simd
 
 extension NIFCollisionFixture {

@@ -1,20 +1,7 @@
-// One PERK effect: the PRKE header, the typed DATA payload it introduces, the
-// PRKC condition tabs, and the EPFT/EPF2/EPF3/EPFD function parameters.
-//
-// A perk is a list of these. The PRKE type byte decides what the DATA that
-// follows means, and — for entry-point effects — the declared function type
-// decides what the EPFD payload means. Both decisions are data-driven unions,
-// so every enum here keeps an `unknown(raw:)` case and every payload that does
-// not match its declared shape is kept as raw bytes rather than dropped.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/PERK", "Perk Sections" and
-//     "Function Types"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PERK
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(PERK, 'Perk', ...)`
-//     line 5908: the PRKE header 5931, the `wbPerkDATADecider` union 5936, the
-//     PRKC condition array 5968, and the `wbEPFDDecider` union 5993.
-// Layout documented in docs/formats/perks.md.
+// One PERK effect: the PRKE header, its typed DATA, the PRKC condition tabs,
+// and the EPFT/EPF2/EPF3/EPFD parameters. The PRKE type and the function type
+// decide what the payloads mean, so each enum keeps an `unknown(raw:)` case and
+// a mismatched payload stays as raw bytes. Layout: docs/formats/perks.md.
 
 import Foundation
 
@@ -31,15 +18,6 @@ nonisolated public enum PerkEffectType: Hashable, CustomStringConvertible, Senda
         case 1: self = .ability
         case 2: self = .entryPoint
         default: self = .unknown(raw: rawValue)
-        }
-    }
-
-    public var rawValue: UInt8 {
-        switch self {
-        case .quest: 0
-        case .ability: 1
-        case .entryPoint: 2
-        case let .unknown(raw): raw
         }
     }
 
@@ -181,16 +159,9 @@ nonisolated public enum PerkFunctionType: Hashable, CustomStringConvertible, Sen
 nonisolated public enum PerkFunctionData: Equatable, Sendable, CustomStringConvertible {
     case float(Float)
     case floatPair(Float, Float)
-    /// EPFT 2 under one of the actor-value functions: the actor value the
-    /// factor multiplies, then the factor.
-    ///
-    /// The index arrives as a *float* rather than as an integer. UESP spells
-    /// the payload "float AV, float FACTOR", and xEdit stores the word as
-    /// `itU32` only to reinterpret it as a `Single` and round it in
-    /// `wbEPFDActorValueToStr` (Core/wbDefinitionsTES5.pas line 889). It is
-    /// rounded to the signed index every other actor-value field in the format
-    /// carries, so a consumer never has to know where the number came from —
-    /// `AlchemySkillBoosts` reads 146 rather than 0x43120000.
+    /// EPFT 2 under an actor-value function: the actor value, then the factor. The
+    /// index is stored as a float (UESP, xEdit) and rounded to the usual signed
+    /// index, so `AlchemySkillBoosts` reads 146.
     case actorValueMultiplier(actorValue: Int32, factor: Float)
     case leveledItem(FormID)
     case spell(FormID)

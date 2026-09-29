@@ -1,4 +1,4 @@
-// Havok packfile header (todo 6.1). Havok ships no public spec; layout is
+// Havok packfile header. Havok ships no public spec; layout is
 // reimplemented from community documentation (hkxcmd/ck-cmd notes, NifTools
 // skeleton discussions) and verified byte-by-byte by probe against SSE
 // `skeleton.hkx` + idle `.hkx` files — all observed files are 64-bit
@@ -28,9 +28,6 @@ nonisolated public enum HKXError: Error, Equatable, Sendable {
 nonisolated public struct HKXHeader: Sendable {
     public static let magic0: UInt32 = 0x57E0_E057
     public static let magic1: UInt32 = 0x10C0_C010
-    /// Observed on every SSE file probed; other versions may parse but are
-    /// flagged by callers, not rejected here.
-    public static let expectedVersionString = "hk_2010.2.0-r1"
 
     public let userTag: UInt32
     public let fileVersion: UInt32

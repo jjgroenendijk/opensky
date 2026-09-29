@@ -119,14 +119,6 @@ public enum PexFixture: Sendable {
         return out
     }
 
-    public static func instruction(opcode: UInt8, operands: [Value] = []) -> Data {
-        var out = Data([opcode])
-        for operand in operands {
-            out.append(value: operand)
-        }
-        return out
-    }
-
     public static func runtimeFile(objects: [PexObject]) -> PexFile {
         PexFile(
             header: PexHeader(

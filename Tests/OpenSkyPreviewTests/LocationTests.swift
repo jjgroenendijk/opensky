@@ -33,27 +33,52 @@ struct LocationTests {
         fields += ESMFixture.field("LCEP", enableParent(43, 44, 2))
         let location = try Location(record: record("LCTN", fields), localized: false)
 
+        #expect(location.formID == FormID(0x100))
         #expect(location.editorID == "TestLocation")
         #expect(location.name == LString.inline("Test Place"))
         #expect(location.parent == FormID(0x10))
         #expect(location.keywords.keywords == [FormID(0x20), FormID(0x21)])
+        #expect(location.addedPersistentReferences.first?.reference == FormID(1))
+        #expect(location.addedPersistentReferences.first?.worldOrCell == FormID(2))
         #expect(location.addedPersistentReferences.first?.gridY == -3)
         #expect(location.persistentReferences.first?.gridX == -8)
         #expect(location.removedPersistentReferences == [FormID(9), FormID(10)])
+        #expect(location.addedUniqueActors.first?.actorBase == FormID(11))
         #expect(location.addedUniqueActors.first?.actorReference == FormID(12))
         #expect(location.uniqueActors.first?.location == FormID(16))
         #expect(location.removedUniqueActors == [FormID(17)])
         #expect(location.addedSpecialReferences.first?.type == FormID(18))
+        #expect(location.addedSpecialReferences.first?.reference == FormID(19))
+        #expect(location.addedSpecialReferences.first?.worldOrCell == FormID(20))
+        #expect(location.addedSpecialReferences.first?.gridY == -21)
         #expect(location.specialReferences.first?.gridX == -27)
         #expect(location.removedSpecialReferences == [FormID(28)])
         #expect(location.addedWorldspaceCells.first?.cells.first?.y == 30)
+        #expect(location.addedWorldspaceCells.first?.cells.first?.x == 31)
         #expect(location.worldspaceCells.first?.cells.count == 2)
         #expect(location.removedWorldspaceCells.first?.worldspace == FormID(37))
         #expect(location.addedInitiallyDisabledReferences == [FormID(38)])
         #expect(location.initiallyDisabledReferences == [FormID(39), FormID(40)])
+        #expect(location.addedEnableParents.first?.reference == FormID(41))
         #expect(location.addedEnableParents.first?.parent == FormID(42))
         #expect(location.enableParents.first?.flags == 2)
         #expect(location.skipped.trailingArrayBytes.isEmpty)
+    }
+
+    @Test
+    func decodesMarkersMusicRadiusAndColor() throws {
+        var radius = Data()
+        radius.appendFloat32(512)
+        var fields = wordField("NAM1", 0x50) + wordField("MNAM", 0x51)
+        fields += ESMFixture.field("RNAM", radius) + wordField("NAM0", 0x52)
+        fields += ESMFixture.field("CNAM", Data([9, 8, 7, 6]))
+        let location = try Location(record: record("LCTN", fields), localized: false)
+
+        #expect(location.music == FormID(0x50))
+        #expect(location.worldMarker == FormID(0x51))
+        #expect(location.worldRadius == 512)
+        #expect(location.horseMarker == FormID(0x52))
+        #expect(location.editorColor?.red == 9)
     }
 
     @Test
@@ -96,6 +121,7 @@ struct LocationTests {
             ESMFixture.field("EDID", ESMFixture.zstring("BossContainer"))
         )
 
+        #expect(valid.formID == FormID(0x100))
         #expect(valid.editorID == "BossContainer")
         #expect(valid.editorColor?.blue == 3)
         #expect(RecordTextDump.dump(record: dumpRecord, localized: false)

@@ -1,25 +1,7 @@
-// `setInterval`, `clearInterval`, `setTimeout`, and `clearTimeout` (milestone
-// 8.3.2 phase 3).
-//
-// These four were the head of the phase-2 missing-API tally once fully
-// qualified class names started resolving: `clearInterval` 1,204 hits,
-// `setInterval` 796, and `invalidationIntervalID` 590 across the vanilla
-// install. They are not a convenience — they are load-bearing. CLIK's
-// `UIComponent.invalidate()` schedules its own `draw()` through
-// `setInterval(this, "_validate", 1)`, so a component that cannot set an
-// interval never lays itself out, never populates its text fields, and never
-// becomes interactive.
-//
-// A timer here is measured in *ticks*, not wall-clock milliseconds. The
-// millisecond argument is converted with the movie's own header `FrameRate`,
-// and a timer fires from `SWFMovieRuntime.advance()` — the same explicit tick
-// that moves a playhead. Nothing reads a clock, so the same tick sequence
-// always produces the same frame, which is the determinism contract in
-// docs/rendering/swf-layer.md.
-//
-// `setInterval` is a Flash player built-in with no entry in the SWF
-// specification; the two calling conventions below are the documented
-// ActionScript 2 ones.
+// `setInterval`, `clearInterval`, `setTimeout`, and `clearTimeout`. CLIK
+// components lay themselves out through `setInterval`, so these are required.
+// A timer counts ticks, converted from milliseconds with the header
+// `FrameRate`, and fires from `SWFMovieRuntime.advance()`, never a clock.
 
 import Foundation
 
@@ -87,10 +69,6 @@ nonisolated public final class SWFRuntimeTimers {
         let before = entries.count
         entries.removeAll { $0.id == id }
         return entries.count != before
-    }
-
-    public func removeAll() {
-        entries.removeAll()
     }
 
     /// Advances every timer by one tick and returns the ones that came due, in
