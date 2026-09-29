@@ -25,6 +25,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 
 nonisolated extension JournalMenuModel {
     /// Resolves one lstring, with or without string tables.
@@ -70,7 +71,7 @@ extension JournalMenuModel {
     ///   - selectedIndex: the row to keep selected, clamped into the list.
     @MainActor
     public static func build(
-        runtime: QuestRuntime,
+        runtime: any QuestAccess,
         strings: LocalizedStrings?,
         aliases: QuestAliasNaming = .none,
         showsCompleted: Bool = false,

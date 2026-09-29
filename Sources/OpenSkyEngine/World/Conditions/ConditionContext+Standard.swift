@@ -10,6 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
 import OpenSkyProgressionInterface
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 nonisolated extension ConditionContext {

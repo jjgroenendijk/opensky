@@ -43,6 +43,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 
 extension PapyrusWorldRuntime {
     /// Instantiates every script `quest` carries and enqueues `OnInit` for the

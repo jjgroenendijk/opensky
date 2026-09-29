@@ -473,6 +473,21 @@ targets += feature(
         "BehaviorTesting", "PhysicsTesting"
     ]
 )
+targets += feature(
+    "OpenSkyQuests",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions"
+    ],
+    interface: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions"
+    ],
+    tests: [
+        "OpenSkyQuestsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyWorldState", "OpenSkyConditions", "FormatsCoreTesting", "FormatsESMTesting"
+    ]
+)
 
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
@@ -483,7 +498,7 @@ targets += foundation(
         "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
         "OpenSkyWorldInterface", "OpenSkyMagicInterface", "OpenSkyCombatInterface",
-        "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyQuestsInterface", "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

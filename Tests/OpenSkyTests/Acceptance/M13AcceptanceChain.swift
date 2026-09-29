@@ -28,6 +28,8 @@ import Foundation
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkyQuests
+@testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
@@ -128,7 +130,7 @@ struct M13AcceptanceChain {
         integrateCell()
     }
 
-    var runtime: QuestRuntime {
+    var runtime: any QuestAccess {
         get throws {
             try #require(session.bridge.questRuntime)
         }

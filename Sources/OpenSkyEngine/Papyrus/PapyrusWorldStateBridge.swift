@@ -15,6 +15,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyQuestsInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -33,7 +34,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// a session with no QUST index, where every quest native fails with
     /// `PapyrusQuestBridgeError.noQuestData` rather than inventing state.
     /// Conformance lives in `PapyrusWorldStateBridgeQuests.swift`.
-    public var questRuntime: QuestRuntime?
+    public var questRuntime: (any QuestAccess)?
     /// Quests whose alias fill failed while their scripts were being attached
     /// at session wire-up (issue #183). Counted rather than thrown, because a
     /// quest that reads as running straight off its DNAM flag was never

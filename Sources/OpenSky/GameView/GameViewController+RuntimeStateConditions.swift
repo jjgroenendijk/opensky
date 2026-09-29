@@ -30,6 +30,7 @@ import OpenSkyConditions
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 extension GameViewController {

@@ -22,6 +22,7 @@ import OpenSkyEngine
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

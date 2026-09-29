@@ -50,6 +50,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 
 @MainActor
 extension PapyrusWorldStateBridge {
@@ -176,7 +177,7 @@ extension PapyrusWorldStateBridge {
     /// runtime that mutates it.
     private struct ResolvedQuestBridge {
         let quest: Quest
-        let runtime: QuestRuntime
+        let runtime: any QuestAccess
     }
 
     private func resolveQuest(_ key: ReferenceKey) throws -> ResolvedQuestBridge {

@@ -19,6 +19,8 @@ import AppKit
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyWorldState
 import OSLog
@@ -53,9 +55,11 @@ extension GameViewController {
         category: "Journal"
     )
 
-    /// The session's quest layer, or nil without game data.
+    /// The session's quest layer, or nil without game data. The bridge holds it
+    /// as `QuestAccess`; the journal reads the whole runtime, which the app
+    /// built.
     var journalQuestRuntime: QuestRuntime? {
-        papyrusBridge?.questRuntime
+        papyrusBridge?.questRuntime as? QuestRuntime
     }
 
     /// Plugin string tables, resolved once and cached.
