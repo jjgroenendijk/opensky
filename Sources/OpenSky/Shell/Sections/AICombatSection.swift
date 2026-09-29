@@ -16,6 +16,7 @@
 // deliberate way back.
 
 import AppKit
+import OpenSkyCombat
 import OpenSkyEngine
 
 final class AICombatSection: PanelSectionViewController {

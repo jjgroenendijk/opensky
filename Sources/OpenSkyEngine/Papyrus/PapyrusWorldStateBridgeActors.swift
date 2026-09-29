@@ -29,6 +29,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldInterface

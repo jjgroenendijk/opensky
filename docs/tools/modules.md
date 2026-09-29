@@ -94,7 +94,7 @@ OpenSkyGameData           virtual file system, load order, record stores, actor 
   ^
 OpenSkyBehavior           Havok behavior graph evaluation, skeleton pose math
   ^
-OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls
+OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls, melee hit sweeps
 OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkyShaderTypes
   ^
 OpenSkyRendering          Metal renderer, scenes, cameras, terrain meshes, weather values
@@ -103,12 +103,14 @@ OpenSkyWorldState         runtime state store, open component set, game clock, g
   ^
 OpenSkyConditions         condition evaluator, function registry, core functions
   ^
-OpenSkyWorldInterface     interaction events and rays, placed interactions, reference source
+OpenSkyWorldInterface     interaction events and rays, placed interactions, reference source,
+                          movement limits
 OpenSkyInventoryInterface inventory state, holders, vendors, baselines, InventoryAccess,
                           EquipmentAccess
   ^
 OpenSkyActorsInterface    actor state components, ActorValueAccess, actor conditions
 OpenSkyMagicInterface     active effects, spell hits, enchantments, SpellCasting, SpellHitApplying
+OpenSkyCombatInterface    combat settings, intents, script hits, CombatControlling, DeathReporting
 OpenSkyCrimeInterface     crime events, ledger, arrest state, ownership values, CrimeReporting
 OpenSkyFactionsInterface  membership and relationship state, hostility values, seams
 OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
@@ -116,6 +118,7 @@ OpenSkyProgressionInterface perk and progress state, skill use events, PerkAcces
   ^
 OpenSkyActors             actor value runtime
 OpenSkyMagic              active effect, caster, spellbook, and enchantment runtimes
+OpenSkyCombat             melee, archery, projectile, combat loop, and ragdoll runtimes
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation
@@ -153,13 +156,16 @@ A lower module never imports a higher one. These patterns keep it that way:
 - Logic that only reads plugin records, with no runtime state, is not a feature. It moves down
   into `OpenSkyGameData`. Examples: actor templates, derived actor values, resistances,
   faction relations, the leveling and skill formulas, the item index, and barter prices.
-- A feature that another module calls into offers a protocol in its interface. Example: crime
-  asks `DetectionObserving` which observers saw an act. Magic and progression change actor values
-  through `ActorValueAccess`, and scripts change faction ranks through `FactionAccess`. Items
-report theft through `CrimeReporting`, and an arrest takes gold through `InventoryAccess`. The
-spellbook readies a spell in a hand through `EquipmentAccess`, and scripts cast through
-`SpellCasting`. The
-  implementation conforms, and the app hands it over as that protocol.
+- A feature that another module calls into offers a protocol in its interface. Examples:
+  - Crime asks `DetectionObserving` which observers saw an act.
+  - Magic and progression change actor values through `ActorValueAccess`.
+  - Scripts change faction ranks through `FactionAccess`, cast through `SpellCasting`, and
+    start and stop fights through `CombatControlling`.
+  - Items report theft through `CrimeReporting`, and an arrest takes gold through
+    `InventoryAccess`.
+  - The spellbook readies a spell in a hand through `EquipmentAccess`.
+
+  The implementation conforms, and the app hands it over as that protocol.
 - A lower module never names a registry or default that a higher module owns. Example:
   `PerkRuntime` and `ActiveEffectRuntime` take their `ConditionFunctionRegistry` as a
   parameter, and the caller passes `.standard`, which lives above every feature. A package test

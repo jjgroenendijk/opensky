@@ -14,6 +14,7 @@
 // outside it is a reason-tagged failure rather than a spellless stranger.
 
 import AppKit
+import OpenSkyCombat
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData

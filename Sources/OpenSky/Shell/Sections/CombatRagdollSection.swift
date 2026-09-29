@@ -16,6 +16,7 @@
 // it would undo that.
 
 import AppKit
+import OpenSkyCombat
 import OpenSkyEngine
 import OpenSkyPhysics
 

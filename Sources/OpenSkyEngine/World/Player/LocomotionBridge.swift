@@ -33,6 +33,7 @@
 // See docs/engine/walk-mode.md.
 
 import OpenSkyBehavior
+import OpenSkyCombatInterface
 import OpenSkyPhysics
 import OpenSkyRendering
 import simd

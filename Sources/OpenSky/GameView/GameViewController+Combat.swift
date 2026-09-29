@@ -13,6 +13,8 @@
 // loop that ran first would be one frame behind the fight it is describing.
 
 import AppKit
+import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEngine
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM

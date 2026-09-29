@@ -12,6 +12,7 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface

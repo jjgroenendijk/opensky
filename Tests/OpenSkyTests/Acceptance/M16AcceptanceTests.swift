@@ -19,6 +19,8 @@
 // on a device-less runner with no install.
 
 import Foundation
+@testable import OpenSkyCombat
+@testable import OpenSkyCombatInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

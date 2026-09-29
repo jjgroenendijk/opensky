@@ -450,6 +450,29 @@ targets += feature(
         "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
+targets += feature(
+    "OpenSkyCombat",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsAnimation", "OpenSkyGameData",
+        "OpenSkyBehavior", "OpenSkyPhysics", "OpenSkyAudio", "OpenSkyWorldState",
+        "OpenSkyConditions", "OpenSkyActorsInterface", "OpenSkyInventoryInterface",
+        "OpenSkyMagicInterface", "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface",
+        "OpenSkyWorldInterface"
+    ],
+    interface: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyPhysics",
+        "OpenSkyActorsInterface"
+    ],
+    tests: [
+        "OpenSkyCombatInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsAnimation", "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics",
+        "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyActorsInterface", "OpenSkyActors",
+        "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyMagic",
+        "OpenSkyMagicTesting", "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface",
+        "OpenSkyWorldInterface", "OpenSkyShaderTypes", "FormatsCoreTesting", "FormatsESMTesting",
+        "BehaviorTesting", "PhysicsTesting"
+    ]
+)
 
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
@@ -459,7 +482,8 @@ targets += foundation(
         "OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState", "OpenSkyConditions",
         "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
-        "OpenSkyWorldInterface", "OpenSkyMagicInterface", "OpenSkyShaderTypes", "CFFmpeg"
+        "OpenSkyWorldInterface", "OpenSkyMagicInterface", "OpenSkyCombatInterface",
+        "OpenSkyShaderTypes", "CFFmpeg"
     ]
 )
 

@@ -21,6 +21,8 @@
 //   scene — fires no spell projectile and the caster tally counts the refusal.
 
 import AppKit
+import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData

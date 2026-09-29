@@ -8,6 +8,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
@@ -49,11 +50,11 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// than a convincing zero. Conformance lives in
     /// `PapyrusWorldStateBridgeActors.swift`.
     public var actorValueRuntime: (() -> (any ActorValueAccess)?)?
-    public var ragdollRuntime: (() -> RagdollRuntime?)?
+    public var ragdollRuntime: (() -> (any DeathReporting)?)?
     /// The combat loop, which `StartCombat`, `StopCombat` and `IsInCombat` reach
     /// through (issue #424). Nil leaves all three tallied failures rather than
     /// letting a script claim it started a fight nothing simulates.
-    public var combatRuntime: (() -> CombatLoopRuntime?)?
+    public var combatRuntime: (() -> (any CombatControlling)?)?
     /// Where one actor's weapon is, or nil when this session observes no draw
     /// state for it — which is every actor but the player today.
     public var weaponDrawState: ((ReferenceKey) -> WeaponDrawState?)?

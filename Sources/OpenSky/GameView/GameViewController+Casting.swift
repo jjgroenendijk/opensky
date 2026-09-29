@@ -17,6 +17,7 @@
 // tally counting a cast's effects too.
 
 import AppKit
+import OpenSkyCombatInterface
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData

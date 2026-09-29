@@ -26,6 +26,7 @@
 // these cases pin the gate's behaviour, not this machine's speed.
 
 import Foundation
+@testable import OpenSkyCombat
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

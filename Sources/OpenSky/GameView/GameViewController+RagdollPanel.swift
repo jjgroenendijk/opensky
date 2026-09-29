@@ -10,6 +10,7 @@
 // sidebar a way to verify the route rather than a second implementation of it.
 
 import Foundation
+import OpenSkyCombat
 import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface

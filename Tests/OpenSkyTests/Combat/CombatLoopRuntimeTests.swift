@@ -17,6 +17,8 @@
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
+@testable import OpenSkyCombat
+@testable import OpenSkyCombatInterface
 @testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
