@@ -13,6 +13,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -126,7 +127,12 @@ struct RendererDynamicPoseTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view, scene: scene, camera: camera)
+        return try Renderer(
+            view: view,
+            scene: scene,
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
     }
 
     /// The crate's mid-height, which is what projects to a lit pixel.

@@ -11,6 +11,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -133,7 +134,12 @@ struct RendererInstancingTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view, scene: scene, camera: camera)
+        return try Renderer(
+            view: view,
+            scene: scene,
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
     }
 
     private static func solidTexture(device: MTLDevice) throws -> MTLTexture {

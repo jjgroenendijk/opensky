@@ -149,6 +149,7 @@ Tests/
   WorldStateTesting/    package library: global store helper
   BehaviorTesting/      package library: behavior graph fixtures
   PhysicsTesting/       package library: collision scene and ragdoll fixtures
+  RenderingTesting/     package library: the compiled shader library for Renderer suites
   OpenSky*Testing/      package libraries, one per feature: fakes and fixtures, may build
                         the feature implementation (Crime, Inventory, Magic, Factions,
                         Perception, Progression, Combat, Dialogue, Scripting, World, Save)

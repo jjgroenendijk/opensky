@@ -8,6 +8,7 @@ import MetalKit
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -76,7 +77,12 @@ struct ParticlePlaybackTests {
         )
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 256, height: 256), device: device)
         view.isPaused = true
-        let renderer = try Renderer(view: view, scene: scene, camera: camera)
+        let renderer = try Renderer(
+            view: view,
+            scene: scene,
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
         let first = try pixels(renderer.renderOffscreen(
             width: 256, height: 256, animationTime: 0.5
         ))

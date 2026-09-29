@@ -7,7 +7,8 @@ check a hypothesis is a different job: load the `probe` skill for that.
 
 - A test touching `Renderer`, `MTKView`, or any AppKit or MetalKit API must be marked
   `@MainActor`. Omitting it is the historical top compile error here (`error: main
-  actor`). Patterns to copy: `RendererOffscreenTests`, `RendererUITests`.
+  actor`). Patterns to copy: `GameViewControllerScreenshotTests`, and
+  `RendererOffscreenTests` in `OpenSkyWorldTests`.
 - A Metal test gates on `device.supportsFamily(.metal4)`, like
   `CellSceneBuilderFixture.hasDevice`, so machines without a Metal 4 device skip instead of
   failing.
@@ -28,8 +29,8 @@ quietly reach one even by accident (issue #362).
 
 ## What stays in this target
 
-This target holds the suites that need the app module, a `Renderer` (its shaders load from
-the app bundle), or an acceptance chain. Every other suite goes in a package test target;
+This target holds the suites that need the app module or an acceptance chain. Every other
+suite goes in a package test target, including one that builds a `Renderer`;
 `Tests/AGENTS.md` has the rule.
 
 `Tests/TestSupport/` is compiled into this bundle and `OpenSkyRealDataTests`. It holds the

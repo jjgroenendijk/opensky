@@ -335,9 +335,10 @@ targets += foundation(
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
         "OpenSkyPhysics", "OpenSkyShaderTypes", "FormatsCoreTesting", "FormatsESMTesting",
-        "FormatsMeshTesting", "OpenSkyFormatsSWF"
+        "FormatsMeshTesting", "OpenSkyFormatsSWF", "RenderingTesting"
     ]
 )
+targets += testing("RenderingTesting", dependencies: [])
 
 targets += foundation(
     "OpenSkyWorldState",
@@ -635,7 +636,8 @@ targets += feature(
         "OpenSkyScripting", "OpenSkyScriptingInterface",
         "OpenSkyWorldTesting",
         "GameDataTesting", "OpenSkyProgressionTesting", "WorldStateTesting",
-        "OpenSkyScriptingTesting"
+        "OpenSkyScriptingTesting", "OpenSkyDiagnostics", "OpenSkyFormatsSWF", "FormatsSWFTesting",
+        "RenderingTesting"
     ]
 )
 
@@ -647,7 +649,7 @@ targets += testing(
         "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyConditions", "OpenSkyPhysics",
         "OpenSkyRendering", "OpenSkyWorldState",
         "OpenSkyAudio", "FormatsAudioTesting", "FormatsCoreTesting", "FormatsESMTesting",
-        "FormatsMeshTesting", "WorldStateTesting"
+        "FormatsMeshTesting", "WorldStateTesting", "RenderingTesting"
     ]
 )
 targets += testing(
@@ -732,7 +734,7 @@ targets += feature(
         "OpenSkyWorldState", "OpenSkyInventoryInterface", "OpenSkyInventory",
         "OpenSkyInventoryTesting", "OpenSkyQuestsInterface", "OpenSkyQuests", "OpenSkyShaderTypes",
         "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyPerceptionInterface", "OpenSkyActors",
-        "OpenSkyWorldInterface",
+        "OpenSkyWorldInterface", "OpenSkyWorld", "RenderingTesting",
         "GameDataTesting"
     ]
 )

@@ -11,6 +11,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -51,7 +52,12 @@ struct TerrainSplatRenderTests {
         view.enableSetNeedsDisplay = false
 
         let scene = try Self.terrainScene(device: device)
-        let renderer = try Renderer(view: view, scene: scene, camera: Self.camera)
+        let renderer = try Renderer(
+            view: view,
+            scene: scene,
+            camera: Self.camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
         let texture = try renderer.renderOffscreen(width: Self.width, height: Self.height)
 
         var pixels = [UInt8](repeating: 0, count: Self.width * Self.height * 4)

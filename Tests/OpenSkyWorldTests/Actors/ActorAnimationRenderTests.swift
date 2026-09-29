@@ -6,6 +6,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -70,7 +71,12 @@ struct ActorAnimationRenderTests {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 256, height: 256), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: animated.scene, camera: animated.camera)
+        let renderer = try Renderer(
+            view: view,
+            scene: animated.scene,
+            camera: animated.camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
         let moving = try pixels(renderer.renderOffscreen(
             width: 256, height: 256, animationTime: 1
         ))
@@ -91,7 +97,12 @@ struct ActorAnimationRenderTests {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 256, height: 256), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: scene, camera: camera)
+        let renderer = try Renderer(
+            view: view,
+            scene: scene,
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
         let first = try pixels(renderer.renderOffscreen(
             width: 256, height: 256, animationTime: 0
         ))

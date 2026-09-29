@@ -136,19 +136,20 @@ extension Renderer {
     /// Grouping their factories keeps Renderer.init below the strict body cap.
     public static func makeAuxiliaryResources(
         device: MTLDevice,
-        view: MTKView
+        view: MTKView,
+        library: MTLLibrary
     ) throws -> (
         shadowAndUI: (ShadowResources, UIResources),
         overlayAndSWF: (WorldOverlayResources, SWFPassResources)
     ) {
         try (
             (
-                makeShadowResources(device: device),
-                makeUIResources(device: device, view: view)
+                makeShadowResources(device: device, library: library),
+                makeUIResources(device: device, view: view, library: library)
             ),
             (
-                makeWorldOverlayResources(device: device, view: view),
-                makeSWFPassResources(device: device, view: view)
+                makeWorldOverlayResources(device: device, view: view, library: library),
+                makeSWFPassResources(device: device, view: view, library: library)
             )
         )
     }
@@ -188,13 +189,20 @@ extension Renderer {
         )
     }
 
-    public static func makePipelines(
-        device: MTLDevice,
-        view: MTKView
-    ) throws -> RenderPipelines {
+    /// The shaders the app and openskycli compile into `default.metallib` in
+    /// their own bundle.
+    public static func makeBundledShaderLibrary(device: MTLDevice) throws -> MTLLibrary {
         guard let library = device.makeDefaultLibrary() else {
             throw RendererError.defaultLibraryMissing
         }
+        return library
+    }
+
+    public static func makePipelines(
+        device: MTLDevice,
+        view: MTKView,
+        library: MTLLibrary
+    ) throws -> RenderPipelines {
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
 
         func makeVariant(

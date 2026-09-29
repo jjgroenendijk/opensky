@@ -35,6 +35,9 @@ A suite stays in `OpenSkyTests` when it needs something a package test target ca
 have:
 
 - the app module (`@testable import OpenSky`),
-- a `Renderer`, which loads its shaders from the app bundle (`swift test` cannot compile
-  `Shaders.metal`),
 - an acceptance chain in `Tests/OpenSkyTests/Acceptance/`.
+
+A suite that builds a `Renderer` goes in a package test target too. It passes
+`shaderLibrary: ShaderLibraryFixture.library(device: device)` from `RenderingTesting`, because a
+package test has no app bundle to load `default.metallib` from. `make test-fast` compiles the
+shaders first (`make shader-library`).

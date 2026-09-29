@@ -12,6 +12,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -23,7 +24,8 @@ struct RenderDebugEncodeTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func soloingTheAlreadySoloedLayerRestoresEveryLayer() throws {
-        let renderer = try #require(Self.headlessRenderer())
+        let built = try Self.headlessRenderer()
+        let renderer = try #require(built)
         renderer.soloRenderLayer(.grass)
         #expect(renderer.renderDebug.layers == .grass)
         #expect(renderer.renderDebug.soloedLayer == .grass)
@@ -34,7 +36,8 @@ struct RenderDebugEncodeTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func isolatingALayerRemovesItsSceneAndShadowDraws() throws {
-        let renderer = try #require(Self.twoLayerRenderer())
+        let built = try Self.twoLayerRenderer()
+        let renderer = try #require(built)
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
         let baseline = renderer.lastDrawStats
         let baselineShadow = renderer.lastShadowDrawStats
@@ -66,7 +69,8 @@ struct RenderDebugEncodeTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aDebugChannelChangesTheFrameOnlyWhenOffscreenOptsIn() throws {
-        let renderer = try #require(Self.twoLayerRenderer())
+        let built = try Self.twoLayerRenderer()
+        let renderer = try #require(built)
         let shipping = try Self.readPixels(
             texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
         )
@@ -88,7 +92,8 @@ struct RenderDebugEncodeTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func wireframeRasterisesFewerLitPixelsThanTheSolidFrame() throws {
-        let renderer = try #require(Self.twoLayerRenderer())
+        let built = try Self.twoLayerRenderer()
+        let renderer = try #require(built)
         renderer.renderDebugAppliesOffscreen = true
         let solid = try Self.litPixelCount(
             renderer.renderOffscreen(width: Self.width, height: Self.height)
@@ -128,21 +133,25 @@ struct RenderDebugEncodeTests {
     /// A renderer over the demo scene, for the pure-state assertions that still
     /// need a live `Renderer`. nil without a Metal 4 device.
     @MainActor
-    private static func headlessRenderer() -> Renderer? {
+    private static func headlessRenderer() throws -> Renderer? {
         guard let device else { return nil }
-        return try? Renderer(view: makeView(device: device))
+        return try Renderer(
+            view: makeView(device: device),
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
     }
 
     /// One crate drawn as a static and a second, offset crate drawn as an
     /// actor: two groups that differ only in scene role, which is exactly what
     /// the layer filter has to be able to tell apart.
     @MainActor
-    private static func twoLayerRenderer() -> Renderer? {
+    private static func twoLayerRenderer() throws -> Renderer? {
         guard let device else { return nil }
-        return try? Renderer(
+        return try Renderer(
             view: makeView(device: device),
             scene: twoLayerScene(device: device),
-            camera: camera
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
     }
 

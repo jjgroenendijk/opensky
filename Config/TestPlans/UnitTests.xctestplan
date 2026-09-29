@@ -225,6 +225,17 @@
           "name" : "OpenSkyMenus"
         }
       ]
+    },
+    "environmentVariableEntries" : [
+      {
+        "key" : "OPENSKY_SHADER_LIBRARY",
+        "value" : "$(BUILD_DIR)/OpenSkyShaders.metallib"
+      }
+    ],
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:OpenSky.xcodeproj",
+      "identifier" : "5A3BAE003000109100177F95",
+      "name" : "OpenSky"
     }
   },
   "testTargets" : [

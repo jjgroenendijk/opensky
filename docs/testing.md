@@ -19,8 +19,7 @@ the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-r
   targets, one per library module in `Package.swift`. A change to engine code does not rebuild them
   ([Swift modules](/tools/modules.md)).
 - `OpenSkyTests`: unit tests with Swift Testing for what a package test target cannot hold: the
-  app module, the renderer through offscreen paths, and the acceptance chains. None of it needs
-  game data.
+  app module and the acceptance chains. None of it needs game data.
 - `OpenSkyRealDataTests`: the suites that read the user's install and skip without a data root. They
   are a separate bundle so `make test` does not compile them and the `RealData` plan can select them
   by target.

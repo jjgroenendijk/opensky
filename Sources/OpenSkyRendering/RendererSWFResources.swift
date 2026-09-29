@@ -100,14 +100,17 @@ extension Renderer {
 
     public static func makeSWFPassResources(
         device: MTLDevice,
-        view: MTKView
+        view: MTKView,
+        library: MTLLibrary
     ) throws -> SWFPassResources {
         try SWFPassResources(
             contentPipeline: makeSWFPipeline(
-                device: device, view: view, fragment: "swfFragment", label: "SWFContent"
+                device: device, view: view, library: library,
+                fragment: "swfFragment", label: "SWFContent"
             ),
             maskPipeline: makeSWFPipeline(
-                device: device, view: view, fragment: "swfMaskFragment", label: "SWFMask"
+                device: device, view: view, library: library,
+                fragment: "swfMaskFragment", label: "SWFMask"
             ),
             contentDepthState: makeSWFContentDepthState(device: device),
             maskIncrementState: makeSWFMaskDepthState(device: device, increment: true),
@@ -125,12 +128,10 @@ extension Renderer {
     private static func makeSWFPipeline(
         device: MTLDevice,
         view: MTKView,
+        library: MTLLibrary,
         fragment: String,
         label: String
     ) throws -> MTLRenderPipelineState {
-        guard let library = device.makeDefaultLibrary() else {
-            throw RendererError.defaultLibraryMissing
-        }
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library

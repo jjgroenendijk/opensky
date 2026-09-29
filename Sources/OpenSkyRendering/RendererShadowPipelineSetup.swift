@@ -8,9 +8,12 @@ import OpenSkyShaderTypes
 
 extension Renderer {
     /// Builds the shadow pipelines + compare sampler + cascade array together.
-    public static func makeShadowResources(device: MTLDevice) throws -> ShadowResources {
+    public static func makeShadowResources(
+        device: MTLDevice,
+        library: MTLLibrary
+    ) throws -> ShadowResources {
         try ShadowResources(
-            pipelines: makeShadowPipelines(device: device),
+            pipelines: makeShadowPipelines(device: device, library: library),
             sampler: makeShadowSampler(device: device),
             map: makeShadowMap(device: device)
         )
@@ -20,11 +23,9 @@ extension Renderer {
     /// binds at pass time (the pass has nothing else to infer the target from,
     /// unlike the scene pipelines which carry a color attachment).
     private static func makeShadowPipelines(
-        device: MTLDevice
+        device: MTLDevice,
+        library: MTLLibrary
     ) throws -> ShadowPipelines {
-        guard let library = device.makeDefaultLibrary() else {
-            throw RendererError.defaultLibraryMissing
-        }
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
 
         func make(

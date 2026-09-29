@@ -2,28 +2,29 @@
 // culling evidence via lastShadowDrawStats, the ShadowQuality tiers, and the
 // per-frame CPU timing metric. Offscreen renders + deterministic checks
 // (AGENTS.md testing). Shares the synthetic scene + render helpers with
-// RendererShadowTests. Skips without a Metal 4 device (paravirtual CI).
+// ShadowSceneFixture. Skips without a Metal 4 device (paravirtual CI).
 
 import Foundation
 import Metal
 @testable import OpenSkyRendering
+import OpenSkyWorldTesting
 import Testing
 
 struct RendererShadowQualityTests {
     private static var hasMetal4Device: Bool {
-        RendererShadowTests.hasMetal4Device
+        ShadowSceneFixture.hasMetal4Device
     }
 
-    private static let width = RendererShadowTests.width
-    private static let height = RendererShadowTests.height
+    private static let width = ShadowSceneFixture.width
+    private static let height = ShadowSceneFixture.height
 
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func perInstanceCullingDropsCastersOutsideCascades() throws {
-        let device = try #require(RendererShadowTests.device)
-        let renderer = try RendererShadowTests.makeRenderer(
+        let device = try #require(ShadowSceneFixture.device)
+        let renderer = try ShadowSceneFixture.makeRenderer(
             device: device,
-            scene: RendererShadowTests.cullingScene(device: device)
+            scene: ShadowSceneFixture.cullingScene(device: device)
         )
         renderer.sunShadowsEnabled = true
         renderer.shadowQuality = .high
@@ -44,20 +45,20 @@ struct RendererShadowQualityTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func qualityOffMatchesDisabledBaseline() throws {
-        let device = try #require(RendererShadowTests.device)
+        let device = try #require(ShadowSceneFixture.device)
 
-        let offRenderer = try RendererShadowTests.makeRenderer(device: device)
+        let offRenderer = try ShadowSceneFixture.makeRenderer(device: device)
         offRenderer.shadowQuality = .off
         _ = try offRenderer.renderOffscreen(width: Self.width, height: Self.height)
-        let off = try RendererShadowTests.readPixels(
+        let off = try ShadowSceneFixture.readPixels(
             texture: offRenderer.renderOffscreen(width: Self.width, height: Self.height)
         )
         #expect(offRenderer.lastShadowDrawStats == ShadowDrawStats(), "off encodes no shadows")
 
-        let baseline = try RendererShadowTests.makeRenderer(device: device)
+        let baseline = try ShadowSceneFixture.makeRenderer(device: device)
         baseline.sunShadowsEnabled = false
         _ = try baseline.renderOffscreen(width: Self.width, height: Self.height)
-        let never = try RendererShadowTests.readPixels(
+        let never = try ShadowSceneFixture.readPixels(
             texture: baseline.renderOffscreen(width: Self.width, height: Self.height)
         )
 
@@ -71,21 +72,21 @@ struct RendererShadowQualityTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func lowAndHighQualityBothDarkenReceiver() throws {
-        let device = try #require(RendererShadowTests.device)
+        let device = try #require(ShadowSceneFixture.device)
 
-        let offRenderer = try RendererShadowTests.makeRenderer(device: device)
+        let offRenderer = try ShadowSceneFixture.makeRenderer(device: device)
         offRenderer.shadowQuality = .off
-        let off = try RendererShadowTests.readPixels(
+        let off = try ShadowSceneFixture.readPixels(
             texture: offRenderer.renderOffscreen(width: Self.width, height: Self.height)
         )
 
         for quality in [ShadowQuality.low, .high] {
-            let renderer = try RendererShadowTests.makeRenderer(device: device)
+            let renderer = try ShadowSceneFixture.makeRenderer(device: device)
             renderer.shadowQuality = quality
-            let shaded = try RendererShadowTests.readPixels(
+            let shaded = try ShadowSceneFixture.readPixels(
                 texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
             )
-            let darker = RendererShadowTests.darkerPixelCount(on: shaded, off: off)
+            let darker = ShadowSceneFixture.darkerPixelCount(on: shaded, off: off)
             #expect(darker > 50, "\(quality) cast no visible shadow (\(darker) darkened)")
         }
     }
@@ -93,14 +94,14 @@ struct RendererShadowQualityTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func qualityRendersAreDeterministic() throws {
-        let device = try #require(RendererShadowTests.device)
+        let device = try #require(ShadowSceneFixture.device)
         for quality in [ShadowQuality.low, .high] {
-            let renderer = try RendererShadowTests.makeRenderer(device: device)
+            let renderer = try ShadowSceneFixture.makeRenderer(device: device)
             renderer.shadowQuality = quality
-            let first = try RendererShadowTests.readPixels(
+            let first = try ShadowSceneFixture.readPixels(
                 texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
             )
-            let second = try RendererShadowTests.readPixels(
+            let second = try ShadowSceneFixture.readPixels(
                 texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
             )
             var differences = 0
@@ -114,8 +115,8 @@ struct RendererShadowQualityTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func shadowTimingMetricIsRecorded() throws {
-        let device = try #require(RendererShadowTests.device)
-        let renderer = try RendererShadowTests.makeRenderer(device: device)
+        let device = try #require(ShadowSceneFixture.device)
+        let renderer = try ShadowSceneFixture.makeRenderer(device: device)
         renderer.sunShadowsEnabled = true
         renderer.shadowQuality = .high
         _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)

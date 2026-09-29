@@ -10,6 +10,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import RenderingTesting
 import simd
 import Testing
 
@@ -133,7 +134,8 @@ struct RendererCullingTests {
         return try Renderer(
             view: view,
             scene: twoCrateScene(device: device),
-            camera: camera
+            camera: camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
     }
 
