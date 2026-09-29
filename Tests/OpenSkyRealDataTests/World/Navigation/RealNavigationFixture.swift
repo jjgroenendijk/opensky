@@ -16,6 +16,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -166,7 +167,7 @@ enum RealNavigationFixture {
         let placed = door.teleportDestination.map {
             PlacedDoor(reference: door.formID, position: door.placement.position, destination: $0)
         }
-        return CellStreamerTests.cellScene(
+        return CellStreamerFixture.cellScene(
             location: location,
             doors: placed.map { [$0] } ?? [],
             navmeshes: CellSceneBuilder.collectNavmeshes(in: cell.children)

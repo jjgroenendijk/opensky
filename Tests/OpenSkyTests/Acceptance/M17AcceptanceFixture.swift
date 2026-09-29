@@ -32,6 +32,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 
 enum M17AcceptanceFixture {

@@ -16,16 +16,19 @@
 //
 // No game data: the plugin bytes every fixture parses are built in code.
 
+import FormatsESMTesting
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
 import Testing
+import WorldStateTesting
 
 /// The clock the store's time-global redirect drives. A reference type because
 /// `WorldStateStore.onTimeGlobalWrite` has to mutate it from a closure, exactly

@@ -21,8 +21,8 @@ linked, and what happens when it is missing.
 - Configure it decode-only and LGPL-only. The result is three libraries, `libavutil`,
   `libavcodec`, and `libswresample`, about 1.2 MB, with one decoder (`wmav2`), no external libraries,
   and nothing outside `libSystem` and the OS frameworks.
-- Link it through a system-library module map, `Sources/CFFmpeg/module.modulemap`, so the few files
-  that need it write `import CFFmpeg`.
+- Wrap it in a small C target of the package, `CFFmpeg`, so the few files that need it write
+  `import CFFmpeg`.
 - ffmpeg is a hard build requirement. A missing prefix fails the build with a message naming
   `make bootstrap`, and the app bundle carries its own copies of the dylibs.
 - Every ffmpeg type stays behind `Sources/OpenSkyAudio/WMADecoder.swift`. Callers pass container
@@ -84,15 +84,23 @@ text and this notice, which is a packaging task for when binaries first ship.
 
 ## Linkage
 
-The module map declares a `[system]` module `CFFmpeg` over `Sources/CFFmpeg/shim.h`, which
-includes the few headers the decoder uses. `SWIFT_INCLUDE_PATHS` lists `Sources/CFFmpeg` and
-`.vendor/ffmpeg/include`, so every target that compiles the audio sources finds the module, including
-the unit test bundle through `@testable import OpenSky`. The app and CLI carry the link settings
-themselves: `LIBRARY_SEARCH_PATHS` into the prefix and `-lavcodec -lavutil -lswresample`.
+`CFFmpeg` is a C target in `Package.swift`. Its module map, `Sources/CFFmpeg/include/module.modulemap`,
+declares the module over `CFFmpeg.h`, which includes the few headers the decoder uses. The target has
+one empty source file, because SwiftPM builds a C target only when it has a source file.
 
-The module map has no `link` directives on purpose. Autolinking would make every target that imports
-the module link `-lavcodec`, including the test bundle, which gets the symbols from its
-`BUNDLE_LOADER` host instead.
+The target carries the header path into `.vendor/ffmpeg/include` and the link flags: `-L` into the
+prefix and `-lavcodec -lavutil -lswresample`. So every binary that uses `OpenSkyAudio` links the
+dylibs. Their install names start with `@rpath`. The app finds them in its bundle. `openskycli`
+has a runpath into the prefix, and the package test targets add the same runpath in
+`Package.swift`.
+`SWIFT_INCLUDE_PATHS` also lists `.vendor/ffmpeg/include`, because a target that imports an engine
+module loads `CFFmpeg` and must find the headers it wraps.
+
+`CFFmpeg` was first a system-library target. That broke when a testing library shared `OpenSkyAudio`
+with the app: Xcode then builds `OpenSkyAudio` as a dynamic framework, and a framework cannot use a
+system-library target. Xcode stops with "The workspace has a reference to a missing target with GUID
+'PACKAGE-TARGET:CFFmpeg'". A framework must also resolve every symbol when it links, so the link flags
+moved from the app settings into the target.
 
 Two alternatives were rejected. Adding an umbrella shim to a header every file sees grows that header
 and hard-codes the prefix in a checked-in file. A SwiftPM system-library package would bring the

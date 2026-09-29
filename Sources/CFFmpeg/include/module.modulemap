@@ -1,0 +1,6 @@
+// The clang module over the vendored, decode-only ffmpeg. `import CFFmpeg` reaches it
+// from the package modules; see docs/decisions/ffmpeg-audio.md.
+module CFFmpeg {
+    header "CFFmpeg.h"
+    export *
+}

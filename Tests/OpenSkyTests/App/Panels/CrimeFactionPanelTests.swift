@@ -9,20 +9,13 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
+import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventoryInterface
 import Testing
 
 @MainActor
 struct CrimeFactionPanelTests {
-    nonisolated static let hold = option(0x10, "Hold")
-    nonisolated static let guild = option(0x20, "Guild")
-    nonisolated static let shop = option(0x30, "Shop")
-
-    nonisolated static func option(_ objectID: UInt32, _ name: String) -> FactionOption {
-        FactionOption(key: .plugin(name: "base.esm", objectID: objectID), name: name)
-    }
-
     static func panel(
         providers: FakeWorldProviders
     ) throws -> CrimeFactionPanelViewController {
@@ -36,46 +29,6 @@ struct CrimeFactionPanelTests {
         )
         panel.loadViewIfNeeded()
         return panel
-    }
-
-    /// A reading with a bounty, a stolen stack, a guard subject and a vendor.
-    nonisolated static func snapshot(hour: Float = 12) -> CrimeFactionControlSnapshot {
-        let vendor = Vendor(
-            faction: shop.key, factionName: "Shop", merchantChest: nil,
-            hours: VendorHours(start: 8, end: 20), listKeywords: [], negatesList: true,
-            buysStolen: false
-        )
-        return CrimeFactionControlSnapshot(
-            isAvailable: true,
-            bounties: [BountyReadout(
-                faction: hold, nonViolentGold: 40, violentGold: 1000,
-                counts: CrimeCounts.none.incrementing(.murder),
-                response: .attackOnSight(bounty: 1040)
-            )],
-            currentCrimeFaction: hold,
-            ownership: nil,
-            ownerName: nil,
-            stolenStacks: [
-                ItemStackReadout(item: FormID(0x42), count: 2, name: "Ring", stolen: true)
-            ],
-            crimeFactions: [hold],
-            selectedCrimeFaction: hold.key,
-            playerMemberships: [MembershipReadout(faction: guild, rank: 2)],
-            subject: SocialSubjectReadout(
-                key: .plugin(name: "base.esm", objectID: 0x900), name: "Guard",
-                memberships: [MembershipReadout(faction: hold, rank: 0)],
-                towardPlayer: nil, crimeFaction: hold, policedFaction: hold, vendor: vendor
-            ),
-            factions: [guild, hold, shop],
-            selectedFaction: guild.key,
-            vendorFactions: [shop],
-            vendorOverride: nil,
-            effectiveVendor: vendor,
-            hour: hour,
-            lastCrimeText: "Murder: 1000 bounty with Hold.",
-            lastGuardText: "No guard has acted yet.",
-            lastActionText: "No crime or faction action yet."
-        )
     }
 
     @Test
@@ -143,7 +96,7 @@ struct CrimeFactionPanelTests {
     @Test
     func theReadoutsCarryTheSnapshot() throws {
         let providers = FakeWorldProviders()
-        providers.crimeFactions.snapshot = Self.snapshot()
+        providers.crimeFactions.snapshot = CrimeFactionSnapshotFixture.snapshot()
         let panel = try Self.panel(providers: providers)
         panel.startInspecting()
         defer { panel.stopInspecting() }
@@ -168,7 +121,7 @@ struct CrimeFactionPanelTests {
     @Test
     func theControlsSendWhatTheFieldsHold() throws {
         let providers = FakeWorldProviders()
-        providers.crimeFactions.snapshot = Self.snapshot()
+        providers.crimeFactions.snapshot = CrimeFactionSnapshotFixture.snapshot()
         let panel = try Self.panel(providers: providers)
         panel.startInspecting()
         defer { panel.stopInspecting() }
@@ -194,7 +147,7 @@ struct CrimeFactionPanelTests {
         let members = panel.membershipSection
         members.factionControl.selectItem(at: 1)
         sendScriptsControl(members.factionControl)
-        #expect(providers.membershipFactionSelection == Self.hold.key)
+        #expect(providers.membershipFactionSelection == CrimeFactionSnapshotFixture.hold.key)
         members.rankControl.stringValue = "300"
         sendScriptsControl(members.joinControl)
         #expect(providers.crimeFactions.joins == [Int8.max])
@@ -209,7 +162,7 @@ struct CrimeFactionPanelTests {
     @Test
     func theVendorOverrideIsTheOneResettableSetting() throws {
         let providers = FakeWorldProviders()
-        providers.crimeFactions.snapshot = Self.snapshot()
+        providers.crimeFactions.snapshot = CrimeFactionSnapshotFixture.snapshot()
         let panel = try Self.panel(providers: providers)
         panel.startInspecting()
         defer { panel.stopInspecting() }
@@ -218,7 +171,7 @@ struct CrimeFactionPanelTests {
 
         vendor.overrideControl.selectItem(at: 1)
         sendScriptsControl(vendor.overrideControl)
-        #expect(providers.vendorOverrideSelection == Self.shop.key)
+        #expect(providers.vendorOverrideSelection == CrimeFactionSnapshotFixture.shop.key)
         #expect(vendor.isOverridden)
         sendScriptsControl(vendor.barterControl)
         #expect(providers.crimeFactions.barterCount == 1)
@@ -233,7 +186,7 @@ struct CrimeFactionPanelTests {
     @Test
     func theSectionsFitThePanelColumn() throws {
         let providers = FakeWorldProviders()
-        providers.crimeFactions.snapshot = Self.snapshot()
+        providers.crimeFactions.snapshot = CrimeFactionSnapshotFixture.snapshot()
         let panel = try Self.panel(providers: providers)
         panel.view.frame = NSRect(x: 0, y: 0, width: PanelMetrics.panelWidth, height: 900)
         panel.view.layoutSubtreeIfNeeded()

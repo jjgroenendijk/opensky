@@ -2,10 +2,13 @@
 
 Test support compiled into two unit-test bundles: `OpenSkyTests` and
 `OpenSkyRealDataTests`. The folder exists because the two targets are separate modules with
-no way to import each other, while a fixture like `FakeWorldProviders` is needed by both
-(issue #418). A fixture that only builds bytes and needs no engine code goes in
-a `Tests/<Name>Testing/` library instead, so the package test targets can use it too. Membership follows
-the folder, exactly as `Sources/OpenSky/` builds into the app alone.
+no way to import each other, while a fixture like `FakeWorldProviders` is needed by both.
+Membership follows the folder, exactly as `Sources/OpenSky/` builds into the app alone.
+
+Only fixtures that need the app belong here: the fake world providers, the panel fakes,
+and the acceptance harnesses. A fixture that needs no app code goes in a
+`Tests/<Name>Testing/` library, so the package test targets can use it too
+(`Tests/AGENTS.md`).
 
 ## What belongs here
 
@@ -23,13 +26,10 @@ and `PexFixture`, live in the `Tests/Formats<Family>Testing/` libraries.
 A `@Test` in this folder would run in both bundles, so the same unit test would also execute
 under `make realtest-all`. Nothing enforces that, so it is a review point.
 
-That is why three types are split across the two folders: the fixture half of
-`CellSceneBuilderTests`, `CellStreamerTests` and `PapyrusWorldActivationTests` is declared
-here, and the suite's `@Test` methods live in extensions of the same type under
-`Tests/OpenSkyTests/`. The type name is deliberately unchanged, so no call site moved and no test
-identifier changed. When splitting another one, keep the declaration and the reusable members
-here, take the tests to `Tests/OpenSkyTests/`, and widen any `private` member the tests still
-reach — the two halves are no longer one file, so file-private no longer spans them.
+A suite that shares a fixture with other suites keeps its `@Test` methods in its own type,
+and the fixture is a separate type. Example: `CellStreamerTests` in `OpenSkyWorldTests`
+calls `CellStreamerFixture` in `OpenSkyWorldTesting`, and the acceptance chains call the
+same fixture.
 
 A type whose shared part is only constants does not need that treatment: give the constants
 their own namespace, as `M10AcceptanceClock` does, and leave the suite alone. Note that a

@@ -14,9 +14,11 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -217,7 +219,7 @@ extension M11AcceptanceRealDataTests {
         chain: M11ScriptedWorldChain,
         renderer: Renderer
     ) throws -> ProxyEvidence {
-        let cells = try CellSceneBuilderTests()
+        let cells = try CellSceneFixture()
         try cells.writeLooseFile("meshes/arch/solid.nif", cells.collisionRenderNIF())
         let plugin = M11ScriptedWorldChain.rebuildPlugin(cells)
         let authored = try cells.build(pluginData: plugin, gridX: 0, gridY: 0)

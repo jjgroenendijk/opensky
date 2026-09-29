@@ -33,6 +33,7 @@ import Metal
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyCombatTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

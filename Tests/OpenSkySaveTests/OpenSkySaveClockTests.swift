@@ -6,6 +6,7 @@
 @testable import FormatsCoreTesting
 import Foundation
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorldState
 import Testing
 

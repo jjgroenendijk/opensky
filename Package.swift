@@ -33,13 +33,12 @@ let testSettings = languageSettings + [ffmpegHeaders]
 /// modules never changes its isolation.
 let librarySettings = testSettings + [.defaultIsolation(MainActor.self)]
 
-/// The app and openskycli link ffmpeg through OTHER_LDFLAGS. A package test
-/// executable has no such setting, so the test targets link it here.
+/// CFFmpeg links the three ffmpeg dylibs, so every binary that uses it links them
+/// too. Their install names start with @rpath. The app finds them in its bundle and
+/// openskycli through its own runpath; a package test executable has neither, so the
+/// test targets add the vendored prefix to their runpath here.
 let testLinkerSettings: [LinkerSetting] = [
-    .unsafeFlags(["-L\(ffmpeg)/lib", "-Xlinker", "-rpath", "-Xlinker", "\(ffmpeg)/lib"]),
-    .linkedLibrary("avcodec"),
-    .linkedLibrary("avutil"),
-    .linkedLibrary("swresample")
+    .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "\(ffmpeg)/lib"])
 ]
 
 // MARK: - Module helpers
@@ -53,16 +52,25 @@ nonisolated(unsafe) var libraryTargets: [String] = []
 nonisolated(unsafe) var testingTargets: [String] = []
 
 /// Rejects a dependency on a module declared later (the same layer or above) and a
-/// dependency on another feature's implementation.
-func checked(_ module: String, _ dependencies: [String]) -> [Target.Dependency] {
+/// library's dependency on a testing library. Unless `implementations` is true, it
+/// also rejects a dependency on a feature's implementation.
+func checked(
+    _ module: String,
+    _ dependencies: [String],
+    implementations: Bool = false
+) -> [Target.Dependency] {
     for dependency in dependencies {
         precondition(
             declared.contains(dependency),
             "\(module) depends on \(dependency), which is not declared below it"
         )
         precondition(
-            !featureImplementations.contains(dependency),
+            implementations || !featureImplementations.contains(dependency),
             "\(module) depends on the feature implementation \(dependency); use its interface"
+        )
+        precondition(
+            implementations || !testingTargets.contains(dependency),
+            "\(module) depends on the testing library \(dependency); only tests may"
         )
     }
     return dependencies.map { .target(name: $0) }
@@ -97,11 +105,13 @@ func foundation(
     return [library, testTarget("\(name)Tests", dependencies: [name] + tests)]
 }
 
-/// Fakes and fixtures other modules' tests share: `Tests/<name>/`.
+/// Fakes and fixtures other modules' tests share: `Tests/<name>/`. Only tests link a
+/// testing library, so it may depend on feature implementations, its own and others'.
+/// It is declared above every implementation it builds.
 func testing(_ name: String, dependencies: [String]) -> [Target] {
     let target = Target.target(
         name: name,
-        dependencies: checked(name, dependencies),
+        dependencies: checked(name, dependencies, implementations: true),
         path: "Tests/\(name)",
         swiftSettings: testSettings
     )
@@ -179,6 +189,10 @@ func composition(_ name: String, dependencies: [String], tests: [String]? = nil)
             declared.contains(dependency),
             "\(name) depends on \(dependency), which is not declared below it"
         )
+        precondition(
+            !testingTargets.contains(dependency),
+            "\(name) depends on the testing library \(dependency); only tests may"
+        )
     }
     let library = Target.target(
         name: name,
@@ -199,8 +213,22 @@ let shaderTypes = Target.target(
     name: "OpenSkyShaderTypes",
     publicHeadersPath: "."
 )
-/// The vendored ffmpeg as a clang module (Sources/CFFmpeg/module.modulemap).
-let cffmpeg = Target.systemLibrary(name: "CFFmpeg")
+/// The vendored ffmpeg as a clang module (Sources/CFFmpeg/include/module.modulemap).
+/// A C target, not a system library: when a testing library shares OpenSkyAudio
+/// with the app, Xcode builds OpenSkyAudio as a dynamic framework, and a framework
+/// cannot depend on a system-library target ("missing target with GUID
+/// 'PACKAGE-TARGET:CFFmpeg'"). A framework also has to resolve every symbol when it
+/// links, so the target carries the ffmpeg link flags.
+let cffmpeg = Target.target(
+    name: "CFFmpeg",
+    cSettings: [.unsafeFlags(["-I\(ffmpeg)/include"])],
+    linkerSettings: [
+        .unsafeFlags(["-L\(ffmpeg)/lib"]),
+        .linkedLibrary("avcodec"),
+        .linkedLibrary("avutil"),
+        .linkedLibrary("swresample")
+    ]
+)
 declared += ["OpenSkyShaderTypes", "CFFmpeg"]
 
 var targets: [Target] = [shaderTypes, cffmpeg]
@@ -210,7 +238,9 @@ var targets: [Target] = [shaderTypes, cffmpeg]
 // Formats: a core of binary readers, compression, geometry values, archives and
 // string tables, then one module per format family. A family depends only on the
 // core, so a parser change rebuilds one family and the modules that use it.
-targets += foundation("OpenSkyFormatsCore", tests: ["FormatsCoreTesting"])
+targets += foundation("OpenSkyFormatsCore", tests: [
+    "FormatsCoreTesting"
+])
 targets += testing("FormatsCoreTesting", dependencies: ["OpenSkyFormatsCore"])
 /// The test target above names FormatsCoreTesting before the helper declares it;
 /// SwiftPM resolves target names lazily, so only the layering check needs the order.
@@ -238,14 +268,26 @@ targets += foundation(
         "OpenSkyFormatsSWF"
     ],
     tests: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM",
-        "FormatsCoreTesting", "FormatsESMTesting", "FormatsPEXTesting"
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "FormatsCoreTesting", "FormatsESMTesting",
+        "FormatsPEXTesting", "OpenSkyFormatsPEX",
+        "GameDataTesting",
+        "WorldStateTesting"
+    ]
+)
+targets += testing(
+    "GameDataTesting",
+    dependencies: [
+        "OpenSkyGameData", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
 targets += foundation(
     "OpenSkyBehavior",
     dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsAnimation", "OpenSkyGameData"],
-    tests: ["BehaviorTesting", "OpenSkyFormatsCore", "OpenSkyFormatsAnimation"]
+    tests: [
+        "BehaviorTesting", "OpenSkyFormatsCore", "OpenSkyFormatsAnimation", "FormatsMeshTesting",
+        "OpenSkyFormatsMesh"
+    ]
 )
 targets += testing(
     "BehaviorTesting",
@@ -261,7 +303,7 @@ targets += foundation(
     ],
     tests: [
         "PhysicsTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
-        "FormatsCoreTesting", "FormatsMeshTesting"
+        "FormatsCoreTesting", "FormatsMeshTesting", "FormatsESMTesting", "OpenSkyGameData"
     ]
 )
 targets += testing(
@@ -292,8 +334,8 @@ targets += foundation(
     ],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
-        "OpenSkyPhysics", "OpenSkyShaderTypes",
-        "FormatsCoreTesting", "FormatsESMTesting", "FormatsMeshTesting"
+        "OpenSkyPhysics", "OpenSkyShaderTypes", "FormatsCoreTesting", "FormatsESMTesting",
+        "FormatsMeshTesting", "OpenSkyFormatsSWF"
     ]
 )
 
@@ -302,6 +344,14 @@ targets += foundation(
     dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData"],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",
+        "FormatsCoreTesting", "FormatsESMTesting",
+        "WorldStateTesting"
+    ]
+)
+targets += testing(
+    "WorldStateTesting",
+    dependencies: [
+        "OpenSkyWorldState", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
@@ -325,13 +375,6 @@ targets += interface(
         "OpenSkyFormatsCore",
         "OpenSkyFormatsESM",
         "OpenSkyGameData",
-        "OpenSkyWorldState"
-    ]
-)
-targets += testing(
-    "OpenSkyWorldTesting",
-    dependencies: [
-        "OpenSkyWorldInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
         "OpenSkyWorldState"
     ]
 )
@@ -367,9 +410,7 @@ targets += feature(
         "OpenSkyConditions", "OpenSkyActorsInterface"
     ],
     testing: [
-        "OpenSkyFormatsESM",
-        "OpenSkyGameData",
-        "OpenSkyActorsInterface",
+        "OpenSkyFactions", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyActorsInterface",
         "FormatsESMTesting"
     ],
     tests: [
@@ -391,9 +432,10 @@ targets += feature(
     ],
     tests: [
         "OpenSkyProgressionInterface", "OpenSkyActors", "OpenSkyActorsInterface",
-        "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState", "OpenSkyConditions",
-        "FormatsCoreTesting", "FormatsESMTesting"
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyConditions", "FormatsCoreTesting", "FormatsESMTesting",
+        "OpenSkyMagicTesting",
+        "OpenSkyProgressionTesting"
     ]
 )
 targets += feature(
@@ -424,13 +466,12 @@ targets += feature(
         "OpenSkyConditions", "OpenSkyPhysics", "OpenSkyActorsInterface",
         "OpenSkyInventoryInterface"
     ],
-    testing: ["OpenSkyFormatsESM", "OpenSkyGameData", "FormatsCoreTesting", "FormatsESMTesting"],
     tests: [
-        "OpenSkyMagicInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
-        "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyPhysics", "OpenSkyActorsInterface",
-        "OpenSkyActors", "OpenSkyProgressionInterface", "OpenSkyInventoryInterface",
-        "OpenSkyInventory", "OpenSkyInventoryTesting", "OpenSkyPerceptionInterface",
-        "FormatsCoreTesting", "FormatsESMTesting"
+        "OpenSkyMagicTesting", "OpenSkyMagicInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyGameData", "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyPhysics",
+        "OpenSkyActorsInterface", "OpenSkyActors", "OpenSkyProgressionInterface",
+        "OpenSkyInventoryInterface", "OpenSkyInventory", "OpenSkyInventoryTesting",
+        "OpenSkyPerceptionInterface", "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
 
@@ -447,13 +488,16 @@ targets += feature(
         "OpenSkyInventoryInterface"
     ],
     testing: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
-        "OpenSkyFactionsInterface", "FormatsCoreTesting", "FormatsESMTesting"
+        "OpenSkyCrime", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyWorldState", "OpenSkyFactionsInterface", "OpenSkyInventoryInterface",
+        "FormatsCoreTesting", "FormatsESMTesting"
     ],
     tests: [
         "OpenSkyCrimeInterface", "OpenSkyActorsInterface", "OpenSkyFactionsInterface",
         "OpenSkyInventoryInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
-        "OpenSkyWorldState", "OpenSkyConditions", "FormatsCoreTesting", "FormatsESMTesting"
+        "OpenSkyWorldState", "OpenSkyConditions", "FormatsCoreTesting", "FormatsESMTesting",
+        "OpenSkyFactions",
+        "OpenSkyFactionsTesting"
     ]
 )
 targets += feature(
@@ -470,7 +514,17 @@ targets += feature(
         "OpenSkyInventoryInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
         "OpenSkyWorldState", "OpenSkyFactionsInterface", "OpenSkyCrimeInterface",
         "OpenSkyMagicInterface", "OpenSkyWorldInterface", "OpenSkyWorldTesting",
-        "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyPerceptionInterface"
+        "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyPerceptionInterface", "OpenSkyCrime",
+        "OpenSkyCrimeTesting"
+    ]
+)
+targets += testing(
+    "OpenSkyMagicTesting",
+    dependencies: [
+        "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyActors", "OpenSkyInventory",
+        "OpenSkyProgression", "OpenSkyProgressionInterface", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
 targets += feature(
@@ -493,7 +547,9 @@ targets += feature(
         "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyMagic",
         "OpenSkyMagicTesting", "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface",
         "OpenSkyWorldInterface", "OpenSkyShaderTypes", "FormatsCoreTesting", "FormatsESMTesting",
-        "BehaviorTesting", "PhysicsTesting"
+        "BehaviorTesting", "PhysicsTesting", "OpenSkyProgression",
+        "OpenSkyCombatTesting",
+        "OpenSkyProgressionTesting"
     ]
 )
 targets += feature(
@@ -508,7 +564,9 @@ targets += feature(
     ],
     tests: [
         "OpenSkyQuestsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
-        "OpenSkyWorldState", "OpenSkyConditions", "FormatsCoreTesting", "FormatsESMTesting"
+        "OpenSkyWorldState", "OpenSkyConditions", "FormatsCoreTesting", "FormatsESMTesting",
+        "GameDataTesting",
+        "WorldStateTesting"
     ]
 )
 targets += feature(
@@ -522,10 +580,9 @@ targets += feature(
         "OpenSkyConditions", "OpenSkyQuestsInterface"
     ],
     tests: [
-        "OpenSkyDialogueInterface",
-        "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM",
-        "OpenSkyGameData"
+        "OpenSkyDialogueInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyConditions", "OpenSkyWorldState",
+        "OpenSkyDialogueTesting", "OpenSkyWorldTesting"
     ]
 )
 targets += feature(
@@ -542,7 +599,14 @@ targets += feature(
     tests: [
         "OpenSkyScriptingInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyFormatsPEX", "OpenSkyGameData", "OpenSkyWorldState", "OpenSkyQuestsInterface",
-        "OpenSkyQuests", "FormatsESMTesting", "FormatsPEXTesting"
+        "OpenSkyQuests", "FormatsESMTesting", "FormatsPEXTesting", "OpenSkyActors",
+        "OpenSkyActorsInterface", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyCrime",
+        "OpenSkyCrimeInterface", "OpenSkyCrimeTesting", "OpenSkyFactions",
+        "OpenSkyFactionsInterface", "OpenSkyFactionsTesting", "OpenSkyInventory",
+        "OpenSkyInventoryInterface", "OpenSkyInventoryTesting", "OpenSkyMagic",
+        "OpenSkyMagicInterface", "OpenSkyPhysics", "OpenSkyProgression",
+        "OpenSkyProgressionInterface",
+        "OpenSkyCombatTesting", "OpenSkyProgressionTesting", "OpenSkyScriptingTesting"
     ]
 )
 
@@ -564,7 +628,61 @@ targets += feature(
         "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyShaderTypes",
         "FormatsCoreTesting", "FormatsESMTesting", "FormatsMeshTesting", "FormatsAnimationTesting",
-        "BehaviorTesting", "PhysicsTesting"
+        "BehaviorTesting", "PhysicsTesting", "FormatsAudioTesting", "FormatsPEXTesting",
+        "OpenSkyActors", "OpenSkyConditions", "OpenSkyCrimeTesting", "OpenSkyDialogue",
+        "OpenSkyFactionsTesting", "OpenSkyFormatsPEX", "OpenSkyMagic", "OpenSkyMagicTesting",
+        "OpenSkyPerception", "OpenSkyPerceptionInterface", "OpenSkyProgression", "OpenSkyQuests",
+        "OpenSkyScripting", "OpenSkyScriptingInterface",
+        "OpenSkyWorldTesting",
+        "GameDataTesting", "OpenSkyProgressionTesting", "WorldStateTesting",
+        "OpenSkyScriptingTesting"
+    ]
+)
+
+// Testing libraries that build the whole world, declared above OpenSkyWorld.
+targets += testing(
+    "OpenSkyWorldTesting",
+    dependencies: [
+        "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyConditions", "OpenSkyPhysics",
+        "OpenSkyRendering", "OpenSkyWorldState",
+        "OpenSkyAudio", "FormatsAudioTesting", "FormatsCoreTesting", "FormatsESMTesting",
+        "FormatsMeshTesting", "WorldStateTesting"
+    ]
+)
+targets += testing(
+    "OpenSkyProgressionTesting",
+    dependencies: [
+        "OpenSkyProgression", "OpenSkyActors", "OpenSkyWorld", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "FormatsCoreTesting", "FormatsESMTesting", "GameDataTesting", "OpenSkyMagicTesting"
+    ]
+)
+targets += testing(
+    "OpenSkyCombatTesting",
+    dependencies: [
+        "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyActors", "OpenSkyActorsInterface",
+        "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyProgressionInterface", "OpenSkyWorld",
+        "OpenSkyBehavior", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyPhysics", "OpenSkyWorldState", "PhysicsTesting", "OpenSkyMagicTesting"
+    ]
+)
+targets += testing(
+    "OpenSkyDialogueTesting",
+    dependencies: [
+        "OpenSkyDialogue", "OpenSkyDialogueInterface", "OpenSkyQuestsInterface", "OpenSkyWorld",
+        "OpenSkyConditions", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "FormatsESMTesting", "GameDataTesting", "OpenSkyWorldTesting"
+    ]
+)
+targets += testing(
+    "OpenSkyScriptingTesting",
+    dependencies: [
+        "OpenSkyScripting", "OpenSkyScriptingInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
+        "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsMesh", "OpenSkyFormatsPEX", "OpenSkyGameData", "OpenSkyPhysics",
+        "OpenSkyWorldState", "FormatsCoreTesting", "FormatsESMTesting", "FormatsPEXTesting",
+        "OpenSkyWorldTesting"
     ]
 )
 
@@ -581,7 +699,23 @@ targets += feature(
         "OpenSkyActorsInterface", "OpenSkyActors", "OpenSkyCrimeInterface",
         "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyProgressionInterface", "OpenSkyProgression", "OpenSkyQuestsInterface",
-        "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyPerceptionInterface"
+        "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyPerceptionInterface", "OpenSkyDialogue",
+        "OpenSkyDialogueInterface", "OpenSkyFactions", "OpenSkyFactionsTesting",
+        "OpenSkyFormatsPEX", "OpenSkyInventory", "OpenSkyInventoryTesting", "OpenSkyScripting",
+        "OpenSkyScriptingInterface", "OpenSkyWorld", "OpenSkyWorldInterface",
+        "OpenSkySaveTesting",
+        "OpenSkyScriptingTesting",
+        "OpenSkyMagicTesting", "OpenSkyProgressionTesting", "OpenSkyWorldTesting",
+        "WorldStateTesting",
+        "OpenSkyDialogueTesting"
+    ]
+)
+
+targets += testing(
+    "OpenSkySaveTesting",
+    dependencies: [
+        "OpenSkySave", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyWorldState"
     ]
 )
 
@@ -597,7 +731,9 @@ targets += feature(
         "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering",
         "OpenSkyWorldState", "OpenSkyInventoryInterface", "OpenSkyInventory",
         "OpenSkyInventoryTesting", "OpenSkyQuestsInterface", "OpenSkyQuests", "OpenSkyShaderTypes",
-        "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyPerceptionInterface"
+        "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyPerceptionInterface", "OpenSkyActors",
+        "OpenSkyWorldInterface",
+        "GameDataTesting"
     ]
 )
 
@@ -610,7 +746,8 @@ targets += composition(
     ],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering",
-        "FormatsCoreTesting", "FormatsESMTesting"
+        "FormatsCoreTesting", "FormatsESMTesting",
+        "GameDataTesting"
     ]
 )
 

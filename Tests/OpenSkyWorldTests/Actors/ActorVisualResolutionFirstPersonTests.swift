@@ -4,6 +4,7 @@
 import FormatsESMTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import Testing
 
 struct ArmorAddonFirstPersonModelTests {

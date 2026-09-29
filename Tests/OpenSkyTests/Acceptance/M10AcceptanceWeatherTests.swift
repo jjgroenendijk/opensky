@@ -29,6 +29,7 @@ import Foundation
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing
+import WorldStateTesting
 
 extension M10AcceptanceTests {
     // MARK: Step 8 — weather transitions fire from real elapsed game hours

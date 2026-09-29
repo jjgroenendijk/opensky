@@ -12,10 +12,29 @@ and `OpenSkyRealDataTests`.
 - Declarations that tests use are `public`. A struct a test builds has an explicit
   `public init(...)`.
 - A library may `@testable import` the module it builds fixtures for, and import the
-  modules and testing libraries below it. `Package.swift` lists what it may import; any
-  other import fails the build.
-- A helper that needs a higher module is an extension in the test target that needs it,
-  for example `SpellStoreFixture+Store.swift` in `Tests/OpenSkyGameDataTests/`.
+  modules and testing libraries below it. It may also import feature implementations,
+  because only tests link it. `Package.swift` lists what it may import; any other import
+  fails the build. It is declared after every implementation it builds.
+- A fixture that a package test target and `OpenSkyTests` or `OpenSkyRealDataTests` both
+  need goes in a library, never in two copies.
+- A byte builder goes in the lowest library that can build it. A helper that wraps the bytes
+  in a higher store is an extension in a higher library, for example
+  `DialogueFixture+Store.swift` in `GameDataTesting` over `DialogueFixture` in
+  `FormatsESMTesting`.
 - A library holds no `@Test`. Put tests in the test target of the module they test.
 - Fixtures are synthetic and built in code, never an extracted game file (root
   `AGENTS.md`, Legal & IP boundary).
+
+## Where a suite goes
+
+A suite goes in the package test target of the highest module it imports, in the order
+`Package.swift` declares them. Example: a record test that imports `OpenSkyFormatsESM` and
+`OpenSkyGameData` goes in `OpenSkyGameDataTests`.
+
+A suite stays in `OpenSkyTests` when it needs something a package test target cannot
+have:
+
+- the app module (`@testable import OpenSky`),
+- a `Renderer`, which loads its shaders from the app bundle (`swift test` cannot compile
+  `Shaders.metal`),
+- an acceptance chain in `Tests/OpenSkyTests/Acceptance/`.

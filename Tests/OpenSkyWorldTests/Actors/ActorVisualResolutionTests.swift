@@ -7,6 +7,7 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import Testing
 
 struct ActorVisualResolutionTests {

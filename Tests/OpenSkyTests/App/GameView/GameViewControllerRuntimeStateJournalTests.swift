@@ -12,11 +12,13 @@
 // no renderer, no game data.
 
 import AppKit
+import FormatsESMTesting
 @testable import OpenSky
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing
+import WorldStateTesting
 
 struct GameViewControllerRuntimeStateJournalTests {
     @Test @MainActor

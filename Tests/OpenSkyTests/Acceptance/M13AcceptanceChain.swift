@@ -32,9 +32,11 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -117,7 +119,7 @@ struct M13AcceptanceChain {
             store: session.worldState,
             quests: QuestStore(quests: [quest], resolver: PapyrusWorldFixture.resolver)
         )
-        streamer = CellStreamerTests.makeStreamer(runner: runner, radius: 0)
+        streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
         // From here on the streamer answers every world lookup, so cell
         // attribution is the engine's answer rather than the fixture's.
         session.bridge.references = streamer
@@ -176,12 +178,12 @@ struct M13AcceptanceChain {
     /// updates because the first one publishes the target and the second one
     /// activates it, exactly as a held key produces two frames.
     func pressUseKey() {
-        let ray = CellStreamerTests.interactionRay(
-            from: CellStreamerTests.center, to: Self.leverTarget
+        let ray = CellStreamerFixture.interactionRay(
+            from: CellStreamerFixture.center, to: Self.leverTarget
         )
-        streamer.update(cameraPosition: CellStreamerTests.center, interactionRay: ray)
+        streamer.update(cameraPosition: CellStreamerFixture.center, interactionRay: ray)
         streamer.update(
-            cameraPosition: CellStreamerTests.center, interactionRay: ray, activate: true
+            cameraPosition: CellStreamerFixture.center, interactionRay: ray, activate: true
         )
         PapyrusWorldFixture.drain(session.world)
     }
@@ -207,13 +209,13 @@ struct M13AcceptanceChain {
     /// Completes the one cell build the streamer asks for, with the lever
     /// carrying an `activate` interaction and a collision shape to raycast at.
     private func integrateCell() {
-        let lever = PapyrusWorldActivationTests.interaction(
+        let lever = PapyrusWorldActivationFixture.interaction(
             reference: Self.leverObjectID, action: .activate
         )
-        streamer.update(cameraPosition: CellStreamerTests.center)
+        streamer.update(cameraPosition: CellStreamerFixture.center)
         runner.complete(
-            CellStreamerTests.coordinate(0, 0),
-            with: .success(CellStreamerTests.cellScene(
+            CellStreamerFixture.coordinate(0, 0),
+            with: .success(CellStreamerFixture.cellScene(
                 location: Self.cell,
                 interactions: [lever.reference: lever],
                 staticCollision: Self.leverCollision,
@@ -225,7 +227,7 @@ struct M13AcceptanceChain {
     /// Where the lever's collision shape sits, a short walk from the camera so
     /// the view ray reaches it.
     private static var leverTarget: SIMD3<Float> {
-        CellStreamerTests.center + SIMD3<Float>(10, 0, 0)
+        CellStreamerFixture.center + SIMD3<Float>(10, 0, 0)
     }
 
     private static var leverCollision: StaticCollisionSet {

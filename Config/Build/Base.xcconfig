@@ -28,7 +28,7 @@ COMPILATION_CACHE_ENABLE_CACHING = YES
 // The vendored decode-only ffmpeg (make ffmpeg). The package declares its clang module,
 // CFFmpeg, but a target that imports an engine module also loads CFFmpeg, and the
 // headers it wraps are found through this search path.
-SWIFT_INCLUDE_PATHS = $(inherited) $(SRCROOT)/Sources/CFFmpeg $(SRCROOT)/.vendor/ffmpeg/include
+SWIFT_INCLUDE_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/include
 
 // Versioning and product naming, identical for every target.
 CURRENT_PROJECT_VERSION = 1

@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyProgression
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyWorldState
 import Testing
 

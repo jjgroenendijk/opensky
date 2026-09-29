@@ -29,10 +29,12 @@ import Foundation
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
+import OpenSkySaveTesting
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 struct M13AcceptanceRealDataTests {

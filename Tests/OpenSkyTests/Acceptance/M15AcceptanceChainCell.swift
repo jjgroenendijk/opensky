@@ -12,6 +12,7 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 
 @MainActor
@@ -40,7 +41,7 @@ extension M15AcceptanceChain {
     }
 
     static func scene(_ coordinate: CellCoordinate) -> CellScene {
-        CellStreamerTests.cellScene(
+        CellStreamerFixture.cellScene(
             location: .exterior(coordinate),
             staticCollision: StaticCollisionSet(
                 location: .exterior(coordinate),

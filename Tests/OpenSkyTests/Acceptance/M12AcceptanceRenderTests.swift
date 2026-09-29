@@ -25,6 +25,7 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -60,9 +61,9 @@ struct M12AcceptanceRenderTests {
     /// count changed" but "the taken cell is byte-identical to a cell that
     /// never held the item, and the dropped one is byte-identical to a cell
     /// whose plugin placed it".
-    @Test(.enabled(if: CellSceneBuilderTests.hasDevice))
+    @Test(.enabled(if: CellSceneFixture.hasDevice))
     func takingRemovesTheItemsPixelsAndDroppingPutsThemBack() throws {
-        let cells = try CellSceneBuilderTests()
+        let cells = try CellSceneFixture()
         try cells.writeLooseFile("meshes/\(Self.itemModel)", Self.triangleNIF(cells))
         let authored = Self.itemPlugin(cells)
         // The same plugin with no placed reference at all, so everything drawn
@@ -118,9 +119,9 @@ struct M12AcceptanceRenderTests {
     /// build path runs, the runtime set is honoured, and the frame comes back
     /// byte-identical to the untouched actor's — so the delta above is the
     /// piece that changed, not the rebuild itself.
-    @Test(.enabled(if: CellSceneBuilderTests.hasDevice))
+    @Test(.enabled(if: CellSceneFixture.hasDevice))
     func theEquippedActorsSilhouetteChanges() throws {
-        let cells = try CellSceneBuilderTests()
+        let cells = try CellSceneFixture()
         try cells.writeLooseFile("meshes/cuirass_m.nif", Self.triangleNIF(cells))
         try cells.writeLooseFile(
             "meshes/robes_m.nif", Self.triangleNIF(cells, halfWidth: 220, height: 320)
@@ -165,7 +166,7 @@ struct M12AcceptanceRenderTests {
     private static let minimumChangedPixels = 500
 
     private static func pixels(of scene: CellScene) throws -> [UInt8] {
-        let device = try #require(CellSceneBuilderTests.device)
+        let device = try #require(CellSceneFixture.device)
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height), device: device
         )
@@ -199,7 +200,7 @@ struct M12AcceptanceRenderTests {
     /// need the base either way: a spawned object resolves its model through
     /// the same index an authored reference does.
     private static func itemPlugin(
-        _ cells: CellSceneBuilderTests,
+        _ cells: CellSceneFixture,
         placed: Bool = true
     ) -> Data {
         cells.plugin(
@@ -219,21 +220,21 @@ struct M12AcceptanceRenderTests {
 
     /// One upright triangle in the XZ plane, sized in game units.
     ///
-    /// `CellSceneBuilderTests.unitNIF` is one unit across, which sits inside
+    /// `CellSceneFixture.unitNIF` is one unit across, which sits inside
     /// the renderer's ten-unit near plane from any camera close enough to see
     /// it. Every model here is built at Skyrim scale instead, and the equip
     /// case gives its two body pieces different sizes so swapping one for the
     /// other is a change in shape rather than only in which asset loaded.
     private static func triangleNIF(
-        _ cells: CellSceneBuilderTests,
+        _ cells: CellSceneFixture,
         halfWidth: Float = 120,
         height: Float = 180
     ) -> Data {
         NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1])),
             .init("BSTriShape", NIFFixture.bsTriShape(
-                attributes: CellSceneBuilderTests.staticAttributes,
-                strideDwords: CellSceneBuilderTests.staticStrideDwords,
+                attributes: CellSceneFixture.staticAttributes,
+                strideDwords: CellSceneFixture.staticStrideDwords,
                 vertexRecords: [
                     SIMD3<Float>(-halfWidth, 0, 0),
                     SIMD3<Float>(halfWidth, 0, 0),

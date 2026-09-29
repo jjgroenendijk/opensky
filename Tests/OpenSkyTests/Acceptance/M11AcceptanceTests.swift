@@ -5,6 +5,7 @@ import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyScriptingTesting
 import Testing
 
 struct M11AcceptanceTests {

@@ -24,6 +24,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -96,7 +97,7 @@ struct WorldAudioTransitionAcceptanceTests {
             )
             sound = soundDirector
             music = musicDirector
-            streamer = CellStreamerTests.makeStreamer(runner: runner)
+            streamer = CellStreamerFixture.makeStreamer(runner: runner)
             // Exactly the three subscriptions the game controller makes.
             streamer.onAmbienceContextChanged = { soundDirector.handleAmbienceContext($0) }
             streamer.onMusicContextChanged = { musicDirector.handleMusicContext($0) }
@@ -106,11 +107,11 @@ struct WorldAudioTransitionAcceptanceTests {
         /// Step 1: the center cell arrives carrying one region and one cell
         /// music type, so the bed starts and the exploration playlist plays.
         func arriveInTheExterior() throws {
-            streamer.update(cameraPosition: CellStreamerTests.center)
+            streamer.update(cameraPosition: CellStreamerFixture.center)
             runner.complete(
-                CellStreamerTests.coordinate(0, 0), with: .success(Self.exteriorScene)
+                CellStreamerFixture.coordinate(0, 0), with: .success(Self.exteriorScene)
             )
-            streamer.update(cameraPosition: CellStreamerTests.center)
+            streamer.update(cameraPosition: CellStreamerFixture.center)
 
             #expect(sound.currentAmbienceDescription != "none")
             #expect(ambienceNames == ["sound\\fx\\amb\\exterior.xwm"])
@@ -185,73 +186,19 @@ struct WorldAudioTransitionAcceptanceTests {
         }
 
         private static var exteriorScene: CellScene {
-            CellStreamerTests.cellScene(
-                location: .exterior(CellStreamerTests.coordinate(0, 0)),
+            CellStreamerFixture.cellScene(
+                location: .exterior(CellStreamerFixture.coordinate(0, 0)),
                 regions: [FormID(exteriorRegion)],
                 musicType: explorationMusic
             )
         }
 
         private static var interiorScene: CellScene {
-            CellStreamerTests.cellScene(
+            CellStreamerFixture.cellScene(
                 location: .interior(interiorCell),
                 acousticSpace: FormID(interiorAcousticSpace),
                 musicType: interiorMusic
             )
-        }
-    }
-}
-
-/// Synthetic plugins this suite needs beyond the shared audio fixtures: a
-/// multi-descriptor SNDR store and a one-record ASPC store.
-@MainActor
-enum TransitionAudioFixture {
-    /// One SNDR per entry, each naming a single ANAM track. Sound references
-    /// resolve straight to SNDR (`resolveAny`), which is what vanilla door and
-    /// region records do.
-    static func makeSoundStore(descriptors: [(id: UInt32, track: String)]) -> SoundRecordStore {
-        let categoryID: UInt32 = 0xB00
-        var bytes = Data()
-        for descriptor in descriptors {
-            let fields = ESMFixture.field("GNAM", uint32(categoryID))
-                + ESMFixture.field("ANAM", ESMFixture.zstring(descriptor.track))
-            bytes += ESMFixture.record("SNDR", formID: descriptor.id, data: fields)
-        }
-        let category = ESMFixture.field(
-            "EDID", ESMFixture.zstring(AudioCategory.effects.soundCategoryEditorID)
-        ) + ESMFixture.field("FNAM", uint32(2))
-        let plugin = ESMFixture.tes4()
-            + ESMFixture.topGroup("SNDR", contents: bytes)
-            + ESMFixture.topGroup(
-                "SNCT",
-                contents: ESMFixture.record("SNCT", formID: categoryID, data: category)
-            )
-        do {
-            return try SoundRecordStore(file: ESMFile(data: plugin))
-        } catch {
-            preconditionFailure("synthetic fixture failed: \(error)")
-        }
-    }
-
-    private static func uint32(_ value: UInt32) -> Data {
-        var data = Data()
-        data.appendUInt32(value)
-        return data
-    }
-
-    /// One ASPC whose SNAM names the interior's direct ambient sound.
-    static func makeAcousticSpaceStore(id: UInt32, ambientSound: UInt32) -> AcousticSpaceStore {
-        var snam = Data()
-        snam.appendUInt32(ambientSound)
-        let fields = ESMFixture.field("EDID", ESMFixture.zstring("Aspc\(id)"))
-            + ESMFixture.field("SNAM", snam)
-        let plugin = ESMFixture.tes4() + ESMFixture.topGroup(
-            "ASPC", contents: ESMFixture.record("ASPC", formID: id, data: fields)
-        )
-        do {
-            return try AcousticSpaceStore(file: ESMFile(data: plugin))
-        } catch {
-            preconditionFailure("synthetic fixture failed: \(error)")
         }
     }
 }

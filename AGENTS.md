@@ -119,7 +119,7 @@ Sources/
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
 Tests/
-  OpenSkyTests/         synthetic suites for the app and for code that needs many modules
+  OpenSkyTests/         synthetic suites for the app, acceptance chains, and renderer suites
   OpenSkyFormats*Tests/ package test targets: synthetic suites, one per format module
   OpenSkyGameDataTests/ package test target: synthetic suites for OpenSkyGameData
   OpenSkyBehaviorTests/ package test target: synthetic suites for OpenSkyBehavior
@@ -145,14 +145,13 @@ Tests/
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
+  GameDataTesting/      package library: record store helpers over the byte fixtures
+  WorldStateTesting/    package library: global store helper
   BehaviorTesting/      package library: behavior graph fixtures
   PhysicsTesting/       package library: collision scene and ragdoll fixtures
-  OpenSkyCrimeTesting/  package library: crime fixtures
-  OpenSkyInventoryTesting/ package library: inventory baseline plugin fixture
-  OpenSkyWorldTesting/  package library: fake reference source
-  OpenSkyMagicTesting/  package library: active effect plugin fixture
-  OpenSkyFactionsTesting/ package library: faction and hostility fixtures
-  OpenSkyPerceptionTesting/ package library: perception world fake and fixtures
+  OpenSky*Testing/      package libraries, one per feature: fakes and fixtures, may build
+                        the feature implementation (Crime, Inventory, Magic, Factions,
+                        Perception, Progression, Combat, Dialogue, Scripting, World, Save)
   OpenSkyUITests/       XCUITest smoke tests
 ```
 
