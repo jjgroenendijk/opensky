@@ -49,11 +49,12 @@ extension Renderer {
 
     public static func makeWorldOverlayResources(
         device: MTLDevice,
-        view: MTKView
+        view: MTKView,
+        library: MTLLibrary
     ) throws -> WorldOverlayResources {
         let verticesPerSlot = worldOverlayPrimitiveBudget * 3
         return try WorldOverlayResources(
-            pipeline: makeWorldOverlayPipeline(device: device, view: view),
+            pipeline: makeWorldOverlayPipeline(device: device, view: view, library: library),
             depthState: makeWorldOverlayDepthState(device: device),
             vertexBuffer: makeUniformBuffer(
                 device: device,
@@ -65,11 +66,9 @@ extension Renderer {
 
     private static func makeWorldOverlayPipeline(
         device: MTLDevice,
-        view: MTKView
+        view: MTKView,
+        library: MTLLibrary
     ) throws -> MTLRenderPipelineState {
-        guard let library = device.makeDefaultLibrary() else {
-            throw RendererError.defaultLibraryMissing
-        }
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library

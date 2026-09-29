@@ -12,16 +12,20 @@ extension Renderer {
     /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
     /// `input` nil -> static seeded pose (offscreen/tests). The app passes a
     /// built cell scene + `SceneCamera.framing(bounds:)` + a shared
-    /// `CameraInputState` for free-fly (todo 2.8).
+    /// `CameraInputState` for free-fly (todo 2.8). `shaderLibrary` nil -> the
+    /// bundled `default.metallib`, as in `init(rendering:)`.
     public convenience init(
         view: MTKView,
         scene: RenderScene? = nil,
         camera: SceneCamera? = nil,
         input: CameraInputState? = nil,
         timeOfDay: Float = Renderer.defaultTimeOfDay,
-        movementConfiguration: PlayerMovementConfiguration = .synthetic
+        movementConfiguration: PlayerMovementConfiguration = .synthetic,
+        shaderLibrary: MTLLibrary? = nil
     ) throws {
-        try self.init(rendering: view, scene: scene, camera: camera)
+        try self.init(
+            rendering: view, scene: scene, camera: camera, shaderLibrary: shaderLibrary
+        )
         frameDriver = GameSession(
             renderer: self,
             input: input,

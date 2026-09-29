@@ -28,7 +28,11 @@ extension Renderer {
     /// 256-byte-aligned per-frame UIFrameUniforms slot.
     public static let alignedUIUniformsSize = (MemoryLayout<UIFrameUniforms>.size + 0xFF) & -0x100
 
-    public static func makeUIResources(device: MTLDevice, view: MTKView) throws -> UIResources {
+    public static func makeUIResources(
+        device: MTLDevice,
+        view: MTKView,
+        library: MTLLibrary
+    ) throws -> UIResources {
         let atlas = UIGlyphAtlas()
         let vertexCapacity = uiQuadBudget * UIDrawList.verticesPerQuad * maxFramesInFlight
         let vertexBuffer = try makeUniformBuffer(
@@ -42,7 +46,7 @@ extension Renderer {
             label: "UIFrameUniforms"
         )
         return try UIResources(
-            pipeline: makeUIPipeline(device: device, view: view),
+            pipeline: makeUIPipeline(device: device, view: view, library: library),
             depthState: makeUIDepthState(device: device),
             sampler: makeUISampler(device: device),
             atlasTexture: makeUIAtlasTexture(device: device, atlas: atlas),
@@ -54,11 +58,9 @@ extension Renderer {
 
     private static func makeUIPipeline(
         device: MTLDevice,
-        view: MTKView
+        view: MTKView,
+        library: MTLLibrary
     ) throws -> MTLRenderPipelineState {
-        guard let library = device.makeDefaultLibrary() else {
-            throw RendererError.defaultLibraryMissing
-        }
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library

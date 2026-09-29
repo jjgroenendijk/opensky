@@ -233,13 +233,16 @@ public final class Renderer: NSObject {
     /// idle/off frames.
     public var lastShadowDrawStats = ShadowDrawStats()
 
-    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera.
+    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
+    /// `shaderLibrary` nil -> the `default.metallib` of the app or openskycli
+    /// bundle. A package test passes the library its fixture loads instead.
     /// This builds the GPU half only; `Renderer(view:)` in the engine also
     /// attaches the game session that drives each frame.
     public init(
         rendering view: MTKView,
         scene: RenderScene? = nil,
-        camera: SceneCamera? = nil
+        camera: SceneCamera? = nil,
+        shaderLibrary: MTLLibrary? = nil
     ) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         self.device = device
@@ -260,7 +263,8 @@ public final class Renderer: NSObject {
 
         Self.configure(view: view)
 
-        let pipelines = try Self.makePipelines(device: device, view: view)
+        let library = try shaderLibrary ?? Self.makeBundledShaderLibrary(device: device)
+        let pipelines = try Self.makePipelines(device: device, view: view, library: library)
         (skyPipeline, opaquePipeline) = (pipelines.sky, pipelines.opaque)
         (alphaTestPipeline, skinnedOpaquePipeline) = (
             pipelines.alphaTest, pipelines.skinnedOpaque
@@ -275,7 +279,7 @@ public final class Renderer: NSObject {
         waterDepthState = try Self.makeWaterDepthState(device: device)
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =
-            try Self.makeAuxiliaryResources(device: device, view: view)
+            try Self.makeAuxiliaryResources(device: device, view: view, library: library)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         let resolvedCamera = camera ?? .demo
