@@ -55,7 +55,6 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyPerceptionInterface
 
 nonisolated extension ConditionFunctions {
     public static func installFaction(_ registry: inout ConditionFunctionRegistry) {
