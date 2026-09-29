@@ -552,4 +552,10 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
         defer { lock.unlock() }
         return buildMetrics
     }
+
+    /// Blocks until every job queued so far has run. Tests use it instead of
+    /// a fixed sleep. Never call it on the build queue.
+    public func waitUntilIdle() {
+        queue.sync {}
+    }
 }
