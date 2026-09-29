@@ -213,6 +213,7 @@ struct VoiceRealDataTests {
                 try Self.render(engine, seconds: declared / 8)
             }
             peak = max(peak, slice)
+            // Kept: gives the real-time decode queue time to refill buffers.
             try await Task.sleep(for: .milliseconds(20))
             if let position = await engine.playbackPosition(ofSource: playback.sourceID) {
                 readings.append(position)

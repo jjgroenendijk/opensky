@@ -96,10 +96,7 @@ struct M12AcceptanceBudgetTests {
     ) throws -> SerialCellBuildRunner {
         let runner = SerialCellBuildRunner(provider: BudgetCellProvider(mutate: mutate))
         runner.enqueue(CellCoordinate(x: 6, y: -2), state: .empty)
-        let deadline = Date().addingTimeInterval(5)
-        while Date() < deadline, runner.drainCompleted().isEmpty {
-            Thread.sleep(forTimeInterval: 0.01)
-        }
+        runner.waitUntilIdle()
         return runner
     }
 

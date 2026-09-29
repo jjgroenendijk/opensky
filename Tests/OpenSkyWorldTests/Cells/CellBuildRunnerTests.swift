@@ -1,8 +1,6 @@
-// SerialCellBuildRunner behaviour (todo 3.2 memory safeguards): the serial
-// executor dedupes enqueues (queue depth bounded by grid size -- defence
-// against the 30 GB runaway) and routes eviction through the same queue so the
-// libraries stay confined. Driven with a fake provider + a gate, no Metal, no
-// game data.
+// SerialCellBuildRunner: dedupes enqueues and routes eviction through the
+// build queue. Uses a fake provider and a gate, so no Metal and no game data.
+// `waitUntilIdle()` flushes the queue, so no test waits a fixed time.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -105,18 +103,6 @@ struct CellBuildRunnerTests {
         CellCoordinate(x: x, y: y)
     }
 
-    /// Waits (bounded) for `condition`, pumping the runloop-free deadline.
-    private func waitUntil(_ timeout: TimeInterval = 5, _ condition: () -> Bool) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if condition() {
-                return true
-            }
-            Thread.sleep(forTimeInterval: 0.005)
-        }
-        return condition()
-    }
-
     @Test
     func enqueueDedupesWhileACellIsInFlight() {
         let gate = DispatchSemaphore(value: 0)
@@ -132,11 +118,7 @@ struct CellBuildRunnerTests {
         runner.enqueue(cell, state: .empty) // deduped
         gate.signal() // release the single build
 
-        #expect(waitUntil {
-            runner.drainCompleted().isEmpty == false || provider.buildCount(cell) == 1
-        })
-        // Give any erroneous extra builds a chance to run, then assert one.
-        Thread.sleep(forTimeInterval: 0.05)
+        runner.waitUntilIdle()
         #expect(provider.buildCount(cell) == 1, "enqueue did not dedupe")
     }
 
@@ -147,10 +129,12 @@ struct CellBuildRunnerTests {
         let cell = coordinate(0, 0)
 
         runner.enqueue(cell, state: .empty)
-        #expect(waitUntil { runner.drainCompleted().isEmpty == false })
+        runner.waitUntilIdle()
+        #expect(runner.drainCompleted().count == 1)
         // No longer pending -> a fresh enqueue rebuilds (e.g. after unload).
         runner.enqueue(cell, state: .empty)
-        #expect(waitUntil { provider.buildCount(cell) == 2 })
+        runner.waitUntilIdle()
+        #expect(provider.buildCount(cell) == 2)
     }
 
     @Test
@@ -160,10 +144,9 @@ struct CellBuildRunnerTests {
         let cell = coordinate(2, 3)
 
         runner.enqueue(cell, state: .empty)
-        #expect(waitUntil { provider.buildCount(cell) == 1 })
-        Thread.sleep(forTimeInterval: 0.05) // completion now buffered
+        runner.waitUntilIdle() // completion now buffered
         runner.enqueue(cell, state: .empty)
-        Thread.sleep(forTimeInterval: 0.05)
+        runner.waitUntilIdle()
 
         #expect(provider.buildCount(cell) == 1)
         #expect(runner.drainCompleted().count == 1)
@@ -174,7 +157,8 @@ struct CellBuildRunnerTests {
         let provider = FakeProvider()
         let runner = SerialCellBuildRunner(provider: provider)
         runner.enqueueEviction(droppingMeshKeys: ["m1"], droppingTextureKeys: ["t1", "t2"])
-        #expect(waitUntil { provider.evictionCount == 1 })
+        runner.waitUntilIdle()
+        #expect(provider.evictionCount == 1)
         #expect(provider.lastEviction?.mesh == ["m1"])
         #expect(provider.lastEviction?.texture == ["t1", "t2"])
     }
@@ -184,7 +168,7 @@ struct CellBuildRunnerTests {
         let provider = FakeProvider()
         let runner = SerialCellBuildRunner(provider: provider)
         runner.enqueueEviction(droppingMeshKeys: [], droppingTextureKeys: [])
-        Thread.sleep(forTimeInterval: 0.05)
+        runner.waitUntilIdle()
         #expect(provider.evictionCount == 0)
     }
 
@@ -213,7 +197,8 @@ struct CellBuildRunnerTests {
         let cell = coordinate(6, -2)
 
         runner.enqueue(cell, state: .empty)
-        #expect(waitUntil { !runner.drainCompleted().isEmpty })
+        runner.waitUntilIdle()
+        #expect(runner.drainCompleted().count == 1)
         let metric = runner.buildMetricsSnapshot()[cell]
         #expect(metric?.collisionDurationMS == 4.25)
         #expect(metric?.collisionShapeCount == 1)
@@ -223,7 +208,8 @@ struct CellBuildRunnerTests {
             droppingMeshKeys: ["meshes\\arch\\solid.nif"],
             droppingTextureKeys: []
         )
-        #expect(waitUntil { provider.evictionCount == 1 })
+        runner.waitUntilIdle()
+        #expect(provider.evictionCount == 1)
         #expect(provider.lastEviction?.mesh == ["meshes\\arch\\solid.nif"])
     }
 
@@ -245,7 +231,8 @@ struct CellBuildRunnerTests {
         let cell = coordinate(6, -2)
 
         runner.enqueue(cell, state: .empty)
-        #expect(waitUntil { !runner.drainCompleted().isEmpty })
+        runner.waitUntilIdle()
+        #expect(runner.drainCompleted().count == 1)
         let metric = runner.buildMetricsSnapshot()[cell]
         #expect(metric?.actorDiscoveredCount == 3)
         #expect(metric?.actorRenderedCount == 1)

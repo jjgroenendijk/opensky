@@ -110,11 +110,14 @@ struct WorldAudioEngineClockTests {
         engine.onSourceFinished = { finished.append($0) }
         let id = try startTone(on: engine)
         try render(engine, frames: Int(Self.toneSeconds * Self.sampleRate) + 8192)
-        // The player node's completion handler fires on an AVFAudio-internal
-        // thread and hops to the main actor to set `bufferFinished`, so the
-        // test has to suspend — not spin — before ticking the engine that
-        // reads that flag.
-        try await Task.sleep(for: .milliseconds(100))
+        // The completion handler hops to the main actor to set
+        // `bufferFinished`. Suspend until it has, not for a fixed time.
+        let source = try #require(engine.sources.first { $0.id == id })
+        let deadline = ContinuousClock.now + .seconds(10)
+        while !source.bufferFinished, ContinuousClock.now < deadline {
+            await Task.yield()
+        }
+        try #require(source.bufferFinished, "completion handler never ran")
         engine.tick(listenerCell: CellCoordinate(x: 0, y: 0))
         #expect(finished == [id])
         engine.tick(listenerCell: CellCoordinate(x: 0, y: 0))

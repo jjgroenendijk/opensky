@@ -262,7 +262,7 @@ final class OpenSkyUITests: OpenSkyUITestCase {
     func testCapturesRenderedFrame() throws {
         let app = try launchApp()
         let window = app.windows.firstMatch
-        // Let the render loop present a few frames before capturing.
+        // Kept: let the render loop present a few frames before capturing.
         Thread.sleep(forTimeInterval: 2)
         let screenshot = window.screenshot()
         let url = FileManager.default.temporaryDirectory
@@ -284,6 +284,8 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         let window = app.windows.firstMatch
         let worldFrame = window.frame
 
+        // Kept: the capture needs streamed cells on screen, and no UI element
+        // reports that.
         Thread.sleep(forTimeInterval: 5)
         try write(window.screenshot(), name: "app-world.png")
 
@@ -292,6 +294,7 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertTrue(table.waitForExistence(timeout: 5))
         XCTAssertTrue(table.tableRows.firstMatch.waitForExistence(timeout: 30))
         table.tableRows.firstMatch.click()
+        // Kept: the preview renders with no UI element to wait on.
         Thread.sleep(forTimeInterval: 3)
         XCTAssertEqual(window.frame.width, worldFrame.width, accuracy: 1)
         XCTAssertEqual(window.frame.height, worldFrame.height, accuracy: 1)
