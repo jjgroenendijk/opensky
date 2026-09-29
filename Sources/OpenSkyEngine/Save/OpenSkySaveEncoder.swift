@@ -10,6 +10,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 nonisolated public enum OpenSkySaveEncoder: Sendable {

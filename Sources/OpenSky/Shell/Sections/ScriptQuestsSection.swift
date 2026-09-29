@@ -10,6 +10,8 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 
 final class ScriptQuestsSection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

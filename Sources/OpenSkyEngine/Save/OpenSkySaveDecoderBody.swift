@@ -13,6 +13,7 @@
 // `private` nested type is invisible across files.
 
 import Foundation
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveDecoder {

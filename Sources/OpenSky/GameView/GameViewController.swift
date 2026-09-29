@@ -8,6 +8,8 @@ import OpenSkyAudio
 import OpenSkyEngine
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import OSLog
 import simd

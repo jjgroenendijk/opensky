@@ -33,6 +33,8 @@ import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 /// Faction state the controller owns. Extensions cannot add stored properties,

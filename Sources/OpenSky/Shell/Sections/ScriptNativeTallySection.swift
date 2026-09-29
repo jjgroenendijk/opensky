@@ -9,6 +9,8 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 
 final class ScriptNativeTallySection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

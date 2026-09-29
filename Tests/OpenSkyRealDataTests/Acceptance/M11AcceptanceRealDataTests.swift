@@ -13,6 +13,8 @@ import MetalKit
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+@testable import OpenSkyScripting
+@testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd

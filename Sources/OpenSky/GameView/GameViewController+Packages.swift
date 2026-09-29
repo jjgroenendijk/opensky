@@ -7,6 +7,8 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyRendering
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 struct PackageBridgeState {

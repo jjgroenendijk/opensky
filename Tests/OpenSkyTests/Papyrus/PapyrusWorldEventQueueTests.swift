@@ -5,6 +5,8 @@
 @testable import FormatsESMTesting
 import Foundation
 @testable import OpenSkyEngine
+@testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import Testing
 
 @MainActor

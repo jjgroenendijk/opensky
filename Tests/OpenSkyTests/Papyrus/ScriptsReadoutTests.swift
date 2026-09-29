@@ -4,7 +4,8 @@
 // install. The empty cases matter most: an idle VM and an absent target have to
 // read as stated conditions rather than as blanks.
 
-@testable import OpenSkyEngine
+@testable import OpenSkyScripting
+@testable import OpenSkyScriptingInterface
 import Testing
 
 struct ScriptsReadoutTests {

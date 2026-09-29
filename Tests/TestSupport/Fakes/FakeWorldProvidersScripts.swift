@@ -5,6 +5,8 @@
 
 import AppKit
 @testable import OpenSkyEngine
+@testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import Testing
 
 /// Forwards the Papyrus seam to the panel tests' recorder rather than

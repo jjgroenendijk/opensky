@@ -8,6 +8,8 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
+@testable import OpenSkyScripting
+@testable import OpenSkyScriptingInterface
 import Testing
 
 struct ScriptDataRealDataTests {

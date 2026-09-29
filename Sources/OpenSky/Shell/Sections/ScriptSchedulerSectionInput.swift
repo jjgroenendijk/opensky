@@ -9,6 +9,8 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 
 extension ScriptSchedulerSection {
     /// Wires target, action, and identifier for every control. Called once from

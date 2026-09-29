@@ -13,6 +13,8 @@
 
 import AppKit
 import OpenSkyEngine
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 
 final class ScriptsPanelViewController: InspectorPanelViewController {
     let instancesSection = ScriptInstancesSection()

@@ -14,6 +14,8 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
+@testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import simd
 import Testing
 

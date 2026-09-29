@@ -31,6 +31,8 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
+import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension GameViewController {

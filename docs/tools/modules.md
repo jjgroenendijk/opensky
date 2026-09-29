@@ -113,6 +113,7 @@ OpenSkyMagicInterface     active effects, spell hits, enchantments, SpellCasting
 OpenSkyCombatInterface    combat settings, intents, script hits, CombatControlling, DeathReporting
 OpenSkyQuestsInterface    quest and alias state, quest conditions, QuestAccess
 OpenSkyDialogueInterface  dialogue state and selection, dialogue conditions, DialogueAccess
+OpenSkyScriptingInterface Papyrus values, script world state, update timers, alias inspection
 OpenSkyCrimeInterface     crime events, ledger, arrest state, ownership values, CrimeReporting
 OpenSkyFactionsInterface  membership and relationship state, hostility values, seams
 OpenSkyPerceptionInterface  detection values, settings, condition functions, seams
@@ -123,6 +124,7 @@ OpenSkyMagic              active effect, caster, spellbook, and enchantment runt
 OpenSkyCombat             melee, archery, projectile, combat loop, and ragdoll runtimes
 OpenSkyQuests             quest runtime, alias filler
 OpenSkyDialogue           dialogue runtime, voice file lookup
+OpenSkyScripting          Papyrus interpreter, script world runtime, native functions
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes
 OpenSkyFactions           faction and relationship runtimes, hostility derivation

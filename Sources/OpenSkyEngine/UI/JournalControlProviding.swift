@@ -17,6 +17,7 @@
 
 import Foundation
 import OpenSkyRendering
+import OpenSkyScriptingInterface
 
 /// One quest as the panel lists it — running state, current stage, and the
 /// display state of each objective the record declares.

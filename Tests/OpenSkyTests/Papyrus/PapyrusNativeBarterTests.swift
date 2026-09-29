@@ -8,6 +8,8 @@ import FormatsESMTesting
 import Foundation
 import OpenSkyEngine
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyScripting
+@testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState
 import Testing
 
