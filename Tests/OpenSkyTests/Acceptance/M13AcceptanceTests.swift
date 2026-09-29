@@ -20,6 +20,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
+@testable import OpenSkySave
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState

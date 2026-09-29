@@ -567,6 +567,23 @@ targets += feature(
     ]
 )
 
+targets += feature(
+    "OpenSkySave",
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyActorsInterface", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
+        "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
+        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyScriptingInterface"
+    ],
+    tests: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyActorsInterface", "OpenSkyActors", "OpenSkyCrimeInterface",
+        "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
+        "OpenSkyProgressionInterface", "OpenSkyProgression", "OpenSkyQuestsInterface",
+        "FormatsCoreTesting", "FormatsESMTesting"
+    ]
+)
+
 // The rest of the engine, until it is split into the modules above it.
 targets += foundation(
     "OpenSkyEngine",

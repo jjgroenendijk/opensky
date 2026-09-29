@@ -20,6 +20,7 @@ import Foundation
 @testable import OpenSkyInventoryInterface
 import OpenSkyInventoryTesting
 @testable import OpenSkyMagicInterface
+@testable import OpenSkySave
 @testable import OpenSkyWorldState
 @testable import OpenSkyWorldTesting
 import Testing

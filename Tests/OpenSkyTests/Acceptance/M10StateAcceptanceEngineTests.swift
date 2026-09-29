@@ -20,6 +20,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+@testable import OpenSkySave
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd

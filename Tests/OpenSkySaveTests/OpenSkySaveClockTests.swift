@@ -5,7 +5,7 @@
 
 @testable import FormatsCoreTesting
 import Foundation
-@testable import OpenSkyEngine
+@testable import OpenSkySave
 @testable import OpenSkyWorldState
 import Testing
 

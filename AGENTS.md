@@ -114,6 +114,7 @@ Sources/
   OpenSkyWorld*/        feature module: cells, streaming, player, weather; Interface: events
   OpenSkyQuests*/       feature module: quest runtime; Interface: quest state, QuestAccess
   OpenSkyScripting*/    feature module: Papyrus interpreter, natives; Interface: script values
+  OpenSkySave/          feature module: OpenSky save files, store, and decoders; no interface
   OpenSkyPreview/       composition module: asset catalog, record dumps; app and CLI only
   OpenSkyShaderTypes/   package module: the clang module wrapping ShaderTypes.h
   CFFmpeg/              package module: the clang module over the vendored ffmpeg
@@ -139,6 +140,7 @@ Tests/
   OpenSkyScriptingTests/ package test target: synthetic suites for OpenSkyScripting
   OpenSkyPreviewTests/  package test target: synthetic suites for OpenSkyPreview
   OpenSkyWorldTests/    package test target: synthetic suites for OpenSkyWorld
+  OpenSkySaveTests/     package test target: synthetic suites for OpenSkySave
   OpenSkyRealDataTests/ env-gated suites that read the user's install
   TestSupport/          fixtures OpenSkyTests and OpenSkyRealDataTests compile; not a target
   Formats*Testing/      package libraries: byte-building fixtures, one per format module
@@ -173,7 +175,7 @@ renderer at its root and puts `UI/`, `Terrain/`, and `Weather/` in folders. The 
 - `Sources/OpenSky/`: `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
   view controller per destination), `GameView/` (`GameViewController` and its extensions),
   and `Resources/` (`Assets.xcassets`, `Branding/`).
-- `Sources/OpenSkyEngine/`: one folder per domain (`UI/`, `Save/`,
+- `Sources/OpenSkyEngine/`: one folder per domain (`UI/`,
   ...). A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in its domain
   folder.
 - `Sources/OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus

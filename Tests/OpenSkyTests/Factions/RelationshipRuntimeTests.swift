@@ -12,6 +12,7 @@ import Foundation
 import OpenSkyFactionsTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+@testable import OpenSkySave
 @testable import OpenSkyWorldState
 import Testing
 

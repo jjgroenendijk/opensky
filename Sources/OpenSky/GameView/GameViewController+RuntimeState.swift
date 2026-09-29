@@ -21,6 +21,7 @@ import OpenSkyEngine
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkySave
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld

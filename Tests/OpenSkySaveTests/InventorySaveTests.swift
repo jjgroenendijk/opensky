@@ -9,11 +9,11 @@
 // build sees are exactly the ones it would have written itself.
 
 import Foundation
-@testable import OpenSkyEngine
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
+@testable import OpenSkySave
 @testable import OpenSkyWorldState
 import simd
 import Testing
