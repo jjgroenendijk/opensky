@@ -171,6 +171,24 @@ long explanation. Keep code comments short.
 - No emojis. Where a severity marker is needed use bracket tags: `[ERROR]`, `[WARNING]`,
   `[INFO]`. Headings are unnumbered.
 
+Code documents itself through names and types. A comment holds only the why that the code
+cannot show. `docs/` holds only what neither the code nor a short comment can hold, such as
+sources, measurements, and cross-subsystem design. Code that needs a what-comment gets a
+better name instead.
+
+- A doc comment on a declaration is at most about 3 lines.
+- A format fact gets one line plus a link to its `docs/formats/` page, which holds the detail.
+- No history ("was", "used to", issue numbers) and no restating of the type or parameter
+  names; git and the signature already hold them.
+- `make comment-length` lists every comment block over 6 lines.
+
+```swift
+// Bad: restates the code and tells history.
+/// The damage multiplier. A `Float`. Was a `Double` before #412.
+// Good: says why.
+/// Sneak attacks skip armor, so this applies after the armor step.
+```
+
 ## How agents work here
 
 - Confirm Skyrim internals against an open spec or observed data, and flag uncertainty.

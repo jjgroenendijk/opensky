@@ -121,7 +121,7 @@ cache-link: ## Point this worktree's compilation cache at the main checkout's
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
         cli-boundary module-graph realdata-plan no-game-content docs-links docs-length \
-        agent-files workflow-lint
+        agent-files workflow-lint comment-length
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -187,6 +187,9 @@ agent-files: ## Check AGENTS.md symlinks and the skill format limits
 
 workflow-lint: ## Lint the GitHub Actions workflows with actionlint
 	@actionlint && echo "[ OK ] workflows clean"
+
+comment-length: ## Report comment blocks over the line limit (report only for now)
+	@./tools/lint/comment-length.sh
 
 ##@ Build checks
 
