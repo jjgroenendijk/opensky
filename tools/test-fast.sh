@@ -6,10 +6,9 @@
 # built products once, and every following run goes through
 # `test-without-building`, which skips the build system entirely.
 #
-# The .xctestrun is regenerated only when an input changed
-# (xcodebuild_xctestrun_stale in tools/xcodebuild-lib.sh): the mtime sweep
-# costs a fraction of a second where even a no-op build-for-testing costs tens
-# of seconds. -B forces the rebuild.
+# The .xctestrun is regenerated only when an input changed or a test product
+# it names is missing (xcodebuild_xctestrun_stale in tools/xcodebuild-lib.sh).
+# -B forces the rebuild.
 #
 # The RealData plan works here without any environment injection because the
 # plan's OPENSKY_DATA_ROOT entry is baked into the generated .xctestrun as an
@@ -91,21 +90,6 @@ if [ -n "$force_build" ] || xcodebuild_xctestrun_stale "${xctestrun:-missing}" "
     fi
 else
     printf '[INFO] reusing %s\n' "$xctestrun"
-fi
-
-# The .xctestrun records the test host it was built against; a missing host
-# (for example after a partial clean) means the products must be rebuilt, not
-# that the run should fail halfway through.
-test_host="$(plutil -extract \
-    'TestConfigurations.0.TestTargets.0.TestHostPath' raw -o - "$xctestrun" \
-    2>/dev/null | sed "s|__TESTROOT__|$(dirname "$xctestrun")|")"
-if [ -n "$test_host" ] && [ ! -e "$test_host" ]; then
-    printf '[INFO] test host missing (%s) -> rebuilding\n' "$test_host"
-    "$root/tools/xcodebuild-run.sh" test-fast-build \
-        xcodebuild -workspace "$root/OpenSky.xcworkspace" -scheme OpenSky \
-        -configuration Debug -derivedDataPath "$OPENSKY_DERIVED_DATA" \
-        -destination 'platform=macOS' -testPlan "$plan" build-for-testing
-    xctestrun="$(xcodebuild_xctestrun "$plan")"
 fi
 
 guard_pid=""
