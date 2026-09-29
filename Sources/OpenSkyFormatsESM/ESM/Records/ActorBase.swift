@@ -1,13 +1,7 @@
-// NPC_ record decoded into engine types: the appearance-relevant subset for
-// the bind-pose milestone, plus the ACBS/CNAM stat inputs the actor-value
-// derivation needs (issue #194), the SPLO spell run (issue #470) and the PRKR
-// perk run (issue #497) and the SNAM faction memberships (issue #501). AI and
-// inventory items are still skipped deliberately; ACBS carries the gender flag + the
-// template-inheritance flags that drive per-field resolution.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/NPC_"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_
-// Layout documented in docs/formats/actors.md.
+// NPC_ record decoded into engine types: appearance, ACBS and CNAM stat inputs,
+// the SPLO spells, PRKR perks, and SNAM factions. Inventory is skipped. ACBS
+// carries the gender flag and the template flags that drive inheritance.
+// Layout: docs/formats/actors.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -33,13 +27,9 @@ nonisolated public struct ActorBase: Sendable {
         public static let pcLevelMult = Flags(rawValue: 0x0000_0080)
     }
 
-    /// The ACBS words the actor-value derivation reads, kept together because
-    /// they are one authoring surface (the Creation Kit's Stats tab) and one
-    /// template-flag group (`useStats`).
-    ///
-    /// The three offsets are signed: the Creation Kit calls them "an amount to
-    /// add or subtract from the calculated value" and vanilla records use
-    /// negative offsets freely.
+    /// The ACBS words the actor-value derivation reads: one Creation Kit tab and
+    /// one template group (`useStats`). The offsets are signed; vanilla records use
+    /// negative ones.
     public struct Stats: Equatable, Sendable {
         /// ACBS 0x08. A fixed level when `pcLevelMult` is clear, otherwise the
         /// player-level multiplier scaled by 1000.
@@ -51,14 +41,8 @@ nonisolated public struct ActorBase: Sendable {
         public var healthOffset: Int16 = 0
         public var magickaOffset: Int16 = 0
         public var staminaOffset: Int16 = 0
-        /// ACBS 0x0E "Speed Multiplier" (UESP NPC_ ACBS), which is the base of
-        /// actor value 30, `Speed Mult` (issue #468). It belongs to the
-        /// `useStats` template group with the three offsets — UESP names the
-        /// group's contents as "level, autocalc, skills, health/magicka/stamina,
-        /// speed, bleedout, class" — so it resolves through the same chain.
-        ///
-        /// 100 when ACBS is too short to reach it, which is the Creation Kit's
-        /// own default for an actor nobody has slowed down or sped up.
+        /// ACBS 0x0E, the base of actor value 30 `Speed Mult`, in the `useStats`
+        /// group. 100, the Creation Kit default, when ACBS is too short.
         public var speedMultiplier: UInt16 = 100
         /// CNAM — the CLAS whose attribute weights spread an auto-calc actor's
         /// per-level points.
@@ -120,58 +104,26 @@ nonisolated public struct ActorBase: Sendable {
     public let defaultOutfit: FormID?
     /// PKID — ordered AI package stack. The first matching entry wins.
     public let packages: [FormID]
-    /// SPLO — the actor's spell list: the SPEL records it knows without
-    /// learning them, in record order (issue #470).
-    ///
-    /// The preceding `SPCT` count is deliberately not read. It states how many
-    /// `SPLO` entries follow, so counting the entries answers the same question
-    /// and cannot disagree with the file; a record whose `SPCT` and entry count
-    /// differ is then decoded rather than rejected.
-    ///
-    /// This list inherits through `TemplateFlags.useSpellList`, which the
-    /// template chain resolves — the same rule the stats and inventory groups
-    /// follow.
+    /// SPLO — the spells the actor knows without learning them, in record order.
+    /// The `SPCT` count is not read: counting entries cannot disagree with the
+    /// file. Inherits through `TemplateFlags.useSpellList`.
     public let spells: [FormID]
-    /// PRKR — the perks the actor is authored with, in record order
-    /// (issue #497).
-    ///
-    /// The preceding `PRKZ` count is deliberately not read, for the reason
-    /// `SPCT` is not: counting the entries answers the same question and cannot
-    /// disagree with the file. The 8-byte struct's rank byte is not read
-    /// either, because UESP records it as dead — "uint8 Rank (no longer in
-    /// use)" — and a rank at runtime is the length of an owned `NNAM` chain
-    /// (`PerkState`).
-    ///
-    /// This list inherits through `TemplateFlags.useSpellList`, which UESP
-    /// names "Use spelllist (both spells and perks)", so it resolves on the
-    /// same flag the `SPLO` run does.
+    /// PRKR — the perks the actor is authored with, in record order. The rank
+    /// byte is dead per UESP; a runtime rank is the length of an `NNAM` chain.
+    /// Inherits through `TemplateFlags.useSpellList`, like `SPLO`.
     public let perks: [FormID]
-    /// SNAM — the factions the actor is authored into, in record order
-    /// (issue #501). Consuming them for hostility, crime and services is the
-    /// rest of milestone M21.
-    ///
-    /// This list inherits through `TemplateFlags.useFactions`, resolved by
-    /// `ActorTemplateResolver.resolveFactions(base:)` the way the spell and
-    /// package runs resolve on their own flags.
+    /// SNAM — the factions the actor is authored into, in record order.
+    /// Inherits through `TemplateFlags.useFactions`.
     public let factions: [FactionMembership]
-    /// ACBS/CNAM/DNAM stat inputs (issue #194).
+    /// ACBS/CNAM/DNAM stat inputs.
     public let stats: Stats
-    /// AIDT — aggression, confidence, morality and assistance (issue #503).
-    /// Nil when the record authors no AIDT or authors one too short to read,
-    /// which `ActorAIData.absent` is the documented stand-in for.
-    ///
-    /// This struct inherits through `TemplateFlags.useAIData`, resolved by
-    /// `ActorTemplateResolver.resolveFactions(base:)` beside the SNAM run,
-    /// because the hostility derivation reads the two together.
+    /// AIDT — aggression, confidence, morality and assistance. Nil when absent or
+    /// too short (`ActorAIData.absent` stands in). Inherits through
+    /// `TemplateFlags.useAIData`, resolved beside the SNAM run.
     public let aiData: ActorAIData?
-    /// CRIF — the crime faction this actor reports crimes to (issue #505),
-    /// which is what the Creation Kit's `Actor.GetCrimeFaction` answers: "the
-    /// Faction the actor reports crimes to". UESP's NPC_ page lists it as a
-    /// FormID of a FACT. Observed on this install, every one of the 463 NPC_
-    /// records in `IsGuardFaction` authors one and is also a member of it.
-    ///
-    /// Inherits through `TemplateFlags.useFactions` beside the SNAM run,
-    /// resolved by `ActorTemplateResolver.resolveFactions(base:)`.
+    /// CRIF — the faction this actor reports crimes to, as
+    /// `Actor.GetCrimeFaction` answers. Inherits through
+    /// `TemplateFlags.useFactions` beside the SNAM run.
     public let crimeFaction: FormID?
     /// VMAD — Papyrus scripts attached to the NPC_ base.
     public let scriptData: ScriptData
@@ -340,14 +292,9 @@ nonisolated public struct ActorBase: Sendable {
         }
     }
 
-    /// ACBS, 24 bytes: uint32 flags, 7 stat/level words, uint16 template
-    /// flags at offset 0x12, 2 tail words (layout: docs/formats/actors.md).
-    ///
-    /// The 20-byte floor is what the appearance decode has always required, so
-    /// a short-but-usable ACBS keeps resolving; the two words past the template
-    /// flags are read only when they are actually there, leaving the health
-    /// offset at its zero default otherwise. That is the defensive-parse rule:
-    /// a truncated subrecord loses a field, it does not fail the record.
+    /// ACBS, 24 bytes (docs/formats/actors.md). 20 bytes is the floor; the two
+    /// words past the template flags are read only when present, so a truncated
+    /// subrecord loses a field, not the record.
     private static func decodeACBS(
         _ field: ESMField,
         npc: FormID,
@@ -422,8 +369,6 @@ nonisolated extension ActorBase {
     /// titles do not name". The three bytes that follow the rank are unused in
     /// Skyrim (xEdit `wbFaction`) and are not read.
     public struct FactionMembership: Equatable, Sendable {
-        public static let byteCount = 8
-
         public let faction: FormID
         public let rank: Int8
     }

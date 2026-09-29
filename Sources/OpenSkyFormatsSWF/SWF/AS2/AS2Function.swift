@@ -1,17 +1,7 @@
-// Callable objects (milestone 8.3.2): the two kinds of ActionScript 2
-// function — a Swift closure supplied by the runtime's built-ins, and a
-// bytecode body defined by `ActionDefineFunction` (0x9B) or
-// `ActionDefineFunction2` (0x8E).
-//
-// A bytecode function does not own its bytes. `ActionDefineFunction` names a
-// `codeSize` and the body is the next `codeSize` bytes of the same stream, so
-// the closure keeps the block it was defined in plus the byte offset its body
-// starts at, and reads the records back with
-// `SWFActionBlock.records(from:byteCount:)`.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionDefineFunction" (p. 92) and "ActionDefineFunction2"
-// (p. 111) for the header fields and the preload/suppress flags.
+// The two kinds of AS2 function: a Swift built-in, and a bytecode body from
+// `ActionDefineFunction` (0x9B) or `ActionDefineFunction2` (0x8E). The body is
+// the next `codeSize` bytes of the defining stream, so a function keeps its
+// block and start offset (SWF spec v19, pp. 92 and 111).
 
 import Foundation
 
@@ -20,9 +10,6 @@ import Foundation
 /// comparator) under the same budget as its caller.
 nonisolated public struct AS2CallContext {
     public let interpreter: AS2Interpreter
-    /// The function object being called, so a constructor can reach its own
-    /// `prototype`.
-    public let callee: AS2Object
     public let thisValue: AS2Value
     public let arguments: [AS2Value]
     /// True when the call came from `new`, so a built-in can populate the
@@ -62,7 +49,6 @@ nonisolated public struct AS2CallContext {
 /// `AS2Fault` and turns anything else into `undefined`, so a native can never
 /// introduce a new error type.
 nonisolated public struct AS2NativeBody {
-    public let name: String
     public let call: (AS2CallContext) throws -> AS2Value
 }
 
@@ -90,11 +76,4 @@ nonisolated public struct AS2BytecodeBody {
 nonisolated public enum AS2Callable {
     case native(AS2NativeBody)
     case bytecode(AS2BytecodeBody)
-
-    public var name: String {
-        switch self {
-        case let .native(body): body.name
-        case let .bytecode(body): body.definition.name
-        }
-    }
 }

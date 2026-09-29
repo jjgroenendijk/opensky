@@ -24,7 +24,7 @@ struct NIFRigidBodyDynamicsTests {
         dynamics.maxLinearVelocity = 104.4
         dynamics.maxAngularVelocity = 31.57
         dynamics.penetrationDepth = 0.15
-        dynamics.timeFactor = 1
+        dynamics.timeFactor = 1.5
         dynamics.gravityFactor = 2
         dynamics.deactivatorType = 2
         dynamics.solverDeactivation = 3
@@ -45,6 +45,7 @@ struct NIFRigidBodyDynamicsTests {
         #expect(decoded.maxLinearVelocity == 104.4)
         #expect(decoded.maxAngularVelocity == 31.57)
         #expect(decoded.penetrationDepth == 0.15)
+        #expect(decoded.timeFactor == 1.5)
         #expect(decoded.gravityFactor == 2)
         #expect(decoded.motionSystem == .boxInertia)
         #expect(decoded.deactivatorType == .spatial)

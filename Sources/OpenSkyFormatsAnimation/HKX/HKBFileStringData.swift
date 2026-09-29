@@ -1,14 +1,6 @@
-// hkbProjectStringData and hkbCharacterStringData decode (todo 14.1). These
-// are the graph-level metadata that names the *other* files a behavior set
-// pulls in: a project file lists its behavior, character, and animation
-// directories, and a character file lists the animation clips its graph can
-// play plus the behavior file it starts from. The census reports both, which
-// is how the vanilla player behavior set is enumerated without guessing paths.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); both classes derive
-// from hkReferencedObject, so the first member sits at 0x10. No Havok SDK or
-// Bethesda code consulted (AGENTS.md Legal & IP). Byte map and citations:
-// docs/formats/hkx-behavior.md.
+// hkbProjectStringData and hkbCharacterStringData decode: the other files a
+// behavior set pulls in, so the census finds them without guessing paths.
+// Offsets from HKX2Library (MIT). Byte map: docs/formats/hkx-behavior.md.
 
 import Foundation
 
@@ -26,7 +18,6 @@ nonisolated public struct HKBProjectData: Equatable, Sendable {
     public let unresolved: [HKXUnresolvedReference]
 
     public static let className = "hkbProjectData"
-    public static let stringDataClassName = "hkbProjectStringData"
 
     private static let stringDataField = HKXField(0x20, "m_stringData")
     private static let animationFilenamesField = HKXField(0x10, "m_animationFilenames")
@@ -77,7 +68,6 @@ nonisolated public struct HKBCharacterData: Equatable, Sendable {
     public let unresolved: [HKXUnresolvedReference]
 
     public static let className = "hkbCharacterData"
-    public static let stringDataClassName = "hkbCharacterStringData"
 
     private static let stringDataField = HKXField(0x98, "m_stringData")
     private static let animationNamesField = HKXField(0x30, "m_animationNames")

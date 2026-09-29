@@ -1,18 +1,7 @@
-// Shared VMAD models for Papyrus scripts attached to ESM records.
-//
-// Layout authority: xEdit dev-4.1.6 `wbDefinitionsTES5.pas`,
-// `wbScriptPropertyObject`, `wbScriptEntry`, and `wbVMAD`; cross-checked
-// against UESP "Skyrim Mod:Mod File Format/VMAD Field".
-// https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-// https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VMAD_Field
-//
-// Fragment carriers have record-specific tails. PACK, PERK and SCEN still
-// record that a tail is present and skip the bounded remainder. QUST decodes
-// its tail into `QuestFragmentSection` (see ScriptDataQuestFragments.swift),
-// because the quest runtime needs the stage-to-fragment mapping and the alias
-// script sections, and INFO decodes its tail into `TopicInfoFragmentSection`
-// (see ScriptDataInfoFragments.swift), because the dialogue runtime needs the
-// begin/end result scripts of a chosen response.
+// Shared VMAD models for Papyrus scripts on ESM records. QUST and INFO decode
+// their fragment tails (ScriptDataQuestFragments.swift,
+// ScriptDataInfoFragments.swift); PACK, PERK and SCEN skip theirs. Layout from
+// xEdit `wbVMAD` and UESP "VMAD Field".
 
 import Foundation
 import OpenSkyFormatsCore
@@ -26,8 +15,8 @@ nonisolated public enum ScriptDataError: Error, Equatable, Sendable {
     case unknownPropertyType(UInt8)
     case unexpectedTrailingBytes(recordType: FourCC?, count: Int)
     /// A fragment tail whose count is a flag population declared a bit outside
-    /// the documented set, so no phase can be paired with an entry (issue
-    /// #426). The tail is refused; the primary scripts survive.
+    /// the documented set, so no phase can be paired with an entry. The tail is
+    /// refused; the primary scripts survive.
     case unknownFragmentFlags(recordType: FourCC?, flags: UInt8)
 }
 
@@ -39,11 +28,8 @@ nonisolated public enum ScriptObjectFormat: Int16, Equatable, Sendable {
 nonisolated public struct ScriptObjectReference: Equatable, Sendable {
     public let formID: FormID
     /// -1 means a direct FormID. Any other value selects an alias on the quest
-    /// identified by `formID`. M13.1 decodes the alias definitions those slots
-    /// name (`Quest.Alias`) and M13.4 fills them at runtime, but the fill is a
-    /// world fact rather than a record one: resolving an alias slot to a
-    /// reference needs the running quest's table, which is why nothing here
-    /// answers it and `ScriptDataBinding` takes a seam for it.
+    /// identified by `formID`. Resolving it needs the running quest's alias
+    /// table, so `ScriptDataBinding` takes a seam for it.
     public let alias: Int16
     public let unused: UInt16
 
@@ -171,7 +157,7 @@ nonisolated public struct ScriptData: Equatable, Sendable {
     /// whose tail failed to decode — that case keeps the primary scripts and
     /// records one `.fragments("QUST")` tally entry instead.
     public var questFragments: QuestFragmentSection?
-    /// Decoded INFO tail (issue #426). Nil for every other carrier, and also
+    /// Decoded INFO tail. Nil for every other carrier, and also
     /// for an INFO whose tail failed to decode — that case keeps the primary
     /// scripts and records one `.fragments("INFO")` tally entry instead.
     public var infoFragments: TopicInfoFragmentSection?
@@ -179,9 +165,5 @@ nonisolated public struct ScriptData: Equatable, Sendable {
 
     public init(ownerType: FourCC? = nil) {
         self.ownerType = ownerType
-    }
-
-    public var isEmpty: Bool {
-        scripts.isEmpty && questFragments == nil && infoFragments == nil
     }
 }

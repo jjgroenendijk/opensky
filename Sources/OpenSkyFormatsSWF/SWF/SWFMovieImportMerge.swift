@@ -1,36 +1,8 @@
-// Cross-movie character import (ImportAssets 57 / ImportAssets2 71): a movie
-// that borrows a sprite from another movie gets that sprite's characters, its
-// linkage names, and its DoInitAction class registrations folded into its own
-// dictionary. `interface\inventorymenu.swf` places three characters it never
-// defines — `ItemCard_mc`, `InventoryLists_mc`, `BottomBar_mc` — and without
-// this merge each of them instantiates as nothing.
-//
-// The merge is a uniform-offset one at the `SWFMovie` level, so the runtime and
-// the renderer stay unchanged: they still see one flat character dictionary.
-// For each distinct source movie the whole source id space is shifted past
-// everything already in flight (`SWFCharacterRemap`), the shifted characters and
-// name tables are merged in, and the importing movie's placeholder id is bound
-// to whatever the source exports under the imported name.
-//
-// Rules that are decisions rather than spec:
-//   - On a linkage-name collision the importing movie wins. Its own bytecode
-//     registered its classes against its own definitions.
-//   - Source DoInitAction blocks run before the importing movie's own, deepest
-//     import first, so an imported CLIK class is registered before anything
-//     instantiates it.
-//   - A URL whose assets the importing movie neither places nor re-exports is
-//     skipped without being loaded. That is exactly the shape of a font import
-//     (`gfxfontlib.swf`), and fonts keep their existing answer: name
-//     substitution through fontconfig in `SWFMovieScene.resolvedFont`.
-//   - Nothing here throws. Every failure — a source the file system cannot
-//     provide, a name the source does not export, a cycle, an id space that
-//     will not fit — is a bounded counter on `SWFImportMergeDiagnostics`.
-//   - `SWFMovie.tally` is left alone. It describes what one file decoded to,
-//     which is what the sweeps report; merged characters are counted on the
-//     import diagnostics instead.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 14
-// "Sharing fonts and other assets" (pp. 285-286).
+// Cross-movie character import (ImportAssets 57 / ImportAssets2 71): each
+// source's IDs shift past those in use and merge into one flat dictionary
+// (docs/formats/swf-display-list.md). On a linkage-name collision the importing
+// movie wins. Nothing throws; failures are counters on
+// `SWFImportMergeDiagnostics`, and `SWFMovie.tally` stays per file.
 
 import Foundation
 
@@ -63,11 +35,6 @@ nonisolated public struct SWFImportMergeDiagnostics: Equatable, Sendable {
     public var saturatedReferences = 0
     /// Resolved VFS paths merged, in merge order, capped at `pathLimit`.
     public var mergedPaths: [String] = []
-
-    /// True when the movie imported nothing that needed merging.
-    public var isEmpty: Bool {
-        self == SWFImportMergeDiagnostics()
-    }
 
     /// One-line report for the CLI.
     public var summary: String {

@@ -72,7 +72,9 @@ struct NIFLODTests {
             .init("BSSubIndexTriShape", payload)
         ]))
         let parsed = try NIFSubIndexTriShape(data: payload, header: file.header)
-        #expect(parsed.segments == [.init(flags: 0xA5, startIndex: 0, primitiveCount: 1)])
+        #expect(parsed.segments.map(\.flags) == [0xA5])
+        #expect(parsed.segments.map(\.startIndex) == [0])
+        #expect(parsed.segments.map(\.primitiveCount) == [1])
         #expect(try file.model().meshes.count == 1)
     }
 

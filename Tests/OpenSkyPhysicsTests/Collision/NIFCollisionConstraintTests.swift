@@ -28,6 +28,7 @@ struct NIFCollisionConstraintTests {
         #expect(model.bodies.count == 2)
         #expect(model.bodies.allSatisfy { $0.carrier == .blendCollisionObject })
         #expect(model.bodies.compactMap(\.targetName).sorted() == ["NPC Head", "NPC Spine"])
+        #expect(model.bodies.map(\.targetBlock).sorted() == [1, 2])
         // Both bodies name the same joint, so the model view de-duplicates it.
         #expect(model.bodies.allSatisfy { $0.constraints.count == 1 })
         #expect(model.constraints.count == 1)
@@ -46,6 +47,8 @@ struct NIFCollisionConstraintTests {
         #expect(near(ragdoll.frameA.pivot.z, scale))
         #expect(near(ragdoll.frameB.pivot.z, -scale))
         #expect(ragdoll.frameA.twist == SIMD3(1, 0, 0))
+        #expect(ragdoll.frameA.plane == SIMD3(0, 0, 1))
+        #expect(ragdoll.frameA.motor == SIMD3(0, -1, 0))
         #expect(ragdoll.frameB.twist == SIMD3(0, 1, 0))
         #expect(ragdoll.coneMaxAngle == 0.5)
         #expect(ragdoll.twistMaxAngle == 0.3)
@@ -78,6 +81,7 @@ struct NIFCollisionConstraintTests {
         #expect(hinge.frameA.axis == SIMD3(0, 0, 1))
         #expect(near(hinge.frameA.pivot.x, scale))
         #expect(near(simd_length(hinge.frameA.perpAxis1), 1))
+        #expect(hinge.frameA.perpAxis2 == SIMD3(-1, 0, 0))
 
         let limitedModel = try skeleton(constraint: (
             "bhkLimitedHingeConstraint",
@@ -139,8 +143,9 @@ struct NIFCollisionConstraintTests {
         let model = try skeleton(constraint: (
             "bhkPrismaticConstraint",
             NIFConstraintFixture.prismatic(
-                entityA: 4, entityB: 6, pivotA: .zero, pivotB: .zero,
-                minDistance: 0, maxDistance: 2
+                entityA: 4, entityB: 6, pivotA: .zero, pivotB: SIMD3(0, 0, 1),
+                minDistance: 0.5, maxDistance: 2,
+                motor: NIFConstraintFixture.motor(type: 2, enabled: true)
             )
         ))
         guard case let .prismatic(joint) = try #require(model.constraints.first).data else {
@@ -148,8 +153,18 @@ struct NIFCollisionConstraintTests {
             return
         }
         #expect(joint.frameA.sliding == SIMD3(1, 0, 0))
+        #expect(joint.frameA.rotation == SIMD3(0, 0, 1))
+        #expect(joint.frameA.plane == SIMD3(0, -1, 0))
+        #expect(joint.frameA.pivot == .zero)
+        #expect(near(joint.frameB.pivot.z, scale))
+        #expect(near(joint.minDistance, 0.5 * scale))
         #expect(near(joint.maxDistance, 2 * scale))
         #expect(joint.friction == 0.5)
+        guard case let .velocity(motor) = joint.motor else {
+            Issue.record("expected a velocity motor, got \(joint.motor)")
+            return
+        }
+        #expect(motor.isEnabled)
     }
 
     @Test func unwrapsMalleableConstraint() throws {
@@ -183,65 +198,12 @@ struct NIFCollisionConstraintTests {
         #expect(inner.maxAngle == 0.5)
     }
 
-    // MARK: - Malformed input
-
-    @Test func unknownConstraintClassIsTalliedAndBodiesSurvive() throws {
-        let model = try skeleton(constraint: ("bhkBreakableConstraint", Data(count: 64)))
-        #expect(model.bodies.count == 2)
-        #expect(model.constraints.isEmpty)
-        #expect(model.unsupportedReachableBlocks["bhkBreakableConstraint"] == 2)
-        #expect(model.decodeFailures.count == 2)
-    }
-
-    @Test func truncatedConstraintCostsOnlyTheJoint() throws {
-        let model = try skeleton(constraint: ("bhkRagdollConstraint", Data(count: 24)))
-        #expect(model.bodies.count == 2)
-        #expect(model.shapeCount == 2)
-        #expect(model.constraints.isEmpty)
-        #expect(model.decodeFailures.count == 2)
-        // Malformed bytes in a class the decoder does read are a failure, not
-        // a gap in coverage, so the unsupported tally stays clean.
-        #expect(model.unsupportedReachableBlocks.isEmpty)
-    }
-
-    @Test func constraintCountPastBlockEndCostsOnlyItsBody() throws {
-        let file = try NIFFile(data: NIFFixture.file(blocks: [
-            .init("NiNode", NIFFixture.niNode(
-                prefix: NIFFixture.avObjectPrefix(collisionRef: 1),
-                children: [3]
-            )),
-            .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(body: 2)),
-            .init("bhkRigidBody", NIFCollisionFixture.rigidBody(
-                shape: 5,
-                constraintCountOverride: 4096
-            )),
-            .init("NiNode", NIFFixture.niNode(
-                prefix: NIFFixture.avObjectPrefix(collisionRef: 4)
-            )),
-            .init("bhkCollisionObject", NIFCollisionFixture.collisionObject(
-                target: 3, body: 6
-            )),
-            .init("bhkSphereShape", NIFCollisionFixture.sphere(radius: 1)),
-            .init("bhkRigidBody", NIFCollisionFixture.rigidBody(shape: 5))
-        ]))
-        let model = file.collisionModel()
-        #expect(model.bodies.count == 1)
-        #expect(model.decodeFailures.count == 1)
-    }
-
-    @Test func constraintRefPastTheBlockTableIsReportedNotFatal() throws {
-        let model = try skeleton(constraint: nil, constraintRef: 99)
-        #expect(model.bodies.count == 2)
-        #expect(model.constraints.isEmpty)
-        #expect(model.decodeFailures.count == 2)
-    }
-
     // MARK: - Support
 
     /// Two bones, each carrying a `bhkBlendCollisionObject` over a rigid body,
     /// both naming the same joint — the shape a vanilla character skeleton
     /// takes. Block 8 is the joint when `constraint` is supplied.
-    private func skeleton(
+    func skeleton(
         constraint: (type: String, data: Data)?,
         constraintRef: Int32 = 8
     ) throws -> NIFCollisionModel {

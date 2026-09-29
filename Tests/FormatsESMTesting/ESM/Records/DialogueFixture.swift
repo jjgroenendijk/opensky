@@ -169,11 +169,6 @@ public enum DialogueFixture {
         condition(functionIndex: 72, comparisonValue: 1, parameter1: base)
     }
 
-    /// `GetQuestRunning(quest) == 1`, one of the quest gates a real INFO uses.
-    public static func questRunning(_ quest: UInt32) -> Data {
-        condition(functionIndex: 56, comparisonValue: 1, parameter1: quest)
-    }
-
     // MARK: - VMAD
 
     /// A VMAD field carrying a primary script list plus an INFO fragment tail.

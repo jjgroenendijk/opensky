@@ -106,6 +106,7 @@ struct FootstepRecordTests {
             record: record(ESMFixture.record("IPDS", formID: 0x400, data: fields))
         )
 
+        #expect(set.editorID == "StoneSet")
         #expect(set.entries.count == 3)
         #expect(set.impact(for: FormID(0x10)) == FormID(0x100))
         // The representative impact is the most frequently paired one, which is

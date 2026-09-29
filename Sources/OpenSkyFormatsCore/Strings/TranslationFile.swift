@@ -1,19 +1,7 @@
-// Skyrim translation-file reader for Scaleform UI menus and the HUD. Menus
-// reference localized text with `$KEY` tokens that resolve against per-language
-// text files at Interface/Translations/<name>_<language>.txt. Each file is
-// UTF-16 little-endian with a byte-order mark, one `$key<TAB>value` pair per
-// CRLF-terminated line. Keys keep their leading `$` and exact case (Scaleform
-// matches keys case-sensitively).
-//
-// References:
-//   Creation Kit wiki "Translation files" (offline at authoring; confirmed via
-//     the community mirrors below).
-//   SkyUI skyui-lib wiki "How to" — https://github.com/schlangster/skyui-lib/wiki/How-to
-//     ("The text files have to use the UTF16 Little Endian ... with BOM
-//     encoding"; "tab-separated string values"; keys prefixed with `$`).
-//   ScaleformTranslationPP — https://github.com/VersuchDrei/ScaleformTranslationPP
-//     ("Scaleform parses keys case-sensitively").
-// Layout and decisions documented in docs/formats/translation-strings.md.
+// Translation-file reader for Scaleform menus: `$KEY` tokens resolve against
+// Interface/Translations/<name>_<language>.txt, UTF-16 LE with a BOM, one
+// `$key<TAB>value` pair per CRLF line. Keys match case-sensitively.
+// Layout and sources: docs/formats/translation-strings.md.
 
 import Foundation
 
@@ -35,10 +23,6 @@ nonisolated public struct TranslationFile: Equatable, Sendable {
 
     public var isEmpty: Bool {
         entries.isEmpty
-    }
-
-    public var keys: [String] {
-        Array(entries.keys)
     }
 
     /// Builds a file directly from already-parsed entries. Used by in-app

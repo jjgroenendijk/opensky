@@ -12,7 +12,6 @@ nonisolated public enum BSAError: Error, Equatable, Sendable {
     case unsupportedVersion(UInt32)
     case missingNames
     case malformed(String)
-    case entryNotFound(String)
     case sizeMismatch(expected: Int, actual: Int)
 }
 
@@ -214,12 +213,11 @@ nonisolated public struct BSAArchive: Sendable {
 
     /// 24-byte v105 folder record.
     private struct FolderRecord {
-        let nameHash: UInt64
         let fileCount: Int
         let offset: UInt64
 
         init(reader: inout BinaryReader) throws {
-            nameHash = try reader.readUInt64()
+            _ = try reader.readUInt64() // name hash; lookup is by name
             fileCount = try Int(reader.readUInt32())
             _ = try reader.readUInt32() // padding
             offset = try reader.readUInt64()
@@ -228,12 +226,11 @@ nonisolated public struct BSAArchive: Sendable {
 
     /// 16-byte file record.
     private struct FileRecord {
-        let nameHash: UInt64
         let size: UInt32
         let offset: UInt32
 
         init(reader: inout BinaryReader) throws {
-            nameHash = try reader.readUInt64()
+            _ = try reader.readUInt64() // name hash; lookup is by name
             size = try reader.readUInt32()
             offset = try reader.readUInt32()
         }

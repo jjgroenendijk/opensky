@@ -1,11 +1,7 @@
-// Execution limits, faults, and the result of one interpreter invocation
-// (milestone 8.3.2).
-//
-// Bytecode arrives from a user's own game files and is never validated by
-// anything upstream, so every way a stream can be wrong has to end in a
-// recorded diagnostic rather than a crash or a hang (AGENTS.md
-// "Reverse-engineering discipline"). A fault aborts the invocation that hit it
-// and nothing else: the runtime stays usable and the tally keeps the evidence.
+// Execution limits, faults, and the result of one interpreter invocation.
+// Bytecode comes unvalidated from the user's files, so every bad stream ends in
+// a recorded fault, never a crash or a hang. A fault aborts only its own
+// invocation; the runtime stays usable.
 
 import Foundation
 
@@ -29,17 +25,6 @@ nonisolated public enum AS2Fault: Error, Equatable, Sendable {
     /// `AS2Limits.reentryDepth` — a built-in or a property accessor chain that
     /// keeps calling back into bytecode.
     case reentryDepthExceeded(offset: Int)
-
-    /// Byte offset within the block where the fault was raised.
-    public var offset: Int {
-        switch self {
-        case let .stackOverflow(offset),
-             let .invalidJump(offset, _), let .truncatedBody(offset),
-             let .budgetExhausted(offset), let .callDepthExceeded(offset),
-             let .reentryDepthExceeded(offset):
-            offset
-        }
-    }
 
     /// Short stable name for the tally and the UI readout.
     public var kind: String {

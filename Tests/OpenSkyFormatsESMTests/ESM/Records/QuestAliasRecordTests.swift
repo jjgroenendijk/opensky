@@ -1,10 +1,5 @@
-// The ALST/ALLS alias run of a QUST record, split out of QuestRecordTests so
-// each suite stays inside the strict-lint type-body cap. Synthetic bytes only
-// (QuestFixture).
-//
-// Layout: UESP "Skyrim Mod:Mod File Format/QUST", "Aliases"; xEdit dev-4.1.6
-// Core/wbDefinitionsTES5.pas reference aliases line 8869, location aliases
-// 8971. See docs/formats/quest-records.md.
+// The ALST/ALLS alias run of a QUST record, over synthetic QuestFixture bytes.
+// Layout: docs/formats/quest-records.md.
 
 import FormatsCoreTesting
 import FormatsESMTesting
@@ -80,9 +75,8 @@ struct QuestAliasRecordTests {
         #expect(quest.aliases[0].flags == [.questObject])
         #expect(quest.aliases[0].keywords.keywords == [FormID(0x0D1)])
         #expect(quest.aliases[0].declaredItemCount == 1)
-        #expect(quest.aliases[0].items == [
-            Quest.Alias.Item(item: FormID(0x0E1), count: 2)
-        ])
+        #expect(quest.aliases[0].items.map(\.item) == [FormID(0x0E1)])
+        #expect(quest.aliases[0].items.map(\.count) == [2])
         #expect(quest.skipped.isEmpty)
     }
 

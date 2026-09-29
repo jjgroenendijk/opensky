@@ -171,10 +171,6 @@ public struct SWFShapeBodyBuilder: Sendable {
         }
     }
 
-    public mutating func appendMoveTo(x: Int32, y: Int32) {
-        appendStyleChange(StyleChange(moveToX: x, moveToY: y))
-    }
-
     /// General straight edge carrying both deltas.
     public mutating func appendStraightEdge(deltaX: Int32, deltaY: Int32) {
         writer.writeUB(1, count: 1) // edge record

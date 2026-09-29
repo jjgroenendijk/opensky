@@ -1,25 +1,7 @@
-// One running movie (milestone 8.3.2 phase 2): the decoded movie, one
-// `AS2Runtime`, the mutable display tree, and the explicit tick that advances
-// it. This is the object an engine holds instead of a bare `SWFMovieScene` when
-// it wants the movie's ActionScript to run.
-//
-// One virtual machine per movie, and therefore one `_global` per movie. The
-// evidence is in the files: `inventorymenu.swf`, `startmenu.swf`, and
-// `hudmenu.swf` each carry byte-identical `DoInitAction` blocks, so every menu
-// embeds its own private copy of the CLIK library rather than sharing one.
-// Sharing happens at the character-dictionary level through ImportAssets2, not
-// through `_global`.
-//
-// Bring-up order (measured in milestone 8.3.1: vanilla menus are
-// class-registration code, 1,127 DoInitAction blocks against 2,163 DoAction):
-//   1. every DoInitAction block, in tag order, against the root clip
-//   2. the root's frame 1 control tags, instantiating registered classes as
-//      their linkage names are placed
-//   3. the root's frame-1 DoAction blocks
-//
-// Nothing here reads a clock. `advance()` is the only thing that moves a
-// playhead, so a movie nobody advances renders the same frame forever — the
-// determinism contract in docs/rendering/swf-layer.md.
+// One running movie: the decoded movie, one `AS2Runtime` and so one `_global`,
+// the mutable display tree, and an explicit tick. Bring-up runs every
+// DoInitAction, then the root's frame-1 control tags, then its frame-1 DoAction
+// blocks. Nothing reads a clock (docs/rendering/swf-layer.md).
 
 import Foundation
 
@@ -27,7 +9,6 @@ nonisolated public final class SWFMovieRuntime {
     /// The decoded movie plus its resolved external fonts.
     public let movieScene: SWFMovieScene
     public let runtime: AS2Runtime
-    public let host: SWFRuntimeHost
 
     /// `_root` / `_level0`.
     public let root: SWFDisplayObject
@@ -57,7 +38,7 @@ nonisolated public final class SWFMovieRuntime {
     public var focusChanges = 0
     /// Nesting guard for a frame action that jumps the same clip again.
     public var gotoDepth = 0
-    /// Live pointer and key state (milestone 8.3.2 phase 3).
+    /// Live pointer and key state.
     public let input = SWFRuntimeInputState()
     /// `setInterval` / `setTimeout` callbacks, fired from `advance()`.
     public let timers = SWFRuntimeTimers()
@@ -106,7 +87,6 @@ nonisolated public final class SWFMovieRuntime {
     public init(movieScene: SWFMovieScene, limits: AS2Limits = .standard) {
         self.movieScene = movieScene
         let host = SWFRuntimeHost()
-        self.host = host
         runtime = AS2Runtime(
             swfVersion: movieScene.movie.version, host: host, limits: limits
         )

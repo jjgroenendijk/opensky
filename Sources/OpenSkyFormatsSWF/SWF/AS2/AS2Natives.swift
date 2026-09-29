@@ -35,7 +35,7 @@ nonisolated public enum AS2Natives: Sendable {
         prototype: AS2Object,
         body: @escaping (AS2CallContext) throws -> AS2Value
     ) -> AS2Object {
-        let function = runtime.makeNative(name, body)
+        let function = runtime.makeNative(body)
         function.define(.object(prototype), for: "prototype", flags: [.dontEnumerate, .dontDelete])
         prototype.define(.object(function), for: "constructor", flags: .dontEnumerate)
         runtime.globalObject.define(.object(function), for: name, flags: .dontEnumerate)
@@ -50,7 +50,7 @@ nonisolated public enum AS2Natives: Sendable {
         name: String,
         body: @escaping (AS2CallContext) throws -> AS2Value
     ) {
-        object.define(.object(runtime.makeNative(name, body)), for: name, flags: .dontEnumerate)
+        object.define(.object(runtime.makeNative(body)), for: name, flags: .dontEnumerate)
     }
 
     // MARK: - Object

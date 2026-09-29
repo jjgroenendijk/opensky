@@ -1,7 +1,6 @@
 // The value types NavmeshFixture packs into NVNM bytes. See NavmeshFixture.swift.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 
 extension NavmeshFixture {
     /// One triangle as the fixture spells it, before packing.

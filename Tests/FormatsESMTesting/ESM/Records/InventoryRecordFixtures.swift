@@ -1,10 +1,5 @@
-// Synthetic subrecord payloads shared by the M12.1.1 inventory record tests.
-// Built in code from the published layouts — never extracted game files
-// (AGENTS.md "Legal & IP boundary").
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format" subpages /MISC, /BOOK, /ALCH,
-// /INGR, /WEAP, /AMMO, /CONT, cross-checked against xEdit dev-4.1.6
-// Core/wbDefinitionsTES5.pas. See docs/formats/item-records.md.
+// Synthetic subrecord payloads for the inventory record tests, built from the
+// published layouts. Layout: docs/formats/item-records.md.
 
 import FormatsCoreTesting
 import Foundation
@@ -65,12 +60,12 @@ public enum InventoryFixture: Sendable {
     }
 
     /// ALCH ENIT: value, flags, addiction, addiction chance, consume sound.
-    public static func enitData(value: Int32, flags: UInt32) -> Data {
+    public static func enitData(value: Int32, flags: UInt32, addictionChance: Float = 0) -> Data {
         var data = Data()
         data.appendUInt32(UInt32(bitPattern: value))
         data.appendUInt32(flags)
         data.appendUInt32(0) // addiction
-        data.appendUInt32(Float(0).bitPattern)
+        data.appendUInt32(addictionChance.bitPattern)
         data.appendUInt32(0x0002_0000) // consume sound
         return data
     }
@@ -154,10 +149,14 @@ public enum InventoryFixture: Sendable {
         return data
     }
 
-    public static func coedData(owner: UInt32, condition: Float) -> Data {
+    public static func coedData(
+        owner: UInt32,
+        ownerCondition: UInt32 = 0,
+        condition: Float
+    ) -> Data {
         var data = Data()
         data.appendUInt32(owner)
-        data.appendUInt32(0) // global / required rank union
+        data.appendUInt32(ownerCondition)
         data.appendUInt32(condition.bitPattern)
         return data
     }

@@ -1,27 +1,7 @@
-// Skyrim `.lip` facial-animation payload: a FaceFX animation header followed by
-// sparse float tokens routed over a frame grid of positional slots.
-//
-// The byte model comes from the clean-room OpenFaceFX research codec and was
-// checked against the user's installed voice corpus. The payload does not name
-// phonemes or TRI targets; it carries positional slots. Keep that distinction
-// in the types so an inferred mapping cannot become an asserted on-disk fact.
-//
-// Two facts about the corpus shape this decoder and were measured, not assumed
-// (issue #449, and see docs/formats/lip.md):
-//
-//   * The slots-per-frame stride is not the constant 33. It is carried by the
-//     duration field: `durationTicks == 4 * slotsPerFrame * frameCount + 28`,
-//     which yields 33 for the 16-target humanoid family and 8 for the 8-target
-//     creature family that ships with the same header otherwise.
-//   * A minority of blobs carry one or three extra bytes between the frame
-//     count and the tuple width, so the tuple width, pre-roll and vocabulary
-//     sit at a shifted offset and the payload starts past a longer header.
-//     `headerSize` records where the payload actually began.
-//
-// Reference:
-// https://github.com/OpenFaceFX/OpenFaceFX/blob/main/tools/lip_codec_research.py
-// Local evidence and the confirmed-versus-uncertain split are documented in
-// docs/formats/lip.md.
+// Skyrim `.lip` payload: a FaceFX header, then sparse float tokens over a frame
+// grid of positional slots. The slots are not phonemes, and the types keep it
+// so. The slot stride comes from the duration field, and some files carry a
+// longer header. Byte model from OpenFaceFX; details: docs/formats/lip.md.
 
 import Foundation
 
@@ -59,7 +39,6 @@ nonisolated public struct LIPKey: Equatable, Sendable {
 }
 
 nonisolated public struct LIPSample: Equatable, Sendable {
-    public let trackTime: Double
     public let weightsBySlot: [Int: Float]
 }
 
@@ -68,7 +47,6 @@ nonisolated public struct LIPFile: Equatable, Sendable {
     /// The humanoid family's stride, and the one the synthetic fixtures use.
     /// A decoded file reports its own through `header.slotsPerFrame`.
     public static let slotCount = 33
-    public static let speechTargetCount = 16
 
     public let header: LIPHeader
     public let keys: [LIPKey]
@@ -84,14 +62,6 @@ nonisolated public struct LIPFile: Equatable, Sendable {
         } catch {
             throw LIPError.malformed(String(describing: error))
         }
-    }
-
-    public init(header: LIPHeader, keys: [LIPKey]) {
-        self.header = header
-        self.keys = keys
-        duplicateValueCount = keys.count(where: \.hasDuplicate)
-        markerCount = 0
-        unmappedKeyCount = keys.count { !LipVisemeMapping.mappedSlots.contains($0.slot) }
     }
 
     fileprivate init(
@@ -119,7 +89,7 @@ nonisolated public struct LIPFile: Equatable, Sendable {
         let clampedFrame = min(max(frame, 0), maximumFrame)
         let grouped = Dictionary(grouping: keys, by: \.slot)
         let weights = grouped.mapValues { Self.sample($0, at: clampedFrame) }
-        return LIPSample(trackTime: safeSeconds, weightsBySlot: weights)
+        return LIPSample(weightsBySlot: weights)
     }
 
     private static func sample(_ keys: [LIPKey], at frame: Double) -> Float {
@@ -198,10 +168,8 @@ nonisolated private struct LIPDecoder {
             durationTicks: durationTicks, frameCount: frameCount
         )
         let tail = try readHeaderTail(frameCount: frameCount, slotsPerFrame: slotsPerFrame)
-        // The active curve count is recorded, not validated: 952 vanilla blobs
-        // declare nine curves against a vocabulary of eight, and nothing here
-        // indexes by the field, so rejecting them bought nothing but silence
-        // (issue #449).
+        // Recorded, not validated: many vanilla files declare nine curves
+        // against a vocabulary of eight, and nothing indexes by this field.
         return LIPHeader(
             durationTicks: durationTicks,
             activeCurveCount: activeCurveCount,
@@ -282,16 +250,10 @@ nonisolated private struct LIPDecoder {
         let markers: Int
     }
 
-    /// A token is a Float32, optionally repeated once, optionally followed by a
-    /// `00 <tag> 00` suffix that skips `tag / 4` slots. That framing is locally
-    /// ambiguous: the three suffix bytes can equally be the first three bytes of
-    /// the next value, and the corpus contains both readings. The walk therefore
-    /// treats each such triple as a choice point and backtracks when the reading
-    /// it tried first cannot carry the rest of the payload to the end of the
-    /// blob. Multiples of four are tried as a suffix first and everything else
-    /// as data first, which is what the pre-#449 decoder did unconditionally.
-    /// One accepted token on the walk: where the next token starts, where this
-    /// key sat on the flattened grid, which reading was tried, and the key.
+    /// A token's `00 <tag> 00` suffix can also be the start of the next value, so
+    /// each triple is a choice point and the walk backtracks when a reading cannot
+    /// reach the end. Multiples of four try the suffix reading first.
+    /// One accepted token on the walk: its offset, grid position, branch, and key.
     private struct Frame {
         let offset: Int
         let position: Int

@@ -1,34 +1,8 @@
-// Auto-calculated spell cost.
-//
-// UESP documents the rule on the SPEL and SCRL pages: a spell's cost is the
-// total of its effect costs, and one effect costs
-//
-//   effect_base_cost * (magnitude * duration / 10) ^ 1.1
-//
-// with three substitutions before the arithmetic — a magnitude below 1 counts
-// as 1, a duration of 0 counts as 10, and a concentration spell's duration
-// counts as 10 whatever the effect says. `effect_base_cost` is the MGEF DATA
-// base cost, so the calculation only works once the EFID links resolve; an
-// unresolved link contributes nothing and is counted so a caller can tell a
-// zero-cost spell from an unresolvable one.
-//
-// UESP does not say where the fractional part goes. Comparing the result
-// against the cost vanilla stores in SPIT says each effect's contribution is
-// truncated to whole magicka before the sum, not the sum afterwards; the
-// measured agreement for each variant is in docs/formats/magic-records.md.
-//
-// The SPIT flag bit 0 ("Manual Cost Calc" in xEdit, "not Auto-Calculate" on
-// UESP) switches a record to the authored SPIT base cost instead. Records the
-// game auto-calculates still store the derived value in that same word, which
-// is what the real-data gate compares against.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/SPEL", Effect/EFIT row
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SPEL
-//   UESP "Skyrim Mod:Mod File Format/SCRL", same row
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: the flag is bit 0 of the SPIT
-//     flags word in both `wbRecord(SPEL, ...)` and `wbRecord(SCRL, ...)`.
-// Formula and measured agreement documented in docs/formats/magic-records.md.
+// Auto-calculated spell cost. One effect costs
+// `base_cost * (magnitude * duration / 10) ^ 1.1`, with magnitude at least 1
+// and duration 10 when 0 or concentration. Each effect is truncated before
+// the sum. SPIT bit 0 selects the authored cost. Formula, sources and measured
+// agreement: docs/formats/magic-records.md.
 
 import Foundation
 
@@ -84,50 +58,8 @@ nonisolated public enum SpellCost: Sendable {
         costs.reduce(0) { $0 + contribution($1) }
     }
 
-    /// Totals the effect list. `baseCost` returns the MGEF base cost for one
-    /// effect, or nil when the EFID link does not resolve.
-    public static func autoCalculated(
-        effects: [MagicItemEffect],
-        castingType: MagicEffectCastingType,
-        baseCost: (MagicItemEffect) -> Float?
-    ) -> (total: Float, unresolved: Int) {
-        var total: Float = 0
-        var unresolved = 0
-        for effect in effects {
-            guard let base = baseCost(effect) else {
-                unresolved += 1
-                continue
-            }
-            total += contribution(effectCost(
-                baseCost: base,
-                magnitude: effect.magnitude,
-                duration: effect.duration,
-                castingType: castingType
-            ))
-        }
-        return (total, unresolved)
-    }
-
-    /// The full result for a record, honoring the manual-cost flag.
-    public static func result(
-        data: SpellItemData?,
-        effects: [MagicItemEffect],
-        baseCost: (MagicItemEffect) -> Float?
-    ) -> SpellCostResult {
-        let calculated = autoCalculated(
-            effects: effects,
-            castingType: data?.castingType ?? .fireAndForget,
-            baseCost: baseCost
-        )
-        return result(
-            data: data,
-            total: calculated.total,
-            unresolvedEffects: calculated.unresolved
-        )
-    }
-
-    /// Variant for a caller that already summed the per-effect contributions,
-    /// so the effect list is not resolved twice.
+    /// The result for a record whose per-effect contributions are already
+    /// summed, honoring the manual-cost flag.
     public static func result(
         data: SpellItemData?,
         total: Float,

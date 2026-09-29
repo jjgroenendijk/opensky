@@ -122,9 +122,10 @@ struct NIFMaterialBlockTests {
         // func GREATER (4), no-sorter on: 1 | 4<<1 | 5<<5 | 0x200 | 4<<10 | 0x2000.
         let flags: UInt16 = 1 | 4 << 1 | 5 << 5 | 0x200 | 4 << 10 | 0x2000
         let property = try NIFAlphaProperty(
-            data: NIFFixture.niAlphaProperty(flags: flags, threshold: 128),
-            header: header()
+            data: NIFFixture.niAlphaProperty(nameIndex: 0, flags: flags, threshold: 128),
+            header: header(strings: ["AlphaProp"])
         )
+        #expect(property.name == "AlphaProp")
         #expect(property.blendEnabled)
         #expect(property.sourceBlendMode == 4)
         #expect(property.destinationBlendMode == 5)

@@ -1,24 +1,7 @@
-// MOVT record decoded into engine types: one named movement type and the
-// directional walk/run speeds an actor using it moves at.
-//
-// A MOVT is how Skyrim states "how fast does an actor go while sneaking", which
-// is what the locomotion bridge (issue #188) needs and what no GMST answers:
-// `fMoveCharWalkBase` and `fMoveCharRunBase` describe the default gait only.
-// The player's four gaits are four records — `NPC_Default_MT`,
-// `NPC_Sneaking_MT`, `NPC_Sprinting_MT`, `NPC_Swimming_MT` — so the bridge
-// reads their forward speeds rather than inventing multipliers.
-//
-// SPED is a fixed 11-float struct. The order is the one xEdit names and the
-// shipped data corroborates: `NPC_Sprinting_MT` is 0 in every lateral slot and
-// 500 in the forward pair, which is only consistent with forward sitting at
-// float indices 4 and 5.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/MOVT"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MOVT
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(MOVT, ...)`
-//     https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-// Layout + observed vanilla values documented in docs/formats/records.md.
+// MOVT record decoded into engine types: a movement type and its directional
+// speeds. The player's gaits are four MOVT records, so locomotion reads their
+// forward speeds instead of inventing multipliers. SPED is 11 floats in xEdit's
+// order; forward sits at indices 4 and 5. Layout: docs/formats/records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -119,24 +102,10 @@ nonisolated public struct MovementType: Equatable, Sendable {
         self.name = name
         self.speeds = speeds
     }
-
-    /// Synthetic movement type, for tests and for defaults assembled without a
-    /// plugin.
-    public init(formID: FormID, editorID: String?, name: String? = nil, speeds: Speeds?) {
-        self.formID = formID
-        self.editorID = editorID
-        self.name = name
-        self.speeds = speeds
-    }
 }
 
-/// Immutable index of the MOVT records across the active load order, keyed by
-/// editor ID. Later plugins win, which is the same override rule
-/// `GameSettingStore` applies to GMSTs.
-///
-/// Editor-ID lookup is case-insensitive for the same reason the global index
-/// is: the names travel through data files and console commands, where Skyrim
-/// has never cared about case.
+/// MOVT records across the load order, keyed by editor ID. Later plugins win,
+/// as with GMSTs. Lookup is case-insensitive, like every editor-ID lookup.
 nonisolated public struct MovementTypeStore: Equatable, Sendable {
     public private(set) var types: [String: MovementType] = [:]
 
@@ -163,9 +132,8 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
         return (speeds.forwardWalk, speeds.forwardRun)
     }
 
-    /// Editor IDs of the four gaits the player uses, as vanilla names them.
+    /// Editor IDs of the player gaits OpenSky reads, as vanilla names them.
     public enum PlayerGait: Sendable {
-        public static let normal = "NPC_Default_MT"
         public static let sneaking = "NPC_Sneaking_MT"
         public static let sprinting = "NPC_Sprinting_MT"
         public static let swimming = "NPC_Swimming_MT"

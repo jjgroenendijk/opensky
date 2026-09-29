@@ -41,7 +41,7 @@ struct CellRecordTests {
     }
 
     @Test func decodesMusicTypeField() throws {
-        // XCMO (M9.2.3): MUSC override, decoded alongside the other links.
+        // XCMO: MUSC override, decoded alongside the other links.
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Tavern"))
             + ESMFixture.field("DATA", Data([0x01, 0x00]))
             + ESMFixture.field("XCAS", formID(0xABC))
@@ -234,5 +234,15 @@ struct CellRecordTests {
 
     private func color(_ red: UInt8, _ green: UInt8, _ blue: UInt8) -> SIMD3<Float> {
         SIMD3(Float(red) / 255, Float(green) / 255, Float(blue) / 255)
+    }
+
+    /// The CELL DATA bits docs/formats/world-records.md lists.
+    @Test func flagBitsMatchTheDocumentedList() {
+        let documented: [(Cell.Flags, UInt16)] = [
+            (.interior, 0x01), (.hasWater, 0x02), (.noLODWater, 0x08), (.showSky, 0x80)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
     }
 }

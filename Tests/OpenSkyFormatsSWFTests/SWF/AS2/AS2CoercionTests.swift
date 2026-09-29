@@ -128,7 +128,7 @@ struct AS2CoercionTests {
         #expect(AS2Value.string("x").typeName == "string")
         #expect(AS2Value.object(AS2Object()).typeName == "object")
         let runtime = AS2Runtime()
-        let function = runtime.makeNative("noop") { _ in .undefined }
+        let function = runtime.makeNative { _ in .undefined }
         #expect(AS2Value.object(function).typeName == "function")
         let hosted = AS2Object()
         hosted.typeOverride = "movieclip"

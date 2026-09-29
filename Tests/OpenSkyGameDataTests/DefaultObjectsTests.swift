@@ -17,6 +17,7 @@ struct DefaultObjectsTests {
                 ("GOLD", 0x0F), ("ZZZZ", 0x20), (nil, 0)
             ]))
         ))
+        #expect(defaults.formID == FormID(1))
         #expect(defaults.editorID == "DefaultObjectManager")
         #expect(defaults.entries.count == 2)
         #expect(defaults.entry(tag: "GOLD")?.object == FormID(0x0F))

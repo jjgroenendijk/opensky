@@ -1,14 +1,7 @@
 // Engine-facing Havok constraint values. A constraint joins two rigid bodies;
-// the ragdoll on a character skeleton is a graph of them. Pivots arrive in
-// engine units, axes stay unit-length and unitless, angles stay radians.
-//
-// Reference: NifTools nif.xml (bhkConstraint, bhkConstraintCInfo,
-// bhkRagdollConstraintCInfo, bhkHingeConstraintCInfo,
-// bhkLimitedHingeConstraintCInfo, bhkBallAndSocketConstraintCInfo,
-// bhkStiffSpringConstraintCInfo, bhkPrismaticConstraintCInfo,
-// bhkConstraintMotorCInfo, hkConstraintType, hkMotorType).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-collision.md.
+// a character ragdoll is a graph of them. Pivots are in engine units, axes are
+// unit length, angles are radians. Layout from nif.xml:
+// docs/formats/nif-collision.md.
 
 import Foundation
 import simd
@@ -27,31 +20,19 @@ nonisolated public enum NIFConstraintType: UInt32, CaseIterable, Sendable {
 /// nif.xml `bhkPositionConstraintMotor`: drives towards a target angle. This
 /// is the motor a posed ragdoll uses.
 nonisolated public struct NIFPositionMotor: Sendable {
-    public let minForce: Float
     public let maxForce: Float
     public let tau: Float
-    public let damping: Float
-    public let proportionalRecoveryVelocity: Float
-    public let constantRecoveryVelocity: Float
     public let isEnabled: Bool
 }
 
 /// nif.xml `bhkVelocityConstraintMotor`.
 nonisolated public struct NIFVelocityMotor: Sendable {
-    public let minForce: Float
-    public let maxForce: Float
-    public let tau: Float
-    public let targetVelocity: Float
-    public let usesVelocityTarget: Bool
     public let isEnabled: Bool
 }
 
 /// nif.xml `bhkSpringDamperConstraintMotor`.
 nonisolated public struct NIFSpringDamperMotor: Sendable {
-    public let minForce: Float
-    public let maxForce: Float
     public let springConstant: Float
-    public let springDamping: Float
     public let isEnabled: Bool
 }
 
@@ -62,15 +43,6 @@ nonisolated public enum NIFConstraintMotor: Sendable {
     case position(NIFPositionMotor)
     case velocity(NIFVelocityMotor)
     case springDamper(NIFSpringDamperMotor)
-
-    public var isEnabled: Bool {
-        switch self {
-        case .none: false
-        case let .position(motor): motor.isEnabled
-        case let .velocity(motor): motor.isEnabled
-        case let .springDamper(motor): motor.isEnabled
-        }
-    }
 }
 
 /// One body's end of a hinge-family constraint: the rotation axis, the two

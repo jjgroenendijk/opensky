@@ -40,8 +40,9 @@ struct NIFSkinTests {
                 vertexWeights: [[
                     (vertex: 0, weight: 1),
                     (vertex: 1, weight: 1),
-                    (vertex: 2, weight: 1)
-                ]]
+                    (vertex: 2, weight: 0.5)
+                ]],
+                boneBound: SIMD4(1, 2, 3, 4)
             )),
             .init("NiSkinPartition", NIFFixture.skinPartition(
                 vertexRecords: records,
@@ -77,11 +78,15 @@ struct NIFSkinTests {
         #expect(instance.skinPartitionRef == 5)
         #expect(instance.skeletonRootRef == 0)
         #expect(instance.boneRefs == [1])
-        #expect(instance.bodyPartitions == [.init(flags: 257, bodyPart: 32)])
+        #expect(instance.bodyPartitions.map(\.flags) == [257])
+        #expect(instance.bodyPartitions.map(\.bodyPart) == [32])
 
         let data = try NIFSkinData(data: file.blocks[4].data)
         #expect(data.bones.count == 1)
-        #expect(data.bones[0].vertexWeights.count == 3)
+        #expect(data.bones[0].vertexWeights.map(\.vertex) == [0, 1, 2])
+        #expect(data.bones[0].vertexWeights.map(\.weight) == [1, 1, 0.5])
+        #expect(data.bones[0].boundingSphereCenter == SIMD3(1, 2, 3))
+        #expect(data.bones[0].boundingSphereRadius == 4)
         #expect(data.bones[0].skinToBone.translation == SIMD3(-10, 0, 0))
 
         let partition = try NIFSkinPartition(

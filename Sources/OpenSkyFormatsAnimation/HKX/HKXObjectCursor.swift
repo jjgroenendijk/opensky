@@ -1,4 +1,4 @@
-// Member reader for one Havok packfile object (todo 14.1). A class decoder
+// Member reader for one Havok packfile object. A class decoder
 // declares its member offsets as `HKXField` constants and reads them through
 // this cursor; the fixup arithmetic, the bounds checks, and the miss log all
 // live here. See HKXObjectGraph.swift for the layout rules and the reasons a
@@ -28,7 +28,6 @@ nonisolated public struct HKXObjectCursor: Sendable {
     /// touching the log directly.
     public mutating func recordMiss(_ field: HKXField, _ miss: HKXResolutionMiss) {
         unresolved.append(HKXUnresolvedReference(
-            sectionIndex: sectionIndex,
             objectOffset: base,
             field: field.name,
             miss: miss
@@ -121,27 +120,15 @@ nonisolated public struct HKXObjectCursor: Sendable {
 
     // MARK: - Pointers and strings
 
-    /// Resolves an 8-byte pointer member through the local fixups first, then
-    /// the global ones. Local wins because a same-section patch is the common
-    /// case and no observed file registers both for one source offset.
-    ///
-    /// The member's own 8 bytes are bounds-checked before the fixup lookup, so
-    /// a pointer that runs off the end of a truncated object reports
-    /// `outOfBounds` rather than the `noFixup` an absent optional produces —
-    /// the two mean opposite things to the real-data sweep.
+    /// Resolves a pointer through the local fixups, then the global ones. The
+    /// member is bounds-checked first, so a truncated object reports `outOfBounds`
+    /// rather than `noFixup`.
     public mutating func pointer(at field: HKXField) -> HKXPointerTarget? {
         resolvePointer(at: field, recordingNull: true)
     }
 
-    /// The same resolution for a member Havok is entitled to leave null, with
-    /// the null itself not logged as a miss.
-    ///
-    /// `hkaAnimation.m_extractedMotion` is the member this exists for: every
-    /// clip in a vanilla install leaves it null, so treating each one as an
-    /// unresolved reference would bury the misses that mean something under
-    /// thousands that do not. Everything else still reports:
-    /// `outOfBounds` on a truncated object, `sectionMissing` on a fixup into a
-    /// section the file does not carry.
+    /// `pointer(at:)` for a member Havok may leave null, such as
+    /// `m_extractedMotion`: a null is not logged as a miss, other failures are.
     public mutating func optionalPointer(at field: HKXField) -> HKXPointerTarget? {
         resolvePointer(at: field, recordingNull: false)
     }

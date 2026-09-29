@@ -29,7 +29,9 @@ struct TopicInfoRecordTests {
         )
         fields += DialogueFixture.inlineText("NAM1", "First response")
         fields += DialogueFixture.inlineText("NAM2", "Actor note")
+        fields += DialogueFixture.inlineText("NAM3", "Edit note")
         fields += DialogueFixture.word("SNAM", 0x501)
+        fields += DialogueFixture.word("LNAM", 0x502)
         fields += DialogueFixture.response(emotion: 1, number: 8)
         fields += DialogueFixture.inlineText("NAM1", "Second response")
         fields += DialogueFixture.condition(functionIndex: 77)
@@ -59,7 +61,10 @@ struct TopicInfoRecordTests {
         #expect(first.usesEmotionAnimation)
         #expect(first.text == LString.inline("First response"))
         #expect(first.scriptNotes == "Actor note")
+        #expect(first.edits == "Edit note")
         #expect(first.speakerIdle == FormID(0x501))
+        #expect(first.listenerIdle == FormID(0x502))
+        #expect(info.legacyDialogueTab == nil)
         #expect(info.conditions.conditions.count == 1)
         #expect(info.conditions.conditions.first?.functionIndex == 77)
         #expect(info.prompt == LString.inline("Choose this"))
@@ -67,6 +72,31 @@ struct TopicInfoRecordTests {
         #expect(info.walkAwayTopic == FormID(0x701))
         #expect(info.audioOutputOverride == FormID(0x801))
         #expect(info.skipped.isEmpty)
+    }
+
+    @Test func legacyDataCarriesTabFlagsAndResetDays() throws {
+        var data = Data()
+        data.appendUInt16(3)
+        data.appendUInt16(0x0002)
+        data.appendFloat32(0.5)
+        let info = try DialogueFixture.info(ESMFixture.field("DATA", data))
+
+        #expect(info.legacyDialogueTab == 3)
+        #expect(info.flags == TopicInfo.Flags.random)
+        #expect(abs(info.resetHours - 12) < 0.01)
+    }
+
+    /// Bits 0 to 14 in the order docs/formats/dialogue.md lists them.
+    @Test func flagBitsMatchTheDocumentedOrder() {
+        let documented: [TopicInfo.Flags] = [
+            .goodbye, .random, .sayOnce, .requiresPlayerActivation, .infoRefusal,
+            .randomEnd, .invisibleContinue, .walkAway, .walkAwayInvisibleInMenu,
+            .forceSubtitle, .canMoveWhileGreeting, .noLipFile, .requiresPostProcessing,
+            .hasAudioOutputOverride, .spendsFavorPoints
+        ]
+        for (bit, flag) in documented.enumerated() {
+            #expect(flag.rawValue == 1 << bit)
+        }
     }
 
     @Test func responseTextResolvesThroughILStrings() throws {

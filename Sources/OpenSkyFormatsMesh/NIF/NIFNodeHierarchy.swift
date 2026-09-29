@@ -10,7 +10,6 @@ import simd
 
 nonisolated public struct NIFNodeHierarchy: Sendable {
     public let worldTransforms: [Int: float4x4]
-    public let parentTransforms: [Int: float4x4]
     public let names: [Int: String]
 
     public init(file: NIFFile) throws {
@@ -19,19 +18,17 @@ nonisolated public struct NIFNodeHierarchy: Sendable {
             try builder.walk(from: root)
         }
         worldTransforms = builder.worldTransforms
-        parentTransforms = builder.parentTransforms
         names = builder.names
     }
 
     private struct Builder {
         /// Plausibility limit on how deeply a real skeleton nests. Depth costs
         /// heap rather than call frames, so this stays a policy choice instead
-        /// of standing in for the thread's stack budget (issue #388).
+        /// of standing in for the thread's stack budget.
         static let maxDepth = 64
 
         let file: NIFFile
         var worldTransforms: [Int: float4x4] = [:]
-        var parentTransforms: [Int: float4x4] = [:]
         var names: [Int: String] = [:]
 
         mutating func walk(from root: Int32) throws {
@@ -58,7 +55,6 @@ nonisolated public struct NIFNodeHierarchy: Sendable {
                 guard worldTransforms[index] == nil else { continue }
                 let node = try Self.decodeNode(block, header: file.header)
                 let world = visit.parent * node.object.localTransform
-                parentTransforms[index] = visit.parent
                 worldTransforms[index] = world
                 if let name = node.object.name {
                     names[index] = name
@@ -91,7 +87,7 @@ nonisolated public struct NIFSkeleton: Sendable {
     public let boneTransforms: [String: float4x4]
 
     /// Direct construction, for tests and for a caller that already has a bone
-    /// table (the rigid-attachment bind lookup, issue #178).
+    /// table (the rigid-attachment bind lookup).
     public init(boneTransforms: [String: float4x4]) {
         self.boneTransforms = boneTransforms
     }
@@ -107,13 +103,9 @@ nonisolated public struct NIFSkeleton: Sendable {
         boneTransforms = transforms
     }
 
-    /// `name`'s bind transform, falling back to a case-insensitive match.
-    ///
-    /// The fallback exists because the two skeleton files disagree on case for
-    /// the attachment nodes: the Havok rig names the drawn-weapon node
-    /// `Weapon` and the NIF names the same node `WEAPON` (observed with
-    /// `openskycli skeleton --nif`, recorded in docs/engine/actor-resolution.md). Skin
-    /// bone names match exactly and take the fast path.
+    /// `name`'s bind transform, falling back to a case-insensitive match because
+    /// the Havok rig and the NIF disagree on case for attachment nodes, such as
+    /// `Weapon` and `WEAPON` (docs/engine/actor-resolution.md).
     public func transform(forBoneNamed name: String) -> float4x4? {
         if let exact = boneTransforms[name] {
             return exact

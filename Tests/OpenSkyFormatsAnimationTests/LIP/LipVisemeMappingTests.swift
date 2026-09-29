@@ -14,10 +14,7 @@ struct LipVisemeMappingTests {
 
     @Test("known slots map and unknown or unavailable slots are tallied")
     func mappingTally() {
-        let sample = LIPSample(
-            trackTime: 0.5,
-            weightsBySlot: [0: 0.75, 1: 0.25, 2: 0.5, 32: 0.1]
-        )
+        let sample = LIPSample(weightsBySlot: [0: 0.75, 1: 0.25, 2: 0.5, 32: 0.1])
         let mapped = LipVisemeMapping.map(sample, availableTargets: ["Aah"])
 
         #expect(mapped.weights == ["Aah": 0.75])

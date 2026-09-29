@@ -1,11 +1,6 @@
-// Shared inventory-subrecord helpers (OBND, KSIZ/KWDA, the value+weight DATA)
-// and the two simplest carryable families, MISC and BOOK. Fixtures are
-// synthetic in-code records (InventoryFixture) — never extracted game files
-// (AGENTS.md "Legal & IP boundary").
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format" subpages /MISC and /BOOK,
-// cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas.
-// See docs/formats/item-records.md.
+// Shared inventory subrecords (OBND, KSIZ/KWDA, value and weight DATA) and the
+// MISC and BOOK families, over synthetic InventoryFixture records.
+// Layout: docs/formats/item-records.md.
 
 import FormatsCoreTesting
 import FormatsESMTesting
@@ -78,6 +73,7 @@ struct MiscItemRecordTests {
         fields += ESMFixture.field("FULL", ESMFixture.zstring("Gold"))
         fields += ESMFixture.field("MODL", ESMFixture.zstring("clutter\\coin01.nif"))
         fields += ESMFixture.field("ICON", ESMFixture.zstring("interface\\icons\\gold.dds"))
+        fields += ESMFixture.field("MICO", ESMFixture.zstring("interface\\icons\\gold_m.dds"))
         fields += InventoryFixture.formIDField("YNAM", 0x0003_C7BC)
         fields += InventoryFixture.formIDField("ZNAM", 0x0003_C7BD)
         fields += InventoryFixture.keywordFields([0x0008_5FF9])
@@ -95,6 +91,7 @@ struct MiscItemRecordTests {
         #expect(item.fields.name == .inline("Gold"))
         #expect(item.fields.modelPath == "clutter\\coin01.nif")
         #expect(item.fields.iconPath == "interface\\icons\\gold.dds")
+        #expect(item.fields.messageIconPath == "interface\\icons\\gold_m.dds")
         #expect(item.fields.pickupSound == FormID(0x0003_C7BC))
         #expect(item.fields.dropSound == FormID(0x0003_C7BD))
         #expect(item.fields.keywords.keywords == [FormID(0x0008_5FF9)])

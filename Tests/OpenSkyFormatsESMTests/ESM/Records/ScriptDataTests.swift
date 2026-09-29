@@ -10,7 +10,7 @@ struct ScriptDataTests {
     @Test("decodes every scalar and array property type")
     func decodesPropertyMatrix() throws {
         let direct = VMADFixture.object(0x0012_3456, unused: 7)
-        let script = VMADFixture.Script("MatrixScript", properties: [
+        let script = VMADFixture.Script("MatrixScript", flags: 1, properties: [
             .init("NoneValue", .none),
             .init("ObjectValue", .object(direct)),
             .init("StringValue", .string("Whiterun")),
@@ -25,6 +25,7 @@ struct ScriptDataTests {
         ])
 
         let data = try decode(VMADFixture.payload(scripts: [script]))
+        #expect(data.scripts.first?.flags == .inherited)
         let properties = try #require(data.scripts.first?.properties)
         #expect(properties.count == 11)
         #expect(properties.map(\.type) == [0, 1, 2, 3, 4, 5, 11, 12, 13, 14, 15])

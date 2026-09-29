@@ -1,14 +1,6 @@
-// REGN record — milestone-7.2 scope is the weather list; milestone-9.2 adds
-// the sound area. A region can hold several data areas (objects, map, grass,
-// sound, weather), each introduced by an RDAT header and followed by area-
-// specific fields that stream sequentially. OpenSky decodes the weather area
-// (RDAT type 3 + RDWT) and the sound area (RDAT type 7 + RDSA); skips the rest.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/REGN"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REGN
-// xEdit dev-4.1.6 wbDefinitionsTES5.pas REGN body lines 9954-10041 +
-// wbDefinitionsCommon.pas wbRegionSounds lines 8712-8748 (RDSA struct).
-// Layout documented in docs/formats/weather.md.
+// REGN record. Each data area opens with an RDAT header. OpenSky decodes the
+// weather area (RDAT 3, RDWT) and the sound area (RDAT 7, RDSA) and skips the
+// rest. Layout from UESP and xEdit: docs/formats/weather.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -43,9 +35,6 @@ nonisolated public struct Region: Sendable {
             public static let cloudy = Conditions(rawValue: 0x0002)
             public static let rainy = Conditions(rawValue: 0x0004)
             public static let snowy = Conditions(rawValue: 0x0008)
-
-            /// The bit set CK uses when "all weather" is selected.
-            public static let all: Conditions = [.pleasant, .cloudy, .rainy, .snowy]
         }
 
         /// SNDR (or SOUN legacy marker) FormID. The runtime resolves the
@@ -86,7 +75,7 @@ nonisolated public struct Region: Sendable {
     public let soundPriority: Int?
     /// Sound area RDAT override flag.
     public let soundOverride: Bool
-    /// RDMO — region music type (MUSC), M9.2.3. UESP REGN notes it "can appear
+    /// RDMO — region music type (MUSC). UESP REGN notes it "can appear
     /// with RDSA under same RDAT or on its own", so it is accepted regardless
     /// of the current area context. nil when absent or null.
     public let musicType: FormID?
@@ -115,7 +104,7 @@ nonisolated public struct Region: Sendable {
 
     /// Mutable accumulator for the field loop. Split out so the area-aware
     /// field switch does not push init past the strict-lint cyclomatic-
-    /// complexity cap (RDSA, added in M9.2.2, tipped it over).
+    /// complexity cap (RDSA, tipped it over).
     private struct RegionFields {
         var editorID: String?
         var worldspace: FormID?

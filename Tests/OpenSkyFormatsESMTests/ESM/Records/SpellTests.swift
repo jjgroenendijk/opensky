@@ -134,6 +134,7 @@ struct SpellTests {
             localized: false
         )
 
+        #expect(scroll.formID == FormID(0x11))
         #expect(scroll.editorID == "TestScrollFirebolt")
         #expect(scroll.name == .inline("Scroll of Firebolt"))
         #expect(scroll.header.fields.modelPath == "Clutter\\Scroll01.nif")
@@ -208,5 +209,19 @@ struct SpellTests {
             duration: 0,
             castingType: .fireAndForget
         ) == 0)
+    }
+
+    /// The SPIT flag bits docs/formats/magic-records.md lists.
+    @Test
+    func flagBitsMatchTheDocumentedList() {
+        let documented: [(SpellFlags, Int)] = [
+            (.manualCostCalc, 0), (.unknown16, 16), (.pcStartSpell, 17), (.unknown18, 18),
+            (.areaEffectIgnoresLineOfSight, 19), (.ignoreResistance, 20),
+            (.scriptEffectAlwaysApplies, 20), (.disallowAbsorbReflect, 21), (.unknown22, 22),
+            (.noDualCastModifications, 23)
+        ]
+        for (flag, bit) in documented {
+            #expect(flag.rawValue == 1 << bit)
+        }
     }
 }

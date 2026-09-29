@@ -1,15 +1,6 @@
-// The behavior class registry (todo 14.2): Havok class name -> decoder. This is
-// what lets the 14.3 evaluator and `openskycli hkx` walk a behavior graph
-// generically, instead of a switch over class names repeated at every call
-// site. A packfile object's class name comes from the virtual-fixup inventory
-// (`HKXObjectGraph.className(at:)`), so the class name *is* the key; the
-// class-name table's signature hash identifies the same class and is recorded
-// per decoder in the file headers under docs/formats/hkx-behavior-nodes.md.
-//
-// The milestone rule is full-graph decode: a class the census reports in the
-// vanilla player behavior files and that is missing from this table is a
-// failed sweep assertion, not a tolerated tally entry. Classes that appear only
-// outside those files are recorded skips.
+// Havok class name -> decoder, so a graph walk needs no switch over class names.
+// The class name comes from the virtual-fixup inventory. A census class from
+// the vanilla player files that is missing here fails the sweep.
 
 import Foundation
 
@@ -35,7 +26,7 @@ nonisolated public enum HKBClassRegistry: Sendable {
         (Value.className, { target, graph in decode(target, graph) })
     }
 
-    /// Graph-level classes from item 14.1 are decoded by `HKBBehaviorCensus`
+    /// Graph-level classes are decoded by `HKBBehaviorCensus`
     /// and its own types, which predate this protocol; they are listed here as
     /// known-but-not-node classes so the coverage assertion can tell "no
     /// decoder exists" from "decoded elsewhere".
@@ -108,13 +99,6 @@ nonisolated public enum HKBClassRegistry: Sendable {
             entry(BSLookAtModifier.decode)
         ]
     )
-
-    /// Every class name this registry decodes, plus the graph-level classes
-    /// item 14.1 already covers. The sweep asserts the census class list is a
-    /// subset of this.
-    public static var coveredClassNames: Set<String> {
-        Set(decoders.keys).union(graphLevelClassNames)
-    }
 
     public static func decoder(for className: String) -> Decoder? {
         decoders[className]

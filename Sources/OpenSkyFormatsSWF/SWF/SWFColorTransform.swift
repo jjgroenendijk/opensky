@@ -1,12 +1,6 @@
-// CXFORM / CXFORMWITHALPHA record decoding plus the color-transform algebra
-// the display-list renderer applies per draw (multiply then add, clamped).
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 1 —
-// "Color transform record" / "Color transform with alpha record" (pp. 24-25).
-// Layout: HasAddTerms UB[1], HasMultTerms UB[1], Nbits UB[4], then the
-// multiply terms (R, G, B[, A] as SB[Nbits], 8.8 fixed point) followed by the
-// add terms (R, G, B[, A] as SB[Nbits], integer -255..255). Like RECT and
-// MATRIX, the record is byte aligned.
+// CXFORM and CXFORMWITHALPHA decoding plus the per-draw color math: multiply,
+// then add, then clamp. Multiply terms are 8.8 fixed point, add terms integers;
+// the record is byte aligned (SWF spec v19, pp. 24-25).
 
 import Foundation
 import simd
@@ -20,10 +14,6 @@ nonisolated public struct SWFColorTransform: Equatable, Sendable {
     public var add = SIMD4<Float>(repeating: 0)
 
     public static let identity = SWFColorTransform()
-
-    public var isIdentity: Bool {
-        self == .identity
-    }
 
     /// Decodes a CXFORM (`hasAlpha == false`, alpha terms untouched) or
     /// CXFORMWITHALPHA record at the reader's position.

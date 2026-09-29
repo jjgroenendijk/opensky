@@ -1,4 +1,4 @@
-// Synthetic SHOU / WOOP / LVSP / DUAL / EQUP decoder coverage (issue #467).
+// Synthetic SHOU / WOOP / LVSP / DUAL / EQUP decoder coverage.
 // Every byte here is assembled in code from the published record layouts —
 // never extracted game files (AGENTS.md "Legal & IP boundary").
 
@@ -25,6 +25,7 @@ struct ShoutRecordTests {
 
         let shout = try Shout(record: record, localized: false)
 
+        #expect(shout.formID == FormID(0x123))
         #expect(shout.editorID == "FireBreath")
         #expect(shout.name == .inline("Fire Breath"))
         #expect(shout.description == .inline("Your voice is fire."))
@@ -86,6 +87,7 @@ struct ShoutRecordTests {
 
         let word = try WordOfPower(record: record, localized: false)
 
+        #expect(word.formID == FormID(0x123))
         #expect(word.editorID == "FireBreathWord1")
         #expect(word.name == .inline("Y3"))
         #expect(word.translation == .inline("Yol"))
@@ -172,6 +174,7 @@ struct ShoutRecordTests {
         let dual = try DualCastData(record: record)
         let art = try #require(dual.art)
 
+        #expect(dual.formID == FormID(0x123))
         #expect(dual.editorID == "FrostStormDualCastData")
         #expect(dual.bounds?.isEmpty == true)
         #expect(art.projectile == FormID(0x0201))

@@ -1,12 +1,7 @@
-// The AS2 runtime (milestone 8.3.2): one movie's global object, built-in
-// prototypes, class registrations, execution limits, tally, and trace log.
-// This is the type an engine holds; `AS2Interpreter` is created per invocation
-// and is stateless between them apart from its own budget.
-//
-// Vanilla Skyrim menus are class-registration code — 1,127 `DoInitAction`
-// blocks against 2,163 timeline `DoAction` blocks — so the interesting output
-// of running one is not a rendered frame but the set of constructors it left in
-// `_global` and handed to `Object.registerClass`. Both are readable here.
+// The AS2 runtime: one movie's global object, built-in prototypes, class
+// registrations, limits, tally, and trace log. An engine holds this;
+// `AS2Interpreter` is created per invocation. Vanilla menus are mostly class
+// registration, so `_global` and `Object.registerClass` are readable here.
 
 import Foundation
 
@@ -157,10 +152,9 @@ nonisolated public final class AS2Runtime {
     }
 
     public func makeNative(
-        _ name: String,
         _ body: @escaping (AS2CallContext) throws -> AS2Value
     ) -> AS2Object {
-        makeFunction(.native(AS2NativeBody(name: name, call: body)))
+        makeFunction(.native(AS2NativeBody(call: body)))
     }
 
     /// The built-in prototype a primitive's members come from.
@@ -201,11 +195,6 @@ nonisolated public final class AS2Runtime {
 
     public func trace(_ message: String) {
         traceLog.append(message)
-    }
-
-    public func resetDiagnostics() {
-        tally = AS2Tally(limits: limits)
-        traceLog = AS2TraceLog(limits: limits)
     }
 
     /// `Math.random`, from a seeded generator so a rendered menu frame is

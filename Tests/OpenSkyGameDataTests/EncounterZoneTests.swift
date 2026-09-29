@@ -14,6 +14,7 @@ struct EncounterZoneTests {
             type: "ECZN",
             fields: zoneFields(editorID: "BleakFallsBarrowZone", data: zoneData())
         ))
+        #expect(full.formID == FormID(1))
         #expect(full.editorID == "BleakFallsBarrowZone")
         #expect(full.owner == FormID(0x10))
         #expect(full.location == FormID(0x20))
@@ -37,6 +38,17 @@ struct EncounterZoneTests {
         ))
         #expect(veryShort.owner == nil)
         #expect(veryShort.skipped.total == 0)
+    }
+
+    /// The DATA flag bits docs/formats/records.md lists.
+    @Test func flagBitsMatchTheDocumentedList() {
+        let documented: [(EncounterZone.Flags, UInt8)] = [
+            (.neverResets, 0x01), (.matchesPlayerBelowMinimumLevel, 0x02),
+            (.disablesCombatBoundary, 0x04)
+        ]
+        for (flag, bits) in documented {
+            #expect(flag.rawValue == bits)
+        }
     }
 
     @Test func wrongRecordTypeThrows() throws {

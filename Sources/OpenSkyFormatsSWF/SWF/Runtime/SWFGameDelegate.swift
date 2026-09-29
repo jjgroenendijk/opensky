@@ -1,34 +1,8 @@
-// The engine<->movie bridge (milestone 8.3.2 phase 3). `gfx.io.GameDelegate` is
-// Scaleform's host channel and the one the vanilla install actually uses: 1,520
-// references across 38 of the 53 movies. OpenSky adopts its shape rather than
-// inventing a bridge, because the movies are unmodified and a different bridge
-// would mean they call into nothing.
-//
-// The delegate itself is ActionScript that ships *inside* each movie — the
-// probe over `startmenu.swf` reads back `call`, `receiveResponse`, `addCallBack`,
-// `removeCallBack`, `receiveCall`, `initialize`, `responseHash`, `callBackHash`,
-// and `nextID` on `_global.gfx.io.GameDelegate` — so the engine does not
-// reimplement it. It supplies the two ends the delegate reaches for:
-//
-//   * movie -> engine: `GameDelegate.call(command, callback, thisRef, ...)`
-//     appends the command name and a response id and hands them to
-//     `ExternalInterface.call`, which is a player built-in and therefore the
-//     engine's to provide. A registered Swift handler answers; an unregistered
-//     name is a logged no-op plus a tally entry, per the binding rule in the
-//     AS2 scope decision. A handler that returns a value and a call that asked
-//     for one are joined back up through `GameDelegate.receiveResponse(id, …)`.
-//
-//   * engine -> movie: the movie registers named callbacks with
-//     `addCallBack(command, thisRef, function)`, and the engine invokes one by
-//     name through `receiveCall`. A movie without a delegate falls back to a
-//     direct function call on the root clip.
-//
-// Both directions land in a bounded invoke log, which is what milestone 8.3.3
-// asks `Developer > UI Lab` to show.
-//
-// There is no public specification for the Scaleform GFx object model, so the
-// argument convention above is recorded as observed from the vanilla bytecode,
-// not cited.
+// The engine<->movie bridge through `gfx.io.GameDelegate`, the Scaleform channel
+// vanilla movies ship and call. Movie to engine: `ExternalInterface.call` reaches
+// a registered Swift handler; an unknown name is a logged no-op. Engine to movie:
+// `receiveCall` invokes a registered callback. Observed, not specified:
+// docs/engine/as2-game-delegate.md.
 
 import Foundation
 
@@ -131,12 +105,7 @@ public typealias SWFHostFunction = @Sendable (SWFHostCall) -> AS2Value?
 
 /// One movie-to-engine call as a handler sees it.
 nonisolated public struct SWFHostCall {
-    public let name: String
     public let arguments: [AS2Value]
-
-    public func argument(_ index: Int) -> AS2Value {
-        arguments.indices.contains(index) ? arguments[index] : .undefined
-    }
 }
 
 nonisolated extension SWFMovieRuntime {
@@ -144,10 +113,6 @@ nonisolated extension SWFMovieRuntime {
     /// name twice replaces the handler, which is what a menu reopening expects.
     public func registerHostFunction(_ name: String, _ body: @escaping SWFHostFunction) {
         hostFunctions[name] = body
-    }
-
-    public func removeHostFunction(_ name: String) {
-        hostFunctions[name] = nil
     }
 
     /// Registered names, sorted so a report is stable.
@@ -189,7 +154,7 @@ nonisolated extension SWFMovieRuntime {
             )
             return nil
         }
-        let result = handler(SWFHostCall(name: name, arguments: arguments))
+        let result = handler(SWFHostCall(arguments: arguments))
         noteInvoke(
             SWFInvokeEntry(
                 direction: .movieToEngine, name: name,
@@ -200,17 +165,9 @@ nonisolated extension SWFMovieRuntime {
         return result
     }
 
-    /// The response id `GameDelegate.call` inserts after the command name, or
-    /// nil when the second value is an ordinary argument.
-    ///
-    /// Telling the two apart cannot be done by shape, and guessing is a real
-    /// failure mode: `tweenmenu.swf` calls `HighlightMenu(3)` with the 3 as its
-    /// only argument, and a rule that treated any leading number as an id would
-    /// silently drop it. So the delegate's own bookkeeping decides. It writes
-    /// `responseHash[id]` immediately before the call when the movie passed a
-    /// callback, and passes the literal -1 when it did not, so an id is a number
-    /// that is either -1 or a live `responseHash` key — and only a movie that
-    /// ships a delegate can produce either.
+    /// The response id `GameDelegate.call` inserts after the command name, or nil.
+    /// Shape cannot tell an id from an argument (`HighlightMenu(3)`), so an id is
+    /// -1 or a live `responseHash` key, which only a delegate writes.
     private func responseId(_ values: [AS2Value]) -> Int? {
         guard
             values.count > 1, case let .number(number) = values[1],

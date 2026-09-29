@@ -24,7 +24,7 @@ struct NIFParticleTests {
     /// modifiers (age-death, gravity, scale, LOD).
     private func fullSystemFile() -> Data {
         let boxEmitter = NIFParticleFixture.boxEmitter(
-            base: NIFParticleFixture.modifierBase(nameIndex: 1, order: 0),
+            base: NIFParticleFixture.modifierBase(nameIndex: 1, order: 2),
             emitter: NIFParticleFixture.emitterBase(
                 speed: 25, initialColor: SIMD4(0.5, 0.6, 0.7, 1), initialRadius: 3,
                 lifeSpan: 2.5
@@ -32,7 +32,7 @@ struct NIFParticleTests {
             width: 10, height: 20, depth: 30
         )
         let gravity = NIFParticleFixture.gravityModifier(
-            base: NIFParticleFixture.modifierBase(order: 4),
+            base: NIFParticleFixture.modifierBase(nameIndex: 2, order: 4),
             axis: SIMD3(0, 0, -1), strength: 9.8
         )
         let scale = NIFParticleFixture.scaleModifier(
@@ -76,7 +76,7 @@ struct NIFParticleTests {
                     NIFParticleFixture.alphaProperty(flags: 0x0001, threshold: 128)
                 )
             ],
-            strings: ["Fire", "BoxEmitter"],
+            strings: ["Fire", "BoxEmitter", "Gravity"],
             roots: [0]
         )
     }
@@ -111,6 +111,7 @@ struct NIFParticleTests {
         try #require(decoded.emitters.count == 1)
         let emitter = decoded.emitters[0]
         #expect(emitter.name == "BoxEmitter")
+        #expect(emitter.order == 2)
         #expect(emitter.speed == 25)
         #expect(emitter.initialRadius == 3)
         #expect(emitter.lifeSpan == 2.5)
@@ -122,6 +123,7 @@ struct NIFParticleTests {
         #expect(decoded.modifiers[0].kind == .ageDeath)
         #expect(decoded.modifiers[1].kind == .gravity(axis: SIMD3(0, 0, -1), strength: 9.8))
         #expect(decoded.modifiers[1].order == 4)
+        #expect(decoded.modifiers[1].name == "Gravity")
         #expect(decoded.modifiers[2].kind == .scale(scales: [0.1, 0.5, 1.0]))
         #expect(decoded.modifiers[3].kind == .lod(
             beginDistance: 0.1, endDistance: 0.7, endEmitScale: 0.2, endSize: 1

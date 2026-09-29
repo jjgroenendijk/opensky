@@ -1,24 +1,7 @@
-// Shared Havok packfile object-graph resolution (todo 14.1). The container
-// (6.1) locates objects; every object decoder then needs the same three
-// operations — resolve a pointer field through the local plus global fixup
-// tables, walk an hkArray descriptor to its element data, and read an in-place
-// cstring. hkaSkeleton, hkaSplineCompressedAnimation, and hkaAnimationBinding
-// each rebuilt those privately. Behavior graphs are pointer-dense (dozens of
-// interlinked hkb classes referencing each other), so the duplication is
-// factored here before item 14.2 multiplies it across node classes.
-//
-// Resolution never traps and never throws: an unresolvable field yields nil
-// and appends an `HKXUnresolvedReference` carrying the reason, so a malformed
-// file costs one field rather than the load. A caller that treats a field as
-// load-bearing converts the nil into its own typed error.
-//
-// Layout rules (64-bit little-endian SSE packfiles, hk_2010.2.0-r1). Pointers
-// are 8 bytes and null on disk — the Havok "finish" pass patches them at load,
-// so the fixup tables *are* the pointer values. hkArray is
-// `{ ptr(8) | i32 size @+8 | u32 capacityAndFlags @+12 }`, 16 bytes; the size
-// field drives element counts because capacityAndFlags carries a flag in
-// bit 31. hkStringPtr is an 8-byte pointer to an in-place NUL-terminated ASCII
-// string. Sources and byte map: docs/formats/hkx-container.md.
+// Havok packfile object-graph resolution shared by every object decoder:
+// pointers through the fixup tables, hkArray elements, and in-place strings.
+// Resolution never traps or throws; an unresolved field yields nil and an
+// `HKXUnresolvedReference`. Layout: docs/formats/hkx-container.md.
 
 import Foundation
 
@@ -56,7 +39,6 @@ nonisolated public enum HKXResolutionMiss: String, Equatable, Sendable {
 
 /// One recorded resolution failure: which member of which object, and why.
 nonisolated public struct HKXUnresolvedReference: Equatable, Sendable {
-    public let sectionIndex: Int
     public let objectOffset: Int
     public let field: String
     public let miss: HKXResolutionMiss

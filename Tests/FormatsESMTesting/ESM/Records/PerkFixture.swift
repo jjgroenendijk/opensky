@@ -30,6 +30,7 @@ public enum PerkFixture: Sendable {
         editorID: String,
         name: String? = nil,
         description: String? = nil,
+        iconPath: String? = nil,
         conditions: [Data] = [],
         header: Data? = PerkFixture.header(),
         nextPerk: UInt32? = nil,
@@ -41,6 +42,9 @@ public enum PerkFixture: Sendable {
         }
         if let description {
             data += ESMFixture.field("DESC", ESMFixture.zstring(description))
+        }
+        if let iconPath {
+            data += ESMFixture.field("ICON", ESMFixture.zstring(iconPath))
         }
         data += conditions.reduce(Data(), +)
         if let header {
@@ -144,14 +148,8 @@ public enum PerkFixture: Sendable {
         values.reduce(Data()) { $0 + float($1) }
     }
 
-    /// EPFD for the actor-value functions: the actor value as a *float* holding
-    /// the index, then the factor.
-    ///
-    /// A float rather than an integer because that is what the records carry:
-    /// xEdit stores the word as `itU32` and reinterprets it as a `Single` before
-    /// rounding (`wbEPFDActorValueToStr`), and UESP spells the payload
-    /// "float AV, float FACTOR". `AlchemySkillBoosts` reads back 146, not
-    /// 0x43120000.
+    /// EPFD for the actor-value functions: the actor value as a float holding the
+    /// index, then the factor, as the records carry it.
     public static func actorValueMultiplier(actorValue: Int32, factor: Float) -> Data {
         float(Float(actorValue)) + float(factor)
     }

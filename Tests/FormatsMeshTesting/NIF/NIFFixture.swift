@@ -6,7 +6,6 @@
 
 import FormatsCoreTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 import simd
 
 public enum NIFFixture: Sendable {
@@ -198,7 +197,8 @@ extension NIFFixture {
     public static func skinData(
         rootParentToSkin: Data = niTransform(),
         boneTransforms: [Data],
-        vertexWeights: [[(vertex: UInt16, weight: Float)]]
+        vertexWeights: [[(vertex: UInt16, weight: Float)]],
+        boneBound: SIMD4<Float> = .zero
     ) -> Data {
         precondition(boneTransforms.count == vertexWeights.count)
         var out = rootParentToSkin
@@ -206,7 +206,9 @@ extension NIFFixture {
         out.append(1) // has vertex weights
         for (transform, weights) in zip(boneTransforms, vertexWeights) {
             out.append(transform)
-            out.append(Data(count: 16)) // zero NiBound
+            for lane in 0 ..< 4 {
+                out.appendFloat32(boneBound[lane]) // NiBound center, then radius
+            }
             out.appendUInt16(UInt16(weights.count))
             for weight in weights {
                 out.appendUInt16(weight.vertex)

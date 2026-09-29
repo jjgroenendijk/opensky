@@ -1,11 +1,6 @@
-// The AS2 runtime's queryable output (milestone 8.3.2): what it executed, what
-// it could not, and what the movie traced.
-//
-// The milestone's stated risk-management mechanism is that an unimplemented
-// opcode or an unknown host API becomes a logged no-op plus a tally entry
-// rather than an error, so the tally is a first-class result and not a debug
-// aid. Both name tables are capped, but every total keeps counting past the
-// cap: a truncated table still reports how much it stopped naming.
+// The AS2 runtime's queryable output: what ran, what did not, and what the
+// movie traced. An unimplemented opcode or host API is a logged no-op plus a
+// tally entry. Name tables are capped; totals keep counting past the cap.
 
 import Foundation
 
@@ -135,10 +130,5 @@ nonisolated public struct AS2TraceLog: Equatable, Sendable {
         if messages.count > entryLimit {
             messages.removeFirst(messages.count - entryLimit)
         }
-    }
-
-    public mutating func clear() {
-        messages.removeAll()
-        total = 0
     }
 }

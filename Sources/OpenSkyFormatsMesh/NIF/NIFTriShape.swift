@@ -1,17 +1,7 @@
-// BSTriShape: Skyrim SE static geometry. AV-object prefix, bounding sphere,
-// skin/shader/alpha property refs, then a BSVertexDesc-driven interleaved
-// vertex array and a uint16 triangle list. SSE variant only (BS stream 100):
-// vertex records are BSVertexDataSSE, where positions are always full floats
-// — unlike FO4's BSVertexData, which packs them as halfs behind the
-// full-precision flag. Halfs remain in UVs; normals/tangents/bitangent Y+Z
-// are normalized bytes.
-//
-// Reference: NifTools nif.xml (BSTriShape, BSVertexDesc, VertexAttribute,
-// BSVertexDataSSE, NiBound, Triangle, HalfTexCoord, ByteVector3).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// normbyte remap ((byte / 255) * 2 - 1) matches NifSkope/nifly, the
-// reference implementations for these packed fields.
-// Layout documented in docs/formats/nif.md.
+// BSTriShape: Skyrim SE static geometry, SSE variant (BS stream 100). Vertex
+// records are BSVertexDataSSE: positions are always full floats, UVs are
+// halfs, and normals and tangents are normalized bytes, remapped as
+// (byte / 255) * 2 - 1 like NifSkope. Layout from nif.xml: docs/formats/nif.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -28,14 +18,11 @@ nonisolated public struct NIFTriShape: Sendable {
 
         public static let vertex = Self(rawValue: 1 << 0)
         public static let uvs = Self(rawValue: 1 << 1)
-        public static let uvs2 = Self(rawValue: 1 << 2)
         public static let normals = Self(rawValue: 1 << 3)
         public static let tangents = Self(rawValue: 1 << 4)
         public static let vertexColors = Self(rawValue: 1 << 5)
         public static let skinned = Self(rawValue: 1 << 6)
-        public static let landData = Self(rawValue: 1 << 7)
         public static let eyeData = Self(rawValue: 1 << 8)
-        public static let instance = Self(rawValue: 1 << 9)
         /// Ignored by the SSE record layout: positions are always full floats.
         public static let fullPrecision = Self(rawValue: 1 << 10)
     }
@@ -133,7 +120,7 @@ nonisolated public struct NIFTriShape: Sendable {
         indices = geometry.indices
 
         // SSE-only trailer: particle-deformed copy of the geometry. The size
-        // field is always present; the copy itself is ignored (M2 statics).
+        // field is always present; the copy itself is ignored.
         let particleDataSize = try Int(reader.readUInt32())
         guard particleDataSize <= reader.bytesRemaining else {
             throw NIFError.malformed(

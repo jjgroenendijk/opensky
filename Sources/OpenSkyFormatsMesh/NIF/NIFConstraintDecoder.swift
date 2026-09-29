@@ -1,12 +1,6 @@
-// Decode bhkConstraint blocks referenced from a rigid body's constraint list.
-// Field order below is the Fallout 3 and later branch of each CInfo struct,
-// which is the branch every Skyrim SE stream (20.2.0.7, BS > 16) takes; the
-// Oblivion-era orders in nif.xml are deliberately not implemented.
-//
-// Reference: NifTools nif.xml (bhkConstraintCInfo and the per-type CInfo
-// structs; the vercond used is `!#NI_BS_LTE_16#` / `since="20.2.0.7"`).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-collision.md.
+// Decodes the bhkConstraint blocks in a rigid body's constraint list. Field
+// order is the Fallout 3 and later branch of each nif.xml CInfo struct, which
+// every Skyrim SE stream takes. Layout: docs/formats/nif-collision.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -197,31 +191,26 @@ nonisolated public enum NIFConstraintDecoder: Sendable {
         case 0:
             return .none
         case 1:
+            // nif.xml order: min force, max force, tau, damping, then two
+            // recovery velocities. Only max force and tau are kept.
+            reader.skip(4)
+            let maxForce = try reader.readFloat32()
+            let tau = try reader.readFloat32()
+            reader.skip(12)
             return try .position(NIFPositionMotor(
-                minForce: reader.readFloat32(),
-                maxForce: reader.readFloat32(),
-                tau: reader.readFloat32(),
-                damping: reader.readFloat32(),
-                proportionalRecoveryVelocity: reader.readFloat32(),
-                constantRecoveryVelocity: reader.readFloat32(),
-                isEnabled: reader.readHavokBool()
+                maxForce: maxForce, tau: tau, isEnabled: reader.readHavokBool()
             ))
         case 2:
-            return try .velocity(NIFVelocityMotor(
-                minForce: reader.readFloat32(),
-                maxForce: reader.readFloat32(),
-                tau: reader.readFloat32(),
-                targetVelocity: reader.readFloat32(),
-                usesVelocityTarget: reader.readHavokBool(),
-                isEnabled: reader.readHavokBool()
-            ))
+            // Four floats and a velocity-target flag before the enabled flag.
+            reader.skip(17)
+            return try .velocity(NIFVelocityMotor(isEnabled: reader.readHavokBool()))
         case 3:
+            // Min force, max force, spring constant, spring damping.
+            reader.skip(8)
+            let springConstant = try reader.readFloat32()
+            reader.skip(4)
             return try .springDamper(NIFSpringDamperMotor(
-                minForce: reader.readFloat32(),
-                maxForce: reader.readFloat32(),
-                springConstant: reader.readFloat32(),
-                springDamping: reader.readFloat32(),
-                isEnabled: reader.readHavokBool()
+                springConstant: springConstant, isEnabled: reader.readHavokBool()
             ))
         default:
             // The payload length is unknown for an unknown motor type, so the

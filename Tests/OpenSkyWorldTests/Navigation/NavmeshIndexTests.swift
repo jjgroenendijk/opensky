@@ -15,7 +15,9 @@ struct NavmeshIndexTests {
         let record = try NavmeshFixture.record(NavmeshFixture.naviRecord(
             infos: NavmeshFixture.info(
                 navmesh: 0x100,
+                flags: 1 << 6,
                 location: SIMD3(10, 20, 30),
+                preferredPercent: 0.25,
                 edgeLinks: [0x200, 0x300],
                 preferredEdgeLinks: [0x200],
                 doors: [0x400],
@@ -31,7 +33,9 @@ struct NavmeshIndexTests {
         #expect(map.malformedInfoCount == 0)
         let first = map.infos[0]
         #expect(first.navmesh == FormID(0x100))
+        #expect(first.flags == .notEdited)
         #expect(first.approximateLocation == SIMD3(10, 20, 30))
+        #expect(first.preferredPercent == 0.25)
         #expect(first.edgeLinks == [FormID(0x200), FormID(0x300)])
         #expect(first.preferredEdgeLinks == [FormID(0x200)])
         #expect(first.doors == [FormID(0x400)])
