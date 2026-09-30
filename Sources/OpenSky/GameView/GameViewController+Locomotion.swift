@@ -1,7 +1,5 @@
-// Renderer bridge for the World > Player & Locomotion readout (issues #188 and
-// #191). Same shape as the other provider extensions: read and write the live
-// renderer on the main thread, and degrade to a documented "unavailable"
-// snapshot when there is no renderer (Metal 4 missing).
+// Renderer bridge for the World > Player & Locomotion readout. Without a
+// renderer it returns an "unavailable" snapshot.
 
 import AppKit
 import OpenSkyBehavior
@@ -59,25 +57,21 @@ extension GameViewController: PlayerLocomotionControlProviding {
     private func locomotionBindings() -> [LocomotionBindingSnapshot] {
         [
             LocomotionBindingSnapshot(
-                id: "run",
                 label: "Run",
                 key: "Shift (hold)",
                 isActive: renderer?.locomotion.intent.run ?? false
             ),
             LocomotionBindingSnapshot(
-                id: "sprint",
                 label: "Sprint",
                 key: "Option (hold)",
                 isActive: cameraInput.isSprinting
             ),
             LocomotionBindingSnapshot(
-                id: "sneak",
                 label: "Sneak",
                 key: "C (toggle)",
                 isActive: cameraInput.isSneaking
             ),
             LocomotionBindingSnapshot(
-                id: "jump",
                 label: "Jump",
                 key: "Space",
                 isActive: renderer?.walkController.isGrounded == false

@@ -51,8 +51,6 @@ nonisolated public struct DetectionInputs: Equatable, Sendable {
 nonisolated public struct DetectionBreakdown: Equatable, Sendable {
     public let soundFactor: Float
     public let visualFactor: Float
-    public let skillFactor: Float
-    public let distanceAttenuation: Float
     /// The detection value itself. Positive means the observer is picking the
     /// target up right now; zero or negative means it is not.
     public let value: Float
@@ -65,22 +63,16 @@ nonisolated public struct DetectionBreakdown: Equatable, Sendable {
     public static let none = DetectionBreakdown(
         soundFactor: 0,
         visualFactor: 0,
-        skillFactor: 0,
-        distanceAttenuation: 0,
         value: 0
     )
 
     public init(
         soundFactor: Float,
         visualFactor: Float,
-        skillFactor: Float,
-        distanceAttenuation: Float,
         value: Float
     ) {
         self.soundFactor = soundFactor
         self.visualFactor = visualFactor
-        self.skillFactor = skillFactor
-        self.distanceAttenuation = distanceAttenuation
         self.value = value
     }
 }

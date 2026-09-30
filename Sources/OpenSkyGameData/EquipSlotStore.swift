@@ -1,14 +1,7 @@
-// Load-order-wide EQUP lookup above RecordIndex, in the shape `KeywordStore`
-// and `SpellStore` already use.
-//
-// `EquipSlotTable` answers the same question for one plugin and is what
-// `EquipmentCatalog` uses; this store exists for the consumers that hold a
-// whole load order — the Asset Browser inspector, the CLI record dump, and the
-// real-data sweep that checks every WEAP and SPEL ETYP resolves. Both share
-// `EquipSlotHands`, so there is one implementation of the parent walk.
-//
-// Parent links resolve relative to the plugin the EQUP came from, which is
-// what lets a mod-added slot name a vanilla hand as its parent.
+// Load-order-wide EQUP lookup above RecordIndex, for consumers that hold a whole
+// load order. `EquipSlotTable` answers for one plugin. Both share
+// `EquipSlotHands` for the parent walk. Parent links resolve relative to the
+// EQUP's plugin, so a mod slot can name a vanilla hand.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -18,10 +11,6 @@ nonisolated public struct ResolvedEquipSlot: Equatable, Sendable {
     public let id: ResolvedFormID
     public let slot: EquipSlot
     public let sourcePlugin: String
-
-    public var editorID: String? {
-        slot.editorID
-    }
 
     public var displayName: String {
         slot.editorID ?? id.description
@@ -83,11 +72,5 @@ nonisolated public struct EquipSlotStore: Sendable {
 
     public func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
         resolve(id, fromPlugin: pluginName)?.displayName ?? "[UNRESOLVED] \(id)"
-    }
-}
-
-nonisolated public enum EquipSlotStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> EquipSlotStore {
-        EquipSlotStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

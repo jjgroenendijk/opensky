@@ -1,33 +1,8 @@
-// The bounty ledger, as a world-state component (issue #504, roadmap item
-// 21.5): what one actor owes each crime faction, and how many of each crime it
-// has committed against them.
-//
-// A slot of its own beside `factions` and `playerProgress`, for the lifetime
-// reason those two are separate from `actorValues`: a bounty moves when a crime
-// is witnessed, while the values beside it are rewritten sixty times a second.
-//
-// ## Per faction, not per hold
-//
-// "Bounties are tracked separately for each of Skyrim's nine holds and you will
-// only incur a bounty in the hold in which you commit a crime ... The
-// Companions, the Tribal Orc strongholds, and Raven Rock each track bounties
-// independently" (<https://en.uesp.net/wiki/Skyrim:Crime>). A hold is not a
-// concept this engine has; a crime faction is, and the twelve the source names
-// are twelve crime factions. Keying by faction is therefore the general shape
-// and the vanilla one at once, and it is what a `Faction.GetCrimeGold` call
-// asks for.
-//
-// ## Counts as well as gold
-//
-// "Regardless of whether a crime is witnessed, the Statistics tab on the menu
-// keeps track of all your criminal activities" (same page). So an unwitnessed
-// theft leaves a count and no gold, which is exactly the difference the
-// acceptance test pins.
-//
-// The component is dropped once it empties, as `PerkState` and
-// `ActorFactionState` are, so a law-abiding session stays clean.
-//
-// Documented in docs/engine/bounty-ledger.md.
+// The bounty ledger as a world-state component: what one actor owes each crime
+// faction, and how many crimes of each kind. Keyed by crime faction, because
+// each hold and group tracks bounties separately
+// (<https://en.uesp.net/wiki/Skyrim:Crime>). Counts move even without a
+// witness. Dropped once empty. See docs/engine/bounty-ledger.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -89,13 +64,9 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
     }
 }
 
-/// One faction's row: what is owed and what was done.
-///
-/// The gold is held in two halves, violent and non-violent, because that is
-/// how the Creation Kit surface asks about it: `GetCrimeGoldViolent` and
-/// `GetCrimeGoldNonviolent` are separate condition functions, and
-/// `Faction.ModCrimeGold` takes an `abViolent` flag. `gold` is their sum,
-/// which is what `GetCrimeGold` and a guard's fine both mean.
+/// One faction's row: what is owed and what was done. Gold is split into violent
+/// and non-violent halves, as `GetCrimeGoldViolent`, `GetCrimeGoldNonviolent`, and
+/// `Faction.ModCrimeGold` ask. `gold` is their sum.
 nonisolated public struct CrimeLedgerEntry: Equatable, Sendable, Comparable {
     public let faction: ReferenceKey
     /// Crime gold outstanding for non-violent crimes — theft and trespass.
@@ -158,15 +129,9 @@ nonisolated public struct CrimeLedgerState: WorldStateComponent, Sendable {
         .crimeLedger
     }
 
-    /// Normalizes on the way in, which is what makes this the save decoder's
-    /// entry point: a repeated faction collapses to its last row, empty rows
-    /// drop out, and the order becomes key order, so a file written under a
-    /// different load order still restores a valid component.
-    ///
-    /// A faction this load order no longer resolves is *kept*, the rule a
-    /// stored membership and an owned perk follow: a bounty is progress the
-    /// player made, and losing it because a plugin came and went would be the
-    /// damaging direction to fail in.
+    /// Normalizes on the way in, so a save from another load order restores a valid
+    /// component. A faction the load order no longer resolves is kept, so a missing
+    /// plugin does not erase a bounty.
     public init(entries: [CrimeLedgerEntry] = []) {
         var rows: [ReferenceKey: CrimeLedgerEntry] = [:]
         for entry in entries where !entry.isEmpty {
@@ -215,11 +180,6 @@ nonisolated public struct CrimeLedgerState: WorldStateComponent, Sendable {
     /// read across the rows rather than stored a second time.
     public var totalGold: Int64 {
         entries.reduce(0) { $0 + Int64($1.gold) }
-    }
-
-    /// How many crimes of one kind this actor has committed anywhere.
-    public func totalCount(of kind: CrimeKind) -> Int64 {
-        entries.reduce(0) { $0 + Int64($1.counts[kind]) }
     }
 
     // MARK: - Deriving
@@ -292,18 +252,8 @@ nonisolated public struct CrimeLedgerState: WorldStateComponent, Sendable {
 }
 
 nonisolated extension WorldStateComponentKind {
-    /// What one actor owes each crime faction, and how many of each crime it has
-    /// committed against them. Like `playerProgress` it modifies no placement and
-    /// belongs to no cell in practice: it is keyed by the perpetrator, which is
-    /// `ReferenceKey.player` for every path this milestone builds. A slot of its
-    /// own beside `factions` for the reason `perks` is one — a bounty moves when a
-    /// crime is witnessed, while the actor values beside it are rewritten sixty
-    /// times a second.
+    /// What one actor owes each crime faction, and how many crimes it committed.
+    /// Keyed by the perpetrator, `ReferenceKey.player` in practice. Its own slot,
+    /// because bounties change rarely and actor values change every step.
     public static let crimeLedger = Self(rawValue: "crimeLedger", order: 19)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func crimeLedger(_ value: CrimeLedgerState) -> Self {
-        Self(value)
-    }
 }

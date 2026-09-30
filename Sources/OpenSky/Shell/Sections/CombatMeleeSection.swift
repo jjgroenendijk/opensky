@@ -1,21 +1,7 @@
-// World > Player & Locomotion > Melee section (issue #195, roadmap item 15.4):
-// the three keys this item added, listed with their live state and reachable
-// from a control, plus the weapon, reach and last-hit readouts.
-//
-// A section under the existing destination rather than a new one, per the
-// app-ui placement rule: melee is four controls on a subsystem the Player &
-// Locomotion panel already describes, and the M15 gate panel (item 15.9) is
-// where a Combat destination belongs if the surface outgrows this.
-//
-// Draw/sheath is a real toggle, so it is a checkbox; attack is momentary, so it
-// is a button that requests exactly one swing, the same latch the mouse sets.
-// Block is a held modifier with nothing to latch — a checkbox would assert it
-// for a single frame and read as broken — so it is reported live in the state
-// readout instead. That is the same three-way split `LocomotionBindingsSection`
-// already makes for sneak, jump, and run/sprint.
-//
-// Not overridden. A drawn weapon is world state, not a panel setting, and a
-// "Reset all" that sheathed it would undo something the user did on purpose.
+// World > Player & Locomotion > Melee section: the melee keys with their live
+// state, plus the weapon, reach, and last-hit readouts. Draw is a checkbox and
+// attack is a button. Block is a held modifier, so it is shown in the readout.
+// No override: a drawn weapon is world state.
 
 import AppKit
 import OpenSkyCombat
@@ -98,7 +84,8 @@ final class CombatMeleeSection: PanelSectionViewController {
             MeleeCombatReadout.stateText(for: snapshot),
             MeleeCombatReadout.weaponText(for: snapshot),
             MeleeCombatReadout.handsText(for: snapshot),
-            MeleeCombatReadout.traceText(for: snapshot)
+            MeleeCombatReadout.traceText(for: snapshot),
+            MeleeCombatReadout.settingsText(for: snapshot)
         ].joined(separator: "\n")
     }
 

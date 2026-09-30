@@ -1,6 +1,5 @@
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// When a vendor trades, from the `VENV` start and end hours.
 nonisolated public struct VendorHours: Equatable, Sendable {

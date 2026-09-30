@@ -1,26 +1,8 @@
-// Actor visual resolution (milestone 5.2): turn a template-resolved actor
-// (ActorResolution.swift) into concrete renderable inputs — per-gender
-// skeleton, skin + outfit body-part model paths with body-slot masking, and
-// FaceGen head mesh/tint paths.
-//
-// Chain shapes (UESP NPC_/RACE/ARMO/ARMA/OTFT pages + real-install probe,
-// docs/engine/actor-resolution.md):
-//   skin:   NPC_ WNAM else RACE WNAM -> ARMO -> race-compatible ARMA
-//   outfit: NPC_ DOFT -> OTFT INAM (ARMO or LVLI; LVLI expands via the same
-//           deterministic entry policy as LVLN) -> ARMO -> ARMA
-// Equipped ARMO body slots (BOD2/BODT) union into a mask; a skin armature
-// whose slots overlap the mask is hidden — covered skin never renders under
-// clothes, so no duplicate geometry.
-//
-// Runtime equipment (issue #178) enters here as an optional equipped-FormID
-// set that *replaces* the DOFT chain for that actor. The masking machinery
-// above is reused untouched; see ActorVisualResolutionEquipment.swift for the
-// override and for ARMA DNAM draw ordering.
-//
-// Failure policy per the milestone gate: a broken chain (dangling FormID,
-// empty/cyclic leveled list, missing race/skin/outfit record) throws — never
-// a silent naked fallback. Missing optional parts degrade to reason-tagged
-// skips so accounting stays exact.
+// Actor visual resolution: a template-resolved actor becomes skeleton, skin and
+// outfit model paths with body-slot masking, and FaceGen paths. Skin: NPC_ or
+// RACE WNAM -> ARMO -> ARMA; outfit: DOFT -> OTFT -> ARMO -> ARMA. A runtime
+// equipped set replaces DOFT. A broken chain throws; a missing optional part is
+// a reason-tagged skip. See docs/engine/actor-resolution.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -67,9 +49,8 @@ nonisolated public struct AppearanceSkip: Equatable, Sendable {
         /// A runtime-equipped item is neither a known ARMO nor a weapon with a
         /// model, so it contributes no geometry.
         case unrenderableEquipment
-        /// The armature declares no MOD4/MOD5, so it contributes nothing to the
-        /// first-person rig (issue #190). Only ever produced by the
-        /// first-person projection; the third-person resolve never emits it.
+        /// The armature declares no MOD4/MOD5, so it adds nothing to the first-person
+        /// rig. Only the first-person projection produces this.
         case noFirstPersonModel
     }
 
@@ -91,25 +72,16 @@ nonisolated public struct ResolvedBodyPart: Equatable, Sendable {
     public let armature: FormID
     /// ARMA MOD2 (male) / MOD3 (female) path, relative to Data/.
     public let modelPath: String
-    /// ARMA MOD4 (male) / MOD5 (female) path — what this piece shows on the
-    /// player's own arms, or nil when the armature declares no first-person
-    /// geometry at all (issue #190). Carried here rather than looked up later
-    /// so the first-person projection needs no second pass over the ARMA index.
+    /// ARMA MOD4 (male) or MOD5 (female): what this piece shows on the player's own
+    /// arms, or nil when it has no first-person geometry.
     public let firstPersonModelPath: String?
     public let slots: BodySlots
 }
 
-/// One rigid model hung off a named skeleton bone rather than skinned to the
-/// whole rig — a drawn weapon in the actor's hand (issue #178).
-///
-/// `bone` is a Havok rig bone name, because that is the space the per-frame
-/// pose is sampled in (`ActorAnimationClip.namedWorldTransforms`). The vanilla
-/// character rig spells the drawn-weapon node `Weapon`, parented to
-/// `NPC R Hand [RHnd]`; the matching NIF node is `WEAPON`. Both names are
-/// observed from the install, never assumed — see docs/engine/actor-resolution.md.
+/// One rigid model hung off a named skeleton bone, such as a drawn weapon.
+/// `bone` is a Havok rig name: `Weapon`, under `NPC R Hand [RHnd]` (NIF node
+/// `WEAPON`), observed on the install (docs/engine/actor-resolution.md).
 nonisolated public struct ResolvedAttachment: Equatable, Sendable {
-    /// The equipped base record the model came from (a WEAP).
-    public let item: FormID
     /// WEAP MODL path, relative to Data/.
     public let modelPath: String
     /// Havok rig bone the model rides.
@@ -168,11 +140,10 @@ nonisolated public struct ActorVisualResolver: Sendable {
     public let leveledItems: [UInt32: LeveledList]
     /// Maps record FormIDs to (defining plugin, objectID) for FaceGen.
     public let formIDResolver: FormIDResolver
-    /// Slot and model data for runtime-equipped items (issue #178). Empty in
-    /// the fixtures that only exercise the plugin `defaultOutfit` path.
+    /// Slot and model data for runtime-equipped items.
     public let equipment: EquipmentCatalog
-    /// HDPT records named by NPC_ and RACE head-part lists. Only expression
-    /// TRI association fields are decoded (issue #207).
+    /// HDPT records named by NPC_ and RACE head-part lists. Only the expression TRI
+    /// fields are decoded.
     public let headParts: [UInt32: HeadPart]
 
     public init(
@@ -232,12 +203,10 @@ nonisolated public struct ActorVisualResolver: Sendable {
     }
 
     /// One actor's renderable inputs.
-    ///
     /// - Parameters:
     ///   - appearance: the template-resolved actor.
-    ///   - equipped: a runtime equipped set that replaces the plugin
-    ///     `defaultOutfit` chain wholesale. Nil — the normal case for an actor
-    ///     nothing has touched — resolves through DOFT exactly as before.
+    ///   - equipped: a runtime equipped set that replaces the `defaultOutfit` chain;
+    ///     nil resolves through DOFT.
     public func resolve(
         appearance: ResolvedActorAppearance,
         equipped: [FormID]? = nil
@@ -422,7 +391,6 @@ nonisolated public struct ActorVisualResolver: Sendable {
                     ),
                     slots: slots
                 ),
-                owner: armor.formID,
                 priority: armature.priority(female: selection.female)
             ))
         }

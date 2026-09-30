@@ -1,8 +1,7 @@
-// M18 location condition functions (issue #455), measured across the active
-// load order before registration. All reads go through `ConditionDataResolution`.
+// Location condition functions, measured across the active load order before
+// registration. All reads go through `ConditionDataResolution`.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

@@ -5,9 +5,7 @@
 
 import Foundation
 import Metal
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
 import OpenSkyRendering
 import simd
 
@@ -32,7 +30,6 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
     public let bindings: [ObjectIdentifier: FaceMorphBuffer]
     public let pairedPaths: [String]
     public let misses: [FaceMorphAssociationMiss]
-    public let worldBounds: ModelBounds?
     private var manualWeights: [String: Float] = [:]
     private var lipWeights: [String: Float] = [:]
     public private(set) var unknownTargetCount = 0
@@ -53,14 +50,12 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
         actor: FormID,
         bindings: [ObjectIdentifier: FaceMorphBuffer],
         pairedPaths: [String],
-        misses: [FaceMorphAssociationMiss],
-        worldBounds: ModelBounds?
+        misses: [FaceMorphAssociationMiss]
     ) {
         self.actor = actor
         self.bindings = bindings
         self.pairedPaths = pairedPaths
         self.misses = misses
-        self.worldBounds = worldBounds
     }
 
     @discardableResult

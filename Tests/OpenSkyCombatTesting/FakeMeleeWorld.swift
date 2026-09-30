@@ -16,11 +16,11 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
     public var targets: [MeleeTarget] = []
     public var blocks: [ReferenceKey: MeleeBlockKind] = [:]
     public var material: FormID?
-    /// The fortify multiplier the runtime asks for (issue #472). 1 is what the
+    /// The fortify multiplier the runtime asks for. 1 is what the
     /// formula reduces to for a character with no fortify effect.
     public var attackMultiplier: Float = 1
 
-    /// Skill uses the runtime reported (issue #498), recorded rather than
+    /// Skill uses the runtime reported, recorded rather than
     /// converted.
     public private(set) var skillUses: [SkillUseEvent] = []
 
@@ -37,7 +37,7 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
     public private(set) var raisedOnTarget: [ReferenceKey: [String]] = [:]
     public private(set) var variables: [String: BehaviorVariableValue] = [:]
     public private(set) var impacts: [ResolvedMeleeImpact] = []
-    /// Enchanted hits the runtime handed out (issue #472), recorded rather than
+    /// Enchanted hits the runtime handed out, recorded rather than
     /// applied: what the melee suites need is that the swing reached the seam with
     /// the struck target and the contact point, and `EnchantmentRuntimeTests` asks
     /// what applying one does against a real effect runtime.
@@ -54,7 +54,7 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
         targets
     }
 
-    public func meleeMaterial(at position: SIMD3<Float>) -> FormID? {
+    public func meleeMaterial() -> FormID? {
         material
     }
 
@@ -70,7 +70,6 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
         enchantedHits.append(hit)
         return WeaponEnchantmentReport(
-            item: hit.profile.item,
             name: hit.profile.name,
             charge: hit.profile.fullCharge,
             didFire: true,

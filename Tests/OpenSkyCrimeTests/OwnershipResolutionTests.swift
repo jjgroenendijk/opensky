@@ -1,9 +1,5 @@
-// Ownership precedence and the "may this actor use it" rule (issue #504,
-// roadmap item 21.5).
-//
-// The three things this pins are the three the crime runtime cannot recover
-// from if they are wrong: which `XOWN` wins, what an unresolvable link means,
-// and who counts as allowed.
+// Ownership precedence and the "may this actor use it" rule: which `XOWN`
+// wins, what an unresolvable link means, and who counts as allowed.
 
 import Foundation
 @testable import OpenSkyCrime
@@ -82,13 +78,13 @@ struct OwnershipResolutionTests {
             for: CrimeFixture.player(), reference: owner, cell: nil
         ).isTheft)
         #expect(!resolver.verdict(
-            for: CrimeFixture.actor(0x700, base: CrimeFixture.Actors.shopkeeper),
+            for: CrimeFixture.actor(base: CrimeFixture.Actors.shopkeeper),
             reference: owner,
             cell: nil
         ).isTheft)
         // A different actor placed from a different base is still a thief.
         #expect(resolver.verdict(
-            for: CrimeFixture.actor(0x701, base: CrimeFixture.Actors.resident),
+            for: CrimeFixture.actor(base: CrimeFixture.Actors.resident),
             reference: owner,
             cell: nil
         ).isTheft)
@@ -153,7 +149,7 @@ struct OwnershipResolutionTests {
 
     // MARK: - Cell decode
 
-    /// CELL `XOWN` and `XRNK` decode, which nothing read before this issue.
+    /// CELL `XOWN` and `XRNK` decode.
     /// Vanilla authors `XOWN` on every owned interior and no `XRNK` at all, so
     /// the rank half is decoded defensively and reads as absent.
     @Test

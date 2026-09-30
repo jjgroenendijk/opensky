@@ -30,7 +30,6 @@ struct LocationStoreRealDataTests {
         #expect(index.collectedCount(of: "LCTN") >= 829)
         #expect(index.collectedCount(of: "LCRT") >= 481)
         #expect(store.locations.count == index.count(of: "LCTN"))
-        #expect(store.refTypes.count == index.count(of: "LCRT"))
 
         let pinned = try #require(store.location(editorID: "WhiterunLocation"))
         var chain: [String] = []

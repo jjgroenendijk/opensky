@@ -1,17 +1,7 @@
-// The event queue one behavior graph instance owns (issue #187).
-//
-// `hkbBehaviorGraphData` declares events positionally, the same way it declares
-// variables: index i has flags `m_eventInfos[i]` and name
-// `m_stringData.m_eventNames[i]`. Nodes raise and test events by index; the
-// engine outside the graph raises them by name.
-//
-// Ordering is the whole point of this type, because it is what makes an update
-// deterministic. An event raised during an update is *not* visible to the rest
-// of that same update: it lands in the next update's queue. That is one
-// documented decision rather than an emergent property of traversal order, and
-// it means two instances stepped with the same inputs fire the same events in
-// the same order whatever the tree shape is. See the update-order section of
-// docs/engine/behavior-runtime.md.
+// The event queue one behavior graph instance owns. Events are declared by index
+// in `hkbBehaviorGraphData`. An event raised during an update lands in the next
+// update's queue, so two instances with the same inputs fire the same events in
+// the same order. See docs/engine/behavior-runtime.md.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -64,16 +54,8 @@ nonisolated public struct BehaviorEventQueue: Equatable, Sendable {
         indexByName = byName
     }
 
-    public var count: Int {
-        names.count
-    }
-
     public func index(of name: String) -> Int? {
         indexByName[name]
-    }
-
-    public func name(at index: Int) -> String? {
-        names.indices.contains(index) ? names[index] : nil
     }
 
     // MARK: - Raising

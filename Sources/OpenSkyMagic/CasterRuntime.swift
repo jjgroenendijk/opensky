@@ -1,41 +1,9 @@
-// The cast loop (issue #470, roadmap item 19.7): turning "cast with this hand"
-// into spent magicka and an applied effect list, for the self-delivery half of
-// casting. Aimed delivery and projectiles are issue 19.8.
-//
-// Main-actor and driven from the frame the renderer already runs there, like
-// the other directors. Everything it touches the world with goes through
-// `CasterWorld`, so the whole runtime is testable against a fake with no store,
-// no records and no window — the same seam `MeleeCombatWorld` is.
-//
-// ## The order a fire-and-forget cast runs in
-//
-//   1. `begin(_:on:)` — the readied spell is resolved, the refusals are checked,
-//      and the hand enters `charging`. A spell with no charge time reaches
-//      `ready` on the same call.
-//   2. `advance(delta:on:)` — the charge accumulates and the hand reaches
-//      `ready`.
-//   3. `release(_:on:)` — the cost is checked against magicka, taken off, and
-//      the effect list is handed to the active-effect runtime.
-//
-// Magicka is checked twice, at step 1 and again at step 3, because it can fall
-// between them: a charge takes half a second and something can hit the caster
-// inside it. UESP states the rule once — "Attempting to cast a spell with a cost
-// higher than your available magicka will result in the failure of the attempted
-// casting" (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>) — and checking it
-// at both ends is the reading that never lets a cast land unpaid.
-//
-// ## And a concentration cast
-//
-// `begin` reaches `concentrating` and stays there. Cost is charged
-// continuously, so the magicka bar moves smoothly rather than in one-second
-// steps, and the effect list is applied once on entry and once per whole second
-// after that. UESP: "Concentration spells do not have a set duration. Rather,
-// the duration is determined by how long you hold the casting trigger."
-// (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>) The SPIT cast duration is
-// the floor under that: a release inside it keeps the cast running until it
-// elapses.
-//
-// Documented in docs/engine/spellcasting.md.
+// The cast loop: a hand's cast becomes spent magicka and applied effects. World
+// access goes through `CasterWorld`. Fire-and-forget: `begin` charges,
+// `advance` reaches ready, `release` pays and applies; magicka is checked at
+// begin and release (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>).
+// Concentration charges continuously and applies once per second.
+// See docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -46,14 +14,9 @@ import OpenSkyPhysics
 import OpenSkyProgressionInterface
 import simd
 
-/// What a cast needs from the world it happens in.
-///
-/// A protocol rather than the concrete runtimes for the reason
-/// `MeleeCombatWorld` is one: the active-effect runtime is a mutating value over
-/// a shared store, and a copy held here would grow a tally the panel never sees.
-///
-/// It refines `SpellHitApplying` (issue #471) so a spell that leaves the caster
-/// lands through the same one implementation a projectile's does.
+/// What a cast needs from the world it happens in. A protocol, so the shared
+/// active-effect runtime is not copied. It refines `SpellHitApplying`, so a spell
+/// and a projectile land through one implementation.
 @MainActor
 public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
     /// Whole game days elapsed, which is what the once-per-day power rule
@@ -71,34 +34,20 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
         on target: ActorValueHolder
     ) -> Int
 
-    /// Launches `payload`'s projectile from the caster along the aim ray
-    /// (issue #471).
-    ///
-    /// - Returns: false when nothing left the caster — the MGEF names no PROJ,
-    ///   this load order does not carry it, or the record is not one the flight
-    ///   model can integrate. Counted rather than silent.
+    /// Launches `payload`'s projectile from the caster along the aim ray.
+    /// - Returns: false when nothing left the caster: no PROJ, a missing record, or
+    ///   one the flight model cannot integrate. Counted.
     @discardableResult
     func fireSpellProjectile(_ payload: SpellPayload) -> Bool
 
-    /// What `caster`'s aim ray reaches, for the deliveries that need a target
-    /// rather than a projectile.
-    ///
-    /// The caster is a parameter rather than an implied player because item
-    /// 19.10 casts an NPC's spells through this same runtime: the player aims
-    /// down the camera ray and an NPC aims from its own eye at whatever it is
-    /// fighting, and only the session knows either.
-    ///
-    /// - Parameter range: SPIT's range in world units. Zero means the record
-    ///   bounds nothing and the session's own maximum applies, which is the
-    ///   same rule a PROJ with no range flies under.
+    /// What `caster`'s aim ray reaches, for deliveries that need a target. The caster
+    /// is a parameter, because NPCs cast through this runtime too.
+    /// - Parameter range: SPIT's range in world units; zero means the session
+    ///   maximum applies.
     func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim
 }
 
 /// One cast in flight, identified by who is casting and in which hand.
-///
-/// A key rather than a nested dictionary because every lookup needs both
-/// halves and neither is meaningful alone: "the right hand" is not a cast until
-/// somebody is doing it (issue #473).
 nonisolated public struct CastSlot: Hashable, Sendable {
     public let caster: ReferenceKey
     public let hand: SpellHand
@@ -151,24 +100,17 @@ public final class CasterRuntime {
     /// The world a cast happens in. Readable across the satellites for the
     /// reason `tally` is settable across them.
     public private(set) weak var world: (any CasterWorld)?
-    /// Every cast in flight, keyed by the actor casting and the hand it is in.
-    ///
-    /// Not `private`: the concentration half lives in
-    /// `CasterRuntimeConcentration.swift`, the same reason `tally` is internal.
-    ///
-    /// Keyed by actor rather than by hand alone because item 19.10 casts an
-    /// NPC's spells through this same runtime: two actors charging at once are
-    /// two casts, and a hand-keyed dictionary would have the second one
-    /// overwrite the first's charge.
+    /// Every cast in flight, keyed by actor and hand, so two actors charging at once
+    /// do not overwrite each other. Not `private`: the concentration half lives in
+    /// `CasterRuntimeConcentration.swift`.
     public var casts: [CastSlot: SpellCastState] = [:]
     /// Whether each actor's hand button was down on the previous frame, so
     /// `acceptFrame` acts on edges rather than levels. Owned here rather than in
     /// the input satellite because an extension cannot add stored properties.
     private var heldButtons: [CastSlot: Bool] = [:]
 
-    /// The perk runtime a cost is folded through (issue #497), or nil in a
-    /// session with no perk data — every synthetic scene, where the record's
-    /// own cost is what the caster pays. See `CasterRuntimePerkCost.swift`.
+    /// The perk runtime a cost is folded through, or nil without perk data. See
+    /// `CasterRuntimePerkCost.swift`.
     public var perks: (any PerkAccess)?
 
     public init(
@@ -373,20 +315,14 @@ public final class CasterRuntime {
         notePowerSpent(spell, caster: caster)
         tally.noteCast()
         return .cast(SpellCastResult(
-            spell: spell.key,
-            hand: hand,
             magickaSpent: cost,
             entryCount: spell.record.effects.count,
             storedCount: stored
         ))
     }
 
-    /// Delivers one application of `spell`.
-    ///
-    /// Self delivery hands the effect list straight to the active-effect
-    /// runtime with the caster as the target; every other implemented delivery
-    /// lives in `CasterRuntimeDelivery.swift` (issue #471).
-    ///
+    /// Delivers one application of `spell`. Self delivery applies to the caster; the
+    /// other deliveries live in `CasterRuntimeDelivery.swift`.
     /// - Returns: how many timed effects were stored.
     public func apply(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Int {
         guard let world else { return 0 }

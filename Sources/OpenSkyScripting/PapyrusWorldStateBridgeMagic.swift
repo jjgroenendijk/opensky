@@ -1,29 +1,12 @@
-// `PapyrusWorldMagicBridge` conformance (issue #474, roadmap item 19.11): where
-// the spell natives meet 19.6's active effects and 19.7's spellbook and cast
-// loop.
-//
-// Split out of `PapyrusWorldStateBridge.swift` for the reason the quest and
-// actor halves are: that file is already at its size shape, and a reader
-// chasing "what does `AddSpell` really do" should land on one screen that says
-// so.
-//
-// ## Why the collaborators are closures
-//
-// The caster runtime is built by `wireCasting` and the active-effect runtime by
-// `wireMagicEffects`, and the order those steps run in is the controller's
-// business rather than this bridge's — the same reason the actor-value and
-// ragdoll runtimes arrive as closures. The active-effect one is a *mutating*
-// closure rather than a getter because `ActiveEffectRuntime` is a struct the
-// session owns by value: handing out a copy to dispel through would grow a
-// tally nothing ever reads and drop the write on the floor.
-//
-// Documented in docs/engine/papyrus-spell-natives.md and docs/engine/spellcasting.md.
+// `PapyrusWorldMagicBridge` conformance: spell natives meet active effects, the
+// spellbook, and the cast loop. Collaborators are closures. The active-effect
+// one is mutating, because the session owns that struct by value.
+// See docs/engine/papyrus-spell-natives.md and docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
-import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import simd
 
@@ -114,17 +97,10 @@ extension PapyrusWorldStateBridge {
         } ?? 0
     }
 
-    /// Whether `DispelAllSpells` is allowed to remove one effect.
-    ///
-    /// "Will dispel all spells affecting this actor with the exception of
-    /// Abilities, Diseases, worn or constant effect enchantments, or
-    /// addictions." (<https://ck.uesp.net/wiki/DispelAllSpells_-_Actor>) Three
-    /// of the five exceptions are SPIT spell types and read straight off the
-    /// record; the other two are the constant mode and the enchantment source
-    /// kind, which is what a worn enchantment's effect carries.
-    ///
-    /// A source record this load order no longer resolves is left alone, which
-    /// keeps a dropped plugin from turning into a silent mass dispel.
+    /// Whether `DispelAllSpells` may remove one effect. It spares abilities,
+    /// diseases, worn or constant enchantments, and addictions
+    /// (<https://ck.uesp.net/wiki/DispelAllSpells_-_Actor>). An unresolved source
+    /// record is left alone.
     public static func isDispellable(_ effect: ActiveEffect, spells: SpellStore?) -> Bool {
         guard effect.source.kind == .spell, !effect.isConstant else { return false }
         guard let record = spells?.spell(key: effect.source.record) else { return false }
@@ -156,17 +132,10 @@ extension PapyrusWorldStateBridge {
         return castAtNamedTarget(record, caster: holder, target: target)
     }
 
-    /// Applies a cast whose script named the target outright.
-    ///
-    /// The aim ray the caster runtime normally uses answers "what is the caster
-    /// pointing at", and a script that named a target is not pointing at
-    /// anything — the wiki is explicit that this cast "will be cast even if the
-    /// actor's hands are not readied"
-    /// (<https://ck.uesp.net/wiki/Cast_-_Spell>). So the payload is handed to
-    /// the same `SpellHitApplying` seam a projectile's landing uses, with the
-    /// named actor as the one direct target and no area sweep: nothing here
-    /// knows where the impact was, and inventing a position would catch
-    /// bystanders a real cast might not.
+    /// Applies a cast whose script named the target. It skips the aim ray and hands
+    /// the payload to `SpellHitApplying` with the named actor as the only target
+    /// (<https://ck.uesp.net/wiki/Cast_-_Spell>). No area sweep, since no impact
+    /// position is known.
     private func castAtNamedTarget(
         _ record: ResolvedSpell,
         caster holder: ActorValueHolder,
@@ -176,7 +145,6 @@ extension PapyrusWorldStateBridge {
         let payload = record.payload(caster: holder.key)
         _ = apply(SpellHit(
             payload: payload,
-            position: SIMD3<Float>(),
             targets: [SpellHitTarget(key: target)]
         ))
         return true

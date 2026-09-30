@@ -1,15 +1,8 @@
-// What the perk runtime did and declined to do (issue #497, roadmap item 20.4).
-//
-// Shaped like `ActiveEffectTally` and `ConditionTally`: every gap is a counter
-// rather than a log line, so a sweep asserts a number and a panel prints one.
-// The rule the whole subsystem follows is that an entry point nothing
-// implements evaluates to the value it was handed — identity, never zero — and
-// these counters are what make that visible instead of silent.
-//
-// Documented in docs/engine/perks.md.
+// What the perk runtime did and declined to do, as counters. An unimplemented
+// entry point returns the value it was handed, and these counters show it.
+// See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyProgressionInterface
 
@@ -22,34 +15,15 @@ nonisolated public struct PerkRuntimeTally: Equatable, Sendable {
     /// payload did not match its function. Keyed by the function's description
     /// so a readout ranks them without a second table.
     public private(set) var unsupportedFunctions: [String: Int] = [:]
-    /// Condition tabs skipped because the caller bound no reference for the
-    /// subject they run against, keyed by that subject.
-    ///
-    /// This is the subsystem's one documented over-application: a weapon-type
-    /// tab that nothing can bind is *not* evaluated, so the effect applies more
-    /// widely than the record asks. Counting it per subject is what says how
-    /// much, and to what.
+    /// Condition tabs skipped because no reference was bound for their subject, by
+    /// subject. This is the one documented over-application: the effect then applies
+    /// more widely than the record asks.
     public private(set) var unboundConditionSubjects: [PerkConditionSubject: Int] = [:]
     /// Condition tabs that were evaluated and came out false, which is a perk
     /// correctly not applying rather than a gap.
     public private(set) var conditionsFailed = 0
     /// Effects skipped because an actor-value function had no value to read.
     public private(set) var unavailableActorValues = 0
-
-    public var isClean: Bool {
-        unresolvedPerks == 0
-            && unsupportedFunctions.isEmpty
-            && unboundConditionSubjects.isEmpty
-            && unavailableActorValues == 0
-    }
-
-    /// Unsupported functions ranked by count, ties broken by name so the order
-    /// is stable.
-    public var rankedUnsupportedFunctions: [(name: String, count: Int)] {
-        unsupportedFunctions
-            .sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
-            .map { ($0.key, $0.value) }
-    }
 
     public mutating func noteUnresolvedPerk() {
         unresolvedPerks += 1

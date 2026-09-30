@@ -1,17 +1,16 @@
-// CoreText shaping + measurement + greedy word wrap for the UI layer
-// (M8.1.1). One code path (CTLineCreateWithAttributedString + glyph runs)
+// CoreText shaping + measurement + greedy word wrap for the UI layer.
+// One code path (CTLineCreateWithAttributedString + glyph runs)
 // drives measurement (font at point size) and rasterized emission (font at
 // pixel size); advances scale linearly with size, so the two stay consistent.
 
 import CoreText
 import Foundation
 
-/// One positioned glyph from a shaped line. `x`/`y` are baseline-relative
-/// positions in the shaping font's coordinate space.
+/// One positioned glyph from a shaped line. `x` is the baseline position in
+/// the shaping font's coordinate space; a single horizontal line has no `y`.
 nonisolated public struct UIShapedGlyph: Equatable, Sendable {
     public let glyphID: CGGlyph
     public let x: Float
-    public let y: Float
 }
 
 /// Vertical typographic metrics of a font, in the font's size units.
@@ -57,11 +56,7 @@ nonisolated public enum UITextShaper: Sendable {
             CTRunGetGlyphs(run, CFRangeMake(0, count), &ids)
             CTRunGetPositions(run, CFRangeMake(0, count), &positions)
             for index in 0 ..< count {
-                glyphs.append(UIShapedGlyph(
-                    glyphID: ids[index],
-                    x: Float(positions[index].x),
-                    y: Float(positions[index].y)
-                ))
+                glyphs.append(UIShapedGlyph(glyphID: ids[index], x: Float(positions[index].x)))
             }
         }
         return UIShapedLine(

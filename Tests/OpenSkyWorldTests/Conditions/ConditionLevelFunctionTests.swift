@@ -1,16 +1,7 @@
-// `GetLevel` and `GetBaseActorValue` (issue #499, roadmap item 20.6), driven
-// through the real evaluator against a synthetic actor pair.
-//
-// Function indices here are the raw on-disk numbers (Creation Kit number minus
-// 4096), from xEdit dev-4.1.6 `Core/wbDefinitionsTES5.pas`:
-//
-//   (Index:  80; Name: 'GetLevel')
-//   (Index: 277; Name: 'GetBaseActorValue'; ParamType1: ptActorValue)
-//
-// The pair is what every vanilla perk requirement is written with: `Armsman20`
-// reads `GetBaseActorValue One-Handed >= 20`, measured on this machine
-// 2026-08-20. Fixtures are synthetic — never extracted game files (AGENTS.md
-// "Legal & IP boundary").
+// `GetLevel` (80) and `GetBaseActorValue` (277) through the real evaluator
+// against a synthetic actor pair. Indices are raw on-disk numbers, from xEdit
+// dev-4.1.6 `Core/wbDefinitionsTES5.pas`. Vanilla perk requirements use this
+// pair, for example `Armsman20` reads `GetBaseActorValue One-Handed >= 20`.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -58,7 +49,6 @@ struct ConditionLevelFunctionTests {
                         base: oneHandedBase, permanent: fortify
                     )
                 ],
-                isPlayer: true,
                 level: playerLevel
             ),
             banditKey: ActorConditionState(
@@ -154,8 +144,7 @@ struct ConditionLevelFunctionTests {
         context.actors = ActorStateResolution(states: [
             Self.playerKey: ActorConditionState(
                 current: ActorValues(repeating: 100),
-                maximums: ActorValues(repeating: 100),
-                isPlayer: true
+                maximums: ActorValues(repeating: 100)
             )
         ])
 

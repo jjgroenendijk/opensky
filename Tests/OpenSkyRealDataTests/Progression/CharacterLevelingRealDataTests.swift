@@ -1,8 +1,6 @@
-// Env-gated character-leveling checks over the user's read-only active load
-// order (issue #499, roadmap item 20.6): the four GMSTs the curve and the
-// level-up rewards read, and one real perk-point spend climbing a vanilla tree
-// from its entry node. Numbers and editor IDs only — no game bytes leave the
-// run.
+// Character-leveling checks over the user's read-only load order: the four
+// GMSTs the curve and level-up rewards read, and one real perk-point spend up
+// a vanilla tree. Numbers and editor IDs only.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -161,8 +159,7 @@ struct CharacterLevelingRealDataTests {
                 .player: ActorConditionState(
                     current: ActorValues(repeating: 100),
                     maximums: ActorValues(repeating: 100),
-                    generalBaseline: [ActorValueIdentity.firstSkillIndex: oneHanded],
-                    isPlayer: true
+                    generalBaseline: [ActorValueIdentity.firstSkillIndex: oneHanded]
                 )
             ]),
             subject: .player

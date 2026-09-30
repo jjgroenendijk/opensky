@@ -14,22 +14,20 @@ import OpenSkyRendering
 import OpenSkyWorldState
 
 nonisolated public struct CellProviderIndexes {
-    /// The four load-order magic stores, decoded off one shared `RecordIndex`
-    /// rather than one load-order scan each: MGEF, SPEL, SCRL, EQUP and ENCH come
-    /// off the same index and the plugin files are walked once (issues #470 and
-    /// #472). Grouped into a type rather than inlined so the outer initializer
-    /// stays inside its length limit.
+    /// The load-order magic stores (MGEF, SPEL, SCRL, EQUP, ENCH), decoded off one
+    /// shared `RecordIndex` so the plugins are walked once. A type, so the outer
+    /// initializer stays under its length limit.
     private struct MagicIndexes {
         let effects: MagicEffectStore
         let spells: SpellStore
         let equipSlots: EquipSlotStore
         let enchantments: EnchantmentStore
-        /// PERK rides the same index (issue #497): its ability effects and its
+        /// PERK rides the same index: its ability effects and its
         /// spell-selecting entry-point functions join against the SPEL store
         /// built two lines above, so building it here is one record walk rather
         /// than a second load order resolution for the same plugins.
         let perks: PerkStore
-        /// AVIF rides it too (issue #498): the perk trees this index already
+        /// AVIF rides it too: the perk trees this index already
         /// decodes hang off AVIF records, and skill advancement reads the
         /// `AVSK` parameters off the same ones.
         let actorValues: ActorValueInformationStore
@@ -87,10 +85,6 @@ nonisolated public struct CellProviderIndexes {
     public let soundStore: SoundRecordStore
     public let footstepStore: FootstepStore
     public let materialTypes: MaterialTypeIndex
-    /// NAVI decoded once (issue #199). Not passed to the provider: nothing in
-    /// the scene build reads a navmesh yet, and the pathing graph that will
-    /// (16.2, issue #200) takes it from here directly.
-    public let navmeshes: NavmeshIndex
     public let aspcStore: AcousticSpaceStore
     public let musicStore: MusicRecordStore
     public let globalStore: GlobalStore
@@ -101,36 +95,36 @@ nonisolated public struct CellProviderIndexes {
     public let inventoryBaselines: InventoryBaselineResolver
     public let equipmentCatalog: EquipmentCatalog
     public let actorValueBaselines: ActorValueBaselineResolver
-    /// Load-order MGEF index (issue #469), behind every EFID an applied effect
+    /// Load-order MGEF index, behind every EFID an applied effect
     /// resolves.
     public let magicEffectStore: MagicEffectStore
-    /// Load-order SPEL and SCRL index (issue #470), which the spellbook keys
+    /// Load-order SPEL and SCRL index, which the spellbook keys
     /// its known spells against.
     public let spellStore: SpellStore
-    /// Load-order EQUP index (issue #470), which answers which hands a readied
+    /// Load-order EQUP index, which answers which hands a readied
     /// spell takes.
     public let equipSlotStore: EquipSlotStore
-    /// Load-order ENCH index (issue #472), behind every enchanted weapon's charge
+    /// Load-order ENCH index, behind every enchanted weapon's charge
     /// and every worn item's constant effects.
     public let enchantmentStore: EnchantmentStore
-    /// Load-order PERK index (issue #497), which the perk runtime owns perks
+    /// Load-order PERK index, which the perk runtime owns perks
     /// out of.
     public let perkStore: PerkStore
-    /// Load-order AVIF index (issue #498), which skill advancement reads each
+    /// Load-order AVIF index, which skill advancement reads each
     /// skill's `AVSK` parameters out of.
     public let actorValueInformation: ActorValueInformationStore
-    /// Load-order FACT index (issue #501), which every runtime membership is
+    /// Load-order FACT index, which every runtime membership is
     /// resolved through.
     public let factionStore: FactionStore
-    /// Load-order RELA and ASTP index (issue #502), which the hostility
+    /// Load-order RELA and ASTP index, which the hostility
     /// derivation asks about one specific pair of actors.
     public let relationshipStore: RelationshipStore
-    /// Load-order FLST index (issue #506), which a vendor faction's buy/sell
+    /// Load-order FLST index, which a vendor faction's buy/sell
     /// keyword list is flattened through.
     public let formListStore: FormListStore
-    /// GMST-derived `fSkillUseCurve` and `fXPPerSkillRank` (issue #498).
+    /// GMST-derived `fSkillUseCurve` and `fXPPerSkillRank`.
     public let skillAdvancementSettings: SkillAdvancementSettings
-    /// GMST-derived level curve and level-up rewards (issue #499).
+    /// GMST-derived level curve and level-up rewards.
     public let characterLevelSettings: CharacterLevelSettings
     /// Plugin the item indexes were built from, which magic-item EFID links are
     /// relative to.
@@ -175,7 +169,6 @@ nonisolated public struct CellProviderIndexes {
         soundStore = SoundRecordStore(file: file)
         footstepStore = FootstepStore(file: file)
         materialTypes = MaterialTypeIndex(file: file)
-        navmeshes = NavmeshIndex(file: file)
         aspcStore = AcousticSpaceStore(file: file)
         musicStore = MusicRecordStore(file: file)
         globalStore = GlobalStore(file: file, pluginName: esmURL.lastPathComponent)
@@ -195,7 +188,7 @@ nonisolated public struct CellProviderIndexes {
         actorValueInformation = magic.actorValues
         magicItemPluginName = esmURL.lastPathComponent
         // Built after the ENCH store so every enchanted item's `EITM` arrives
-        // already load-order resolved (issue #472): without the resolver an
+        // already load-order resolved: without the resolver an
         // equipped enchanted weapon would look unenchanted at runtime.
         inventoryBaselines = InventoryBaselineResolver.build(
             from: file,
@@ -213,7 +206,7 @@ nonisolated public struct CellProviderIndexes {
     /// The stat derivation and the baselines over it.
     ///
     /// Its own step because the initializer is at its length cap, and because
-    /// the two halves have to share one `PlayerLevelSource` (issue #499): the
+    /// the two halves have to share one `PlayerLevelSource`: the
     /// baselines take the resolver's own, so a level-up moves an NPC's
     /// `PC Level Mult` scaling and the player's reported level together.
     private static func actorValueBaselines(
@@ -228,7 +221,7 @@ nonisolated public struct CellProviderIndexes {
                 localized: (try? file.pluginHeader().isLocalized) ?? false,
                 pluginName: pluginName,
                 // Load-order wide, so a patch plugin's CLAS override reaches
-                // the derivation instead of being invisible to it (#496).
+                // the derivation instead of being invisible to it.
                 classes: CharacterClassStoreLoader.load(root: root, baseFile: file),
                 settings: tuning.level
             )

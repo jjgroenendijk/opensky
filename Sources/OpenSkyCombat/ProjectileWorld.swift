@@ -1,23 +1,7 @@
-// The world seam archery resolves a shot through (issue #196, roadmap item
-// 15.5), and the values on either side of it.
-//
-// `MeleeCombatWorld`'s shape, for the same reason: every question below is
-// something the session already knows how to answer — where the player is
-// aiming from, which actors are resident, what a sweep hits, how to take health
-// off a reference, how to play a positional sound, how to put an object in the
-// world and take it out again — and naming them together is what lets the
-// acceptance tests drive the whole runtime against a fake world with no
-// renderer, no window and no game data.
-//
-// The one thing this seam has that melee's does not is a *spawn* pair.
-// Sticking an arrow means putting a new object into the world, and OpenSky
-// already has exactly one way to do that: `ReferenceSpawnState`, the component
-// a dropped item is drawn from (item 12.1.3). A stuck arrow is that mechanism
-// with a different base record and a different transform, which is why the seam
-// asks for a key back and hands the key in again to remove it, rather than
-// carrying a bespoke drawing channel of its own.
-//
-// Documented in docs/engine/projectiles.md.
+// The world seam archery resolves a shot through, and the values on either
+// side. Shaped like `MeleeCombatWorld`, plus a spawn pair: a stuck arrow is a
+// `ReferenceSpawnState` spawn, so the seam returns a key and takes it back to
+// remove the arrow. See docs/engine/projectiles.md.
 
 import OpenSkyBehavior
 import OpenSkyCombatInterface
@@ -59,7 +43,7 @@ nonisolated public struct ProjectileShooter: Equatable, Sendable {
     }
 }
 
-/// One projectile in flight — an arrow or a cast spell (issue #471).
+/// One projectile in flight: an arrow or a cast spell.
 nonisolated public struct LiveProjectile: Equatable, Sendable {
     /// Monotonic id, so the trace can name a projectile that no longer exists.
     public let id: Int
@@ -101,13 +85,11 @@ nonisolated public enum ProjectileOutcome: String, Equatable, Sendable, CaseIter
     }
 }
 
-/// One finished shot, kept for the panel's last-trajectory readout. Carries
-/// everything the issue asks that readout to show: spawn point, impact point
-/// and flight time.
+/// One finished shot, kept for the panel's last-trajectory readout: spawn
+/// point, impact point, and flight time.
 nonisolated public struct ProjectileTrace: Equatable, Sendable {
     public let id: Int
     public let launchPosition: SIMD3<Float>
-    public let launchDirection: SIMD3<Float>
     /// Where it ended. For a miss this is simply where it was given up on.
     public let endPosition: SIMD3<Float>
     /// Seconds of flight.
@@ -128,8 +110,8 @@ nonisolated public struct ProjectileTrace: Equatable, Sendable {
     public let sound: FormID?
     /// Whether the arrow was left in the world at the impact point.
     public let stuck: Bool
-    /// What a landed spell applied, or nil for an arrow and for a spell that
-    /// reached nobody (issue #471).
+    /// What a landed spell applied, or nil for an arrow and for a spell that reached
+    /// nobody.
     public let spellHit: SpellHitReport?
     /// Whether this hit should make its target hostile: every arrow, and a
     /// spell whose effects are hostile. Read by the combat loop, so a healing
@@ -139,8 +121,6 @@ nonisolated public struct ProjectileTrace: Equatable, Sendable {
 
 /// One arrow left standing in whatever it hit.
 nonisolated public struct StuckProjectile: Equatable, Sendable {
-    /// The projectile that made it, so the trace and the registry agree.
-    public let projectileID: Int
     /// The AMMO to draw it from. A stuck arrow is the ammunition's own ground
     /// model, which is the model a spent arrow is picked back up as.
     public let base: FormID
@@ -154,11 +134,8 @@ nonisolated public struct StuckProjectile: Equatable, Sendable {
     public let host: FormID?
 }
 
-/// Everything the archery runtimes need from the session around them.
-///
-/// `WeaponEnchantmentApplying` is refined for the reason `SpellHitApplying` is: an
-/// enchanted bow and an enchanted blade apply through one implementation (issue
-/// #472).
+/// Everything the archery runtimes need from the session around them. It refines
+/// `WeaponEnchantmentApplying`, so bows and blades share one implementation.
 @MainActor
 public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHitApplying,
     WeaponEnchantmentApplying
@@ -176,9 +153,9 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     /// Normally `ShapeSweeper.firstHit` over the streamer's broadphase.
     func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit?
 
-    /// The MATT type of what was struck, or nil where it names none. Feeds the
-    /// IPCT lookup exactly as the ground material feeds a footstep's.
-    func projectileMaterial(at position: SIMD3<Float>) -> FormID?
+    /// The MATT type an impact plays against, or nil where it names none. The
+    /// session reports the ground, as for a melee hit.
+    func projectileMaterial() -> FormID?
 
     /// Takes `amount` off `target`'s health.
     ///

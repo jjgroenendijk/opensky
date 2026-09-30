@@ -1,15 +1,6 @@
-// Main-app progression inspection seam (issue #500, roadmap item 20.7): what
-// the `World > Progression` panel is written against, so the panel stays
-// independent of `GameViewController` while reaching the same engine calls the
-// runtime uses.
-//
-// One snapshot value rather than a bag of protocol properties, for the reason
-// `ActorValueControlSnapshot` is one: a readout has to be a pure function of a
-// single engine observation. A level, the experience under it and the perk
-// points it paid for are three numbers one level-up moves together, and three
-// reads taken microseconds apart could show a level that has not been paid for.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// Main-app progression inspection seam for the `World > Progression` panel. One
+// snapshot value, so level, experience, and perk points come from one
+// observation. AppKit-free.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -121,18 +112,6 @@ nonisolated public struct PerkInspection: Equatable, Sendable {
     /// or quest stage it carries.
     public let effects: [String]
 
-    public static let empty = PerkInspection(
-        name: "—",
-        editorID: "-",
-        formID: "-",
-        isPlayable: false,
-        isTrait: false,
-        isHidden: false,
-        isOwned: false,
-        conditions: [],
-        effects: []
-    )
-
     public init(
         name: String,
         editorID: String,
@@ -178,9 +157,8 @@ nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
     public let ownedPerkCount: Int
     /// The eighteen skills, in actor-value index order.
     public let skills: [SkillProgressReadout]
-    /// What the per-skill perk-tree cache behind those lines holds and how much
-    /// of this tick's reading it served without touching the records
-    /// (issue #556).
+    /// What the per-skill perk-tree cache behind those lines holds, and how much of
+    /// this tick's reading it served.
     public let perkTreeCache: PerkTreeCacheReadout
     /// Which skill the controls and the tree act on.
     public let selectedSkill: Int32

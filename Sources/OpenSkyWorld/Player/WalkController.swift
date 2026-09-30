@@ -9,7 +9,7 @@ import simd
 nonisolated public struct WalkController: Sendable {
     public typealias GroundSampler = (SIMD2<Float>) -> TerrainGroundSample?
     public typealias CollisionQuery = CapsuleWorldCollider.CandidateQuery
-    /// Asked once per fixed step for that step's displacement (issue #188).
+    /// Asked once per fixed step for that step's displacement.
     /// Nil leaves the controller on its own input-derived movement, which is
     /// what walk mode did before a behavior graph existed.
     public typealias StepPlanner = (LocomotionStepState) -> LocomotionStepPlan
@@ -41,19 +41,14 @@ nonisolated public struct WalkController: Sendable {
     /// True while the last step resolved in water deep enough to swim. Gravity,
     /// ground snap, and step support are all suspended there.
     public private(set) var isSwimming = false
-    /// The MATT material of whatever the capsule is currently standing on
-    /// (issue #358): the terrain texture under the feet, or the material of the
+    /// The MATT material of whatever the capsule is currently standing on:
+    /// the terrain texture under the feet, or the material of the
     /// collision shape it rests against. Nil while airborne, and nil on a
     /// surface that names no material. This is the argument the footstep chain
     /// was missing — the impact table is keyed by it.
     public private(set) var groundMaterial: FormID?
     private var accumulatedTime: Float = 0
     public var activeStepSupport: CapsuleStepSupport?
-
-    /// The height the capsule is held at while stepping up, when it is.
-    public var activeStepSupportHeight: Float? {
-        activeStepSupport?.height
-    }
 
     public struct HorizontalMove: Sendable {
         public let result: CapsuleMoveResult

@@ -1,28 +1,8 @@
-// The registry of live ragdolls (issue #197, roadmap item 15.6): which corpses
-// are simulating right now, the fixed-step clock they advance on, and the
-// resting transforms they hand to persistence.
-//
-// It is deliberately the same shape as `DynamicBodyWorld`, because it has the
-// same job for a different kind of body: a keyed collection in sorted order, a
-// fixed-step accumulator on `PhysicsStep.fixedTimeStep`, a settled-pose drain
-// for the world-state store, and a cell-scoped lifecycle so streaming a cell out
-// takes its corpses with it. A reader who has understood one has understood the
-// other.
-//
-// The one structural difference is that a ragdoll is not one body but a body
-// *list with joints*, so each entry steps its own solver over its own bodies
-// rather than every body sharing one. Ragdolls do not collide with each other:
-// two corpses in a pile is a case the joint solver would have to arbitrate
-// between two constraint sets at once, and the honest version of that is more
-// than this item takes on. Each ragdoll collides with the static world, and with
-// those of its own bones that `RagdollSelfCollision` admits; the limitation is
-// stated in docs/engine/ragdoll-solver.md rather than hidden.
-//
-// Ordering is by `ReferenceKey` throughout, for the reason the dynamic body
-// registry sorts: the solver's iteration order, and therefore the trajectories,
-// must not depend on hashing.
-//
-// Documented in docs/engine/ragdoll.md.
+// The registry of live ragdolls, shaped like `DynamicBodyWorld`: sorted by
+// `ReferenceKey`, stepped on `PhysicsStep.fixedTimeStep`, with a settled-pose
+// drain and cell-scoped lifecycle. Each ragdoll runs its own joint solver.
+// Ragdolls do not collide with each other (docs/engine/ragdoll-solver.md).
+// See docs/engine/ragdoll.md.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -47,8 +27,7 @@ nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
     /// Bodies whose integrated pose came back non-finite. Always zero; a
     /// non-zero value is the stability gate failing in the open.
     public var recoveredBodyCount = 0
-    /// Bone pairs the biped filter admits, summed over every live ragdoll: the
-    /// size of the set self-collision is allowed to work over (issue #413).
+    /// Bone pairs the biped filter admits, summed over every live ragdoll.
     public var selfCollisionPairCount = 0
     /// Bone-against-bone contacts at the last solve, summed the same way. Zero
     /// on a vanilla humanoid standing at its bind pose, and non-zero once a limb
@@ -86,8 +65,7 @@ nonisolated public struct RagdollStatsSnapshot: Equatable, Sendable {
     }
 }
 
-/// The panel seam for the ragdoll controls under `World > Combat & Physics`
-/// (issue #197 scope point 7).
+/// The panel seam for the ragdoll controls under `World > Combat & Physics`.
 @MainActor
 public protocol RagdollControlProviding: AnyObject {
     var ragdollStatsSnapshot: RagdollStatsSnapshot { get }
@@ -119,17 +97,13 @@ nonisolated public struct RagdollWorld: Sendable {
     /// Which ragdolls had already settled at the last step, so a corpse is
     /// recorded the step it comes to rest rather than on every step after.
     private var wasSettled: Set<ReferenceKey> = []
-    /// Keys in the order they were added, oldest first. `ragdolls` itself is
-    /// sorted by `ReferenceKey` so the solver's iteration order cannot depend
-    /// on hashing, which means the array carries no notion of age; the cap in
-    /// `trim(to:)` needs one, so it is tracked here rather than by re-sorting
-    /// the thing whose order is load-bearing (issue #374).
+    /// Keys in the order they were added, oldest first. `ragdolls` is sorted by key,
+    /// so `trim(to:)` needs this separate age order.
     private var spawnOrder: [ReferenceKey] = []
     private var accumulatedTime: Float = 0
     public var isFrozen = false
-    /// Whether a ragdoll's bones may touch each other at all. The admitted pairs
-    /// are per-definition; this is the one switch over all of them, so a viewer
-    /// can watch the same collapse both ways (issue #413).
+    /// Whether a ragdoll's bones may touch each other at all: one switch over every
+    /// definition's pairs.
     public var isSelfCollisionEnabled = true {
         didSet {
             guard isSelfCollisionEnabled != oldValue else { return }
@@ -194,15 +168,8 @@ nonisolated public struct RagdollWorld: Sendable {
         spawnOrder.removeAll { $0 == key }
     }
 
-    /// Stops simulating the oldest corpses until at most `limit` remain
-    /// (issue #374).
-    ///
-    /// A trimmed corpse is not deleted and is not resurrected: it stops being
-    /// stepped and falls back to the resting transform `ActorDeathState`
-    /// recorded, which is exactly what happens to a corpse whose cell unloads.
-    /// The body a player is looking at therefore stays on the floor; what it
-    /// loses is the last of its motion.
-    ///
+    /// Stops simulating the oldest corpses until at most `limit` remain. A trimmed
+    /// corpse falls back to its recorded `ActorDeathState` rest transform.
     /// - Returns: how many stopped simulating.
     @discardableResult
     public mutating func trim(to limit: Int) -> Int {
@@ -212,14 +179,6 @@ nonisolated public struct RagdollWorld: Sendable {
             remove(key)
         }
         return excess
-    }
-
-    /// Drops every ragdoll a cell owns. Called when the cell leaves residency.
-    public mutating func removeCell(_ location: CellSceneLocation) {
-        let departing = cells.filter { $0.value == location }.map(\.key)
-        for key in departing {
-            remove(key)
-        }
     }
 
     public mutating func removeAll() {
@@ -292,27 +251,6 @@ nonisolated public struct RagdollWorld: Sendable {
     }
 
     // MARK: - Queries
-
-    /// The pose one ragdoll writes into the skinning path this frame, or nil
-    /// when that actor is not ragdolling.
-    public func boneMatrices(
-        for key: ReferenceKey,
-        blending animated: [String: float4x4],
-        worldToActor: float4x4
-    ) -> [String: float4x4]? {
-        guard let instance = instance(for: key) else { return nil }
-        return instance.blendedBoneMatrices(animated: animated, worldToActor: worldToActor)
-    }
-
-    /// Applies an impulse to one ragdoll, waking it.
-    public mutating func applyImpulse(
-        _ impulse: SIMD3<Float>,
-        at point: SIMD3<Float>,
-        to key: ReferenceKey
-    ) {
-        guard let index = ragdolls.firstIndex(where: { $0.key == key }) else { return }
-        ragdolls[index].instance.applyImpulse(impulse, at: point)
-    }
 
     public init() {}
 }

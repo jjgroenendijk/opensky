@@ -1,20 +1,7 @@
-// Turning one actor in place to face a point (issue #427, roadmap item 17.4).
-//
-// A conversation needs the speaker to look at the player, and the only thing in
-// this engine that owns an actor's yaw is the movement authority
-// (`NPCMovementRuntime`). Writing the yaw from the dialogue layer instead would
-// give an actor two owners of its facing, and the frame after a package
-// restarted a walk the two would disagree. So a turn is a request to that
-// authority, exactly as a walk is, and it takes the actor's mover away for the
-// same reason a walk takes the previous walk away.
-//
-// The turn is bounded by `NPCMovementRuntime.maximumYawSpeed`, the same rate a
-// mover turns corners at, so an actor spun to face the player rotates at the
-// speed the rest of its locomotion rotates at rather than snapping.
-//
-// Head tracking, eye contact and look-at IK are explicitly not this: the whole
-// actor turns on the spot, its feet do not move, and nothing above the neck is
-// aimed at anything (issue #427, "Out of scope").
+// Turning one actor in place to face a point. The movement authority
+// (`NPCMovementRuntime`) owns an actor's yaw, so a turn is a request to it, like
+// a walk. The turn rate is `NPCMovementRuntime.maximumYawSpeed`. The whole actor
+// turns; there is no head tracking or look-at IK.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -89,9 +76,7 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
         return NPCLocomotionDriveUpdate(
             actor: actor,
             intent: .still,
-            gait: .walk,
-            yaw: yaw,
-            deltaTime: frameTime
+            gait: .walk
         )
     }
 

@@ -1,22 +1,11 @@
-// The player's rendered first-person arms (issue #190).
-//
-// The same shape as `PlayerBody`, and deliberately so: one assembly, one
-// animation, one transform rebuilt per frame, draw groups rebuilt only when
-// that transform actually moved. What differs is what it is anchored to. The
-// body stands on the capsule; the arms hang off the camera, so their transform
-// is rebuilt from the eye pose *and* from the pose the first-person behavior
-// graph just produced, because the graph is what says where the rig's camera
-// bone is.
-//
-// The arms move every frame — including the frames a standing player does not,
-// since looking around moves them — so unlike the body they rarely take the
-// unchanged-transform shortcut. That is still worth keeping: a paused frame,
-// or a menu-mode frame, costs one matrix comparison.
+// The player's rendered first-person arms, shaped like `PlayerBody`. The arms
+// hang off the camera, so their transform comes from the eye pose and the
+// first-person graph's camera bone. Draw groups rebuild only when the transform
+// moves, which saves work on paused frames.
 
 import Metal
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
-import OpenSkyFormatsCore
 import OpenSkyRendering
 import simd
 

@@ -1,13 +1,6 @@
-// Applying a landed spell (issue #471, roadmap item 19.8): the resistance
-// scaling, the area rule, and what reaches whom.
-//
-// Records are synthetic and built in code (`SpellbookFixture`) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
-//
-// The effect runtime here is a real one over a real `WorldStateStore`, unlike
-// the cast-loop suites' fake: the question this file asks is what the *actor
-// value* ended up at after a resistance-scaled application, and a fake world
-// could only answer what it was handed.
+// Applying a landed spell: resistance scaling, the area rule, and who is hit.
+// The effect runtime is real over a real `WorldStateStore`, because the
+// question is the final actor value. Records come from `SpellbookFixture`.
 
 import Foundation
 @testable import OpenSkyActors
@@ -63,12 +56,8 @@ struct SpellHitTests {
         return spell.payload(caster: caster)
     }
 
-    private func hit(
-        _ payload: SpellPayload,
-        targets: [SpellHitTarget],
-        position: SIMD3<Float> = SIMD3()
-    ) -> SpellHit {
-        SpellHit(payload: payload, position: position, targets: targets)
+    private func hit(_ payload: SpellPayload, targets: [SpellHitTarget]) -> SpellHit {
+        SpellHit(payload: payload, targets: targets)
     }
 
     // MARK: - Resistance scaling

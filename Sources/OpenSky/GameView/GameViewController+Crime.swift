@@ -1,22 +1,8 @@
-// Session wiring for crime (issue #504, roadmap item 21.5): builds the crime
-// runtime over the provider's FACT and LCTN indexes, answers the four questions
-// `CrimeWorld` asks about the running session, and routes the hooks — a take, a
-// blow, a death — into the bounty ledger.
-//
-// AppKit stays in this controller satellite; the runtime, the reporter, the
-// ownership resolver and the ledger component are all engine types that build
-// into `openskycli` and are testable without a window.
-//
-// ## What is paid per take, and what is not
-//
-// `crimeOwner(of:)` runs once per take and once per container open, not per
-// frame: it is two dictionary lookups and a resolve, and the answer is
-// deliberately not cached, because a quest that hands the player a house key
-// changes it and a cache would have to be invalidated by every membership
-// write.
-//
-// The witness question is the perception pass's already-converged state, read
-// rather than recomputed, so a take costs no raycast.
+// Session wiring for crime: builds the crime runtime over the provider's FACT
+// and LCTN indexes, answers `CrimeWorld`, and routes takes, blows, and deaths
+// into the bounty ledger. `crimeOwner(of:)` runs once per take, not per frame,
+// and is not cached: a quest can change ownership at any time. The witness
+// check reads the perception state, so a take costs no raycast.
 
 import AppKit
 import OpenSkyActorsInterface
@@ -46,28 +32,24 @@ struct CrimeBridgeState {
     /// Walks a cell's location parent chain to the crime faction that answers
     /// for it.
     var crimeFactions: CrimeFactionResolver?
-    /// Actors the player struck first this session, which is what makes the
-    /// second blow of a fight not a second assault and the eventual death a
-    /// murder rather than self-defence.
-    ///
-    /// Session state rather than a component: it answers "did this fight start
-    /// with the player", and a reloaded save restarts every fight from what the
-    /// records and the stored hostility say.
+    /// Actors the player struck first this session. The second blow of a fight is
+    /// not a second assault, and a later death counts as murder. Session state, not
+    /// a component: a reloaded save restarts every fight.
     var assaultedActors: Set<ReferenceKey> = []
     /// Cell the player was last seen in, so a trespass is noticed on arrival
     /// rather than once per frame for as long as they stay.
     var lastPlayerCell: CellSceneLocation?
     /// Who is mid-confrontation, who is cooling off, and which factions the
-    /// player resisted (issue #505).
+    /// player resisted.
     var guards = GuardResponseState()
     /// Where each pursuing guard was last sent, so a pursuit repaths only once
     /// the player has moved away from it rather than every frame.
     var pursuitTargets: [ReferenceKey: SIMD3<Float>] = [:]
     /// Human-readable result of the last crime the session recorded.
     var lastActionText = "No crime recorded yet."
-    /// Human-readable result of the last guard action (issue #505).
+    /// Human-readable result of the last guard action.
     var lastGuardText = "No guard has acted yet."
-    /// What the `World > Crime & Factions` panel has selected (issue #507).
+    /// What the `World > Crime & Factions` panel has selected.
     var panel = CrimeFactionPanelState()
 }
 
@@ -121,11 +103,6 @@ extension GameViewController {
         crime.reporter?.runtime.crimeGold(of: faction) ?? 0
     }
 
-    /// Every faction the player owes something to or has offended.
-    func resolvedCrimeFactions() -> [ResolvedFaction] {
-        crime.reporter?.runtime.resolvedFactions() ?? []
-    }
-
     /// Crime ledgers as the condition machinery reads them, which is what
     /// `GetCrimeGold` answers from.
     ///
@@ -151,18 +128,9 @@ extension GameViewController {
     // MARK: - Hooks
 
     /// Records the player's first blow against an actor that was not already
-    /// hostile.
-    ///
-    /// Called from `reportScriptHit`, the one seam every landed blow passes
-    /// through, which is why a sword and an arrow cannot disagree about what
-    /// counts as a first strike. A blow struck by anybody but the player, a
-    /// blow against the player, and a blow against an actor already angry are
-    /// all no crime: "Self-defense against an unprovoked assault is legal and
-    /// not considered a crime" (<https://en.uesp.net/wiki/Skyrim:Crime>).
-    ///
-    /// Only the *first* strike counts, which is what `assaultedActors` records:
-    /// the second blow of the same fight is not a second crime, and the set is
-    /// also what makes the eventual death a murder rather than self-defence.
+    /// hostile. Every landed blow passes through `reportScriptHit`. Self-defense is
+    /// no crime (<https://en.uesp.net/wiki/Skyrim:Crime>), and only the first strike
+    /// of a fight counts.
     func reportPlayerAssault(
         on target: ReferenceKey,
         wasHostile: Bool,
@@ -178,25 +146,10 @@ extension GameViewController {
         note(reporter.reportAssault(on: target), as: "Assault")
     }
 
-    /// Records a death as murder when the player is the one who caused it.
-    ///
-    /// `assaultedActors` is the attribution, not a refinement of it. The
-    /// zero-health sweep that notices a death knows only that health reached
-    /// zero — not who emptied it — so charging every non-hostile death to the
-    /// player would put a 1000-gold bounty on a bandit killing a guard, on fall
-    /// damage, and on a script's `Kill`. The set holds exactly the actors this
-    /// player struck first, which is the strongest claim this engine can make
-    /// about who did it.
-    ///
-    /// That also gets the interesting half of the rule right: "If you kill an
-    /// NPC or domestic animal after attacking them and making them hostile, you
-    /// can be simultaneously guilty of both assault and murder"
-    /// (<https://en.uesp.net/wiki/Skyrim:Crime>) — an actor the player
-    /// assaulted is still a murder victim even though it died angry, while a
-    /// bandit that attacked first is not. The stated deviation is the sentence
-    /// after it: a one-hit kill charges assault as well as murder here, because
-    /// the blow is reported before the sweep notices the death. Recorded in
-    /// docs/engine/crime.md.
+    /// Records a death as murder when the player struck the victim first. The death
+    /// sweep does not know who emptied health, so `assaultedActors` is the
+    /// attribution. A one-hit kill charges assault and murder, because the blow is
+    /// reported before the death. See docs/engine/crime.md.
     func reportPlayerMurder(of victim: ReferenceKey, wasHostile: Bool) {
         guard
             victim != .player,
@@ -206,19 +159,10 @@ extension GameViewController {
         note(reporter.reportMurder(of: victim), as: "Murder")
     }
 
-    /// Notices the player arriving somewhere an owner has not let them be.
-    ///
-    /// Called on every world tick and cheap when nothing moved: the cell the
-    /// player stands in is compared against the last one seen and the ownership
-    /// lookup runs only when it changed. One trespass per arrival, so standing
-    /// in a shop does not accrue a bounty per frame.
-    ///
-    /// v1 records the trespass on arrival rather than after the warning the
-    /// original gives — "you will receive one warning and be told to leave the
-    /// area. If you linger and continue to trespass, you will receive a bounty
-    /// after 30 seconds" (<https://en.uesp.net/wiki/Skyrim:Crime>). The warning
-    /// is a guard line and a timer, which are issue #505's; recorded as a
-    /// limitation in docs/engine/crime.md.
+    /// Notices the player arriving somewhere an owner has not allowed. Runs every
+    /// tick, but the ownership lookup runs only when the cell changes. The trespass
+    /// is recorded on arrival, without the game's warning and 30-second timer
+    /// (docs/engine/crime.md).
     func advanceCrimeTrespass() {
         let location = streamer?.currentCellLocation
         guard crime.lastPlayerCell != location else { return }
@@ -302,7 +246,6 @@ extension GameViewController: CrimeWorld {
             seedFactions(of: holder)
         }
         return CrimeActor(
-            key: key,
             base: actorBaseKey(of: key),
             memberships: factions.runtime?.state(of: key) ?? ActorFactionState()
         )

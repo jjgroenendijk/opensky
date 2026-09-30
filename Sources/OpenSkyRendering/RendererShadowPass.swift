@@ -1,11 +1,7 @@
-// Sun-shadow depth pre-pass (M7.1.1, per-cascade caster culling in M7.1.2),
-// split from RendererScenePass.swift (file-length limits). Runs on the same
-// reused MTL4CommandBuffer BEFORE the scene pass: fits orthographic cascades
-// to the camera frustum (ShadowCascadeMath), renders the casters whose bounds
-// intersect each cascade into one shadow-array slice per cascade, then the
-// scene pass samples the array. Water, sky and LOD do not cast. Caster
-// instances + per-draw uniforms use dedicated shadow rings so they never
-// collide with the scene pass, which resets its own cursors to 0 each frame.
+// Sun-shadow depth pre-pass, split from RendererScenePass.swift. It fits
+// orthographic cascades to the camera frustum (ShadowCascadeMath) and renders the
+// casters that intersect each cascade into one shadow-array slice. Water, sky,
+// and LOD do not cast. Dedicated shadow rings keep it apart from the scene pass.
 
 import Foundation
 import Metal
@@ -13,7 +9,7 @@ import OpenSkyFormatsCore
 import OpenSkyShaderTypes
 import simd
 
-/// Sun-shadow quality tier (M7.1.2). Drives cascade count, shadow range, and
+/// Sun-shadow quality tier. Drives cascade count, shadow range, and
 /// PCF tap count; the app sidebar selects it. `.off` renders no shadow pass
 /// (equivalent to `sunShadowsEnabled = false`, but a persisted user choice).
 nonisolated public enum ShadowQuality: String, CaseIterable, Sendable {
@@ -62,7 +58,6 @@ extension Renderer {
     private struct ShadowCascadeContext {
         let cascade: ShadowCascade
         let frustum: Frustum
-        let slot: Int
         let encoder: MTL4RenderCommandEncoder
     }
 
@@ -214,7 +209,6 @@ extension Renderer {
             let context = ShadowCascadeContext(
                 cascade: cascade,
                 frustum: Frustum(viewProjection: cascade.viewProjection),
-                slot: state.slot,
                 encoder: encoder
             )
             // The shadow lists, not the camera lists: a first-person player

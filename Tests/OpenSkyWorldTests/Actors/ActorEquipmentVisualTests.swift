@@ -1,9 +1,6 @@
-// Runtime equipment in visual resolution and assembly (issue #178, roadmap
-// item 12.2.1): the equipped-set override of the plugin default outfit, ARMA
-// DNAM draw ordering, and the weapon hand attachment.
-//
-// Synthetic ARMO/ARMA/NPC_ fixtures throughout (ActorVisualFixtures.swift) —
-// no extracted game records.
+// Runtime equipment in visual resolution: the equipped set overrides the
+// default outfit, ARMA DNAM draw order, and the weapon hand attachment.
+// Synthetic fixtures from ActorVisualFixtures.swift.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -158,12 +155,9 @@ struct ActorEquipmentResolutionTests {
         #expect(visual.parts.map(\.modelPath) == ["clothes_m.nif", "robes_m.nif", "feet_m.nif"])
     }
 
-    /// Draw order applies to the plugin `defaultOutfit` chain too, and it
-    /// reorders armatures *within* one ARMO — the case issue #384 caught, where
-    /// vanilla `ClothesMonkRobesHooded` lists MonkRobesAA (priority 15) ahead of
-    /// MonkHoodAA (priority 10) and the resolve has to emit the hood first.
-    /// Covered synthetically here because the real-data suite that found it
-    /// cannot run in CI.
+    /// Draw order also reorders armatures within one ARMO of the `defaultOutfit`
+    /// chain: `ClothesMonkRobesHooded` lists the robe (priority 15) before the hood
+    /// (priority 10), and the hood must come first.
     @Test func priorityReordersArmaturesWithinOnePluginOutfitPiece() throws {
         let resolver = makeResolver(outfitItems: [0x340])
         let visual = try resolver.resolve(appearance: appearance(outfit: 0x400))
@@ -187,7 +181,7 @@ struct ActorEquipmentResolutionTests {
         )
 
         #expect(visual.attachments == [ResolvedAttachment(
-            item: FormID(0x600), modelPath: "sword.nif", bone: "Weapon"
+            modelPath: "sword.nif", bone: "Weapon"
         )])
         // A weapon is not a body part and contributes no biped slots.
         #expect(visual.equippedSlots.isEmpty)
@@ -233,7 +227,7 @@ struct ActorEquipmentAssemblyTests {
         #expect(provider.log.attachments.map(\.path) == ["sword.nif"])
         #expect(provider.log.attachments.map(\.bone) == ["Weapon"])
         #expect(assembly.models.last?.role == .attachment(ResolvedAttachment(
-            item: FormID(0x600), modelPath: "sword.nif", bone: "Weapon"
+            modelPath: "sword.nif", bone: "Weapon"
         )))
     }
 
@@ -273,7 +267,7 @@ struct ActorEquipmentAssemblyTests {
             $0.reason == .missingAsset
                 && $0.subject == .model(
                     role: .attachment(ResolvedAttachment(
-                        item: FormID(0x600), modelPath: "sword.nif", bone: "Weapon"
+                        modelPath: "sword.nif", bone: "Weapon"
                     )),
                     path: "sword.nif"
                 )

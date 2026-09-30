@@ -1,22 +1,8 @@
-// Live projectiles (issue #196, roadmap item 15.5, scope points 3 to 5): what
-// is in the air right now, how it advances, what it hits, and what is left
-// behind.
-//
-// The clock is the whole design. Frames arrive at whatever rate the display
-// gives; a trajectory that integrated the frame time directly would land in a
-// different place on a 60 Hz display than on a 120 Hz one, and the issue asks
-// for deterministic trajectories. So this type accumulates frame time and
-// advances every projectile on `PhysicsStep.fixedTimeStep`, exactly as
-// `DynamicBodyWorld` does — and for exactly the same reason. A shot fired from
-// a given pose lands in the same place on every machine.
-//
-// Ordering is by projectile id throughout, which is allocation order. Two runs
-// of the same session therefore resolve impacts in the same sequence.
-//
-// Everything it touches the world with goes through `ProjectileWorld`, so the
-// whole runtime is testable against a fake with no renderer and no game data.
-//
-// Documented in docs/engine/projectiles.md.
+// Live projectiles: what is in the air, how it advances, what it hits, and what
+// stays behind. Frame time accumulates into `PhysicsStep.fixedTimeStep` steps,
+// so a trajectory is the same at 60 Hz and 120 Hz. Impacts resolve in
+// projectile-id order. World access goes through `ProjectileWorld`.
+// See docs/engine/projectiles.md.
 
 import Foundation
 import OpenSkyCombatInterface
@@ -31,14 +17,9 @@ public final class ProjectileRuntime {
     /// How many finished shots the trace keeps. A handful, because the panel
     /// shows the newest and a reader is looking at the last thing they did.
     public static let traceLimit = 16
-    /// How many arrows may be left standing in the world at once.
-    ///
-    /// UESP "Skyrim:Archery" states vanilla's own cap — "Only 15 missed arrows
-    /// or bolts can be present at once, once a 16th has been fired the first
-    /// one fired will despawn" — and that is the number and the eviction rule
-    /// used here. It applies to every stuck arrow rather than to missed ones
-    /// alone, because this engine does not model arrow retrieval from a corpse
-    /// (M18+) and so has no second category to count separately.
+    /// How many arrows may stay stuck in the world at once. UESP "Skyrim:Archery":
+    /// "Only 15 missed arrows or bolts can be present at once"; the oldest despawns.
+    /// It applies to every stuck arrow, because arrow retrieval is not modeled.
     public static let stuckLimit = 15
     /// Ceiling on fixed steps run for one frame, so a long stall costs bounded
     /// time. The same bound `PhysicsStep.maximumFrameTime` puts on the
@@ -46,10 +27,8 @@ public final class ProjectileRuntime {
     public static let maximumFrameTime = PhysicsStep.maximumFrameTime
 
     public let settings: ArcherySettings
-    /// How an EFIT area becomes a radius in world units (issue #471). A
-    /// settable property rather than a constructor argument because the
-    /// conversion is uncertain and a panel or a test may want to move it; see
-    /// `MagicAreaSettings`.
+    /// How an EFIT area becomes a radius in world units. Settable, because the
+    /// conversion is uncertain; see `MagicAreaSettings`.
     public var areaSettings = MagicAreaSettings.documentedDefaults
     /// Projectiles in the air, in id order.
     public private(set) var live: [LiveProjectile] = []
@@ -84,13 +63,9 @@ public final class ProjectileRuntime {
 
     // MARK: - Firing
 
-    /// Launches one projectile and consumes whatever it was fired from.
-    ///
-    /// The inventory removal happens first and gates everything after it: an
-    /// empty quiver must not put an arrow in the air, and a shot that failed to
-    /// find one must not be counted. Only an arrow spends anything; a spell has
-    /// already paid its magicka in `CasterRuntime`.
-    ///
+    /// Launches one projectile and consumes what it was fired from. The inventory
+    /// removal comes first: an empty quiver fires nothing. A spell already paid in
+    /// `CasterRuntime`.
     /// - Returns: the projectile, or nil when the shot could not be taken.
     @discardableResult
     public func fire(_ shot: ProjectileShot) -> LiveProjectile? {
@@ -98,14 +73,8 @@ public final class ProjectileRuntime {
         return fire(shot, from: world.projectileShooter)
     }
 
-    /// Launches one projectile from a shooter other than the one holding the
-    /// camera (issue #473, roadmap item 19.10).
-    ///
-    /// An NPC's spell leaves its own eye along its own aim, and nothing else
-    /// about the shot changes: the same fixed step, the same impact query, the
-    /// same range and lifetime bounds. Separating the pose from the shot is
-    /// what keeps that true — the alternative, a second flight path for actors,
-    /// is exactly what item 15.5 refused to write for spells.
+    /// Launches one projectile from a shooter other than the camera holder, such as
+    /// an NPC's spell. The flight, impact query, and bounds are the same.
     @discardableResult
     public func fire(_ shot: ProjectileShot, from shooter: ProjectileShooter) -> LiveProjectile? {
         guard let world, shot.profile.isFlyable else { return nil }
@@ -250,14 +219,9 @@ public final class ProjectileRuntime {
         )
     }
 
-    /// Whether the projectile has run out of range or lifetime.
-    ///
-    /// Range is the shorter of the PROJ's own `range` and the GMST
-    /// `fVisibleNavmeshMoveDist`, because UESP is explicit that past the latter
-    /// a shot "will phase through targets without doing any damage" — so
-    /// continuing to fly it would be simulating something that can no longer
-    /// hit anything. A record or a setting of zero bounds nothing rather than
-    /// stopping the shot immediately.
+    /// Whether the projectile has run out of range or lifetime. Range is the shorter
+    /// of the PROJ `range` and GMST `fVisibleNavmeshMoveDist`; past the latter a shot
+    /// does no damage (UESP). A zero value bounds nothing.
     private func expiry(of projectile: LiveProjectile) -> ProjectileOutcome? {
         let limits = [projectile.profile.range, settings.visibleMoveDistance.value]
             .filter { $0 > 0 }
@@ -305,7 +269,6 @@ public final class ProjectileRuntime {
             let location = projectile.location
         else { return false }
         let arrow = StuckProjectile(
-            projectileID: projectile.id,
             base: base,
             location: location,
             position: impact.position,
@@ -322,11 +285,8 @@ public final class ProjectileRuntime {
         return true
     }
 
-    /// Removes the stuck arrows at `indices` from the world and from the
-    /// registry.
-    /// Internal rather than private so `ProjectileRuntimeBounds.swift` can
-    /// reach it: the transient caps live there because this type is at its
-    /// body-length limit (issue #374).
+    /// Removes the stuck arrows at `indices` from the world and from the registry.
+    /// Internal, so `ProjectileRuntimeBounds.swift` can reach it.
     public func removeStuckArrows(_ indices: [Int]) {
         guard !indices.isEmpty else { return }
         let doomed = Set(indices)
@@ -355,7 +315,6 @@ public final class ProjectileRuntime {
         let entry = ProjectileTrace(
             id: projectile.id,
             launchPosition: projectile.launchPosition,
-            launchDirection: projectile.launchDirection,
             endPosition: position,
             flightTime: projectile.state.age,
             travelled: projectile.state.travelled,

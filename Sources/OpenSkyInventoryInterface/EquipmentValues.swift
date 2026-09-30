@@ -13,7 +13,6 @@ nonisolated public enum EquipmentError: Error, Equatable {
 
 /// What one equip changed: the item now worn and everything it displaced.
 nonisolated public struct EquipmentChange: Equatable, Sendable {
-    public let equipped: FormID
     /// Items unequipped to make room, in ascending FormID order. Empty when
     /// nothing conflicted.
     public let unequipped: [FormID]
@@ -21,8 +20,7 @@ nonisolated public struct EquipmentChange: Equatable, Sendable {
     /// stored state is byte-identical and no rebuild is needed.
     public let changed: Bool
 
-    public init(equipped: FormID, unequipped: [FormID], changed: Bool) {
-        self.equipped = equipped
+    public init(unequipped: [FormID], changed: Bool) {
         self.unequipped = unequipped
         self.changed = changed
     }

@@ -1,39 +1,9 @@
-// Evaluating an entry point against one actor's owned perks (issue #497,
-// roadmap item 20.4): the half of the perk runtime a combat or magic formula
-// actually calls.
-//
-// A satellite of `PerkRuntime` so that type stays under the strict-lint file
-// cap, and along a real seam: everything there is ownership — who has which
-// perk — and everything here is a number a formula asked about.
-//
-// ## The three steps, and what each one refuses
-//
-// 1. `PerkStore`'s entry-point index answers which effects in the load order
-//    hook the entry point at all, already in priority order. Effects belonging
-//    to a perk the actor does not own are dropped here, which is the only
-//    ownership test in the path.
-// 2. Each surviving effect's PRKC condition tabs are evaluated. A tab is run
-//    against the object its PRKC index names for this entry point
-//    (`PerkConditionSubject`), so a "Weapon" tab is asked about the weapon and
-//    not about the actor. A tab the caller bound no reference for is *skipped
-//    and counted* rather than failed: failing it would make every vanilla
-//    damage perk inert, because their weapon-type tabs name an object this
-//    engine has no world reference for. That is a documented
-//    over-application, and `PerkRuntimeTally.unboundConditionSubjects` is how
-//    much of it happened.
-// 3. What is left becomes operands for `PerkEntryPointEvaluator`, which is
-//    where the arithmetic and the ordering live.
-//
-// ## Why the condition context is rebuilt here
-//
-// `HasPerk` is what makes a rank chain work — `Armsman00` carries
-// `HasPerk Armsman20 == 0` — so the perk seam on the context has to reflect
-// what the store holds *now*, not whatever the caller last published. Every
-// evaluation therefore overwrites `ConditionContext.perks` from the world state
-// for the actors involved, and leaves every other seam the caller supplied
-// alone.
-//
-// Documented in docs/engine/perks.md.
+// Evaluating an entry point against one actor's owned perks. Steps: the entry
+// point index gives effects in priority order, unowned ones dropped; each PRKC
+// tab runs against its `PerkConditionSubject`, and an unbound subject is skipped
+// and counted; the rest go to `PerkEntryPointEvaluator`. The context's `perks`
+// seam is rebuilt from world state, so `HasPerk` chains work.
+// See docs/engine/perks.md.
 
 import Foundation
 import OpenSkyConditions
@@ -86,13 +56,8 @@ extension PerkRuntime {
         return outcome
     }
 
-    /// The multiplier form: `modify(1, ...)`.
-    ///
-    /// Every combat surface this wires into folds perks in as a factor beside
-    /// the fortify term — `damage * (1 + perk effects) * (1 + item effects)`,
-    /// UESP "Skyrim:Weapons" — and a vanilla damage perk is authored as
-    /// `Multiply Value 1.2` on `Mod Attack Damage`, so evaluating the identity
-    /// element is exactly the factor those formulas want.
+    /// The multiplier form: `modify(1, ...)`. Combat folds perks in as a factor:
+    /// `damage * (1 + perk effects) * (1 + item effects)` (UESP "Skyrim:Weapons").
     public mutating func multiplier(
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
@@ -134,8 +99,7 @@ extension PerkRuntime {
             operands.append(PerkEntryPointOperand(
                 function: payload.function,
                 data: effect.effect.functionData,
-                priority: match.priority,
-                perk: key
+                priority: match.priority
             ))
         }
         conditions.random = context.random

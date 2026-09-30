@@ -1,17 +1,6 @@
-// What dialogue selection produced, and why (issue #426, roadmap item 17.2).
-//
-// The types here are the *answer* half of `DialogueRuntime`: which topics a
-// speaker offers, which response won inside each, and — for every response that
-// did not win — the reason it lost. They are separate from the runtime for the
-// reason `ConditionContext` is separate from `ConditionEvaluator`: a caller
-// rendering a topic menu or an acceptance readout needs these and nothing else,
-// while a caller changing how selection works needs the other file.
-//
-// The trace is not a debugging afterthought. Item 17.8's acceptance panel has
-// to show why a line was or was not offered, and `ConditionOutcome.failures`
-// already carries the machine-readable reasons, so selection keeps every
-// outcome it computed instead of reducing the work to a Bool and throwing the
-// evidence away.
+// What dialogue selection produced, and why: the offered topics, the winning
+// response in each, and the reason every other response lost. The acceptance
+// panel needs the trace, so selection keeps every `ConditionOutcome`.
 
 import Foundation
 import OpenSkyConditions
@@ -96,10 +85,6 @@ nonisolated public struct DialogueSelection: Equatable, Sendable {
 
     public static let empty = DialogueSelection(offers: [], rejected: [], tally: ConditionTally())
 
-    public var isEmpty: Bool {
-        offers.isEmpty
-    }
-
     public init(
         offers: [DialogueTopicOffer],
         rejected: [DialogueTopicOffer],
@@ -113,10 +98,6 @@ nonisolated public struct DialogueSelection: Equatable, Sendable {
 
 /// What choosing a response produced.
 nonisolated public struct DialogueChoice: Equatable, Sendable {
-    /// The response that was chosen.
-    public let info: FormID
-    /// Said-state as stored afterwards.
-    public let state: DialogueRuntimeState
     /// Topics the chosen response links to through TCLT, filtered the same way
     /// the offered list is, so a link to a topic whose quest has since stopped
     /// does not appear.
@@ -135,15 +116,11 @@ nonisolated public struct DialogueChoice: Equatable, Sendable {
     public let unrunFragmentCount: Int
 
     public init(
-        info: FormID,
-        state: DialogueRuntimeState,
         next: DialogueSelection,
         endsConversation: Bool,
         dispatchedFragments: [String],
         unrunFragmentCount: Int
     ) {
-        self.info = info
-        self.state = state
         self.next = next
         self.endsConversation = endsConversation
         self.dispatchedFragments = dispatchedFragments

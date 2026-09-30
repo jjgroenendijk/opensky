@@ -1,24 +1,13 @@
-// Main-app world-item inspection seam (issue #177, roadmap item 12.1.3). The
-// provider keeps the panel independent of `GameViewController` while exposing
-// the engine-owned take, drop and container-session operations.
-//
-// One snapshot value rather than a bag of protocol properties, for the same
-// reason `RuntimeStateSnapshot` is one: the readout has to be a pure function
-// of a single engine observation, not of several taken microseconds apart while
-// the streamer is mutating between them.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// Main-app world-item inspection seam: take, drop, and container sessions,
+// without the panel depending on `GameViewController`. One snapshot value, so the
+// readout comes from one observation. AppKit-free.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 
-/// Who an equip or unequip applies to (issue #178).
-///
-/// Two selectors, for the two things a session actually wants to do. The
-/// player is where state and carry-weight accounting are checked; the nearest
-/// actor is where the *visual* is checked, because the player has no rendered
-/// body until M14 and an NPC is the only thing an equip can be seen on.
+/// Who an equip or unequip applies to: the player for state and carry weight,
+/// or the nearest actor to see the change on a rendered body.
 nonisolated public enum EquipmentTargetSelector: Equatable, Sendable {
     case player
     /// The resident ACHR closest to the player.
@@ -27,18 +16,15 @@ nonisolated public enum EquipmentTargetSelector: Equatable, Sendable {
 
 /// One equipped item as the panel spells it.
 nonisolated public struct EquippedItemReadout: Equatable, Sendable {
-    public let item: FormID
     public let name: String
     /// Biped slots and hands it occupies, preformatted — the panel has no
     /// business knowing how to render a `BodySlots` bitfield.
     public let occupancy: String
-    /// The item's enchantment and what it has left, preformatted, or nil when it
-    /// carries none and when the session has no ENCH index (issue #472). The
-    /// panel has no business knowing the charge model either.
+    /// The item's enchantment and what it has left, preformatted, or nil when it has
+    /// none or the session has no ENCH index.
     public let enchantment: String?
 
-    public init(item: FormID, name: String, occupancy: String, enchantment: String? = nil) {
-        self.item = item
+    public init(name: String, occupancy: String, enchantment: String? = nil) {
         self.name = name
         self.occupancy = occupancy
         self.enchantment = enchantment
@@ -59,7 +45,7 @@ nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
     public let targetIsContainer: Bool
     /// The player's stacks, in the component's FormID order.
     public let playerStacks: [ItemStackReadout]
-    /// Total carried weight from #175's per-item weights.
+    /// Total carried weight.
     public let playerWeight: Float
     /// Gold, which is an ordinary stack of the vanilla gold form.
     public let playerGold: Int32
@@ -70,8 +56,7 @@ nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
     /// Objects the running game has spawned and not yet taken back — dropped
     /// items, across every cell whether resident or not.
     public let spawnedObjectCount: Int
-    /// What the player is wearing (issue #178). State only: the player has no
-    /// rendered body this milestone.
+    /// What the player is wearing.
     public let playerEquipped: [EquippedItemReadout]
     /// How the nearest resident ACHR is named, or nil when none is loaded.
     public let nearestActorName: String?
@@ -160,10 +145,8 @@ public protocol ItemControlProviding: AnyObject {
     @discardableResult
     func dropPlayerItem(_ item: FormID?, count: Int32) -> String
 
-    /// Equips `item` on `target`, unequipping whatever it conflicts with
-    /// (issue #178). A nil `item` equips the target's first *equippable*
-    /// unequipped stack, so the control works without knowing a FormID.
-    ///
+    /// Equips `item` on `target`, unequipping its conflicts. A nil `item` equips the
+    /// target's first equippable unequipped stack.
     /// - Returns: a human-readable outcome naming what was displaced.
     @discardableResult
     func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String

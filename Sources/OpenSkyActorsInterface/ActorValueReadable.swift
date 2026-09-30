@@ -1,19 +1,8 @@
-// One actor's values as a *snapshot* reads them (issue #468, roadmap item
-// 19.5).
-//
-// Two surfaces take an observation of an actor rather than reading the runtime
-// live — `ActorConditionState` for a condition evaluation and
-// `PapyrusActorState` for a native call — and both now have to answer for the
-// whole 164-entry table rather than for three typed fields. The lookup rule is
-// identical on both sides, so it is written once here instead of twice with two
-// chances to disagree about what an untouched resistance reads.
-//
-// The rule, in one sentence: a primary's *current* value answers from the typed
-// triple, every vanilla index answers its base and modifiers from the stored
-// entry when there is one and from the record baseline when there is not, and
-// an index outside the table answers nil so the caller can count it.
-//
-// Documented in docs/engine/actor-values.md.
+// One actor's values as a snapshot reads them. `ActorConditionState` and
+// `PapyrusActorState` share this lookup rule: a primary's current value comes
+// from the typed triple, every vanilla index from its stored entry or the record
+// baseline, and an index outside the table answers nil.
+// See docs/engine/actor-values.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -30,9 +19,6 @@ nonisolated public protocol ActorValueReadable {
     /// Base values this actor's records author, keyed by vanilla index. The
     /// primaries are in here too since item 20.3, at their derived maximums.
     var generalBaseline: [Int32: Float] { get }
-    /// Whether this actor is the player, which is the only thing the resistance
-    /// cap depends on.
-    var isPlayer: Bool { get }
 }
 
 nonisolated extension ActorValueReadable {
@@ -52,13 +38,9 @@ nonisolated extension ActorValueReadable {
         entry(at: index)?.base
     }
 
-    /// `index`'s stored entry, or the unmodified entry its records author. Nil
-    /// only for an index outside the table.
-    ///
-    /// A primary falls back to `maximums` when the snapshot carries no baseline
-    /// for it, because an actor with nothing written is at its derived maximum
-    /// by definition — which is what keeps a snapshot built before item 20.3
-    /// answering the same numbers it always did.
+    /// `index`'s stored entry, or the unmodified entry its records author. Nil only
+    /// for an index outside the table. A primary without a baseline falls back to
+    /// `maximums`.
     public func entry(at index: Int32) -> ActorValueEntry? {
         guard let fallback = ActorValueIdentity.defaultValue(at: index) else { return nil }
         let baseline = if let kind = ActorValueIdentity.kind(at: index) {
@@ -69,13 +51,9 @@ nonisolated extension ActorValueReadable {
         return general[index] ?? ActorValueEntry(base: baseline)
     }
 
-    /// What `GetActorValuePercent` and `GetActorValuePercentage` report: the
-    /// current value over its ceiling, clamped to 0 ... 1.
-    ///
-    /// A primary divides by its effective maximum, which is what its bar is
-    /// drawn against; everything else divides by its base, which is the only
-    /// ceiling it has. A zero or negative denominator reads as 0 rather than
-    /// dividing.
+    /// What `GetActorValuePercent` and `GetActorValuePercentage` report: the current
+    /// value over its ceiling, clamped to 0 ... 1. A primary divides by its effective
+    /// maximum, others by their base. A zero or negative denominator reads as 0.
     public func fraction(at index: Int32) -> Float? {
         guard let value = value(at: index) else { return nil }
         let ceiling: Float? = if let kind = ActorValueIdentity.kind(at: index) {
@@ -86,24 +64,5 @@ nonisolated extension ActorValueReadable {
         guard let ceiling else { return nil }
         guard ceiling.isFinite, ceiling > 0, value.isFinite else { return 0 }
         return min(max(0, value / ceiling), 1)
-    }
-
-    /// The fraction of incoming damage this actor's resistance at `index`
-    /// removes, capped — the read-only half of
-    /// `ActorValueRuntime.resistanceFraction(at:on:settings:)`, for a caller
-    /// that already holds an observation.
-    public func resistanceFraction(
-        at index: Int32,
-        settings: ActorResistanceSettings = .documentedDefaults
-    ) -> Float? {
-        guard ActorResistance.isPercentage(index: index), let points = value(at: index) else {
-            return nil
-        }
-        return ActorResistance.fraction(
-            percentagePoints: points,
-            at: index,
-            isPlayer: isPlayer,
-            settings: settings
-        )
     }
 }

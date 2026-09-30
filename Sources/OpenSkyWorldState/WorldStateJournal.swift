@@ -1,21 +1,8 @@
-// World-state change journal (issue #159, roadmap item 10.1.2): the ordered log
-// of every component mutation `WorldStateStore` applies.
-//
-// The journal is a first-class result, not a debug aid. Save serialization
-// (10.1.4) replays it to know what changed since the last write, the sidebar
-// readout (10.1.5) shows it, and Papyrus (M11) needs a causal order for the
-// events it fires. That is why sequence numbers are monotonic across the whole
-// store rather than per reference, and why they keep counting past the point
-// where old entries are dropped.
-//
-// Issue #165 added a second kind of entry for global-variable writes. Rather
-// than widen `WorldStateJournalEntry` — whose `kind` is a component slot on a
-// reference, which a global does not have — globals get their own entry type
-// and their own retained window, sharing the one sequence counter. Interleaving
-// the two logs by `sequence` therefore reproduces the exact order the mutations
-// happened in, which is the property Papyrus and the save layer actually need.
-//
-// Documented in docs/engine/runtime-state.md.
+// The ordered log of every mutation `WorldStateStore` applies. Save and the
+// sidebar read it, and Papyrus needs its causal order, so sequence numbers
+// are store-wide and keep counting after old entries drop. Global writes have
+// their own entry type and window but share the counter, so merging both logs
+// by `sequence` gives the true order. See docs/engine/runtime-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -46,7 +33,7 @@ nonisolated public struct WorldStateJournalEntry: Equatable, Sendable {
     }
 }
 
-/// One recorded global-variable mutation (issue #165).
+/// One recorded global-variable mutation.
 ///
 /// `key` is the GLOB record's session-stable `ReferenceKey`, not a placed
 /// object's, and there is no cell: a global belongs to the session rather than
@@ -70,21 +57,10 @@ nonisolated public struct WorldStateGlobalJournalEntry: Equatable, Sendable {
     }
 }
 
-/// Bounded, ordered window over the most recent `WorldStateJournalEntry` and
-/// `WorldStateGlobalJournalEntry` values.
-///
-/// The cap exists because the journal is unbounded work otherwise: a running
-/// game mutates state forever, and a log that grows forever is a leak with a
-/// slow fuse. Once a window is full the oldest entry is dropped to make room,
-/// `droppedCount` counts how many were lost, and sequence numbers keep
-/// increasing so a consumer can tell the difference between "nothing happened"
-/// and "I missed it".
-///
-/// The default cap is `WorldStateJournal.defaultCapacity` (4096 entries), and
-/// each window carries it separately: a burst of global writes must not evict
-/// the reference history, and the reverse. Storage is a fixed-size ring, so
-/// recording is O(1) and the memory cost is bounded at construction rather than
-/// growing to a high-water mark.
+/// Bounded ring windows over the most recent reference and global entries.
+/// When a window is full the oldest entry drops and `droppedCount` rises, so a
+/// consumer can tell "nothing happened" from "I missed it". Each window holds
+/// `WorldStateJournal.defaultCapacity` entries, so one kind cannot evict the other.
 nonisolated public struct WorldStateJournal: Sendable {
     /// Entries retained before the oldest starts falling off the back. Sized so
     /// that a normal play session's recent history — a few thousand
@@ -122,27 +98,6 @@ nonisolated public struct WorldStateJournal: Sendable {
         components.droppedCount
     }
 
-    /// Number of retained component entries, which is
-    /// `min(total recorded, capacity)`.
-    public var entryCount: Int {
-        components.count
-    }
-
-    public var isEmpty: Bool {
-        components.isEmpty
-    }
-
-    /// Oldest retained component entry, nil when nothing has been recorded or
-    /// everything recorded has already been dropped.
-    public var oldest: WorldStateJournalEntry? {
-        components.oldest
-    }
-
-    /// Most recently recorded component entry.
-    public var newest: WorldStateJournalEntry? {
-        components.newest
-    }
-
     /// Appends a component mutation, dropping the oldest entry when the window
     /// is full, and returns the entry as recorded (sequence number included).
     @discardableResult
@@ -176,14 +131,6 @@ nonisolated public struct WorldStateJournal: Sendable {
     /// Global entries dropped because the window was full.
     public var droppedGlobalCount: Int {
         globals.droppedCount
-    }
-
-    public var globalEntryCount: Int {
-        globals.count
-    }
-
-    public var newestGlobal: WorldStateGlobalJournalEntry? {
-        globals.newest
     }
 
     /// Appends a global mutation, taking the next shared sequence number.
@@ -230,24 +177,8 @@ nonisolated private struct JournalRing<Entry: Sendable>: Sendable {
         storage = Array(repeating: nil, count: capacity)
     }
 
-    var count: Int {
-        retained
-    }
-
-    var isEmpty: Bool {
-        retained == 0
-    }
-
     var entries: [Entry] {
         (0 ..< retained).compactMap { storage[(start + $0) % capacity] }
-    }
-
-    var oldest: Entry? {
-        retained == 0 ? nil : storage[start]
-    }
-
-    var newest: Entry? {
-        retained == 0 ? nil : storage[(start + retained - 1) % capacity]
     }
 
     mutating func append(_ entry: Entry) {

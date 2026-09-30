@@ -1,12 +1,6 @@
-// What an actor's values are before anything at runtime has touched them
-// (issue #194, roadmap item 15.3).
-//
-// Baselines are never stored, exactly as inventory baselines and quest
-// baselines are not: they are re-derived from plugin data on every call, so a
-// reset genuinely restores whatever the records now say, and a save cannot
-// carry a maximum a changed load order no longer authors.
-//
-// Documented in docs/engine/actor-values.md.
+// What an actor's values are before anything at runtime touched them. Never
+// stored: re-derived from plugin data on every call, so a reset restores what
+// the records say now. See docs/engine/actor-values.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -54,13 +48,12 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public let maximums: ActorValues
     /// Percent of each maximum restored per second, from RACE DATA.
     public let regenPercentPerSecond: ActorValues
-    /// Base values for the non-primary actor values the subject's records
-    /// author, keyed by vanilla table index (issue #468). Sparse: an index
-    /// absent here reads `ActorValueIdentity.defaultValue(at:)`.
+    /// Base values for the non-primary actor values the subject's records author,
+    /// by vanilla table index. Sparse: an absent index reads
+    /// `ActorValueIdentity.defaultValue(at:)`.
     public let general: [Int32: Float]
-    /// The level the derivation used (issue #499): the ACBS word or its
-    /// `PC Level Mult` scaling for an NPC, and the player's own character level
-    /// for the player. What `GetLevel` and `Actor.GetLevel` report.
+    /// The level the derivation used: the ACBS level or its `PC Level Mult` scaling
+    /// for an NPC, and the character level for the player. `GetLevel` reports it.
     public let level: Int
 
     public init(
@@ -75,14 +68,9 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
         self.level = max(PlayerLevelSource.startingLevel, level)
     }
 
-    /// The base value `index` starts from: what the records author, and the
-    /// documented vanilla default otherwise. Nil for an index outside the
-    /// table, which is the one answer that stays a miss.
-    ///
-    /// A primary answers its re-derived maximum (issue #496). That is the
-    /// number a primary's base override is an offset from, and answering it
-    /// here is what lets one index-keyed table cover all 164 values instead of
-    /// two tables with two chances to disagree.
+    /// The base value `index` starts from: what the records author, or the vanilla
+    /// default. Nil for an index outside the table. A primary answers its re-derived
+    /// maximum, which its base override is an offset from.
     public func base(at index: Int32) -> Float? {
         if let kind = ActorValueIdentity.kind(at: index) {
             return maximums[kind]
@@ -113,11 +101,6 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
             level: level
         )
     }
-
-    public static let empty = ActorValueBaseline(
-        maximums: .zero,
-        regenPercentPerSecond: .zero
-    )
 }
 
 /// Re-derives actor-value baselines from plugin data.
@@ -128,7 +111,7 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
 nonisolated public struct ActorValueBaselineResolver: Sendable {
     /// Every playable vanilla race authors the same level-1 attributes, so the
     /// player's baseline is that triple until character generation exists to
-    /// pick a race (M18). Probed rather than remembered — see
+    /// pick a race. Probed rather than remembered — see
     /// docs/engine/actor-value-store.md for the records this number came from.
     public static let vanillaPlayerStartingValues = ActorValues(repeating: 100)
 
@@ -150,10 +133,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
     /// Baseline handed to a subject nothing can be derived for: the player
     /// before chargen, a summon, an NPC_ whose chain will not walk.
     public let fallback: ActorValueBaseline
-    /// Where the player's own level is published (issue #499). The same
-    /// reference the resolver reads for `PC Level Mult` scaling when the two
-    /// are built together, so an NPC scaled against the player and the player's
-    /// own reported level cannot disagree.
+    /// Where the player's own level is published. The same reference the resolver
+    /// reads for `PC Level Mult` scaling, so the two cannot disagree.
     public let playerLevel: PlayerLevelSource
 
     public init(
@@ -172,13 +153,9 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         self.playerLevel = playerLevel ?? resolver?.playerLevelSource ?? PlayerLevelSource()
     }
 
-    /// The baseline for one subject.
-    ///
-    /// Never throws and never returns nil. An NPC_ whose template chain is
-    /// broken degrades to `fallback` rather than failing the mutation that
-    /// asked: a cycle in someone else's plugin must not make an actor
-    /// unhittable. `ActorValueResolver.resolve(base:)` is the surface that
-    /// reports the failure to a caller that wants to know.
+    /// The baseline for one subject. Never throws or returns nil: a broken template
+    /// chain degrades to `fallback`. `ActorValueResolver.resolve(base:)` reports the
+    /// failure to a caller that wants it.
     public func baseline(for subject: ActorValueSubject) -> ActorValueBaseline {
         switch subject {
         case .player:
@@ -213,7 +190,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             // The player has no NPC_ in this engine, so the non-primary
             // baselines come from the race alone: no ACBS speed multiplier and
             // no class spread, which is exactly the level-1 unclassed actor the
-            // player is before chargen exists (M20).
+            // player is before chargen exists.
             general: ActorValueDerivation.generalBaseValues(
                 inputs: ActorValueInputs(race: race.stats)
             ),

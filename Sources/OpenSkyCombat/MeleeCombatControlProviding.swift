@@ -1,13 +1,6 @@
-// Main-app melee inspection seam (issue #195, roadmap item 15.4, scope point
-// 8): weapon-drawn state, attack phase, and the last-hit trace, plus the three
-// new key bindings as controls rather than as unadvertised keystrokes.
-//
-// One snapshot value rather than a bag of protocol properties, for the same
-// reason `ActorValueControlSnapshot` is one: the readout has to be a pure
-// function of a single engine observation, not of several taken microseconds
-// apart while a swing is resolving between them.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// Main-app melee inspection seam: draw state, attack phase, the last-hit trace,
+// and the melee keys as controls. One snapshot value, so the readout comes from
+// a single engine observation. AppKit-free.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -30,6 +23,8 @@ nonisolated public struct MeleeHitReadout: Equatable, Sendable {
     public let sound: String?
     /// Whether the target's graph took the stagger event.
     public let staggered: Bool
+    /// What the weapon's enchantment did, or nil when it carries none.
+    public let enchantment: String?
 
     public init(
         target: String,
@@ -38,7 +33,8 @@ nonisolated public struct MeleeHitReadout: Equatable, Sendable {
         blockedPercent: Float,
         appliedDamage: Float,
         sound: String?,
-        staggered: Bool
+        staggered: Bool,
+        enchantment: String? = nil
     ) {
         self.target = target
         self.distance = distance
@@ -47,6 +43,7 @@ nonisolated public struct MeleeHitReadout: Equatable, Sendable {
         self.appliedDamage = appliedDamage
         self.sound = sound
         self.staggered = staggered
+        self.enchantment = enchantment
     }
 }
 
@@ -66,9 +63,8 @@ nonisolated public struct MeleeCombatSnapshot: Equatable, Sendable {
     public let weaponDamage: Float
     public let weaponReachMultiplier: Float
     public let weaponSpeed: Float
-    /// What each hand is holding, as the graph counts it. These are the two
-    /// numbers `iRightHandType` and `iLeftHandType` carry, shown so a wrong
-    /// animation set can be traced to the hand it came from (issue #403).
+    /// What each hand holds, as the graph counts it: `iRightHandType` and
+    /// `iLeftHandType`, so a wrong animation set can be traced to its hand.
     public let rightHandType: CombatHandType
     public let leftHandType: CombatHandType
     /// The resolved reach in world units, after `fCombatDistance` and scale.
@@ -142,14 +138,9 @@ nonisolated public struct MeleeCombatSnapshot: Equatable, Sendable {
 public protocol MeleeCombatControlProviding: AnyObject {
     var meleeCombatSnapshot: MeleeCombatSnapshot { get }
 
-    /// Whether the weapon is out. Setting it raises the census-named draw or
-    /// sheath event, exactly as the R key does — a control the panel offers
-    /// and a key the player presses must be indistinguishable downstream.
-    ///
-    /// Block is deliberately not offered the same way. It is a held modifier
-    /// with nothing to latch, and a checkbox that asserted it for a single
-    /// frame would read as broken; it is reported live in the readout instead,
-    /// on the same terms `LocomotionBindingsSection` reports run and sprint.
+    /// Whether the weapon is out. Setting it raises the draw or sheath event, as the
+    /// R key does. Block is not offered here: it is a held modifier, so the readout
+    /// shows it live.
     var isWeaponDrawn: Bool { get set }
 
     /// Requests exactly one swing, the same latch the left mouse button sets.

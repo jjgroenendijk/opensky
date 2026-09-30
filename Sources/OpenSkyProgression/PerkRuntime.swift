@@ -1,29 +1,7 @@
-// Owning perks (issue #497, roadmap item 20.4): the mutation layer over
-// `PerkState`, plus the seeding that gives an NPC the perks its record
-// authored.
-//
-// A thin layer beside `WorldStateStore`, following `SpellbookRuntime`,
-// `ActiveEffectRuntime` and `ActorValueRuntime`. Every mutation writes through
-// `WorldStateStore.set`, so it lands in the journal, in the dirty counts and in
-// the save exactly like learning a spell does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the store it writes to is.
-//
-// Failure model: nothing here throws. A perk this load order does not carry is
-// a refused add rather than an error, and an entry point nothing implements
-// evaluates to the value it was handed (`PerkRuntimeEvaluation`).
-//
-// ## Ranks
-//
-// A rank is not a stored number. Each rank of a vanilla chain is its own PERK
-// record joined by `NNAM`, and taking rank two means owning the second record;
-// the first record's own conditions then turn it off, because vanilla authors
-// `HasPerk <next rank> == 0` on it. `rank(inChainFrom:on:)` is therefore a walk
-// of the chain counting what the component holds, and it is the only place the
-// word "rank" means anything at runtime.
-//
-// Documented in docs/engine/perks.md.
+// Owning perks: the mutation layer over `PerkState`, plus seeding NPC perks from
+// their records. Writes go through `WorldStateStore.set`. Nothing throws. A rank
+// is not stored: each rank is its own PERK record joined by `NNAM`, and
+// `rank(inChainFrom:on:)` walks the chain. See docs/engine/perks.md.
 
 import Foundation
 import OpenSkyConditions
@@ -39,8 +17,6 @@ nonisolated public struct PerkSeedReport: Equatable, Sendable {
     /// Links the load order carries no PERK record for, which is a dangling
     /// `PRKR` entry rather than an error.
     public let unresolved: Int
-
-    public static let none = PerkSeedReport(added: [], unresolved: 0)
 }
 
 /// Reads and mutates owned perks on top of a `WorldStateStore`.
@@ -49,14 +25,8 @@ public struct PerkRuntime: PerkAccess {
     /// Load-order PERK lookup behind every stored key, and the entry-point
     /// index every evaluation queries.
     public let perks: PerkStore
-    /// What a perk effect's PRKC condition tabs are evaluated against.
-    ///
-    /// A whole context rather than a yes/no closure, for the reason
-    /// `ActiveEffectRuntime` takes one: the same evaluator the rest of the
-    /// engine uses answers here, and an unevaluatable condition is the
-    /// documented reason-tagged false rather than a silent pass. The `perks`
-    /// seam on it is rebuilt per evaluation from the store, so `HasPerk` always
-    /// reads live ownership rather than whatever the caller last handed over.
+    /// What a perk effect's PRKC condition tabs are evaluated against. The `perks`
+    /// seam is rebuilt per evaluation, so `HasPerk` reads live ownership.
     public var conditions: ConditionContext
     public let conditionRegistry: ConditionFunctionRegistry
     /// What the runtime did and declined to do. Not `private(set)`: the
@@ -75,10 +45,6 @@ public struct PerkRuntime: PerkAccess {
         self.perks = perks
         self.conditions = conditions
         self.conditionRegistry = conditionRegistry
-    }
-
-    public var store: WorldStateStore {
-        worldState
     }
 
     // MARK: - Reading
@@ -109,14 +75,8 @@ public struct PerkRuntime: PerkAccess {
         state(of: holder).owned.compactMap(record)
     }
 
-    /// How far along the `NNAM` chain starting at `head` this actor has come:
-    /// 0 when it owns none of the chain, 1 when it owns only the head, and the
-    /// position of the deepest owned record otherwise.
-    ///
-    /// The deepest owned record rather than a count of owned records, because
-    /// vanilla adds one record per rank and a script may legitimately have
-    /// added a later rank without the earlier ones. Reporting a count would
-    /// then say "rank 1" for an actor holding the fifth record.
+    /// How far along the `NNAM` chain from `head` this actor has come: 0 for none,
+    /// otherwise the position of the deepest owned record, not a count.
     public func rank(inChainFrom head: ReferenceKey, on holder: ActorValueHolder) -> Int {
         guard let resolved = perks.perk(key: head) else { return 0 }
         let state = state(of: holder)
@@ -131,14 +91,8 @@ public struct PerkRuntime: PerkAccess {
 
     // MARK: - Writing
 
-    /// Gives `holder` one perk.
-    ///
-    /// A perk this load order does not carry is refused and counted: a key
-    /// nothing resolves could never be evaluated, and storing it would put a
-    /// permanent unreadable entry in the save. That is the opposite of the rule
-    /// for a *stored* perk, which is kept when it stops resolving — the
-    /// difference is direction, exactly as it is for a known spell.
-    ///
+    /// Gives `holder` one perk. A perk this load order does not carry is refused and
+    /// counted, since it could never be read back.
     /// - Returns: true when the perk was not already owned.
     @discardableResult
     public mutating func add(_ perk: ReferenceKey, to holder: ActorValueHolder) -> Bool {

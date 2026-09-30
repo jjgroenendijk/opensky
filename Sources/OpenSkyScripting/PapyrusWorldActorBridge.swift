@@ -1,45 +1,17 @@
-// The actor half of the native-to-world seam (issue #375, roadmap item 15.8):
-// what an `Actor` native is allowed to ask of the session, and the nonisolated
-// hops the native bodies actually call.
-//
-// A protocol of its own that `PapyrusWorldBridge` refines, exactly as the quest
-// half is, and for the same reason: actors are a subsystem with their own
-// vocabulary — values, maximums, death, hostility — and a test that only cares
-// about actors should be able to read this list on its own.
-//
-// ## Why reads come back as one observation
-//
-// `actorState(for:)` answers with a whole `PapyrusActorState` rather than with
-// one getter per question. Five natives read this actor and three of them are
-// the same number at different scalings; taking one observation is what stops
-// `GetActorValue` and `GetActorValuePercentage` from straddling a mutation and
-// disagreeing about the same actor in the same script line.
-//
-// ## Why the mutations answer with the state afterwards
-//
-// `DamageActorValue` has to know whether the blow it just landed emptied the
-// bar, because that is what turns a damage into a death. Returning the stored
-// state means the native never re-reads and never races its own write. The
-// death itself is not the native's to declare: the bridge routes it, so a
-// script kill and a sword kill reach `RagdollRuntime.noteZeroHealth` by one
-// path and the death events fire exactly once from the death latch.
-//
-// Documented in docs/engine/papyrus-actor-natives.md.
+// The actor half of the native-to-world seam: what an `Actor` native may ask of
+// the session, and the nonisolated hops the natives call. `actorState(for:)`
+// returns one observation, so related reads cannot straddle a write. Mutations
+// return the state afterwards; the bridge routes deaths through
+// `RagdollRuntime.noteZeroHealth`. See docs/engine/papyrus-actor-natives.md.
 
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyScriptingInterface
 
-/// Which of the three base-and-modifier writes a script asked for (issue #496,
-/// roadmap item 20.3).
-///
-/// One enumeration and one bridge method rather than three of each, because the
-/// three differ only in which slot they land in and every other step — find the
-/// actor, reject an unknown value name, route a health that reached zero into
-/// the death path — is shared. The semantics of each case are quoted at
-/// `ActorValueRuntime.setBase(at:to:on:)`, `addModifier(_:to:at:on:)` and
+/// Which of the three base-and-modifier writes a script asked for. One enum and
+/// one bridge method, because only the slot differs. Semantics are at
+/// `ActorValueRuntime.setBase(at:to:on:)`, `addModifier(_:to:at:on:)`, and
 /// `forceValue(at:to:on:)`.
 nonisolated public enum PapyrusActorValueWrite: String, CaseIterable, Equatable, Sendable {
     /// `SetActorValue`: sets the base value, leaving every modifier intact.
@@ -52,25 +24,16 @@ nonisolated public enum PapyrusActorValueWrite: String, CaseIterable, Equatable,
     case force = "ForceActorValue"
 }
 
-/// Which way a scripted perk write goes (issue #497).
-///
-/// One enumeration and one bridge closure rather than two of each, because the
-/// two differ only in the direction and every other step — find the actor, write
-/// through `PerkRuntime`, reconcile the abilities the change granted or revoked
-/// — is shared.
+/// Which way a scripted perk write goes. One enum, because only the direction
+/// differs.
 nonisolated public enum PapyrusPerkMutation: String, CaseIterable, Equatable, Sendable {
     case add = "AddPerk"
     case remove = "RemovePerk"
 }
 
-/// Which of the two scripted skill advances a native asked for (issue #498).
-///
-/// One enumeration and one bridge closure rather than two of each, for the
-/// reason `PapyrusPerkMutation` is one: the two differ only in the unit the
-/// magnitude is in, and every other step — resolve the player, find the AVIF
-/// parameters, write the skill — is shared. The semantics of each are quoted at
-/// `SkillAdvancementRuntime.advance(skill:byUse:on:)` and
-/// `increment(skill:on:)`.
+/// Which of the two scripted skill advances a native asked for. One enum,
+/// because only the unit differs. Semantics are at
+/// `SkillAdvancementRuntime.advance(skill:byUse:on:)` and `increment(skill:on:)`.
 nonisolated public enum PapyrusSkillAdvance: String, CaseIterable, Equatable, Sendable {
     /// `Game.AdvanceSkill`: the magnitude is a skill *use* amount.
     case advance = "AdvanceSkill"
@@ -90,24 +53,18 @@ nonisolated public struct PapyrusActorState: ActorValueReadable, Equatable, Send
     /// Whether the actor is actually in a fight, per 16.7's behavior phase.
     /// Searching counts; being hostile without having noticed anybody does not.
     public let isInCombat: Bool
-    /// The same answer at `GetCombatState`'s three-value resolution.
-    public let combatActivity: ActorCombatActivity
     /// Where the actor's weapon is, or nil when nothing in this session
     /// observes a draw state for it. Only the player carries a behavior graph
     /// that tracks one today, so every other actor answers nil and
     /// `IsWeaponDrawn` fails with a reason rather than claiming sheathed.
     public let weaponDrawState: WeaponDrawState?
-    /// Non-primary actor values this actor has moved off its baseline
-    /// (issue #468), which is what lets `GetActorValue("Resist Fire")` answer
-    /// rather than fail with "no store for actor value".
+    /// Non-primary actor values this actor has moved off its baseline, so
+    /// `GetActorValue("Resist Fire")` answers.
     public let general: [Int32: ActorValueEntry]
     /// Non-primary base values this actor's records author, which is what
     /// `GetBaseActorValue` reports for them.
     public let generalBaseline: [Int32: Float]
-    /// Whether this actor is the player, which is what the resistance cap
-    /// depends on.
-    public let isPlayer: Bool
-    /// The actor's level, which is what `Actor.GetLevel` reports (issue #499).
+    /// The actor's level, which `Actor.GetLevel` reports.
     public let level: Int
 
     public init(
@@ -115,22 +72,18 @@ nonisolated public struct PapyrusActorState: ActorValueReadable, Equatable, Send
         maximums: ActorValues,
         isDead: Bool = false,
         isInCombat: Bool = false,
-        combatActivity: ActorCombatActivity = .notFighting,
         weaponDrawState: WeaponDrawState? = nil,
         general: [Int32: ActorValueEntry] = [:],
         generalBaseline: [Int32: Float] = [:],
-        isPlayer: Bool = false,
         level: Int = PlayerLevelSource.startingLevel
     ) {
         self.current = current
         self.maximums = maximums
         self.isDead = isDead
         self.isInCombat = isInCombat
-        self.combatActivity = combatActivity
         self.weaponDrawState = weaponDrawState
         self.general = general
         self.generalBaseline = generalBaseline
-        self.isPlayer = isPlayer
         self.level = max(PlayerLevelSource.startingLevel, level)
     }
 }
@@ -147,41 +100,26 @@ public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     /// resident cell resolves to a placed actor.
     func actorState(for key: ReferenceKey) -> PapyrusActorState?
 
-    /// Takes `amount` off one of `key`'s values through `ActorValueRuntime`,
-    /// then routes a health that reached zero into the death path.
-    ///
-    /// Addressed by vanilla actor-value index rather than by
-    /// `ActorValueKind` since 19.5, because a script may damage any of the 164
-    /// and only three of them have a kind.
-    ///
-    /// - Returns: the state as stored afterwards, or nil when there was no
-    ///   actor to damage.
+    /// Takes `amount` off one of `key`'s values through `ActorValueRuntime`, then
+    /// routes zero health into the death path. Addressed by vanilla index.
+    /// - Returns: the state as stored afterwards, or nil when there was no actor.
     @discardableResult
     func damageActorValue(
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState?
 
-    /// Adds `amount` to one of `key`'s values, capped at its maximum.
-    ///
-    /// Never resurrects: restoring health on a latched corpse writes the health
-    /// and leaves the corpse dead, because `Resurrect` is the function that
-    /// clears a death and it is not implemented.
-    ///
-    /// - Returns: the state as stored afterwards, or nil when there was no
-    ///   actor to restore.
+    /// Adds `amount` to one of `key`'s values, capped at its maximum. Never
+    /// resurrects: `Resurrect` is not implemented.
+    /// - Returns: the state as stored afterwards, or nil when there was no actor.
     @discardableResult
     func restoreActorValue(
         at index: Int32, by amount: Float, on key: ReferenceKey
     ) -> PapyrusActorState?
 
-    /// Sets, modifies or forces one of `key`'s actor values (issue #496).
-    ///
-    /// A health that reaches zero becomes a death on the same call, exactly as
-    /// it does through `damageActorValue`: a script that forces health to zero
-    /// and then asks `IsDead()` must not read a live actor lying on the floor.
-    ///
-    /// - Returns: the state as stored afterwards, or nil when there was no
-    ///   actor to write to and when the index names no actor value.
+    /// Sets, modifies, or forces one of `key`'s actor values. Zero health becomes a
+    /// death in the same call.
+    /// - Returns: the state as stored afterwards, or nil for no actor or an unknown
+    ///   index.
     @discardableResult
     func writeActorValue(
         _ write: PapyrusActorValueWrite,
@@ -190,14 +128,9 @@ public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
         on key: ReferenceKey
     ) -> PapyrusActorState?
 
-    /// Starts `key` fighting `target` at once, without waiting for it to
-    /// perceive anything (issue #424). Writes hostility through the world-state
-    /// store on the way, so a scripted fight is saved exactly as one the player
-    /// started.
-    ///
-    /// - Returns: true when the actor is now fighting. False for an actor this
-    ///   session does not track and for a target other than the player, which
-    ///   is a fight nothing in this engine simulates.
+    /// Starts `key` fighting `target` at once, writing hostility through the store.
+    /// - Returns: true when the actor is now fighting. False for an untracked actor
+    ///   or a target other than the player.
     @discardableResult
     func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool
 
@@ -208,13 +141,9 @@ public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     @discardableResult
     func stopActorCombat(_ key: ReferenceKey) -> Bool
 
-    /// Gives `key` one perk through `PerkRuntime`, so a scripted grant lands in
-    /// the journal and the save exactly as an NPC's seeded perk does, and the
-    /// abilities it grants are applied in the same call (issue #497).
-    ///
-    /// - Returns: true when the perk was not already owned. False for an actor
-    ///   this session does not track, for a session with no perk data, and for
-    ///   a record this load order does not carry.
+    /// Gives `key` one perk through `PerkRuntime` and applies its abilities.
+    /// - Returns: true when the perk was not already owned. False for an untracked
+    ///   actor, no perk data, or a record this load order lacks.
     @discardableResult
     func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool
 
@@ -229,22 +158,16 @@ public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     /// would read as an actor who has taken nothing.
     func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool?
 
-    /// Advances one of the player's skills through `SkillAdvancementRuntime`,
-    /// so a scripted advance and a landed blow reach the same thresholds and
-    /// the same save (issue #498).
-    ///
-    /// - Returns: false for a session with no progression runtime, and for a
-    ///   skill this load order carries no advancement parameters for. Both are
-    ///   tallied failures rather than a script that believes it taught the
-    ///   player something.
+    /// Advances one of the player's skills through `SkillAdvancementRuntime`.
+    /// - Returns: false without a progression runtime, or for a skill with no
+    ///   advancement parameters. Both are tallied failures.
     @discardableResult
     func advancePlayerSkill(
         _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
     ) -> Bool
 
-    /// The player's unspent perk points, or nil when this session runs no
-    /// character leveling (issue #499) — a synthetic scene with no progression,
-    /// where answering zero would read as a player who has spent everything.
+    /// The player's unspent perk points, or nil without character leveling, where
+    /// zero would mislead.
     func playerPerkPoints() -> Int?
 
     /// Adds or removes perk points, clamped to the documented pool bounds.
@@ -254,13 +177,9 @@ public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     @discardableResult
     func modifyPlayerPerkPoints(by delta: Int) -> Int?
 
-    /// Kills `key` outright, attributing it to `killer` when the script named
-    /// one. Health is emptied first, so a corpse never reads as dead at full
-    /// health and the death takes the same route a fatal blow does.
-    ///
-    /// - Returns: true when this call is what killed the actor. An actor
-    ///   already dead answers false and raises nothing, which is what makes
-    ///   `OnDeath` fire exactly once.
+    /// Kills `key`, attributing it to `killer` when named. Health is emptied first,
+    /// so the death takes the fatal-blow route.
+    /// - Returns: true when this call killed the actor; false for one already dead.
     @discardableResult
     func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool
 }

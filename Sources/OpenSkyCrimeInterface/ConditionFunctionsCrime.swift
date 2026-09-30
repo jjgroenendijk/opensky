@@ -1,32 +1,11 @@
-// The crime condition function (issue #504, roadmap item 21.5), split out of
-// `ConditionFunctions` the way the actor, data, magic and perk families are.
-//
-// One function, from the xEdit TES5 condition table
-// (dev-4.1.6 Core/wbDefinitionsTES5.pas):
-//
-//   (Index: 459; Name: 'GetCrimeGold'; ParamType1: ptFactionNull)
-//
-// The index is the raw stored number; the Creation Kit spells it 4555.
-//
-// and its two siblings, which split the same bounty by whether the crime was
-// violent (issue #563):
-//
-//   (Index: 375; Name: 'GetCrimeGoldViolent'; ParamType1: ptFactionNull)
-//   (Index: 376; Name: 'GetCrimeGoldNonviolent'; ParamType1: ptFactionNull)
-//
-// `CrimeLedgerEntry` holds the two halves, and `GetCrimeGold` answers their
-// sum. Which crimes are violent is `CrimeKind.isViolent`.
-//
-// `ptFactionNull` is nullable by declaration, and a null parameter asks about
-// the hold the subject is standing in rather than about no faction at all; the
-// seam resolves that through `CrimeConditionResolution.currentCrimeFaction`,
-// which the caller fills from `CrimeFactionResolver`.
-//
-// Documented in docs/engine/condition-functions.md and docs/engine/guard-response.md.
+// The crime condition functions (xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas):
+// 459 `GetCrimeGold`, 375 `GetCrimeGoldViolent`, 376 `GetCrimeGoldNonviolent`,
+// all `ptFactionNull`. A null parameter means the hold the subject stands in,
+// through `CrimeConditionResolution.currentCrimeFaction`. See
+// docs/engine/condition-functions.md and docs/engine/guard-response.md.
 
 import Foundation
 import OpenSkyConditions
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {

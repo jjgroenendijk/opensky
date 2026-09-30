@@ -1,9 +1,8 @@
-// Exact finite raycast over streamed NIF collision geometry (M8.4.1).
+// Exact finite raycast over streamed NIF collision geometry.
 // Broadphase is the existing per-cell BVH; narrowphase transforms the ray
 // into each shape's local space so affine placement keeps the world-ray
 // distance parameter intact.
 
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyPhysics

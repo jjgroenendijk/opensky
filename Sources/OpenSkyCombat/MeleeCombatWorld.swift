@@ -1,21 +1,7 @@
-// The world seam melee combat resolves a hit through (issue #195, roadmap item
-// 15.4), and the intent and status values on either side of it.
-//
-// One protocol rather than a bag of optional closures. `MeleeCombatRuntime`
-// asks five questions and performs three actions, and every one of them is
-// something the session already knows how to answer — where the player is
-// standing, which actors are resident, what the ground is made of, how to take
-// health off a reference, how to play a positional sound, how to raise an event
-// on a graph. Naming them together is what lets the acceptance tests drive the
-// whole runtime against a fake world with no renderer, no window, and no game
-// data, which is what "deterministic tests" in the issue's acceptance means.
-//
-// The seam is deliberately narrow in one direction: the runtime never mutates
-// the world except through these three calls, and it never reads a clock. A
-// swing's whole trajectory through the engine is (intent in) -> (events in) ->
-// (these calls out).
-//
-// Documented in docs/engine/melee-combat.md.
+// The world seam melee combat resolves a hit through, and the intent and status
+// values on either side. One protocol, so tests can drive the runtime against a
+// fake world. The runtime changes the world only through these calls and never
+// reads a clock. See docs/engine/melee-combat.md.
 
 import OpenSkyActorsInterface
 import OpenSkyBehavior
@@ -59,35 +45,28 @@ nonisolated public struct MeleeHitRecord: Equatable, Sendable {
     public let target: ReferenceKey
     /// How far along the swing contact was found, world units.
     public let distance: Float
-    public let position: SIMD3<Float>
     public let damage: MeleeDamageResult
     /// The impact sound that played, or nil where the chain named none.
     public let sound: FormID?
     /// Whether the target's graph was told to stagger.
     public let staggered: Bool
-    /// Which swing landed it, so two hits from one swing are visibly one swing.
-    public let swingID: Int
-    /// What the weapon's enchantment did, or nil when the weapon carries none
-    /// and when this session cannot apply one (issue #472).
+    /// What the weapon's enchantment did, or nil when the weapon has none or this
+    /// session cannot apply one.
     public let enchantment: WeaponEnchantmentReport?
 
     public init(
         target: ReferenceKey,
         distance: Float,
-        position: SIMD3<Float>,
         damage: MeleeDamageResult,
         sound: FormID?,
         staggered: Bool,
-        swingID: Int,
         enchantment: WeaponEnchantmentReport? = nil
     ) {
         self.target = target
         self.distance = distance
-        self.position = position
         self.damage = damage
         self.sound = sound
         self.staggered = staggered
-        self.swingID = swingID
         self.enchantment = enchantment
     }
 }
@@ -103,34 +82,24 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     var meleeAttacker: MeleeAttacker { get }
 
     /// The attacker's fortify multiplier for a swing with `handType`, which is
-    /// `MeleeDamage`'s `attackMultiplier` (issue #472).
-    ///
-    /// Answered by the session rather than computed here, for the reason
-    /// `meleeBlock(of:)` is: the runtime holds no actor-value surface, and a
-    /// session with no actor values answers 1 — which is what the formula reduces
-    /// to for a character with no fortify effect.
+    /// `MeleeDamage`'s `attackMultiplier`. The session answers; without actor values
+    /// it answers 1.
     func meleeAttackMultiplier(handType: CombatHandType) -> Float
 
     /// Every actor a swing could reach. Actors only — the caller's filter, not
     /// the runtime's, because only the session knows what is an ACHR.
     func meleeTargets() -> [MeleeTarget]
 
-    /// The MATT type of what was struck at `position`, or nil where it names
-    /// none. Feeds the IPCT lookup exactly as the ground material feeds a
-    /// footstep's.
-    func meleeMaterial(at position: SIMD3<Float>) -> FormID?
+    /// The MATT type a hit plays against, or nil where it names none. Actors
+    /// carry no per-body-part material yet, so the session reports the ground.
+    func meleeMaterial() -> FormID?
 
     /// What `target` is blocking with, or nil when it is not blocking.
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind?
 
-    /// The *blocker's* fortify and perk multiplier, which is `MeleeDamage`'s
-    /// `bonusMultiplier` (issues #472 and #497).
-    ///
-    /// Answered by the session for the reason `meleeAttackMultiplier` is: the
-    /// runtime holds neither an actor-value surface nor a perk store. The
-    /// default is 1 — what the quoted block formula reduces to for a character
-    /// with neither a Fortify Block effect nor a blocking perk — so a session
-    /// that models neither is untouched by this.
+    /// The blocker's fortify and perk multiplier, which is `MeleeDamage`'s
+    /// `bonusMultiplier`. The session answers; the default 1 means no Fortify Block
+    /// and no blocking perk.
     func meleeBlockMultiplier(of target: ReferenceKey) -> Float
 
     /// Takes `amount` off `target`'s health.

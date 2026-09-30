@@ -1,13 +1,6 @@
-// `MeleeCombatControlProviding` conformance (issue #195, roadmap item 15.4,
-// scope point 8): the live readouts and controls the
-// `World > Player & Locomotion > Melee` section is written against.
-//
-// Every field is a plain read off `MeleeCombatRuntime`, with no accounting
-// invented at the UI. The two controls go through the same latches the mouse
-// and the R key set, so a swing requested from the sidebar is indistinguishable
-// downstream from one the player made — which is the whole point of offering
-// them, because it makes the sidebar a way to verify the binding rather than a
-// second implementation of it.
+// `MeleeCombatControlProviding` conformance for the Melee section. Every field
+// reads `MeleeCombatRuntime`. The controls use the same latches as the mouse and
+// the R key, so the sidebar verifies the binding.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -16,6 +9,7 @@ import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 
 extension GameViewController: MeleeCombatControlProviding {
@@ -93,7 +87,8 @@ extension GameViewController: MeleeCombatControlProviding {
             blockedPercent: record.damage.blockedFraction * 100,
             appliedDamage: record.damage.applied,
             sound: record.sound?.description,
-            staggered: record.staggered
+            staggered: record.staggered,
+            enchantment: record.enchantment?.describedLine
         )
     }
 }

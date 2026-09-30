@@ -1,27 +1,10 @@
-// The quest half of the native-to-world seam (issue #322): what a `Quest`
-// native is allowed to ask of the session, and the nonisolated hops the native
-// bodies actually call.
-//
-// It is a protocol of its own that `PapyrusWorldBridge` refines, rather than
-// nine more methods on that protocol, for the reason the file split in
-// `PapyrusNativeObjectReference*.swift` exists: quests are a subsystem with
-// their own vocabulary — stages, objectives, running-ness — and a test that
-// only cares about quests should be able to read this list on its own.
-//
-// Every operation is expressed in `ReferenceKey`, because that is the identity
-// a Papyrus handle resolves to. Turning it into the QUST record's FormID is
-// `QuestStore`'s job on the far side, so nothing on the script side ever holds
-// a load-order-relative number.
-//
-// Failures are thrown `QuestError`s, exactly as `QuestRuntime` throws them: a
-// script asking about a quest this session does not define, or setting a stage
-// the record does not declare, gets a native failure it can see in the tally
-// rather than a zero it would go on to act upon.
+// The quest half of the native-to-world seam, in `ReferenceKey` terms;
+// `QuestStore` maps keys to FormIDs. Failures are thrown `QuestError`s, which
+// the tally shows.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
 
 /// Failures the seam itself reports, as opposed to the `QuestError`s the quest
 /// layer throws once a quest has been named.

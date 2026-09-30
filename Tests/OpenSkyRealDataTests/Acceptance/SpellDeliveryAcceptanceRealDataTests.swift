@@ -1,17 +1,7 @@
-// The 19.8 acceptance chain against the user's own install (issue #471),
-// headless: a vanilla destruction spell is readied and cast at an actor, its
-// projectile flies on the record's own numbers, and the health it takes off is
-// the resistance-adjusted amount rather than the authored one.
-//
-// Read-only throughout, and no game bytes leave the machine: what is asserted
-// is arithmetic over actor values this session set, and the summary written to
-// gitignored `logs/` names editor IDs and numbers only.
-//
-// This is the deterministic half of the acceptance. It drives the real
-// `CasterRuntime`, the real `ProjectileRuntime` and the real
-// `ActiveEffectRuntime` over records read from the install; what it stands in
-// for is the renderer and the streamer, because a spell projectile is invisible
-// until M26 and there would be nothing in a frame to look at.
+// Spell delivery acceptance against the user's install, headless: a vanilla
+// destruction spell is cast at an actor, its projectile flies on the record's
+// numbers, and the health loss is resistance-adjusted. Read-only; the summary
+// in gitignored `logs/` holds editor IDs and numbers only.
 
 import Foundation
 @testable import OpenSkyActors
@@ -111,8 +101,8 @@ struct SpellDeliveryAcceptanceRealDataTests {
         }
 
         /// This chain casts spells, not swings: the weapons it carries are
-        /// unenchanted, so an enchanted hit is the documented "not here" nil
-        /// (issue #472). `EnchantmentRuntimeRealDataTests` covers the enchantment
+        /// unenchanted, so an enchanted hit is the documented "not here" nil.
+        /// `EnchantmentRuntimeRealDataTests` covers the enchantment
         /// side against the same install.
         @discardableResult
         func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
@@ -141,7 +131,7 @@ struct SpellDeliveryAcceptanceRealDataTests {
             nil
         }
 
-        func projectileMaterial(at position: SIMD3<Float>) -> FormID? {
+        func projectileMaterial() -> FormID? {
             nil
         }
 

@@ -1,14 +1,7 @@
-// Theft at the choke points (issue #504, roadmap item 21.5): a take out of the
-// world through `WorldItemRuntime`, and a take out of a container through
-// `ContainerSession`.
-//
-// Both go through `CrimeReporter`, so the two paths cannot disagree about what
-// counts as theft or about what it costs. The chain under them is the M12
-// acceptance chain, which already places an NPC-owned loose sword and an
-// unowned chest — the two cases the hook has to tell apart.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// Theft at the choke points: a take from the world through `WorldItemRuntime`
+// and from a container through `ContainerSession`. Both use `CrimeReporter`.
+// The M12 chain supplies an NPC-owned sword and an unowned chest. Fixtures
+// are synthetic.
 
 import Foundation
 @testable import OpenSkyCrime
@@ -152,9 +145,7 @@ struct CrimeTheftHookTests {
     /// counter both follow.
     @Test func takingPropertyTheActorMayUseIsNoCrime() throws {
         let harness = try Harness()
-        harness.world.actor = CrimeActor(
-            key: .player, base: CrimeFixture.key(CrimeFixture.Actors.shopkeeper)
-        )
+        harness.world.actor = CrimeActor(base: CrimeFixture.key(CrimeFixture.Actors.shopkeeper))
 
         let outcome = try harness.chain.runtime.take(
             Chain.take(Chain.looseSwordReference, base: InventoryBaselineFixture.sword)

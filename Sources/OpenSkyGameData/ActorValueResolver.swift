@@ -1,15 +1,7 @@
-// Plugin-side seam of the actor-value subsystem (issue #194, roadmap item
-// 15.3): turns an NPC_ FormID into the derived base health, magicka and
-// stamina, by walking the template chain for the stat fields and looking up the
-// RACE and CLAS records they name.
-//
-// Separate from `ActorValueRuntime` on purpose, and mirroring how
-// `InventoryBaselineResolver` sits beside `InventoryRuntime`: this side is
-// immutable, reads only records, and is safe to build once per session; the
-// runtime side is mutable, main-actor, and knows nothing about records. The
-// runtime asks this type for a baseline and never re-derives one itself.
-//
-// Documented in docs/engine/actor-values.md.
+// Plugin-side seam of the actor-value subsystem: turns an NPC_ FormID into the
+// derived base values, walking the template chain and the RACE and CLAS records.
+// Immutable and record-only, like `InventoryBaselineResolver`; the runtime asks
+// it for baselines. See docs/engine/actor-values.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -29,14 +21,13 @@ nonisolated public enum ActorValueResolveError: Error, Equatable {
 /// One actor's derived baseline plus the records it came from, so an inspector
 /// can say *why* a number is what it is rather than only what it is.
 nonisolated public struct ResolvedActorValues: Equatable, Sendable {
-    public let base: FormID
     /// Base maximums: what `ActorValueState` starts full at.
     public let maximums: ActorValues
     /// Percent of each maximum restored per second, from the race.
     public let regenPercentPerSecond: ActorValues
-    /// Base values for the non-primary actor values this actor's records
-    /// author, keyed by vanilla table index (issue #468). An index absent here
-    /// reads `ActorValueIdentity.defaultValue(at:)`.
+    /// Base values for the non-primary actor values this actor's records author, by
+    /// vanilla table index. An absent index reads
+    /// `ActorValueIdentity.defaultValue(at:)`.
     public let generalBaseValues: [Int32: Float]
     /// The level the derivation used.
     public let level: Int
@@ -64,19 +55,16 @@ nonisolated public struct ResolvedActorValues: Equatable, Sendable {
 nonisolated public struct ActorValueResolver: Sendable {
     public let templates: ActorTemplateResolver
     public let races: [UInt32: Race]
-    /// Load-order-wide CLAS lookup (issue #496). Cross-plugin since item 20.3,
-    /// which is why the plugin the NPC_ records came from travels beside it:
-    /// a class link resolves relative to the plugin carrying it.
+    /// Load-order-wide CLAS lookup. The NPC_ plugin travels beside it, because a
+    /// class link resolves relative to the plugin carrying it.
     public let classes: CharacterClassStore
     /// Plugin the NPC_ and RACE indexes were built from, which is what a CLAS
     /// link in one of those records resolves against.
     public let pluginName: String
     public let settings: ActorValueLevelSettings
-    /// Where the level a `PC Level Mult` actor scales against is published
-    /// (issue #499). Shared by reference, so a level-up moves every derivation
-    /// on its next read rather than needing this value rebuilt; a session with
-    /// no progression leaves it at 1 and every scaled actor resolves at the
-    /// bottom of its range, which is what it did before item 20.6.
+    /// Where the level a `PC Level Mult` actor scales against is published. Shared by
+    /// reference, so a level-up applies on the next read. Without progression it
+    /// stays 1.
     public let playerLevelSource: PlayerLevelSource
 
     /// The level as of right now.
@@ -100,14 +88,9 @@ nonisolated public struct ActorValueResolver: Sendable {
         playerLevelSource = playerLevel
     }
 
-    /// Builds every index this resolver needs from one plugin file.
-    ///
-    /// `settings` is passed in rather than loaded here: the GMST store spans
-    /// the whole load order and a caller that already built one must not pay
-    /// for a second walk. `classes` is passed in for the same reason and for
-    /// one more — a caller with the whole load order hands over a store built
-    /// across it, so a patch plugin's CLAS override is seen; a caller with one
-    /// file gets a store over that file alone.
+    /// Builds every index this resolver needs from one plugin file. `settings` and
+    /// `classes` are passed in, so a caller does not pay for a second load-order walk
+    /// and a patch plugin's CLAS override is seen.
     public static func build(
         from file: ESMFile,
         localized: Bool,
@@ -141,15 +124,6 @@ nonisolated public struct ActorValueResolver: Sendable {
         classes.resolve(id, fromPlugin: pluginName)?.characterClass
     }
 
-    /// The derivation inputs for one NPC_, gathered through its template chain.
-    ///
-    /// - Throws: `ActorValueResolveError.unresolvedChain` when the TPLT walk
-    ///   fails — a cycle, a dangling target, an empty leveled list.
-    public func inputs(base: FormID) throws -> ActorValueInputs {
-        let resolved = try resolveStats(base: base)
-        return inputs(from: resolved)
-    }
-
     /// The full derived baseline for one NPC_.
     public func resolve(base: FormID) throws -> ResolvedActorValues {
         let resolved = try resolveStats(base: base)
@@ -160,7 +134,6 @@ nonisolated public struct ActorValueResolver: Sendable {
         // whose maximums and reported level disagree.
         let currentPlayerLevel = playerLevel
         return ResolvedActorValues(
-            base: base,
             maximums: ActorValueDerivation.baseValues(
                 inputs: gathered,
                 settings: settings,

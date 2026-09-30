@@ -45,16 +45,8 @@ public protocol EquipmentAccess {
     /// `holder`'s equipped items.
     func equipped(on holder: InventoryHolder) -> [FormID]
 
-    func isEquipped(_ item: FormID, on holder: InventoryHolder) -> Bool
-
     /// What `item` occupies.
     func occupancy(of item: FormID) -> EquipmentOccupancy
-
-    /// Equips `item` on `holder`, unequipping whatever it conflicts with.
-    ///
-    /// - Throws: `EquipmentError` when the item is not held or occupies no slot.
-    @discardableResult
-    func equip(_ item: FormID, on holder: InventoryHolder) throws -> EquipmentChange
 
     /// Unequips `item` on `holder`. Returns true when the stored state changed.
     @discardableResult

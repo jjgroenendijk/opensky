@@ -1,11 +1,6 @@
-// Immutable DIAL/INFO/VTYP index. Unlike flat record stores, DIAL owns a
-// type-7 child group and INFO file order is selection-significant, so this
-// walks the top group's direct record/group sequence.
-//
-// Since issue #426 the index also resolves each INFO to a session-stable
-// `ReferenceKey`, exactly as `QuestStore` resolves each QUST. Said-state is
-// runtime state filed per INFO record, and a save must not key it off a
-// load-order-relative FormID.
+// Immutable DIAL/INFO/VTYP index. DIAL owns a type-7 child group and INFO order
+// matters, so this walks the top group's sequence. Each INFO also resolves to a
+// session-stable `ReferenceKey`, which said-state is keyed by.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -23,9 +18,6 @@ nonisolated public final class DialogueStore: Sendable {
     /// plugin's master list so said-state and saves never key off a
     /// load-order-relative number.
     private let keysByInfoFormID: [UInt32: ReferenceKey]
-    /// The inverse, which is what the save decoder and the Papyrus fragment
-    /// dispatcher read: a key arrives and the INFO record behind it is needed.
-    private let infoFormIDsByKey: [ReferenceKey: UInt32]
     /// Master-list resolver of the plugin these records came from, retained so
     /// a caller can resolve the FormIDs the records *point at*.
     public let resolver: FormIDResolver
@@ -135,15 +127,6 @@ nonisolated public final class DialogueStore: Sendable {
         self.voicesByFormID = voicesByFormID
         voiceFormIDsByEditorID = voiceIDs
         keysByInfoFormID = infoKeys
-        // Built by accumulation rather than by `Dictionary(uniqueKeysWithValues:)`
-        // because that traps on a collision, and a plugin listing the same
-        // master twice can hand two FormIDs the same key. The lowest FormID
-        // wins so the inverse is deterministic whatever the dictionary order.
-        var inverse: [ReferenceKey: UInt32] = [:]
-        for (raw, key) in infoKeys where raw < (inverse[key] ?? UInt32.max) {
-            inverse[key] = raw
-        }
-        infoFormIDsByKey = inverse
         self.resolver = resolver
         self.skippedRecordCount = skippedRecordCount
     }
@@ -192,20 +175,10 @@ nonisolated public final class DialogueStore: Sendable {
         keysByInfoFormID[id.rawValue]
     }
 
-    /// The INFO record a session-stable key names, the direction the save
-    /// decoder and the fragment dispatcher read.
-    public func info(key: ReferenceKey) -> TopicInfo? {
-        infoFormIDsByKey[key].flatMap { infosByFormID[$0] }
-    }
-
     /// Topics in FormID order, which is the deterministic order selection
     /// walks them in when two topics share a priority.
     public func sortedTopics() -> [DialogueTopic] {
         topicsByFormID.keys.sorted().compactMap { topicsByFormID[$0] }
-    }
-
-    public func voiceType(_ id: FormID) -> VoiceType? {
-        voicesByFormID[id.rawValue]
     }
 
     public func voiceType(editorID: String) -> VoiceType? {

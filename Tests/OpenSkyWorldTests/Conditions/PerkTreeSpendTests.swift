@@ -1,12 +1,7 @@
-// Spending a perk point (issue #499, roadmap item 20.6): the tree, the rank
-// order and the perk's own conditions, and the typed refusal for each.
-//
-// The fixture tree is shaped like this machine's `AVOneHanded` — an entry node
-// granting nothing, one box hanging off it, two boxes hanging off that, and a
-// rank chain whose higher ranks are in no box at all — so every rule is
-// exercised against the shape the real records have rather than one invented to
-// be easy. Every byte is authored in `PerkRuntimeFixture`; nothing comes from
-// the install.
+// Spending a perk point: the tree, the rank order, the perk's own conditions,
+// and the typed refusal for each. The synthetic tree has the shape of vanilla
+// `AVOneHanded`: an empty entry node, one box off it, two boxes off that, and a
+// rank chain whose higher ranks are in no box.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -57,8 +52,7 @@ struct PerkTreeSpendTests {
                 .player: ActorConditionState(
                     current: ActorValues(repeating: 100),
                     maximums: ActorValues(repeating: 100),
-                    generalBaseline: [PerkRuntimeFixture.oneHandedIndex: oneHanded],
-                    isPlayer: true
+                    generalBaseline: [PerkRuntimeFixture.oneHandedIndex: oneHanded]
                 )
             ]),
             subject: .player

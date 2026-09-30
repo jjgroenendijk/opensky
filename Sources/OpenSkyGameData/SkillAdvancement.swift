@@ -60,10 +60,6 @@ nonisolated public struct SkillAdvanceOutcome: Equatable, Sendable {
     /// every point gained.
     public let characterExperience: Float
 
-    public var didAdvance: Bool {
-        levelsGained > 0
-    }
-
     public init(
         levelsGained: Int,
         level: Float,
@@ -91,19 +87,10 @@ nonisolated public enum SkillAdvancement: Sendable {
     /// actually gain, so it never truncates a legitimate advance.
     public static let maximumLevelsPerAdvance = 100
 
-    /// Skill experience one use is worth:
-    /// `Skill Use Mult * amount + Skill Use Offset`.
-    ///
-    /// `amount` is the use amount in the vocabulary `Game.AdvanceSkill` speaks
-    /// — "This is in Skill Usage amounts"
-    /// (<https://ck.uesp.net/wiki/AdvanceSkill_-_Game>) — which is the base XP
-    /// of the action times whatever multiplier the action's own record carries,
-    /// resolved by the caller.
-    ///
-    /// A use amount that is zero, negative or not finite is worth nothing at
-    /// all, offset included: the offset is what a *use* adds on top of itself,
-    /// and awarding it for a non-use would let a stream of zero-damage hits
-    /// level Lockpicking at ten experience a swing.
+    /// Skill experience one use is worth: `Skill Use Mult * amount + Skill Use
+    /// Offset`. `amount` is in "Skill Usage amounts"
+    /// (<https://ck.uesp.net/wiki/AdvanceSkill_-_Game>). A zero, negative, or
+    /// non-finite amount is worth nothing, offset included.
     public static func experience(
         forUse amount: Float,
         parameters: SkillUseParameters
@@ -116,11 +103,8 @@ nonisolated public enum SkillAdvancement: Sendable {
 
     /// The experience needed to leave `level` for the next one:
     /// `Skill Improve Mult * level ^ fSkillUseCurve + Skill Improve Offset`.
-    ///
-    /// - Returns: zero for a threshold the parameters make impossible — a
-    ///   non-finite result, or one at or below zero. A caller reads that as "no
-    ///   advancement", which is the safe answer: treating it as "free" would
-    ///   advance a skill to its ceiling on the first blow.
+    /// - Returns: zero when the parameters make the threshold non-finite or not
+    ///   positive. A caller reads that as "no advancement".
     public static func threshold(
         atSkillLevel level: Float,
         parameters: SkillUseParameters,
@@ -145,20 +129,10 @@ nonisolated public enum SkillAdvancement: Sendable {
         return max(0, level * settings.characterExperiencePerRank)
     }
 
-    /// Spends `experience` against the thresholds above `level`, one whole
-    /// point at a time.
-    ///
-    /// The remainder carries: the wiki's own arithmetic treats skill experience
-    /// as a running total against cumulative thresholds ("Cumulative XP from Y
-    /// to X = Cumulative(X) - Cumulative(Y)"), so the eighty-sixth broken pick
-    /// that crosses a threshold leaves whatever it overshot by on the skill
-    /// rather than throwing it away. Experience exactly equal to the threshold
-    /// advances the skill and carries nothing, which is the edge
-    /// `SkillAdvancementTests` pins.
-    ///
-    /// A skill at the ceiling gains nothing and carries nothing: there is no
-    /// next level for the experience to be spent on, and banking it would make
-    /// a legendary reset instantly refund every point.
+    /// Spends `experience` against the thresholds above `level`, one point at a time.
+    /// The remainder carries, as the wiki's cumulative arithmetic implies. Experience
+    /// equal to the threshold advances and carries nothing. At the ceiling nothing
+    /// is gained or banked.
     public static func advance(
         experience: Float,
         from level: Float,

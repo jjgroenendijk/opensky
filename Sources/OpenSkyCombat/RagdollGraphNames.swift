@@ -1,28 +1,8 @@
-// The graph event names death and ragdoll bind to (issue #197, roadmap item
-// 15.6).
-//
-// Every name here was read out of the M14 behavior census over the user's own
-// install (`logs/hkx-behavior-census.log`, produced by
-// `HKBBehaviorCensusRealDataTests`), never from memory, and every one of them
-// appears in that log's `distinct events` union across the character behavior
-// files. The same rule and the same reasons as `CombatGraphNames`: vanilla's
-// capitalization is inconsistent — `bleedOutStart` is lower-camel and
-// `DeathAnim` is upper-camel, in the same file — and a merely plausible name
-// resolves to nothing at all.
-//
-// The direction of travel splits the same way melee's does.
-//
-// * Raised: the engine tells the graph the actor's health reached zero.
-//   `bleedOutStart` is the entry to `BleedOutBehavior`, whose clips the census
-//   lists as `Animations\BleedOut_*.hkx`, and `DeathAnim` is the death clip
-//   selector `0_master.hkx` declares beside it.
-// * Observed: the graph tells the engine that the animation has reached the
-//   frame the physics takes over at. `AddRagdollToWorld` is that frame — its
-//   name says what it asks the engine to do — with `NPCAddRagdollToWorld` as the
-//   NPC-side spelling the census also carries, `Ragdoll` as the plain hand-off,
-//   and `RagdollInstant` as the one that asks for no blend at all.
-//
-// Documented in docs/engine/ragdoll.md.
+// The graph event names death and ragdoll bind to, read from the behavior
+// census over the install, never from memory. Raised: `bleedOutStart` and
+// `DeathAnim`. Observed: `AddRagdollToWorld`, `NPCAddRagdollToWorld`,
+// `Ragdoll`, and `RagdollInstant`, the hand-off to physics.
+// See docs/engine/ragdoll.md.
 
 import Foundation
 
@@ -34,8 +14,6 @@ nonisolated public enum RagdollGraphNames: Sendable {
     public static let bleedOutStart = "bleedOutStart"
     /// The death animation itself.
     public static let deathAnim = "DeathAnim"
-    /// Leaving the death state, which nothing but a resurrection raises.
-    public static let deathStop = "deathStop"
 
     /// Every event the ragdoll runtime raises when an actor dies, in the order
     /// it raises them. Bleedout first, then the death clip: an actor that

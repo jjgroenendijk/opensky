@@ -1,23 +1,8 @@
-// Merchant transactions (M12.2.3, issue #179): buying from and selling to a
-// merchant, priced by `BarterPricing` and settled through `InventoryRuntime`.
-//
-// A merchant here is an inventory holder: a vendor faction's merchant chest
-// when the counterparty is a faction vendor (issue #506), or a container the
-// developer nominates from the sidebar. The session does not care how it was
-// chosen. `BarterRules` carries what the vendor faction adds — its hours, its
-// buy/sell keyword list and whether it fences — and is unrestricted for a
-// nominated container, which trades as it did before vendors existed.
-//
-// Every transaction is one `InventoryRuntime.exchange`, so the item and the gold
-// move together or not at all, and both land in the world-state journal, the
-// dirty counts and the save exactly like any other inventory write.
-//
-// Refusals are ordinary outcomes, not errors in the sense of something having
-// gone wrong: a merchant with no gold buys nothing and still sells everything,
-// and a player who cannot afford a sword is not a fault. They are typed so the
-// menu can say which refusal it was, and every one of them writes nothing.
-//
-// Documented in docs/engine/barter.md.
+// Merchant transactions: buying and selling, priced by `BarterPricing` and
+// settled through `InventoryRuntime.exchange`, so item and gold move together.
+// A merchant is an inventory holder; `BarterRules` adds vendor hours, keywords,
+// and fencing. Refusals are typed outcomes that write nothing.
+// See docs/engine/barter.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -40,7 +25,7 @@ nonisolated public enum BarterError: Error, Equatable {
     /// The price exceeds what one gold stack can hold, so no amount of gold in
     /// the world could settle it.
     case priceOutOfRange(Int64)
-    /// Outside the vendor faction's `VENV` hours (issue #506).
+    /// Outside the vendor faction's `VENV` hours.
     case vendorClosed(opens: UInt16, closes: UInt16)
     /// The vendor's buy/sell list, with its negation, excludes the item.
     case vendorDoesNotTrade(item: FormID)
@@ -48,7 +33,7 @@ nonisolated public enum BarterError: Error, Equatable {
     case vendorRefusesStolen(item: FormID, stolen: Int32)
 }
 
-/// The vendor rules one session trades under (issue #506).
+/// The vendor rules one session trades under.
 nonisolated public struct BarterRules {
     /// The faction vendor, or nil for a nominated container, which trades
     /// anything at any hour and keeps stolen goods stolen.
@@ -81,15 +66,6 @@ nonisolated public struct BarterRules {
 
 /// What one completed transaction moved.
 nonisolated public struct BarterTransaction: Equatable, Sendable {
-    public enum Kind: String, Equatable, Sendable {
-        /// Gold player to merchant, item merchant to player.
-        case buy
-        /// Item player to merchant, gold merchant to player.
-        case sell
-    }
-
-    public let kind: Kind
-    public let item: FormID
     public let count: Int32
     /// Total gold that changed hands, already multiplied by `count`.
     public let gold: Int32
@@ -127,12 +103,6 @@ public final class BarterSession {
 
     // MARK: - Reading
 
-    /// What the merchant has for sale right now, read through the runtime on
-    /// every access rather than cached, like `ContainerSession.contents`.
-    public var stock: [InventoryStack] {
-        inventory.inventory(of: merchant).stacks
-    }
-
     public var merchantGold: Int32 {
         inventory.goldCount(of: merchant)
     }
@@ -161,15 +131,10 @@ public final class BarterSession {
 
     // MARK: - Transactions
 
-    /// Buys `count` of `item` from the merchant.
-    ///
-    /// What a vendor sells comes out honest: UESP's Merchants page records
-    /// that "Purchasing stolen items you place in there will remove their
-    /// stolen tags" (<https://en.uesp.net/wiki/Skyrim:Merchants>).
-    ///
-    /// - Throws: `BarterError.notStocked` when the merchant holds fewer,
-    ///   `BarterError.playerCannotAfford` when the price exceeds the player's
-    ///   gold, and the vendor refusals `BarterRules` names. All write nothing.
+    /// Buys `count` of `item` from the merchant. Bought items arrive honest
+    /// (<https://en.uesp.net/wiki/Skyrim:Merchants>).
+    /// - Throws: `BarterError.notStocked`, `BarterError.playerCannotAfford`, and the
+    ///   vendor refusals `BarterRules` names. All write nothing.
     @discardableResult
     public func buy(_ item: FormID, count: Int32 = 1) throws -> BarterTransaction {
         try requirePositive(count)
@@ -192,19 +157,13 @@ public final class BarterSession {
             to: merchant,
             laundering: rules.vendor != nil
         )
-        return BarterTransaction(kind: .buy, item: item, count: count, gold: price)
+        return BarterTransaction(count: count, gold: price)
     }
 
-    /// Sells `count` of `item` to the merchant.
-    ///
-    /// Honest copies go first, as every removal spends them. A sale that
-    /// reaches stolen copies is refused by a vendor that is not a fence, and a
-    /// fence takes them in honest.
-    ///
-    /// - Throws: `BarterError.notCarried` when the player holds fewer,
-    ///   `BarterError.merchantCannotAfford` when the merchant's purse cannot
-    ///   cover the offer, and the vendor refusals `BarterRules` names. All
-    ///   write nothing.
+    /// Sells `count` of `item` to the merchant. Honest copies go first. A non-fence
+    /// refuses stolen copies; a fence takes them in honest.
+    /// - Throws: `BarterError.notCarried`, `BarterError.merchantCannotAfford`, and
+    ///   the vendor refusals `BarterRules` names. All write nothing.
     @discardableResult
     public func sell(_ item: FormID, count: Int32 = 1) throws -> BarterTransaction {
         try requirePositive(count)
@@ -231,7 +190,7 @@ public final class BarterSession {
             to: merchant,
             laundering: rules.vendor?.buysStolen == true
         )
-        return BarterTransaction(kind: .sell, item: item, count: count, gold: price)
+        return BarterTransaction(count: count, gold: price)
     }
 
     private func requirePositive(_ count: Int32) throws {

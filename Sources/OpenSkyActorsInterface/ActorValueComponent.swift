@@ -1,29 +1,8 @@
-// Actor values as a world-state component (issue #194, roadmap item 15.3): the
-// value type holding one actor's current health, magicka and stamina once
-// anything has touched them.
-//
-// The component lives here rather than in `WorldStateComponents.swift` for the
-// same reason `ReferenceInventoryState` and `QuestRuntimeState` live beside
-// their own subsystems: it carries behaviour of its own — clamping, the
-// zero-health rule — rather than being a plain field bag. Only the
-// `WorldStateComponentKind` case and the `WorldStateComponentValue` case sit
-// with the rest, so every store operation stays generic over the protocol.
-//
-// Current values and deviations only. The maximums are *not* stored, and that
-// is the whole design: they are a pure function of the RACE, CLAS and NPC_
-// records (`ActorValueResolver`), so storing them would let a save keep numbers
-// a changed load order no longer authors. It is the same rule the inventory
-// baseline and the quest baseline already follow — re-derive, never persist.
-//
-// That rule is why a base write is stored as an offset rather than as a number
-// (issue #496): `ActorValueOverride` holds what the session did to a value, the
-// records keep holding what the value is, and the two are added on every read.
-//
-// One invariant holds for every value of this type, enforced in `init` rather
-// than checked at use sites: every value is finite and not negative. That is
-// what lets the runtime, the HUD and the save each assume it separately.
-//
-// Documented in docs/engine/actor-value-store.md.
+// Actor values as a world-state component: one actor's current values once
+// anything touched them. Maximums are not stored; they are re-derived from RACE,
+// CLAS, and NPC_ records, so a changed load order applies. Base writes are
+// offsets for the same reason. Every value is finite and not negative, enforced
+// in `init`. See docs/engine/actor-value-store.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -39,48 +18,24 @@ nonisolated public struct ActorValueState: WorldStateComponent, Sendable {
     /// the maximums.
     public private(set) var current: ActorValues
 
-    /// Every actor value this actor has moved off its derived baseline, keyed
-    /// by vanilla table index (issue #468, roadmap item 19.5; primaries added
-    /// by issue #496, item 20.3).
-    ///
-    /// Sparse on purpose, and that sparseness is the design rather than an
-    /// optimization. An actor has 164 actor values and a session touches a
-    /// handful; storing the other 160 would put a number in the save for every
-    /// value a record authors, which is the same "re-derive, never persist"
-    /// rule the maximums follow. An index absent here reads its baseline, and
-    /// an override that comes back to nothing is dropped rather than kept at
-    /// its default (see `setting(_:at:baseline:)`).
-    ///
-    /// Deltas, never absolutes — that is what lets the three primaries be in
-    /// here beside `current` without the two ever disagreeing. `current` is
-    /// where a primary *is*; an override is what the session did to the
-    /// ceiling above it, and the maximum is still re-derived from records on
-    /// every read.
+    /// Every actor value this actor moved off its derived baseline, by vanilla table
+    /// index. Sparse on purpose: an absent index reads its baseline, and an override
+    /// that returns to nothing is dropped. Deltas only, so a primary's `current` and
+    /// its override never disagree.
     public private(set) var overrides: [Int32: ActorValueOverride]
 
     public static var componentKind: WorldStateComponentKind {
         .actorValues
     }
 
-    /// The flag item 15.6 consumes to start death and ragdoll handling.
-    ///
-    /// Derived rather than stored: a stored flag and a stored health can
-    /// disagree, and after a save round trip there would be no way to say which
-    /// of the two was right. Zero exactly, not a small epsilon — every path
-    /// that lowers health clamps at zero, so an actor at zero health arrived
-    /// there by the clamp.
+    /// Whether the actor is dead. Derived, not stored, so it cannot disagree with
+    /// health. Exactly zero: every path that lowers health clamps at zero.
     public var hasZeroHealth: Bool {
         current.health <= 0
     }
 
-    /// Normalizes on the way in, which is also what makes this the save
-    /// decoder's entry point: a corrupt file degrades into a valid state rather
-    /// than failing the whole load.
-    ///
-    /// An override whose index is outside the vanilla table is dropped rather
-    /// than stored, because it names no actor value; so is one that says
-    /// nothing, because an override that deviates from nothing is not a
-    /// deviation.
+    /// Normalizes on the way in, so a corrupt save degrades to a valid state. An
+    /// override outside the vanilla table, or one that changes nothing, is dropped.
     public init(current: ActorValues, overrides: [Int32: ActorValueOverride] = [:]) {
         var normalized = ActorValues.zero
         for kind in ActorValueKind.allCases {
@@ -94,12 +49,7 @@ nonisolated public struct ActorValueState: WorldStateComponent, Sendable {
     }
 
     /// The state an actor has before anything touches it: every value at its
-    /// maximum.
-    ///
-    /// Actors enter the world full. Nothing in a plugin authors a "starts at
-    /// half health" actor — the Creation Kit's Stats tab has no such field —
-    /// so a partially depleted actor is always something the session did, and
-    /// therefore always a component rather than a baseline.
+    /// maximum. No plugin authors a partly depleted actor.
     public static func baseline(maximums: ActorValues) -> ActorValueState {
         ActorValueState(current: maximums)
     }
@@ -190,10 +140,4 @@ nonisolated extension WorldStateComponentKind {
     /// `ActorValueResolver`, exactly as an inventory baseline re-derives from its
     /// CNTO list.
     public static let actorValues = Self(rawValue: "actorValues", order: 8)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func actorValues(_ value: ActorValueState) -> Self {
-        Self(value)
-    }
 }

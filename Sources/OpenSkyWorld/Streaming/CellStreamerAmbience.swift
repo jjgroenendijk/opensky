@@ -1,12 +1,7 @@
-// Ambience-context emission (M9.2.2): builds an `AmbienceContext` value from
-// the streamer's current state and fires `onAmbienceContextChanged` when it
-// differs from the previous emission. Split from CellStreamer.swift for the
-// same file-size reason as CellStreamerTransitions.
-//
-// Sources of context:
-//   - Interior enter/exit: `apply(transition:)` clears/sets `interiorScene`.
-//   - Exterior recenter: the per-frame `update()` walk in CellStreamer.swift.
-// Both call `emitAmbienceContextIfNeeded()` here.
+// Ambience-context emission: builds an `AmbienceContext` from the streamer
+// state and fires `onAmbienceContextChanged` when it changes. Interior
+// transitions (`apply(transition:)`) and exterior recenters (`update()`) both
+// call `emitAmbienceContextIfNeeded()`.
 
 import Foundation
 import OpenSkyAudio
@@ -16,7 +11,7 @@ import OpenSkyGameData
 
 /// Cheap identity for diff: only the fields that drive `AmbienceBed.resolve`.
 /// The director's bed cache means equal keys never re-resolve.
-nonisolated public struct AmbienceKey: Equatable, Sendable {
+nonisolated public struct AmbienceKey: Hashable, Sendable {
     public let isInterior: Bool
     public let interiorFormID: UInt32?
     public let exteriorCenter: CellCoordinate?

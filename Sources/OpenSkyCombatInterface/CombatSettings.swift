@@ -1,43 +1,10 @@
-// The GMSTs melee combat resolves its numbers from (issue #195, roadmap item
-// 15.4), in the shape `PlayerMovementConfiguration` already established:
-// immutable, resolved once at setup, every value carrying the name of where it
-// came from so a readout can say "this is Skyrim.esm's number" rather than
-// presenting a fallback as the same kind of fact.
-//
-// Resolved once rather than looked up per swing for the same reason the
-// controller tuning is: a fixed-step simulation that reaches back into game
-// data mid-step is a simulation whose result depends on when it was asked.
-//
-// Provenance for every constant is recorded on the field that uses it, and one
-// thing has to be said up front because it contradicts the secondary source.
-//
-// UESP "Skyrim:Block" writes both block formulas in percentage points — a base
-// of 30 for a weapon, 45 for a shield, a cap of 85, and a skill weight of 1.5.
-// Reading `Skyrim.esm` on the local install (2026-08-07, `openskycli gmst
-// combat`) gives the same settings as **fractions**, and two of them with
-// different values:
-//
-//     fCombatDistance       141.000   fBlockWeaponBase       0.300
-//     fBlockWeaponScaling     0.200   fShieldBaseFactor      0.450
-//     fShieldScalingFactor    0.200   fBlockSkillMult        2.000
-//     fBlockMax               0.700   fBlockPowerAttackMult  0.660
-//
-// So `fBlockWeaponBase` is 0.3 where UESP says 30, `fBlockMax` is 0.70 where
-// UESP says 85%, and `fBlockSkillMult` is 2.0 where UESP's formula carries 1.5.
-// The install wins: these are the numbers the shipped game reads. What UESP
-// still supplies, and what the raw values cannot, is the *shape* — which term
-// multiplies which — and that shape reconciles with the fractions on exactly
-// one reading, the one `MeleeDamage` implements: the two base terms and the cap
-// are fractions of the incoming damage, and the two scaling terms are
-// percentage points per unit of damage or armour, so they carry a `/ 100`.
-//
-// Every fallback below is therefore the value observed on the install rather
-// than the value UESP prints, and says so in its source string.
-//
-// Documented in docs/engine/melee-damage.md.
+// The GMSTs melee combat resolves its numbers from, resolved once at setup.
+// Each value names its source, so a readout can tell data from a fallback. The
+// install stores the block settings as fractions and differs from UESP on
+// `fBlockMax` and `fBlockSkillMult`; the install wins, and every fallback is the
+// observed value. See docs/engine/melee-damage.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics

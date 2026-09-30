@@ -1,33 +1,13 @@
-// Where a bow shot is, tracked from the events the behavior graph fires back
-// (issue #196, roadmap item 15.5).
-//
-// `MeleeCombatState`'s rule, applied to a shot: the engine raises
-// `bowDrawStart` and `attackRelease`, and the *graph* decides whether a draw
-// was entered, how long it takes to reach full, and which frame the arrow
-// leaves the string. This type reads that answer; it does not time a draw
-// beside it.
-//
-// One state machine rather than melee's two, because there is nothing here
-// corresponding to draw-and-sheath: whether the bow is in hand at all is
-// already `MeleeCombatState.drawState`, and this machine describes only the
-// shot on top of it. `ArcheryRuntime` refuses to start a draw unless that
-// machine says the weapon is out, so the two compose without either knowing
-// the other's internals.
-//
-// Pure value type over a name stream: no clock, no world, no projectiles. That
-// is what makes the acceptance test a list of strings.
-//
-// Documented in docs/engine/archery.md.
+// Where a bow shot is, tracked from the events the behavior graph fires. The
+// graph decides the draw timing and the release frame; this type only reads it.
+// Whether the bow is out is `MeleeCombatState.drawState`. A pure value type
+// over a name stream. See docs/engine/archery.md.
 
 import Foundation
 
-/// Where a shot is.
-///
-/// `nocked` opens at `arrowAttach`, `drawing` at `BowDraw`, `drawn` at
-/// `bowDrawn`, and `loosed` at `arrowRelease` — which is the one frame a
-/// projectile spawns on. `loosed` lasts a single batch: `endFrame()` returns it
-/// to `idle`, exactly as the melee contact frame closes, so a graph that fires
-/// `arrowRelease` and nothing else cannot sit in the spawn window.
+/// Where a shot is. `nocked` opens at `arrowAttach`, `drawing` at `BowDraw`,
+/// `drawn` at `bowDrawn`, and `loosed` at `arrowRelease`, the frame a projectile
+/// spawns. `loosed` lasts one batch: `endFrame()` returns it to `idle`.
 nonisolated public enum ArcheryShotPhase: String, Equatable, Sendable, CaseIterable {
     case idle
     case nocked
@@ -50,7 +30,6 @@ nonisolated public enum ArcheryShotPhase: String, Equatable, Sendable, CaseItera
 
 /// What one observed event did to the shot.
 nonisolated public struct ArcheryStateChange: Equatable, Sendable {
-    public let event: String
     public let phase: ArcheryShotPhase
     /// True on the frame an arrow became a visible attachment in the draw hand.
     public let attachedArrow: Bool
@@ -71,15 +50,9 @@ nonisolated public struct ArcheryState: Equatable, Sendable {
     /// which draw produced it. Zero before the first nock.
     public private(set) var shotID = 0
 
-    /// Advances the state by one fired event name, answering with what changed
-    /// or nil when the name is not one this machine acts on.
-    ///
-    /// Names arrive from `LocomotionGraphEventQueue`, which carries every event
-    /// the graph fired. An unrecognized name is dropped silently: that is the
-    /// normal case, not a fault.
-    /// Split in two because one `switch` over every name it acts on is past the
-    /// strict-lint complexity cap, and the two halves are the two things the
-    /// graph reports: where the draw has got to, and where the arrow is.
+    /// Advances the state by one fired event name, answering with what changed or
+    /// nil. An unknown name is dropped: that is the normal case. Split in two to stay
+    /// under the complexity cap: the draw half and the arrow half.
     @discardableResult
     public mutating func handle(_ event: String) -> ArcheryStateChange? {
         if let change = handleDraw(event) {
@@ -109,7 +82,7 @@ nonisolated public struct ArcheryState: Equatable, Sendable {
         default:
             return nil
         }
-        return change(event)
+        return change()
     }
 
     /// Where the arrow itself is: in the hand, gone from the hand, or gone from
@@ -141,17 +114,15 @@ nonisolated public struct ArcheryState: Equatable, Sendable {
         default:
             return nil
         }
-        return change(event, attachedArrow: attached, loosedArrow: loosed)
+        return change(attachedArrow: attached, loosedArrow: loosed)
     }
 
     /// One change report over the state as it now stands.
     private func change(
-        _ event: String,
         attachedArrow: Bool = false,
         loosedArrow: Bool = false
     ) -> ArcheryStateChange {
         ArcheryStateChange(
-            event: event,
             phase: phase,
             attachedArrow: attachedArrow,
             loosedArrow: loosedArrow

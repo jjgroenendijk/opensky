@@ -1,4 +1,4 @@
-// World > HUD & Interaction > Items section (issue #177, roadmap item 12.1.3):
+// World > HUD & Interaction > Items section:
 // the accessibility-id contract, the readout spelling, and that every control
 // reaches the provider. `make test-ui` is TCC-blocked on this machine, so the
 // ids are pinned here as literal assertions.
@@ -46,12 +46,8 @@ struct ItemsSectionTests {
         )
     }
 
-    private static func worn(
-        _ raw: UInt32,
-        _ name: String,
-        _ occupancy: String
-    ) -> EquippedItemReadout {
-        EquippedItemReadout(item: FormID(raw), name: name, occupancy: occupancy)
+    private static func worn(_ name: String, _ occupancy: String) -> EquippedItemReadout {
+        EquippedItemReadout(name: name, occupancy: occupancy)
     }
 
     /// Loads the section's view so `makeContentViews` has run and the controls
@@ -126,11 +122,11 @@ struct ItemsSectionTests {
         let provider = FakeItemProvider()
         let section = Self.loadedSection(provider)
         provider.itemControlSnapshot = Self.snapshot(
-            playerEquipped: [Self.worn(0x300, "Iron Cuirass", "body")],
+            playerEquipped: [Self.worn("Iron Cuirass", "body")],
             nearestActorName: "skyrim.esm:0BAD (base 00000800)",
             nearestActorEquipped: [
-                Self.worn(0x200, "Iron Sword", "right hand"),
-                Self.worn(0x400, "Iron Helmet", "head")
+                Self.worn("Iron Sword", "right hand"),
+                Self.worn("Iron Helmet", "head")
             ]
         )
         section.refreshReadout()

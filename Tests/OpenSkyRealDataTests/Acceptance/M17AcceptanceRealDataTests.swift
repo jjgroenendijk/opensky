@@ -1,33 +1,8 @@
-// M17 acceptance, vanilla half (issue #209): one conversation with one real
-// speaker in the user's own install, from the offered list to the recording on
-// disk to the save.
-//
-// The synthetic gate (`M17AcceptanceTests`) drives the app's own entry points
-// over records built in code, which is what makes it deterministic and what
-// makes it able to run a Papyrus result script. What it cannot show is that the
-// same loop holds over shipped data: 15,037 topics whose conditions were
-// written by somebody else, voice file names that have to be re-derived from
-// editor IDs rather than read out of a field, and a lip track embedded inside
-// the recording it belongs to.
-//
-// The speaker is Delphine, for the reason `DialogueRuntimeRealDataTests` gives:
-// the 17.1 sweep found her named by more player-facing INFO conditions than any
-// other NPC in `Skyrim.esm`, so her list exercises the quest gate, file order
-// and the condition seam at once.
-//
-// One deliberate difference from the synthetic gate: the quest stage here is set
-// through `QuestRuntime.setStage`, which is the same call a result script's
-// `SetStage` native lands on, rather than by running a vanilla result script on
-// the Papyrus VM. Running shipped quest scripts is M11's own gate
-// (`PapyrusAcceptanceRealDataTests`), and the dialogue-to-fragment-to-stage
-// chain is proven end to end on the VM by `PapyrusWorldDialogueTests` and by the
-// synthetic M17 route. What this suite adds is that the *state* those calls
-// write is the state a real conversation reads back, and that it survives a
-// save.
-//
-// No game-derived bytes leave the run: the assertions are counts, editor IDs,
-// FormIDs and derived names, and the report goes to gitignored `logs/`.
-//
+// M17 acceptance, vanilla half: one conversation with Delphine in the user's
+// install, from the offered list to the voice file to the save. The stage is
+// set through `QuestRuntime.setStage`, the call `SetStage` lands on; running
+// vanilla result scripts is covered elsewhere. Assertions are counts, editor
+// IDs, and FormIDs; the report goes to gitignored `logs/`.
 // Run: make realtest T='M17AcceptanceRealDataTests'
 
 import Foundation
@@ -68,14 +43,9 @@ struct M17AcceptanceRealDataTests {
     func theConversationHoldsAgainstTheUsersOwnInstall() throws {
         let world = try Self.world()
         let selection = try Self.expectAConditionFilteredList(world)
-        // The offer this gate can follow all the way through: its winning
-        // response has a line recorded on disk that frames and whose lip track
-        // decodes, and the quest that owns its topic has a stage to set. None
-        // of that is true of every offer — a topic can win on an INFO with no
-        // TRDT run at all, plenty of dialogue quests carry no stages, and a
-        // handful of vanilla lip tracks hold non-finite curve values
-        // (`LipSyncRealDataTests` tallies those). Walking to the next candidate
-        // is what keeps the gate about the loop rather than about one file.
+        // The first offer whose response has a framed voice line with a decodable lip
+        // track, and whose quest has a stage to set. Not every offer has these, so
+        // the gate walks to the next candidate.
         let found = try Self.findAConversationLineOnDisk(world, selection: selection)
         let offer = found.offer
 
@@ -120,14 +90,9 @@ struct M17AcceptanceRealDataTests {
         return selection
     }
 
-    /// Step 2 — the recording. A winning response's file name is re-derived
-    /// from its quest and topic editor IDs, found in the archives under some
-    /// voice type, framed, and its embedded lip track decoded. That chain is
-    /// what makes a chosen topic audible and the mouth move.
-    ///
-    /// Candidates are walked in the order the list offers them, and what was
-    /// skipped is reported rather than swallowed: a gate that silently took the
-    /// twentieth candidate would read as though the first had worked.
+    /// Step 2, the recording: re-derive the file name from the quest and topic
+    /// editor IDs, find it under a voice type, frame it, and decode its lip track.
+    /// Skipped candidates are reported, not hidden.
     @MainActor
     private static func findAConversationLineOnDisk(
         _ world: World,
@@ -245,7 +210,6 @@ struct M17AcceptanceRealDataTests {
         let runtime = try DialogueRuntime(
             store: restored,
             dialogue: world.dialogue,
-            quests: world.questStore,
             questStates: quests.resolution(),
             context: conditionContext(),
             registry: .standard
@@ -320,7 +284,6 @@ extension M17AcceptanceRealDataTests {
         let runtime = try DialogueRuntime(
             store: store,
             dialogue: dialogue,
-            quests: questStore,
             questStates: quests.resolution(),
             context: conditionContext(),
             registry: .standard

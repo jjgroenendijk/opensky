@@ -1,28 +1,11 @@
-// Quest-state condition functions (issue #182), split out of
-// `ConditionFunctions` the way `ConditionFunctionsTime` is.
-//
-// These four were the top of the #251 demand list waiting on quests to exist,
-// and they are honest to register now that `QuestRuntimeState` holds the state
-// they read: each is a pure read of the quest seam on `ConditionContext`, with
-// no world, no clock and no reference needed. A QUST parameter naming a quest
-// nothing defines is a reason-tagged `ConditionFailure.unresolvedQuest` and a
-// `ConditionTally` bucket, never a throw and never a comparison against zero.
-//
-// Indices below are the raw stored numbers; the Creation Kit spells each 4096
-// higher. They come from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, whose
-// condition-function table lists:
-//
-//   (Index:  56; Name: 'GetQuestRunning'; ParamType1: ptQuest)
-//   (Index:  58; Name: 'GetStage'; ParamType1: ptQuest)
-//   (Index:  59; Name: 'GetStageDone'; ParamType1: ptQuest; ParamType2: ptQuestStage)
-//   (Index: 543; Name: 'GetQuestCompleted'; ParamType1: ptQuest)
-//
-// Return semantics come from the Creation Kit wiki's condition-function pages,
-// cited at each registration.
+// Quest-state condition functions, each a pure read of the quest seam. An
+// undefined quest is `ConditionFailure.unresolvedQuest`, never a throw. Raw
+// stored indices from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: 56
+// `GetQuestRunning`, 58 `GetStage`, 59 `GetStageDone`, 543 `GetQuestCompleted`.
+// Return rules come from the wiki pages cited at each registration.
 
 import Foundation
 import OpenSkyConditions
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {
@@ -40,14 +23,9 @@ nonisolated extension ConditionFunctions {
         })
 
         // "Returns 1 if the specified stage has been completed, 0 otherwise."
-        // (<https://ck.uesp.net/wiki/GetStageDone>) "Done" means explicitly
-        // visited, so a lower stage is never implied by a higher one
-        // (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>).
-        //
-        // Parameter 2 is `ptQuestStage`, an integer stage index rather than a
-        // FormID. A negative or out-of-range value cannot name a stage — stage
-        // indices are uint16 on disk — so it answers 0 rather than failing:
-        // "no such stage has been done" is a real answer, not a coverage gap.
+        // (<https://ck.uesp.net/wiki/GetStageDone>) Only visited stages count
+        // (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>). A negative or out-of-range
+        // stage answers 0.
         registry.register(ConditionFunction(
             index: 59,
             name: "GetStageDone",
@@ -74,13 +52,8 @@ nonisolated extension ConditionFunctions {
         })
 
         // "Returns 0 if a quest has not yet been completed, 1 if it has."
-        // (<https://ck.uesp.net/wiki/GetQuestCompleted>) The same page records
-        // that the original engine returned 0 unconditionally until patch
-        // 1.9.32; OpenSky implements the fixed behaviour, so a plugin authored
-        // around the bug — the page suggests `GetStageDone` on the last stage
-        // instead — still evaluates correctly, while one that relied on the
-        // broken return does not. That trade is deliberate: reproducing a
-        // documented, patched bug would make every correct condition wrong.
+        // (<https://ck.uesp.net/wiki/GetQuestCompleted>) OpenSky implements the patched
+        // behavior, not the old always-0 bug.
         registry.register(ConditionFunction(
             index: 543,
             name: "GetQuestCompleted",
@@ -90,12 +63,9 @@ nonisolated extension ConditionFunctions {
         })
     }
 
-    /// The quest parameter 1 names, or the reason it could not be read.
-    ///
-    /// Two different failures live here and stay distinct: a CIS1 name override
-    /// that names no filled alias of the context's quest leaves the parameter
-    /// unreadable (`unresolvedParameter`, issue #183), while a readable FormID
-    /// that names no quest is `unresolvedQuest`.
+    /// The quest parameter 1 names, or the reason it could not be read: a CIS1
+    /// override naming no filled alias is `unresolvedParameter`; a FormID naming no
+    /// quest is `unresolvedQuest`.
     public static func questState(
         _ call: ConditionCall,
         index: UInt16

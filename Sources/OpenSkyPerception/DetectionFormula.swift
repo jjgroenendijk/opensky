@@ -1,40 +1,8 @@
-// The detection value, as arithmetic (issue #202, roadmap item 16.6).
-//
-// A pure function of numbers, deliberately, exactly like `ProjectileFlight`: no
-// world, no clock, no collision, no state. That is what makes "sneaking versus
-// standing changes the accumulation rate" a plain assertion over two literals,
-// and it is why the geometry that decides `hasLineOfSight` and `isInViewCone`
-// lives next door in `PerceptionSight` instead of here.
-//
-// ## The shape, and where it came from
-//
-// UESP "Skyrim:Sneak", section "Remaining Undetected", states the whole thing:
-//
-//     Detection Value = fSneakBaseValue
-//         + (Sound factor + Visual factor + Noticer skill factor) * attenuation
-//         + (Noticer skill factor - Sneaker skill factor)
-//     attenuation = ((fSneakMaxDistance - distance) / fSneakMaxDistance) ^ exponent
-//     Sound Factor = fSneakSoundsMult * (Movement + Action)
-//                    * (1 with line of sight, fSneakSoundLosMult without)
-//     Movement     = (fSneakEquippedWeightBase + fSneakEquippedWeightMult * weight)
-//                    * (fSneakRunningMult if running) * muffle,  0 when not moving
-//     Action       = ActionSound * fSneakActionMult
-//
-// That shape is implemented as written. The constants come from the install
-// where the install has them (`DetectionSettings`), and the *visual* factor is
-// the one term UESP describes only qualitatively — it names light level as the
-// driver and light level is a gap here — so its shape is OpenSky's and says so.
-//
-// ## The four pinned inputs, and why they are pinned rather than guessed
-//
-// Light level, muffle, action sounds and both skill levels are inputs this
-// engine cannot supply today. Each one is a named constant below with the
-// documented neutral value it is pinned at, so a reader can see exactly what is
-// missing and what filling it would change. None of them is approximated with a
-// plausible-looking substitute: a wrong number that moves is worse than a
-// stated constant that does not, because only one of the two is visible.
-//
-// Documented in docs/engine/detection.md.
+// The detection value, as pure arithmetic. The shape is UESP "Skyrim:Sneak",
+// "Remaining Undetected", with constants from `DetectionSettings`. The visual
+// factor's shape is ours, because UESP describes it only in words. Light level,
+// muffle, action sounds, and skill levels are pinned constants, not guesses.
+// See docs/engine/detection.md.
 
 import Foundation
 import OpenSkyPerceptionInterface
@@ -52,16 +20,9 @@ nonisolated public enum DetectionFormula: Sendable {
     /// The target's action sound this instant. Pinned: no attack, cast or shout
     /// reports one to perception yet.
     public static let pinnedActionSound: Float = 0
-    /// Both skill levels. `ActorValueIdentity` names Sneak as vanilla actor
-    /// value 15, and item 15.3 stores three of the 164 — health, magicka and
-    /// stamina — so neither the sneaker's Sneak nor the noticer's perception is
-    /// readable through `ActorValueRuntime` today. Pinned at the vanilla
-    /// starting skill level, which UESP "Skyrim:Skills" states is 15 for every
-    /// skill before racial bonuses.
-    ///
-    /// Pinning both at the same number is what makes the formula's trailing
-    /// `(Noticer - Sneaker)` term exactly zero, so the one place a skill still
-    /// shows up is the attenuated noticer term.
+    /// Both skill levels, pinned at 15, the vanilla starting skill (UESP
+    /// "Skyrim:Skills"), because the runtime does not read Sneak yet. Equal values
+    /// make the `(Noticer - Sneaker)` term zero.
     public static let pinnedSkillLevel: Float = 15
 
     /// The range this pair's senses attenuate over, world units.
@@ -88,13 +49,9 @@ nonisolated public enum DetectionFormula: Sendable {
         return powf(linear, max(0, settings.distanceAttenuationExponent.value))
     }
 
-    /// What movement at `gait` multiplies the target's noise by.
-    ///
-    /// Only the running multiplier is vanilla's. Standing still is vanilla's
-    /// rule with no constant attached, and the sneak and sprint steps either
-    /// side of walking are OpenSky's — see `DetectionSettings`. Swimming is
-    /// deliberately given walking's multiplier rather than a fourth constant
-    /// nothing measured.
+    /// What movement at `gait` multiplies the target's noise by. Only the running
+    /// multiplier is vanilla's; sneak and sprint are ours (`DetectionSettings`).
+    /// Swimming uses walking's.
     public static func movementMultiplier(
         gait: LocomotionGait?,
         settings: DetectionSettings
@@ -157,24 +114,14 @@ nonisolated public enum DetectionFormula: Sendable {
         return DetectionBreakdown(
             soundFactor: sound,
             visualFactor: visual,
-            skillFactor: skill,
-            distanceAttenuation: attenuation,
             value: value.isFinite ? value : settings.sneakBaseValue.value
         )
     }
 
-    /// How far a target moving at `gait` can be heard, world units: the
-    /// distance at which the sound and skill terms alone exactly cancel
-    /// `fSneakBaseValue`.
-    ///
-    /// Closed form rather than a search, because the attenuation is invertible:
-    /// with `needed = -base / (sound + skill)` the radius is
-    /// `max * (1 - needed^(1/exponent))`. Zero when even a touching target is
-    /// too quiet to notice, which is a real answer for a crouching one.
-    ///
-    /// Nothing in the pass consumes this — the attenuated sound term already
-    /// produces the behaviour. It exists because "a gait-based noise radius" is
-    /// what the milestone asks for in world units, and this is that number.
+    /// How far a target moving at `gait` can be heard, in world units: where the
+    /// sound and skill terms cancel `fSneakBaseValue`. Closed form:
+    /// `max * (1 - needed^(1/exponent))`, with `needed = -base / (sound + skill)`.
+    /// Zero when even a touching target is too quiet. Shown as a readout only.
     public static func noiseRadius(
         gait: LocomotionGait?,
         settings: DetectionSettings,

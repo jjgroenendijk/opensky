@@ -1,15 +1,8 @@
-// Music director (M9.2.3, issue #156): the runtime half of music selection.
-// Subscribes to the streamer's music-context callback, resolves it through
-// `MusicSelection`, and owns the non-positional source(s) that play the result.
-//
-// Separate from WorldAudioSoundDirector on purpose: that class already owns the
-// SFX + ambience state machine, and music has its own lifetime rules (the
-// director, not the engine, retires a music source — non-positional sources are
-// exempt from both the FIFO budget and the cell purge).
-//
-// Main-actor only, like the rest of the audio stack. Defensive throughout: an
-// absent engine, store, or file degrades to silence and a readable reason, never
-// a crash. Design + policy: docs/engine/music.md.
+// Music director: subscribes to the streamer's music context, resolves it
+// through `MusicSelection`, and owns the non-positional sources that play it.
+// Separate from `WorldAudioSoundDirector`, because music sources have their own
+// lifetime rules. Failures degrade to silence with a reason.
+// See docs/engine/music.md.
 
 import Foundation
 import OpenSkyAudio
@@ -45,7 +38,7 @@ public final class WorldMusicDirector {
     /// restarts, and re-used as what to start when music is switched back on.
     private var desiredSelection = MusicSelection.silent(state: .exploration)
     /// The selection combat interrupted, held for as long as the fight lasts.
-    /// Non-nil is also what "combat music is playing" means (issue #374).
+    /// Non-nil is also what "combat music is playing" means.
     private var preCombatSelection: MusicSelection?
     /// Index into `desiredSelection.tracks` of the track that should sound.
     private var trackIndex = 0
@@ -105,7 +98,7 @@ public final class WorldMusicDirector {
             context: context, musicStore: musicStore, weatherStore: weatherStore
         )
         // A cell crossed mid-fight updates what leaving combat will return to
-        // rather than interrupting the fight's own music (issue #374).
+        // rather than interrupting the fight's own music.
         guard preCombatSelection == nil else {
             preCombatSelection = selection
             return
@@ -182,22 +175,12 @@ public final class WorldMusicDirector {
         handleMusicContext(.empty)
     }
 
-    // MARK: - Combat (issue #374)
+    // MARK: - Combat
 
-    /// Switches the combat playlist on and off, which is the seam this page has
-    /// been holding open since M9 (docs/engine/music.md).
-    ///
-    /// Entering combat selects a `MUSCombat...` record directly, bypassing the
-    /// context precedence chain, and remembers the selection it interrupted.
-    /// Leaving combat restores exactly that selection rather than re-resolving,
-    /// so a fight that started in a town ends back in the town's playlist even
-    /// if the streamer never published a context in between.
-    ///
-    /// A load order with no combat playlist leaves the music alone: nothing to
-    /// select is not a reason to go silent mid-fight.
-    ///
-    /// - Returns: nil on success, or a short reason the selection did not
-    ///   change.
+    /// Switches the combat playlist on and off. Entering selects a `MUSCombat...`
+    /// record directly and remembers the interrupted selection; leaving restores it.
+    /// With no combat playlist the music stays. See docs/engine/music.md.
+    /// - Returns: nil on success, or a short reason the selection did not change.
     @discardableResult
     public func setCombatActive(_ active: Bool) -> String? {
         guard active else { return leaveCombat() }
@@ -266,17 +249,6 @@ public final class WorldMusicDirector {
         desiredSelection.state.displayName
     }
 
-    /// Crossfade the current selection uses, for the readout.
-    public var currentCrossfadeSeconds: Float {
-        desiredSelection.crossfadeSeconds
-    }
-
-    /// Position in the current playlist, as `index + 1` of `count`. Zero-based
-    /// index and a zero count when silent.
-    public var playlistPosition: (index: Int, count: Int) {
-        (desiredSelection.isSilent ? 0 : trackIndex, desiredSelection.tracks.count)
-    }
-
     // MARK: - State machine
 
     private func adopt(_ selection: MusicSelection, force: Bool = false) {
@@ -321,13 +293,10 @@ public final class WorldMusicDirector {
         retireMusicSources(overSeconds: duration)
     }
 
-    /// Starts one playable track as a non-positional music source. Returns nil
-    /// (with `lastMusicError` set) when the file or the engine refuses.
-    ///
-    /// The authored `MUST ANAM` name is resolved through
-    /// `MusicRecordStore.loadAudioFile`, which falls back to the `.xwm` sibling
-    /// when the archives ship no file under the authored name (issue #246), so
-    /// the source is named after the file that really loaded.
+    /// Starts one playable track as a non-positional music source. Returns nil, with
+    /// `lastMusicError` set, when the file or engine refuses.
+    /// `MusicRecordStore.loadAudioFile` falls back to the `.xwm` sibling, and the
+    /// source is named after the file that loaded.
     private func startSource(for track: PlayableMusicTrack) -> Int? {
         do {
             let file = try MusicRecordStore.loadAudioFile(at: track.path, load: fileLoader)

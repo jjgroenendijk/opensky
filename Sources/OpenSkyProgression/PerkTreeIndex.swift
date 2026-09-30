@@ -1,30 +1,7 @@
-// Where each perk sits in a skill's AVIF perk tree (issue #499, roadmap item
-// 20.6): the load-order-wide map from a PERK identity to the box that grants
-// it, and to the boxes whose lines reach that box.
-//
-// Built once beside `PerkStore` and `ActorValueInformationStore`, in the shape
-// every `*Index` here takes: immutable, cheap to copy, and answering one
-// question. Spending a perk point asks it twice — "is this perk in a tree at
-// all?" and "which boxes are its parents?" — and neither answer may cost a walk
-// of every AVIF record.
-//
-// ## Which direction a connection points
-//
-// From parent to child. A node's `CNAM` run is "Line to Index"
-// (xEdit dev-4.1.6 `wbRArray('Connections', wbInteger(CNAM, 'Line to Index'))`),
-// and this machine's `AVOneHanded` reads:
-//
-//   #0  perk NULL,        lines to [7]
-//   #7  perk Armsman00,   lines to [4, 3, 5, 1, 6]
-//   #1  perk FightingStance, lines to [2, 11]
-//
-// measured 2026-08-20 with `openskycli record AVOneHanded`. The tree's entry
-// node is `#0`, it grants no perk, and it is what `Armsman00` hangs from — so
-// the first real box of every vanilla tree has a parent that costs nothing to
-// own. Parents are therefore collected by inverting the connection run, and a
-// node reached from the root node needs no owned parent.
-//
-// Documented in docs/engine/character-leveling.md.
+// Where each perk sits in a skill's AVIF perk tree: PERK identity to its box and
+// to the boxes whose lines reach it. Connections point from parent to child
+// (`CNAM` "Line to Index"). The root node `#0` grants no perk, so the first real
+// box needs no owned parent. See docs/engine/character-leveling.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -32,13 +9,9 @@ import OpenSkyGameData
 
 /// One perk's place in the tree that grants it.
 nonisolated public struct PerkTreePlacement: Equatable, Sendable {
-    /// The AVIF record whose tree carries the box.
-    public let skill: ResolvedFormID
     /// The actor-value index that AVIF names, when it names a vanilla one. What
     /// a skill requirement is stated against, and what a readout groups by.
     public let actorValueIndex: Int32?
-    /// The box's own `INAM` identity inside the tree.
-    public let node: UInt32
     /// Whether the box's `FNAM` asks for a parent.
     public let requiresParent: Bool
     /// Perks whose boxes draw a line to this one.
@@ -88,9 +61,7 @@ nonisolated public struct PerkTreeIndex: Sendable {
                 guard let perk = perkByNode[node.index] else { continue }
                 let incoming = tree.filter { $0.connections.contains(node.index) }
                 placements[perk] = PerkTreePlacement(
-                    skill: record.id,
                     actorValueIndex: record.actorValueIndex,
-                    node: node.index,
                     requiresParent: node.parentRequired,
                     parents: incoming.compactMap { perkByNode[$0.index] },
                     reachableFromRoot: incoming.contains { rootNodes.contains($0.index) }

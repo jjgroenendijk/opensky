@@ -1,5 +1,5 @@
 // Fixed-clock NPC capsule movement, path following, bounded recovery, sparse
-// persistence, and actor trigger occupancy (issue #423).
+// persistence, and actor trigger occupancy.
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -37,10 +37,8 @@ public struct NPCMovementRuntime {
     public static let stuckTimeout: Float = 2
     public static let progressTolerance: Float = 1
     public static let runDistance: Float = 512
-    /// How fast an actor may turn, in radians per second. Explicitly
-    /// `nonisolated` so the in-place turn (`NPCFacingHold`, issue #427) can
-    /// corner at the same rate a mover does without becoming main-actor
-    /// isolated itself.
+    /// How fast an actor may turn, in radians per second. `nonisolated`, so the
+    /// in-place turn (`NPCFacingHold`) can use it without main-actor isolation.
     nonisolated public static let maximumYawSpeed: Float = .pi * 2
 
     public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
@@ -50,7 +48,7 @@ public struct NPCMovementRuntime {
 
     private var movers: [ReferenceKey: NPCMover] = [:]
     private var parked: [ReferenceKey: NPCParkedMovement] = [:]
-    /// Actors turning on the spot (issue #427). Not counted against the mover
+    /// Actors turning on the spot. Not counted against the mover
     /// cap: a turn runs no path, no collision sweep and no repath, so the CPU
     /// budget the cap protects does not apply to it.
     private var facings: [ReferenceKey: NPCFacingHold] = [:]
@@ -109,13 +107,8 @@ public struct NPCMovementRuntime {
         return true
     }
 
-    /// Stops one actor where it stands, parking its pose so a later read still
-    /// finds it there.
-    ///
-    /// The combat layer's "hold": an actor that reached weapon range, raised its
-    /// guard or gave up should stop walking, and it must stop through the
-    /// movement authority rather than by having its request quietly ignored.
-    ///
+    /// Stops one actor where it stands, keeping its pose. Combat's "hold" goes
+    /// through the movement authority instead of letting a request expire.
     /// - Returns: true when there was a live mover to stop.
     @discardableResult
     public mutating func stop(_ actor: ReferenceKey) -> Bool {
@@ -127,7 +120,7 @@ public struct NPCMovementRuntime {
         // The same still-drive a mover publishes when it finishes on its own,
         // so the gait clip stops rather than looping on a standing actor.
         onDrive?(NPCLocomotionDriveUpdate(
-            actor: actor, intent: .still, gait: .walk, yaw: mover.yaw, deltaTime: 0
+            actor: actor, intent: .still, gait: .walk
         ))
         return true
     }

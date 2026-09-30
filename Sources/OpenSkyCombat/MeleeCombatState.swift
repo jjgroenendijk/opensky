@@ -1,39 +1,15 @@
-// Weapon-drawn state and attack phase, tracked from the events the behavior
-// graph fires back (issue #195, roadmap item 15.4).
-//
-// The engine raises `attackStart`; the *graph* decides whether an attack state
-// was actually entered, how long the windup lasts, and which frame connects.
-// So this type is a reader of the graph, not a timer beside it — the same rule
-// the footstep director follows, and for the same reason: a phase invented from
-// a clock drifts against the animation the player is watching, and a hit
-// resolved off that clock lands at a moment the swing is not at.
-//
-// The two state machines here are deliberately separate. Drawing a weapon and
-// swinging it are different sub-behaviors in vanilla (`weapequip.hkx` and
-// `1hm_behavior.hkx`) and they interleave: a sheath request during a swing is
-// legal and the graph sorts out the order. Folding them into one enum would
-// force this type to invent that ordering.
-//
-// Interruption is the graph's, too. A hit that staggers the player fires
-// `staggerStart`, the behavior graph's own transition takes the attack state
-// away, and the attack phase drops back to idle here — which is the whole of
-// what "attack cancel" needs, because the engine never held a swing timer that
-// would have kept running. See docs/engine/melee-combat.md on the two M14
-// feature tallies this item was asked to revisit.
-//
-// Pure value type over a name stream: no clock, no world, no records. That is
-// what makes the acceptance test a list of strings.
+// Draw state and attack phase, tracked from the events the behavior graph fires.
+// The graph decides windup length and the contact frame; this type only reads
+// it. Draw and swing are two machines, because vanilla interleaves them. A
+// stagger ends the attack through the graph. A pure value type over a name
+// stream. See docs/engine/melee-combat.md.
 
 import Foundation
 import OpenSkyActorsInterface
 
-/// Where a swing is.
-///
-/// `windup` opens at `attackStart`, `swinging` at `preHitFrame`, `contact` at
-/// `HitFrame`, and `recovery` runs until the attack state ends. The hit window
-/// is `contact` alone: `preHitFrame` exists to say a hit is imminent, so a
-/// consumer that wants to pre-resolve something has a frame to do it in, and
-/// the sweep still runs on the contact frame itself.
+/// Where a swing is. `windup` opens at `attackStart`, `swinging` at
+/// `preHitFrame`, `contact` at `HitFrame`, and `recovery` runs until the attack
+/// state ends. The hit window is `contact` alone.
 nonisolated public enum MeleeAttackPhase: String, Equatable, Sendable, CaseIterable {
     case idle
     case windup
@@ -50,8 +26,6 @@ nonisolated public enum MeleeAttackPhase: String, Equatable, Sendable, CaseItera
 
 /// What one observed event did to the state.
 nonisolated public struct MeleeStateChange: Equatable, Sendable {
-    /// The event name that produced it.
-    public let event: String
     public let drawState: WeaponDrawState
     public let attackPhase: MeleeAttackPhase
     /// True on the event that moved the weapon between the sheathed node and
@@ -76,18 +50,9 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
     /// swing; rises on every `attackStart`.
     public private(set) var swingID = 0
 
-    /// Advances the state by one fired event name, answering with what changed
-    /// or nil when the name is not one this machine acts on.
-    ///
-    /// Names arrive from `LocomotionGraphEventQueue`, which carries every event
-    /// the graph fired — combat, magic, footsteps, and the several hundred
-    /// vanilla names nothing here consumes. An unrecognized name is dropped
-    /// silently: that is the normal case, not a fault.
-    ///
-    /// Split three ways below because one `switch` over every census name is
-    /// past the strict-lint complexity cap, and the three groups are the three
-    /// things the graph actually reports: where the weapon is, where the swing
-    /// is, and which flags are up.
+    /// Advances the state by one fired event name, answering with what changed or
+    /// nil. An unknown name is dropped: that is the normal case. Split three ways to
+    /// stay under the complexity cap: weapon, swing, and flags.
     @discardableResult
     public mutating func handle(_ event: String) -> MeleeStateChange? {
         if let change = handleWeapon(event) {
@@ -113,16 +78,9 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
             // A sheath cancels whatever swing was in flight; the graph takes
             // the attack state away at the same moment.
             attackPhase = .idle
-        // Two names for each edge, because vanilla only annotates some of the
-        // equip clips. `1HM_Equip.hkx` and `Bow_Equip.hkx` carry
-        // `BeginWeaponDraw`; `Dag_Equip.hkx`, `Axe_Equip.hkx`, `Mac_Equip.hkx`,
-        // `2HC_Equip.hkx` and `2HW_Equip.hkx` carry no such mark at all. The
-        // graph's own `WeapEquip_Out` — the transition `0_master.hkx` takes
-        // into `Weap_Readied_State` — fires for every one of them, so it is the
-        // backstop that keeps a dagger from being stuck mid-draw forever. It
-        // arrives at the end of the clip rather than at the frame the hand
-        // reaches the hilt, so the annotation wins whenever there is one
-        // (issue #403).
+        // Two names per edge, because only some equip clips carry `BeginWeaponDraw`
+        // (`1HM_Equip.hkx` does, `Dag_Equip.hkx` does not). `WeapEquip_Out` fires for
+        // all of them at the clip end, so it is the backstop; the annotation wins.
         case CombatGraphNames.beginWeaponDraw, CombatGraphNames.weapEquipOut:
             moved = !drawState.isWeaponInHand
             drawState = .drawn
@@ -133,7 +91,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
         default:
             return nil
         }
-        return change(event, movedAttachment: moved)
+        return change(movedAttachment: moved)
     }
 
     /// The swing's four phases.
@@ -158,7 +116,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
         default:
             return nil
         }
-        return change(event, openedHitWindow: openedHitWindow)
+        return change(openedHitWindow: openedHitWindow)
     }
 
     /// Blocking and staggering, both plain edges.
@@ -181,17 +139,15 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
         default:
             return nil
         }
-        return change(event)
+        return change()
     }
 
     /// One change report over the state as it now stands.
     private func change(
-        _ event: String,
         movedAttachment: Bool = false,
         openedHitWindow: Bool = false
     ) -> MeleeStateChange {
         MeleeStateChange(
-            event: event,
             drawState: drawState,
             attackPhase: attackPhase,
             movedAttachment: movedAttachment,

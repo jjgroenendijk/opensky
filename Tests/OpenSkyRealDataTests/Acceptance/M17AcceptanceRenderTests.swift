@@ -1,23 +1,7 @@
-// M17 acceptance, pixel half (issue #209): the milestone's two visible claims
-// measured as changed-pixel counts rather than eyeballed — the speaker's mouth
-// moves with the audio clock, and a conversation takes the view and puts the
-// menu over it.
-//
-// The mouth is measured in a region rather than over the whole frame, which is
-// what makes the claim "the mouth moved" instead of "something moved". The
-// region is the middle of the head shot the harness frames, and the assertion is
-// twofold: pixels changed inside it, and most of the frame's change is inside
-// it. A morph that moved a shoulder would pass the first and fail the second.
-//
-// The camera-and-menu half runs both toggles over one real cell in one run, in
-// the order a conversation applies them: the view moves to frame the speaker,
-// then the vanilla movie is brought up on top. `DialogueCameraRenderRealDataTests`
-// and `DialogueMenuRealDataTests` each prove their own toggle; what this adds is
-// that the two compose, which is the only frame a player ever actually sees.
-//
-// Gated on a Metal 4 device *and* on the install, because what is drawn is the
-// user's own art. Rendered frames go to gitignored `logs/`: a frame embeds the
-// user's game assets and is never committed (AGENTS.md "Legal & IP boundary").
+// M17 acceptance, pixel half, as changed-pixel counts. The mouth region must
+// change and hold most of the frame's change. The camera and menu toggles run
+// together on one real cell, in the order a conversation applies them. Needs
+// a Metal 4 device and the install; frames go to gitignored `logs/`.
 
 import CoreGraphics
 import Foundation
@@ -185,7 +169,6 @@ struct M17AcceptanceRenderTests {
     private static func engageTheDialogueCamera(_ renderer: Renderer) throws -> [UInt8] {
         let head = renderer.playerEyePosition + renderer.freeFlyCamera.forward * 140
         renderer.setDialogueCameraFocus(DialogueCameraFocus(
-            speaker: .plugin(name: "skyrim.esm", objectID: 0x1B079),
             headPosition: head
         ))
         #expect(renderer.isDialogueCameraEngaged)

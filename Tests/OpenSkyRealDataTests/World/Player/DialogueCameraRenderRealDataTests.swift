@@ -1,23 +1,7 @@
-// M17.4 acceptance, pixel half (issue #427): engaging the dialogue camera over
-// the user's own cell moves the frame, and releasing it puts the previous view
-// back exactly.
-//
-// `DialogueCameraTests` already proves the framing math from synthetic
-// transforms. What it cannot prove is that the override reaches the passes: the
-// eye is written into `Renderer.freeFlyCamera`, which the scene pass, the
-// shadow fit and the culling all read separately, and an override that failed to
-// land there would leave every one of those unit tests green while the frame
-// never moved.
-//
-// Both frames are rendered at the same animation time through
-// `renderOffscreen(width:height:animationTime:)`, so the only difference
-// between them is the camera. A test that let the clock run would measure a
-// swaying tree.
-//
-// Gated on a Metal 4 device *and* on the install, because what is being drawn is
-// the user's own cell geometry. Rendered frames go to gitignored `logs/`: a
-// frame embeds the user's game art and is never committed (AGENTS.md "Legal &
-// IP boundary").
+// Dialogue camera acceptance, pixel half: engaging the camera over the user's
+// cell moves the frame, and releasing it restores the view exactly. Both
+// frames render at one animation time, so only the camera differs. Needs a
+// Metal 4 device and the install; frames go to gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -95,7 +79,6 @@ struct DialogueCameraRenderRealDataTests {
         // Somebody standing a conversation's distance ahead of the player.
         let speaker = renderer.playerEyePosition + renderer.freeFlyCamera.forward * 140
         renderer.setDialogueCameraFocus(DialogueCameraFocus(
-            speaker: .plugin(name: "skyrim.esm", objectID: 0x1B079),
             headPosition: speaker
         ))
         #expect(renderer.isDialogueCameraEngaged)

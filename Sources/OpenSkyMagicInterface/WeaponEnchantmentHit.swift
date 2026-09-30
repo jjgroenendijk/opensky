@@ -1,34 +1,11 @@
-// An enchanted weapon landing a hit (issue #472, roadmap item 19.9): the value
-// the combat runtimes hand out, the seam they hand it through, and what applying
-// it does.
-//
-// ## Why this reuses the spell-hit machinery instead of repeating it
-//
-// A weapon enchantment is `Contact` delivery — the Creation Kit wiki states
-// weapons "can only have 'Contact'" (<https://ck.uesp.net/wiki/Enchantment>) — and
-// once an actor has been struck, a contact enchantment and a landed spell do
-// exactly the same thing: scale each hostile entry by that actor's resistances and
-// hand the list to the effect runtime. Item 19.8 already wrote that once, in
-// `SpellHitApplication`, so this applies through it rather than beside it. The
-// only thing added here is the charge: a spell pays magicka at cast time, and an
-// enchantment pays charge at impact.
-//
-// Resistances therefore apply to a weapon enchantment. `ENIT` carries no
-// "ignore resistance" flag of the kind `SPIT` has — its two documented flag bits
-// are the manual-cost switch and extend-duration-on-recast — so there is no
-// record-level way for an enchantment to bypass the step and none is invented.
-//
-// ## What a hit does not do
-//
-// It does not consult the enchantment's worn restriction (see
-// `ItemEnchantmentProfile` for the measured reason), and it does not scale the
-// charge cost by the wielder's skill (see `EnchantmentCharge`).
-//
-// Documented in docs/engine/item-enchantments.md.
+// An enchanted weapon landing a hit: the value the combat runtimes hand out,
+// the seam, and what applying it does. A contact enchantment applies through
+// `SpellHitApplication`, resistances included, and pays charge at impact. It
+// does not check the worn restriction or scale the charge by skill.
+// See docs/engine/item-enchantments.md.
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 import simd
 
 /// One enchanted weapon's hit, as the world seam receives it.
@@ -40,25 +17,20 @@ nonisolated public struct WeaponEnchantmentHit: Equatable, Sendable {
     public let attacker: ReferenceKey
     /// The actor that was struck.
     public let target: ReferenceKey
-    /// Where contact was made, world space. What an area entry measures from.
-    public let position: SIMD3<Float>
 
     public init(
         profile: ItemEnchantmentProfile,
         attacker: ReferenceKey,
-        target: ReferenceKey,
-        position: SIMD3<Float>
+        target: ReferenceKey
     ) {
         self.profile = profile
         self.attacker = attacker
         self.target = target
-        self.position = position
     }
 }
 
 /// What applying one enchanted hit did.
 nonisolated public struct WeaponEnchantmentReport: Equatable, Sendable {
-    public let item: FormID
     /// The enchantment's display name, so a readout names it rather than a form.
     public let name: String
     /// The charge after the hit. Unchanged from before it when nothing fired.
@@ -82,7 +54,6 @@ nonisolated public struct WeaponEnchantmentReport: Equatable, Sendable {
     }
 
     public init(
-        item: FormID,
         name: String,
         charge: EnchantmentCharge,
         didFire: Bool,
@@ -90,7 +61,6 @@ nonisolated public struct WeaponEnchantmentReport: Equatable, Sendable {
         storedCount: Int,
         adjustments: [SpellMagnitudeAdjustment]
     ) {
-        self.item = item
         self.name = name
         self.charge = charge
         self.didFire = didFire

@@ -1,12 +1,6 @@
-// The five actor condition functions and the combat-target run-on (issue #375,
-// roadmap item 15.8), driven through the real evaluator against a synthetic
-// fight.
-//
-// Function indices here are the raw on-disk numbers (Creation Kit number minus
-// 4096) — see the ConditionFunctionsActor.swift header for the sources.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The actor condition functions and the combat-target run-on, through the real
+// evaluator against a synthetic fight. Function indices are raw on-disk numbers
+// (Creation Kit number minus 4096); see the ConditionFunctionsActor.swift header.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -57,8 +51,8 @@ struct ConditionActorFunctionTests {
         banditActivity: ActorCombatActivity? = nil,
         playerResistFire: Float? = nil
     ) throws -> ConditionContext {
-        // A hostile bandit is fighting unless a case says otherwise, which is
-        // what an actor that has perceived the player is doing (issue #424).
+        // A hostile bandit is fighting unless a case says otherwise, as an actor that
+        // has perceived the player does.
         let activity = banditActivity
             ?? (banditHostility == .hostile ? ActorCombatActivity.fighting : .notFighting)
         var context = try ConditionEvaluatorFixture.populatedContext()
@@ -70,21 +64,19 @@ struct ConditionActorFunctionTests {
                     weaponDrawState: playerDraw,
                     general: playerResistFire.map { points in
                         [Int32(resistFireIndex): ActorValueEntry(base: points)]
-                    } ?? [:],
-                    isPlayer: true
+                    } ?? [:]
                 ),
                 banditKey: ActorConditionState(
                     current: ActorValues(repeating: 100),
                     maximums: ActorValues(repeating: 100),
                     isDead: banditIsDead,
-                    hostility: banditHostility,
                     combatActivity: activity
                 )
             ],
             playerKey: playerKey,
             // The player is fighting the bandit only while the bandit is both
             // alive and actually engaged, which is what `CombatLoopState.derive`
-            // says since item 16.7.
+            // says.
             playerTarget: banditIsDead || activity == .notFighting ? nil : banditKey
         )
         return context
@@ -138,9 +130,8 @@ struct ConditionActorFunctionTests {
         ).outcome == .true)
     }
 
-    /// Item 19.5 (issue #468): a non-primary actor value answers rather than
-    /// tallying a miss. Untouched, a skill reads its documented floor and a
-    /// resistance reads zero.
+    /// A non-primary actor value answers rather than tallying a miss. Untouched, a
+    /// skill reads its documented floor and a resistance reads zero.
     @Test func aNonPrimaryActorValueReadsItsBaselineRatherThanMissing() throws {
         let context = try Self.fightContext()
         let skill = try Self.evaluate(

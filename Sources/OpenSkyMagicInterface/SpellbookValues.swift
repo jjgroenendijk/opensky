@@ -1,8 +1,6 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
 
 /// Failures readying a spell reports. Like `EquipmentError`, each is a caller
 /// mistake or a data answer, never malformed input.
@@ -22,7 +20,6 @@ nonisolated public enum SpellbookError: Error, Equatable {
 
 /// What one readying changed.
 nonisolated public struct SpellEquipChange: Equatable, Sendable {
-    public let spell: ReferenceKey
     /// The hands it now fills, which is both for a two-handed spell whichever
     /// hand was asked for.
     public let hands: HandSlots
@@ -30,21 +27,14 @@ nonisolated public struct SpellEquipChange: Equatable, Sendable {
     public let unequippedSpells: [ReferenceKey]
     /// Worn items displaced out of those hands, in ascending FormID order.
     public let unequippedItems: [FormID]
-    /// False when the spell was already readied in exactly these hands and
-    /// nothing was displaced, so the stored state is byte-identical.
-    public let changed: Bool
 
     public init(
-        spell: ReferenceKey,
         hands: HandSlots,
         unequippedSpells: [ReferenceKey],
-        unequippedItems: [FormID],
-        changed: Bool
+        unequippedItems: [FormID]
     ) {
-        self.spell = spell
         self.hands = hands
         self.unequippedSpells = unequippedSpells
         self.unequippedItems = unequippedItems
-        self.changed = changed
     }
 }

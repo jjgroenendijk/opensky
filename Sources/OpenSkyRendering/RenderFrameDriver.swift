@@ -1,21 +1,7 @@
-// The simulation side of a frame, as the renderer sees it.
-//
-// The renderer draws. Its driver moves the camera, advances the game clock,
-// and runs the world, weather and audio. The renderer calls the driver at fixed
-// points in the frame, so the order of the work never changes:
-//
-// Live frame (`draw(in:)`):
-//   1. `prepareLiveFrame`: camera and player, the per-frame `onFrame` hook
-//      (which may swap the scene), game clock, world simulation, weather.
-//   2. The renderer's own step: animations, particles, precipitation.
-//   3. `finishLiveFrame`: audio.
-//
-// Offscreen frame: the renderer calls `updateWorldSim`, `updateWeather` and
-// `updateAudio` itself, with the offscreen delta, between the same steps.
-//
-// The renderer reads the rest of what it draws from the driver on demand, so a
-// value is never a stale copy: the time of day, the wind, the projection's field
-// of view, and the player's rigs.
+// The simulation side of a frame, as the renderer sees it. Live frame:
+// `prepareLiveFrame` (camera, `onFrame`, clock, world, weather), then the
+// renderer's own step, then `finishLiveFrame` (audio). Offscreen frames call the
+// update methods directly. Other values are read on demand, never copied.
 
 import Metal
 
@@ -47,7 +33,6 @@ public protocol RenderFrameDriver: AnyObject {
 @MainActor
 public protocol RenderRig: AnyObject {
     var render: RenderScene { get }
-    var residencyAllocations: [MTLAllocation] { get }
     /// Publishes the rig's current pose to its palettes. Returns the number of
     /// bones updated.
     func publishAnimation(enabled: Bool) -> Int
@@ -72,7 +57,7 @@ extension Renderer {
         frameDriver?.wind ?? .calm
     }
 
-    /// What this frame draws and casts (`PlayerRigVisibility`, issue #190).
+    /// What this frame draws and casts (`PlayerRigVisibility`).
     public var rigVisibility: PlayerRigVisibility {
         frameDriver?.rigVisibility ?? PlayerRigVisibility.resolve(
             mode: movementMode,

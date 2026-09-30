@@ -1,4 +1,4 @@
-// Engine-owned interaction values (M8.4.1). The world publishes one
+// Engine-owned interaction values. The world publishes one
 // view-ray target and emits a typed event when the use key activates it.
 // UI and future Papyrus consumers subscribe without owning targeting rules.
 
@@ -13,12 +13,12 @@ nonisolated public enum InteractionAction: Equatable, Sendable {
     case harvest
     case use
     /// A loose world item: activating it moves the reference's stack into the
-    /// activator's inventory and removes the reference (issue #177). The item's
+    /// activator's inventory and removes the reference. The item's
     /// FULL name rides on `PlacedInteraction.name` as it does for every other
     /// action, so the HUD prompt reads "Take Iron Sword" from the same
     /// label-plus-name composition every action uses.
     case take
-    /// A living actor the player can start a conversation with (issue #205).
+    /// A living actor the player can start a conversation with.
     /// Unlike every other action here the target is not a placed object with
     /// collision geometry; `TalkTargeting` picks it off the same view ray
     /// against actor capsules, and `CellStreamer` publishes it through the same
@@ -91,8 +91,7 @@ nonisolated public struct InteractionTarget: Equatable, Sendable {
     }
 }
 
-/// One use-key activation. M11 Papyrus OnActivate can subscribe to this
-/// engine event without changing the raycast or door transition path.
+/// One use-key activation. Papyrus `OnActivate` subscribes to this event.
 nonisolated public struct InteractionEvent: Equatable, Sendable {
     public let target: InteractionTarget
 
@@ -101,26 +100,15 @@ nonisolated public struct InteractionEvent: Equatable, Sendable {
     }
 }
 
-/// One use-key activation of an actor (issue #205): the event the dialogue
-/// menu opens on.
-///
-/// Separate from `InteractionEvent` rather than a case inside it because it
-/// carries something that event cannot: the speaker's `ReferenceKey`. Every
-/// other interaction addresses a placed object by `FormID`, while dialogue
-/// selection, said-state and a save all key off the session-stable identity,
-/// and re-resolving it downstream would put the same lookup in every consumer.
-/// The plain `InteractionEvent` is still published beside this one, so the
-/// audio director and the Papyrus `OnActivate` subscribers see an activated
-/// actor exactly as they see an activated door.
+/// One use-key activation of an actor: the event the dialogue menu opens on.
+/// It carries the speaker's session-stable `ReferenceKey`, which dialogue and
+/// saves key off. The plain `InteractionEvent` is still published beside it.
 nonisolated public struct TalkActivationEvent: Equatable, Sendable {
     /// The actor being spoken to.
     public let speaker: ReferenceKey
-    /// The crosshair target it was picked from, for the readouts.
-    public let target: InteractionTarget
 
-    public init(speaker: ReferenceKey, target: InteractionTarget) {
+    public init(speaker: ReferenceKey) {
         self.speaker = speaker
-        self.target = target
     }
 }
 

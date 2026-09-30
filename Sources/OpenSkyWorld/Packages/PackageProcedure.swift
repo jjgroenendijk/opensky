@@ -1,6 +1,5 @@
-// Minimal deterministic AI-package procedure machines (issue #201). Movement
-// commands feed the existing MoveToPointControl/NPC mover; animation commands
-// are explicit seams for the sleep/eat loop clips.
+// Minimal deterministic AI-package procedure machines. Movement commands feed
+// the NPC mover; animation commands are seams for the sleep and eat clips.
 
 import OpenSkyConditions
 import simd
@@ -22,7 +21,6 @@ nonisolated public enum PackageProcedureState: Equatable, Sendable {
 nonisolated public enum PackageProcedureCommand: Equatable, Sendable {
     case move(to: SIMD3<Float>)
     case playLoop(PackageLoopClip)
-    case stopLoop
 }
 
 nonisolated public enum PackageProcedureEvent: Equatable, Sendable {

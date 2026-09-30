@@ -1,43 +1,16 @@
-// One actor's spell bookkeeping as a world-state component (issue #470,
-// roadmap item 19.7): which spells it knows, which tomes it has read, which
-// spell is readied in each hand, and which greater powers it has already spent
-// today.
-//
-// ## Why the four travel in one slot
-//
-// `ActiveEffectState` is a slot of its own beside `actorValues` because the two
-// have different lifetimes — a current-health float is rewritten sixty times a
-// second while an effect list changes on an event. Everything here is on the
-// event side of that line: learning a spell, reading a tome, readying a hand
-// and spending a power are all things a player action does and nothing does per
-// frame, so splitting them across slots would buy no write locality.
-//
-// The stronger reason is an invariant one component can enforce and two cannot:
-// a readied hand must name a spell the actor knows. Forgetting a spell that is
-// in a hand has to clear that hand in the same write, and a save whose load
-// order no longer carries the readied spell has to drop the hand rather than
-// leave it pointing at nothing. `init` is where both happen, which is also what
-// makes this type the save decoder's entry point — the same role
-// `ActiveEffectState.init` plays for `AEFF`.
-//
-// The component is dropped entirely once it empties, so an actor that knows no
-// spells stops being dirty for this slot.
-//
-// Documented in docs/engine/spellcasting.md.
+// One actor's spell bookkeeping as a world-state component: known spells, read
+// tomes, readied hands, and greater powers spent today. One slot, so `init` can
+// enforce that a readied hand names a known spell. That also makes `init` the
+// save decoder's entry point. Dropped once empty.
+// See docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
-/// Which hand a spell is readied in.
-///
-/// Two cases rather than a `HandSlots` because a hand slot is a set and a
-/// readied spell goes into exactly one named hand; a spell that fills both
-/// hands is one entry occupying both, which `SpellbookState` stores by writing
-/// the same key into each hand.
-///
-/// The raw values are the save encoding and must not be renumbered.
+/// Which hand a spell is readied in. A spell that fills both hands is stored in
+/// each. The raw values are the save encoding and must not be renumbered.
 nonisolated public enum SpellHand: UInt8, CaseIterable, Hashable, Sendable {
     case left = 0
     case right = 1
@@ -64,16 +37,10 @@ nonisolated public struct SpellbookState: WorldStateComponent, Sendable {
     /// SPEL records the actor knows, in ascending key order. Ordered rather
     /// than a set so the save writes the same bytes twice for the same state.
     public private(set) var known: [ReferenceKey]
-    /// BOOK records the actor has already opened, in ascending key order.
-    ///
-    /// This is the "already read" mark UESP records on the BOOK DATA flag byte:
-    /// "0x08 - Read ([verification needed] not used in static game data, flag in
-    /// save game data for already read books?)"
-    /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/BOOK>). The source
-    /// carries its own hedge and so does this: the mark is per reader here,
-    /// because it is what stops a second reading of the same tome teaching a
-    /// spell twice, and per-reader is the only reading that survives an NPC
-    /// picking the book up.
+    /// BOOK records the actor has opened, in ascending key order: the "already read"
+    /// mark UESP hedges on the BOOK DATA flag byte
+    /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/BOOK>). Per reader, so a
+    /// tome cannot teach twice.
     public private(set) var readBooks: [ReferenceKey]
     public private(set) var leftHand: ReferenceKey?
     public private(set) var rightHand: ReferenceKey?
@@ -86,15 +53,9 @@ nonisolated public struct SpellbookState: WorldStateComponent, Sendable {
         .spellbook
     }
 
-    /// Normalizes on the way in, which is what makes this the save decoder's
-    /// entry point: a file written under a different load order degrades into a
-    /// valid spellbook rather than failing the whole load.
-    ///
-    /// Duplicates collapse, order becomes the key order, and a hand naming a
-    /// spell that is not known is cleared — including the case where the spell
-    /// was never known and the case where it was forgotten in the same write.
-    /// A spent-power day for a spell that is not known is dropped for the same
-    /// reason: nothing can ever consult it again.
+    /// Normalizes on the way in, so a save from another load order restores a valid
+    /// spellbook. Duplicates collapse, order becomes key order, and a hand or spent
+    /// power naming an unknown spell is dropped.
     public init(
         known: [ReferenceKey] = [],
         readBooks: [ReferenceKey] = [],
@@ -142,19 +103,6 @@ nonisolated public struct SpellbookState: WorldStateComponent, Sendable {
             hands.insert(.leftHand)
         }
         if rightHand == spell {
-            hands.insert(.rightHand)
-        }
-        return hands
-    }
-
-    /// Every hand currently holding a spell, whichever spell it is. What the
-    /// item side asks before equipping something that takes a hand.
-    public var occupiedHands: HandSlots {
-        var hands = HandSlots()
-        if leftHand != nil {
-            hands.insert(.leftHand)
-        }
-        if rightHand != nil {
             hands.insert(.rightHand)
         }
         return hands
@@ -244,10 +192,4 @@ nonisolated extension WorldStateComponentKind {
     /// slot rather than splitting further because a readied hand must name a known
     /// spell, and only one component can enforce that in a single write.
     public static let spellbook = Self(rawValue: "spellbook", order: 13)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func spellbook(_ value: SpellbookState) -> Self {
-        Self(value)
-    }
 }

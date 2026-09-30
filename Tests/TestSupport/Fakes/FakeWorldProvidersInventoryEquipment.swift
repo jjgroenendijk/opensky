@@ -1,10 +1,6 @@
-// The Inventory & Equipment half of the world-provider fake (issue #180), in
-// its own file so `FakeWorldProviders` stays inside the lint caps.
-//
-// The fake keeps a real two-inventory ledger rather than canned strings,
-// because the section under test is an accounting readout: a grant that does
-// not change what the next snapshot reports would let the panel pass while
-// showing a number nothing produced.
+// The Inventory & Equipment half of the world-provider fake, split for the
+// lint caps. It keeps a real two-inventory ledger, so a grant changes the next
+// snapshot.
 
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFormatsESM
@@ -80,7 +76,7 @@ extension FakeWorldProviders {
             equipTarget: inventoryEquipment.target,
             equipInspection: inventoryEquipmentInspection,
             // One item resolved and reused every frame since, which is the
-            // shape a live session's cache reads (issue #489).
+            // shape a live session's cache reads.
             enchantmentCache: EnchantmentCacheReadout(
                 itemCount: 1, resolvedCount: 1, reuseCount: 12
             ),
@@ -103,7 +99,7 @@ extension FakeWorldProviders {
             EquipInspectReadout(
                 name: "00003000 (base 00003000)",
                 equipped: [EquippedItemReadout(
-                    item: Self.grantedSword, name: "IronSword", occupancy: "right hand",
+                    name: "IronSword", occupancy: "right hand",
                     // Item 19.9 gave the readout an enchantment line; the fake
                     // carries one so the M19 gate can read a charge back through
                     // the panel rather than only through the formatter.

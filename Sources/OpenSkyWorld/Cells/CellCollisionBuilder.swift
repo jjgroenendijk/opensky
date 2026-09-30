@@ -21,7 +21,7 @@ nonisolated public struct CellCollisionPlacement: Sendable {
     public let key: ReferenceKey?
     /// The placement's own position, euler rotation, and uniform XSCL scale,
     /// kept apart from `transform` because a simulated body integrates a pose
-    /// rather than a matrix (issue #193).
+    /// rather than a matrix.
     public let placement: PlacedReference.Placement
     public let scale: Float
 
@@ -65,7 +65,7 @@ nonisolated public struct CellCollisionAccumulator: Sendable {
 }
 
 /// Both collision products of one cell's placements: the immutable set the
-/// broadphase indexes, and the bodies the dynamic world simulates (issue #193).
+/// broadphase indexes, and the bodies the dynamic world simulates.
 nonisolated public struct CellCollisionProducts: Sendable {
     public var collision: StaticCollisionSet
     public var dynamicBodies: [DynamicBodyPlacement] = []
@@ -280,23 +280,10 @@ nonisolated extension CellSceneBuilder {
         return products
     }
 
-    nonisolated public func buildStaticCollision(
-        placements: [CellCollisionPlacement],
-        location: CellSceneLocation
-    ) -> StaticCollisionSet {
-        buildCollisionProducts(placements: placements, location: location).collision
-    }
-
-    /// Places every model-bearing reference, routing each decoded body to the
-    /// immutable set or to the dynamic world.
-    ///
-    /// The split is the census's, not the motion byte's alone: vanilla exports
-    /// most static geometry as `MO_SYS_BOX_STABILIZED` with zero mass, so
-    /// `NIFRigidBodyDynamics.isSimulated` — a known simulated motion system
-    /// *and* a positive finite mass — is what separates a barrel from a wall
-    /// (docs/formats/nif-collision.md, dynamics census). A body that qualifies
-    /// but whose reference carries no runtime key, or whose shapes yield no
-    /// convex volume, falls back to being static rather than disappearing.
+    /// Places every model-bearing reference, routing each body to the immutable set
+    /// or the dynamic world. `NIFRigidBodyDynamics.isSimulated` (a simulated motion
+    /// system and positive mass) decides (docs/formats/nif-collision.md). A body
+    /// with no runtime key or no convex volume stays static.
     nonisolated public func buildCollisionProducts(
         placements: [CellCollisionPlacement],
         location: CellSceneLocation
@@ -385,14 +372,9 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    /// One placed reference's simulated body, or nil where the whole reference
-    /// stays static.
-    ///
-    /// A model whose simulated bodies are bound by joints stays static
-    /// wholesale. Nothing solves a constraint yet — that is item 15.6 — and the
-    /// real-data probe showed what happens without this rule: a hanging rack
-    /// whose joint is ignored simply falls, and keeps falling out of the world.
-    /// Static is the honest answer until the joint can be honoured.
+    /// One placed reference's simulated body, or nil where the whole reference stays
+    /// static. A model whose simulated bodies are joined by constraints stays static:
+    /// without a solver, a hanging rack would fall out of the world.
     nonisolated private func dynamicPlacement(
         bodies: [NIFCollisionBody],
         placement: CellCollisionPlacement,
@@ -418,7 +400,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Places one decoded shape into the cell's shape list: its broadphase
     /// partitions through the cache, its world transform, and the MATT its
-    /// Havok material resolves to (issue #358). One logical shape stays one
+    /// Havok material resolves to. One logical shape stays one
     /// stats entry however many broadphase leaves it splits into.
     nonisolated private func place(
         shape: NIFCollisionShape,

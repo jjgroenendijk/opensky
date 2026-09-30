@@ -1,26 +1,8 @@
-// The 19.9 acceptance chain, end to end against the user's own install
-// (issue #472): a real enchanted weapon landing real hits and running down, and a
-// real Fortify One-Handed armour enchantment measurably changing a damage number.
-//
-// Read-only against the install and headless: it builds the same engine types the
-// app wires — the real `EnchantmentStore`, the real `ItemDefinitionStore` with its
-// `EITM` resolver, the real `ActiveEffectRuntime` — with no window and no renderer,
-// so what it proves is the chain rather than the panel. The panels are covered by
-// `ItemsSectionTests`, `InventoryEquipmentPanelTests` and `InventoryMenuPanelTests`;
-// this covers what those readouts print about.
-//
-// Neither half is pinned to a FormID it did not have to be. Both the weapon and
-// the armour are found by *searching* the load order — the weapon for a metered
-// contact enchantment whose effect this engine can actually carry out, the armour
-// for one whose effect moves One-Handed Modifier — so the chain keeps working when a
-// load order moves which item carries what. The one pinned FormID is UESP's
-// published charge row, asserted beside the searched weapon rather than instead of
-// it: that row's own enchantment is an Absorb effect, which is an archetype item
-// 19.6 counts rather than applies.
-//
-// It writes a summary into gitignored `logs/` so a pull request can link the run.
-// Counts, editor IDs and numbers only: no game bytes leave the machine
-// (AGENTS.md "Legal & IP boundary").
+// Enchantment acceptance against the user's install, headless: a real
+// enchanted weapon hits and runs down, and a Fortify One-Handed armour
+// enchantment changes a damage number. Both items are found by search, not
+// pinned FormID. The summary goes to gitignored `logs/`: counts, editor IDs,
+// and numbers only.
 
 import Foundation
 @testable import OpenSkyActors
@@ -87,14 +69,9 @@ struct EnchantmentAcceptanceRealDataTests {
             first { $0.isWorn && moves(actorValue, in: $0) }
         }
 
-        /// The first metered contact enchantment whose effect list this engine can
-        /// actually carry out on health.
-        ///
-        /// Searched rather than pinned, and the archetype filter is the point: the
-        /// weapon UESP's charge table happens to name carries an Absorb effect,
-        /// which is an archetype item 19.6 counts rather than applies. Picking a
-        /// weapon by hand would either pin that gap into the acceptance or pin a
-        /// FormID that a load order can move.
+        /// The first metered contact enchantment whose effects this engine applies to
+        /// health. Searched, because the weapon UESP names carries an Absorb effect,
+        /// which OpenSky counts but does not apply.
         func firstDamagingContactProfile() -> ItemEnchantmentProfile? {
             let health = ActorValueIdentity.storedIndices[.health] ?? 24
             return first { profile in
@@ -198,8 +175,7 @@ struct EnchantmentAcceptanceRealDataTests {
                 WeaponEnchantmentHit(
                     profile: weapon,
                     attacker: .player,
-                    target: target.key,
-                    position: .zero
+                    target: target.key
                 ),
                 owner: .player,
                 target: target,

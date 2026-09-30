@@ -22,7 +22,7 @@ final class FakeAudioProvider: AudioControlProviding {
     var stopAllCount = 0
     var audioStatsSnapshot = AudioStatsSnapshot.empty
 
-    /// Voice picker + playback bridges (item 17.5). `selectableVoiceFileNames`
+    /// Voice picker + playback bridges. `selectableVoiceFileNames`
     /// is what the fake offers; `voiceFileMatchCount` defaults to that count so
     /// a suite only sets it when it is testing the truncated-list wording.
     var voiceFileFilter = ""
@@ -53,10 +53,9 @@ final class FakeAudioProvider: AudioControlProviding {
     var stopMusicCount = 0
     var currentMusicDescription = "none"
     var currentMusicStateName = "exploration"
-    var currentMusicTrackName: String?
     var lastMusicError: String?
 
-    /// Footstep director bridges (issue #352), delegated to the shared fake so
+    /// Footstep director bridges, delegated to the shared fake so
     /// both panel fakes record the same way; the forwarding conformance lives
     /// in `FakeFootstepControls.swift`.
     let footsteps = FakeFootstepControls()

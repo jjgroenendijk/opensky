@@ -22,12 +22,10 @@ import OpenSkyWorldState
 /// executor (never the main thread), so it inherits the single-threaded
 /// confinement CellSceneBuilder / MeshLibrary / TextureLibrary require.
 nonisolated public protocol CellSceneProvider {
-    /// Throws `CellSceneError.cellNotFound` for a void grid slot; any other
-    /// throw is a build failure. Both are classified by the streamer.
-    ///
-    /// - Parameter state: the runtime world state to build against (issue
-    ///   #160). It is an immutable value captured on the main thread, which is
-    ///   the only way store state reaches this executor.
+    /// Throws `CellSceneError.cellNotFound` for a void grid slot; any other throw is
+    /// a build failure. The streamer classifies both.
+    /// - Parameter state: the runtime world state to build against, an immutable
+    ///   value captured on the main thread.
     func buildCell(at coordinate: CellCoordinate, state: WorldStateSnapshot) throws -> CellScene
 
     /// Drops the given cached assets (a departed cell's keys no resident cell
@@ -82,7 +80,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider, WeatherPr
     /// Footstep index (FSTS/FSTP/IPDS/IPCT); nil when the session was built
     /// without one, which is every synthetic scene.
     public var footstepStore: FootstepStore?
-    /// MATT index (issue #358); nil on a synthetic scene, and then the footstep
+    /// MATT index; nil on a synthetic scene, and then the footstep
     /// readout names a material by FormID.
     public var materialTypes: MaterialTypeIndex?
     /// Acoustic-space index (ASPC); nil when the plugin has no ASPC records.
@@ -98,65 +96,65 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider, WeatherPr
     public var locationStore: LocationStore?
     /// Topic, response and voice-type records for the dialogue runtime.
     public var dialogueStore: DialogueStore?
-    /// PACK records plus resolved NPC_ package lists (issue #201).
+    /// PACK records plus resolved NPC_ package lists.
     public var packageStore: PackageStore?
-    /// Item/container/leveled-list indexes (issue #177); nil when the session
+    /// Item/container/leveled-list indexes; nil when the session
     /// was built without them, which is every synthetic scene.
     public var inventoryBaselines: InventoryBaselineResolver?
-    /// Equippable-item slot index (issue #178); nil on the same synthetic
+    /// Equippable-item slot index; nil on the same synthetic
     /// scenes, and then equipping reports itself unavailable.
     public var equipmentCatalog: EquipmentCatalog?
-    /// RACE/CLAS/NPC_ stat indexes (issue #194); nil on the same synthetic
+    /// RACE/CLAS/NPC_ stat indexes; nil on the same synthetic
     /// scenes, and then actor values report themselves unavailable.
     public var actorValueBaselines: ActorValueBaselineResolver?
-    /// Load-order MGEF index (issue #469); nil on the same synthetic scenes,
+    /// Load-order MGEF index; nil on the same synthetic scenes,
     /// and then active effects report themselves unavailable.
     public var magicEffectStore: MagicEffectStore?
-    /// Plugin every magic item's EFID links are relative to (issue #469).
+    /// Plugin every magic item's EFID links are relative to.
     public var magicItemPluginName: String?
-    /// Load-order SPEL and SCRL index (issue #470); nil on the same synthetic
+    /// Load-order SPEL and SCRL index; nil on the same synthetic
     /// scenes, and then the spellbook reports itself unavailable.
     public var spellStore: SpellStore?
-    /// Load-order EQUP index (issue #470), which answers which hands a readied
+    /// Load-order EQUP index, which answers which hands a readied
     /// spell takes.
     public var equipSlotStore: EquipSlotStore?
-    /// Load-order ENCH index (issue #472); nil on the same synthetic scenes, and
+    /// Load-order ENCH index; nil on the same synthetic scenes, and
     /// then an enchanted item applies nothing and the readout says so.
     public var enchantmentStore: EnchantmentStore?
-    /// Load-order PERK index (issue #497); nil on the same synthetic scenes,
+    /// Load-order PERK index; nil on the same synthetic scenes,
     /// and then the perk runtime reports itself unavailable.
     public var perkStore: PerkStore?
-    /// Load-order FACT index (issue #501); nil on the same synthetic scenes,
+    /// Load-order FACT index; nil on the same synthetic scenes,
     /// and then every actor derives as neutral toward everyone.
     public var factionStore: FactionStore?
-    /// Load-order RELA and ASTP index (issue #502); nil on the same synthetic
+    /// Load-order RELA and ASTP index; nil on the same synthetic
     /// scenes, and then no pair overrides its factions.
     public var relationshipStore: RelationshipStore?
-    /// Load-order FLST index (issue #506); nil on the same synthetic scenes,
+    /// Load-order FLST index; nil on the same synthetic scenes,
     /// and then vendors trade without their keyword lists.
     public var formListStore: FormListStore?
-    /// Load-order AVIF index (issue #498); nil on the same synthetic scenes,
+    /// Load-order AVIF index; nil on the same synthetic scenes,
     /// and then skill advancement has no parameters and reports the drop.
     public var actorValueInformation: ActorValueInformationStore?
-    /// GMST-derived skill-use curve and per-rank character experience (issue
-    /// #498), defaulting to the documented numbers on a synthetic scene.
+    /// GMST-derived skill-use curve and per-rank character experience, defaulting to
+    /// the documented numbers on a synthetic scene.
     public var skillAdvancementSettings: SkillAdvancementSettings = .documentedDefaults
-    /// GMST-derived level curve and level-up rewards (issue #499), defaulting
+    /// GMST-derived level curve and level-up rewards, defaulting
     /// to the documented numbers on a synthetic scene.
     public var characterLevelSettings: CharacterLevelSettings = .documentedDefaults
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     public var movementConfiguration: PlayerMovementConfiguration = .synthetic
     /// GMST-derived `fBarterMin` and `fBarterMax` at the milestone's fixed
-    /// Speech value (issue #179), defaulting to the documented vanilla numbers.
+    /// Speech value, defaulting to the documented vanilla numbers.
     public var barterPricing: BarterPricing = .vanilla
-    /// GMST-derived combat distance and block factors (issue #195),
+    /// GMST-derived combat distance and block factors,
     /// defaulting to the documented vanilla numbers on a synthetic scene.
     public var combatSettings: CombatSettings = .synthetic
-    /// GMST-derived arrow tilt-up angles and visible-move distance (issue
-    /// #196), defaulting to the UESP-documented numbers on a synthetic scene.
+    /// GMST-derived arrow tilt-up angles and visible-move distance, defaulting to the
+    /// UESP-documented numbers on a synthetic scene.
     public var archerySettings: ArcherySettings = .synthetic
-    /// GMST-derived detection ranges, noise weights and thresholds (issue
-    /// #202), defaulting to the documented numbers on a synthetic scene.
+    /// GMST-derived detection ranges, noise weights, and thresholds, defaulting to
+    /// the documented numbers on a synthetic scene.
     public var detectionSettings: DetectionSettings = .synthetic
 
     /// Compiled-script source for the Papyrus world runtime; nil when the
@@ -289,21 +287,17 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider, WeatherPr
 nonisolated public struct CellBuildResult {
     public let coordinate: CellCoordinate
     public let result: Result<CellScene, any Error>
-    public let totalDurationMS: Double
 
     public init(
         coordinate: CellCoordinate,
-        result: Result<CellScene, any Error>,
-        totalDurationMS: Double = 0
+        result: Result<CellScene, any Error>
     ) {
         self.coordinate = coordinate
         self.result = result
-        self.totalDurationMS = totalDurationMS
     }
 }
 
 nonisolated public struct CellBuildMetric: Equatable, Sendable {
-    public let totalDurationMS: Double
     public let collisionDurationMS: Double
     public let collisionShapeCount: Int
     public let collisionTriangleCount: Int
@@ -428,18 +422,14 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
             lock.lock()
             buildCounts[coordinate, default: 0] += 1
             lock.unlock()
-            let started = DispatchTime.now().uptimeNanoseconds
             let result = Result { try provider.buildCell(at: coordinate, state: state) }
-            let duration = Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
             let entry = CellBuildResult(
                 coordinate: coordinate,
-                result: result,
-                totalDurationMS: duration
+                result: result
             )
             lock.lock()
             if case let .success(scene) = result {
                 buildMetrics[coordinate] = CellBuildMetric(
-                    totalDurationMS: duration,
                     collisionDurationMS: scene.staticCollision.buildDurationMS,
                     collisionShapeCount: scene.staticCollision.stats.shapeCount,
                     collisionTriangleCount: scene.staticCollision.stats.triangleCount,

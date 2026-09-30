@@ -1,14 +1,6 @@
-// The shop harness the crime acceptance runs against (issue #504, roadmap item
-// 21.5), split out of `CrimeRealDataTests.swift` when that type reached its
-// body-length cap.
-//
-// The split is along a real seam: the suite asks the questions, and this builds
-// the session those questions need — one real interior cell, the resolvers over
-// the real load order, and the take path wired the way
-// `GameViewControllerCrime` wires the session's.
-//
-// Read-only external input: nothing here is committed, cached into the repo or
-// copied into build output (AGENTS.md "Legal & IP boundary").
+// The shop session the crime acceptance runs against: one real interior cell,
+// resolvers over the real load order, and the take path wired as
+// `GameViewControllerCrime` wires it. Read-only external input.
 
 import Foundation
 import Metal
@@ -52,13 +44,9 @@ extension CrimeRealDataTests {
             let expectedBounty: Int32
         }
 
-        /// Every loose item in the cell that the reference index also knows
-        /// about, which is what a take can actually resolve.
-        ///
-        /// Walked from the entries rather than from `scene.interactions`,
-        /// because the interaction map is the wider of the two: it carries
-        /// references the cell listed and the index did not retain, and
-        /// `WorldItemRuntime.take` needs the entry.
+        /// Every loose item in the cell that the reference index knows, which is what
+        /// a take can resolve. `WorldItemRuntime.take` needs the entry, and
+        /// `scene.interactions` also holds references the index dropped.
         var takeables: [(entry: RuntimeReferenceEntry, interaction: PlacedInteraction)] {
             scene.references.sortedEntries().compactMap { entry in
                 guard
@@ -147,8 +135,8 @@ extension CrimeRealDataTests {
             Int64(definitions?.definition(item)?.value ?? 0)
         }
 
-        func crimeActor(_ key: ReferenceKey) -> CrimeActor {
-            CrimeActor(key: key)
+        func crimeActor(_: ReferenceKey) -> CrimeActor {
+            CrimeActor()
         }
     }
 

@@ -1,29 +1,9 @@
-// Runtime world-state visibility for the streamer (issue #160, roadmap item
-// 10.1.3). Split from CellStreamer.swift so exterior grid scheduling stays
-// readable.
-//
-// Two halves live here. The first is how a store mutation becomes a rebuild
-// request: `noteStateMutation(in:sequence:)` is called on the main thread right
-// after `WorldStateStore` journals a change, and records the sequence against
-// the cell the change was attributed to. The second is how a rebuild is
-// reconciled with builds that were already running when the change landed.
-//
-// Design, in one paragraph. Every dispatched build carries the snapshot
-// sequence it was built from on `CellScene.stateSequence`, and every mutation
-// raises `cellMutationSequence` for its cell. A resident scene is current
-// exactly while `stateSequence >= cellMutationSequence`. That single comparison
-// resolves the race where a mutation lands while a build for the same cell is
-// already in flight: the in-flight result is always integrated (so the cell is
-// drawn as soon as it can be, and the old scene is never left up longer than
-// necessary), and if it turns out to predate the mutation, a rebuild is queued
-// against a fresh snapshot. Because a rebuild reconstructs the whole cell from
-// plugin bytes plus the current snapshot, applying it twice is indistinguishable
-// from applying it once — there is no delta to double-apply and none to lose.
-//
-// Rebuilding whole cells is the intended v1: no per-instance patching, and the
-// per-frame budget is unchanged at one integration and one dispatch.
-//
-// Documented in docs/engine/runtime-state.md.
+// How a world-state mutation becomes a cell rebuild. Every build carries the
+// snapshot sequence it was built from, and every mutation raises its cell's
+// mutation sequence. A resident scene is current while `stateSequence >=
+// cellMutationSequence`. An in-flight build is always integrated; if it predates
+// a mutation, a rebuild is queued. A rebuild is a whole cell, so it is
+// idempotent. See docs/engine/runtime-state.md.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -32,16 +12,10 @@ import OpenSkyWorldState
 import simd
 
 extension CellStreamer {
-    /// Records a world-state mutation and schedules whatever has to be rebuilt
-    /// to make it visible. Call this on the main thread immediately after the
-    /// store journals the change.
-    ///
-    /// - Parameters:
-    ///   - location: the cell the mutation was attributed to, or nil when the
-    ///     store could not attribute it. An unattributed mutation is treated
-    ///     conservatively: every resident cell is rebuilt, because the streamer
-    ///     has no cheaper way to tell which one the reference lives in.
-    ///   - sequence: the journal sequence a snapshot taken now would carry.
+    /// Records a world-state mutation and schedules the rebuilds that make it
+    /// visible. Call it on the main thread right after the store journals it.
+    /// A nil `location` rebuilds every resident cell, because the streamer cannot
+    /// tell which one holds the reference.
     public func noteStateMutation(in location: CellSceneLocation?, sequence: UInt64) {
         switch location {
         case let .exterior(coordinate):
@@ -120,8 +94,7 @@ extension CellStreamer {
     /// Unloading is not a state change — state lives only in the store — so
     /// there is nothing to preserve here: a returning cell is rebuilt from
     /// plugin bytes plus the current snapshot, which reapplies the delta on
-    /// its own. Dropping the pending rebuild is therefore the cancellation
-    /// the issue asks for, with no ghost dispatch left behind.
+    /// its own. Dropping the pending rebuild leaves no ghost dispatch.
     public func pruneRebuildState() {
         let accounted = core.accountedCells
         rebuildRequests.removeAll { !accounted.contains($0) }
@@ -130,17 +103,10 @@ extension CellStreamer {
 
     // MARK: - Interior rebuilds
 
-    /// Rebuilds the interior currently owning the view when a mutation has
-    /// outrun it.
-    ///
-    /// There is no provider entry point that builds an interior cell on its
-    /// own: an interior only ever arrives as the destination of a door
-    /// transition, so the rebuild re-runs that same transition against a fresh
-    /// snapshot. That is the simplest mechanism that is correct, and it reuses
-    /// the existing path rather than adding a second one. The one adjustment
-    /// is that `apply(transition:sourceDoor:isRebuild:)` passes no camera for a
-    /// rebuild, so the swap leaves the player exactly where they are standing
-    /// instead of teleporting them back to the door.
+    /// Rebuilds the current interior when a mutation has outrun it. An interior
+    /// only arrives through a door transition, so this re-runs that transition
+    /// against a fresh snapshot. A rebuild passes no camera, so the player stays
+    /// where they stand.
     public func dispatchInteriorRebuildIfNeeded() {
         guard transitionInFlight == nil, let scene = interiorScene, let door = interiorSourceDoor
         else { return }
@@ -162,8 +128,8 @@ extension CellStreamer {
         core.rebuilding.count
     }
 
-    /// Runtime references retained by the scenes currently owning the view
-    /// (issue #162). An interior owns the view alone when one is loaded, which
+    /// Runtime references retained by the scenes currently owning the view.
+    /// An interior owns the view alone when one is loaded, which
     /// is the same precedence `referenceEntry(key:)` uses, so a lookup that
     /// succeeds is always counted here.
     public var residentReferenceCount: Int {
@@ -173,13 +139,8 @@ extension CellStreamer {
         return composition.cells.values.reduce(0) { $0 + $1.references.count }
     }
 
-    /// The world state the next dispatched build would run against.
-    public var currentStateSnapshot: WorldStateSnapshot {
-        stateSource()
-    }
-
     /// The cell the player is currently in, which is where anything they spawn
-    /// belongs (issue #177). An interior owns the view alone when one is
+    /// belongs. An interior owns the view alone when one is
     /// loaded, matching the precedence every other lookup here uses;
     /// otherwise it is the exterior grid center. Nil only before the first
     /// cell has streamed in, when there is nowhere to put anything.

@@ -1,39 +1,13 @@
-// Joint geometry (issue #197, roadmap item 15.6): turning a joint definition
-// and two live bodies into the anchors and angular violations the solver acts
-// on. Split from `RagdollConstraintSolver` so the impulse arithmetic and the
-// angle measurements can be read — and tested — apart from each other.
-//
-// ## What the angles mean, and how confident that is
-//
-// `bhkRagdollConstraint` stores a cone maximum, a plane minimum and maximum, and
-// a twist minimum and maximum, per docs/formats/nif-collision.md. What Havok
-// does with those five numbers is not published, so the reading below is stated
-// rather than assumed, and it is the reading the vanilla numbers are consistent
-// with:
-//
-//  * **Cone** bounds the angle between the two bodies' twist axes. This one is
-//    unambiguous — it is what a cone limit means and what the field is named
-//    after.
-//  * **Plane** bounds the same twist axis's deviation *out of* body A's plane,
-//    signed, which is why it stores a minimum and a maximum where the cone
-//    stores only a maximum. Together the cone and the plane make the
-//    asymmetric, non-circular limit a shoulder needs.
-//  * **Twist** bounds the roll of body B about the shared twist axis, measured
-//    between the two plane normals.
-//
-// The uncertainty is real and is recorded in docs/engine/ragdoll-solver.md: the cone
-// and twist readings are firm, the plane reading is the one that could be
-// something else. It is bounded, though — every reading of these fields
-// produces a limit that is *at least* as tight as no limit at all, so a wrong
-// one makes a shoulder stiff or loose, never unstable.
-//
-// Documented in docs/engine/ragdoll-solver.md.
+// Joint geometry: a joint definition and two live bodies become anchors and
+// angular violations. Cone bounds the angle between twist axes; plane bounds
+// the signed tilt out of body A's plane; twist bounds B's roll. The plane
+// reading is the uncertain one, but any reading only makes a joint stiffer or
+// looser. See docs/engine/ragdoll-solver.md.
 
 import simd
 
 /// One body's end of a joint, in world space at the current pose.
 nonisolated public struct RagdollWorldFrame: Sendable {
-    public let pivot: SIMD3<Float>
     public let primaryAxis: SIMD3<Float>
     public let secondaryAxis: SIMD3<Float>
 }
@@ -152,24 +126,10 @@ nonisolated public struct RagdollJointLimitPass: Sendable {
         return satisfied
     }
 
-    /// The roll about the shared axis, bounded on both sides. A ragdoll cone's
-    /// twist limit and a limited hinge's own angle are the same measurement.
-    ///
-    /// The angle runs from **B's** reference axis to **A's**, which is the one
-    /// detail here that was settled by measurement rather than by reasoning.
-    /// Read at the vanilla humanoid's bind pose, this direction puts all four
-    /// hinge kinds the skeleton carries inside their authored ranges — knee
-    /// -0.054 in [-1.920, 0], ankle -0.498 in [-0.596, 0.063], elbow +0.019 in
-    /// [0, 1.920], wrist -0.060 in [-0.087, 0.349]. The opposite direction puts
-    /// three of the four outside, the ankle by 0.44 radians, which would have a
-    /// standing skeleton fighting its own ankle limit before anything moved.
-    /// The vanilla cones all carry symmetric twist ranges, so they cannot tell
-    /// the two directions apart and follow the hinges for consistency.
-    ///
-    /// Because the angle is A-relative-to-B, the axis the solver is handed is
-    /// negated: its contract is that `dot(angularVelocityB - angularVelocityA,
-    /// axis)` is the rate the violation grows at, and rotating A is what grows
-    /// this one.
+    /// The roll about the shared axis, bounded on both sides. It runs from B's axis to
+    /// A's: measured at the vanilla bind pose, this puts all four hinge kinds inside
+    /// their ranges, and the reverse puts three outside. So the solver axis is
+    /// negated: `dot(angularVelocityB - angularVelocityA, axis)` is the growth rate.
     private static func twist(
         _ frames: (a: RagdollWorldFrame, b: RagdollWorldFrame),
         minAngle: Float,
@@ -233,7 +193,6 @@ nonisolated extension RagdollJointDefinition {
 nonisolated extension RagdollJointFrame {
     public func world(in body: DynamicBody) -> RagdollWorldFrame {
         RagdollWorldFrame(
-            pivot: body.position + body.orientation.act(pivot),
             primaryAxis: body.orientation.act(primaryAxis),
             secondaryAxis: body.orientation.act(secondaryAxis)
         )

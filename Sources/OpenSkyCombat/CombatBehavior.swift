@@ -1,22 +1,7 @@
-// The vocabulary one combat behavior machine speaks (issue #424, roadmap item
-// 16.7): where an actor is in a fight, what it was told about the world this
-// step, and what it asks the world for.
-//
-// Split from the machine itself so the values a caller passes and reads are
-// legible without the state transitions between them, and so the panel readout
-// and the condition seam can name a phase without importing the decision layer.
-//
-// ## Why one phase enum rather than a stance and an attack timer
-//
-// The dev target had a four-phase attack clock and nothing else, because it had
-// nothing else to be doing. A mind is either closing, waiting, guarding,
-// swinging, reeling, running or looking, and those are mutually exclusive: an
-// actor cannot be fleeing and winding up at once. Spelling them as one enum is
-// what makes "which of these is it in" a single readable answer in the panel, in
-// a test assertion and in `GetCombatState` — and what makes an illegal
-// combination unrepresentable rather than merely unlikely.
-//
-// Documented in docs/engine/combat-behavior.md.
+// The vocabulary of a combat behavior machine: the actor's phase in a fight,
+// what it was told this step, and what it asks for. One phase enum, because the
+// states exclude each other, so an illegal mix cannot be written.
+// See docs/engine/combat-behavior.md.
 
 import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface
@@ -35,12 +20,8 @@ nonisolated public enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIt
     case blocking
     /// Winding up. The attack clip is playing and nothing has connected.
     case windup
-    /// Casting: a spell is charging in the actor's hand and, for a maintained
-    /// one, being held (issue #473, roadmap item 19.10). Its own phase rather
-    /// than a flag on `windup` because the two are timed by different things —
-    /// a swing by this layer's own cadence, a cast by the SPIT charge time the
-    /// record states — and because an actor cannot be swinging and casting at
-    /// once, which is exactly what this enum exists to make unrepresentable.
+    /// Casting: a spell is charging or being held. Its own phase, because a cast is
+    /// timed by the SPIT charge time, and an actor cannot swing and cast at once.
     case casting
     /// The contact step. Exactly one step long, which is what makes a hit land
     /// once rather than once per frame of the swing.
@@ -79,13 +60,8 @@ nonisolated public enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIt
     }
 }
 
-/// What one observer currently makes of its target, as the combat layer needs
-/// it.
-///
-/// A projection of 16.6's `DetectionPairState` rather than the state itself:
-/// the combat machine needs the level read as a state and the position to walk
-/// to, and handing it the whole pair state would let it act on a raw detection
-/// level the perception pass owns the meaning of.
+/// What one observer makes of its target, as the combat layer needs it: a
+/// projection of `DetectionPairState`, not the raw detection level.
 nonisolated public struct CombatAwareness: Equatable, Sendable {
     /// How aware the observer is.
     public var state: DetectionState
@@ -113,13 +89,8 @@ nonisolated public struct CombatAwareness: Equatable, Sendable {
     }
 }
 
-/// One spell an actor could cast this step, as the decision layer needs it.
-///
-/// Resolved by the session rather than by the machine, for the reason
-/// `CombatAwareness` is a projection rather than the detection state itself: the
-/// numbers below come from SPIT and from the load order's own aimed-cast
-/// ceiling, and a decision layer that read records could disagree with the cast
-/// loop about what a spell costs.
+/// One spell an actor could cast this step. Resolved by the session, so the
+/// decision layer and the cast loop agree on cost.
 nonisolated public struct CombatSpellOption: Equatable, Sendable {
     /// The SPEL this option casts.
     public let spell: ReferenceKey
@@ -191,7 +162,7 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
     /// True when a script called `StartCombat`, which engages the actor without
     /// waiting for it to perceive anything and keeps it engaged while it cannot.
     public var isForced: Bool
-    /// What the actor could cast and what it can pay for (issue #473).
+    /// What the actor could cast and what it can pay for.
     public var casting: CombatCastingProfile
 
     public init(
@@ -227,7 +198,7 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
 
 /// Where the machine wants the actor to be, handed to 16.4 movement.
 ///
-/// Positions rather than directions, because `MoveToPointControl` takes a point
+/// Positions rather than directions, because the NPC mover takes a point
 /// and paths to it: a direction would need a second authority to turn it into
 /// somewhere the navmesh actually reaches.
 nonisolated public enum CombatMovementCommand: Equatable, Sendable {
@@ -281,7 +252,4 @@ nonisolated public struct CombatBehaviorStep: Equatable, Sendable {
     /// Where the actor should be heading, or nil when this step asked for no
     /// change in movement.
     public var command: CombatMovementCommand?
-
-    /// The step a machine that did nothing reports.
-    public static let idle = CombatBehaviorStep()
 }

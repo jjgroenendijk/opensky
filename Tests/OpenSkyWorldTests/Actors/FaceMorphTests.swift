@@ -67,8 +67,7 @@ struct FaceMorphTests {
             actor: FormID(0x1234),
             bindings: [:],
             pairedPaths: [],
-            misses: [],
-            worldBounds: nil
+            misses: []
         )
 
         #expect(!playback.setWeight(1, for: "Missing"))

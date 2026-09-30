@@ -1,4 +1,4 @@
-// Deterministic A* over resident navmesh triangles (issue #200). The open
+// Deterministic A* over resident navmesh triangles. The open
 // heap and score maps retain capacity across queries. A shared-edge step costs
 // centroid -> edge midpoint -> next centroid; the heuristic is straight-line
 // centroid distance, or zero when a resident teleport can make world-space
@@ -287,14 +287,13 @@ nonisolated extension RuntimeNavigationGraph {
                 portal: .edge(edgeVertices.0, edgeVertices.1)
             ))
         }
-        appendDoorTransitions(from: node, mesh: mesh, triangle: triangle, into: &result)
+        appendDoorTransitions(from: node, mesh: mesh, into: &result)
         result.sort(by: Self.transitionPrecedes)
     }
 
     private func appendDoorTransitions(
         from node: NavigationTriangleID,
         mesh: RuntimeNavigationMesh,
-        triangle: RuntimeNavigationTriangle,
         into result: inout [NavigationTransition]
     ) {
         for reference in mesh.doorLinksByTriangle[node.triangle] ?? [] {
@@ -304,7 +303,7 @@ nonisolated extension RuntimeNavigationGraph {
                 let targetDoor = door(destination)
             else { continue }
             for target in triangles(atDoor: destination) {
-                guard target != node, let targetTriangle = self.triangle(target) else { continue }
+                guard target != node, let targetTriangle = triangle(target) else { continue }
                 guard
                     !targetTriangle.isDegenerate,
                     !targetTriangle.flags.contains(.deleted)

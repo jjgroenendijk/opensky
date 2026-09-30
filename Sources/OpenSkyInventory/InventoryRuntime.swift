@@ -1,26 +1,8 @@
-// Inventory accounting (issue #176, roadmap item 12.1.2): the mutation API
-// above `WorldStateStore` and the arithmetic — carry weight and gold — that
-// reads item definitions.
-//
-// A thin layer beside the store rather than methods on it. The store is the
-// generic substrate that knows about keys, components, journalling and
-// snapshots and deliberately knows nothing about records; inventory needs
-// `ItemDefinitionStore` for weights and `InventoryBaselineResolver` for
-// baselines, neither of which belongs inside it. Everything here writes through
-// `WorldStateStore.set(_:for:in:)`, so every mutation lands in the journal, in
-// the dirty counts and in the save exactly like a script's `Disable()` does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the store it writes to is.
-//
-// Conservation: `transfer` computes both resulting inventories before writing
-// either, so a transfer that cannot complete writes nothing at all and the
-// total count across the two owners is unchanged. A failed `remove` leaves the
-// store untouched for the same reason — the arithmetic happens on the value
-// type first (`ReferenceInventoryState.removing`), and the store only ever sees
-// a state that already succeeded.
-//
-// Documented in docs/engine/inventory-state.md.
+// Inventory accounting: the mutation API above `WorldStateStore`, plus carry
+// weight and gold from item definitions. Every write goes through
+// `WorldStateStore.set(_:for:in:)`. The arithmetic runs on the value type first,
+// so a failed transfer or remove writes nothing.
+// See docs/engine/inventory-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -72,18 +54,13 @@ public struct InventoryRuntime: InventoryAccess {
         inventory(of: holder).count(of: item)
     }
 
-    /// How many stolen copies of `item` `holder` holds (issue #504).
+    /// How many stolen copies of `item` `holder` holds.
     public func stolenCount(of item: FormID, in holder: InventoryHolder) -> Int32 {
         inventory(of: holder).stolenCount(of: item)
     }
 
-    /// Total weight `holder` carries, from #175's per-item weights.
-    ///
-    /// An item no loaded plugin index describes contributes nothing, which is
-    /// the only safe answer: guessing a weight for an unknown form would put a
-    /// number the data never authored into an encumbrance check. Weight is
-    /// summed in `Double` and returned as `Float` so a large stack does not
-    /// accumulate rounding error one addition at a time.
+    /// Total weight `holder` carries. An unknown item adds nothing. Summed in
+    /// `Double` to avoid rounding error on large stacks.
     public func carriedWeight(of holder: InventoryHolder) -> Float {
         let inventory = inventory(of: holder)
         let total = inventory.stacks.reduce(0.0) { running, stack in
@@ -93,8 +70,7 @@ public struct InventoryRuntime: InventoryAccess {
         return Float(total)
     }
 
-    /// Total gold value of everything `holder` carries, before any barter
-    /// adjustment. Merchant pricing is issue #179.
+    /// Total gold value of everything `holder` carries, before barter adjustment.
     public func carriedValue(of holder: InventoryHolder) -> Int64 {
         inventory(of: holder).stacks.reduce(0) { running, stack in
             let value = baselines.items.definition(stack.item)?.value ?? 0
@@ -109,12 +85,8 @@ public struct InventoryRuntime: InventoryAccess {
 
     // MARK: - Mutating
 
-    /// Gives `holder` `count` more of `item`.
-    ///
-    /// The first mutation materializes the baseline into the component, so a
-    /// container whose CNTO list holds three lockpicks and gains one ends up
-    /// with a component holding four rather than a delta holding one.
-    ///
+    /// Gives `holder` `count` more of `item`. The first write stores the whole
+    /// baseline, so three lockpicks plus one stores four.
     /// - Returns: the inventory as stored afterwards.
     /// - Throws: `InventoryError.nonPositiveCount`, `InventoryError.countOverflow`.
     @discardableResult
@@ -130,27 +102,8 @@ public struct InventoryRuntime: InventoryAccess {
         return updated
     }
 
-    /// Re-marks `count` of `item` in `holder`'s inventory as stolen (issue
-    /// #504), for goods that were already in hand when their standing changed —
-    /// which is what taking out of an owned container is.
-    ///
-    /// - Returns: true when the stored state changed.
-    @discardableResult
-    public func markStolen(_ item: FormID, count: Int32, in holder: InventoryHolder) -> Bool {
-        store.set(
-            inventory(of: holder).markingStolen(item, count: count),
-            for: holder.key,
-            in: holder.cell
-        )
-    }
-
-    /// Takes `count` of `item` away from `holder`.
-    ///
-    /// Removing more than the owner holds is `InventoryError.insufficientCount`
-    /// and writes nothing. It is deliberately not clamped: a caller that meant
-    /// "take everything" can ask how much there is first, and one that did not
-    /// mean it has a bug worth surfacing.
-    ///
+    /// Takes `count` of `item` away from `holder`. Removing more than held is
+    /// `InventoryError.insufficientCount` and writes nothing; it is not clamped.
     /// - Returns: the inventory as stored afterwards.
     /// - Throws: `InventoryError.nonPositiveCount`, `InventoryError.insufficientCount`.
     @discardableResult
@@ -162,21 +115,10 @@ public struct InventoryRuntime: InventoryAccess {
         return updated
     }
 
-    /// Moves `count` of `item` from one owner to another.
-    ///
-    /// Both resulting inventories are computed before either is written, so the
-    /// operation is all-or-nothing and the total count across the two owners is
-    /// conserved. Two journal entries come out of it, one per owner, in source-
-    /// then-destination order.
-    ///
-    /// - Throws: `InventoryError.sameHolder` when source and destination are
-    ///   one owner, plus everything `add` and `remove` throw.
-    /// A movement carries its stolen split with it: hot goods stay hot on the
-    /// other side of the transfer, which is what "the item is considered
-    /// stolen" as long as the marker is present means
-    /// (<https://en.uesp.net/wiki/Skyrim:Crime>). `markingStolen` marks the
-    /// whole movement stolen on arrival instead, which is what taking out of a
-    /// container somebody else owns does (issue #504).
+    /// Moves `count` of `item` from one owner to another, all or nothing, with two
+    /// journal entries. The stolen split moves with the items; `markingStolen` marks
+    /// all of it stolen, as taking from someone else's container does.
+    /// - Throws: `InventoryError.sameHolder`, plus everything `add` and `remove` throw.
     public func transfer(
         _ item: FormID,
         count: Int32,
@@ -198,27 +140,11 @@ public struct InventoryRuntime: InventoryAccess {
         store.set(given, for: destination.key, in: destination.cell)
     }
 
-    /// Moves items in both directions at once: `first` gives `given` to
-    /// `second` and receives `taken` back.
-    ///
-    /// This is what a barter transaction is — an item one way and gold the
-    /// other — and it exists here rather than as two `transfer` calls because
-    /// two calls are not one operation. Both owners' final inventories are
-    /// computed with both movements applied before either is written, so a sale
-    /// the merchant cannot pay for leaves the item with the player rather than
-    /// handing it over and then failing to pay. Item counts and gold are
-    /// therefore conserved across the pair the same way `transfer` conserves one
-    /// movement.
-    ///
-    /// A leg whose amount is zero is skipped rather than rejected: a free item
-    /// and a worthless one are both ordinary trades, and refusing them would
-    /// make a zero-value item untradeable.
-    ///
-    /// `laundering` makes both legs arrive honest, whatever they left as —
-    /// what a sale to a fence and a purchase from a vendor do (issue #506).
-    ///
-    /// - Throws: `InventoryError.sameHolder`, plus everything the inventory
-    ///   arithmetic throws. Nothing is written on any failure.
+    /// Moves items both ways at once: `first` gives `given` and receives `taken`, as
+    /// a barter does. Both results are computed before either write, so a sale the
+    /// merchant cannot pay for writes nothing. A zero leg is skipped. `laundering`
+    /// makes both legs arrive honest, as a fence or vendor does.
+    /// - Throws: `InventoryError.sameHolder`, plus the inventory arithmetic errors.
     public func exchange(
         giving given: (item: FormID, amount: Int32),
         taking taken: (item: FormID, amount: Int32),
@@ -231,9 +157,8 @@ public struct InventoryRuntime: InventoryAccess {
         }
         var giver = inventory(of: first)
         var receiver = inventory(of: second)
-        // Each leg carries its own stolen split, so selling hot goods hands the
-        // merchant hot goods and the gold that comes back is honest — the
-        // difference issue #506's fence rules read (issue #504).
+        // Each leg carries its own stolen split: hot goods stay hot, and the gold that
+        // comes back is honest.
         if given.amount > 0 {
             let split = laundering
                 ? StolenSplit(clean: given.amount, stolen: 0)
@@ -252,10 +177,8 @@ public struct InventoryRuntime: InventoryAccess {
         store.set(receiver, for: second.key, in: second.cell)
     }
 
-    /// Moves every stolen copy `source` holds into `destination`, still
-    /// stolen — what an arrest does with the player's hot goods (issue #505).
-    /// All-or-nothing like `transfer`.
-    ///
+    /// Moves every stolen copy `source` holds into `destination`, still stolen, as
+    /// an arrest does. All or nothing.
     /// - Returns: the stacks that moved, empty when nothing was stolen.
     /// - Throws: `InventoryError.sameHolder`, `InventoryError.countOverflow`.
     @discardableResult
@@ -281,9 +204,8 @@ public struct InventoryRuntime: InventoryAccess {
 
     // MARK: - Equipped set
 
-    /// Marks `item` equipped on `holder`. Storage only — slot conflicts and
-    /// ARMA arbitration are issue #178.
-    ///
+    /// Marks `item` equipped on `holder`. Storage only; `EquipmentRuntime` handles
+    /// slot conflicts.
     /// - Returns: true when the stored state changed.
     @discardableResult
     public func equip(_ item: FormID, on holder: InventoryHolder) -> Bool {

@@ -1,23 +1,8 @@
-// The world a fighting caster runs over (issue #473, roadmap item 19.10): one
-// NPC, one player, one spellbook, one cast loop and one effect runtime, with no
-// renderer and no window.
-//
-// Everything the app's own casting bridge does, done here over synthetic
-// records: an actor's known spells become combat options, a chosen option is
-// readied and begun through `CasterRuntime`, the charge is advanced on the same
-// delta the fight is stepped with, and a released cast delivers through the
-// 19.8 path into a real `ActiveEffectRuntime`. That is what makes
-// `CombatLoopCastingTests` an assertion about the pipeline rather than about a
-// fake that agreed with it.
-//
-// In `openskyTestSupport` because both test bundles drive it: the synthetic
-// suite hands it `SpellbookFixture`'s records, and the real-data suite hands it
-// the install's own stores and a pinned vanilla caster's spell list. The two
-// then assert the same pipeline over different records rather than over two
-// harnesses that could drift apart.
-//
-// The synthetic records are built in code (`SpellbookFixture`) — never extracted
-// game files (AGENTS.md "Legal & IP boundary").
+// The world a fighting caster runs in: one NPC, one player, a spellbook, a
+// cast loop, and a real `ActiveEffectRuntime`, headless. It does what the
+// app's casting bridge does, so `CombatLoopCastingTests` tests the pipeline.
+// Both test bundles use it: synthetic `SpellbookFixture` records, or the
+// install's stores. Nothing here is extracted game data.
 
 import Foundation
 @testable import OpenSkyActors
@@ -301,14 +286,8 @@ extension CombatCastingChain: CasterWorld {
         ).count
     }
 
-    /// Lands what the cast fired, at the target it was aimed at.
-    ///
-    /// The flight itself is not integrated here and does not need to be:
-    /// `ProjectileSpellTests` owns the PROJ-driven trajectory and the impact
-    /// query over the same `ProjectileRuntime` an arrow flies through, and what
-    /// this chain is about is whether a fighting NPC's decision produces a
-    /// payload that damages who it was aimed at. Both the launch and the
-    /// landing are recorded, so a case can assert on either.
+    /// Lands what the cast fired at its target. The flight is not simulated:
+    /// `ProjectileSpellTests` covers it. Launch and landing are both recorded.
     @discardableResult
     public func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
         firedProjectiles.append(payload)
@@ -321,7 +300,7 @@ extension CombatCastingChain: CasterWorld {
             excluding: payload.caster
         )
         guard !targets.isEmpty else { return true }
-        applySpellHit(SpellHit(payload: payload, position: aim.position, targets: targets))
+        applySpellHit(SpellHit(payload: payload, targets: targets))
         return true
     }
 

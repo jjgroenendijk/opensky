@@ -3,7 +3,6 @@ import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
-import OpenSkyPhysics
 import simd
 
 /// Applying one landed spell to the actors it reached.
@@ -92,11 +91,8 @@ public enum SpellHitApplication {
         )
     }
 
-    /// The same scaling without a `SpellPayload` in hand.
-    ///
-    /// A weapon enchantment's contact effects pay the same resistances a landed
-    /// spell's do and are not a payload (issue #472), so the two meet here rather
-    /// than in a second copy of the formula.
+    /// The same scaling without a `SpellPayload`. A weapon enchantment's contact
+    /// effects pay the same resistances.
     public static func scale(
         _ entries: [MagicItemEffect],
         fromPlugin pluginName: String,
@@ -125,7 +121,6 @@ public enum SpellHitApplication {
             )
             adjustments.append(SpellMagnitudeAdjustment(
                 target: holder.key,
-                effect: entry.effect,
                 name: resolved.displayName,
                 resistance: element,
                 baseMagnitude: entry.magnitude,

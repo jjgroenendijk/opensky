@@ -1,49 +1,9 @@
-// Archetype dispatch (issue #469, roadmap item 19.6): turning one decoded MGEF
-// plus the EFIT numbers beside it into what the runtime should actually do.
-//
-// A pure function over decoded records, deliberately separate from
-// `ActiveEffectRuntime`: everything here is testable with no store, no actor
-// and no world, and the runtime below it never has to reason about a flag bit.
-//
-// ## The archetypes this item implements, and their cited semantics
-//
-// From the Creation Kit wiki's Magic Effect page, Effect Archetypes table
-// (<https://ck.uesp.net/wiki/Magic_Effect>, read through the Wayback Machine —
-// see docs/tools/environment.md on why the live host is unreachable):
-//
-//   Value Modifier — "1. The value to modify. ... Modifies the Actor Value by
-//   <MAG>."
-//   Dual Value Modifier — "1: The first value 2: The second value ... Modifies
-//   both Actor Values. The first value is modified by <MAG>, the second value
-//   is modified by <MAG> * AV Weight."
-//   Peak Value Modifier — "1: The value to modify. 2: A keyword for effects it
-//   does not stack with. If there are two PVMs with the same keyword active at
-//   the same time, the one with the lower <mag> will be dispelled
-//   automatically?"
-//
-// The question mark is the wiki's own; the rule is implemented as written and
-// the uncertainty is recorded in docs/engine/magic.md rather than hidden.
-//
-// Every other archetype applies nothing and is counted, so the unimplemented
-// ground is measured rather than silent.
-//
-// ## Which actor value, and which direction
-//
-// UESP's MGEF DATA table names `44:PrimaryAV` and `58:SecondAV` as actor-value
-// indices with -1 for none
-// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF>), which the
-// decoder calls `relatedActorValue` and `secondActorValue`. Direction is the
-// Detrimental flag: "This Effect is applied as a negative value (damage) to the
-// specified Actor Value."
-//
-// ## Why the No Magnitude / No Duration flags are ignored here
-//
-// The same Creation Kit page states it outright: "No Magnitude, No Area and No
-// Duration do not actually affect the inner workings of the effect, checking
-// them just makes it so these parameters will be unavailable when you assign
-// the effect". The EFIT numbers are therefore taken as authored.
-//
-// Documented in docs/engine/magic.md.
+// Archetype dispatch: one decoded MGEF plus its EFIT numbers becomes what the
+// runtime does. Pure. Value Modifier, Dual Value Modifier, and Peak Value
+// Modifier follow <https://ck.uesp.net/wiki/Magic_Effect>; every other archetype
+// is counted. The Detrimental flag sets direction. No Magnitude and No Duration
+// are ignored, as the wiki says they change only the editor.
+// See docs/engine/magic.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -54,7 +14,6 @@ import OpenSkyMagicInterface
 nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     /// The MGEF being applied.
     public let effect: ReferenceKey
-    public let archetype: MagicEffectArchetype
     /// Which of the two documented timed behaviours applies. Meaningless for an
     /// instant application, which is applied once and stored nowhere.
     public let mode: ActiveEffectMode
@@ -70,11 +29,8 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     /// dispelled."
     public let refusesRecast: Bool
 
-    /// Whether the effect applies once rather than persisting.
-    ///
-    /// A constant effect also carries a duration of zero and is the opposite of
-    /// instant: it persists until the item that granted it comes off, so the
-    /// mode is asked before the number (issue #472).
+    /// Whether the effect applies once rather than persisting. A constant effect also
+    /// has zero duration but persists, so the mode is checked first.
     public var isInstant: Bool {
         mode != .constant && duration <= 0
     }
@@ -107,19 +63,10 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         .valueModifier, .dualValueModifier, .peakValueModifier
     ]
 
-    /// Plans one effect entry.
-    ///
-    /// - Parameters:
-    ///   - effect: the resolved MGEF, whose `sourcePlugin` the keyword link is
-    ///     relative to.
-    ///   - entry: the EFID/EFIT/CTDA entry that named it.
-    ///   - isConstant: whether the record that carries the entry is a constant
-    ///     effect — a worn item's enchantment (issue #472). Such an entry owns
-    ///     its modifier slot until the item comes off, so its authored duration
-    ///     of zero must not be read as "apply once".
-    ///   - resolveKeyword: turns the MGEF's associated-item link into a key.
-    ///     Supplied by the runtime, which owns the load order; a planner that
-    ///     resolved links itself would need a store and stop being pure.
+    /// Plans one EFID/EFIT/CTDA `entry` of the resolved MGEF `effect`.
+    /// `isConstant` marks a worn enchantment, whose zero duration means "while
+    /// worn". `resolveKeyword` turns the plugin-relative keyword link into a key,
+    /// so the planner stays pure.
     public static func plan(
         effect: ResolvedMagicEffect,
         entry: MagicItemEffect,
@@ -142,14 +89,11 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         case let .failure(reason):
             return .skip(reason)
         case let .success(values):
-            // A timed Recover effect on health, magicka or stamina applies like
-            // any other held modifier (issue #511): since item 20.3 a primary's
-            // temporary slot moves its maximum and carries the current value
-            // along, which is the Creation Kit's "changes both the maximum and
-            // the current value". Expiry's floor is `ActiveEffectRuntime.release`.
+            // A timed Recover effect on health, magicka, or stamina applies like any held
+            // modifier: a primary's temporary slot moves its maximum and the current value.
+            // Expiry's floor is `ActiveEffectRuntime.release`.
             return .apply(MagicEffectApplication(
                 effect: ReferenceKey(resolved: effect.id),
-                archetype: data.archetype,
                 mode: mode,
                 isDetrimental: data.flags.contains(.detrimental),
                 duration: duration,

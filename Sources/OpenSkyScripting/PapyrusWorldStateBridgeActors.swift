@@ -1,38 +1,13 @@
-// `PapyrusWorldActorBridge` conformance (issues #375 and #424, roadmap items
-// 15.8 and 16.7): where the `Actor` natives meet 15.3's actor values, 15.6's
-// death latch and 16.7's fights.
-//
-// Split out of `PapyrusWorldStateBridge.swift` for the reason the quest half is
-// split out: that file is already at its size shape, and a reader chasing "what
-// does `DamageActorValue` really do" should land on one screen that says so.
-//
-// ## Nothing here writes around the subsystems that own the state
-//
-// Values go through `ActorValueRuntime`, so the clamp, the journal, the dirty
-// counts and the save see a script's damage exactly as they see a sword's.
-// Deaths go through `RagdollRuntime.noteZeroHealth(of:killer:)`, so a scripted
-// kill raises the same census-named graph events, spawns the same ragdoll and
-// fires the same `OnDeath` as a fatal blow. `StartCombat` and `StopCombat` go
-// through `CombatLoopRuntime`, so a script's fight is the same fight the player
-// can walk into: it writes hostility through the world-state store, engages the
-// same behavior machine, and ends by handing the actor back to its package.
-//
-// ## Why the collaborators are closures
-//
-// The actor-value runtime and the ragdoll runtime are built by their own
-// wiring steps, and the order those steps run in is the controller's business
-// rather than this bridge's. Holding a closure instead of a reference means the
-// bridge is correct whichever order the session wires, and means a test can
-// supply one subsystem without standing up the other.
-//
-// Documented in docs/engine/papyrus-actor-natives.md.
+// `PapyrusWorldActorBridge` conformance. Values go through `ActorValueRuntime`,
+// deaths through `RagdollRuntime.noteZeroHealth(of:killer:)`, and fights through
+// `CombatLoopRuntime`, like the player's. Collaborators are closures, so wiring
+// order does not matter. See docs/engine/papyrus-actor-natives.md.
 
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -49,11 +24,9 @@ extension PapyrusWorldStateBridge {
             maximums: values.maximums(of: holder),
             isDead: worldState.component(ActorDeathState.self, for: key)?.isDead ?? false,
             isInCombat: isActorInCombat(key),
-            combatActivity: combatRuntime?()?.activity(of: key) ?? .notFighting,
             weaponDrawState: weaponDrawState?(key),
             general: values.resolvedEntries(of: holder),
             generalBaseline: baseline.basesByIndex,
-            isPlayer: key == playerKey,
             level: baseline.level
         )
     }
@@ -183,18 +156,10 @@ extension PapyrusWorldStateBridge {
 
     // MARK: - Private
 
-    /// Whether `key` is actually in a fight, which is its 16.7 behavior phase
-    /// rather than its stored hostility: an actor that hates the player but has
-    /// not noticed them is not in combat, and neither is one that gave up.
-    /// Searching counts, because a searching actor has not left the fight.
-    ///
-    /// The player is never "in combat" by this reading, because hostility is
-    /// stored per NPC and describes how that NPC regards the player. Whether
-    /// the *player* is in a fight is `CombatLoopState.isPlayerInCombat`, which
-    /// is derived from every resident actor rather than stored on one, and
-    /// answering it here would mean holding the combat runtime as well.
-    /// `Game.GetPlayer().IsInCombat()` therefore reads false in a fight, which
-    /// is a stated gap rather than a hidden one — see docs/engine/papyrus-actor-natives.md.
+    /// Whether `key` is in a fight: its behavior phase, not stored hostility.
+    /// Searching counts. The player always reads false here, because the player's
+    /// fight state is derived (`CombatLoopState.isPlayerInCombat`); a stated gap in
+    /// docs/engine/papyrus-actor-natives.md.
     private func isActorInCombat(_ key: ReferenceKey) -> Bool {
         guard worldState.component(ActorDeathState.self, for: key)?.isDead != true
         else { return false }

@@ -1,21 +1,8 @@
-// The pose currency of the behavior evaluator (issue #187): what a generator
-// returns, and the blend math that mixes two of them.
-//
-// A pose here is dense — one `HKABonePose` per skeleton bone, seeded from the
-// skeleton's reference pose — rather than the sparse
-// `[HKABoneTransformSample]` a clip samples into. Dense is what blending needs:
-// two children that animate different bone subsets must still mix bone by bone,
-// and a bone neither child animates must come out as the reference pose rather
-// than as a hole. `SkeletonPoseMath.worldMatrices(skeleton:samples:)` composes
-// the same way, starting from the reference pose and overwriting the sampled
-// bones, so the two layers agree on what an unanimated bone is.
-//
-// Root motion is carried beside the pose and never applied to it. The root
-// bone of a Skyrim rig is authored with the clip's world travel baked in, so a
-// walk clip walks the whole skeleton off the origin if the root is composed
-// like any other bone. Item 14.5 hands the delta to the character controller
-// and the controller decides where the character ends up; this layer only
-// measures it.
+// The pose type of the behavior evaluator and its blend math. A pose is dense,
+// one `HKABonePose` per bone from the reference pose, so children that animate
+// different bones still blend bone by bone. Root motion is carried beside the
+// pose and never applied to it; the character controller decides where the
+// character ends up.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -27,15 +14,9 @@ import simd
 nonisolated public struct BehaviorRootMotion: Equatable, Sendable {
     public var translation: SIMD3<Float>
     public var rotation: simd_quatf
-    /// True when this travel came from a clip whose data carries extracted
-    /// motion, and therefore when the graph — not the resolved gait — is what
-    /// moves the character this step.
-    ///
-    /// This is a statement about the *data*, not about the magnitude, and it
-    /// is what `LocomotionBridge` branches on. An extracted-motion clip that
-    /// happens to stand still for a step still holds movement authority and
-    /// still reports zero travel; an in-place clip never holds it however far
-    /// its root bone drifts (issue #370).
+    /// True when this travel came from a clip with extracted motion, so the graph
+    /// moves the character this step. It describes the data, not the magnitude;
+    /// `LocomotionBridge` branches on it.
     public var isExtracted: Bool
 
     public init(
@@ -75,28 +56,18 @@ nonisolated public struct BehaviorPose: Equatable, Sendable {
 /// `HKASkeleton` so the evaluator can be unit-tested against a three-bone rig
 /// built in code, with no packfile in the way.
 nonisolated public struct BehaviorSkeleton: Equatable, Sendable {
-    public let boneNames: [String]
     public let referencePose: [HKABonePose]
     /// The bone whose animated travel is extracted rather than composed. On
     /// every vanilla Skyrim rig this is bone 0, `NPC Root [Root]`.
     public let rootBoneIndex: Int
 
-    public init(boneNames: [String], referencePose: [HKABonePose], rootBoneIndex: Int = 0) {
-        self.boneNames = boneNames
+    public init(referencePose: [HKABonePose], rootBoneIndex: Int = 0) {
         self.referencePose = referencePose
         self.rootBoneIndex = rootBoneIndex
     }
 
     public init(_ skeleton: HKASkeleton, rootBoneIndex: Int = 0) {
-        self.init(
-            boneNames: skeleton.boneNames,
-            referencePose: skeleton.referencePose,
-            rootBoneIndex: rootBoneIndex
-        )
-    }
-
-    public var boneCount: Int {
-        referencePose.count
+        self.init(referencePose: skeleton.referencePose, rootBoneIndex: rootBoneIndex)
     }
 
     /// A pose holding nothing but the reference pose. This is what a generator
@@ -114,14 +85,9 @@ nonisolated public enum BehaviorPoseMath: Sendable {
     /// The identity quaternion, spelled once.
     public static let identityRotation = simd_quatf(ix: 0, iy: 0, iz: 0, r: 1)
 
-    /// Blends `lhs` toward `rhs` by `weight`, clamped to [0, 1]. Translation
-    /// and scale interpolate linearly; rotation interpolates along the shortest
-    /// arc, which is what makes a 350-degree turn blend through 0 rather than
-    /// the long way round.
-    ///
-    /// Bone counts that disagree are not a fault: the shorter list wins, and
-    /// the extra bones of the longer one are kept as they are. A clip bound to
-    /// a rig with fewer bones than the character's is ordinary in modded data.
+    /// Blends `lhs` toward `rhs` by `weight`, clamped to [0, 1]. Rotation takes the
+    /// shortest arc. When bone counts differ, the extra bones of the longer pose are
+    /// kept as they are.
     public static func blend(_ lhs: BehaviorPose, _ rhs: BehaviorPose, weight: Float)
         -> BehaviorPose
     {
@@ -167,15 +133,9 @@ nonisolated public enum BehaviorPoseMath: Sendable {
         )
     }
 
-    /// Normalized weight blend of any number of children, folded left to right:
-    /// after i children of total weight W, the next child of weight w enters at
-    /// w / (W + w). For two children of weights a and b this is exactly
-    /// `blend(first, second, weight: b / (a + b))`, which is the value the unit
-    /// tests hand-compute against.
-    ///
-    /// Children of non-positive weight are dropped rather than normalized to
-    /// zero, because a blender whose weights all fall to zero must produce the
-    /// reference pose rather than a divide by zero. `fallback` is that pose.
+    /// Normalized weight blend of any number of children, folded left to right: the
+    /// next child of weight w enters at w / (W + w). Non-positive weights are dropped;
+    /// with no weight left the result is `fallback`.
     public static func blend(
         children: [(pose: BehaviorPose, weight: Float)],
         fallback: BehaviorPose
@@ -212,18 +172,9 @@ nonisolated public enum BehaviorPoseMath: Sendable {
         }
     }
 
-    /// Weight blend of any number of children, each masked per bone.
-    ///
-    /// This is what a vanilla upper-body blend needs: Skyrim's player graph
-    /// blends a full-body locomotion pose with a left-arm pose and a right-arm
-    /// pose, and each of the arm children carries an `hkbBoneWeightArray` that
-    /// is 1 on its own arm and 0 everywhere else. Blending them without the
-    /// mask averages three unrelated poses over the whole skeleton, which pulls
-    /// limbs apart rather than layering them (issue #189).
-    ///
-    /// The fold is the same left-to-right normalized one
-    /// `blend(children:fallback:)` performs, run once per bone, so a child with
-    /// no mask produces exactly the unmasked result.
+    /// Weight blend of any number of children, each masked per bone by its
+    /// `hkbBoneWeightArray`. The vanilla upper-body blend needs this. Same fold as
+    /// `blend(children:fallback:)`, run per bone.
     public static func blend(masked children: [MaskedChild], fallback: BehaviorPose)
         -> BehaviorPose
     {
@@ -285,13 +236,8 @@ nonisolated public enum BehaviorPoseMath: Sendable {
         return bones
     }
 
-    /// The travel between two samples of the same root bone, expressed in the
-    /// earlier sample's frame: `rotation` is the turn from `previous` to
-    /// `current`, `translation` their difference.
-    ///
-    /// `isExtracted` is the caller's to state, because this is arithmetic over
-    /// two poses and cannot know whether the clip they came from carries a
-    /// reference frame.
+    /// The travel between two samples of the same root bone, in the earlier sample's
+    /// frame. `isExtracted` is the caller's to state.
     public static func rootMotion(
         from previous: HKABonePose,
         to current: HKABonePose,

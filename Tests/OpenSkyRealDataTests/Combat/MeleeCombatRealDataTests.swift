@@ -1,15 +1,7 @@
-// Env-gated melee combat over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md "Legal & IP"), issue #195.
-//
-// The synthetic suites prove the state machine, the sweep and the formula in
-// isolation, and every name they use is quoted from the census. The claim they
-// cannot make is the issue's real-data acceptance: that the *vanilla* player
-// graph declares those names, that raising them through the shipping input path
-// reaches an attack state, and that the events the graph fires back are the ones
-// the melee runtime acts on. A census name the graph refuses would leave every
-// synthetic test green and the feature dead.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
+// Melee combat over the user's install (read-only, never committed). Proves
+// that the vanilla player graph declares the census names, that the input
+// path reaches an attack state, and that the graph fires the events the melee
+// runtime reads. Skips when OPENSKY_DATA_ROOT is unset. Run with
 // `make realtest T='MeleeCombatRealDataTests/vanillaGraphAcceptsTheCensusNamedCombatEvents()'`.
 
 import Foundation
@@ -78,19 +70,9 @@ struct MeleeCombatRealDataTests {
         )
     }
 
-    /// Draw and attack driven through the shipping input path — camera input to
-    /// `LocomotionBridge` to the melee runtime — with the real graph attached.
-    /// Headless: no window, no renderer, no audio.
-    ///
-    /// What this pins is the loop rather than a particular animation: the
-    /// request leaves through the input path, the vanilla graph acts on it, and
-    /// what comes back is a stream of names the melee runtime reads.
-    ///
-    /// It also pins the outcome now that issue #403 has settled the hand-type
-    /// encoding: with `iRightHandType` written, the graph runs the equip clip
-    /// for that weapon, the weapon reaches the hand, and the swing that follows
-    /// reaches a contact frame. Before #403 both variables were unwritten and
-    /// this test asserted the stuck `.drawing` state instead.
+    /// Draw and attack through the input path (camera input to `LocomotionBridge`
+    /// to the melee runtime) with the real graph, headless. With `iRightHandType`
+    /// written, the graph runs the equip clip and the swing reaches a contact frame.
     @Test(.enabled(if: Self.dataRoot != nil))
     @MainActor
     func drawAndAttackDriveTheVanillaGraphThroughTheShippingInputPath() throws {
@@ -101,9 +83,8 @@ struct MeleeCombatRealDataTests {
             settings: CombatSettings.resolve(store: GameSettingLoader.load(root: root)),
             world: world
         )
-        // A one-handed sword rather than the unarmed default, so the graph is
-        // asked for the animation set whose encoding #403 settled: writing
-        // `iRightHandType` is what makes `weapequip.hkx` select `1HM_Equip.hkx`.
+        // A one-handed sword, so writing `iRightHandType` makes `weapequip.hkx`
+        // select `1HM_Equip.hkx`.
         runtime.weapon = MeleeWeaponProfile(damage: 8, reach: 1, handType: .sword)
 
         // Draw, then a second of graph time, then attack. The input arrives as
@@ -122,8 +103,7 @@ struct MeleeCombatRealDataTests {
 
         #expect(world.raised.contains(CombatGraphNames.weaponDraw))
         // `weaponDraw` is the intent; `WeapEquip` is the event `0_master.hkx`
-        // actually transitions on, and raising only the first is what left the
-        // graph standing still before #403.
+        // transitions on.
         #expect(world.raised.contains(CombatGraphNames.weapEquip))
         #expect(
             !afterDraw.isEmpty,
@@ -204,14 +184,9 @@ struct MeleeCombatRealDataTests {
 
     // MARK: - Loading
 
-    /// A bridge over the real player graph, activated and stepped once so the
-    /// state machines are running.
-    ///
-    /// `PlayerBehaviorGraph.load` rather than a hand-built instance, for the
-    /// reason `FootstepRealDataTests` records: `0_master.hkx` is a shell whose
-    /// combat branches are `hkbBehaviorReferenceGenerator`s naming
-    /// `1hm_behavior.hkx`, `blockbehavior.hkx` and `weapequip.hkx`, and a graph
-    /// built without a reference source reaches none of them.
+    /// A bridge over the real player graph, activated and stepped once.
+    /// `PlayerBehaviorGraph.load`, because `0_master.hkx` reaches its combat
+    /// branches through `hkbBehaviorReferenceGenerator`s.
     private static func bridge(root: GameDataRoot) throws -> LocomotionBridge {
         let graph = try PlayerBehaviorGraph.load(
             fileSystem: VirtualFileSystem(root: root)
@@ -286,7 +261,7 @@ final class GraphBackedMeleeWorld: MeleeCombatWorld {
         []
     }
 
-    func meleeMaterial(at position: SIMD3<Float>) -> FormID? {
+    func meleeMaterial() -> FormID? {
         nil
     }
 
@@ -296,7 +271,7 @@ final class GraphBackedMeleeWorld: MeleeCombatWorld {
 
     /// This world reaches no targets at all — it exists to drive the real graph —
     /// so the fortify term is the 1 the formula reduces to for a character with
-    /// none and an enchanted hit never arrives (issue #472).
+    /// none and an enchanted hit never arrives.
     func meleeAttackMultiplier(handType: CombatHandType) -> Float {
         1
     }

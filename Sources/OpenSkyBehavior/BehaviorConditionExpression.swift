@@ -1,30 +1,9 @@
-// Transition conditions (issue #330): the little expression language a
-// `hkbExpressionCondition` or `hkbStringCondition` carries as authored text.
-//
-// Havok compiles the text at load into a form it keeps in a `SERIALIZE_IGNORED`
-// member, so the packfile holds the source and nothing else. That means the
-// grammar has to be recovered from the strings the vanilla files actually
-// carry rather than from a spec. The probe over the local install reports 3,769
-// transitions, 429 of which name a condition, and every one of those strings
-// fits the grammar below:
-//
-//     or         := and ( "||" and )*
-//     and        := comparison ( "&&" comparison )*
-//     comparison := unary ( ( "==" | "!=" | ">=" | "<=" | ">" | "<" ) unary )?
-//     unary      := "!" unary | primary
-//     primary    := number | variable | "(" or ")"
-//
-// Observed forms, verbatim from that probe: `IsFirstPerson == 0`,
-// `(IsNPC == 0) && (iLeftHandType != 7) && (iLeftHandType != 12)`,
-// `(iWantBlock == 0) || (iLeftHandType == 7)`, `!bIsSynced && !bIsRiding`,
-// `Speed >= fMinSpeed` (variable against variable), and
-// `(staggerDirection < .25) || (staggerDirection > .75)` (leading-dot literal).
-// No string literals, no arithmetic, no function calls, no assignment.
-//
-// A value is a float; a bare variable is true when it is non-zero, which is how
-// `!bBlendOutSlow` reads. A name the graph does not declare makes evaluation
-// fail rather than default, because a wrong answer here fires a wrong
-// transition — see `docs/engine/behavior-state-machines.md`.
+// Transition conditions: the expression text an `hkbExpressionCondition` or
+// `hkbStringCondition` carries. The grammar comes from the vanilla strings, for
+// example `(iWantBlock == 0) || (iLeftHandType == 7)`: `||`, `&&`, comparisons,
+// `!`, numbers, variables, and parentheses. A bare variable is true when
+// non-zero. An undeclared name fails evaluation
+// (`docs/engine/behavior-state-machines.md`).
 
 import Foundation
 
@@ -64,8 +43,6 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
         case disjunction(Node, Node)
     }
 
-    /// The authored text, kept so the tally can name what failed.
-    public let source: String
     public let root: Node
 
     /// Parses `source`, or returns nil when it is empty or does not fit the
@@ -74,7 +51,7 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
         guard let tokens = BehaviorConditionLexer.tokens(of: source) else { return nil }
         var parser = BehaviorConditionParser(tokens: tokens)
         guard let root = parser.parseDisjunction(), parser.isAtEnd else { return nil }
-        return BehaviorConditionExpression(source: source, root: root)
+        return BehaviorConditionExpression(root: root)
     }
 
     /// True or false when every name resolves, nil when one does not.

@@ -1,16 +1,8 @@
-// Music playlist selection (M9.2.3, issue #156). Pure value logic over the
-// decoded MUSC/MUST records: a context describing where the listener is turns
-// into one ordered, playable playlist plus the policy the runtime director
-// needs (how it advances, how long the crossfade lasts). No engine, no I/O, no
-// randomness that a test cannot reproduce.
-//
-// Selection precedence, most specific first (docs/engine/music.md):
-//   CELL.XCMO -> the first REGN.RDMO among the cell's XCLR regions -> WRLD.ZNAM
-//
-// The three states the milestone names (exploration, town, interior) are
-// derived here, not authored: interior comes from the cell type, town from the
-// selected MUSC editor id, and exploration is the fallback. The limits of that
-// inference are written down in docs/engine/music.md.
+// Music playlist selection: pure value logic over MUSC and MUST records that
+// turns a listener context into a playlist plus the advance and crossfade policy.
+// Precedence: CELL.XCMO -> first REGN.RDMO of the cell's XCLR regions ->
+// WRLD.ZNAM. The exploration, town, and interior states are derived, not
+// authored (docs/engine/music.md).
 
 import Foundation
 import OpenSkyFormatsESM
@@ -90,13 +82,9 @@ nonisolated public enum MusicState: String, Equatable, Sendable, CaseIterable {
     case town
     /// Every other exterior, including one with no playlist at all.
     case exploration
-    /// The player is in combat (issue #374, roadmap item 15.7).
-    ///
-    /// The case this enum was shaped to grow. Unlike the other three it is not
-    /// derived from the streamer's context at all: combat is a game-system
-    /// state, so `WorldMusicDirector.setCombatActive(_:)` selects a MUSC
-    /// directly and the context chain below it is left untouched, which is what
-    /// lets leaving combat restore the selection it interrupted.
+    /// The player is in combat. Not derived from the streamer context:
+    /// `WorldMusicDirector.setCombatActive(_:)` selects a MUSC directly, so leaving
+    /// combat restores the interrupted selection.
     case combat
 
     public var displayName: String {
@@ -123,7 +111,6 @@ nonisolated public enum MusicPlaylistAdvance: String, Equatable, Sendable {
 
 /// One MUST track reduced to what playback needs.
 nonisolated public struct PlayableMusicTrack: Equatable, Sendable {
-    public let formID: FormID
     public let editorID: String?
     /// Canonical VFS key of the ANAM stream.
     public let path: String
@@ -274,12 +261,9 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
     /// anywhere in the records, so the editor id is the only signal available.
     private static let townEditorIDPrefix = "mustown"
 
-    /// Bethesda's combat playlists are all named `MUSCombat<Something>`, the
-    /// same naming convention the town branch above relies on and with the same
-    /// limits: it is a convention, not data, so a load order that renames them
-    /// selects nothing and the director leaves the music where it was rather
-    /// than guessing (issue #374). The observation that these records exist in
-    /// vanilla is M9's, recorded in docs/engine/music.md.
+    /// Bethesda's combat playlists are named `MUSCombat<Something>`. That is a
+    /// naming convention, not data: a load order that renames them selects nothing
+    /// and the music stays as it was (docs/engine/music.md).
     public static let combatEditorIDPrefix = "muscombat"
 
     private static func derivedState(isInterior: Bool, editorID: String?) -> MusicState {
@@ -355,9 +339,7 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
     ) -> [PlayableMusicTrack] {
         tracks.compactMap { track in
             guard let path = musicStore.audioPaths(for: track).first else { return nil }
-            return PlayableMusicTrack(
-                formID: track.formID, editorID: track.editorID, path: path
-            )
+            return PlayableMusicTrack(editorID: track.editorID, path: path)
         }
     }
 

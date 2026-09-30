@@ -1,19 +1,8 @@
-// Main-actor owner of the Papyrus VM inside the engine loop (issue #171).
-//
-// `PapyrusRuntime` stays the nonisolated headless script library and instance
-// table from M11.1; this type owns one for the world session and adds what
-// the engine loop needs: per-reference instance identity, the single FIFO
-// script-event queue, the fixed-step latent scheduler, and the save-state
-// seam. Satellites: `PapyrusWorldEvents.swift` (tick and dispatch),
-// `PapyrusWorldLifecycle.swift` (cell attach and detach),
-// `PapyrusWorldPersistence.swift` (instance-state snapshot and restore).
-//
-// Stated simplifications:
-// - Persistent instances are never retired, so they survive every `detach`,
-//   including world-space transitions, until the session ends.
-// - A latent call whose instance was retired stays in the scheduler; when it
-//   wakes, the resume faults on the missing instance and is counted, which
-//   keeps retirement O(instances) instead of scanning scheduler entries.
+// Main-actor owner of the Papyrus VM in the engine loop: per-reference instance
+// identity, one FIFO event queue, the fixed-step latent scheduler, and the save
+// seam. Satellites: `PapyrusWorldEvents.swift`, `PapyrusWorldLifecycle.swift`,
+// `PapyrusWorldPersistence.swift`. Persistent instances live until the session
+// ends; a latent call on a retired instance faults when it wakes and is counted.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -33,15 +22,9 @@ public final class PapyrusWorldRuntime {
     public let fixedStepSeconds: Double
     /// Per-tick dispatch ceiling; tests lower it to force carry-over.
     public var budget: PapyrusTickBudget = .standard
-    /// Freezes the VM's own clock (issue #278). While true,
-    /// `advance(delta:gameClock:)` returns a zero report and accumulates
-    /// nothing, so unpausing never bursts through the time that passed.
-    /// `stepFixed(gameClock:)` stays callable, which is what the sidebar's
-    /// step-one-tick control drives.
-    ///
-    /// Independent of `Renderer.worldSimPaused`, which the menu-mode
-    /// controller owns: menu mode delivers delta 0 to the whole world
-    /// simulation, while this pauses only the script VM.
+    /// Freezes the VM's own clock. While true, `advance(delta:gameClock:)` does
+    /// nothing, and `stepFixed(gameClock:)` still steps one tick. Separate from
+    /// `Renderer.worldSimPaused`, which pauses the whole simulation.
     public var isPaused = false
 
     // Stored state is internal rather than private because the lifecycle,
@@ -60,35 +43,25 @@ public final class PapyrusWorldRuntime {
     /// Instances created from an `isPersistent` reference entry; these
     /// survive `detach`.
     public var persistentKeys: Set<PapyrusInstanceKey> = []
-    /// Instances belonging to a quest rather than to a placed reference
-    /// (issue #322). They are in no cell's set, so only `detachQuest(key:)`
-    /// retires them. See `PapyrusWorldQuests.swift`.
+    /// Instances belonging to a quest rather than a placed reference. Only
+    /// `detachQuest(key:)` retires them. See `PapyrusWorldQuests.swift`.
     public var questInstanceKeys: Set<PapyrusInstanceKey> = []
-    /// Script instances belonging to one quest's filled aliases (issue #183),
-    /// keyed by the *quest* so `detachQuest(key:)` can retire them, while the
-    /// instances themselves are keyed by the filled reference — a
-    /// `ReferenceAlias` script runs on the reference in the alias, not on the
-    /// quest. See `PapyrusWorldQuests.swift`.
+    /// Script instances of one quest's filled aliases, keyed by the quest so
+    /// `detachQuest(key:)` can retire them. The instances are keyed by the filled
+    /// reference. See `PapyrusWorldQuests.swift`.
     public var questAliasInstanceKeys: [ReferenceKey: Set<PapyrusInstanceKey>] = [:]
-    /// Filled quest aliases every VMAD binding pass resolves alias-typed
-    /// object properties through (issue #183). A value rather than a callback
-    /// into the session, so binding stays nonisolated; the bridge refreshes it
-    /// whenever a fill changes it. `.empty` in a session with no quest layer,
-    /// where every alias property keeps its compiler default.
+    /// Filled quest aliases that VMAD binding resolves alias properties through. A
+    /// value, so binding stays nonisolated. `.empty` without a quest layer.
     public var aliasResolution: QuestAliasResolution = .empty
     /// Newest alias filled and bound, worded like a `recentEvents` entry, for
     /// the Scripts readout. Nil until a quest with an alias starts.
     public var lastQuestAliasFill: String?
-    /// Script instances belonging to a dialogue response rather than to a
-    /// placed reference (issue #426). They are in no cell's set and nothing
-    /// retires them; see `PapyrusWorldDialogue.swift`.
+    /// Script instances belonging to a dialogue response. Nothing retires them; see
+    /// `PapyrusWorldDialogue.swift`.
     public var dialogueInstanceKeys: Set<PapyrusInstanceKey> = []
     /// Dialogue result fragments enqueued this session, for the Scripts
     /// readout.
     public var dialogueFragmentsQueued = 0
-    /// Newest dialogue result fragment enqueued, worded like a `recentEvents`
-    /// entry. Nil until a response with a result script is chosen.
-    public var lastDialogueFragment: String?
     /// Stage fragments enqueued this session, for the Scripts readout.
     public var questFragmentsQueued = 0
     /// Newest fragment enqueued, worded like a `recentEvents` entry. Nil until
@@ -99,41 +72,27 @@ public final class PapyrusWorldRuntime {
     /// Instances with a latent call in flight. Their queued events stay
     /// queued, in order, until the suspended handler settles.
     public var busyInstances: Set<PapyrusInstanceKey> = []
-    /// Update timers for `Form.RegisterForUpdate` and friends (issue #277);
-    /// advanced once per fixed step by `advanceUpdateTimers(gameClock:)`.
+    /// Update timers for `Form.RegisterForUpdate` and friends, advanced once per
+    /// fixed step by `advanceUpdateTimers(gameClock:)`.
     public var updateTimers = PapyrusUpdateTimerRegistry()
-    /// Master-list resolver the most recent attach carried (issue #375), so an
-    /// event argument naming a base record — `OnHit`'s `akSource` and
-    /// `akProjectile` — can be turned into world identity without the caller
-    /// resolving it first. Nil until the first attach; a base form is then
-    /// Papyrus `None` rather than a guessed identity.
-    ///
-    /// One resolver covers the session, which is the same single-resolver
-    /// assumption `PapyrusWorldStateBridge.referenceKey(forFormID:)` and the
-    /// cell builder already make, not a new one.
+    /// Master-list resolver from the latest attach, so an event argument naming a
+    /// base record (`OnHit`'s `akSource`) becomes world identity. Nil until the
+    /// first attach. One resolver per session.
     public private(set) var formIDResolver: FormIDResolver?
     /// Attach, dispatch, and restore skips, for inspection and acceptance.
     public var skips = PapyrusWorldSkipTally()
     /// VMAD property-binding skips aggregated across every attach.
     public var bindingSkips = ScriptBindingTally()
 
-    /// Resolves a script name to its compiled form the first time an attach
-    /// needs it. Nil means no library is available (headless tests), so only
-    /// scripts registered up front exist. A name that fails to load is
-    /// remembered in `unresolvableScripts` so a broken or absent script is not
-    /// re-decoded on every cell attach.
-    ///
-    /// Decoding every `.pex` in an install up front costs far more than a
-    /// session ever uses, so the library fills in lazily, one script per
-    /// first use.
+    /// Resolves a script name to its compiled form on first need. Nil means no
+    /// library (headless tests). Failed names go into `unresolvableScripts`, so they
+    /// are not decoded again.
     public var scriptProvider: ((String) -> PexFile?)?
     /// Script names the provider already failed to resolve, keyed lowercased.
     public var unresolvableScripts: Set<String> = []
 
-    /// Handles handed out for references that carry no script instance — the
-    /// player above all — so a native can name them (issue #172). Allocated
-    /// downwards from `UInt64.max` while `PapyrusRuntime` allocates instance
-    /// handles upwards from 1, which is what keeps the two ranges apart.
+    /// Handles for references with no script instance, such as the player. Allocated
+    /// down from `UInt64.max`, while instance handles count up from 1.
     public var opaqueHandlesByKey: [ReferenceKey: PapyrusObjectHandle] = [:]
     public var opaqueKeysByHandle: [PapyrusObjectHandle: ReferenceKey] = [:]
     public var nextOpaqueHandleValue = UInt64.max
@@ -162,10 +121,9 @@ public final class PapyrusWorldRuntime {
     /// snowball into a burst of catch-up simulation.
     public static let maximumStepsPerAdvance = 4
 
-    /// How deep a chain of script-driven activations may go before the world
-    /// runtime refuses to queue another `OnActivate` (issue #172). Player use
-    /// keys enter at depth 0, so eight `Activate` calls may chain off one
-    /// press. Refusals are tallied as `activationRecursionCappedTotal`.
+    /// How deep a chain of script activations may go before `OnActivate` is refused.
+    /// Player use starts at depth 0. Refusals count as
+    /// `activationRecursionCappedTotal`.
     public static let maximumActivationDepth = 8
 
     /// Entries `recentEvents` retains, matching
@@ -252,18 +210,9 @@ public final class PapyrusWorldRuntime {
         ))
     }
 
-    /// True once `name` is in the script library, loading it through
-    /// `scriptProvider` on first need. A provider miss is remembered, so the
-    /// second attach naming a missing script costs a set lookup.
-    ///
-    /// The script's ancestors are loaded with it (issue #322). A method call on
-    /// a receiver that *has* a script instance dispatches under the script the
-    /// function is declared in, so a call the child does not define is only
-    /// named correctly — `Quest.SetStage` rather than
-    /// `QF_SomeQuest_0001E2F0.SetStage` — when the parent that declares it is
-    /// in the library. Without the chain every inherited native would arrive
-    /// under the child's name and miss the registry, which is a family of false
-    /// unimplemented tallies rather than a family of missing behaviours.
+    /// True once `name` is in the script library, loading it on first need. A miss
+    /// is remembered. Ancestors load too, so an inherited call such as
+    /// `Quest.SetStage` dispatches under the declaring script's name.
     public func resolveScript(named name: String) -> Bool {
         guard resolveScriptFile(named: name) else { return false }
         var parent = runtime.script(named: name)?.parentClassName ?? ""

@@ -1,16 +1,8 @@
-// Turns a dialogue response plus a speaker's voice type into the archive path
-// of its recording. The naming rule itself lives in `VoiceFilePath`; this type
-// supplies the four strings that rule needs by walking the records: the
-// defining plugin, the INFO's owning topic, that topic's owning quest, and the
-// response numbers the INFO carries.
-//
-// Quest lookup goes through `ReferenceKey` rather than a raw FormID because a
-// topic in one plugin may be owned by a quest defined in one of its masters.
-// A session that loaded only that master's plugin still resolves; a session
-// that loaded neither gets no quest name, which is a wrong path rather than a
-// crash — `DialogueVoice` reports the miss instead of playing silence.
-//
-// Documented in docs/formats/fuz.md and docs/engine/audio-decoding.md.
+// Turns a dialogue response plus a speaker's voice type into the archive path of
+// its recording, walking the records for the strings `VoiceFilePath` needs.
+// Quest lookup uses `ReferenceKey`, because a topic may belong to a quest in a
+// master. A miss gives a wrong path, which `DialogueVoice` reports.
+// See docs/formats/fuz.md and docs/engine/audio-decoding.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -18,8 +10,6 @@ import OpenSkyGameData
 
 /// One recorded response of one INFO.
 nonisolated public struct VoiceLine: Equatable, Sendable {
-    /// TRDT response number, one-based; the trailing `_1`, `_2` of the name.
-    public let responseNumber: Int
     /// Canonical VFS key of the `.fuz` file.
     public let path: String
 }
@@ -82,7 +72,6 @@ nonisolated public struct VoiceLineLocator: Sendable {
         )
         return info.responses.map { response in
             VoiceLine(
-                responseNumber: Int(response.number),
                 path: VoiceFilePath.path(
                     plugin: pluginName,
                     voiceType: voiceType,

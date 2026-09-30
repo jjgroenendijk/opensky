@@ -13,19 +13,11 @@ nonisolated public struct ResolvedLocation: Equatable, Sendable {
     public let sourcePlugin: String
 }
 
-nonisolated public struct ResolvedLocationRefType: Equatable, Sendable {
-    public let id: ResolvedFormID
-    public let refType: LocationRefType
-    public let sourcePlugin: String
-}
-
 nonisolated public struct LocationStore: Sendable {
     private let index: RecordIndex
     private let keywordStore: KeywordStore
     public private(set) var locations: [ResolvedFormID: ResolvedLocation] = [:]
-    public private(set) var refTypes: [ResolvedFormID: ResolvedLocationRefType] = [:]
     private var locationsByEditorID: [String: ResolvedLocation] = [:]
-    private var refTypesByEditorID: [String: ResolvedLocationRefType] = [:]
 
     public init(index: RecordIndex) {
         self.index = index
@@ -33,12 +25,8 @@ nonisolated public struct LocationStore: Sendable {
         let orderedIDs = index.records.keys.sorted {
             Self.precedes($0, $1, index: index)
         }
-        for id in orderedIDs {
-            switch index.records[id]?.record.type {
-            case "LCTN": addLocation(id)
-            case "LCRT": addRefType(id)
-            default: break
-            }
+        for id in orderedIDs where index.records[id]?.record.type == "LCTN" {
+            addLocation(id)
         }
     }
 
@@ -55,14 +43,6 @@ nonisolated public struct LocationStore: Sendable {
 
     public func location(editorID: String) -> ResolvedLocation? {
         locationsByEditorID[editorID.lowercased()]
-    }
-
-    public func refType(_ id: ResolvedFormID) -> ResolvedLocationRefType? {
-        refTypes[canonicalMatch(id, in: refTypes)]
-    }
-
-    public func refType(editorID: String) -> ResolvedLocationRefType? {
-        refTypesByEditorID[editorID.lowercased()]
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
@@ -190,24 +170,6 @@ nonisolated public struct LocationStore: Sendable {
         locations[id] = resolved
         if let editorID = location.editorID {
             locationsByEditorID[editorID.lowercased()] = resolved
-        }
-    }
-
-    private mutating func addRefType(_ id: ResolvedFormID) {
-        guard
-            case let .decoded(refType, sourcePlugin) = index.decode(
-                id,
-                using: LocationRefType.init(record:)
-            )
-        else { return }
-        let resolved = ResolvedLocationRefType(
-            id: id,
-            refType: refType,
-            sourcePlugin: sourcePlugin
-        )
-        refTypes[id] = resolved
-        if let editorID = refType.editorID {
-            refTypesByEditorID[editorID.lowercased()] = resolved
         }
     }
 

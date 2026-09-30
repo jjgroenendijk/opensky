@@ -14,10 +14,8 @@ nonisolated public final class ActorAnimationClip {
     public let skeleton: HKASkeleton
     public let animation: HKASplineCompressedAnimation
     public let binding: HKAAnimationBinding
-    /// The `.nif` this rig's skeleton came from, which is also where its
-    /// ragdoll bodies and joints live (issue #197). Carried here rather than
-    /// re-derived because the clip is the only thing that already knows which
-    /// skeleton an actor is using.
+    /// The `.nif` this rig's skeleton came from, which also holds its ragdoll bodies
+    /// and joints.
     public let skeletonMeshPath: String
 
     public init(
@@ -101,8 +99,7 @@ nonisolated public enum ActorAnimationLoadError: LocalizedError {
 nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
     public let actor: FormID
     public let female: Bool
-    /// The clip currently sounding: the idle one, or a bounded override a
-    /// combat reaction asked for (issue #374).
+    /// The clip currently playing: the idle one, or a bounded combat override.
     public private(set) var clip: ActorAnimationClip
     /// The clip this actor returns to when an override ends.
     private let idleClip: ActorAnimationClip
@@ -131,11 +128,8 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         }
     }
 
-    /// Plays `clip` for `seconds`, then returns to the idle one (issue #374).
-    ///
-    /// A second request replaces the first rather than queueing: a stagger that
-    /// interrupts an attack has to take the attack's clip away, which is the
-    /// same rule the player's graph follows.
+    /// Plays `clip` for `seconds`, then returns to idle. A second request replaces
+    /// the first, so a stagger takes an attack's clip away.
     public func play(
         _ clip: ActorAnimationClip,
         startingAt time: Float,
@@ -154,11 +148,6 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         if overrideEnd == 0 {
             self.clip = locomotionClip
         }
-    }
-
-    /// Whether a bounded override is playing as of `time`.
-    public func isOverriding(at time: Float) -> Bool {
-        overrideEnd > 0 && time < overrideEnd
     }
 
     /// The pose to draw at `time`, with an expired override already retired.

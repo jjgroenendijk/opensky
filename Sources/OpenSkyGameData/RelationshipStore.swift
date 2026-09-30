@@ -1,17 +1,7 @@
-// Load-order-wide RELA and ASTP lookup above RecordIndex, in the FactionStore
-// shape: the winning record per identity, lookup by identity and by editor ID,
-// and the joins a consumer would otherwise redo — a relationship's two actor
-// bases resolved, and its ASTP link joined to the titles it names.
-//
-// The query the rest of milestone M21 needs is the pair one: "what are these
-// two actors to each other", asked without knowing which of them the record
-// calls the parent. `relationship(between:and:)` answers it in either argument
-// order and hands back the record, whose `parent` and `child` keep the
-// authored direction for a caller that needs it (a child title only makes
-// sense on the child side).
-//
-// Nothing here decides hostility or evaluates a condition. Those read this
-// store and are issues #503 and #508.
+// Load-order-wide RELA and ASTP lookup above RecordIndex, like `FactionStore`:
+// the winning record per identity, editor-ID lookup, the two actor bases
+// resolved, and the ASTP titles joined. `relationship(between:and:)` answers in
+// either argument order; `parent` and `child` keep the authored direction.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -20,7 +10,6 @@ import OpenSkyFormatsESM
 nonisolated public struct ResolvedAssociationType: Equatable, Sendable {
     public let id: ResolvedFormID
     public let associationType: AssociationType
-    public let sourcePlugin: String
 
     public var editorID: String? {
         associationType.editorID
@@ -71,30 +60,6 @@ nonisolated public struct ResolvedRelationship: Equatable, Sendable {
     }
 }
 
-/// Unordered key for the pair index. Both actor identities are normalized to a
-/// lowercased plugin name and then sorted, so a lookup finds the record no
-/// matter which actor the caller passes first or how the plugin name is cased.
-nonisolated public struct RelationshipPairKey: Hashable, Sendable {
-    private let first: String
-    private let second: String
-
-    public init(_ left: ResolvedFormID, _ right: ResolvedFormID) {
-        let leftKey = Self.text(left)
-        let rightKey = Self.text(right)
-        if leftKey <= rightKey {
-            first = leftKey
-            second = rightKey
-        } else {
-            first = rightKey
-            second = leftKey
-        }
-    }
-
-    private static func text(_ id: ResolvedFormID) -> String {
-        "\(id.plugin.lowercased()):\(id.objectID)"
-    }
-}
-
 nonisolated public struct RelationshipStore: Sendable {
     private let index: RecordIndex
     public private(set) var relationships: [ResolvedFormID: ResolvedRelationship] = [:]
@@ -105,7 +70,7 @@ nonisolated public struct RelationshipStore: Sendable {
     public private(set) var duplicatePairCount = 0
     private var relationshipsByEditorID: [String: ResolvedRelationship] = [:]
     private var associationTypesByEditorID: [String: ResolvedAssociationType] = [:]
-    private var byPair: [RelationshipPairKey: ResolvedRelationship] = [:]
+    private var byPair: [String: ResolvedRelationship] = [:]
     private var byActor: [ResolvedFormID: [ResolvedRelationship]] = [:]
 
     /// Every relationship the load order carries, ordered by identity so a
@@ -159,7 +124,7 @@ nonisolated public struct RelationshipStore: Sendable {
         between left: ResolvedFormID,
         and right: ResolvedFormID
     ) -> ResolvedRelationship? {
-        byPair[RelationshipPairKey(left, right)]
+        byPair[Self.pairKey(left, right)]
     }
 
     /// The rank the pair holds, in either argument order. Nil when no record
@@ -201,16 +166,12 @@ nonisolated public struct RelationshipStore: Sendable {
 
     private mutating func addAssociationType(_ id: ResolvedFormID) {
         guard
-            case let .decoded(type, sourcePlugin) = index.decode(
+            case let .decoded(type, _) = index.decode(
                 id,
                 using: AssociationType.init(record:)
             )
         else { return }
-        let resolved = ResolvedAssociationType(
-            id: id,
-            associationType: type,
-            sourcePlugin: sourcePlugin
-        )
+        let resolved = ResolvedAssociationType(id: id, associationType: type)
         associationTypes[id] = resolved
         if let editorID = type.editorID {
             associationTypesByEditorID[editorID.lowercased()] = resolved
@@ -258,7 +219,7 @@ nonisolated public struct RelationshipStore: Sendable {
             byActor[key]?.sort { Self.precedes($0.id, $1.id) }
         }
         guard let parent, let child else { return }
-        let key = RelationshipPairKey(parent, child)
+        let key = Self.pairKey(parent, child)
         if byPair[key] != nil {
             duplicatePairCount += 1
         }
@@ -290,6 +251,15 @@ nonisolated public struct RelationshipStore: Sendable {
         left.plugin.caseInsensitiveCompare(right.plugin) == .orderedSame
             ? left.objectID < right.objectID
             : left.plugin.localizedCaseInsensitiveCompare(right.plugin) == .orderedAscending
+    }
+
+    /// Unordered pair key: both identities lowercased and sorted, so a lookup
+    /// finds the record whichever actor comes first and however the plugin is cased.
+    private static func pairKey(_ left: ResolvedFormID, _ right: ResolvedFormID) -> String {
+        [left, right]
+            .map { "\($0.plugin.lowercased()):\($0.objectID)" }
+            .sorted()
+            .joined(separator: "|")
     }
 }
 

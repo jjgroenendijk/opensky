@@ -1,22 +1,7 @@
-// World > Player & Locomotion > Archery section (issue #196, roadmap item
-// 15.5, scope point 6): the dev spawn control the issue asks for, the live
-// projectile count, and the last-trajectory readout, beside the shot state the
-// attack button drives.
-//
-// A section under the existing destination rather than a new one, on the same
-// reading item 15.4 made for Melee: archery is four controls on a subsystem the
-// Player & Locomotion panel already describes, and the M15 gate panel (item
-// 15.9) is where a Combat destination belongs if the surface outgrows this.
-// Placing it beside Melee is deliberate — the two share a mouse button, and a
-// reader comparing "why did my click swing instead of drawing" wants both
-// readouts in one place.
-//
-// All four controls are momentary, so all four are buttons. There is nothing to
-// toggle: drawing a bow is a held input with no state to set from a checkbox
-// (the same reasoning that keeps Block out of the Melee section), and the three
-// clean-up actions are one-shots. Nothing here is an override, so the section
-// registers none: an arrow in the air is world state and a "Reset all" that
-// deleted it would undo something the user did on purpose.
+// World > Player & Locomotion > Archery section: the dev spawn control, the
+// live projectile count, and the last-trajectory readout. It sits beside Melee,
+// because both share a mouse button. All controls are one-shot buttons, and the
+// section registers no override: an arrow in flight is world state.
 
 import AppKit
 import OpenSkyCombat
@@ -100,7 +85,8 @@ final class CombatArcherySection: PanelSectionViewController {
             ArcheryReadout.stateText(for: snapshot),
             ArcheryReadout.equipmentText(for: snapshot),
             ArcheryReadout.flightText(for: snapshot),
-            ArcheryReadout.traceText(for: snapshot)
+            ArcheryReadout.traceText(for: snapshot),
+            ArcheryReadout.settingsText(for: snapshot)
         ].joined(separator: "\n")
     }
 

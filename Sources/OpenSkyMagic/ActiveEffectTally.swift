@@ -1,12 +1,6 @@
-// What the active-effect runtime did and did not do (issue #469, roadmap item
-// 19.6).
-//
-// Every path that declines to apply something increments a bucket here, so the
-// ground this milestone does not cover is measured rather than silent. That is
-// the same discipline `ConditionTally` and `MagicEffectTally` already follow:
-// an unimplemented archetype is a number a sweep can assert on, not a shrug.
-//
-// Documented in docs/engine/magic.md.
+// What the active-effect runtime did and did not do. Every declined path counts
+// here, like `ConditionTally`, so a sweep can assert on the gaps.
+// See docs/engine/magic.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -38,11 +32,6 @@ nonisolated public struct ActiveEffectTally: Equatable, Sendable {
     /// Everything that was counted as declining to do something.
     public var totalSkips: Int {
         skips.values.reduce(0, +) + conditionSkipped + recastRefused + unresolvedEffect
-    }
-
-    /// How many entries named one unimplemented archetype.
-    public func skipCount(_ failure: MagicEffectPlanFailure) -> Int {
-        skips[failure] ?? 0
     }
 
     /// Every unimplemented archetype seen, with its count — the listing a

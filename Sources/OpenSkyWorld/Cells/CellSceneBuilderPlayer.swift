@@ -1,17 +1,7 @@
-// Assembling the player body out of the same machinery a streamed NPC uses
-// (issue #189).
-//
-// Item 14.6's rule is that the player is not a special case below the
-// transform: it resolves through `ActorTemplateResolver` and
-// `ActorVisualResolver` like any ACHR, so slot masking, FaceGen, and the M12
-// equipment attachment path apply to it without a second implementation. The
-// two things that differ are stated here and nowhere else: the base record is
-// named directly (the player has no ACHR to read it from) and the transform
-// comes from the character controller rather than from a record.
-//
-// This lives on `CellSceneBuilder` because that is where the resolvers, the
-// `MeshLibrary`, and the archive file system already are. It builds no cell and
-// touches no cell state: what it produces outlives every scene swap.
+// Assembles the player body with the same resolvers a streamed NPC uses, so
+// slot masking, FaceGen, and equipment work without a second path. Two things
+// differ: the base record is named directly, and the transform comes from the
+// character controller. It builds no cell, and its result outlives scene swaps.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -58,7 +48,7 @@ nonisolated public protocol PlayerBodyProviding {
     ) -> Result<PlayerBody, PlayerBodyError>
 
     /// Assembles the first-person arms from the same equipped set, over the
-    /// first-person rig and the first-person graph's pose (issue #190).
+    /// first-person rig and the first-person graph's pose.
     func makePlayerFirstPersonRig(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
@@ -130,7 +120,6 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
             }
             assembly = ActorAssembler(provider: meshes).assemble(
                 actor: PlayerBody.actorFormID,
-                base: PlayerBody.baseFormID,
                 // Identity: `place` supplies the live transform every frame,
                 // and a stale one baked in here would place the first frame at
                 // the world origin.

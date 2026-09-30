@@ -26,10 +26,6 @@ nonisolated public struct PerkEvaluationSubjects: Equatable, Sendable {
         references[subject]
     }
 
-    public var owner: ReferenceKey? {
-        references[.perkOwner]
-    }
-
     /// Every bound reference, which is what the condition seam is built for.
     public var boundReferences: [ReferenceKey] {
         Array(Set(references.values))
@@ -44,20 +40,15 @@ nonisolated public struct PerkEntryPointOperand: Equatable, Sendable {
     public let data: PerkFunctionData?
     /// PRKE byte 2, verbatim.
     public let priority: UInt8
-    /// The perk the effect belongs to, carried for reporting only. Nil for a
-    /// hand-built operand in a test.
-    public let perk: ReferenceKey?
 
     public init(
         function: PerkFunction,
         data: PerkFunctionData?,
-        priority: UInt8 = 0,
-        perk: ReferenceKey? = nil
+        priority: UInt8 = 0
     ) {
         self.function = function
         self.data = data
         self.priority = priority
-        self.perk = perk
     }
 }
 

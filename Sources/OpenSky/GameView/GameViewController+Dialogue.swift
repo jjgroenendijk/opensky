@@ -1,18 +1,7 @@
-// Live app wiring for the dialogue layer (issue #205, roadmap item 17.3): the
-// Talk target the crosshair picks up, the use-key event that opens a
-// conversation, and the `DialogueRuntime` the conversation is selected from.
-//
-// AppKit and the renderer stay in this controller satellite; the row model is
-// UI/DialogueMenuModel.swift and the movie contract is
-// UI/DialogueMenuMovieBridge.swift, both of which build into the CLI target.
-// Presentation — the movie lifecycle, the menu stack and the input path — is
-// the `GameViewController+DialogueMenu.swift` satellite beside this one.
-//
-// A session without game data has no dialogue index, which is the
-// `DialogueControlSnapshot.empty` path: the panel then states that dialogue is
-// unavailable rather than showing zeros that look like an empty index.
-//
-// See docs/engine/dialogue-menu.md.
+// Live app wiring for dialogue: the Talk target the crosshair picks up, the
+// use-key event that opens a conversation, and the `DialogueRuntime`. The menu
+// itself is `GameViewController+DialogueMenu.swift`. Without game data the panel
+// shows `DialogueControlSnapshot.empty`. See docs/engine/dialogue-menu.md.
 
 import AppKit
 import OpenSkyActorsInterface
@@ -75,24 +64,10 @@ extension GameViewController {
         }
     }
 
-    /// Every resident actor the crosshair may pick up as a Talk target.
-    ///
-    /// Filtered on the two facts that decide whether a conversation is possible
-    /// at all, and on nothing else:
-    ///
-    /// * A dead actor does not talk. `ActorDeathState` is the same latch combat
-    ///   targeting reads, so the two cannot disagree about who is alive.
-    /// * A hostile actor does not talk. What an actor in combat says belongs to
-    ///   DIAL's combat category, and `DialogueRuntime.topics(for:)` offers only
-    ///   category 0 — the player's menu — so a hostile actor's menu would be
-    ///   the wrong list even when it was not empty. `ActorHostility` is the
-    ///   state the combat loop already keeps, so the two cannot disagree about
-    ///   who is fighting. A neutral or friendly actor is a target.
-    ///
-    /// Not filtered on having anything to say: a speaker whose topics all fail
-    /// their conditions still opens a menu with an empty list, which is what
-    /// makes "why is there nothing here" answerable from the condition trace
-    /// rather than from a prompt that silently never appeared.
+    /// Every resident actor the crosshair may pick up as a Talk target. Dead and
+    /// hostile actors are left out: `topics(for:)` offers only the player's menu
+    /// category. An actor with no passing topic still opens an empty menu, so the
+    /// condition trace can explain why.
     func talkCandidates() -> [TalkCandidate] {
         guard let streamer else { return [] }
         return combatActors().compactMap { observation in
@@ -136,13 +111,8 @@ extension GameViewController {
         return dialogue.strings
     }
 
-    /// The session's dialogue selection layer, or nil without game data.
-    ///
-    /// Built per call rather than retained because every field of it is a live
-    /// read — the quest resolution, the alias table, the condition context and
-    /// the clock all move between one conversation and the next — and a
-    /// retained copy would answer from whenever it was made. It is a struct
-    /// over stores that already exist, so building one costs nothing.
+    /// The session's dialogue selection layer, or nil without game data. Built per
+    /// call, because every input is a live read; it is a cheap struct over stores.
     var dialogueRuntime: DialogueRuntime? {
         guard let store = dialogue.store, let quests = papyrusBridge?.questRuntime else {
             return nil
@@ -150,7 +120,6 @@ extension GameViewController {
         return DialogueRuntime(
             store: worldState,
             dialogue: store,
-            quests: quests.quests,
             questStates: quests.resolution(),
             context: runtimeStateConditionContext(),
             registry: .standard,

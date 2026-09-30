@@ -1,33 +1,9 @@
-// Ability-type perk effects (issue #497, roadmap item 20.4): a perk that grants
-// a spell for as long as the actor owns it.
-//
-// ## Reconciliation rather than an add hook
-//
-// Written as a *reconcile*, exactly like `WornEnchantmentApplication` and for
-// the same reason: perks arrive from several places — a script's `AddPerk`, an
-// NPC's `PRKR` seeding, a loaded save — and hanging "apply the ability" off each
-// of them would be one missed call away from an effect that never comes off.
-// Given who owns what, make the stored perk-sourced effects match; do nothing
-// when they already do. Every path calls this afterwards, calling it twice
-// changes nothing, and a loaded session calls it once per actor to pick up the
-// abilities its restored perks grant.
-//
-// That is also why `ActiveEffectSourceKind.perk` exists. Dispelling by source
-// *record* would take the ability off even when the actor still owns the perk
-// that granted it, and a spell an actor also knows in its own right would be
-// indistinguishable from one a perk lent it.
-//
-// ## What is applied
-//
-// The whole effect list of the granted SPEL, as `constant` effects, unscaled —
-// the shape a worn enchantment uses, and for the same reason: UESP describes a
-// perk ability as something the actor simply carries
-// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PERK>, "the data is
-// simply a spell applied without conditions"). A zero duration on such an entry
-// means "for as long as it is carried" rather than "once", which is exactly
-// what `isConstant` means to the active-effect runtime.
-//
-// Documented in docs/engine/perks.md and docs/engine/spellcasting.md.
+// Ability-type perk effects: a perk that grants a spell while owned. Written as
+// a reconcile, like `WornEnchantmentApplication`, so every path that changes
+// perks calls it and a second call changes nothing. Effects use
+// `ActiveEffectSourceKind.perk` and apply as unscaled constants
+// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PERK>).
+// See docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -54,12 +30,6 @@ nonisolated public struct PerkAbilityReport: Equatable, Sendable {
     /// readout.
     public var didChange: Bool {
         !granted.isEmpty || !revoked.isEmpty
-    }
-
-    public var describedLine: String {
-        guard didChange else { return "Perk abilities unchanged." }
-        return "Perk abilities: \(granted.count) granted (\(storedCount) effect(s)), "
-            + "\(revoked.count) revoked (\(dispelledCount) effect(s))."
     }
 }
 

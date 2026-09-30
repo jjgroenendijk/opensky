@@ -1,49 +1,10 @@
-// Character level arithmetic (issue #499, roadmap item 20.6): what the next
-// character level costs, what a total of character experience is worth in
-// levels, and what one level-up hands the player.
-//
-// Pure functions over numbers, in the shape `SkillAdvancement` takes: nothing
-// here reaches the world, so every assertion about the curve is plain
-// arithmetic rather than something only a running session shows.
-//
-// ## The curve, quoted
-//
-// UESP "Skyrim:Leveling" states it twice, once in plain numbers and once in the
-// settings those numbers come from:
-//
-//   XP required to level up your character = (Current level + 3) * 25
-//
-//   Or if using the Skyrim Creation Kit Game Setting values:
-//   (fXPLevelUpBase)+(Current Char. Level * fXPLevelUpMult)
-//   Where the default values for Skyrim vanilla (1.9.32.X) are
-//   fXPLevelUpBase = 75 and fXPLevelUpMult = 25.
-//
-// and pins both ends of it with worked numbers: "100 XP is required to advance
-// from level 1 to level 2, and 1300 XP is required to advance from level 49 to
-// 50. This is consistent across all levels."
-//
-// The same page gives the closed form of the running total and its inverse:
-//
-//   XP required to go from level 1 to level N = 12.5 * N^2 + 62.5 * N - 75
-//   FLOOR(-2.5 + SQRT(8 * XP + 1225) / 10)
-//
-// Both are the vanilla-numbers spelling of the same curve rather than a second
-// rule, so they are implemented here from the settings and *checked* against
-// those constants in `CharacterLevelingTests` — a load order that moves either
-// setting moves the sum with it, which a hardcoded 12.5 could not do.
-//
-// ## Where the numbers come from
-//
-// `fXPLevelUpBase` 75 and `fXPLevelUpMult` 25 are authored by `Skyrim.esm` on
-// this machine, read 2026-08-20 with `openskycli gmst list --prefix fxp`, and
-// pinned by `CharacterLevelingRealDataTests`. So are the two settings the
-// level-up *reward* reads: `iAVDhmsLevelUp` 10, the points one attribute pick
-// adds, and `fLevelUpCarryWeightMod` 5, the carry weight a stamina pick adds.
-//
-// Documented in docs/engine/character-leveling.md.
+// Character level arithmetic: the cost of the next level, the levels a total of
+// experience is worth, and what a level-up grants. Pure functions. The curve is
+// `fXPLevelUpBase + level * fXPLevelUpMult` (UESP "Skyrim:Leveling"; vanilla 75
+// and 25). `CharacterLevelingTests` checks the running total against UESP's
+// closed form. See docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 /// The four game settings character leveling reads, resolved once.
@@ -57,14 +18,10 @@ nonisolated public struct CharacterLevelSettings: Equatable, Sendable {
     public var levelUpBase: Float
     /// `fXPLevelUpMult` — what each level already held adds to the threshold.
     public var levelUpMultiplier: Float
-    /// `iAVDhmsLevelUp` — points one attribute pick adds to the chosen value.
-    /// "One attribute (Health, Magicka, Stamina) can be increased by 10 points"
-    /// (<https://en.uesp.net/wiki/Skyrim:Leveling>).
-    ///
-    /// The same setting `ActorValueLevelSettings.pointsPerLevel` reads for an
-    /// NPC, where it is the number of points a *class* spreads across the three
-    /// rather than the number one pick puts into one. Two readings of one
-    /// setting, both stated by the sources, and neither derived from the other.
+    /// `iAVDhmsLevelUp`: points one attribute pick adds. "One attribute (Health,
+    /// Magicka, Stamina) can be increased by 10 points"
+    /// (<https://en.uesp.net/wiki/Skyrim:Leveling>). For an NPC the same setting is
+    /// the points a class spreads (`ActorValueLevelSettings.pointsPerLevel`).
     public var attributeIncrement: Float
     /// `fLevelUpCarryWeightMod` — carry weight a stamina pick adds on top of
     /// the stamina itself. "Adding to your base stamina when you level up
@@ -135,11 +92,8 @@ nonisolated public enum CharacterLeveling: Sendable {
 
     /// The experience needed to leave `level` for the next one:
     /// `fXPLevelUpBase + level * fXPLevelUpMult`.
-    ///
-    /// - Returns: zero for a threshold the settings make impossible — a
-    ///   non-finite result, or one at or below zero. A caller reads that as "no
-    ///   leveling", which is the safe answer: treating it as free would run the
-    ///   player to the level cap on the first skill point.
+    /// - Returns: zero when the settings make the threshold non-finite or not
+    ///   positive. A caller reads that as "no leveling".
     public static func experienceForNextLevel(
         atLevel level: Int,
         settings: CharacterLevelSettings = .documentedDefaults
@@ -153,14 +107,9 @@ nonisolated public enum CharacterLeveling: Sendable {
         return cost
     }
 
-    /// The experience one character starting at level 1 must earn in total to
-    /// reach `level`, which is the sum of every threshold below it.
-    ///
-    /// Summed rather than closed-form on purpose: the closed form UESP prints
-    /// is the vanilla-numbers spelling of this sum, and a load order that moves
-    /// either setting moves the sum with it. `CharacterLevelingTests` checks
-    /// this against `12.5 * N^2 + 62.5 * N - 75` at the vanilla settings, which
-    /// is what makes the two readings one fact rather than two.
+    /// The total experience needed from level 1 to reach `level`: the sum of the
+    /// thresholds below it. Summed, not closed-form, so changed settings apply;
+    /// `CharacterLevelingTests` checks it against `12.5 * N^2 + 62.5 * N - 75`.
     public static func cumulativeExperience(
         toLevel level: Int,
         settings: CharacterLevelSettings = .documentedDefaults
@@ -176,16 +125,10 @@ nonisolated public enum CharacterLeveling: Sendable {
         return total
     }
 
-    /// Spends `experience` against the thresholds above `level`, one whole
-    /// level at a time.
-    ///
-    /// The remainder carries, which is the rule behind UESP's own note that
-    /// over-training banks levels rather than wasting the surplus: "Over-
-    /// training will still grant you level ups even if the progress bar is
-    /// stuck at 100% (for example: If you start training Illusion from level 1
-    /// to Illusion level 44 you will be level 6 once you choose to level up)"
-    /// (<https://en.uesp.net/wiki/Skyrim:Leveling>). Experience exactly equal
-    /// to the threshold levels the character and carries nothing.
+    /// Spends `experience` against the thresholds above `level`, one level at a time.
+    /// The remainder carries, so over-training banks levels
+    /// (<https://en.uesp.net/wiki/Skyrim:Leveling>). Experience equal to the
+    /// threshold levels up and carries nothing.
     public static func advance(
         experience: Float,
         from level: Int,

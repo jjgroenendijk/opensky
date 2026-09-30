@@ -1,24 +1,8 @@
-// Live app wiring for the dialogue camera and the speaker focus (issue #427,
-// roadmap item 17.4).
-//
-// Two things happen here and they are deliberately one file, because they are
-// one behaviour: while somebody is being talked to, the view frames them and
-// they stand still facing the player. Splitting the camera from the focus would
-// let a session end up with one without the other.
-//
-// **The focus is republished every frame rather than latched on entry.** The
-// speaker's head moves — it is a bone of a running animation — and the player
-// can walk around a speaker mid-conversation, so a framing computed once at
-// entry would be stale by the second sentence. Recomputing it is a bone lookup
-// and an `atan2`, which is why it can be done per frame at all.
-//
-// **What the focus does to the speaker goes through the authorities that
-// already own it.** Movement is suspended through `stopActor`, the turn is
-// requested through `faceActor`, and the package is held and released through
-// `ActorPackageRuntime`. None of it is written directly onto the actor, so
-// nothing here can disagree with what the AI does next frame.
-//
-// See docs/engine/dialogue-camera.md.
+// Live app wiring for the dialogue camera and the speaker focus. One file,
+// because the camera framing and the speaker standing still are one behavior.
+// The focus is republished every frame, because the head moves. The speaker is
+// held through `stopActor`, `faceActor`, and `ActorPackageRuntime`, never
+// written directly. See docs/engine/dialogue-camera.md.
 
 import AppKit
 import OpenSkyDiagnostics
@@ -47,13 +31,8 @@ struct DialogueCameraBridgeState {
 }
 
 extension GameViewController {
-    /// Publishes the camera's focus once per world update and registers its
-    /// gizmo with the M16 overlay registry (issue #422).
-    ///
-    /// Ordering: this runs after the systems already chained onto
-    /// `onWorldUpdate`, so the head bone it samples is the one this frame's
-    /// animation pass produced and the actor pose it reads is the one this
-    /// frame's movement produced.
+    /// Publishes the camera focus once per world update and registers its gizmo.
+    /// Runs after the other `onWorldUpdate` systems, so it reads this frame's pose.
     func wireDialogueCamera(renderer: Renderer) {
         let advancePreviousSystems = renderer.onWorldUpdate
         renderer.onWorldUpdate = { [weak self] delta in
@@ -79,7 +58,7 @@ extension GameViewController {
             return
         }
         renderer.setDialogueCameraFocus(
-            DialogueCameraFocus(speaker: speaker, headPosition: head)
+            DialogueCameraFocus(headPosition: head)
         )
         holdSpeakerFocus(on: speaker, playerEye: renderer.playerEyePosition)
     }
@@ -104,13 +83,8 @@ extension GameViewController {
         }
     }
 
-    /// Where one actor's head is in the world.
-    ///
-    /// The posed `NPC Head [Head]` bone where the actor has a running clip,
-    /// which is what makes the camera follow a head that a conversation idle is
-    /// moving. An actor the animation layer resolved no rig for falls back to
-    /// the capsule's own eye height, which is where this engine puts a head
-    /// when it has not been told otherwise.
+    /// Where one actor's head is in the world: the posed `NPC Head [Head]` bone, or
+    /// the capsule eye height when the actor has no rig.
     func dialogueSpeakerHeadPosition(for actor: ReferenceKey) -> SIMD3<Float>? {
         guard
             let streamer,

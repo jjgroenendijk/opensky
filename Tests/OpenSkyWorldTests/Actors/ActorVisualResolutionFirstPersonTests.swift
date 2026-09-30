@@ -1,5 +1,5 @@
 // The first-person projection of a resolved actor visual, and the ARMA
-// MOD4/MOD5 decode behind it (issue #190). Synthetic fixtures throughout.
+// MOD4/MOD5 decode behind it. Synthetic fixtures throughout.
 
 import FormatsESMTesting
 @testable import OpenSkyFormatsESM
@@ -87,7 +87,7 @@ struct ActorVisualResolutionFirstPersonTests {
             equippedSlots: [.body],
             parts: parts,
             attachments: [ResolvedAttachment(
-                item: FormID(0x300), modelPath: "weapons\\sword.nif", bone: "Weapon"
+                modelPath: "weapons\\sword.nif", bone: "Weapon"
             )],
             usesRuntimeEquipment: true,
             faceGenMeshPath: "meshes\\face.nif",

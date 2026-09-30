@@ -1,16 +1,6 @@
-// The fake `ProjectileWorld` the archery runtime tests drive (issue #196,
-// roadmap item 15.5).
-//
-// Its own file rather than a member of one test suite, because three suites
-// use it — the projectile runtime, the archery runtime, and the panel readout —
-// and the seam it stands in for is what makes all three testable with no
-// renderer, no window and no game data.
-//
-// Every answer is a plain stored value, and every action is recorded rather
-// than performed. Static collision is a list of half-space planes instead of a
-// real broadphase: what the runtime needs from a sweep is a distance and a
-// point, and standing up a `StaticCollisionSet` here would test
-// `ShapeSweeper` a second time rather than testing the runtime.
+// The fake `ProjectileWorld` for the projectile, archery, and panel suites.
+// Answers are stored values and actions are recorded. Static collision is a
+// list of half-space planes, so the tests do not retest `ShapeSweeper`.
 
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
@@ -48,7 +38,7 @@ final class FakeProjectileWorld: ProjectileWorld {
     var canSpawn = true
     var residentCells: Set<CellSceneLocation> = [.exterior(CellCoordinate(x: 0, y: 0))]
 
-    /// Skill uses the runtime reported (issue #498), recorded rather than
+    /// Skill uses the runtime reported, recorded rather than
     /// converted.
     private(set) var skillUses: [SkillUseEvent] = []
 
@@ -65,7 +55,7 @@ final class FakeProjectileWorld: ProjectileWorld {
     private(set) var impacts: [ResolvedMeleeImpact] = []
     private(set) var raised: [String] = []
     private(set) var spellHits: [SpellHit] = []
-    /// Enchanted hits the runtime handed out (issue #472).
+    /// Enchanted hits the runtime handed out.
     private(set) var enchantedHits: [WeaponEnchantmentHit] = []
     private(set) var variables: [String: BehaviorVariableValue] = [:]
     private var nextSpawnID: UInt64 = 1
@@ -101,7 +91,7 @@ final class FakeProjectileWorld: ProjectileWorld {
         )
     }
 
-    func projectileMaterial(at position: SIMD3<Float>) -> FormID? {
+    func projectileMaterial() -> FormID? {
         material
     }
 
@@ -151,7 +141,7 @@ final class FakeProjectileWorld: ProjectileWorld {
         variables[name] = value
     }
 
-    /// Records the landed spell instead of applying it (issue #471). What the
+    /// Records the landed spell instead of applying it. What the
     /// projectile suites need to know is which actors the runtime *reached* and
     /// at what distance; whether the effect runtime then stored anything is
     /// `SpellHitTests`' question, asked against a real one.
@@ -166,7 +156,7 @@ final class FakeProjectileWorld: ProjectileWorld {
     }
 
     /// Records the enchanted hit instead of applying it, for the reason a landed
-    /// spell is recorded (issue #472): what the projectile suites need to know is
+    /// spell is recorded: what the projectile suites need to know is
     /// that the bow's enchantment reached the seam with the right target and
     /// position, and `EnchantmentRuntimeTests` asks what applying it does against a
     /// real effect runtime. The charge is reported unspent, because nothing here
@@ -175,7 +165,6 @@ final class FakeProjectileWorld: ProjectileWorld {
     func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
         enchantedHits.append(hit)
         return WeaponEnchantmentReport(
-            item: hit.profile.item,
             name: hit.profile.name,
             charge: hit.profile.fullCharge,
             didFire: true,

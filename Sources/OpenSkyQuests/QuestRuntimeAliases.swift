@@ -1,20 +1,7 @@
-// The alias half of `QuestRuntime` (issue #183, roadmap item 13.4): when a
-// quest's alias table is filled, when it is cleared, and who may read it.
-//
-// A satellite of `QuestRuntime.swift` rather than more methods on it, matching
-// how the inventory layer splits, and because everything here follows one rule
-// the stage and objective mutations do not: the table is derived from plugin
-// data by `QuestAliasFiller` rather than edited by a caller. Nothing outside
-// this file writes a `QuestAliasState`.
-//
-// Lifetime, from the Creation Kit wiki (<https://ck.uesp.net/wiki/Alias>):
-// aliases "are not actually 'filled' until the quest starts running", and the
-// Optional checkbox decides whether an alias that will not fill stops the
-// start. Both are implemented in `startQuest`; `stopQuest` clears the table,
-// which is what makes a restarted quest re-run its fills against the world as
-// it stands then rather than as it stood at the first start.
-//
-// Documented in docs/engine/quest-state.md.
+// The alias half of `QuestRuntime`: when a quest's alias table is filled,
+// cleared, and read. `QuestAliasFiller` derives the table; nothing else writes a
+// `QuestAliasState`. Aliases fill when the quest starts and clear when it stops
+// (<https://ck.uesp.net/wiki/Alias>). See docs/engine/quest-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -57,21 +44,6 @@ extension QuestRuntime {
         return store.component(QuestAliasState.self, for: key)?.location(forAlias: aliasID)
     }
 
-    /// Every quest with a non-empty alias table, in `ReferenceKey` order,
-    /// paired with the record it belongs to. For inspection surfaces.
-    public func filledAliasQuests() -> [(quest: Quest, aliases: QuestAliasState)] {
-        quests.sortedQuests().compactMap { quest in
-            guard
-                let key = quests.key(for: quest.formID),
-                let state = store.component(QuestAliasState.self, for: key),
-                !state.isEmpty
-            else {
-                return nil
-            }
-            return (quest: quest, aliases: state)
-        }
-    }
-
     /// The seam conditions read alias fills through, built the same way
     /// `resolution()` builds the quest-state seam.
     public func aliasResolution() -> QuestAliasResolution {
@@ -90,16 +62,10 @@ extension QuestRuntime {
 
     // MARK: - Filling
 
-    /// Fills `quest`'s aliases and stores the table, unless a non-optional
-    /// alias could not be filled.
-    ///
-    /// Idempotent for a quest whose table is already non-empty: the Creation
-    /// Kit fills on the transition into running, so a second `Start` on a
-    /// running quest must not re-point aliases its scripts are already holding.
-    ///
-    /// - Throws: `QuestError.aliasFillFailed` when a non-optional alias stayed
-    ///   empty, in which case nothing is written.
-    /// - Returns: the table as stored, and the reasons any alias stayed empty.
+    /// Fills `quest`'s aliases and stores the table, unless a non-optional alias
+    /// could not be filled. A second start on a running quest does not refill.
+    /// - Throws: `QuestError.aliasFillFailed`; nothing is written then.
+    /// - Returns: the table as stored, and why any alias stayed empty.
     @discardableResult
     public func fillAliases(of quest: Quest, key: ReferenceKey) throws -> QuestAliasFillResult {
         if let existing = store.component(QuestAliasState.self, for: key), !existing.isEmpty {

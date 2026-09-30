@@ -1,36 +1,7 @@
-// The perception pass (issue #202, roadmap item 16.6): who looks at whom, how
-// often, and what that costs.
-//
-// Main-actor, like the other directors, advanced from the same paused-aware
-// world delta the actor-value runtime, the ragdolls and the combat loop take,
-// and everything it touches the world with goes through `PerceptionWorld` — so
-// the whole runtime is testable against a fake.
-//
-// ## Three bounds, all named
-//
-// Perception is the first subsystem in this engine whose cost is quadratic in
-// the world rather than linear: every observer against every target. Left
-// unbounded that is a line-of-sight raycast per pair per step, and the raycast
-// is the expensive half. So:
-//
-//   * `maximumPairs` caps how many pairs exist at all. Past it the nearest
-//     pairs win and the rest are dropped, and `droppedPairCount` says how many —
-//     a silent truncation would read as "nothing else was nearby".
-//   * `pairsPerStep` caps how many are re-evaluated per fixed step, round-robin
-//     over a stable order. A pair evaluated every eighth step is advanced by
-//     the elapsed time since it was last looked at, so slicing changes when a
-//     level is recomputed and not what it converges to.
-//   * `maximumStepsPerAdvance` caps how much simulated time one frame may
-//     spend, exactly as `CombatLoopRuntime` and `ActorValueRuntime` cap theirs.
-//
-// ## Deterministic given the same inputs
-//
-// The roster is sorted by `ReferenceKey` before it is paired, the slice cursor
-// advances by a fixed stride, and every accumulation is a pure function of the
-// elapsed seconds. Two runs over the same recorded inputs produce the same
-// levels, which is what the acceptance tests pin.
-//
-// Documented in docs/engine/detection.md.
+// The perception pass: who looks at whom, and at what cost. Three named bounds:
+// `maximumPairs` (nearest win; `droppedPairCount` counts the rest),
+// `pairsPerStep` round-robin, and `maximumStepsPerAdvance`. The roster is sorted
+// by `ReferenceKey`, so runs are deterministic. See docs/engine/detection.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -101,28 +72,8 @@ public final class PerceptionRuntime {
         pairs[DetectionPairKey(observer: observer, target: target)] ?? .unaware
     }
 
-    /// The strongest state any observer holds about `target`, which is what a
-    /// "am I detected?" question means from the target's side.
-    public func strongestState(of target: ReferenceKey) -> DetectionState {
-        var strongest = DetectionState.unaware
-        for (key, pair) in pairs where key.target == target {
-            if pair.state == .detected {
-                return .detected
-            }
-            if pair.state == .suspicious {
-                strongest = .suspicious
-            }
-        }
-        return strongest
-    }
-
-    /// Every observer that currently detects `target`, in ascending observer
-    /// order.
-    ///
-    /// The witness list a crime is judged against (issue #504). Detection only:
-    /// an observer that is merely suspicious has not seen anything, and the
-    /// order is sorted rather than dictionary order so two runs over the same
-    /// recorded inputs name the same witnesses in the same sequence.
+    /// Every observer that currently detects `target`, in ascending order: the
+    /// witness list for a crime. Suspicion does not count.
     public func observersDetecting(_ target: ReferenceKey) -> [ReferenceKey] {
         pairs
             .filter { $0.key.target == target && $0.value.state == .detected }
@@ -132,12 +83,8 @@ public final class PerceptionRuntime {
 
     // MARK: - Frames
 
-    /// Advances perception by a wall delta, running whole fixed steps only.
-    ///
-    /// A zero delta advances nothing and is safe to call every frame — the
-    /// established menu-pause rule. A negative or non-finite delta is treated
-    /// the same way rather than run backwards.
-    ///
+    /// Advances perception by a wall delta, running whole fixed steps only. A zero,
+    /// negative, or non-finite delta runs nothing.
     /// - Returns: how many whole steps ran.
     @discardableResult
     public func advance(by delta: Float) -> Int {

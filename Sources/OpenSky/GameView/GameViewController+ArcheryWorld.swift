@@ -1,31 +1,9 @@
-// `ProjectileWorld` conformance (issue #196, roadmap item 15.5): the eleven
-// answers the archery runtimes need from the session around them.
-//
-// Every one is a plain read off something that already exists — the camera's
-// pose, the streamer's resident actors and its static broadphase, the ground
-// contact's material, the actor-value runtime, the world audio engine, the
-// inventory runtime, the world-state store, the locomotion bridge's graph.
-// Nothing here invents an accounting of its own, which is what keeps the
-// runtime's behaviour the same under test as it is in the app.
-//
-// Three answers are honest partial ones and are worth stating rather than
-// papering over:
-//
-// * `projectileMaterial(at:)` reports the ground material under the player,
-//   not the material of the surface the arrow struck. It is the same
-//   limitation `meleeMaterial(at:)` has and the same reason: nothing in this
-//   engine resolves a per-triangle material at an arbitrary world point yet
-//   (issue #358 gave shapes a material; picking the struck triangle out of one
-//   is a separate step).
-// * `raiseArcheryEvent(_:)` can only reach the player's graph, because item
-//   14.6 attached a behavior graph to the player and to nobody else.
-// * A stuck arrow is spawned as the AMMO's own ground model through
-//   `ReferenceSpawnState`, which is the one runtime-object channel this engine
-//   has (item 12.1.3). Its transform is the impact point and the flight
-//   direction; it is not attached to the *bone* of an actor it hit, so an actor
-//   that walks away leaves the arrow where it landed. Attaching to a moving
-//   host is `RigidAttachment`'s job and needs an actor-node transform channel
-//   the spawn path does not have.
+// `ProjectileWorld` conformance: the answers the archery runtimes need, each a
+// plain read off an existing session system. Known partial answers:
+// - `projectileMaterial()` uses the ground material under the player.
+// - `raiseArcheryEvent(_:)` reaches only the player's behavior graph.
+// - A stuck arrow is a spawned AMMO model at the impact point. It does not
+//   follow the bone of the actor it hit.
 
 import AppKit
 import OpenSkyBehavior
@@ -68,7 +46,7 @@ extension GameViewController: ProjectileWorld {
         )
     }
 
-    func projectileMaterial(at position: SIMD3<Float>) -> FormID? {
+    func projectileMaterial() -> FormID? {
         renderer?.walkController.groundMaterial
     }
 

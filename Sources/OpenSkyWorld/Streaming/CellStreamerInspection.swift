@@ -4,8 +4,6 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyPhysics
-import OpenSkyRendering
 
 extension CellStreamer {
     /// Grid slots that reached a terminal state: resident + void + failed.
@@ -46,11 +44,6 @@ extension CellStreamer {
         grid.desiredCells.count
     }
 
-    /// Snapshot of the currently composed multi-cell scene.
-    public var composedScene: RenderScene {
-        composition.composedScene()
-    }
-
     public var distantLODBlockCount: Int {
         composition.distantLOD?.blockCount ?? 0
     }
@@ -65,12 +58,5 @@ extension CellStreamer {
 
     public var isInterior: Bool {
         interiorScene != nil
-    }
-
-    public var residentCollisionStats: StaticCollisionStats {
-        if let interiorScene {
-            return interiorScene.staticCollision.stats
-        }
-        return composition.collisionStats()
     }
 }

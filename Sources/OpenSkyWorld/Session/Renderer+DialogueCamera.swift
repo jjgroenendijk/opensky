@@ -1,30 +1,11 @@
-// The renderer half of the dialogue camera (issue #427, roadmap item 17.4):
-// engaging the override, resolving it once per input frame, and putting the
-// player's own view back when the conversation ends.
-//
-// ## Why the pose is swapped rather than the mode
-//
-// `freeFlyCamera` is the one pose every pass reads — the scene pass, the shadow
-// cascade fit, grass, precipitation and the audio listener all take their view
-// from it — so an override that produced a second camera would have to be
-// threaded through all of them, and a pass that missed the thread would draw
-// the frame from the wrong place. Instead the override writes that one pose and
-// remembers what was there.
-//
-// The swap is undone at the top of the next input frame, before anything
-// simulates, and re-applied at the bottom of it. That ordering is the whole
-// trick: `WalkController` integrates the player's facing out of this same pose,
-// and the body is placed from its yaw, so a frame that simulated against the
-// dialogue pose would turn the player to face themselves. Between frames the
-// dialogue pose is what stands, which is what the passes want and also what the
-// audio listener wants — a conversation is heard from where it is watched.
-//
-// Nothing here changes `movementMode`. The player is still in whatever mode
-// they chose; disengaging restores the pose and re-projects, and the mode was
-// never touched to need restoring.
+// The renderer half of the dialogue camera: engage the override, resolve it per
+// input frame, and restore the player's view afterwards. The override writes
+// `freeFlyCamera`, the one pose every pass reads, and remembers the old pose.
+// It is undone before simulation each frame and re-applied after, so
+// `WalkController` never turns the player to the dialogue pose.
+// `movementMode` never changes.
 
 import OpenSkyDiagnostics
-import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldInterface
@@ -33,14 +14,10 @@ import simd
 /// What the app publishes each frame while a conversation is open. Sampled by
 /// the session — the renderer knows nothing about speakers, rigs or menus.
 nonisolated public struct DialogueCameraFocus: Equatable, Sendable {
-    /// Who is being talked to. Carried so the panel can name them and so a
-    /// focus that silently changed actor is visible rather than invisible.
-    public let speaker: ReferenceKey
     /// The speaker's head, world space.
     public let headPosition: SIMD3<Float>
 
-    public init(speaker: ReferenceKey, headPosition: SIMD3<Float>) {
-        self.speaker = speaker
+    public init(headPosition: SIMD3<Float>) {
         self.headPosition = headPosition
     }
 }
@@ -83,13 +60,9 @@ extension Renderer {
             : FirstPersonCamera.defaultFOVYRadians
     }
 
-    /// Engages, re-aims, or releases the override.
-    ///
-    /// One entry point for all three because they are one decision — who, if
-    /// anybody, the view is framing — and because engaging and releasing both
-    /// have to re-project: the field of view a conversation is watched at is
-    /// the shared world angle, which is not the angle first person projects
-    /// with.
+    /// Engages, re-aims, or releases the override: one decision about who the view
+    /// frames. Engaging and releasing both re-project, because the dialogue field of
+    /// view differs from first person.
     public func setDialogueCameraFocus(_ focus: DialogueCameraFocus?) {
         let wasEngaged = isDialogueCameraEngaged
         restorePlayerCameraPose()
@@ -133,13 +106,8 @@ extension Renderer {
         freeFlyCamera.pitch = pose.pitch
     }
 
-    /// Where the player's own eye is, whatever the view is currently doing.
-    ///
-    /// In third person `freeFlyCamera.position` is the orbit eye rather than
-    /// the player, and framing a conversation from the orbit eye would stand
-    /// the dialogue camera off from a point that is already stood off. In fly
-    /// mode there is no capsule under the view, so the view is the best answer
-    /// available.
+    /// Where the player's own eye is. In third person the camera is the orbit eye,
+    /// so the capsule eye is used; in fly mode the view itself is the best answer.
     public var playerEyePosition: SIMD3<Float> {
         guard movementMode.isPlayerControlled else {
             return dialogueCameraState.restorePose?.position ?? freeFlyCamera.position
@@ -148,13 +116,8 @@ extension Renderer {
             + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
     }
 
-    /// The pivot cross, the sightline and the speaker's facing, for the M16
-    /// world-overlay registry (issue #422).
-    ///
-    /// Drawn from the last resolved pose rather than from a second resolve, so
-    /// the gizmo can never disagree with the frame it is drawn over. While the
-    /// camera is engaged the eye *is* the viewpoint, so the useful half of the
-    /// gizmo is the pivot and the line the player's own eye looks along.
+    /// The pivot cross, the sightline, and the speaker's facing, for the world
+    /// overlay registry. Drawn from the last resolved pose, so it matches the frame.
     public func appendDialogueCameraOverlay(
         context: WorldOverlayFrameContext,
         to list: inout WorldOverlayDrawList

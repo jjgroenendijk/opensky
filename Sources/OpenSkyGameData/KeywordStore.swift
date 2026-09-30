@@ -107,9 +107,3 @@ nonisolated public struct KeywordStore: Sendable {
         return left.objectID < right.objectID
     }
 }
-
-nonisolated public enum KeywordStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> KeywordStore {
-        KeywordStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
-    }
-}

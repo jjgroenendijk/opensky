@@ -1,12 +1,6 @@
-// Two reads a live projectile makes of the world around it: the impact chain a
-// landed arrow plays, and the eviction of stuck arrows whose cell has gone.
-//
-// A satellite of `ProjectileRuntime` for the reason `ProjectileRuntimeBounds`
-// is one: that type sits at its body-length limit (issue #374), so a function
-// added to it has to displace one. These two were chosen because neither
-// writes a `private(set)` member of the main type — `playImpact` only reads,
-// and the eviction goes through the already-internal
-// `removeStuckArrows(_:)` — so moving them needed no access loosened.
+// Two world reads a live projectile makes: the impact chain a landed arrow
+// plays, and the eviction of stuck arrows whose cell is gone. A satellite of
+// `ProjectileRuntime`, which is at its body-length cap.
 
 import OpenSkyFormatsESM
 import simd
@@ -25,7 +19,7 @@ extension ProjectileRuntime {
         // adding one is a one-line change rather than a new chain.
         guard
             let resolved = impacts.resolve(
-                weapon: .unarmed, material: world.projectileMaterial(at: position)
+                weapon: .unarmed, material: world.projectileMaterial()
             )
         else { return nil }
         world.playProjectileImpact(resolved, at: position)

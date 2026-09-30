@@ -1,15 +1,7 @@
-// Synthetic behavior graphs for the evaluator tests (issue #187).
-//
-// The evaluator reads decoded objects through `BehaviorObjectSource`, so a test
-// graph is a dictionary of decoded structs rather than a packfile: the byte
-// layouts are already covered by the decode tests, and repeating them here
-// would test the fixture instead of the evaluator. Everything below is
-// invented — no extracted game data anywhere (AGENTS.md "Legal & IP boundary").
-//
-// The one exception is the clip: `splineClip()` builds a real
-// `HKASplineCompressedAnimation` from the shared synthetic packfile fixture, so
-// clip time advance and looping are exercised through the same sampling seam
-// the engine uses.
+// Synthetic behavior graphs for the evaluator tests: dictionaries of decoded
+// structs, not packfiles, because decode tests cover the bytes. All invented.
+// `splineClip()` builds a real `HKASplineCompressedAnimation` from the
+// synthetic packfile fixture, so clip time runs through the engine's sampler.
 
 import FormatsAnimationTesting
 import Foundation
@@ -144,7 +136,6 @@ public enum BehaviorFixture {
     /// vanilla Skyrim skeleton.
     public static func skeleton() -> BehaviorSkeleton {
         BehaviorSkeleton(
-            boneNames: ["NPC Root [Root]", "NPC Pelvis [Pelv]", "NPC Hand [Hand]"],
             referencePose: [
                 bonePose(translation: SIMD3(0, 0, 0)),
                 bonePose(translation: SIMD3(0, 10, 0)),
@@ -356,7 +347,6 @@ public enum BehaviorFixture {
         clips: any BehaviorClipSource = EmptyBehaviorClipSource()
     ) -> BehaviorGraphInstance {
         BehaviorGraphInstance(
-            name: "test",
             root: root,
             data: data,
             source: table,

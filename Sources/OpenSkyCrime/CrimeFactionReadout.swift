@@ -1,12 +1,10 @@
-// Text for the `World > Crime & Factions` readouts (issue #507), kept out of the
-// AppKit sections so the wording is unit-testable and every section reads one
-// snapshot the same way.
+// Text for the `World > Crime & Factions` readouts, kept out of AppKit so the
+// wording is unit-testable.
 
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface

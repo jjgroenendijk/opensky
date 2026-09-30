@@ -1,24 +1,8 @@
-// Spawned references (issue #177, roadmap item 12.1.3): objects the running
-// game created, which no plugin places and every cell build still has to draw.
-//
-// A dropped item is the first of them; a summon and a placed atronach are the
-// same shape. The representation is deliberately a `WorldStateComponent` rather
-// than a list beside the store, so that the M10 machinery absorbs it unchanged:
-// `WorldStateStore.set` journals a spawn exactly as it journals a `Disable()`,
-// `snapshot()` orders it by `ReferenceKey`, the save writes it as one more
-// additive chunk, and `CellStreamer.noteStateMutation` rebuilds the cell it
-// landed in. Nothing in this file knows about inventory; dropping an item is
-// `InventoryRuntime.remove` followed by one `set` of this component.
-//
-// The component carries its own cell rather than relying on
-// `ReferenceStateDelta.cell`. The delta's cell records where the *most recent*
-// mutation happened and is overwritten by every later write, which is right for
-// dirty-count attribution and wrong for "where does this object exist": moving
-// a dropped item would otherwise be able to strand it in a cell it is no longer
-// in. The two agree in practice, because every writer attributes the mutation
-// to the same cell it spawns into.
-//
-// Documented in docs/engine/reference-identity.md.
+// Spawned references: objects the running game created, which no plugin
+// places. A spawn is a `WorldStateComponent`, so the store journals it, the
+// save writes it, and the streamer rebuilds its cell like any other mutation.
+// The component carries its own cell because `ReferenceStateDelta.cell` is
+// overwritten by each later write. See docs/engine/reference-identity.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -68,43 +52,23 @@ nonisolated public struct ReferenceSpawnState: WorldStateComponent, Sendable {
     }
 }
 
-/// The raw FormID a spawned reference is addressed by inside a built cell.
-///
-/// Everything below the runtime index — collision raycasts, interaction
-/// metadata, the render instance sort key — addresses a placement by raw
-/// `FormID`, so a generated reference needs one even though no plugin defines
-/// it. The mapping is from the generated key's sequence number, which is
-/// already the whole of the allocator's state, into the `0xFF` mod index.
-///
-/// `0xFF` is safe by construction rather than by convention: a plugin's records
-/// are numbered by its position in the load order, and a load order can hold at
-/// most 0xFE plugins because the index is one byte, so no plugin record can
-/// ever carry it. (Bethesda's own save format uses the same index for
-/// save-created references, which is a corroboration of the reasoning and not
-/// its source.)
+/// The raw FormID a spawned reference uses inside a built cell. Collision,
+/// interaction, and render sorting address placements by raw `FormID`. The
+/// sequence number maps into mod index `0xFF`, which no plugin can use: a load
+/// order holds at most 0xFE plugins.
 nonisolated public enum SpawnedReferenceIdentity: Sendable {
     /// High byte of every spawned reference's FormID.
     public static let modIndex: UInt32 = 0xFF00_0000
     /// Largest sequence number that still fits in the 24-bit object ID.
     public static let maximumSequence: UInt64 = 0x00FF_FFFF
 
-    /// The FormID `key` is placed under, or nil when `key` is not a generated
-    /// key or its sequence has outrun the 24-bit object ID.
-    ///
-    /// Running out is not a silent wrap: a wrapped sequence would alias two
-    /// distinct objects onto one FormID, so the build drops the reference and
-    /// counts it instead. Reaching the cap needs 16.7 million spawns in one
-    /// session, which no play session produces.
+    /// The FormID `key` is placed under, or nil when `key` is not generated or its
+    /// sequence has outrun the 24-bit object ID. Wrapping would alias two objects,
+    /// so the build drops the reference and counts it.
     public static func formID(for key: ReferenceKey) -> FormID? {
         guard case let .generated(sequence) = key, sequence <= maximumSequence else {
             return nil
         }
         return FormID(modIndex | UInt32(sequence))
-    }
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func spawn(_ value: ReferenceSpawnState) -> Self {
-        Self(value)
     }
 }
