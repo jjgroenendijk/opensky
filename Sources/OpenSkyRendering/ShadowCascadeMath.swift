@@ -15,6 +15,48 @@ nonisolated public struct ShadowCascade: Sendable {
     public var splitFar: Float
 }
 
+/// Camera, sun, and cascade settings for `ShadowCascadeMath.makeCascades`.
+/// Slice 0 starts at `nearPlane`; `shadowDistance` is the overall far bound.
+nonisolated public struct ShadowCascadeRequest: Sendable {
+    public var cameraToWorld: simd_float4x4
+    public var fovYRadians: Float
+    public var aspectRatio: Float
+    public var nearPlane: Float
+    public var shadowDistance: Float
+    public var sunDirection: SIMD3<Float>
+    public var cascadeCount: Int
+    public var lambda: Float
+    public var shadowMapResolution: Int
+    public var casterBackup: Float
+    public var residentBounds: ModelBounds?
+
+    public init(
+        cameraToWorld: simd_float4x4,
+        fovYRadians: Float,
+        aspectRatio: Float,
+        nearPlane: Float,
+        shadowDistance: Float,
+        sunDirection: SIMD3<Float>,
+        cascadeCount: Int,
+        lambda: Float,
+        shadowMapResolution: Int,
+        casterBackup: Float,
+        residentBounds: ModelBounds? = nil
+    ) {
+        self.cameraToWorld = cameraToWorld
+        self.fovYRadians = fovYRadians
+        self.aspectRatio = aspectRatio
+        self.nearPlane = nearPlane
+        self.shadowDistance = shadowDistance
+        self.sunDirection = sunDirection
+        self.cascadeCount = cascadeCount
+        self.lambda = lambda
+        self.shadowMapResolution = shadowMapResolution
+        self.casterBackup = casterBackup
+        self.residentBounds = residentBounds
+    }
+}
+
 nonisolated public enum ShadowCascadeMath: Sendable {
     /// Practical (blended uniform + logarithmic) split scheme. Returns `count`
     /// strictly increasing far bounds; last element is exactly `far`. Degenerate
@@ -43,45 +85,30 @@ nonisolated public enum ShadowCascadeMath: Sendable {
         return splits
     }
 
-    // Full camera + sun + cascade config; the renderer calls this by keyword.
-    // swiftlint:disable function_parameter_count
-    /// Build one orthographic light-space cascade per frustum slice. Slice 0
-    /// starts at `nearPlane`; `shadowDistance` is the overall far bound. Each
-    /// cascade fits a rotation-invariant square around the slice's bounding
-    /// sphere and snaps its origin to the shadow-map texel grid.
-    public static func makeCascades(
-        cameraToWorld: simd_float4x4,
-        fovYRadians: Float,
-        aspectRatio: Float,
-        nearPlane: Float,
-        shadowDistance: Float,
-        sunDirection: SIMD3<Float>,
-        cascadeCount: Int,
-        lambda: Float,
-        shadowMapResolution: Int,
-        casterBackup: Float,
-        residentBounds: ModelBounds? = nil
-    ) -> [ShadowCascade] {
-        let count = max(cascadeCount, 1)
-        let resolution = max(shadowMapResolution, 1)
-        let sun = normalizedSun(sunDirection)
+    /// One orthographic light-space cascade per frustum slice. Each cascade
+    /// fits a rotation-invariant square around its slice's bounding sphere and
+    /// snaps the origin to the shadow-map texel grid.
+    public static func makeCascades(_ request: ShadowCascadeRequest) -> [ShadowCascade] {
+        let count = max(request.cascadeCount, 1)
+        let resolution = max(request.shadowMapResolution, 1)
+        let sun = normalizedSun(request.sunDirection)
         let up = lightUp(sun)
-        let tanHalfFovY = tanf(max(fovYRadians, 1e-4) * 0.5)
+        let tanHalfFovY = tanf(max(request.fovYRadians, 1e-4) * 0.5)
         let splits = splitDistances(
-            near: nearPlane,
-            far: shadowDistance,
+            near: request.nearPlane,
+            far: request.shadowDistance,
             count: count,
-            lambda: lambda
+            lambda: request.lambda
         )
         var cascades: [ShadowCascade] = []
         cascades.reserveCapacity(count)
         for index in 0 ..< count {
-            let sliceNear = index == 0 ? nearPlane : splits[index - 1]
+            let sliceNear = index == 0 ? request.nearPlane : splits[index - 1]
             let sliceFar = splits[index]
             let corners = sliceCorners(
-                cameraToWorld: cameraToWorld,
+                cameraToWorld: request.cameraToWorld,
                 tanHalfFovY: tanHalfFovY,
-                aspectRatio: aspectRatio,
+                aspectRatio: request.aspectRatio,
                 sliceNear: sliceNear,
                 sliceFar: sliceFar
             )
@@ -90,8 +117,8 @@ nonisolated public enum ShadowCascadeMath: Sendable {
                 sun: sun,
                 up: up,
                 resolution: resolution,
-                casterBackup: casterBackup,
-                residentBounds: residentBounds
+                casterBackup: request.casterBackup,
+                residentBounds: request.residentBounds
             )
             cascades.append(ShadowCascade(
                 viewProjection: viewProjection,
@@ -101,8 +128,6 @@ nonisolated public enum ShadowCascadeMath: Sendable {
         }
         return cascades
     }
-
-    // swiftlint:enable function_parameter_count
 
     /// Cascade lookup mirrored by the MSL shader: first `i` in `0..<cascadeCount`
     /// with `viewDepth <= splits[i]`, else the last cascade. Written as a plain
@@ -224,14 +249,14 @@ nonisolated public enum ShadowCascadeMath: Sendable {
             residentNearZ: residentNearZ
         )
         let farZ = max(-minBound.z, nearZ + 1e-4)
-        let ortho = MatrixMath.orthographic(
+        let ortho = MatrixMath.orthographic(OrthographicBounds(
             left: originX,
             right: originX + extent,
             bottom: originY,
             top: originY + extent,
             nearZ: nearZ,
             farZ: farZ
-        )
+        ))
         return ortho * lightView
     }
 
@@ -251,15 +276,9 @@ nonisolated public enum ShadowCascadeMath: Sendable {
         return -maxZ
     }
 
-    /// Clamp the light near plane so the casterBackup extension reaches no
-    /// further toward the sun than resident geometry actually does. The scene
-    /// is the resident cell set, so its bounds enclose every caster: pulling
-    /// the near plane back to them is a precision/cost win, never a visual
-    /// change. `sliceNearZ` keeps the frustum slice covered; `fullBackupNearZ`
-    /// is the unclamped 7.1.1 near; `residentNearZ` nil -> unclamped. The
-    /// result stays <= sliceNearZ (slice covered) and, whenever resident
-    /// geometry sits within the backup, <= residentNearZ (no caster clipped),
-    /// and never reaches past the full backup toward the sun.
+    /// Pulls the light near plane back to resident geometry, which bounds every
+    /// caster. The result covers the slice, clips no resident caster, and never
+    /// reaches past `fullBackupNearZ`. A nil `residentNearZ` means no clamp.
     public static func clampedShadowNearZ(
         sliceNearZ: Float,
         fullBackupNearZ: Float,

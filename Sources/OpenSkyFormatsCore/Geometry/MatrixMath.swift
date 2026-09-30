@@ -20,7 +20,7 @@ nonisolated public enum MatrixMath: Sendable {
     }
 
     /// The inverse, for a control that presents an angle in degrees over a
-    /// value the engine keeps in radians (issue #190).
+    /// value the engine keeps in radians.
     public static func degrees(fromRadians radians: Float) -> Float {
         radians / .pi * 180
     }
@@ -130,20 +130,9 @@ nonisolated public enum MatrixMath: Sendable {
             * Self.scale(uniform: scale)
     }
 
-    /// The inverse of `placement`'s rotation: the Bethesda euler triple whose
-    /// `Rz(-z) * Ry(-y) * Rx(-x)` reproduces `orientation`.
-    ///
-    /// A simulated rigid body integrates an orientation quaternion but persists
-    /// through `ReferenceTransformOverride`, which stores the record's own euler
-    /// angles (issue #193). Without this the two representations could not be
-    /// the same rotation, and a settled object would be found rotated after a
-    /// save and reload.
-    ///
-    /// The middle angle is recovered through `asin`, so it comes back in
-    /// `-pi/2 ... pi/2`. That names the same rotation as any other triple for it.
-    /// Straight up or straight down leaves the outer two angles degenerate; the
-    /// X angle is pinned to zero there and the whole rotation is carried by Z,
-    /// which is the conventional resolution.
+    /// The euler triple whose `Rz(-z) * Ry(-y) * Rx(-x)` reproduces `orientation`,
+    /// so a rigid body's quaternion can persist as record euler angles.
+    /// Y comes back in `-pi/2 ... pi/2`; at gimbal lock X is pinned to zero.
     public static func eulerAngles(of orientation: simd_quatf) -> SIMD3<Float> {
         let matrix = float3x3(orientation)
         // matrix[column][row]; the derivation below reads row-major.
@@ -188,28 +177,41 @@ nonisolated public enum MatrixMath: Sendable {
         ))
     }
 
-    // Six bounds are the canonical orthographic-frustum signature (l/r/b/t/n/f).
-    // swiftlint:disable function_parameter_count
     /// Right-handed orthographic projection mapping z to Metal's [0, 1] range.
-    /// Eye space looks down -z, so eye z in [-farZ, -nearZ] maps to clip z in
-    /// [0, 1]; x in [left, right] and y in [bottom, top] map to [-1, 1].
-    public static func orthographic(
-        left: Float,
-        right: Float,
-        bottom: Float,
-        top: Float,
-        nearZ: Float,
-        farZ: Float
-    ) -> float4x4 {
-        let rml = right - left
-        let tmb = top - bottom
-        let nmf = nearZ - farZ
+    /// Eye z in [-farZ, -nearZ] maps to clip z in [0, 1]; x and y map to [-1, 1].
+    public static func orthographic(_ bounds: OrthographicBounds) -> float4x4 {
+        let rml = bounds.right - bounds.left
+        let tmb = bounds.top - bounds.bottom
+        let nmf = bounds.nearZ - bounds.farZ
         return float4x4(columns: (
             SIMD4<Float>(2 / rml, 0, 0, 0),
             SIMD4<Float>(0, 2 / tmb, 0, 0),
             SIMD4<Float>(0, 0, 1 / nmf, 0),
-            SIMD4<Float>(-(right + left) / rml, -(top + bottom) / tmb, nearZ / nmf, 1)
+            SIMD4<Float>(
+                -(bounds.right + bounds.left) / rml,
+                -(bounds.top + bounds.bottom) / tmb,
+                bounds.nearZ / nmf,
+                1
+            )
         ))
     }
-    // swiftlint:enable function_parameter_count
+}
+
+/// The eye-space box an orthographic projection maps to clip space.
+nonisolated public struct OrthographicBounds: Equatable, Sendable {
+    public var left: Float
+    public var right: Float
+    public var bottom: Float
+    public var top: Float
+    public var nearZ: Float
+    public var farZ: Float
+
+    public init(left: Float, right: Float, bottom: Float, top: Float, nearZ: Float, farZ: Float) {
+        self.left = left
+        self.right = right
+        self.bottom = bottom
+        self.top = top
+        self.nearZ = nearZ
+        self.farZ = farZ
+    }
 }

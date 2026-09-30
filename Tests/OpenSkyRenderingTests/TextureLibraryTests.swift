@@ -48,14 +48,14 @@ struct TextureLibraryTests {
         try contents.write(to: url)
     }
 
-    private func library(device: MTLDevice) -> TextureLibrary {
+    private func library(device: MTLDevice) throws -> TextureLibrary {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
-        return TextureLibrary(fileSystem: vfs, device: device)
+        return try TextureLibrary(fileSystem: vfs, device: device)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func nilKeyReturnsSharedPlaceholderUncounted() throws {
         let device = try #require(Self.anyDevice)
-        let library = library(device: device)
+        let library = try library(device: device)
         let first = library.texture(key: nil, usage: .color)
         let second = library.texture(key: nil, usage: .color)
         #expect(first === second)
@@ -65,7 +65,7 @@ struct TextureLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func missingPathPlaceholderIdentityAndCounter() throws {
         let device = try #require(Self.anyDevice)
-        let library = library(device: device)
+        let library = try library(device: device)
         let first = library.texture(key: "textures\\nope.dds", usage: .color)
         let second = library.texture(key: "textures\\nope.dds", usage: .color)
         #expect(first === second)
@@ -77,7 +77,7 @@ struct TextureLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func normalizationVariantsHitOneEntry() throws {
         let device = try #require(Self.anyDevice)
-        let library = library(device: device)
+        let library = try library(device: device)
         let canonical = library.texture(key: "textures\\sky\\night.dds", usage: .color)
         let variant = library.texture(key: "Textures/Sky\\NIGHT.DDS", usage: .color)
         #expect(canonical === variant)
@@ -86,7 +86,7 @@ struct TextureLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func colorAndDataUsageAreDistinctEntries() throws {
         let device = try #require(Self.anyDevice)
-        let library = library(device: device)
+        let library = try library(device: device)
         let color = library.texture(key: "textures\\a.dds", usage: .color)
         let data = library.texture(key: "textures\\a.dds", usage: .data)
         #expect(color !== data)
@@ -97,7 +97,7 @@ struct TextureLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func providerMatchesTextureMethod() throws {
         let device = try #require(Self.anyDevice)
-        let library = library(device: device)
+        let library = try library(device: device)
         let direct = library.texture(key: "textures\\a.dds", usage: .color)
         let viaProvider = library.provider("textures\\a.dds", .color)
         #expect(direct === viaProvider)
@@ -111,7 +111,7 @@ struct TextureLibraryTests {
             height: 8,
             mipCount: 1
         ))
-        let library = library(device: device)
+        let library = try library(device: device)
         let first = library.texture(key: "textures\\rock.dds", usage: .color)
         let second = library.texture(key: "Textures/Rock.DDS", usage: .color)
         #expect(first === second) // shared instance across refs
@@ -123,7 +123,7 @@ struct TextureLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func capturedKeysCanRemarkACacheHitWorkingSet() throws {
         let device = try #require(Self.anyDevice)
-        let library = library(device: device)
+        let library = try library(device: device)
 
         library.beginKeyCapture()
         _ = library.texture(key: "textures\\shared.dds", usage: .color)
@@ -137,7 +137,7 @@ struct TextureLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func evictionDropsOnlyRequestedTextureKeys() throws {
         let device = try #require(Self.anyDevice)
-        let library = library(device: device)
+        let library = try library(device: device)
         _ = library.texture(key: "textures\\first.dds", usage: .color)
         _ = library.texture(key: "textures\\second.dds", usage: .color)
         let keys = library.drainTouchedKeys()

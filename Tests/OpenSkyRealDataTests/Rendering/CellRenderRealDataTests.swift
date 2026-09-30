@@ -71,7 +71,7 @@ struct CellRenderRealDataTests {
 
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
         let cellScene = try builder.buildScene(
@@ -114,7 +114,7 @@ struct CellRenderRealDataTests {
     /// a clear failure long before the system is at risk.
     private static let footprintCapMB = 3584.0
 
-    /// Drives the live streamer (todo 3.2) end to end over real data: a
+    /// Drives the live streamer end to end over real data: a
     /// SerialCellBuildRunner builds the 5x5 around FirstRenderCell off the
     /// main thread, the sink swaps each recompose into a real Renderer, and
     /// pumping update() mirrors exactly what the app's per-frame hook does --
@@ -205,7 +205,7 @@ extension CellRenderRealDataTests {
     private func makeStreamHarness(device: MTLDevice, root: GameDataRoot) throws -> StreamHarness {
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let provider = BuilderCellSceneProvider(
             builder: CellSceneBuilder(file: file, meshes: meshes, textures: textures),

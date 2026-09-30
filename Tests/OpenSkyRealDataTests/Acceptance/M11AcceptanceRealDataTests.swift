@@ -106,7 +106,7 @@ extension M11AcceptanceRealDataTests {
     private func makeSetup(device: MTLDevice, root: GameDataRoot) throws -> Setup {
         let fileSystem = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         let provider = BuilderCellSceneProvider(
             builder: CellSceneBuilder(

@@ -39,25 +39,15 @@ nonisolated public struct Quest: Sendable {
         case dragonborn
         case unknown(UInt32)
 
-        // One branch per documented value; a lookup table would not read
-        // better than the list, so the complexity cap is waived here.
-        // swiftlint:disable:next cyclomatic_complexity
+        /// Indexed by the raw DNAM value.
+        private static let known: [Kind] = [
+            .none, .mainQuest, .magesGuild, .thievesGuild, .darkBrotherhood, .companionQuests,
+            .miscellaneous, .daedricQuests, .sideQuests, .civilWar, .vampire, .dragonborn
+        ]
+
         public init(rawValue: UInt32) {
-            switch rawValue {
-            case 0: self = .none
-            case 1: self = .mainQuest
-            case 2: self = .magesGuild
-            case 3: self = .thievesGuild
-            case 4: self = .darkBrotherhood
-            case 5: self = .companionQuests
-            case 6: self = .miscellaneous
-            case 7: self = .daedricQuests
-            case 8: self = .sideQuests
-            case 9: self = .civilWar
-            case 10: self = .vampire
-            case 11: self = .dragonborn
-            default: self = .unknown(rawValue)
-            }
+            let index = Int(rawValue)
+            self = index < Self.known.count ? Self.known[index] : .unknown(rawValue)
         }
 
         public var name: String {

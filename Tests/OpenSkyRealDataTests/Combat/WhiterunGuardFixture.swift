@@ -1,5 +1,4 @@
-// One real Whiterun guard, located in the user's own install (issues #202 and
-// #424).
+// One real Whiterun guard, located in the user's own install.
 //
 // Shared by the perception suite, which watches the guard notice an approaching
 // player, and the combat suite, which then fights it. Both want the same three
@@ -45,7 +44,7 @@ enum WhiterunGuardFixture {
     /// a sight line is traced against is the real thing.
     static func buildCell(root: GameDataRoot, device: MTLDevice) throws -> CellScene {
         let fileSystem = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let builder = try CellSceneBuilder(
             file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
             meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),

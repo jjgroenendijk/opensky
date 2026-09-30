@@ -1,4 +1,4 @@
-// M7.5.2 GRAS render acceptance against the user's read-only Skyrim SE
+// GRAS render acceptance against the user's read-only Skyrim SE
 // install. Renders cell-owned Whiterun grass through production batches,
 // proves live density/distance policy + weather wind motion numerically, and
 // writes only gitignored PNG/report evidence. One @Test keeps realtest exact.
@@ -103,7 +103,7 @@ struct GrassRenderingAcceptanceRealDataTests {
         let root = try #require(Self.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let scene = try CellSceneBuilder(file: file, meshes: meshes, textures: textures)
             .buildScene(

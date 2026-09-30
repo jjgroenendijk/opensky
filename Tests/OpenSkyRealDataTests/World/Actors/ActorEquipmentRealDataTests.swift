@@ -96,7 +96,7 @@ struct ActorEquipmentRealDataTests {
         #expect(after.skips.contains { $0.reason == AppearanceSkip.Reason.maskedByOutfit })
 
         let vfs = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let assembler = ActorAssembler(provider: meshes)
 
@@ -126,7 +126,7 @@ struct ActorEquipmentRealDataTests {
         let device = try #require(Self.device)
         let root = try #require(Self.dataRoot)
         let vfs = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
 
         let skeletonPath = "meshes\\actors\\character\\character assets\\skeleton.nif"

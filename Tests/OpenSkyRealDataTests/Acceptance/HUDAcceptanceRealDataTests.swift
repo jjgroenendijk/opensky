@@ -1,4 +1,4 @@
-// M8.4.3 HUD acceptance against the user's read-only Skyrim SE install.
+// HUD acceptance against the user's read-only Skyrim SE install.
 // The walk-route farm door supplies real interaction metadata and collision;
 // numeric A/B evidence plus rendered frames stay in ignored logs/.
 
@@ -119,7 +119,7 @@ struct HUDAcceptanceRealDataTests {
         fileSystem: VirtualFileSystem
     ) throws -> CellScene {
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(
             fileSystem: fileSystem,
             device: device,

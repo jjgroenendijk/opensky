@@ -243,4 +243,15 @@ struct PerkRecordTests {
         #expect(perk.skipped.total == 0)
         return perk.effects.first?.functionData
     }
+
+    @Test(arguments: [
+        (UInt8(0), PerkFunction.unknown(raw: 0)),
+        (1, .setValue),
+        (9, .addActivateChoice),
+        (15, .setText),
+        (16, .unknown(raw: 16))
+    ])
+    func functionRawValueMapsToCase(raw: UInt8, expected: PerkFunction) {
+        #expect(PerkFunction(rawValue: raw) == expected)
+    }
 }

@@ -326,7 +326,7 @@ extension CellSceneTerrainTests {
     private func build(pluginData: Data) throws -> CellScene {
         let device = try #require(Self.device)
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let builder = try CellSceneBuilder(
             file: ESMFile(data: pluginData),

@@ -38,9 +38,9 @@ struct MeshLibraryTests {
         try contents.write(to: url)
     }
 
-    private func library(device: MTLDevice) -> MeshLibrary {
+    private func library(device: MTLDevice) throws -> MeshLibrary {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         return MeshLibrary(fileSystem: vfs, device: device, textures: textures)
     }
 
@@ -75,7 +75,7 @@ struct MeshLibraryTests {
     @Test(.enabled(if: Self.hasDevice)) func cachesModelByKey() throws {
         let device = try #require(Self.device)
         try writeLooseFile("meshes/clutter/cup.nif", staticNIF())
-        let library = library(device: device)
+        let library = try library(device: device)
         let first = try library.model(path: "meshes\\clutter\\cup.nif")
         let second = try library.model(path: "meshes\\clutter\\cup.nif")
         #expect(first === second) // shared instance across refs
@@ -85,7 +85,7 @@ struct MeshLibraryTests {
     @Test(.enabled(if: Self.hasDevice)) func prependsMeshesPrefixWhenOmitted() throws {
         let device = try #require(Self.device)
         try writeLooseFile("meshes/clutter/cup.nif", staticNIF())
-        let library = library(device: device)
+        let library = try library(device: device)
         // Record-style path without the "meshes\\" root resolves + shares the
         // same instance as the fully qualified one.
         let bare = try library.model(path: "clutter\\cup.nif")
@@ -97,7 +97,7 @@ struct MeshLibraryTests {
     @Test(.enabled(if: Self.hasDevice)) func normalizationVariantsHitOneEntry() throws {
         let device = try #require(Self.device)
         try writeLooseFile("meshes/clutter/cup.nif", staticNIF())
-        let library = library(device: device)
+        let library = try library(device: device)
         let canonical = try library.model(path: "meshes\\clutter\\cup.nif")
         let variant = try library.model(path: "Meshes/Clutter\\CUP.NIF")
         #expect(canonical === variant)
@@ -106,7 +106,7 @@ struct MeshLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func missingFileThrowsNotFound() throws {
         let device = try #require(Self.device)
-        let library = library(device: device)
+        let library = try library(device: device)
         #expect(throws: MeshLibraryError.fileNotFound(path: "meshes\\clutter\\absent.nif")) {
             _ = try library.model(path: "clutter\\absent.nif")
         }
@@ -115,7 +115,7 @@ struct MeshLibraryTests {
     @Test(.enabled(if: Self.hasDevice)) func malformedNIFThrowsParseFailed() throws {
         let device = try #require(Self.device)
         try writeLooseFile("meshes/bad.nif", Data("not a nif file".utf8))
-        let library = library(device: device)
+        let library = try library(device: device)
         #expect(throws: MeshLibraryError.self) {
             _ = try library.model(path: "bad.nif")
         }
@@ -129,7 +129,7 @@ struct MeshLibraryTests {
             blocks: [.init("NiNode", NIFFixture.niNode())],
             roots: [-1]
         ))
-        let library = library(device: device)
+        let library = try library(device: device)
         #expect(throws: MeshLibraryError.emptyModel(path: "meshes\\empty.nif")) {
             _ = try library.model(path: "empty.nif")
         }
@@ -146,7 +146,7 @@ struct MeshLibraryTests {
             )),
             .init("BSTriShape", shape())
         ]))
-        let library = library(device: device)
+        let library = try library(device: device)
         _ = try library.model(path: "mixed.nif")
         #expect(library.skippedShapeCount(forPath: "mixed.nif") == 1)
         #expect(library.totalSkippedShapeCount == 1)
@@ -155,7 +155,7 @@ struct MeshLibraryTests {
     @Test(.enabled(if: Self.hasDevice)) func recordsModelBoundsAtLoad() throws {
         let device = try #require(Self.device)
         try writeLooseFile("meshes/clutter/cup.nif", staticNIF())
-        let library = library(device: device)
+        let library = try library(device: device)
         #expect(library.bounds(forPath: "clutter\\cup.nif") == nil) // not loaded yet
         _ = try library.model(path: "clutter\\cup.nif")
         // shape() places all three vertices at (1, 2, 3) -> point bounds.
@@ -165,7 +165,7 @@ struct MeshLibraryTests {
 
     @Test(.enabled(if: Self.hasDevice)) func invalidPathThrowsNotFound() throws {
         let device = try #require(Self.device)
-        let library = library(device: device)
+        let library = try library(device: device)
         #expect(throws: MeshLibraryError.self) {
             _ = try library.model(path: "")
         }

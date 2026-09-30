@@ -1,4 +1,4 @@
-// CellSceneBuilder integration for the runtime reference index (issue #158):
+// CellSceneBuilder integration for the runtime reference index:
 // a reference decoded during a build must be addressable on the finished
 // CellScene by ReferenceKey and by raw FormID, tagged with the children group
 // it was stored in. Plugin bytes come from the synthetic ESMFixture helpers on
@@ -88,7 +88,7 @@ struct CellSceneBuilderReferenceIndexTests {
     func keysUseTheBuildersPluginName() throws {
         let device = try #require(CellSceneBuilderTests.device)
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let builder = try CellSceneBuilder(
             file: ESMFile(data: fixtures.plugin(

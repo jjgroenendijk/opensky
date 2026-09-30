@@ -1,4 +1,4 @@
-// M7.2.3 weather-core acceptance over the user's own Skyrim SE install
+// Weather-core acceptance over the user's own Skyrim SE install
 // (read-only external input, never committed — AGENTS.md Legal & IP): renders
 // the FirstRenderCell exterior scene offscreen and proves the acceptance gate
 // end to end against real WTHR/CLMT data:
@@ -141,7 +141,7 @@ struct WeatherAcceptanceRealDataTests {
         let root = try #require(Self.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
         let cellScene = try builder.buildScene(

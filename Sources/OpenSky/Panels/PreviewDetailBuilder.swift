@@ -23,7 +23,7 @@ final class PreviewDetailBuilder {
 
     private let fileSystem: VirtualFileSystem
     private let referenceInspector: ReferenceRecordInspector?
-    /// Nil when the machine lacks a Metal 4 GPU — text-only previews then.
+    /// Nil without a Metal 4 GPU or its texture placeholders; previews are then text-only.
     private let device: (any MTLDevice)?
     private let textures: TextureLibrary?
     private let meshes: MeshLibrary?
@@ -34,9 +34,12 @@ final class PreviewDetailBuilder {
     ) {
         self.fileSystem = fileSystem
         self.referenceInspector = referenceInspector
-        if let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) {
+        if
+            let device = MTLCreateSystemDefaultDevice(),
+            device.supportsFamily(.metal4),
+            let textures = try? TextureLibrary(fileSystem: fileSystem, device: device)
+        {
             self.device = device
-            let textures = TextureLibrary(fileSystem: fileSystem, device: device)
             self.textures = textures
             meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         } else {

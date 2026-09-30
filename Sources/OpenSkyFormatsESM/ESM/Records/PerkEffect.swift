@@ -52,28 +52,17 @@ nonisolated public enum PerkFunction: Hashable, CustomStringConvertible, Sendabl
     case setText
     case unknown(raw: UInt8)
 
-    // One branch per documented value; a lookup table would not read better
-    // than the list, so the complexity cap is waived here.
-    // swiftlint:disable:next cyclomatic_complexity
+    /// Indexed by the raw value minus one; 0 is not a documented function.
+    private static let known: [PerkFunction] = [
+        .setValue, .addValue, .multiplyValue, .addRangeToValue, .addActorValueMultiplier,
+        .absoluteValue, .negativeAbsoluteValue, .addLeveledList, .addActivateChoice,
+        .selectSpell, .selectText, .setToActorValueMultiplier, .multiplyActorValueMultiplier,
+        .multiplyOnePlusActorValueMultiplier, .setText
+    ]
+
     public init(rawValue: UInt8) {
-        switch rawValue {
-        case 1: self = .setValue
-        case 2: self = .addValue
-        case 3: self = .multiplyValue
-        case 4: self = .addRangeToValue
-        case 5: self = .addActorValueMultiplier
-        case 6: self = .absoluteValue
-        case 7: self = .negativeAbsoluteValue
-        case 8: self = .addLeveledList
-        case 9: self = .addActivateChoice
-        case 10: self = .selectSpell
-        case 11: self = .selectText
-        case 12: self = .setToActorValueMultiplier
-        case 13: self = .multiplyActorValueMultiplier
-        case 14: self = .multiplyOnePlusActorValueMultiplier
-        case 15: self = .setText
-        default: self = .unknown(raw: rawValue)
-        }
+        let index = Int(rawValue) - 1
+        self = Self.known.indices.contains(index) ? Self.known[index] : .unknown(raw: rawValue)
     }
 
     /// The four functions whose EPFT=2 payload is an actor value and a factor

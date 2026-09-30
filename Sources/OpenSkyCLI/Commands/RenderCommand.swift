@@ -285,7 +285,7 @@ enum RenderCommand {
     static func makeBuilder(context: CLIContext, device: MTLDevice) throws -> CellSceneBuilder {
         let fileSystem = context.makeFileSystem()
         let file = try context.loadSkyrimESM()
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         return CellSceneBuilder(
             file: file,

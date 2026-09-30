@@ -75,7 +75,7 @@ struct LipSyncRenderRealDataTests {
         let lipData = try #require(
             FUZFile(data: vfs.contents(forPath: Self.voicePath)).lipData
         )
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let builder = CellSceneBuilder(
             file: file, meshes: meshes, textures: textures, fileSystem: vfs
