@@ -172,8 +172,8 @@ nonisolated public struct ActorVisualResolver: Sendable {
         localized: Bool,
         pluginName: String
     ) -> ActorVisualResolver {
-        let masters = (try? file.pluginHeader().masters) ?? []
         var skipped = SkippedRecords()
+        let masters = skipped.masters(of: file)
         var resolver = ActorVisualResolver(
             races: index(file, "RACE", &skipped) { try Race(record: $0, localized: localized) },
             armors: index(file, "ARMO", &skipped) { try Armor(record: $0, localized: localized) },
@@ -195,10 +195,8 @@ nonisolated public struct ActorVisualResolver: Sendable {
         _ decode: (ESMRecord) throws -> Value
     ) -> [UInt32: Value] {
         var values: [UInt32: Value] = [:]
-        guard let top = file.topGroup(of: type), let children = try? top.children() else {
-            return values
-        }
-        for case let .record(record) in children {
+        guard let top = file.topGroup(of: type) else { return values }
+        for case let .record(record) in skipped.children(of: top) {
             guard record.type == type, !record.isDeleted else { continue }
             values[record.formID] = skipped.decode(record, using: decode)
         }

@@ -146,7 +146,7 @@ nonisolated public struct PreviewCatalog: Sendable {
                 records.append(record)
                 return true
             }
-            let localized = (try? file.pluginHeader())?.isLocalized ?? false
+            let localized = file.isLocalized
             return (
                 PreviewCatalog(
                     files: files,

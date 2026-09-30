@@ -5,6 +5,7 @@
 
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
@@ -39,6 +40,16 @@ struct InventoryBaselineTests {
         // CNTO count 2 over a bundle of (cuirass x1, helmet x2).
         #expect(baseline.count(of: Fixture.cuirass) == 2)
         #expect(baseline.count(of: Fixture.helmet) == 4)
+    }
+
+    @Test func aMalformedOutfitIsCountedAsSkipped() throws {
+        let broken = try ESMFile(
+            data: ESMFixture.tes4() + ESMFixture.topGroup(
+                "OTFT", contents: ESMFixture.malformedRecord("OTFT", formID: 0xBAD)
+            )
+        )
+        #expect(InventoryBaselineResolver.build(from: broken).skippedRecords.count(of: "OTFT") == 1)
+        #expect(try Fixture.resolver().skippedRecords.isEmpty)
     }
 
     @Test func emptyAndUnknownContainersBaselineEmpty() throws {

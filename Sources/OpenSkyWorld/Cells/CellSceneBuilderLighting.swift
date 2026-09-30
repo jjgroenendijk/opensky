@@ -140,7 +140,7 @@ nonisolated extension CellSceneBuilder {
             return lightingTemplateIndex
         }
         var index: [UInt32: LightingTemplate] = [:]
-        if let top = file.topGroup(of: "LGTM"), let children = try? top.children() {
+        if let top = file.topGroup(of: "LGTM"), let children = childrenOrSkip(top) {
             for case let .record(record) in children where record.type == "LGTM" {
                 if let template = decodeOrSkip(record, using: LightingTemplate.init(record:)) {
                     index[record.formID] = template
@@ -156,7 +156,7 @@ nonisolated extension CellSceneBuilder {
             return lightIndex
         }
         var index: [UInt32: LightRecord] = [:]
-        if let top = file.topGroup(of: "LIGH"), let children = try? top.children() {
+        if let top = file.topGroup(of: "LIGH"), let children = childrenOrSkip(top) {
             for case let .record(record) in children where record.type == "LIGH" {
                 if let light = decodeOrSkip(record, using: LightRecord.init(record:)) {
                     index[record.formID] = light

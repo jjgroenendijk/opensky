@@ -1,18 +1,7 @@
-// Movie model for the display-list renderer (milestone 8.2.4): the character
-// dictionary (shapes, bitmaps, fonts, texts, edit texts, sprites) plus the
-// frame-1 display list — every place/modify/remove tag applied up to the
-// first ShowFrame. Sprite characters (DefineSprite, 39) decode their own
-// nested tag stream and keep their own frame-1 list; rendering nested sprites
-// beyond frame 1 (timeline animation) is 8.3.x work.
-//
-// Milestone 8.3.1 adds the action side without executing any of it: the main
-// movie and every sprite keep a full `SWFTimeline` (all frames, each with its
-// control tags and DoAction blocks), DoInitAction (59) blocks are collected by
-// sprite id, and PlaceObject2/3 CLIPACTIONS handlers hang off their placement.
-//
-// Reference: Adobe SWF File Format Specification, version 19 — chapter 3
-// "The display list" (pp. 33-51), chapter 5 "Actions" (pp. 63-118), and
-// DefineSprite (chapter 13, p. 201).
+// Movie model for the display-list renderer: the character dictionary, the
+// frame-1 display list, and a full `SWFTimeline` per movie and sprite for the
+// action runtime. DoInitAction blocks are kept by sprite id.
+// Reference: Adobe SWF File Format Specification v19, chapters 3, 5 and 13.
 
 import Foundation
 
@@ -92,6 +81,8 @@ nonisolated public struct SWFMovieTally: Equatable, Sendable {
     public var undecodedActionOpcodes = 0
     /// Action-stream framing problems recorded instead of thrown.
     public var actionWarnings = 0
+    /// Tags that failed to parse and were skipped, over the whole movie.
+    public var malformedTags = 0
 
     public mutating func add(_ other: SWFMovieTally) {
         placeObject += other.placeObject
@@ -111,6 +102,7 @@ nonisolated public struct SWFMovieTally: Equatable, Sendable {
         unknownActionOpcodes += other.unknownActionOpcodes
         undecodedActionOpcodes += other.undecodedActionOpcodes
         actionWarnings += other.actionWarnings
+        malformedTags += other.malformedTags
     }
 }
 
@@ -291,6 +283,7 @@ nonisolated public struct SWFMovie: Sendable {
         for initAction in decoder.initActions {
             total.record(actions: initAction.actions)
         }
+        total.malformedTags += decoder.malformedTags
         tally = total
     }
 

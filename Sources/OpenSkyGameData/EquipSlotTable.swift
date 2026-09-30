@@ -1,10 +1,6 @@
-// Turns an EQUP graph into `HandSlots`, and indexes one plugin's EQUP records
-// so an ETYP link resolves without a load-order index.
-//
-// EQUP gives the structure, not the meaning of the leaves, so a leaf is read
-// by editor ID: only LeftHand and RightHand occupy a hand. A choose-one slot
-// resolves to the right hand when it can, and a link to no EQUP is a tallied
-// miss (docs/formats/shouts-equip-slots.md, docs/engine/inventory-equipment.md).
+// Turns an EQUP graph into `HandSlots`. Only LeftHand and RightHand leaves
+// occupy a hand, read by editor ID; a choose-one slot prefers the right hand,
+// and a link to no EQUP is a tallied miss (docs/formats/shouts-equip-slots.md).
 
 import Foundation
 import OpenSkyFormatsCore
@@ -117,14 +113,11 @@ nonisolated public struct EquipSlotTable: Equatable, Sendable {
     public init(file: ESMFile) {
         var slots: [UInt32: EquipSlot] = [:]
         var skipped = SkippedRecords()
-        guard
-            let group = file.topGroup(of: "EQUP"),
-            let children = try? group.children()
-        else {
+        guard let group = file.topGroup(of: "EQUP") else {
             self.init(slots: slots)
             return
         }
-        for child in children {
+        for child in skipped.children(of: group) {
             guard case let .record(record) = child, record.type == "EQUP", !record.isDeleted
             else { continue }
             if let slot = skipped.decode(record, using: { try EquipSlot(record: $0) }) {

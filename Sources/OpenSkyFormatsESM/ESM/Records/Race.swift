@@ -1,22 +1,8 @@
-// RACE record decoded into engine types: the appearance subset needed to skin
-// an actor, plus the DATA starting-attribute and regeneration floats the
-// actor-value derivation needs (issue #194), plus the DATA fields that author a
-// *non-primary* actor value — the seven skill bonuses, base carry weight, base
-// mass and unarmed damage (issue #468). Spell lists, keywords, body-part data,
-// tinting, face morphs and the movement floats are skipped deliberately.
-//
-// Per-gender skeleton: RACE gates gendered model blocks with 0-length MNAM
-// (male) / FNAM (female) markers; the skeletal-model block that follows the
-// first marker pair carries an ANAM zstring (path to the skeleton .nif). Later
-// MNAM/FNAM markers open other blocks (face/body models, head presets) whose
-// bodies hold MODL, not ANAM — so keying ANAM off the most recent MNAM/FNAM
-// marker resolves the skeleton unambiguously (ANAM appears only in that one
-// block). MODT model hashes are skipped.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/RACE"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/RACE
-// Slot bit numbering: NifTools nif.xml BSDismemberBodyPartType (see
-// BodyTemplate.swift).
+// RACE record: the appearance fields that skin an actor and the DATA fields
+// that author its actor values. Spells, keywords, tints and morphs are skipped.
+// The skeleton ANAM sits in the block after the first MNAM/FNAM marker, so ANAM
+// is keyed off the most recent marker (docs/formats/actors.md).
+// Reference: UESP "Skyrim Mod:Mod File Format/RACE"; slot bits: nif.xml.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -52,8 +38,8 @@ nonisolated public struct Race: Sendable {
             case "BOD2": bodyTemplate = try BodyTemplate(bod2: field)
             case "BODT": bodyTemplate = try BodyTemplate(bodt: field)
             case "DATA":
-                flags = Race.decodeFlags(field) ?? flags
-                stats = Race.decodeStats(field) ?? stats
+                flags = try Race.decodeFlags(field) ?? flags
+                stats = try Race.decodeStats(field) ?? stats
             case "SPLO":
                 try spells.append(FormID(reader.readUInt32()))
             default: return false
@@ -112,15 +98,9 @@ nonisolated public struct Race: Sendable {
         public static let faceGenHead = Flags(rawValue: 0x0000_0002)
     }
 
-    /// The DATA floats a level-1 actor of this race starts with, and the
-    /// regeneration rates that refill them.
-    ///
-    /// Semantics from the Creation Kit's Race page, quoted rather than
-    /// inferred: "Starting Health: Health for Level 1 actors of this race",
-    /// and "Health Regen: The percentage of total Health that is regenerated
-    /// each second" (<https://ck.uesp.net/wiki/Race>). The regen fields are
-    /// therefore percentages, not fractions — vanilla `NordRace` stores 0.7,
-    /// meaning 0.7% of maximum health per second.
+    /// Level-1 starting attributes and their regen rates. Regen is a percentage
+    /// per second, not a fraction: `NordRace` stores 0.7 for 0.7%
+    /// (<https://ck.uesp.net/wiki/Race>).
     public struct Stats: Equatable, Sendable {
         public var startingHealth: Float = 0
         public var startingMagicka: Float = 0
@@ -188,10 +168,9 @@ nonisolated public struct Race: Sendable {
     /// DATA starting attributes and regen rates; all-zero when DATA is absent
     /// or too short to reach them.
     public let stats: Stats
-    /// SPLO — the spells and abilities every actor of this race carries
-    /// (issue #470). The `SPCT` count in front of the run is not read, for the
-    /// reason `ActorBase.spells` states: counting the entries answers the same
-    /// question and cannot disagree with the file.
+    /// SPLO — the spells and abilities every actor of this race carries. The
+    /// `SPCT` count is not read: counting the entries cannot disagree with the
+    /// file (see `ActorBase.spells`).
     public let spells: [FormID]
     /// ANAM under the male (MNAM) skeleton block.
     public let maleSkeletonPath: String?
@@ -230,48 +209,37 @@ nonisolated public struct Race: Sendable {
 
     /// DATA: skill bonuses (14 bytes + 2 pad) then male/female height +
     /// weight floats; flags live at 0x20 (UESP RACE DATA). Too-short DATA -> nil.
-    private static func decodeFlags(_ field: ESMField) -> Flags? {
+    private static func decodeFlags(_ field: ESMField) throws -> Flags? {
         guard field.data.count >= 0x24 else { return nil }
         var reader = BinaryReader(field.data)
         reader.skip(0x20)
-        return try? Flags(rawValue: reader.readUInt32())
+        return try Flags(rawValue: reader.readUInt32())
     }
 
-    /// DATA continued (UESP RACE DATA, 128-byte v40 / 164-byte v43 struct):
-    /// starting health / magicka / stamina are the three floats at 0x24, and
-    /// health / magicka / stamina regen are the three at 0x54, after base
-    /// carry weight, base mass, the two movement rates, size, and the head /
-    /// hair / injured-health / shield fields.
-    ///
-    /// Read as independent windows rather than one long walk, so a DATA long
-    /// enough for the starting attributes but not the regen block still yields
-    /// the attributes. Vanilla ships neither shape, but a mod may.
-    ///
-    /// The non-primary actor values the same struct authors (issue #468) are
-    /// read the same way: the seven skill-bonus pairs at 0x00, base carry
-    /// weight at 0x30 and base mass at 0x34, and unarmed damage at 0x60, which
-    /// is the first float after the three regen percentages.
-    private static func decodeStats(_ field: ESMField) -> Stats? {
+    /// DATA starting attributes at 0x24, regen at 0x54, carry weight and mass at
+    /// 0x30, unarmed damage at 0x60 (UESP RACE DATA). Each window is read on its
+    /// own, so a DATA too short for the regen block still yields the attributes.
+    private static func decodeStats(_ field: ESMField) throws -> Stats? {
         guard field.data.count >= 0x30 else { return nil }
         var stats = Stats()
-        stats.skillBonuses = decodeSkillBonuses(field)
+        stats.skillBonuses = try decodeSkillBonuses(field)
         var reader = BinaryReader(field.data)
         reader.skip(0x24)
-        stats.startingHealth = (try? reader.readFloat32()) ?? 0
-        stats.startingMagicka = (try? reader.readFloat32()) ?? 0
-        stats.startingStamina = (try? reader.readFloat32()) ?? 0
+        stats.startingHealth = try reader.readFloat32()
+        stats.startingMagicka = try reader.readFloat32()
+        stats.startingStamina = try reader.readFloat32()
         if field.data.count >= 0x38 {
-            stats.baseCarryWeight = (try? reader.readFloat32()) ?? 0
-            stats.baseMass = (try? reader.readFloat32()) ?? 0
+            stats.baseCarryWeight = try reader.readFloat32()
+            stats.baseMass = try reader.readFloat32()
         }
         guard field.data.count >= 0x60 else { return stats }
         var regen = BinaryReader(field.data)
         regen.skip(0x54)
-        stats.healthRegenPercent = (try? regen.readFloat32()) ?? 0
-        stats.magickaRegenPercent = (try? regen.readFloat32()) ?? 0
-        stats.staminaRegenPercent = (try? regen.readFloat32()) ?? 0
+        stats.healthRegenPercent = try regen.readFloat32()
+        stats.magickaRegenPercent = try regen.readFloat32()
+        stats.staminaRegenPercent = try regen.readFloat32()
         guard field.data.count >= 0x64 else { return stats }
-        stats.unarmedDamage = (try? regen.readFloat32()) ?? 0
+        stats.unarmedDamage = try regen.readFloat32()
         return stats
     }
 
@@ -280,16 +248,14 @@ nonisolated public struct Race: Sendable {
     /// A pair whose bonus is zero is dropped rather than stored, because a race
     /// that fills fewer than seven slots leaves the rest zeroed and a stored
     /// 0/0 pair is indistinguishable from "+0 to Aggression".
-    private static func decodeSkillBonuses(_ field: ESMField) -> [SkillBonus] {
+    private static func decodeSkillBonuses(_ field: ESMField) throws -> [SkillBonus] {
         guard field.data.count >= 0x0E else { return [] }
         var reader = BinaryReader(field.data)
         var bonuses: [SkillBonus] = []
         for _ in 0 ..< 7 {
-            guard
-                let actorValue = try? reader.readUInt8(),
-                let bonus = try? reader.readUInt8(),
-                bonus > 0
-            else { continue }
+            let actorValue = try reader.readUInt8()
+            let bonus = try reader.readUInt8()
+            guard bonus > 0 else { continue }
             bonuses.append(SkillBonus(actorValue: Int32(actorValue), bonus: Float(bonus)))
         }
         return bonuses

@@ -186,9 +186,9 @@ nonisolated extension CellSceneBuilder {
 
     /// The first decodable LAND in the cell's temporary-children group (UESP Groups).
     nonisolated public func landRecord(in cellChildren: ESMGroup?) -> Land? {
-        guard let cellChildren, let children = try? cellChildren.children() else { return nil }
+        guard let cellChildren, let children = childrenOrSkip(cellChildren) else { return nil }
         for case let .group(group) in children where group.kind == .cellTemporaryChildren {
-            guard let records = try? group.children() else { continue }
+            guard let records = childrenOrSkip(group) else { continue }
             for case let .record(record) in records where record.type == "LAND" {
                 guard !record.isDeleted else { continue }
                 if let land = decodeOrSkip(record, using: Land.init(record:)) {

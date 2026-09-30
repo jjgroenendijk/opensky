@@ -2,6 +2,7 @@
 
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import Testing
 
@@ -20,6 +21,16 @@ struct FormListTests {
         #expect(list.editorID == "OrderedForms")
         #expect(list.entries == [FormID(3), nil, FormID(1), FormID(2)])
         #expect(list.malformedEntryCount == 0)
+    }
+
+    @Test
+    func throwsOnAnUnterminatedEditorID() throws {
+        let fields = ESMFixture.field("EDID", Data("NoTerminator".utf8))
+        let record = try FormListFixture.parse(
+            ESMFixture.record("FLST", formID: 0x100, data: fields)
+        )
+
+        #expect(throws: BinaryReaderError.self) { try FormList(record: record) }
     }
 
     @Test

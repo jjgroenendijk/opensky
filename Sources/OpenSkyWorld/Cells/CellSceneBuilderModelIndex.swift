@@ -42,7 +42,7 @@ nonisolated extension CellSceneBuilder {
             return statIndex
         }
         var index: [UInt32: StaticObject] = [:]
-        if let top = file.topGroup(of: "STAT"), let children = try? top.children() {
+        if let top = file.topGroup(of: "STAT"), let children = childrenOrSkip(top) {
             for case let .record(record) in children where record.type == "STAT" {
                 guard let stat = decodeOrSkip(record, using: StaticObject.init(record:)) else {
                     continue
@@ -61,7 +61,7 @@ nonisolated extension CellSceneBuilder {
         }
         var index: [UInt32: ModelBase] = [:]
         for type in ModelBase.supportedTypes {
-            guard let top = file.topGroup(of: type), let children = try? top.children() else {
+            guard let top = file.topGroup(of: type), let children = childrenOrSkip(top) else {
                 continue
             }
             for case let .record(record) in children where record.type == type {

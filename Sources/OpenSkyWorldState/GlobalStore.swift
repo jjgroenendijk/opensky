@@ -23,8 +23,8 @@ nonisolated public final class GlobalStore: Sendable {
 
     /// `pluginName` is needed because a plugin does not store its own name.
     public convenience init(file: ESMFile, pluginName: String) {
-        let masters = (try? file.pluginHeader().masters) ?? []
         var skipped = SkippedRecords()
+        let masters = skipped.masters(of: file)
         let decoded = file.decodeRecords(of: "GLOB", skipped: &skipped) { try Global(record: $0) }
         self.init(
             globals: decoded,

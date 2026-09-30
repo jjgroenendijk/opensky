@@ -104,12 +104,12 @@ nonisolated public struct EquipmentCatalog: Sendable {
     /// records. Records that fail to decode drop out and later read as not
     /// equippable.
     public static func build(from file: ESMFile) -> EquipmentCatalog {
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         let equipSlots = EquipSlotTable(file: file)
         var items: [UInt32: EquippableItem] = [:]
         var unresolved = 0
         var skipped = SkippedRecords()
-        for record in records(of: "ARMO", in: file) {
+        for record in file.liveRecords(of: "ARMO", skipped: &skipped) {
             guard
                 let armor = skipped.decode(
                     record,
@@ -121,7 +121,7 @@ nonisolated public struct EquipmentCatalog: Sendable {
                 modelPath: nil
             )
         }
-        for record in records(of: "WEAP", in: file) {
+        for record in file.liveRecords(of: "WEAP", skipped: &skipped) {
             guard
                 let weapon = skipped.decode(
                     record,
@@ -154,17 +154,5 @@ nonisolated public struct EquipmentCatalog: Sendable {
     /// "not equippable" everywhere it is used.
     public func occupancy(of item: FormID) -> EquipmentOccupancy {
         items[item.rawValue]?.occupancy ?? .none
-    }
-
-    private static func records(of type: FourCC, in file: ESMFile) -> [ESMRecord] {
-        guard let group = file.topGroup(of: type), let children = try? group.children() else {
-            return []
-        }
-        return children.compactMap { child in
-            guard case let .record(record) = child, record.type == type, !record.isDeleted else {
-                return nil
-            }
-            return record
-        }
     }
 }

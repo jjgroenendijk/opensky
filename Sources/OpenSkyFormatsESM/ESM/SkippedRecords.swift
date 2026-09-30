@@ -59,6 +59,26 @@ nonisolated public struct SkippedRecords: Equatable, Sendable {
         return merged
     }
 
+    /// The group's children, or none with the error noted under its record type.
+    public mutating func children(of group: ESMGroup) -> [ESMGroup.Child] {
+        do {
+            return try group.children()
+        } catch {
+            note(group.recordType ?? "GRUP", error: error)
+            return []
+        }
+    }
+
+    /// The plugin's master list, or none with the TES4 error noted.
+    public mutating func masters(of file: ESMFile) -> [String] {
+        do {
+            return try file.pluginHeader().masters
+        } catch {
+            note("TES4", error: error)
+            return []
+        }
+    }
+
     /// Decodes `record`, or notes the error under the record's type and returns nil.
     public mutating func decode<Value>(
         _ record: ESMRecord,

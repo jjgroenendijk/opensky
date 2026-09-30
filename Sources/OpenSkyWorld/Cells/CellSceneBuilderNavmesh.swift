@@ -1,13 +1,6 @@
-// NAVM collection from a cell's children groups (issue #199).
-//
-// Navmeshes are stored beside the placements — a cell's temporary-children
-// group holds them next to its REFRs — but they are not placements, so
-// `collectTaggedReferences` skips them by type. This is the other half of that
-// skip: the walk that picks NAVM out of the same group and decodes it.
-//
-// Decoded beside the rest of the cell's immutable geometry. That keeps NAVM
-// I/O on the existing off-main build queue and gives the streamer the same
-// scene-owned lifetime it already reconciles for collision and rigid bodies.
+// NAVM records from a cell's children groups. They sit beside the REFRs but are
+// not placements, so this walk picks them out of the same groups. It runs with
+// the rest of the cell geometry on the build queue.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -15,25 +8,16 @@ import OpenSkyFormatsESM
 import OSLog
 
 nonisolated extension CellSceneBuilder {
-    /// Decoded NAVM records from the cell's persistent and temporary children
-    /// groups. Deleted records place no surface and are skipped; a record that
-    /// fails to decode is logged and skipped, so one bad navmesh does not cost
-    /// the cell its others.
-    ///
-    /// Static because it reads nothing but the group handed to it; tests and
-    /// probes can decode a synthetic cell without a mesh library or device.
+    /// Live NAVM records from the persistent and temporary children groups. A
+    /// record that fails to decode is logged and skipped. Static, so a test can
+    /// decode a synthetic cell without a mesh library or device.
     nonisolated public static func collectNavmeshes(in cellChildren: ESMGroup?) -> [Navmesh] {
-        guard let cellChildren, let children = try? cellChildren.children() else {
-            if cellChildren != nil {
-                logger.warning("malformed cell-children group skipped")
-            }
-            return []
-        }
+        guard let cellChildren, let children = loggedChildren(cellChildren) else { return [] }
         var navmeshes: [Navmesh] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = try? group.children()
+                let records = Self.loggedChildren(group)
             else { continue }
             for case let .record(record) in records where record.type == "NAVM" {
                 guard !record.isDeleted else { continue }

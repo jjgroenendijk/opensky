@@ -106,6 +106,16 @@ struct SWFMovieTests {
         #expect(movie.tally.removals == 1)
     }
 
+    @Test func truncatedControlTagsAreCountedNotApplied() throws {
+        let movie = try SWFDisplayFixture.movie(tags: [
+            SWFFixture.Tag(code: 28, body: Data()), // RemoveObject2 without a depth
+            SWFFixture.Tag(code: 9, body: Data()), // SetBackgroundColor without RGB
+            SWFDisplayFixture.showFrameTag
+        ])
+        #expect(movie.tally.removals == 0)
+        #expect(movie.tally.malformedTags == 2)
+    }
+
     @Test func timelineStopsAtFirstShowFrame() throws {
         var first = SWFDisplayFixture.Place2()
         first.depth = 1

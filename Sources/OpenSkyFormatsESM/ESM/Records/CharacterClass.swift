@@ -1,14 +1,7 @@
-// CLAS record decoded into engine types (issue #194, roadmap item 15.3): the
-// attribute weights that spread an auto-calc actor's per-level points, plus the
-// bleedout ratio 15.6 will read, plus the 18 skill weights that spread an
-// actor's per-level skill points (issue #468, roadmap item 19.5). The trainer
-// fields are skipped deliberately — nothing trains yet.
-//
-// Named `CharacterClass` rather than `Class`, which is a Swift keyword-adjacent
-// name that reads badly at every use site; the record type stays "CLAS".
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/CLAS"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS
+// CLAS record: the attribute and skill weights that spread an auto-calc actor's
+// per-level points, and the bleedout ratio. Trainer fields are skipped.
+// Named `CharacterClass` because `Class` reads badly at every use site.
+// Reference: UESP "Skyrim Mod:Mod File Format/CLAS".
 // Layout documented in docs/formats/actors.md.
 
 import Foundation
@@ -79,7 +72,7 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
     /// FULL — display name; localized plugins store a string-table ID.
     public let name: LString?
     public let attributeWeights: AttributeWeights
-    /// DATA 0x06, the per-skill weights (issue #468).
+    /// DATA 0x06, the per-skill weights.
     public let skillWeights: SkillWeights
     /// DATA 0x18, the health ratio below which an essential or protected actor
     /// enters bleedout (CK "Class"). Decoded here so 15.6 does not have to
@@ -103,7 +96,7 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
             case "FULL":
                 name = try LString(field: field, localized: localized)
             case "DATA":
-                data = Self.decodeDATA(field)
+                data = try Self.decodeDATA(field)
             default:
                 break
             }
@@ -123,40 +116,34 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
         var bleedoutDefault: Float = 0
     }
 
-    /// DATA, 36 bytes: uint32 unknown, trainer skill + level, 18 skill
-    /// weights, float bleedout default at 0x18, uint32 voice points, then the
-    /// three attribute weight bytes at 0x20 and a flag byte (UESP CLAS).
-    ///
-    /// A short DATA yields zero weights rather than a thrown error: a class
-    /// with no weights spreads no per-level points, which is exactly what an
-    /// unreadable one should do, and refusing the record would take the whole
-    /// actor down with it.
-    private static func decodeDATA(_ field: ESMField) -> DecodedData {
+    /// DATA, 36 bytes (UESP CLAS). A short DATA yields zero weights, not an
+    /// error: a class with no weights spreads no points, and throwing would
+    /// take the whole actor down.
+    private static func decodeDATA(_ field: ESMField) throws -> DecodedData {
         var decoded = DecodedData()
-        decoded.skillWeights = decodeSkillWeights(field)
+        decoded.skillWeights = try decodeSkillWeights(field)
         guard field.data.count >= 0x23 else { return decoded }
         var reader = BinaryReader(field.data)
         reader.skip(0x18)
-        decoded.bleedoutDefault = (try? reader.readFloat32()) ?? 0
+        decoded.bleedoutDefault = try reader.readFloat32()
         reader.skip(4) // voice points
-        decoded.attributeWeights.health = (try? reader.readUInt8()) ?? 0
-        decoded.attributeWeights.magicka = (try? reader.readUInt8()) ?? 0
-        decoded.attributeWeights.stamina = (try? reader.readUInt8()) ?? 0
+        decoded.attributeWeights.health = try reader.readUInt8()
+        decoded.attributeWeights.magicka = try reader.readUInt8()
+        decoded.attributeWeights.stamina = try reader.readUInt8()
         return decoded
     }
 
     /// DATA 0x06: the eighteen skill weight bytes. A DATA too short to hold all
     /// eighteen yields none rather than a truncated list, because the mapping
     /// from position to actor value only holds for a complete block.
-    private static func decodeSkillWeights(_ field: ESMField) -> SkillWeights {
+    private static func decodeSkillWeights(_ field: ESMField) throws -> SkillWeights {
         guard field.data.count >= 0x06 + SkillWeights.count else { return SkillWeights() }
         var reader = BinaryReader(field.data)
         reader.skip(0x06)
         var weights: [UInt8] = []
         weights.reserveCapacity(SkillWeights.count)
         for _ in 0 ..< SkillWeights.count {
-            guard let weight = try? reader.readUInt8() else { return SkillWeights() }
-            weights.append(weight)
+            try weights.append(reader.readUInt8())
         }
         return SkillWeights(weights: weights)
     }

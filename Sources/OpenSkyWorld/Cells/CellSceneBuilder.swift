@@ -124,6 +124,7 @@ nonisolated public final class CellSceneBuilder {
     /// Records this builder could not decode, each FormID counted once.
     public private(set) var skippedRecords = SkippedRecords()
     private var skippedFormIDs: Set<UInt32> = []
+    private var skippedGroupOffsets: Set<Int> = []
 
     public init(
         file: ESMFile,
@@ -139,11 +140,11 @@ nonisolated public final class CellSceneBuilder {
         self.textures = textures
         self.fileSystem = fileSystem
         self.pluginName = pluginName
-        let header = try? file.pluginHeader()
-        pluginLocalized = header?.isLocalized ?? false
+        pluginLocalized = file.isLocalized
         // Without a header, master index 0 falls through to the plugin itself.
-        formIDResolver = header?.formIDResolver(pluginName: pluginName)
-            ?? FormIDResolver(pluginName: pluginName, masters: [])
+        var skipped = SkippedRecords()
+        formIDResolver = FormIDResolver(pluginName: pluginName, masters: skipped.masters(of: file))
+        skippedRecords = skipped
         localizedStrings = fileSystem.map {
             LocalizedStrings(vfs: $0, pluginName: pluginName, language: localizationLanguage)
         }
@@ -255,6 +256,35 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
+    /// The group's children, or nil with the error counted once under its record type.
+    nonisolated public func childrenOrSkip(_ group: ESMGroup) -> [ESMGroup.Child]? {
+        do {
+            return try group.children()
+        } catch {
+            guard skippedGroupOffsets.insert(group.contentRange.lowerBound).inserted else {
+                return nil
+            }
+            skippedRecords.note(group.recordType ?? "GRUP", error: error)
+            Self.logMalformedGroup(error)
+            return nil
+        }
+    }
+
+    /// For static walks, which hold no builder to count the skip in.
+    nonisolated public static func loggedChildren(_ group: ESMGroup) -> [ESMGroup.Child]? {
+        do {
+            return try group.children()
+        } catch {
+            logMalformedGroup(error)
+            return nil
+        }
+    }
+
+    private static func logMalformedGroup(_ error: any Error) {
+        let reason = String(describing: error)
+        logger.warning("malformed group skipped: \(reason, privacy: .public)")
+    }
+
     /// Returns the first WRLD group whose EDID matches exactly. A malformed WRLD
     /// is skipped, because another one may still match.
     nonisolated public func worldChildrenGroup(
@@ -295,10 +325,7 @@ nonisolated extension CellSceneBuilder {
         localized: Bool
     ) -> FoundCell? {
         // Prune a malformed subtree: the target may live in a sibling block.
-        guard let children = try? group.children() else {
-            Self.logger.warning("malformed group under WRLD tree skipped")
-            return nil
-        }
+        guard let children = childrenOrSkip(group) else { return nil }
         for (index, child) in children.enumerated() {
             switch child {
             case let .record(record) where record.type == "CELL":

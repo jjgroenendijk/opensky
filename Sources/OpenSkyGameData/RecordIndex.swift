@@ -48,6 +48,8 @@ nonisolated public struct RecordIndex: Sendable {
 
     public private(set) var records: [ResolvedFormID: IndexedRecord] = [:]
     public private(set) var collectedRecordCounts: [FourCC: Int] = [:]
+    /// Records whose fields do not decode, and malformed groups, by record type.
+    public private(set) var skippedRecords = SkippedRecords()
     private var candidates: [ResolvedFormID: [IndexedRecord]] = [:]
     private let resolvers: [String: FormIDResolver]
     private let canonicalPluginNames: [String: String]
@@ -67,18 +69,21 @@ nonisolated public struct RecordIndex: Sendable {
         )
 
         var decodedResolvers: [String: FormIDResolver] = [:]
+        var skippedHeaders = SkippedRecords()
         for plugin in plugins {
             do {
                 decodedResolvers[plugin.name.lowercased()] = try plugin.file
                     .pluginHeader()
                     .formIDResolver(pluginName: plugin.name)
             } catch {
+                skippedHeaders.note("TES4", error: error)
                 Self.logger.warning(
                     "Plugin header skipped for \(plugin.name, privacy: .public)"
                 )
             }
         }
         resolvers = decodedResolvers
+        skippedRecords = skippedHeaders
 
         for plugin in plugins {
             add(pluginName: plugin.name, file: plugin.file, recordTypes: recordTypes)
@@ -179,24 +184,19 @@ nonisolated public struct RecordIndex: Sendable {
         recordTypes: Set<FourCC>
     ) {
         guard let resolver = resolvers[pluginName.lowercased()] else { return }
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         for group in file.topGroups {
             guard let type = group.recordType, recordTypes.contains(type) else { continue }
-            guard let children = try? group.children() else {
-                Self.logger.warning(
-                    """
-                    Malformed \(type.description, privacy: .public) group skipped in \
-                    \(pluginName, privacy: .public)
-                    """
-                )
-                continue
-            }
-            for case let .record(record) in children where !record.isDeleted {
-                guard
-                    record.type == type,
-                    (try? record.fields()) != nil,
-                    let resolved = resolver.resolve(FormID(record.formID))
-                else { continue }
+            for case let .record(record) in skippedRecords.children(of: group)
+                where !record.isDeleted && record.type == type
+            {
+                do {
+                    _ = try record.fields()
+                } catch {
+                    skippedRecords.note(type, error: error)
+                    continue
+                }
+                guard let resolved = resolver.resolve(FormID(record.formID)) else { continue }
                 collectedRecordCounts[type, default: 0] += 1
                 let canonical = canonicalize(resolved)
                 let entry = IndexedRecord(

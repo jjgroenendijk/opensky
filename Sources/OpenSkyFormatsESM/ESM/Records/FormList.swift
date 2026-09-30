@@ -1,12 +1,6 @@
-// FLST form lists: an editor ID followed by zero or more repeating LNAM
-// FormID subrecords. List order is observable through Papyrus index access,
-// so nulls and all other entries stay in file order.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/FLST" (EDID + repeating LNAM formid):
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FLST
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(FLST, ...)`,
-//   which models LNAM as the repeating `FormIDs` array.
+// FLST form lists: an editor ID and repeating LNAM FormIDs. Papyrus reads the
+// list by index, so nulls and every other entry stay in file order.
+// References: UESP "Skyrim Mod:Mod File Format/FLST"; xEdit `wbRecord(FLST, ...)`.
 // Layout documented in docs/formats/records.md.
 
 import Foundation
@@ -34,7 +28,7 @@ nonisolated public struct FormList: Equatable, Sendable {
             switch field.type {
             case "EDID":
                 var reader = BinaryReader(field.data)
-                decodedEditorID = try? reader.readZString()
+                decodedEditorID = try reader.readZString()
             case "LNAM":
                 var reader = BinaryReader(field.data)
                 for _ in 0 ..< (field.data.count / 4) {

@@ -1,9 +1,6 @@
-// TES4 plugin-info record decoded into engine types: HEDR stats, author /
-// description strings, master list (MAST entries, file order). The master
-// list is what gives raw FormIDs meaning — see FormID.swift.
-//
+// TES4 plugin-info record: HEDR stats, author, description, and the master list
+// that gives raw FormIDs their meaning (FormID.swift).
 // Reference: UESP "Skyrim Mod:Mod File Format" — TES4 record.
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format
 // Layout documented in docs/formats/formid.md.
 
 import Foundation
@@ -99,5 +96,10 @@ nonisolated extension ESMFile {
     /// callers keep the result.
     public func pluginHeader() throws -> PluginHeader {
         try PluginHeader(tes4: tes4)
+    }
+
+    /// Reads only the TES4 record flags, so it cannot fail like `pluginHeader()`.
+    public var isLocalized: Bool {
+        tes4.flags.contains(.localized)
     }
 }

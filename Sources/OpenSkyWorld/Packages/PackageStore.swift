@@ -33,12 +33,14 @@ nonisolated public struct PackageStore: Sendable {
     public private(set) var skippedRecords = SkippedRecords()
 
     public init(file: ESMFile) {
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         actorTemplates = ActorTemplateResolver.build(from: file, localized: localized)
         var decoded: [UInt32: Package] = [:]
         var skipped = SkippedRecords()
-        if let group = file.topGroup(of: "PACK"), let children = try? group.children() {
-            for case let .record(record) in children where record.type == "PACK" {
+        if let group = file.topGroup(of: "PACK") {
+            for case let .record(record) in skipped.children(of: group)
+                where record.type == "PACK"
+            {
                 guard
                     !record.isDeleted,
                     let package = skipped.decode(record, using: Package.init(record:))

@@ -28,8 +28,10 @@ nonisolated public struct NavmeshIndex: Sendable {
         var infos: [NavmeshInfo] = []
         var deleted: [FormID] = []
         var skipped = SkippedRecords()
-        if let group = file.topGroup(of: "NAVI"), let children = try? group.children() {
-            for case let .record(record) in children where record.type == "NAVI" {
+        if let group = file.topGroup(of: "NAVI") {
+            for case let .record(record) in skipped.children(of: group)
+                where record.type == "NAVI"
+            {
                 guard !record.isDeleted else { continue }
                 guard let map = skipped.decode(record, using: NavmeshInfoMap.init(record:)) else {
                     let id = FormID(record.formID).description

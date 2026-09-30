@@ -27,9 +27,8 @@ nonisolated public struct GameSettingStore: Sendable {
 
     private mutating func add(pluginName: String, file: ESMFile) {
         guard let group = file.topGroup(of: "GMST") else { return }
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
-        guard let children = try? group.children() else { return }
-        for case let .record(record) in children where !record.isDeleted {
+        let localized = file.isLocalized
+        for case let .record(record) in skippedRecords.children(of: group) where !record.isDeleted {
             guard
                 let setting = skippedRecords.decode(
                     record,

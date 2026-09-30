@@ -42,6 +42,28 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.skippedRecords.count(of: "CELL") == 1)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func countsTruncatedBlockWhileSearching() throws {
+        let bytes = plugin(extraWorldChildren: ESMFixture.exteriorBlock(
+            x: 0, y: 0, groupType: 4, contents: Data(count: 10)
+        ))
+        let scene = try build(pluginData: bytes)
+
+        #expect(scene.summary.skippedRecords.count(of: "GRUP") == 1)
+    }
+
+    @Test func modelCatalogCountsTruncatedBlock() throws {
+        let bytes = plugin(
+            temporaryRefs: refrRecord(formID: 0x200, base: 0x100),
+            extraWorldChildren: ESMFixture.exteriorBlock(
+                x: 0, y: 0, groupType: 4, contents: Data(count: 10)
+            )
+        )
+        let models = try ExteriorCellModelCatalog(file: ESMFile(data: bytes))
+            .models(worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2)
+
+        #expect(models.skippedRecords.count(of: "GRUP") == 1)
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func malformedDoorReferenceThrowsATypedError() throws {
         let bytes = plugin(interiorRecords: interiorCellGroup(
             formID: 0x0001_38CA, refs: ESMFixture.malformedRecord("REFR", formID: 0x300)

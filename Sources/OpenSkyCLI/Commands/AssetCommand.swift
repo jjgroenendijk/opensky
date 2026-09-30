@@ -26,10 +26,10 @@ enum AssetCommand {
         print("blocks: \(file.blocks.count) — "
             + counts.map { "\($0.key) \($0.value)" }.joined(separator: ", "))
         for (index, block) in file.blocks.enumerated() {
-            if let node = decodedNode(block, header: file.header) {
+            if let node = decodedNode(index, block, header: file.header) {
                 print("block \(index): \(block.typeName) \(node.object.name ?? "-") "
                     + "children \(node.children)")
-            } else if let shape = decodedShape(block, header: file.header) {
+            } else if let shape = decodedShape(index, block, header: file.header) {
                 print("block \(index): \(block.typeName) \(shape.object.name ?? "-") "
                     + "\(shape.positions.count) vertices, \(shape.indices.count / 3) triangles")
             }
@@ -37,17 +37,35 @@ enum AssetCommand {
         printModelSummary(file: file)
     }
 
-    private static func decodedNode(_ block: NIFFile.Block, header: NIFHeader) -> NIFNode? {
+    private static func decodedNode(
+        _ index: Int,
+        _ block: NIFFile.Block,
+        header: NIFHeader
+    ) -> NIFNode? {
         guard NIFNode.traversedTypes.contains(block.typeName) else { return nil }
-        return try? NIFNode(data: block.data, header: header)
+        return decodedOrWarn(index, block) { try NIFNode(data: block.data, header: header) }
     }
 
     private static func decodedShape(
+        _ index: Int,
         _ block: NIFFile.Block,
         header: NIFHeader
     ) -> NIFTriShape? {
         guard ["BSTriShape", "BSSubIndexTriShape"].contains(block.typeName) else { return nil }
-        return try? NIFTriShape(data: block.data, header: header)
+        return decodedOrWarn(index, block) { try NIFTriShape(data: block.data, header: header) }
+    }
+
+    private static func decodedOrWarn<Value>(
+        _ index: Int,
+        _ block: NIFFile.Block,
+        _ decode: () throws -> Value
+    ) -> Value? {
+        do {
+            return try decode()
+        } catch {
+            printError("[WARNING] block \(index) \(block.typeName) failed to decode: \(error)")
+            return nil
+        }
     }
 
     /// Flattened engine-model view (drawable meshes + resolved materials).

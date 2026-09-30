@@ -19,7 +19,7 @@ enum CellCommand {
         try scanner.finish()
 
         let file = try context.loadSkyrimESM()
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         guard let world = worldChildren(editorID: worldspace, file: file, localized: localized)
         else {
             throw CLIError.failure("worldspace \(worldspace) not found")
@@ -49,7 +49,7 @@ enum CellCommand {
         file: ESMFile,
         localized: Bool
     ) -> ESMGroup? {
-        guard let top = file.topGroup(of: "WRLD"), let children = try? top.children() else {
+        guard let top = file.topGroup(of: "WRLD"), let children = childrenOrWarn(top) else {
             return nil
         }
         var matchedFormID: UInt32?
@@ -83,7 +83,7 @@ enum CellCommand {
         y: Int32,
         localized: Bool
     ) -> FoundCell? {
-        guard let children = try? group.children() else { return nil }
+        guard let children = childrenOrWarn(group) else { return nil }
         for (index, child) in children.enumerated() {
             switch child {
             case let .record(record) where record.type == "CELL":
@@ -181,12 +181,12 @@ enum CellCommand {
         in cellChildren: ESMGroup?,
         _ body: (ESMRecord) -> Void
     ) {
-        guard let cellChildren, let children = try? cellChildren.children() else { return }
+        guard let cellChildren, let children = childrenOrWarn(cellChildren) else { return }
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren
                 || group.kind == .cellTemporaryChildren,
-                let records = try? group.children()
+                let records = childrenOrWarn(group)
             else { continue }
             for case let .record(record) in records {
                 body(record)

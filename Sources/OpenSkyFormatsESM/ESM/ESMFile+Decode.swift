@@ -35,6 +35,13 @@ nonisolated extension ESMFile {
         return values
     }
 
+    /// Live `type` records, undecoded, for callers that decode them their own way.
+    public func liveRecords(of type: FourCC, skipped: inout SkippedRecords) -> [ESMRecord] {
+        var records: [ESMRecord] = []
+        forEachLiveRecord(of: type, skipped: &skipped) { records.append($0) }
+        return records
+    }
+
     private func forEachLiveRecord(
         of type: FourCC,
         skipped: inout SkippedRecords,
