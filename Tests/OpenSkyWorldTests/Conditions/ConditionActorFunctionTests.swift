@@ -5,7 +5,6 @@
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyConditions
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
@@ -33,7 +32,7 @@ struct ConditionActorFunctionTests {
     private static let healthIndex: UInt32 = 24
     /// A skill, which reads its documented floor until something moves it.
     private static let sneakIndex: UInt32 = 15
-    /// `Resist Fire`, a non-primary value item 19.5 stores.
+    /// `Resist Fire`, a stored non-primary value.
     private static let resistFireIndex: UInt32 = 41
     /// One past the end of the vanilla table, which names no actor value at
     /// all and is the one thing left that tallies a parameter miss.
@@ -286,8 +285,8 @@ struct ConditionActorFunctionTests {
         )
         #expect(!result.outcome.isTrue)
         #expect(result.outcome.failures == [.unresolvedReference(.combatTarget)])
-        // The run-on itself is supported now, so nothing lands in the
-        // unsupported bucket that used to hold every combat-target condition.
+        // The run-on itself is supported, so nothing lands in the unsupported
+        // bucket.
         #expect(result.tally.unsupportedRunOnTotal == 0)
         #expect(result.tally.rankedUnresolvedReferences.map(\.name) == ["combatTarget"])
     }

@@ -1,4 +1,4 @@
-// Single registration point for main-app sidebar destinations (issue #98).
+// Single registration point for main-app sidebar destinations.
 // Adding a destination = one DestinationDescriptor here; the shell reads this
 // list to build the sidebar and content area. Replaces the former four
 // touch-points (enum case + stored panel + panel(for:) switch + wireProvider).
@@ -17,7 +17,6 @@ import OpenSkyPhysics
 import OpenSkyProgression
 import OpenSkyRendering
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 
 /// Sidebar grouping. Rows render under their section's group header, in
@@ -162,14 +161,9 @@ enum DestinationRegistry {
     /// Selected on launch: the live render plus its camera/frame/scene readouts.
     static let defaultDestinationID = "world"
 
-    /// The registered destinations, in sidebar order. The three menu
-    /// destinations, the progression destination and the crime destination
-    /// are spliced in from `DestinationRegistryMenus.swift`,
-    /// `DestinationRegistryProgression.swift` and
-    /// `DestinationRegistryCrime.swift` at the position they occupy in
-    /// the sidebar; the registry is still the single registration point, and
-    /// the split exists only because this enum body is at the strict-lint
-    /// type-length cap.
+    /// The registered destinations, in sidebar order. The menu, progression and
+    /// crime destinations are spliced in from the `DestinationRegistry*` files,
+    /// which exist only for the type-length cap.
     static let all: [DestinationDescriptor] = simulationDestinations
         + progressionDestinations + crimeDestinations + menuDestinations
         + sessionDestinations

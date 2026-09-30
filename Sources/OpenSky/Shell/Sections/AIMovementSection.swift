@@ -1,16 +1,7 @@
-// World > AI & Navigation > Movement section (issue #423, roadmap item 16.4;
-// shipped by the M16 gate, issue #203): the move-to-point dev control and the
-// mover readout the path follower publishes.
-//
-// Two buttons and no field. "Where" is the crosshair, because a point in a city
-// is not a number a person knows and the pick already reaches 8,192 units;
-// typing three floats would be a worse version of looking at the spot. Stop is
-// its counterpart, and both are one-shots, so both are buttons.
-//
-// Not overridden. Where an actor has walked to is world state a user asked for,
-// and a "Reset all" that teleported every NPC back to its authored placement
-// would undo the thing the destination exists to demonstrate. `World > Runtime
-// State > Reset` already owns dropping reference transforms.
+// World > AI & Navigation > Movement section: move-to-point and stop buttons,
+// and the path follower's readout. The target is the crosshair, not typed
+// coordinates. Not overridden: where an actor walked is world state; World >
+// Runtime State > Reset drops reference transforms.
 
 import AppKit
 import OpenSkyWorld
@@ -35,10 +26,6 @@ final class AIMovementSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "aiMovement"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

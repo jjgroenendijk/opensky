@@ -1,14 +1,7 @@
-// World > AI & Navigation > Overlays section (issue #422, roadmap item 16.3;
-// shipped by the M16 gate, issue #203): the three world-space debug overlays and
-// what the overlay pass drew for them.
-//
-// Three checkboxes rather than one, because they answer three different
-// questions and a user watching a guard walk to an inn wants the corridor
-// without the whole navmesh under it. All three default off, which makes this
-// the one section under the destination that carries overridden-ness: the
-// sidebar's "Reset all" switches them back off, exactly as it releases a frozen
-// physics simulation, and a session left with the navmesh drawn over Whiterun
-// otherwise reads as a rendering bug rather than as a control someone left on.
+// World > AI & Navigation > Overlays section: three world-space debug overlays
+// and what the overlay pass drew. Three checkboxes, so a user can show the
+// corridor without the whole navmesh. All default off; this is the one section
+// here that is overridden, so "Reset all" turns them off.
 
 import AppKit
 import OpenSkyWorld
@@ -48,10 +41,6 @@ final class AIOverlaySection: PanelSectionViewController {
 
     override func resetToDefaults() {
         Self.resetToDefaults(provider: provider)
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     /// All three overlays default off, so any one of them being on is this

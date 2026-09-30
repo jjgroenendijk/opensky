@@ -32,10 +32,6 @@ final class CombatArcherySection: PanelSectionViewController {
         "combatArchery"
     }
 
-    var readout: String {
-        statsLabel.stringValue
-    }
-
     override func makeContentViews() -> [NSView] {
         PanelComponents.configureButton(
             spawnControl, target: self, action: #selector(spawn),

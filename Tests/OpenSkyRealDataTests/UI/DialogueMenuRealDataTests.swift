@@ -1,20 +1,7 @@
-// M17.3 dialogue menu acceptance against the user's read-only Skyrim SE
-// install (issue #205): `dialoguemenu.swf` loads, brings up faultlessly, takes
-// the rows OpenSky publishes, and changes rendered pixels when it does.
-//
-// The three questions this answers, in the order the milestone asks them:
-//
-// 1. Does the vanilla movie still have the shape `DialogueMenuMovieBridge`
-//    measured? The class constants, the required entry points and the list are
-//    all asserted against the movie rather than against a copy of them here.
-// 2. Does a published conversation reach the movie? Read back out of its own
-//    `EntriesA`, its own subtitle field and its own `eMenuState`.
-// 3. Does it draw? One offscreen frame with the menu open against one with it
-//    closed, compared on changed pixels — the `HUDAcceptanceRealDataTests`
-//    pattern.
-//
-// No game-derived bytes leave the run: the assertions are counts and shapes,
-// and the two frames go to gitignored `logs/`.
+// Dialogue menu acceptance on the user's install: `dialoguemenu.swf` still has
+// the shape `DialogueMenuMovieBridge` measured, a published conversation is
+// read back from the movie's own `EntriesA`, subtitle and `eMenuState`, and an
+// open menu changes rendered pixels. Frames go to gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -150,7 +137,7 @@ struct DialogueMenuRealDataTests {
         runtime.start()
         try HUDMovieBridge.validate(runtime: runtime)
         HUDMovieBridge.initialize(runtime: runtime)
-        // M8.4.2 hides the holder because it ships an authoring sample in it.
+        // The HUD bridge hides the holder, because it ships an authoring sample.
         #expect(!HUDMovieBridge.isSubtitleVisible(runtime: runtime))
 
         let line = "A subtitle OpenSky published."
@@ -275,7 +262,6 @@ extension DialogueMenuRealDataTests {
             guard let info = store.infos(for: topic.formID).first else { continue }
             entries.append(
                 DialogueTopicEntry(
-                    topic: topic.formID,
                     info: info.formID,
                     text: DialogueMenuModel.rowText(
                         topic: topic, info: info, strings: strings

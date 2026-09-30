@@ -81,7 +81,10 @@ struct SWFGlyphPathTests {
         let second = try #require(SWFGlyphPath.makePath(
             segments: triangleSegments(), unitsPerEM: 1024, emPixelSize: 64
         ))
-        #expect(steps(of: first) == steps(of: second))
+        let firstSteps = steps(of: first)
+        #expect(firstSteps == steps(of: second))
+        #expect(firstSteps.first?.type == CGPathElementType.moveToPoint.rawValue)
+        #expect(firstSteps.first?.points.count == 1)
     }
 
     @Test func emptyGlyphMakesNoPath() {

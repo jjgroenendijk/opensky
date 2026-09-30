@@ -2,7 +2,6 @@
 
 import FormatsPEXTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 import Testing

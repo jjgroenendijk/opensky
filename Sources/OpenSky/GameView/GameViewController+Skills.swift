@@ -1,22 +1,8 @@
-// Session wiring for skill advancement (issue #498, roadmap item 20.5): builds
-// the advancement runtime over the provider's AVIF index, answers the one
-// question a hit cannot answer about itself — what the target is wearing — and
-// is the single place every simulated system's skill use lands.
-//
-// AppKit stays in this controller satellite; the runtime, the formulas and the
-// event are engine types that build into `openskycli` and are testable without
-// a window.
-//
-// ## One implementation for four seams
-//
-// `reportSkillUse` is written once here and satisfies `MeleeCombatWorld`,
-// `CombatLoopWorld`, `ProjectileWorld` and `CasterWorld` at the same time,
-// exactly as `reportScriptHit` does for the first three: all four refine
-// `SkillUseReporting`, and this controller is the conformance for all of them.
-// A blow, an arrow and a cast therefore reach the same thresholds through the
-// same code, which is what stops the three from drifting apart.
-//
-// Documented in docs/engine/skill-advancement.md.
+// Session wiring for skill advancement: builds the runtime over the provider's
+// AVIF index, answers what a hit target is wearing, and receives every skill
+// use. `reportSkillUse` here satisfies `MeleeCombatWorld`, `CombatLoopWorld`,
+// `ProjectileWorld` and `CasterWorld` at once, so blows, arrows and casts share
+// one code path (docs/engine/skill-advancement.md).
 
 import AppKit
 import OpenSkyFormatsESM
@@ -26,7 +12,6 @@ import OpenSkyInventoryInterface
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -37,7 +22,7 @@ struct SkillBridgeState {
     /// provider can supply an AVIF index. Nil without game data, and then every
     /// reported use is counted and dropped.
     var runtime: SkillAdvancementRuntime?
-    /// The last advance, for the readouts item 20.7 builds on.
+    /// The last advance, for the Progression readouts.
     var lastAdvance: SkillAdvanceReport?
 }
 
@@ -79,16 +64,10 @@ extension GameViewController {
         return report?.experience ?? 0
     }
 
-    /// What `key` is wearing, counted by armour type.
-    ///
-    /// Equipped armour only: a piece in the pack teaches nothing, and clothing
-    /// belongs to neither armour skill. A session with no equipment runtime or
-    /// no item index answers "nothing worn", and an armoured hit then credits no
-    /// skill rather than a guessed one.
-    ///
-    /// The item index is the melee runtime's, which is the provider's own
-    /// `inventoryBaselines.items` — one store rather than a second decode of the
-    /// same ARMO records.
+    /// What `key` is wearing, counted by armor type. Only equipped armor
+    /// counts; clothing trains neither armor skill. Without an equipment
+    /// runtime or item index the answer is "nothing worn", so no skill is
+    /// guessed. The item index is the melee runtime's, to avoid a second decode.
     func wornArmor(of key: ReferenceKey) -> WornArmorProfile {
         guard
             let equipment = worldItems.equipment,
@@ -126,10 +105,8 @@ extension GameViewController {
     }
 
     /// One scripted advance, for `Game.AdvanceSkill` and `Game.IncrementSkill`.
-    ///
-    /// The whole read-modify-write lives here because `SkillAdvancementRuntime`
-    /// is a struct this controller owns by value — handing the bridge a copy
-    /// would drop the write.
+    /// The read-modify-write lives here, because `SkillAdvancementRuntime` is a
+    /// value this controller owns; a copy would drop the write.
     ///
     /// - Returns: whether the skill took it.
     func advancePlayerSkill(

@@ -6,7 +6,6 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
@@ -126,13 +125,10 @@ extension CellSceneBuilderFixture {
         )
     }
 
-    /// The NPC chain of `actorChainRecords`, plus an OTFT default outfit
-    /// (cuirass) and a second ARMO the runtime can equip instead (robes), plus
-    /// a WEAP for the hand attachment.
-    ///
-    /// Slots: the skin torso ARMA, the cuirass and the robes all claim slot 32,
-    /// so whichever piece is worn masks the skin and the other piece is simply
-    /// not resolved.
+    /// The NPC chain of `actorChainRecords`, plus an OTFT outfit (cuirass), a
+    /// second ARMO to equip instead (robes), and a WEAP for the hand. The skin
+    /// torso, cuirass and robes all claim slot 32, so the worn piece masks the
+    /// skin and the other is not resolved.
     public func equipmentActorRecords(npc: UInt32) -> [String: Data] {
         var records = actorChainRecords(npc: npc)
         records["NPC_"] = npcWithOutfit(npc: npc, outfit: 0x400)

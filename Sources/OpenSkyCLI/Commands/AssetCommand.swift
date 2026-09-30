@@ -34,7 +34,7 @@ enum AssetCommand {
                     + "\(shape.positions.count) vertices, \(shape.indices.count / 3) triangles")
             }
         }
-        printModelSummary(file: file, key: key)
+        printModelSummary(file: file)
     }
 
     private static func decodedNode(_ block: NIFFile.Block, header: NIFHeader) -> NIFNode? {
@@ -51,7 +51,7 @@ enum AssetCommand {
     }
 
     /// Flattened engine-model view (drawable meshes + resolved materials).
-    private static func printModelSummary(file: NIFFile, key: String) {
+    private static func printModelSummary(file: NIFFile) {
         let model: Model
         do {
             model = try file.model()

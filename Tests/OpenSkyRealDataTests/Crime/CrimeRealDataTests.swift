@@ -1,25 +1,13 @@
-// Env-gated acceptance for the crime runtime over the user's own read-only
-// load order (issue #504, roadmap item 21.5).
-//
-// The question the milestone asks: in a real owned Whiterun interior, does
-// taking an owned item while somebody is watching accrue the theft bounty on
-// Whiterun's own crime faction and mark the stack stolen — and does the same
-// take, unwitnessed, accrue nothing while still marking it?
-//
-// Every step runs through the production types: the cell is built by
-// `CellSceneBuilder`, its `XOWN` is decoded by `Cell`, the crime faction is
-// walked out of the `XLCN` chain by `CrimeFactionResolver`, the bounty is
-// priced from the FACT's own `CRVA` by `CrimeGoldTable`, and the take goes
-// through `WorldItemRuntime.take`.
-//
-// Counts, editor IDs and derived verdicts only — no game bytes leave the run
-// (AGENTS.md "Legal & IP boundary").
+// Env-gated crime acceptance over the user's load order. In a real owned
+// Whiterun interior, a witnessed take accrues the theft bounty on Whiterun's
+// crime faction and marks the stack stolen; an unwitnessed take only marks it.
+// Every step uses the production types. Only counts, editor IDs and verdicts
+// leave the run.
 
 import Foundation
 import Metal
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory

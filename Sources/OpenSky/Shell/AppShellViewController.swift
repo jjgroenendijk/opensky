@@ -1,10 +1,8 @@
-// Unified-sidebar app shell (issue #98 PR 2): one NSSplitViewController for
-// every destination — the segmented World/Asset Browser mode switch is gone.
-// Sidebar rows come from DestinationRegistry; content is layered by
-// ShellContentViewController so the game view never leaves the hierarchy.
-// Full-content controllers (Asset Browser) are built lazily from their
-// registry factory and cached forever, preserving catalog/filter/selection
-// across destination changes and Settings reloads.
+// Unified-sidebar app shell: one NSSplitViewController for every destination.
+// Sidebar rows come from DestinationRegistry; ShellContentViewController layers
+// the content, so the game view never leaves the hierarchy. Full-content
+// controllers are built lazily and cached, so their selection survives
+// destination changes and Settings reloads.
 
 import AppKit
 
@@ -20,7 +18,7 @@ final class AppShellViewController: NSSplitViewController {
     private var fullContentContext: FullContentContext
     private var currentDestinationID: String?
     /// View > Hide Inspector state. Applies to whichever world destination is
-    /// frontmost, which is what the retired `Viewport` row used to do.
+    /// frontmost.
     private var isInspectorHidden = false
 
     /// The embedded live World controller (screenshot + reload target).
@@ -123,11 +121,6 @@ final class AppShellViewController: NSSplitViewController {
     var canToggleInspector: Bool {
         currentDestinationID
             .flatMap(DestinationRegistry.destination(id:))?.isWorldInspector ?? false
-    }
-
-    /// True while the inspector column is collapsed by the View-menu command.
-    var isInspectorCollapsed: Bool {
-        isInspectorHidden
     }
 
     /// Whether the always-on frame overlay is wanted (persisted).

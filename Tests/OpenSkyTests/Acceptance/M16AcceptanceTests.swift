@@ -1,27 +1,12 @@
-// M16 acceptance (issue #203): one guard, one day, through every AI capability
-// the milestone claims.
-//
-// The gate statement in one run: a schedule selects a package off the game
-// clock, the package's destination becomes a navmesh corridor, the guard walks
-// that corridor out of the market and through a door into the inn, the
-// perception pass notices the player standing in front of it, the combat machine
-// closes and fights, the guard breaks off wounded, hunts for a player who broke
-// line of sight, gives up, and is handed back to the package its schedule now
-// names.
-//
-// Every step asserts what a runtime holds, not just that a call returned: which
-// package won and why, which door the corridor crossed, what the detection level
-// reached, which phases the machine entered in which order, and which package
-// the resume produced. The panel half is `M16AcceptancePanelTests`, the budget
-// half is `M16AcceptanceBudgetTests`, the pixel half is
-// `M16AcceptanceRenderTests` and the vanilla half is
-// `M16AcceptanceRealDataTests`; the last two are gated, and everything here runs
-// on a device-less runner with no install.
+// M16 acceptance: one guard through one day. A schedule picks a package, the
+// guard walks a navmesh corridor through a door, notices the player, fights,
+// breaks off wounded, searches, gives up, and resumes its package. Each step
+// asserts runtime state, not only that a call returned. The panel, budget,
+// render, and real-data halves live in the other `M16Acceptance*` suites.
 
 import Foundation
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
@@ -174,16 +159,9 @@ struct M16AcceptanceTests {
         #expect(readout.procedure == .sleep)
     }
 
-    /// Step 7 — the other way a fight ends. Giving up does not clear a quarrel,
-    /// so the same guard re-engages the moment it perceives the player again.
-    /// Wounding it mid-fight then makes it run rather than swing: two exits from
-    /// one fight, both reached from the same machine.
-    ///
-    /// The order matters and is the machine's own rule rather than a convenience
-    /// here — an actor already under the flee threshold never *starts* a fight,
-    /// which is what stops one that just ran from turning around the moment it
-    /// looks back. So the guard has to be engaged before it can be wounded into
-    /// running.
+    /// Step 7: giving up does not end the quarrel, so the guard re-engages on
+    /// sight. Wounding it mid-fight then makes it flee. An actor already under
+    /// the flee threshold never starts a fight, so it is engaged first.
     private static func theWoundedGuardBreaksOff(_ chain: Chain) throws {
         chain.sightBlocked = { _, _ in false }
         chain.playerFeet = chain.guardFeet + SIMD3(80, 0, 0)
@@ -201,14 +179,10 @@ struct M16AcceptanceTests {
         )
         #expect(chain.combat.state.isPlayerInCombat, "a fleeing actor is still in the fight")
 
-        // Running does not go on forever: past the break distance the pursuit
-        // ends the same way a finished search does. The distance is opened here
-        // by moving the player rather than by letting the guard run, because
-        // this arena's two navmesh sheets are 200 units long and the flee
-        // distance is 1,400 — the mover has nowhere to take it, which is a
-        // property of the fixture and not of the machine. What is being checked
-        // is that the *break* is a distance test the machine applies, and it is
-        // symmetric in who opened the gap.
+        // Past the break distance the pursuit ends like a finished search. The
+        // player moves instead of the guard, because the arena's navmesh is
+        // 200 units long and the flee distance is 1,400. The break is a distance
+        // test, so either side may open the gap.
         chain.playerFeet = chain.guardFeet
             + SIMD3(CombatBehaviorSettings.standard.fleeBreakDistance + 100, 0, 0)
         #expect(
@@ -218,15 +192,9 @@ struct M16AcceptanceTests {
         #expect(chain.packageResumes.count == 2, "the second exit handed it back too")
     }
 
-    /// The whole arc, stated once: every phase the milestone claims an actor
-    /// passes through was actually entered by the machine on its own clock.
-    ///
-    /// `contact` is asserted through the machine's own count rather than through
-    /// the observed set, and that is not a weaker check. The contact phase is
-    /// exactly one fixed step long — which is what makes a hit land once rather
-    /// than once per frame of the swing — and the route samples the phase once
-    /// per frame, so a frame that drove two steps can step through contact
-    /// without the sample ever seeing it. The count cannot miss it.
+    /// Every phase the milestone claims was entered by the machine on its own
+    /// clock. `contact` is checked through the machine's own count: it lasts one
+    /// fixed step, and a frame that runs two steps can skip it in a sample.
     private static func expectEveryPhaseWasEntered(_ chain: Chain) throws {
         for phase in [
             CombatBehaviorPhase.approaching, .spacing, .windup,

@@ -1,4 +1,4 @@
-// Env-gated M17.6 acceptance over the user's read-only install. Associates
+// Env-gated face-morph acceptance over the user's install. Associates
 // Heimskr's baked FaceGen shapes with HDPT expression TRIs, renders Aah at
 // zero and one, and proves a repeated one-weight frame is deterministic.
 
@@ -10,7 +10,6 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import simd
 import Testing
 

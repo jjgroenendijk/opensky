@@ -1,14 +1,6 @@
-// World > Player & Locomotion readout text (issue #191): the device-free half
-// of the locomotion verification surface.
-//
-// Every line the panel shows is a pure function of one
-// `PlayerLocomotionSnapshot`, exactly as `JournalReadout` is of one
-// `JournalControlSnapshot`. Keeping the wording here rather than inside the
-// section view controllers is what lets the text be asserted without AppKit,
-// without a Metal device, and without a game install.
-//
-// No AppKit import on purpose: the file compiles into both the app and the CLI
-// target, so it needs no project-membership exception.
+// World > Player & Locomotion readout text. Each line is a pure function of
+// one `PlayerLocomotionSnapshot`, so the wording is testable without AppKit, a
+// Metal device, or an install. No AppKit import: the CLI builds it too.
 
 import Foundation
 import OpenSkyBehavior
@@ -60,9 +52,12 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
     /// bridge wrote, and the events that came back.
     public static func graphText(for snapshot: PlayerLocomotionSnapshot) -> String {
         let status = snapshot.status
+        let bodyLines = snapshot.bodyFailureReason.map { ["Player body: none (\($0))"] } ?? []
         guard status.graphAvailable else {
-            return "Behavior graph: not attached\n"
-                + "Locomotion still resolves; nothing is written or raised."
+            return ([
+                "Behavior graph: not attached",
+                "Locomotion still resolves; nothing is written or raised."
+            ] + bodyLines).joined(separator: "\n")
         }
         let firstPerson: String = status.firstPersonGraphAvailable
             ? "attached (\(status.firstPersonGraphUpdates) updates)"
@@ -70,7 +65,7 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
         var header = "Behavior graph: attached"
         header += "  Updates: \(status.graphUpdates)"
         header += "  First person: " + firstPerson
-        return ([header]
+        return ([header] + bodyLines
             + statePathLines(snapshot.activeStates, label: "State path")
             + statePathLines(snapshot.firstPersonActiveStates, label: "First-person path")
             + variableLines(snapshot.variables)
@@ -100,7 +95,7 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
         // States the rule the two totals are split by, so a reader can tell a
         // zero root-motion total from a broken one. Every vanilla animation
         // leaves `m_extractedMotion` null, so on an unmodded install the first
-        // total stays at zero for the whole session (issue #370).
+        // total stays at zero for the whole session.
         let rule = "Root motion drives the capsule only for a clip whose data carries "
             + "extracted motion; vanilla clips animate in place, so the gait drives it."
         guard !status.motionTrace.isEmpty else {

@@ -1,26 +1,13 @@
-// The combat loop from hostility to a landed blow (issues #374 and #424,
-// roadmap items 15.7 and 16.7).
-//
-// 16.7's headline acceptance is "deterministic tests run the full synthetic
-// loop: detect, approach along a navmesh, attack with real damage, a player
-// block reducing it, an NPC block reducing the player's hit, stagger
-// interrupting the attack, flee at the threshold, loss of the hidden player,
-// search, give-up, and package resumption". This file owns that sentence up to
-// the stagger; `CombatLoopDisengageTests` owns the rest. Both drive whole fixed
-// steps against `FakeCombatWorld`, so a fight is a pure function of the step
-// count and repeats exactly.
-//
-// What these suites do not re-test has a home: `CombatBehaviorMachineTests`
-// owns the decisions on their own, `MeleeCombatRuntimeTests` the player's
-// swing, `ProjectileRuntimeTests` the arrow, `RagdollRuntimeTests` the hand-off
-// and the corpse's inventory. The milestone gates run all of them as one route.
+// The combat loop from hostility to a landed blow: detect, approach along a
+// navmesh, attack, blocks on both sides, and stagger. `CombatLoopDisengageTests`
+// covers flee, search, give-up, and package resumption. Both drive whole fixed
+// steps against `FakeCombatWorld`, so a fight repeats exactly.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 import OpenSkyCombatTesting
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import simd
 import Testing

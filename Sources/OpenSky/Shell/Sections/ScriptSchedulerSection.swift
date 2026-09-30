@@ -1,23 +1,11 @@
-// World > Scripts > Scheduler section (issue #278): the transport for the
-// Papyrus VM. Pause freezes the VM's own tick, and the two step buttons run
-// fixed steps by hand so a latent `Utility.Wait` or a `RegisterForUpdate` timer
-// can be walked through one edge at a time.
-//
-// This is the section that carries the destination's overridden-ness: a paused
-// VM is the one thing under World > Scripts that sits away from its documented
-// default, and the sidebar's reset resumes it. The other three sections are
-// read-only and report false.
-//
-// The VM pause is deliberately not the engine's menu-mode world pause. Those
-// are separate freezes with separate controls, and this one never writes
-// `Renderer.worldSimPaused`.
-//
-// Control wiring and the `@objc` actions live in the satellite
-// `ScriptSchedulerSectionInput.swift`, the same split `SWFRuntimeSection` uses.
+// World > Scripts > Scheduler section: the Papyrus VM transport. Pause freezes
+// the VM tick; the step buttons run fixed steps, to walk a `Utility.Wait` or a
+// `RegisterForUpdate` timer one edge at a time. A paused VM is this
+// destination's override. The pause never writes `Renderer.worldSimPaused`,
+// which belongs to menu mode.
 
 import AppKit
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 
 final class ScriptSchedulerSection: PanelSectionViewController {
     /// Ticks the burst button applies. Twenty fixed steps is two thirds of a

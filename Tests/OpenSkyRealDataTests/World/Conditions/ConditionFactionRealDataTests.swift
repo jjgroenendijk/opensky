@@ -1,19 +1,8 @@
 // Env-gated acceptance for the faction and relationship condition functions
-// (issue #508, roadmap item 21.4), over the user's own read-only load order.
-//
-// Two questions, both asked with vanilla's own bytes:
-//
-// 1. Does a *real* authored `GetInFaction` condition — one lifted out of a real
-//    `INFO` record, not one this suite composed — answer truthfully about a real
-//    Whiterun guard? The guard is located the same production way
-//    `WhiterunGuardFixture` locates it, its memberships are seeded from its own
-//    `SNAM` run by the production `FactionRuntime`, and the condition is
-//    evaluated by the production `ConditionEvaluator`.
-// 2. What do the six new functions add to the registry's reach over the whole
-//    load order? That is the coverage delta the issue asks to be recorded.
-//
-// Aggregate counts, editor IDs and derived verdicts only — no game bytes leave
-// the run (AGENTS.md "Legal & IP boundary").
+// over the user's load order. It checks that a real authored `GetInFaction`
+// condition answers truthfully about a real Whiterun guard, located and seeded
+// the production way, and records what the six faction functions add to the
+// registry's reach. Only counts, editor IDs and verdicts leave the run.
 
 import FormatsCoreTesting
 import Foundation
@@ -35,15 +24,14 @@ struct ConditionFactionRealDataTests {
         return try? GameDataLocator.locate()
     }()
 
-    /// The six raw indices item 21.4 registers, from xEdit's TES5 condition
+    /// The six raw indices the faction step registers, from xEdit's TES5 condition
     /// table: `GetFactionRankDifference`, `GetInFaction`, `GetFactionRank`,
     /// `GetRelationshipRank`, `GetFactionRelation` and `IsHostileToActor`.
     private static let factionIndices: Set<UInt16> = [60, 71, 73, 403, 449, 719]
 
-    /// The two crime-gold halves added after this delta was measured (issue
-    /// #573): `GetCrimeGoldViolent` and `GetCrimeGoldNonviolent`. Subtracted
-    /// out so the delta keeps pinning the faction step alone. `GetCrimeGold`
-    /// (issue #504) landed first and is already inside the numbers below.
+    /// `GetCrimeGoldViolent` and `GetCrimeGoldNonviolent`, subtracted so the
+    /// delta measures the faction functions alone. `GetCrimeGold` is already
+    /// inside the numbers below.
     private static let laterIndices: Set<UInt16> = [375, 376]
 
     private static let guardEditorIDPrefix = "GuardWhiterun"
@@ -57,8 +45,6 @@ struct ConditionFactionRealDataTests {
         let editorID: String
         let memberships: [ResolvedFaction]
         let seam: FactionConditionResolution
-        let plugin: String
-        let factions: FactionStore
     }
 
     @Test(.enabled(if: Self.dataRoot != nil))
@@ -203,19 +189,13 @@ struct ConditionFactionRealDataTests {
                 sourcePlugin: plugin,
                 derivation: runtime.derivation,
                 profiles: [holder.key: runtime.profile(of: holder)]
-            ),
-            plugin: plugin,
-            factions: factions
+            )
         )
     }
 
-    /// Real `GetInFaction` conditions lifted out of the load order, split by
-    /// whether the faction they name is one this guard belongs to.
-    ///
-    /// Only the `== 1` form is taken, which is what makes the expected answer
-    /// knowable without re-deriving it from the operator: the condition asks
-    /// "is the subject in this faction", so it is true exactly when the guard is
-    /// a member.
+    /// Real `GetInFaction` conditions from the load order, split by whether the
+    /// guard belongs to the named faction. Only the `== 1` form is taken, so the
+    /// expected answer is membership itself.
     @MainActor
     private static func authoredInFactionConditions(
         root: GameDataRoot,

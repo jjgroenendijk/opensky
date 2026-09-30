@@ -1,22 +1,8 @@
-// World > Progression > Perk Tree section (issue #500, roadmap item 20.7): the
-// selected skill's AVIF perk tree, box by box, and the resolved PERK record
-// behind whichever box is selected.
-//
-// A list plus an inspector rather than a drawn grid. The tree's meaning is its
-// connections, its rank chains and the rule that refuses a box, and every one
-// of those reads as well spelled out as drawn — while a laid-out grid would be
-// a second renderer to keep honest for no verification the list does not
-// already give.
-//
-// Spend point is the real spend: it goes through the tree, the rank order and
-// the perk's own conditions before it takes the point, and a refusal is printed
-// as the rule that refused it. Grant and Remove are the dev way around all
-// three, for reading what a perk does without qualifying for it first.
-//
-// The skill popup writes the same provider selection the Skills section above
-// writes, so the two cannot describe different skills.
-//
-// Not overridden: an owned perk is world state, not a panel setting.
+// World > Progression > Perk Tree section: the selected skill's AVIF perk tree
+// as a list, plus the PERK record behind the selected box. Spend point checks
+// the tree, rank order, and conditions and prints any refusal; Grant and Remove
+// bypass them. The skill popup shares the provider selection with the Skills
+// section. Not overridden.
 
 import AppKit
 import OpenSkyProgression
@@ -43,14 +29,6 @@ final class ProgressionPerkTreeSection: ProgressionPanelSection {
 
     override var sectionIdentifier: String {
         "progressionPerkTree"
-    }
-
-    var treeReadout: String {
-        treeLabel.stringValue
-    }
-
-    var perkReadout: String {
-        perkLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

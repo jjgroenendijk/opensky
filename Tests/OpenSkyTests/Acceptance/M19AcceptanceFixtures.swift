@@ -1,14 +1,9 @@
-// The session `M19AcceptancePanelTests` reads: a player mid-fight who has
-// learned Firebolt and readied it right-handed, a bandit that has just taken it
-// through a 40% fire resistance, and the fighter's own casting switched on.
-//
-// Split out of the suite for the reason `M10AcceptanceFixture` was: one
-// milestone's worth of snapshot literals is past the strict-lint type-length
-// cap, and what is under test is the surface rather than the numbers.
+// The session `M19AcceptancePanelTests` reads: a player who learned and readied
+// Firebolt, a bandit just hit by it through 40% fire resistance, and fighter
+// casting on. A separate file, because the literals pass the type-length cap.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

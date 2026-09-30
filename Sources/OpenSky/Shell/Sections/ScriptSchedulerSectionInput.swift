@@ -1,15 +1,9 @@
-// Control wiring and actions for World > Scripts > Scheduler (issue #278).
-// Split from ScriptSchedulerSection.swift so the section's type body stays
-// inside the strict-lint limit; the accessibility identifiers set here are the
-// UI-test API and are pinned literally in ScriptsPanelTests.
-//
-// Every action is one provider call, a resync so the pause checkbox and the
-// readout agree with the engine immediately, and `finishInteraction()` last so
-// keyboard focus returns to the game view.
+// Control wiring and actions for World > Scripts > Scheduler, split out for the
+// type-body limit. ScriptsPanelTests pins the accessibility ids. Each action is
+// one provider call, a resync, then `finishInteraction()` to refocus the game.
 
 import AppKit
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 
 extension ScriptSchedulerSection {
     /// Wires target, action, and identifier for every control. Called once from

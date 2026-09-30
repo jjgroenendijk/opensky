@@ -1,4 +1,4 @@
-// Synthetic fixtures for the Papyrus world runtime (issue #171): VMAD-carrying
+// Synthetic fixtures for the Papyrus world runtime: VMAD-carrying
 // REFR entries, event-handler scripts, and a note-recording native dispatch.
 // Every byte is built in code; no game data is embedded.
 
@@ -6,7 +6,6 @@
 import FormatsESMTesting
 import FormatsPEXTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
@@ -23,7 +22,7 @@ import Testing
 nonisolated public final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch {
     private let registry: PapyrusNativeRegistry
     public private(set) var notes: [String] = []
-    /// Stands in for a not-yet-written native (issue #172): consulted before
+    /// Stands in for a not-yet-written native: consulted before
     /// the "Probe.Note" recorder, so a test can implement one `Probe.*` call
     /// against the world through `context.world` without waiting for the real
     /// `ObjectReference` family.
@@ -54,7 +53,6 @@ nonisolated public final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch 
 public enum PapyrusWorldFixture {
     public static let pluginName = "skyrim.esm"
     public static let cell = FakeWorldReferences.defaultCell
-    public static let otherCell = CellSceneLocation.interior(FormID(0x2000))
 
     public static var resolver: FormIDResolver {
         FormIDResolver(pluginName: pluginName, masters: [])
@@ -78,14 +76,10 @@ public enum PapyrusWorldFixture {
         return ESMFixture.field("XLKR", payload)
     }
 
-    /// Decodes a synthetic REFR record carrying the given VMAD scripts into a
-    /// runtime reference entry, the exact shape a cell build produces.
-    ///
-    /// - Parameter placement: DATA position, so a test can assert a
-    ///   `SetPosition` write against something other than the origin.
-    /// - Parameter linkedReferences: XLKR entries in file order, each a
-    ///   `(keyword, ref)` pair of raw FormID values with a nil keyword meaning
-    ///   an untagged link.
+    /// Decodes a synthetic REFR with the given VMAD scripts into the runtime
+    /// entry a cell build produces. `placement` is the DATA position.
+    /// `linkedReferences` are XLKR `(keyword, ref)` pairs; a nil keyword is an
+    /// untagged link.
     public static func referenceEntry(
         objectID: UInt32,
         scripts: [VMADFixture.Script],
@@ -120,7 +114,7 @@ public enum PapyrusWorldFixture {
         )
     }
 
-    /// The same thing as an ACHR rather than a REFR (issue #375), which is what
+    /// The same thing as an ACHR rather than a REFR, which is what
     /// the `Actor` natives need: only a placed actor carries the NPC_ base an
     /// `ActorValueHolder` derives its baseline from.
     public static func actorEntry(
@@ -216,7 +210,7 @@ public enum PapyrusWorldFixture {
         )
     }
 
-    /// A whole world-aware Papyrus session over synthetic data (issue #172):
+    /// A whole world-aware Papyrus session over synthetic data:
     /// the store the natives write through, the bridge they reach it by, the
     /// reference source standing in for the streamer, and the runtime.
     public struct Session {
@@ -241,15 +235,9 @@ public enum PapyrusWorldFixture {
         }
     }
 
-    /// Builds that session and attaches `entries` to the cell, so every VMAD
-    /// script on them has a live instance.
-    ///
-    /// The attach leaves `OnInit`/`OnCellAttach`/`OnLoad` queued; call
-    /// `drain(_:)` first when a test only cares about later events.
-    ///
-    /// - Parameter worldState: pass an existing store to build a second
-    ///   session over state a first one wrote, which is what a save/load test
-    ///   does.
+    /// Builds the session and attaches `entries` to the cell, leaving
+    /// `OnInit`/`OnCellAttach`/`OnLoad` queued; `drain(_:)` clears them. Pass
+    /// `worldState` to build a second session over state a first one wrote.
     @MainActor
     public static func session(
         objects: [PexObject],
@@ -286,7 +274,7 @@ public enum PapyrusWorldFixture {
         )
     }
 
-    /// The standard native registry over a session's world (issue #172), which
+    /// The standard native registry over a session's world, which
     /// is how a natives test invokes one function directly instead of through
     /// compiled bytecode.
     @MainActor

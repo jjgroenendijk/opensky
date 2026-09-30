@@ -1,10 +1,7 @@
-// Papyrus wiring satellite for GameViewController (issue #171): builds the
-// session's `PapyrusWorldRuntime`, gives it a lazy script library over the
-// install's VFS, binds script instance lifetime to cell streaming, and ticks
-// it from the renderer's world-simulation hook.
-//
-// Split from GameViewController+Streaming.swift, which is already at its
-// split-for-size shape; the wiring here is independent of scene composition.
+// Papyrus wiring for GameViewController: builds the session's
+// `PapyrusWorldRuntime`, gives it a lazy script library over the install's VFS,
+// binds script instance lifetime to cell streaming, and ticks it from the
+// renderer's world-simulation hook.
 
 import OpenSkyCombat
 import OpenSkyFormatsESM
@@ -20,14 +17,10 @@ import OpenSkyWorld
 import OSLog
 
 extension GameViewController {
-    /// Creates the VM for this session and subscribes it to the engine.
-    ///
-    /// Three seams, all one-directional so the engine never depends on the VM:
-    /// the streamer announces cell attach and detach, the renderer announces a
-    /// world-simulation delta, and the provider supplies compiled scripts. A
-    /// provider that cannot supply scripts (a synthetic scene, or an install
-    /// whose archives carry no `scripts\` entries) leaves `papyrus` nil rather
-    /// than running a VM with an empty library.
+    /// Creates the VM for this session and subscribes it to the engine. The
+    /// streamer, the renderer, and the provider each feed the VM one way, so the
+    /// engine never depends on it. A provider that cannot supply scripts leaves
+    /// `papyrus` nil rather than running a VM with an empty library.
     func wirePapyrus(
         provider: any CellSceneProvider,
         renderer: Renderer,
@@ -41,14 +34,14 @@ extension GameViewController {
             worldState: worldState, references: controller, globals: globalStore
         )
         bridge.clockSource = { [weak renderer] in renderer?.gameClock }
-        // The `Actor` natives' collaborators (issue #375). Closures rather than
+        // The `Actor` natives' collaborators. Closures rather than
         // references, so this wiring step does not have to run after the ones
         // that build them: `wireActorValues` needs a provider and `wireRagdoll`
         // needs a renderer, and neither is ordered against this file.
         bridge.actorValueRuntime = { [weak self] in self?.actorValues.runtime }
         bridge.ragdollRuntime = { [weak self] in self?.ragdoll.runtime }
         // The combat loop, which `StartCombat`, `StopCombat` and `IsInCombat`
-        // reach through (issue #424).
+        // reach through.
         bridge.combatRuntime = { [weak self] in self?.combat.runtime }
         wireSpellNatives(bridge: bridge, provider: provider)
         // Only the player carries a behavior graph that tracks a draw state, so
@@ -73,7 +66,7 @@ extension GameViewController {
         controller.onInteraction.add { [weak bridge] event in
             bridge?.handleInteraction(event)
         }
-        // Trigger-volume occupancy edges (issue #173). The streamer tests once
+        // Trigger-volume occupancy edges. The streamer tests once
         // per rendered frame in walk mode; each edge queues one event per
         // script on the volume's authoring reference.
         controller.onTriggerTransition.add { [weak bridge] event in
@@ -102,16 +95,10 @@ extension GameViewController {
         papyrus = world
     }
 
-    /// Gives the session its quest layer and starts the quests that are
-    /// already running (issue #322).
-    ///
-    /// Which quests those are is the #182 state's answer, not this file's: at
-    /// wire-up it is every quest whose DNAM says start-game-enabled, and after
-    /// a save is restored it is whatever that save recorded. Their scripts are
-    /// instantiated once here; `Start` and `Stop` maintain the set afterwards.
-    ///
-    /// A provider with no QUST index leaves `questRuntime` nil, and every
-    /// `Quest` native then fails with `PapyrusQuestBridgeError.noQuestData`.
+    /// Gives the session its quest layer and starts the quests that already
+    /// run: at wire-up the start-game-enabled ones, after a load what the save
+    /// recorded. Without a QUST index `questRuntime` stays nil and every `Quest`
+    /// native fails with `PapyrusQuestBridgeError.noQuestData`.
     private func wireQuests(
         provider: any CellSceneProvider,
         bridge: PapyrusWorldStateBridge
@@ -119,7 +106,6 @@ extension GameViewController {
         guard let store = (provider as? QuestDataProviding)?.questStore else {
             return
         }
-        questStore = store
         let locations = (provider as? LocationDataProviding)?.locationStore
         bridge.questRuntime = QuestRuntime(
             store: worldState,
@@ -162,13 +148,10 @@ extension GameViewController {
 }
 
 extension GameViewController {
-    /// The spell natives' collaborators (issue #474, roadmap item 19.11).
-    ///
-    /// Closures for the reason the actor ones are: `wireCasting` and
-    /// `wireMagicEffects` both run after this step, and a reference captured
-    /// here would be nil forever. The dispel closure carries the whole
-    /// read-modify-write because `ActiveEffectRuntime` is a struct this
-    /// controller owns by value — handing out a copy would drop the write.
+    /// The spell natives' collaborators. Closures, because `wireCasting` and
+    /// `wireMagicEffects` run after this step. The dispel closure does the whole
+    /// read-modify-write, because `ActiveEffectRuntime` is a value this
+    /// controller owns; a copy would drop the write.
     func wireSpellNatives(
         bridge: PapyrusWorldStateBridge,
         provider: any CellSceneProvider
@@ -187,13 +170,10 @@ extension GameViewController {
         wirePerkNatives(bridge: bridge)
     }
 
-    /// The perk natives' collaborators (issue #497, roadmap item 20.4).
-    ///
-    /// Closures for the reason the spell ones are: `wirePerks` runs after this
-    /// step, and the mutation closure carries the whole write because
-    /// `PerkRuntime` is a struct this controller owns by value — and because
-    /// granting a perk has to reconcile the abilities it grants in the same
-    /// call, which is a step the bridge should not know about.
+    /// The perk natives' collaborators. Closures, because `wirePerks` runs
+    /// after this step. The mutation closure does the whole write, because
+    /// `PerkRuntime` is a value this controller owns and granting a perk must
+    /// reconcile its abilities in the same call.
     private func wirePerkNatives(bridge: PapyrusWorldStateBridge) {
         bridge.mutatePerks = { [weak self] mutation, perk, actor in
             guard let self, let holder = actorValueHolder(for: actor) else { return false }
@@ -207,17 +187,17 @@ extension GameViewController {
         }
         // `wireSkills` runs after this step too, and the closure carries the
         // whole write because `SkillAdvancementRuntime` is a struct this
-        // controller owns by value (issue #498).
+        // controller owns by value.
         bridge.advanceSkill = { [weak self] advance, index, magnitude in
             self?.advancePlayerSkill(advance, at: index, by: magnitude) ?? false
         }
-        // `wireProgression` runs after this step as well (issue #499). A zero
+        // `wireProgression` runs after this step as well. A zero
         // delta is the read `Game.GetPerkPoints` makes, which is why one
         // closure answers both natives.
         bridge.modifyPerkPoints = { [weak self] delta in
             self?.modifyPlayerPerkPoints(by: delta)
         }
-        // `wireCrime` runs after this step too (issue #504), so the reporter is
+        // `wireCrime` runs after this step too, so the reporter is
         // reached through a getter rather than captured — the same reason every
         // closure above is one.
         bridge.crimeReporter = { [weak self] in self?.crime.reporter }
@@ -227,7 +207,7 @@ extension GameViewController {
             let text = openBarter(with: actor)
             return (containerMenu.isOpen && containerMenu.vendor != nil, text)
         }
-        // `wireFactions` runs after this step too (issue #508), for the same
+        // `wireFactions` runs after this step too, for the same
         // reason, so its five collaborators are getters as well.
         wireFactionNatives(bridge: bridge)
     }

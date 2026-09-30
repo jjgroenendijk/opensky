@@ -1,16 +1,9 @@
-// Renderer-routed input for the inventory menu bridge (M12.2.2, issue #289).
-// Satellite of UI/InventoryMenuMovieBridge.swift.
-//
-// `handle(_:runtime:)` mutates the runtime and nothing else, so a caller that
-// uses it against a live renderer moves the movie's selection without pushing
-// the regenerated command stream to the GPU, and the frame does not change
-// until some later call happens to synchronize the layer. That is issue #300
-// against the system menu. This overload exists so the inventory menu cannot
-// repeat it: every renderer entry point ends by pulling `sceneIfChanged()`, so
-// routing through `Renderer.sendSWFInput` both delivers the key and repaints.
+// Renderer-routed input for the inventory menu bridge. Every renderer entry
+// point ends by pulling `sceneIfChanged()`, so `Renderer.sendSWFInput` both
+// delivers the key and repaints; driving the runtime alone would not update
+// the frame.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyRendering
 

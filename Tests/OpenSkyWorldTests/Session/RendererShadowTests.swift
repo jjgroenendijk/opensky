@@ -1,15 +1,11 @@
-// Cascaded sun-shadow renderer integration (M7.1.1): offscreen A/B renders of
-// a synthetic ground + caster scene, deterministic pixel checks (AGENTS.md
-// testing rule). Proves the depth pre-pass + PCF sampling actually darkens the
-// receiver under a caster, only ever darkens (monotonic), and leaves the sky
-// untouched — and that disabling shadows reproduces a never-enabled baseline.
-// Skips without a Metal 4 device (paravirtual CI), pattern from
-// RendererCullingTests / RendererOffscreenTests.
+// Cascaded sun-shadow integration: offscreen A/B renders of a synthetic ground
+// and caster. Shadows darken the receiver under the caster, only ever darken,
+// leave the sky alone, and disabling them matches a never-enabled baseline.
+// Skips without a Metal 4 device.
 
 import Foundation
 import Metal
 import MetalKit
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldTesting

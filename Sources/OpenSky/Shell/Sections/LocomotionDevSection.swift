@@ -1,18 +1,7 @@
-// World > Player & Locomotion > Dev Controls section (issue #191): hold one
-// gait, and raise one graph event by hand.
-//
-// Both controls exist so a state the route is awkward to reach can still be
-// inspected: swimming needs water under the capsule, landing needs a fall, and
-// a graph event the bridge only raises on an edge is otherwise a single frame
-// long. Forcing a gait writes the graph's own inputs and the resolved speed and
-// touches nothing else — the capsule keeps its gravity, its grounding and its
-// collision — so a forced swim shows the swim clips on dry land rather than
-// pretending the world changed.
-//
-// This section carries the destination's overridden-ness: a held gait is a
-// setting that differs from the documented default, and it is what the
-// sidebar's "Reset all" clears. Raising an event leaves nothing behind and is
-// therefore not an override.
+// World > Player & Locomotion > Dev Controls section: hold one gait, or raise
+// one graph event, to inspect hard-to-reach states. A forced gait writes only
+// the graph inputs and speed, so a forced swim plays swim clips on dry land. A
+// held gait is this destination's override; raising an event is not.
 
 import AppKit
 import OpenSkyPhysics
@@ -64,10 +53,6 @@ final class LocomotionDevSection: PanelSectionViewController {
 
     static func resetToDefaults(provider: (any PlayerLocomotionControlProviding)?) {
         provider?.forcedLocomotionGait = nil
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

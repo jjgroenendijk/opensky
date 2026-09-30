@@ -1,22 +1,9 @@
-// Env-gated dynamic-body probe over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md "Legal & IP"),
-// issue #193, roadmap item 15.2.
-//
-// The synthetic suites prove the solver against boxes and a floor. The claims
-// they cannot make are the ones that decide whether this feature works at all:
-// that a vanilla clutter-heavy interior actually produces simulated bodies from
-// its own Havok data, that those bodies settle rather than sink or explode,
-// that a shove moves them, and that stepping them costs a frame budget the
-// renderer can afford. All four come from the install or the whole thing is a
-// well-tested no-op.
-//
-// The report is counts and timings only and goes to gitignored `logs/`;
-// nothing extracted from the install enters the repository.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
+// Env-gated dynamic-body probe over the user's install. It checks what the
+// synthetic suites cannot: a vanilla interior yields bodies from its own Havok
+// data, they settle, a shove moves them, and a step fits the frame budget. The
+// report holds counts and timings and goes to gitignored `logs/`. Run with
 // `make realtest T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`,
-// or `make realtest-perf` to hold the step to the budget an optimized build is
-// held to rather than the unoptimized ceiling.
+// or `make realtest-perf` for the optimized budget.
 
 import Foundation
 import Metal
@@ -42,32 +29,14 @@ struct DynamicBodyRealDataTests {
         dataRoot != nil && (device?.supportsFamily(.metal4) ?? false)
     }
 
-    /// The perf budget for one physics step, in milliseconds: a 1/120 step has
-    /// 8.33 ms of wall clock and the solver must not become the frame's critical
-    /// path. Measured 0.37 ms average over this cell when this landed, so the
-    /// budget carries the margin `docs/testing.md` asks a perf gate to carry.
-    ///
-    /// It applies to an *optimized* build, which is the one that ships. A step
-    /// is a few hundred microseconds of `simd` arithmetic in tight loops, and
-    /// that is exactly the code Swift's `-Onone` treats worst: the same run
-    /// measures around twenty-four times slower unoptimized, so holding a plain
-    /// `make realtest` to 2 ms would be measuring the compiler rather than the
-    /// engine. `make realtest-perf` builds this suite with `-O` and the gate
-    /// below is the real one; a default `make realtest` still gates, at the
-    /// unoptimized ceiling, so a regression cannot hide there either.
-    private static let stepBudgetMS = 2.0
-
-    /// The same gate for an unoptimized build: the measured 8.9 ms with room for
-    /// the noise a Debug run carries. Loose on purpose — it exists to catch a
-    /// regression of the *kind* this issue fixed, not to certify performance.
-    private static let unoptimizedStepBudgetMS = 20.0
-
-    /// Whichever of the two the running build is held to.
+    /// Wall-clock budget for one 1/120 s physics step, in milliseconds. An
+    /// optimized build (`make realtest-perf`) is held to 2 ms; measured 0.37.
+    /// `-Onone` runs about 24x slower, so a plain `make realtest` gets 20 ms.
     private static var budgetMS: Double {
         #if OPENSKY_OPTIMIZED
-            stepBudgetMS
+            2.0
         #else
-            unoptimizedStepBudgetMS
+            20.0
         #endif
     }
 
@@ -101,7 +70,7 @@ struct DynamicBodyRealDataTests {
 
         let placements = scene.dynamicBodies
         #expect(!placements.isEmpty, "the vanilla farmhouse placed no simulated body")
-        // The drawn half of the same claim (issue #193): a reference the solver
+        // The drawn half of the same claim: a reference the solver
         // moves has to carry its identity into the draw list, or the pose
         // produced below never reaches the screen and the clutter simulates
         // invisibly. Asserted on real placements because the tagging is done
@@ -126,14 +95,9 @@ struct DynamicBodyRealDataTests {
 
         #expect(settle.nonFiniteCount == 0, "a body integrated to a non-finite pose")
         #expect(settle.recoveredBodyCount == 0, "a body had to be reset mid-step")
-        // Every reference the cell simulates comes to rest inside five seconds
-        // of world time, and comes to rest near where it was authored rather
-        // than at the bottom of the world. Those two together are item 15.2's
-        // settle criterion (issue #392): before it was met, half this cell's
-        // clutter left the geometry it started in and fell tens of thousands of
-        // units, while the rest sat still without ever sleeping, so neither a
-        // count of sleepers alone nor a finite-pose check alone would have
-        // caught it.
+        // Every simulated reference comes to rest within five seconds of world
+        // time, near where it was authored. Both checks are needed: clutter that
+        // falls out of the world and clutter that never sleeps each pass one.
         #expect(
             settle.sleepingCount == world.bodyCount,
             "\(world.bodyCount - settle.sleepingCount) of \(world.bodyCount) never came to rest"
@@ -155,9 +119,9 @@ struct DynamicBodyRealDataTests {
 }
 
 extension DynamicBodyRealDataTests {
-    /// Issue #401's exterior acceptance: use a vanilla dynamic placement and
-    /// its tagged draw, push it across a real adjacent-cell boundary, then
-    /// remove the placing cell while the occupied cell remains.
+    /// Exterior acceptance: take a vanilla dynamic placement and its tagged draw,
+    /// push it across a real adjacent-cell boundary, then remove the placing
+    /// cell while the occupied cell remains.
     @Test(.enabled(if: Self.canRun))
     func rebinsVanillaExteriorClutterAcrossResidentCells() throws {
         let root = try #require(Self.dataRoot)
@@ -292,16 +256,10 @@ extension DynamicBodyRealDataTests {
         return result
     }
 
-    /// Walks a capsule into settled clutter and counts what moved.
-    ///
-    /// The capsule is placed just outside each of the first `shovedBodyCount`
-    /// bodies in key order and walked into it, rather than at the average of
-    /// every body's position. The average is where this probe used to stand, and
-    /// it only ever worked because half the clutter was falling through the
-    /// world at the time: now that every reference settles where it was
-    /// authored, the centroid of a farmhouse's clutter is a point in mid-air in
-    /// the middle of a room and a capsule there touches nothing. Key order keeps
-    /// the choice deterministic and independent of which house this is.
+    /// Walks a capsule into settled clutter and counts what moved. The capsule
+    /// starts just outside each of the first `shovedBodyCount` bodies in key
+    /// order, because the centroid of a room's clutter is usually mid-air.
+    /// Key order keeps the choice deterministic.
     private static func shove(world: inout DynamicBodyWorld, scene: CellScene) -> ShoveResult {
         guard !world.bodies.isEmpty else { return ShoveResult() }
         let before = Dictionary(

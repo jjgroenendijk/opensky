@@ -1,4 +1,4 @@
-// ActorVisualResolver tests (milestone 5.2) over synthetic in-code records
+// ActorVisualResolver tests over synthetic in-code records
 // (ESMFixture) — never extracted game files (AGENTS.md "Legal & IP boundary").
 // Chain shapes + FaceGen convention: docs/engine/actor-resolution.md.
 
@@ -15,7 +15,6 @@ struct ActorVisualResolutionTests {
     private enum FID {
         static let npc: UInt32 = 0x1000
         static let race: UInt32 = 0x100
-        static let foreignRace: UInt32 = 0x999
         static let skin: UInt32 = 0x200
         static let altSkin: UInt32 = 0x201
         static let skinTorso: UInt32 = 0x210
@@ -23,15 +22,12 @@ struct ActorVisualResolutionTests {
         static let skinForeign: UInt32 = 0x212
         static let clothes: UInt32 = 0x300
         static let clothesArma: UInt32 = 0x310
-        static let robes: UInt32 = 0x320
-        static let robesArma: UInt32 = 0x321
         static let outfit: UInt32 = 0x400
         static let leveledOutfit: UInt32 = 0x410
         static let bundleOutfit: UInt32 = 0x420
         static let leveledList: UInt32 = 0x500
         static let cyclicList: UInt32 = 0x510
         static let emptyList: UInt32 = 0x520
-        static let bundleList: UInt32 = 0x530
     }
 
     // MARK: - Gender + skeleton

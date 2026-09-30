@@ -1,4 +1,4 @@
-// Shared vocabulary for main-app inspector panels (issue #98). Every sidebar
+// Shared vocabulary for main-app inspector panels. Every sidebar
 // destination's controls are built from these metrics + factories so 100 future
 // knobs still read as one coherent panel. Pure AppKit builders, no state; the
 // numbers match the hand-rolled constants the panels used before unification.
@@ -27,7 +27,6 @@ enum PanelMetrics {
     /// Horizontal spacing inside a control row.
     static let rowGap: CGFloat = 8
 
-    static let headingFont = NSFont.boldSystemFont(ofSize: 15)
     static let captionFont = NSFont.systemFont(ofSize: 12)
     static let noteFont = NSFont.systemFont(ofSize: 11)
     static let monoFont = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
@@ -37,13 +36,6 @@ enum PanelMetrics {
 /// Stateless factories for the labels, rows, and controls panels share. Extract
 /// only what was already duplicated across panels — keep it small.
 enum PanelComponents {
-    /// Panel/section title in the themed uppercase display treatment.
-    static func heading(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.attributedStringValue = Theme.headingAttributed(text, size: 15)
-        return label
-    }
-
     /// Sub-heading above a control group.
     static func caption(_ text: String) -> NSTextField {
         let label = NSTextField(labelWithString: text)

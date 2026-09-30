@@ -1,4 +1,4 @@
-// M11.1 headless acceptance: native dispatch, latency, fallback, determinism.
+// M11 headless acceptance: native dispatch, latency, fallback, determinism.
 
 import FormatsPEXTesting
 import Foundation
@@ -20,6 +20,11 @@ struct M11AcceptanceTests {
         let second = try executeSyntheticProgram()
 
         #expect(first == second)
+        guard case let .integer(roll) = first.value else {
+            Issue.record("Run returned \(first.value), not the RandomInt roll")
+            return
+        }
+        #expect((10 ... 20).contains(roll))
         #expect(first.tally.nativeCallTotal == 4)
         #expect(first.tally.unimplementedNativeTotal == 1)
         #expect(first.tally.suspensionTotal == 1)

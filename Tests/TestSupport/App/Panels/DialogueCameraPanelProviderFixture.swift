@@ -1,11 +1,6 @@
-// Recording double and snapshot builder for the dialogue-camera seam
-// (issue #427), shared by the panel suite and by the destination-registry
-// satellite.
-//
-// Its own file for the reason the dialogue fixture beside it has one: stored
-// properties cannot live in an extension, so a fake shared across suites has to
-// be one type in one file, and `FakeWorldProviders` already sits near the repo
-// file-length limit.
+// Recording double and snapshot builder for the dialogue-camera seam, shared by
+// the panel suite and the destination-registry suite. Its own file, because a
+// shared fake needs stored properties.
 
 import AppKit
 @testable import OpenSkyFormatsESM
@@ -25,7 +20,6 @@ nonisolated func makeDialogueCameraSnapshot(
     pose: DialogueCameraPose? = nil,
     restoreMode: CameraMovementMode = .thirdPerson,
     restoreFOVYDegrees: Float = FirstPersonCamera.defaultFOVYDegrees,
-    overlayEnabled: Bool = false,
     speakerFocus: DialogueSpeakerFocusRow? = nil,
     lastOutcome: String? = nil
 ) -> DialogueCameraSnapshot {
@@ -39,7 +33,6 @@ nonisolated func makeDialogueCameraSnapshot(
         pose: pose,
         restoreMode: restoreMode,
         restoreFOVYDegrees: restoreFOVYDegrees,
-        overlayEnabled: overlayEnabled,
         speakerFocus: speakerFocus,
         lastOutcome: lastOutcome
     )

@@ -1,24 +1,12 @@
-// M13 acceptance (issue #185): one quest, driven end to end by the world, with
-// the journal following it and a mid-quest save resuming it.
-//
-// The gate statement in one run: the quest is running, a real M11 activation
-// drives `SetStage` through script code, the stage fragment executes and mutates
-// `WorldStateStore`, the alias resolves, the journal shows the quest's title,
-// objective and log-entry text, and a save taken mid-quest loads into a fresh
-// engine instance at the same stage with the same objectives and journal
-// content.
-//
-// Every step asserts the trace and the accounting, not just that the call
-// returned: which notes the VM dispatched in which order, which cell each write
-// was attributed to, and what the journal model made of the result. The pixel
-// half is `M13AcceptanceRenderTests` and the panel half is
-// `M13AcceptancePanelTests`; both are gated, and everything here runs on a
-// device-less runner with no install.
+// M13 acceptance: one quest driven end to end by the world. An activation runs
+// `SetStage` through script code, the fragment writes `WorldStateStore`, the
+// alias resolves, the journal shows the quest, and a mid-quest save loads into
+// a fresh engine at the same stage. Each step asserts the trace, not only the
+// return. Render and panel halves are the other `M13Acceptance*` suites.
 
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
-@testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 import OpenSkySaveTesting

@@ -1,5 +1,5 @@
 // World > Container Menu > Menu: opens the engine's menu stack on a container
-// or a merchant and drives the two-pane transfer list (M12.2.3, issue #179).
+// or a merchant and drives the two-pane transfer list.
 // Every button routes the same `MenuInputEvent` the keyboard produces in menu
 // mode, so the panel cannot diverge from live input.
 
@@ -30,10 +30,6 @@ final class ContainerMenuSection: PanelSectionViewController {
         checkboxWithTitle: "Vanilla menu movie", target: nil, action: nil
     )
     private let statsLabel = PanelComponents.statsLabel(identifier: "ContainerMenuStatsLabel")
-
-    var statsReadout: String {
-        statsLabel.stringValue
-    }
 
     override var sectionTitle: String {
         "Menu"
@@ -125,6 +121,7 @@ final class ContainerMenuSection: PanelSectionViewController {
         Container menu: open · \(snapshot.mode.rawValue) mode · world sim \(sim)
         Stack: \(stack)
         \(sideLine(for: snapshot))
+        \(categoryLine(for: snapshot))
         \(rows(for: snapshot))
         \(goldLine(for: snapshot))\(action)
         \(movieReadout(for: snapshot))
@@ -135,6 +132,16 @@ final class ContainerMenuSection: PanelSectionViewController {
         let container = snapshot.containerName ?? "no container"
         let side = snapshot.side == .container ? container : "Player"
         return "Showing: \(side) · \(snapshot.transferLabel) moves the selected row"
+    }
+
+    nonisolated static func categoryLine(for snapshot: ContainerMenuControlSnapshot) -> String {
+        guard !snapshot.categoryLabels.isEmpty else {
+            return "Categories: none"
+        }
+        let tabs = snapshot.categoryLabels.enumerated().map { index, label in
+            index == snapshot.selectedCategoryIndex ? "[\(label)]" : label
+        }.joined(separator: " ")
+        return "Categories: \(tabs)"
     }
 
     nonisolated static func rows(for snapshot: ContainerMenuControlSnapshot) -> String {

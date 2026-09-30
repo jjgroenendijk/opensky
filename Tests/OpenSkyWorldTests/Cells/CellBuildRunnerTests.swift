@@ -20,9 +20,6 @@ import Testing
 nonisolated private final class FakeProvider: CellSceneProvider {
     private let lock = NSLock()
     private var builds: [CellCoordinate: Int] = [:]
-    /// Snapshot each build ran against, so a test can assert the runner passes
-    /// the caller's state through.
-    private var states: [CellCoordinate: WorldStateSnapshot] = [:]
     private var evictions: [(mesh: Set<String>, texture: Set<String>)] = []
     private let gate: DispatchSemaphore?
     private let started: DispatchSemaphore?
@@ -41,12 +38,11 @@ nonisolated private final class FakeProvider: CellSceneProvider {
         self.summaryMutation = summaryMutation
     }
 
-    func buildCell(at coordinate: CellCoordinate, state: WorldStateSnapshot) throws -> CellScene {
+    func buildCell(at coordinate: CellCoordinate, state _: WorldStateSnapshot) throws -> CellScene {
         started?.signal()
         gate?.wait()
         lock.lock()
         builds[coordinate, default: 0] += 1
-        states[coordinate] = state
         lock.unlock()
         var summary = CellLoadSummary(
             cellName: "fake", gridX: coordinate.x, gridY: coordinate.y,
@@ -77,12 +73,6 @@ nonisolated private final class FakeProvider: CellSceneProvider {
         lock.lock()
         defer { lock.unlock() }
         return builds[coordinate, default: 0]
-    }
-
-    func buildState(_ coordinate: CellCoordinate) -> WorldStateSnapshot? {
-        lock.lock()
-        defer { lock.unlock() }
-        return states[coordinate]
     }
 
     var evictionCount: Int {

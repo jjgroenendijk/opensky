@@ -1,19 +1,10 @@
-// World > Scripts destination panel (issue #278): the sidebar verification
-// surface for the Papyrus VM. Thin composition of self-contained sections on
-// the shared panel framework, the same shape as RuntimeStatePanelViewController.
-// Exact sidebar path and controls: docs/engine/papyrus-world.md.
-//
-// Section order follows the order a session reaches for them: what is loaded,
-// then what it did, then how to drive it by hand, then what it could not do.
-//
-// It is a destination of its own rather than sections under World > Runtime
-// State because the VM is a distinct subsystem with its own transport: pausing
-// and stepping scripts is not the same freeze as menu mode, and confusing the
-// two is exactly what a separate path prevents.
+// World > Scripts destination panel for the Papyrus VM (docs/engine/papyrus-world.md).
+// Sections run in the order a session needs them: what is loaded, what it did,
+// how to drive it, what it could not do. A separate destination, because
+// pausing scripts is a different freeze from menu mode.
 
 import AppKit
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 
 final class ScriptsPanelViewController: InspectorPanelViewController {
     let instancesSection = ScriptInstancesSection()

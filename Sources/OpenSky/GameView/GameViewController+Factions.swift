@@ -1,30 +1,9 @@
-// Session wiring for factions and derived hostility (issue #503, roadmap item
-// 21.3): builds the faction runtime over the provider's FACT and RELA indexes,
-// seeds an actor from its authored `SNAM` run, and answers the one question the
-// combat loop asks about every resident actor — is this one angry with the
-// player.
-//
-// AppKit stays in this controller satellite; the runtime, the derivation, the
-// relation index and the component are all engine types that build into
-// `openskycli` and are testable without a window.
-//
-// ## What is paid per frame, and what is not
-//
-// `combatHostility(of:)` is asked for every resident actor by the combat loop,
-// the perception overlay, the dialogue candidate filter and the navigation
-// panel, several times per frame. Two costs are in that path and only one of
-// them is cheap.
-//
-// The derivation itself is cheap: two component reads, a pair lookup and a walk
-// of two short membership lists, all dictionary work. It runs every time and is
-// not cached, because a cache would have to be invalidated by every world-state
-// write and actor values are rewritten sixty times a second — the cache would
-// miss on nearly every query while still costing a comparison.
-//
-// Seeding is not cheap: it walks the actor's whole template chain. So it
-// happens once per actor per session, guarded by a `Set` test that costs no
-// copy of the runtime, and the mutating path is entered only on the first sight
-// of an actor.
+// Session wiring for factions and derived hostility: builds the faction runtime
+// over the provider's FACT and RELA indexes, seeds an actor from its `SNAM` run,
+// and answers whether a resident actor is hostile to the player. The derivation
+// runs on every query and is not cached, because actor values change every
+// frame. Seeding walks the template chain, so it runs once per actor per
+// session, behind a `Set` check.
 
 import AppKit
 import OpenSkyCombat
@@ -33,7 +12,6 @@ import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -45,7 +23,7 @@ struct FactionBridgeState {
     /// game data, and then every actor answers from the stored override alone,
     /// exactly as it did before this milestone.
     var runtime: FactionRuntime?
-    /// Scripted relationship ranks over the same store (issue #508), built
+    /// Scripted relationship ranks over the same store, built
     /// beside the faction runtime because both need the provider's RELA index.
     /// Nil without game data, and then `SetRelationshipRank` refuses rather than
     /// writing a rank nothing can read back.
@@ -95,21 +73,11 @@ extension GameViewController {
 
     // MARK: - Condition seam
 
-    /// Faction memberships, relationship ranks and the derivation over them, as
-    /// the condition machinery reads them (issue #508). This is what
-    /// `GetInFaction`, `GetFactionRank`, `GetFactionRankDifference`,
-    /// `GetFactionRelation`, `GetRelationshipRank` and `IsHostileToActor` answer
-    /// from.
-    ///
-    /// Profiles are built for the player and every resident actor, which is the
-    /// same set `runtimeStateActorResolution()` already walks. An actor no cell
-    /// has streamed carries no profile and the functions report the gap rather
-    /// than answering "belongs to nothing" — which is the honest answer, because
-    /// this engine has not read that actor's record yet.
-    ///
-    /// Seeding happens here rather than in the condition body: the body is
-    /// nonisolated and cannot reach the store, and a per-actor seed is a
-    /// `Set` membership test after the first sight of each one.
+    /// Faction memberships, relationship ranks, and the derivation, as the
+    /// faction condition functions read them. Profiles cover the player and every
+    /// resident actor; an unstreamed actor has none, so the functions report the
+    /// gap. Seeding happens here because the condition body is nonisolated and
+    /// cannot reach the store.
     func factionConditionResolution() -> FactionConditionResolution {
         guard let runtime = factions.runtime else { return .empty }
         var profiles: [ReferenceKey: ActorSocialProfile] = [:]
@@ -155,7 +123,7 @@ extension GameViewController {
     }
 
     /// One actor's social profile, seeded first, for `GetCrimeFaction`,
-    /// `IsGuard` and the guard pass (issue #505). Nil without faction data or
+    /// `IsGuard` and the guard pass. Nil without faction data or
     /// for an actor that is not resident.
     func socialProfile(of key: ReferenceKey) -> ActorSocialProfile? {
         guard let holder = actorValueHolder(for: key) else { return nil }
@@ -172,13 +140,10 @@ extension GameViewController {
         return factions.runtime
     }
 
-    /// The faction natives' collaborators (issue #508, roadmap item 21.4).
-    ///
-    /// Closures for the reason the perk ones are: `wireFactions` runs after the
-    /// Papyrus bridge is built, so a reference captured here would be nil
-    /// forever. The membership accessor takes the actor it is about because
-    /// reading a membership has to seed it first, and seeding is a mutating call
-    /// on a struct this controller owns by value.
+    /// The faction natives' collaborators. Closures, because `wireFactions` runs
+    /// after the Papyrus bridge is built. The membership accessor takes its actor
+    /// because a read must seed it first, which mutates a value this controller
+    /// owns.
     func wireFactionNatives(bridge: PapyrusWorldStateBridge) {
         bridge.factionRuntime = { [weak self] key in
             self?.seededFactionRuntime(for: key)
@@ -208,14 +173,9 @@ extension GameViewController {
 
     // MARK: - Derived hostility
 
-    /// What `key` currently makes of the player, derived from its memberships,
-    /// its relationships and its own aggression, with the session's explicit
-    /// override on top.
-    ///
-    /// Falls back to the stored override alone when there is no runtime, which
-    /// is every synthetic scene: a session with no load order has no relation to
-    /// derive anything from, and inventing one would make the panel toggle look
-    /// broken.
+    /// What `key` makes of the player, from its memberships, relationships and
+    /// aggression, with the session override on top. Without a runtime (every
+    /// synthetic scene) only the stored override answers.
     func derivedHostilityDecision(of key: ReferenceKey) -> HostilityDecision? {
         guard
             let runtime = factions.runtime,
@@ -259,10 +219,5 @@ extension GameViewController {
         }
         seedFactions(of: holder)
         return runtime.leave(key, from: faction, in: holder.cell)
-    }
-
-    /// Every faction `key` currently belongs to that the load order resolves.
-    func resolvedFactions(of key: ReferenceKey) -> [ResolvedFaction] {
-        factions.runtime?.resolvedFactions(of: key) ?? []
     }
 }

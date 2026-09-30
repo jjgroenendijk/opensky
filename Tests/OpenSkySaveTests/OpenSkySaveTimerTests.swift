@@ -1,15 +1,10 @@
-// PTMR chunk coverage for the OpenSky native save container (issue #277):
-// pending update-timer slots round-trip, bytes stay deterministic, an empty
-// list writes no chunk at all, an absent chunk means no pending timer, corrupt
-// payloads throw rather than crash, and an unknown chunk appended after PTMR is
-// still skipped.
-//
-// Every fixture is built in code — a save is OpenSky's own format and a
-// synthetic PEX object is not game data. See docs/formats/opensky-save-world-chunks.md.
+// PTMR chunk coverage for the OpenSky save container: pending timers round-trip,
+// bytes stay deterministic, an empty list writes no chunk, an absent chunk
+// means no timer, corrupt payloads throw, and an unknown chunk after PTMR is
+// skipped (docs/formats/opensky-save-world-chunks.md).
 
 @testable import FormatsCoreTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
 import OpenSkySaveTesting

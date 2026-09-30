@@ -135,7 +135,6 @@ struct DialogueRuntimeRealDataTests {
 
     private struct World {
         let dialogue: DialogueStore
-        let quests: QuestStore
         let runtime: DialogueRuntime
     }
 
@@ -165,7 +164,7 @@ struct DialogueRuntimeRealDataTests {
             ),
             registry: .standard
         )
-        return World(dialogue: dialogue, quests: quests, runtime: runtime)
+        return World(dialogue: dialogue, runtime: runtime)
     }
 
     private static func writeReport(_ report: String) throws {

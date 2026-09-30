@@ -1,13 +1,7 @@
-// The faction and relationship natives (issue #508, roadmap item 21.4): the
-// `Actor` membership family, the two relationship accessors, the two pair reads,
-// and the refusal a script has to be able to tell apart from "not a member".
-//
-// The bridge closures are the session's — every mutation goes through
-// `FactionRuntime` or `RelationshipRuntime` and lands in the world-state store,
-// so a scripted membership is saved exactly like a seeded one.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The faction and relationship natives: `Actor` membership, the relationship
+// accessors, the pair reads, and the refusal a script must tell apart from
+// "not a member". Mutations go through `FactionRuntime` or
+// `RelationshipRuntime` into the world-state store, so they save like seeds.
 
 import FormatsESMTesting
 import Foundation
@@ -299,10 +293,6 @@ extension PapyrusNativeFactionTests {
         let otherKey: ReferenceKey
         let factions: FactionRuntime
         let relationships: RelationshipRuntime
-        /// `NPC_` identity per reference, as the session resolves one. Filled by
-        /// the fixture so the record layer of a relationship lookup has
-        /// something to key on.
-        let bases: [ReferenceKey: ResolvedFormID]
     }
 
     private static let guards = Social.key(Social.Factions.guards)
@@ -362,8 +352,7 @@ extension PapyrusNativeFactionTests {
             other: #require(session.bridge.objectHandle(for: second.key)),
             otherKey: second.key,
             factions: factions,
-            relationships: relationships,
-            bases: bases
+            relationships: relationships
         )
     }
 

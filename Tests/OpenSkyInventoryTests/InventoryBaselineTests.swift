@@ -1,16 +1,12 @@
-// InventoryBaselineResolver unit tests (issue #176): what each owner kind
-// holds before anything at runtime has touched it, and how leveled entries
-// expand.
-//
-// Every fixture is the synthetic plugin in InventoryBaselineFixture, built in
-// code and read through `InventoryBaselineResolver.build(from:)`, so these
-// cover the record indexing as well as the derivation.
+// InventoryBaselineResolver tests: what each owner kind holds before runtime
+// changes, and how leveled entries expand. Fixtures come from
+// InventoryBaselineFixture through `InventoryBaselineResolver.build(from:)`,
+// so the record indexing is covered too.
 
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 import OpenSkyInventoryTesting
 import Testing
@@ -53,9 +49,8 @@ struct InventoryBaselineTests {
 
     // MARK: - Actors
 
-    /// The outfit is both what the actor carries and what it is wearing:
-    /// baselining a default outfit as carried-but-unworn would start every NPC
-    /// naked. Slot arbitration is issue #178.
+    /// The outfit is both carried and worn; a carried-but-unworn outfit would
+    /// start every NPC naked.
     @Test func actorBaselineIsItsResolvedDefaultOutfit() throws {
         let resolver = try Fixture.resolver()
         let baseline = resolver.baseline(for: .actor(base: Fixture.guardActor))

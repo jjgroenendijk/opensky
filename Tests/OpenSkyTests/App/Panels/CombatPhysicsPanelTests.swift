@@ -1,19 +1,12 @@
-// World > Combat & Physics verification-surface coverage (issue #198, roadmap
-// item 15.9): the panel the registry factory builds, the literal
-// accessibility-id contract for the three sections this item added, the
-// readouts they render from one snapshot, and the provider round trip for every
-// control.
-//
-// The Melee, Archery and Death & Ragdoll sections that moved here from
-// `World > Player & Locomotion` keep their own suites — `CombatMeleePanelTests`,
-// `CombatArcheryPanelTests`, `CombatRagdollPanelTests` — so this file covers
-// what item 15.9 added rather than re-covering all six.
+// World > Combat & Physics panel coverage: the panel the registry builds, the
+// accessibility ids of the Actor Values, Physics and Combat Loop sections, their
+// readouts, and the provider round trip for every control. Melee, Archery and
+// Death & Ragdoll have their own suites.
 
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPerceptionInterface
@@ -101,7 +94,7 @@ struct CombatPhysicsPanelTests {
         #expect(readout.contains("Derivation: level 6, auto-calculated per level"))
         #expect(readout.contains("Controls: acting on the nearest actor"))
         #expect(readout.contains("Damaged Bandit."))
-        // Item 19.5 (issue #468): the selected value, its modifier slots and
+        // Item 19.5: the selected value, its modifier slots and
         // the capped resistance fraction it reads as.
         #expect(readout.contains("Selected value: Resist Fire (41) — 25.0  base 40.0"))
         #expect(readout.contains("dmg -15.0"))
@@ -137,7 +130,7 @@ struct CombatPhysicsPanelTests {
         #expect(readout.contains("Fighters: 1"))
         #expect(readout.contains("Bandit: windup, detected"))
         #expect(readout.contains("2 contact frames"))
-        // Item 19.10 (issue #473): the per-fighter cast counts and the
+        // Item 19.10: the per-fighter cast counts and the
         // casting line above the hostility one.
         #expect(readout.contains("2 casts (1 castable)"))
         #expect(readout.contains("AI casting: on — 1 of 1 fighters armed, 2 spells cast"))
@@ -240,7 +233,7 @@ struct CombatPhysicsPanelTests {
             ),
             target: .nearestActor,
             // A resistance rather than a primary, so the panel test covers the
-            // line item 19.5 added (issue #468).
+            // resistance line.
             selection: ActorValueInspection(
                 name: "Resist Fire",
                 index: 41,

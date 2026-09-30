@@ -1,10 +1,9 @@
-// `super` across a class hierarchy deeper than two levels (issue #136) — the
+// `super` across a class hierarchy deeper than two levels — the
 // shape every CLIK component has, because a component extends
 // `gfx.core.UIComponent`, which extends `MovieClip`.
 
 import FormatsSWFTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsSWF
 import Testing
 

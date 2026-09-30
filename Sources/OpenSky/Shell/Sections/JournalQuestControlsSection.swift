@@ -1,15 +1,7 @@
-// World > Quests & Journal > Quest Controls section (issue #184): the dev
-// transport that makes the M13 loop drivable without a console.
-//
-// Start fills the quest's aliases and runs it, Stop clears them again, Set
-// stage records one stage as reached, and the objective controls put a line on
-// the journal page. Between them they reach every state the page can show, so
-// the milestone can be walked end to end from the sidebar.
-//
-// Not overridden. A running quest is world state, not a panel setting; the
-// destination's overridden-ness is the open journal, which the Page section
-// owns, and stopping a quest the user deliberately started is not something a
-// "Reset all" should do.
+// World > Quests & Journal > Quest Controls section: start, stop, set stage,
+// and objective controls, which reach every state the journal page can show.
+// Not overridden: a running quest is world state; the Page section owns this
+// destination's override.
 
 import AppKit
 import OpenSkyMenus
@@ -41,10 +33,6 @@ final class JournalQuestControlsSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "journalQuestControls"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     /// Stage index typed into the field, or nil when it holds nothing usable.

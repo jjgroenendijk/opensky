@@ -183,7 +183,7 @@ struct M17AcceptanceRealDataTests {
         )
         let advanced = try world.quests.setStage(stage, on: owner)
         #expect(advanced.isStageDone(stage))
-        return QuestEvidence(quest: owner, editorID: quest.editorID, stage: stage)
+        return QuestEvidence(quest: owner, stage: stage)
     }
 
     /// Step 5 — the save. Said-state and quest state are both world state, so
@@ -248,7 +248,6 @@ extension M17AcceptanceRealDataTests {
 
     private struct QuestEvidence {
         let quest: FormID
-        let editorID: String?
         let stage: UInt16
     }
 

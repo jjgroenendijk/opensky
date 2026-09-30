@@ -1,4 +1,3 @@
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
@@ -8,14 +7,9 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-// Papyrus bridge for the World > Scripts sidebar panel (issue #278). Sampling
-// and formatting live elsewhere — `PapyrusWorldRuntime.scriptsSnapshot` builds
-// the value and `ScriptsReadout` words it — so this file is only the seam
-// between the panel and the session's VM.
-//
-// A session without game data has no `papyrus`, which is the
-// `ScriptsSnapshot.empty` path: the panel then states that the VM is
-// unavailable rather than showing zeros that look like a running VM.
+// Papyrus bridge for the World > Scripts panel. `PapyrusWorldRuntime
+// .scriptsSnapshot` builds the value and `ScriptsReadout` words it. Without
+// game data there is no `papyrus`, so the panel shows `ScriptsSnapshot.empty`.
 
 extension GameViewController: ScriptControlProviding {
     /// One sample of the VM, targeted at whatever the crosshair is on.

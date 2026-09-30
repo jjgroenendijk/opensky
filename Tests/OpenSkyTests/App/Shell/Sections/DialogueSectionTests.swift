@@ -1,12 +1,6 @@
-// World > Dialogue & Voice > Dialogue section coverage (issue #205; the
-// section moved to the milestone's own destination with issue #209). Uses only
-// synthetic provider state; the real-install bring-up gate lives in the
-// env-gated acceptance test and in `openskycli swf dialogue-menu`.
-//
-// Two things are pinned here and nowhere else: the accessibility ids, which are
-// the UI-test API and must never change silently, and the readout wording,
-// which is how the milestone's acceptance question — "did Escape leave the
-// world exactly as it was" — is answered from a readout rather than by eye.
+// World > Dialogue & Voice > Dialogue section coverage over synthetic provider
+// state. It pins the accessibility ids, which are the UI-test API, and the
+// readout wording, which answers "did Escape leave the world as it was".
 
 import AppKit
 @testable import OpenSky
@@ -29,7 +23,6 @@ struct DialogueSectionTests {
         -> DialogueTopicRow
     {
         DialogueTopicRow(
-            topic: FormID(id),
             info: FormID(id + 0x100),
             text: text,
             endsConversation: goodbye

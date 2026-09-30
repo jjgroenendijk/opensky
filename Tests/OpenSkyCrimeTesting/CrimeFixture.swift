@@ -11,7 +11,6 @@ import Foundation
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyWorldState
 
 public enum CrimeFixture {
     public static let pluginName = "Base.esm"
@@ -66,10 +65,6 @@ public enum CrimeFixture {
 
     public static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: pluginName.lowercased(), objectID: objectID)
-    }
-
-    public static func id(_ objectID: UInt32) -> ResolvedFormID {
-        ResolvedFormID(plugin: pluginName, objectID: objectID)
     }
 
     // MARK: - The load order

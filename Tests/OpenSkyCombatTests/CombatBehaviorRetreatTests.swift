@@ -1,13 +1,9 @@
-// One actor's combat mind: breaking off, searching and giving up (issue #424,
-// roadmap item 16.7).
-//
-// The half of the machine that ends a fight rather than running one. Split from
-// `CombatBehaviorMachineTests` for the strict lint type cap; the literals both
-// halves hand the machine live in `CombatBehaviorFixture`.
+// One actor's combat mind: breaking off, searching and giving up. The other
+// half is `CombatBehaviorMachineTests`; shared literals are in
+// `CombatBehaviorFixture`.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface
 import simd

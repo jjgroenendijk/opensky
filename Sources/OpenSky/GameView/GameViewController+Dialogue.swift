@@ -9,13 +9,11 @@ import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyQuestsInterface
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -140,7 +138,6 @@ extension GameViewController {
         let readback = dialogueReadback
         let rows = dialogue.model.topics.prefix(DialogueControlSnapshot.rowLimit).map {
             DialogueTopicRow(
-                topic: $0.topic,
                 info: $0.info,
                 text: $0.text,
                 endsConversation: $0.endsConversation

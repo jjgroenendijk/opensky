@@ -1,4 +1,4 @@
-// The transition-condition expression language (issue #330).
+// The transition-condition expression language.
 //
 // The strings asserted here are shapes the probe over the local install found
 // in the vanilla player graph, retyped against invented variable names where a
@@ -9,7 +9,6 @@ import BehaviorTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
-@testable import OpenSkyFormatsCore
 import Testing
 
 struct BehaviorConditionExpressionTests {

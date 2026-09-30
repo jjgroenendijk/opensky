@@ -1,18 +1,7 @@
-// World > Dialogue & Voice: the M17 milestone's own destination (issue #209).
-//
-// The four sections the milestone's sub-issues delivered were mounted where
-// their nearest neighbour already lived — the conversation and the face under
-// `World > HUD & Interaction` because that is where the crosshair is, the voice
-// line under `World > Audio` because that is where the submixes are. A
-// conversation is one loop across all of them, so the gate assembles them into
-// one destination in the order a conversation uses them: start it, see it
-// framed, hear it, watch the mouth move.
-//
-// Each section is standalone — it owns its provider seam, its sync and its
-// readout — so this assembly changed no control identifier. Four provider types
-// rather than one: the sections read the dialogue runtime, the dialogue camera,
-// the face-morph playback and the world audio engine, and typing them apart
-// keeps each section's dependency honest.
+// World > Dialogue & Voice: the conversation loop in one destination, in the
+// order a conversation uses it: start, framing, voice, mouth. Each section owns
+// its provider seam, sync, and readout, and the four provider types stay
+// separate so each dependency is explicit.
 
 import AppKit
 import OpenSkyMenus
@@ -64,10 +53,6 @@ final class DialoguePanelViewController: InspectorPanelViewController {
 
     var dialogueOpenControl: NSButton {
         dialogueSection.openControl
-    }
-
-    var dialogueLeaveControl: NSButton {
-        dialogueSection.leaveControl
     }
 
     var dialogueChooseControl: NSButton {

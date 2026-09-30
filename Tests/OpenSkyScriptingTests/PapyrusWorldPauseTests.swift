@@ -1,10 +1,9 @@
 // VM pause, single-stepping, the recent-event ring, and the Scripts snapshot
-// the World > Scripts sidebar reads (issue #278). Every fixture is built in
+// the World > Scripts sidebar reads. Every fixture is built in
 // code by `PapyrusWorldFixture`; no game data is involved.
 
 @testable import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface

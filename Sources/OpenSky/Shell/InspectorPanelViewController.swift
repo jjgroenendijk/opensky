@@ -1,4 +1,4 @@
-// Base class for a full sidebar destination panel (issue #98): a vertically
+// Base class for a full sidebar destination panel: a vertically
 // scrolling column of either collapsible sections (Environment) or direct
 // controls (UI Lab). Replaces the per-panel hand-computed content height + the
 // scroll-to-top hack with a flipped auto-layout document that starts at the top.
@@ -51,8 +51,7 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
     /// unrelated sections wants. A panel whose sections all read one expensive
     /// provider value overrides this to false: the panel then runs the only
     /// ticker and refreshes its sections together through `refreshSections`, so
-    /// that value is built once per tick instead of once per section
-    /// (issue #556).
+    /// that value is built once per tick instead of once per section.
     var sectionsTickIndependently: Bool {
         true
     }
@@ -161,7 +160,7 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
 
     /// Refreshes every section from this panel's ticker, for a panel that turned
     /// `sectionsTickIndependently` off. Override to build the shared value the
-    /// sections read before calling `super` (issue #556).
+    /// sections read before calling `super`.
     func refreshSections() {
         refreshReadout()
         for section in sections {
@@ -175,16 +174,6 @@ class InspectorPanelViewController: NSViewController, InspectorPanel {
         for section in sections {
             section.stopInspecting()
         }
-    }
-
-    /// Direct-content panels: refresh + return focus to the game view.
-    func finishInteraction(refocusOnMouseUpOnly: Bool = false) {
-        refreshReadout()
-        onOverrideStateChange?()
-        if refocusOnMouseUpOnly, NSApp.currentEvent?.type != .leftMouseUp {
-            return
-        }
-        refocusAction?()
     }
 
     private func makeCollapsibleSection(

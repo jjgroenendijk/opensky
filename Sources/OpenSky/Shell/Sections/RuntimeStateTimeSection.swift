@@ -1,19 +1,7 @@
-// World > Runtime State > Time section (M10.2.1): scrubs the game clock — hour
-// and full calendar date — sets the timescale the clock advances at, and states
-// whether the world simulation is paused.
-//
-// Pause is a readout, not a control, and deliberately so. `Renderer.worldSimPaused`
-// is owned by `MenuModeController`: the menu drives it, and every sim clock in
-// the renderer reads it. A checkbox here would be silently overwritten the next
-// time the menu opened or closed, which is a worse surface than an honest
-// readout. World > System Menu owns the toggle; this section reports what it
-// did, because a clock that appears stuck is otherwise inexplicable.
-//
-// The one setting this section owns is the timescale, which is the `TimeScale`
-// global rather than a clock property — so the timescale is what makes this
-// section overridden, and resetting it writes the vanilla default back. Time
-// passing is not an override: a clock that has advanced is a world that has
-// been played, not a knob left in a non-default position.
+// World > Runtime State > Time section: scrubs the game clock, sets the
+// timescale, and reports whether world simulation is paused. Pause is a readout,
+// because `MenuModeController` owns `Renderer.worldSimPaused`. The `TimeScale`
+// global is the one setting here, so it is the override; elapsed time is not.
 
 import AppKit
 import OpenSkyWorld
@@ -48,10 +36,6 @@ final class RuntimeStateTimeSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "runtimeStateTime"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override var isOverridden: Bool {

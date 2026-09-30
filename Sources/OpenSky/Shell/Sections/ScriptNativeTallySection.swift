@@ -1,15 +1,9 @@
-// World > Scripts > Native coverage section (issue #278): how much of the
-// Papyrus native surface the session actually exercised, and which missing
-// natives cost the most.
-//
-// Coverage here is observed, not registered: a native nothing has called yet is
-// counted nowhere, because the useful question is "what did the scripts this
-// install runs ask for", not "how long is the registry". Read-only, so it is
-// never overridden.
+// World > Scripts > Native coverage section: which Papyrus natives the session
+// called, and which missing ones cost the most. Coverage is observed, not
+// registered. Read-only.
 
 import AppKit
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 
 final class ScriptNativeTallySection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

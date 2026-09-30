@@ -1,16 +1,6 @@
-// World > Progression > Character section (issue #500, roadmap item 20.7): the
-// player's level, the experience under it, the perk points it paid for, and the
-// attribute pick each level still owes.
-//
-// The experience award is a control rather than only a readout because the
-// alternative way to reach a level-up is to swing a sword a few hundred times.
-// It drives `PlayerLevelRuntime.award`, which is the same call a skill point
-// makes on the player's behalf, so what the button demonstrates is the real
-// curve rather than a shortcut around it.
-//
-// Not overridden. A level, a perk point and a spent pick are world state the
-// user produced on purpose, not panel settings, and a "Reset all" that took a
-// level back would undo the demonstration rather than a knob.
+// World > Progression > Character section: level, experience, perk points, and
+// owed attribute picks. The experience award calls `PlayerLevelRuntime.award`,
+// the same call a skill point makes. Not overridden.
 
 import AppKit
 import OpenSkyGameData
@@ -39,10 +29,6 @@ final class ProgressionCharacterSection: ProgressionPanelSection {
 
     override var sectionIdentifier: String {
         "progressionCharacter"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     /// The award the button applies, or the default when the field holds

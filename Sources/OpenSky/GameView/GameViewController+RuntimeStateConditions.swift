@@ -14,7 +14,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 

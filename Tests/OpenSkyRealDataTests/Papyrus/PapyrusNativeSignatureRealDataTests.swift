@@ -1,32 +1,13 @@
-// Env-gated signature check for the faction and relationship natives (issue
-// #508, roadmap item 21.4), against the compiled `Actor.pex` and `Faction.pex`
-// the user's own install ships.
-//
-// Why this suite exists. A Papyrus signature is an interface a mod's compiled
-// bytecode already agrees with: a wrong argument count is a script that stops
-// working, not a number that reads slightly off. The Creation Kit wiki is the
-// documented source and it is quoted at every registration site — but the wiki
-// is a wiki, `creationkit.com` has been down for a year
-// (docs/tools/environment.md), and two functions in this family have no page on
-// any mirror at all. The script the game itself ships cannot have drifted from
-// the game, so it is the check.
-//
-// It has already earned its keep twice. `Actor.IsHostileToActor` was about to be
-// recorded as an absence and is in fact declared
-// `bool IsHostileToActor(Actor) native`, so it is registered.
-// `Actor.AddToFaction` was about to be treated as a native and is in fact an
-// ordinary Papyrus wrapper — its whole body is
-// `if !IsInFaction(akFaction); SetFactionRank(akFaction, 0); endIf`, which is
-// where the engine's implementation of it comes from.
-//
-// Names and counts only — no game bytes leave the run (AGENTS.md "Legal & IP
-// boundary").
+// Env-gated signature check for the faction and relationship natives against
+// the compiled `Actor.pex` and `Faction.pex` the install ships. A wrong
+// argument count breaks mods, and the shipped script cannot drift from the
+// game. Example: `Actor.AddToFaction` is a Papyrus wrapper, not a native; its
+// body is `if !IsInFaction(akFaction); SetFactionRank(akFaction, 0); endIf`.
 
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
-@testable import OpenSkyScriptingInterface
 import Testing
 
 struct PapyrusNativeSignatureRealDataTests {
@@ -55,13 +36,9 @@ struct PapyrusNativeSignatureRealDataTests {
     }
 
     /// Every function `PapyrusNativeFaction.swift` installs, with the argument
-    /// count its body reads.
-    ///
-    /// `isNative` records what the *shipped* script says, not what OpenSky does
-    /// with it. `AddToFaction` is the one entry that is false, for the reason in
-    /// this file's header; OpenSky registers it anyway, because the wrapper's
-    /// body is exactly the semantics the engine implements and a registered
-    /// shortcut does not depend on the game's own script being loadable.
+    /// count its body reads. `isNative` records the shipped script. Only
+    /// `AddToFaction` is false; OpenSky registers it anyway with the wrapper's
+    /// semantics, so it works without the game's script.
     private static let installed = [
         Expected("Actor", "AddToFaction", 1, isNative: false),
         Expected("Actor", "RemoveFromFaction", 1),

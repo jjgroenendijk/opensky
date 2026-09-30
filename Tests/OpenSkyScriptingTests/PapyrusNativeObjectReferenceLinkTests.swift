@@ -1,9 +1,8 @@
-// `GetLinkedRef` and `Activate` (issue #172), plus the headless policy the
+// `GetLinkedRef` and `Activate`, plus the headless policy the
 // whole `ObjectReference` family shares. Satellite of
 // `PapyrusNativeObjectReferenceTests`.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface

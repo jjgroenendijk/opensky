@@ -21,7 +21,8 @@ extension GameViewController: PlayerLocomotionControlProviding {
             firstPersonActiveStates: bridge.firstPersonGraph?.activeStates ?? [],
             variables: locomotionVariables(of: bridge.graph),
             forcedGait: bridge.forcedGait,
-            tally: bridge.graph?.tally
+            tally: bridge.graph?.tally,
+            bodyFailureReason: playerBodyBridge.failureReason
         )
     }
 

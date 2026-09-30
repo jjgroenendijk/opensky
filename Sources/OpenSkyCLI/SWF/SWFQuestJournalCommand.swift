@@ -1,19 +1,8 @@
-// `swf quest-journal`: drive the Quests page of `interface\quest_journal.swf`
-// through `QuestJournalMovieBridge` against a real quest, and report what the
-// movie built (M13.5, issue #184).
-//
-// The bring-up gate for the page's data contract, in the CLI rather than only
-// in a test because the real-data XCTest host is unreliable on this machine
-// (docs/tools/environment.md). It only parses args and prints; the bridge and
-// the model it publishes live in `Sources/OpenSkyMenus/` and are unit tested there
-// against synthetic fixtures.
-//
-// `--text` is the measurement mode the contract was pinned with: it resolves
-// the quest's FULL, CNAM and NNAM lstrings out of all three string tables and
-// prints each, so which table a field belongs to is observed rather than
-// assumed. `--probe-rows` publishes rows with no fields at all and prints the
-// missing-name delta, which is how the row-field names were measured: every
-// property the movie reads off a row it was handed lands in that tally.
+// `swf quest-journal`: drives the Quests page of `interface\quest_journal.swf`
+// through `QuestJournalMovieBridge` for a real quest and reports what the movie
+// built. `--text` resolves the quest's FULL, CNAM and NNAM from all three
+// string tables. `--probe-rows` publishes empty rows and prints the
+// missing-name delta, which is how the row field names were measured.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -25,9 +14,8 @@ import OpenSkyQuests
 import OpenSkyWorldState
 
 enum SWFQuestJournalCommand {
-    /// `MGRArniel01`, the M13 target quest: the cheapest journal-visible quest
-    /// in vanilla `Skyrim.esm` (2 stages, 1 objective, no conditions), picked
-    /// by the issue-#181 census.
+    /// `MGRArniel01`: the cheapest journal-visible quest in vanilla
+    /// `Skyrim.esm` (2 stages, 1 objective, no conditions).
     private static let defaultQuest = "MGRArniel01"
     private static let defaultTicks = 20
 
@@ -100,7 +88,6 @@ extension SWFQuestJournalCommand {
     private struct Session {
         let quest: Quest
         let strings: LocalizedStrings
-        let runtime: QuestRuntime
         let model: JournalMenuModel
 
         init(context: CLIContext, editorID: String, objectiveState: String?) throws {
@@ -114,7 +101,6 @@ extension SWFQuestJournalCommand {
                 vfs: context.makeFileSystem(), pluginName: "Skyrim.esm"
             )
             let quests = QuestRuntime(store: WorldStateStore(), quests: store)
-            runtime = quests
             _ = try? quests.startQuest(quest.formID)
             for stage in quest.stages.map(\.index).sorted() {
                 _ = try? quests.setStage(stage, on: quest.formID)

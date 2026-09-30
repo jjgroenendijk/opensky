@@ -1,18 +1,7 @@
-// The 19.10 acceptance chain, end to end against the user's own install
-// (issue #473): a pinned vanilla caster, granted the spells its own records
-// give it, decides to cast in a fight and takes health off the player.
-//
-// Read-only against the install and headless: it drives `CombatCastingChain` —
-// the same harness the synthetic suite drives — over the load order's real
-// SPEL, MGEF and EQUP indexes, so what it proves is that vanilla records
-// actually reach the decision, the cast loop and the effect runtime. There is
-// no window, no renderer and no mover: the caster stands where the test puts it
-// and the player stands still, because the fight this checks is the casting
-// one.
-//
-// It writes a one-line summary into gitignored `logs/` so a pull request can
-// link the run. Editor IDs and counts only: no game bytes leave the machine
-// (AGENTS.md "Legal & IP boundary").
+// AI casting acceptance on the user's install: a pinned vanilla caster, given
+// its own record spells, decides to cast in a fight and damages the player.
+// Headless: `CombatCastingChain` runs over the real SPEL, MGEF and EQUP
+// indexes. A one-line summary goes to gitignored `logs/`.
 
 import Foundation
 @testable import OpenSkyActors
@@ -68,7 +57,6 @@ struct AICastingAcceptanceRealDataTests {
             equipSlots: EquipSlotStore(index: index)
         )
         let chain = CombatCastingChain(
-            store: store,
             spellbook: spellbook,
             values: values,
             effects: ActiveEffectRuntime(

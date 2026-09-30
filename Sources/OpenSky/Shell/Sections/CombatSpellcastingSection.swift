@@ -1,14 +1,7 @@
-// World > Combat & Physics > Spellcasting section (issue #470, roadmap item
-// 19.7): what the player knows, what each hand is holding, and the seven
-// controls that take a spell from a tome to a cast without leaving the panel.
-//
-// It sits directly below Magic Effects because that is where a cast lands: the
-// acceptance picture for this item is a healing spell moving the magicka meter
-// down and the health meter up, and all three readouts are read together.
-//
-// Not overridden. A learned spell and a readied hand are world state, not panel
-// settings, and a "Reset all" that forgot the player's spells would undo
-// something the user did on purpose.
+// World > Combat & Physics > Spellcasting section: known spells, what each hand
+// holds, and the controls from tome to cast. It sits below Magic Effects,
+// because a healing cast is read against the magicka and health meters. Not
+// overridden: learned spells and readied hands are world state.
 
 import AppKit
 import OpenSkyMagic
@@ -41,10 +34,6 @@ final class CombatSpellcastingSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "combatSpellcasting"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

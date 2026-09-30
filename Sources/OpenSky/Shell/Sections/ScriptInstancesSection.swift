@@ -1,14 +1,9 @@
-// World > Scripts > Instances section (issue #278): how many Papyrus script
-// instances the world runtime is holding, and which scripts sit on the
-// reference the player is currently looking at.
-//
-// Purely a readout, so it is never overridden and its reset is a no-op: nothing
-// here is a setting a user can leave in a non-default position. The scheduler
-// section carries this destination's overridden-ness.
+// World > Scripts > Instances section: how many script instances the world
+// runtime holds, and which scripts sit on the reference under the crosshair.
+// Read-only.
 
 import AppKit
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 
 final class ScriptInstancesSection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

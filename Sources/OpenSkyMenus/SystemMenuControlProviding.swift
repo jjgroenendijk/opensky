@@ -1,4 +1,4 @@
-// Main-app system menu seam (M8.5.1). Keeps the verification panel independent
+// Main-app system menu seam. Keeps the verification panel independent
 // of GameViewController while exposing the live menu-stack state, the two
 // settings placeholders the milestone surfaces (data root, audio volume), and
 // the vanilla-movie presentation state behind them.
@@ -17,12 +17,9 @@ nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
     public let openMenus: [String]
     public let worldSimPaused: Bool
 
-    /// Settings placeholders. Read-only for the data root (Settings owns
-    /// changing it, Cmd+,); the volume is live and writes through the same
-    /// audio seam as World > Audio.
+    /// Read-only here: Settings (Cmd+,) owns changing the data root.
     public let dataRootPath: String?
     public let dataRootSource: String?
-    public let masterVolume: Float
     public let audioEnabled: Bool
 
     /// Vanilla presentation layer.
@@ -47,7 +44,6 @@ nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
         worldSimPaused: Bool,
         dataRootPath: String?,
         dataRootSource: String?,
-        masterVolume: Float,
         audioEnabled: Bool,
         movieEnabled: Bool,
         movieLoaded: Bool,
@@ -67,7 +63,6 @@ nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
         self.worldSimPaused = worldSimPaused
         self.dataRootPath = dataRootPath
         self.dataRootSource = dataRootSource
-        self.masterVolume = masterVolume
         self.audioEnabled = audioEnabled
         self.movieEnabled = movieEnabled
         self.movieLoaded = movieLoaded

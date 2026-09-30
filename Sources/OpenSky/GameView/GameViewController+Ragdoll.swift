@@ -1,19 +1,11 @@
-// Session wiring for death and ragdoll (issue #197, roadmap item 15.6): builds
-// the runtime, sweeps resident actors for zero health, feeds the runtime the
-// graph events the fixed steps fired, and publishes the simulated pose into the
-// render scene.
-//
-// AppKit stays in this controller satellite; the definition builder, the joint
-// solver, the instance and the runtime are all engine types that build into
-// `openskycli` and are testable without a window.
-//
-// The frame hook shares `Renderer.onFrame` with melee and archery, and reads the
-// same `LocomotionGraphEventQueue` through its own cursor, which is what item
-// 15.4 promoted the queue to allow.
+// Session wiring for death and ragdoll: builds the runtime, sweeps resident
+// actors for zero health, feeds the runtime the graph events the fixed steps
+// fired, and publishes the simulated pose into the render scene. The frame hook
+// shares `Renderer.onFrame` with melee and archery and reads
+// `LocomotionGraphEventQueue` through its own cursor.
 
 import AppKit
 import OpenSkyActors
-import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
@@ -74,12 +66,8 @@ extension GameViewController {
     }
 
     /// One frame of death and ragdoll: zero-health actors die, drained graph
-    /// events hand off, live ragdolls step, and the simulated poses reach the
-    /// scene.
-    ///
-    /// The events are drained unconditionally, even outside walk mode, for the
-    /// same reason melee's are: the cursor must not accumulate a backlog from a
-    /// mode where nothing acts on it and then resolve all of it at once.
+    /// events hand off, live ragdolls step, and the poses reach the scene.
+    /// Events drain even outside walk mode, so no backlog builds up.
     func advanceRagdoll(renderer: Renderer?, delta: Float) {
         guard let renderer, let runtime = ragdoll.runtime else { return }
         let events = renderer.locomotion.graphEvents.drain(
@@ -94,13 +82,9 @@ extension GameViewController {
         runtime.advance(by: delta)
     }
 
-    /// Every resident actor whose health has reached zero dies.
-    ///
-    /// A sweep rather than a hook on the damage call, because health reaches
-    /// zero from more than one place — a swing, an arrow, a sidebar control,
-    /// and later a script — and each of those would otherwise need its own
-    /// death check. `noteZeroHealth(of:)` is idempotent, which is what makes a
-    /// sweep the cheap option rather than the sloppy one.
+    /// Every resident actor whose health has reached zero dies. A sweep, not a
+    /// hook, because health reaches zero from several places; the sweep is
+    /// cheap because `noteZeroHealth(of:)` is idempotent.
     private func killZeroHealthActors(runtime: RagdollRuntime) {
         guard let streamer, let values = actorValues.runtime else { return }
         for entry in streamer.residentActorEntries() {
@@ -111,15 +95,11 @@ extension GameViewController {
                 cell: streamer.cellLocation(of: entry.key)
             )
             guard values.hasZeroHealth(holder) else { continue }
-            // The return says this call is what killed the actor, so the murder
-            // is reported exactly once (issue #504). Hostility is read before
-            // the death is written, because a corpse's stored hostility is
-            // whatever the fight left behind. The sweep does not know who
-            // emptied the health, which is why the crime layer attributes the
-            // death from the actors this player struck rather than from here.
-            let wasHostile = combatHostility(of: entry.key) == .hostile
+            // True only for the call that killed the actor, so the murder is
+            // reported once. The crime layer attributes the death from the
+            // actors this player struck.
             guard runtime.noteZeroHealth(of: entry.key) else { continue }
-            reportPlayerMurder(of: entry.key, wasHostile: wasHostile)
+            reportPlayerMurder(of: entry.key)
         }
     }
 

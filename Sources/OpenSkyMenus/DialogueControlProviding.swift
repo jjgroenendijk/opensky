@@ -1,27 +1,15 @@
-// Main-app dialogue seam (issue #205, roadmap item 17.3, scope point 7). Keeps
-// the dialogue panel independent of `GameViewController` while exposing the
-// Talk target, the menu's menu-stack presence and pause policy, the topics on
-// offer, and why a topic that is not on offer lost.
-//
-// The seam mirrors `JournalControlProviding`: the panel reads one snapshot per
-// refresh and calls one mutation entry point per user action. It never sees
-// `DialogueRuntime`, `MenuStack` or `SWFMovieRuntime` directly, so the engine
-// keeps ownership of main-actor state.
-//
-// The condition-trace readout is #426's `DialogueSelection` reduced to lines
-// rather than a second evaluation: item 17.8 has to explain why a line the
-// player expected did not appear, and selection already keeps every outcome it
-// computed for exactly that. Reducing it here rather than in the panel is what
-// lets the wording be unit tested without a window.
-//
-// Documented in docs/engine/dialogue-menu.md.
+// Main-app dialogue seam: the Talk target, the menu's stack presence and pause
+// policy, the topics on offer, and why a missing topic lost. The panel reads
+// one snapshot and calls one mutation per action, like
+// `JournalControlProviding`. The condition trace reduces `DialogueSelection`
+// to lines here, so the wording is testable without a window
+// (docs/engine/dialogue-menu.md).
 
 import Foundation
 import OpenSkyFormatsESM
 
 /// One topic as the panel lists it.
 nonisolated public struct DialogueTopicRow: Equatable, Sendable {
-    public let topic: FormID
     /// The INFO that won the topic, which is what choosing the row delivers.
     public let info: FormID
     /// What the row reads in the menu.
@@ -29,8 +17,7 @@ nonisolated public struct DialogueTopicRow: Equatable, Sendable {
     /// Whether the winning response ends the conversation.
     public let endsConversation: Bool
 
-    public init(topic: FormID, info: FormID, text: String, endsConversation: Bool) {
-        self.topic = topic
+    public init(info: FormID, text: String, endsConversation: Bool) {
         self.info = info
         self.text = text
         self.endsConversation = endsConversation

@@ -5,7 +5,6 @@
 // destination drives all of them.
 
 import AppKit
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
@@ -63,7 +62,7 @@ extension GameViewController: WeatherControlProviding {
         renderer?.currentWind ?? .calm
     }
 
-    /// Scrubs the game clock's hour (issue #164). With game data present the
+    /// Scrubs the game clock's hour. With game data present the
     /// write goes through the `GameHour` global so it journals and exercises
     /// the same redirect any script write will; the redirect moves the clock,
     /// never a stored override. Without a `GlobalStore` (demo scene) the

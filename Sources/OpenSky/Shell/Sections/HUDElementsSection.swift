@@ -35,10 +35,6 @@ final class HUDElementsSection: PanelSectionViewController {
     let scaleControl = NSPopUpButton(frame: .zero, pullsDown: false)
     private let statsLabel = PanelComponents.statsLabel(identifier: "HUDElementsStatsLabel")
 
-    var statsReadout: String {
-        statsLabel.stringValue
-    }
-
     override var sectionTitle: String {
         "Elements"
     }

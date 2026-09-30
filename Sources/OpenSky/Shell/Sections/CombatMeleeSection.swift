@@ -33,10 +33,6 @@ final class CombatMeleeSection: PanelSectionViewController {
         "combatMelee"
     }
 
-    var readout: String {
-        statsLabel.stringValue
-    }
-
     override func makeContentViews() -> [NSView] {
         PanelComponents.configureCheckbox(
             weaponDrawnControl, target: self, action: #selector(weaponDrawnChanged),

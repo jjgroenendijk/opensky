@@ -1,27 +1,8 @@
-// Builds a `DialogueMenuModel` out of live dialogue state (issue #205).
-// Satellite of UI/DialogueMenuModel.swift, which holds the value types.
-//
-// Two text questions decide what the menu reads, and both are record facts
-// rather than conventions invented here:
-//
-// * A topic row shows the winning INFO's RNAM when it has one and the parent
-//   DIAL's FULL otherwise. UESP's INFO page states the override in those terms:
-//   RNAM is "the player's response to a question (INFO with TCLT options). If
-//   present, overrides the default text coming from the parent dialogue topic"
-//   (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INFO>). Our decoder
-//   calls that field `prompt`.
-// * The line a speaker says is the INFO's TRDT response text, which
-//   `TopicInfo.Response.resolvedText(using:)` already pins to `.ilstrings` —
-//   the table whose name says what it holds.
-//
-// Which table each answers out of is measured rather than assumed:
-// `openskycli swf dialogue-menu --text` resolves every field out of all three
-// tables and prints what each answered, the same instrument
-// `swf quest-journal --text` is for the journal. On vanilla `Skyrim.esm` the
-// DIAL FULL and the INFO RNAM answer out of `.strings` and the response text
-// out of `.ilstrings`.
-//
-// Documented in docs/engine/dialogue-menu.md.
+// Builds a `DialogueMenuModel` out of live dialogue state. A topic row shows
+// the winning INFO's RNAM (`prompt`) when present, else the parent DIAL's FULL
+// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INFO>). A spoken line
+// is the INFO's TRDT text from `.ilstrings`. The tables were measured with
+// `openskycli swf dialogue-menu --text` (docs/engine/dialogue-menu.md).
 
 import Foundation
 import OpenSkyDialogueInterface
@@ -63,14 +44,10 @@ nonisolated extension DialogueMenuModel {
         info.responses.map { text($0.text, kind: .ilstrings, strings: strings) ?? "" }
     }
 
-    /// Resolves one lstring, with or without string tables.
-    ///
-    /// A plugin whose header does not say localized writes its text inline, and
-    /// then there is no table to consult and none is needed. Same helper shape
-    /// as `JournalMenuModel.text(_:kind:strings:)`, and deliberately a second
-    /// copy rather than a shared one: the two menus resolve different fields
-    /// out of different tables, and a shared entry point would invite passing
-    /// the wrong kind.
+    /// Resolves one lstring, with or without string tables; a plugin that is
+    /// not localized writes text inline. A separate copy from
+    /// `JournalMenuModel.text(_:kind:strings:)`, because the menus read
+    /// different fields from different tables.
     public static func text(
         _ value: LString?,
         kind: StringTable.Kind,
@@ -100,7 +77,6 @@ extension DialogueMenuModel {
             guard let topic = runtime.dialogue.topic(offer.topic) else { return nil }
             let info = runtime.dialogue.info(offer.info)
             return DialogueTopicEntry(
-                topic: offer.topic,
                 info: offer.info,
                 text: rowText(topic: topic, info: info, strings: strings),
                 endsConversation: info?.flags.contains(.goodbye) ?? false
@@ -108,14 +84,9 @@ extension DialogueMenuModel {
         }
     }
 
-    /// One conversation as it opens: the speaker's offered topics, and the
-    /// greeting they lead with when they have one.
-    ///
-    /// The greeting is a HELO topic's winning response rather than a fourth
-    /// kind of thing, which is what `DialogueRuntime.greeting(for:)` answers.
-    /// A speaker with no greeting opens straight on the list, which is also
-    /// what a speaker with no topics at all does — the menu then shows an empty
-    /// list and says so rather than refusing to open.
+    /// One conversation as it opens: the speaker's offered topics and the
+    /// greeting from `DialogueRuntime.greeting(for:)`, if any. A speaker with no
+    /// greeting or no topics still opens the menu, which says the list is empty.
     public static func build(
         speaker: ReferenceKey,
         name: String,

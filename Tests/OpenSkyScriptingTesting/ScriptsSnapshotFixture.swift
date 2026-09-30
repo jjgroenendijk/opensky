@@ -2,7 +2,6 @@
 // the panel suite.
 
 @testable import OpenSkyScripting
-import OpenSkyScriptingInterface
 
 /// Builds a `ScriptsSnapshot` from only the fields a test cares about. The
 /// snapshot is immutable by design and its memberwise initializer takes twenty

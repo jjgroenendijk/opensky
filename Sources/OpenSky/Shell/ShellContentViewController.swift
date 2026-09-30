@@ -1,11 +1,8 @@
-// Content area of the unified shell (issue #98 PR 2). Three layers, back to
-// front: the game view (stays in the hierarchy so its renderer + streamer
-// survive destination changes), a leading 300pt inspector-panel slot, and a
-// full-bleed full-content slot covering the game view for Library
-// destinations. While covered, the MTKView is hidden and its draw loop paused
-// (owner decision 2026-07-23, reversing the issue #98 low-rate choice): the
-// world must not render behind the Asset Browser. Uncovering resumes the loop;
-// the streamer re-warms on the next drawn frame.
+// Content area of the unified shell. Three layers, back to front: the game
+// view (kept alive so its renderer and streamer survive destination changes),
+// a 300 pt inspector-panel slot, and a full-content slot for Library
+// destinations. While covered, the MTKView is hidden and its draw loop paused,
+// so the world does not render behind the Asset Browser.
 
 import AppKit
 import MetalKit
@@ -115,11 +112,6 @@ final class ShellContentViewController: NSViewController {
     /// True while the overlay's 2 Hz refresh timer is scheduled.
     var isFrameHUDTicking: Bool {
         frameHUD.isTicking
-    }
-
-    /// Current overlay text; the verification tests read it directly.
-    var frameHUDReadout: String {
-        frameHUD.statsReadout
     }
 
     private func installFrameHUD() {

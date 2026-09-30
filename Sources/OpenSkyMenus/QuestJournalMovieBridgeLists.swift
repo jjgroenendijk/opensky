@@ -1,10 +1,7 @@
-// List plumbing for the journal's Quests page (issue #184). Satellite of
-// UI/QuestJournalMovieBridge.swift, which holds the measured contract.
-//
-// Same degradation rule as every other movie bridge: a list the movie has not
-// built, a row that is not an object, a text field that is not there — each
-// answers nil or does nothing. A vanilla movie whose shape moved must leave an
-// entry in the missing-API tally and an empty readout, never take the app down.
+// List plumbing for the journal's Quests page. The measured contract is in
+// QuestJournalMovieBridge.swift. A list, row, or text field the movie lacks
+// answers nil or does nothing: a changed movie leaves a missing-API tally
+// entry and an empty readout, never a crash.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -14,12 +11,8 @@ nonisolated extension QuestJournalMovieBridge {
     // MARK: - Writing
 
     /// Fills both lists and the two text fields from `model`, then rebuilds the
-    /// visible entry clips.
-    ///
-    /// Order matters and was measured: `InvalidateData` rebuilds from the array
-    /// and resets `iSelectedIndex` to the list base's own nothing-selected
-    /// sentinel of -1 as it goes, so the selection is written afterwards, not
-    /// before, exactly as the inventory menu's list does.
+    /// visible entry clips. The selection is written after `InvalidateData`,
+    /// because that call resets `iSelectedIndex` to -1 (measured).
     public static func publish(_ model: JournalMenuModel, runtime: SWFMovieRuntime) {
         rebuild(
             rows: model.entries.map(titleRow),
@@ -39,13 +32,8 @@ nonisolated extension QuestJournalMovieBridge {
     }
 
     /// Writes one list's rows, rebuilds its entry clips and points it at
-    /// `selection`.
-    ///
-    /// A list that ends up empty is cleared rather than only invalidated:
-    /// measured, `InvalidateData` rebuilds as many clips as there are rows and
-    /// leaves the rest holding whatever the previous publish put there, so a
-    /// quest with no objectives would keep showing the last quest's first line.
-    /// `ClearList` is the base class's own method for exactly that.
+    /// `selection`. An empty list is also cleared with `ClearList`, because
+    /// `InvalidateData` leaves surplus clips holding the previous rows (measured).
     public static func rebuild(
         rows: [[String: AS2Value]],
         atPath path: String,
@@ -131,14 +119,9 @@ nonisolated extension QuestJournalMovieBridge {
         ]
     }
 
-    /// One objective row.
-    ///
-    /// `completed`, `failed` and `active` are the three names the movie's own
-    /// action side carries for an objective's state, and driving them is what
-    /// moves the entry clip off `Normal` — see the frame readout of
-    /// `openskycli swf quest-journal --objective-state completed`. `active`
-    /// marks the player's tracked objective, which OpenSky does not model, so
-    /// it is published false rather than guessed.
+    /// One objective row. `completed`, `failed` and `active` are the movie's
+    /// own state names, and they move the entry clip off `Normal`. `active`
+    /// marks the tracked objective, which OpenSky does not model, so it is false.
     public static func objectiveRow(_ objective: JournalObjectiveEntry) -> [String: AS2Value] {
         [
             "text": .string(objective.text),
@@ -147,15 +130,6 @@ nonisolated extension QuestJournalMovieBridge {
             "failed": .boolean(objective.state == .failed),
             "active": .boolean(false)
         ]
-    }
-
-    /// Entry-clip frame label for one objective display state.
-    public static func frameLabel(for state: JournalObjectiveEntry.State) -> String {
-        switch state {
-        case .displayed: objectiveNormalFrame
-        case .completed: objectiveCompletedFrame
-        case .failed: objectiveFailedFrame
-        }
     }
 
     /// `questTitleEndpieces` frame label for one quest type. The clip's own
@@ -273,17 +247,10 @@ nonisolated extension QuestJournalMovieBridge {
         return runtime.text(of: node)
     }
 
-    /// Frame label each *visible* objective entry clip currently stops on.
-    ///
-    /// The page's own display-state readout: `ObjectiveScrollingList.SetEntry`
-    /// moves the clip to one of the labels measured on its timeline, so this is
-    /// what proves a published objective row reached the movie and not only the
-    /// backing array. A clip stopped on an unlabelled frame reports its number.
-    ///
-    /// Hidden clips are left out because that is how the list retires a row:
-    /// `ClearList` hides the surplus entry clips rather than moving them back
-    /// to a blank frame, so a cleared list still holds the last row's label on
-    /// a clip nobody can see.
+    /// Frame label each visible objective entry clip stops on. It proves a
+    /// published row reached the movie, not only the backing array; an
+    /// unlabelled frame reports its number. Hidden clips are skipped, because
+    /// `ClearList` hides surplus clips and leaves their old labels.
     public static func objectiveEntryFrames(runtime: SWFMovieRuntime) -> [String] {
         guard let list = runtime.node(atPath: objectiveListPath, from: runtime.root) else {
             return []

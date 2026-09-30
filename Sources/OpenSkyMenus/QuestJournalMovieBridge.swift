@@ -1,41 +1,9 @@
-// Vanilla presentation layer for the journal's Quests page (issue #184,
-// roadmap item 13.5): the measured AS2 contract of the `QuestsPage` half of
-// `Interface\quest_journal.swf`.
-//
-// A satellite of UI/SystemMenuMovieBridge.swift rather than a second movie
-// bring-up. Both drive the same placed `QuestJournalBase`, so the System page's
-// `prepare(runtime:)` registration is the one that runs and this file adds only
-// what the Quests page itself reaches for. `docs/decisions/swf-as2-scope.md`
-// named this the deferred phase-4 contract that "lands in the milestone that
-// owns its data"; M13 owns it.
-//
-// Everything below was measured with `openskycli swf action-run --movie
-// quest_journal.swf`, whose `--dump`, `--dump-class` and `--dump-proto` options
-// print the page instance, the registered `QuestsPage` class and the list
-// widgets' prototype chains. Nothing is taken from memory of the shipped game.
-//
-// Measured shape of the page (`.../QuestsFader/Page_mc`, class `QuestsPage`):
-//
-//   TitleList_mc/List_mc   class `QuestTitleList`; the quest rows
-//   objectiveList          class `ObjectiveScrollingList`; the selected
-//                          quest's objectives
-//   questTitleText         the selected quest's name
-//   questDescriptionText   the selected quest's journal paragraphs
-//   questTitleEndpieces    a decorative clip whose frame labels are the quest
-//                          types: Main, MagesGuild, ThievesGuild,
-//                          DarkBrotherhood, Companion, Favor, Daedric, Misc,
-//                          CivilWar, DLC01, DLC02
-//   NoQuestsText           shown instead of a list when there is nothing
-//
-// Both lists inherit the same list base: `EntriesA` holds the rows, the
-// `entryList` property is its accessor, `iSelectedIndex` holds the selection
-// with -1 for none, and `InvalidateData()` rebuilds the visible entry clips
-// from the array. The objective entry clips carry the frame labels `Normal`,
-// `NormalSelected`, `Completed`, `CompletedSelected`, `Failed`,
-// `FailedSelected`, `Active`, `ActiveSelected` and `None`, which is the
-// display-state vocabulary the page draws objectives with.
-//
-// Documented in docs/engine/journal.md.
+// Vanilla presentation layer for the journal's Quests page: the measured AS2
+// contract of the `QuestsPage` half of `Interface\quest_journal.swf`. It rides
+// on the System page's bring-up, because both drive the same placed
+// `QuestJournalBase`. Measured with `openskycli swf action-run --movie
+// quest_journal.swf`; the page shape and frame labels are in
+// docs/engine/journal.md.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -65,7 +33,6 @@ nonisolated public enum QuestJournalMovieBridge: Sendable {
     public static let objectiveListPath = "\(pagePath)/objectiveList"
     public static let titleTextPath = "\(pagePath)/questTitleText"
     public static let descriptionTextPath = "\(pagePath)/questDescriptionText"
-    public static let noQuestsTextPath = "\(pagePath)/NoQuestsText"
     public static let endpiecesPath = "\(pagePath)/questTitleEndpieces"
 
     /// The list base's backing array and selection, shared by both lists.
@@ -76,12 +43,9 @@ nonisolated public enum QuestJournalMovieBridge: Sendable {
     /// Method on the list base that empties every entry clip.
     public static let clearMethod = "ClearList"
 
-    /// Frame labels of an objective entry clip, measured off the clip's own
-    /// timeline. `Active` marks the player's tracked objective, which OpenSky
-    /// does not model yet, so it is listed but never selected.
-    public static let objectiveNormalFrame = "Normal"
+    /// Frame label of a completed objective entry clip, measured off the clip's
+    /// own timeline.
     public static let objectiveCompletedFrame = "Completed"
-    public static let objectiveFailedFrame = "Failed"
 
     // MARK: - Bring-up
 

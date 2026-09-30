@@ -1,4 +1,4 @@
-// System menu (M8.5.1): the first real `MenuInputConsumer`. Opening the menu
+// System menu: the first real `MenuInputConsumer`. Opening the menu
 // pushes the engine's own menu stack, which pauses world sim and re-routes
 // keyboard input here; Resume pops it. AppKit and the renderer stay in this
 // controller satellite, the selector is UI/SystemMenuModel.swift, and the
@@ -49,8 +49,8 @@ extension GameViewController {
         case .resume:
             closeSystemMenu()
         case .showSettings:
-            // The placeholders live beside the menu for M8.5.1; revealing them
-            // is state on the model, not a second menu on the stack.
+            // Revealing the placeholders is state on the model, not a second
+            // menu on the stack.
             break
         case .quit:
             closeSystemMenu()
@@ -224,7 +224,6 @@ extension GameViewController: SystemMenuControlProviding {
             worldSimPaused: menuMode.isWorldSimPaused,
             dataRootPath: systemMenuDataRoot?.installURL.path(percentEncoded: false),
             dataRootSource: systemMenuDataRoot.map { Self.dataRootSourceLabel($0.source) },
-            masterVolume: audioMasterVolume,
             audioEnabled: audioEnabled,
             movieEnabled: systemMenu.movieEnabled,
             movieLoaded: systemMenu.movieLoaded,

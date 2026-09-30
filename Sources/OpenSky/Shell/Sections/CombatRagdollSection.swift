@@ -1,19 +1,6 @@
-// World > Player & Locomotion > Death & Ragdoll section (issue #197, roadmap
-// item 15.6, scope point 7): the ragdoll trigger the issue asks for, with the
-// bone-body and constraint-iteration readouts beside it.
-//
-// A section under the existing destination rather than a new one, on the same
-// reading items 15.4 and 15.5 made for Melee and Archery: this is three controls
-// on a subsystem the Player & Locomotion panel already describes, and the M15
-// gate panel (item 15.9) is where a Combat & Physics destination belongs if the
-// surface outgrows this. Placing it beside Melee and Archery is deliberate — a
-// reader who has just watched an arrow land wants to see what killing the target
-// did, in the same panel.
-//
-// Trigger is momentary and so is Clear; Freeze is a state and so is a checkbox.
-// Nothing here is an override, so the section registers none: a corpse on the
-// floor is world state a user made on purpose, and a "Reset all" that resurrected
-// it would undo that.
+// World > Combat & Physics > Death & Ragdoll section: the ragdoll trigger, with
+// bone-body and constraint-iteration readouts. Trigger and Clear are buttons;
+// Freeze is a checkbox. No override: a corpse is world state the user made.
 
 import AppKit
 import OpenSkyCombat
@@ -47,10 +34,6 @@ final class CombatRagdollSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "combatRagdoll"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

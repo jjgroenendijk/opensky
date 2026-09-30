@@ -1,17 +1,6 @@
-// World > HUD & Interaction > Dialogue Camera (issue #427, roadmap item 17.4,
-// scope point 5): the discoverable half of the conversation camera and the
-// speaker focus.
-//
-// It sits beside the Dialogue section rather than in a destination of its own
-// because it is the same behaviour seen from the other end: that section starts
-// a conversation, this one shows what the conversation did to the view and to
-// the actor. Item 17.8 assembles the milestone's own destination, and moving a
-// standalone section there is a registry edit that changes no control id.
-//
-// The force toggle is what makes the camera checkable without a conversation:
-// a conversation needs an actor with something to say, standing within the
-// interaction ray's reach, and the framing has to be checkable against any
-// actor in the cell.
+// World > Dialogue & Voice > Dialogue Camera: what a conversation did to the
+// view and the actor. The force toggle frames any actor in the cell, so the
+// camera is checkable without an actor that has something to say.
 
 import AppKit
 import OpenSkyMenus
@@ -42,14 +31,6 @@ final class DialogueCameraSection: PanelSectionViewController {
     private let speakerLabel = PanelComponents.statsLabel(
         identifier: "DialogueCameraSpeakerStatsLabel"
     )
-
-    var cameraReadout: String {
-        cameraLabel.stringValue
-    }
-
-    var speakerReadout: String {
-        speakerLabel.stringValue
-    }
 
     override var sectionTitle: String {
         "Dialogue Camera"

@@ -1,9 +1,6 @@
-// Developer > UI Lab renderer bridge: UILabControlProviding over the live renderer
-// (M8.1.1 overlay controls) plus the M8.1.4 menu-mode and localized-strings
-// previews. Satellite of GameViewController.swift (500-line file limit); the
-// stored state it maps (uiLabSampleSelection, localizedLabelsLoader and its
-// cache) lives on the class. A nil renderer (Metal 4 unavailable) degrades to
-// inert controls, matching the other `*ControlProviding` bridges.
+// Developer > UI Lab renderer bridge: `UILabControlProviding` over the live
+// renderer, plus the menu-mode and localized-strings previews. The stored state
+// lives on the class. Without a renderer the controls are inert.
 
 import AppKit
 import OpenSkyGameData
@@ -49,7 +46,6 @@ extension GameViewController: UILabControlProviding {
     var uiSnapshot: UILabControlSnapshot {
         UILabControlSnapshot(
             overlayEnabled: uiOverlayEnabled,
-            sampleShown: uiSampleShown,
             scale: uiScale,
             stats: renderer?.lastUIDrawStats ?? UIDrawStats()
         )
@@ -69,7 +65,7 @@ extension GameViewController: UILabControlProviding {
         }
     }
 
-    // MARK: - Menu-mode preview (M8.1.4)
+    // MARK: - Menu-mode preview
 
     /// Opens one more preview menu on the real MenuModeController. Names are
     /// depth-derived (`UILabMenu1`, `UILabMenu2`, ...) so pure push/pop use can
@@ -96,7 +92,7 @@ extension GameViewController: UILabControlProviding {
         )
     }
 
-    // MARK: - Localized-strings preview (M8.1.4)
+    // MARK: - Localized-strings preview
 
     var uiLocalizedSampleShown: Bool {
         get { renderer != nil && uiLabSampleSelection == .localized }

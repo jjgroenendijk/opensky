@@ -1,19 +1,7 @@
-// World > AI & Navigation > Combat Behavior section (issue #424, roadmap item
-// 16.7; shipped by the M16 gate, issue #203): the hostility toggle for the
-// selected actor and the per-fighter behavior readout beside it.
-//
-// The second hostility checkbox in the app, and not an accident. The one under
-// `World > Combat & Physics > Combat Loop` acts on the nearest resident actor,
-// which is the right target when a single opponent is standing in front of you.
-// This one acts on the actor selected above, which is the only thing that makes
-// sense when the point of the destination is to follow one guard through a
-// market. Both drive the same `ActorCombatState` component, so the two panels
-// never disagree about who is angry — they disagree only about whom the
-// checkbox is aimed at, and each says so.
-//
-// Not overridden. An angry actor is world state a user made on purpose, and a
-// "Reset all" that calmed the fight would undo it. Clearing the checkbox is the
-// deliberate way back.
+// World > AI & Navigation > Combat Behavior section: hostility for the selected
+// actor and its behavior readout. The Combat Loop section's checkbox targets
+// the nearest actor instead; both write `ActorCombatState`, so they agree.
+// Not overridden: clearing the checkbox is the way back.
 
 import AppKit
 import OpenSkyCombat
@@ -48,10 +36,6 @@ final class AICombatSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "aiCombat"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

@@ -92,11 +92,9 @@ nonisolated public struct ReferenceRecordCatalog: Sendable {
     ]
 
     public let pluginNames: [String]
-    public let index: RecordIndex
     private let itemsByType: [ReferenceRecordType: [PreviewItem]]
 
     public init(index: RecordIndex, pluginNames: [String]) {
-        self.index = index
         self.pluginNames = pluginNames
         var grouped: [ReferenceRecordType: [PreviewItem]] = [:]
         for type in ReferenceRecordType.allCases {

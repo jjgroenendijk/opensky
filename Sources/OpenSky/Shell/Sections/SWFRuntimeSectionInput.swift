@@ -1,14 +1,9 @@
-// Control wiring + actions for Developer > UI Lab > SWF runtime (M8.3.3).
-// Split from SWFRuntimeSection.swift so the section's type body stays inside
-// the strict-lint limit; the accessibility identifiers set here are the
-// UI-test API and are pinned literally in SWFRuntimeSectionTests.
-//
-// Every action is one engine call plus a resync. None of them can throw: the
-// provider swallows a runtime failure into the readout, which is what keeps a
-// malformed movie from taking a control action down with it.
+// Control wiring and actions for Developer > UI Lab > SWF runtime, split out
+// for the type-body limit. SWFRuntimeSectionTests pins the accessibility ids.
+// Each action is one engine call plus a resync; the provider turns a runtime
+// failure into readout text, so no action throws.
 
 import AppKit
-import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyMenus
 

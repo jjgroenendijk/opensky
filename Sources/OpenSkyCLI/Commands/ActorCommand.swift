@@ -1,10 +1,7 @@
-// `actor`: list ACHR placed actors around one exterior cell, resolve each
-// base NPC_ through its TPLT template chain (milestone 5.1), then resolve
-// visuals — skeleton, skin/outfit body parts with slot masking, FaceGen
-// paths (milestone 5.2). WRLD tree walk mirrors CellCommand; persistent-cell
-// ACHRs map in by physical position like door handling. Resolution + policy
-// live in ActorTemplateResolver / ActorVisualResolver (Sources/OpenSkyWorld/);
-// this file only parses args and prints.
+// `actor`: lists ACHR placed actors around one exterior cell, resolves each
+// base NPC_ through its TPLT chain, then resolves skeleton, body parts with
+// slot masking, and FaceGen paths. The resolvers live in Sources/OpenSkyWorld/;
+// this file parses arguments and prints.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -345,7 +342,6 @@ extension ActorCommand {
     }
 
     private struct FoundCell {
-        let formID: UInt32
         let children: ESMGroup?
     }
 
@@ -366,7 +362,7 @@ extension ActorCommand {
                 let cellChildren = cellChildren(
                     following: index, in: children, formID: record.formID
                 )
-                return FoundCell(formID: record.formID, children: cellChildren)
+                return FoundCell(children: cellChildren)
             case let .group(sub)
                 where sub.kind == .exteriorCellBlock || sub.kind == .exteriorCellSubBlock:
                 if let found = findCell(in: sub, x: x, y: y, localized: localized) {

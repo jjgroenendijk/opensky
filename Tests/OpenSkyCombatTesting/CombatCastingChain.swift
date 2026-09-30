@@ -25,7 +25,6 @@ public final class CombatCastingChain {
     public static let caster = ReferenceKey.plugin(name: "base.esm", objectID: 0x0901)
     public static let casterBase = FormID(0x0000_0F01)
 
-    public let store: WorldStateStore
     public let spellbook: SpellbookRuntime
     public let values: ActorValueRuntime
     public let caster: CasterRuntime
@@ -51,7 +50,6 @@ public final class CombatCastingChain {
         let store = WorldStateStore()
         let values = SpellbookFixture.values(store: store)
         try self.init(
-            store: store,
             spellbook: SpellbookFixture.runtime(store: store).0,
             values: values,
             effects: ActiveEffectRuntime(
@@ -65,12 +63,10 @@ public final class CombatCastingChain {
     /// Over whatever records the caller indexed, which is how the real-data
     /// suite drives the same pipeline against the install.
     public init(
-        store: WorldStateStore,
         spellbook: SpellbookRuntime,
         values: ActorValueRuntime,
         effects: ActiveEffectRuntime
     ) {
-        self.store = store
         self.spellbook = spellbook
         self.values = values
         self.effects = effects

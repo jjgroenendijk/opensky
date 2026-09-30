@@ -1,4 +1,4 @@
-// The World > Crime & Factions panel (issue #507, roadmap item 21.8): its
+// The World > Crime & Factions panel: its
 // placement, its accessibility-id contract, and that each control sends what
 // its field, checkbox and popup hold.
 //
@@ -8,10 +8,8 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyCrime
-@testable import OpenSkyCrimeInterface
 import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyInventoryInterface
 import Testing
 
 @MainActor

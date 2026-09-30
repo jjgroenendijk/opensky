@@ -1,14 +1,8 @@
-// World > Scripts > Events section (issue #278): the tail of what the VM
-// actually dispatched, plus how much is still queued and how much the ring
-// pushed out.
-//
-// The tail is presented the way the Runtime State journal tail is — oldest
-// first, most recent last — because both answer the same question: what did the
-// engine just do, in order. Read-only, so it is never overridden.
+// World > Scripts > Events section: the tail of what the VM dispatched, oldest
+// first, plus how much is queued and how much the ring dropped. Read-only.
 
 import AppKit
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 
 final class ScriptEventsSection: PanelSectionViewController {
     weak var provider: (any ScriptControlProviding)? {

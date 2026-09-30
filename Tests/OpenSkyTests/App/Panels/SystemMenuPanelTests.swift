@@ -206,7 +206,6 @@ struct SystemMenuPanelTests {
             worldSimPaused: worldSimPaused,
             dataRootPath: dataRootPath,
             dataRootSource: dataRootSource,
-            masterVolume: 1,
             audioEnabled: audioEnabled,
             movieEnabled: movieEnabled,
             movieLoaded: movieLoaded,

@@ -20,10 +20,9 @@ struct PerkTreeSpendTests {
         let validator: PerkTreeSpendValidator
         var runtime: PerkRuntime
         let trees: PerkTreeIndex
-        let store: WorldStateStore
     }
 
-    private func harness(oneHanded: Float = 15) throws -> Harness {
+    private func harness() throws -> Harness {
         let index = try PerkRuntimeFixture.index()
         let store = WorldStateStore()
         var runtime = PerkRuntime(
@@ -39,8 +38,7 @@ struct PerkTreeSpendTests {
                 conditionRegistry: .standard
             ),
             runtime: runtime,
-            trees: trees,
-            store: store
+            trees: trees
         )
     }
 

@@ -1,18 +1,7 @@
-// Main-app seam for the dialogue camera and the speaker focus (issue #427,
-// roadmap item 17.4, scope point 5).
-//
-// The same shape as `DialogueControlProviding` beside it: the panel reads one
-// snapshot per refresh and calls one mutation entry point per user action, and
-// never sees the renderer, the movement runtime or the package runtime.
-//
-// The force toggle exists because the camera is otherwise reachable only by
-// holding a conversation, and a conversation needs an actor with something to
-// say standing within the interaction ray's reach. Forcing it on a selected
-// actor is what lets the framing, the collision pull-in and the speaker turn be
-// checked against any actor in the cell, which is what item 17.8's gate has to
-// do.
-//
-// Documented in docs/engine/dialogue-camera.md.
+// Main-app seam for the dialogue camera and speaker focus, shaped like
+// `DialogueControlProviding`. The force toggle frames any selected actor, so
+// framing, collision pull-in, and speaker turn can be checked without a
+// conversation (docs/engine/dialogue-camera.md).
 
 import OpenSkyFormatsESM
 import OpenSkyRendering
@@ -81,7 +70,6 @@ nonisolated public struct DialogueCameraSnapshot: Equatable, Sendable {
         pose: nil,
         restoreMode: .fly,
         restoreFOVYDegrees: FirstPersonCamera.defaultFOVYDegrees,
-        overlayEnabled: false,
         speakerFocus: nil,
         lastOutcome: nil
     )
@@ -102,7 +90,6 @@ nonisolated public struct DialogueCameraSnapshot: Equatable, Sendable {
     /// The field of view that mode projects with, which the projection is
     /// rebuilt to on release.
     public let restoreFOVYDegrees: Float
-    public let overlayEnabled: Bool
     public let speakerFocus: DialogueSpeakerFocusRow?
     public let lastOutcome: String?
 
@@ -116,7 +103,6 @@ nonisolated public struct DialogueCameraSnapshot: Equatable, Sendable {
         pose: DialogueCameraPose?,
         restoreMode: CameraMovementMode,
         restoreFOVYDegrees: Float,
-        overlayEnabled: Bool,
         speakerFocus: DialogueSpeakerFocusRow?,
         lastOutcome: String?
     ) {
@@ -129,7 +115,6 @@ nonisolated public struct DialogueCameraSnapshot: Equatable, Sendable {
         self.pose = pose
         self.restoreMode = restoreMode
         self.restoreFOVYDegrees = restoreFOVYDegrees
-        self.overlayEnabled = overlayEnabled
         self.speakerFocus = speakerFocus
         self.lastOutcome = lastOutcome
     }
@@ -149,6 +134,6 @@ public protocol DialogueCameraControlProviding: AnyObject {
     /// Which actor the toggle aims at.
     var dialogueCameraTarget: DialogueCameraTarget { get set }
 
-    /// The pivot, sightline and eye gizmo, through the M16 overlay registry.
+    /// The pivot, sightline and eye gizmo, through the debug overlay registry.
     var dialogueCameraOverlayEnabled: Bool { get set }
 }

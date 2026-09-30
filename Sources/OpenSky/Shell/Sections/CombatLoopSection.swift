@@ -1,26 +1,8 @@
-// World > Combat & Physics > Combat Loop section (issues #374 and #424, roadmap
-// items 15.7 and 16.7; shipped by the M15 gate, issue #198): the hostility
-// toggle, and the combat-state, per-fighter, incoming-hit and transient-count
-// readouts the loop publishes.
-//
-// Item 16.7 deleted the "Spawn dev target" and "Reset dev target" buttons with
-// the clock they drove. There is nothing to spawn now: making an actor hostile
-// and letting it notice the player *is* the fight, so the checkbox that was the
-// setup step for the dev target is the whole control surface, and the readout
-// that used to describe one clock's phase now describes every fighter's mind.
-//
-// Item 19.10 added one control beside it: whether fighters cast the spells their
-// records give them. A checkbox for the same reason hostility is one — it is a
-// standing state rather than a one-shot — and it lives in this section rather
-// than a new one because it is a knob on a subsystem that already has a section.
-//
-// Hostility is a state the world holds, so it is a checkbox; clearing the trace
-// is a one-shot, so it is a button. That is the same split the Melee section
-// makes for draw, attack and block.
-//
-// Not overridden. An angry opponent is world state a user made on purpose, and
-// a "Reset all" that calmed the fight would undo it. Clearing the checkbox is
-// the deliberate way back.
+// World > Combat & Physics > Combat Loop section: the hostility and spell-cast
+// checkboxes, and the combat-state, per-fighter, incoming-hit and transient
+// readouts. Standing states are checkboxes; clearing the trace is a button.
+// Not overridden: an angry opponent is world state the user made, and clearing
+// the checkbox is the way back.
 
 import AppKit
 import OpenSkyCombat
@@ -50,10 +32,6 @@ final class CombatLoopSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "combatLoop"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

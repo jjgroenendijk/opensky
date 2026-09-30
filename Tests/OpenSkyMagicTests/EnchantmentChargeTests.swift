@@ -1,13 +1,8 @@
-// The charge arithmetic on its own (issue #472, roadmap item 19.9): uses,
-// spending, the stranded remainder, and the unmetered case.
-//
-// Pure values, no store and no records, which is what makes `floor(charge / cost)`
-// a plain assertion rather than something only a running session can show. The
-// same ratio is pinned against UESP's published rows in
-// `EnchantmentRuntimeRealDataTests`.
+// The charge arithmetic alone: uses, spending, the stranded remainder, and the
+// unmetered case. `EnchantmentRuntimeRealDataTests` checks the same ratio
+// against UESP's published rows.
 
 import Foundation
-@testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
 import Testing
 

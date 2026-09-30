@@ -1,14 +1,8 @@
-// Renderer-routed input and movie readback for the dialogue menu bridge (issue
-// #205). Satellite of UI/DialogueMenuMovieBridge.swift.
-//
-// `handle(_:runtime:)` mutates the runtime and nothing else, so a caller that
-// uses it against a live renderer moves the movie without pushing the
-// regenerated command stream to the GPU. That was issue #300 against the system
-// menu; this overload exists so the dialogue menu cannot repeat it, because
-// `Renderer.sendSWFInput` both delivers the key and repaints.
+// Renderer-routed input and movie readback for the dialogue menu bridge.
+// `Renderer.sendSWFInput` both delivers the key and repaints; driving the
+// runtime alone would move the movie without updating the GPU commands.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyRendering
 

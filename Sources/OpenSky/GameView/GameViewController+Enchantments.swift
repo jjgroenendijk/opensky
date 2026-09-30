@@ -1,26 +1,9 @@
-// Session wiring for item enchantments (issue #472, roadmap item 19.9): where an
-// equipped item's ENCH comes from, how a landed hit spends its charge, and how a
-// worn item's constant effects go on and come off.
-//
-// AppKit stays in this controller satellite; the ledger, the profile, the charge
-// arithmetic and both application paths are engine types that build into
-// `openskycli` and are testable without a window.
-//
-// ## Two calls, and where they come from
-//
-// * `applyWeaponEnchantment(_:)` is the `WeaponEnchantmentApplying` conformance
-//   both `MeleeCombatWorld` and `ProjectileWorld` refine, so a swing and an arrow
-//   take the same path — the same reason `reportScriptHit` and `applySpellHit`
-//   are each implemented once here.
-// * `refreshWornEnchantments(on:)` reconciles rather than hooks. Every equip path
-//   in this controller calls it afterwards, calling it twice changes nothing, and
-//   a loaded session calls it once per actor. See `WornEnchantmentApplication` for
-//   why that shape was chosen over an equip hook.
-//
-// The effect runtime is a value over a shared store, so it is taken out, worked
-// through and put back — the pattern `applySpellHit` and `consumeMagicItem`
-// follow, and what keeps the Magic Effects panel's tally counting an enchantment
-// too.
+// Session wiring for item enchantments: where an equipped item's ENCH comes
+// from, how a landed hit spends its charge, and how a worn item's constant
+// effects go on and come off. `applyWeaponEnchantment(_:)` serves both melee and
+// projectiles. `refreshWornEnchantments(on:)` reconciles, so calling it twice
+// changes nothing. The effect runtime is a value: it is taken out, changed,
+// and put back.
 
 import AppKit
 import OpenSkyFormatsESM
@@ -34,24 +17,15 @@ import OpenSkyWorld
 /// Enchantment state the controller owns. Extensions cannot add stored
 /// properties, so it lives as one value on `GameViewController`.
 struct EnchantmentBridgeState {
-    /// Load-order ENCH index, written by `wireEnchantments` when the provider can
-    /// supply one. Nil without game data, and then an enchanted item applies
-    /// nothing and the readout says so.
-    ///
-    /// Rewiring it drops every resolved profile below, because the store is one
-    /// of the two record sources a profile is derived from and the only one that
-    /// is ever written after the item index it is paired with (issue #489).
+    /// Load-order ENCH index, set by `wireEnchantments`. Nil without game data.
+    /// Setting it drops every cached profile, because profiles derive from it.
     var store: EnchantmentStore? {
         didSet { profiles.invalidate() }
     }
 
     /// Resolved profiles, so the melee and archery frame hooks stop re-walking
-    /// the records for an equipped set that has not changed (issue #489).
+    /// the records for an equipped set that has not changed.
     var profiles = ItemEnchantmentProfileCache()
-    /// What the most recent enchanted hit did. Nil until one lands.
-    var lastHit: WeaponEnchantmentReport?
-    /// What the most recent worn-item reconciliation did. Nil until one runs.
-    var lastWorn: WornEnchantmentReport?
     /// Human-readable result of the last panel or menu action.
     var lastActionText = "No enchantment action yet."
 }
@@ -71,7 +45,6 @@ extension GameViewController: WeaponEnchantmentApplying {
             using: &runtime
         )
         magicEffects.runtime = runtime
-        enchantments.lastHit = report
         return report
     }
 }
@@ -86,16 +59,10 @@ extension GameViewController {
         enchantments.store = (provider as? MagicDataProviding)?.enchantmentStore
     }
 
-    /// The resolved enchantment of one carried item, or nil when it carries none
-    /// and when this session has no ENCH index.
-    ///
-    /// Answered from the profile cache after the first ask, which is what keeps
-    /// the melee and archery frame hooks off the records (issue #489).
-    ///
-    /// The store is read out before the call rather than inside the closure
-    /// deliberately: the call holds a write access to `enchantments` for as long
-    /// as it runs, and reading `enchantments.store` from inside it would be a
-    /// second, overlapping access to the same property.
+    /// The resolved enchantment of one carried item, or nil when it has none or
+    /// the session has no ENCH index. Cached after the first ask. The store is
+    /// read before the call, because the call holds write access to
+    /// `enchantments` and a read inside it would overlap.
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
         let store = enchantments.store
         return enchantments.profiles.profile(of: item) { item in
@@ -116,15 +83,10 @@ extension GameViewController {
         return EnchantmentLedger(store: runtime.store).charge(of: profile, on: holder)
     }
 
-    /// Brings `holder`'s worn constant effects in line with what it is wearing.
-    ///
-    /// Called after every equip and unequip, and once per actor after a load. A
-    /// call that changes nothing costs one component read.
-    ///
-    /// The inventory holder is what the equip paths have in hand, and the
-    /// actor-value holder the effects are applied to is resolved from its key: an
-    /// owner with no actor-value state — a container — wears nothing this could
-    /// apply to, and answers "nothing changed".
+    /// Brings `holder`'s worn constant effects in line with what it wears.
+    /// Called after every equip and unequip, and once per actor after a load.
+    /// An owner with no actor-value state, such as a container, answers
+    /// "nothing changed".
     @discardableResult
     func refreshWornEnchantments(on holder: InventoryHolder) -> WornEnchantmentReport {
         guard
@@ -139,22 +101,12 @@ extension GameViewController {
             using: &runtime
         )
         magicEffects.runtime = runtime
-        if report.didChange {
-            enchantments.lastWorn = report
-        }
         return report
     }
 
-    /// One item's enchantment and what it has left, preformatted, or nil when it
-    /// carries none.
-    ///
-    /// The one place a charge is turned into words, so the equipment readout, the
-    /// inventory menu detail and the magic panel cannot disagree about how much a
-    /// weapon has left.
-    ///
-    /// A holder is needed for the *stored* charge; without one — an owner with no
-    /// actor-value state — the item's own full charge is reported, which is what
-    /// nothing having spent any means.
+    /// One item's enchantment and remaining charge, formatted, or nil when it has
+    /// none. The one place a charge becomes words, so every readout agrees.
+    /// Without a holder the item's full charge is reported.
     func enchantmentLine(of item: FormID, on holder: ActorValueHolder?) -> String? {
         guard let profile = enchantmentProfile(of: item) else { return nil }
         let charge = holder.flatMap { enchantmentCharge(of: item, on: $0) } ?? profile.fullCharge

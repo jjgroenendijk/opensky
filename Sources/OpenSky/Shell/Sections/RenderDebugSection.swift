@@ -1,18 +1,7 @@
-// World > Render Debug section (issue #144): switch the scene pass's output
-// channel, and switch layers off one at a time.
-//
-// The app's stated purpose is finding visual bugs, and until this section there
-// was no way to bisect one — the only tools were reading code and staring at the
-// frame. Two controls cover most of that gap: a debug channel says what a
-// surface believes about itself, and a layer mask says which subsystem drew it.
-//
-// The solo popup deliberately writes the same mask the checkboxes do rather than
-// carrying a stored "soloed layer" beside them: two stores for one state
-// desynchronise, and a derived one cannot.
-//
-// Neither control persists. A session that starts in wireframe reads as a
-// rendering bug, so both reset on launch and the sidebar's "Reset all" clears
-// them the way it releases a frozen physics simulation.
+// World > Render Debug section: switches the scene pass's output channel and
+// turns layers off one at a time, to bisect visual bugs. The solo popup writes
+// the same mask as the checkboxes, so there is one source of truth. Neither
+// control persists, and "Reset all" clears both.
 
 import AppKit
 import OpenSkyRendering
@@ -51,10 +40,6 @@ final class RenderDebugSection: PanelSectionViewController {
 
     override func resetToDefaults() {
         Self.resetToDefaults(provider: provider)
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     /// A debug channel or a hidden layer is by definition a non-default view of

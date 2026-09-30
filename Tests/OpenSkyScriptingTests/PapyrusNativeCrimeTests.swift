@@ -24,7 +24,6 @@ struct PapyrusNativeCrimeTests {
         let session: PapyrusWorldFixture.Session
         let registry: PapyrusNativeRegistry
         let actor: PapyrusObjectHandle
-        let actorKey: ReferenceKey
         let reporter: CrimeReporter
         let world: FakeCrimeWorld
     }
@@ -81,7 +80,6 @@ struct PapyrusNativeCrimeTests {
             session: session,
             registry: PapyrusWorldFixture.registry(for: session),
             actor: #require(session.bridge.objectHandle(for: entry.key)),
-            actorKey: entry.key,
             reporter: reporter,
             world: world
         )

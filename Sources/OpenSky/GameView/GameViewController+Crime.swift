@@ -150,7 +150,7 @@ extension GameViewController {
     /// sweep does not know who emptied health, so `assaultedActors` is the
     /// attribution. A one-hit kill charges assault and murder, because the blow is
     /// reported before the death. See docs/engine/crime.md.
-    func reportPlayerMurder(of victim: ReferenceKey, wasHostile: Bool) {
+    func reportPlayerMurder(of victim: ReferenceKey) {
         guard
             victim != .player,
             crime.assaultedActors.contains(victim),

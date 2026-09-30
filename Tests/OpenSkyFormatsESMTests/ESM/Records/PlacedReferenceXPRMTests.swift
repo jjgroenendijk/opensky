@@ -9,7 +9,6 @@ import Foundation
 import Testing
 
 struct PlacedReferenceXPRMTests {
-    typealias Primitive = PlacedReference.Primitive
     typealias PrimitiveType = PlacedReference.PrimitiveType
 
     /// Builds a 32-byte XPRM payload. `trailing` and `truncate` exist so the

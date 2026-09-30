@@ -1,23 +1,9 @@
-// The M15 gate's world and graph, built in code (issue #198).
-//
-// Two pieces, the same split `M14AcceptanceFixture` made one milestone earlier.
-// `M15AcceptanceWorld` is the ground the fight happens on: a flat floor, a wall
-// for an arrow to stick in, and the clutter a body can shove. `M15AcceptanceFixture`
-// is the synthetic behavior graph the fight is driven through: eleven states
-// covering draw, sheathe, attack, block, bow draw, loose, stagger, recoil,
-// bleedout and death, wired to the census names `CombatGraphNames`,
-// `ArcheryGraphNames` and `RagdollGraphNames` declare.
-//
-// The graph is what makes this a gate rather than a set of unit tests run in a
-// row. Every contact frame, nock, release and ragdoll hand-off in the route is
-// a *clip trigger* firing out of the graph on its own clock, exactly as a
-// vanilla annotation does — not a name a test handed the runtime. A route that
-// fed the events in by hand would prove the runtimes work and prove nothing
-// about the seam between them and the animation.
-//
-// Everything here is invented. No packfile bytes, no extracted clip data, no
-// heights from the install (AGENTS.md "Legal & IP boundary"). The vanilla half
-// of the gate is `M15AcceptanceRealDataTests`, which is env-gated.
+// The M15 gate's world and graph, built in code. `M15AcceptanceWorld` is a
+// flat floor, a wall for arrows, and clutter to shove. `M15AcceptanceFixture` is
+// a synthetic behavior graph whose clip triggers fire each contact, nock,
+// release, and ragdoll hand-off on the graph's own clock, so the gate tests the
+// seam between the runtimes and animation. Everything is invented; the vanilla
+// half is `M15AcceptanceRealDataTests`.
 
 import BehaviorTesting
 import Foundation
@@ -32,13 +18,8 @@ import Foundation
 import PhysicsTesting
 import simd
 
-/// The synthetic arena the fight happens in.
-///
-/// Deliberately flat: M14 already proved locomotion resolves over slopes, water
-/// and a streaming boundary, and a gate about combat wants the one variable it
-/// is measuring to be the fight. The wall is what an arrow that misses can
-/// stick in, and it stands far enough east that a shot has to actually fly to
-/// reach it.
+/// The synthetic arena. Flat, so the fight is the one variable. The wall stops
+/// a missed arrow and stands far enough east that a shot must fly.
 nonisolated enum M15AcceptanceWorld {
     static let floorHeight: Float = 0
     /// Where the wall stands, on +X, past the opponent.
@@ -53,7 +34,7 @@ nonisolated enum M15AcceptanceWorld {
     /// Where the clutter is dropped from, high enough that it visibly falls.
     static let clutterDropHeight: Float = 120
 
-    static func sampleGround(_ position: SIMD2<Float>) -> TerrainGroundSample? {
+    static func sampleGround(_: SIMD2<Float>) -> TerrainGroundSample? {
         TerrainGroundSample(height: floorHeight, normal: SIMD3<Float>(0, 0, 1))
     }
 
@@ -85,19 +66,10 @@ nonisolated enum M15AcceptanceWorld {
     }
 }
 
-/// The eleven-state synthetic combat graph the route drives.
-///
-/// One state per phase of the fight the gate names, each running a clip whose
-/// triggers fire the observed events that phase is defined by. The transitions
-/// into the states are wildcards keyed on the events the runtimes *raise*, so
-/// the route's own edges are what move the graph and the graph's own clock is
-/// what answers.
-///
-/// Trigger times are spread across the first third of a one-second clip so that
-/// a state entered on one frame fires its annotations over the following
-/// handful of fixed steps rather than all at once, which is what makes the
-/// ordering assertions in `M15AcceptanceTests` about the graph rather than
-/// about a list literal.
+/// The eleven-state synthetic combat graph. Wildcard transitions key on the
+/// events the runtimes raise. Trigger times spread over the first third of a
+/// one-second clip, so a state fires its annotations over several fixed steps
+/// and the ordering checks test the graph, not a list literal.
 nonisolated enum M15AcceptanceFixture {
     /// State ids, which are also the order the states are declared in.
     enum State: Int, CaseIterable {
@@ -188,17 +160,10 @@ nonisolated enum M15AcceptanceFixture {
         }
     }
 
-    /// Every wildcard edge, as (event, destination) pairs.
-    ///
-    /// Each phase has an entry edge keyed on the event a runtime *raises* and,
-    /// where the phase ends on its own, a return edge keyed on the annotation
-    /// its own clip fires. The returns are what let the route swing twice: a
-    /// state machine will not transition into the state it is already in, so a
-    /// second `attackStart` reaches `Attack` only because the first swing's
-    /// `attackStop` annotation took the graph back out.
-    ///
-    /// `bowDrawn` deliberately has no edge: full draw is a hold, and the state
-    /// stays put until the release event arrives.
+    /// Every wildcard edge, as (event, destination) pairs. A phase that ends on
+    /// its own has a return edge on its clip's annotation, so a second
+    /// `attackStart` can reach `Attack` again. `bowDrawn` has no edge: full draw
+    /// holds until the release event.
     static let wildcardEdges: [(event: String, state: State)] = [
         (LocomotionGraphNames.moveStart, .walk),
         (LocomotionGraphNames.moveStop, .idle),

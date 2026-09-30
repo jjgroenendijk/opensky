@@ -1,19 +1,10 @@
-// World > Crime & Factions > Memberships (issue #507): the player's and a
-// picked actor's factions with their ranks, what that actor makes of the player
-// with every term of the hostility precedence list beside the answer, and
-// whether it is a guard.
-//
-// The subject is picked with the crosshair rather than from a list, for the
-// reason `ContainerMerchantSection` offers its crosshair button: every resident
-// actor already has a place in the world, and a list of a hundred names would
-// be a worse way to point at the one in front of the camera.
-//
-// Not overridden: a membership is world state, and "Reset all" taking the
-// player out of a guild they just joined would undo the demonstration.
+// World > Crime & Factions > Memberships: the player's and a picked actor's
+// factions and ranks, what that actor makes of the player with each hostility
+// term, and whether it is a guard. The actor is picked with the crosshair. Not
+// overridden: a membership is world state.
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyFormatsCore
 
 final class FactionMembershipSection: CrimeFactionPanelSection {
     let crosshairControl = NSButton(title: "Use crosshair actor", target: nil, action: nil)

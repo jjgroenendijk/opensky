@@ -1,16 +1,8 @@
-// Env-gated M12.2.1 acceptance over the user's read-only Skyrim SE install:
-// resolve a dressed vanilla NPC before and after an equip, and render both.
-//
-// The before frame is the actor as the plugin dresses him — his DOFT outfit.
-// The after frame is the same actor resolved from a runtime equipped set that
-// swaps his torso piece and puts a weapon in his hand. Both frames go to
-// gitignored `logs/` and are linked from the PR; a rendered frame embeds the
-// user's own assets, so it is game content and never committed (AGENTS.md
-// "Legal & IP boundary").
-//
-// Run with `make realtest T='ActorEquipmentRealDataTests/<name>()'`, which
-// injects the data root and runs under the RSS watchdog. Plain `xcodebuild
-// test` does not forward `OPENSKY_DATA_ROOT`, so this silently skips there.
+// Env-gated equipment acceptance over the user's install: resolve a dressed
+// vanilla NPC before and after an equip that swaps his torso piece and adds a
+// weapon, and render both. Frames go to gitignored `logs/`. Run with
+// `make realtest T='ActorEquipmentRealDataTests/<name>()'`; plain
+// `xcodebuild test` does not pass `OPENSKY_DATA_ROOT`, so it skips.
 
 import CoreGraphics
 import Foundation
@@ -22,7 +14,6 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -46,8 +37,8 @@ struct ActorEquipmentRealDataTests {
         device != nil && dataRoot != nil
     }
 
-    /// Heimskr, the Whiterun street preacher — the same ACHR the M5.4
-    /// acceptance renders, so the two frames are directly comparable.
+    /// Heimskr, the Whiterun street preacher: the same ACHR the actor render
+    /// acceptance uses, so the frames are comparable.
     private static let heimskrACHR = FormID(0x0001_A682)
     /// `ArmorIronCuirass`, a torso piece his monk robes do not overlap by
     /// accident: both claim biped slot 32, which is what makes the swap

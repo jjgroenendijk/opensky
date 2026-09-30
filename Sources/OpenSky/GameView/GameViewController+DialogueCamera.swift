@@ -114,8 +114,7 @@ extension GameViewController {
     ///
     /// Called every frame while the camera is engaged: the entry work runs once
     /// per speaker, and the re-aim runs always, because a player who walks
-    /// around a speaker has to be followed rather than left addressed at the
-    /// place they used to be standing.
+    /// around a speaker has to be followed, not addressed where they stood.
     private func holdSpeakerFocus(on speaker: ReferenceKey, playerEye: SIMD3<Float>) {
         if let held = dialogueCamera.held, held != speaker {
             releaseSpeakerFocus()
@@ -156,7 +155,6 @@ extension GameViewController: DialogueCameraControlProviding {
             restoreFOVYDegrees: MatrixMath.degrees(
                 fromRadians: renderer.dialogueCameraRestoreFOVYRadians
             ),
-            overlayEnabled: renderer.dialogueCameraOverlayEnabled,
             speakerFocus: dialogueSpeakerFocusRow(),
             lastOutcome: dialogueCamera.lastOutcome
         )

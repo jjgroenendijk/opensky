@@ -1,11 +1,7 @@
-// Env-gated NIF particle sweep over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md Legal & IP): resolves
-// every model path referenced by the WhiterunWorld city cells plus the Tamriel
-// Whiterun-exterior home cell, opens each NIF through the VFS, and runs the
-// particleSystems() decode. Gate for milestone 7.3.1: the whole set decodes
-// with no throws, particle-bearing NIFs exist, and their effect shaders
-// resolve. Skips automatically when OPENSKY_DATA_ROOT is unset/unresolvable
-// (CI has no game data). Summary printed + written to logs/.
+// Env-gated NIF particle sweep over the user's install: decodes the particle
+// systems of every model the WhiterunWorld city cells and the Whiterun exterior
+// home cell reference. The set must decode without throwing, some NIFs must
+// carry particles, and their effect shaders must resolve. Summary goes to logs/.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -47,7 +43,7 @@ struct ParticleRealDataTests {
             }
             do {
                 let systems = try NIFFile(data: data).particleSystems()
-                stats.accumulate(path: path, systems: systems)
+                stats.accumulate(systems: systems)
             } catch {
                 failures.append("\(path): \(error)")
             }
@@ -108,7 +104,7 @@ struct ParticleRealDataTests {
         var alphaProperties = 0
         var unsupported: [String: Int] = [:]
 
-        mutating func accumulate(path: String, systems decoded: [ParticleSystemDefinition]) {
+        mutating func accumulate(systems decoded: [ParticleSystemDefinition]) {
             guard !decoded.isEmpty else { return }
             particleFiles += 1
             systems += decoded.count

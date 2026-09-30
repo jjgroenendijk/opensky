@@ -1,7 +1,6 @@
 // Live app bridge for the HUD & Interaction Face Morphs section.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyMenus
 import OpenSkyRendering

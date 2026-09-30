@@ -1,5 +1,5 @@
 // World > System Menu > Menu: opens the engine's menu stack and drives the
-// Resume / Settings / Quit selector (M8.5.1). Every button routes the same
+// Resume / Settings / Quit selector. Every button routes the same
 // `MenuInputEvent` the keyboard produces in menu mode, so the panel cannot
 // diverge from live input.
 
@@ -25,10 +25,6 @@ final class SystemMenuSection: PanelSectionViewController {
         checkboxWithTitle: "Vanilla menu movie", target: nil, action: nil
     )
     private let statsLabel = PanelComponents.statsLabel(identifier: "SystemMenuStatsLabel")
-
-    var statsReadout: String {
-        statsLabel.stringValue
-    }
 
     override var sectionTitle: String {
         "Menu"

@@ -1,11 +1,9 @@
-// Totals, input and readback for the container and barter menu bridge (M12.2.3,
-// issue #179). Satellite of UI/ContainerMenuMovieBridge.swift, which holds the
-// measured contract.
+// Totals, input and readback for the container and barter menu bridge. The
+// measured contract is in ContainerMenuMovieBridge.swift.
 //
 // Everything here degrades: a movie whose shape moved leaves a tally entry and
-// an empty readout rather than throwing. The list reading and writing itself is
-// #289's, called through rather than copied, so the three menus cannot disagree
-// about what an `EntriesA` row is.
+// an empty readout rather than throwing. List reads and writes go through the
+// inventory bridge, so the menus agree on what an `EntriesA` row is.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -15,11 +13,10 @@ import OpenSkyRendering
 nonisolated extension ContainerMenuMovieBridge {
     // MARK: - Totals
 
-    /// The bottom bar. The player's gold and carry weight are the two
-    /// `TextField` instances #289 measured, filled with the GFx `SetText`
-    /// extension; the merchant's purse goes through `SetBarterInfo`, which is
-    /// also what moves the player info card onto its `Barter` frame so that
-    /// `VendorGoldValue` exists at all.
+    /// The bottom bar. The player's gold and carry weight are `TextField`s
+    /// filled with the GFx `SetText` extension. The merchant's purse goes
+    /// through `SetBarterInfo`, which also moves the player info card onto its
+    /// `Barter` frame, so that `VendorGoldValue` exists at all.
     public static func publishTotals(_ model: ContainerMenuModel, runtime: SWFMovieRuntime) {
         if model.mode == .barter {
             publishBarterInfo(model, runtime: runtime)
@@ -34,11 +31,8 @@ nonisolated extension ContainerMenuMovieBridge {
 
     /// `BottomBar.SetBarterInfo(aiPlayerGold, aiVendorGold, aiGoldDelta,
     /// astrVendorName)` plus `BarterMenu.SetBarterMultipliers(afBuyMult,
-    /// afSellMult)`.
-    ///
-    /// The gold delta is what the pending transaction would move, which is zero
-    /// here: quantity selection and the confirm step are not driven, so nothing
-    /// is ever pending. See docs/engine/barter.md.
+    /// afSellMult)`. The gold delta is zero: quantity selection and the confirm
+    /// step are not driven, so nothing is pending (docs/engine/barter.md).
     public static func publishBarterInfo(_ model: ContainerMenuModel, runtime: SWFMovieRuntime) {
         runtime.callMovie(
             barterInfoCallback,
@@ -71,8 +65,8 @@ nonisolated extension ContainerMenuMovieBridge {
 
     // MARK: - Readback
 
-    /// Faults, distinct unresolved names and unhandled bridge calls. Reuses
-    /// #289's shape so the two acceptance gates report the same three numbers.
+    /// Faults, distinct unresolved names and unhandled bridge calls, in the
+    /// inventory bridge's shape, so the acceptance gates report the same numbers.
     public static func diagnostics(runtime: SWFMovieRuntime) -> InventoryMenuDiagnostics {
         InventoryMenuMovieBridge.diagnostics(runtime: runtime)
     }
@@ -89,10 +83,6 @@ nonisolated extension ContainerMenuMovieBridge {
 
     public static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
         InventoryMenuMovieBridge.selectedIndex(runtime: runtime, atPath: itemListPath)
-    }
-
-    public static func selectedCategoryIndex(runtime: SWFMovieRuntime) -> Int? {
-        InventoryMenuMovieBridge.selectedIndex(runtime: runtime, atPath: categoryListPath)
     }
 
     /// The merchant purse the movie is showing, read back off the vendor gold
@@ -143,8 +133,8 @@ nonisolated extension ContainerMenuMovieBridge {
     }
 
     /// Delivers one menu event through the renderer, which resynchronizes the
-    /// drawn command stream with whatever the movie changed. Routing a live
-    /// movie's input any other way repaints late; see #300.
+    /// drawn command stream with whatever the movie changed. Any other route
+    /// repaints late.
     @MainActor
     @discardableResult
     public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
