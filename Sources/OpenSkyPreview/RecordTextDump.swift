@@ -62,16 +62,20 @@ nonisolated public enum RecordTextDump: Sendable {
         magicContext: MagicContext?
     ) -> String {
         var lines = [headerLine(record: record)]
-        if
-            let decoded = decodedSummary(
-                record: record,
-                localized: localized,
-                keywordContext: keywordContext,
-                formListContext: formListContext,
-                magicContext: magicContext
-            )
-        {
-            lines.append(decoded)
+        do {
+            if
+                let decoded = try decodedSummary(
+                    record: record,
+                    localized: localized,
+                    keywordContext: keywordContext,
+                    formListContext: formListContext,
+                    magicContext: magicContext
+                )
+            {
+                lines.append(decoded)
+            }
+        } catch {
+            lines.append("[WARNING] \(record.type) decode failed: \(error)")
         }
         lines.append(contentsOf: fieldLines(record: record))
         return lines.joined(separator: "\n")
@@ -91,22 +95,22 @@ nonisolated public enum RecordTextDump: Sendable {
         keywordContext: KeywordContext?,
         formListContext: FormListContext?,
         magicContext: MagicContext?
-    ) -> String? {
+    ) throws -> String? {
         switch record.type {
-        case "WRLD": worldSummary(record: record, localized: localized)
-        case "CELL": cellSummary(record: record, localized: localized)
-        case "STAT": staticSummary(record: record)
-        case "REFR": referenceSummary(record: record)
-        case "WTHR": weatherSummary(record: record)
-        case "CLMT": climateSummary(record: record)
-        case "REGN": regionSummary(record: record)
-        case "QUST": questSummary(record: record, localized: localized)
-        case "NAVM": navmeshSummary(record: record)
-        case "NAVI": navmeshIndexSummary(record: record)
+        case "WRLD": try worldSummary(record: record, localized: localized)
+        case "CELL": try cellSummary(record: record, localized: localized)
+        case "STAT": try staticSummary(record: record)
+        case "REFR": try referenceSummary(record: record)
+        case "WTHR": try weatherSummary(record: record)
+        case "CLMT": try climateSummary(record: record)
+        case "REGN": try regionSummary(record: record)
+        case "QUST": try questSummary(record: record, localized: localized)
+        case "NAVM": try navmeshSummary(record: record)
+        case "NAVI": try navmeshIndexSummary(record: record)
         // Inventory families live in RecordTextDumpItems.swift so this switch
         // stays inside the strict-lint complexity cap.
         default:
-            magicSummary(
+            try magicSummary(
                 record: record,
                 localized: localized,
                 keywordContext: keywordContext,
@@ -131,35 +135,29 @@ nonisolated public enum RecordTextDump: Sendable {
         }
     }
 
-    private static func worldSummary(record: ESMRecord, localized: Bool) -> String? {
-        guard let world = try? Worldspace(record: record, localized: localized) else {
-            return nil
-        }
-        let parent = if let id = world.parent {
-            id.description
-        } else {
-            "-"
-        }
+    private static func worldSummary(record: ESMRecord, localized: Bool) throws -> String? {
+        let world = try Worldspace(record: record, localized: localized)
+        let parent = world.parent?.description ?? "-"
         return "decoded WRLD: editorID \(world.editorID ?? "-"), "
             + "parent \(parent), "
             + "flags 0x\(String(world.flags.rawValue, radix: 16))"
     }
 
-    private static func cellSummary(record: ESMRecord, localized: Bool) -> String? {
-        guard let cell = try? Cell(record: record, localized: localized) else { return nil }
+    private static func cellSummary(record: ESMRecord, localized: Bool) throws -> String? {
+        let cell = try Cell(record: record, localized: localized)
         let grid = cell.grid.map { "(\($0.x),\($0.y))" } ?? "-"
         return "decoded CELL: editorID \(cell.editorID ?? "-"), grid \(grid), "
             + (cell.isInterior ? "interior" : "exterior")
     }
 
-    private static func staticSummary(record: ESMRecord) -> String? {
-        guard let stat = try? StaticObject(record: record) else { return nil }
+    private static func staticSummary(record: ESMRecord) throws -> String? {
+        let stat = try StaticObject(record: record)
         return "decoded STAT: editorID \(stat.editorID ?? "-"), "
             + "model \(stat.modelPath ?? "(marker, no MODL)")"
     }
 
-    private static func referenceSummary(record: ESMRecord) -> String? {
-        guard let ref = try? PlacedReference(record: record) else { return nil }
+    private static func referenceSummary(record: ESMRecord) throws -> String? {
+        let ref = try PlacedReference(record: record)
         let teleport = ref.teleportDestination.map {
             ", teleport \($0.door) at \(vector($0.placement.position))"
                 + " rotation \(vector($0.placement.rotation))"
@@ -174,8 +172,8 @@ nonisolated public enum RecordTextDump: Sendable {
         "(\(value.x), \(value.y), \(value.z))"
     }
 
-    private static func weatherSummary(record: ESMRecord) -> String? {
-        guard let weather = try? Weather(record: record) else { return nil }
+    private static func weatherSummary(record: ESMRecord) throws -> String? {
+        let weather = try Weather(record: record)
         let layers = weather.colors.map { "\($0.count)" } ?? "-"
         let wind = weather.data.map {
             String(format: "%.2f @ %.0f deg", $0.windSpeed, $0.windDirection)
@@ -189,8 +187,8 @@ nonisolated public enum RecordTextDump: Sendable {
             + "class \(precipitation)"
     }
 
-    private static func climateSummary(record: ESMRecord) -> String? {
-        guard let climate = try? Climate(record: record) else { return nil }
+    private static func climateSummary(record: ESMRecord) throws -> String? {
+        let climate = try Climate(record: record)
         let timing = climate.timing.map {
             "sunrise \($0.sunriseBegin)-\($0.sunriseEnd), "
                 + "sunset \($0.sunsetBegin)-\($0.sunsetEnd) min"
@@ -199,8 +197,8 @@ nonisolated public enum RecordTextDump: Sendable {
             + "\(climate.weatherList.count) weathers, \(timing)"
     }
 
-    private static func regionSummary(record: ESMRecord) -> String? {
-        guard let region = try? Region(record: record) else { return nil }
+    private static func regionSummary(record: ESMRecord) throws -> String? {
+        let region = try Region(record: record)
         let worldspace = region.worldspace.map(\.description) ?? "-"
         let priority = region.weatherPriority.map { "\($0)" } ?? "-"
         return "decoded REGN: editorID \(region.editorID ?? "-"), "
@@ -208,8 +206,8 @@ nonisolated public enum RecordTextDump: Sendable {
             + "weather priority \(priority)"
     }
 
-    private static func questSummary(record: ESMRecord, localized: Bool) -> String? {
-        guard let quest = try? Quest(record: record, localized: localized) else { return nil }
+    private static func questSummary(record: ESMRecord, localized: Bool) throws -> String? {
+        let quest = try Quest(record: record, localized: localized)
         let name = switch quest.name {
         case let .inline(text): "\"\(text)\""
         case let .tableID(id): "string #\(id)"
@@ -227,11 +225,9 @@ nonisolated public enum RecordTextDump: Sendable {
             + skips
     }
 
-    /// The navmesh inspector surface (issue #199): selecting a NAVM in the
-    /// Asset Browser, or `openskycli record --type NAVM`, shows the decoded
-    /// mesh without anything having to draw it yet (16.3, issue #422).
-    private static func navmeshSummary(record: ESMRecord) -> String? {
-        guard let navmesh = try? Navmesh(record: record) else { return nil }
+    /// The navmesh inspector: shows the decoded mesh without drawing it.
+    private static func navmeshSummary(record: ESMRecord) throws -> String? {
+        let navmesh = try Navmesh(record: record)
         let geometry = navmesh.geometry
         let location = switch geometry.location {
         case let .interior(cell): "interior cell \(cell)"
@@ -245,8 +241,8 @@ nonisolated public enum RecordTextDump: Sendable {
             + "grid divisor \(geometry.gridDivisor)"
     }
 
-    private static func navmeshIndexSummary(record: ESMRecord) -> String? {
-        guard let map = try? NavmeshInfoMap(record: record) else { return nil }
+    private static func navmeshIndexSummary(record: ESMRecord) throws -> String? {
+        let map = try NavmeshInfoMap(record: record)
         let islands = map.infos.count { $0.flags.contains(.isIsland) }
         return "decoded NAVI: editorID \(map.editorID ?? "-"), version \(map.version), "
             + "\(map.infos.count) navmeshes (\(islands) islands, "

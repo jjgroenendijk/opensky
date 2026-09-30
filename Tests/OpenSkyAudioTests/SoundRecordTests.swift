@@ -6,6 +6,7 @@
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyAudio
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import Testing
 
@@ -205,6 +206,16 @@ struct SoundRecordTests {
         )) {
             _ = try unlinkedStore.resolve(sound: FormID(0x301))
         }
+    }
+
+    @Test func countsAMalformedDescriptor() throws {
+        let store = try soundStore(
+            descriptors: ESMFixture.malformedRecord("SNDR", formID: 0x300),
+            sounds: Data()
+        )
+        #expect(store.descriptors.isEmpty)
+        #expect(store.skippedRecords.count(of: "SNDR") == 1)
+        #expect(store.skippedRecords.total == 1)
     }
 
     private func soundStore(

@@ -1,17 +1,6 @@
-// `archery`: walk the ammunition chain the way a shot does — AMMO to the PROJ
-// it launches to the flight the two produce (issue #196, roadmap item 15.5).
-//
-// This is the probe that settles what PROJ's `gravity` member means. Neither
-// UESP nor xEdit states its unit, and the two candidate readings are
-// distinguishable by looking at the data: an acceleration in world units per
-// second squared would have to be in the hundreds to move an arrow at all,
-// while a dimensionless multiplier over world gravity would sit near one. The
-// `--census` report prints the distribution over every PROJ in the load order
-// so the answer is read rather than assumed, and the per-arrow rows print the
-// drop each reading predicts at a fixed distance so the difference is in front
-// of the reader instead of in a footnote.
-//
-// Read-only. Output is plain text and stable enough to grep.
+// `archery`: walks AMMO -> PROJ -> flight. It settles the unit of PROJ
+// `gravity`, which no spec states: an acceleration would be in the hundreds, a
+// multiplier over world gravity near one. `--census` prints the distribution.
 
 import Foundation
 import OpenSkyCombat
@@ -22,9 +11,8 @@ import OpenSkyGameData
 import OpenSkyPhysics
 
 enum ArcheryCommand {
-    /// The distance the per-arrow drop is reported at. A round number inside
-    /// `fVisibleNavmeshMoveDist`, so the figure is one a shot could actually
-    /// take.
+    /// Where the per-arrow drop is reported. It is inside
+    /// `fVisibleNavmeshMoveDist`, so a real shot can travel it.
     static let dropDistance: Float = 1000
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
@@ -54,24 +42,16 @@ enum ArcheryCommand {
 
     /// Every PROJ in the base plugin, keyed by raw FormID.
     private static func projectiles(in file: ESMFile) -> [UInt32: Projectile] {
-        guard
-            let group = file.topGroup(of: "PROJ"),
-            let children = try? group.children()
-        else { return [:] }
-        var decoded: [UInt32: Projectile] = [:]
-        for case let .record(record) in children where !record.isDeleted {
-            guard let projectile = try? Projectile(record: record) else { continue }
-            decoded[projectile.formID.rawValue] = projectile
+        var skipped = SkippedRecords()
+        let decoded = file.indexRecords(of: "PROJ", skipped: &skipped) {
+            try Projectile(record: $0)
         }
+        skipped.printWarnings()
         return decoded
     }
 
-    /// The distribution that settles the `gravity` unit question.
-    ///
-    /// Broken out by DATA `type`, because the whole-set figures do not settle
-    /// anything on their own: a handful of beam and cone records carry
-    /// enormous values in both members, and lumping them in with the arrows
-    /// hides the band the arrows actually sit in.
+    /// The `gravity` distribution per DATA `type`. Beam and cone records carry
+    /// huge values that would hide the arrow band in one set.
     private static func printCensus(_ projectiles: [UInt32: Projectile]) {
         for kind in Projectile.Kind.allCases {
             let matching = projectiles.values.filter { $0.kind == kind }
@@ -109,16 +89,15 @@ enum ArcheryCommand {
         projectiles: [UInt32: Projectile],
         filter: String?
     ) {
-        guard
-            let group = file.topGroup(of: "AMMO"),
-            let children = try? group.children()
-        else { return }
-        for case let .record(record) in children where !record.isDeleted {
-            guard
-                let ammo = try? Ammunition(record: record, localized: localized),
-                let link = ammo.projectile,
-                let projectile = projectiles[link.rawValue]
-            else { continue }
+        var skipped = SkippedRecords()
+        let ammunition = file.decodeRecords(of: "AMMO", skipped: &skipped) {
+            try Ammunition(record: $0, localized: localized)
+        }
+        skipped.printWarnings()
+        for ammo in ammunition {
+            guard let link = ammo.projectile, let projectile = projectiles[link.rawValue] else {
+                continue
+            }
             let editorID = ammo.fields.editorID ?? ammo.formID.description
             if let filter, !editorID.lowercased().contains(filter.lowercased()) {
                 continue

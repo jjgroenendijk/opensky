@@ -1,6 +1,5 @@
-// Sound record index and SOUN -> SNDR -> audio-file resolution. Track paths
-// become canonical VFS keys so callers can pass them directly to game-data
-// lookup without reproducing record-specific path rules.
+// SOUN, SNDR, and SNCT records, and SOUN -> SNDR -> audio-file resolution.
+// Track paths become VFS keys, so callers skip the path rules.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -23,16 +22,19 @@ nonisolated public final class SoundRecordStore {
     public let sounds: [UInt32: SoundMarker]
     public let descriptors: [UInt32: SoundDescriptor]
     public let categories: [UInt32: SoundCategory]
+    public let skippedRecords: SkippedRecords
 
     public init(file: ESMFile) {
-        sounds = Self.index(file, type: "SOUN") { try? SoundMarker(record: $0) }
-        descriptors = Self.index(file, type: "SNDR") {
-            try? SoundDescriptor(record: $0)
+        var skipped = SkippedRecords()
+        sounds = file.indexRecords(of: "SOUN", skipped: &skipped) { try SoundMarker(record: $0) }
+        descriptors = file.indexRecords(of: "SNDR", skipped: &skipped) {
+            try SoundDescriptor(record: $0)
         }
         let localized = (try? file.pluginHeader().isLocalized) ?? false
-        categories = Self.index(file, type: "SNCT") {
-            try? SoundCategory(record: $0, localized: localized)
+        categories = file.indexRecords(of: "SNCT", skipped: &skipped) {
+            try SoundCategory(record: $0, localized: localized)
         }
+        skippedRecords = skipped
     }
 
     public func sound(_ id: FormID) -> SoundMarker? {
@@ -58,14 +60,11 @@ nonisolated public final class SoundRecordStore {
         return resolved(sound: sound, descriptor: descriptor)
     }
 
-    /// Resolves a sound reference that may target a SNDR directly or reach it
-    /// via a SOUN legacy marker. activator/door/container sound fields store
-    /// raw FormIDs whose target type the decoder does not pin, so runtime
-    /// consumers route them through here. Throws `soundNotFound` when the
-    /// reference is neither a SOUN nor a SNDR.
+    /// Resolves a FormID that names either a SNDR or a SOUN marker. Activator,
+    /// door, and container sound fields do not say which. Throws `soundNotFound`
+    /// for anything else.
     public func resolveAny(_ id: FormID) throws -> ResolvedSound {
-        // Direct SNDR hit: synthesize a marker so the public shape stays
-        // consistent with the SOUN path.
+        // A direct SNDR gets a synthetic marker, so both paths return one shape.
         if let descriptor = descriptors[id.rawValue] {
             return resolved(
                 sound: SoundMarker(formID: id, editorID: nil, descriptor: id),
@@ -108,28 +107,8 @@ nonisolated public final class SoundRecordStore {
         )
     }
 
-    private static func index<Value>(
-        _ file: ESMFile,
-        type: FourCC,
-        decode: (ESMRecord) -> Value?
-    ) -> [UInt32: Value] {
-        var values: [UInt32: Value] = [:]
-        guard let group = file.topGroup(of: type), let children = try? group.children() else {
-            return values
-        }
-        for case let .record(record) in children where record.type == type {
-            if let value = decode(record) {
-                values[record.formID] = value
-            }
-        }
-        return values
-    }
-
-    /// Normalizes an SNDR ANAM filename into a VFS key. The Creation Kit also
-    /// writes separator-led `\Data\Sound\...` paths: the leading separator is
-    /// a Windows root-relative marker, not a volume, so VFS normalization can
-    /// strip it. A remaining `:` still identifies a drive or volume, while the
-    /// normalizer rejects `.` and `..` components before this point.
+    /// Normalizes an SNDR ANAM filename into a `sound\...` VFS key. A leading
+    /// separator is stripped; a `:` names a drive and is rejected.
     private static func canonicalSoundPath(_ track: String) -> String? {
         guard let normalized = try? VirtualFileSystem.normalize(track) else {
             return nil
@@ -137,8 +116,7 @@ nonisolated public final class SoundRecordStore {
         guard !normalized.contains(":") else {
             return nil
         }
-        // The Creation Kit writes both Sound\... and Data\Sound\... ANAM
-        // forms; VFS keys are relative to Data, so discard that outer root.
+        // VFS keys are relative to Data, so a `data\` prefix goes.
         if normalized.hasPrefix("data\\sound\\") {
             return String(normalized.dropFirst("data\\".count))
         }

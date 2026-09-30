@@ -9,9 +9,9 @@ nonisolated extension RecordTextDump {
     /// FACT: the identity and flag line, then the crime values, the rank table,
     /// the interfaction relations and the raw vendor block, each printed only
     /// when the record carries it.
-    public static func factionSummary(_ record: ESMRecord, _ localized: Bool) -> String? {
+    public static func factionSummary(_ record: ESMRecord, _ localized: Bool) throws -> String? {
         guard record.type == "FACT" else { return nil }
-        guard let faction = try? Faction(record: record, localized: localized) else { return nil }
+        let faction = try Faction(record: record, localized: localized)
         var lines = [
             "decoded FACT: editorID \(faction.editorID ?? "-"), "
                 + "name \(nameText(faction.name)), "

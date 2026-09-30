@@ -4,6 +4,7 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing
@@ -33,6 +34,14 @@ struct GlobalStoreTests {
         let store = try GlobalFixture.store(Self.records)
         #expect(store.sortedGlobals().compactMap(\.editorID)
             == ["GameHour", "TimeScale", "WeatherChanceRain"])
+    }
+
+    @Test func countsAMalformedGlobal() throws {
+        let store = try GlobalFixture.store(
+            Self.records + ESMFixture.malformedRecord("GLOB", formID: 0x0100_0803)
+        )
+        #expect(store.count == 3)
+        #expect(store.skippedRecords.count(of: "GLOB") == 1)
     }
 
     @Test func emptyStoreAnswersNothing() {

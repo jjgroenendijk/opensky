@@ -1,10 +1,5 @@
-// Satellite of RecordTextDump: the decoded-summary lines for the M12.1.1
-// inventory record families. Split out so `RecordTextDump.decodedSummary`
-// stays inside the strict-lint cyclomatic-complexity cap — its switch would
-// otherwise carry fifteen cases.
-//
-// Feeds both `openskycli record --type WEAP` and the Asset Browser detail
-// pane (docs/tools/preview-gui.md); one implementation, two surfaces.
+// Satellite of RecordTextDump: decoded-summary lines for the inventory record
+// types. A separate file keeps `decodedSummary` under the complexity cap.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -20,27 +15,25 @@ nonisolated extension RecordTextDump {
         localized: Bool,
         keywordContext: KeywordContext?,
         magicContext: MagicContext?
-    ) -> String? {
+    ) throws -> String? {
         switch record.type {
-        case "CONT": containerSummary(record: record, localized: localized)
-        case "MISC": miscSummary(record, localized, keywordContext)
-        case "BOOK": bookSummary(record, localized, keywordContext, magicContext)
-        case "ALCH": ingestibleSummary(record, localized, keywordContext, magicContext)
-        case "INGR": ingredientSummary(record, localized, keywordContext, magicContext)
-        case "WEAP": weaponSummary(record, localized, keywordContext, magicContext)
-        case "AMMO": ammunitionSummary(record, localized, keywordContext)
-        case "ARMO": armorSummary(record, localized, keywordContext, magicContext)
-        case "ARMA": armorAddonSummary(record: record)
-        case "PROJ": projectileSummary(record: record)
+        case "CONT": try containerSummary(record: record, localized: localized)
+        case "MISC": try miscSummary(record, localized, keywordContext)
+        case "BOOK": try bookSummary(record, localized, keywordContext, magicContext)
+        case "ALCH": try ingestibleSummary(record, localized, keywordContext, magicContext)
+        case "INGR": try ingredientSummary(record, localized, keywordContext, magicContext)
+        case "WEAP": try weaponSummary(record, localized, keywordContext, magicContext)
+        case "AMMO": try ammunitionSummary(record, localized, keywordContext)
+        case "ARMO": try armorSummary(record, localized, keywordContext, magicContext)
+        case "ARMA": try armorAddonSummary(record: record)
+        case "PROJ": try projectileSummary(record: record)
         default: nil
         }
     }
 
-    /// PROJ is not carryable and so does not share the inventory prefix; it is
-    /// summarized here anyway because the record an arrow points at is the one
-    /// a reader chasing an AMMO's `projectile` link wants next (issue #196).
-    private static func projectileSummary(record: ESMRecord) -> String? {
-        guard let projectile = try? Projectile(record: record) else { return nil }
+    /// PROJ is not an item, but it is what an AMMO `projectile` link points at.
+    private static func projectileSummary(record: ESMRecord) throws -> String? {
+        let projectile = try Projectile(record: record)
         let kind = projectile.kind.map { "\($0)" } ?? "unknown"
         return String(
             format: """
@@ -63,8 +56,8 @@ nonisolated extension RecordTextDump {
         _ localized: Bool,
         _ context: KeywordContext?,
         _ magicContext: MagicContext?
-    ) -> String? {
-        guard let armor = try? Armor(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let armor = try Armor(record: record, localized: localized)
         let slots = armor.bodyTemplate.map { "0x\(String($0.slots.rawValue, radix: 16))" } ?? "-"
         return "decoded ARMO: editorID \(armor.editorID ?? "-"), "
             + "value \(armor.itemValue.value), "
@@ -92,11 +85,9 @@ nonisolated extension RecordTextDump {
         return ", enchantment \(name)" + (charge.map { ", charge \($0)" } ?? "")
     }
 
-    /// ARMA's draw priorities are what equip-slot arbitration compares
-    /// (issue #178), so they are the point of this line — inspecting them on a
-    /// real record is how the DNAM layout was confirmed.
-    private static func armorAddonSummary(record: ESMRecord) -> String? {
-        guard let addon = try? ArmorAddon(record: record) else { return nil }
+    /// ARMA draw priorities are what equip-slot arbitration compares.
+    private static func armorAddonSummary(record: ESMRecord) throws -> String? {
+        let addon = try ArmorAddon(record: record)
         let slots = addon.bodyTemplate.map { "0x\(String($0.slots.rawValue, radix: 16))" } ?? "-"
         return "decoded ARMA: editorID \(addon.editorID ?? "-"), "
             + "slots \(slots), race \(addon.primaryRace?.description ?? "-"), "
@@ -106,10 +97,8 @@ nonisolated extension RecordTextDump {
             + "male model \(addon.maleModelPath ?? "-")"
     }
 
-    private static func containerSummary(record: ESMRecord, localized: Bool) -> String? {
-        guard let container = try? Container(record: record, localized: localized) else {
-            return nil
-        }
+    private static func containerSummary(record: ESMRecord, localized: Bool) throws -> String? {
+        let container = try Container(record: record, localized: localized)
         let entries = container.entries
             .prefix(8)
             .map { "\($0.item)x\($0.count)" }
@@ -124,8 +113,8 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: KeywordContext?
-    ) -> String? {
-        guard let item = try? MiscItem(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let item = try MiscItem(record: record, localized: localized)
         return "decoded MISC: " + shared(item.fields, item.itemValue, context)
     }
 
@@ -134,8 +123,8 @@ nonisolated extension RecordTextDump {
         _ localized: Bool,
         _ context: KeywordContext?,
         _ magicContext: MagicContext?
-    ) -> String? {
-        guard let book = try? Book(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let book = try Book(record: record, localized: localized)
         let teaches = switch book.teaches {
         case .nothing: "nothing"
         case let .skill(index): "skill \(ActorValueIdentity.description(of: index))"
@@ -150,8 +139,8 @@ nonisolated extension RecordTextDump {
         _ localized: Bool,
         _ context: KeywordContext?,
         _ magicContext: MagicContext?
-    ) -> String? {
-        guard let item = try? Ingestible(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let item = try Ingestible(record: record, localized: localized)
         return "decoded ALCH: " + shared(item.fields, item.itemValue, context)
             + ", " + effectText(item.effects, context: magicContext) + ", "
             + "flags 0x\(String(item.flags.rawValue, radix: 16))"
@@ -162,8 +151,8 @@ nonisolated extension RecordTextDump {
         _ localized: Bool,
         _ context: KeywordContext?,
         _ magicContext: MagicContext?
-    ) -> String? {
-        guard let item = try? Ingredient(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let item = try Ingredient(record: record, localized: localized)
         return "decoded INGR: " + shared(item.fields, item.itemValue, context)
             + ", " + effectText(item.effects, context: magicContext)
             + ", auto-calc value \(item.autoCalcValue)"
@@ -174,8 +163,8 @@ nonisolated extension RecordTextDump {
         _ localized: Bool,
         _ context: KeywordContext?,
         _ magicContext: MagicContext?
-    ) -> String? {
-        guard let weapon = try? Weapon(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let weapon = try Weapon(record: record, localized: localized)
         let animation = weapon.animationType.map { "\($0)" } ?? "unknown"
         let critical = weapon.criticalData.map { "\($0.damage)" } ?? "-"
         let criticalEffect = weapon.criticalData?.effect.map {
@@ -205,8 +194,8 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: KeywordContext?
-    ) -> String? {
-        guard let ammo = try? Ammunition(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let ammo = try Ammunition(record: record, localized: localized)
         let projectile = ammo.projectile.map(\.description) ?? "-"
         return "decoded AMMO: " + shared(ammo.fields, ammo.itemValue, context)
             + String(format: ", damage %.1f, projectile %@", ammo.damage, projectile)

@@ -56,7 +56,8 @@ enum CellCommand {
         for child in children {
             switch child {
             case let .record(record) where record.type == "WRLD":
-                let world = try? Worldspace(record: record, localized: localized)
+                let world = decodeOrWarn(record) { try Worldspace(record: $0, localized: localized)
+                }
                 matchedFormID = world?.editorID == editorID ? record.formID : nil
             case let .group(group)
                 where group.kind == .worldChildren && group.parentFormID == matchedFormID:
@@ -87,7 +88,10 @@ enum CellCommand {
             switch child {
             case let .record(record) where record.type == "CELL":
                 guard
-                    let cell = try? Cell(record: record, localized: localized),
+                    let cell = decodeOrWarn(
+                        record,
+                        using: { try Cell(record: $0, localized: localized) }
+                    ),
                     let grid = cell.grid, grid.x == x, grid.y == y
                 else { continue }
                 let children = cellChildren(following: index, in: children, formID: record.formID)

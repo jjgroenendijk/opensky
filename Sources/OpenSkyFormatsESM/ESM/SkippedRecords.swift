@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
 
 nonisolated public struct SkippedRecords: Equatable, Sendable {
     public struct Entry: Equatable, Sendable {
