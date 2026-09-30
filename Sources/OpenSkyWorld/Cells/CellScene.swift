@@ -36,7 +36,7 @@ nonisolated public struct PlacedDoor: Equatable, Sendable {
 }
 
 /// One built exterior cell, ready to render.
-nonisolated public struct CellScene {
+nonisolated public struct CellScene: Sendable {
     public let renderScene: RenderScene
     public let summary: CellLoadSummary
     /// World-space AABB over every drawn instance — nil when nothing drew.

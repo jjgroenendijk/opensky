@@ -69,7 +69,7 @@ nonisolated public struct GrassDrawInstance: Sendable {
     public let densityKey: Float
 }
 
-nonisolated public struct GrassDrawGroup {
+nonisolated public struct GrassDrawGroup: Sendable {
     public let mesh: RenderMesh
     public let material: RenderMaterial
     public fileprivate(set) var instances: [GrassDrawInstance]

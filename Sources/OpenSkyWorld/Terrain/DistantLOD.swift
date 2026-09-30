@@ -245,7 +245,7 @@ nonisolated public enum DistantLODSelection: Sendable {
     }
 }
 
-nonisolated public struct DistantLODScene {
+nonisolated public struct DistantLODScene: Sendable {
     public let renderScene: RenderScene
     public let assets: CellAssets
     public let blockCount: Int

@@ -4,9 +4,10 @@
 // skinning.
 
 import Foundation
-import Metal
+@preconcurrency import Metal
 import OpenSkyFormatsMesh
 import simd
+import Synchronization
 
 nonisolated public enum FaceMorphError: Error, Equatable {
     case vertexCountMismatch(tri: Int, mesh: Int)
@@ -69,11 +70,15 @@ nonisolated public enum FaceMorphComposer: Sendable {
     }
 }
 
-nonisolated public final class FaceMorphBuffer {
+nonisolated public final class FaceMorphBuffer: Sendable {
     public let buffer: MTLBuffer
     public let vertexCount: Int
     public let targets: [FaceMorphTarget]
-    public private(set) var currentDeltas: [MorphVertexDelta]
+    /// Written on the main actor after the build queue hands the buffer over.
+    private let deltas: Mutex<[MorphVertexDelta]>
+    public var currentDeltas: [MorphVertexDelta] {
+        deltas.withLock { $0 }
+    }
 
     public init(device: MTLDevice, tri: TRIFile, mesh: RenderMesh) throws {
         guard tri.baseVertices.count == mesh.vertexCount else {
@@ -82,10 +87,11 @@ nonisolated public final class FaceMorphBuffer {
             )
         }
         vertexCount = mesh.vertexCount
-        targets = FaceMorphComposer.targets(from: tri)
-        currentDeltas = FaceMorphComposer.compose(
-            targets: targets, weights: [:], vertexCount: vertexCount
-        )
+        let targets = FaceMorphComposer.targets(from: tri)
+        self.targets = targets
+        deltas = Mutex(FaceMorphComposer.compose(
+            targets: targets, weights: [:], vertexCount: mesh.vertexCount
+        ))
         let length = vertexCount * MorphVertexLayout.stride * Renderer.maxFramesInFlight
         guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
             throw FaceMorphError.bufferAllocationFailed
@@ -98,16 +104,17 @@ nonisolated public final class FaceMorphBuffer {
     }
 
     public func update(weights: [String: Float]) {
-        currentDeltas = FaceMorphComposer.compose(
+        let composed = FaceMorphComposer.compose(
             targets: targets, weights: weights, vertexCount: vertexCount
         )
+        deltas.withLock { $0 = composed }
     }
 
     public func prepare(slot: Int) {
-        buffer.contents().advanced(by: byteOffset(slot: slot)).copyMemory(
-            from: currentDeltas,
-            byteCount: vertexCount * MorphVertexLayout.stride
-        )
+        let destination = buffer.contents().advanced(by: byteOffset(slot: slot))
+        deltas.withLock {
+            destination.copyMemory(from: $0, byteCount: vertexCount * MorphVertexLayout.stride)
+        }
     }
 
     public func byteOffset(slot: Int) -> Int {

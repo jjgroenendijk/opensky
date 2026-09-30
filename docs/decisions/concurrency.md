@@ -51,9 +51,9 @@ numbers are an upper bound.
 
 Two changes follow from this table:
 
-- The cell build worker hands its scenes over in a lock without a compiler check, because
-  `CellScene` is not `Sendable`. [#675](https://github.com/jjgroenendijk/opensky/issues/675) makes
-  that handoff compiler-checked.
+- The cell build worker hands its scenes over in a checked `Mutex`, because `CellScene` is
+  `Sendable` ([cell streaming](/engine/cell-streaming.md)). The runner still shares its provider
+  with the main actor. [#678](https://github.com/jjgroenendijk/opensky/issues/678) splits it.
 - The Preview panel and the screenshot delay still use `Task.detached` and `DispatchQueue.main`.
   [#676](https://github.com/jjgroenendijk/opensky/issues/676) moves them to `@concurrent` functions
   and a main-actor `Task`.

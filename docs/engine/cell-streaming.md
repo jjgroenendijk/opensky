@@ -92,10 +92,23 @@ A queue was chosen over an actor:
   change to the caches.
 
 Only the result buffers, the set of pending coordinates, and the build counts cross between
-threads. The runner guards them with two locks. The counts and pending sets are `Sendable`
-values in a `Mutex`, so the compiler checks them. The result buffers hold cell scenes, which
-are not `Sendable`, so an `OSAllocatedUnfairLock` guards them without a compiler check. No lock
-goes into the caches. The main thread collects results once per frame.
+threads. The runner keeps them in two `Mutex` values, so the compiler checks both. No lock goes
+into the caches. The main thread collects results once per frame.
+
+A finished `CellScene` is `Sendable`. Two kinds of objects make that true:
+
+- **Shared GPU resources.** `RenderModel`, `RenderMaterial`, and `ActorAnimationClip` stay in
+  the build caches and are also held by resident scenes. They are immutable after the build
+  uploads them. Metal buffers and textures are safe to use from more than one thread, but the
+  SDK does not mark them `Sendable` yet. The files that store them in a `Sendable` type write
+  `@preconcurrency import Metal`.
+- **Per-cell playback objects.** Bone palettes on `RenderMesh`, `ParticlePlayback`,
+  `FaceMorphBuffer`, and the animation playbacks change every frame on the main actor. Each one
+  keeps that state in a `Mutex`. Only the main actor takes these locks, so they never wait.
+
+The runner is still `@unchecked Sendable` for one reason: the main actor keeps its own copy of
+the provider, which holds the same builder.
+[#678](https://github.com/jjgroenendijk/opensky/issues/678) splits the provider.
 
 ## Scheduling
 

@@ -13,7 +13,6 @@ import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState
-import os
 import Synchronization
 
 /// Builds one cell scene by grid coordinate. The single seam scene build
@@ -284,7 +283,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider, WeatherPr
 }
 
 /// One finished build handed back to the main-thread streamer.
-nonisolated public struct CellBuildResult {
+nonisolated public struct CellBuildResult: Sendable {
     public let coordinate: CellCoordinate
     public let result: Result<CellScene, any Error>
 
@@ -333,12 +332,12 @@ nonisolated public struct CellBuildMetric: Equatable, Sendable {
     }
 }
 
-nonisolated public struct DistantLODBuildResult {
+nonisolated public struct DistantLODBuildResult: Sendable {
     public let center: CellCoordinate
     public let result: Result<DistantLODScene?, any Error>
 }
 
-nonisolated public struct DoorTransitionBuildResult {
+nonisolated public struct DoorTransitionBuildResult: Sendable {
     public let sourceDoor: FormID
     public let result: Result<DoorTransition, any Error>
 }
@@ -382,8 +381,8 @@ nonisolated extension CellBuildRunning {
 }
 
 /// Builds cells one at a time on one serial queue, off the main thread.
-/// Unchecked `Sendable`: the provider and its scenes are not `Sendable`; they stay
-/// on `queue` until `results` hands a scene over (docs/engine/cell-streaming.md).
+/// Unchecked `Sendable` only for `provider`: the main actor keeps its own copy of the
+/// same value. Results are `Sendable` and cross in `results` (docs/engine/cell-streaming.md).
 nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @unchecked Sendable {
     nonisolated private struct Bookkeeping {
         /// Lets the fly-path gate prove each wanted cell built once.
@@ -405,8 +404,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
     private let provider: any CellSceneProvider
     private let queue: DispatchQueue
     private let bookkeeping = Mutex(Bookkeeping())
-    /// Holds scenes, which are not `Sendable`, so the compiler cannot check it.
-    private let results = OSAllocatedUnfairLock(uncheckedState: Results())
+    private let results = Mutex(Results())
 
     public init(
         provider: any CellSceneProvider,
@@ -426,7 +424,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
                 bookkeeping.withLock { $0.buildMetrics[coordinate] = metric }
             }
             let entry = CellBuildResult(coordinate: coordinate, result: result)
-            results.withLockUnchecked { $0.cells.append(entry) }
+            results.withLock { $0.cells.append(entry) }
         }
     }
 
@@ -448,7 +446,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
     }
 
     public func drainCompleted() -> [CellBuildResult] {
-        let out = results.withLockUnchecked {
+        let out = results.withLock {
             defer { $0.cells.removeAll(keepingCapacity: true) }
             return $0.cells
         }
@@ -478,13 +476,13 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
                 try provider.buildDistantLOD(center: center, hiddenCells: hiddenCells)
             }
             let entry = DistantLODBuildResult(center: center, result: result)
-            results.withLockUnchecked { $0.distantLOD.append(entry) }
+            results.withLock { $0.distantLOD.append(entry) }
         }
         return true
     }
 
     public func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
-        let out = results.withLockUnchecked {
+        let out = results.withLock {
             defer { $0.distantLOD.removeAll(keepingCapacity: true) }
             return $0.distantLOD
         }
@@ -500,12 +498,12 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
                 try provider.buildDoorTransition(from: sourceDoor, state: state)
             }
             let entry = DoorTransitionBuildResult(sourceDoor: sourceDoor, result: result)
-            results.withLockUnchecked { $0.doorTransitions.append(entry) }
+            results.withLock { $0.doorTransitions.append(entry) }
         }
     }
 
     public func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
-        let out = results.withLockUnchecked {
+        let out = results.withLock {
             defer { $0.doorTransitions.removeAll(keepingCapacity: true) }
             return $0.doorTransitions
         }

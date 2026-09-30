@@ -28,6 +28,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import Synchronization
 import Testing
 
 @MainActor
@@ -182,26 +183,39 @@ struct M17AcceptanceBudgetTests {
 /// A morph sink that records what a lip track asked for, and the high-water
 /// mark of how many weights one update wrote.
 nonisolated private final class LipSyncBudgetSink: LipMorphWeightApplying {
+    private struct Record {
+        var weights: [String: Float] = [:]
+        var maximumWeightCount = 0
+    }
+
     let actor = FormID(0x1720)
     let targetNames = ["Aah", "BigAah"]
-    private(set) var weights: [String: Float] = [:]
-    private(set) var maximumWeightCount = 0
+    private let record = Mutex(Record())
+
+    var weights: [String: Float] {
+        record.withLock { $0.weights }
+    }
+
+    var maximumWeightCount: Int {
+        record.withLock { $0.maximumWeightCount }
+    }
 
     @discardableResult
     func setLipWeights(_ weights: [String: Float]) -> Int {
-        self.weights = weights
-        maximumWeightCount = max(maximumWeightCount, weights.count)
+        record.withLock {
+            $0.weights = weights
+            $0.maximumWeightCount = max($0.maximumWeightCount, weights.count)
+        }
         return weights.count
     }
 
     @discardableResult
     func clearLipWeights() -> Int {
-        weights = [:]
+        record.withLock { $0.weights = [:] }
         return 1
     }
 
     func reset() {
-        weights = [:]
-        maximumWeightCount = 0
+        record.withLock { $0 = Record() }
     }
 }

@@ -3,6 +3,7 @@ import FormatsAnimationTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
+import Synchronization
 import Testing
 
 @Suite("Audio-clock lip-sync playback")
@@ -95,17 +96,21 @@ struct LipSyncPlaybackTests {
 nonisolated private final class LipMorphSink: LipMorphWeightApplying {
     let actor = FormID(0x14)
     let targetNames = ["Aah", "BigAah"]
-    private(set) var weights: [String: Float] = [:]
+    private let recorded = Mutex<[String: Float]>([:])
+
+    var weights: [String: Float] {
+        recorded.withLock { $0 }
+    }
 
     @discardableResult
     func setLipWeights(_ weights: [String: Float]) -> Int {
-        self.weights = weights
+        recorded.withLock { $0 = weights }
         return 1
     }
 
     @discardableResult
     func clearLipWeights() -> Int {
-        weights = [:]
+        recorded.withLock { $0 = [:] }
         return 1
     }
 }
