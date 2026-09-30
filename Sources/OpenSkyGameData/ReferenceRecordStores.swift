@@ -14,14 +14,25 @@ nonisolated public struct ResolvedEncounterZone: Equatable, Sendable {
 
 nonisolated public struct EncounterZoneStore: Sendable {
     private let index: RecordIndex
-    public private(set) var zones: [ResolvedFormID: ResolvedEncounterZone] = [:]
-    private var zonesByEditorID: [String: ResolvedEncounterZone] = [:]
+    private let table: ResolvedRecordTable<ResolvedEncounterZone>
+
+    public var zones: [ResolvedFormID: ResolvedEncounterZone] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex) {
         self.index = index
-        for id in index.orderedRecordIDs(of: "ECZN") {
-            add(id)
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["ECZN"],
+            decode: { try EncounterZone(record: $0.record) },
+            editorID: \.editorID,
+            resolve: { ResolvedEncounterZone(id: $0, zone: $1, sourcePlugin: $2) }
+        )
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -29,18 +40,15 @@ nonisolated public struct EncounterZoneStore: Sendable {
     }
 
     public func zone(_ id: ResolvedFormID) -> ResolvedEncounterZone? {
-        zones[index.canonicalMatch(id, in: zones)]
+        table.value(id)
     }
 
     public func zone(editorID: String) -> ResolvedEncounterZone? {
-        zonesByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedEncounterZone? {
-        guard case let .resolved(resolved) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return zone(resolved)
+        index.resolvedID(id, fromPlugin: pluginName).flatMap { zone($0) }
     }
 
     public func encounterZone(containing cell: Cell, fromPlugin pluginName: String)
@@ -56,24 +64,6 @@ nonisolated public struct EncounterZoneStore: Sendable {
         guard let raw = worldspace.encounterZone else { return nil }
         return resolve(raw, fromPlugin: pluginName)
     }
-
-    private mutating func add(_ id: ResolvedFormID) {
-        guard
-            case let .decoded(zone, sourcePlugin) = index.decode(
-                id,
-                using: EncounterZone.init(record:)
-            )
-        else { return }
-        let resolved = ResolvedEncounterZone(
-            id: id,
-            zone: zone,
-            sourcePlugin: sourcePlugin
-        )
-        zones[id] = resolved
-        if let editorID = zone.editorID {
-            zonesByEditorID[editorID.lowercased()] = resolved
-        }
-    }
 }
 
 nonisolated public struct ResolvedCollisionLayer: Equatable, Sendable {
@@ -85,14 +75,34 @@ nonisolated public struct ResolvedCollisionLayer: Equatable, Sendable {
 
 nonisolated public struct CollisionLayerStore: Sendable {
     private let index: RecordIndex
-    public private(set) var layers: [ResolvedFormID: ResolvedCollisionLayer] = [:]
-    private var layersByEditorID: [String: ResolvedCollisionLayer] = [:]
+    private let table: ResolvedRecordTable<ResolvedCollisionLayer>
+
+    public var layers: [ResolvedFormID: ResolvedCollisionLayer] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex) {
         self.index = index
-        for id in index.orderedRecordIDs(of: "COLL") {
-            add(id)
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["COLL"],
+            decode: { try CollisionLayer(record: $0.record, localized: $0.localized) },
+            editorID: \.editorID,
+            resolve: { id, layer, sourcePlugin in
+                ResolvedCollisionLayer(
+                    id: id,
+                    layer: layer,
+                    sourcePlugin: sourcePlugin,
+                    collidesWith: layer.collidesWith.compactMap {
+                        index.resolvedID($0, fromPlugin: sourcePlugin)
+                    }
+                )
+            }
+        )
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -100,18 +110,15 @@ nonisolated public struct CollisionLayerStore: Sendable {
     }
 
     public func layer(_ id: ResolvedFormID) -> ResolvedCollisionLayer? {
-        layers[index.canonicalMatch(id, in: layers)]
+        table.value(id)
     }
 
     public func layer(editorID: String) -> ResolvedCollisionLayer? {
-        layersByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedCollisionLayer? {
-        guard case let .resolved(resolved) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return layer(resolved)
+        index.resolvedID(id, fromPlugin: pluginName).flatMap { layer($0) }
     }
 
     public func collisionLayer(for projectile: Projectile, fromPlugin pluginName: String)
@@ -119,28 +126,6 @@ nonisolated public struct CollisionLayerStore: Sendable {
     {
         guard let raw = projectile.collisionLayer else { return nil }
         return resolve(raw, fromPlugin: pluginName)
-    }
-
-    private mutating func add(_ id: ResolvedFormID) {
-        guard
-            case let .decoded(layer, sourcePlugin) = index.decodeIndexed(
-                id,
-                using: { try CollisionLayer(record: $0.record, localized: $0.localized) }
-            )
-        else { return }
-        let links = layer.collidesWith.compactMap {
-            index.resolvedID($0, fromPlugin: sourcePlugin)
-        }
-        let resolved = ResolvedCollisionLayer(
-            id: id,
-            layer: layer,
-            sourcePlugin: sourcePlugin,
-            collidesWith: links
-        )
-        layers[id] = resolved
-        if let editorID = layer.editorID {
-            layersByEditorID[editorID.lowercased()] = resolved
-        }
     }
 }
 
@@ -158,15 +143,26 @@ nonisolated public struct ResolvedDefaultObjectEntry: Equatable, Sendable {
 
 nonisolated public struct DefaultObjectStore: Sendable {
     private let index: RecordIndex
-    public private(set) var records: [ResolvedFormID: ResolvedDefaultObjects] = [:]
+    private let table: ResolvedRecordTable<ResolvedDefaultObjects>
     public private(set) var entries: [DefaultObjectTag: ResolvedDefaultObjectEntry] = [:]
-    private var recordsByEditorID: [String: ResolvedDefaultObjects] = [:]
+    /// Counts every DOBJ definition that failed, because overrides merge by tag.
+    public private(set) var skippedRecords = SkippedRecords()
+
+    public var records: [ResolvedFormID: ResolvedDefaultObjects] {
+        table.values
+    }
 
     public init(index: RecordIndex) {
         self.index = index
-        for id in index.orderedRecordIDs(of: "DOBJ") {
-            addRecord(id)
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["DOBJ"],
+            decode: { try DefaultObjects(record: $0.record) },
+            editorID: { $0.editorID },
+            resolve: { _, record, sourcePlugin in
+                ResolvedDefaultObjects(record: record, sourcePlugin: sourcePlugin)
+            }
+        )
         for definition in index.definitions(of: "DOBJ") {
             merge(definition)
         }
@@ -177,11 +173,11 @@ nonisolated public struct DefaultObjectStore: Sendable {
     }
 
     public func defaultObjects(_ id: ResolvedFormID) -> ResolvedDefaultObjects? {
-        records[index.canonicalMatch(id, in: records)]
+        table.value(id)
     }
 
     public func defaultObjects(editorID: String) -> ResolvedDefaultObjects? {
-        recordsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func entry(tag name: String) -> ResolvedDefaultObjectEntry? {
@@ -193,23 +189,13 @@ nonisolated public struct DefaultObjectStore: Sendable {
         entry(tag: name)?.object
     }
 
-    private mutating func addRecord(_ id: ResolvedFormID) {
+    private mutating func merge(_ definition: IndexedRecord) {
         guard
-            case let .decoded(record, sourcePlugin) = index.decode(
-                id,
-                using: DefaultObjects.init(record:)
+            let decoded = skippedRecords.decode(
+                definition.record,
+                using: { try DefaultObjects(record: $0) }
             )
         else { return }
-        let resolved = ResolvedDefaultObjects(
-            record: record,
-            sourcePlugin: sourcePlugin
-        )
-        records[id] = resolved
-        recordsByEditorID[record.editorID.lowercased()] = resolved
-    }
-
-    private mutating func merge(_ definition: IndexedRecord) {
-        guard let decoded = try? DefaultObjects(record: definition.record) else { return }
         for entry in decoded.entries {
             entries[entry.tag] = ResolvedDefaultObjectEntry(
                 tag: entry.tag,
@@ -218,46 +204,5 @@ nonisolated public struct DefaultObjectStore: Sendable {
                 sourcePlugin: definition.sourcePlugin
             )
         }
-    }
-}
-
-nonisolated extension RecordIndex {
-    fileprivate func resolvedID(_ id: FormID?, fromPlugin pluginName: String)
-        -> ResolvedFormID?
-    {
-        guard
-            let id,
-            case let .resolved(resolved) = resolve(id, fromPlugin: pluginName)
-        else { return nil }
-        return resolved
-    }
-
-    fileprivate func orderedRecordIDs(of type: FourCC) -> [ResolvedFormID] {
-        records.keys
-            .filter { records[$0]?.record.type == type }
-            .sorted { left, right in
-                let leftSource = records[left]?.sourcePlugin ?? left.plugin
-                let rightSource = records[right]?.sourcePlugin ?? right.plugin
-                let leftPriority = priority(ofPlugin: leftSource)
-                let rightPriority = priority(ofPlugin: rightSource)
-                if leftPriority != rightPriority {
-                    return leftPriority < rightPriority
-                }
-                if left.plugin.caseInsensitiveCompare(right.plugin) != .orderedSame {
-                    return left.plugin.localizedCaseInsensitiveCompare(right.plugin)
-                        == .orderedAscending
-                }
-                return left.objectID < right.objectID
-            }
-    }
-
-    fileprivate func canonicalMatch(
-        _ id: ResolvedFormID,
-        in values: [ResolvedFormID: some Any]
-    ) -> ResolvedFormID {
-        values.keys.first {
-            $0.objectID == id.objectID
-                && $0.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        } ?? id
     }
 }

@@ -19,28 +19,26 @@ nonisolated public struct ResolvedEquipSlot: Equatable, Sendable {
 
 nonisolated public struct EquipSlotStore: Sendable {
     private let index: RecordIndex
+    private let table: ResolvedRecordTable<ResolvedEquipSlot>
+
     /// Every winning EQUP identity in the load order.
-    public private(set) var slots: [ResolvedFormID: ResolvedEquipSlot] = [:]
-    private var slotsByEditorID: [String: ResolvedEquipSlot] = [:]
+    public var slots: [ResolvedFormID: ResolvedEquipSlot] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "EQUP" else { continue }
-            guard
-                case let .decoded(slot, sourcePlugin) = index.decode(
-                    id,
-                    using: EquipSlot.init(record:)
-                ) else { continue }
-            let resolved = ResolvedEquipSlot(id: id, slot: slot, sourcePlugin: sourcePlugin)
-            slots[id] = resolved
-            if let editorID = slot.editorID {
-                slotsByEditorID[editorID.lowercased()] = resolved
-            }
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["EQUP"],
+            decode: { try EquipSlot(record: $0.record) },
+            editorID: \.editorID,
+            resolve: { ResolvedEquipSlot(id: $0, slot: $1, sourcePlugin: $2) }
+        )
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -48,21 +46,15 @@ nonisolated public struct EquipSlotStore: Sendable {
     }
 
     public func slot(_ id: ResolvedFormID) -> ResolvedEquipSlot? {
-        slots[id] ?? slots.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        table.value(id)
     }
 
     public func slot(editorID: String) -> ResolvedEquipSlot? {
-        slotsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolvedID
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedEquipSlot? {

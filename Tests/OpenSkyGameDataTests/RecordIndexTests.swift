@@ -85,11 +85,12 @@ struct RecordIndexTests {
         let undecodable = index.decode(id) { _ -> String in
             throw ESMError.malformed("all candidates rejected")
         }
-        guard case let .undecodable(failedID) = undecodable else {
+        guard case let .undecodable(failedID, error) = undecodable else {
             Issue.record("expected undecodable rather than missing")
             return
         }
         #expect(failedID == id)
+        #expect(String(describing: error).contains("all candidates rejected"))
 
         let absent = ResolvedFormID(plugin: "Base.esm", objectID: 999)
         let missing = index.decode(absent) { _ in "unused" }

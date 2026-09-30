@@ -22,8 +22,12 @@ nonisolated public final class DialogueStore: Sendable {
     /// a caller can resolve the FormIDs the records *point at*.
     public let resolver: FormIDResolver
 
-    /// DIAL, INFO or VTYP records whose field container could not be decoded.
-    public let skippedRecordCount: Int
+    /// DIAL, INFO or VTYP records that failed to decode.
+    public let skippedRecords: SkippedRecords
+
+    public var skippedRecordCount: Int {
+        skippedRecords.total
+    }
 
     public static let empty = DialogueStore(
         topics: [],
@@ -40,26 +44,27 @@ nonisolated public final class DialogueStore: Sendable {
         var topics: [DialogueTopic] = []
         var infosByTopic: [UInt32: [TopicInfo]] = [:]
         var voiceTypes: [VoiceType] = []
-        var skipped = 0
+        var skipped = SkippedRecords()
 
         if let top = file.topGroup(of: "DIAL"), let children = try? top.children() {
             for child in children {
                 switch child {
                 case let .record(record):
                     guard record.type == "DIAL", !record.isDeleted else { continue }
-                    guard let topic = try? DialogueTopic(record: record, localized: isLocalized)
-                    else {
-                        skipped += 1
-                        continue
+                    let topic = skipped.decode(record) {
+                        try DialogueTopic(record: $0, localized: isLocalized)
                     }
-                    topics.append(topic)
+                    topics.append(contentsOf: topic.map { [$0] } ?? [])
                 case let .group(group):
                     guard group.kind == .topicChildren, let parent = group.parentFormID else {
                         continue
                     }
-                    let result = Self.decodeInfos(in: group, localized: isLocalized)
-                    infosByTopic[parent, default: []].append(contentsOf: result.infos)
-                    skipped += result.skipped
+                    let infos = Self.decodeInfos(
+                        in: group,
+                        localized: isLocalized,
+                        skipped: &skipped
+                    )
+                    infosByTopic[parent, default: []].append(contentsOf: infos)
                 }
             }
         }
@@ -68,11 +73,8 @@ nonisolated public final class DialogueStore: Sendable {
             for case let .record(record) in children
                 where record.type == "VTYP" && !record.isDeleted
             {
-                guard let voice = try? VoiceType(record: record) else {
-                    skipped += 1
-                    continue
-                }
-                voiceTypes.append(voice)
+                let voice = skipped.decode(record) { try VoiceType(record: $0) }
+                voiceTypes.append(contentsOf: voice.map { [$0] } ?? [])
             }
         }
         self.init(
@@ -80,7 +82,7 @@ nonisolated public final class DialogueStore: Sendable {
             infosByTopic: infosByTopic,
             voiceTypes: voiceTypes,
             resolver: FormIDResolver(pluginName: pluginName, masters: header?.masters ?? []),
-            skippedRecordCount: skipped
+            skippedRecords: skipped
         )
     }
 
@@ -89,7 +91,7 @@ nonisolated public final class DialogueStore: Sendable {
         infosByTopic: [UInt32: [TopicInfo]],
         voiceTypes: [VoiceType],
         resolver: FormIDResolver,
-        skippedRecordCount: Int = 0
+        skippedRecords: SkippedRecords = SkippedRecords()
     ) {
         var topicsByFormID: [UInt32: DialogueTopic] = [:]
         var topicIDs: [String: UInt32] = [:]
@@ -128,7 +130,7 @@ nonisolated public final class DialogueStore: Sendable {
         voiceFormIDsByEditorID = voiceIDs
         keysByInfoFormID = infoKeys
         self.resolver = resolver
-        self.skippedRecordCount = skippedRecordCount
+        self.skippedRecords = skippedRecords
     }
 
     public var topicCount: Int {
@@ -187,18 +189,21 @@ nonisolated public final class DialogueStore: Sendable {
 
     private static func decodeInfos(
         in group: ESMGroup,
-        localized: Bool
-    ) -> (infos: [TopicInfo], skipped: Int) {
-        guard let children = try? group.children() else { return ([], 1) }
-        var infos: [TopicInfo] = []
-        var skipped = 0
-        for case let .record(record) in children where record.type == "INFO" && !record.isDeleted {
-            guard let info = try? TopicInfo(record: record, localized: localized) else {
-                skipped += 1
-                continue
-            }
-            infos.append(info)
+        localized: Bool,
+        skipped: inout SkippedRecords
+    ) -> [TopicInfo] {
+        let children: [ESMGroup.Child]
+        do {
+            children = try group.children()
+        } catch {
+            skipped.note("INFO", error: error)
+            return []
         }
-        return (infos, skipped)
+        var infos: [TopicInfo] = []
+        for case let .record(record) in children where record.type == "INFO" && !record.isDeleted {
+            let info = skipped.decode(record) { try TopicInfo(record: $0, localized: localized) }
+            infos.append(contentsOf: info.map { [$0] } ?? [])
+        }
+        return infos
     }
 }

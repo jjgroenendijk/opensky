@@ -62,16 +62,25 @@ nonisolated public struct ResolvedRelationship: Equatable, Sendable {
 
 nonisolated public struct RelationshipStore: Sendable {
     private let index: RecordIndex
-    public private(set) var relationships: [ResolvedFormID: ResolvedRelationship] = [:]
-    public private(set) var associationTypes: [ResolvedFormID: ResolvedAssociationType] = [:]
+    private let relationshipTable: ResolvedRecordTable<ResolvedRelationship>
+    private let associationTypeTable: ResolvedRecordTable<ResolvedAssociationType>
     /// How many pairs were named by more than one record. Vanilla authors each
-    /// pair once; a load order that does not is a fact worth reporting rather
-    /// than a fault, and the load-order winner is the one kept.
+    /// pair once; the load-order winner is the one kept.
     public private(set) var duplicatePairCount = 0
-    private var relationshipsByEditorID: [String: ResolvedRelationship] = [:]
-    private var associationTypesByEditorID: [String: ResolvedAssociationType] = [:]
     private var byPair: [String: ResolvedRelationship] = [:]
     private var byActor: [ResolvedFormID: [ResolvedRelationship]] = [:]
+
+    public var relationships: [ResolvedFormID: ResolvedRelationship] {
+        relationshipTable.values
+    }
+
+    public var associationTypes: [ResolvedFormID: ResolvedAssociationType] {
+        associationTypeTable.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        relationshipTable.skipped.merging(associationTypeTable.skipped)
+    }
 
     /// Every relationship the load order carries, ordered by identity so a
     /// caller that prints or counts them gets the same answer on every run.
@@ -85,16 +94,36 @@ nonisolated public struct RelationshipStore: Sendable {
 
     public init(index: RecordIndex) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        // ASTP first: a relationship joins its association type when it is
-        // added, so the types have to be in place before the RELA pass.
-        for id in orderedIDs where index.records[id]?.record.type == "ASTP" {
-            addAssociationType(id)
-        }
-        for id in orderedIDs where index.records[id]?.record.type == "RELA" {
-            addRelationship(id)
+        // ASTP first: a relationship joins its association type as it is built.
+        let types = ResolvedRecordTable(
+            index: index,
+            types: ["ASTP"],
+            decode: { try AssociationType(record: $0.record) },
+            editorID: \.editorID,
+            resolve: { id, type, _ in ResolvedAssociationType(id: id, associationType: type) }
+        )
+        associationTypeTable = types
+        relationshipTable = ResolvedRecordTable(
+            index: index,
+            types: ["RELA"],
+            decode: { try Relationship(record: $0.record) },
+            editorID: \.editorID,
+            resolve: { id, relationship, sourcePlugin in
+                ResolvedRelationship(
+                    id: id,
+                    relationship: relationship,
+                    sourcePlugin: sourcePlugin,
+                    parent: index.resolvedID(relationship.parent, fromPlugin: sourcePlugin),
+                    child: index.resolvedID(relationship.child, fromPlugin: sourcePlugin),
+                    associationType: index.resolvedID(
+                        relationship.associationType,
+                        fromPlugin: sourcePlugin
+                    ).flatMap { types.value($0) }
+                )
+            }
+        )
+        for resolved in relationshipTable.orderedValues {
+            addToPairIndexes(resolved, parent: resolved.parent, child: resolved.child)
         }
     }
 
@@ -103,19 +132,19 @@ nonisolated public struct RelationshipStore: Sendable {
     }
 
     public func relationship(_ id: ResolvedFormID) -> ResolvedRelationship? {
-        relationships[canonicalMatch(id, in: relationships)]
+        relationshipTable.value(id)
     }
 
     public func relationship(editorID: String) -> ResolvedRelationship? {
-        relationshipsByEditorID[editorID.lowercased()]
+        relationshipTable.value(editorID: editorID)
     }
 
     public func associationType(_ id: ResolvedFormID) -> ResolvedAssociationType? {
-        associationTypes[canonicalMatch(id, in: associationTypes)]
+        associationTypeTable.value(id)
     }
 
     public func associationType(editorID: String) -> ResolvedAssociationType? {
-        associationTypesByEditorID[editorID.lowercased()]
+        associationTypeTable.value(editorID: editorID)
     }
 
     /// The relationship between two actor bases, in either argument order. The
@@ -144,10 +173,7 @@ nonisolated public struct RelationshipStore: Sendable {
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolved) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolved
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedRelationship? {
@@ -162,47 +188,6 @@ nonisolated public struct RelationshipStore: Sendable {
             return "[UNRESOLVED] \(id)"
         }
         return resolved.editorID ?? resolved.id.description
-    }
-
-    private mutating func addAssociationType(_ id: ResolvedFormID) {
-        guard
-            case let .decoded(type, _) = index.decode(
-                id,
-                using: AssociationType.init(record:)
-            )
-        else { return }
-        let resolved = ResolvedAssociationType(id: id, associationType: type)
-        associationTypes[id] = resolved
-        if let editorID = type.editorID {
-            associationTypesByEditorID[editorID.lowercased()] = resolved
-        }
-    }
-
-    private mutating func addRelationship(_ id: ResolvedFormID) {
-        guard
-            case let .decoded(relationship, sourcePlugin) = index.decode(
-                id,
-                using: Relationship.init(record:)
-            )
-        else { return }
-        let parent = resolvedID(relationship.parent, fromPlugin: sourcePlugin)
-        let child = resolvedID(relationship.child, fromPlugin: sourcePlugin)
-        let resolved = ResolvedRelationship(
-            id: id,
-            relationship: relationship,
-            sourcePlugin: sourcePlugin,
-            parent: parent,
-            child: child,
-            associationType: resolvedID(
-                relationship.associationType,
-                fromPlugin: sourcePlugin
-            ).flatMap { associationType($0) }
-        )
-        relationships[id] = resolved
-        if let editorID = relationship.editorID {
-            relationshipsByEditorID[editorID.lowercased()] = resolved
-        }
-        addToPairIndexes(resolved, parent: parent, child: child)
     }
 
     /// Adds one decoded relationship to the pair and per-actor indexes. A
@@ -224,11 +209,6 @@ nonisolated public struct RelationshipStore: Sendable {
             duplicatePairCount += 1
         }
         byPair[key] = resolved
-    }
-
-    private func resolvedID(_ id: FormID?, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard let id else { return nil }
-        return resolvedID(id, fromPlugin: pluginName)
     }
 
     /// Identity is plugin-plus-object-id compared case-insensitively, matching

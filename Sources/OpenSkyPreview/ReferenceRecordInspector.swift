@@ -1,5 +1,5 @@
-// Resolved text for the Asset Browser's M18 record rows. The same formatter
-// feeds the CLI record command, keeping link honesty out of the AppKit layer.
+// Resolved text for the Asset Browser's reference record rows, with the
+// stores' skipped-record counts. The CLI record command uses it too.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -22,6 +22,8 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
     private let defaultObjects: DefaultObjectStore
     private let factions: FactionStore
     private let keywordUsage: [ResolvedFormID: [String]]
+    /// Records the inspector's stores dropped, so malformed data shows in the Asset Browser.
+    public let skippedRecords: SkippedRecords
 
     public init(index: RecordIndex) {
         self.index = index
@@ -42,6 +44,13 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
         defaultObjects = DefaultObjectStore(index: index)
         factions = FactionStore(index: index)
         keywordUsage = Self.buildKeywordUsage(index: index, keywords: keywordStore)
+        skippedRecords = [
+            keywords.skippedRecords, formLists.skippedRecords, magicEffects.skippedRecords,
+            spells.skippedRecords, enchantments.skippedRecords, shouts.skippedRecords,
+            equipSlots.skippedRecords, perks.skippedRecords, locations.skippedRecords,
+            encounterZones.skippedRecords, collisionLayers.skippedRecords,
+            defaultObjects.skippedRecords, factions.skippedRecords
+        ].reduce(SkippedRecords()) { $0.merging($1) }
     }
 
     public func text(for preview: PreviewRecord) -> String {
@@ -65,13 +74,6 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
             sections.insert(resolved, at: 2)
         }
         return sections.joined(separator: "\n\n")
-    }
-
-    private func metadata(_ preview: PreviewRecord) -> String {
-        let identity = preview.resolvedID?.description ?? resolvedIdentity(preview).description
-        return "resolved inspector:\n"
-            + "  winner plugin: \(preview.sourcePlugin)\n"
-            + "  identity: \(identity)"
     }
 
     private func resolvedDetail(_ preview: PreviewRecord) -> String? {
@@ -271,6 +273,24 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
         return usage.mapValues {
             $0.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
         }
+    }
+}
+
+nonisolated extension ReferenceRecordInspector {
+    private func metadata(_ preview: PreviewRecord) -> String {
+        let identity = preview.resolvedID?.description ?? resolvedIdentity(preview).description
+        let type = preview.record.type
+        var lines = [
+            "resolved inspector:",
+            "  winner plugin: \(preview.sourcePlugin)",
+            "  identity: \(identity)",
+            "  skipped \(type) records: \(skippedRecords.count(of: type))",
+            "  skipped records, all types: \(skippedRecords.total)"
+        ]
+        if let first = skippedRecords.byType[type]?.firstError {
+            lines.append("  first \(type) skip: \(first)")
+        }
+        return lines.joined(separator: "\n")
     }
 }
 

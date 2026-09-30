@@ -56,19 +56,24 @@ nonisolated public final class WeatherStore {
     public let worldspaceClimate: [UInt32: FormID]
     /// WRLD editor ID -> FormID, to resolve the pinned worldspace by name.
     public let worldspaceByEditorID: [String: UInt32]
+    public let skippedRecords: SkippedRecords
 
     public init(file: ESMFile) {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
-        weathers = Self.index(file, "WTHR") { try? Weather(record: $0) }
-        climates = Self.index(file, "CLMT") { try? Climate(record: $0) }
-        regions = Self.index(file, "REGN") { try? Region(record: $0) }
+        var skipped = SkippedRecords()
+        weathers = Self.index(file, "WTHR", &skipped) { try Weather(record: $0) }
+        climates = Self.index(file, "CLMT", &skipped) { try Climate(record: $0) }
+        regions = Self.index(file, "REGN", &skipped) { try Region(record: $0) }
         var climateByWorld: [UInt32: FormID] = [:]
         var worldByEditorID: [String: UInt32] = [:]
         if let top = file.topGroup(of: "WRLD"), let children = try? top.children() {
             for case let .record(record) in children where record.type == "WRLD" {
-                guard let world = try? Worldspace(record: record, localized: localized) else {
-                    continue
-                }
+                guard
+                    let world = skipped.decode(
+                        record,
+                        using: { try Worldspace(record: $0, localized: localized) }
+                    )
+                else { continue }
                 if let climate = world.climate, !climate.isNull {
                     climateByWorld[record.formID] = climate
                 }
@@ -79,6 +84,7 @@ nonisolated public final class WeatherStore {
         }
         worldspaceClimate = climateByWorld
         worldspaceByEditorID = worldByEditorID
+        skippedRecords = skipped
     }
 
     public func weather(_ id: FormID) -> Weather? {
@@ -116,14 +122,15 @@ nonisolated public final class WeatherStore {
     private static func index<Value>(
         _ file: ESMFile,
         _ type: FourCC,
-        _ decode: (ESMRecord) -> Value?
+        _ skipped: inout SkippedRecords,
+        _ decode: (ESMRecord) throws -> Value
     ) -> [UInt32: Value] {
         var out: [UInt32: Value] = [:]
         guard let top = file.topGroup(of: type), let children = try? top.children() else {
             return out
         }
         for case let .record(record) in children where record.type == type {
-            if let value = decode(record) {
+            if let value = skipped.decode(record, using: decode) {
                 out[record.formID] = value
             }
         }

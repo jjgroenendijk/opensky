@@ -14,31 +14,25 @@ nonisolated public struct ResolvedKeyword: Equatable, Sendable {
 
 nonisolated public struct KeywordStore: Sendable {
     private let index: RecordIndex
-    public private(set) var keywords: [ResolvedFormID: ResolvedKeyword] = [:]
-    private var keywordsByEditorID: [String: ResolvedKeyword] = [:]
+    private let table: ResolvedRecordTable<ResolvedKeyword>
+
+    public var keywords: [ResolvedFormID: ResolvedKeyword] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            Self.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "KYWD" else { continue }
-            guard
-                case let .decoded(keyword, sourcePlugin) = index.decode(
-                    id,
-                    using: Keyword.init(record:)
-                ) else { continue }
-            let resolved = ResolvedKeyword(
-                id: id,
-                keyword: keyword,
-                sourcePlugin: sourcePlugin
-            )
-            keywords[id] = resolved
-            if let editorID = keyword.editorID {
-                keywordsByEditorID[editorID.lowercased()] = resolved
-            }
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["KYWD"],
+            decode: { try Keyword(record: $0.record) },
+            editorID: \.editorID,
+            resolve: { ResolvedKeyword(id: $0, keyword: $1, sourcePlugin: $2) }
+        )
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -46,21 +40,15 @@ nonisolated public struct KeywordStore: Sendable {
     }
 
     public func keyword(_ id: ResolvedFormID) -> ResolvedKeyword? {
-        keywords[id] ?? keywords.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        table.value(id)
     }
 
     public func keyword(editorID: String) -> ResolvedKeyword? {
-        keywordsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolvedID
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedKeyword? {
@@ -87,23 +75,5 @@ nonisolated public struct KeywordStore: Sendable {
     /// visible as its raw FormID instead of disappearing from the dump.
     public func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
         resolve(id, fromPlugin: pluginName)?.keyword.editorID ?? "[UNRESOLVED] \(id)"
-    }
-
-    private static func precedes(
-        _ left: ResolvedFormID,
-        _ right: ResolvedFormID,
-        index: RecordIndex
-    ) -> Bool {
-        let leftSource = index.records[left]?.sourcePlugin ?? left.plugin
-        let rightSource = index.records[right]?.sourcePlugin ?? right.plugin
-        let leftPriority = index.priority(ofPlugin: leftSource)
-        let rightPriority = index.priority(ofPlugin: rightSource)
-        if leftPriority != rightPriority {
-            return leftPriority < rightPriority
-        }
-        if left.plugin.caseInsensitiveCompare(right.plugin) != .orderedSame {
-            return left.plugin.localizedCaseInsensitiveCompare(right.plugin) == .orderedAscending
-        }
-        return left.objectID < right.objectID
     }
 }

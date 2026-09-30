@@ -11,18 +11,13 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
     public let effect: MagicEffect
     public let sourcePlugin: String
 
-    /// Runtime identity of this record, which is how an active effect names the
-    /// MGEF it is an application of (issue #469).
+    /// Runtime identity of this record, which is how an active effect names its MGEF.
     public var key: ReferenceKey {
         ReferenceKey(resolved: id)
     }
 
-    /// This effect's KWDA entries as runtime identities, resolved through the
-    /// store the record came out of (issue #474).
-    ///
-    /// A keyword the load order no longer carries is dropped rather than
-    /// guessed at, which makes the answer a subset of what is authored and
-    /// never a superset.
+    /// This effect's KWDA entries as runtime identities. A keyword the load
+    /// order does not carry is dropped, so the answer is never a superset.
     public func keywordKeys(in store: MagicEffectStore) -> Set<ReferenceKey> {
         Set(effect.keywords.keywords.compactMap { keyword in
             store.resolvedID(keyword, fromPlugin: sourcePlugin).map(ReferenceKey.init(resolved:))
@@ -40,37 +35,31 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
 
 nonisolated public struct MagicEffectStore: Sendable {
     private let index: RecordIndex
-    public private(set) var effects: [ResolvedFormID: ResolvedMagicEffect] = [:]
-    private var effectsByEditorID: [String: ResolvedMagicEffect] = [:]
-    /// The same records under the identity the active-effect component keys
-    /// them by, so a stored effect goes back to its record without walking
-    /// every entry (issue #474).
-    private var effectsByKey: [ReferenceKey: ResolvedMagicEffect] = [:]
+    private let table: ResolvedRecordTable<ResolvedMagicEffect>
+    /// The same records under the identity the active-effect component keys them by.
+    private let effectsByKey: [ReferenceKey: ResolvedMagicEffect]
+
+    public var effects: [ResolvedFormID: ResolvedMagicEffect] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "MGEF" else { continue }
-            guard
-                case let .decoded(effect, sourcePlugin) = index.decodeIndexed(
-                    id,
-                    using: Self.decode
-                )
-            else { continue }
-            let resolved = ResolvedMagicEffect(
-                id: id,
-                effect: effect,
-                sourcePlugin: sourcePlugin
-            )
-            effects[id] = resolved
-            effectsByKey[resolved.key] = resolved
-            if let editorID = effect.editorID {
-                effectsByEditorID[editorID.lowercased()] = resolved
-            }
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["MGEF"],
+            decode: Self.decode,
+            editorID: \.editorID,
+            resolve: { ResolvedMagicEffect(id: $0, effect: $1, sourcePlugin: $2) }
+        )
+        effectsByKey = Dictionary(
+            table.values.values.map { ($0.key, $0) },
+            uniquingKeysWith: { _, later in later }
+        )
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -78,10 +67,7 @@ nonisolated public struct MagicEffectStore: Sendable {
     }
 
     public func effect(_ id: ResolvedFormID) -> ResolvedMagicEffect? {
-        effects[id] ?? effects.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        table.value(id)
     }
 
     /// The record behind a stored runtime identity, or nil when this load order
@@ -92,14 +78,11 @@ nonisolated public struct MagicEffectStore: Sendable {
     }
 
     public func effect(editorID: String) -> ResolvedMagicEffect? {
-        effectsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolvedID
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedMagicEffect? {

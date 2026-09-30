@@ -28,15 +28,13 @@ nonisolated public enum RecordIndexLookup: Sendable {
 nonisolated public enum RecordIndexDecodeResult<Value> {
     case decoded(Value, sourcePlugin: String)
     case missing(ResolvedFormID)
-    case undecodable(ResolvedFormID)
+    case undecodable(ResolvedFormID, error: any Error)
 }
 
 extension RecordIndexDecodeResult: Sendable where Value: Sendable {}
 
 nonisolated public struct RecordIndex: Sendable {
-    /// Reference data loaded once for stores and the Asset Browser. MGEF,
-    /// SPEL, SCRL and ENCH join the M18 families because magic links need the
-    /// same cross-plugin override semantics and inspector context.
+    /// Reference data loaded once for the stores and the Asset Browser.
     public static let referenceRecordTypes: Set<FourCC> = [
         "KYWD", "FLST", "LCTN", "LCRT", "ECZN", "AACT", "COLL", "DOBJ", "MGEF",
         "SPEL", "SCRL", "ENCH", "SHOU", "WOOP", "LVSP", "DUAL", "EQUP", "AVIF",
@@ -101,37 +99,48 @@ nonisolated public struct RecordIndex: Sendable {
         return .record(record)
     }
 
-    /// Decodes highest priority first, retaining an earlier valid definition
-    /// when a later type-specific body is malformed.
+    /// Decodes highest priority first, keeping an earlier valid definition when
+    /// a later body is malformed. `.undecodable` carries the winner's error.
     public func decode<Value>(
         _ id: ResolvedFormID,
         using decodeRecord: (ESMRecord) throws -> Value
     ) -> RecordIndexDecodeResult<Value> {
-        let canonical = canonicalize(id)
-        guard let definitions = candidates[canonical] else { return .missing(canonical) }
-        for definition in definitions.reversed() {
-            if let value = try? decodeRecord(definition.record) {
-                return .decoded(value, sourcePlugin: definition.sourcePlugin)
-            }
-        }
-        return .undecodable(canonical)
+        decodeIndexed(id) { try decodeRecord($0.record) }
     }
 
-    /// Variant for decoders that also need owning-plugin metadata such as the
-    /// TES4 localized flag. Candidate fallback stays paired with the metadata
-    /// of the definition being attempted.
+    /// Variant for decoders that also need the owning plugin's metadata, such as
+    /// the TES4 localized flag.
     public func decodeIndexed<Value>(
         _ id: ResolvedFormID,
         using decodeRecord: (IndexedRecord) throws -> Value
     ) -> RecordIndexDecodeResult<Value> {
         let canonical = canonicalize(id)
         guard let definitions = candidates[canonical] else { return .missing(canonical) }
+        var firstError: (any Error)?
         for definition in definitions.reversed() {
-            if let value = try? decodeRecord(definition) {
+            do {
+                let value = try decodeRecord(definition)
                 return .decoded(value, sourcePlugin: definition.sourcePlugin)
+            } catch {
+                firstError = firstError ?? error
             }
         }
-        return .undecodable(canonical)
+        return .undecodable(canonical, error: firstError ?? ESMError.malformed("no definition"))
+    }
+
+    /// Winning identities of `types`, lowest plugin priority first, so the last
+    /// write into an editor-ID map is the definition the load order prefers.
+    public func orderedRecordIDs(of types: Set<FourCC>) -> [ResolvedFormID] {
+        records.keys
+            .filter { records[$0].map { types.contains($0.record.type) } ?? false }
+            .sorted { RecordStoreOrdering.precedes($0, $1, index: self) }
+    }
+
+    public func resolvedID(_ id: FormID?, fromPlugin pluginName: String) -> ResolvedFormID? {
+        guard let id, case let .resolved(resolved) = resolve(id, fromPlugin: pluginName) else {
+            return nil
+        }
+        return resolved
     }
 
     public func count(of type: FourCC) -> Int {

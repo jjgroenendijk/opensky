@@ -85,15 +85,19 @@ nonisolated public struct EquipmentCatalog: Sendable {
     /// How many WEAP records fell back on `defaultWeaponHands` because their
     /// ETYP was absent or named no EQUP in this plugin.
     public let unresolvedEquipTypes: Int
+    /// ARMO and WEAP skips here, plus the EQUP skips of `equipSlots`.
+    public let skippedRecords: SkippedRecords
 
     public init(
         items: [UInt32: EquippableItem],
         equipSlots: EquipSlotTable = EquipSlotTable(),
-        unresolvedEquipTypes: Int = 0
+        unresolvedEquipTypes: Int = 0,
+        skippedRecords: SkippedRecords = SkippedRecords()
     ) {
         self.items = items
         self.equipSlots = equipSlots
         self.unresolvedEquipTypes = unresolvedEquipTypes
+        self.skippedRecords = skippedRecords.merging(equipSlots.skippedRecords)
     }
 
     /// Indexes the ARMO and WEAP top groups against the plugin's own EQUP
@@ -104,15 +108,26 @@ nonisolated public struct EquipmentCatalog: Sendable {
         let equipSlots = EquipSlotTable(file: file)
         var items: [UInt32: EquippableItem] = [:]
         var unresolved = 0
+        var skipped = SkippedRecords()
         for record in records(of: "ARMO", in: file) {
-            guard let armor = try? Armor(record: record, localized: localized) else { continue }
+            guard
+                let armor = skipped.decode(
+                    record,
+                    using: { try Armor(record: $0, localized: localized) }
+                )
+            else { continue }
             items[armor.formID.rawValue] = EquippableItem(
                 occupancy: EquipmentOccupancy(slots: armor.bodyTemplate?.slots ?? BodySlots()),
                 modelPath: nil
             )
         }
         for record in records(of: "WEAP", in: file) {
-            guard let weapon = try? Weapon(record: record, localized: localized) else { continue }
+            guard
+                let weapon = skipped.decode(
+                    record,
+                    using: { try Weapon(record: $0, localized: localized) }
+                )
+            else { continue }
             let resolved = equipSlots.hands(of: weapon.equipType)
             if resolved == nil {
                 unresolved += 1
@@ -125,7 +140,8 @@ nonisolated public struct EquipmentCatalog: Sendable {
         return EquipmentCatalog(
             items: items,
             equipSlots: equipSlots,
-            unresolvedEquipTypes: unresolved
+            unresolvedEquipTypes: unresolved,
+            skippedRecords: skipped
         )
     }
 

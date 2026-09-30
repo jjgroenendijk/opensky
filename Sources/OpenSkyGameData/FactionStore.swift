@@ -1,10 +1,6 @@
-// Load-order-wide FACT lookup above RecordIndex, in the LocationStore shape:
-// the winning record per identity, lookup by identity and by editor id, and
-// the joins a consumer would otherwise redo — an actor's memberships resolved
-// through the template chain, and a relation resolved to the faction it names.
-//
-// Nothing here decides hostility, crime response or trade. Those read this
-// store and are the rest of milestone M21.
+// Load-order-wide FACT lookup above RecordIndex, plus the joins consumers
+// would otherwise redo: memberships and relations resolved to factions.
+// Hostility, crime and trade rules read this store; none live here.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -43,14 +39,20 @@ nonisolated public struct ResolvedFactionMembership: Equatable, Sendable {
 
 nonisolated public struct FactionStore: Sendable {
     private let index: RecordIndex
-    public private(set) var factions: [ResolvedFormID: ResolvedFaction] = [:]
-    private var factionsByEditorID: [String: ResolvedFaction] = [:]
-    private var factionsByKey: [ReferenceKey: ResolvedFaction] = [:]
-    /// The faction the `GFAC` ("Guard Faction") default object names (issue
-    /// #505), which is how the engine tells a guard from any other member of a
-    /// crime faction. Observed on this install: it names `IsGuardFaction`, and
-    /// every vanilla guard is a member. Nil for a load order with no `DOBJ` or
-    /// no `GFAC` entry, where nobody is a guard.
+    private let table: ResolvedRecordTable<ResolvedFaction>
+    private let factionsByKey: [ReferenceKey: ResolvedFaction]
+
+    public var factions: [ResolvedFormID: ResolvedFaction] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
+
+    /// The faction the `GFAC` default object names, which tells a guard from
+    /// other crime-faction members. Vanilla names `IsGuardFaction`. Nil without
+    /// a `GFAC` entry, where nobody is a guard.
     public private(set) var guardFaction: ResolvedFaction?
 
     /// Every faction the load order carries, ordered by identity so a caller
@@ -73,16 +75,21 @@ nonisolated public struct FactionStore: Sendable {
 
     public init(index: RecordIndex) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "FACT" else { continue }
-            add(id)
-        }
+        let table = ResolvedRecordTable(
+            index: index,
+            types: ["FACT"],
+            decode: { try Faction(record: $0.record, localized: $0.localized) },
+            editorID: \.editorID,
+            resolve: { ResolvedFaction(id: $0, faction: $1, sourcePlugin: $2) }
+        )
+        self.table = table
+        factionsByKey = Dictionary(
+            table.values.values.map { (ReferenceKey(resolved: $0.id), $0) },
+            uniquingKeysWith: { _, later in later }
+        )
         guardFaction = DefaultObjectStore(index: index)
             .object(tag: "GFAC")
-            .flatMap { faction($0) }
+            .flatMap { table.value($0) }
     }
 
     /// The guard faction as the runtime identity memberships are keyed by.
@@ -98,34 +105,25 @@ nonisolated public struct FactionStore: Sendable {
     }
 
     public func faction(_ id: ResolvedFormID) -> ResolvedFaction? {
-        factions[canonicalMatch(id)]
+        table.value(id)
     }
 
     public func faction(editorID: String) -> ResolvedFaction? {
-        factionsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
-    /// The faction one runtime identity names, which is what the faction
-    /// runtime looks every stored membership up through (issue #503).
-    ///
-    /// A separate index rather than a `ResolvedFormID` round trip because
-    /// `ReferenceKey` lowercases the plugin name while `ResolvedFormID` keeps
-    /// whatever spelling the MAST field used, so the two are not
-    /// interchangeable dictionary keys.
+    /// The faction one runtime identity names. A separate index, because
+    /// `ReferenceKey` lowercases the plugin name and `ResolvedFormID` does not.
     public func faction(key: ReferenceKey) -> ResolvedFaction? {
         factionsByKey[key]
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolved) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolved
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
-    /// One of `faction`'s own links — `STOL`, `JAIL` — as the runtime identity
-    /// of what it names, resolved through the plugin that defined the faction,
-    /// whose master list the link's load-order byte indexes (issue #505).
+    /// One of `faction`'s own links, such as `STOL` or `JAIL`, as a runtime
+    /// identity, resolved through the plugin that defined the faction.
     public func linkKey(_ link: FormID?, of faction: ResolvedFaction) -> ReferenceKey? {
         guard let link, let id = resolvedID(link, fromPlugin: faction.sourcePlugin) else {
             return nil
@@ -180,34 +178,6 @@ nonisolated public struct FactionStore: Sendable {
     ) -> LString? {
         guard let faction = membership.faction, membership.rank >= 0 else { return nil }
         return faction.faction.rankTitle(UInt32(membership.rank), female: female)
-    }
-
-    private mutating func add(_ id: ResolvedFormID) {
-        guard
-            case let .decoded(faction, sourcePlugin) = index.decodeIndexed(
-                id,
-                using: { try Faction(record: $0.record, localized: $0.localized) }
-            )
-        else { return }
-        let resolved = ResolvedFaction(id: id, faction: faction, sourcePlugin: sourcePlugin)
-        factions[id] = resolved
-        factionsByKey[ReferenceKey(resolved: id)] = resolved
-        if let editorID = faction.editorID {
-            factionsByEditorID[editorID.lowercased()] = resolved
-        }
-    }
-
-    /// Identity is plugin-plus-object-id compared case-insensitively, matching
-    /// how `LocationStore` matches a key that was built from a differently
-    /// cased plugin name.
-    private func canonicalMatch(_ id: ResolvedFormID) -> ResolvedFormID {
-        if factions[id] != nil {
-            return id
-        }
-        return factions.keys.first {
-            $0.objectID == id.objectID
-                && $0.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        } ?? id
     }
 }
 

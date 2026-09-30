@@ -113,38 +113,46 @@ nonisolated public struct ActorTemplateResolver: Sendable {
     /// so the spell baseline must expand them. Defaulted, so older fixtures still
     /// build.
     public let leveledSpells: [UInt32: LeveledList]
+    public let skippedRecords: SkippedRecords
 
     public init(
         actors: [UInt32: ActorBase],
         leveledActors: [UInt32: LeveledList],
-        leveledSpells: [UInt32: LeveledList] = [:]
+        leveledSpells: [UInt32: LeveledList] = [:],
+        skippedRecords: SkippedRecords = SkippedRecords()
     ) {
         self.actors = actors
         self.leveledActors = leveledActors
         self.leveledSpells = leveledSpells
+        self.skippedRecords = skippedRecords
     }
 
     /// Indexes every decodable NPC_ + LVLN top-group record. Undecodable
     /// records drop out of the index and later resolve as missing targets.
     public static func build(from file: ESMFile, localized: Bool) -> ActorTemplateResolver {
         var actors: [UInt32: ActorBase] = [:]
+        var skipped = SkippedRecords()
         if let top = file.topGroup(of: "NPC_"), let children = try? top.children() {
             for case let .record(record) in children {
                 guard record.type == "NPC_", !record.isDeleted else { continue }
-                actors[record.formID] = try? ActorBase(record: record, localized: localized)
+                actors[record.formID] = skipped.decode(record) {
+                    try ActorBase(record: $0, localized: localized)
+                }
             }
         }
         return ActorTemplateResolver(
             actors: actors,
-            leveledActors: leveledLists(in: file, of: "LVLN"),
-            leveledSpells: leveledLists(in: file, of: "LVSP")
+            leveledActors: leveledLists(in: file, of: "LVLN", skipped: &skipped),
+            leveledSpells: leveledLists(in: file, of: "LVSP", skipped: &skipped),
+            skippedRecords: skipped
         )
     }
 
     /// Every decodable leveled list of one record type, by raw FormID.
     private static func leveledLists(
         in file: ESMFile,
-        of type: FourCC
+        of type: FourCC,
+        skipped: inout SkippedRecords
     ) -> [UInt32: LeveledList] {
         var lists: [UInt32: LeveledList] = [:]
         guard let top = file.topGroup(of: type), let children = try? top.children() else {
@@ -152,7 +160,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         }
         for case let .record(record) in children {
             guard record.type == type, !record.isDeleted else { continue }
-            lists[record.formID] = try? LeveledList(record: record)
+            lists[record.formID] = skipped.decode(record) { try LeveledList(record: $0) }
         }
         return lists
     }

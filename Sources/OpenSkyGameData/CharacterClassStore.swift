@@ -1,19 +1,5 @@
-// Load-order-wide CLAS lookup above `RecordIndex` (issue #496, roadmap item
-// 20.3), in the shape `MagicEffectStore` and `PerkStore` already use: winning
-// record per identity, editor-id lookup, and links resolved relative to the
-// plugin that carries them.
-//
-// It replaces `CharacterClassIndex`, which was a plain `[UInt32: CharacterClass]`
-// map built from one file — the last record store in the engine not built on
-// `RecordIndex`, and therefore the last one with no cross-plugin override
-// handling at all. A patch plugin that rebalances `EncBandit`'s class was
-// silently ignored: the index keyed raw FormIDs inside one file, so a later
-// plugin's CLAS could not win over an earlier one's, and it could not even be
-// seen unless it lived in the same file as the actors.
-//
-// What a class contributes is documented with the record
-// (`Sources/OpenSkyFormatsESM/ESM/Records/CharacterClass.swift`) and with the
-// derivation it feeds (docs/engine/actor-values.md).
+// Load-order-wide CLAS lookup above `RecordIndex`, so a patch plugin's class
+// override wins. What a class contributes is in docs/engine/actor-values.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -39,40 +25,33 @@ nonisolated public struct ResolvedCharacterClass: Equatable, Sendable {
 }
 
 nonisolated public struct CharacterClassStore: Equatable, Sendable {
-    public private(set) var classes: [ResolvedFormID: ResolvedCharacterClass] = [:]
-    private var classesByEditorID: [String: ResolvedCharacterClass] = [:]
+    private let table: ResolvedRecordTable<ResolvedCharacterClass>
     private let index: RecordIndex?
 
+    public var classes: [ResolvedFormID: ResolvedCharacterClass] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
+
     /// The empty store, which is what a synthetic scene, a benchmark and a unit
-    /// test drive the derivation with: every actor then spreads no class points,
-    /// exactly as one naming no class does.
+    /// test drive the derivation with: every actor then spreads no class points.
     public init() {
         index = nil
+        table = ResolvedRecordTable()
     }
 
     public init(index: RecordIndex) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "CLAS" else { continue }
-            guard
-                case let .decoded(decoded, sourcePlugin) = index.decodeIndexed(
-                    id,
-                    using: Self.decode
-                )
-            else { continue }
-            let resolved = ResolvedCharacterClass(
-                id: id,
-                characterClass: decoded,
-                sourcePlugin: sourcePlugin
-            )
-            classes[id] = resolved
-            if let editorID = decoded.editorID {
-                classesByEditorID[editorID.lowercased()] = resolved
-            }
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["CLAS"],
+            decode: Self.decode,
+            editorID: \.editorID,
+            resolve: { ResolvedCharacterClass(id: $0, characterClass: $1, sourcePlugin: $2) }
+        )
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -94,15 +73,11 @@ nonisolated public struct CharacterClassStore: Equatable, Sendable {
     }
 
     public func characterClass(editorID: String) -> ResolvedCharacterClass? {
-        classesByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard
-            let index,
-            case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName)
-        else { return nil }
-        return resolvedID
+        index?.resolvedID(id, fromPlugin: pluginName)
     }
 
     /// The class a record in `pluginName` names, resolved through the load

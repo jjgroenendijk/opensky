@@ -66,6 +66,8 @@ struct ReferenceRecordCatalogTests {
         let keywordPreview = try previewRecord(in: catalog, type: .keyword)
         let keywordText = inspector.text(for: keywordPreview)
         #expect(keywordText.contains("winner plugin: Base.esm"))
+        #expect(keywordText.contains("skipped KYWD records: 0"))
+        #expect(inspector.skippedRecords.isEmpty)
         #expect(keywordText.contains("users (1):"))
         #expect(keywordText.contains("TestItem — Base.esm"))
 

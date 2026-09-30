@@ -37,34 +37,28 @@ nonisolated public struct EnchantmentStore: Sendable {
     public static let chainCap = 32
 
     private let index: RecordIndex
+    private let table: ResolvedRecordTable<ResolvedEnchantment>
+
     /// Every winning ENCH identity in the load order.
-    public private(set) var enchantments: [ResolvedFormID: ResolvedEnchantment] = [:]
-    private var enchantmentsByEditorID: [String: ResolvedEnchantment] = [:]
+    public var enchantments: [ResolvedFormID: ResolvedEnchantment] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex, effects: MagicEffectStore) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "ENCH" else { continue }
-            guard
-                case let .decoded(decoded, sourcePlugin) = index.decodeIndexed(
-                    id,
-                    using: Self.decode
-                )
-            else { continue }
-            let resolved = Self.join(
-                id: id,
-                record: decoded,
-                sourcePlugin: sourcePlugin,
-                effects: effects
-            )
-            enchantments[id] = resolved
-            if let editorID = decoded.editorID {
-                enchantmentsByEditorID[editorID.lowercased()] = resolved
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["ENCH"],
+            decode: Self.decode,
+            editorID: \.editorID,
+            resolve: { id, decoded, sourcePlugin in
+                Self.join(id: id, record: decoded, sourcePlugin: sourcePlugin, effects: effects)
             }
-        }
+        )
     }
 
     public init(index: RecordIndex) {
@@ -76,21 +70,15 @@ nonisolated public struct EnchantmentStore: Sendable {
     }
 
     public func enchantment(_ id: ResolvedFormID) -> ResolvedEnchantment? {
-        enchantments[id] ?? enchantments.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        table.value(id)
     }
 
     public func enchantment(editorID: String) -> ResolvedEnchantment? {
-        enchantmentsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolvedID
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedEnchantment? {
