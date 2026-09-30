@@ -1,26 +1,14 @@
-// The `Game` family (issue #172), which is one function so far.
-//
-// `Game` is where the vanilla script corpus reaches for anything session-wide,
-// and almost all of it — quests, the menu stack, the camera, difficulty — has
-// no engine behind it yet. Only `GetPlayer` is installed, because it is the
-// one call that can be answered honestly today and the one every other family
-// needs: it is how a script names the activator it was handed.
+// The `Game` family. Only `GetPlayer` is installed: the rest of `Game` needs
+// session systems that do not exist yet.
 
 import Foundation
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
-    /// `Actor GetPlayer()` — a global function, so it arrives with no receiver.
-    ///
-    /// The player has no plugin record in this engine and no script instance,
-    /// so the handle is the opaque one `PapyrusWorldRuntime` mints for
-    /// `ReferenceKey.player` and caches for the session. Two calls therefore
-    /// return the same handle, and comparing it against an `akActionRef` in
-    /// script code answers "did the player do this?" correctly.
-    ///
-    /// The returned handle names the player but resolves to no `Actor` script,
-    /// so an `Actor`-only method called on it dispatches as an unimplemented
-    /// native and is tallied — visibly missing rather than silently wrong.
+    /// `Actor GetPlayer()`, a global function with no receiver. It returns the
+    /// session-stable opaque handle for `ReferenceKey.player`, so `akActionRef ==
+    /// Game.GetPlayer()` works. The handle has no `Actor` script, so an `Actor`
+    /// method on it is tallied as unimplemented rather than faked.
     public static func installGame(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Game",

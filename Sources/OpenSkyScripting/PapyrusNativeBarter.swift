@@ -1,14 +1,7 @@
-// `Actor.ShowBarterMenu` (issue #506, roadmap item 21.7): the native the load
-// order's merchant dialogue calls to open trade. On the local install 32 of the
-// 39 scripted INFOs conditioned on `JobMerchantFaction` run a fragment that
-// calls it on the speaker, so implementing it is what puts barter behind the
-// vanilla dialogue rather than behind a separate control.
-//
-// "Shows the barter menu for this actor." — `Function ShowBarterMenu()
-// native` (<https://ck.uesp.net/wiki/ShowBarterMenu_-_Actor>). The page notes
-// that the original shows an empty menu for an actor that is not loaded or
-// whose merchant conditions fail; this engine refuses instead and says why,
-// because an empty shop reads as a vendor with nothing to sell.
+// `Actor.ShowBarterMenu` (<https://ck.uesp.net/wiki/ShowBarterMenu_-_Actor>), which
+// merchant dialogue fragments call to open trade. Where the game shows an empty
+// menu, this engine refuses with a reason, because an empty shop looks like a
+// vendor with nothing to sell.
 //
 // Documented in docs/engine/vendor-factions.md and docs/engine/papyrus-activation.md.
 

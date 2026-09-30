@@ -1,36 +1,8 @@
-// The spell natives (issue #474, roadmap item 19.11): the `Actor` spell family
-// and `Spell.Cast`, over 19.6's active effects and 19.7's spellbook.
+// The spell natives: the `Actor` spell family and `Spell.Cast`, chosen by call
+// counts over the vanilla scripts. None is latent. A missing world or spellbook
+// is a failure with a reason.
 //
-// Policy is the `Actor` family's, unchanged: `self` arrives as
-// `PapyrusNativeCall.receiver` and becomes a `ReferenceKey`; a headless
-// runtime, a handle with no world identity, or a session with no spellbook is a
-// failure with a reason rather than a guess, and the interpreter substitutes
-// the call's declared default so the script keeps running.
-//
-// The eleven registered here were chosen by counting what the shipped scripts
-// actually call, not by taste: `PexNativeCensus` over the vanilla corpus ranks
-// `Actor.RemoveSpell` at 311 call sites, `Actor.AddSpell` at 278 and
-// `Spell.Cast` at 277, and the per-native counts are in
-// docs/engine/papyrus-spell-natives.md.
-//
-// ## Latency
-//
-// None of these is latent. The Creation Kit wiki declares every one of them a
-// plain `native` with no `Global`/latent marker, and says of the cast outright:
-// "This function casts the spell instantaneously."
-// (<https://ck.uesp.net/wiki/Cast_-_Spell>) So each returns on the same call
-// the script made and none of them suspends the frame.
-//
-// ## What is deliberately absent, and why
-//
-// `Actor.DoCombatSpellApply` (26 call sites) is a combat-AI request rather than
-// a cast: it asks the actor's combat controller to work the spell into what it
-// is already doing, and 19.10's caster AI chooses its own spells. Registering
-// it as an immediate cast would make an NPC fire through its own decision loop.
-// `Spell.RemoteCast`, `Spell.Preload` and `Spell.Unload` are absent with the
-// asset lifecycle they name. The whole `ActiveMagicEffect` script is absent
-// because no script archetype MGEF runs yet (tallied in 19.6), so there is no
-// receiver for one of its methods to be about.
+// Documented in docs/engine/papyrus-spell-natives.md, with the natives left out on purpose.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -47,26 +19,8 @@ extension PapyrusNativeFunctions {
 
     /// `bool AddSpell(Spell akSpell, bool abVerbose = true)`,
     /// `bool RemoveSpell(Spell akSpell)` and `bool HasSpell(Form akForm)`.
-    ///
-    /// "Adds the specified spell to this actor ... True on success."
-    /// (<https://ck.uesp.net/wiki/AddSpell_-_Actor>) `abVerbose` only suppresses
-    /// a UI message, and there is no spell-added message to suppress yet, so
-    /// the argument is accepted and ignored rather than refused.
-    ///
-    /// "Removes the specified spell from this actor."
-    /// (<https://ck.uesp.net/wiki/RemoveSpell_-_Actor>) The same page records a
-    /// vanilla quirk OpenSky does not reproduce: a spell inherited from the
-    /// ActorBase or Race is not actually removed but "will still return true in
-    /// such cases". Here a spell granted from an actor's `SPLO` list is an
-    /// ordinary known spell and removing it removes it. Reproducing a
-    /// documented lie would make every correct script wrong.
-    ///
-    /// "Checks to see if this actor has the given Spell or Shout ... This
-    /// function only detects whether the actor knows a spell."
-    /// (<https://ck.uesp.net/wiki/HasSpell_-_Actor>) A shout is a SHOU record
-    /// no store here carries, so it answers false rather than failing: "this
-    /// actor does not know that" is the honest answer for a record the
-    /// spellbook can never contain.
+    /// `abVerbose` is ignored, because there is no spell-added message. A shout is
+    /// never in the spellbook, so `HasSpell` answers false for one.
     private static func installSpellKnowledge(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -98,17 +52,9 @@ extension PapyrusNativeFunctions {
 
     /// `EquipSpell(Spell akSpell, int aiSource)`,
     /// `UnequipSpell(Spell akSpell, int aiSource)` and
-    /// `Spell GetEquippedSpell(int aiSource)`.
-    ///
-    /// "Forces the actor to equip the specified spell in the specified source
-    /// ... 0: Left hand, 1: Right hand, 2: Voice (use this for Powers)"
-    /// (<https://ck.uesp.net/wiki/EquipSpell_-_Actor>), and the same numbering
-    /// on the unequip and read pages. OpenSky readies spells into two hands and
-    /// has no voice slot, so sources 2 and 3 are a tallied failure rather than
-    /// a silent no-op.
-    ///
-    /// The equip returns nothing in Papyrus; the bridge still answers whether
-    /// it happened, so a refusal is counted rather than invisible.
+    /// `Spell GetEquippedSpell(int aiSource)`. There is no voice slot, so sources
+    /// 2 and 3 are tallied failures. The bridge reports each equip, so a refusal
+    /// is counted.
     private static func installSpellEquip(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
@@ -155,20 +101,9 @@ extension PapyrusNativeFunctions {
 
     /// `bool HasMagicEffect(MagicEffect akEffect)`,
     /// `bool HasMagicEffectWithKeyword(Keyword akKeyword)`,
-    /// `bool DispelSpell(Spell akSpell)` and `DispelAllSpells()`.
-    ///
-    /// "Checks to see if this actor is currently being affected by the given
-    /// Magic Effect." (<https://ck.uesp.net/wiki/HasMagicEffect_-_Actor>) and
-    /// the keyword variant on
-    /// (<https://ck.uesp.net/wiki/HasMagicEffectWithKeyword_-_Actor>). Both
-    /// pages note the vanilla answer ignores whether the effect's own condition
-    /// holds; OpenSky stores only effects that were applied, so it answers the
-    /// narrower question — the same difference the condition functions carry,
-    /// recorded in docs/engine/condition-functions.md.
-    ///
-    /// "Will dispel all magic effects from this actor that came from the given
-    /// spell ... True if at least one effect was dispelled from the actor."
-    /// (<https://ck.uesp.net/wiki/DispelSpell_-_Actor>)
+    /// `bool DispelSpell(Spell akSpell)` and `DispelAllSpells()`. Only applied
+    /// effects are stored, so the checks answer a narrower question than the game
+    /// (docs/engine/condition-functions.md).
     private static func installSpellEffects(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
@@ -206,17 +141,9 @@ extension PapyrusNativeFunctions {
         })
     }
 
-    /// `Cast(ObjectReference akSource, ObjectReference akTarget = None)`.
-    ///
-    /// "Casts this spell from the specified object reference, optionally toward
-    /// a target object reference ... This function casts the spell
-    /// instantaneously." (<https://ck.uesp.net/wiki/Cast_-_Spell>) The receiver
-    /// is the SPEL rather than the caster, which is why this is the one native
-    /// here that reads its subject out of `call.receiver` and its actor out of
-    /// argument 0.
-    ///
-    /// `akTarget` is genuinely optional and defaults to `None`, in which case
-    /// the cast follows the caster's own aim the way a player's does.
+    /// `Cast(ObjectReference akSource, ObjectReference akTarget = None)`
+    /// (<https://ck.uesp.net/wiki/Cast_-_Spell>). The receiver is the SPEL and the
+    /// caster is argument 0. With no target, the cast follows the caster's aim.
     private static func installSpellCast(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Spell",

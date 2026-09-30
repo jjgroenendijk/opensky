@@ -1,31 +1,9 @@
-// The `Quest` native family (issue #322): the script side of the #182 quest
-// state and the #322 stage fragments.
+// The `Quest` native family. The receiver resolves to the QUST record's
+// `ReferenceKey`, and each native is one `PapyrusWorldBridge` call; `QuestRuntime`
+// owns the stage and objective rules. Both the native and the `Quest.psc`
+// wrapper names are registered, because either can arrive.
 //
-// A quest reaches script code the same way a `GlobalVariable` does — as a VMAD
-// object property, or as `self` inside a quest script — so the receiver handle
-// resolves to the QUST record's `ReferenceKey` and everything below is one
-// `PapyrusWorldBridge` call. Nothing here writes state directly; the seam in
-// `PapyrusWorldStateBridgeQuests.swift` runs every mutation through
-// `QuestRuntime`, so the stage and objective rules stay in one place.
-//
-// Signatures and semantics come from the Creation Kit wiki's Quest script
-// reference, cited per function. Two names exist for three of these because
-// the shipped `Quest.psc` declares a native and a thin wrapper around it —
-// `SetCurrentStageID`/`SetStage`, `GetCurrentStageID`/`GetStage` and
-// `IsStageDone`/`GetStageDone`. Both spellings are registered because both can
-// arrive: with the install's `Quest.pex` in the library the wrapper runs as
-// ordinary bytecode and calls the native, and without it the wrapper name
-// itself dispatches here. They are the same function either way.
-//
-// Deliberately absent, and left to the unimplemented tally rather than stubbed:
-// `Reset` (needs alias fill, #183), `IsObjectiveDisplayed`/`IsObjectiveCompleted`
-// (the state exists, but the vanilla returns also fold in objective *targets*,
-// which #183 owns), `IsStarting`/`IsStopping` (both name the latent window
-// between a start or stop request and its completion, and OpenSky's mutations
-// are immediate, so there is no honest moment for either to be true),
-// `GetAlias`/`GetAliasedRef` and `SetActive` (#183 and M17). A quest script
-// calling one of those is visibly missing in the Scripts readout rather than
-// silently wrong.
+// Documented in docs/engine/papyrus-quests.md, with the natives left out on purpose.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -41,13 +19,9 @@ extension PapyrusNativeFunctions {
     }
 
     /// `bool IsRunning()`, `bool IsCompleted()`, `int GetCurrentStageID()` and
-    /// `bool IsStageDone(int aiStage)`, with their wrapper spellings.
-    ///
-    /// `GetCurrentStageID` "obtains the highest completed stage in this quest"
-    /// (<https://ck.uesp.net/wiki/GetCurrentStageID_-_Quest>) and
-    /// `IsStageDone` "obtains whether the specified stage is done or not"
-    /// (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>) — both of which
-    /// `QuestRuntimeState` already answers by those rules.
+    /// `bool IsStageDone(int aiStage)`, with their wrapper spellings. Each is
+    /// answered by `QuestRuntimeState`
+    /// (<https://ck.uesp.net/wiki/GetCurrentStageID_-_Quest>).
     private static func installQuestReads(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -68,14 +42,8 @@ extension PapyrusNativeFunctions {
         }
     }
 
-    /// `bool Start()`, `Stop()` and `CompleteQuest()`.
-    ///
-    /// `Start` returns "true if the quest was successfully started"
-    /// (<https://ck.uesp.net/wiki/Start_-_Quest>); `Stop` "stops the quest"
-    /// (<https://ck.uesp.net/wiki/Stop_-_Quest>) and `CompleteQuest` "flags
-    /// this quest as completed"
-    /// (<https://ck.uesp.net/wiki/CompleteQuest_-_Quest>), neither returning
-    /// anything.
+    /// `bool Start()`, `Stop()` and `CompleteQuest()`
+    /// (<https://ck.uesp.net/wiki/Start_-_Quest>). Only `Start` returns a value.
     private static func installQuestRunState(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -92,15 +60,9 @@ extension PapyrusNativeFunctions {
         }
     }
 
-    /// `bool SetCurrentStageID(int aiStage)` and its `SetStage` wrapper, which
-    /// return true when the stage exists and was set, false otherwise
-    /// (<https://ck.uesp.net/wiki/SetStage_-_Quest>).
-    ///
-    /// A stage the quest does not declare is `QuestError.unknownStage`, which
-    /// the shared handler turns into a native failure. The interpreter then
-    /// substitutes the call's declared default — false for this signature —
-    /// so the script sees exactly the documented return while the tally still
-    /// records that something asked for a stage that does not exist.
+    /// `bool SetCurrentStageID(int aiStage)` and its `SetStage` wrapper
+    /// (<https://ck.uesp.net/wiki/SetStage_-_Quest>). An unknown stage is a native
+    /// failure, so the script gets the documented false and the tally records it.
     private static func installQuestStages(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -113,14 +75,8 @@ extension PapyrusNativeFunctions {
     }
 
     /// `SetObjectiveDisplayed(int aiObjective, bool abDisplayed = true, bool
-    /// abForce = false)` and the completed and failed setters, each taking its
-    /// own Bool and clearing none of the others
-    /// (<https://ck.uesp.net/wiki/SetObjectiveDisplayed_-_Quest> and
-    /// siblings).
-    ///
-    /// `abForce` is accepted and ignored: it forces the journal to re-announce
-    /// an objective that was already displayed, which is a UI effect the
-    /// journal (#184) owns and which changes no stored state.
+    /// abForce = false)` and the completed and failed setters, each changing only
+    /// its own flag. `abForce` only re-announces in the journal UI, so it is ignored.
     private static func installQuestObjectives(
         into registry: inout PapyrusNativeRegistry
     ) {

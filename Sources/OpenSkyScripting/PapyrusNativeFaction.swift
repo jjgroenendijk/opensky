@@ -69,14 +69,10 @@ extension PapyrusNativeFunctions {
             }
         })
 
-        // "Gets this actor's rank in the specified faction ... -2 if the Actor is
-        // not in the faction. -1 if the Actor is in the faction, with a rank set
-        // to -1." — `int Function GetFactionRank(Faction akFaction) native`
-        // (<https://ck.uesp.net/wiki/GetFactionRank_-_Actor>)
-        //
-        // The -2 is applied here rather than in the seam, so the condition
-        // function of the same name can keep answering the -1 *its* page
-        // documents from the same stored rank.
+        // "-2 if the Actor is not in the faction. -1 if the Actor is in the faction,
+        // with a rank set to -1." (<https://ck.uesp.net/wiki/GetFactionRank_-_Actor>)
+        // The -2 is applied here, so the condition function of the same name can
+        // still answer the -1 its own page documents.
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "GetFactionRank"
@@ -121,13 +117,8 @@ extension PapyrusNativeFunctions {
         into registry: inout PapyrusNativeRegistry
     ) {
         // "Gets the relationship rank between this actor and another ... 4: Lover
-        // ... -4: Archnemesis" —
-        // `int Function GetRelationshipRank(Actor akOther) native`
-        // (<https://ck.uesp.net/wiki/GetRelationshipRank_-_Actor>)
-        //
-        // A pair nothing names is a refusal rather than 0, because 0 is
-        // Acquaintance and a script comparing `>= 1` would read an unknown pair
-        // as a deliberate indifference the records never authored.
+        // ... -4: Archnemesis" (<https://ck.uesp.net/wiki/GetRelationshipRank_-_Actor>)
+        // An unknown pair is a refusal, not 0: 0 is Acquaintance, a real rank.
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "GetRelationshipRank"
@@ -199,14 +190,10 @@ extension PapyrusNativeFunctions {
             }
         })
 
-        // `bool Function IsHostileToActor(Actor akActor) native`, read off the
-        // install's own compiled `Actor.pex` by
-        // `PapyrusNativeSignatureRealDataTests`. The Creation Kit wiki carries no
-        // page for it on any mirror reachable from here, and neither does its
-        // condition-function twin at xEdit index 719, so the shipped declaration
-        // is the whole source for the signature. The semantics are this engine's
-        // hostility precedence list asked about the pair — the same answer the
-        // combat loop acts on, rather than a second one written here.
+        // `bool Function IsHostileToActor(Actor akActor) native`, read from the
+        // install's compiled `Actor.pex` by `PapyrusNativeSignatureRealDataTests`,
+        // because no wiki page exists. It asks the same hostility precedence list
+        // the combat loop uses.
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "IsHostileToActor"
@@ -221,12 +208,7 @@ extension PapyrusNativeFunctions {
 
         // "Int GetReaction(Faction akOther): Gets this faction's reaction towards
         // the other faction." (<https://ck.uesp.net/wiki/Faction_Script>)
-        //
-        // A `Faction` script's `self` is a form rather than a placed reference,
-        // and this engine addresses a FACT by the same `ReferenceKey` its
-        // memberships are keyed by — so the receiver resolves exactly as an
-        // `Actor` receiver does, which is the same reasoning
-        // `PapyrusNativeCrime.factionTarget` states.
+        // The receiver resolves as in `PapyrusNativeCrime.factionTarget`.
         registry.register(PapyrusNativeFunction(
             scriptName: "Faction",
             functionName: "GetReaction"

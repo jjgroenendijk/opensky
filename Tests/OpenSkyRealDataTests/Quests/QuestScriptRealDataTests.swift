@@ -1,17 +1,7 @@
-// Env-gated acceptance for issue #322 over the user's own install: the
-// census-chosen target quest's scripts instantiate against real data, its
-// first stage fragment runs, and the unimplemented and fault tallies are
-// pinned rather than described.
-//
-// The quest is `MGRArniel01`, the cheapest entry on the 13.1 census shortlist
-// (docs/formats/quest-records.md): two stages, one objective, one forced-reference
-// alias, two fragments and no conditions. Named here rather than rediscovered,
-// because the shortlist is the record of that choice.
-//
-// Nothing from the install is committed: the report goes to gitignored `logs/`
-// and carries counts and editor IDs only. Run it with
-// `make realtest T='QuestScriptRealDataTests/runsTheTargetQuestsFirstStageFragment()'`,
-// which supplies the data root and the RSS watchdog.
+// Real-data acceptance: the scripts of `MGRArniel01`, the cheapest quest on the
+// census shortlist (docs/formats/quest-records.md), bind and run their first
+// stage fragment, with the tallies pinned. The report goes to gitignored `logs/`
+// and holds counts and editor IDs only.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -80,14 +70,9 @@ struct QuestScriptRealDataTests {
         #expect(world.runtime.tally.unimplementedNativeTotal == 0)
         #expect(world.eventQueue.isEmpty)
 
-        // The one attach skip is the `OnInit` a generated fragment script does
-        // not declare, which is counted rather than faulted. Every binding skip
-        // is now `unresolvedReference`: issue #183 fills the quest's one alias,
-        // so its property resolves to a world reference, but this session loads
-        // no cell and therefore holds no live handle for any of the five. They
-        // leave the compiler defaults in place, which is why the fragment still
-        // runs. The `aliasObject` bucket is empty, which is the alias fill
-        // showing up in the tally.
+        // The one attach skip is an `OnInit` the fragment script does not declare.
+        // Binding skips are `unresolvedReference`: no cell is loaded, so no handle
+        // exists yet, and the compiler defaults stay. The fragment still runs.
         #expect(world.skips.total == 1)
         #expect(world.skips.counts[.undefinedEventFunction] == 1)
         #expect(world.bindingSkips.counts[.unresolvedReference] == 5)

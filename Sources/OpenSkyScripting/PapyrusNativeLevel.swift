@@ -1,27 +1,9 @@
-// The character-level natives (issue #499, roadmap item 20.6): `Actor.GetLevel`
-// and the two SKSE perk-point functions, over 20.6's level runtime.
+// The character-level natives: `Actor.GetLevel` and the SKSE perk-point
+// functions on `Game`. The perk-point pool has no vanilla Papyrus surface, so
+// only the SKSE calls reach it. A session with no progression is a failure with
+// a reason.
 //
-// Policy is the perk and skill families', unchanged: `self` arrives as
-// `PapyrusNativeCall.receiver` and becomes a `ReferenceKey`, a session with no
-// progression is a failure with a reason rather than a guess, and the
-// interpreter substitutes the call's declared default so the script keeps
-// running.
-//
-// ## Why two of the three are SKSE functions
-//
-// The perk-point pool has no vanilla Papyrus surface at all; the Creation Kit
-// wiki declares `GetPerkPoints`, `SetPerkPoints` and `ModPerkPoints` as SKSE
-// additions to the `Game` script. OpenSky implements the two the pool needs to
-// be readable and writable and states the third's absence rather than guessing
-// at it, which is the same rule the rest of the native surface follows. The
-// script-level half of SKSE compatibility is a stated goal
-// (docs/engine/papyrus-vm.md); the binary half is not.
-//
-// `Game.GetPerk` is *not* here. It resolves an editor id to a PERK form, which
-// is a record lookup rather than a progression question, and it belongs with
-// whichever item gives `Game` a form lookup.
-//
-// Documented in docs/engine/papyrus-activation.md and docs/engine/character-leveling.md.
+// Documented in docs/engine/papyrus-vm.md and docs/engine/character-leveling.md.
 
 import Foundation
 import OpenSkyScriptingInterface

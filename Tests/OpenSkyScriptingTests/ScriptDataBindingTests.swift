@@ -71,7 +71,7 @@ struct ScriptDataBindingTests {
         }
     }
 
-    /// A filled alias binds like any other object property (issue #183): the
+    /// A filled alias binds like any other object property: the
     /// seam turns the quest FormID plus the alias slot into a world reference,
     /// and the `aliasObject` skip is gone for that property.
     @Test("a filled quest alias binds to its world reference")

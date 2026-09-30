@@ -20,7 +20,7 @@ nonisolated public enum ScriptBindingSkipReason: Hashable, Sendable {
     case missingBackingVariable
     /// An alias-typed object property whose alias holds nothing: the quest is
     /// not running, its fill type is one OpenSky does not implement, or the
-    /// session has no alias seam at all (issue #183). A *filled* alias binds
+    /// session has no alias seam at all. A *filled* alias binds
     /// like any other object property and is not counted here.
     case aliasObject
     case unresolvedReference
@@ -81,11 +81,9 @@ nonisolated public struct BoundScriptInstance: Sendable {
 }
 
 extension AttachedScript {
-    /// Creates one instance through the issue #168 initial-values seam.
-    ///
-    /// An unfilled alias object and a direct reference with no live opaque
-    /// handle leave the PEX compiler default intact. The caller owns
-    /// world-reference handle allocation; M11.2 supplies that lifecycle.
+    /// Creates one instance with its bound initial values. An unfilled alias
+    /// and a reference with no live handle keep the PEX compiler default. The
+    /// caller allocates world-reference handles.
     public func makeInstance(
         in runtime: PapyrusRuntime,
         handle: PapyrusObjectHandle? = nil,
@@ -141,7 +139,7 @@ private struct ScriptBindingBuilder {
 
     let scriptName: String
     let formIDResolver: FormIDResolver
-    /// Filled quest aliases this session holds (issue #183). `.empty` in a
+    /// Filled quest aliases this session holds. `.empty` in a
     /// headless binding, where every alias-typed property keeps its default.
     let aliases: QuestAliasResolution
     let objectHandle: (ReferenceKey) -> PapyrusObjectHandle?
@@ -290,7 +288,7 @@ private struct ScriptBindingBuilder {
     /// An alias-typed reference (`alias != -1`) names a slot on the quest its
     /// FormID identifies rather than a form, so it resolves through the fill
     /// seam; an alias that holds nothing keeps the compiler default and is
-    /// counted as `.aliasObject` exactly as every alias was before issue #183.
+    /// counted as `.aliasObject`.
     private mutating func resolve(
         _ value: ScriptObjectReference,
         propertyName: String

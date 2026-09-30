@@ -1,10 +1,6 @@
-// Position natives of the `ObjectReference` family (issue #172). Satellite of
-// `PapyrusNativeObjectReference.swift`, which states the policy these follow.
-//
-// Only instant placement lives here. `TranslateTo`, `TranslateToRef`,
-// `SplineTranslateTo` and the `OnTranslationComplete` event they raise need an
-// interpolator the world runtime does not have, so they are deferred to a later
-// milestone rather than stubbed into looking successful.
+// Position natives of the `ObjectReference` family: instant placement only.
+// `TranslateTo` and the other motion natives need an interpolator, so they stay
+// unregistered rather than faked (docs/engine/papyrus-activation.md).
 
 import Foundation
 import OpenSkyScriptingInterface
@@ -33,17 +29,10 @@ extension PapyrusNativeFunctions {
         }
     }
 
-    /// `SetPosition(float afX, float afY, float afZ)`.
-    ///
-    /// The write is one `ReferenceTransformOverride`, which carries the whole
-    /// placement, so the current rotation and XSCL scale are read back out of
-    /// the resolved state and written again unchanged. An axis whose argument
-    /// the caller did not pass keeps its current value for the same reason:
-    /// the compiler fills Papyrus defaults in, so a short argument list is a
-    /// malformed call rather than a request to move to the origin.
-    ///
-    /// An argument that is present but is not a number, or is not finite, is a
-    /// failure — a NaN coordinate would poison every later distance comparison.
+    /// `SetPosition(float afX, float afY, float afZ)`. The write is one whole
+    /// `ReferenceTransformOverride`, so rotation, scale, and any axis not passed
+    /// keep their current values. A non-numeric or non-finite argument fails,
+    /// because a NaN coordinate would break every later distance check.
     public static func installSetPosition(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference",

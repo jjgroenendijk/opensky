@@ -1,25 +1,7 @@
-// The skill natives (issue #498, roadmap item 20.5): `Game.AdvanceSkill` and
-// `Game.IncrementSkill` over 20.5's advancement runtime.
-//
-// Both are global functions on `Game` and both act on the player alone, which
-// the wiki states rather than implies: "Advances the progress of the provided
-// Skill by the given amount (for the player only)"
-// (<https://ck.uesp.net/wiki/AdvanceSkill_-_Game>) and "Advances the provided
-// Skill by the one point (for the player only)"
-// (<https://ck.uesp.net/wiki/IncrementSkill_-_Game>). So neither takes a
-// receiver and neither needs one.
-//
-// The difference between them is the unit, and it is the whole reason they are
-// two functions: `AdvanceSkill` hands over skill *use*, which the skill's own
-// AVIF multipliers then convert and which may or may not reach the next
-// threshold — "This is in Skill Usage amounts, so it will count towards skill
-// progression but won't necessarily change the Skill itself" — while
-// `IncrementSkill` hands over a whole point. Both run the same path a swing
-// does, so a scripted advance and a landed blow cannot drift apart.
-//
-// Policy is the perk family's, unchanged: a session with no progression runtime
-// is a failure with a reason rather than a silent no-op, and the interpreter
-// substitutes the call's declared default so the script keeps running.
+// The skill natives: `Game.AdvanceSkill` and `Game.IncrementSkill`, which act on
+// the player only (<https://ck.uesp.net/wiki/AdvanceSkill_-_Game>).
+// `AdvanceSkill` passes skill use, which the AVIF multipliers convert;
+// `IncrementSkill` passes one whole point. Both run the same path as a landed hit.
 //
 // Documented in docs/engine/papyrus-activation.md and docs/engine/skill-advancement.md.
 
@@ -71,14 +53,10 @@ extension PapyrusNativeFunctions {
         failure(call, "\(call.functionName) needs a session with skill advancement")
     }
 
-    /// Resolves the world and the skill name both natives start with.
-    ///
-    /// The name is read with the *record* vocabulary, which is what Papyrus
-    /// speaks: the wiki's own example is `Game.AdvanceSkill("Marksman", 50.0)`,
-    /// and `Marksman` is the editor-id spelling of `Archery`
-    /// (`ActorValueIdentity.recordNameAliases`). A name that is not one of the
-    /// eighteen skills is a refusal rather than a write to a neighbouring actor
-    /// value.
+    /// Resolves the world and the skill name. Names use the record vocabulary
+    /// Papyrus speaks, so `"Marksman"` means `Archery`
+    /// (`ActorValueIdentity.recordNameAliases`). A name outside the eighteen
+    /// skills is refused.
     private static func skillCall(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
