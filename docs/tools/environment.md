@@ -162,4 +162,8 @@ Seen again 2026-09-30 for `OpenSkyInventory`: a new public class built through `
 the app and `OpenSkyInventoryTests` failed through xcodebuild with "cannot find type in scope"
 until the same delete.
 
+Seen again 2026-09-30 for `OpenSkyGameData`: a new public protocol failed in `GameDataTesting`
+with "cannot find type in scope" on two builds in a row. The Products copy was five hours older
+than the new emit. The same delete fixed it.
+
 Retires when an interface change builds through xcodebuild without a manual delete.
