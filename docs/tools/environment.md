@@ -155,4 +155,7 @@ Seen again the same day for `OpenSkyFormatsSWF`, with the emit a cache miss this
 test` failed the same way. Every `OpenSkyFormats*` copy in Products was a day older than its
 `Intermediates.noindex` module. Deleting those folders fixed the next build.
 
+Seen again 2026-09-30 for `OpenSkyFormatsCore`: a new public struct failed in `OpenSkyRendering`
+with "cannot find in scope" on two builds in a row, until the same delete.
+
 Retires when an interface change builds through xcodebuild without a manual delete.
