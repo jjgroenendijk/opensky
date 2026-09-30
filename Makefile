@@ -35,8 +35,9 @@ TEST_RESULTS     := $(DERIVED_DATA)/TestResults
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
 
 # Every xcodebuild runs through this wrapper. It keeps the full transcript under
-# logs/ and prints only diagnostics, failures, and the final counts; a failing
-# run prints everything. OPENSKY_XCODEBUILD_RAW=1 always prints everything.
+# logs/ and prints each diagnostic once, failures, and the final counts. It also
+# clears stale module copies (tools/stale-modules.sh). OPENSKY_XCODEBUILD_RAW=1
+# prints everything.
 XCB_RUN          := ./tools/xcodebuild-run.sh
 # Allocates a per-run output directory, logs/<name>/<UTC timestamp>/, and points
 # <name>/latest at it, so `make prune` can age whole runs out (issue #347).
@@ -121,7 +122,7 @@ cache-link: ## Point this worktree's compilation cache at the main checkout's
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
         cli-boundary module-graph realdata-plan no-game-content docs-links docs-length \
-        agent-files workflow-lint comment-length
+        agent-files workflow-lint comment-length comment-blocks comment-apply
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -191,9 +192,21 @@ workflow-lint: ## Lint the GitHub Actions workflows with actionlint
 comment-length: ## Report comment blocks over the line limit (report only for now)
 	@./tools/lint/comment-length.sh
 
+comment-blocks: ## Print long comment blocks to rewrite in bulk [PATHS='Sources/X'] [REFS=1]
+	@./tools/comment-blocks.sh dump $(if $(REFS),-r,) $(PATHS)
+
+comment-apply: ## Write rewritten blocks from a comment-blocks spec back [SPEC=file]
+	@./tools/comment-blocks.sh apply "$(SPEC)"
+
 ##@ Build checks
 
-.PHONY: verify-build shader-library
+.PHONY: compile verify-build shader-library
+
+# swift build of the package modules the branch changed, or M='A B', plus their
+# dependents. No Xcode, so it is the quick loop while fixing compile errors;
+# Xcode-only code still needs verify-build.
+compile: vendor-link ## Compile changed package modules and their dependents [M='Module ...']
+	@./tools/compile-modules.sh $(M)
 
 # Every target compiled, no test run: OpenSkyTests, the app with
 # OpenSkyRealDataTests, and openskycli. Catches a change that breaks a target it

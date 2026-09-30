@@ -49,3 +49,12 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   it across a module boundary.
 - Every file that uses a module writes its own `import`. New modules and their dependencies
   go in `Package.swift`, never in the project file.
+
+## Bulk edits
+
+- Make an edit that repeats across many files with a script, then review `git diff --stat`
+  and a sample of the hunks. Do not read and edit each site in the conversation. Each file
+  read stays in context for the rest of the session, so per-site edits cost far more.
+- Comments: `make comment-blocks PATHS='Sources/X' > logs/comments.txt` prints only the long
+  blocks, each under a `=== path:first-last` header. Rewrite the text under each header,
+  leave a body empty to delete the block, then run `make comment-apply SPEC=logs/comments.txt`.

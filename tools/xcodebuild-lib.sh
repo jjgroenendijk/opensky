@@ -10,7 +10,7 @@
 # script run directly from a shell) and provides:
 #
 #   xcodebuild_products_dir CONFIG   built-products directory for a macOS scheme
-#   xcodebuild_summary               stdin -> the lines a green run needs
+#   xcodebuild_summary ROOT          stdin -> each diagnostic once, errors capped
 #   xcodebuild_xctestrun PLAN        newest .xctestrun for a test plan, or nothing
 #   xcodebuild_xctestrun_stale FILE ROOT   exit 0 when FILE must be regenerated
 #   xcodebuild_xctestrun_products_missing FILE   exit 0 when a named product is gone
@@ -26,19 +26,34 @@ xcodebuild_products_dir() {
     printf '%s\n' "$OPENSKY_DERIVED_DATA/Build/Products/$1"
 }
 
-# Filter a transcript down to what a green run has to show: diagnostics, the
-# tests that did not pass, and the closing counts. Per-file compile lines and
-# the one line per passing test are the bulk of the output and say nothing.
-# Callers keep the unfiltered transcript in logs/ and print all of it when the
-# run fails, so this can never be the only copy of a failure message.
+# Filter a transcript down to what a run has to show: diagnostics, the tests
+# that did not pass, and the closing counts. xcodebuild repeats each diagnostic
+# with colour codes, absolute paths, and an "(in target ...)" suffix, so the
+# filter strips those, prints each line once, and caps errors, failed tests,
+# and warnings. The full transcript stays in logs/. $1 is the checkout root.
 xcodebuild_summary() {
-    grep --line-buffered -E \
-        -e '(error|warning): ' \
-        -e '^\*\*' \
-        -e '^(Executed|Testing (failed|cancelled))' \
-        -e "^Test (case|suite|Case|Suite) .* (failed|errored)" \
-        -e '^✘' \
-        || true
+    awk -v root="$1/" -v max="${OPENSKY_MAX_ERRORS:-40}" '
+        { gsub(/\033\[[0-9;]*m/, "") }
+        # Every app-extension build step logs this; it is never the problem.
+        /appintentsmetadataprocessor.*Metadata extraction skipped/ { next }
+        /(error|warning): |^\*\*|^(Executed|Testing (failed|cancelled))|^Test ([Cc]ase|[Ss]uite) .* (failed|errored)|^✘/ {
+            line = $0
+            while (length(root) > 1 && (i = index(line, root)) > 0)
+                line = substr(line, 1, i - 1) substr(line, i + length(root))
+            gsub(/\/\^src\//, "", line)
+            sub(/ \(in target .* from project .*\)$/, "", line)
+            sub(/ on \047[^\047]*\047 \([0-9.]+ seconds\)$/, "", line)
+            if (seen[line]++) next
+            if (line ~ /error: |failed|errored|^✘/ && ++problems > max) { hidden++; next }
+            if (line ~ /warning: / && ++warnings > 10) { quiet++; next }
+            print line
+            fflush()
+        }
+        END {
+            if (hidden) printf "[INFO] %d more errors or failed tests not shown\n", hidden
+            if (quiet) printf "[INFO] %d more warnings not shown\n", quiet
+        }
+    '
 }
 
 # `xcodebuild build-for-testing` writes one .xctestrun per test plan under

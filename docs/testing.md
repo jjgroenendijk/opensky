@@ -39,6 +39,7 @@ a test there would run in both bundles. It holds only fixtures that need the app
 | `make test` | The unit plan through the build system |
 | `make test-fast [T='Suite/test()'] [B=1]` | The fast loop: build once, then run against the cached products. `B=1` forces a build |
 | `make test-one T=Class[/test]` | One class or method through the build system. A bare name resolves under `OpenSkyTests/`. Name the target for a package suite, for example `OpenSkyGameDataTests/Class` |
+| `make compile [M='Module ...']` | `swift build` of the changed package modules, or the named ones, and every package target that depends on them. No Xcode, so it is the quick check while fixing compile errors |
 | `make verify-build` | Compiles the app, the CLI, and both unit bundles without running a test. The only routine command that compiles the real-data suites |
 | `make test-report` | Pass and fail counts, each failure's name and message, and code coverage, from the newest result bundle |
 | `make realtest T='Class/method()' [CAP=MB]` | One real-data test under the memory watchdog |

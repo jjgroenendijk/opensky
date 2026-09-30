@@ -45,6 +45,10 @@ test first, watch it fail, then fix.
 - `make test-fast T='Suite'` runs a whole suite; `T='Suite/method()'` runs one test. A
   selector that matches nothing fails loudly with near-matches, so a typo cannot pass.
 - Batch several edits into one run instead of rerunning after each edit.
+- While fixing compile errors in package modules, loop on `make compile` (or
+  `make compile M='OpenSkyWorld'`). It runs `swift build` on the changed modules and their
+  dependents, without Xcode. Run `make verify-build` once at the end, because only it
+  compiles the app, `OpenSkyCLI`, and the Xcode test bundles.
 - `make verify-build` compiles the app, `OpenSkyCLI`, and both unit bundles without running
   a test. It is the only routine command that compiles `OpenSkyRealDataTests`, and the
   cheapest way to catch a type change that breaks a target you did not test.
@@ -55,8 +59,15 @@ test first, watch it fail, then fix.
 
 These commands build, so the background-shell and one-`xcodebuild` rules in the root
 `AGENTS.md` apply to them: `make test-fast` after an edit, `make test`, `make verify-build`,
-`make cli`, `make realtest`, `make install`, and `git push`. Wait for the completion
-notification rather than polling a log.
+`make cli`, `make realtest`, `make install`, and `git push`.
+
+- Start the command itself in the background, not with `> file` redirection, and wait for
+  the completion notification. Do not `cat` the task output, `sleep`, or loop on a log
+  before it arrives. Each check is one more turn, and each turn re-reads the whole context.
+- The output already lists each error once, with repository paths. Read it from the
+  notification. Open the transcript only when the output says errors were not shown.
+- The build removes stale module copies itself and retries once
+  (`docs/tools/build-system.md`). Do not delete `.swiftmodule` folders by hand.
 
 ## Real-data runs
 

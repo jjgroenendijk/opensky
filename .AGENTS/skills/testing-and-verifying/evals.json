@@ -40,5 +40,17 @@
     "expected_behavior": [
       "Answers from docs/formats/bsa.md or the code without running any test or build"
     ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "I added a parameter to a public init in OpenSkyGameData and other modules no longer compile. Fix the call sites.",
+    "files": [],
+    "expected_behavior": [
+      "Loops on make compile (swift build of the changed modules and their dependents) while fixing errors",
+      "Runs make verify-build once at the end, in the background, and reads the errors from the notification without polling or grepping the transcript",
+      "Does not delete .swiftmodule folders by hand"
+    ]
   }
 ]
