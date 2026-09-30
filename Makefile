@@ -122,7 +122,7 @@ cache-link: ## Point this worktree's compilation cache at the main checkout's
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
         cli-boundary module-graph realdata-plan no-game-content docs-links docs-length \
-        agent-files workflow-lint comment-length
+        agent-files workflow-lint comment-length comment-blocks comment-apply
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -191,6 +191,12 @@ workflow-lint: ## Lint the GitHub Actions workflows with actionlint
 
 comment-length: ## Report comment blocks over the line limit (report only for now)
 	@./tools/lint/comment-length.sh
+
+comment-blocks: ## Print long comment blocks to rewrite in bulk [PATHS='Sources/X'] [REFS=1]
+	@./tools/comment-blocks.sh dump $(if $(REFS),-r,) $(PATHS)
+
+comment-apply: ## Write rewritten blocks from a comment-blocks spec back [SPEC=file]
+	@./tools/comment-blocks.sh apply "$(SPEC)"
 
 ##@ Build checks
 
