@@ -158,4 +158,8 @@ test` failed the same way. Every `OpenSkyFormats*` copy in Products was a day ol
 Seen again 2026-09-30 for `OpenSkyFormatsCore`: a new public struct failed in `OpenSkyRendering`
 with "cannot find in scope" on two builds in a row, until the same delete.
 
+Seen again 2026-09-30 for `OpenSkyInventory`: a new public class built through `swift test`, but
+the app and `OpenSkyInventoryTests` failed through xcodebuild with "cannot find type in scope"
+until the same delete.
+
 Retires when an interface change builds through xcodebuild without a manual delete.

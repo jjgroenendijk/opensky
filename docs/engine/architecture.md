@@ -91,8 +91,8 @@ to 30.34 move them.
 
 Where it does not apply: view code, input handling, and sidebar panels stay in the app.
 
-The pattern page comes from 30.12
-([#610](https://github.com/jjgroenendijk/opensky/issues/610)).
+[Coordinators](/engine/coordinators.md) has the pattern, the module rules, and the steps to
+move a domain.
 
 ## Data-oriented layout
 

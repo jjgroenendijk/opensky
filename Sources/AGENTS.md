@@ -22,8 +22,11 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
 - A package module never imports a module above it. Behavior that needs a higher layer goes
   in an extension file up there.
 - An extension file is named `Type+Feature.swift`, for example
-  `GameView/GameViewController+Magic.swift`. File names stay unique inside a target,
-  because Swift rejects two files with one name in the same module.
+  `Package+Schedule.swift`. File names stay unique inside a target, because Swift rejects
+  two files with one name in the same module.
+- Do not add a new `GameViewController+X.swift` file. Game logic there cannot be reached by
+  the package tests or the CLI. Put it in a coordinator in the feature module instead;
+  `docs/engine/coordinators.md` has the pattern, and `VendorCoordinator` is the example.
 - Past the SwiftLint file cap, split into a satellite file (`Renderer.swift` ->
   `RendererScenePass.swift`). Check first which members need same-file `private(set)`
   access. Past the parameter or tuple cap, introduce a struct.
