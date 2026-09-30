@@ -33,10 +33,9 @@ nonisolated public enum AudioEngineError: Error, Equatable {
     case submixUnavailable
 }
 
-/// Thread-safe projection of one main-actor source clock. RenderAnimation is a
-/// nonisolated protocol, so LipSyncPlayback reads this value instead of
-/// crossing actor isolation into WorldAudioEngine during scene traversal.
-nonisolated public final class VoicePlaybackClock: @unchecked Sendable, Equatable {
+/// Thread-safe copy of one main-actor source clock. `LipSyncPlayback` reads it
+/// during scene traversal, which is nonisolated.
+nonisolated public final class VoicePlaybackClock: Sendable, Equatable {
     private let storedPosition = Mutex<Double?>(0)
 
     public var position: Double? {

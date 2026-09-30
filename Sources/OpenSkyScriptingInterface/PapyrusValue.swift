@@ -6,6 +6,7 @@
 // not represented here.
 
 import Foundation
+import Synchronization
 
 nonisolated public struct PapyrusObjectHandle: Equatable, Hashable, Sendable {
     public let rawValue: UInt64
@@ -74,13 +75,28 @@ indirect nonisolated public enum PapyrusType: Equatable, Sendable {
     }
 }
 
-nonisolated public final class PapyrusArray: @unchecked Sendable {
+/// A Papyrus array has reference semantics: every copy of the value sees a write.
+nonisolated public final class PapyrusArray: Sendable {
     public let elementType: PapyrusType
-    public var elements: [PapyrusValue]
+    private let storage: Mutex<[PapyrusValue]>
 
     public init(elementType: PapyrusType, elements: [PapyrusValue]) {
         self.elementType = elementType
-        self.elements = elements
+        storage = Mutex(elements)
+    }
+
+    /// A snapshot. Later writes do not change it.
+    public var elements: [PapyrusValue] {
+        storage.withLock { $0 }
+    }
+
+    public var count: Int {
+        storage.withLock { $0.count }
+    }
+
+    /// Writes in place. The index must be in bounds.
+    public func setElement(_ value: PapyrusValue, at index: Int) {
+        storage.withLock { $0[index] = value }
     }
 }
 

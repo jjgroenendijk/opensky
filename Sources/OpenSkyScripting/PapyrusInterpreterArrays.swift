@@ -61,7 +61,7 @@ extension PapyrusInterpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(2, instruction: instruction)
         let array = try array(operands[1], frame: frame)
-        try write(.integer(Int32(array.elements.count)), to: operands[0], frame: frame)
+        try write(.integer(Int32(array.count)), to: operands[0], frame: frame)
         return .next
     }
 
@@ -72,14 +72,15 @@ extension PapyrusInterpreter {
         let operands = try requireOperands(3, instruction: instruction)
         let array = try array(operands[1], frame: frame)
         let index = try arrayIndex(operands[2], frame: frame)
-        guard array.elements.indices.contains(index) else {
+        let elements = array.elements
+        guard elements.indices.contains(index) else {
             throw .arrayBounds(
                 instruction: instructionIndex,
                 index: index,
-                count: array.elements.count
+                count: elements.count
             )
         }
-        try write(array.elements[index], to: operands[0], frame: frame)
+        try write(elements[index], to: operands[0], frame: frame)
         return .next
     }
 
@@ -90,18 +91,19 @@ extension PapyrusInterpreter {
         let operands = try requireOperands(3, instruction: instruction)
         let array = try array(operands[0], frame: frame)
         let index = try arrayIndex(operands[1], frame: frame)
-        guard array.elements.indices.contains(index) else {
+        let count = array.count
+        guard (0 ..< count).contains(index) else {
             throw .arrayBounds(
                 instruction: instructionIndex,
                 index: index,
-                count: array.elements.count
+                count: count
             )
         }
         let value = try cast(
             read(operands[2], frame: frame),
             to: array.elementType
         )
-        array.elements[index] = value
+        array.setElement(value, at: index)
         return .next
     }
 
@@ -159,11 +161,12 @@ extension PapyrusInterpreter {
         in array: PapyrusArray,
         start: Int
     ) -> Int {
+        let elements = array.elements
         let lowerBound = max(0, start)
-        guard lowerBound < array.elements.count else {
+        guard lowerBound < elements.count else {
             return -1
         }
-        return array.elements[lowerBound...].firstIndex(where: { equal($0, needle) }) ?? -1
+        return elements[lowerBound...].firstIndex(where: { equal($0, needle) }) ?? -1
     }
 
     private func reverseIndex(
@@ -171,12 +174,13 @@ extension PapyrusInterpreter {
         in array: PapyrusArray,
         start: Int
     ) -> Int {
-        guard !array.elements.isEmpty else {
+        let elements = array.elements
+        guard !elements.isEmpty else {
             return -1
         }
         let upperBound = start < 0
-            ? array.elements.count - 1
-            : min(start, array.elements.count - 1)
-        return array.elements[...upperBound].lastIndex(where: { equal($0, needle) }) ?? -1
+            ? elements.count - 1
+            : min(start, elements.count - 1)
+        return elements[...upperBound].lastIndex(where: { equal($0, needle) }) ?? -1
     }
 }

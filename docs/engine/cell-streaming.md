@@ -91,9 +91,11 @@ A queue was chosen over an actor:
 - The build call was already synchronous and throwing. Wrapping it in `queue.async` needs no
   change to the caches.
 
-Only the completion buffer, the set of pending coordinates, and the build counts cross between
-threads. One lock inside the runner guards them. The lock never goes into the caches. The main
-thread collects results once per frame.
+Only the result buffers, the set of pending coordinates, and the build counts cross between
+threads. The runner guards them with two locks. The counts and pending sets are `Sendable`
+values in a `Mutex`, so the compiler checks them. The result buffers hold cell scenes, which
+are not `Sendable`, so an `OSAllocatedUnfairLock` guards them without a compiler check. No lock
+goes into the caches. The main thread collects results once per frame.
 
 ## Scheduling
 

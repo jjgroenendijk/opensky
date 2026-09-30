@@ -1,53 +1,41 @@
-// Streaming decode for one playing source: keeps an AVAudioPlayerNode fed with
-// short PCM buffers instead of decoding the whole file up front (a music track
-// decodes to ~37 MB of PCM; issue #218).
-//
-// Threading model (docs/engine/audio.md): all decode work and all mutable
-// scheduling state live on the shared audio-decode DispatchQueue passed in by
-// WorldAudioEngine — including the WMADecoder, which is not Sendable and must be
-// owned by exactly one queue. The main actor only creates, starts and stops
-// streamers and polls `isFinished`. OpenSky code never runs on the audio render
-// thread: AVAudioPlayerNode consumes the scheduled buffers there itself, and its
-// completion handlers (fired on an AVFAudio internal queue) immediately hop back
-// onto the decode queue. Nothing in this file allocates, locks or logs on the
-// render thread because nothing in this file runs there.
+// Streaming decode for one playing source: keeps an `AVAudioPlayerNode` fed
+// with short PCM buffers instead of decoding the whole file up front.
+// Threading model: docs/engine/audio.md. No code in this file runs on the audio
+// render thread, so the locks here never block it.
 
 import AVFAudio
 import Foundation
 import OpenSkyFormatsAudio
 import Synchronization
 
-nonisolated public final class AudioSourceStreamer: @unchecked Sendable {
-    /// Encoded packets decoded per scheduled buffer. At vanilla music rates one
-    /// packet decodes to ~46 ms of PCM, so a chunk is roughly three quarters of
-    /// a second.
+nonisolated public final class AudioSourceStreamer: Sendable {
+    /// At vanilla music rates one packet decodes to about 46 ms of PCM, so a
+    /// chunk is about 0.75 s.
     public static let packetsPerChunk = 16
-    /// Buffers scheduled ahead of playback. Refill triggers when one finishes
-    /// playing, so two chunks (~1.5 s) of margin always remain — far more than
-    /// the sub-millisecond decode of the next chunk needs.
+    /// Refill starts when one buffer finishes, so about 1.5 s of margin remains.
     public static let maxChunksInFlight = 3
+
+    /// Decode state. Only the decode queue locks it, so the lock never waits.
+    nonisolated private struct DecodeState {
+        var decoder: WMADecoder?
+        var nextPacketIndex = 0
+        var chunksInFlight = 0
+        var drained = false
+        var stopped = false
+        /// A looping pass that decoded nothing ends instead of rewinding, so an
+        /// unusable file never spins the decode queue.
+        var passProducedSamples = false
+    }
 
     private let queue: DispatchQueue
     private let node: AVAudioPlayerNode
     private let format: AVAudioFormat
     private let file: XWMFile
     private let downmixToMono: Bool
-    /// Continuous sources (the per-cell ambient bed) rewind to the first packet
-    /// at end of file instead of finishing, so the engine never retires them.
+    /// The per-cell ambient bed rewinds at end of file, so it never finishes.
     private let loops: Bool
-
-    // Queue-confined state: touched only on `queue`.
-    private var decoder: WMADecoder?
-    private var nextPacketIndex = 0
-    private var chunksInFlight = 0
-    private var drained = false
-    private var stopped = false
-    /// Whether the current pass over the file has yielded any PCM. A looping
-    /// source whose pass decoded nothing ends instead of rewinding, so a file
-    /// the decoder cannot use never spins the decode queue forever.
-    private var passProducedSamples = false
-
-    /// Cross-thread completion flag, polled by the main actor each audio tick.
+    private let state = Mutex(DecodeState())
+    /// Polled by the main actor each audio tick.
     private let finished = Mutex(false)
 
     public var isFinished: Bool {
@@ -55,14 +43,9 @@ nonisolated public final class AudioSourceStreamer: @unchecked Sendable {
     }
 
     /// - Parameters:
-    ///   - file: the framed container; its payload is read packet-by-packet via
-    ///     `packet(at:)`, never copied whole.
-    ///   - node: the player this streamer feeds. The engine owns attach/detach.
-    ///   - format: the node's connection format (mono for positional sources).
-    ///   - downmixToMono: averages stereo PCM into one channel so the
-    ///     environment node can spatialize it (it passes stereo through flat).
-    ///   - loops: rewind to the first packet at end of file instead of
-    ///     reporting completion.
+    ///   - node: the player this streamer feeds. The engine attaches it.
+    ///   - format: the node's connection format, mono for positional sources.
+    ///   - downmixToMono: the environment node plays stereo flat, unpositioned.
     ///   - queue: the engine's shared serial decode queue.
     public init(
         file: XWMFile,
@@ -80,35 +63,36 @@ nonisolated public final class AudioSourceStreamer: @unchecked Sendable {
         self.queue = queue
     }
 
-    /// Begins decoding and scheduling on the decode queue. The caller starts
-    /// the player node; playback begins when the first buffer lands.
+    /// Starts decoding on the decode queue. The caller starts the player node.
     public func start() {
         queue.async { [self] in
-            do {
-                decoder = try WMADecoder(parameters: AudioCodecParameters(xwm: file.codec))
-            } catch {
-                markFinished()
-                return
+            let parameters = AudioCodecParameters(xwm: file.codec)
+            let started = state.withLock { decode in
+                decode.decoder = try? WMADecoder(parameters: parameters)
+                guard decode.decoder != nil else { return false }
+                scheduleMore(&decode)
+                return true
             }
-            scheduleMore()
+            if !started {
+                markFinished()
+            }
         }
     }
 
-    /// Requests a stop. The engine also stops the node on the main actor, which
-    /// discards scheduled buffers and fires their completions; this flag stops
-    /// the decode queue from scheduling replacements.
+    /// The engine also stops the node, which drops scheduled buffers and fires
+    /// their completions; this flag stops the queue from scheduling more.
     public func requestStop() {
         queue.async { [self] in
-            stopped = true
+            state.withLock { $0.stopped = true }
             markFinished()
         }
     }
 
     // MARK: - Decode queue
 
-    private func scheduleMore() {
-        while !stopped, !drained, chunksInFlight < Self.maxChunksInFlight {
-            guard let samples = decodeNextChunk(), !samples.isEmpty else { continue }
+    private func scheduleMore(_ decode: inout DecodeState) {
+        while !decode.stopped, !decode.drained, decode.chunksInFlight < Self.maxChunksInFlight {
+            guard let samples = decodeNextChunk(&decode), !samples.isEmpty else { continue }
             guard
                 let buffer = Self.makeBuffer(
                     samples: samples,
@@ -117,83 +101,82 @@ nonisolated public final class AudioSourceStreamer: @unchecked Sendable {
                     format: format
                 )
             else {
-                drained = true
+                decode.drained = true
                 break
             }
-            chunksInFlight += 1
-            // Completion fires on an AVFAudio internal queue -> hop straight
-            // back to the decode queue.
+            decode.chunksInFlight += 1
+            // Completion fires on an AVFAudio queue; hop back to the decode queue.
             node.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { [weak self] _ in
                 guard let self else { return }
                 queue.async { self.chunkCompleted() }
             }
         }
-        if drained, chunksInFlight == 0 {
+        if decode.drained, decode.chunksInFlight == 0 {
             markFinished()
         }
     }
 
-    /// Decodes up to `packetsPerChunk` packets. At end of file a looping source
-    /// rewinds and any other source sets `drained`. Returns nil after a decode
-    /// error (the source ends early but never traps).
-    private func decodeNextChunk() -> [Float]? {
-        guard let decoder else {
-            drained = true
+    /// Decodes up to `packetsPerChunk` packets. Returns nil after a decode
+    /// error, so the source ends early but never traps.
+    private func decodeNextChunk(_ decode: inout DecodeState) -> [Float]? {
+        guard let decoder = decode.decoder else {
+            decode.drained = true
             return nil
         }
         var samples: [Float] = []
         var packetsUsed = 0
         do {
             while packetsUsed < Self.packetsPerChunk {
-                guard let packet = file.packet(at: nextPacketIndex) else {
+                guard let packet = file.packet(at: decode.nextPacketIndex) else {
                     let tail = try decoder.flush()
-                    append(tail, to: &samples)
-                    rewindOrDrain(decoder: decoder)
+                    append(tail, to: &samples, state: &decode)
+                    rewindOrDrain(&decode, decoder: decoder)
                     break
                 }
-                nextPacketIndex += 1
+                decode.nextPacketIndex += 1
                 packetsUsed += 1
-                try append(decoder.decode(packet: packet), to: &samples)
+                try append(decoder.decode(packet: packet), to: &samples, state: &decode)
             }
         } catch {
-            drained = true
+            decode.drained = true
             return nil
         }
         return samples
     }
 
-    private func append(_ decoded: [Float], to samples: inout [Float]) {
+    private func append(_ decoded: [Float], to samples: inout [Float], state: inout DecodeState) {
         guard !decoded.isEmpty else { return }
-        passProducedSamples = true
+        state.passProducedSamples = true
         samples.append(contentsOf: decoded)
     }
 
-    /// End of the packet table. A looping source starts the file over with a
-    /// reset decoder; everything else finishes once the scheduled buffers play
-    /// out.
-    private func rewindOrDrain(decoder: WMADecoder) {
+    private func rewindOrDrain(_ decode: inout DecodeState, decoder: WMADecoder) {
         guard
             Self.shouldRewind(
-                loops: loops, passProducedSamples: passProducedSamples, stopped: stopped
+                loops: loops,
+                passProducedSamples: decode.passProducedSamples,
+                stopped: decode.stopped
             )
         else {
-            drained = true
+            decode.drained = true
             return
         }
         decoder.reset()
-        nextPacketIndex = 0
-        passProducedSamples = false
+        decode.nextPacketIndex = 0
+        decode.passProducedSamples = false
     }
 
     private func chunkCompleted() {
-        chunksInFlight -= 1
-        if drained || stopped {
-            if chunksInFlight <= 0 {
-                markFinished()
+        state.withLock { decode in
+            decode.chunksInFlight -= 1
+            if decode.drained || decode.stopped {
+                if decode.chunksInFlight <= 0 {
+                    markFinished()
+                }
+                return
             }
-            return
+            scheduleMore(&decode)
         }
-        scheduleMore()
     }
 
     private func markFinished() {
@@ -202,10 +185,7 @@ nonisolated public final class AudioSourceStreamer: @unchecked Sendable {
 
     // MARK: - Policy + PCM packing (pure, unit-tested)
 
-    /// Rewind policy at end of file, kept pure because no WMA fixture may enter
-    /// the repository and the decode loop itself can only be exercised against
-    /// the user's own install. A source rewinds when it was started as a loop,
-    /// its last pass actually produced PCM, and no stop was requested.
+    /// Kept pure so a unit test can check it: no WMA fixture may enter the repo.
     public static func shouldRewind(loops: Bool, passProducedSamples: Bool, stopped: Bool) -> Bool {
         loops && passProducedSamples && !stopped
     }
