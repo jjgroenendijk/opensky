@@ -22,7 +22,7 @@ extension GameViewController {
     /// engine never depends on it. A provider that cannot supply scripts leaves
     /// `papyrus` nil rather than running a VM with an empty library.
     func wirePapyrus(
-        provider: any CellSceneProvider,
+        provider: any WorldDataProviding,
         renderer: Renderer,
         streamer controller: CellStreamer
     ) {
@@ -100,7 +100,7 @@ extension GameViewController {
     /// recorded. Without a QUST index `questRuntime` stays nil and every `Quest`
     /// native fails with `PapyrusQuestBridgeError.noQuestData`.
     private func wireQuests(
-        provider: any CellSceneProvider,
+        provider: any WorldDataProviding,
         bridge: PapyrusWorldStateBridge
     ) {
         guard let store = (provider as? QuestDataProviding)?.questStore else {
@@ -154,7 +154,7 @@ extension GameViewController {
     /// controller owns; a copy would drop the write.
     func wireSpellNatives(
         bridge: PapyrusWorldStateBridge,
-        provider: any CellSceneProvider
+        provider: any WorldDataProviding
     ) {
         bridge.casterRuntime = { [weak self] in self?.casting.runtime }
         bridge.magicEffectStore = (provider as? MagicDataProviding)?.magicEffectStore

@@ -179,35 +179,21 @@ final class PreviewViewController: NSViewController {
         return stack
     }
 
-    // MARK: - Catalog load (off main)
+    // MARK: - Catalog load (@concurrent)
 
     private func loadCatalog(root: GameDataRoot) {
         statusLabel.stringValue = "Loading archives + Skyrim.esm…"
         let generation = catalogGeneration
         let fileSystem = VirtualFileSystem(root: root)
-        let esmURL = root.dataURL.appending(path: "Skyrim.esm")
-        Task.detached(priority: .userInitiated) {
-            let loaded = PreviewCatalog.load(fileSystem: fileSystem, esmURL: esmURL)
-            let plugins = ActivePluginFiles.load(root: root)
-            let index = RecordIndex(
-                plugins: plugins,
-                recordTypes: RecordIndex.referenceRecordTypes
-                    .union(ReferenceRecordCatalog.inspectedItemTypes)
+        Task(priority: .userInitiated) { [weak self] in
+            let loaded = await Self.loadCatalogData(root: root, fileSystem: fileSystem)
+            guard let self, catalogGeneration == generation else { return }
+            catalogDidLoad(
+                loaded.catalog,
+                fileSystem: fileSystem,
+                referenceCatalog: loaded.references,
+                referenceInspector: loaded.inspector
             )
-            let references = ReferenceRecordCatalog(
-                index: index,
-                pluginNames: plugins.map(\.name)
-            )
-            let inspector = ReferenceRecordInspector(index: index)
-            await MainActor.run { [weak self] in
-                guard let self, catalogGeneration == generation else { return }
-                catalogDidLoad(
-                    loaded.catalog,
-                    fileSystem: fileSystem,
-                    referenceCatalog: references,
-                    referenceInspector: inspector
-                )
-            }
         }
     }
 
@@ -262,12 +248,10 @@ final class PreviewViewController: NSViewController {
             show(items: PreviewCatalog.filter(items, query: query))
             return
         }
-        Task.detached(priority: .userInitiated) {
-            let filtered = PreviewCatalog.filter(items, query: query)
-            await MainActor.run { [weak self] in
-                guard let self, filterGeneration == generation else { return }
-                show(items: filtered)
-            }
+        Task(priority: .userInitiated) { [weak self] in
+            let filtered = await Self.filter(items, query: query)
+            guard let self, filterGeneration == generation else { return }
+            show(items: filtered)
         }
     }
 
@@ -292,6 +276,44 @@ final class PreviewViewController: NSViewController {
         let hidden = selectedCategory != .referenceRecords
         pluginPopUp.isHidden = hidden
         recordTypePopUp.isHidden = hidden
+    }
+}
+
+// MARK: - Off-main work
+
+extension PreviewViewController {
+    nonisolated fileprivate struct LoadedCatalog: Sendable {
+        let catalog: PreviewCatalog
+        let references: ReferenceRecordCatalog
+        let inspector: ReferenceRecordInspector
+    }
+
+    @concurrent
+    nonisolated fileprivate static func loadCatalogData(
+        root: GameDataRoot,
+        fileSystem: VirtualFileSystem
+    ) async -> LoadedCatalog {
+        let esmURL = root.dataURL.appending(path: "Skyrim.esm")
+        let loaded = PreviewCatalog.load(fileSystem: fileSystem, esmURL: esmURL)
+        let plugins = ActivePluginFiles.load(root: root)
+        let index = RecordIndex(
+            plugins: plugins,
+            recordTypes: RecordIndex.referenceRecordTypes
+                .union(ReferenceRecordCatalog.inspectedItemTypes)
+        )
+        return LoadedCatalog(
+            catalog: loaded.catalog,
+            references: ReferenceRecordCatalog(index: index, pluginNames: plugins.map(\.name)),
+            inspector: ReferenceRecordInspector(index: index)
+        )
+    }
+
+    @concurrent
+    nonisolated fileprivate static func filter(
+        _ items: [PreviewItem],
+        query: String
+    ) async -> [PreviewItem] {
+        PreviewCatalog.filter(items, query: query)
     }
 }
 

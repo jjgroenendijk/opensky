@@ -113,7 +113,7 @@ extension GameViewController: MeleeCombatWorld {
     func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         guard
             let engine = renderer?.worldAudio, engine.isRunning,
-            let sounds = (streamerCellProvider as? AudioDataProviding)?.soundStore,
+            let sounds = (worldData as? AudioDataProviding)?.soundStore,
             let sound = try? sounds.resolveAny(impact.sound),
             let path = sound.filePaths.first,
             let data = try? audioFileSystem?.contents(forPath: path)

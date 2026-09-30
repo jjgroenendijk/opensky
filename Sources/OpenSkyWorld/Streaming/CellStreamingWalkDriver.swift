@@ -28,7 +28,7 @@ public final class CellStreamingWalkDriver {
 
     public init(
         renderer: Renderer,
-        provider: any CellSceneProvider,
+        provider: sending any CellSceneProvider,
         configuration: CellStreamingWalkBenchmarkConfiguration
     ) {
         self.renderer = renderer

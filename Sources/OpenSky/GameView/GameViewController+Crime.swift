@@ -59,7 +59,7 @@ extension GameViewController {
     /// Wired after `wireFactions` and `wireWorldItems`, because it hands the
     /// reporter to the world-item runtime those two already built and reads the
     /// same FACT store the hostility derivation does.
-    func wireCrime(provider: any CellSceneProvider) {
+    func wireCrime(provider: any WorldDataProviding) {
         guard
             let factionStore = (provider as? FactionDataProviding)?.factionStore,
             let pluginName = (provider as? MagicDataProviding)?.magicItemPluginName
@@ -114,7 +114,7 @@ extension GameViewController {
         let ledger = reporter.runtime.ledger()
         return CrimeConditionResolution(
             factions: reporter.runtime.factions,
-            sourcePlugin: (streamerCellProvider as? MagicDataProviding)?.magicItemPluginName,
+            sourcePlugin: (worldData as? MagicDataProviding)?.magicItemPluginName,
             currentCrimeFaction: crimeFaction(in: streamer?.currentCellLocation),
             ledgers: ledger.isEmpty ? [:] : [.player: ledger]
         )
@@ -256,7 +256,7 @@ extension GameViewController: CrimeWorld {
     private func actorBaseKey(of key: ReferenceKey) -> ReferenceKey? {
         guard
             let base = streamer?.referenceEntry(key: key)?.placedActor?.base,
-            let plugin = (streamerCellProvider as? MagicDataProviding)?.magicItemPluginName,
+            let plugin = (worldData as? MagicDataProviding)?.magicItemPluginName,
             let resolved = crime.reporter?.runtime.factions
                 .resolvedID(base, fromPlugin: plugin)
         else { return nil }

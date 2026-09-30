@@ -96,7 +96,7 @@ nonisolated public struct WalkBenchmarkFrameBudget: Equatable, Sendable {
 public enum CellStreamingWalkBenchmark {
     public static func run(
         renderer: Renderer,
-        provider: any CellSceneProvider,
+        provider: sending any CellSceneProvider,
         configuration: CellStreamingWalkBenchmarkConfiguration
     ) throws -> CellStreamingWalkBenchmarkResult {
         let driver = CellStreamingWalkDriver(

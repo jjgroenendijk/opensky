@@ -37,7 +37,7 @@ extension GameViewController {
     /// runtime nil. The item index and the impact resolver are separately
     /// optional on top of that: a session can swing without either, and then
     /// the swing is unarmed and silent rather than absent.
-    func wireMelee(provider: any CellSceneProvider, renderer: Renderer) {
+    func wireMelee(provider: any WorldDataProviding, renderer: Renderer) {
         guard let settings = (provider as? CombatDataProviding)?.combatSettings else {
             return
         }

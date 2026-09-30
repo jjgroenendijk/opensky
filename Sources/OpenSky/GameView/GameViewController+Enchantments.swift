@@ -55,7 +55,7 @@ extension GameViewController {
     ///
     /// Wired beside `wireMagicEffects`, which owns the effect runtime every
     /// application ultimately writes through.
-    func wireEnchantments(provider: any CellSceneProvider) {
+    func wireEnchantments(provider: any WorldDataProviding) {
         enchantments.store = (provider as? MagicDataProviding)?.enchantmentStore
     }
 

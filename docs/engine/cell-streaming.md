@@ -106,9 +106,16 @@ A finished `CellScene` is `Sendable`. Two kinds of objects make that true:
   `FaceMorphBuffer`, and the animation playbacks change every frame on the main actor. Each one
   keeps that state in a `Mutex`. Only the main actor takes these locks, so they never wait.
 
-The runner is still `@unchecked Sendable` for one reason: the main actor keeps its own copy of
-the provider, which holds the same builder.
-[#678](https://github.com/jjgroenendijk/opensky/issues/678) splits the provider.
+A streaming session has two halves, so the builder and the main actor share nothing mutable:
+
+- **The build half.** `BuilderCellSceneProvider` holds only the builder and the worldspace. The
+  runner takes it as a `sending` parameter and keeps it in a `Mutex`. Only the build queue takes
+  that lock, so it never waits. After the hand-over no other code holds the builder.
+- **The data half.** `WorldDataStores` holds the record stores the game systems read on the main
+  actor, such as the dialogue, faction, and sound stores. The build queue never reads them.
+
+`CellSession` carries the runner and the data half to the app. The compiler checks the split:
+the runner is plain `Sendable`, and using the builder after the hand-over is a compile error.
 
 ## Scheduling
 

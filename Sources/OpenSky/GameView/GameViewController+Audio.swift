@@ -42,7 +42,7 @@ extension GameViewController: AudioControlProviding {
     /// also running.
     private func buildSoundDirectorIfNeeded(engine: WorldAudioEngine) {
         guard soundDirector == nil else { return }
-        let provider = streamerCellProvider
+        let provider = worldData
         let weatherStore = (provider as? WeatherProviding)?.weatherSystem?.store
         let soundStore = (provider as? AudioDataProviding)?.soundStore
         let aspcStore = (provider as? AudioDataProviding)?.aspcStore
@@ -60,7 +60,7 @@ extension GameViewController: AudioControlProviding {
     /// renderer so the per-frame audio tick advances the playlist.
     private func buildMusicDirectorIfNeeded(engine: WorldAudioEngine) {
         guard musicDirector == nil else { return }
-        let provider = streamerCellProvider
+        let provider = worldData
         let director = WorldMusicDirector(
             engine: engine,
             musicStore: (provider as? AudioDataProviding)?.musicStore,
@@ -77,7 +77,7 @@ extension GameViewController: AudioControlProviding {
     /// resolve to instead of waiting for the next equip change.
     private func buildFootstepDirectorIfNeeded(engine: WorldAudioEngine) {
         guard footstepDirector == nil else { return }
-        let provider = streamerCellProvider
+        let provider = worldData
         let director = WorldAudioFootstepDirector(
             engine: engine,
             footstepStore: (provider as? AudioDataProviding)?.footstepStore,

@@ -43,7 +43,7 @@ extension GameViewController {
     /// Wired after `wirePerks`, because the baselines it reads are the ones the
     /// actor-value side already loaded: the template resolver behind an actor's
     /// `SNAM` run is the same one behind its stats.
-    func wireFactions(provider: any CellSceneProvider) {
+    func wireFactions(provider: any WorldDataProviding) {
         guard
             let social = provider as? FactionDataProviding,
             let factionStore = social.factionStore,
@@ -88,7 +88,7 @@ extension GameViewController {
         }
         return FactionConditionResolution(
             factions: runtime.factions,
-            sourcePlugin: (streamerCellProvider as? MagicDataProviding)?.magicItemPluginName,
+            sourcePlugin: (worldData as? MagicDataProviding)?.magicItemPluginName,
             derivation: runtime.derivation,
             profiles: profiles
         )
@@ -165,7 +165,7 @@ extension GameViewController {
     func actorRelationshipBase(of key: ReferenceKey) -> ResolvedFormID? {
         guard
             let base = streamer?.referenceEntry(key: key)?.placedActor?.base,
-            let plugin = (streamerCellProvider as? MagicDataProviding)?.magicItemPluginName
+            let plugin = (worldData as? MagicDataProviding)?.magicItemPluginName
         else { return nil }
         return factions.runtime?.derivation.relationships
             .resolvedID(base, fromPlugin: plugin)

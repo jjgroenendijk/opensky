@@ -156,10 +156,11 @@ public enum CellStreamingFlyBenchmark {
 
     public static func run(
         renderer: Renderer,
-        provider: any CellSceneProvider,
+        provider: sending any CellSceneProvider,
+        weather: WeatherSystem?,
         configuration: CellStreamingFlyBenchmarkConfiguration
     ) throws -> CellStreamingFlyBenchmarkResult {
-        guard let weather = (provider as? WeatherProviding)?.weatherSystem else {
+        guard let weather else {
             throw CellStreamingFlyBenchmarkError.weatherUnavailable
         }
         guard let rain = weather.store.weather(for: .rain) else {
@@ -202,7 +203,7 @@ public enum CellStreamingFlyBenchmark {
 
         init(
             renderer: Renderer,
-            provider: any CellSceneProvider,
+            provider: sending any CellSceneProvider,
             configuration: CellStreamingFlyBenchmarkConfiguration
         ) {
             self.renderer = renderer

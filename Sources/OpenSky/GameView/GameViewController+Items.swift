@@ -62,7 +62,7 @@ extension GameViewController {
     /// order stays: audio first, Papyrus activation second, world items last.
     /// Ordering matters only in that the activation sound should play whether
     /// or not the take succeeds.
-    func wireWorldItems(provider: any CellSceneProvider, streamer: CellStreamer) {
+    func wireWorldItems(provider: any WorldDataProviding, streamer: CellStreamer) {
         guard let baselines = (provider as? ItemDataProviding)?.inventoryBaselines else {
             return
         }

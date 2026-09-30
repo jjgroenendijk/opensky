@@ -50,7 +50,7 @@ extension GameViewController {
     /// provider with no MGEF index — every synthetic scene — leaves the runtime
     /// nil, and the panel then reports itself unavailable rather than showing a
     /// convincing empty effect list.
-    func wireMagicEffects(provider: any CellSceneProvider, renderer: Renderer) {
+    func wireMagicEffects(provider: any WorldDataProviding, renderer: Renderer) {
         guard
             let values = actorValues.runtime,
             let magic = provider as? MagicDataProviding,

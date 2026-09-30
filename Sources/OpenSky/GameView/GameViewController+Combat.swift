@@ -48,7 +48,7 @@ extension GameViewController {
     /// A provider with no combat settings — every synthetic scene — leaves the
     /// runtime nil, exactly as it leaves the melee runtime nil, and then no
     /// fight can start rather than one starting with invented numbers.
-    func wireCombat(provider: any CellSceneProvider, renderer: Renderer) {
+    func wireCombat(provider: any WorldDataProviding, renderer: Renderer) {
         guard let settings = (provider as? CombatDataProviding)?.combatSettings else {
             return
         }

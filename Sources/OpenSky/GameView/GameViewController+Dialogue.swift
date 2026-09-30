@@ -52,7 +52,7 @@ extension GameViewController {
     /// worth talking to" — a question about death and hostility, which lives
     /// here beside the world-state store rather than inside streaming — and
     /// `onTalkActivation` is the use-key event the menu opens on.
-    func wireDialogue(provider: any CellSceneProvider, streamer: CellStreamer) {
+    func wireDialogue(provider: any WorldDataProviding, streamer: CellStreamer) {
         dialogue.store = (provider as? DialogueDataProviding)?.dialogueStore
         streamer.talk.candidateSource = { [weak self] in
             self?.talkCandidates() ?? []

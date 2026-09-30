@@ -75,7 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.activate()
     }
 
-    /// Provider factory handed to GameViewController: sets up the off-main
+    /// Session factory handed to GameViewController: sets up the off-main
     /// cell builder (VFS -> ESMFile -> Texture/MeshLibrary -> CellSceneBuilder)
     /// over the located install. No cell is built here -- that walk moves to
     /// the streamer's background runner (todo 3.2), so launch never blocks on
@@ -84,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// gate (missing esm, ESM parse throw) logs [ERROR] and returns nil so the
     /// controller falls back to DemoScene. Locator failures never reach this
     /// closure: World shows the in-window configuration message instead.
-    private func makeCellProviderFactory() -> ((MTLDevice) -> (any CellSceneProvider)?)? {
+    private func makeCellSessionFactory() -> ((MTLDevice) -> CellSession?)? {
         guard let root = gameDataRoot, let vfs = virtualFileSystem else { return nil }
         let configurationStore = terrainLODConfigurationStore
         let language = localizationLanguage.language
@@ -97,7 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     localizationLanguage: language,
                     terrainLODConfigurationStore: configurationStore
                 )
-                return indexes.makeProvider()
+                return indexes.makeSession()
             } catch {
                 let reason = String(describing: error)
                 Self.logger.error(
@@ -113,7 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeWorldViewController() -> GameViewController {
         let controller = GameViewController()
-        controller.cellProviderFactory = makeCellProviderFactory()
+        controller.cellSessionFactory = makeCellSessionFactory()
         controller.startupErrorMessage = gameDataErrorMessage
         controller.terrainLODConfigurationStore = terrainLODConfigurationStore
         // UI Lab localized-strings readout (M8.1.4): merged translation counts

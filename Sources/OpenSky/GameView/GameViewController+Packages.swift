@@ -16,7 +16,7 @@ struct PackageBridgeState {
 }
 
 extension GameViewController {
-    func wirePackages(provider: any CellSceneProvider, renderer: Renderer) {
+    func wirePackages(provider: any WorldDataProviding, renderer: Renderer) {
         guard let store = (provider as? PackageDataProviding)?.packageStore else { return }
         packages.runtime = ActorPackageRuntime(store: store)
         let advancePreviousSystems = renderer.onWorldUpdate

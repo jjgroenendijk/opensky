@@ -80,7 +80,10 @@ nonisolated public struct CellProviderIndexes {
         }
     }
 
-    public let builder: CellSceneBuilder
+    /// Owns the builder, which never reaches the main actor.
+    public let runner: SerialCellBuildRunner
+    public let scriptFileSystem: any GameFileSource
+    public let scriptFormIDResolver: FormIDResolver
     public let weatherSystem: WeatherSystem?
     public let soundStore: SoundRecordStore
     public let footstepStore: FootstepStore
@@ -152,16 +155,14 @@ nonisolated public struct CellProviderIndexes {
         detectionSettings = tuning.detection
         skillAdvancementSettings = tuning.skillAdvancement
         characterLevelSettings = tuning.characterLevel
-        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
-        let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
-        builder = CellSceneBuilder(
+        (runner, scriptFormIDResolver) = try Self.makeRunner(
             file: file,
-            meshes: meshes,
-            textures: textures,
             fileSystem: fileSystem,
+            device: device,
             localizationLanguage: localizationLanguage,
             terrainLODConfigurationStore: terrainLODConfigurationStore
         )
+        scriptFileSystem = fileSystem
         weatherSystem = WeatherSystem(
             file: file,
             worldspaceEditorID: FirstRenderCell.worldspaceEditorID
@@ -203,6 +204,32 @@ nonisolated public struct CellProviderIndexes {
         )
     }
 
+    /// Hands the new builder straight to the runner, so no other code holds it.
+    private static func makeRunner(
+        file: ESMFile,
+        fileSystem: any GameFileSource,
+        device: MTLDevice,
+        localizationLanguage: String,
+        terrainLODConfigurationStore: TerrainLODConfigurationStore
+    ) throws -> (SerialCellBuildRunner, FormIDResolver) {
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
+        let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
+        let builder = CellSceneBuilder(
+            file: file,
+            meshes: meshes,
+            textures: textures,
+            fileSystem: fileSystem,
+            localizationLanguage: localizationLanguage,
+            terrainLODConfigurationStore: terrainLODConfigurationStore
+        )
+        let formIDResolver = builder.formIDResolver
+        let runner = SerialCellBuildRunner(provider: BuilderCellSceneProvider(
+            builder: builder,
+            worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+        ))
+        return (runner, formIDResolver)
+    }
+
     /// The stat derivation and the baselines over it.
     ///
     /// Its own step because the initializer is at its length cap, and because
@@ -228,10 +255,14 @@ nonisolated public struct CellProviderIndexes {
         )
     }
 
-    public func makeProvider() -> BuilderCellSceneProvider {
-        BuilderCellSceneProvider(
-            builder: builder,
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
+    public func makeSession() -> CellSession {
+        CellSession(runner: runner, data: makeDataStores())
+    }
+
+    private func makeDataStores() -> WorldDataStores {
+        WorldDataStores(
+            scriptFormIDResolver: scriptFormIDResolver,
+            scriptFileSystem: scriptFileSystem,
             weatherSystem: weatherSystem,
             soundStore: soundStore,
             footstepStore: footstepStore,

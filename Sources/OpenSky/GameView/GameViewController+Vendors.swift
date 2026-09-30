@@ -18,7 +18,7 @@ import OpenSkyWorldState
 
 extension GameViewController {
     /// Wired after `wireFactions`, whose runtime answers the memberships.
-    func wireVendors(provider: any CellSceneProvider) {
+    func wireVendors(provider: any WorldDataProviding) {
         guard
             let social = provider as? FactionDataProviding,
             let factionStore = social.factionStore,
