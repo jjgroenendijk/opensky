@@ -49,14 +49,9 @@ numbers are an upper bound.
 | Launch setup (plugin load, record stores) | Main actor | Under 0.33 s from process start to the first frame. The heavy actor indexes are built lazily on the cell build worker |
 | Preview catalog load and filter | `@concurrent` function | Hundreds of thousands of records. A panel waits for it, the frame loop does not |
 
-Two changes follow from this table:
-
-- The cell build worker hands its scenes over in a checked `Mutex`, because `CellScene` is
-  `Sendable` ([cell streaming](/engine/cell-streaming.md)). The runner still shares its provider
-  with the main actor. [#678](https://github.com/jjgroenendijk/opensky/issues/678) splits it.
-- The Preview panel and the screenshot delay still use `Task.detached` and `DispatchQueue.main`.
-  [#676](https://github.com/jjgroenendijk/opensky/issues/676) moves them to `@concurrent` functions
-  and a main-actor `Task`.
+The cell build worker hands its scenes over in a checked `Mutex`, because `CellScene` is
+`Sendable`. It owns the builder alone: the main actor reads a separate set of record stores
+([cell streaming](/engine/cell-streaming.md)).
 
 The render encode grew with the loaded cells in the same run: 0.6 ms at the start and up to 24 ms
 with 25 cells loaded. That is a data layout question for the per-frame profile, not a reason to

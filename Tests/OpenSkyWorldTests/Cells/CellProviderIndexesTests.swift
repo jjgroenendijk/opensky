@@ -1,6 +1,7 @@
 import FormatsESMTesting
 import Foundation
 import Metal
+import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
@@ -33,11 +34,10 @@ struct CellProviderIndexesTests {
             localizationLanguage: "french",
             terrainLODConfigurationStore: .fallback()
         )
-        let provider = indexes.makeProvider()
+        let provider = try #require(indexes.makeSession().data as? WorldDataStores)
 
-        #expect(provider.builder.fileSystem as? VirtualFileSystem === fileSystem)
-        #expect(provider.builder.localizedStrings?.language == "french")
-        #expect(provider.worldspaceEditorID == FirstRenderCell.worldspaceEditorID)
+        #expect(provider.scriptFileSystem as? VirtualFileSystem === fileSystem)
+        #expect(provider.scriptFormIDResolver.pluginName == "Skyrim.esm")
         #expect(provider.weatherSystem == nil)
         #expect(provider.soundStore != nil)
         #expect(provider.aspcStore != nil)

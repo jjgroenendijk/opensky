@@ -165,13 +165,10 @@ enum BenchCommand {
         options: Options
     ) throws {
         let builder = try RenderCommand.makeBuilder(context: context, device: device)
+        let weather = WeatherSystem(file: builder.file, worldspaceEditorID: options.worldspace)
         let provider = BuilderCellSceneProvider(
             builder: builder,
-            worldspaceEditorID: options.worldspace,
-            weatherSystem: WeatherSystem(
-                file: builder.file,
-                worldspaceEditorID: options.worldspace
-            )
+            worldspaceEditorID: options.worldspace
         )
         let view = MTKView(
             frame: CGRect(
@@ -193,6 +190,7 @@ enum BenchCommand {
         let result = try CellStreamingFlyBenchmark.run(
             renderer: renderer,
             provider: provider,
+            weather: weather,
             configuration: CellStreamingFlyBenchmarkConfiguration(
                 start: options.start,
                 size: options.size,

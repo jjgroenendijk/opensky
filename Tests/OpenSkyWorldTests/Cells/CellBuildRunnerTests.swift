@@ -12,15 +12,16 @@ import Foundation
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
+import Synchronization
 import Testing
 
 /// Fake provider: counts builds per coordinate, optionally blocking each build
 /// on a gate so the test can hold one "in flight" while it enqueues again.
-/// Records eviction drop-sets. Thread-safe (queue + main touch it).
-nonisolated private final class FakeProvider: CellSceneProvider {
-    private let lock = NSLock()
-    private var builds: [CellCoordinate: Int] = [:]
-    private var evictions: [(mesh: Set<String>, texture: Set<String>)] = []
+/// Records eviction drop-sets. `Sendable`, so the test still reads it after the
+/// runner takes it.
+nonisolated private final class FakeProvider: CellSceneProvider, Sendable {
+    private let builds = Mutex<[CellCoordinate: Int]>([:])
+    private let evictions = Mutex<[(mesh: Set<String>, texture: Set<String>)]>([])
     private let gate: DispatchSemaphore?
     private let started: DispatchSemaphore?
     private let collision: StaticCollisionSet
@@ -41,9 +42,7 @@ nonisolated private final class FakeProvider: CellSceneProvider {
     func buildCell(at coordinate: CellCoordinate, state _: WorldStateSnapshot) throws -> CellScene {
         started?.signal()
         gate?.wait()
-        lock.lock()
-        builds[coordinate, default: 0] += 1
-        lock.unlock()
+        builds.withLock { $0[coordinate, default: 0] += 1 }
         var summary = CellLoadSummary(
             cellName: "fake", gridX: coordinate.x, gridY: coordinate.y,
             totalRefCount: 0, drawnRefCount: 0,
@@ -64,27 +63,19 @@ nonisolated private final class FakeProvider: CellSceneProvider {
         droppingMeshKeys meshKeys: Set<String>,
         droppingTextureKeys textureKeys: Set<String>
     ) {
-        lock.lock()
-        evictions.append((meshKeys, textureKeys))
-        lock.unlock()
+        evictions.withLock { $0.append((meshKeys, textureKeys)) }
     }
 
     func buildCount(_ coordinate: CellCoordinate) -> Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return builds[coordinate, default: 0]
+        builds.withLock { $0[coordinate, default: 0] }
     }
 
     var evictionCount: Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return evictions.count
+        evictions.withLock { $0.count }
     }
 
     var lastEviction: (mesh: Set<String>, texture: Set<String>)? {
-        lock.lock()
-        defer { lock.unlock() }
-        return evictions.last
+        evictions.withLock { $0.last }
     }
 }
 

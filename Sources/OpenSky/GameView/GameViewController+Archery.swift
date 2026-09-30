@@ -56,7 +56,7 @@ extension GameViewController {
     /// optional on top of that: a session can fly a projectile without either,
     /// and then the shot carries no arrow and lands silently rather than not
     /// happening.
-    func wireArchery(provider: any CellSceneProvider, renderer: Renderer) {
+    func wireArchery(provider: any WorldDataProviding, renderer: Renderer) {
         guard let settings = (provider as? CombatDataProviding)?.archerySettings else {
             return
         }

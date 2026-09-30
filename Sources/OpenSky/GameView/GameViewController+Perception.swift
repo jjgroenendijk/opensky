@@ -35,7 +35,7 @@ struct PerceptionBridgeState {
 
 extension GameViewController {
     /// Builds the perception pass over the provider's detection GMSTs.
-    func wirePerception(provider: any CellSceneProvider, renderer: Renderer) {
+    func wirePerception(provider: any WorldDataProviding, renderer: Renderer) {
         guard let settings = (provider as? CombatDataProviding)?.detectionSettings else {
             return
         }

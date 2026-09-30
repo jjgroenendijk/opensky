@@ -28,13 +28,13 @@ final class GameViewController: NSViewController {
     /// root can be corrected without relaunching or dismissing an alert loop.
     var startupErrorMessage: String?
 
-    /// Builds the off-main cell provider on the view's Metal device. Set by
+    /// Builds the cell streaming session on the view's Metal device. Set by
     /// the AppDelegate before the window content loads; nil factory or nil
     /// result (missing game data / setup throw) -> no streamer, renderer
     /// falls back to the synthetic DemoScene. The factory runs here (not in
     /// the AppDelegate) because the asset libraries bind GPU resources to the
     /// device the view renders with.
-    var cellProviderFactory: ((MTLDevice) -> (any CellSceneProvider)?)?
+    var cellSessionFactory: ((MTLDevice) -> CellSession?)?
 
     /// Thread-safe effective INI/sidebar LOD values shared with the off-main
     /// DistantLODBuilder. AppDelegate replaces this before view load.
@@ -125,10 +125,9 @@ final class GameViewController: NSViewController {
     /// fired graph events; lives in
     /// `Sources/OpenSkyWorld/Session/WorldAudioFootstepDirector.swift`.
     var footstepDirector: WorldAudioFootstepDirector?
-    /// Cell provider the audio bridge reads sound/aspc stores off when it
-    /// constructs the SFX director. Held weakly because the build
-    /// runner (and through it the streamer) already retains the provider.
-    var streamerCellProvider: (any CellSceneProvider)?
+    /// The session stores the audio, crime and faction bridges read. The build
+    /// runner holds the builder half, so the two share nothing mutable.
+    var worldData: (any WorldDataProviding)?
     /// Cached picker paths — enumerating every archive entry is not free.
     var cachedAudioFileNames: [String]?
     /// Voice picker filter, playback tracking and last-error state.
@@ -243,7 +242,8 @@ final class GameViewController: NSViewController {
         // the renderer on an empty scene and streams cells in around the
         // camera; no provider (missing data / setup throw) falls back to the
         // synthetic DemoScene so the window is never blank forever.
-        let provider = cellProviderFactory?(device)
+        let session = cellSessionFactory?(device)
+        let provider = session?.data
 
         do {
             let newRenderer = try Renderer(
@@ -279,9 +279,9 @@ final class GameViewController: NSViewController {
                     cameraInput?.releaseAll()
                 }
             }
-            if let provider {
-                streamerCellProvider = provider
-                startStreaming(provider: provider, renderer: newRenderer)
+            if let session {
+                worldData = session.data
+                wireStreaming(session: session, renderer: newRenderer)
             }
             // Registered after streaming so the HUD still refreshes after the
             // streamer's per-frame update, exactly as it did when streaming
@@ -290,15 +290,6 @@ final class GameViewController: NSViewController {
         } catch {
             show(message: "Renderer setup failed: \(error)")
         }
-    }
-
-    /// Wires a streamer over the provider: builds run off-main on a serial
-    /// runner, the recomposed scene swaps in via `Renderer.setScene`, and the
-    /// renderer's per-frame hook drives the streamer with the live camera
-    /// position. Body lives in `GameViewController+Streaming.swift` to keep this
-    /// file under the strict-lint size cap.
-    private func startStreaming(provider: any CellSceneProvider, renderer: Renderer) {
-        wireStreaming(provider: provider, renderer: renderer)
     }
 
     /// Saves the live World camera + current streamed scene, excluding app

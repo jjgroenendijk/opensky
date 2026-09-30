@@ -58,7 +58,7 @@ extension GameViewController {
     ///
     /// Wired after `wirePerks` and `wireSkills`: it hands itself to the skill
     /// runtime, and the spend validator it answers for reads the perk runtime.
-    func wireProgression(provider: any CellSceneProvider) {
+    func wireProgression(provider: any WorldDataProviding) {
         guard let values = actorValues.runtime else { return }
         // The runtime publishes into the baselines it writes through, which are
         // the provider's own — so a level-up moves the player's reported level

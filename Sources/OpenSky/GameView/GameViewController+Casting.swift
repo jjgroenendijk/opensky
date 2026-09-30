@@ -63,7 +63,7 @@ extension GameViewController {
     /// provider with no spell index — every synthetic scene — leaves the runtime
     /// nil, and the panel then says so rather than showing an empty spellbook
     /// that looks like a player who has learned nothing.
-    func wireCasting(provider: any CellSceneProvider, renderer: Renderer) {
+    func wireCasting(provider: any WorldDataProviding, renderer: Renderer) {
         guard
             let values = actorValues.runtime,
             let magic = provider as? MagicDataProviding,

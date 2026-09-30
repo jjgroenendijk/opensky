@@ -54,7 +54,7 @@ extension GameViewController {
     /// Wired after `wireCasting`, because the cast loop folds the spell-cost
     /// entry point through this runtime and takes it by value: the caster has
     /// to exist before it can be handed one.
-    func wirePerks(provider: any CellSceneProvider) {
+    func wirePerks(provider: any WorldDataProviding) {
         guard let store = (provider as? ProgressionDataProviding)?.perkStore else { return }
         var runtime = PerkRuntime(store: worldState, perks: store, conditionRegistry: .standard)
         runtime.conditions = ConditionContext(globals: runtimeStateGlobalResolution())

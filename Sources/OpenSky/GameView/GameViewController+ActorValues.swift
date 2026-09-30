@@ -43,7 +43,7 @@ extension GameViewController {
     /// A provider with no indexes — every synthetic scene — leaves the runtime
     /// nil, and the panel then reports itself unavailable rather than showing a
     /// convincing zero.
-    func wireActorValues(provider: any CellSceneProvider, renderer: Renderer) {
+    func wireActorValues(provider: any WorldDataProviding, renderer: Renderer) {
         guard
             let baselines = (provider as? ActorValueDataProviding)?.actorValueBaselines
         else {

@@ -44,7 +44,7 @@ extension GameViewController {
     /// assembles the body. A failure at any step is recorded and reported
     /// rather than retried: it is a fact about the install, and a silent retry
     /// loop would hide it behind a stutter.
-    func wirePlayerBody(provider: any CellSceneProvider, renderer: Renderer) {
+    func wirePlayerBody(provider: any WorldDataProviding, renderer: Renderer) {
         guard let bodyProvider = provider as? PlayerBodyProviding else {
             playerBodyBridge.failureReason = "the scene provider cannot assemble actors"
             return

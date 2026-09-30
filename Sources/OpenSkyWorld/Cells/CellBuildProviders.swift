@@ -163,6 +163,10 @@ nonisolated public protocol FactionDataProviding {
     var formListStore: FormListStore? { get }
 }
 
+/// The session data the main actor reads while the runner builds cells. The
+/// `XDataProviding` protocols say which stores a conformer carries.
+nonisolated public protocol WorldDataProviding {}
+
 /// Optional script-loading seam a provider can expose (issue #171). The
 /// Papyrus world runtime resolves a script name to compiled bytecode lazily
 /// through the file system, and resolves the FormIDs a VMAD property names

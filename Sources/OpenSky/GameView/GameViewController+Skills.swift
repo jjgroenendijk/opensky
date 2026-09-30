@@ -32,7 +32,7 @@ extension GameViewController {
     /// Wired after `wireActorValues`, because every read and write it makes goes
     /// through that runtime, and after `wireWorldItems`, because the worn-armour
     /// question it answers reads the equipment runtime.
-    func wireSkills(provider: any CellSceneProvider) {
+    func wireSkills(provider: any WorldDataProviding) {
         guard
             let values = actorValues.runtime,
             let information = (provider as? ProgressionDataProviding)?.actorValueInformation

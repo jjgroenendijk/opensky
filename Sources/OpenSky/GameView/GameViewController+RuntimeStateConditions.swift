@@ -171,6 +171,6 @@ extension GameViewController {
     /// Music record index off the streamer's cell provider, which is where
     /// every decoded record store this session built lives.
     private var runtimeStateMusicStore: MusicRecordStore? {
-        (streamerCellProvider as? AudioDataProviding)?.musicStore
+        (worldData as? AudioDataProviding)?.musicStore
     }
 }

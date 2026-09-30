@@ -180,12 +180,4 @@ final class M17AcceptanceChain {
 /// store, because the chain installs a synthetic one. It exists so the chain
 /// can call the app's own `wireDialogue` rather than repeating the two seam
 /// assignments that function makes.
-nonisolated private final class DialogueOnlyProvider: CellSceneProvider {
-    func buildCell(at coordinate: CellCoordinate, state _: WorldStateSnapshot) throws -> CellScene {
-        throw CellSceneError.cellNotFound(
-            worldspaceEditorID: "M17", gridX: coordinate.x, gridY: coordinate.y
-        )
-    }
-
-    func evict(droppingMeshKeys _: Set<String>, droppingTextureKeys _: Set<String>) {}
-}
+nonisolated private struct DialogueOnlyProvider: WorldDataProviding {}

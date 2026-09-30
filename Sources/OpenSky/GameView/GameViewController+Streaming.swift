@@ -16,11 +16,11 @@ extension GameViewController {
     /// renderer's per-frame hook drives the streamer with the live camera
     /// position. Weak captures both ways -> no retain cycle (this controller
     /// owns both renderer + streamer).
-    func wireStreaming(provider: any CellSceneProvider, renderer: Renderer) {
-        let runner = SerialCellBuildRunner(provider: provider)
+    func wireStreaming(session: CellSession, renderer: Renderer) {
+        let provider = session.data
         let controller = CellStreamer(
             center: CellCoordinate(x: FirstRenderCell.gridX, y: FirstRenderCell.gridY),
-            runner: runner,
+            runner: session.runner,
             sink: { [weak renderer] scene, camera in
                 do {
                     try renderer?.setScene(scene, camera: camera)
@@ -109,7 +109,7 @@ extension GameViewController {
     }
 
     private func wireStreamingSources(
-        provider: any CellSceneProvider,
+        provider: any WorldDataProviding,
         renderer: Renderer,
         streamer: CellStreamer
     ) {
@@ -121,7 +121,7 @@ extension GameViewController {
     /// The two runtimes that own an actor's numbers, in the order they depend
     /// on each other: magic effects write through the actor-value surface, so
     /// the surface has to exist first.
-    private func wireActorSystems(provider: any CellSceneProvider, renderer: Renderer) {
+    private func wireActorSystems(provider: any WorldDataProviding, renderer: Renderer) {
         wireActorValues(provider: provider, renderer: renderer)
         wireMagicEffects(provider: provider, renderer: renderer)
         // A cast spends an actor value and applies effects through the effect
@@ -148,7 +148,7 @@ extension GameViewController {
     }
 
     private func wireLateWorldSystems(
-        provider: any CellSceneProvider,
+        provider: any WorldDataProviding,
         renderer: Renderer,
         streamer: CellStreamer
     ) {
@@ -198,7 +198,7 @@ extension GameViewController {
     /// A global write hands weather and the clock a fresh `GlobalResolution`
     /// rather than rebuilding cells. The five time globals write into the
     /// renderer's clock (docs/engine/game-clock.md).
-    private func wireGlobals(provider: any CellSceneProvider, renderer: Renderer) {
+    private func wireGlobals(provider: any WorldDataProviding, renderer: Renderer) {
         let worldState = worldState
         let globalStore = (provider as? GlobalDataProviding)?.globalStore
         self.globalStore = globalStore

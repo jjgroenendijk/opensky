@@ -168,7 +168,7 @@ extension M11AcceptanceRealDataTests {
                 world.attach(
                     cell: location,
                     references: scene.references,
-                    formIDResolver: provider.scriptFormIDResolver,
+                    formIDResolver: provider.builder.formIDResolver,
                     firstIntegration: true
                 )
                 count += 1
