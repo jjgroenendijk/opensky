@@ -64,7 +64,8 @@ extension GameViewController {
             selectedFaction: crime.panel.membershipFaction ?? options.all.first?.key,
             vendorFactions: options.vendors,
             vendorOverride: override,
-            effectiveVendor: override.flatMap { vendors?.vendor(faction: $0) } ?? subject.vendor,
+            effectiveVendor: override.flatMap { vendors?.core.vendor(faction: $0) } ?? subject
+                .vendor,
             hour: renderer?.gameClock.hourOfDay,
             lastCrimeText: crime.lastActionText,
             lastGuardText: crime.lastGuardText,

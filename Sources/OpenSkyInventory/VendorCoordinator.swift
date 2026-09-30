@@ -1,5 +1,5 @@
-// Merchants for the barter menu: which vendor an actor or a faction is, which
-// inventory it trades from, and the rules one trade runs under.
+// The world side of the vendor domain: the `VendorWorld` port and the shell
+// that reads it for `VendorCore`.
 // See docs/engine/vendor-factions.md and docs/engine/coordinators.md.
 
 import OpenSkyFactionsInterface
@@ -35,71 +35,45 @@ nonisolated public struct BarterCounterparty: Equatable, Sendable {
     public let holder: InventoryHolder
 }
 
-/// The vendor domain: resolves merchants and the rules they trade under.
+/// The shell of the vendor domain: reads the world through `VendorWorld` and
+/// hands the facts to `VendorCore`, which decides.
 public final class VendorCoordinator {
-    public let resolver: VendorResolver
-    /// The plugin that item keyword FormIDs are resolved from.
-    private let itemPluginName: String?
+    public let core: VendorCore
     private weak var world: (any VendorWorld)?
 
-    public init(resolver: VendorResolver, itemPluginName: String?, world: any VendorWorld) {
-        self.resolver = resolver
-        self.itemPluginName = itemPluginName
+    public init(core: VendorCore, world: any VendorWorld) {
+        self.core = core
         self.world = world
     }
 
     /// `actor`'s vendor role, from its seeded memberships.
     public func vendor(of actor: ReferenceKey) -> Vendor? {
-        guard let memberships = world?.factionMemberships(of: actor) else { return nil }
-        return resolver.vendor(memberships: memberships)
-    }
-
-    /// Nil when `key` is not a vendor faction in this load order.
-    public func vendor(faction key: ReferenceKey) -> Vendor? {
-        guard let resolved = resolver.factions.faction(key: key), resolved.faction.isVendor else {
-            return nil
-        }
-        return resolver.vendor(faction: resolved)
+        core.vendor(memberships: world?.factionMemberships(of: actor))
     }
 
     /// Who `actor` trades as. `override` names a vendor faction to use in place
     /// of the one its memberships resolve.
-    ///
-    /// The counterparty is the faction's merchant chest when it names one, and
-    /// the actor's own inventory otherwise (UESP, Skyrim:Merchants).
     public func counterparty(
         for actor: ReferenceKey,
         vendorFaction override: ReferenceKey? = nil
     ) -> Result<BarterCounterparty, BarterOpenRefusal> {
-        guard let vendor = override.flatMap(vendor(faction:)) ?? vendor(of: actor) else {
-            return .failure(.notAMerchant)
-        }
-        guard let holder = holder(of: vendor, actor: actor) else {
-            return .failure(.chestNotResident(factionName: vendor.factionName))
-        }
-        return .success(BarterCounterparty(vendor: vendor, holder: holder))
+        let vendor = override.flatMap(core.vendor(faction:)) ?? vendor(of: actor)
+        let stock = vendor.flatMap { stock(at: VendorCore.stockKey(of: $0, actor: actor)) }
+        return VendorCore.counterparty(vendor: vendor, actor: actor, stock: stock)
     }
 
     /// The rules a trade with `vendor` runs under. A nil vendor is a nominated
     /// container, which trades anything.
     public func rules(for vendor: Vendor?) -> BarterRules {
         guard let vendor else { return .unrestricted }
-        let resolver = resolver
-        let plugin = itemPluginName
+        let core = core
         return BarterRules(vendor: vendor, hour: world?.hourOfDay) { [weak world] item in
-            guard let plugin, let raw = world?.itemKeywords(of: item) else { return [] }
-            return resolver.keywords(raw, fromPlugin: plugin)
+            core.keywords(world?.itemKeywords(of: item))
         }
     }
 
-    private func holder(of vendor: Vendor, actor: ReferenceKey) -> InventoryHolder? {
-        let key = vendor.merchantChest ?? actor
+    private func stock(at key: ReferenceKey) -> VendorStock? {
         guard let owner = world?.residentOwner(of: key) else { return nil }
-        switch (vendor.merchantChest, owner) {
-        case (nil, .actor), (_?, .container):
-            return InventoryHolder(key: key, owner: owner, cell: world?.cellLocation(of: key))
-        default:
-            return nil
-        }
+        return VendorStock(owner: owner, cell: world?.cellLocation(of: key))
     }
 }
