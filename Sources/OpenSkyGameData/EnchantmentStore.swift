@@ -1,15 +1,6 @@
-// Load-order-wide ENCH lookup above RecordIndex, in the shape `SpellStore` and
-// `MagicEffectStore` already use.
-//
-// The store joins each effect against `MagicEffectStore` and computes the
-// auto-calculated cost once, at construction, so no consumer recomputes it.
-// UESP documents the same per-effect curve for an enchantment that it does for
-// a spell, so `SpellCost` is the one implementation of it.
-//
-// A base-enchantment chain is followed here rather than by each consumer: an
-// item's EITM usually names a derived enchantment (`EnchFrostDamage03`) whose
-// ENIT points at the base one, and a cycle guard bounds a mod that makes that
-// chain loop.
+// Load-order-wide ENCH lookup above RecordIndex, like `SpellStore`. It joins each
+// effect with `MagicEffectStore` and computes the auto-calculated cost once,
+// through `SpellCost`. It follows the base-enchantment chain, with a cycle guard.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -195,11 +186,5 @@ nonisolated public struct EnchantmentStore: Sendable {
 
     private static func decode(_ indexed: IndexedRecord) throws -> Enchantment {
         try Enchantment(record: indexed.record, localized: indexed.localized)
-    }
-}
-
-nonisolated public enum EnchantmentStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> EnchantmentStore {
-        EnchantmentStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

@@ -1,29 +1,8 @@
-// What an equippable item occupies, and the index that answers it for one
-// plugin (issue #178, roadmap item 12.2.1).
-//
-// Two disjoint kinds of occupancy exist and the engine needs both, so they
-// travel together in one value:
-//
-// * Worn armour occupies biped object slots. ARMO carries them in BOD2/BODT
-//   and `BodySlots` already models them; that is the same bitfield the
-//   appearance pass masks skin against, so equipping reuses it rather than
-//   inventing a parallel notion of "chest".
-// * A weapon occupies hands, which are not biped slots at all. No bit of the
-//   biped bitfield means "right hand" — slot 39 is the shield's *armour*, not
-//   the hand holding it — so a second small set covers hands and a conflict is
-//   an overlap in either half.
-//
-// Which hands a weapon takes comes from its ETYP link, read through the EQUP
-// records of the same plugin (`EquipSlotTable`). That is the record the game
-// itself uses, and it is the only one that separates the cases the DNAM
-// animation type cannot: a staff and a bow share no animation family yet both
-// resolve through EQUP, and the handful of vanilla weapons whose animation
-// family disagrees with their authored slot follow the slot. The animation
-// type is still decoded (#175) and still drives animation selection; it no
-// longer decides occupancy.
-//
-// Documented in docs/formats/shouts-equip-slots.md,
-// docs/engine/inventory-equipment.md and docs/engine/inventory-state.md.
+// What an equippable item occupies: biped slots for worn armor (`BodySlots`,
+// from BOD2/BODT) and hands for a weapon. A conflict is an overlap in either.
+// Hands come from the weapon's ETYP link through EQUP (`EquipSlotTable`), not
+// from the animation type. See docs/formats/shouts-equip-slots.md,
+// docs/engine/inventory-equipment.md, and docs/engine/inventory-state.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -80,20 +59,15 @@ nonisolated public struct EquipmentOccupancy: Equatable, Sendable {
 
 /// One equippable base record reduced to what equipping needs from it.
 nonisolated public struct EquippableItem: Equatable, Sendable {
-    public let formID: FormID
     public let occupancy: EquipmentOccupancy
     /// WEAP MODL — the world model a hand attachment loads. Nil for armour,
     /// whose geometry comes from its ARMA armatures instead.
     public let modelPath: String?
 }
 
-/// Which slots each equippable base record in one plugin occupies.
-///
-/// Single-plugin and raw-FormID keyed, matching `ItemDefinitionStore` and the
-/// actor resolution indexes. Separate from `ItemDefinitionStore` because that
-/// store's `ItemDefinition` is the *inventory* view — value, weight, name —
-/// and deliberately carries no body template; widening it would put armour
-/// layout data on every potion.
+/// Which slots each equippable base record in one plugin occupies. Single-plugin
+/// and raw-FormID keyed. Separate from `ItemDefinitionStore`, which is the
+/// inventory view and carries no body template.
 nonisolated public struct EquipmentCatalog: Sendable {
     /// The hands a weapon takes when its ETYP link names nothing this plugin
     /// can resolve. Five vanilla WEAP records carry no ETYP at all — the
@@ -133,7 +107,6 @@ nonisolated public struct EquipmentCatalog: Sendable {
         for record in records(of: "ARMO", in: file) {
             guard let armor = try? Armor(record: record, localized: localized) else { continue }
             items[armor.formID.rawValue] = EquippableItem(
-                formID: armor.formID,
                 occupancy: EquipmentOccupancy(slots: armor.bodyTemplate?.slots ?? BodySlots()),
                 modelPath: nil
             )
@@ -145,7 +118,6 @@ nonisolated public struct EquipmentCatalog: Sendable {
                 unresolved += 1
             }
             items[weapon.formID.rawValue] = EquippableItem(
-                formID: weapon.formID,
                 occupancy: EquipmentOccupancy(hands: resolved ?? defaultWeaponHands),
                 modelPath: weapon.fields.modelPath
             )

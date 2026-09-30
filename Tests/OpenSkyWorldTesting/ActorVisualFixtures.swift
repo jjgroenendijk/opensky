@@ -38,7 +38,7 @@ public func makeResolver(
         try? armor(formID: 0x330, race: 0x19, slots: 0b10000, armatures: [0x331]),
         // Hooded robes: one ARMO whose two armatures are listed in the
         // opposite order to their DNAM draw priority, the shape vanilla
-        // ClothesMonkRobesHooded has (issue #384).
+        // ClothesMonkRobesHooded has.
         try? armor(formID: 0x340, race: 0x19, slots: 0b0100, armatures: [0x342, 0x341])
     ]
     let addons = makeArmorAddons(
@@ -103,7 +103,7 @@ private func makeArmorAddons(
             formID: 0x331, race: 0x19, additional: [0x100], slots: 0b10000,
             models: ("gloves_m.nif", "gloves_f.nif")
         ),
-        // Vanilla MonkHoodAA and MonkRobesAA priorities (issue #384).
+        // Vanilla MonkHoodAA and MonkRobesAA priorities.
         try? arma(
             formID: 0x341, race: 0x19, additional: [0x100], slots: 0b0010,
             models: ("hood_m.nif", "hood_f.nif"), priority: 10
@@ -128,31 +128,29 @@ public func makeEquipmentCatalog(
     var items: [UInt32: EquippableItem] = [
         // Torso clothes and robes both claim slot 32, so equipping one
         // displaces the other. Gloves claim slot 34 and coexist with both.
-        0x300: equippable(0x300, slots: 0b0100),
-        0x320: equippable(0x320, slots: 0b0100),
-        0x330: equippable(0x330, slots: 0b10000),
+        0x300: equippable(slots: 0b0100),
+        0x320: equippable(slots: 0b0100),
+        0x330: equippable(slots: 0b10000),
         0x600: EquippableItem(
-            formID: FormID(0x600),
             occupancy: EquipmentOccupancy(hands: .rightHand),
             modelPath: swordModel
         ),
         0x610: EquippableItem(
-            formID: FormID(0x610),
             occupancy: EquipmentOccupancy(hands: .bothHands),
             modelPath: "greatsword.nif"
         ),
         // A potion: carryable, occupies nothing, never equippable.
         0x700: EquippableItem(
-            formID: FormID(0x700), occupancy: .none, modelPath: nil
+            occupancy: .none,
+            modelPath: nil
         )
     ]
     items.merge(extra) { _, new in new }
     return EquipmentCatalog(items: items)
 }
 
-private func equippable(_ raw: UInt32, slots: UInt32) -> EquippableItem {
+private func equippable(slots: UInt32) -> EquippableItem {
     EquippableItem(
-        formID: FormID(raw),
         occupancy: EquipmentOccupancy(slots: BodySlots(rawValue: slots)),
         modelPath: nil
     )

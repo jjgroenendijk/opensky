@@ -1,18 +1,9 @@
-// World > Inventory & Equipment readout text (issue #180): the device-free
-// half of the M12 verification surface.
-//
-// Every line the three sections show is a pure function of one
-// `InventoryEquipmentSnapshot`, exactly as `ScriptsReadout` is a pure function
-// of one `ScriptsSnapshot`. Keeping the wording here rather than inside the
-// section view controllers is what lets the text be asserted without AppKit,
-// without a Metal device, and without a game install.
-//
-// No AppKit import on purpose: the file compiles into both the app and the CLI
-// target, so it needs no project-membership exception.
+// World > Inventory & Equipment readout text. Every line is a pure function of
+// one `InventoryEquipmentSnapshot`, so the wording is testable without AppKit,
+// Metal, or a game install.
 
 import Foundation
 import OpenSkyCrimeInterface
-import OpenSkyFormatsCore
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 
@@ -121,9 +112,8 @@ nonisolated public enum InventoryEquipmentReadout: Sendable {
     private static func equippedLines(_ items: [EquippedItemReadout]) -> String {
         guard !items.isEmpty else { return "Wearing: nothing" }
         var lines = ["Wearing:"]
-        // The enchantment and its remaining charge trail the slots where the
-        // piece has one (issue #472), so a hit that drained a weapon is readable
-        // here rather than only through a health bar.
+        // The enchantment and its remaining charge follow the slots, so a drained
+        // weapon is visible here.
         lines += items.prefix(listedStackLimit).map { item in
             let enchantment = item.enchantment.map { " · \($0)" } ?? ""
             return "  \(item.name) · \(item.occupancy)\(enchantment)"

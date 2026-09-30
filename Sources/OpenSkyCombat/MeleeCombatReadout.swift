@@ -1,9 +1,5 @@
-// Text for the `World > Player & Locomotion > Melee` readout (issue #195,
-// roadmap item 15.4).
-//
-// Engine-side and AppKit-free, on the `PlayerLocomotionReadout` precedent: the
-// panel section owns layout and the wording lives here, so a unit test can
-// assert on the sentence a user reads without standing up a window.
+// Text for the `World > Player & Locomotion > Melee` readout. AppKit-free, so a
+// unit test can check the wording.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -82,6 +78,7 @@ nonisolated public enum MeleeCombatReadout: Sendable {
             line += ", staggered"
         }
         line += hit.sound.map { ", \($0)" } ?? ", silent"
+        line += hit.enchantment.map { ", \($0)" } ?? ""
         return line
     }
 

@@ -1,18 +1,6 @@
-// The variable storage one behavior graph instance owns (issue #187).
-//
-// `hkbBehaviorGraphData` declares the variables positionally: index i has type
-// `m_variableInfos[i]`, name `m_stringData.m_variableNames[i]`, and initial
-// value in `m_variableInitialValues` — word list for bool, int, and real,
-// quad list for vector and quaternion. This type is that storage, seeded from
-// those declarations and mutable at runtime.
-//
-// External callers address variables by name (`bIsSprinting`, `Speed`), which
-// is what item 14.5 will bind engine state to. Indices stay available because
-// `hkbVariableBindingSet` addresses them positionally and never by name.
-//
-// Word storage keeps the raw i32 the packfile stores, including a real's float
-// bit pattern, so a round trip through this store is byte-exact and an unknown
-// declared type still reads and writes without loss.
+// The variable storage one behavior graph instance owns, seeded from the
+// `hkbBehaviorGraphData` declarations. Callers use names; `hkbVariableBindingSet`
+// uses indices. Word storage keeps the raw i32, so a round trip is byte-exact.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -117,10 +105,6 @@ nonisolated public struct BehaviorVariableStore: Equatable, Sendable {
             byName[name] = index
         }
         indexByName = byName
-    }
-
-    public var count: Int {
-        words.count
     }
 
     /// The declared index of `name`, or nil when the graph declares no such

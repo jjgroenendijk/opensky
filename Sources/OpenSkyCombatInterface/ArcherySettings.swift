@@ -4,7 +4,6 @@
 // Documented in docs/engine/projectiles.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics

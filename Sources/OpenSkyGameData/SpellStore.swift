@@ -1,14 +1,7 @@
-// Load-order-wide SPEL and SCRL lookup above RecordIndex, in the shape
-// `KeywordStore` and `MagicEffectStore` already use.
-//
-// Both record types live in one store because they are the same payload: a
-// scroll is a spell wrapped in an inventory item, and every consumer that
-// chases a link — BOOK's spell tome, WEAP's critical effect, the caster
-// runtime in 19.7 — wants the casting header and the resolved effect list, not
-// the record tag. `MagicCastingRecord` keeps the two decoders distinguishable.
-//
-// The store joins each effect against `MagicEffectStore` and computes the
-// auto-calculated cost once, at construction, so no consumer recomputes it.
+// Load-order-wide SPEL and SCRL lookup above RecordIndex, like `KeywordStore`.
+// One store, because a scroll is a spell in an item. `MagicCastingRecord` keeps
+// the two apart. Each effect is joined with `MagicEffectStore` and the
+// auto-calculated cost is computed once.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -47,8 +40,8 @@ nonisolated public struct ResolvedSpell: Sendable {
         record.recordType
     }
 
-    /// Runtime identity of this record, which is how the spellbook and the
-    /// active-effect runtime address it (issue #470).
+    /// Runtime identity of this record, which the spellbook and the active-effect
+    /// runtime use.
     public var key: ReferenceKey {
         ReferenceKey(resolved: id)
     }
@@ -59,8 +52,7 @@ nonisolated public struct ResolvedSpell: Sendable {
         data?.type ?? .spell
     }
 
-    /// True when the record carries the SPIT "PC Start Spell" flag, which is
-    /// what makes a spell one the player already knows (issue #470).
+    /// True when the record carries the SPIT "PC Start Spell" flag.
     public var isPlayerStartSpell: Bool {
         data?.flags.contains(.pcStartSpell) ?? false
     }
@@ -80,29 +72,19 @@ nonisolated public struct SpellStore: Sendable {
     public private(set) var records: [ResolvedFormID: ResolvedSpell] = [:]
     private var recordsByEditorID: [String: ResolvedSpell] = [:]
     /// The same records under the identity the world state keys them by, so the
-    /// spellbook can go from a stored key back to the record without walking
-    /// every entry (issue #470).
+    /// spellbook can go from a stored key back to the record.
     private var recordsByKey: [ReferenceKey: ResolvedSpell] = [:]
 
     public var spells: [ResolvedSpell] {
         records.values.filter { $0.recordType == "SPEL" }
     }
 
-    /// Editor IDs of the spells the player knows before learning anything.
-    ///
-    /// UESP: "You will always know the spells Flames and Healing by the time you
-    /// start Unbound, regardless of your race"
-    /// (<https://en.uesp.net/wiki/Skyrim:Spells>).
-    ///
-    /// Named rather than derived, and that is a deliberate finding rather than
-    /// a shortcut. The obvious data source would be the SPIT "PC Start Spell"
-    /// flag, and it is not the mechanism: across the whole vanilla load order
-    /// that bit is set on exactly one record, `PCHealRateCombat`, which
-    /// `CasterRealDataTests` pins so the finding cannot quietly rot. Vanilla
-    /// grants Flames and Healing from the intro quest's Papyrus script instead,
-    /// and this build does not run that quest. Editor IDs rather than FormIDs so
-    /// the lookup goes through the load order: a load order carrying neither
-    /// record grants nothing rather than reaching for a form that is not there.
+    /// Editor IDs of the spells the player knows before learning anything: "You will
+    /// always know the spells Flames and Healing"
+    /// (<https://en.uesp.net/wiki/Skyrim:Spells>). Named, not derived: vanilla sets
+    /// SPIT "PC Start Spell" only on `PCHealRateCombat` (`CasterRealDataTests`) and
+    /// grants these from a quest script. Editor IDs, so a load order without them
+    /// grants nothing.
     public static let vanillaStartSpellEditorIDs = ["Flames", "Healing"]
 
     /// The records `vanillaStartSpellEditorIDs` names that this load order
@@ -162,9 +144,8 @@ nonisolated public struct SpellStore: Sendable {
         recordsByEditorID[editorID.lowercased()]
     }
 
-    /// The record behind a stored runtime identity, or nil when this load order
-    /// no longer carries it — which is what a save written under a different
-    /// load order hands back (issue #470).
+    /// The record behind a stored runtime identity, or nil when this load order no
+    /// longer carries it.
     public func spell(key: ReferenceKey) -> ResolvedSpell? {
         recordsByKey[key]
     }
@@ -253,11 +234,5 @@ nonisolated public struct SpellStore: Sendable {
         default:
             throw ESMError.malformed("expected SPEL or SCRL, got \(indexed.record.type)")
         }
-    }
-}
-
-nonisolated public enum SpellStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> SpellStore {
-        SpellStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

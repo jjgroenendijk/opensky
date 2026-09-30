@@ -226,8 +226,6 @@ nonisolated public enum OwnershipVerdict: Equatable, Sendable {
 /// and a caller holding a save-decoded membership list has both without a live
 /// actor behind them.
 nonisolated public struct CrimeActor: Equatable, Sendable {
-    /// Runtime identity of the acting reference.
-    public let key: ReferenceKey
     /// The NPC_ base this actor was placed from, or nil for the player, who has
     /// no base record in this engine (`ReferenceKey.player`).
     public let base: ReferenceKey?
@@ -236,28 +234,20 @@ nonisolated public struct CrimeActor: Equatable, Sendable {
     public let memberships: ActorFactionState
 
     public init(
-        key: ReferenceKey,
         base: ReferenceKey? = nil,
         memberships: ActorFactionState = ActorFactionState()
     ) {
-        self.key = key
         self.base = base
         self.memberships = memberships
     }
 
     /// The player with no memberships, which is what a synthetic scene and a
     /// fresh session both start from.
-    public static let player = CrimeActor(key: .player)
+    public static let player = CrimeActor()
 
-    /// Whether property owned by `owner` is this actor's to use.
-    ///
-    /// An actor owner matches on the NPC_ base, because that is what `XOWN`
-    /// names: every ACHR placed from the owning base is the owner, and an actor
-    /// with no base — the player — matches none of them. A faction owner
-    /// matches a member at or above the rank the record demands.
-    ///
-    /// The one place the rule lives, so `OwnershipResolver` and `CrimeReporter`
-    /// cannot drift apart on it.
+    /// Whether property owned by `owner` is this actor's to use. An actor owner
+    /// matches the NPC_ base, so the player matches none. A faction owner matches a
+    /// member at or above the required rank. The one place this rule lives.
     public func mayUse(_ owner: ReferenceOwner) -> Bool {
         switch owner {
         case let .actor(base):
@@ -275,12 +265,7 @@ nonisolated public struct CrimeActor: Equatable, Sendable {
 }
 
 /// The `XOWN`/`XRNK` reading for one placed reference, and what the crime
-/// runtime makes of it.
-///
-/// It was an inspection until issue #504; since then ownership is enforced and
-/// this states the enforced answer rather than the raw fields alone. It is on
-/// the gate panel because "taking this is theft" is a fact the loop otherwise
-/// moves through silently.
+/// runtime makes of it. Shown on the gate panel.
 nonisolated public struct ReferenceOwnershipReadout: Equatable, Sendable {
     /// How the reference is named in the world, matching the HUD prompt.
     public let name: String
@@ -292,11 +277,9 @@ nonisolated public struct ReferenceOwnershipReadout: Equatable, Sendable {
     /// `XRNK` — the faction rank required to use it freely. Meaningful only
     /// when `owner` is a FACT; nil when the field is absent.
     public let factionRank: Int32?
-    /// Whether taking it would actually be theft for the player right now
-    /// (issue #504): the `OwnershipVerdict` over the reference's own `XOWN`,
-    /// the cell's, and the player's memberships. Not the same as `isOwned` —
-    /// a reference in an owned shop carries no `XOWN` and is still theft, and
-    /// a faction-owned chest the player ranks high enough in is not.
+    /// Whether taking it would be theft for the player now: the `OwnershipVerdict`
+    /// over the reference, its cell, and the player's memberships. Differs from
+    /// `isOwned`: an item in an owned shop has no `XOWN` but is still theft.
     public let isTheft: Bool
     /// What taking it would add to the bounty, in gold. Zero when the take is
     /// no crime, and also when the place answers to no crime faction.

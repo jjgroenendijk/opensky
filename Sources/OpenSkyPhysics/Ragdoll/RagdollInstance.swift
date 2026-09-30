@@ -1,36 +1,8 @@
-// One live ragdoll (issue #197, roadmap item 15.6): the bodies a definition
-// spawned, the blend that carries the skeleton from animated to simulated, and
-// the pose it writes back.
-//
-// ## The hand-off
-//
-// `hkbRigidBodyRagdollControlsModifier` is the graph's way of saying "the
-// physics owns these bones now, over this many seconds". Its semantics, as this
-// engine implements them:
-//
-//  1. Every bone body is placed at the pose the animation currently has it in,
-//     by composing the animated bone matrix with the bind-pose frame the
-//     definition carries. No body is teleported to a rest pose — a character
-//     shot mid-stride falls from mid-stride.
-//  2. Every bone body inherits the velocity that pose was arriving at, measured
-//     from the previous animated pose over the frame's own delta, plus whatever
-//     whole-actor velocity the caller hands over. A running character's corpse
-//     keeps running for the moment it takes to fall.
-//  3. The skeleton then blends from the animated pose to the simulated one over
-//     `m_durationToBlend` seconds. Below that duration both poses are evaluated
-//     and mixed; past it the animation is not consulted at all.
-//
-// ## Writing back
-//
-// The pose path this engine already has ends in `[String: float4x4]` — one
-// skeleton-world matrix per bone name, handed to `SkinningPalette.posed(by:)`.
-// A simulated bone writes into exactly that dictionary, so a ragdolled corpse
-// reaches the skinning palette through the same call an idle animation does and
-// the renderer needs to know nothing about physics. Bones the ragdoll does not
-// simulate — fingers, the skirt chain, weapon nodes — keep whatever the
-// animation left there, which is why a corpse still has hands.
-//
-// Documented in docs/engine/ragdoll.md.
+// One live ragdoll. On hand-off each body starts at the animated pose with its
+// velocity, then the skeleton blends to simulation over `m_durationToBlend`.
+// The pose writes back into the same bone-name matrix dictionary that
+// `SkinningPalette.posed(by:)` reads; unsimulated bones keep the animation.
+// See docs/engine/ragdoll.md.
 
 import OpenSkyBehavior
 import OpenSkyFormatsCore
@@ -54,22 +26,15 @@ nonisolated public enum RagdollPhase: Equatable, Sendable {
 
 nonisolated public struct RagdollInstance: Sendable {
     public let definition: RagdollDefinition
-    /// One body per `definition.bones` entry, index-aligned with it.
-    ///
-    /// Settable within the module rather than `private(set)`, for the same
-    /// reason `DynamicBodyWorld` hands its own array to the solver `inout`: the
-    /// solver owns these values during a step, and the stability gate re-throws
-    /// the same ragdoll sixty times through them. Nothing outside re-poses a
-    /// ragdoll — the pose it has is the one the simulation gave it.
+    /// One body per `definition.bones` entry, index-aligned with it. Module-settable,
+    /// because the solver owns these values during a step.
     public var bodies: [DynamicBody]
     /// Seconds the animated-to-simulated blend takes, from the controlling
     /// modifier's `m_durationToBlend`. Zero means an instant hand-off, which is
     /// what the `RagdollInstant` event asks for.
     public let blendDuration: Float
-    /// Whether the bones may touch each other at all this step. The pairs are
-    /// the definition's; this is the switch the sidebar throws over them, so a
-    /// viewer can see the same collapse with and without a torso its arms
-    /// cannot pass through (issue #413).
+    /// Whether the bones may touch each other this step; the sidebar switch over the
+    /// definition's pairs.
     public var isSelfCollisionEnabled = true
     public private(set) var blendElapsed: Float = 0
     public private(set) var lastStats = DynamicStepStats()
@@ -100,15 +65,9 @@ nonisolated public struct RagdollInstance: Sendable {
         bodies.allSatisfy(\.isSleeping)
     }
 
-    /// Spawns a ragdoll from the pose the animation currently holds.
-    ///
-    /// `animatedBoneMatrices` are skeleton-world matrices in the actor's own
-    /// space; `actorToWorld` places that space in the world. Splitting them is
-    /// what lets the same pose be used for the write-back, which has to go back
-    /// through the actor's space to reach the skinning palette.
-    ///
-    /// Nil when the definition names no bone the pose supplies, which is the
-    /// unresolvable case a caller should report rather than paper over.
+    /// Spawns a ragdoll from the pose the animation holds. `animatedBoneMatrices` are
+    /// in actor space; `actorToWorld` places that space. Nil when the definition
+    /// names no bone the pose supplies.
     public init?(
         definition: RagdollDefinition,
         animatedBoneMatrices: [float4x4],
@@ -154,35 +113,16 @@ nonisolated public struct RagdollInstance: Sendable {
 
     // MARK: - Stepping
 
-    /// How long the whole-ragdoll settling test watches for, in seconds, and how
-    /// far the root may travel in that time and still count as at rest.
-    ///
-    /// The interleaved constraint solver lets each bone reach 15.2's ordinary
-    /// sleep threshold. This whole-ragdoll test remains the coordinated view:
-    /// an uneven floor must not leave one marginal bone delaying persistence
-    /// after the corpse as a whole has stopped travelling.
-    ///
-    /// So the question asked here is the one a viewer actually asks — has the
-    /// body stopped *going* anywhere — and it is asked of displacement rather
-    /// than velocity: the root travels less than `settleDistance` over
-    /// `settleWindow`, and the whole ragdoll is put to sleep. An impulse wakes
-    /// it again exactly as it wakes any 15.2 body.
+    /// How long the whole-ragdoll settling test watches, in seconds, and how far the
+    /// root may travel in that time and still count as at rest. It checks
+    /// displacement, so one marginal bone on uneven ground cannot delay rest.
     public static let settleWindow: Float = 1
     public static let settleDistance: Float = 3
     public static let settleJointSeparation: Float = 2
     public static let settleAngularViolation: Float = 0.06
-    /// Pose-only projections made on arrival at rest.
-    ///
-    /// One is not enough: a pass moves a body by at most
-    /// `RagdollConstraintSolver.maximumPositionCorrection` and turns it by the
-    /// angular equivalent, and takes a fixed fraction of the remaining error, so
-    /// a joint several units open at the moment of rest closes geometrically
-    /// rather than at once. Measured on the vanilla humanoid's worst joint —
-    /// the left elbow, left 3.11 units and 0.113 radians open by a self-collision
-    /// contact during the fall — eight passes reach 0.59 units and 0.058
-    /// radians, and thirty-two reach 0.10 and 0.024. It is paid once per corpse
-    /// per spell of rest, over seventeen joints, so buying the tight answer
-    /// costs nothing worth measuring.
+    /// Pose-only projections made on arrival at rest. One pass closes only part of a
+    /// joint's error. Measured on the vanilla left elbow, 32 passes close a 3.11-unit
+    /// gap to 0.10 units; it runs once per rest, so the cost is negligible.
     public static let restProjectionCount = 32
     /// How far inside the settling thresholds the projection drives the joints
     /// before it stops. Half, so a corpse rests clear of the boundary rather
@@ -206,22 +146,10 @@ nonisolated public struct RagdollInstance: Sendable {
         return lastStats
     }
 
-    /// Puts the whole ragdoll to sleep once its root has stopped travelling, and
-    /// makes the one final pose-only joint projection either route to rest ends
-    /// with.
-    ///
-    /// Either route, because there are two. The coordinated one below waits for
-    /// the whole corpse to stop travelling *and* for every joint to be nearly
-    /// satisfied. But a ragdoll can also reach rest the ordinary way, every bone
-    /// falling under 15.2's own sleep thresholds independently, and that route
-    /// asks nothing about the joints: a bone can stop moving while the joint
-    /// holding it is still stretched, and once every bone is asleep nothing
-    /// solves it again. Before issue #413 that was invisible, because a corpse
-    /// whose bones ignored each other had nothing left to push a joint open at
-    /// the end of a fall; a self-collision contact during the collapse can leave
-    /// one, and the vanilla humanoid's left elbow rested three engine units and
-    /// six degrees open because of it. Projecting on arrival at rest, whichever
-    /// route got there, closes it.
+    /// Puts the whole ragdoll to sleep once its root stops travelling, and runs the
+    /// final joint projection on either route to rest. Bones can also sleep one by
+    /// one with a joint still stretched by a self-collision contact; projecting on
+    /// arrival at rest closes it.
     private mutating func updateSettling(dt: Float) {
         guard !hasProjectedAtRest else { return }
         guard !isSettled else { return projectAtRest() }
@@ -240,18 +168,9 @@ nonisolated public struct RagdollInstance: Sendable {
         projectAtRest()
     }
 
-    /// Sleeps every bone and makes one pose-only joint projection over the
-    /// sleeping bodies. No velocity is derived from the move: this is the pose a
-    /// corpse keeps, not a push it is given.
-    ///
-    /// The projection runs more than once, because one pass moves each body by
-    /// at most `maximumPositionCorrection` and a joint left several units open
-    /// at the moment of rest needs more than that. It stops as soon as every
-    /// joint is inside `restProjectionMargin` of the settling thresholds — not
-    /// merely inside them, so a corpse does not come to rest sitting exactly on
-    /// the boundary the settling test just cleared. A pose that arrived nearly
-    /// satisfied therefore still pays about the single pass it always did, and
-    /// only one the per-body route left open pays for more.
+    /// Sleeps every bone and projects the joints over the sleeping bodies, with no
+    /// velocity. It repeats until every joint is inside `restProjectionMargin`, so a
+    /// nearly satisfied pose still costs about one pass.
     private mutating func projectAtRest() {
         for index in bodies.indices {
             bodies[index].isSleeping = true
@@ -300,28 +219,11 @@ nonisolated public struct RagdollInstance: Sendable {
         hasProjectedAtRest = false
     }
 
-    /// Applies an impulse to the bone nearest `point`, waking the whole ragdoll
-    /// so a settled corpse responds to being hit.
-    public mutating func applyImpulse(_ impulse: SIMD3<Float>, at point: SIMD3<Float>) {
-        guard
-            let nearest = bodies.indices.min(by: {
-                simd_distance_squared(bodies[$0].position, point)
-                    < simd_distance_squared(bodies[$1].position, point)
-            })
-        else { return }
-        wake()
-        bodies[nearest].applyImpulse(impulse, at: point)
-    }
-
     // MARK: - Pose
 
-    /// The simulated pose as skeleton-world matrices in the actor's own space,
-    /// keyed by bone name — the shape `SkinningPalette.posed(by:)` consumes.
-    ///
-    /// `worldToActor` is the inverse of the placement the instance was spawned
-    /// with. It is the caller's rather than the instance's because an actor that
-    /// is streamed out and back re-derives its placement, and a cached inverse
-    /// would quietly be the old one.
+    /// The simulated pose as actor-space bone matrices by name, for
+    /// `SkinningPalette.posed(by:)`. `worldToActor` comes from the caller, because a
+    /// re-streamed actor re-derives its placement.
     public func boneMatrices(worldToActor: float4x4) -> [String: float4x4] {
         var matrices: [String: float4x4] = [:]
         for (index, bone) in definition.bones.enumerated() where bodies.indices.contains(index) {
@@ -333,14 +235,9 @@ nonisolated public struct RagdollInstance: Sendable {
         return matrices
     }
 
-    /// The pose to draw this frame: the simulated bones mixed into the animated
-    /// ones at the blend's current weight.
-    ///
-    /// Matrix-level mixing rather than TRS-level, because both sides arrive as
-    /// matrices here and a blend that only ever runs for half a second between
-    /// two poses of the same rigid skeleton does not visibly shear. Past the
-    /// blend the animated side is dropped entirely, so the corpse's steady state
-    /// is exactly the simulated pose.
+    /// The pose to draw this frame: simulated bones mixed into animated ones at the
+    /// blend weight. Matrix mixing is fine for a short blend; past it only the
+    /// simulated pose remains.
     public func blendedBoneMatrices(
         animated: [String: float4x4],
         worldToActor: float4x4

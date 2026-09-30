@@ -1,29 +1,9 @@
-// Which object each PRKC condition tab of a perk effect runs against (issue
-// #497, roadmap item 20.4).
-//
-// A perk entry-point effect carries one to three condition tabs, and the tab's
-// PRKC byte is an index rather than a name: UESP describes it as "Type - How to
-// apply the conditions that follow. Has values of 0-2 but the actual values
-// depend on the effect type. See the entry point EffectTypes for details"
-// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PERK>). The per-entry-
-// point "Condition Types" column on the same page is what says which subject
-// each index names, and this file is that column, transcribed.
-//
-// Two entry points the name table carries are absent from UESP's effect-type
-// table — 12 (`Mod Addiction Duration`) and 91 (`Allow Mount Actor`), neither of
-// which any vanilla perk hooks — and both fall back to the perk owner alone.
-//
-// ## Why this matters at runtime
-//
-// A caller evaluating an entry point can bind some of these subjects and not
-// others. A melee formula knows the attacker and the target; it does not know
-// the *weapon* as a world reference, because a swung weapon is an inventory
-// FormID rather than a placed reference the condition machinery can run
-// `HasKeyword` against. `PerkRuntime` therefore skips a tab whose subject the
-// caller did not bind and counts it, rather than evaluating it against the
-// wrong object or refusing the whole effect. That is a documented
-// over-application — `Armsman00`'s weapon-type tab is exactly such a tab — and
-// the count is what makes it visible instead of silent. See docs/engine/perks.md.
+// Which object each PRKC condition tab of a perk effect runs against. The PRKC
+// byte is an index whose meaning depends on the entry point; this file
+// transcribes UESP's "Condition Types" column
+// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PERK>). Entry points 12
+// and 91 are missing there and fall back to the perk owner. An unbound subject
+// is skipped and counted by `PerkRuntime`. See docs/engine/perks.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -40,20 +20,6 @@ nonisolated public enum PerkConditionSubject: String, CaseIterable, Hashable, Se
     case item
     case enchantment
     case lockedReference
-
-    public var describedName: String {
-        switch self {
-        case .perkOwner: "perk owner"
-        case .target: "target"
-        case .attacker: "attacker"
-        case .attackerWeapon: "attacker weapon"
-        case .spell: "spell"
-        case .weapon: "weapon"
-        case .item: "item"
-        case .enchantment: "enchantment"
-        case .lockedReference: "locked reference"
-        }
-    }
 }
 
 nonisolated extension PerkEntryPoint {

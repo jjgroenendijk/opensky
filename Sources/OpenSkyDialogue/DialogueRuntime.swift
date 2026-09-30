@@ -20,9 +20,6 @@ public struct DialogueRuntime: DialogueAccess {
     /// Plugin-side index every selection reads and every mutation takes its
     /// session-stable keys from.
     public let dialogue: DialogueStore
-    /// Quest index, for the owning-quest filter and for the alias scope a
-    /// dialogue condition is evaluated in.
-    public let quests: QuestStore
     /// Quest state seam, so "is the owning quest running" is answered by the
     /// same resolution the condition functions read rather than by a second
     /// path into the store.
@@ -39,7 +36,6 @@ public struct DialogueRuntime: DialogueAccess {
     public init(
         store: WorldStateStore,
         dialogue: DialogueStore,
-        quests: QuestStore,
         questStates: QuestResolution = .empty,
         context: ConditionContext = ConditionContext(),
         registry: ConditionFunctionRegistry,
@@ -47,7 +43,6 @@ public struct DialogueRuntime: DialogueAccess {
     ) {
         self.store = store
         self.dialogue = dialogue
-        self.quests = quests
         self.questStates = questStates
         self.context = context
         self.registry = registry
@@ -81,13 +76,8 @@ public struct DialogueRuntime: DialogueAccess {
 
     // MARK: - Selection
 
-    /// The topics `speaker` offers the player, plus the ones that were
-    /// considered and offered nothing.
-    ///
-    /// Player-facing topics only: DIAL DATA's category names what a topic is
-    /// for, and only category 0 is the menu the player picks from. The other
-    /// categories — scene, combat, detection and the rest — are spoken by the
-    /// machinery that owns them and never appear as a choice.
+    /// The topics `speaker` offers the player, plus those that offered nothing. Only
+    /// DIAL category 0, the player's menu; other categories are spoken elsewhere.
     public func topics(for speaker: ReferenceKey) -> DialogueSelection {
         select(
             topics: dialogue.sortedTopics().filter { $0.category == .player },
@@ -95,13 +85,9 @@ public struct DialogueRuntime: DialogueAccess {
         )
     }
 
-    /// The greeting `speaker` opens with, or nil when no greeting applies.
-    ///
-    /// Greetings are the HELO subtype rather than a category of their own: DIAL
-    /// SNAM is the authoritative four-character subtype (see `DialogueTopic`),
-    /// and `Skyrim.esm` carries 297 HELO topics. The highest-priority topic
-    /// with a winning response is the greeting; ties fall to FormID, exactly as
-    /// in the offered list.
+    /// The greeting `speaker` opens with, or nil. Greetings are the HELO subtype in
+    /// DIAL SNAM. The highest-priority topic with a winning response wins; ties go to
+    /// FormID.
     public func greeting(for speaker: ReferenceKey) -> DialogueTopicOffer? {
         select(
             topics: dialogue.sortedTopics().filter { $0.subtype == "HELO" },
@@ -226,13 +212,8 @@ public struct DialogueRuntime: DialogueAccess {
         return questStates.state(for: id)?.isRunning ?? false
     }
 
-    /// Whether `speaker` is a placement of the NPC_ record an INFO's ANAM
-    /// names.
-    ///
-    /// A speaker the reference index holds no record for cannot be compared, so
-    /// the gate passes rather than failing: refusing every response of an actor
-    /// this session has not indexed would silence a speaker for a reason that
-    /// has nothing to do with the record.
+    /// Whether `speaker` is a placement of the NPC_ record an INFO's ANAM names. A
+    /// speaker with no indexed record passes, so it is not silenced for no reason.
     private func speaks(_ speaker: ReferenceKey, as forced: FormID) -> Bool {
         guard let entry = context.references[speaker] else { return true }
         return ConditionFunctions.baseForm(of: entry) == forced

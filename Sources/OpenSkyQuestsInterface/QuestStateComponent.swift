@@ -6,13 +6,9 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
-/// Display state of one quest objective, addressed by its QOBJ index.
-///
-/// The three flags are independent on disk and in Papyrus:
-/// `SetObjectiveDisplayed`, `SetObjectiveCompleted` and `SetObjectiveFailed` are
-/// three separate natives, each taking its own Bool, and none of them clears
-/// another (<https://ck.uesp.net/wiki/SetObjectiveDisplayed_-_Quest> and
-/// siblings). They are modelled the same way here.
+/// Display state of one quest objective, by QOBJ index. The three flags are
+/// independent, like the `SetObjectiveDisplayed`, `SetObjectiveCompleted`, and
+/// `SetObjectiveFailed` natives (<https://ck.uesp.net/wiki/SetObjectiveDisplayed_-_Quest>).
 nonisolated public struct QuestObjectiveState: Equatable, Sendable {
     /// QOBJ index this state belongs to.
     public let index: UInt16
@@ -40,13 +36,8 @@ nonisolated public struct QuestObjectiveState: Equatable, Sendable {
     }
 }
 
-/// Failures the quest layer reports.
-///
-/// Every one of them is a caller mistake rather than malformed input, which is
-/// why they are distinct from `ESMError`, and every one is a thrown failure
-/// rather than a clamp: a script that sets a stage the quest does not define has
-/// a bug, and silently recording it would hide the bug behind a quest that never
-/// advances.
+/// Failures the quest layer reports. Each is a caller mistake, so it throws
+/// rather than clamps.
 nonisolated public enum QuestError: Error, Equatable {
     /// No loaded plugin defines a QUST with this FormID.
     case unknownQuest(FormID)
@@ -59,15 +50,10 @@ nonisolated public enum QuestError: Error, Equatable {
     case unknownObjective(quest: FormID, objective: UInt16)
     /// A mutation that only means something on a running quest.
     case questNotRunning(FormID)
-    /// The quest could not start because one or more non-optional aliases
-    /// stayed empty (issue #183). Carries the alias IDs in list order.
-    ///
-    /// The Creation Kit is explicit that this is game semantics rather than an
-    /// engine gap: "Optional: If checked, the quest is not required to fill
-    /// this in order to start. If unchecked, the quest will fail to start if it
-    /// cannot fill this alias." (<https://ck.uesp.net/wiki/Alias>) An alias
-    /// left empty because OpenSky does not implement its fill type is *not*
-    /// reported here; see `QuestAliasFiller`.
+    /// The quest could not start because a non-optional alias stayed empty; carries
+    /// the alias IDs in list order (<https://ck.uesp.net/wiki/Alias>). An alias
+    /// empty because OpenSky lacks its fill type is not reported here; see
+    /// `QuestAliasFiller`.
     case aliasFillFailed(quest: FormID, aliases: [UInt32])
 }
 
@@ -111,13 +97,9 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
         self.objectives = byIndex.keys.sorted().compactMap { byIndex[$0] }
     }
 
-    /// The state a quest has before anything touches it.
-    ///
-    /// Only the DNAM `startGameEnabled` flag feeds the baseline. The `completed`
-    /// and `failed` bits in the same field are authoring state the Creation Kit
-    /// writes about the quest's design, not about a session, so a fresh game
-    /// starts every quest uncompleted; see docs/engine/quest-state.md for the
-    /// vanilla start machinery this v1 leaves out.
+    /// The state a quest has before anything touches it. Only DNAM
+    /// `startGameEnabled` feeds it; the completed and failed bits are authoring
+    /// state. See docs/engine/quest-state.md.
     public static func baseline(for quest: Quest) -> QuestRuntimeState {
         QuestRuntimeState(isRunning: quest.flags.contains(.startGameEnabled))
     }
@@ -151,12 +133,6 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
     /// all-false rather than as nil.
     public func objective(_ index: UInt16) -> QuestObjectiveState {
         objectives.first { $0.index == index } ?? QuestObjectiveState(index: index)
-    }
-
-    /// True when the state still equals the plugin baseline for `quest`, which
-    /// is what makes a reset back to plugin data meaningful.
-    public func matchesBaseline(of quest: Quest) -> Bool {
-        self == Self.baseline(for: quest)
     }
 
     // MARK: - Mutating
@@ -232,10 +208,4 @@ nonisolated extension WorldStateComponentKind {
     /// the same way `GlobalStore` keys a GLOB override, because a quest is not
     /// placed anywhere and belongs to no cell.
     public static let quest = Self(rawValue: "quest", order: 6)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func quest(_ value: QuestRuntimeState) -> Self {
-        Self(value)
-    }
 }

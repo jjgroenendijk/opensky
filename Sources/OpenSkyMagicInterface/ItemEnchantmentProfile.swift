@@ -1,43 +1,8 @@
-// One enchanted item, resolved once into everything the runtime needs from it
-// (issue #472, roadmap item 19.9).
-//
-// The counterpart of `SpellPayload` for an item rather than a cast: resolved when
-// equipment resolves and never re-derived, so a weapon already swinging applies
-// the enchantment it was carrying when the swing started.
-//
-// ## What the record shapes are, measured
-//
-// The Creation Kit wiki states the authoring rules
-// (<https://ck.uesp.net/wiki/Enchantment>): "Armor Enchantments must use the
-// 'Constant Effect' casting type" and "can only have 'Self' as their delivery
-// type"; weapons "can only have 'Contact'"; staves "can only use 'Aimed' or
-// 'Target Location'". Every one of those holds in this machine's install, counted
-// on 2026-08-17 across the whole active load order:
-//
-//   ARMO EITM -> 2,885 enchantments, all `enchantment / constant effect / self`
-//   WEAP EITM -> 2,939 `enchantment / fire and forget / touch`, plus 86 staff
-//                enchantments spread over aimed, target-actor and target-location
-//
-// So the *casting type* is what selects the runtime behaviour here, not the record
-// family: a constant effect is worn, a contact enchantment fires on a hit, and a
-// staff enchantment is neither (see `EnchantmentRuntime` for the staff tally).
-//
-// ## The worn restriction is not a runtime gate
-//
-// `ENIT`'s worn-restriction link is a form list of keywords, and the same wiki
-// page describes it as an *authoring* restriction: "When the player tries to
-// enchant a Weapon or piece of Armor with this Enchantment, only items that have
-// one of the keywords in this list may be enchanted with it."
-//
-// It is exposed here as a question a caller can ask, and deliberately not
-// consulted when a worn item's effects are applied, because enforcing it would
-// break vanilla items. Of the 2,727 enchanted ARMO records whose enchantment
-// chain names a restriction list, 70 do not carry any keyword their own list
-// names — among them the Gauldur Amulet and its three fragments, a Dragon Priest
-// mask, and Cicero's hat (measured 2026-08-17; the counterexamples are pinned in
-// `EnchantmentRuntimeRealDataTests` so nothing can quietly start enforcing it).
-//
-// Documented in docs/engine/item-enchantments.md.
+// One enchanted item, resolved once into everything the runtime needs, like
+// `SpellPayload`. The casting type selects behavior: a constant effect is worn,
+// a contact one fires on a hit, and a staff one is neither. The worn restriction
+// is not enforced, because vanilla items break it (Gauldur Amulet;
+// `EnchantmentRuntimeRealDataTests`). See docs/engine/item-enchantments.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -102,36 +67,23 @@ nonisolated public struct ItemEnchantmentProfile: Equatable, Sendable {
         ActiveEffectSource(kind: .enchantment, record: enchantment)
     }
 
-    /// Whether `keywords` satisfies the worn restriction: true when the
-    /// enchantment names none, when the list is empty, and when the item carries
-    /// one of the listed keywords.
-    ///
-    /// - Parameter listedKeywords: the resolved contents of `wornRestriction`,
-    ///   or nil when the caller could not resolve the form list. An unresolvable
-    ///   list allows everything, on the same reasoning an unresolvable link
-    ///   elsewhere in this engine is data rather than a fault.
+    /// Whether `keywords` satisfies the worn restriction: true when there is none,
+    /// the list is empty, or the item has a listed keyword.
+    /// - Parameter listedKeywords: the resolved `wornRestriction` list, or nil when
+    ///   it could not be resolved, which allows everything.
     public func allowsWearing(keywords: [FormID], listedKeywords: [FormID]?) -> Bool {
         guard let listedKeywords, !listedKeywords.isEmpty else { return true }
         let carried = Set(keywords.map(\.rawValue))
         return listedKeywords.contains { carried.contains($0.rawValue) }
     }
-
-    /// One line for a readout: what the enchantment is and what it costs.
-    public var describedLine: String {
-        let shape = isWorn ? "worn" : (isStaff ? "staff" : "on hit")
-        return "\(name) (\(shape)): \(fullCharge.describedLine)"
-    }
 }
 
 nonisolated extension ItemEnchantmentProfile {
-    /// Resolves one carried item's enchantment, or nil when the item carries
-    /// none or its `EITM` does not resolve.
-    ///
+    /// Resolves one carried item's enchantment, or nil when it has none or its
+    /// `EITM` does not resolve.
     /// - Parameters:
-    ///   - definition: the unified item view, whose `enchantment` carries the
-    ///     already load-order-resolved identity and the `EAMT` charge.
-    ///   - store: the ENCH store, which supplies the effect list, the cost and
-    ///     the base chain the worn restriction is read from.
+    ///   - definition: the item view with the resolved enchantment and `EAMT` charge.
+    ///   - store: the ENCH store with effects, cost, and the base chain.
     public static func resolve(
         _ definition: ItemDefinition,
         using store: EnchantmentStore

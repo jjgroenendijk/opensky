@@ -1,31 +1,8 @@
-// The M17 gate's session (issue #209): one speaker, one live `GameViewController`
-// and the shipping conversation path, headless.
-//
-// The gate statement is a loop through the app rather than through the dialogue
-// runtime, so the harness drives the app's own entry points and asserts engine
-// models at the far end, exactly as the M13-M16 gates did. The use key's
-// activation reaches `GameViewController.beginDialogue` through the streamer's
-// Talk seam the app itself wires in `wireDialogue`; the panel's Open, Up, Down,
-// Choose and Leave reach it through `DialogueControlProviding`, which is the
-// same `MenuInputEvent` path the live keys take. Nothing here calls a dialogue
-// method the shipping surfaces do not.
-//
-// Two deliberate simplifications against a running app, both stated so a
-// failure is never mistaken for one of them:
-//
-// * No cell is resident, so the streamer has no actors to walk and the Talk
-//   candidate list is supplied directly. The pick itself is real —
-//   `TalkTargetPicker.nearest` over the same view ray the crosshair casts — and
-//   the occlusion rule that a solid hit in front of an actor wins belongs to
-//   `CellStreamerInteraction`, which its own suites cover.
-// * There is no renderer, so `dialoguemenu.swf` never loads. The movie contract
-//   is `DialogueMenuMovieBridgeTests` and the vanilla movie is driven by
-//   `openskycli swf dialogue-menu`; what is under test here is the engine model
-//   the movie is published from, which is authoritative for the selection
-//   either way (`GameViewControllerDialogueMenu.routeDialogueInput`).
-//
-// Everything is invented — no packfile bytes, no extracted records, no voice
-// files (AGENTS.md "Legal & IP boundary").
+// The M17 gate's session: one speaker, a live `GameViewController`, and the
+// shipping conversation path, headless. It drives only the app's entry points.
+// No cell is resident, so Talk candidates are supplied directly; the pick is
+// real. No renderer, so `dialoguemenu.swf` never loads; the engine model is
+// tested instead. Everything is invented.
 
 import AppKit
 @testable import OpenSky
@@ -75,13 +52,9 @@ final class M17AcceptanceChain {
 
     // MARK: - The world's own entry point
 
-    /// What the use key does on an actor under the crosshair: the view ray
-    /// picks the nearest Talk candidate, the streamer retains it, and the
-    /// activation fans out to whoever subscribed — which in the app is the
-    /// dialogue menu.
-    ///
-    /// Returns the picked speaker so a route step can assert the pick rather
-    /// than assume it.
+    /// The use key on an actor under the crosshair: the view ray picks the nearest
+    /// Talk candidate and the activation fans out to subscribers. Returns the
+    /// picked speaker so a step can assert it.
     @discardableResult
     func pressUseKeyOnTheSpeaker() throws -> ReferenceKey {
         let ray = try #require(InteractionRay(
@@ -93,22 +66,7 @@ final class M17AcceptanceChain {
             ray: ray, candidates: streamer.talk.candidateSource?() ?? []
         ))
         streamer.talk.speaker = hit.candidate.key
-        streamer.talk.activations(TalkActivationEvent(
-            speaker: hit.candidate.key,
-            target: InteractionTarget(
-                interaction: PlacedInteraction(
-                    reference: hit.candidate.reference,
-                    base: hit.candidate.base,
-                    position: hit.candidate.feet,
-                    name: hit.candidate.name,
-                    action: .talk,
-                    actionLabel: InteractionAction.talk.defaultLabel,
-                    sounds: nil
-                ),
-                hitPosition: hit.candidate.feet,
-                distance: hit.distance
-            )
-        ))
+        streamer.talk.activations(TalkActivationEvent(speaker: hit.candidate.key))
         return hit.candidate.key
     }
 
@@ -145,13 +103,9 @@ final class M17AcceptanceChain {
         choose()
     }
 
-    /// Says the line that is being delivered to its end, which is what pressing
-    /// Enter through a response does, and hands the list back.
-    ///
-    /// A greeting is delivered the same way a chosen response is, so both
-    /// states are driven here; the loop stops when the list is back or when a
-    /// goodbye has closed the conversation. The bound is a runaway guard, not a
-    /// run count: no fixture response has sixteen runs.
+    /// Says the current line to its end, as Enter does, and returns the list.
+    /// Stops when the list is back or a goodbye closes the conversation. The bound
+    /// is a runaway guard.
     func finishTheLine() {
         var guardCount = 0
         while controller.dialogue.isOpen, model.state != .topicList, guardCount < 16 {

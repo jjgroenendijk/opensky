@@ -1,17 +1,6 @@
-// AVAL chunk decoding for the OpenSky native save container (issue #194).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly
-// like `INVN` and `QSTS`: an actor whose only delta is its values has no `RDLT`
-// entry, so merging by `ReferenceKey` is what lets the encoder omit one.
-//
-// Bounds, as everywhere else in this decoder: the declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
-//
-// A non-finite or negative float is normalized to zero by
-// `ActorValueState.init` rather than rejected here, for the same reason a
-// duplicate quest stage is: the invariant belongs to the type, and one
-// nonsensical value is not a reason to fail a whole save.
+// AVAL chunk decoding for the OpenSky save, merged into `RDLT` entries by
+// `ReferenceKey` like `INVN`. Declared counts are checked against the bytes
+// left. Bad floats are normalized by `ActorValueState.init`, not rejected.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -27,11 +16,10 @@ nonisolated public struct SaveActorValueEntry: Equatable, Sendable {
     public let state: ActorValueState
 }
 
-/// One actor's saved actor-value overrides (issue #496), before they are merged
-/// onto that actor's `AVAL` entry.
+/// One actor's saved actor-value overrides, before they merge onto its `AVAL`
+/// entry.
 nonisolated public struct SaveActorValueOverrideEntry: Equatable, Sendable {
     public let key: ReferenceKey
-    public let cell: CellSceneLocation?
     public let overrides: [Int32: ActorValueOverride]
 }
 
@@ -78,8 +66,8 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
         }
     }
 
-    /// `AVOV` (issue #496): one entry per actor holding actor-value overrides,
-    /// each a list of `(index, base offset, permanent, damage)` records.
+    /// `AVOV`: one entry per actor with overrides, each a list of
+    /// `(index, base offset, permanent, damage)` records.
     public static func decodeActorValueOverrides(
         _ payload: Data
     ) throws -> [SaveActorValueOverrideEntry] {
@@ -99,13 +87,8 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
         return entries
     }
 
-    /// Lays each actor's override table onto the `AVAL` entry for the same
-    /// reference.
-    ///
-    /// An `AVOV` entry with no `AVAL` entry beside it is dropped rather than
-    /// turned into a state of its own. The encoder writes both together, so an
-    /// orphan means a hand-edited or truncated file, and the alternative would
-    /// be inventing a health for an actor whose health the save never carried.
+    /// Lays each actor's override table onto its `AVAL` entry. An `AVOV` entry
+    /// without an `AVAL` entry is dropped, since the encoder writes both together.
     public static func mergeOverrides(
         _ overrides: [SaveActorValueOverrideEntry],
         into values: [SaveActorValueEntry]
@@ -131,7 +114,8 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
         _ reader: inout SaveReader
     ) throws -> SaveActorValueOverrideEntry {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
-        let cell = try OpenSkySaveEntryDecoder.decodeCell(&reader)
+        // The cell is written for symmetry with AVAL; the merge takes the AVAL cell.
+        _ = try OpenSkySaveEntryDecoder.decodeCell(&reader)
         let count = try reader.uint32("AVOV value count")
         try OpenSkySaveDecoder.validate(
             count: count,
@@ -157,7 +141,7 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
                 damage: damage
             )
         }
-        return SaveActorValueOverrideEntry(key: key, cell: cell, overrides: overrides)
+        return SaveActorValueOverrideEntry(key: key, overrides: overrides)
     }
 
     private static func decodeEntry(_ reader: inout SaveReader) throws -> SaveActorValueEntry {

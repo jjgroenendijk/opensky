@@ -1,16 +1,6 @@
-// What a landed projectile does, by payload (issue #471, roadmap item 19.8).
-//
-// A satellite of `ProjectileRuntime` for the reason `ProjectileRuntimeBounds`
-// is one: the class is at its strict-lint body-length cap, and generalizing the
-// shot model added a second thing an impact can mean. Splitting on payload
-// rather than on line count also puts the two halves side by side, which is
-// where a reader comparing "an arrow does this, a spell does that" wants them.
-//
-// Both are internal rather than private so this file can reach them; nothing
-// outside the two files calls either, because `resolve(_:impact:)` in
-// `ProjectileRuntime.swift` is the only caller.
-//
-// Documented in docs/engine/projectiles.md and docs/engine/spell-delivery.md.
+// What a landed projectile does, by payload: an arrow or a spell. A satellite
+// of `ProjectileRuntime`, which is at its body-length cap.
+// See docs/engine/projectiles.md and docs/engine/spell-delivery.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -28,22 +18,17 @@ extension ProjectileRuntime {
             let target = impact.target, let world,
             world.applyProjectileDamage(arrow.damage.applied, to: target)
         else { return 0 }
-        // After the damage, for the reason the melee path reports after its
-        // own (issue #375). `akProjectile` is filled in because this runtime
-        // knows which PROJ struck; the wiki records vanilla leaving it `None`
-        // for an actor target, which a handler that checks for `None` first
-        // still tolerates.
+        // After the damage, as the melee path does. `akProjectile` is filled in; vanilla
+        // leaves it `None` for an actor target, which handlers already tolerate.
         world.reportScriptHit(ScriptHitEvent(
             target: target,
             aggressor: projectile.shooter,
             source: arrow.weapon,
             projectile: projectile.profile.projectile
         ))
-        // Archery levels on "Base Weapon Damage of the Bow"
-        // (<https://en.uesp.net/wiki/Skyrim:Leveling>) — the WEAP number alone,
-        // so neither the draw fraction nor the arrow raises it — and the actor
-        // it struck takes the armour half of the same exchange a swing reports
-        // (issue #498).
+        // Archery levels on the bow's base WEAP damage
+        // (<https://en.uesp.net/wiki/Skyrim:Leveling>), and the target takes the armor
+        // half, as for a swing.
         world.reportSkillUse(SkillUseEvent(
             actor: projectile.shooter,
             action: .weaponHit(.bow),
@@ -56,17 +41,9 @@ extension ProjectileRuntime {
         return arrow.damage.applied
     }
 
-    /// Fires the bow's enchantment on the actor an arrow struck (issue #472).
-    ///
-    /// Only a contact enchantment fires, exactly as for a swing: an enchanted bow
-    /// carries the same `Contact` delivery an enchanted blade does, and a staff is
-    /// not shot. An arrow that struck geometry rather than an actor applies
-    /// nothing and spends nothing, which is the one place this differs from a
-    /// swing — a swing only reaches this path having found a target.
-    ///
-    /// - Returns: what the enchantment did, discardable because the arrow's damage
-    ///   is what `resolve(_:impact:)` reports and the enchantment's own outcome is
-    ///   read off the session's readout instead.
+    /// Fires the bow's enchantment on the actor an arrow struck. Only a contact
+    /// enchantment fires. An arrow that hit geometry applies and spends nothing.
+    /// - Returns: what the enchantment did; discardable, because the readout shows it.
     @discardableResult
     public func applyBowEnchantment(
         _ arrow: ArrowPayload,
@@ -81,8 +58,7 @@ extension ProjectileRuntime {
         return world.applyWeaponEnchantment(WeaponEnchantmentHit(
             profile: profile,
             attacker: projectile.shooter,
-            target: target,
-            position: impact.position
+            target: target
         ))
     }
 
@@ -119,7 +95,7 @@ extension ProjectileRuntime {
             ))
         }
         return world.applySpellHit(SpellHit(
-            payload: payload, position: impact.position, targets: targets
+            payload: payload, targets: targets
         ))
     }
 }

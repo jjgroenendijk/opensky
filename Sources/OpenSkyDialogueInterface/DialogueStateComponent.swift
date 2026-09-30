@@ -1,39 +1,8 @@
-// Dialogue runtime state as a world-state component (issue #426, roadmap item
-// 17.2): the value type that holds one INFO's said-state once a speaker has
-// actually said it.
-//
-// It lives here rather than in `WorldStateComponents.swift` for the reason
-// `QuestRuntimeState` does: the type carries behaviour of its own — the
-// documented say-once rule and the reset interval — rather than being a plain
-// field bag. Only the `WorldStateComponentKind` case and the
-// `WorldStateComponentValue` case sit with the rest, so every store operation
-// stays generic over the protocol.
-//
-// An INFO is a base record rather than a placed reference, which the store does
-// not care about: state is keyed by the INFO record's session-stable
-// `ReferenceKey`, exactly as `QuestRuntimeState` is keyed by the QUST record's,
-// so journalling, snapshot ordering and the mutation callbacks apply unchanged.
-//
-// ## Why said-state is per INFO and not per speaker
-//
-// The Creation Kit's Response Data window documents the flag as a property of
-// the *response*, not of a conversation: "Say Once: If checked, this info will
-// only be said once. Once said, it will never be said again."
-// (<https://ck.uesp.net/wiki/Dialogue_Views>, Response Data). Nothing in that
-// sentence is scoped to a speaker, and shared INFOs are reachable from several
-// speakers through DNAM, so a per-speaker table would let the same line be said
-// once by each of them. One counter per INFO record is what the documented rule
-// describes.
-//
-// ## What the probe showed is persistent, and what is not
-//
-// Branch progression is *not* stored here. A vanilla sweep of Skyrim.esm found
-// zero INFOs carrying a PNAM previous-info link and 4,294 carrying TCLT topic
-// links, so the flow from one line to the next is a pure function of the chosen
-// INFO's own record plus said-state — there is no separate cursor to persist.
-// See docs/engine/dialogue.md.
-//
-// Documented in docs/engine/runtime-state.md and docs/engine/dialogue.md.
+// Dialogue state as a world-state component: one INFO's said-state, keyed by
+// the INFO's `ReferenceKey`. Per INFO, not per speaker: "Say Once: ... Once
+// said, it will never be said again" (<https://ck.uesp.net/wiki/Dialogue_Views>).
+// Branch progress is not stored; it follows from the INFO record and said-state.
+// See docs/engine/runtime-state.md and docs/engine/dialogue.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -51,8 +20,6 @@ nonisolated public enum DialogueError: Error, Equatable {
     /// The INFO record exists but its FormID does not resolve to a
     /// session-stable `ReferenceKey`, so there is nowhere to key said-state.
     case unresolvedInfoKey(FormID)
-    /// No loaded plugin declares a DIAL with this FormID.
-    case unknownTopic(FormID)
 }
 
 /// Everything the runtime records about one INFO.
@@ -75,14 +42,6 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
         self.saidCount = saidCount
     }
 
-    /// The state every INFO has before anything touches it. Unlike a quest's,
-    /// this baseline reads nothing off the record: an INFO carries no authored
-    /// "already said" bit, so the baseline is the same for all of them and the
-    /// parameter-free `unsaid` is it.
-    public static func baseline(for _: TopicInfo) -> DialogueRuntimeState {
-        .unsaid
-    }
-
     /// Whether this response has ever been said, which is what the say-once
     /// rule tests.
     public var hasBeenSaid: Bool {
@@ -94,12 +53,6 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
     /// and would put an entry in the save for every INFO a session considered.
     public var isUntouched: Bool {
         saidCount == 0
-    }
-
-    /// True when the state still equals the plugin baseline, which is what
-    /// makes a reset back to plugin data meaningful.
-    public func matchesBaseline(of info: TopicInfo) -> Bool {
-        self == Self.baseline(for: info)
     }
 
     /// This state with one more saying recorded. Saturating rather than
@@ -115,10 +68,4 @@ nonisolated extension WorldStateComponentKind {
     /// it is keyed by an INFO base record's `ReferenceKey`, because a response is
     /// not placed anywhere and belongs to no cell.
     public static let dialogue = Self(rawValue: "dialogue", order: 11)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func dialogue(_ value: DialogueRuntimeState) -> Self {
-        Self(value)
-    }
 }

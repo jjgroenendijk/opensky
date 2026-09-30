@@ -276,7 +276,7 @@ public protocol AudioControlProviding: AnyObject {
     func stopAllAudioSources()
     var audioStatsSnapshot: AudioStatsSnapshot { get }
 
-    // Voice-line controls (item 17.5). The archives hold 75,408 `.fuz` voice
+    // Voice-line controls. The archives hold 75,408 `.fuz` voice
     // files, far past what a picker can list, so the picker is a filter over
     // that corpus rather than the corpus itself.
 
@@ -302,8 +302,8 @@ public protocol AudioControlProviding: AnyObject {
     var voicePlaybackDescription: String { get }
     /// Most recent voice failure reason; nil when the last start succeeded.
     var lastVoiceError: String? { get }
-    /// Applies decoded speech curves to the selected actor. Defaults on; the
-    /// panel toggle is the deterministic A/B seam for issue #208.
+    /// Applies decoded speech curves to the selected actor. Defaults on; the panel
+    /// toggle is the A/B switch.
     var lipSyncEnabled: Bool { get set }
     /// Active line, track clock and live named weights for LipSyncStatsLabel.
     var lipSyncSnapshot: LipSyncSnapshot { get }
@@ -311,7 +311,7 @@ public protocol AudioControlProviding: AnyObject {
     /// its audio from playing.
     var lastLipSyncError: String? { get }
 
-    // World SFX + ambience director controls (M9.2.2). The director lives
+    // World SFX + ambience director controls. The director lives
     // beside the audio engine; these no-op when audio is not enabled.
 
     /// Use-key activation plays the activator's SNDR. Off still lets ambience
@@ -331,7 +331,7 @@ public protocol AudioControlProviding: AnyObject {
     /// the readout. "none" when the bed is empty.
     var currentAmbienceDescription: String { get }
 
-    // Music director controls (M9.2.3). Same lazy-construction policy: these
+    // Music director controls. Same lazy-construction policy: these
     // no-op (and read their defaults) until audio is enabled.
 
     /// MUSC playlist playback follows the streamed cell. Off fades the current
@@ -348,12 +348,10 @@ public protocol AudioControlProviding: AnyObject {
     var currentMusicDescription: String { get }
     /// Derived music state: "exploration", "town" or "interior".
     var currentMusicStateName: String { get }
-    /// VFS path of the track currently sounding; nil when silent.
-    var currentMusicTrackName: String? { get }
     /// Most recent music failure reason; nil when the last start succeeded.
     var lastMusicError: String? { get }
 
-    // Footstep director controls (issue #352). Same lazy-construction policy
+    // Footstep director controls. Same lazy-construction policy
     // again: these read their defaults and no-op until audio is enabled.
 
     /// Footstep events fired by the player's behavior graph play the sound the
@@ -372,7 +370,7 @@ public protocol AudioControlProviding: AnyObject {
     var lastFootstepError: String? { get }
     /// Events routed and footsteps played since the director was built.
     var footstepCounts: (routed: Int, played: Int) { get }
-    /// The MATT footsteps currently resolve against (issue #358): what the
+    /// The MATT footsteps currently resolve against: what the
     /// ground contact reports, or the pinned material and that it is pinned.
     var currentFootstepMaterialDescription: String { get }
     /// Every MATT the load order carries, by FormID and display name, for the

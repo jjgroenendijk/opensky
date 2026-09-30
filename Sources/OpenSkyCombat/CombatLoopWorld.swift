@@ -1,21 +1,7 @@
-// The world seam the combat loop drives through (issues #374 and #424, roadmap
-// items 15.7 and 16.7), and the values on either side of it.
-//
-// One protocol rather than a bag of closures, for the reason `MeleeCombatWorld`
-// is one: every question here is something the session already knows how to
-// answer — where the player is standing, which actors are resident and alive,
-// what hostility the world-state store holds for one of them, how to take
-// health off a reference, how to raise a graph event, how many transient
-// objects are live. Naming them together is what lets the acceptance chain
-// drive the whole loop against a fake world with no renderer, no window and no
-// game data.
-//
-// The seam is deliberately narrow in one direction: the runtime mutates the
-// world only through the calls declared here, and it never reads a clock. A
-// fight's whole trajectory through the engine is (hostility in) -> (fixed steps)
-// -> (these calls out).
-//
-// Documented in docs/engine/combat.md.
+// The world seam the combat loop drives through, and the values on either side.
+// One protocol, so the acceptance chain can drive the loop against a fake world.
+// The runtime changes the world only through these calls and never reads a
+// clock. See docs/engine/combat.md.
 
 import OpenSkyActorsInterface
 import OpenSkyBehavior
@@ -62,12 +48,6 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
         self.scale = scale
         self.isDead = isDead
         self.name = name
-    }
-
-    /// This actor as a melee target, so an NPC's swing runs through the same
-    /// 15.4 detector the player's does.
-    public var meleeTarget: MeleeTarget {
-        MeleeTarget(key: key, feet: feet, capsule: capsule)
     }
 }
 
@@ -129,8 +109,7 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func combatBlock(of key: ReferenceKey) -> MeleeBlockKind?
 
     /// The blocker's fortify and perk multiplier for an incoming blow, which is
-    /// `MeleeDamage`'s `bonusMultiplier` (issues #472 and #497). Defaults to 1,
-    /// what the formula reduces to for a character with neither.
+    /// `MeleeDamage`'s `bonusMultiplier`. Defaults to 1.
     func combatBlockMultiplier(of key: ReferenceKey) -> Float
 
     /// What `observer` currently makes of `target`, projected from 16.6's
@@ -153,22 +132,14 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// The profile `key` swings with, which sizes its reach and its damage.
     func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile
 
-    /// What `key` could cast right now and what it can pay for (issue #473).
-    ///
-    /// Resolved by the session because it is the session that holds the
-    /// spellbook, the SPEL records and the actor's magicka. A world with no
-    /// caster runtime — every synthetic scene without game data — answers
-    /// `.none`, and every actor then fights with its hands exactly as it did
-    /// before 19.10.
+    /// What `key` could cast right now and what it can pay for. The session holds
+    /// the spellbook and magicka. A world with no caster runtime answers `.none`, so
+    /// every actor fights with its hands.
     func combatCasting(of key: ReferenceKey) -> CombatCastingProfile
 
-    /// Starts `option`'s cast in `key`'s hand, through the same
-    /// `CasterRuntime` the player's casts run through.
-    ///
-    /// - Returns: false when the cast was refused — the actor does not know the
-    ///   spell, the load order dropped it, its magicka fell between the
-    ///   decision and the call. The machine then falls back to swinging rather
-    ///   than standing still holding nothing.
+    /// Starts `option`'s cast in `key`'s hand, through the player's `CasterRuntime`.
+    /// - Returns: false when the cast was refused (unknown spell, dropped record, not
+    ///   enough magicka). The machine then swings instead.
     @discardableResult
     func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool
 
@@ -183,13 +154,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// broke off or gave up mid-charge.
     func cancelCombatCast(by key: ReferenceKey)
 
-    /// Sends `key` walking to `point` through the 16.4 mover, which owns the
-    /// path, the capsule and the persistence.
-    ///
-    /// - Returns: true when a path was found and the mover took the request.
-    ///   False is the honest answer for a point no navmesh reaches or for a
-    ///   crowd already at the mover cap, and the machine asks again with a
-    ///   different point rather than sliding there anyway.
+    /// Sends `key` walking to `point` through the NPC mover.
+    /// - Returns: true when a path was found and the mover took it. False for an
+    ///   unreachable point or a full mover cap; the machine then tries another point.
     @discardableResult
     func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool
 

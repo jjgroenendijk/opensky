@@ -1,31 +1,11 @@
-// The seam between nonisolated Papyrus natives and the main-actor world
-// (issue #172).
-//
-// Three types live here and the split is deliberate:
-//
-// * `PapyrusWorldBridge` is the `@MainActor` protocol every world operation a
-//   native may perform is declared on. Its production conformer is
-//   `PapyrusWorldStateBridge`; tests conform their own.
-// * `PapyrusWorldAccess` is the nonisolated façade a native body actually
-//   holds, reached as `context.world`. Each method is a one-line hop onto the
-//   main actor.
-// * `PapyrusWorldReferenceSource` is what the bridge asks for decoded
-//   references and their resident cell. `CellStreamer` conforms in the app; a
-//   synthetic index conforms in tests, so natives are testable with no GPU and
-//   no streamer.
-//
-// Concurrency, stated plainly: `WorldStateStore` and `PapyrusWorldRuntime` are
-// `@MainActor`, while `PapyrusNativeFunction.Body` is nonisolated and
-// `@Sendable`. Native bodies are nevertheless only ever run synchronously from
-// `PapyrusWorldRuntime`'s tick, which is on the main actor, so
-// `PapyrusWorldAccess` asserts that with `MainActor.assumeIsolated` rather than
-// hiding the mismatch behind `@unchecked Sendable` or a global. A headless
-// runtime leaves `PapyrusNativeContext.world` nil and never reaches this file,
-// which is why every access is optional at the call site.
+// The seam between nonisolated Papyrus natives and the main-actor world.
+// `PapyrusWorldBridge` is the `@MainActor` protocol (`PapyrusWorldStateBridge` in
+// production). `PapyrusWorldAccess` is the nonisolated facade natives hold; it
+// hops with `MainActor.assumeIsolated`, since natives only run from the
+// main-actor tick. `PapyrusWorldReferenceSource` supplies references.
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
@@ -46,24 +26,10 @@ nonisolated public struct PapyrusActivationOutcome: Equatable, Sendable {
     )
 }
 
-/// Every world operation a Papyrus native is allowed to perform.
-///
-/// Issue #172 builds this seam; the natives that plug into it are `Enable`,
-/// `Disable`, `IsEnabled`, `GetPositionX`/`Y`/`Z`, `SetPosition`, `Delete`,
-/// `Activate`, `GetLinkedRef`, `GlobalVariable.GetValue`/`SetValue`, and
-/// `Game.GetPlayer`. Nothing here writes around `WorldStateStore`: every
-/// mutation is one `set(_:for:in:)` or `setGlobal(_:formID:defaults:)` call,
-/// so the journal, the dirty counts, and the save see it.
-/// The quest operations are declared separately, in
-/// `PapyrusWorldQuestBridge.swift` (issue #322), the actor operations in
-/// `PapyrusWorldActorBridge.swift` (issue #375), the magic operations in
-/// `PapyrusWorldMagicBridge.swift` (issue #474), the crime operations in
-/// `PapyrusWorldCrimeBridge.swift` (issue #504), the faction and relationship
-/// operations in `PapyrusWorldFactionBridge.swift` (issue #508), the guard and
-/// arrest operations in `PapyrusWorldGuardBridge.swift` (issue #505), the
-/// barter operation in `PapyrusNativeBarter.swift` (issue #506), and all seven
-/// are refined in here so a native reaches all of it through the one
-/// `context.world` façade.
+/// Every world operation a Papyrus native may perform. Every write is one
+/// `set(_:for:in:)` or `setGlobal(_:formID:defaults:)` call. It refines the quest,
+/// actor, magic, crime, faction, and guard bridges, and the barter operation, so
+/// natives reach everything through `context.world`.
 @MainActor
 public protocol PapyrusWorldBridge:
     PapyrusWorldQuestBridge, PapyrusWorldActorBridge, PapyrusWorldMagicBridge,
@@ -97,9 +63,6 @@ public protocol PapyrusWorldBridge:
     /// The decoded REFR behind `key`, which is where linked references live.
     func placedReference(for key: ReferenceKey) -> PlacedReference?
 
-    /// Cell `key` is resident in, for mutation attribution.
-    func cellLocation(of key: ReferenceKey) -> CellSceneLocation?
-
     /// Writes one component through `WorldStateStore.set(_:for:in:)`,
     /// attributing it to the reference's resident cell when there is one.
     ///
@@ -130,8 +93,8 @@ public protocol PapyrusWorldBridge:
         togglesOpen: Bool
     ) -> PapyrusActivationOutcome
 
-    /// Arms one update-timer slot on the script instance behind `handle`
-    /// (issue #277). A handle with no script instance behind it is a no-op.
+    /// Arms one update-timer slot on the script instance behind `handle`. A handle
+    /// with no instance is a no-op.
     func registerUpdateTimer(
         handle: PapyrusObjectHandle,
         slot: PapyrusUpdateTimerSlot,
@@ -145,13 +108,9 @@ public protocol PapyrusWorldBridge:
     )
 }
 
-/// Nonisolated façade over a `PapyrusWorldBridge`, held by
-/// `PapyrusNativeContext.world` and called from native bodies.
-///
-/// Every method mirrors the protocol one-for-one and hops with
-/// `MainActor.assumeIsolated`, which is an assertion, not a suppression: it
-/// traps if a native ever runs off the main actor, and only a world-aware
-/// runtime installs one of these.
+/// Nonisolated facade over a `PapyrusWorldBridge`, held by
+/// `PapyrusNativeContext.world`. Each method hops with `MainActor.assumeIsolated`,
+/// which traps if a native runs off the main actor.
 nonisolated public final class PapyrusWorldAccess: Sendable {
     /// Internal rather than private so the quest hops can live in
     /// `PapyrusWorldQuestBridge.swift` beside the protocol they mirror. Only
@@ -184,10 +143,6 @@ nonisolated public final class PapyrusWorldAccess: Sendable {
 
     public func placedReference(for key: ReferenceKey) -> PlacedReference? {
         MainActor.assumeIsolated { bridge.placedReference(for: key) }
-    }
-
-    public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        MainActor.assumeIsolated { bridge.cellLocation(of: key) }
     }
 
     @discardableResult

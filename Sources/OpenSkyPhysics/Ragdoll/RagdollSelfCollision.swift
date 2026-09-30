@@ -20,11 +20,6 @@ nonisolated public struct RagdollBonePair: Hashable, Sendable, Comparable {
 
 /// The bone pairs of one ragdoll that are allowed to collide.
 nonisolated public struct RagdollSelfCollision: Sendable, Equatable {
-    /// How many joints apart two bones must be before they may touch. Two hops
-    /// is a jointed pair's shared parent, so the first admitted distance is
-    /// three.
-    public static let minimumJointDistance = 3
-
     /// Admitted pairs, ascending. Sorted rather than a bare set so anything that
     /// reports or iterates them is deterministic.
     public let pairs: [RagdollBonePair]

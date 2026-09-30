@@ -1,5 +1,5 @@
-// The device-free half of the World > Inventory & Equipment surface
-// (issue #180): every line the three sections show is a pure function of one
+// The device-free half of the World > Inventory & Equipment surface:
+// every line the three sections show is a pure function of one
 // snapshot, so it can be asserted without AppKit, without a Metal device and
 // without a game install.
 
@@ -127,8 +127,8 @@ struct InventoryEquipmentReadoutTests {
             .contains("Faction rank"))
     }
 
-    /// Ownership the reference does not carry itself: the cell claims it
-    /// (issue #504), which is every crate in a vanilla shop.
+    /// Ownership the reference does not carry itself: the cell claims it,
+    /// which is every crate in a vanilla shop.
     @Test
     func ownershipTextNamesTheCellWhenTheReferenceCarriesNoOwner() {
         let inherited = ReferenceOwnershipReadout(
@@ -181,9 +181,8 @@ struct InventoryEquipmentReadoutTests {
         let inspection = EquipInspectReadout(
             name: "0x00003000",
             equipped: [
-                EquippedItemReadout(item: FormID(0x300), name: "IronCuirass", occupancy: "body"),
+                EquippedItemReadout(name: "IronCuirass", occupancy: "body"),
                 EquippedItemReadout(
-                    item: FormID(0x200),
                     name: "IronSword",
                     occupancy: "right hand"
                 )
@@ -216,7 +215,7 @@ struct InventoryEquipmentReadoutTests {
         #expect(text.contains("Appearance skips: none"))
     }
 
-    /// The section states what the profile cache is doing (issue #489), which is
+    /// The section states what the profile cache is doing, which is
     /// what makes the per-frame reuse visible without a profiler.
     @Test
     func equipmentTextStatesTheEnchantmentCache() {

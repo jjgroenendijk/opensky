@@ -33,10 +33,6 @@ nonisolated public final class PapyrusScheduler {
     public private(set) var elapsedGameHours = 0.0
     public private(set) var pendingCount = 0
 
-    public var realSeconds: Double {
-        Double(tickCount) * fixedStepSeconds
-    }
-
     private var lastGameSeconds: Double?
     private var nextOrder: UInt64 = 0
     private var entries: [Entry] = []

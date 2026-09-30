@@ -2,7 +2,6 @@
 
 import Foundation
 import OpenSkyConditions
-import OpenSkyScriptingInterface
 import OSLog
 
 nonisolated public struct PapyrusNativeKey: Equatable, Hashable, Sendable {
@@ -54,9 +53,8 @@ nonisolated public final class PapyrusNativeLog {
 nonisolated public final class PapyrusNativeContext {
     public var random: ConditionRandom
     public let log: PapyrusNativeLog
-    /// The world a native may read and mutate, or nil in a headless runtime
-    /// with no world behind it (issue #172). A native that needs the world
-    /// returns a failure rather than guessing when this is nil.
+    /// The world a native may read and change, or nil in a headless runtime. A native
+    /// that needs it fails rather than guessing.
     public let world: PapyrusWorldAccess?
 
     public init(
@@ -79,9 +77,8 @@ nonisolated public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
         standard(context: PapyrusNativeContext())
     }
 
-    /// The standard registry over a caller-supplied context, which is how a
-    /// world-aware session installs the same natives with
-    /// `PapyrusNativeContext.world` set (issue #172).
+    /// The standard registry over a caller-supplied context, so a world-aware session
+    /// installs the same natives with `PapyrusNativeContext.world` set.
     public static func standard(context: PapyrusNativeContext) -> PapyrusNativeRegistry {
         var registry = PapyrusNativeRegistry(context: context)
         PapyrusNativeFunctions.install(into: &registry)
@@ -126,13 +123,5 @@ nonisolated public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
 
     public var count: Int {
         functions.count
-    }
-
-    public var keys: [PapyrusNativeKey] {
-        functions.keys.sorted {
-            $0.scriptName == $1.scriptName
-                ? $0.functionName < $1.functionName
-                : $0.scriptName < $1.scriptName
-        }
     }
 }

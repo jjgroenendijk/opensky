@@ -1,6 +1,4 @@
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// What one fill pass produced: the table, why each empty alias is empty, and
 /// whether the quest is allowed to start with it.

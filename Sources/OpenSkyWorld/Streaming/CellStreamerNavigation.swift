@@ -1,4 +1,4 @@
-// Streamed navigation reconciliation and query surface (issue #200). Like
+// Streamed navigation reconciliation and query surface. Like
 // CellStreamerPhysics, this derives lifetime from resident scenes each frame:
 // coverage swaps, door transitions and state rebuilds therefore need no
 // navigation-specific callbacks.
@@ -19,14 +19,6 @@ extension CellStreamer {
     /// but only this many queued paths can consume A* work in one frame.
     public static let maximumNavigationRepathsPerFrame = 2
 
-    public func navigationProjection(
-        of point: SIMD3<Float>,
-        searchRadius: Float = NavigationPathQuery.defaultProjectionRadius
-    ) -> NavigationProjectionResult {
-        reconcileNavigation()
-        return navigationState.graph.projection(of: point, searchRadius: searchRadius)
-    }
-
     /// Immediate query for user-driven and inspection callers. Actor followers
     /// use the queued repath surface below so a crowd cannot spike one frame.
     public func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
@@ -45,24 +37,6 @@ extension CellStreamer {
         return navigationState.graph.pathIsCurrent(
             path, target: target, targetMoveTolerance: targetMoveTolerance
         )
-    }
-
-    /// Queues one replacement per follower only when an unload/rebuild or a
-    /// sufficiently moved target invalidated its prior corridor.
-    public func requestNavigationRepathIfNeeded(
-        identifier: UInt64,
-        query: NavigationPathQuery,
-        previousPath: NavigationPath,
-        targetMoveTolerance: Float = NavigationPathQuery.defaultTargetMoveTolerance
-    ) {
-        reconcileNavigation()
-        guard
-            !navigationState.graph.pathIsCurrent(
-                previousPath,
-                target: query.target,
-                targetMoveTolerance: targetMoveTolerance
-            ) else { return }
-        requestNavigationRepath(NavigationRepathRequest(identifier: identifier, query: query))
     }
 
     public func requestNavigationRepath(_ request: NavigationRepathRequest) {

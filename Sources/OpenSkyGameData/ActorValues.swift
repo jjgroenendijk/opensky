@@ -1,17 +1,6 @@
-// The three primary actor values and the triple that carries them (issue #194,
-// roadmap item 15.3).
-//
-// Health, magicka and stamina are one type rather than three loose floats
-// because every operation in this subsystem touches all three at once: the
-// derivation produces a triple, the runtime clamps a triple, the save writes a
-// triple, and the HUD reads a triple. Splitting them would put the same three
-// lines at every call site and invite one of them to drift.
-//
-// Only the three *primary* values live here. Skills, resistances and the rest
-// of the actor-value table are M18; this type deliberately does not pretend to
-// be the general actor-value store those will need.
-//
-// Documented in docs/engine/actor-values.md.
+// The three primary actor values and the triple that carries them. One type,
+// because every operation touches all three: derivation, clamping, save, and
+// HUD. Other actor values live elsewhere. See docs/engine/actor-values.md.
 
 import Foundation
 
@@ -27,13 +16,9 @@ nonisolated public enum ActorValueKind: String, CaseIterable, Hashable, Sendable
     case stamina
 }
 
-/// One value per `ActorValueKind`.
-///
-/// Values are `Float` because every source is: the RACE DATA starting
-/// attributes are floats, damage from a weapon will be, and the HUD meters take
-/// a fraction. The derivation rounds to whole numbers where the documented
-/// formula does, but the type itself does not force integers — a healing effect
-/// that restores 2.5 per second must not quantize away.
+/// One value per `ActorValueKind`. `Float`, because every source is: RACE DATA,
+/// damage, and the HUD fraction. A regeneration of 2.5 per second must not be
+/// rounded away.
 nonisolated public struct ActorValues: Equatable, Sendable {
     public var health: Float
     public var magicka: Float
@@ -68,14 +53,6 @@ nonisolated public struct ActorValues: Equatable, Sendable {
             case .stamina: stamina = newValue
             }
         }
-    }
-
-    /// True when every value is finite, which is the precondition the runtime
-    /// enforces before storing anything: one NaN in a maximum would make every
-    /// later clamp produce NaN and the HUD meter would go blank rather than
-    /// empty.
-    public var isFinite: Bool {
-        health.isFinite && magicka.isFinite && stamina.isFinite
     }
 
     /// This triple with every value pulled into `0 ... limits`, per kind.

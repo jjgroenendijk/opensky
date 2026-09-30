@@ -59,22 +59,10 @@ nonisolated public enum PapyrusRunOutcome {
 }
 
 nonisolated public struct PapyrusTallySnapshot: Equatable, Sendable {
-    public let runs: Int
-    public let instructionsExecuted: Int
-    public let nativeCallCounts: [String: Int]
     public let nativeCallTotal: Int
-    public let unnamedNativeCalls: Int
-    public let unimplementedNativeCounts: [String: Int]
     public let unimplementedNativeTotal: Int
-    public let unnamedUnimplementedNatives: Int
-    public let nativeFailureCounts: [String: Int]
-    public let nativeFailureTotal: Int
-    public let deferredAnimationTotal: Int
-    public let activationRecursionCappedTotal: Int
     public let suspensionTotal: Int
     public let faultTotal: Int
-    public let faultKindCounts: [String: Int]
-    public let faults: [PapyrusFault]
 }
 
 nonisolated public final class PapyrusTally {
@@ -93,7 +81,7 @@ nonisolated public final class PapyrusTally {
     public private(set) var nativeFailureTotal = 0
     public private(set) var deferredAnimationTotal = 0
     /// Activations refused because the chain reached
-    /// `PapyrusWorldRuntime.maximumActivationDepth` (issue #172).
+    /// `PapyrusWorldRuntime.maximumActivationDepth`.
     public private(set) var activationRecursionCappedTotal = 0
     public private(set) var suspensionTotal = 0
     public private(set) var faultTotal = 0
@@ -102,10 +90,6 @@ nonisolated public final class PapyrusTally {
 
     public init(limits: PapyrusLimits = .standard) {
         self.limits = limits
-    }
-
-    public var rankedNativeCalls: [(name: String, count: Int)] {
-        Self.ranked(nativeCallCounts)
     }
 
     public var rankedUnimplementedNatives: [(name: String, count: Int)] {
@@ -122,22 +106,10 @@ nonisolated public final class PapyrusTally {
 
     public var snapshot: PapyrusTallySnapshot {
         PapyrusTallySnapshot(
-            runs: runs,
-            instructionsExecuted: instructionsExecuted,
-            nativeCallCounts: nativeCallCounts,
             nativeCallTotal: nativeCallTotal,
-            unnamedNativeCalls: unnamedNativeCalls,
-            unimplementedNativeCounts: unimplementedNativeCounts,
             unimplementedNativeTotal: unimplementedNativeTotal,
-            unnamedUnimplementedNatives: unnamedUnimplementedNatives,
-            nativeFailureCounts: nativeFailureCounts,
-            nativeFailureTotal: nativeFailureTotal,
-            deferredAnimationTotal: deferredAnimationTotal,
-            activationRecursionCappedTotal: activationRecursionCappedTotal,
             suspensionTotal: suspensionTotal,
-            faultTotal: faultTotal,
-            faultKindCounts: faultKindCounts,
-            faults: faults
+            faultTotal: faultTotal
         )
     }
 

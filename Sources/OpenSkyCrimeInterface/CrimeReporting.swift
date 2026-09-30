@@ -2,7 +2,6 @@
 // OpenSkyCrime conforms, and the composition root hands it over as this protocol.
 
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// Judges ownership, reports crimes, and reads and writes the player's bounty.
 @MainActor

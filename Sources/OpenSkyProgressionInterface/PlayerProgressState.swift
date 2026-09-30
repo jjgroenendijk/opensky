@@ -1,37 +1,8 @@
-// The player's character-level progress, as a world-state component (issue
-// #499, roadmap item 20.6).
-//
-// ## Why this is stored and the skill half is not
-//
-// Skill progress lives in the `Skill Advance` actor values, because the vanilla
-// table already has a slot per skill holding exactly that quantity
-// (docs/engine/skill-advancement.md). Nothing in that table holds a character
-// level, banked character experience, or a count of unspent perk points, so
-// this is the one part of progression that needs a component of its own. It is
-// keyed by `ReferenceKey.player` and travels in the save's `PLVL` chunk.
-//
-// Item 20.5 left the character-experience contribution in a session accumulator
-// with the shape of the persisted thing deliberately undecided; this is that
-// shape, and the accumulator is gone.
-//
-// ## What is stored, and what is not
-//
-// Stored: the level, the experience banked toward the next one, the unspent
-// perk-point pool, how many attribute picks are owed, and the history of picks
-// already made.
-//
-// Not stored: the *effect* of a pick. Choosing health adds `iAVDhmsLevelUp`
-// points to the health base through the item 20.3 base-override path, which is
-// where every other session-made deviation from a derived baseline lives. Two
-// homes for the same ten points would be two chances to disagree, and the
-// override is the one the actor-value runtime already reads. The history is
-// therefore a record of what happened rather than the mechanism — it is what a
-// level-up screen lists and what a save inspector prints.
-//
-// The component is dropped once it says nothing, exactly as `PerkState` and
-// `SpellbookState` are, so a session that never levels stays clean.
-//
-// Documented in docs/engine/character-leveling.md.
+// The player's character-level progress, as a world-state component keyed by
+// `ReferenceKey.player`, saved in `PLVL`. It stores the level, banked
+// experience, unspent perk points, owed attribute picks, and the pick history.
+// A pick's effect lives in the actor-value base override, not here. Dropped
+// once empty. See docs/engine/character-leveling.md.
 
 import Foundation
 import OpenSkyGameData
@@ -170,10 +141,4 @@ nonisolated extension WorldStateComponentKind {
     /// different questions — how many points are left to spend, and which perks
     /// those points already bought.
     public static let playerProgress = Self(rawValue: "playerProgress", order: 18)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func playerProgress(_ value: PlayerProgressState) -> Self {
-        Self(value)
-    }
 }

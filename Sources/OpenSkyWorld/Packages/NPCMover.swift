@@ -86,9 +86,7 @@ public struct NPCMover {
         emissions.drive = NPCLocomotionDriveUpdate(
             actor: actor,
             intent: LocomotionIntent(moveForward: 1, run: gait == .run),
-            gait: gait,
-            yaw: yaw,
-            deltaTime: frameTime
+            gait: gait
         )
         collectTriggerEdges(world: world, into: &emissions)
         collectCellHandoff(world: world, into: &emissions)
@@ -237,9 +235,7 @@ public struct NPCMover {
         emissions.drive = NPCLocomotionDriveUpdate(
             actor: actor,
             intent: .still,
-            gait: .walk,
-            yaw: yaw,
-            deltaTime: 0
+            gait: .walk
         )
         emissions.persistence.append(persistence(reason: reason))
         emissions.triggers += occupiedTriggers.sorted().map {

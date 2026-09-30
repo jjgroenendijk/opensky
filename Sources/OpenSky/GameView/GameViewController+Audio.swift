@@ -1,4 +1,4 @@
-// Renderer/engine bridge for the World > Audio panel (M9.1.3). Same shape as
+// Renderer/engine bridge for the World > Audio panel. Same shape as
 // the other provider extensions: everything runs on the main actor, and with no
 // engine, data or renderer the provider degrades to `AudioStatsSnapshot.empty`
 // and an empty picker so the panel never crashes.
@@ -174,7 +174,7 @@ extension GameViewController: AudioControlProviding {
         worldAudio?.statsSnapshot() ?? .empty
     }
 
-    // MARK: - World SFX director bridges (M9.2.2)
+    // MARK: - World SFX director bridges
 
     var sfxEnabled: Bool {
         get { soundDirector?.sfxEnabled ?? true }
@@ -205,7 +205,7 @@ extension GameViewController: AudioControlProviding {
         soundDirector?.currentAmbienceDescription ?? "none"
     }
 
-    // MARK: - Music director bridges (M9.2.3)
+    // MARK: - Music director bridges
 
     var musicEnabled: Bool {
         get { musicDirector?.musicEnabled ?? true }
@@ -233,15 +233,11 @@ extension GameViewController: AudioControlProviding {
         musicDirector?.currentStateName ?? "unknown"
     }
 
-    var currentMusicTrackName: String? {
-        musicDirector?.currentTrackName
-    }
-
     var lastMusicError: String? {
         musicDirector?.lastMusicError
     }
 
-    // MARK: - Footstep director bridges (issue #352)
+    // MARK: - Footstep director bridges
 
     var footstepsEnabled: Bool {
         get { footstepDirector?.footstepsEnabled ?? true }
@@ -270,7 +266,7 @@ extension GameViewController: AudioControlProviding {
         return (footstepDirector.routedEventCount, footstepDirector.playedFootstepCount)
     }
 
-    /// The surface footsteps currently resolve against (issue #358).
+    /// The surface footsteps currently resolve against.
     var currentFootstepMaterialDescription: String {
         footstepDirector?.materialDescription ?? "none"
     }

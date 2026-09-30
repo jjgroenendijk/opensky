@@ -1,30 +1,7 @@
-// The impact sound a landed swing plays (issue #195, roadmap item 15.4, scope
-// point 7).
-//
-// This is the footstep chain with one link changed, and reusing it rather than
-// building a second one is the point:
-//
-//   footstep: graph event -> FSTP tag -> IPDS -> IPCT for the material -> SNDR
-//   melee:    HitFrame    -> WEAP INAM -> IPDS -> IPCT for the material -> SNDR
-//
-// From the IPDS onwards the two are identical, so `ImpactDataSet.impact(for:)`
-// and `Impact.sound` do the work here exactly as they do for a footstep, and
-// the material argument means the same thing: the MATT type of the surface that
-// was struck. `WalkController.groundMaterial` reports it for a foot; for a hit
-// the caller supplies the target's material, which in this milestone is the
-// ground material under the target — actors carry no per-body-part material in
-// this engine yet, and saying so is better than inventing one.
-//
-// Every link is optional, on the same reasoning the footstep store gives: a
-// weapon with no INAM, an IPDS with no entry for the material, an IPCT with no
-// sound. Each ends the walk with nil and a silent hit, never a throw. Vanilla
-// has silent combinations of its own, so a missing link is data rather than a
-// fault.
-//
-// Decals and visual effects are explicitly out of this item's scope; only the
-// sound is resolved.
-//
-// Documented in docs/engine/melee-combat.md.
+// The impact sound a landed swing plays. It reuses the footstep chain with one
+// link changed: WEAP INAM -> IPDS -> IPCT for the material -> SNDR. Every link
+// is optional; a missing one gives a silent hit, never a throw. Only the sound
+// is resolved, not decals. See docs/engine/melee-combat.md.
 
 import Foundation
 import OpenSkyAudio
@@ -33,10 +10,6 @@ import OpenSkyFormatsESM
 /// What a resolved hit impact turns into. The melee counterpart of
 /// `ResolvedFootstep`, and deliberately the same shape.
 nonisolated public struct ResolvedMeleeImpact: Equatable, Sendable {
-    /// The IPDS the weapon named.
-    public let dataSet: FormID
-    /// The IPCT chosen for the struck material.
-    public let impact: Impact
     /// The SNDR to play. Never null: a resolution with no sound is reported as
     /// nil instead.
     public let sound: FormID
@@ -57,24 +30,11 @@ nonisolated public struct MeleeImpactResolver: Sendable {
         impacts = footsteps.impacts
     }
 
-    /// Test seam: indexes built from decoded values rather than from a file.
-    public init(impactDataSets: [ImpactDataSet], impacts: [Impact]) {
-        self.impactDataSets = Dictionary(
-            uniqueKeysWithValues: impactDataSets.map { ($0.formID.rawValue, $0) }
-        )
-        self.impacts = Dictionary(
-            uniqueKeysWithValues: impacts.map { ($0.formID.rawValue, $0) }
-        )
-    }
-
-    /// The sound `weapon` plays when it lands on `material`, or nil where any
-    /// link in the chain is missing.
-    ///
+    /// The sound `weapon` plays when it lands on `material`, or nil where a link is
+    /// missing.
     /// - Parameters:
     ///   - weapon: the swing profile; its `impactDataSet` is the WEAP INAM.
-    ///   - material: the MATT type of what was struck, or nil when it names
-    ///     none — the impact table then answers with its representative entry,
-    ///     exactly as it does for a footstep on an unnamed surface.
+    ///   - material: the MATT type struck, or nil for the table's default entry.
     public func resolve(weapon: MeleeWeaponProfile, material: FormID?) -> ResolvedMeleeImpact? {
         guard
             let dataSetID = weapon.impactDataSet,
@@ -83,6 +43,6 @@ nonisolated public struct MeleeImpactResolver: Sendable {
             let impact = impacts[impactID.rawValue],
             let sound = impact.sound
         else { return nil }
-        return ResolvedMeleeImpact(dataSet: dataSetID, impact: impact, sound: sound)
+        return ResolvedMeleeImpact(sound: sound)
     }
 }

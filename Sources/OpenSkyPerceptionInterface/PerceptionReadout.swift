@@ -1,17 +1,6 @@
-// What the perception pass shows a person (issue #202, roadmap item 16.6).
-//
-// Flat values rather than a live handle on the runtime, for the reason every
-// other readout in this engine is: the panel that consumes them arrives with
-// the M16 gate (issue #203) and must not be able to reach past what it was
-// given, and a value can be asserted on in a test with no window.
-//
-// The issue names the panel line this feeds — a per-selected-actor readout of
-// state, level and last-seen position, under the accessibility identifier
-// `DetectionStatsLabel`. `summaryLine` below *is* that line, so the panel
-// prints one string rather than re-deriving a format the tests would then have
-// to know about twice.
-//
-// Documented in docs/engine/detection.md.
+// What the perception pass shows a person: flat values, testable without a
+// window. `summaryLine` is the per-actor line behind the `DetectionStatsLabel`
+// identifier. See docs/engine/detection.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -28,8 +17,6 @@ nonisolated public struct DetectionPairReadout: Equatable, Sendable {
     public let level: Float
     /// The detection value the last evaluation produced.
     public let detectionValue: Float
-    public let soundFactor: Float
-    public let visualFactor: Float
     public let distance: Float
     public let hasLineOfSight: Bool
     public let isInViewCone: Bool
@@ -62,8 +49,6 @@ nonisolated public struct DetectionPairReadout: Equatable, Sendable {
         state: DetectionState,
         level: Float,
         detectionValue: Float,
-        soundFactor: Float,
-        visualFactor: Float,
         distance: Float,
         hasLineOfSight: Bool,
         isInViewCone: Bool,
@@ -76,8 +61,6 @@ nonisolated public struct DetectionPairReadout: Equatable, Sendable {
         self.state = state
         self.level = level
         self.detectionValue = detectionValue
-        self.soundFactor = soundFactor
-        self.visualFactor = visualFactor
         self.distance = distance
         self.hasLineOfSight = hasLineOfSight
         self.isInViewCone = isInViewCone

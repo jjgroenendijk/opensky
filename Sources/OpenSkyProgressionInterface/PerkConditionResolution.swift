@@ -1,18 +1,7 @@
-// The one place a condition asks "does this actor own that perk?" (issue #497,
-// roadmap item 20.4), mirroring `MagicConditionResolution` and
-// `ActorStateResolution`.
-//
-// Shaped as a resolved snapshot rather than as a live handle for the reason
-// every other seam on `ConditionContext` is: the evaluator is a nonisolated
-// value a build thread may run, so a condition body cannot reach into
-// `WorldStateStore` or `PerkRuntime`. The caller that *is* on the main actor
-// reads the component and hands the result over.
-//
-// The store rides along beside the per-actor sets because `HasPerk` takes a
-// FormID parameter that has to be resolved against the load order before it can
-// be compared, exactly as the magic seam's does.
-//
-// Documented in docs/engine/perks.md and docs/engine/condition-functions.md.
+// Whether an actor owns a perk, for conditions: a snapshot the main actor
+// builds, like `MagicConditionResolution`. The store rides along, because
+// `HasPerk`'s FormID parameter must be resolved against the load order.
+// See docs/engine/perks.md and docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyConditions
@@ -53,14 +42,8 @@ nonisolated public struct PerkConditionResolution: @unchecked Sendable, Sendable
         store != nil
     }
 
-    /// One FormID parameter as the runtime identity the component stores.
-    ///
-    /// The record has to exist, not merely resolve. Plugin-relative resolution
-    /// answers with an identity for any FormID whose plugin is loaded, so a
-    /// parameter naming a perk no plugin defines would otherwise come back as
-    /// an ordinary key and read as "this actor does not have it" — which is a
-    /// different answer from "this engine has no such perk". The keyword seam
-    /// applies the same rule for the same reason.
+    /// One FormID parameter as the runtime identity the component stores. The record
+    /// must exist, not just resolve, so "no such perk" differs from "not owned".
     public func key(of formID: FormID) -> ReferenceKey? {
         guard
             let sourcePlugin,
@@ -79,11 +62,6 @@ nonisolated public struct PerkConditionResolution: @unchecked Sendable, Sendable
     public func owns(_ perk: ReferenceKey, on actor: ReferenceKey) -> Bool? {
         guard isAvailable else { return nil }
         return owned[actor]?.contains(perk) ?? false
-    }
-
-    /// The perks `actor` owns, empty for an actor that owns none.
-    public func perks(of actor: ReferenceKey) -> Set<ReferenceKey> {
-        owned[actor] ?? []
     }
 }
 

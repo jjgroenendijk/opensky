@@ -1,26 +1,7 @@
-// Consuming a magic item (issue #469, roadmap item 19.6): the first consumer of
-// the active-effect runtime — drinking a potion and eating an ingredient.
-//
-// A satellite of `ActiveEffectRuntime.swift` rather than more of it: that file
-// owns applying, ticking and dispelling an already-resolved effect, and this one
-// owns the inventory half — which record family an item belongs to, how many of
-// it there are, and what "one unit" means. The two are separate because casting
-// (issues 19.7 and 19.8) reaches the first without going anywhere near the
-// second.
-//
-// ## The ingredient rule
-//
-// Eating a raw ingredient applies its *first* effect only. UESP's "Skyrim:
-// Alchemy Effects" states it: "Ingredients listed in bold have that effect as
-// their first, meaning that eating a sample of that ingredient will provide a
-// small version of that effect."
-// <https://en.uesp.net/wiki/Skyrim:Alchemy_Effects>
-//
-// The Alchemy skill's Experimenter perk changes how many effects eating
-// *reveals*, which is discovery state rather than application, and belongs to
-// the alchemy milestone rather than here.
-//
-// Documented in docs/engine/magic.md.
+// Consuming a magic item: drinking a potion or eating an ingredient. The
+// inventory half of `ActiveEffectRuntime`. Eating an ingredient applies only its
+// first effect (<https://en.uesp.net/wiki/Skyrim:Alchemy_Effects>).
+// See docs/engine/magic.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -30,14 +11,11 @@ import OpenSkyMagicInterface
 
 /// What consuming one item applies.
 nonisolated public struct MagicItemUse: Equatable, Sendable {
-    public let item: FormID
     /// Which source kind the resulting effects are attributed to.
     public let kind: ActiveEffectSourceKind
     /// The effect entries one unit applies, already narrowed by the ingredient
     /// rule where it applies.
     public let effects: [MagicItemEffect]
-    /// ALCH ENIT's consume sound, for the milestone that plays it.
-    public let consumeSound: FormID?
 }
 
 /// Why a consume attempt did nothing.
@@ -50,7 +28,6 @@ nonisolated public enum MagicItemConsumeError: Equatable, Error {
 
 /// What one successful consume did.
 nonisolated public struct MagicItemConsumeOutcome: Equatable, Sendable {
-    public let item: FormID
     public let kind: ActiveEffectSourceKind
     /// Effect entries handed to the runtime — not all of which necessarily
     /// applied; the runtime's tally says which did not and why.
@@ -61,16 +38,9 @@ nonisolated public struct MagicItemConsumeOutcome: Equatable, Sendable {
 }
 
 extension ActiveEffectRuntime {
-    /// Removes one unit of `item` from `holder` and applies what it does to
-    /// `target`.
-    ///
-    /// The removal happens first and only on success, so a consume that cannot
-    /// find the item applies nothing and a consume that applies nothing still
-    /// costs the unit — which is what drinking a potion of an effect this
-    /// engine has not implemented does in the original game.
-    ///
-    /// - Throws: `MagicItemConsumeError`, plus whatever `InventoryRuntime`
-    ///   throws when the removal fails.
+    /// Removes one unit of `item` from `holder` and applies its effects to `target`.
+    /// A consume that applies nothing still costs the unit, as in the game.
+    /// - Throws: `MagicItemConsumeError`, plus `InventoryRuntime` removal errors.
     @discardableResult
     public mutating func consume(
         _ item: FormID,
@@ -96,7 +66,6 @@ extension ActiveEffectRuntime {
             on: target
         )
         return MagicItemConsumeOutcome(
-            item: item,
             kind: use.kind,
             entryCount: use.effects.count,
             stored: stored

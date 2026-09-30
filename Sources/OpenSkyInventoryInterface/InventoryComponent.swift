@@ -1,51 +1,17 @@
-// Inventory as a world-state component (issue #176, roadmap item 12.1.2): the
-// value type that holds one owner's items once anything has touched them.
-//
-// The component lives here rather than in `WorldStateComponents.swift` because
-// it is the one component with real behaviour of its own — stack arithmetic
-// and an equipped set — while the other four are plain field bags. Only the
-// `WorldStateComponentKind` case and the `WorldStateComponentValue` case sit
-// with the rest; every store operation stays generic over the protocol.
-//
-// Full-override model: the component holds the owner's *entire* effective
-// inventory, not a delta against the plugin baseline. The first mutation
-// materializes the baseline into the component and everything afterwards edits
-// that. An owner nothing has touched has no component at all and re-derives
-// from plugin data through `InventoryBaselineResolver`. This is what keeps
-// leveled and templated baselines out of delta arithmetic: a CONT whose CNTO
-// list points at an LVLI has no stable "minus one iron sword" representation,
-// but it does have a stable resolved list, and once the player has opened the
-// chest the resolved list is the truth.
-//
-// Two invariants hold for every value of this type, enforced in `init` rather
-// than checked at use sites:
-//
-// * `stacks` is sorted by item FormID ascending and then by the stolen flag,
-//   honest copies before stolen ones, with one entry per (item, stolen) pair
-//   and every count strictly positive. Sorting is what makes a snapshot of two
-//   stores that reached the same end state byte-identical.
-// * `equipped` is sorted ascending and free of duplicates, for the same reason.
-//
-// Documented in docs/engine/inventory-state.md.
+// Inventory as a world-state component: one owner's items once anything touched
+// them. Full override: the first write stores the whole resolved baseline, so
+// leveled lists need no delta math. `init` enforces two invariants: `stacks`
+// sorted by FormID then stolen flag, one entry per pair, counts positive; and
+// `equipped` sorted and unique. See docs/engine/inventory-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
-/// One stack of identical items: a base FormID, whether they were stolen, and
-/// how many of it there are.
-///
-/// v1 stacks by base FormID plus the stolen flag, matching
-/// `ItemDefinition.stackKey` widened by the one distinction crime introduces.
-/// Per-instance data — tempering, enchanting, charge level — makes two
-/// instances of the same base distinct and will widen the key further; see
-/// docs/engine/runtime-state.md.
-///
-/// The stolen flag is part of the key rather than a property of the whole item
-/// because the original tracks it per copy: "Should you steal multiple items of
-/// the same type, each item considered stolen is tracked separately when
-/// dropped" (<https://en.uesp.net/wiki/Skyrim:Crime>). Ten honest arrows and
-/// one stolen arrow are therefore two stacks of the same base (issue #504).
+/// One stack of identical items: a base FormID, a stolen flag, and a count. The
+/// stolen flag is part of the key, because the game tracks it per copy
+/// (<https://en.uesp.net/wiki/Skyrim:Crime>). Per-instance data will widen the
+/// key further (docs/engine/runtime-state.md).
 nonisolated public struct InventoryStack: Equatable, Sendable {
     /// Base item record: MISC, BOOK, ALCH, INGR, WEAP, AMMO or ARMO.
     public let item: FormID
@@ -78,14 +44,6 @@ nonisolated public struct StolenSplit: Equatable, Sendable {
 
     public static let none = StolenSplit(clean: 0, stolen: 0)
 
-    public var total: Int32 {
-        clean + stolen
-    }
-
-    public var isEmpty: Bool {
-        total <= 0
-    }
-
     public init(clean: Int32, stolen: Int32) {
         self.clean = clean
         self.stolen = stolen
@@ -114,11 +72,8 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
     /// Stacks sorted by item FormID and then by the stolen flag, one per
     /// (item, stolen) pair, counts positive.
     public private(set) var stacks: [InventoryStack]
-    /// Equipped base FormIDs, sorted ascending and unique.
-    ///
-    /// Storage only. Slot conflicts and ARMA arbitration are issue #178's; this
-    /// issue journals the set and puts it in the save so that work has
-    /// somewhere to land.
+    /// Equipped base FormIDs, sorted ascending and unique. Storage only;
+    /// `EquipmentRuntime` arbitrates slots.
     public private(set) var equipped: [FormID]
 
     /// Nothing held and nothing equipped, which is also the player's baseline.
@@ -196,13 +151,8 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
         stolenCount(of: item) > 0
     }
 
-    /// How a removal of `count` of `item` divides between honest and stolen
-    /// copies.
-    ///
-    /// Honest copies go first, so an inventory that holds both spends the ones
-    /// that carry no consequence before the ones that do. The split is clamped
-    /// to what is actually held, so a caller that asks for more than there is
-    /// sees a smaller `total` rather than a negative flavour.
+    /// How a removal of `count` of `item` divides between honest and stolen copies.
+    /// Honest copies go first. Clamped to what is held.
     public func split(taking count: Int32, of item: FormID) -> StolenSplit {
         guard count > 0 else { return .none }
         let clean = min(count, self.count(of: item, stolen: false))
@@ -301,11 +251,8 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
             .replacing(item, stolen: true, with: self.count(of: item, stolen: true) + moved)
     }
 
-    /// This inventory without any stolen copies, and the stolen stacks that
-    /// came out of it — what an arrest seizes (issue #505).
-    ///
-    /// An equipped item whose every copy was stolen is unequipped with it; one
-    /// the owner also holds honestly stays equipped.
+    /// This inventory without stolen copies, plus the stolen stacks removed, as an
+    /// arrest seizes them. An item equipped only in stolen copies is unequipped.
     public func removingStolen() -> (remaining: Self, taken: [InventoryStack]) {
         let taken = stacks.filter(\.stolen)
         guard !taken.isEmpty else { return (self, []) }
@@ -368,10 +315,4 @@ nonisolated extension WorldStateComponentKind {
     /// `Sources/OpenSkyInventoryInterface/InventoryComponent.swift` because it
     /// carries stack arithmetic of its own rather than being a plain field bag.
     public static let inventory = Self(rawValue: "inventory", order: 4)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func inventory(_ value: ReferenceInventoryState) -> Self {
-        Self(value)
-    }
 }

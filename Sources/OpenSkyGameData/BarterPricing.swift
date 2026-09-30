@@ -1,31 +1,11 @@
-// Vanilla barter pricing (M12.2.3, issue #179): what a merchant charges the
-// player for an item and what the merchant pays for one.
-//
-// The formula is cited, not remembered. UESP "Skyrim:Speech", section "Prices"
-// (https://en.uesp.net/wiki/Skyrim:Speech#Prices) gives it as:
-//
-//     price factor = fBarterMax - (fBarterMax - fBarterMin) * min(skill, 100) / 100
-//     buy price    = round(value of item * buy price modifier * base price factor)
-//     sell price   = round(value of item * sell price modifier / base price factor)
-//
-// with `fBarterMax` defaulting to 3.3 and `fBarterMin` to 2.0, skill levels over
-// 100 having no effect, and the trade price caps
-// `max sell price = value * 1.00` and `min buy price = value * 1.05`.
-//
-// The two price modifiers carry the Haggling and Allure perks and any Fortify
-// Barter effect. Perks and enchantments are M18+, so `buyModifier` and
-// `sellModifier` are 1 here and exist as a named seam rather than as a value
-// this milestone computes. Speech itself is likewise fixed at
-// `defaultSpeechSkill` until skill progression lands.
-//
-// Both settings are read out of the load order's own GMST records through
-// `GameSettingStore`, so a plugin that retunes barter retunes OpenSky. Only a
-// missing or non-finite setting falls back to the documented vanilla default.
-//
-// Documented in docs/engine/barter.md.
+// Vanilla barter pricing, from UESP "Skyrim:Speech#Prices":
+//   price factor = fBarterMax - (fBarterMax - fBarterMin) * min(skill, 100) / 100
+//   buy = round(value * buy modifier * factor); sell = round(value * sell modifier / factor)
+// Caps: sell at most value * 1.00, buy at least value * 1.05. Both settings come
+// from the load order's GMSTs, with vanilla defaults (3.3, 2.0) only when missing.
+// See docs/engine/barter.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 /// The barter price factors one merchant transaction is priced at.

@@ -1,15 +1,9 @@
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
 
-/// Where a chosen response's result scripts go.
-///
-/// A seam rather than a direct call into `PapyrusWorldRuntime` for the reason
-/// `PapyrusWorldQuestBridge` is one: the dialogue layer compiles into
-/// `openskycli` and is tested without a VM, and a session with no script
-/// runtime must still be able to hold a conversation. The conformer in a real
-/// session is the Papyrus world bridge.
+/// Where a chosen response's result scripts go. A seam, so dialogue works in
+/// tests and sessions without a VM. In a real session the Papyrus world bridge
+/// conforms.
 @MainActor
 public protocol DialogueFragmentDispatching: AnyObject, Sendable {
     /// Instantiates the response's result script if needed and enqueues the

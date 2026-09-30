@@ -1,19 +1,7 @@
-// The four world seams the M15 gate's chain answers (issue #198), in a
-// satellite of `M15AcceptanceChain.swift` for the type-length cap — the same
-// split `GameViewController` makes across `GameViewControllerMeleeWorld`,
-// `GameViewControllerArcheryWorld`, `GameViewControllerRagdollWorld` and
-// `GameViewControllerCombatWorld`.
-//
-// Every answer below is the chain's own state read straight: where the capsule
-// is, which actors exist, what the arena's collision holds, how to take health
-// off a reference through `ActorValueRuntime`, how to raise an event on one of
-// the two real graphs. Nothing is recorded-and-ignored the way a unit-test fake
-// records: this is a session, not a stand-in for one, which is what makes the
-// route an integration of the four runtimes rather than four runs in a row.
-//
-// One deliberate narrowing: impacts and sounds are dropped. Audio is M9's and
-// resolving a SNDR here would need the install, which the headless half of the
-// gate does not have.
+// The four world seams the M15 chain answers, split from
+// `M15AcceptanceChain.swift` for the type-length cap. Each answer reads the
+// chain's real state, so the route integrates the four runtimes. Impacts and
+// sounds are dropped: a SNDR needs the install.
 
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
@@ -49,7 +37,7 @@ extension M15AcceptanceChain: MeleeCombatWorld {
         [MeleeTarget(key: Self.opponent, feet: opponentFeet)]
     }
 
-    func meleeMaterial(at position: SIMD3<Float>) -> FormID? {
+    func meleeMaterial() -> FormID? {
         nil
     }
 
@@ -80,8 +68,8 @@ extension M15AcceptanceChain: MeleeCombatWorld {
 
     /// The M15 chain carries unenchanted weapons and no effect runtime, so the
     /// fortify term is the 1 the formula reduces to for a character with none and
-    /// an enchanted hit is the documented "this world cannot apply one" nil
-    /// (issue #472). `EnchantmentRuntimeTests` covers both paths.
+    /// an enchanted hit is the documented "this world cannot apply one" nil.
+    /// `EnchantmentRuntimeTests` covers both paths.
     func meleeAttackMultiplier(handType: CombatHandType) -> Float {
         1
     }
@@ -111,7 +99,7 @@ extension M15AcceptanceChain: ProjectileWorld {
 
     /// The M15 chain fires arrows and nothing else, so a landed spell is the
     /// documented "no effect runtime here" answer rather than a second
-    /// application path this chain would never exercise (issue #471).
+    /// application path this chain would never exercise.
     @discardableResult
     func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
         .none
@@ -124,7 +112,7 @@ extension M15AcceptanceChain: ProjectileWorld {
         )
     }
 
-    func projectileMaterial(at position: SIMD3<Float>) -> FormID? {
+    func projectileMaterial() -> FormID? {
         nil
     }
 
@@ -278,15 +266,9 @@ extension M15AcceptanceChain: CombatLoopWorld {
         return .detected(at: meleeAttacker.feet)
     }
 
-    /// Against the health the chain *started* the actor at, not the derived
-    /// maximum.
-    ///
-    /// The route deliberately gives the opponent 40 health so that one swing
-    /// and one arrow are the whole fight, while the record-derived maximum is
-    /// 100. Dividing by the maximum would put the opponent under the flee
-    /// threshold after the first blow, and the gate would be measuring an actor
-    /// running away rather than the fight it is about. Full is what the chain
-    /// set, which is the honest reading of "how hurt is it".
+    /// Health against the value the chain started the actor at (40), not the
+    /// derived maximum (100). Dividing by the maximum would push the opponent past
+    /// the flee threshold after one blow.
     func combatHealthFraction(of key: ReferenceKey) -> Float {
         let holder = key == Self.player ? ActorValueHolder.player : opponentHolder
         let full = key == Self.player ? Self.playerHealth : Self.opponentHealth

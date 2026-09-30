@@ -1,30 +1,13 @@
-// `PapyrusWorldStateBridge`'s faction and relationship half (issue #508, roadmap
-// item 21.4), beside the actor, quest, magic and crime halves.
-//
-// Every operation goes through the session's `FactionRuntime` or
-// `RelationshipRuntime`, which are the same doors an actor's seeded `SNAM` run
-// and the hostility derivation come through: a scripted membership and an
-// authored one therefore reach the store, the journal and the save by one path,
-// and a script cannot produce a membership the engine could not have produced
-// itself.
-//
-// Both runtimes are reached through closures for the reason `mutatePerks` is:
-// the controller owns them and hands over accessors, so a session that never
-// built one leaves every native here refusing rather than answering "not a
-// member".
-//
-// Seeding, and why it happens here. `FactionRuntime` copies an actor's authored
-// `SNAM` run into the component the first time anything asks. A script that
-// calls `IsInFaction` on an actor the player has never met must see that run, so
-// the accessor the controller supplies seeds before it answers — the same thing
-// `derivedHostilityDecision(of:)` does for the combat loop.
+// The faction and relationship half of `PapyrusWorldStateBridge`, through
+// `FactionRuntime` and `RelationshipRuntime`, reached by closures; without them
+// every native refuses. The accessor seeds an actor's authored `SNAM` run before
+// answering, as `derivedHostilityDecision(of:)` does.
 
 import Foundation
 import OpenSkyConditions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyScriptingInterface
 
 extension PapyrusWorldStateBridge {
     @discardableResult
@@ -107,14 +90,9 @@ extension PapyrusWorldStateBridge {
     }
 }
 
-/// One pair's social answer as the natives need it: whether the observer is
-/// hostile, and what the two actors' *factions* alone make of each other.
-///
-/// A value rather than the whole `HostilityDecision` because the two natives ask
-/// different questions and only one of them is about hostility:
-/// `GetFactionReaction` is explicitly "the faction-based reaction"
-/// (<https://ck.uesp.net/wiki/GetFactionReaction_-_Actor>), which is the faction
-/// term of the precedence list and not the answer that came out of it.
+/// One pair's social answer for the natives: whether the observer is hostile, and
+/// what the two factions alone make of each other. `GetFactionReaction` is the
+/// faction term only (<https://ck.uesp.net/wiki/GetFactionReaction_-_Actor>).
 nonisolated public struct PapyrusSocialDecision: Equatable, Sendable {
     public let isHostile: Bool
     public let factionReaction: ActorReaction

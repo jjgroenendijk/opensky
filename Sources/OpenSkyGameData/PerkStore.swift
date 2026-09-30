@@ -1,16 +1,7 @@
-// Load-order-wide PERK lookup above RecordIndex, in the shape SpellStore and
-// MagicEffectStore already use: winning record per identity, editor-ID lookup,
-// and the joins a consumer would otherwise redo.
-//
-// Two joins beyond the usual. Ability effects and spell-selecting entry-point
-// functions are resolved against `SpellStore`, so a caller reading a perk gets
-// the spell record rather than a raw link. And every entry-point effect in the
-// load order is collected into one index keyed by entry-point id, because the
-// perk runtime (issue 20.4) asks "which perk effects hook Mod Attack Damage"
-// once per formula evaluation and must not scan all 523 perks to answer.
-//
-// Owning perks on an actor, and evaluating an entry point's conditions, are
-// issue 20.4 and deliberately absent here.
+// Load-order-wide PERK lookup above RecordIndex, like `SpellStore`. Ability
+// effects and spell-selecting entry points are resolved against `SpellStore`.
+// Every entry-point effect is indexed by entry-point id, so the perk runtime
+// does not scan every perk per formula.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -68,9 +59,6 @@ nonisolated public struct PerkEntryPointMatch: Equatable, Sendable {
     public let perk: ResolvedFormID
     /// Position of the effect inside `ResolvedPerk.effects`.
     public let effectIndex: Int
-    public let entryPoint: PerkEntryPoint
-    /// PRKE rank, counting from zero as the record stores it.
-    public let rank: UInt8
     public let priority: UInt8
 }
 
@@ -86,11 +74,8 @@ nonisolated public struct PerkStore: Sendable {
     public private(set) var entryPointIndex: [UInt8: [PerkEntryPointMatch]] = [:]
     private var recordsByEditorID: [String: ResolvedPerk] = [:]
     private var recordsByKey: [ReferenceKey: ResolvedPerk] = [:]
-    /// Each perk that is somebody's `NNAM` target, mapped back to the record
-    /// naming it — the reverse of `rankChain(from:)` (issue #499). Spending a
-    /// perk point on rank three of a chain has to know that rank two exists and
-    /// is unowned, and walking every chain in the load order to find that out
-    /// would be a pass over every PERK per click.
+    /// Each perk that is somebody's `NNAM` target, mapped back to the record naming
+    /// it: the reverse of `rankChain(from:)`, so buying a rank finds the one before.
     private var previousRanks: [ResolvedFormID: ResolvedFormID] = [:]
 
     public var perks: [ResolvedPerk] {
@@ -231,8 +216,6 @@ nonisolated public struct PerkStore: Sendable {
             let match = PerkEntryPointMatch(
                 perk: resolved.id,
                 effectIndex: offset,
-                entryPoint: entryPoint,
-                rank: effect.effect.rank,
                 priority: effect.effect.priority
             )
             var matches = entryPointIndex[entryPoint.rawValue, default: []]

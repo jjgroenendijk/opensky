@@ -1,5 +1,4 @@
 import Foundation
-import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface
 import simd

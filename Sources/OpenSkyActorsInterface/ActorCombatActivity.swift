@@ -16,24 +16,11 @@ nonisolated public enum ActorCombatActivity: UInt8, Equatable, Sendable, CaseIte
     case fighting = 1
     /// Searching for a target it lost. `GetCombatState` 2.
     case searching = 2
-
-    public var displayName: String {
-        switch self {
-        case .notFighting: "not in combat"
-        case .fighting: "in combat"
-        case .searching: "searching"
-        }
-    }
 }
 
-/// Where the weapon is.
-///
-/// `drawing` and `sheathing` are the interim states between the engine raising
-/// the event and the clip reaching the annotation that actually moves the
-/// model. The attachment is on the hand node for `drawn` and `sheathing`, and
-/// on the sheathed node for `sheathed` and `drawing`: the weapon stays where it
-/// was until `BeginWeaponDraw` or `BeginWeaponSheathe` says the hand has
-/// reached it.
+/// Where the weapon is. `drawing` and `sheathing` last until the clip reaches
+/// `BeginWeaponDraw` or `BeginWeaponSheathe`. The weapon is on the hand node for
+/// `drawn` and `sheathing`, and on the sheathed node otherwise.
 nonisolated public enum WeaponDrawState: String, Equatable, Sendable, CaseIterable {
     case sheathed
     case drawing

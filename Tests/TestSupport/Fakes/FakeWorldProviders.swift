@@ -1,4 +1,4 @@
-// The shared main-app provider fake (issue #98). Split out of
+// The shared main-app provider fake. Split out of
 // DestinationRegistryTests.swift to keep both files inside the lint size caps;
 // several panel suites use it, so it is not owned by any one of them.
 
@@ -20,7 +20,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var refocusCount = 0
     var faceMorphSnapshot = FaceMorphControlSnapshot.empty
 
-    /// AI and navigation (issues #422, #202, #203). The behaviour is in
+    /// AI and navigation. The behaviour is in
     /// `FakeWorldProvidersAI.swift`; only the state lives here, because an
     /// extension cannot hold stored properties.
     var aiOverlay = FakeAIOverlayState()
@@ -122,7 +122,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var inventoryMenuMovieEnabled = false
     var inventoryMenuLastAction: String?
 
-    /// ContainerMenuControlProviding (issue #179). The behaviour is in
+    /// ContainerMenuControlProviding. The behaviour is in
     /// `FakeWorldProvidersContainerMenu.swift`; only the state lives here,
     /// because an extension cannot hold stored properties.
     var containerMenuModel = ContainerMenuModel(
@@ -138,7 +138,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var containerMenuLastAction: String?
     var containerMenuMerchant: FormID? = FormID(0x0300)
 
-    /// InventoryEquipmentControlProviding (issue #180). One stored value rather
+    /// InventoryEquipmentControlProviding. One stored value rather
     /// than seven, because this class is at the lint type-length cap; the
     /// behaviour and the type itself are in
     /// `FakeWorldProvidersInventoryEquipment.swift`.
@@ -211,7 +211,7 @@ final class FakeWorldProviders: WorldControlProviders {
     /// SceneStatsProviding
     var sceneStatsSnapshot = SceneStatsSnapshot.empty
 
-    /// Render debug views + layer isolation (issue #144). Conformance lives in
+    /// Render debug views + layer isolation. Conformance lives in
     /// `FakeWorldProvidersRenderDebug.swift`; only the state is here, because an
     /// extension cannot hold stored properties.
     var renderDebug = RenderDebugState()
@@ -283,12 +283,12 @@ final class FakeWorldProviders: WorldControlProviders {
 
     var audioStatsSnapshot = AudioStatsSnapshot.empty
 
-    /// Voice bridges (item 17.5). The behaviour is in
+    /// Voice bridges. The behaviour is in
     /// `FakeWorldProvidersVoice.swift`; only the state lives here, because an
     /// extension cannot hold stored properties.
     var voice = FakeVoiceState()
 
-    // World SFX director bridges (M9.2.2).
+    // World SFX director bridges.
     var sfxEnabled = true
     var ambienceEnabled = true
     private(set) var stopAmbienceCount = 0
@@ -301,7 +301,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var lastSFXError: String?
     var currentAmbienceDescription = "none"
 
-    // Music director bridges (M9.2.3).
+    // Music director bridges.
     var musicEnabled = true
     var selectableMusicTypeNames: [String] = []
     /// MUSC editor ids the Music section forced, in order.
@@ -314,7 +314,6 @@ final class FakeWorldProviders: WorldControlProviders {
         forcedMusicTypeNames.append(name)
         guard musicForceFailure == nil else { return musicForceFailure }
         currentMusicDescription = "\(name) — music\\\(name).xwm"
-        currentMusicTrackName = "music\\\(name).xwm"
         return nil
     }
 
@@ -322,74 +321,72 @@ final class FakeWorldProviders: WorldControlProviders {
     func stopMusic() {
         stopMusicCount += 1
         currentMusicDescription = "none"
-        currentMusicTrackName = nil
     }
 
     var currentMusicDescription = "none"
     var currentMusicStateName = "exploration"
-    var currentMusicTrackName: String?
     var lastMusicError: String?
 
-    /// Footstep director bridges (issue #352), delegated to the shared fake so
+    /// Footstep director bridges, delegated to the shared fake so
     /// both panel fakes record the same way; the forwarding conformance lives
     /// in `FakeFootstepControls.swift`.
     let footsteps = FakeFootstepControls()
 
-    /// RuntimeStateControlProviding (M10.1.5) is delegated to the panel tests'
+    /// RuntimeStateControlProviding is delegated to the panel tests'
     /// fake so both suites record mutations through one implementation. The
     /// forwarding conformance lives in the satellite
     /// `DestinationRegistryRuntimeStateTests.swift`, which keeps this file
     /// under the length limit.
     let runtimeState = FakeRuntimeStateProvider()
 
-    /// TriggerControlProviding (issue #173) is delegated the same way; the
+    /// TriggerControlProviding is delegated the same way; the
     /// forwarding conformance lives in `WorldPanelTests.swift`.
     let triggers = FakeTriggerProvider()
 
-    /// ItemControlProviding (issue #177), delegated for the same reason; the
+    /// ItemControlProviding, delegated for the same reason; the
     /// forwarding conformance lives in `ItemsSectionTests.swift`.
     let items = FakeItemProvider()
 
-    /// ScriptControlProviding (issue #278) is delegated the same way; the
+    /// ScriptControlProviding is delegated the same way; the
     /// forwarding conformance lives in `DestinationRegistryScriptsTests.swift`.
     let scripts = FakeScriptProvider()
 
-    /// JournalControlProviding (issue #184), delegated for the same reason; the
+    /// JournalControlProviding, delegated for the same reason; the
     /// forwarding conformance lives in `DestinationRegistryJournalTests.swift`.
     let journal = FakeJournalProvider()
 
-    /// DialogueControlProviding (issue #205), delegated for the same reason;
+    /// DialogueControlProviding, delegated for the same reason;
     /// the forwarding conformance lives in `FakeWorldProvidersDialogue.swift`.
     let dialogue = FakeDialogueProvider()
-    /// The conversation camera and speaker focus (issue #427). Behaviour is in
+    /// The conversation camera and speaker focus. Behaviour is in
     /// `FakeWorldProvidersDialogue.swift`.
     let dialogueCamera = FakeDialogueCameraProvider()
 
-    /// PlayerLocomotionControlProviding (issue #188) state; the conformance
+    /// PlayerLocomotionControlProviding state; the conformance
     /// lives in `FakeWorldProvidersLocomotion.swift`.
     var locomotion = FakeLocomotionState()
-    /// FirstPersonControlProviding (issue #190) state; the conformance lives
+    /// FirstPersonControlProviding state; the conformance lives
     /// beside the locomotion one.
     var firstPerson = FakeFirstPersonState()
-    /// MeleeCombatControlProviding (issue #195) state; the conformance lives
+    /// MeleeCombatControlProviding state; the conformance lives
     /// beside the locomotion one.
     var melee = FakeMeleeState()
     var archery = FakeArcheryState()
-    /// RagdollControlProviding (issue #197) state; the conformance lives beside
+    /// RagdollControlProviding state; the conformance lives beside
     /// the locomotion one.
     var ragdoll = FakeRagdollState()
-    /// ActorValueControlProviding (issue #194), CombatLoopControlProviding
-    /// (issue #374) and PhysicsControlProviding (issue #193) state; all three
+    /// ActorValueControlProviding, CombatLoopControlProviding
+    /// and PhysicsControlProviding state; all three
     /// conformances live in `FakeWorldProvidersCombat.swift`.
     var actorValues = FakeActorValueState()
     var magicEffects = FakeMagicEffectState()
     var casting = FakeCastingState()
     var combatLoop = FakeCombatLoopState()
     var physics = FakePhysicsState()
-    /// ProgressionControlProviding (issue #500) state; the conformance lives in
+    /// ProgressionControlProviding state; the conformance lives in
     /// `FakeWorldProvidersProgression.swift`.
     var progression = FakeProgressionState()
-    /// CrimeFactionControlProviding (issue #507) state; the conformance lives
+    /// CrimeFactionControlProviding state; the conformance lives
     /// in `FakeWorldProvidersCrime.swift`.
     var crimeFactions = FakeCrimeFactionState()
 }
@@ -444,8 +441,8 @@ extension FakeWorldProviders {
             carriedWeight: inventoryMenuModel.carriedWeight,
             gold: inventoryMenuModel.gold,
             lastActionText: inventoryMenuLastAction,
-            // A fake carries no ENCH index, so nothing equipped is enchanted
-            // (issue #472); `EnchantmentRuntimeTests` covers the charge itself.
+            // A fake carries no ENCH index, so nothing equipped is enchanted;
+            // `EnchantmentRuntimeTests` covers the charge itself.
             enchantmentLines: [],
             movieEnabled: inventoryMenuMovieEnabled,
             movieLoaded: false,

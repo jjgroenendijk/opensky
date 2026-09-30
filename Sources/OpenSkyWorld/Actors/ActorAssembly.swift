@@ -1,4 +1,4 @@
-// Actor assembly (milestone 5.4): turn one resolved visual into race-skeleton-
+// Actor assembly: turn one resolved visual into race-skeleton-
 // validated GPU assets at its ACHR world transform. Every upstream selection
 // skip + asset failure remains reason-tagged. Assembly is renderable when at
 // least one body or FaceGen model survives; floating skeleton-only actors are
@@ -7,7 +7,6 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
 import OpenSkyRendering
 import simd
 
@@ -20,10 +19,8 @@ nonisolated public protocol ActorAssetProvider {
         path: String,
         skeleton: Skeleton?
     ) -> Result<Asset, ActorAssetFailure>
-    /// A rigid model rewritten to ride one named skeleton bone (issue #178).
-    /// Separate from `loadActorModel` because the result is a different asset
-    /// even for the same path — the bone is part of the geometry — and so must
-    /// cache under its own key.
+    /// A rigid model rewritten to ride one named skeleton bone. It caches under its
+    /// own key, because the bone is part of the geometry.
     func loadActorAttachment(
         path: String,
         bone: String,
@@ -65,7 +62,6 @@ nonisolated public struct AssembledActorModel<Asset> {
 
 nonisolated public struct ActorAssembly<Asset> {
     public let actor: FormID
-    public let base: FormID
     public let visual: ResolvedActorVisual
     public let transform: float4x4
     public let models: [AssembledActorModel<Asset>]
@@ -85,7 +81,6 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
     ) -> ActorAssembly<Provider.Asset> {
         assemble(
             actor: actor.formID,
-            base: actor.base,
             transform: MatrixMath.placement(
                 position: actor.placement.position,
                 rotation: actor.placement.rotation,
@@ -95,17 +90,11 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         )
     }
 
-    /// Assembles an actor that has no ACHR behind it.
-    ///
-    /// The player is the case that needs this (issue #189): it is not a placed
-    /// reference — `ReferenceKey.player` deliberately names no plugin record —
-    /// and its transform comes from the character controller rather than from a
-    /// record's position and rotation. Everything past the transform is the
-    /// same path a streamed NPC takes, which is the point: one assembly, one
-    /// masking rule, one equipment attachment.
+    /// Assembles an actor that has no ACHR behind it, such as the player. The
+    /// transform comes from the character controller; everything else is the NPC
+    /// path.
     public func assemble(
         actor: FormID,
-        base: FormID,
         transform: float4x4,
         visual: ResolvedActorVisual
     ) -> ActorAssembly<Provider.Asset> {
@@ -149,7 +138,6 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         }
         return ActorAssembly(
             actor: actor,
-            base: base,
             visual: visual,
             transform: transform,
             models: models,
@@ -232,9 +220,8 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
         renderPlacements(at: transform)
     }
 
-    /// The same placements at a transform supplied from outside the assembly.
-    /// The player body is assembled once and moves every frame (issue #189), so
-    /// its transform cannot be the one baked in at assembly time.
+    /// The same placements at a transform supplied from outside, because the player
+    /// body moves every frame.
     public func renderPlacements(
         at transform: float4x4,
         faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
@@ -264,13 +251,9 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
             .reduce(nil) { result, bounds in result.map { $0.union(bounds) } ?? bounds }
     }
 
-    /// An attachment's model bounds sit at the weapon's own origin, not where
-    /// the hand bone carries it, so pushing them through the actor transform
-    /// would name a box the geometry is never in. Culling attachments on it
-    /// would blink a drawn weapon out at the wrong moment, and folding it into
-    /// the actor's world bounds would move the actor's box. Nil bounds means
-    /// never culled, which for one small mesh per armed actor is the right
-    /// trade until attachment bounds follow the pose (M15 draw/sheath).
+    /// Attachment bounds sit at the weapon's own origin, not at the hand, so they
+    /// cannot be used for culling or the actor's box. Nil means never culled, which
+    /// is fine for one small mesh.
     private static func isAttachment(_ role: ActorModelRole) -> Bool {
         if case .attachment = role {
             return true

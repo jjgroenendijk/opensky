@@ -7,7 +7,6 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
 
 @MainActor
 extension PapyrusWorldStateBridge {
@@ -45,17 +44,10 @@ extension PapyrusWorldStateBridge {
         try resolved.runtime.completeQuest(resolved.quest.formID)
     }
 
-    /// Sets one stage, then enqueues that stage's fragments when the stage was
-    /// not already reached.
-    ///
-    /// A start-up stage starts the quest inside `QuestRuntime.setStage`, so
-    /// the scripts are attached here before the fragments are queued — a
-    /// fragment on a start-up stage has to find an instance to run on.
-    ///
-    /// A shut-down stage is the mirror case and is deliberately *not* mirrored:
-    /// the quest stops, but its script instances stay. Retiring them here would
-    /// delete the fragment this very call just queued, since fragments run on a
-    /// later tick. `Stop` is what retires a quest's instances.
+    /// Sets one stage, then enqueues its fragments when it was not reached before.
+    /// A start-up stage starts the quest, so scripts attach before fragments queue.
+    /// A shut-down stage stops the quest but keeps its instances, so this call's
+    /// fragments still run; `Stop` retires them.
     @discardableResult
     public func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
         let resolved = try resolveQuest(key)
@@ -98,20 +90,10 @@ extension PapyrusWorldStateBridge {
         )
     }
 
-    /// Instantiates the scripts of every quest the current state reports as
-    /// running, which is what a session does once at wire-up and again after a
-    /// save is restored.
-    ///
-    /// Aliases are filled first for a quest that has none yet — a start-game-
-    /// enabled quest reaches "running" straight off its DNAM flag without
-    /// anything ever calling `Start`, and a restored save may predate the
-    /// `QALS` chunk. A quest whose fill *fails* is the one place OpenSky
-    /// deviates from the documented "the quest will fail to start" rule: its
-    /// running flag came from plugin data rather than from a `Start` call, so
-    /// the failure is counted in `questAliasFillFailures` and the quest keeps
-    /// running with an empty table rather than being un-started behind the
-    /// player's back.
-    ///
+    /// Instantiates the scripts of every running quest, at wire-up and after a load.
+    /// Aliases fill first when empty. A fill failure here is counted in
+    /// `questAliasFillFailures`, and the quest keeps running, because its running
+    /// flag came from plugin data.
     /// - Returns: instances created.
     @discardableResult
     public func attachRunningQuestScripts() -> Int {

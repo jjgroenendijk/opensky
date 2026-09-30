@@ -1,18 +1,7 @@
-// World > HUD & Interaction > Items, equipment half (issue #178, roadmap item
-// 12.2.1). Satellite of GameViewController+Items.swift, split for file-length
-// limits and because equipping is a distinct concern from take/drop/containers.
-//
-// Two targets, and the split matters. Equipping on the player exercises the
-// state path — the equipped set, the conflict resolution, the journal entry —
-// and changes nothing on screen, because the player has no rendered body until
-// M14. Equipping on the nearest resident NPC is the *visual* proof: the write
-// is attributed to that actor's cell, `CellStreamer.noteStateMutation` queues a
-// rebuild, and the rebuilt actor resolves its appearance from the equipped set
-// instead of its plugin default outfit.
-//
-// Everything degrades to a stated non-answer rather than a crash, matching the
-// take/drop half: no game data means no catalog, which the panel reports as
-// unavailable instead of silently doing nothing.
+// World > HUD & Interaction > Items, equipment half. Equipping on the player
+// tests the state path. Equipping on the nearest NPC is the visual proof: the
+// write queues a cell rebuild, and the actor resolves from the equipped set.
+// No game data means no catalog, which the panel reports.
 
 import AppKit
 import OpenSkyFormatsESM
@@ -38,10 +27,8 @@ extension GameViewController {
         }
         do {
             let change = try equipment.equip(chosen, on: holder)
-            // After the write, so the reconcile reads the equipped set this equip
-            // produced (issue #472). Every equip path in this controller ends with
-            // this call; see `WornEnchantmentApplication` for why it reconciles
-            // rather than applying just the item that moved.
+            // After the write, so the reconcile reads this equip's result. See
+            // `WornEnchantmentApplication` for why it reconciles every item.
             refreshWornEnchantments(on: holder)
             let displaced = change.unequipped.isEmpty
                 ? ""
@@ -85,7 +72,6 @@ extension GameViewController {
         let values = actorValueHolder(for: holder.key)
         return equipment.equipped(on: holder).map { item in
             EquippedItemReadout(
-                item: item,
                 name: name(of: item),
                 occupancy: Self.describe(equipment.occupancy(of: item)),
                 enchantment: enchantmentLine(of: item, on: values)

@@ -1,30 +1,7 @@
-// What a crime is, and what one is worth (issue #504, roadmap item 21.5).
-//
-// ## The four kinds
-//
-// Theft, assault, murder and trespass — the four the FACT `CRVA` struct prices
-// and the four this milestone can actually observe happening. `CRVA` prices two
-// more, pickpocketing and jailbreak escape, and the load order carries
-// `iCrimeGoldStealHorse` and `iCrimeGoldWerewolf` for two others (observed on
-// this install: 100 and 1000; they are the only two `iCrime*` settings that
-// exist at all). None of those four has a mechanism behind it yet, so none is a
-// case here: an enum case nothing can raise is a promise the engine does not
-// keep. See docs/engine/crime.md for what that defers.
-//
-// ## Where the numbers come from
-//
-// Per crime faction, from its `CRVA` block, never from a game setting. That is
-// not a simplification: `openskycli gmst list --prefix iCrime` on this install
-// reports exactly two settings, neither of which prices any of these four,
-// while `CrimeFactionWhiterun`'s `CRVA` reads "murder 1000, assault 40,
-// trespass 5, pickpocket 25, steal multiplier 0.5000, escape 100, werewolf
-// 1000". UESP's bounty table gives the same four numbers from the player's side
-// — "Assault ... 40", "Trespassing ... 5", "Murder ... 1000", and stealing
-// costs "Half of the stolen item's value, rounded down"
-// (<https://en.uesp.net/wiki/Skyrim:Crime>) — which is the 0.5 steal
-// multiplier applied to the item's value and rounded down.
-//
-// Documented in docs/engine/crime.md.
+// What a crime is, and what one is worth. Four kinds: theft, assault, murder,
+// and trespass, the ones this engine can observe. Prices come from each crime
+// faction's `CRVA`, not from game settings; they match UESP's bounty table
+// (<https://en.uesp.net/wiki/Skyrim:Crime>). See docs/engine/crime.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -64,35 +41,18 @@ nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Co
         }
     }
 
-    /// Whether the bounty for this crime lands in the violent half of the
-    /// ledger.
-    ///
-    /// The Creation Kit wiki's Crime page sorts the crimes into "Minor Crimes"
-    /// — trespassing, pickpocketing, theft — and "Major Crimes" — assault,
-    /// murder, escape (<https://ck.uesp.net/wiki/Crime>, read through the
-    /// Wayback Machine). The violent half is the major one; escape has no case
-    /// here yet.
+    /// Whether the bounty lands in the violent half of the ledger: the "Major
+    /// Crimes" of <https://ck.uesp.net/wiki/Crime> (assault, murder).
     public var isViolent: Bool {
         switch self {
         case .assault, .murder: true
         case .theft, .trespass: false
         }
     }
-
-    /// How a readout names it.
-    public var label: String {
-        rawValue.capitalized
-    }
 }
 
 /// One crime, fully described: who did it, to whom, where, who answers for it,
-/// and whether anybody saw.
-///
-/// A value rather than a call with six arguments, so the thing that happened
-/// can be built at the site that noticed it, carried, logged and replayed. The
-/// crime faction is already resolved: only the caller knows which cell the act
-/// happened in, and `CrimeFactionResolver` turns that into a faction once
-/// rather than at every consumer.
+/// and whether anybody saw. The caller resolves the crime faction once.
 nonisolated public struct CrimeEvent: Equatable, Sendable {
     public let kind: CrimeKind
     /// Who committed it. The player in every path this milestone builds; the
@@ -139,14 +99,8 @@ nonisolated public struct CrimeEvent: Equatable, Sendable {
 
 /// The bounty one faction charges for one crime, from its `CRVA` block.
 nonisolated public struct CrimeGoldTable: Equatable, Sendable {
-    /// Multiplier used when the record's `CRVA` is too short to carry one.
-    ///
-    /// `Faction.CrimeValues.stealMultiplier` is optional because the field
-    /// arrived in a later record version, and `Faction.swift` leaves what an
-    /// absent one means to this issue. It means 1: the neutral multiplier, so a
-    /// plugin writing a 12-byte `CRVA` charges the item's full value rather
-    /// than nothing. Zero was the alternative and is the damaging one — it
-    /// would make every theft from such a faction free.
+    /// Multiplier used when the record's `CRVA` is too short to carry one. It is 1,
+    /// so a 12-byte `CRVA` charges full value; 0 would make every theft free.
     public static let defaultStealMultiplier: Float = 1
 
     public let values: Faction.CrimeValues?
@@ -163,16 +117,9 @@ nonisolated public struct CrimeGoldTable: Equatable, Sendable {
         self.init(values: faction.crimeValues)
     }
 
-    /// What `event` costs, in gold.
-    ///
-    /// Theft is the value of what was taken times the steal multiplier, rounded
-    /// down — "Half of the stolen item's value, rounded down"
-    /// (<https://en.uesp.net/wiki/Skyrim:Crime>) with the 0.5 coming from the
-    /// record rather than from the prose. Rounding down is what makes a
-    /// one-gold trinket free, which is the behaviour the source describes;
-    /// nothing here invents a floor.
-    ///
-    /// The other three are flat `CRVA` amounts.
+    /// What `event` costs, in gold. Theft is the item value times the steal
+    /// multiplier, rounded down (<https://en.uesp.net/wiki/Skyrim:Crime>). The other
+    /// three are flat `CRVA` amounts.
     public func bounty(for event: CrimeEvent) -> Int32 {
         guard let values else { return 0 }
         return switch event.kind {

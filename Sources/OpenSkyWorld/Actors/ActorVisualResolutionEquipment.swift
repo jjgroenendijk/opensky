@@ -1,63 +1,16 @@
-// Runtime equipment in visual resolution (issue #178, roadmap item 12.2.1),
-// split from ActorVisualResolution.swift for file-length limits.
-//
-// Two things live here, both of which only matter once something can equip.
-//
-// The first is the equipped-set override. An actor whose inventory component
-// exists resolves its worn armour from `ReferenceInventoryState.equipped`
-// instead of from the plugin `defaultOutfit` chain — a wholesale replacement,
-// not a merge, because the baseline equipped set already *is* the default
-// outfit (`InventoryBaselineResolver.actorBaseline`). Merging the two would
-// re-dress an actor the moment anything undressed it. Everything downstream is
-// unchanged: the same body-slot mask hides covered skin, the same ARMA
-// selection picks gendered models, and refresh is the normal
-// `noteStateMutation` cell rebuild.
-//
-// The second is ARMA DNAM draw priority. It orders worn parts; it does not
-// hide them. That distinction was settled against the install rather than
-// assumed, and the first reading here was wrong in a way worth recording:
-//
-//     openskycli record OrcishCuirassAA
-//       -> slots 0x114 (body|forearms|calves), priority male 5 female 5
-//     openskycli record OrcishBootsAA
-//       -> slots 0x180 (feet|calves),          priority male 10 female 10
-//
-// The two share the calves slot, and the boots outrank the cuirass there. Were
-// priority a visibility rule, equipping Orcish boots would delete the Orcish
-// cuirass — one armature covers body, forearms *and* calves, so hiding it for
-// losing one slot takes the torso with it. Vanilla plainly draws both. The
-// Creation Kit wiki says as much once read precisely: priority "is used to
-// determine the order of the ArmorAddons", with the naked body at 0, a torso
-// at 5, and "gloves that you want to draw over the ends of sleeves" at 10 —
-// an ordering, and the same 5-then-10 the records above carry.
-//
-// So parts sort by ascending priority, stably, and the highest-priority
-// armature is emitted last. Hiding stays the job of the equipped-slot mask,
-// which has better evidence for it: an ARMO's own BOD2 slots. Within one
-// actor's equipped set that is also sufficient, because `EquipmentRuntime`
-// already refuses to equip two pieces claiming the same biped slot, so no two
-// worn armatures can contest a slot in the first place.
-//
-// A runtime equipped set never throws. A broken DOFT chain is malformed plugin
-// data and the milestone gate says throw; an equipped FormID that names
-// nothing renderable is ordinary runtime state — a dropped-in mod item, a
-// script equipping a token — and degrades to a reason-tagged skip.
-//
-// Documented in docs/engine/actor-resolution.md.
+// Runtime equipment in visual resolution. The equipped set replaces the DOFT
+// chain rather than merging with it. ARMA DNAM priority orders worn parts and
+// does not hide them (Orcish boots at 10 draw over the cuirass at 5), so parts
+// sort by priority and the BOD2 slot mask does the hiding. A bad equipped FormID
+// is a reason-tagged skip. See docs/engine/actor-resolution.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-/// Skeleton nodes a rigid attachment can hang from.
-///
-/// Observed from the vanilla character rig rather than recalled: probing
-/// `meshes\actors\character\character assets\skeleton.hkx` with
-/// `openskycli skeleton` shows bone 43 `Weapon` parented to bone 39
-/// `NPC R Hand [RHnd]`, and bone 42 `Shield` parented to `NPC L Hand [LHnd]`.
-/// The sheathed nodes (`WeaponSword`, `WeaponAxe`, `WeaponBack`, `Quiver`)
-/// hang off the pelvis and spine instead and belong to draw/sheath, which is
-/// M15. Recorded in docs/engine/actor-resolution.md.
+/// Skeleton nodes a rigid attachment can hang from, observed with
+/// `openskycli skeleton`: `Weapon` under `NPC R Hand [RHnd]` and `Shield` under
+/// `NPC L Hand [LHnd]`. See docs/engine/actor-resolution.md.
 nonisolated public enum ActorAttachmentBone: Sendable {
     /// The drawn right-hand weapon node.
     public static let drawnWeapon = "Weapon"
@@ -66,9 +19,6 @@ nonisolated public enum ActorAttachmentBone: Sendable {
 /// One resolved body part with the ARMA DNAM draw priority that orders it.
 nonisolated public struct PrioritizedPart: Equatable, Sendable {
     public let part: ResolvedBodyPart
-    /// The ARMO the armature came from — carried for logging and tests, so a
-    /// part's provenance survives the sort.
-    public let owner: FormID
     /// DNAM priority for the resolved gender. 0 for a DNAM-less ARMA, which
     /// is the naked-body level and therefore sorts first.
     public let priority: UInt8
@@ -181,7 +131,6 @@ nonisolated extension ActorVisualResolver {
                 continue
             }
             attachments.append(ResolvedAttachment(
-                item: item,
                 modelPath: modelPath,
                 bone: ActorAttachmentBone.drawnWeapon
             ))
@@ -189,14 +138,8 @@ nonisolated extension ActorVisualResolver {
         return WornEquipment(armors: armors, attachments: attachments)
     }
 
-    /// Worn parts in ARMA DNAM draw order: ascending priority, ties left in
-    /// the order the pieces resolved in.
-    ///
-    /// The sort is stable — `enumerated()` supplies the index as the tie-break
-    /// rather than relying on `sorted(by:)`, which Swift does not guarantee to
-    /// be stable — so an outfit whose ARMAs all carry the same priority comes
-    /// out in exactly the order it went in, and nothing about the existing
-    /// plugin-outfit path moves.
+    /// Worn parts in ARMA DNAM draw order: ascending priority, ties in resolve order.
+    /// `enumerated()` gives a stable tie-break, since `sorted(by:)` is not stable.
     public static func inDrawOrder(_ parts: [PrioritizedPart]) -> [ResolvedBodyPart] {
         parts.enumerated()
             .sorted { lhs, rhs in

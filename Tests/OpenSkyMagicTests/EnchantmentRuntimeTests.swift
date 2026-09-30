@@ -1,4 +1,4 @@
-// The enchantment runtime (issue #472, roadmap item 19.9): a landed hit applying
+// The enchantment runtime: a landed hit applying
 // its effects and draining charge, an empty weapon applying nothing, and a worn
 // item granting constant effects until it comes off.
 //
@@ -23,8 +23,7 @@ struct EnchantmentRuntimeTests {
         WeaponEnchantmentHit(
             profile: profile,
             attacker: .player,
-            target: target.key,
-            position: .zero
+            target: target.key
         )
     }
 

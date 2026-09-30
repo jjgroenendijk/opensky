@@ -1,31 +1,8 @@
-// The `Actor` family (issues #375 and #424, roadmap items 15.8 and 16.7): the
-// scripting-facing surface of 15.3's actor values and of the fights 16.7's
-// combat AI runs.
-//
-// Policy is the `ObjectReference` family's, unchanged: `self` arrives as
-// `PapyrusNativeCall.receiver` and becomes a `ReferenceKey`; a headless runtime,
-// a handle with no world identity, or a key that names no actor this session
-// tracks is a failure with a reason rather than a guess, and the interpreter
-// substitutes the call's declared default so the script keeps running.
-//
-// Signatures follow the Creation Kit wiki's Actor script reference, cited at
-// each registration.
-//
-// ## What is deliberately absent, and why
-//
-// `SetActorValue`, `ModActorValue` and `ForceActorValue` were absent through
-// M19 because the three primaries had no base-plus-modifiers store to write to.
-// Item 20.3 (issue #496) gave them one, so all three are registered now — in
-// `PapyrusNativeActorValues.swift`, with their semantics quoted there.
-//
-// `SetRelationshipRank` and the faction natives are absent with the factions
-// themselves: 16.7 keeps `ActorHostility`'s two cases and adds no relationship
-// store for them to write.
-//
-// `GetActorValuePercentage` is spelled with the long suffix here because that
-// is the native; `GetAVPercentage` is a Papyrus-level wrapper around it, as are
-// `GetAV`, `GetBaseAV`, `DamageAV` and `RestoreAV`, so they need no
-// registration of their own.
+// The `Actor` natives: actor values and combat for scripts. `self` becomes a
+// `ReferenceKey`; a headless runtime or an unknown actor fails with a reason,
+// and the interpreter uses the declared default. `SetActorValue`,
+// `ModActorValue`, and `ForceActorValue` live in `PapyrusNativeActorValues.swift`.
+// `GetAV` and similar are Papyrus wrappers and need no registration.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -41,26 +18,10 @@ nonisolated extension PapyrusNativeFunctions {
         installActorCombat(into: &registry)
     }
 
-    /// `StartCombat(Actor akTarget)` and `StopCombat()`.
-    ///
-    /// "Starts combat between this actor and the target actor."
-    /// (<https://www.creationkit.com/index.php?title=StartCombat_-_Actor>)
-    /// "Stops this actor from fighting."
-    /// (<https://www.creationkit.com/index.php?title=StopCombat_-_Actor>)
-    ///
-    /// Both were deliberately unregistered through M15, because hostility was
-    /// read and never written from script and no AI had a reason to call them.
-    /// They route through `CombatLoopRuntime` rather than writing
-    /// `ActorCombatState` directly, so a script's fight enters by the same door
-    /// the player's does: hostility through the world-state store, the same
-    /// behavior machine engaged, and the same hand-back to the 16.5 package when
-    /// it stops.
-    ///
-    /// `StartCombat` names a target, and OpenSky accepts only the player.
-    /// Actor-versus-actor combat is out of 16.7's scope — `ActorHostility` has
-    /// two cases and both are about the player — so a script that names anybody
-    /// else takes a tallied failure naming the reason rather than a fight that
-    /// silently does not happen. `StopCombat` takes no argument.
+    /// `StartCombat(Actor akTarget)` and `StopCombat()`
+    /// (<https://www.creationkit.com/index.php?title=StartCombat_-_Actor>). Both go
+    /// through `CombatLoopRuntime`, like the player's fights. OpenSky accepts only
+    /// the player as target; another target is a tallied failure.
     private static func installActorCombat(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
@@ -96,22 +57,10 @@ nonisolated extension PapyrusNativeFunctions {
         })
     }
 
-    /// `float GetActorValue(string)`, `float GetBaseActorValue(string)` and
-    /// `float GetActorValuePercentage(string)`.
-    ///
-    /// "Gets the specified actor value from the actor ... This function returns
-    /// the current value as opposed to the base (maximum) value."
-    /// (<https://www.creationkit.com/index.php?title=GetActorValue_-_Actor>)
-    /// "Gets the base value of the specified actor value."
-    /// (<https://www.creationkit.com/index.php?title=GetBaseActorValue_-_Actor>)
-    /// "Gets the specified actor value from the actor as a percentage of its
-    /// maximum value (from 0 to 1)."
-    /// (<https://www.creationkit.com/index.php?title=GetActorValuePercentage_-_Actor>)
-    ///
-    /// The base value is this engine's re-derived maximum. Nothing buffs a
-    /// maximum yet, so base and maximum are the same number; when magic effects
-    /// arrive they will separate, and the percentage divides by the maximum
-    /// rather than by the base for that reason.
+    /// `float GetActorValue(string)`, `float GetBaseActorValue(string)`, and
+    /// `float GetActorValuePercentage(string)`
+    /// (<https://www.creationkit.com/index.php?title=GetActorValue_-_Actor>). The
+    /// base is the re-derived maximum; the percentage divides by the maximum.
     private static func installActorValueReads(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -143,16 +92,9 @@ nonisolated extension PapyrusNativeFunctions {
     }
 
     /// `DamageActorValue(string, float)` and `RestoreActorValue(string, float)`.
-    ///
-    /// "Negative numbers will be converted to positive so -100 and 100 will
-    /// have the same effect."
-    /// (<https://www.creationkit.com/index.php?title=DamageActorValue_-_Actor>,
-    /// and the same sentence on the Restore page), which is why both take the
-    /// magnitude rather than rejecting a negative argument.
-    ///
-    /// A damage that empties health becomes a death inside the bridge, on the
-    /// same call, so a script that damages an actor to zero and immediately
-    /// asks `IsDead()` gets the answer the player can see.
+    /// Negative amounts act as positive, as the wiki says
+    /// (<https://www.creationkit.com/index.php?title=DamageActorValue_-_Actor>). Damage
+    /// to zero health becomes a death in the same call.
     private static func installActorValueWrites(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -187,29 +129,11 @@ nonisolated extension PapyrusNativeFunctions {
         }
     }
 
-    /// `bool IsDead()`, `bool IsInCombat()`, `bool IsWeaponDrawn()` and
-    /// `Kill(Actor akKiller = None)`.
-    ///
-    /// "Is this actor currently dead?"
-    /// (<https://www.creationkit.com/index.php?title=IsDead_-_Actor>) reads the
-    /// death latch, not health, which is what makes it agree with the corpse on
-    /// screen.
-    ///
-    /// "Is this actor currently in combat?"
-    /// (<https://www.creationkit.com/index.php?title=IsInCombat_-_Actor>) is
-    /// 16.7's behavior phase rather than stored hostility: an actor that hates
-    /// the player but has not noticed them is not in a fight, an actor still
-    /// searching for a target it lost is, and a dead one never is.
-    ///
-    /// "Has this actor drawn his weapon and/or spell?"
-    /// (<https://www.creationkit.com/index.php?title=IsWeaponDrawn_-_Actor>)
-    /// can only be answered for an actor whose draw state something observes,
-    /// which today is the player alone. Every other actor fails with a reason
-    /// and is counted, because "sheathed" would be an invented fact.
-    ///
-    /// "Kills this actor with the passed-in actor being the culprit."
-    /// (<https://www.creationkit.com/index.php?title=Kill_-_Actor>) The killer
-    /// is argument 0 and may legitimately be `None`.
+    /// `bool IsDead()`, `bool IsInCombat()`, `bool IsWeaponDrawn()`, and
+    /// `Kill(Actor akKiller = None)`. `IsDead` reads the death latch.
+    /// `IsInCombat` reads the behavior phase, so searching counts.
+    /// `IsWeaponDrawn` answers only for the player; others fail with a reason. The
+    /// killer may be `None` (<https://www.creationkit.com/index.php?title=Kill_-_Actor>).
     private static func installActorStatus(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -274,14 +198,9 @@ nonisolated extension PapyrusNativeFunctions {
         )
     }
 
-    /// The vanilla actor-value index the string argument at `index` spells, or
-    /// nil when the argument is missing, is not a string, or names no vanilla
-    /// actor value at all.
-    ///
-    /// Every name the table carries answers since 19.5, because every one of
-    /// them is stored. A nil is now a name no vanilla actor value carries —
-    /// a typo, a mod's invented value, or one of the Papyrus synonyms the table
-    /// deliberately does not alias (`Marksman` for `Archery`).
+    /// The vanilla actor-value index the string argument at `index` names, or nil
+    /// when it is missing, not a string, or no vanilla name. Papyrus synonyms such
+    /// as `Marksman` are not aliased.
     public static func actorValueIndex(
         _ call: PapyrusNativeCall,
         at index: Int

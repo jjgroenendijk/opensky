@@ -1,36 +1,8 @@
-// Crime at runtime (issue #504, roadmap item 21.5): the layer that turns "an
-// owned thing was taken" into a bounty on a crime faction.
-//
-// A thin layer beside `WorldStateStore`, following `FactionRuntime`,
-// `PerkRuntime` and `InventoryRuntime`. Every mutation writes through
-// `WorldStateStore.set`, so accruing a bounty lands in the journal, in the
-// dirty counts and in the save exactly as joining a faction does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the store it writes to is.
-//
-// ## The decision, in order
-//
-// 1. **Is there a faction to charge?** `CrimeEvent.crimeFaction`, resolved by
-//    the caller through `CrimeFactionResolver`. None means the place belongs to
-//    nobody, and nothing is recorded — a bandit killed on the road costs
-//    nothing and leaves no row.
-// 2. **Does that faction care?** `Faction.Flags.trackCrime` has to be set, and
-//    the per-kind ignore bit (`ignoreStealing`, `ignoreAssault`, `ignoreMurder`,
-//    `ignoreTrespass`) must not be. A faction with
-//    `doNotReportCrimesAgainstMembers` set refuses a crime whose victim belongs
-//    to it.
-// 3. **Did anybody see?** Only a witnessed crime accrues gold. "If you are
-//    caught doing an illegal action by a witness you will incur a bounty"
-//    (<https://en.uesp.net/wiki/Skyrim:Crime>).
-// 4. **How much?** `CrimeGoldTable` over the faction's own `CRVA`.
-//
-// The count moves either way, witnessed or not: "Regardless of whether a crime
-// is witnessed, the Statistics tab on the menu keeps track of all your criminal
-// activities" (same page). That is the difference an unwitnessed theft leaves
-// behind — a count, no gold, and a stolen stack.
-//
-// Documented in docs/engine/crime.md.
+// Crime at runtime: turns a crime into a bounty on a crime faction, writing
+// through `WorldStateStore.set`. Order: a faction to charge; it tracks crime
+// and does not ignore this kind; a witness saw it
+// (<https://en.uesp.net/wiki/Skyrim:Crime>); the price from `CrimeGoldTable`.
+// The count moves even when nobody saw. See docs/engine/crime.md.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -63,10 +35,6 @@ public struct CrimeRuntime {
         self.witnesses = witnesses
     }
 
-    public var store: WorldStateStore {
-        worldState
-    }
-
     // MARK: - Reading
 
     /// `key`'s ledger, empty when nothing has ever written one.
@@ -85,18 +53,6 @@ public struct CrimeRuntime {
         on key: ReferenceKey = .player
     ) -> CrimeCounts {
         ledger(of: key).counts(for: faction)
-    }
-
-    /// Total gold owed everywhere, which is UESP's "Total Lifetime Bounty".
-    public func totalCrimeGold(on key: ReferenceKey = .player) -> Int64 {
-        ledger(of: key).totalGold
-    }
-
-    /// Every faction `key` owes something to or has offended, joined to the
-    /// records, in ledger order. A row whose faction this load order dropped is
-    /// kept in the ledger and simply absent here.
-    public func resolvedFactions(on key: ReferenceKey = .player) -> [ResolvedFaction] {
-        ledger(of: key).factions.compactMap { factions.faction(key: $0) }
     }
 
     // MARK: - Reporting
@@ -124,14 +80,8 @@ public struct CrimeRuntime {
         return CrimeOutcome(gold: gold, faction: faction, recorded: true, refusal: nil)
     }
 
-    /// What a witnessed `event` would cost, without recording anything.
-    ///
-    /// The quote a readout shows under the crosshair before the player acts. It
-    /// runs the same refusal rules `report` does — a faction that does not track
-    /// crime, or ignores this kind, or will not report a crime against its own
-    /// member charges nothing — so the panel cannot promise a bounty the take
-    /// would not charge. The one rule it skips is witnessing, because "if
-    /// witnessed" is exactly what the quote is answering.
+    /// What a witnessed `event` would cost, without recording anything. The quote
+    /// runs the same refusal rules as `report`, except the witness check.
     public func quote(_ event: CrimeEvent) -> Int32 {
         guard
             let faction = event.crimeFaction,
@@ -252,20 +202,10 @@ public struct CrimeRuntime {
         return nil
     }
 
-    /// Whether the crime's victim belongs to the faction that would charge for
-    /// it.
-    ///
-    /// Two things count. A *placed actor* answers from its stored memberships,
-    /// which is the assault and murder case. A victim that *is* the faction
-    /// answers yes trivially, which is the theft-from-faction-property case —
-    /// a shop owned by the hold it stands in.
-    ///
-    /// Stated limitation: a theft from an NPC_-owned reference cannot consult
-    /// the flag at all. `XOWN` names a base record and `ActorFactionState` is
-    /// keyed by a placement, so there is nothing to look the base up as; every
-    /// ACHR placed from it would answer differently anyway. Recorded in
-    /// docs/engine/crime.md rather than answered with the wrong actor's
-    /// memberships.
+    /// Whether the crime's victim belongs to the faction that would charge for it: a
+    /// placed actor by its memberships, or the faction itself. A theft from an
+    /// NPC_-owned reference cannot check this, because `XOWN` names a base record
+    /// (docs/engine/crime.md).
     private func isMember(_ victim: ReferenceKey, of faction: ReferenceKey) -> Bool {
         victim == faction || memberships(of: victim).isMember(of: faction)
     }

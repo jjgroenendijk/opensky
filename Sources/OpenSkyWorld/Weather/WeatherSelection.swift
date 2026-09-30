@@ -3,7 +3,6 @@
 // worldspace CLMT (WRLD CNAM) as fallback; see docs/engine/weather.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
@@ -13,18 +12,11 @@ import simd
 /// and picks one deterministically. Pure over a WeatherStore so it unit-tests
 /// without a running renderer.
 nonisolated public enum WeatherSelection: Sendable {
-    /// Candidate pool for `worldspace` given the exterior cell's XCLR regions.
-    ///
-    /// Rules (xEdit REGN semantics, flagged in docs/engine/weather.md):
-    /// - Applicable regions = XCLR regions with a weather area whose WNAM is
-    ///   this worldspace (or unset). Highest RDAT weather priority wins ties.
-    /// - The winning region's RDWT list is the base pool. When its weather-area
-    ///   Override flag is clear, the worldspace climate list is appended as
-    ///   lower-priority candidates; when set, the region list stands alone.
-    /// - No applicable region -> the worldspace climate (WRLD CNAM) list.
-    ///
-    /// `globals` resolves CLMT WLST global overrides; nil keeps every climate
-    /// chance at the number the plugin authored.
+    /// Candidate pool for `worldspace` from the cell's XCLR regions (xEdit REGN
+    /// semantics, docs/engine/weather.md). The highest RDAT priority region wins.
+    /// Its RDWT list is the base pool; the climate list is appended unless the
+    /// weather area's Override flag is set. No region -> the WRLD CNAM climate.
+    /// A nil `globals` keeps every authored climate chance.
     public static func candidates(
         worldspace: UInt32?,
         regionIDs: [FormID],
@@ -53,16 +45,10 @@ nonisolated public enum WeatherSelection: Sendable {
         return pool.filter { store.weather($0.weather) != nil }
     }
 
-    /// The worldspace climate's WLST entries as weighted candidates.
-    ///
-    /// WLST global semantics: each entry carries an optional GLOB beside its
-    /// static chance, and neither UESP's CLMT page nor xEdit's `wbRecord(CLMT)`
-    /// — which names the field 'Global' and stops there — says what the game
-    /// does with it. OpenSky's documented choice is that a global that resolves
-    /// *replaces* the static chance, so a mutated global is directly the weight
-    /// used; an unresolvable global leaves the authored chance alone. See
-    /// docs/formats/weather.md. (REGN's RDWT entries carry a similar unused
-    /// global that stays ignored.)
+    /// The worldspace climate's WLST entries as weighted candidates. A resolved
+    /// GLOB replaces the static chance; an unresolved one keeps it. No spec says
+    /// what the game does here, so this is OpenSky's choice
+    /// (docs/formats/weather.md).
     public static func climateCandidates(
         worldspace: UInt32?,
         store: WeatherStore,

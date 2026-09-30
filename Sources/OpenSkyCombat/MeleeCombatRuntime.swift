@@ -1,27 +1,8 @@
-// Melee combat (issue #195, roadmap item 15.4): the runtime that turns player
-// intent into census-named graph events, reads the graph's answer back, and
-// resolves the hit the contact frame asks for.
-//
-// The order every frame runs in, and why it is that order:
-//
-//   1. `acceptFrame(_:)` — intent edges become raised events. The engine only
-//      ever *asks*: it raises `attackStart`, it does not decide that an attack
-//      began.
-//   2. the fixed steps advance the graph (LocomotionBridge's job, not this
-//      type's), and the graph fires whatever it fires.
-//   3. `handleGraphEvents(_:)` — the drained names advance `MeleeCombatState`
-//      and, on the contact frame, run the sweep and apply the damage.
-//
-// So a swing that the graph refuses — sheathed, staggered, already swinging —
-// costs one ignored event and nothing else. There is no engine-side attack
-// timer to get out of step with the animation, which is the same rule the
-// footstep director follows.
-//
-// Main-actor, like the other directors, and driven from the frame the renderer
-// already runs there. Everything it touches the world with goes through
-// `MeleeCombatWorld`, so the whole runtime is testable against a fake.
-//
-// Documented in docs/engine/melee-combat.md.
+// Melee combat: turns player intent into graph events, reads the graph's answer,
+// and resolves the hit on the contact frame. Order per frame: `acceptFrame(_:)`
+// raises events; the graph steps; `handleGraphEvents(_:)` advances the state and
+// applies damage. No engine-side attack timer. All world access goes through
+// `MeleeCombatWorld`. See docs/engine/melee-combat.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -217,14 +198,9 @@ public final class MeleeCombatRuntime {
         }
     }
 
-    /// Raises the pair of events one draw or sheath request implies.
-    ///
-    /// Two events rather than one, because the vanilla graph splits the job in
-    /// two and only reads one of them. `weaponDraw` and `weaponSheathe` are
-    /// declared but named by no transition in any character behavior file: they
-    /// are the *intent*, and vanilla's engine, not its graph, decides what that
-    /// intent equips. The second event is that decision, and it is the one
-    /// `0_master.hkx` transitions on (issue #403).
+    /// Raises the pair of events one draw or sheath request implies. `weaponDraw`
+    /// and `weaponSheathe` are the intent, and no vanilla transition reads them. The
+    /// second event is the one `0_master.hkx` transitions on.
     private func raiseEquipEvents(sheathing: Bool, world: any MeleeCombatWorld) {
         world.raiseCombatEvent(
             sheathing ? CombatGraphNames.weaponSheathe : CombatGraphNames.weaponDraw,
@@ -307,10 +283,8 @@ public final class MeleeCombatRuntime {
         let landed = world.applyMeleeDamage(damage.applied, to: hit.target)
         noteSkillUse(hit, damage: damage, landed: landed, world: world)
         let enchantment = applyEnchantment(hit, world: world)
-        // After the damage, so a script that reads the target's health inside
-        // `OnHit` sees the blow that caused the event rather than the state
-        // before it (issue #375). The block term is what the damage formula
-        // already resolved, so `abHitBlocked` cannot disagree with the number.
+        // After the damage, so an `OnHit` script sees the new health. `abHitBlocked`
+        // comes from the damage formula's block term.
         world.reportScriptHit(ScriptHitEvent(
             target: hit.target,
             aggressor: world.meleeAttacker.key,
@@ -319,7 +293,7 @@ public final class MeleeCombatRuntime {
         ))
         let staggered = stagger(hit.target, damage: damage, world: world)
         let impact = impacts?.resolve(
-            weapon: weapon, material: world.meleeMaterial(at: hit.position)
+            weapon: weapon, material: world.meleeMaterial()
         )
         if let impact {
             world.playMeleeImpact(impact, at: hit.position)
@@ -327,11 +301,9 @@ public final class MeleeCombatRuntime {
         let record = MeleeHitRecord(
             target: hit.target,
             distance: hit.distance,
-            position: hit.position,
             damage: damage,
             sound: impact?.sound,
             staggered: staggered,
-            swingID: state.swingID,
             enchantment: enchantment
         )
         trace.append(record)
@@ -341,22 +313,12 @@ public final class MeleeCombatRuntime {
         return record
     }
 
-    /// Reports what this blow taught both characters in it (issue #498).
-    ///
-    /// Three uses come out of one swing, each with the base experience its own
-    /// source states (`SkillUseEvent`): the weapon skill the attacker swung
-    /// with, the blocker's Block for the raw damage the block absorbed, and the
-    /// target's armour skill for the raw rating of the strike — "Armor skill
-    /// increases are based on the raw attack rating (plus any power attack
-    /// bonuses) of an enemy strike"
-    /// (<https://en.uesp.net/wiki/Skyrim:Heavy_Armor>), which is the whole
-    /// strike rather than the part a block let through.
-    ///
-    /// The weapon skill is credited only when the blow reached something whose
-    /// health it could take: "Weapon skill gains are based on base weapon damage
-    /// dealt against valid targets (those whose health can be damaged)"
-    /// (<https://en.uesp.net/wiki/Skyrim:One-handed>). The two defensive uses do
-    /// not depend on that, because the target was struck either way.
+    /// Reports what this blow taught both characters (`SkillUseEvent`): the
+    /// attacker's weapon skill, the blocker's Block for the absorbed damage, and the
+    /// target's armor skill for the raw strike
+    /// (<https://en.uesp.net/wiki/Skyrim:Heavy_Armor>). The weapon skill counts only
+    /// against a target whose health can be damaged
+    /// (<https://en.uesp.net/wiki/Skyrim:One-handed>).
     private func noteSkillUse(
         _ hit: MeleeHit,
         damage: MeleeDamageResult,
@@ -383,13 +345,9 @@ public final class MeleeCombatRuntime {
         ))
     }
 
-    /// Fires the weapon's enchantment on the actor the swing struck (issue #472).
-    ///
-    /// Only a contact enchantment fires: a weapon carrying a constant effect is
-    /// nonsense the records do not author, and a staff enchantment is cast rather
-    /// than struck with. Nothing is decided about the charge here — the world seam
-    /// owns the ledger — so a weapon that has run dry is a report saying so rather
-    /// than a hit that silently skipped a step.
+    /// Fires the weapon's enchantment on the actor the swing struck. Only a contact
+    /// enchantment fires. The world seam owns the charge, so a dry weapon returns a
+    /// report that says so.
     private func applyEnchantment(
         _ hit: MeleeHit,
         world: any MeleeCombatWorld
@@ -398,8 +356,7 @@ public final class MeleeCombatRuntime {
         return world.applyWeaponEnchantment(WeaponEnchantmentHit(
             profile: profile,
             attacker: world.meleeAttacker.key,
-            target: hit.target,
-            position: hit.position
+            target: hit.target
         ))
     }
 

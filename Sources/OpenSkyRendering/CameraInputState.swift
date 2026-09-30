@@ -41,8 +41,8 @@ public final class CameraInputState {
         boost = enabled
     }
 
-    /// Sprint is held, like boost (issue #188): the locomotion bridge reads the
-    /// level each fixed step rather than an edge.
+    /// Sprint is held, like boost: the locomotion bridge reads the level each fixed
+    /// step.
     public func setSprint(_ enabled: Bool) {
         sprinting = enabled
     }
@@ -68,33 +68,23 @@ public final class CameraInputState {
         jumpRequested = true
     }
 
-    /// Latches one attack press until the next frame drains it (issue #195),
-    /// on the same terms as jump: a click between two rendered frames must
-    /// still reach a fixed step, and must reach it exactly once.
+    /// Latches one attack press until the next frame drains it, like jump, so a
+    /// click between frames reaches exactly one fixed step.
     public func requestAttack() {
         attackRequested = true
     }
 
-    /// Holds the attack button down (issue #196). The same binding as
-    /// `requestAttack()` and deliberately not the same signal: melee acts on
-    /// the press and archery on the hold, so the view sets both from one
-    /// mouse-down and only this one is cleared by the mouse-up.
+    /// Holds the attack button down. Same binding as `requestAttack()`, but melee
+    /// acts on the press and archery on the hold, so only this one clears on
+    /// mouse-up.
     public func setAttackHeld(_ enabled: Bool) {
         attackHeld = enabled
-    }
-
-    public var isAttackHeld: Bool {
-        attackHeld
     }
 
     /// Block is held, like boost and sprint: the melee runtime reads the level
     /// each frame and raises `blockStart`/`blockStop` on its edges.
     public func setBlocking(_ enabled: Bool) {
         blocking = enabled
-    }
-
-    public var isBlocking: Bool {
-        blocking
     }
 
     /// Latches one draw/sheath press. A toggle rather than two bindings,
@@ -127,13 +117,9 @@ public final class CameraInputState {
         cameraModeCycleRequested = true
     }
 
-    /// Clears all held state — call on capture loss / focus loss so keys do not
-    /// stick after the window stops receiving key-up events. Sneak is a mode
-    /// rather than a held key, so it deliberately survives: releasing capture
-    /// must not stand the player up. Whether the weapon is drawn survives for
-    /// the same reason — it is world state the player set on purpose — but the
-    /// guard drops, because a block held through a lost mouse-up would stay up
-    /// forever.
+    /// Clears all held state on capture or focus loss, so keys do not stick. Sneak
+    /// and the drawn weapon survive, because they are modes the player set. The
+    /// block guard drops.
     public func releaseAll() {
         pressed.removeAll()
         boost = false

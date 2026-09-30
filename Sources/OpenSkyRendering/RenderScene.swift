@@ -5,7 +5,6 @@
 import Foundation
 import Metal
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
 import OpenSkyShaderTypes
 import simd
 
@@ -64,21 +63,15 @@ nonisolated public struct RenderPlacement {
     /// large billboard batches out of the per-fragment point-light loop.
     public let receivesPointLights: Bool
     public let receivesShadows: Bool
-    /// The REFR this placement draws, but only when a simulated rigid body
-    /// moves it every frame (issue #193). Zero everywhere else, which is every
-    /// placement the world has ever had: `transform` is then the whole answer
-    /// and nothing looks the reference up. See `DrawInstance.referenceFormID`.
+    /// The REFR this placement draws, only when a simulated rigid body moves it
+    /// every frame; zero otherwise. See `DrawInstance.referenceFormID`.
     public let referenceFormID: UInt32
     /// Per-mesh actor-local FaceGen expression buffers. Empty for every
     /// placement except a face model with an associated expression TRI.
     public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
-    /// Which scene role this placement plays, for the dev shell's layer
-    /// isolation (issue #144). It belongs here rather than on `RenderMesh`
-    /// because meshes are shared and cached by VFS path in `MeshLibrary`, so
-    /// mesh identity cannot own a scene role: the same tree mesh is a static in
-    /// one cell and a distant-LOD billboard in the block above it. The
-    /// `.statics` default is what leaves every ordinary construction site
-    /// unchanged; only the actor and distant-LOD builders pass anything else.
+    /// Which scene role this placement plays, for layer isolation. It lives here, not
+    /// on the shared `RenderMesh`, because one mesh can play different roles.
+    /// `.statics` is the default.
     public let layer: RenderLayer
 
     public init(
@@ -116,20 +109,12 @@ nonisolated public struct DrawInstance: Sendable {
     public let castsShadows: Bool
     public let receivesPointLights: Bool
     public let receivesShadows: Bool
-    /// The REFR a simulated rigid body moves, or zero for the ordinary case of
-    /// a placement that stays where its cell build put it (issue #193).
-    ///
-    /// A cell build bakes world matrices once, so a body that moves between
-    /// builds would otherwise be drawn at the pose the plugin authored until
-    /// the cell was rebuilt — a pushed barrel that does not move until it
-    /// settles. Carrying the identity here lets the two passes that upload
-    /// instance transforms substitute the live pose for the baked one
-    /// (`Renderer.drawn(_:)`), which is cheaper and far less invasive than
-    /// rebuilding draw groups every frame: the grouping key is mesh plus
-    /// material, and moving an instance changes neither.
+    /// The REFR a simulated rigid body moves, or zero. The upload passes substitute
+    /// the live pose for the baked one (`Renderer.drawn(_:)`), which is cheaper than
+    /// rebuilding draw groups every frame.
     public var referenceFormID: UInt32 = 0
-    /// The placement's scene role, carried through so the encode-level layer
-    /// filter and the `layerCategory` debug channel agree (issue #144).
+    /// The placement's scene role, so the layer filter and the `layerCategory` debug
+    /// channel agree.
     public var layer: RenderLayer = .statics
 }
 
@@ -304,15 +289,9 @@ nonisolated public struct RenderScene {
     public let particles: [ParticlePlayback]
     /// Cell-owned actor playback objects; references disappear on cell eviction.
     public let animations: [any RenderAnimation]
-    /// Simulated bone poses, keyed by the ACHR each ragdoll stands for (issue
-    /// #197, roadmap item 15.6).
-    ///
-    /// The ragdoll writes into the same `[String: float4x4]` shape a clip
-    /// samples, and it is laid over that clip's pose here rather than in a
-    /// second draw path — a corpse reaches the skinning palette through exactly
-    /// the call an idle animation does, and the renderer needs to know nothing
-    /// about physics. Bones the ragdoll does not simulate keep the animated
-    /// pose, which is why a corpse still has hands.
+    /// Simulated bone poses, keyed by the ACHR each ragdoll stands for. Laid over the
+    /// clip's pose in the same `[String: float4x4]` shape, so unsimulated bones keep
+    /// the animation.
     public var ragdollPoses: [UInt32: [String: float4x4]] = [:]
 
     public init(

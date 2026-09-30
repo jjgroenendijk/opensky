@@ -1,25 +1,15 @@
-// Plugin baseline plus runtime delta, resolved (issue #159, roadmap item
-// 10.1.2). This is the read side of `WorldStateStore`: the baseline is derived
-// from the decoded record every time it is asked for, never cached, so a store
-// delta can never go stale against a reloaded plugin.
-//
-// Applying a resolved state during a cell build is issue #160's work; this type
-// only computes it.
-//
-// Documented in docs/engine/runtime-state.md.
+// Plugin baseline plus runtime delta, resolved. The read side of
+// `WorldStateStore`: the baseline is re-derived from the record on every ask,
+// so a delta cannot go stale against a reloaded plugin.
+// See docs/engine/runtime-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
 
-/// The state of one reference: what the plugin authored, with any runtime
-/// deltas laid over the top.
-///
-/// Construct it from a `RuntimeReferenceEntry` for the plugin baseline, then
-/// call `applying(_:)` with the store's delta. `overriddenKinds` reports which
-/// slots the delta supplied, so a caller can tell "disabled because a script
-/// disabled it" from "disabled because the record says so".
+/// The state of one reference: the plugin baseline with runtime deltas on top.
+/// `overriddenKinds` names the slots the delta supplied, so a caller can tell
+/// a script disable from a record disable.
 nonisolated public struct ReferenceState: Equatable, Sendable {
-    public let key: ReferenceKey
     public var enableState: ReferenceEnableState
     public var transform: ReferenceTransformOverride
     public var activation: ReferenceActivationState
@@ -33,14 +23,8 @@ nonisolated public struct ReferenceState: Equatable, Sendable {
     }
 
     /// The plugin baseline for `entry`, re-derived from its decoded record.
-    ///
-    /// One gap remains deliberate: neither placement type carries the
-    /// header's `deleted` flag, so the
-    ///   deletion baseline is always "not deleted". That flag means the plugin
-    ///   removed the record, which is a load-time concern rather than a runtime
-    ///   one.
+    /// Deletion is always "not deleted": the header flag is a load-time concern.
     public init(baseline entry: RuntimeReferenceEntry) {
-        key = entry.key
         switch entry.record {
         case let .reference(reference):
             enableState = ReferenceEnableState(isEnabled: !reference.isInitiallyDisabled)

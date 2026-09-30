@@ -1,19 +1,8 @@
-// Synthetic crime factions, locations and cells for the crime suites (issue
-// #504). Every layout comes from `FactionFixture` and the field specs in
-// docs/formats/factions.md and docs/formats/records.md, so no bytes from the
-// game install appear here (AGENTS.md "Legal & IP boundary").
-//
-// One plugin carries the FACT, LCTN and KYWD records together, because the
-// crime runtime joins them: a cell's `XLCN` and a location's `FNAM` have to
-// resolve to the same `ReferenceKey`s the ledger is written under, or the
-// suites would be testing the fixture rather than the runtime.
-//
-// The `CRVA` numbers default to the ones the local install carries on
-// `CrimeFactionWhiterun` — "murder 1000, assault 40, trespass 5, pickpocket 25,
-// steal multiplier 0.5000" — which are also UESP's published bounty table
-// (<https://en.uesp.net/wiki/Skyrim:Crime>). Using the real numbers is what
-// makes an arithmetic mistake in the suites read as a wrong bounty rather than
-// as a fixture nobody can check.
+// Synthetic crime factions, locations, and cells, built from `FactionFixture`
+// and docs/formats/factions.md. One plugin holds FACT, LCTN, and KYWD, because
+// the crime runtime joins them by `ReferenceKey`. The `CRVA` defaults match
+// UESP's bounty table (<https://en.uesp.net/wiki/Skyrim:Crime>), so a wrong
+// sum reads as a wrong bounty.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -37,12 +26,11 @@ public enum CrimeFixture {
         public static let tolerant: UInt32 = 0x11
         /// Owns property and does not track crime at all.
         public static let shopkeepers: UInt32 = 0x12
-        /// What the `GFAC` default object names: membership makes a guard
-        /// (issue #505).
+        /// What the `GFAC` default object names: membership makes a guard.
         public static let guards: UInt32 = 0x13
     }
 
-    /// The hold's jail links (issue #505): a `STOL` evidence chest and a
+    /// The hold's jail links: a `STOL` evidence chest and a
     /// `JAIL` exterior marker. Placed-reference FormIDs, so they sit apart
     /// from every record the fixture actually carries.
     public enum Links {
@@ -201,16 +189,15 @@ public enum CrimeFixture {
 
     /// The player, optionally in factions.
     public static func player(memberships: [(faction: UInt32, rank: Int8)] = []) -> CrimeActor {
-        CrimeActor(key: .player, base: nil, memberships: state(memberships))
+        CrimeActor(base: nil, memberships: state(memberships))
     }
 
     /// One NPC by its base record, optionally in factions.
     public static func actor(
-        _ reference: UInt32,
         base: UInt32,
         memberships: [(faction: UInt32, rank: Int8)] = []
     ) -> CrimeActor {
-        CrimeActor(key: key(reference), base: key(base), memberships: state(memberships))
+        CrimeActor(base: key(base), memberships: state(memberships))
     }
 
     public static func state(_ memberships: [(faction: UInt32, rank: Int8)]) -> ActorFactionState {

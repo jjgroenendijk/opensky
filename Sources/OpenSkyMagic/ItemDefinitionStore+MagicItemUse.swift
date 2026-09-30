@@ -6,15 +6,13 @@ import OpenSkyGameData
 import OpenSkyMagicInterface
 
 nonisolated extension ItemDefinitionStore {
-    /// What consuming `id` applies, or nil when it is not something an actor
-    /// can eat or drink (issue #469).
+    /// What consuming `id` applies, or nil when it is not something an actor can eat
+    /// or drink.
     public func magicItemUse(_ id: FormID) -> MagicItemUse? {
         if let ingestible = ingestibles[id.rawValue] {
             return MagicItemUse(
-                item: id,
                 kind: .potion,
-                effects: ingestible.effects,
-                consumeSound: ingestible.consumeSound
+                effects: ingestible.effects
             )
         }
         guard let ingredient = ingredients[id.rawValue] else { return nil }
@@ -24,10 +22,8 @@ nonisolated extension ItemDefinitionStore {
         // that ingredient will provide a small version of that effect."
         // <https://en.uesp.net/wiki/Skyrim:Alchemy_Effects>
         return MagicItemUse(
-            item: id,
             kind: .ingredient,
-            effects: Array(ingredient.effects.prefix(1)),
-            consumeSound: nil
+            effects: Array(ingredient.effects.prefix(1))
         )
     }
 }

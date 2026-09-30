@@ -1,29 +1,8 @@
-// The one place a condition asks "what does dialogue know about this actor?"
-// (issue #426, roadmap item 17.2), mirroring `QuestResolution`,
-// `QuestAliasResolution` and `ActorStateResolution`.
-//
-// Shaped as a resolved snapshot rather than as a live handle for the reason
-// every other seam is: `ConditionContext` is a nonisolated value a build thread
-// may evaluate against, so it cannot reach into `WorldStateStore` or into a
-// `@MainActor` runtime. The caller that *is* on the main actor builds one and
-// hands it over.
-//
-// Two facts live here, because two dialogue-demanded condition functions need
-// them and neither is derivable from anything a condition already has:
-//
-// * The voice type of an actor, which `GetIsVoiceType` compares. It is a pure
-//   read of the NPC_ record's VTCK through the template chain, so it is filled
-//   once per resident actor rather than recomputed per condition.
-// * Who is currently talking to the player, which `IsInDialogueWithPlayer`
-//   reports. That is a fact about the live conversation and about nothing else,
-//   which is why it is a field here rather than a component in the store: it
-//   does not survive a save, because a reloaded game is not mid-sentence.
-//
-// An empty resolution — the default in a context with no world running — makes
-// both functions a reason-tagged false rather than a convincing "no voice type"
-// or "not talking", exactly as the empty actor seam does.
-//
-// Documented in docs/engine/dialogue.md and docs/engine/condition-functions.md.
+// What dialogue knows about an actor, for conditions: a snapshot the main actor
+// builds, like `QuestResolution`. It holds each actor's voice type (VTCK through
+// the template chain) for `GetIsVoiceType`, and who talks to the player for
+// `IsInDialogueWithPlayer`. An empty resolution gives reason-tagged false.
+// See docs/engine/dialogue.md and docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyConditions
@@ -62,11 +41,6 @@ nonisolated public struct DialogueResolution: Sendable {
     /// is what opening a conversation produces.
     public func talking(to speaker: ReferenceKey?) -> Self {
         DialogueResolution(voiceTypes: voiceTypes, speakerInDialogue: speaker)
-    }
-
-    /// Actors this resolution knows a voice type for.
-    public var voiceTypeCount: Int {
-        voiceTypes.count
     }
 }
 

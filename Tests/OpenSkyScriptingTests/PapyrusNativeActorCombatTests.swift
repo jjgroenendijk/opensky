@@ -1,11 +1,6 @@
-// The two combat natives `Actor` gained with the combat AI (issue #424, roadmap
-// item 16.7), plus the `IsInCombat` reading they changed.
-//
-// An extension of `PapyrusNativeActorTests` rather than a suite of its own, so
-// the fixture stays one thing: the same synthetic scripted actor, wired to the
-// same real value runtime, ragdoll runtime and — new here — a real combat loop
-// over a recording world. Split into its own file only because the strict lint
-// type cap is smaller than the family is.
+// The `Actor` combat natives and the `IsInCombat` reading they change, over
+// the same synthetic actor as `PapyrusNativeActorTests` plus a real combat
+// loop. A separate file only because of the lint type cap.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
@@ -22,7 +17,7 @@ import Testing
 extension PapyrusNativeActorTests {
     /// `IsInCombat` reads what the actor is *doing*, not what it feels: an
     /// actor made hostile without a fight running answers false, and only
-    /// `StartCombat` (or perceiving the player) turns it true (issue #424).
+    /// `StartCombat` (or perceiving the player) turns it true.
     @Test func isInCombatReadsTheFightAndNotACorpse() throws {
         let fixture = try Self.fixture()
         #expect(call(

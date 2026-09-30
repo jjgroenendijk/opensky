@@ -1,53 +1,10 @@
-// A spell landing on somebody other than its caster (issue #471, roadmap item
-// 19.8): the payload a delivery carries, the actors it reaches, and the
-// resistance-scaled magnitudes it applies.
-//
-// Split from the delivery mechanisms on purpose. A projectile, a target-actor
-// cast and a concentration beam differ entirely in how they *find* an actor and
-// not at all in what happens once they have one, so the finding lives in
-// `ProjectileRuntime` and `CasterRuntime` and the applying lives here — one
-// implementation, one place the resistance formula is read.
-//
-// ## What scales, and by how much
-//
-// Only **hostile** effects. UESP states the rule over damage rather than over
-// every effect: "Magic Resistance decreases the damage of any offensive spell by
-// the displayed percentage" (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>),
-// and the MGEF Hostile flag is the record's own word for "offensive". A restore
-// or a fortify is handed to the effect runtime unscaled.
-//
-// The multiplier itself is item 19.5's `magicDamageMultiplier`, unchanged and
-// uncopied: Resist Magic first, then the MGEF's own resistance actor value,
-// multiplicatively. A **weakness** is the same formula with a negative
-// resistance — UESP's Weakness to Fire is worded "Target is <mag>% weaker to
-// fire damage" (<https://en.uesp.net/wiki/Skyrim:Weakness_to_Fire>) and is
-// authored as a detrimental Value Modifier on Resist Fire, so -30 points reads
-// as a fraction of -0.3 and a multiplier of 1.3.
-//
-// The SPEL flag xEdit names "Ignore Resistance" skips the whole step, which is
-// why the payload carries it rather than the resolver assuming every spell is
-// resistible.
-//
-// ## Where the area radius comes from, and what is uncertain about it
-//
-// EFIT's area is authored in **feet**, which is measured rather than assumed:
-// the resolved game-setting table names the effect item's area unit outright
-// (`sMagicEffectItemFeet`), and vanilla `Fireball` carries an EFIT area of 15
-// against UESP's description of the same spell as "a fiery explosion for 40
-// points of damage in a 15 foot radius" (<https://en.uesp.net/wiki/Skyrim:Fireball>,
-// probed 2026-08-16 with `openskycli record Fireball`).
-//
-// **How many world units a foot is, is not settled by any source this session
-// could reach.** `MagicAreaSettings.documentedDefaults` carries 128/6 units per
-// foot, derived from this engine's own `PlayerCapsule.standard` height of 128
-// units for an adult human, and it is a setting rather than a constant so the
-// number can be corrected without touching the rule. The uncertainty is
-// recorded in docs/engine/spell-delivery.md rather than hidden.
-//
-// Documented in docs/engine/spell-delivery.md.
+// A spell landing on somebody other than its caster: the payload, the actors it
+// reaches, and the resistance-scaled magnitudes. Only hostile effects scale, by
+// `magicDamageMultiplier` (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>);
+// "Ignore Resistance" skips the step. EFIT area is in feet; the units per foot
+// in `MagicAreaSettings` are uncertain. See docs/engine/spell-delivery.md.
 
 import Foundation
-import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
@@ -106,15 +63,11 @@ nonisolated public struct SpellHitTarget: Equatable, Sendable {
 /// One landed spell, as the world seam receives it.
 nonisolated public struct SpellHit: Equatable, Sendable {
     public let payload: SpellPayload
-    /// Where it landed, world space. The caster's own position for a delivery
-    /// that never travelled.
-    public let position: SIMD3<Float>
     /// Every actor it reached, direct target first.
     public let targets: [SpellHitTarget]
 
-    public init(payload: SpellPayload, position: SIMD3<Float>, targets: [SpellHitTarget]) {
+    public init(payload: SpellPayload, targets: [SpellHitTarget]) {
         self.payload = payload
-        self.position = position
         self.targets = targets
     }
 }
@@ -124,8 +77,6 @@ nonisolated public struct SpellHit: Equatable, Sendable {
 /// health bar.
 nonisolated public struct SpellMagnitudeAdjustment: Equatable, Sendable {
     public let target: ReferenceKey
-    /// The MGEF the entry names.
-    public let effect: FormID
     /// Its display name, for the readout.
     public let name: String
     /// MGEF DATA "Resistance Actor Value", or nil where the record names none.
@@ -149,14 +100,12 @@ nonisolated public struct SpellMagnitudeAdjustment: Equatable, Sendable {
 
     public init(
         target: ReferenceKey,
-        effect: FormID,
         name: String,
         resistance: Int32?,
         baseMagnitude: Float,
         multiplier: Float
     ) {
         self.target = target
-        self.effect = effect
         self.name = name
         self.resistance = resistance
         self.baseMagnitude = baseMagnitude
@@ -237,16 +186,10 @@ nonisolated public enum SpellHitTargeting: Sendable {
         payload.entries.map { settings.radius(ofArea: $0.area) }.max() ?? 0
     }
 
-    /// Every actor `payload` reaches when it lands at `position`.
-    ///
-    /// The struck actor comes first and is direct, so it receives every entry
-    /// including the point ones. Everybody else is a bystander at their own
-    /// distance, measured to the **capsule** rather than to the feet, so a
-    /// blast at head height catches somebody standing beside it.
-    ///
-    /// - Parameter excluding: the caster, which its own spell never catches.
-    ///   Matched on key for the reason a shot never hits its own shooter: the
-    ///   caster is often the nearest actor to a spell that detonated close by.
+    /// Every actor `payload` reaches when it lands at `position`. The struck actor
+    /// comes first and gets every entry. Bystanders are measured to their capsule.
+    /// - Parameter excluding: the caster, matched on key; its own spell never
+    ///   catches it.
     public static func targets(
         of payload: SpellPayload,
         at position: SIMD3<Float>,

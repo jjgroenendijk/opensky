@@ -1,4 +1,4 @@
-// Immutable PACK/NPC_ indexes and template resolution (issue #201). Built
+// Immutable PACK/NPC_ indexes and template resolution. Built
 // once from Skyrim.esm beside the other CellProviderIndexes stores.
 
 import Foundation
@@ -22,33 +22,13 @@ nonisolated public enum PackageProcedureKind: Equatable, Sendable {
 
 nonisolated public struct ResolvedPackage: Equatable, Sendable {
     public let package: Package
-    public let template: Package?
     public let templateChain: [FormID]
     public let procedure: PackageProcedureKind
-
-    public var location: Package.Location? {
-        package.dataInputs.compactMap { input -> Package.Location? in
-            guard case let .location(value) = input.value else { return nil }
-            return value
-        }.first
-    }
-
-    public var target: Package.Target? {
-        package.dataInputs.compactMap { input -> Package.Target? in
-            guard case let .target(value) = input.value else { return nil }
-            return value
-        }.first
-    }
 }
 
 nonisolated public struct PackageStore: Sendable {
     public let packages: [UInt32: Package]
     public let actorTemplates: ActorTemplateResolver
-
-    public static let empty = PackageStore(
-        packages: [],
-        actorTemplates: ActorTemplateResolver(actors: [:], leveledActors: [:])
-    )
 
     public init(file: ESMFile) {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
@@ -101,7 +81,6 @@ nonisolated public struct PackageStore: Sendable {
         let definition = resolvedTemplate ?? concrete
         return ResolvedPackage(
             package: concrete,
-            template: resolvedTemplate,
             templateChain: chain,
             procedure: Self.procedure(for: definition)
         )

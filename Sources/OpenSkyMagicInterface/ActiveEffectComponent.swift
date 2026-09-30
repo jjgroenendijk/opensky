@@ -1,19 +1,7 @@
-// Active effects as a world-state component (issue #469, roadmap item 19.6):
-// every magic effect currently acting on one actor.
-//
-// The component lives here rather than in `WorldStateComponents.swift` for the
-// same reason `ReferenceInventoryState` and `ActorValueState` live beside their
-// own subsystems: it carries behaviour of its own — sequence assignment, the
-// stacking rules, expiry — rather than being a plain field bag. Only the
-// `WorldStateComponentKind` case and the `WorldStateComponentValue` case sit
-// with the rest, so every store operation stays generic over the protocol.
-//
-// A slot of its own beside `actorValues` rather than a field on it, for the
-// lifetime reason `death` and `combat` are separate slots: a current-health
-// float is rewritten sixty times a second, while an effect list changes when
-// something is applied, expires or is dispelled.
-//
-// Documented in docs/engine/magic.md.
+// Active effects as a world-state component: every magic effect on one actor.
+// It owns sequence assignment, stacking, and expiry. Its own slot, because
+// effects change on events while health changes every step.
+// See docs/engine/magic.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -29,16 +17,9 @@ nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {
         .activeEffects
     }
 
-    /// Normalizes on the way in, which is also what makes this the save
-    /// decoder's entry point: a corrupt file degrades into a valid state rather
-    /// than failing the whole load.
-    ///
-    /// An effect with no values acts on nothing and is dropped, as is a *timed*
-    /// one whose duration is not above zero — a zero-duration effect applies
-    /// once and is never stored, so one appearing here is corruption rather than
-    /// an instantaneous effect that somehow persisted. A constant effect is the
-    /// exception and is kept whatever its duration says, because no duration
-    /// bounds it (issue #472).
+    /// Normalizes on the way in, so a corrupt save degrades to a valid state. An
+    /// effect with no values is dropped, and so is a timed one with duration not
+    /// above zero. A constant effect is kept whatever its duration.
     public init(effects: [ActiveEffect] = []) {
         self.effects = effects
             .filter { !$0.values.isEmpty && ($0.duration > 0 || $0.isConstant) }
@@ -60,24 +41,10 @@ nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {
 
     // MARK: - Queries
 
-    /// Whether any effect on this actor is an application of `effect`.
-    ///
-    /// The shape `HasMagicEffect` needs (issue 19.11 registers the condition
-    /// function and the Papyrus native; this answers them).
+    /// Whether any effect on this actor is an application of `effect`, which
+    /// the `HasMagicEffect` condition and Papyrus native read.
     public func hasEffect(_ effect: ReferenceKey) -> Bool {
         effects.contains { $0.effect == effect }
-    }
-
-    /// Every effect applied by one source record — what a script asking
-    /// "is this potion still working" needs.
-    public func effects(from source: ActiveEffectSource) -> [ActiveEffect] {
-        effects.filter { $0.source == source }
-    }
-
-    /// Every effect acting on one actor value, which is what a readout of a
-    /// single value's contributors lists.
-    public func effects(affecting index: Int32) -> [ActiveEffect] {
-        effects.filter { effect in effect.values.contains { $0.index == index } }
     }
 
     /// The total each actor value's temporary modifier slot should hold for
@@ -125,12 +92,6 @@ nonisolated public struct ActiveEffectState: WorldStateComponent, Sendable {
         return ActiveEffectState(effects: effects.filter { !sequences.contains($0.sequence) })
     }
 
-    /// This state without every effect `predicate` selects — the general shape
-    /// `Dispel` and the cure archetypes both take.
-    public func removing(where predicate: (ActiveEffect) -> Bool) -> ActiveEffectState {
-        ActiveEffectState(effects: effects.filter { !predicate($0) })
-    }
-
     /// Every effect whose duration has run out.
     public var expired: [ActiveEffect] {
         effects.filter(\.isExpired)
@@ -143,10 +104,4 @@ nonisolated extension WorldStateComponentKind {
     /// slots: the values beside it are rewritten sixty times a second, while an
     /// effect list changes only when something is applied, expires or is dispelled.
     public static let activeEffects = Self(rawValue: "activeEffects", order: 12)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func activeEffects(_ value: ActiveEffectState) -> Self {
-        Self(value)
-    }
 }

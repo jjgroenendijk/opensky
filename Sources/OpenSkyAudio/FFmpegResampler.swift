@@ -10,7 +10,6 @@ nonisolated public final class FFmpegResampler {
     /// `SwrContext` is opaque in the public headers, so Swift imports it as `OpaquePointer`.
     private var context: OpaquePointer?
     public let channelCount: Int
-    public let sampleRate: Int
 
     /// Builds a converter matched to the first decoded frame: same channel layout, same
     /// sample rate, sample format forced to `AV_SAMPLE_FMT_FLT`.
@@ -20,7 +19,6 @@ nonisolated public final class FFmpegResampler {
             throw WMADecoderError.unsupportedSampleFormat(sourceFormat)
         }
         channelCount = Int(frame.pointee.ch_layout.nb_channels)
-        sampleRate = Int(frame.pointee.sample_rate)
 
         // The output layout is a copy, because a custom layout owns heap storage that must
         // be released whether swr_alloc_set_opts2 succeeds or not.

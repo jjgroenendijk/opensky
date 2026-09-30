@@ -1,25 +1,8 @@
-// Narrowphase for dynamic rigid bodies (issue #193, roadmap item 15.2): the
-// contacts one body has with the immutable static world, and the contacts two
-// dynamic bodies have with each other.
-//
-// Every contact is generated from a *sample point plus a skin radius* on one
-// body tested against the other surface. That is the whole method, and it is
-// what keeps the solver's inputs closed-form: a convex body's samples are its
-// hull vertices or its capsule ends, and the question asked of the other
-// surface is only ever "how deep is this sphere inside you".
-//
-// Against a triangle the answer has to be signed, because an unsigned distance
-// flips the push direction the moment a corner passes through a floor. The sign
-// comes from the triangle's own plane, oriented toward the body's centre of
-// mass: a body is convex and its centre is always on the outside of a surface
-// it is resting on, so that orientation is stable while a distance-only test is
-// not. `recoveryDepth` bounds how far behind a surface a contact is still
-// believed, so a body standing above a floor in one room is not dragged by a
-// triangle in the room below.
-//
-// Documented in docs/engine/dynamic-narrowphase.md.
+// Narrowphase for dynamic rigid bodies: contacts with the static world and
+// between two dynamic bodies. Each contact is a sample point plus a skin radius
+// tested against the other surface. `recoveryDepth` bounds how far behind a
+// surface a contact is still believed. See docs/engine/dynamic-narrowphase.md.
 
-import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import simd
 
@@ -31,16 +14,10 @@ nonisolated public struct PlacedTriangleSoup: Sendable {
     public let transform: float4x4
 }
 
-/// One body's contact samples moved into a placed shape's own local space,
-/// together with the box that bounds every one of them at its full reach.
-///
-/// The box is what makes the triangle pass affordable. A body carries a couple
-/// of dozen samples and a candidate shape a few dozen triangles, so the pass is
-/// a product of the two unless something cuts it: testing each triangle against
-/// the *whole sample set* first turns twenty-odd rejects into one, and only the
-/// few triangles that survive are prepared at all. `recovery` is what sizes the
-/// box, which is why it is capped to the body rather than left at a flat
-/// `recoveryDepth` — see `DynamicBodyContacts.recoveryDepth(of:)`.
+/// One body's contact samples in a placed shape's local space, with the box that
+/// bounds them at full reach. Testing each triangle against the box first turns
+/// many rejects into one. `recovery` sizes the box; see
+/// `DynamicBodyContacts.recoveryDepth(of:)`.
 nonisolated public struct DynamicLocalSamples: Sendable {
     public let points: [SIMD3<Float>]
     /// Each sample's skin, with `contactMargin` added and the shape's scale
@@ -130,16 +107,8 @@ nonisolated public enum DynamicBodyContacts: Sendable {
     /// to a deep penetration of this one.
     public static let recoveryDepth: Float = 48
 
-    /// The same bound for one body, which is the smaller of `recoveryDepth` and
-    /// the body's own reach.
-    ///
-    /// A sample cannot be meaningfully further inside a surface than the body it
-    /// belongs to is big — past that the whole body would be buried, which is
-    /// not a state vanilla authoring produces. Scaling the bound down for small
-    /// clutter is also the single largest saving in the step: the bound inflates
-    /// the box every triangle of a candidate shape is tested against, and a flat
-    /// 48 units around a tankard let nearly half of a room's triangles through
-    /// to the exact query.
+    /// The same bound for one body: the smaller of `recoveryDepth` and the body's own
+    /// reach. Scaling it down for small clutter was the largest saving in the step.
     public static func recoveryDepth(of body: DynamicBody) -> Float {
         min(recoveryDepth, max(contactMargin * 4, body.definition.boundingRadius))
     }
@@ -180,17 +149,10 @@ nonisolated public enum DynamicBodyContacts: Sendable {
         return result
     }
 
-    /// The deepest penetration of each sample into one placed shape, in sample
-    /// order so the contact list stays deterministic.
-    ///
-    /// The triangle work runs in the *shape's* local space rather than in the
-    /// world. A placed shape carries far more vertices than a body carries
-    /// samples, so pushing a handful of samples through one inverse matrix beats
-    /// pushing every triangle through the forward one — measured as the single
-    /// largest cost in a step over a real interior. The shape's placement is
-    /// rigid times a uniform scale (a REFR's XSCL, a body's and a shape's own
-    /// rigid transforms), so a length in local space is a world length divided
-    /// by that scale, and the answer converts back exactly.
+    /// The deepest penetration of each sample into one placed shape, in sample order.
+    /// The work runs in the shape's local space: moving a few samples through one
+    /// inverse matrix is cheaper than moving every triangle. The placement is rigid
+    /// times uniform scale, so lengths convert back exactly.
     private static func penetrations(
         of samples: [(point: SIMD3<Float>, radius: Float)],
         shape: StaticCollisionShape,

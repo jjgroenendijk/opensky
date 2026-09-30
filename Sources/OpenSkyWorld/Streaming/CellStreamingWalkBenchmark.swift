@@ -59,9 +59,7 @@ nonisolated public struct CellStreamingWalkBenchmarkConfiguration: Sendable {
 }
 
 nonisolated public struct CellStreamingWalkBenchmarkResult: Sendable {
-    public let render: OffscreenBenchResult
     public let physicsRender: OffscreenBenchResult
-    public let routeFrameCount: Int
     public let exteriorStepGain: Float
     public let interiorDistance: Float
     public let finalFeetPosition: SIMD3<Float>

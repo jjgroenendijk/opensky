@@ -1,15 +1,7 @@
-// Dialogue result scripts under the Papyrus world runtime (issue #426, roadmap
-// item 17.2): the route a quest-stage result actually travels.
-//
-// This is the item's "result-to-setStage" bar, run end to end rather than
-// asserted at a seam: a chosen response's TIF_ fragment calls `SetStage` on a
-// `Quest`, the M13 native lands in `PapyrusWorldStateBridge`, and `QuestRuntime`
-// records the stage. Nothing in the dialogue layer knows what a stage is, which
-// is exactly the property the test exists to hold.
-//
-// Fixtures are synthetic, built in code by `PapyrusQuestFixture` and
-// `DialogueFixture` — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// Dialogue result scripts under the Papyrus world runtime: a response's TIF_
+// fragment calls `SetStage`, the native lands in `PapyrusWorldStateBridge`,
+// and `QuestRuntime` records it. Fixtures come from `PapyrusQuestFixture` and
+// `DialogueFixture`.
 
 import FormatsESMTesting
 import FormatsPEXTesting
@@ -36,13 +28,9 @@ struct PapyrusWorldDialogueTests {
         .plugin(name: PapyrusWorldFixture.pluginName, objectID: Self.infoObjectID)
     }
 
-    /// An INFO carrying a begin fragment that advances the probe quest and an
-    /// end fragment that only records that it ran.
-    ///
-    /// The generated script is listed twice, exactly as shipped data lists it:
-    /// once in the primary VMAD script list, where its `MyQuest` property names
-    /// the quest the stage result advances, and once by name in the fragment
-    /// tail.
+    /// An INFO with a begin fragment that advances the probe quest and an end
+    /// fragment that records it ran. The script is listed twice, as shipped data
+    /// does: in the VMAD list, and by name in the fragment tail.
     private func info() throws -> TopicInfo {
         try DialogueFixture.info(DialogueFixture.infoData() + Self.infoVMAD())
     }
@@ -173,7 +161,6 @@ struct PapyrusWorldDialogueTests {
         let runtime = try DialogueRuntime(
             store: session.worldState,
             dialogue: dialogueStore(),
-            quests: PapyrusQuestFixture.store(PapyrusQuestFixture.quest()),
             registry: .standard,
             fragments: session.bridge
         )

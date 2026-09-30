@@ -1,15 +1,11 @@
-// Text for the `World > Player & Locomotion > Archery` readout (issue #196,
-// roadmap item 15.5).
-//
-// Engine-side and AppKit-free, on the `MeleeCombatReadout` precedent: the panel
-// section owns layout and the wording lives here, so a unit test can assert on
-// the sentence a user reads without standing up a window.
+// Text for the `World > Player & Locomotion > Archery` readout. AppKit-free, so
+// a unit test can check the wording.
 
 import Foundation
 
 nonisolated public enum ArcheryReadout: Sendable {
-    /// The state line: where the shot is, whether an arrow is nocked, and how
-    /// long the draw has been held.
+    /// The state line: where the shot is, whether an arrow is nocked, how long
+    /// the draw has been held, and the hold behind the last shot.
     public static func stateText(for snapshot: ArcherySnapshot) -> String {
         guard snapshot.isAvailable else {
             return "Archery: unavailable (no game data loaded)"
@@ -26,6 +22,9 @@ nonisolated public enum ArcheryReadout: Sendable {
                     snapshot.drawFraction * 100
                 )
             )
+        }
+        if snapshot.lastHeldSeconds > 0 {
+            parts.append(String(format: "last hold %.2fs", snapshot.lastHeldSeconds))
         }
         return "Archery: " + parts.joined(separator: ", ")
     }
@@ -60,7 +59,8 @@ nonisolated public enum ArcheryReadout: Sendable {
     public static func traceText(for snapshot: ArcherySnapshot) -> String {
         guard snapshot.isAvailable else { return "Shots: unavailable" }
         let header = String(
-            format: "Shots: %d fired, %d impacts, %d in flight, %d stuck",
+            format: "Shots: %d drawn, %d fired, %d impacts, %d in flight, %d stuck",
+            snapshot.drawRequestCount,
             snapshot.firedCount,
             snapshot.impactCount,
             snapshot.liveCount,

@@ -1,32 +1,8 @@
-// Relationship ranks at runtime (issue #508, roadmap item 21.4): the authored
-// `RELA` record underneath, and whatever a script has said since on top.
-//
-// A thin layer beside `WorldStateStore` in the shape of `FactionRuntime`. Every
-// mutation writes through `WorldStateStore.set`, so a scripted relationship
-// lands in the journal, in the dirty counts and in the save exactly as a joined
-// faction does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window.
-//
-// ## The two layers, and which wins
-//
-// `RelationshipStore` answers from the `RELA` records, keyed by the two `NPC_`
-// bases. `ActorRelationshipState` answers from what a script set, keyed by the
-// two placed references. The override wins, because that is what "set" means and
-// because the record is the starting state a script is deliberately changing.
-//
-// The override is also the only layer that can speak about the player, who has
-// no `NPC_` base in this engine — see the header of
-// `ActorRelationshipComponent.swift`. So a vanilla script's
-// `SetRelationshipRank(Game.GetPlayer(), 3)` is readable afterwards while
-// `GetRelationshipRank` against an untouched player pair reports a gap rather
-// than inventing Acquaintance.
-//
-// Failure model: nothing here throws. Every operation is a component read or
-// write, and an actor nothing has written about simply has no override.
-//
-// Documented in docs/engine/hostility.md and docs/formats/relationships.md.
+// Relationship ranks at runtime: the `RELA` records underneath, and what a
+// script set on top. Writes go through `WorldStateStore.set`. The script
+// override wins, and it is the only layer that can name the player, who has no
+// `NPC_` base. Nothing here throws.
+// See docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
 import OpenSkyFactionsInterface
@@ -48,10 +24,6 @@ public struct RelationshipRuntime: RelationshipAccess {
         self.relationships = relationships
     }
 
-    public var store: WorldStateStore {
-        worldState
-    }
-
     // MARK: - Reading
 
     /// `key`'s scripted overrides, empty when nothing has ever written one.
@@ -59,16 +31,10 @@ public struct RelationshipRuntime: RelationshipAccess {
         worldState.component(ActorRelationshipState.self, for: key) ?? ActorRelationshipState()
     }
 
-    /// The signed Creation Kit rank between two actors — "4: Lover ... -4:
-    /// Archnemesis" (<https://ck.uesp.net/wiki/GetRelationshipRank_-_Actor>) —
-    /// or nil when neither layer names the pair.
-    ///
-    /// Nil is not 0: 0 is Acquaintance, a rank a record and a script both author
-    /// deliberately, and a caller has to be able to tell it from "nothing says".
-    ///
-    /// `bases` maps a reference to the `NPC_` identity a `RELA` record would
-    /// name, and answers nil for an actor that has none — the player, and any
-    /// actor no plugin describes.
+    /// The signed Creation Kit rank between two actors, "4: Lover ... -4:
+    /// Archnemesis" (<https://ck.uesp.net/wiki/GetRelationshipRank_-_Actor>), or nil
+    /// when neither layer names the pair. Nil is not 0 (Acquaintance). `bases` maps
+    /// a reference to its `NPC_` identity, nil for the player.
     public func rank(
         of observer: ReferenceKey,
         toward target: ReferenceKey,
@@ -95,18 +61,10 @@ public struct RelationshipRuntime: RelationshipAccess {
 
     // MARK: - Writing
 
-    /// Sets the rank between two actors, in both components.
-    ///
-    /// "Sets the relationship rank between this actor and another."
-    /// (<https://ck.uesp.net/wiki/SetRelationshipRank_-_Actor>) A relationship is
-    /// one fact about a pair rather than two opinions — `RELA` stores a single
-    /// record for it — so both sides are written and either actor can answer
-    /// alone.
-    ///
-    /// An actor set against itself is refused: no `RELA` record names a base
-    /// twice, and storing one would make `rank(of:toward:)` answer a question
-    /// the records cannot pose.
-    ///
+    /// Sets the rank between two actors in both components, as `SetRelationshipRank`
+    /// does (<https://ck.uesp.net/wiki/SetRelationshipRank_-_Actor>). `RELA` stores
+    /// one record per pair, so either actor can answer alone. An actor set against
+    /// itself is refused.
     /// - Returns: true when stored state changed.
     @discardableResult
     public func setRank(

@@ -1,21 +1,7 @@
-// One actor's runtime faction memberships, as a world-state component
-// (issue #503, roadmap item 21.3).
-//
-// The NPC_ `SNAM` run says which factions an actor was *authored* into. This
-// component is what the actor belongs to *now*: seeded from that run the first
-// time anything asks, then moved by a quest joining the player to the
-// Companions, a script promoting somebody a rank, or a faction removal.
-//
-// A slot of its own beside `perks` and `spellbook` for the lifetime reason
-// those two are separate from `actorValues`: a membership changes on a quest
-// stage or a script call, never per frame, while the values beside it are
-// rewritten sixty times a second.
-//
-// The component is dropped entirely once it empties, exactly as `PerkState` is,
-// so an actor in no faction stops being dirty for this slot. That is also why
-// seeding an actor whose record authors no membership writes nothing.
-//
-// Documented in docs/engine/hostility.md and docs/formats/factions.md.
+// One actor's runtime faction memberships, as a world-state component. Seeded
+// from the NPC_ `SNAM` run the first time anything asks, then moved by quests
+// and scripts. Dropped once empty, so seeding an actor with no memberships
+// writes nothing. See docs/engine/hostility.md and docs/formats/factions.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -40,14 +26,9 @@ nonisolated public struct ActorFactionMembership: Equatable, Sendable, Comparabl
     }
 }
 
-/// Every faction one actor currently belongs to, in ascending faction-key
-/// order.
-///
-/// Ordered rather than a dictionary so the save writes the same bytes twice for
-/// the same state, which is the rule `PerkState.owned` already follows. One
-/// entry per faction: joining a faction an actor is already in changes the rank
-/// rather than adding a second row, because "what rank is this actor" must have
-/// exactly one answer.
+/// Every faction one actor belongs to, in ascending faction-key order, so a save
+/// writes the same bytes for the same state. One entry per faction: joining again
+/// changes the rank.
 nonisolated public struct ActorFactionState: WorldStateComponent, Sendable {
     public private(set) var memberships: [ActorFactionMembership]
 
@@ -69,15 +50,9 @@ nonisolated public struct ActorFactionState: WorldStateComponent, Sendable {
         memberships.map(\.faction)
     }
 
-    /// Normalizes on the way in, which is what makes this the save decoder's
-    /// entry point: a repeated faction collapses to its last rank and the order
-    /// becomes key order, so a file written under a different load order still
-    /// restores a valid component.
-    ///
-    /// A faction this load order no longer resolves is *kept*, the rule a known
-    /// spell and an owned perk follow: losing it would make removing a plugin
-    /// destroy progress, and it is invisible to every query that goes through
-    /// `FactionStore` anyway.
+    /// Normalizes on the way in, so a save from another load order restores a valid
+    /// component. A faction the load order no longer resolves is kept, so removing a
+    /// plugin does not destroy progress.
     public init(memberships: [ActorFactionMembership] = []) {
         var ranks: [ReferenceKey: Int8] = [:]
         for membership in memberships {
@@ -123,10 +98,4 @@ nonisolated extension WorldStateComponentKind {
     /// which is why it must be a component and not a re-read of the NPC_ record: an
     /// actor the player has joined to a faction has to stay joined across a reload.
     public static let factions = Self(rawValue: "factions", order: 16)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func factions(_ value: ActorFactionState) -> Self {
-        Self(value)
-    }
 }

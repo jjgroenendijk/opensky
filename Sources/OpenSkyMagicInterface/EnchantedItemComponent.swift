@@ -1,36 +1,9 @@
-// Per-item enchantment state as a world-state component (issue #472, roadmap
-// item 19.9): how much charge each of an owner's enchanted weapons has left, and
-// which constant effects each worn item established.
-//
-// ## Why the charge is keyed by base FormID, and what that costs
-//
-// Charge is a *per-instance* quantity: two iron swords of frost with different
-// charges left are genuinely different objects. This engine has no per-instance
-// item identity yet — `ItemDefinition.stackKey` is the base FormID and
-// `ItemDefinitionStore`'s own header already records that "tempering, enchanting,
-// charge level and item health all make two instances of the same base FormID
-// distinct, so the key grows into a compound one when the milestone that
-// introduces per-instance data lands".
-//
-// So the key here is the base FormID too, and the consequence is stated rather
-// than hidden: one owner holding two of the same enchanted weapon shares one
-// charge between them. Keying by anything else would mean inventing an instance
-// identity that neither the inventory component nor its save chunk can carry,
-// and then having to migrate it. The stated shape is a key this component can
-// widen without moving the rule: everything below addresses an item through
-// `charge(of:)` and `setting(charge:of:)`, so the day a stack key becomes
-// compound, only those two signatures change.
-//
-// ## Why the worn effects are recorded at all
-//
-// Taking off a ring has to remove exactly the effects that ring granted, and
-// nothing else. Dispelling by source record would be wrong: a helmet and a
-// necklace can carry the *same* ENCH, and vanilla robes and circlets do. So each
-// worn item's applied effects are recorded by the `ActiveEffect.sequence` numbers
-// they were given, which is per-actor identity the `AEFF` chunk already persists,
-// and unequipping dispels those sequences and no others.
-//
-// Documented in docs/engine/item-enchantments.md.
+// Per-item enchantment state as a world-state component: each enchanted weapon's
+// remaining charge, and the constant effects each worn item established. Charge
+// is keyed by base FormID, because items have no per-instance identity yet, so
+// two identical weapons share one charge. Worn effects are recorded by
+// `ActiveEffect.sequence`, so removal is exact.
+// See docs/engine/item-enchantments.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -118,12 +91,6 @@ nonisolated public struct EnchantedItemState: WorldStateComponent, Sendable {
         }
         return EnchantedItemState(charges: charges, wornEffects: updated)
     }
-
-    /// This state with every worn-effect record dropped, leaving the charges
-    /// alone.
-    public func clearingWornEffects() -> EnchantedItemState {
-        EnchantedItemState(charges: charges)
-    }
 }
 
 nonisolated extension WorldStateComponentKind {
@@ -134,10 +101,4 @@ nonisolated extension WorldStateComponentKind {
     /// equip, while charge moves only when an enchanted weapon actually lands a
     /// hit.
     public static let enchantedItems = Self(rawValue: "enchantedItems", order: 14)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func enchantedItems(_ value: EnchantedItemState) -> Self {
-        Self(value)
-    }
 }

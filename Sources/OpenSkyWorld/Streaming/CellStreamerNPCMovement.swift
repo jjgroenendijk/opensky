@@ -1,4 +1,4 @@
-// Cell-streamer integration for NPC locomotion (issue #423). Navigation,
+// Cell-streamer integration for NPC locomotion. Navigation,
 // collision, terrain, triggers, and residency already meet here.
 
 import OpenSkyFormatsESM
@@ -16,7 +16,7 @@ public struct CellStreamerNPCMovementState {
     public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
 }
 
-extension CellStreamer: MoveToPointControl {
+extension CellStreamer {
     public var npcMovement: NPCMovementRuntime {
         get { npcMovementState.runtime }
         set { npcMovementState.runtime = newValue }
@@ -79,13 +79,15 @@ extension CellStreamer: MoveToPointControl {
         return started ? .started : .moverCapReached
     }
 
+    /// Stops one actor where it stands, through the movement authority.
+    /// - Returns: true when there was a live mover to stop.
     @discardableResult
     public func stopActor(_ actor: ReferenceKey) -> Bool {
         bindNPCMovementCallbacks()
         return npcMovement.stop(actor)
     }
 
-    /// Turns a resident actor towards a world point (issue #427).
+    /// Turns a resident actor towards a world point.
     ///
     /// Reads the same placement `moveActor` reads and prefers the movement
     /// runtime's own transform over the authored one, so an actor that walked
@@ -112,6 +114,8 @@ extension CellStreamer: MoveToPointControl {
         return true
     }
 
+    /// Releases a facing hold, leaving the actor where it now stands.
+    /// - Returns: true when there was a hold to release.
     @discardableResult
     public func releaseActorFacing(_ actor: ReferenceKey) -> Bool {
         bindNPCMovementCallbacks()

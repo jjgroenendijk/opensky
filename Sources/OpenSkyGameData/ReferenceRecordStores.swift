@@ -10,8 +10,6 @@ nonisolated public struct ResolvedEncounterZone: Equatable, Sendable {
     public let id: ResolvedFormID
     public let zone: EncounterZone
     public let sourcePlugin: String
-    public let owner: ResolvedFormID?
-    public let location: ResolvedFormID?
 }
 
 nonisolated public struct EncounterZoneStore: Sendable {
@@ -69,9 +67,7 @@ nonisolated public struct EncounterZoneStore: Sendable {
         let resolved = ResolvedEncounterZone(
             id: id,
             zone: zone,
-            sourcePlugin: sourcePlugin,
-            owner: index.resolvedID(zone.owner, fromPlugin: sourcePlugin),
-            location: index.resolvedID(zone.location, fromPlugin: sourcePlugin)
+            sourcePlugin: sourcePlugin
         )
         zones[id] = resolved
         if let editorID = zone.editorID {
@@ -149,7 +145,6 @@ nonisolated public struct CollisionLayerStore: Sendable {
 }
 
 nonisolated public struct ResolvedDefaultObjects: Equatable, Sendable {
-    public let id: ResolvedFormID
     public let record: DefaultObjects
     public let sourcePlugin: String
 }
@@ -206,7 +201,6 @@ nonisolated public struct DefaultObjectStore: Sendable {
             )
         else { return }
         let resolved = ResolvedDefaultObjects(
-            id: id,
             record: record,
             sourcePlugin: sourcePlugin
         )
@@ -265,28 +259,5 @@ nonisolated extension RecordIndex {
             $0.objectID == id.objectID
                 && $0.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
         } ?? id
-    }
-}
-
-nonisolated public enum ReferenceRecordStoreLoader: Sendable {
-    public static func encounterZones(
-        root: GameDataRoot,
-        baseFile: ESMFile? = nil
-    ) -> EncounterZoneStore {
-        EncounterZoneStore(index: RecordIndexLoader.load(root: root, baseFile: baseFile))
-    }
-
-    public static func collisionLayers(
-        root: GameDataRoot,
-        baseFile: ESMFile? = nil
-    ) -> CollisionLayerStore {
-        CollisionLayerStore(index: RecordIndexLoader.load(root: root, baseFile: baseFile))
-    }
-
-    public static func defaultObjects(
-        root: GameDataRoot,
-        baseFile: ESMFile? = nil
-    ) -> DefaultObjectStore {
-        DefaultObjectStore(index: RecordIndexLoader.load(root: root, baseFile: baseFile))
     }
 }

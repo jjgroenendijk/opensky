@@ -21,8 +21,6 @@ extension PerceptionRuntime {
                 state: pair.state,
                 level: pair.level,
                 detectionValue: pair.breakdown.value,
-                soundFactor: pair.breakdown.soundFactor,
-                visualFactor: pair.breakdown.visualFactor,
                 distance: pair.distance,
                 hasLineOfSight: pair.hasLineOfSight,
                 isInViewCone: pair.isInViewCone,

@@ -1,5 +1,5 @@
 // Runtime navmesh graph, projection, deterministic A*, door traversal and
-// bounded repathing over synthetic in-code geometry (issue #200).
+// bounded repathing over synthetic in-code geometry.
 
 import FormatsESMTesting
 @testable import OpenSkyFormatsCore
@@ -178,6 +178,8 @@ struct NavigationRuntimeTests {
         streamer.advanceNavigation()
 
         #expect(responses.map(\.identifier) == [1, 2])
+        // The target cell is gone, so no repath can reach it.
+        #expect(responses.allSatisfy { $0.result.path == nil })
         #expect(streamer.navigationState.repathRequests.map(\.identifier) == [3])
     }
 

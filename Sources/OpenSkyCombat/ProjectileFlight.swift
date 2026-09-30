@@ -1,50 +1,9 @@
-// How a launched projectile moves (issue #196, roadmap item 15.5, scope point
-// 3).
-//
-// A pure function of numbers, deliberately: no world, no clock, no collision.
-// That is what makes "a deterministic test pins spawn, apex and impact point"
-// a plain arithmetic assertion, and it is why the impact query lives next door
-// in `ProjectileImpact` instead of here.
-//
-// ## The integrator
-//
-// There is no drag, so the motion under a constant acceleration is exactly
-//
-//     p(t) = p₀ + v₀t + ½at²        v(t) = v₀ + at
-//
-// and the step below is that closed form applied over one `dt` rather than an
-// approximation of it. Semi-implicit Euler — the integrator the dynamic-body
-// solver uses — would accumulate a `½a·dt²` error per step against the same
-// analytic curve, which is fine for a crate settling on a floor and is not fine
-// for a trajectory the acceptance gate pins by its apex and impact point. So
-// this is exact, and `apexHeight` and `drop(at:)` below can be checked against
-// it in closed form rather than by re-running the loop.
-//
-// Substeps come from the caller. `ProjectileRuntime` advances on
-// `PhysicsStep.fixedTimeStep`, so a shot's trajectory is the same on a
-// 60 Hz display as on a 120 Hz one — the requirement the issue words as
-// "deterministic trajectories".
-//
-// ## `gravityFactor` is a multiplier, and that is a measurement
-//
-// PROJ's `gravity` member has no documented unit. `Projectile.swift` carries
-// the measurement that settles it — over the 20 arrow-type PROJ records in
-// `Skyrim.esm` the member is bounded by 1 while `speed` runs to the thousands,
-// and the vanilla iron arrow drops 18.9 world units over 1,000 units of level
-// flight on the multiplier reading against 0.0135 on the acceleration reading.
-// UESP "Skyrim:Archery" describes the field only as "a gravity value, which
-// determines how quickly the projectile drops (higher is faster)", which is
-// consistent with the multiplier reading and rules out neither on its own; the
-// data does the ruling out.
-//
-// The world gravity it multiplies is this engine's single gravity constant,
-// `PhysicsStep.gravity`. Sharing it rather than introducing a projectile
-// gravity means an arrow and a dropped crate fall at rates that stay in step if
-// the constant ever changes.
-//
-// Documented in docs/engine/projectiles.md.
+// How a launched projectile moves: a pure function of numbers, with no world,
+// clock, or collision. With no drag the step is the exact closed form
+// `p(t) = p0 + v0 t + a t^2 / 2`, so apex and drop are checkable. PROJ `gravity`
+// multiplies `PhysicsStep.gravity`; the census that settles it is in
+// docs/engine/projectiles.md.
 
-import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import simd
@@ -74,15 +33,11 @@ nonisolated public enum ProjectileFlight: Sendable {
     }
 
     /// The state a shot starts in.
-    ///
     /// - Parameters:
     ///   - origin: the muzzle, world space.
-    ///   - direction: the aim ray. Normalized here, so an unnormalized vector
-    ///     is accepted; a zero-length one launches along +X rather than
-    ///     producing a NaN heading.
+    ///   - direction: the aim ray, normalized here; zero length launches along +X.
     ///   - profile: the PROJ's flight numbers.
-    ///   - speedScale: what the launch speed is multiplied by, for a draw that
-    ///     did not reach full. 1 is a full draw.
+    ///   - speedScale: the launch speed factor for a partial draw; 1 is full.
     public static func launch(
         from origin: SIMD3<Float>,
         along direction: SIMD3<Float>,

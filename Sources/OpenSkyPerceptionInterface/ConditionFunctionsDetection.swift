@@ -1,43 +1,13 @@
-// Perception condition functions (issue #202, roadmap item 16.6), split out of
-// `ConditionFunctions` the way `ConditionFunctionsActor` is.
-//
-// These three were waiting on the perception pass rather than on a decode. Each
-// is now a pure read of the `detection` seam on `ConditionContext`, with no
-// world, no clock and no runtime behind it — which is what lets the whole family
-// be driven from a literal in a test.
-//
-// Indices below are the raw stored numbers; the Creation Kit spells each 4096
-// higher. They come from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, whose
-// condition-function table lists:
-//
-//   (Index:   1; Name: 'GetDistance'; ParamType1: ptReference)
-//   (Index:  27; Name: 'GetLineOfSight'; ParamType1: ptReference)
-//   (Index:  45; Name: 'GetDetected'; ParamType1: ptActor)
-//
-// Return semantics come from the Creation Kit wiki pages cited at each
-// registration.
-//
-// ## Which way round a pair runs
-//
-// All three are asked of the run-on reference *about* the parameter reference:
-// `[Observer].GetDetected Target`. That direction matters, because detection is
-// not symmetric — a guard may have you while you have no idea it is there — and
-// getting it backwards would make every stealth condition in a vanilla package
-// answer about the wrong actor. `GetDistance` is symmetric and is still
-// resolved the same way, so one helper serves all three.
-//
-// Three misses stay distinct on purpose. A parameter that names no reference
-// this session holds is `.unresolvedParameter`, keyed by function index,
-// because the *parameter* is what could not be read. A run-on naming nothing is
-// `.unresolvedReference`, which `ConditionCall` already produces. And a pair or
-// a position the perception pass carries nothing for is
-// `.unavailableDetection`: an untracked pair is not an undetected one, and only
-// one of those is a real answer.
+// Perception condition functions, each a pure read of the `detection` seam.
+// Raw stored indices from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: 1
+// `GetDistance`, 27 `GetLineOfSight`, 45 `GetDetected`. Each asks the run-on
+// reference about the parameter, because detection is not symmetric. Misses stay
+// distinct: `.unresolvedParameter`, `.unresolvedReference`, and
+// `.unavailableDetection` (an untracked pair is not an undetected one).
 
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
-import OpenSkyWorldState
 
 nonisolated extension ConditionFunctions {
     public static func installDetection(_ registry: inout ConditionFunctionRegistry) {

@@ -1,8 +1,5 @@
-// The Archery section of `World > Combat & Physics` (issue #196, roadmap
-// item 15.5, scope point 6). Same panel and same fake as the Melee section
-// beside it, asked the same three questions: does the readout describe the
-// engine, does it say so when there is no engine, and does every control reach
-// the provider.
+// The Archery section of `World > Combat & Physics`: does the readout describe
+// the engine, say when there is none, and does every control reach the provider.
 
 import AppKit
 @testable import OpenSky
@@ -65,7 +62,8 @@ struct CombatArcheryPanelTests {
         #expect(readout.contains("IronArrow"))
         #expect(readout.contains("ArrowIronProjectile"))
         #expect(readout.contains("gravity x0.350"))
-        #expect(readout.contains("2 fired, 1 impacts, 1 in flight, 3 stuck"))
+        #expect(readout.contains("3 drawn, 2 fired, 1 impacts, 1 in flight, 3 stuck"))
+        #expect(readout.contains("last hold 1.20s"))
         // Spawn point, impact point, flight time.
         #expect(readout.contains("(0, 0, 128)"))
         #expect(readout.contains("(1200, 0, 109)"))

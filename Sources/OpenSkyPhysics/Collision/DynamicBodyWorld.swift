@@ -1,23 +1,8 @@
-// The runtime registry of simulated rigid bodies (issue #193, roadmap item
-// 15.2): which references are dynamic right now, the fixed-step clock they
-// advance on, and the lifecycle rules that tie them to cell residency and to
-// persisted world state.
-//
-// A body exists only while the exterior cell it currently occupies is
-// resident. Streaming adds bodies from their placing scene, re-bins them as
-// they move, and drops them when their occupied cell leaves. What survives is
-// the resting
-// transform: once a body sleeps, its pose is written to the reference's
-// `.transform` component, which is what a save records and what the next build
-// of that cell places the object by. A body that is still moving when its cell
-// unloads keeps its last written resting pose, not its mid-flight one — a crate
-// should not be found in mid-air after a reload.
-//
-// Ordering is by `ReferenceKey` throughout. The registry keeps its bodies in a
-// sorted array rather than a dictionary precisely so that the solver's
-// iteration order, and therefore the trajectories, cannot depend on hashing.
-//
-// Documented in docs/engine/dynamic-bodies.md.
+// The runtime registry of simulated rigid bodies. A body exists while its
+// current exterior cell is resident. When a body sleeps, its pose goes to the
+// `.transform` component, which the save and the next cell build use. Bodies are
+// kept sorted by `ReferenceKey`, so trajectories do not depend on hashing.
+// See docs/engine/dynamic-bodies.md.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -86,9 +71,8 @@ nonisolated public struct SettledDynamicBodyTransform: Sendable {
     public let placingCell: CellSceneLocation
 }
 
-/// The panel seam for `World > Combat & Physics` (issue #193 scope point 7).
-/// Specified here, consumed by item 15.9 — the same shape as every other panel
-/// bridge: one `Equatable` snapshot out, plain actions in.
+/// The panel seam for `World > Combat & Physics`: one `Equatable` snapshot out,
+/// plain actions in.
 @MainActor
 public protocol PhysicsControlProviding: AnyObject {
     var dynamicBodyStatsSnapshot: DynamicBodyStatsSnapshot { get }
@@ -209,14 +193,6 @@ nonisolated public struct DynamicBodyWorld: Sendable {
         bodies.removeAll { !resident.contains($0.occupiedCell) }
     }
 
-    public mutating func removeAll() {
-        bodies.removeAll()
-        placedPoses.removeAll()
-        wasSleeping.removeAll()
-        installedCells.removeAll()
-        accumulatedTime = 0
-    }
-
     /// Registers one body outside a cell build — the path a dropped inventory
     /// item takes, which has a spawn state but no placed reference yet.
     public mutating func add(_ placement: DynamicBodyPlacement, in location: CellSceneLocation) {
@@ -236,19 +212,8 @@ nonisolated public struct DynamicBodyWorld: Sendable {
         rebinExteriorBodies()
     }
 
-    /// Forces bodies to sleep where they stand until at most `limit` are awake
-    /// (issue #374).
-    ///
-    /// The order is ascending `ReferenceKey`, which is this registry's order
-    /// everywhere else and is stated rather than described as "oldest": a body
-    /// is placed by its cell build and carries no spawn time, so age is not
-    /// something the registry knows. What it does guarantee is that two runs
-    /// that reach the same over-budget state put the same bodies to sleep.
-    ///
-    /// A slept body keeps its pose and is persisted by the ordinary settled
-    /// drain, so the cap costs motion rather than position — a crate stops
-    /// mid-tumble instead of vanishing.
-    ///
+    /// Forces bodies to sleep in place until at most `limit` are awake, in ascending
+    /// `ReferenceKey` order. A slept body keeps and persists its pose.
     /// - Returns: how many were put to sleep.
     @discardableResult
     public mutating func sleepExcessBodies(over limit: Int) -> Int {
@@ -368,13 +333,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     }
 
     /// Where every moved body is now, relative to where its cell build drew it,
-    /// keyed by the REFR the draw instances carry (issue #193).
-    ///
-    /// Bodies that have not moved are absent rather than present with an
-    /// identity, so a world whose clutter is all standing still hands the
-    /// renderer an empty map and costs it nothing. Rebuilt per frame rather
-    /// than cached: fifty-odd entries is a few microseconds, and a cache here
-    /// would have to be invalidated by every lifecycle path in this type.
+    /// keyed by REFR. Unmoved bodies are absent. Rebuilt per frame; it is cheap.
     public var instanceDeltas: [UInt32: float4x4] {
         var deltas: [UInt32: float4x4] = [:]
         for body in bodies {
@@ -413,16 +372,9 @@ nonisolated public struct DynamicBodyWorld: Sendable {
         bodies[index].applyImpulse(impulse, at: point)
     }
 
-    /// The push a moving player capsule gives the clutter it walks into
-    /// (issue #193 scope point 5).
-    ///
-    /// The capsule is not itself a rigid body — it is a character controller
-    /// with no mass — so the shove is modelled rather than solved: a body whose
-    /// collider overlaps the capsule takes an impulse along the horizontal
-    /// direction from the capsule axis to the body, sized by the player's own
-    /// horizontal speed and the body's mass. That makes a light bowl skitter
-    /// and a heavy crate barely shift, which is the behaviour the shove is for,
-    /// without letting a walking player inject unbounded energy.
+    /// The push a moving player capsule gives the clutter it walks into. The capsule
+    /// has no mass, so the shove is modeled: an overlapping body gets a horizontal
+    /// impulse sized by the player's speed and the body's mass.
     public mutating func push(
         capsule: PlayerCapsule,
         feetPosition: SIMD3<Float>,

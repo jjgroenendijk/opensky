@@ -1,45 +1,9 @@
-// Quest script instances and stage-fragment dispatch for
-// `PapyrusWorldRuntime` (issue #322, roadmap item 13.3).
-//
-// A quest is not placed anywhere, so it never attaches or detaches with a
-// cell. Everything else about its scripts is the ordinary lifecycle in
-// `PapyrusWorldLifecycle.swift`, which is why this file reuses `instantiate`,
-// `bind` and `retire` rather than restating them:
-//
-// * The instance key is the QUST record's session-stable `ReferenceKey` plus
-//   the script name, exactly the shape a placed reference uses. `PSCR`
-//   persistence, `firedOnInit` and the update-timer registry therefore apply
-//   with no change at all.
-// * Quest instances are persistent by construction: they are registered in
-//   `persistentKeys` and are in no cell's `attachedByCell` set, so no
-//   `detach(cell:)` can reach them. Only `stopQuest` retires one.
-// * `OnInit` fires once ever per instance through `enqueueOnInitIfNeeded`.
-//   `OnCellAttach` and `OnLoad` are deliberately never enqueued: neither
-//   event means anything for an object that is in no cell.
-//
-// Alias scripts (issue #183) join the same attach. They are the one part of a
-// quest's script set that is *not* keyed by the quest: a `ReferenceAlias`
-// script runs on the reference filling its alias, so its instance is keyed by
-// that reference and `questAliasInstanceKeys` remembers which quest owns it so
-// a `Stop` still retires exactly its own. An alias that holds nothing
-// contributes no instance, which is why the attach takes the filled table.
-//
-// Which scripts a quest carries: the QUST VMAD primary script list, plus the
-// generated fragment script named by the VMAD tail's file name
-// ("QF_<editorID>_<formID>"). The tail's script is included even though
-// shipped data normally also lists it as a primary script, because the
-// fragment table is the only thing that *guarantees* the fragment script is
-// named, and a duplicate costs nothing — both spellings produce the same
-// `PapyrusInstanceKey` and the second one is skipped.
-//
-// Stage fragments: `SetStage` looks the stage up in the #181 fragment table
-// and enqueues each matching fragment function on that fragment script's
-// instance through the normal FIFO, so the per-tick budget, the busy-instance
-// serialization and global event order all apply. Deviations from the
-// documented engine behaviour are stated in `PapyrusWorldQuestBridge.swift`,
-// beside the call that decides when a fragment runs.
-//
-// Documented in docs/engine/papyrus-quests.md.
+// Quest script instances and stage-fragment dispatch. Keyed by the QUST's
+// `ReferenceKey` plus script name; persistent, retired only by `stopQuest`.
+// `OnInit` fires once; cell events never. Alias scripts are keyed by the filled
+// reference. Scripts come from the VMAD primary list plus the tail's fragment
+// script. Stage fragments run through the normal FIFO.
+// See docs/engine/papyrus-quests.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -47,15 +11,9 @@ import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
-    /// Instantiates every script `quest` carries and enqueues `OnInit` for the
-    /// ones that have never fired it.
-    ///
-    /// Idempotent: calling it for a quest that already holds instances creates
-    /// nothing and enqueues nothing, which is what makes a restarted quest
-    /// keep its variables.
-    ///
-    /// - Parameter key: session-stable identity of the QUST record, which is
-    ///   also the identity its script handles resolve to.
+    /// Instantiates every script `quest` carries and enqueues `OnInit` for those
+    /// that never fired it. Idempotent, so a restarted quest keeps its variables.
+    /// - Parameter key: the QUST's session-stable identity.
     /// - Returns: instances created by this call.
     @discardableResult
     public func attachQuest(
@@ -73,7 +31,7 @@ extension PapyrusWorldRuntime {
                 created.insert(item.key)
             }
         }
-        let aliasPlan = questAliasAttachPlan(quest, key: key, aliases: aliases)
+        let aliasPlan = questAliasAttachPlan(quest, aliases: aliases)
         for item in aliasPlan {
             persistentKeys.insert(item.key)
             questAliasInstanceKeys[key, default: []].insert(item.key)
@@ -88,15 +46,9 @@ extension PapyrusWorldRuntime {
         return created.count
     }
 
-    /// Retires every script instance the quest holds, dropping its variables,
-    /// its queued events and its pending timers.
-    ///
-    /// This is what `Stop` does, and it is the one thing that removes a quest
-    /// instance: `Stop` on the real engine shuts the quest's scripts down, and
-    /// a later `Start` runs `OnInit` again on the fresh instances. The
-    /// `firedOnInit` entry is therefore cleared here as well, which is the one
-    /// place in the runtime where it is.
-    ///
+    /// Retires every script instance the quest holds, with its variables, events,
+    /// and timers, as `Stop` does. Clears `firedOnInit` too, so a later `Start` runs
+    /// `OnInit` again.
     /// - Returns: instances retired.
     @discardableResult
     public func detachQuest(key: ReferenceKey) -> Int {
@@ -112,14 +64,9 @@ extension PapyrusWorldRuntime {
         return keys.count
     }
 
-    /// Enqueues the fragment functions `quest` attaches to `stage`, in the
-    /// file order the fragment table lists them.
-    ///
-    /// A fragment naming a script the quest holds no instance of is counted as
-    /// `missingQuestFragmentInstance` and skipped; a fragment whose function
-    /// the script chain does not define is counted by the dispatcher as
-    /// `undefinedEventFunction`. Neither is a fault.
-    ///
+    /// Enqueues the fragment functions `quest` attaches to `stage`, in table order.
+    /// A missing instance counts as `missingQuestFragmentInstance`; an undefined
+    /// function as `undefinedEventFunction`.
     /// - Returns: events enqueued.
     @discardableResult
     public func queueQuestFragments(
@@ -158,25 +105,12 @@ extension PapyrusWorldRuntime {
         questAliasInstanceKeys.values.reduce(0) { $0 + $1.count }
     }
 
-    /// Scripts the quest's *filled* aliases carry, from the alias-script
-    /// sections of the VMAD tail (issue #181), each instantiated on the
-    /// reference in that alias.
-    ///
-    /// Keying on the filled reference rather than on the quest is what makes
-    /// these `ReferenceAlias` scripts behave like the reference scripts they
-    /// sit beside — the same `Self` identity, the same handle in the map a
-    /// binding resolves object properties through — and it is also what keeps
-    /// two aliases carrying the same script name from collapsing onto one
-    /// instance. `questAliasInstanceKeys` remembers which quest owns them so a
-    /// `Stop` can still retire exactly its own.
-    ///
-    /// An alias section naming a *different* quest is skipped: the decoder
-    /// carries the object rather than assuming the owner (`QuestAliasScripts`),
-    /// and filling another quest's alias from here would need that quest's
-    /// table, which this call does not have.
+    /// Scripts the quest's filled aliases carry, each instantiated on the reference
+    /// in that alias, so it acts like a reference script.
+    /// `questAliasInstanceKeys` records the owning quest for `Stop`. An alias section
+    /// naming a different quest is skipped.
     private func questAliasAttachPlan(
         _ quest: Quest,
-        key: ReferenceKey,
         aliases: QuestAliasState
     ) -> [PapyrusAttachItem] {
         var plan: [PapyrusAttachItem] = []

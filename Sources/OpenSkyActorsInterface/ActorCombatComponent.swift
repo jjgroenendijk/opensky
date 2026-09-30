@@ -1,26 +1,8 @@
-// Persistent hostility (issue #374, roadmap item 15.7): the world-state
-// component that makes an actor still angry after a save and a reload.
-//
-// It sits beside `ActorValueState` and `ActorDeathState` rather than inside
-// either, for the reason the death latch sits beside the values: the three have
-// different lifetimes. Current health is rewritten by every regeneration step,
-// death is a one-way latch, and hostility is a small state that changes rarely
-// and is cleared by nothing but a panel toggle or a resurrection.
-//
-// ## What hostility is, and what it deliberately is not
-//
-// It is one enum per actor, entered when the player damages that actor or when
-// the panel toggle sets it. There is no aggro radius, no faction relation, no
-// disposition arithmetic and no crime: those need perception and packages, and
-// both are M16's. An actor is neutral until something the player did made it
-// hostile, and it stays that way until told otherwise.
-//
-// The *player's* combat state is not stored here at all. "Am I in combat" is a
-// derived question — is any resident actor hostile and alive — and deriving it
-// keeps it from going stale against a corpse or an evicted cell. See
-// `CombatLoopState`.
-//
-// Documented in docs/engine/combat.md.
+// Persistent hostility: the component that keeps an actor angry after a reload.
+// It is separate from values and death, because the lifetimes differ. An actor
+// turns hostile when the player damages it or the panel sets it. The player's
+// own combat state is derived, not stored (`CombatLoopState`).
+// See docs/engine/combat.md.
 
 import Foundation
 import OpenSkyWorldState
@@ -66,10 +48,4 @@ nonisolated extension WorldStateComponentKind {
     /// separate: hostility changes on a handful of events, while the values beside
     /// it are rewritten sixty times a second.
     public static let combat = Self(rawValue: "combat", order: 10)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func combat(_ value: ActorCombatState) -> Self {
-        Self(value)
-    }
 }

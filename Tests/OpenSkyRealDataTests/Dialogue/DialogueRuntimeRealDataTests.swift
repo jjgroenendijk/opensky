@@ -1,25 +1,8 @@
-// Env-gated dialogue selection against the user's read-only vanilla install
-// (issue #426, roadmap item 17.2).
-//
-// One concrete speaker, one fixed quest state, one pinned answer. The speaker
-// is Delphine, chosen because the 17.1 sweep found her named by more
-// player-facing INFO conditions than any other NPC in `Skyrim.esm` — 165
-// responses across 123 topics — so her list exercises the quest gate, file
-// order and the condition seam at once rather than one of them.
-//
-// The quest state is the plugin baseline: nothing has started, so exactly the
-// start-game-enabled quests are running. That is what makes the answer
-// deterministic without the test having to author a save.
-//
-// The pinned numbers are drift detection, not a claim that OpenSky reproduces
-// the vanilla topic menu. Selection here offers every player-facing topic whose
-// quest runs and whose responses pass, while the original engine additionally
-// scopes topics to the speaker's active dialogue views; the gap is stated in
-// docs/engine/dialogue.md. Registering another condition function legitimately
-// changes these numbers, and updating them is part of that change.
-//
-// No game-derived bytes leave the run: the assertions are counts, editor IDs
-// and FormIDs.
+// Dialogue selection against the user's install. The speaker is Delphine, who
+// has more player-facing INFO conditions than any other NPC in `Skyrim.esm`.
+// The quest state is the plugin baseline. The pinned numbers detect drift; the
+// vanilla engine also scopes topics by dialogue view (docs/engine/dialogue.md).
+// Assertions are counts, editor IDs, and FormIDs.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -172,7 +155,6 @@ struct DialogueRuntimeRealDataTests {
         let runtime = try DialogueRuntime(
             store: WorldStateStore(),
             dialogue: dialogue,
-            quests: quests,
             questStates: QuestResolution(defaults: quests),
             context: ConditionContext(
                 references: ConditionEvaluatorFixture.references([

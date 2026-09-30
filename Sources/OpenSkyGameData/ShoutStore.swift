@@ -1,15 +1,7 @@
-// Load-order-wide SHOU and WOOP lookup above RecordIndex, in the shape
-// `SpellStore` and `KeywordStore` already use.
-//
-// The two record types live in one store because a word of power is only ever
-// reached through a shout: WOOP carries the text, SHOU carries the pairing
-// between a word and the spell it casts, and nothing wants one without being
-// able to reach the other. Each shout's SNAM run is joined against the word
-// index and against `SpellStore` at construction, so an inspector prints names
-// rather than raw links without redoing the resolution.
-//
-// Decode only. Shout casting, cooldowns, word unlocking and dragon souls are
-// deliberately absent this milestone.
+// Load-order-wide SHOU and WOOP lookup above RecordIndex, like `SpellStore`. One
+// store, because a word of power is only reached through a shout. Each shout's
+// SNAM run is joined with the words and `SpellStore` at construction. Decode
+// only: no casting, cooldowns, or word unlocking.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -18,7 +10,6 @@ import OpenSkyFormatsESM
 nonisolated public struct ResolvedWordOfPower: Equatable, Sendable {
     public let id: ResolvedFormID
     public let word: WordOfPower
-    public let sourcePlugin: String
 
     public var editorID: String? {
         word.editorID
@@ -53,12 +44,7 @@ nonisolated public struct ResolvedShoutWord: Sendable {
 nonisolated public struct ResolvedShout: Sendable {
     public let id: ResolvedFormID
     public let shout: Shout
-    public let sourcePlugin: String
     public let words: [ResolvedShoutWord]
-
-    public var editorID: String? {
-        shout.editorID
-    }
 
     public var displayName: String {
         switch shout.name {
@@ -76,7 +62,6 @@ nonisolated public struct ShoutStore: Sendable {
     /// Every winning WOOP identity in the load order.
     public private(set) var words: [ResolvedFormID: ResolvedWordOfPower] = [:]
     private var shoutsByEditorID: [String: ResolvedShout] = [:]
-    private var wordsByEditorID: [String: ResolvedWordOfPower] = [:]
 
     public init(index: RecordIndex, spells: SpellStore) {
         self.index = index
@@ -86,13 +71,9 @@ nonisolated public struct ShoutStore: Sendable {
         // Words first: a shout joins against them as it is built.
         for id in orderedIDs where index.records[id]?.record.type == "WOOP" {
             guard
-                case let .decoded(word, sourcePlugin) = index.decodeIndexed(id, using: Self.word)
+                case let .decoded(word, _) = index.decodeIndexed(id, using: Self.word)
             else { continue }
-            let resolved = ResolvedWordOfPower(id: id, word: word, sourcePlugin: sourcePlugin)
-            words[id] = resolved
-            if let editorID = word.editorID {
-                wordsByEditorID[editorID.lowercased()] = resolved
-            }
+            words[id] = ResolvedWordOfPower(id: id, word: word)
         }
         for id in orderedIDs where index.records[id]?.record.type == "SHOU" {
             guard
@@ -101,7 +82,6 @@ nonisolated public struct ShoutStore: Sendable {
             let resolved = ResolvedShout(
                 id: id,
                 shout: shout,
-                sourcePlugin: sourcePlugin,
                 words: join(shout: shout, sourcePlugin: sourcePlugin, spells: spells)
             )
             shouts[id] = resolved
@@ -124,20 +104,12 @@ nonisolated public struct ShoutStore: Sendable {
         )
     }
 
-    public func shout(_ id: ResolvedFormID) -> ResolvedShout? {
-        shouts[id] ?? shouts.first { key, _ in matches(key, id) }?.value
-    }
-
     public func shout(editorID: String) -> ResolvedShout? {
         shoutsByEditorID[editorID.lowercased()]
     }
 
     public func word(_ id: ResolvedFormID) -> ResolvedWordOfPower? {
         words[id] ?? words.first { key, _ in matches(key, id) }?.value
-    }
-
-    public func word(editorID: String) -> ResolvedWordOfPower? {
-        wordsByEditorID[editorID.lowercased()]
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {

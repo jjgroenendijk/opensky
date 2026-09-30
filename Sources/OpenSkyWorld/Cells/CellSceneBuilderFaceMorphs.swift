@@ -3,7 +3,6 @@
 // Vertex count is the final guard before an actor-local buffer is attached.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
@@ -37,17 +36,11 @@ nonisolated extension CellSceneBuilder {
                 state: &state
             )
         }
-        let faceBounds = faceModels.compactMap {
-            $0.asset.bounds?.transformed(by: assembly.transform)
-        }.reduce(nil) { result, bounds in
-            result.map { $0.union(bounds) } ?? bounds
-        }
         return FaceMorphPlayback(
             actor: assembly.actor,
             bindings: state.bindings,
             pairedPaths: state.pairedPaths.sorted(),
-            misses: state.misses,
-            worldBounds: faceBounds
+            misses: state.misses
         )
     }
 

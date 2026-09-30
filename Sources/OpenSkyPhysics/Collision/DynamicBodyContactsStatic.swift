@@ -1,24 +1,13 @@
-// The static half of the dynamic narrowphase, split from DynamicBodyContacts
-// for the type-length limit (issue #193): how deep a world-space sphere sits
-// inside one placed collision shape, for every geometry the static world holds,
-// and which way that shape's surface faces (issue #392).
-//
-// Documented in docs/engine/dynamic-narrowphase.md.
+// The static half of the dynamic narrowphase: how deep a world-space sphere sits
+// inside one placed collision shape, and which way that shape's surface faces.
+// See docs/engine/dynamic-narrowphase.md.
 
 import OpenSkyFormatsMesh
 import simd
 
-/// How a triangle's plane normal becomes a surface normal.
-///
-/// The rule this replaces oriented every normal toward the body's centre of
-/// mass, on the premise that a convex body resting on a surface always has its
-/// centre on the outside of it. Real data does not honour that premise. The
-/// real-data probe found vanilla clutter whose decoded centre of mass sits
-/// *below every vertex of its own collider*: the item then oriented the shelf's
-/// top face downward, was driven through the shelf, and accelerated out of the
-/// world. Any thin body sunk past its own half-thickness flips the same way.
-/// Nothing about the body is a safe reference — the surface has to speak for
-/// itself.
+/// How a triangle's plane normal becomes a surface normal. The surface decides,
+/// not the body: some vanilla clutter has its decoded center of mass below every
+/// collider vertex, so orienting toward the center fails.
 nonisolated public enum DynamicSurfaceOrientation: Sendable {
     /// Trust the winding the file carries. Vanilla wound its collision
     /// triangles front face outward, which the probe confirms over a whole
@@ -151,30 +140,11 @@ nonisolated extension DynamicBodyContacts {
         }
         return nearest?.penetration
     }
-
-    /// Signed sphere-versus-triangle against a triangle already prepared for
-    /// the query, for the caller that has one point and one triangle.
-    public static func nearestSurface(
-        of point: SIMD3<Float>,
-        radius: Float,
-        triangle: CollisionTriangle,
-        orientation: DynamicSurfaceOrientation,
-        recovery: Float = recoveryDepth
-    ) -> (distance: Float, penetration: DynamicPenetration?)? {
-        DynamicSurfaceTriangle(triangle, orientation: orientation)?.surface(
-            of: point, radius: radius, recovery: recovery
-        )
-    }
 }
 
-/// One triangle with everything that does not depend on the sample already
-/// worked out: its bounds and its oriented surface normal.
-///
-/// A step over a real interior asks the same triangle about every sample of
-/// every nearby body, so anything computed inside that loop is computed twenty
-/// times over for one answer. Hoisting the cross product, the normalisation,
-/// the facing decision and the bounds out of it is most of what took the
-/// measured step from tens of milliseconds to something a frame can afford.
+/// One triangle with its bounds and oriented surface normal worked out in
+/// advance. Hoisting this out of the per-sample loop is most of the measured
+/// speedup.
 nonisolated public struct DynamicSurfaceTriangle: Sendable {
     public let triangle: CollisionTriangle
     /// The surface normal, already facing the way the shape's own rule says.
@@ -197,17 +167,10 @@ nonisolated public struct DynamicSurfaceTriangle: Sendable {
 
     /// How far one sample sits from this triangle, and the penetration if it is
     /// behind the front face by less than `radius`.
-    ///
-    /// - Parameter nearerThan: the best distance the caller has already found
-    ///   for this sample. The distance from the sample to the triangle's own
-    ///   *plane* is a lower bound on the distance to the triangle, and it costs
-    ///   one dot product against the closest-point query's several dozen
-    ///   operations, so a triangle that cannot beat the incumbent is dismissed
-    ///   before that query runs. The pruning is exact: nothing that could have
-    ///   won is skipped.
-    /// - Returns: nil when this triangle is out of range or cannot be the
-    ///   nearest. A non-nil answer with no penetration still matters — it is how
-    ///   a near surface saying "outside" vetoes a far one saying "deep inside".
+    /// - Parameter nearerThan: the best distance found so far. The plane distance is
+    ///   a cheap lower bound, so a triangle that cannot win is skipped exactly.
+    /// - Returns: nil when out of range or not nearest. A non-nil answer with no
+    ///   penetration lets a near "outside" veto a far "deep inside".
     public func surface(
         of point: SIMD3<Float>,
         radius: Float,

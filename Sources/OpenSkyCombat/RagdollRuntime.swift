@@ -1,34 +1,8 @@
-// Death and ragdoll activation (issue #197, roadmap item 15.6): the director
-// that notices an actor at zero health, raises the census-named death events,
-// waits for the graph's hand-off, and spawns the ragdoll it asks for.
-//
-// The order every frame runs in, and why it is that order:
-//
-//   1. `noteZeroHealth(_:)` — the 15.3 flag becomes a death. The engine writes
-//      the death component and *asks* the graph to play the death, by raising
-//      `bleedOutStart` and `DeathAnim`. It does not decide that the animation
-//      has finished.
-//   2. the fixed steps advance the graph, and the graph fires whatever it fires.
-//   3. `handleGraphEvents(_:on:)` — a drained `AddRagdollToWorld` (or one of its
-//      three siblings) is the hand-off, and that is what spawns the bodies.
-//   4. `advance(by:)` — the live ragdolls step, and any that came to rest write
-//      their resting transform into their death component.
-//
-// So a death whose graph refuses to hand off costs one death component and no
-// bodies, which is visibly wrong in the right way: the actor is dead and still
-// standing, rather than dead and in a pose the engine invented.
-//
-// ## The graph-less fallback
-//
-// An actor with no behavior graph attached — a synthetic test session, a
-// headless probe, a creature whose graph this engine has not resolved — declares
-// none of the hand-off events, so step 3 would never fire and the corpse would
-// never fall. `RagdollWorldSeam.raiseRagdollEvent` reports whether a graph took
-// the event, and a death that no graph took hands off immediately instead.
-// The count of deaths that took that route is on the runtime, so a session can
-// tell "the graph drove this" from "the engine had to".
-//
-// Documented in docs/engine/ragdoll.md.
+// Death and ragdoll activation. Order per frame: `noteZeroHealth(_:)` writes
+// the death and raises the death events; the graph steps;
+// `handleGraphEvents(_:on:)` spawns the bodies on the hand-off; `advance(by:)`
+// steps ragdolls and stores rest poses. An actor with no graph hands off at
+// once, and the runtime counts those. See docs/engine/ragdoll.md.
 
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
@@ -109,15 +83,9 @@ public protocol RagdollWorldSeam: AnyObject {
     /// a fact the store owns.
     func deathState(of key: ReferenceKey) -> ActorDeathState?
 
-    /// Queues `OnDying(akKiller)` and `OnDeath(akKiller)` on the scripts
-    /// attached to `key` (issue #375).
-    ///
-    /// Called from inside the death latch, so the "exactly once" guarantee the
-    /// Creation Kit's own documentation implies is the latch's rather than a
-    /// second set this runtime would have to keep. A session with no script VM
-    /// answers 0, which is the honest count and not an error.
-    ///
-    /// - Returns: how many events were queued.
+    /// Queues `OnDying(akKiller)` and `OnDeath(akKiller)` on the scripts attached to
+    /// `key`. Called inside the death latch, so each fires exactly once.
+    /// - Returns: how many events were queued; 0 without a script VM.
     @discardableResult
     func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int
 }
@@ -139,11 +107,8 @@ public final class RagdollRuntime: DeathReporting {
     /// How many deaths the graph drove, and how many the fallback had to.
     public private(set) var graphDrivenDeathCount = 0
     public private(set) var fallbackDeathCount = 0
-    /// `OnDying` and `OnDeath` events this runtime's deaths queued (issue
-    /// #375), counted together. Zero in a session with no script VM and zero
-    /// for a corpse carrying no scripts, which are two different reasons for
-    /// the same honest number — the panel reads it beside the death counts so
-    /// the pair can be compared.
+    /// `OnDying` and `OnDeath` events this runtime's deaths queued, counted together.
+    /// Zero without a script VM or for a corpse with no scripts.
     public private(set) var deathEventsQueued = 0
 
     /// The blend the controlling `hkbRigidBodyRagdollControlsModifier` asks for,
@@ -167,22 +132,10 @@ public final class RagdollRuntime: DeathReporting {
 
     // MARK: - Death
 
-    /// One actor's health reached zero.
-    ///
-    /// Idempotent: an actor already recorded dead is ignored, so the caller can
-    /// call this from a per-frame sweep over every resident actor without
-    /// tracking edges itself.
-    ///
-    /// This is the one death path (issue #375). A sword, an arrow, a sidebar
-    /// control and a script's `Kill` all arrive here, and the latch above is
-    /// what makes `OnDying` and `OnDeath` fire exactly once however many of
-    /// them reach the same corpse.
-    ///
-    /// - Parameter killer: who to attribute the death to, or nil when nothing
-    ///   named one. A per-frame sweep cannot know, and `None` is what the
-    ///   Creation Kit documents `akKiller` to default to.
-    ///
-    /// - Returns: true when this call is what killed the actor.
+    /// One actor's health reached zero. Idempotent, so a per-frame sweep can call it.
+    /// Every death path arrives here, so `OnDying` and `OnDeath` fire once.
+    /// - Parameter killer: who caused the death, or nil (the `akKiller` default).
+    /// - Returns: true when this call killed the actor.
     @discardableResult
     public func noteZeroHealth(of key: ReferenceKey, killer: ReferenceKey? = nil) -> Bool {
         guard let seam, seam.deathState(of: key)?.isDead != true else { return false }
@@ -295,15 +248,6 @@ public final class RagdollRuntime: DeathReporting {
         }
     }
 
-    /// The pose one actor draws this frame, or nil when it is not ragdolling.
-    public func boneMatrices(
-        for key: ReferenceKey,
-        blending animated: [String: float4x4],
-        worldToActor: float4x4
-    ) -> [String: float4x4]? {
-        world.boneMatrices(for: key, blending: animated, worldToActor: worldToActor)
-    }
-
     /// Suspends and resumes stepping without discarding the corpses, which is
     /// what the panel's freeze control drives.
     public var isFrozen: Bool {
@@ -311,18 +255,15 @@ public final class RagdollRuntime: DeathReporting {
         set { world.isFrozen = newValue }
     }
 
-    /// Whether a ragdoll's own bones may touch each other, which is what the
-    /// panel's self-collision control drives (issue #413).
+    /// Whether a ragdoll's own bones may touch each other; the panel's
+    /// self-collision control drives it.
     public var isSelfCollisionEnabled: Bool {
         get { world.isSelfCollisionEnabled }
         set { world.isSelfCollisionEnabled = newValue }
     }
 
-    /// Stops simulating the oldest corpses until at most `limit` remain, which
-    /// is the combat loop's transient cap reaching the registry (issue #374).
-    /// The deaths themselves are the store's and survive; what a trimmed corpse
-    /// loses is its remaining motion.
-    ///
+    /// Stops simulating the oldest corpses until at most `limit` remain. The deaths
+    /// stay in the store; a trimmed corpse only loses its motion.
     /// - Returns: how many stopped simulating.
     @discardableResult
     public func trim(to limit: Int) -> Int {

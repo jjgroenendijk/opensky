@@ -1,19 +1,10 @@
-// `PapyrusWorldStateBridge`'s crime half (issue #504, roadmap item 21.5),
-// beside the actor, quest and magic halves.
-//
-// Every operation goes through the session's `CrimeReporter`, which is the same
-// door a witnessed theft comes through: a scripted bounty and a stolen ring
-// therefore reach the ledger, the journal and the save by one path, and a
-// script cannot produce a bounty the engine could not have produced itself.
-//
-// The reporter is reached through a closure for the reason `mutatePerks` is:
-// the controller owns it and hands over a getter, so a session that never built
-// one leaves every native here refusing rather than answering zero.
+// The crime half of `PapyrusWorldStateBridge`. Every operation goes through the
+// session's `CrimeReporter`, the same path a witnessed theft takes. Without a
+// reporter every native refuses.
 
 import Foundation
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
 
 extension PapyrusWorldStateBridge {
     public func crimeGold(of faction: ReferenceKey) -> Int? {
@@ -52,14 +43,9 @@ extension PapyrusWorldStateBridge {
         alarm(.trespass, witness: witness, criminal: criminal)
     }
 
-    /// Both alarms are the same operation with a different crime kind: the
-    /// witness is the victim and the place it stands in decides the faction.
-    ///
-    /// Reported as witnessed outright rather than run past the perception pass.
-    /// The script is asserting that this actor caught the criminal — that is
-    /// what "have this actor pretend he caught the specified criminal" means —
-    /// so asking the detection state whether it really did would let a scripted
-    /// alarm fail silently because the witness happened to be facing away.
+    /// Both alarms are one operation with a different crime kind. They count as
+    /// witnessed without asking perception, because the script asserts the witness
+    /// saw it.
     private func alarm(
         _ kind: CrimeKind,
         witness: ReferenceKey,

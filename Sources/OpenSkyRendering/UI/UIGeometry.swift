@@ -1,4 +1,4 @@
-// Screen-space UI geometry value types (M8.1.1). Pure deterministic float
+// Screen-space UI geometry value types. Pure deterministic float
 // math, unit-testable without Metal. Layout works in resolution-independent
 // UI points; UIScale converts points -> framebuffer pixels with deterministic
 // edge snapping so rects and glyph origins land on whole pixels.
@@ -75,8 +75,6 @@ nonisolated public struct UIInsets: Equatable, Sendable {
     public var bottom: Float
     public var right: Float
 
-    public static let zero = UIInsets(top: 0, left: 0, bottom: 0, right: 0)
-
     public init(top: Float, left: Float, bottom: Float, right: Float) {
         self.top = top
         self.left = left
@@ -138,11 +136,6 @@ nonisolated public struct UIScale: Equatable, Sendable {
 
     public init(_ raw: Float) {
         factor = min(max(raw, Self.range.lowerBound), Self.range.upperBound)
-    }
-
-    /// Points -> pixels, no snapping.
-    public func pixels(_ points: Float) -> Float {
-        points * factor
     }
 
     /// Points -> nearest whole pixel.

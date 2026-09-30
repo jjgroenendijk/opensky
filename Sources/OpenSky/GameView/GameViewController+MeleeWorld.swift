@@ -1,23 +1,8 @@
-// `MeleeCombatWorld` conformance (issue #195, roadmap item 15.4): the eight
-// answers the melee runtime needs from the session around it.
-//
-// Every one is a plain read off something that already exists — the walk
-// controller's capsule pose, the streamer's resident actors, the ground
-// contact's material, the actor-value runtime, the world audio engine, the
-// locomotion bridge's graph. Nothing here invents an accounting of its own,
-// which is what keeps the runtime's behaviour the same under test as it is in
-// the app.
-//
-// Two answers are honest non-answers and are worth stating rather than
-// papering over:
-//
-// * `meleeMaterial(at:)` reports the ground material under the player, not the
-//   material of the body part that was struck. Actors carry no per-body-part
-//   Havok material in this engine, so the alternative is inventing one.
-// * `raiseCombatEvent(_:on:)` can only reach the player's graph. Item 14.6
-//   attached a behavior graph to the player and to nobody else, so a stagger
-//   raised on an NPC answers false and the trace records it as not staggered,
-//   which is the truth rather than a silent no-op.
+// `MeleeCombatWorld` conformance: the answers the melee runtime needs, each a
+// plain read off an existing session system. Known partial answers:
+// - `meleeMaterial()` uses the ground material under the player.
+// - `raiseCombatEvent(_:on:)` reaches only the player's graph, so a stagger on
+//   an NPC answers false.
 
 import AppKit
 import OpenSkyActors
@@ -62,37 +47,26 @@ extension GameViewController: MeleeCombatWorld {
         }
     }
 
-    func meleeMaterial(at position: SIMD3<Float>) -> FormID? {
+    func meleeMaterial() -> FormID? {
         renderer?.walkController.groundMaterial
     }
 
-    /// The player's fortify multiplier for a swing with `handType` (issue #472).
-    ///
-    /// Read straight off the actor-value runtime through `CombatFortifyBonus`,
-    /// which names the values and does the arithmetic. A session with no
-    /// actor-value runtime answers 1 — what the formula reduces to for a character
-    /// with no fortify effect — rather than pretending the swing is unarmed.
+    /// The player's fortify multiplier for a swing with `handType`, from
+    /// `CombatFortifyBonus`. Without an actor-value runtime it answers 1.
     func meleeAttackMultiplier(handType: CombatHandType) -> Float {
         guard let runtime = actorValues.runtime else { return 1 }
         let fortify = CombatFortifyBonus.melee(handType: handType) {
             runtime.value(at: $0, on: .player)
         }
-        // `Mod Attack Damage` (35) is the entry point every vanilla weapon perk
-        // hooks — 81 effects, the most-hooked in the game — and it is authored
-        // as `Multiply Value 1.2` on Armsman and its kin. It multiplies the
-        // fortify term rather than replacing it, which is the shape UESP
-        // "Skyrim:Weapons" gives: `... * (1 + perk effects) * (1 + item
-        // effects)` (issue #497).
+        // `Mod Attack Damage` (35) multiplies the fortify term, as UESP
+        // "Skyrim:Weapons" gives: `... * (1 + perk effects) * (1 + item effects)`.
         return fortify * perkMultiplier(
             at: GameViewController.attackDamageEntryPoint, on: .player
         )
     }
 
-    /// The blocker's fortify and perk term (issues #472 and #497).
-    ///
-    /// `Mod Percent Blocked` (39) is where Shield Wall and its ranks live, and
-    /// the fortify half is the Block Modifier pair `CombatFortifyBonus.block`
-    /// already read but nothing yet supplied to the formula.
+    /// The blocker's fortify and perk term. `Mod Percent Blocked` (39) holds Shield
+    /// Wall; the fortify half is the Block Modifier pair.
     func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
         guard
             let runtime = actorValues.runtime,
@@ -124,18 +98,11 @@ extension GameViewController: MeleeCombatWorld {
         return true
     }
 
-    /// One landed blow reaches the scripts attached to its target (issue #375).
-    ///
-    /// Implemented once here and inherited by the archery and combat-loop
-    /// conformances, which are the same controller: all three seams refine
-    /// `ScriptHitReporting`, so a hit from any of them takes this one path into
-    /// the VM. A session with no VM queues nothing and says so.
+    /// One landed blow reaches the scripts attached to its target. The archery and
+    /// combat-loop seams share this path into the VM.
     @discardableResult
     func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        // Every landed blow in this engine passes here and names both sides, so
-        // this is where assault is noticed (issue #504): one seam rather than
-        // one per weapon, which is what keeps a sword swing and an arrow from
-        // disagreeing about what counts as a first strike.
+        // Every landed blow passes here, so assault is noticed in one place.
         reportPlayerAssault(
             on: hit.target,
             wasHostile: combatHostility(of: hit.target) == .hostile,

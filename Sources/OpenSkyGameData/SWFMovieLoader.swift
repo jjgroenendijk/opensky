@@ -1,12 +1,7 @@
-// One place to turn a game-data path into something the renderer can draw:
-// container parse -> character dictionary + frame-1 display list -> external
-// font substitution through Interface\fontconfig.txt. The CLI sweeps and the
-// app's movie picker both go through this, so both see identical decoding and
-// identical font resolution.
-//
-// The fontconfig environment (config + fontlib library) is decoded once on
-// first use and cached for the loader's lifetime: the fontlib movies are large
-// and shared by every Interface movie.
+// Turns a game-data path into something the renderer can draw: container parse,
+// character dictionary and frame-1 display list, then font substitution through
+// Interface\fontconfig.txt. The CLI and the app share it. The fontconfig
+// environment is decoded once and cached, because the fontlib movies are large.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -23,8 +18,6 @@ nonisolated public final class SWFMovieLoader {
     public struct FontEnvironment: Sendable {
         public let config: SWFFontConfig
         public let library: SWFFontLibrary
-        /// fontlib movies named by fontconfig that the VFS could not provide.
-        public let missingFontlibs: [String]
     }
 
     private let fileSystem: VirtualFileSystem
@@ -47,14 +40,10 @@ nonisolated public final class SWFMovieLoader {
             .sorted()
     }
 
-    /// Decodes one movie, folds in the characters it imports from other movies,
-    /// and resolves the fonts its edit texts need. Throws the underlying
-    /// `SWFError`/parse error when the movie itself cannot be decoded; a source
-    /// movie that cannot be provided and an unresolvable font name are both
-    /// recorded rather than fatal.
-    ///
-    /// The import merge runs before font resolution so an edit text that came
-    /// in with an imported sprite gets its substitution too.
+    /// Decodes one movie, merges the characters it imports, and resolves the fonts
+    /// its edit texts need. Throws when the movie cannot be decoded; a missing source
+    /// movie or font is recorded, not fatal. Imports merge first, so imported edit
+    /// texts get fonts too.
     public func load(path: String) throws -> SWFMovieScene {
         let file = try SWFFile(data: fileSystem.contents(forPath: path))
         let merged = try SWFMovieImportMerger.merge(
@@ -97,23 +86,18 @@ nonisolated public final class SWFMovieLoader {
 
     private func makeFontEnvironment() -> FontEnvironment {
         guard let data = try? fileSystem.contents(forPath: Self.fontConfigPath) else {
-            return FontEnvironment(
-                config: SWFFontConfig.parse(""), library: SWFFontLibrary(), missingFontlibs: []
-            )
+            return FontEnvironment(config: SWFFontConfig.parse(""), library: SWFFontLibrary())
         }
         let text = GameText.decode(data)
         let config = SWFFontConfig.parse(text)
         var library = SWFFontLibrary()
-        var missing: [String] = []
         for movie in config.fontlibs {
             // fontlib names are install-relative paths ("Interface\fonts_en.swf");
             // the VFS normalizes case and separators.
             if let file = try? SWFFile(data: fileSystem.contents(forPath: movie)) {
                 library.register(movie: movie, file: file)
-            } else {
-                missing.append(movie)
             }
         }
-        return FontEnvironment(config: config, library: library, missingFontlibs: missing)
+        return FontEnvironment(config: config, library: library)
     }
 }

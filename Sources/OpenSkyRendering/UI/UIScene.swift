@@ -1,4 +1,4 @@
-// Value-type UI scene (M8.1.1). Nodes anchor point-space content to the
+// Value-type UI scene. Nodes anchor point-space content to the
 // viewport; `resolve` turns the scene into a pixel-space draw list given the
 // framebuffer size + scale, rasterizing needed glyphs into the atlas. Pure
 // aside from atlas mutation -> two resolves of one scene are byte-identical.
@@ -61,10 +61,6 @@ nonisolated public struct UIScene: Sendable {
     }
 
     public static let empty = UIScene()
-
-    public var isEmpty: Bool {
-        nodes.isEmpty
-    }
 
     /// Shared per-resolve inputs, bundled to keep helper signatures small.
     private struct ResolveContext {

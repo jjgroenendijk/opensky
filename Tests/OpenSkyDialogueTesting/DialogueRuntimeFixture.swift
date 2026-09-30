@@ -1,16 +1,8 @@
 // The synthetic world `DialogueRuntimeTests` and `DialogueSaveTests` select
-// against: two quests, five topics and the responses under them, every byte
-// built in code through `DialogueFixture` and `QuestFixture`.
-//
-// One world rather than one per test, because the interesting properties are
-// about how topics compete with each other — priority order, a quest gate, a
-// say-once line dropping out — and each of those needs the others present to
-// mean anything.
-//
-// The shape mirrors what the vanilla probe found rather than a convenient
-// invention: every topic names an owning quest, the responses gate on
-// `GetIsID` for the speaker, and the follow-up flow runs through TCLT links
-// rather than through a previous-info chain, which `Skyrim.esm` uses zero times.
+// against: two quests and five topics, built with `DialogueFixture` and
+// `QuestFixture`. One shared world, because topics compete with each other.
+// Its shape follows the vanilla probe: owning quests, `GetIsID` gates, and
+// follow-ups through TCLT links.
 
 import FormatsESMTesting
 import Foundation
@@ -108,7 +100,6 @@ public enum DialogueRuntimeFixture {
         return try DialogueRuntime(
             store: store,
             dialogue: dialogueStore(),
-            quests: quests,
             questStates: QuestResolution(defaults: quests),
             context: context(),
             registry: .standard,

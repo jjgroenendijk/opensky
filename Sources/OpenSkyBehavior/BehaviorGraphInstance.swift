@@ -1,15 +1,7 @@
-// One running behavior graph (issue #187): the object that holds a decoded
-// graph's variables, events, and per-node runtime state, and steps them.
-//
-// Nothing here is a singleton. An instance is built over a root generator and
-// a `hkbBehaviorGraphData`, and two instances built over the same decoded file
-// share nothing but the immutable decode — which is what item 14.7 (#190)
-// needs when it puts a first-person graph beside the third-person one, and what
-// makes the determinism test meaningful.
-//
-// The generator, clip, and modifier semantics live in the three satellite files
-// beside this one. This file owns the instance's state, its update order, and
-// the binding application every node's evaluation reads through.
+// One running behavior graph: the decoded graph's variables, events, and
+// per-node runtime state. Two instances over one decoded file share only the
+// immutable decode. The generator, clip, and modifier semantics live in the
+// satellite files; this file owns the state and the update order.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -84,8 +76,6 @@ nonisolated public struct BehaviorUpdateResult: Equatable, Sendable {
     public let rootMotion: BehaviorRootMotion
     /// Events visible during this update, in the order they were raised.
     public let firedEvents: [BehaviorEvent]
-    /// Seconds of graph time this instance has run.
-    public let time: Float
 }
 
 /// One graph instance: decoded objects in, poses and events out.
@@ -95,17 +85,14 @@ nonisolated public final class BehaviorGraphInstance {
     /// without end, and a decoded graph is untrusted external input.
     public static let maximumDepth = 64
 
-    /// `hkbBehaviorGraph::m_name`, for reporting.
-    public let name: String?
     public let skeleton: BehaviorSkeleton
 
     private let source: any BehaviorObjectSource
     private let clips: any BehaviorClipSource
     public let root: HKXPointerTarget?
 
-    /// Where `hkbBehaviorReferenceGenerator` names resolve (issue #189). Nil
-    /// leaves every reference unresolved and tallied, which is what items 14.3
-    /// and 14.4 ran with.
+    /// Where `hkbBehaviorReferenceGenerator` names resolve. Nil leaves every
+    /// reference unresolved and tallied.
     public var references: (any BehaviorReferenceSource)?
     /// Child instances by reference key, built on first reach. The optional is
     /// stored so a name that will not resolve is looked up once.
@@ -141,9 +128,8 @@ nonisolated public final class BehaviorGraphInstance {
     public var nodeStates: [HKXPointerTarget: BehaviorNodeState] = [:]
     public var reachedThisUpdate: Set<HKXPointerTarget> = []
 
-    /// Per-state-machine runtime state (issue #330). Deliberately not cleared
-    /// by `deactivate()`: `m_startStateMode` 2 re-enters the state that was
-    /// current when the machine stopped, so the id has to outlive the node.
+    /// Per-state-machine runtime state. Not cleared by `deactivate()`:
+    /// `m_startStateMode` 2 re-enters the state that was current when it stopped.
     public var machineStates: [HKXPointerTarget: BehaviorMachineState] = [:]
     /// Update index at which each event id was last active, so a transition's
     /// trigger and initiate intervals can be read as event windows.
@@ -159,12 +145,9 @@ nonisolated public final class BehaviorGraphInstance {
     /// consumed by the first machine that enters below it.
     public var pendingNestedStateId: Int?
 
-    /// Seconds the animated-to-simulated blend takes, from the most recently
-    /// evaluated `hkbRigidBodyRagdollControlsModifier` (issue #197, item 15.6).
-    /// Nil until one has run, which is the honest state for a graph that carries
-    /// no ragdoll controls at all. Internal rather than `private(set)` for the
-    /// same reason `events` and `tally` are: the modifier evaluation that writes
-    /// it is an extension in another file.
+    /// Seconds the animated-to-simulated blend takes, from the last evaluated
+    /// `hkbRigidBodyRagdollControlsModifier`. Nil until one has run. Internal, because
+    /// the modifier that writes it is an extension in another file.
     public var ragdollBlendDuration: Float?
 
     /// What every state machine the last update reached is doing, in walk
@@ -179,7 +162,6 @@ nonisolated public final class BehaviorGraphInstance {
     private var decoded: [HKXPointerTarget: (any HKBClass)?] = [:]
 
     public init(
-        name: String? = nil,
         root: HKXPointerTarget?,
         data: HKBBehaviorGraphData?,
         source: any BehaviorObjectSource,
@@ -187,7 +169,6 @@ nonisolated public final class BehaviorGraphInstance {
         clips: any BehaviorClipSource = EmptyBehaviorClipSource(),
         tallyNameLimit: Int = BehaviorTally.defaultNameLimit
     ) {
-        self.name = name
         self.root = root
         self.source = source
         self.skeleton = skeleton
@@ -207,7 +188,6 @@ nonisolated public final class BehaviorGraphInstance {
         tallyNameLimit: Int = BehaviorTally.defaultNameLimit
     ) {
         self.init(
-            name: graph.name,
             root: graph.rootGenerator,
             data: graph.data,
             source: HKXBehaviorObjectSource(graph: objectGraph),
@@ -259,20 +239,10 @@ nonisolated public final class BehaviorGraphInstance {
         isActive = false
     }
 
-    /// Advances the graph by one fixed timestep and returns the pose, the root
-    /// travel, and the events the step saw.
-    ///
-    /// The order is fixed and total:
-    ///
-    /// 1. Events raised since the last update become the active set. Nothing
-    ///    raised during this update is visible to it.
-    /// 2. The generator tree is walked depth first from the root, children in
-    ///    the order the class declares them. A node's bindings are applied
-    ///    immediately before it is evaluated, so every node sees the same
-    ///    variable values.
-    /// 3. Nodes reached last update but not this one are deactivated, in
-    ///    packfile order.
-    /// 4. The active event set is closed and returned.
+    /// Advances the graph by one fixed timestep and returns the pose, root travel,
+    /// and events. Order: queued events become active; the tree is walked depth
+    /// first, bindings applied just before each node; nodes not reached are
+    /// deactivated; the event set is returned.
     @discardableResult
     public func update(deltaTime: Float) -> BehaviorUpdateResult {
         if !isActive {
@@ -305,8 +275,7 @@ nonisolated public final class BehaviorGraphInstance {
         return BehaviorUpdateResult(
             bones: bones,
             rootMotion: pose.rootMotion,
-            firedEvents: events.endUpdate(),
-            time: time
+            firedEvents: events.endUpdate()
         )
     }
 
@@ -371,10 +340,6 @@ nonisolated public final class BehaviorGraphInstance {
         state.isActivated = true
         nodeStates[target] = state
         return state
-    }
-
-    public func state(of target: HKXPointerTarget) -> BehaviorNodeState {
-        nodeStates[target] ?? BehaviorNodeState()
     }
 
     // MARK: - Bindings
@@ -463,11 +428,6 @@ nonisolated extension [String: BehaviorVariableValue] {
     /// The bound integer for `path`, or `fallback`.
     public func int(_ path: String, or fallback: Int) -> Int {
         value(path)?.intValue ?? fallback
-    }
-
-    /// The bound bool for `path`, or `fallback`.
-    public func bool(_ path: String, or fallback: Bool) -> Bool {
-        value(path)?.boolValue ?? fallback
     }
 
     private func value(_ path: String) -> BehaviorVariableValue? {

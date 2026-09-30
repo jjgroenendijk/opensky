@@ -21,7 +21,7 @@ nonisolated private final class FakeProvider: CellSceneProvider {
     private let lock = NSLock()
     private var builds: [CellCoordinate: Int] = [:]
     /// Snapshot each build ran against, so a test can assert the runner passes
-    /// the caller's state through (issue #160).
+    /// the caller's state through.
     private var states: [CellCoordinate: WorldStateSnapshot] = [:]
     private var evictions: [(mesh: Set<String>, texture: Set<String>)] = []
     private let gate: DispatchSemaphore?
@@ -253,7 +253,7 @@ struct CellBuildRunnerTests {
     @Test
     func failureWithoutReasonIsUnexplained() {
         var metric = CellBuildMetric(
-            totalDurationMS: 0, collisionDurationMS: 0,
+            collisionDurationMS: 0,
             collisionShapeCount: 0, collisionTriangleCount: 0
         )
         metric.actorDiscoveredCount = 1
@@ -265,7 +265,7 @@ struct CellBuildRunnerTests {
     @Test
     func staticFallbackWithoutReasonIsUnexplained() {
         var metric = CellBuildMetric(
-            totalDurationMS: 0, collisionDurationMS: 0,
+            collisionDurationMS: 0,
             collisionShapeCount: 0, collisionTriangleCount: 0
         )
         metric.actorRenderedCount = 1

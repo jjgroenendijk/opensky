@@ -1,14 +1,7 @@
-// Actor template-chain resolution (milestone 5.1): follow NPC_ TPLT links
-// through direct NPC_ targets and LVLN leveled lists, then resolve each
-// appearance field to the chain record that actually provides it, driven by
-// the per-record ACBS template flags. Never copies whole records: a field
-// delegates upward only while its governing flag stays set.
-//
-// Flag semantics per Creation Kit ActorBase template docs (which tab each
-// flag inherits): traits covers race/gender/skin/height/weight, character
-// gen (head parts) rides Use Traits; inventory covers the default outfit.
-// Reference: UESP "Skyrim Mod:Mod File Format/NPC_" + CK wiki "BaseActorData".
-// Documented in docs/engine/actor-resolution.md.
+// Actor template-chain resolution: follow NPC_ TPLT links through NPC_ and LVLN
+// targets, then resolve each field group to the chain record that provides it,
+// driven by the ACBS template flags. A field delegates upward only while its
+// flag is set. See docs/engine/actor-resolution.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -51,38 +44,18 @@ nonisolated public struct ResolvedActorAppearance: Equatable {
     public let defaultOutfit: ActorSourcedField<FormID?>
 }
 
-/// Stat-relevant fields of one actor after template resolution (issue #194).
-///
-/// A sibling of `ResolvedActorAppearance` rather than more fields on it,
-/// because the two answer to different template flags and have different
-/// consumers: appearance rides `useTraits` and feeds the renderer, stats ride
-/// `useStats` and feed `ActorValueDerivation`. The race is resolved here too,
-/// through `useTraits` exactly as the appearance resolves it, because the
-/// starting attributes come from the race and the derivation would otherwise
-/// have to reach back into the appearance for one field.
+/// Stat-relevant fields of one actor after template resolution. Separate from
+/// `ResolvedActorAppearance`: stats follow `useStats` and feed
+/// `ActorValueDerivation`. The race is resolved here too, for the starting
+/// attributes.
 nonisolated public struct ResolvedActorStats: Equatable {
-    public let base: FormID
-    public let chain: [ActorChainLink]
     /// RNAM, resolved through `useTraits` — the Creation Kit puts race on the
     /// Traits tab, not the Stats tab.
     public let race: ActorSourcedField<FormID?>
-    /// RNAM of the record that supplies the stats, which is the race the
-    /// *starting attributes* come from.
-    ///
-    /// Not the same field as `race`, and the difference is observed rather than
-    /// documented anywhere. Neither UESP nor the Creation Kit wiki says which
-    /// race feeds the base attributes when `useTraits` and `useStats` resolve to
-    /// different records; the wiki only says base health is "determined by their
-    /// Race, Class, and Level" (<https://ck.uesp.net/wiki/Stats_Tab>). Probing
-    /// `Skyrim.esm` settles it: with the traits race, 61 of 4297 auto-calc
-    /// records disagree with the values the editor itself baked into their DNAM;
-    /// with the stats record's race, 26 do, and every remaining one is the same
-    /// stale template (see `ActorValueRealDataTests`). The skeleton, draugr and
-    /// creature records that flip are exactly the ones whose traits and stats
-    /// resolve to different races.
-    ///
-    /// The renderer still skins an actor with `race`. This field only feeds
-    /// `ActorValueDerivation`.
+    /// RNAM of the record that supplies the stats: the race the starting attributes
+    /// come from. This differs from `race`, and no source documents it; probing
+    /// `Skyrim.esm` against baked DNAM values settles it (`ActorValueRealDataTests`).
+    /// Only `ActorValueDerivation` reads this; the renderer uses `race`.
     public let statsRace: ActorSourcedField<FormID?>
     /// ACBS stat words plus CNAM, resolved through `useStats`: "Use stats
     /// (Stats tab, including level, autocalc, skills, health/magicka/stamina,
@@ -96,56 +69,34 @@ nonisolated public struct ResolvedActorStats: Equatable {
 
 /// Ordered AI package stack after `useAIPackages` template inheritance.
 nonisolated public struct ResolvedActorPackages: Equatable {
-    public let base: FormID
-    public let chain: [ActorChainLink]
     public let packages: ActorSourcedField<[FormID]>
 }
 
-/// Authored spell list after `useSpellList` template inheritance (issue #473).
-///
-/// A sibling of `ResolvedActorPackages` rather than more fields on the
-/// appearance or the stats, for the reason those two are separate: the list
-/// answers to its own ACBS template-data bit, and its consumer is the spellbook
-/// rather than the renderer or the actor-value derivation.
+/// Authored spell list after `useSpellList` template inheritance. Its own struct,
+/// because it follows its own ACBS bit and feeds the spellbook.
 nonisolated public struct ResolvedActorSpells: Equatable {
-    public let base: FormID
-    public let chain: [ActorChainLink]
     /// SPLO, resolved through `useSpellList`.
     public let spells: ActorSourcedField<[FormID]>
-    /// PRKR, resolved through the same flag: UESP names it "Use spelllist
-    /// (both spells and perks)", so an actor delegating its spell list
-    /// delegates its perk list with it (issue #497).
+    /// PRKR, resolved through the same flag: UESP names it "Use spelllist (both
+    /// spells and perks)".
     public let perks: ActorSourcedField<[FormID]>
     /// RNAM, resolved through `useTraits` — the race whose own `SPLO` run every
     /// member of it carries.
     public let race: ActorSourcedField<FormID?>
 }
 
-/// Faction memberships and AI attributes after template inheritance
-/// (issues #501 and #503).
-///
-/// Its own struct for the reason the spell list has one: the SNAM run answers
-/// to its own ACBS template-data bit, and its consumers — hostility, crime
-/// response and vendor rules — are none of the ones already resolved here.
-///
-/// The AIDT rides along on its own flag rather than getting a struct of its
-/// own, the way `ResolvedActorSpells` carries the perk run beside the spell
-/// run: the hostility derivation reads the memberships and the aggression
-/// together, and two walks of the same template chain would only be a second
-/// chance for the two answers to disagree.
+/// Faction memberships and AI attributes after template inheritance. SNAM follows
+/// its own ACBS bit. AIDT rides along on its own flag, because hostility reads
+/// memberships and aggression together.
 nonisolated public struct ResolvedActorFactions: Equatable {
-    public let base: FormID
-    public let chain: [ActorChainLink]
     /// SNAM, resolved through `useFactions`.
     public let factions: ActorSourcedField<[ActorBase.FactionMembership]>
     /// AIDT, resolved through `useAIData` — the flag UESP names "Use AI Data
     /// (AI Data tab, including aggression, confidence, morality, combat style
     /// and gift filter)". Nil when the providing record authors none.
     public let aiData: ActorSourcedField<ActorAIData?>
-    /// CRIF, resolved through `useFactions` beside SNAM (issue #505). The
-    /// Creation Kit puts the crime faction on the same Factions tab the flag
-    /// names, so the record that supplies an actor's memberships supplies the
-    /// faction it reports crimes to.
+    /// CRIF, resolved through `useFactions` beside SNAM: the Creation Kit shows the
+    /// crime faction on the Factions tab.
     public var crimeFaction: FormID? {
         crimeFactionField.value
     }
@@ -158,13 +109,9 @@ nonisolated public struct ResolvedActorFactions: Equatable {
 nonisolated public struct ActorTemplateResolver: Sendable {
     public let actors: [UInt32: ActorBase]
     public let leveledActors: [UInt32: LeveledList]
-    /// LVSP decodes by raw FormID (issue #473). An actor's `SPLO` run names
-    /// leveled *spell* lists as freely as it names SPEL records — every vanilla
-    /// caster's offensive spells arrive that way, observed against
-    /// `Skyrim.esm` — so the spell baseline has to be able to expand one.
-    ///
-    /// Defaulted, so the fixtures that build a resolver by hand for the
-    /// appearance and package paths are untouched by a field they do not use.
+    /// LVSP decodes by raw FormID. An actor's `SPLO` run can name leveled spell lists,
+    /// so the spell baseline must expand them. Defaulted, so older fixtures still
+    /// build.
     public let leveledSpells: [UInt32: LeveledList]
 
     public init(
@@ -236,13 +183,11 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         )
     }
 
-    /// The same chain walk as `resolve(base:)`, resolving the stat fields
-    /// instead of the appearance fields (issue #194).
+    /// The same chain walk as `resolve(base:)`, resolving the stat fields instead of
+    /// the appearance fields.
     public func resolveStats(base: FormID) throws -> ResolvedActorStats {
-        let (npcs, chain) = try resolveChain(base: base)
+        let (npcs, _) = try resolveChain(base: base)
         return ResolvedActorStats(
-            base: base,
-            chain: chain,
             race: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.race, source: $0.formID)
             },
@@ -264,24 +209,19 @@ nonisolated public struct ActorTemplateResolver: Sendable {
     /// Resolves only the package-list field group. A local empty list remains
     /// authoritative unless `useAIPackages` explicitly delegates it.
     public func resolvePackages(base: FormID) throws -> ResolvedActorPackages {
-        let (npcs, chain) = try resolveChain(base: base)
+        let (npcs, _) = try resolveChain(base: base)
         return ResolvedActorPackages(
-            base: base,
-            chain: chain,
             packages: resolveField(in: npcs, flag: .useAIPackages) {
                 ActorSourcedField(value: $0.packages, source: $0.formID)
             }
         )
     }
 
-    /// Resolves only the spell-list field group (issue #473). A local empty
-    /// list stays authoritative unless `useSpellList` delegates it, which is
-    /// the rule every other field group here follows.
+    /// Resolves only the spell-list field group. A local empty list stays
+    /// authoritative unless `useSpellList` delegates it.
     public func resolveSpells(base: FormID) throws -> ResolvedActorSpells {
-        let (npcs, chain) = try resolveChain(base: base)
+        let (npcs, _) = try resolveChain(base: base)
         return ResolvedActorSpells(
-            base: base,
-            chain: chain,
             spells: resolveField(in: npcs, flag: .useSpellList) {
                 ActorSourcedField(value: $0.spells, source: $0.formID)
             },
@@ -294,15 +234,12 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         )
     }
 
-    /// Resolves the faction-membership field group and the AI attributes
-    /// beside it (issues #501 and #503). A local empty list stays authoritative
-    /// unless `useFactions` delegates it, the rule every other field group here
-    /// follows, and the AIDT delegates on its own `useAIData` flag.
+    /// Resolves the faction-membership field group and the AI attributes beside it.
+    /// A local empty list stays authoritative unless `useFactions` delegates it; the
+    /// AIDT delegates on `useAIData`.
     public func resolveFactions(base: FormID) throws -> ResolvedActorFactions {
-        let (npcs, chain) = try resolveChain(base: base)
+        let (npcs, _) = try resolveChain(base: base)
         return ResolvedActorFactions(
-            base: base,
-            chain: chain,
             factions: resolveField(in: npcs, flag: .useFactions) {
                 ActorSourcedField(value: $0.factions, source: $0.formID)
             },

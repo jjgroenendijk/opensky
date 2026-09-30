@@ -1,16 +1,11 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorldState
 
-/// One inventory owner: its identity, which plugin record its baseline comes
-/// from, and the cell its mutations are attributed to.
-///
-/// The three travel together because every mutation needs all three, and
-/// passing them separately at each call site is how a mutation ends up
-/// attributed to the wrong cell. `cell` is optional for the same reason the
-/// store's is: a script may empty a container in a cell that has never been
-/// loaded.
+/// One inventory owner: its identity, the plugin record its baseline comes from,
+/// and the cell its writes are attributed to. They travel together so a write
+/// cannot name the wrong cell. `cell` is optional: a script may change a
+/// container in an unloaded cell.
 nonisolated public struct InventoryHolder: Equatable, Sendable {
     public let key: ReferenceKey
     public let owner: InventoryOwner
@@ -38,7 +33,6 @@ nonisolated public enum InventoryOwner: Equatable, Sendable {
     case container(base: FormID)
     /// A placed ACHR, identified by its NPC_ base record.
     case actor(base: FormID)
-    /// An owner with no plugin baseline at all — a runtime-created object such
-    /// as a dropped-item pile (#177) or a summon.
+    /// An owner with no plugin baseline, such as a dropped-item pile or a summon.
     case generated
 }

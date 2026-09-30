@@ -1,4 +1,4 @@
-// Resident, queryable navigation graph (issue #200). Each cell contributes
+// Resident, queryable navigation graph. Each cell contributes
 // immutable NAVM geometry. Cross-navmesh edges and teleport doors resolve at
 // query time, so residency changes need no callback web or adjacency rebuild.
 
@@ -79,10 +79,6 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
     private var cellDoors: [CellSceneLocation: [UInt32]] = [:]
     private var doorTriangles: [UInt32: [NavigationTriangleID]] = [:]
     private var scratch = NavigationQueryScratch()
-
-    public var isEmpty: Bool {
-        navmeshes.isEmpty
-    }
 
     public var triangleCount: Int {
         navmeshes.values.reduce(0) { $0 + $1.triangles.count }

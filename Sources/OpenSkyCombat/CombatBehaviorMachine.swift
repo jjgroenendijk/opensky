@@ -1,46 +1,9 @@
-// One actor's combat mind (issue #424, roadmap item 16.7, scope points 1
-// through 5), as a pure value over a fixed step.
-//
-// This is what replaces `DevTargetDriver`. The clock attacked on an interval
-// from wherever it stood, at whatever was in front of it, and never gave up.
-// The machine below decides, in this order every step: is my target still
-// there, am I hurt enough to run, can I still see it, am I close enough to
-// swing. Everything downstream of a decision — the 15.4 hit volume, the 15.4
-// damage formula, the actor values, the death and the ragdoll — is untouched,
-// which is the whole point of having built the clock through the shipping paths.
-//
-// ## Fixed step, no clock, no sampling
-//
-// `step(seconds:inputs:)` is a pure function of the previous state, the inputs
-// and the elapsed seconds, exactly as `DetectionPairState.advanced` is. It
-// never reads a clock. The one place a decision is not determined by its inputs
-// is the block roll, and that draws from a `ConditionRandom` seeded per actor
-// from its `ReferenceKey` — the same splitmix generator the condition system's
-// `GetRandomPercent` uses, seeded the same way. So a fight replays exactly, and
-// two actors in one room still do not block in lockstep.
-//
-// ## Casting is a phase, not a kind of attack
-//
-// Item 19.10 gives the machine a second way to hurt somebody, and it is spelled
-// as its own phase rather than as a flag on `windup`. The phase enum's whole
-// job is that the answer to "what is this actor doing" is one readable case, and
-// a swing and a cast are not the same act with a different weapon: a swing is
-// timed by this layer's own cadence and lands at the contact step, a cast is
-// timed by the SPIT charge time the record states and lands wherever the 19.8
-// delivery takes it. What they share is *when the decision is made* — the same
-// two points a swing is chosen at — so the choice lives in one place and the
-// execution does not.
-//
-// ## Why the machine asks for movement instead of performing it
-//
-// It emits a `CombatMovementCommand` and the runtime hands it to 16.4's
-// `MoveToPointControl`. The mover is the movement authority — it owns the
-// capsule, the navmesh path, the stuck recovery and the persistence — and a
-// combat layer that wrote positions would be a second one that disagreed with
-// it. This is the same split 16.4 established for packages, and it is why
-// fleeing is "ask for a point away from the target" rather than "walk backwards".
-//
-// Documented in docs/engine/combat-behavior.md.
+// One actor's combat mind, as a pure value over a fixed step. Each step it
+// checks, in order: target still there, hurt enough to flee, target still seen,
+// close enough to swing. No clock: the block roll draws from a `ConditionRandom`
+// seeded from the `ReferenceKey`. It asks the NPC mover for movement through
+// `CombatMovementCommand` rather than writing positions.
+// See docs/engine/combat-behavior.md.
 
 import Foundation
 import OpenSkyCombatInterface
@@ -128,22 +91,10 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         }
     }
 
-    /// Interrupts whatever is in flight, exactly as the graph's own stagger
-    /// transition takes the player's attack away.
-    ///
-    /// A fleeing or searching actor staggers too, and lands back in the gap
-    /// between attacks: the next step re-reads its health and its awareness and
-    /// sends it straight back to running or looking if that is still what those
-    /// say. A blow interrupts whatever the actor was doing, and nothing is
-    /// decided twice.
-    ///
-    /// An actor that was not fighting at all is in the fight afterwards. Being
-    /// struck is being told where somebody is, and that is the *existing* combat
-    /// entry — the player's own blow — rather than a second perception rule: the
-    /// runtime keeps the actor engaged for the step it takes to turn around.
-    ///
-    /// - Returns: true when the machine actually entered a stagger, so a caller
-    ///   asks for a clip only when there is one to play.
+    /// Interrupts whatever is in flight, as the graph's stagger does. An actor that
+    /// was not fighting is engaged afterwards: being struck reveals the attacker.
+    /// - Returns: true when the machine entered a stagger, so a caller asks for a
+    ///   clip only when there is one to play.
     @discardableResult
     public mutating func stagger() -> Bool {
         guard phase != .staggered else { return false }
@@ -173,18 +124,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
 
     // MARK: - Waiting
 
-    /// Not in a fight: engage as soon as the target is perceived, or as soon as
-    /// a script says to.
-    ///
-    /// This is scope point 5's single new combat entry, and it is deliberately
-    /// the only one: hostility is still entered by the player's blow, the panel
-    /// toggle or a script, and what widened is *when an actor already marked
-    /// hostile starts fighting* — on perceiving the target rather than on being
-    /// hit by it.
-    ///
-    /// An actor still under the flee threshold does not start a fight, which is
-    /// what stops one it just ran from restarting the moment it looks back: it
-    /// broke off because it was losing, and nothing here heals it.
+    /// Not in a fight: engage when the target is perceived or a script says so.
+    /// Hostility itself is still entered only by a blow, the panel, or a script. An
+    /// actor under the flee threshold does not start a fight.
     private mutating func advanceWaiting(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard !inputs.shouldFlee(settings: settings) else { return unchanged() }
         guard inputs.isForced || inputs.awareness.isDetected else { return unchanged() }
@@ -211,7 +153,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         case .approaching: return advanceApproaching(inputs)
         case .spacing: return advanceSpacing(inputs)
         case .blocking: return advanceBlocking(inputs)
-        case .casting: return advanceCasting(inputs)
+        case .casting: return advanceCasting()
         case .windup: return advanceWindup()
         case .contact:
             enter(.recovery)
@@ -261,13 +203,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         return startAttackOrCast(inputs)
     }
 
-    /// The one place a swing and a cast are chosen between.
-    ///
-    /// The rule, stated in docs/engine/combat-behavior.md and deliberately simple: an
-    /// actor that cannot reach its target with a weapon casts whenever it can
-    /// afford something that reaches, and one that *is* in weapon reach casts
-    /// with probability `castChance` and swings otherwise. Drawn from the same
-    /// seeded generator the block roll uses, so a fight still replays exactly.
+    /// The one place a swing and a cast are chosen between
+    /// (docs/engine/combat-behavior.md). Out of weapon reach, cast when affordable;
+    /// in reach, cast with probability `castChance`. Uses the seeded block-roll RNG.
     private mutating func startAttackOrCast(
         _ inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
@@ -288,16 +226,10 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         return step
     }
 
-    /// Charging, and for a maintained spell holding it afterwards. The charge
-    /// is the record's own `chargeTime`; the hold is this layer's number,
-    /// because nothing in the load order says how long an NPC maintains a beam.
-    ///
-    /// A target that walks out of range mid-charge does not cancel the cast:
-    /// the magicka is already committed by then and the spell leaves the hand
-    /// and misses, which is what the player sees happen to their own casts.
-    private mutating func advanceCasting(
-        _ inputs: CombatBehaviorInputs
-    ) -> CombatBehaviorStep {
+    /// Charging, and for a maintained spell holding it afterwards. The charge is the
+    /// record's `chargeTime`; the hold time is ours. A target leaving range does not
+    /// cancel the cast.
+    private mutating func advanceCasting() -> CombatBehaviorStep {
         guard let option = pendingCast else { return enterSpacing() }
         let hold = max(0, option.chargeSeconds)
             + (option.isConcentration ? settings.concentrationSeconds : 0)
@@ -363,13 +295,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         return step
     }
 
-    /// Running: keep asking for a point further away until far enough from the
-    /// target to be out of the fight, then hand back to the package.
-    ///
-    /// Health recovering above the threshold does not bring the actor back into
-    /// the fight; nothing in this engine heals an NPC mid-fight, and an actor
-    /// that turned and ran and then turned around again would be a decision the
-    /// player cannot read.
+    /// Running: ask for points further away until out of the fight, then hand back
+    /// to the package. Recovering health does not bring the actor back.
     private mutating func advanceFleeing(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard inputs.distance < settings.fleeBreakDistance else { return endPursuit() }
         guard secondsSinceCommand >= settings.commandIntervalSeconds else { return unchanged() }

@@ -1,13 +1,7 @@
-// The crime natives (issue #504, roadmap item 21.5): the `Faction` crime-gold
-// trio and the two `Actor` alarms over a live crime runtime, plus the refusal a
-// script has to be able to tell apart from a zero bounty.
-//
-// The bridge closure is the session's — every mutation goes through
-// `CrimeRuntime` and lands in the world-state store, so a scripted bounty is
-// saved exactly like a witnessed one.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The crime natives: the `Faction` crime-gold trio and the two `Actor` alarms
+// over a live crime runtime, plus the refusal that differs from a zero bounty.
+// Every mutation goes through `CrimeRuntime`, so a scripted bounty is saved
+// like a witnessed one. Fixtures are synthetic.
 
 import FormatsESMTesting
 import Foundation
@@ -57,8 +51,8 @@ struct PapyrusNativeCrimeTests {
             0
         }
 
-        func crimeActor(_ key: ReferenceKey) -> CrimeActor {
-            CrimeActor(key: key)
+        func crimeActor(_: ReferenceKey) -> CrimeActor {
+            CrimeActor()
         }
     }
 
@@ -159,7 +153,7 @@ struct PapyrusNativeCrimeTests {
         #expect(fixture.reporter.runtime.crimeGold(of: hold) == 0)
     }
 
-    /// The violent half (issue #563): `ModCrimeGold(n, true)` and
+    /// The violent half: `ModCrimeGold(n, true)` and
     /// `SetCrimeGoldViolent` write it, the two readers split what
     /// `GetCrimeGold` sums, and `SetCrimeGold` leaves it alone.
     @Test func theViolentHalfIsReadAndWrittenOnItsOwn() throws {

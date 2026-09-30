@@ -1,39 +1,11 @@
-// The numbers detection resolves its formula from (issue #202, roadmap item
-// 16.6), in the shape `CombatSettings` and `ArcherySettings` established:
-// immutable, resolved once at setup, every value carrying the name of where it
-// came from so a readout can say "this is Skyrim.esm's number" rather than
-// presenting an OpenSky constant as the same kind of fact.
-//
-// ## Two kinds of number, kept apart on purpose
-//
-// The first kind is a GMST the shipped game carries. UESP "Skyrim:Sneak" writes
-// the detection formula in terms of named settings, and the ten the local
-// install actually holds are read out of the load order here, exactly as the
-// block factors are. Their fallbacks are the values observed on the install
-// (2026-08-09, `openskycli gmst list --prefix fsneak`), not the values a wiki
-// prints — which matters at least once already: UESP names an
-// `fSneakDistanceAttenuationExponent`, and no GMST of that editor ID exists.
-//
-// The second kind is a number vanilla keeps in AI internals that no record
-// documents. There is no GMST for a view cone, for how loud a crouching target
-// is, for how fast an alerted guard makes up its mind, or for how long it takes
-// to forget. Those are OpenSky's own, they carry the source string "OpenSky
-// constant" wherever they are reported, and the docs page states them as ours.
-// That is the same honesty rule `DevTargetDriver` follows: an invented number
-// that reads like a measured one is worse than no number at all.
-//
-// A third category is deliberately not resolved here at all: inputs the engine
-// cannot supply yet. Light level, muffle, action sounds and the Sneak skill are
-// pinned at documented neutral values in `DetectionFormula` and listed as gaps
-// on the docs page. None of them is approximated. The install does carry the
-// settings a light term would read — `fSneakLightMult`,
-// `fSneakLightExteriorMult` and `fDetectionSneakLightMod` — and they are
-// deliberately left unresolved until there is a light level to multiply.
-//
-// Documented in docs/engine/detection.md.
+// The numbers detection resolves its formula from, resolved once at setup, each
+// naming its source. GMSTs come from the load order, with install-observed
+// fallbacks (UESP's `fSneakDistanceAttenuationExponent` does not exist). Values
+// no record documents, such as the view cone, are marked "OpenSky constant".
+// Light, muffle, and skill stay pinned in `DetectionFormula`.
+// See docs/engine/detection.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
@@ -149,13 +121,9 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
         MovementSetting(value: value, source: "OpenSky constant")
     }
 
-    /// Builds a whole set: `override` supplies a load-order value where one
-    /// exists, and every setting it declines falls back to the vanilla number
-    /// under `loadOrderSource`.
-    ///
-    /// One builder rather than two initializer call sites, so the synthetic set
-    /// and the resolved set cannot drift apart in either their numbers or their
-    /// field order.
+    /// Builds a whole set: `override` supplies a load-order value where one exists,
+    /// and the rest fall back to vanilla numbers under `loadOrderSource`. One builder,
+    /// so the synthetic and resolved sets cannot drift apart.
     private static func make(
         loadOrderSource: String,
         override: (String) -> MovementSetting?

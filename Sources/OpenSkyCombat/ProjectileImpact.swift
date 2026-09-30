@@ -1,40 +1,8 @@
-// What a projectile hits on one step (issue #196, roadmap item 15.5, scope
-// point 4).
-//
-// ## Which query, and why
-//
-// The issue offers a choice — the 15.2 shape sweep, or a per-substep raycast
-// "where a ray is exact enough" — and asks for the choice to be stated. It is
-// split, because the two halves of the world answer to different queries:
-//
-// * **Static geometry: the 15.2 sweep.** A vanilla arrow flies at thousands of
-//   world units per second, so at a 1/120 s substep it covers tens of units
-//   between samples. A ray along that segment would be exact for an infinitely
-//   thin arrow, and an arrow is *not* infinitely thin: PROJ carries a
-//   `collisionRadius`, and honouring it is the difference between an arrow
-//   that clips a doorframe and one that slides past it. `ShapeSweeper` sweeps
-//   a sphere of that radius along the segment and bisects the touch distance,
-//   which is exactly the query, and a zero radius degenerates to the ray
-//   without needing a second code path.
-// * **Actor capsules: the segment-to-segment test.** `ShapeSweeper` answers
-//   against placed static shapes and knows nothing about actors, so the actor
-//   half reuses `MeleeHitDetector.closestApproach` — the same exact
-//   shortest-distance-between-two-segments narrowphase a swing already uses.
-//   Against a capsule that is exact rather than conservative, and it costs one
-//   closed-form solve per actor per step instead of a sampled sweep.
-//
-// Both halves run against the same travelled segment and the nearer touch
-// wins, so an arrow that passes an actor standing behind a wall hits the wall.
-//
-// ## One impact per projectile
-//
-// Enforced by the projectile ceasing to exist, not by a filter: `first(...)`
-// returns at most one impact per step and the runtime retires the projectile on
-// it. There is no "already hit" set to keep, because there is no second step.
-//
-// Pure functions over values. No world, no clock, no mutation.
-//
-// Documented in docs/engine/projectiles.md.
+// What a projectile hits on one step. Static geometry uses a sphere sweep of
+// the PROJ `collisionRadius`; actor capsules use the segment test of
+// `MeleeHitDetector.closestApproach`. The nearer touch wins. The runtime retires
+// a projectile on its first impact. Pure functions over values.
+// See docs/engine/projectiles.md.
 
 import OpenSkyFormatsESM
 import OpenSkyPhysics
@@ -46,9 +14,6 @@ nonisolated public struct ProjectileImpact: Equatable, Sendable {
     public let distance: Float
     /// Contact point, world space.
     public let position: SIMD3<Float>
-    /// Surface normal pointing back toward the arrow, where the query supplied
-    /// one. Zero against an actor, whose capsule normal is derived instead.
-    public let normal: SIMD3<Float>
     /// The actor struck, or nil for static geometry.
     public let target: ReferenceKey?
     /// The reference struck, where the query named one.
@@ -87,17 +52,11 @@ nonisolated public struct ProjectileStep: Equatable, Sendable {
 
 nonisolated public enum ProjectileImpactQuery: Sendable {
     /// The nearest thing `step` touches, or nil when it is clear.
-    ///
     /// - Parameters:
-    ///   - step: the segment the projectile travelled and what it travelled as.
-    ///   - targets: the actors in range; the caller filters to actors.
-    ///   - shooter: never hit by its own arrow. Matched on `ReferenceKey`
-    ///     rather than by distance, because the first step of a shot starts
-    ///     inside the shooter's own capsule and it would otherwise be the
-    ///     nearest thing to every shot ever fired.
-    ///   - sweep: the static-collision query, normally `ShapeSweeper.firstHit`
-    ///     over the streamer's broadphase. Passed in so this stays a pure
-    ///     function.
+    ///   - step: the segment the projectile travelled and its shape.
+    ///   - targets: the actors in range.
+    ///   - shooter: never hit by its own shot, matched on `ReferenceKey`.
+    ///   - sweep: the static query, normally `ShapeSweeper.firstHit`.
     public static func first(
         step: ProjectileStep,
         targets: [MeleeTarget],
@@ -122,7 +81,6 @@ nonisolated public enum ProjectileImpactQuery: Sendable {
         let asImpact = ProjectileImpact(
             distance: staticHit.distance,
             position: staticHit.position,
-            normal: staticHit.normal,
             target: nil,
             reference: staticHit.reference
         )
@@ -159,11 +117,9 @@ nonisolated public enum ProjectileImpactQuery: Sendable {
                     || (distance == current.distance && target.key < (current.target ?? target.key))
             } ?? true
             guard replaces else { continue }
-            let normal = closest.onFirst - closest.onSecond
             best = ProjectileImpact(
                 distance: distance,
                 position: (closest.onFirst + closest.onSecond) * 0.5,
-                normal: simd_length(normal) > Float.ulpOfOne ? simd_normalize(normal) : SIMD3(),
                 target: target.key,
                 reference: nil
             )
@@ -171,13 +127,8 @@ nonisolated public enum ProjectileImpactQuery: Sendable {
         return best
     }
 
-    /// The rotation a stuck arrow is placed at, so its shaft points along the
-    /// direction it arrived from.
-    ///
-    /// `PlacedReference.Placement` carries Euler radians in the same convention
-    /// REFR DATA uses, and `MatrixMath.eulerAngles(of:)` is what the dynamic
-    /// solver already converts an orientation through, so the same conversion
-    /// is used here rather than a second one that could disagree with it.
+    /// The rotation a stuck arrow is placed at, so its shaft points along its flight.
+    /// Uses `MatrixMath.eulerAngles(of:)`, the conversion REFR placements use.
     public static func stuckRotation(alongFlight direction: SIMD3<Float>) -> SIMD3<Float> {
         let forward = ProjectileFlight.normalized(direction)
         // Yaw about Z, then pitch down from the horizon. Roll is left at zero:

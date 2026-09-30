@@ -1,28 +1,8 @@
-// Where a cast is (issue #470, roadmap item 19.7): the per-hand state machine
-// the caster runtime advances, and the outcomes it reports.
-//
-// A pure value type over a clock, in the shape `ArcheryState` and
-// `MeleeCombatState` take: no world, no store, no effects. That is what makes
-// the cast tests a list of time steps.
-//
-// One difference from those two is deliberate and is the milestone's known gap.
-// Melee and archery read their timing back out of the behavior graph — the
-// engine raises `attackStart` and the *graph* decides when the contact frame
-// is. No casting graph is driven yet (M25/M26 owns the animation), so the charge
-// here is timed against the SPIT charge time instead. When the graph arrives it
-// replaces this clock the same way it replaced melee's, and the phases stay.
-//
-// ## Where the phases come from
-//
-// UESP's Magic Overview states both shapes in one paragraph: "Some spells will
-// trigger immediately upon being cast and can be maintained as long as held.
-// Others require holding to charge the spell and releasing to cast it. Casting a
-// spell of either form depletes the caster's magicka based on the cost of the
-// spell and will continue to do so if the spell is maintained."
-// (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>) The first sentence is
-// `concentrating`, the second is `charging` then `ready` then the release.
-//
-// Documented in docs/engine/spellcasting.md.
+// Where a cast is: the per-hand state machine and its outcomes. A pure value
+// type over a clock. No casting graph is driven yet, so the charge is timed by
+// SPIT. UESP's Magic Overview gives the two shapes: concentration, and charge
+// then release (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>).
+// See docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -65,9 +45,8 @@ nonisolated public enum SpellCastFailure: Equatable, Sendable {
     /// spell the same rule ends a cast already running, because the cost keeps
     /// being charged for as long as it is maintained.
     case insufficientMagicka(cost: Float, available: Float)
-    /// The spell's delivery is not self. Aimed, target-actor and
-    /// target-location delivery are issue 19.8; this counts them rather than
-    /// pretending they landed.
+    /// The spell's delivery is not self. This hand path counts
+    /// other deliveries rather than pretending they landed.
     case deliveryUnsupported(MagicEffectDelivery)
     /// An ability is a permanent effect an actor carries, not something a hand
     /// casts.
@@ -119,9 +98,8 @@ nonisolated public enum SpellCastOutcome: Equatable, Sendable {
         return false
     }
 
-    /// Whether a spell actually left the hand: a fire-and-forget one landed, or
-    /// a maintained one ran and was let go. What the combat loop counts as a
-    /// cast having happened (issue #473).
+    /// Whether a spell left the hand: a fire-and-forget one landed, or a maintained
+    /// one ran and was let go. The combat loop counts this as a cast.
     public var isFinished: Bool {
         switch self {
         case .cast, .released: true
@@ -139,8 +117,6 @@ nonisolated public enum SpellCastOutcome: Equatable, Sendable {
 
 /// One completed application: what was spent and what landed.
 nonisolated public struct SpellCastResult: Equatable, Sendable {
-    public let spell: ReferenceKey
-    public let hand: SpellHand
     /// Magicka actually taken off the caster.
     public let magickaSpent: Float
     /// Effect entries handed to the active-effect runtime.
@@ -178,8 +154,8 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
     /// Starts a charge.
     public mutating func beginCharge(_ spell: ReferenceKey) {
         self = SpellCastState()
-        self.spell = spell
         phase = .charging
+        self.spell = spell
     }
 
     /// Moves a fully charged fire-and-forget cast to the release window.
@@ -212,27 +188,13 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
         isReleasing = true
     }
 
-    /// Ends the cast, leaving the hand idle.
-    public mutating func finish() {
-        self = SpellCastState()
-    }
-
-    /// How close to a whole second counts as one.
-    ///
-    /// The same arithmetic detail `ActiveEffectRuntime` documents, and a real
-    /// failure the suites caught rather than a theoretical one: the simulation
-    /// step is 1/60 s, which has no exact binary representation, so sixty steps
-    /// sum to slightly under one second. Without the tolerance a maintained
-    /// spell would skip an application every second.
+    /// How close to a whole second counts as one. Sixty 1/60 s steps sum to just
+    /// under one second in binary floating point; without this tolerance a
+    /// maintained spell would skip an application.
     public static let secondTolerance: Float = 0.001
 
-    /// Applications that are due but have not happened yet, capped at the steps
-    /// one advance may run so a stalled frame cannot apply a minute of healing
-    /// at once.
-    ///
-    /// One at entry plus one per whole second held, which is why the count is
-    /// `elapsed + 1`: a maintained heal starts healing when it starts costing
-    /// rather than a second later.
+    /// Applications that are due, capped at the steps one advance may run. One at
+    /// entry plus one per whole second held, hence `elapsed + 1`.
     public func pendingApplications(limit: Int) -> Int {
         let elapsed = UInt32(max(0, held + Self.secondTolerance).rounded(.down))
         let due = elapsed &+ 1

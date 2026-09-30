@@ -22,12 +22,6 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     /// PROJ `collisionRadius`, world units. The radius the impact sweep uses;
     /// zero flies as a point and is a supported case, not a degraded one.
     public let collisionRadius: Float
-    /// PROJ `impactForce`, carried for whatever pushes a dynamic body with it.
-    public let impactForce: Float
-    /// PROJ flight SNDR; nil where the record names none.
-    public let sound: FormID?
-    /// PROJ MODL, so a stuck arrow can be drawn from the same mesh that flew.
-    public let modelPath: String?
 
     public init(
         projectile: FormID? = nil,
@@ -35,10 +29,7 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
         gravityFactor: Float,
         range: Float = 0,
         lifetime: Float = 0,
-        collisionRadius: Float = 0,
-        impactForce: Float = 0,
-        sound: FormID? = nil,
-        modelPath: String? = nil
+        collisionRadius: Float = 0
     ) {
         self.projectile = projectile
         self.speed = Self.clean(speed)
@@ -46,9 +37,6 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
         self.range = Self.clean(range)
         self.lifetime = Self.clean(lifetime)
         self.collisionRadius = Self.clean(collisionRadius)
-        self.impactForce = Self.clean(impactForce)
-        self.sound = sound
-        self.modelPath = modelPath
     }
 
     /// One decoded PROJ as a flight profile.
@@ -59,10 +47,7 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
             gravityFactor: record.gravityFactor,
             range: record.range,
             lifetime: record.lifetime,
-            collisionRadius: record.collisionRadius,
-            impactForce: record.impactForce,
-            sound: record.sound,
-            modelPath: record.modelPath
+            collisionRadius: record.collisionRadius
         )
     }
 

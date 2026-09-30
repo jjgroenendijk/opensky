@@ -1,11 +1,8 @@
-// M18 keyword and form-list condition functions (issue #455). The location
-// half is in `ConditionFunctionsDataLocations` to keep both files reviewable.
-//
-// Indices are raw stored numbers from xEdit dev-4.1.6
-// Core/wbDefinitionsTES5.pas. Creation Kit numbers are 4096 higher.
+// Keyword and form-list condition functions. The location half is in
+// `ConditionFunctionsDataLocations`. Indices are raw stored numbers from xEdit
+// dev-4.1.6 Core/wbDefinitionsTES5.pas; Creation Kit numbers are 4096 higher.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

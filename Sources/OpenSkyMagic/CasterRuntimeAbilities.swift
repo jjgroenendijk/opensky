@@ -1,30 +1,17 @@
-// Abilities (issue #470, roadmap item 19.7): the half of the caster runtime
-// that applies what an actor simply carries rather than what a hand casts.
-//
-// A satellite of `CasterRuntime` so that type stays under the strict-lint body
-// cap, and along a real seam: everything else in that file is a cast the player
-// asked for, and nothing here is cast at all.
-//
-// Documented in docs/engine/spellcasting.md.
+// Abilities: the part of the caster runtime that applies what an actor carries
+// rather than casts. A satellite of `CasterRuntime`, which is at its body cap.
+// See docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
 
 extension CasterRuntime {
-    /// Applies every ability `holder` knows as an effect on `holder`.
-    ///
-    /// An ability is a spell of SPIT type `ability`: nothing casts it, the actor
-    /// simply has it. Vanilla authors most ability entries with a zero duration,
-    /// meaning "for as long as the actor carries it", and the active-effect
-    /// runtime has no permanent mode — a zero-duration entry there applies once
-    /// and is stored nowhere, which for a resistance would be a one-off nudge
-    /// wearing the name of a permanent bonus. Those entries are counted here
-    /// rather than applied wrongly (`CastingTally.unheldAbilityEntries`); the
-    /// timed ones apply normally.
-    ///
+    /// Applies every ability `holder` knows as an effect on `holder`. A
+    /// zero-duration entry means "while carried", which the active-effect runtime
+    /// cannot hold, so it is counted (`CastingTally.unheldAbilityEntries`), not
+    /// applied wrongly.
     /// - Returns: how many timed effects were stored.
     @discardableResult
     public func applyAbilities(on holder: ActorValueHolder) -> Int {

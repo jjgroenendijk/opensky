@@ -1,36 +1,14 @@
-// Read-only index of every carryable base record in one plugin, behind one
-// unified view. The inventory runtime (#176) resolves an item FormID through
-// here instead of knowing which of the seven record families it belongs to.
-//
-// Naming and shape follow the existing immutable stores (`WeatherStore`,
-// `SoundRecordStore`): build once from an `ESMFile`, expose lookups, never
-// mutate.
-//
-// Containers are indexed separately from items. A CONT is not carryable — it
-// has no gold value and no weight — but the inventory runtime still has to
-// read a container's starting contents, so `container(_:)` sits alongside
-// `definition(_:)` rather than being forced into the same view.
-//
-// Stackability, v1: every item stacks by base FormID, which is what
-// `ItemDefinition.stackKey` returns. That is correct only while no
-// per-instance data exists. Tempering, enchanting, charge level and item
-// health all make two instances of the same base FormID distinct, so the key
-// grows into a compound one when the milestone that introduces per-instance
-// data lands; see docs/engine/runtime-state.md.
-//
-// Scope: single-plugin, raw-FormID keyed, matching the convention the actor
-// resolution indexes already use. Cross-plugin override resolution is a
-// separate concern (`GameSettingStore` does it for GMST) and is not needed
-// until the inventory runtime reads more than Skyrim.esm.
+// Read-only index of every carryable base record in one plugin, behind one view.
+// Containers are indexed separately with `container(_:)`. Every item stacks by
+// base FormID (`ItemDefinition.stackKey`), which holds until per-instance data
+// exists (docs/engine/runtime-state.md). Single-plugin, raw-FormID keyed.
 
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
-/// The ENCH link a weapon or a piece of armor carries, already resolved
-/// against the load order where a resolver was supplied (issue #466). The
-/// equipment runtime reads the resolved identity instead of walking plugins
-/// again for every equip.
+/// The ENCH link a weapon or armor carries, resolved against the load order when
+/// a resolver was supplied.
 nonisolated public struct ItemEnchantment: Equatable, Sendable {
     /// EITM exactly as the record writes it, relative to its own plugin.
     public let link: FormID
@@ -117,62 +95,30 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
 }
 
 nonisolated public final class ItemDefinitionStore {
-    /// Vanilla gold, `Gold001`.
-    ///
-    /// Gold is an ordinary `MISC` item and an ordinary stack — there is no
-    /// separate currency field anywhere in this engine, which is also how the
-    /// original data models it. Confirmed against the local install rather than
-    /// from memory: `openskycli record Gold001` reports
+    /// Vanilla gold, `Gold001`: an ordinary `MISC` stack. Checked on the install:
     /// `MISC 0000000F — decoded MISC: editorID Gold001, value 1, weight 0.00`.
-    /// Cross-checked against UESP "Skyrim:Gold".
     public static let vanillaGoldFormID = FormID(0x0000_000F)
 
     /// Carryable item definitions, keyed by raw FormID.
     public let definitions: [UInt32: ItemDefinition]
     /// CONT decodes, keyed by raw FormID.
     public let containers: [UInt32: Container]
-    /// WEAP decodes, keyed by raw FormID (issue #195).
-    ///
-    /// Kept beside the unified views rather than folded into them: melee
-    /// combat needs DNAM `reach`, `speed` and `stagger` and the INAM impact
-    /// link, and `ItemDefinition` deliberately carries only what every family
-    /// has in common. A second dictionary over the same records costs one
-    /// pointer per weapon and keeps the common view from growing a
-    /// weapon-shaped hole every other family fills with nil.
+    /// WEAP decodes, keyed by raw FormID. Kept beside the unified view, because melee
+    /// needs DNAM and INAM fields that `ItemDefinition` does not carry.
     public let weapons: [UInt32: Weapon]
-    /// AMMO decodes, keyed by raw FormID (issue #196).
-    ///
-    /// Beside the unified views for the same reason the WEAP decodes are:
-    /// archery needs DATA `damage` and the PROJ link, and `ItemDefinition`
-    /// carries only what every family has in common.
+    /// AMMO decodes, keyed by raw FormID, for archery's DATA `damage` and PROJ link.
     public let ammunition: [UInt32: Ammunition]
-    /// ALCH decodes, keyed by raw FormID (issue #469).
-    ///
-    /// Beside the unified views for the same reason the WEAP and AMMO decodes
-    /// are: consuming a potion needs its EFID/EFIT effect list, and
-    /// `ItemDefinition` deliberately carries only what every family has in
-    /// common.
+    /// ALCH decodes, keyed by raw FormID, for a potion's EFID/EFIT effect list.
     public let ingestibles: [UInt32: Ingestible]
-    /// INGR decodes, keyed by raw FormID (issue #469). Beside the ALCH decodes
-    /// for the same reason.
+    /// INGR decodes, keyed by raw FormID.
     public let ingredients: [UInt32: Ingredient]
-    /// BOOK decodes, keyed by raw FormID (issue #470). Beside the others for
-    /// the same reason: reading a spell tome needs the DATA "teaches" union,
-    /// and `ItemDefinition` carries only what every family has in common.
+    /// BOOK decodes, keyed by raw FormID, for the spell tome DATA union.
     public let books: [UInt32: Book]
-    /// ARMO decodes, keyed by raw FormID (issue #498).
-    ///
-    /// Beside the unified views for the same reason the WEAP decodes are: the
-    /// armour skills level on what the wearer is wearing, which is the BOD2
-    /// armour type, and `ItemDefinition` carries only what every family has in
-    /// common.
+    /// ARMO decodes, keyed by raw FormID, for the BOD2 armor type the armor skills
+    /// level on.
     public let armor: [UInt32: Armor]
-    /// PROJ decodes, keyed by raw FormID (issue #196).
-    ///
-    /// PROJ is not a carryable family and has no `ItemDefinition` view at all,
-    /// but the record an arrow points at is exactly what a shot needs next, so
-    /// it is indexed here rather than in a second store that would have to be
-    /// built from the same file and handed around beside this one.
+    /// PROJ decodes, keyed by raw FormID. Not carryable, but an arrow's shot needs
+    /// its PROJ, so it is indexed here.
     public let projectiles: [UInt32: Projectile]
 
     /// Records that failed to decode, by family — surfaced so the real-data
@@ -243,17 +189,8 @@ nonisolated public final class ItemDefinitionStore {
         armor[id.rawValue]?.bodyTemplate?.armorType
     }
 
-    /// The decoded BOOK behind an item, or nil when the item is not a book.
-    public func book(_ id: FormID) -> Book? {
-        books[id.rawValue]
-    }
-
-    /// The SPEL a spell tome teaches, or nil when `id` is not a book or is a
-    /// book that teaches no spell (issue #470).
-    ///
-    /// The link is plugin-relative and returned raw, because the caller holds
-    /// the plugin the item index was built from and the resolver that turns it
-    /// into a `ReferenceKey`.
+    /// The SPEL a spell tome teaches, or nil. The link is plugin-relative and raw;
+    /// the caller resolves it.
     public func teachesSpell(_ id: FormID) -> FormID? {
         guard case let .spell(spell) = books[id.rawValue]?.teaches else { return nil }
         return spell
@@ -273,14 +210,8 @@ nonisolated public final class ItemDefinitionStore {
         weapons[id.rawValue]
     }
 
-    /// The arrow `id` names, as everything a shot needs from it: its AMMO
-    /// damage and the flight profile of the PROJ it launches (issue #196).
-    ///
-    /// Nil when `id` is not ammunition, or when the PROJ it names is missing
-    /// or is not something the flight model can integrate — a hitscan record,
-    /// or one with no launch speed. An arrow that cannot fly is better
-    /// reported as no arrow than as a projectile that stands still where the
-    /// bow is.
+    /// The arrow `id` names: its AMMO damage and its PROJ flight profile. Nil when
+    /// `id` is not ammunition, or its PROJ is missing, hitscan, or has no speed.
     public func archeryAmmunition(_ id: FormID) -> ArcheryAmmunition? {
         guard
             let ammo = ammunition[id.rawValue],
@@ -291,14 +222,9 @@ nonisolated public final class ItemDefinitionStore {
         return ArcheryAmmunition(ammunition: ammo, projectile: projectile)
     }
 
-    /// The PROJ `id` names, as a flight profile (issue #471).
-    ///
-    /// The same index the arrow path reads, reached by the PROJ FormID an MGEF
-    /// carries rather than through an AMMO. Nil when the record is missing or
-    /// is not one the flight model can integrate — a hitscan record, or one
-    /// with no launch speed — so a spell whose projectile cannot fly is a
-    /// counted refusal rather than something standing still in the caster's
-    /// face.
+    /// The PROJ `id` names, as a flight profile, reached from an MGEF. Nil when the
+    /// record is missing, hitscan, or has no launch speed; the spell is then refused
+    /// and counted.
     public func projectileProfile(_ id: FormID) -> ProjectileProfile? {
         guard let projectile = projectiles[id.rawValue], projectile.isBallistic else {
             return nil
@@ -314,9 +240,8 @@ nonisolated public final class ItemDefinitionStore {
             .sorted { $0.formID.rawValue < $1.formID.rawValue }
     }
 
-    /// The ENCH behind an item's EITM, or nil when the item is unenchanted or
-    /// the store was built without a resolver (issue #466). The equipment
-    /// runtime reads this instead of re-walking plugins.
+    /// The ENCH behind an item's EITM, or nil when unenchanted or built without a
+    /// resolver.
     public func enchantment(of definition: ItemDefinition) -> ResolvedEnchantment? {
         guard
             let resolver = enchantments,

@@ -1,38 +1,11 @@
-// The magic half of the native-to-world seam (issue #474, roadmap item 19.11):
-// what a spell-facing native is allowed to ask of the session, and the
-// nonisolated hops the native bodies actually call.
-//
-// A protocol of its own that `PapyrusWorldBridge` refines, exactly as the quest
-// and actor halves are, and for the same reason: magic is a subsystem with its
-// own vocabulary — known spells, readied hands, active effects, a cast — and a
-// test that only cares about spells should be able to read this list on its
-// own.
-//
-// ## Why the reads come back as one observation
-//
-// `spellState(for:)` answers with a whole `PapyrusSpellState` rather than with
-// one getter per question, for the reason `actorState(for:)` does. Five natives
-// read this actor's magic and three of them are the same two components at
-// different angles; taking one observation is what stops `HasSpell` and
-// `GetEquippedSpell` from straddling a mutation inside one script line.
-//
-// ## Nothing here writes around the subsystems that own the state
-//
-// Learning and forgetting go through `SpellbookRuntime`, so a script's
-// `AddSpell` lands in the journal, the dirty counts and the save exactly as
-// reading a spell tome does, and readying a hand arbitrates against worn
-// equipment through the same path the panel's Ready button takes. Dispelling
-// goes through `ActiveEffectRuntime`, so the temporary modifier slots each
-// effect owned are handed back rather than leaked. `Spell.Cast` goes through
-// `CasterRuntime`, so a scripted cast applies its effect list through the one
-// implementation a player's cast uses.
-//
-// Documented in docs/engine/papyrus-spell-natives.md.
+// The magic half of the native-to-world seam. `spellState(for:)` returns one
+// observation, so related reads cannot straddle a write. Learning goes through
+// `SpellbookRuntime`, dispelling through `ActiveEffectRuntime`, and
+// `Spell.Cast` through `CasterRuntime`. See docs/engine/papyrus-spell-natives.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface
-import OpenSkyScriptingInterface
 
 /// One actor's magic as a Papyrus native sees it.
 nonisolated public struct PapyrusSpellState: Equatable, Sendable {

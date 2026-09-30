@@ -4,7 +4,6 @@
 
 import Foundation
 import OpenSkyCrimeInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
@@ -49,17 +48,17 @@ nonisolated public struct CellScene {
     public let interactions: [FormID: PlacedInteraction]
     /// XCLR REGN regions overlapping this exterior cell (empty on interiors +
     /// cells without XCLR). The streamer pushes the center cell's set into the
-    /// weather runtime so region-weighted selection runs live (M7.2.3).
+    /// weather runtime so region-weighted selection runs live.
     public let regions: [FormID]
-    /// XCAS acoustic space (ASPC) reference for interior ambience (M9.2.2);
+    /// XCAS acoustic space (ASPC) reference for interior ambience;
     /// nil on exteriors or interiors without one. The streamer pushes the
     /// current cell's value into the world sound director so its ambient bed
     /// resolves against the right ASPC record.
     public let acousticSpace: FormID?
-    /// XCMO music-type override authored on this CELL (M9.2.3); nil when the
+    /// XCMO music-type override authored on this CELL; nil when the
     /// cell authors none. First link in the music selection precedence chain.
     public let musicType: FormID?
-    /// CELL `XOWN`/`XRNK` (issue #504); nil when the cell is unowned. What a
+    /// CELL `XOWN`/`XRNK`; nil when the cell is unowned. What a
     /// reference standing here inherits when it authors no owner of its own,
     /// and what a trespass is judged against.
     public let owner: RecordOwnership?
@@ -67,7 +66,7 @@ nonisolated public struct CellScene {
     /// Carried rather than resolved because resolving it needs the load-order
     /// LCTN and FACT stores, which the cell builder has no business holding:
     /// the crime faction is `CrimeFactionResolver`'s answer, walking this
-    /// link's parent chain (issue #504).
+    /// link's parent chain.
     public let locationLink: FormID?
     /// The plugin `owner` and `locationLink` are spelled against, which is the
     /// plugin the cell record was read from.
@@ -79,7 +78,7 @@ nonisolated public struct CellScene {
     /// interiors or cells with no drawable terrain.
     public let terrainHeightField: TerrainHeightField?
     /// Flat water-surface height for this cell, resolved from CELL XCLW over
-    /// the worldspace default the same way the drawn plane is (issue #188).
+    /// the worldspace default the same way the drawn plane is.
     /// nil where the cell has no water. One height per cell, because vanilla
     /// authors one plane per cell.
     public let waterHeight: Float?
@@ -89,28 +88,28 @@ nonisolated public struct CellScene {
     /// Immutable mesh collision + per-cell broadphase. Empty for cells built
     /// without a collision VFS (legacy synthetic tests).
     public let staticCollision: StaticCollisionSet
-    /// Immutable authored trigger volumes for this cell (issue #173):
+    /// Immutable authored trigger volumes for this cell:
     /// SkyrimLayer 12 NIF bodies plus `XPRM` box and sphere primitives, over
     /// the same broadphase the solid set uses. Empty for cells built without a
     /// collision VFS or without reference retention.
     public let triggerVolumes: TriggerVolumeSet
-    /// Rigid bodies this cell places into the dynamic world (issue #193): the
+    /// Rigid bodies this cell places into the dynamic world: the
     /// movable clutter its references carry, already inertially described and
     /// posed. Empty for a cell built without a collision VFS or without
     /// reference retention, because a simulated body is registered under a
     /// `ReferenceKey`.
     public let dynamicBodies: [DynamicBodyPlacement]
-    /// Immutable authored walkable surfaces for this cell (issue #200).
+    /// Immutable authored walkable surfaces for this cell.
     /// The streamer installs them into its resident navigation graph and
     /// removes them with the scene; an empty array means the cell has no
     /// usable NAVM records.
     public let navmeshes: [Navmesh]
     /// Decoded REFR/ACHR records of this cell, addressable by session-stable
-    /// `ReferenceKey` and by raw FormID (issue #158). Empty for cells built
+    /// `ReferenceKey` and by raw FormID. Empty for cells built
     /// without reference retention (synthetic render tests).
     public let references: RuntimeReferenceIndex
-    /// Journal sequence of the `WorldStateSnapshot` this cell was built from
-    /// (issue #160). 0 means the build applied no runtime state. Comparing it
+    /// Journal sequence of the `WorldStateSnapshot` this cell was built from.
+    /// 0 means the build applied no runtime state. Comparing it
     /// against the store's current sequence is how the streamer will tell a
     /// stale scene from a current one.
     public let stateSequence: UInt64
@@ -212,14 +211,14 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
     public var waterPlaneCount = 0
     /// Supported LIGH/XEMI placements available to forward draws.
     public var pointLightCount = 0
-    /// References the runtime disabled since load (issue #160) — the same
+    /// References the runtime disabled since load — the same
     /// intentional skip an initially-disabled record gets, arrived at from
     /// world state rather than from the plugin.
     public var runtimeDisabledSkipCount = 0
     /// References the runtime deleted since load. Not the record header's
     /// `deleted` flag, which is filtered before a reference is ever counted.
     public var runtimeDeletedSkipCount = 0
-    /// Objects the running game placed in this cell (issue #177): dropped
+    /// Objects the running game placed in this cell: dropped
     /// items today. They are outside `totalRefCount`, which counts what the
     /// plugin authored, and inside `drawnRefCount`, which counts what the cell
     /// drew — so the accounting identity is
@@ -248,7 +247,7 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
     public var actorAnimationFailureCount = 0
     public var actorAnimationFailureReasons: [String] = []
     /// Reason-tagged appearance skips, per actor, as
-    /// "ACHR <id>: <reason> (<subject>)" (issue #180). A rendered actor can
+    /// "ACHR <id>: <reason> (<subject>)". A rendered actor can
     /// carry these — a masked skin part is a resolution decision, not a
     /// failure — so this list is outside the accounting identities above and
     /// is read by the `World > Inventory & Equipment` equipment inspection.

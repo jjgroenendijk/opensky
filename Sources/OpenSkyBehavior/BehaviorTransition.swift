@@ -1,23 +1,8 @@
-// Transitions in flight (issue #330): the flag map a `hkbStateMachineTransitionInfo`
-// carries, the crossfade one `hkbBlendingTransitionEffect` runs, and the blend
-// curve that shapes it.
-//
-// The flag map below is not taken on faith. It comes from the same open-source
-// lineage as the byte layouts (hkxparse/HKX2Library, ZeldaMods Havok wiki; see
-// `docs/decisions/havok-behavior-scope.md`), and every bit this file acts on was
-// then checked against the local install by the probe recorded in
-// `docs/engine/behavior-state-machines.md`:
-//
-// * `0x100` is set on 3,340 of the 3,769 transitions and on exactly the
-//   transitions that carry no `m_condition` pointer, which is what
-//   `FLAG_DISABLE_CONDITION` means.
-// * `0x400` and `0x800` appear only inside `m_wildcardTransitions` arrays,
-//   which is what the two wildcard bits mean.
-// * `0x2000` appears only where `m_toNestedStateId` is a state id the
-//   destination's nested machine declares.
-//
-// Bits the vanilla player graph never sets (`0x8`, `0x40`, `0x80`, `0x4000`)
-// are named for completeness and not acted on.
+// Transitions in flight: the `hkbStateMachineTransitionInfo` flag map, the
+// `hkbBlendingTransitionEffect` crossfade, and its blend curve. The flag map
+// comes from open sources (`docs/decisions/havok-behavior-scope.md`) and was
+// checked against the install (`docs/engine/behavior-state-machines.md`). Bits
+// the player graph never sets are named but not acted on.
 
 import Foundation
 
@@ -57,8 +42,6 @@ nonisolated public enum BehaviorTransitionEffectFlag: Sendable {
     public static let ignoreFromGenerator = 0x1
     /// Align the incoming generator's clip time with the outgoing one's.
     public static let sync = 0x2
-    public static let ignoreWorldFromModel = 0x4
-    public static let ignoreToGenerator = 0x8
 }
 
 /// `hkbBlendCurveUtils::BlendCurve` as the transition effects decode it. Only

@@ -1,30 +1,7 @@
-// Persistent death (issue #197, roadmap item 15.6): the world-state component
-// that makes an actor still dead after a save and a reload.
-//
-// It sits beside `ActorValueState` rather than inside it, following the same
-// rule the quest slots follow. The two have different lifetimes: actor values
-// are a live simulation quantity that regeneration rewrites every fixed step,
-// while death is a one-way latch that nothing but a resurrection clears. Folding
-// the latch into the regenerating value would mean rewriting the death record
-// sixty times a second for no change, and would make "is this actor dead" a
-// question about a float rather than about a fact.
-//
-// ## What is persisted, and what is not
-//
-// The resting **root** transform, not the per-bone pose. A vanilla ragdoll is
-// eighteen bodies; the pose that settles them is a hundred and forty-four floats
-// per corpse, and every one of them would have to survive a save, a load, and a
-// cell rebuild to be worth recording.
-//
-// The visual consequence is stated plainly because it is real and a player can
-// see it: **a corpse reloads lying at the place and facing it came to rest, in
-// the skeleton's rest pose rather than in the exact tangle it died in.** A body
-// that fell face-down across a stair comes back face-down at the foot of the
-// stair, laid out straight. Recording the full pose is a later item's to take
-// on if it is ever worth the save-file cost; nothing here forecloses it, because
-// the component would gain a field rather than change shape.
-//
-// Documented in docs/engine/ragdoll.md and docs/engine/runtime-state.md.
+// Persistent death: the component that keeps an actor dead after a reload. It is
+// a one-way latch, separate from the regenerating actor values. Only the resting
+// root transform is stored, not the bone pose, so a corpse reloads in its rest
+// pose. See docs/engine/ragdoll.md and docs/engine/runtime-state.md.
 
 import OpenSkyFormatsCore
 import OpenSkyWorldState
@@ -86,10 +63,4 @@ nonisolated extension WorldStateComponentKind {
     /// different lifetimes: a current-health float is rewritten every regeneration
     /// step, while death is a latch nothing but a resurrection clears.
     public static let death = Self(rawValue: "death", order: 9)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func death(_ value: ActorDeathState) -> Self {
-        Self(value)
-    }
 }

@@ -1,5 +1,4 @@
 import Foundation
-import OpenSkyWorldState
 
 /// Which clock a timer counts against.
 nonisolated public enum PapyrusUpdateTimerFamily: Hashable, Sendable {

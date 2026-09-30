@@ -1,7 +1,7 @@
-// The player-locomotion half of the world-provider fake (issue #188), in its
+// The player-locomotion half of the world-provider fake, in its
 // own file so `FakeWorldProviders` stays inside the type-length cap.
 //
-// The panel that consumes this seam lands with the locomotion gate (#191); the
+// The panel that consumes this seam lands with the locomotion gate; the
 // fake exists now so the aggregate provider protocol stays satisfiable and the
 // registry tests keep compiling.
 
@@ -60,10 +60,10 @@ extension FakeWorldProviders {
             status: locomotion.status,
             bindings: [
                 LocomotionBindingSnapshot(
-                    id: "run", label: "Run", key: "Shift (hold)", isActive: false
+                    label: "Run", key: "Shift (hold)", isActive: false
                 ),
                 LocomotionBindingSnapshot(
-                    id: "sneak", label: "Sneak", key: "C (toggle)", isActive: locomotion.sneaking
+                    label: "Sneak", key: "C (toggle)", isActive: locomotion.sneaking
                 )
             ],
             configuration: movementConfiguration,
@@ -101,7 +101,7 @@ extension FakeWorldProviders {
     }
 }
 
-/// The first-person half of the fake's stored state (issue #190).
+/// The first-person half of the fake's stored state.
 struct FakeFirstPersonState {
     var armsEnabled = true
     var fovYDegrees = FirstPersonCamera.defaultFOVYDegrees
@@ -124,7 +124,7 @@ extension FakeWorldProviders {
     }
 }
 
-/// The melee half of the fake's stored state (issue #195). Held beside the
+/// The melee half of the fake's stored state. Held beside the
 /// locomotion state because the Melee section sits under the same destination
 /// and both are driven by the same fake in the registry tests.
 struct FakeMeleeState {
@@ -158,7 +158,7 @@ extension FakeWorldProviders {
     }
 }
 
-/// The archery half of the fake's stored state (issue #196). Beside the melee
+/// The archery half of the fake's stored state. Beside the melee
 /// state for the same reason: the Archery section sits under the same
 /// destination and the same fake drives both in the registry tests.
 struct FakeArcheryState {
@@ -198,7 +198,7 @@ extension FakeWorldProviders {
     }
 }
 
-/// RagdollControlProviding (issue #197, roadmap item 15.6) state.
+/// RagdollControlProviding state.
 struct FakeRagdollState {
     var snapshot = RagdollStatsSnapshot()
     var triggerRequests = 0

@@ -1,12 +1,5 @@
-// What skill advancement did and declined to do (issue #498, roadmap item
-// 20.5): the per-advance report a caller reads and the session-wide tally a
-// sweep asserts against.
-//
-// Split out of `PlayerProgressState.swift` when item 20.6 turned that file into
-// the persisted character-level component: these two are session reporting and
-// belong beside the runtime that produces them, not beside a save chunk.
-//
-// Documented in docs/engine/skill-advancement.md.
+// What skill advancement did and declined to do: the per-advance report and the
+// session-wide tally. See docs/engine/skill-advancement.md.
 
 import Foundation
 
@@ -26,7 +19,7 @@ nonisolated public struct SkillAdvanceReport: Equatable, Sendable {
     /// nothing levelled.
     public let characterExperience: Float
     /// What banking that experience did to the character level, or nil when the
-    /// session runs no character leveling (issue #499).
+    /// session runs no character leveling.
     public let levelUp: PlayerLevelUpReport?
 
     public init(
@@ -45,10 +38,6 @@ nonisolated public struct SkillAdvanceReport: Equatable, Sendable {
         self.carriedExperience = carriedExperience
         self.characterExperience = characterExperience
         self.levelUp = levelUp
-    }
-
-    public var levelsGained: Int {
-        Int(level - previousLevel)
     }
 
     public var didAdvance: Bool {
@@ -77,7 +66,7 @@ nonisolated public struct SkillAdvancementTally: Equatable, Sendable {
     public private(set) var missingParameters = 0
     /// Uses dropped because the amount was zero, negative or not finite.
     public private(set) var emptyUses = 0
-    /// Character levels gained by the points this runtime granted (issue #499).
+    /// Character levels gained by the points this runtime granted.
     public private(set) var characterLevels = 0
 
     public var isClean: Bool {

@@ -1,41 +1,15 @@
-// Filled quest aliases as a world-state component (issue #183, roadmap item
-// 13.4): which world reference each of a running quest's reference aliases
-// currently stands for.
-//
-// A component of its own rather than another field on `QuestRuntimeState`,
-// keyed by the same QUST `ReferenceKey`, because the two have different
-// lifetimes and different save shapes. Stage and objective state survives a
-// stop — "stopping a quest is not resetting it" (item 13.2) — while the alias
-// table is cleared on stop, since the Creation Kit is explicit that aliases are
-// filled when the quest starts and hold nothing before that:
-//
-//   "Note that the aliases are not actually 'filled' until the quest starts
-//   running - what is defined in the Quest Alias tab is how the alias will be
-//   filled when the quest starts."
-//   (<https://ck.uesp.net/wiki/Alias>)
-//
-// Keeping them apart also keeps the `QSTS` save chunk byte-identical to what
-// item 13.2 wrote: the fills travel in their own additive `QALS` chunk, so a
-// build that predates alias resolution still loads a save taken after it.
-//
-// One invariant, enforced in `init` rather than checked at use sites, for the
-// same reason `QuestRuntimeState`'s two are: `fills` is sorted by alias ID and
-// holds at most one entry per ID, which is what makes two stores that filled
-// the same aliases encode byte-identically.
-//
-// Documented in docs/engine/quest-state.md.
+// Filled quest aliases as a world-state component: the reference each alias of
+// a running quest stands for. Separate from `QuestRuntimeState`, because stage
+// state survives a stop and aliases do not (<https://ck.uesp.net/wiki/Alias>).
+// Saved in its own `QALS` chunk. `init` keeps `fills` sorted by alias ID, one
+// entry per ID. See docs/engine/quest-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
 /// One filled reference alias: the ALST alias ID and the world reference it
-/// resolved to.
-///
-/// The target is a session-stable `ReferenceKey` rather than a FormID because
-/// that is the identity everything downstream addresses — the Papyrus handle
-/// map, the condition run-on resolution, the save file — and because a FormID
-/// is load-order relative and would be wrong after the plugin list changes.
+/// resolved to, as a session-stable `ReferenceKey`.
 nonisolated public struct QuestAliasFill: Equatable, Sendable {
     /// ALST/ALLS number the quest's scripts and conditions address the alias by.
     public let aliasID: UInt32
@@ -223,10 +197,4 @@ nonisolated extension WorldStateComponentKind {
     /// the two have different lifetimes: stage and objective state survives a stop,
     /// while the alias table is cleared by one.
     public static let questAliases = Self(rawValue: "questAliases", order: 7)
-}
-
-nonisolated extension WorldStateComponentValue {
-    public static func questAliases(_ value: QuestAliasState) -> Self {
-        Self(value)
-    }
 }

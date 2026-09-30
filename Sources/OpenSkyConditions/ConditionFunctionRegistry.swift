@@ -1,18 +1,7 @@
-// The CTDA condition-function table (issue #251), keyed by the raw on-disk
-// function index.
-//
-// Skyrim defines several hundred condition functions. OpenSky implements the
-// handful the engine can honestly answer today and leaves the rest to
-// `ConditionTally`, which counts every miss by index so the real-data sweep can
-// rank what to implement next. Registering a function OpenSky cannot really
-// compute would trade a measurable gap for a silent wrong answer, so the
-// registry stays small on purpose.
-//
-// Index numbering: the value stored in a CTDA field is the Creation Kit's
-// number minus 4096, and this registry is keyed by the stored value.
-//
-// Shape mirrors `AS2Natives`: one `install` entry point, family installers in
-// satellite files, no giant switch.
+// The CTDA condition-function table, keyed by the stored function index (the
+// Creation Kit number minus 4096). Only functions OpenSky can answer honestly
+// are registered; `ConditionTally` counts every miss. Family installers live in
+// satellite files, like `AS2Natives`.
 
 import Foundation
 
@@ -24,7 +13,6 @@ nonisolated public enum ConditionParameterType: Equatable, Sendable {
     case unused
     case formID
     case integer
-    case float
 }
 
 /// One condition function: what it is called, how its parameters are typed, and

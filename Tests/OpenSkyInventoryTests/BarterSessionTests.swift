@@ -1,10 +1,6 @@
-// Merchant transactions (issue #179): conservation of gold and of items across
-// a buy and a sell, the two insufficient-funds refusals, and the journalling
-// that makes a transaction survive a save.
-//
-// Reuses the synthetic plugin `InventoryBaselineFixture` builds and the
-// reference harness `WorldItemRuntimeTests` builds, so a merchant is an
-// ordinary container reference here exactly as it is in the engine.
+// Merchant transactions: gold and items are conserved across a buy and a
+// sell, the two insufficient-funds refusals, and the journal entries a save
+// needs. A merchant is an ordinary container reference here.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -87,9 +83,7 @@ struct BarterSessionTests {
 
         let bought = try shop.session.buy(Fixture.cuirass)
 
-        #expect(bought == BarterTransaction(
-            kind: .buy, item: Fixture.cuirass, count: 1, gold: 388
-        ))
+        #expect(bought == BarterTransaction(count: 1, gold: 388))
         #expect(shop.inventory.count(of: Fixture.cuirass, in: .player) == 1)
         #expect(shop.inventory.count(of: Fixture.cuirass, in: shop.merchant) == 2)
         #expect(shop.session.playerGold == 1000 - 388)
@@ -126,7 +120,7 @@ struct BarterSessionTests {
 
         let sold = try shop.session.sell(Fixture.sword)
 
-        #expect(sold == BarterTransaction(kind: .sell, item: Fixture.sword, count: 1, gold: 8))
+        #expect(sold == BarterTransaction(count: 1, gold: 8))
         #expect(shop.inventory.count(of: Fixture.sword, in: .player) == 0)
         #expect(shop.session.playerGold == 1008)
         #expect(shop.session.merchantGold == 1000 + 1 - 8)
@@ -142,7 +136,7 @@ struct BarterSessionTests {
         #expect(totals(shop) == before)
     }
 
-    /// The zero-gold merchant named in the issue: it can buy nothing and still
+    /// A zero-gold merchant can buy nothing and still
     /// sell everything.
     @Test func aMerchantWithNoGoldBuysNothingAndSellsEverything() throws {
         let shop = try openShop(merchantGold: 0)

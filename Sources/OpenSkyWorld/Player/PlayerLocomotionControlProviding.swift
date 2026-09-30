@@ -1,15 +1,7 @@
-// Live-renderer seam for the `World > Player & Locomotion` destination
-// (issues #188 and #191). Same shape as the other panel bridges: one Equatable
-// snapshot crosses from the engine to the readout, polled at 2 Hz, plus the
-// actions the sections can invoke.
-//
-// The seam was declared with the character-controller bridge (#188) so the
-// sprint, sneak and jump bindings that milestone added could not be reachable
-// only by an unadvertised keystroke; the gate (#191) grew it into the whole
-// destination — the live graph, the motion trace, and the two dev controls —
-// without changing that shape.
-//
-// Documented in docs/engine/locomotion-graph.md.
+// Live-renderer seam for the `World > Player & Locomotion` destination: one
+// Equatable snapshot polled at 2 Hz, plus the actions the sections invoke. It
+// covers the sprint, sneak, and jump bindings, the live graph, the motion
+// trace, and the dev controls. See docs/engine/locomotion-graph.md.
 
 import Foundation
 import OpenSkyBehavior
@@ -19,13 +11,11 @@ import OpenSkyPhysics
 /// `isActive` is whether that input is asserted right now, so a user can press
 /// the key and watch the row light up rather than trusting the label.
 nonisolated public struct LocomotionBindingSnapshot: Equatable, Sendable {
-    public let id: String
     public let label: String
     public let key: String
     public let isActive: Bool
 
-    public init(id: String, label: String, key: String, isActive: Bool) {
-        self.id = id
+    public init(label: String, key: String, isActive: Bool) {
         self.label = label
         self.key = key
         self.isActive = isActive
@@ -41,10 +31,6 @@ nonisolated public struct LocomotionVariableSnapshot: Equatable, Sendable {
     /// The live value, formatted by the graph's own type, or nil when the graph
     /// declares no variable of that name.
     public let value: String?
-
-    public var isBound: Bool {
-        value != nil
-    }
 
     public init(name: String, value: String?) {
         self.name = name
@@ -69,7 +55,7 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
     /// The state path the third-person graph resolved on its last update, from
     /// the outermost state machine inward.
     public let activeStates: [BehaviorActiveState]
-    /// The same for the first-person graph (issue #190), kept apart so a
+    /// The same for the first-person graph, kept apart so a
     /// perspective that diverges is visible rather than averaged.
     public let firstPersonActiveStates: [BehaviorActiveState]
     /// Every variable the bridge writes, with the value the graph holds.

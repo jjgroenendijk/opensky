@@ -1,11 +1,7 @@
-// SWF display-list encode (M8.2.4): renders the assigned movie's frame-1
-// command stream over the finished 3D frame, inside the scene pass after the
-// world draws and before the dev UI overlay. Per draw: one 256-byte uniform
-// slot carrying the concatenated place -> movie -> viewport -> NDC transform,
-// the fill mapping, and the CXFORM; shape draws bind the movie's static
-// twip-space vertex buffer, text draws bind the per-frame glyph-quad ring.
-// Clip layers use a counting stencil: begin/end mask draws increment/
-// decrement, content tests stencil == active-clip count.
+// SWF display-list encode: draws the movie's frame-1 commands over the 3D frame,
+// before the dev UI. Each draw has a 256-byte uniform slot with the combined
+// transform, fill mapping, and CXFORM. Shapes use the movie's twip-space vertex
+// buffer; text uses the glyph-quad ring. Clip layers use a counting stencil.
 
 import Metal
 import MetalKit
@@ -67,12 +63,9 @@ extension Renderer {
         }
     }
 
-    /// Hands one released movie's glyph cells back to the shared atlas. Without
-    /// this a host that swaps movies fills the fixed-size atlas with fonts
-    /// nothing draws any more, and later movies render with no text at all
-    /// (issue #127). Safe between frames: survivors move, but the SWF and UI
-    /// passes both re-query the atlas every frame and the bumped revision
-    /// re-uploads the texture.
+    /// Hands one released movie's glyph cells back to the shared atlas, so swapped
+    /// movies do not fill it. Safe between frames: both passes re-query the atlas,
+    /// and the bumped revision re-uploads the texture.
     private func releaseSWFGlyphs(generation: Int) {
         uiResources.glyphAtlas.releaseSWFGlyphs { fontKey in
             SWFTextPlanner.generation(forFontKey: fontKey) == generation
@@ -220,10 +213,6 @@ nonisolated public struct SWFFrameBuilder {
     public private(set) var glyphVertices: [SWFVertex] = []
     public private(set) var skipped = 0
     private var glyphQuadCount = 0
-
-    public init(movie: SWFMovieResources, viewport: SIMD2<Float>, glyphAtlas: UIGlyphAtlas) {
-        self.init(movie: movie, viewport: viewport, contentScale: 1, glyphAtlas: glyphAtlas)
-    }
 
     public init(
         movie: SWFMovieResources,

@@ -1,31 +1,8 @@
-// The fight, as one object (issues #374 and #424, roadmap items 15.7 and 16.7).
-//
-// Items 15.3 through 15.6 built the pieces: values that can be taken off, a
-// swing that takes them, an arrow that flies, a corpse that falls and can be
-// looted. Item 15.7 made those into a loop with a stand-in opponent — a clock
-// that attacked on a fixed interval from wherever it stood. Item 16.7 deletes
-// the clock and puts a mind in its place:
-//
-//   * hostility, one enum per actor, entered by the player's own blow, the panel
-//     toggle or a script (`ActorCombatState`);
-//   * a combat behavior machine per hostile actor (`CombatBehaviorMachine`),
-//     which approaches through 16.4 movement, attacks through the shipping
-//     windup-contact-recovery path, blocks, breaks off at low health, searches
-//     the last place it perceived its target and gives up;
-//   * combat state, derived every step from who is *engaged* rather than from
-//     who is angry (`CombatLoopState`);
-//   * reactions in both directions — the actor staggers, the player recoils;
-//   * bounds on everything the fight spawns (`CombatTransientLimits`) and on how
-//     many actors may fight at once;
-//   * and the combat-music edge, which now falls the moment the last opponent
-//     gives up rather than when it is finally killed.
-//
-// Main-actor, like the other directors, and advanced from the same paused-aware
-// world delta the actor-value runtime, the perception pass and the ragdolls
-// take. Everything it touches the world with goes through `CombatLoopWorld`, so
-// the whole runtime is testable against a fake.
-//
-// Documented in docs/engine/combat.md.
+// The fight as one object: hostility (`ActorCombatState`), one behavior machine
+// per hostile actor (`CombatBehaviorMachine`), combat state derived from who is
+// engaged (`CombatLoopState`), reactions, transient bounds
+// (`CombatTransientLimits`), and the combat-music edge. All world access goes
+// through `CombatLoopWorld`. See docs/engine/combat.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -45,13 +22,10 @@ public final class CombatLoopRuntime: CombatControlling {
     /// `ActorValueRuntime.maximumStepsPerAdvance`.
     public static let maximumStepsPerAdvance = 8
 
-    /// Most actors that may hold a behavior machine at once (scope point 7).
-    ///
-    /// Deliberately `ActorMovementLimits.maximumSimultaneousMovers`: every
-    /// engaged actor asks the mover for a path, so a ninth fighter would be one
-    /// whose approach silently never started. Past the cap the nearest actors
-    /// win and `crowdedOutCount` says how many did not, because a silent
-    /// truncation would read as "nobody else was fighting".
+    /// Most actors that may hold a behavior machine at once. Equal to
+    /// `ActorMovementLimits.maximumSimultaneousMovers`, because each engaged actor
+    /// needs a mover. Past the cap the nearest win, and `crowdedOutCount` counts
+    /// the rest.
     public static let maximumEngagedActors = ActorMovementLimits.maximumSimultaneousMovers
 
     /// How many incoming hits the trace keeps.
@@ -129,13 +103,9 @@ public final class CombatLoopRuntime: CombatControlling {
         return changed
     }
 
-    /// Makes `key` hostile because the player hurt it, which is one of the three
-    /// ways hostility is entered.
-    ///
-    /// Idempotent, so the several places a blow lands — a swing, an arrow, a
-    /// script — can all call it without checking first.
-    ///
-    /// - Returns: true when this call is what turned the actor hostile.
+    /// Makes `key` hostile because the player hurt it. Idempotent, so every hit path
+    /// can call it.
+    /// - Returns: true when this call turned the actor hostile.
     @discardableResult
     public func provoke(_ key: ReferenceKey) -> Bool {
         guard key != .player, hostility(of: key) != .hostile else { return false }
@@ -171,13 +141,9 @@ public final class CombatLoopRuntime: CombatControlling {
 
     // MARK: - Script control (scope point 6)
 
-    /// `StartCombat`: makes `actor` fight `target` at once, without waiting for
-    /// it to perceive anything.
-    ///
-    /// - Returns: true when the actor is now fighting. False for the player as
-    ///   the aggressor, for an actor this session does not track, and for a
-    ///   target other than the player — the fight this engine runs is against
-    ///   the player, so naming anybody else would be a fight nothing simulates.
+    /// `StartCombat`: makes `actor` fight `target` at once.
+    /// - Returns: true when the actor is now fighting. False for the player as the
+    ///   aggressor, an untracked actor, or a target other than the player.
     @discardableResult
     public func startCombat(_ actor: ReferenceKey, with target: ReferenceKey) -> Bool {
         guard let world, actor != .player, target == .player else { return false }
@@ -224,12 +190,6 @@ public final class CombatLoopRuntime: CombatControlling {
         return phase == .searching ? .searching : .fighting
     }
 
-    /// Who `key` is fighting, which is the player unless a script said
-    /// otherwise.
-    public func target(of key: ReferenceKey) -> ReferenceKey {
-        forcedTargets[key] ?? .player
-    }
-
     /// Whether `key` engages without having to perceive its target: a script
     /// called `StartCombat`, or the player hit it and it has not turned around
     /// yet.
@@ -239,13 +199,8 @@ public final class CombatLoopRuntime: CombatControlling {
 
     // MARK: - Frames
 
-    /// Advances the fight by a wall delta, running whole fixed steps only.
-    ///
-    /// A zero delta advances nothing and is safe to call every frame — the
-    /// established menu-pause rule, which reaches this layer as delta 0 exactly
-    /// as it reaches the Papyrus VM and the actor-value runtime. A negative or
-    /// non-finite delta is treated the same way rather than run backwards.
-    ///
+    /// Advances the fight by a wall delta, running whole fixed steps only. A zero,
+    /// negative, or non-finite delta runs nothing, so a paused menu is safe.
     /// - Returns: how many whole steps ran.
     @discardableResult
     public func advance(by delta: Float) -> Int {
@@ -266,15 +221,9 @@ public final class CombatLoopRuntime: CombatControlling {
 
     // MARK: - Persistence
 
-    /// Drops everything a reload cannot reproduce, which is what makes a fight
-    /// saved mid-swing resume consistently. Called on both sides of a save.
-    ///
-    /// Hostility and actor values are untouched: those are components and the
-    /// save carries them. What goes is the in-flight transients — arrows in the
-    /// air, corpses still falling — and every machine's phase, which restarts
-    /// from "not fighting" rather than resuming mid-windup. An actor that is
-    /// still hostile and can still perceive the player re-engages on the first
-    /// step after the load, which is the same route it took the first time.
+    /// Drops what a reload cannot reproduce: arrows in flight, falling corpses, and
+    /// every machine's phase. Hostility and actor values stay; the save holds them.
+    /// Called on both sides of a save.
     public func prepareForPersistence() {
         world?.despawnCombatTransients()
         for key in behaviors.keys.sorted() {
