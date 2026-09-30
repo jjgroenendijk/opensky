@@ -10,20 +10,17 @@
 import Foundation
 import OpenSkyFormatsCore
 
-/// An immutable subrecord-to-slot table. `WritableKeyPath` is not `Sendable`
-/// under Swift 6 language mode, so a `static let` dictionary of key paths reads
-/// to the compiler as shared mutable state. A key path value is in fact an
-/// immutable descriptor — the mutation happens through it, on the caller's own
-/// `Root` — so the tables are safe to share, and wrapping them here keeps them
-/// as constants instead of rebuilding four dictionaries per subrecord.
-nonisolated private struct AliasSlotTable<Value>: @unchecked Sendable {
-    private let slots: [FourCC: WritableKeyPath<Quest.Alias, Value>]
+/// An immutable subrecord-to-slot table, shared as a `static let` constant.
+nonisolated private struct AliasSlotTable<Value>: Sendable {
+    typealias Slot = Sendable & WritableKeyPath<Quest.Alias, Value>
 
-    init(_ slots: [FourCC: WritableKeyPath<Quest.Alias, Value>]) {
+    private let slots: [FourCC: Slot]
+
+    init(_ slots: [FourCC: Slot]) {
         self.slots = slots
     }
 
-    subscript(code: FourCC) -> WritableKeyPath<Quest.Alias, Value>? {
+    subscript(code: FourCC) -> Slot? {
         slots[code]
     }
 }

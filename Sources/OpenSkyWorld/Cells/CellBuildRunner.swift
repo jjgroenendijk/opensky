@@ -1,8 +1,6 @@
-// Off-main cell build execution (todo 3.2 async build): the serial-executor
-// half of streaming. CellSceneProvider is the build seam (real builder in the
-// app, a fake in unit tests); CellBuildRunning runs builds off the main thread
-// and buffers their results for the main-thread streamer to poll once per
-// frame. Concurrency confinement decision: docs/engine/cell-streaming.md.
+// Off-main cell builds. `CellSceneProvider` is the build seam (the real builder
+// in the app, a fake in unit tests); `CellBuildRunning` runs builds off the main
+// thread and buffers results for the streamer to poll once per frame.
 
 import Foundation
 import OpenSkyAudio
@@ -15,6 +13,8 @@ import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState
+import os
+import Synchronization
 
 /// Builds one cell scene by grid coordinate. The single seam scene build
 /// crosses to reach `CellSceneBuilder`; a fake conformer lets CellStreamer
@@ -381,29 +381,32 @@ nonisolated extension CellBuildRunning {
     }
 }
 
-/// Production runner: one serial `DispatchQueue` builds cells one at a time
-/// (matching the 3.2 "build one at a time" budget) off the main thread. The
-/// provider + its libraries are confined to this queue; the only shared state
-/// is the tiny completion buffer, guarded by its own lock. That lock lives
-/// here, not inside the libraries -- confinement keeps the caches lock-free.
+/// Builds cells one at a time on one serial queue, off the main thread.
+/// Unchecked `Sendable`: the provider and its scenes are not `Sendable`; they stay
+/// on `queue` until `results` hands a scene over (docs/engine/cell-streaming.md).
 nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @unchecked Sendable {
+    nonisolated private struct Bookkeeping {
+        /// Lets the fly-path gate prove each wanted cell built once.
+        var buildCounts: [CellCoordinate: Int] = [:]
+        var buildMetrics: [CellCoordinate: CellBuildMetric] = [:]
+        /// Queued or building. A duplicate enqueue is a no-op, which bounds the
+        /// queue depth to the grid size even if the streamer has a bug.
+        var pending: Set<CellCoordinate> = []
+        var pendingLOD: Set<CellCoordinate> = []
+        var pendingDoorTransitions: Set<FormID> = []
+    }
+
+    nonisolated private struct Results {
+        var cells: [CellBuildResult] = []
+        var distantLOD: [DistantLODBuildResult] = []
+        var doorTransitions: [DoorTransitionBuildResult] = []
+    }
+
     private let provider: any CellSceneProvider
     private let queue: DispatchQueue
-    private let lock = NSLock()
-    private var completed: [CellBuildResult] = []
-    /// Execution counts support streaming verification. Kept beside pending
-    /// under the same lock so the fly-path gate can prove each desired cell
-    /// built once, including completed results not drained yet.
-    private var buildCounts: [CellCoordinate: Int] = [:]
-    private var buildMetrics: [CellCoordinate: CellBuildMetric] = [:]
-    /// Coordinates queued-or-building, so a duplicate enqueue is a no-op --
-    /// defence in depth over the streamer's own dedup. Bounds the queue depth
-    /// to the grid size regardless of caller bugs (guards the 30 GB runaway).
-    private var pending: Set<CellCoordinate> = []
-    private var pendingLOD: Set<CellCoordinate> = []
-    private var completedLOD: [DistantLODBuildResult] = []
-    private var pendingDoorTransitions: Set<FormID> = []
-    private var completedDoorTransitions: [DoorTransitionBuildResult] = []
+    private let bookkeeping = Mutex(Bookkeeping())
+    /// Holds scenes, which are not `Sendable`, so the compiler cannot check it.
+    private let results = OSAllocatedUnfairLock(uncheckedState: Results())
 
     public init(
         provider: any CellSceneProvider,
@@ -414,49 +417,42 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
     }
 
     public func enqueue(_ coordinate: CellCoordinate, state: WorldStateSnapshot) {
-        lock.lock()
-        let isNew = pending.insert(coordinate).inserted
-        lock.unlock()
+        let isNew = bookkeeping.withLock { $0.pending.insert(coordinate).inserted }
         guard isNew else { return }
         queue.async { [self] in
-            lock.lock()
-            buildCounts[coordinate, default: 0] += 1
-            lock.unlock()
+            bookkeeping.withLock { $0.buildCounts[coordinate, default: 0] += 1 }
             let result = Result { try provider.buildCell(at: coordinate, state: state) }
-            let entry = CellBuildResult(
-                coordinate: coordinate,
-                result: result
-            )
-            lock.lock()
-            if case let .success(scene) = result {
-                buildMetrics[coordinate] = CellBuildMetric(
-                    collisionDurationMS: scene.staticCollision.buildDurationMS,
-                    collisionShapeCount: scene.staticCollision.stats.shapeCount,
-                    collisionTriangleCount: scene.staticCollision.stats.triangleCount,
-                    actorDurationMS: scene.summary.actorBuildDurationMS,
-                    actorDiscoveredCount: scene.summary.actorCount,
-                    actorRenderedCount: scene.summary.actorDrawnCount,
-                    actorDisabledSkipCount: scene.summary.actorDisabledSkipCount,
-                    actorFailureCount: scene.summary.actorFailureCount,
-                    actorFailureReasons: scene.summary.actorFailureReasons,
-                    actorAnimatedCount: scene.summary.actorAnimatedCount,
-                    actorAnimationFailureCount: scene.summary.actorAnimationFailureCount,
-                    actorAnimationFailureReasons: scene.summary.actorAnimationFailureReasons
-                )
+            if let metric = try? result.map(Self.metric(for:)).get() {
+                bookkeeping.withLock { $0.buildMetrics[coordinate] = metric }
             }
-            completed.append(entry)
-            lock.unlock()
+            let entry = CellBuildResult(coordinate: coordinate, result: result)
+            results.withLockUnchecked { $0.cells.append(entry) }
         }
     }
 
+    private static func metric(for scene: CellScene) -> CellBuildMetric {
+        CellBuildMetric(
+            collisionDurationMS: scene.staticCollision.buildDurationMS,
+            collisionShapeCount: scene.staticCollision.stats.shapeCount,
+            collisionTriangleCount: scene.staticCollision.stats.triangleCount,
+            actorDurationMS: scene.summary.actorBuildDurationMS,
+            actorDiscoveredCount: scene.summary.actorCount,
+            actorRenderedCount: scene.summary.actorDrawnCount,
+            actorDisabledSkipCount: scene.summary.actorDisabledSkipCount,
+            actorFailureCount: scene.summary.actorFailureCount,
+            actorFailureReasons: scene.summary.actorFailureReasons,
+            actorAnimatedCount: scene.summary.actorAnimatedCount,
+            actorAnimationFailureCount: scene.summary.actorAnimationFailureCount,
+            actorAnimationFailureReasons: scene.summary.actorAnimationFailureReasons
+        )
+    }
+
     public func drainCompleted() -> [CellBuildResult] {
-        lock.lock()
-        defer { lock.unlock() }
-        let out = completed
-        completed.removeAll(keepingCapacity: true)
-        for entry in out {
-            pending.remove(entry.coordinate)
+        let out = results.withLockUnchecked {
+            defer { $0.cells.removeAll(keepingCapacity: true) }
+            return $0.cells
         }
+        bookkeeping.withLock { $0.pending.subtract(out.map(\.coordinate)) }
         return out
     }
 
@@ -475,72 +471,55 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, @uncheck
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>
     ) -> Bool {
-        lock.lock()
-        let isNew = pendingLOD.insert(center).inserted
-        lock.unlock()
+        let isNew = bookkeeping.withLock { $0.pendingLOD.insert(center).inserted }
         guard isNew else { return false }
         queue.async { [self] in
             let result = Result {
                 try provider.buildDistantLOD(center: center, hiddenCells: hiddenCells)
             }
-            lock.lock()
-            completedLOD.append(DistantLODBuildResult(center: center, result: result))
-            lock.unlock()
+            let entry = DistantLODBuildResult(center: center, result: result)
+            results.withLockUnchecked { $0.distantLOD.append(entry) }
         }
         return true
     }
 
     public func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
-        lock.lock()
-        defer { lock.unlock() }
-        let out = completedLOD
-        completedLOD.removeAll(keepingCapacity: true)
-        for entry in out {
-            pendingLOD.remove(entry.center)
+        let out = results.withLockUnchecked {
+            defer { $0.distantLOD.removeAll(keepingCapacity: true) }
+            return $0.distantLOD
         }
+        bookkeeping.withLock { $0.pendingLOD.subtract(out.map(\.center)) }
         return out
     }
 
     public func enqueueDoorTransition(from sourceDoor: FormID, state: WorldStateSnapshot) {
-        lock.lock()
-        let isNew = pendingDoorTransitions.insert(sourceDoor).inserted
-        lock.unlock()
+        let isNew = bookkeeping.withLock { $0.pendingDoorTransitions.insert(sourceDoor).inserted }
         guard isNew else { return }
         queue.async { [self] in
             let result = Result {
                 try provider.buildDoorTransition(from: sourceDoor, state: state)
             }
-            lock.lock()
-            completedDoorTransitions.append(DoorTransitionBuildResult(
-                sourceDoor: sourceDoor,
-                result: result
-            ))
-            lock.unlock()
+            let entry = DoorTransitionBuildResult(sourceDoor: sourceDoor, result: result)
+            results.withLockUnchecked { $0.doorTransitions.append(entry) }
         }
     }
 
     public func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
-        lock.lock()
-        defer { lock.unlock() }
-        let out = completedDoorTransitions
-        completedDoorTransitions.removeAll(keepingCapacity: true)
-        for entry in out {
-            pendingDoorTransitions.remove(entry.sourceDoor)
+        let out = results.withLockUnchecked {
+            defer { $0.doorTransitions.removeAll(keepingCapacity: true) }
+            return $0.doorTransitions
         }
+        bookkeeping.withLock { $0.pendingDoorTransitions.subtract(out.map(\.sourceDoor)) }
         return out
     }
 
-    /// Thread-safe snapshot for tests + scripted streaming verification.
+    /// Thread-safe snapshot for tests and scripted streaming checks.
     public func buildCountsSnapshot() -> [CellCoordinate: Int] {
-        lock.lock()
-        defer { lock.unlock() }
-        return buildCounts
+        bookkeeping.withLock { $0.buildCounts }
     }
 
     public func buildMetricsSnapshot() -> [CellCoordinate: CellBuildMetric] {
-        lock.lock()
-        defer { lock.unlock() }
-        return buildMetrics
+        bookkeeping.withLock { $0.buildMetrics }
     }
 
     /// Blocks until every job queued so far has run. Tests use it instead of
