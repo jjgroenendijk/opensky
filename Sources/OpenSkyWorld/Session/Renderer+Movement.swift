@@ -2,7 +2,6 @@
 
 import OpenSkyPhysics
 import OpenSkyRendering
-import QuartzCore
 
 extension Renderer {
     /// Seeds the walk controller from the camera pose during `init`, before
@@ -48,7 +47,7 @@ extension Renderer {
         restorePlayerCameraPose()
         // Menu mode pauses the sim: dt goes to zero so the camera holds its pose
         // while the clock keeps its mark fresh (resume carries no time jump).
-        let dt = cameraClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
+        let dt = cameraClock.advance(to: wallClock.now, paused: worldSimPaused)
         lastCameraDelta = min(max(dt, 0), WalkController.maximumFrameTime)
         let frameInput = input.makeInput(dt: dt)
         if frameInput.cycleCameraMode {

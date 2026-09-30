@@ -177,6 +177,8 @@ public final class Renderer: NSObject {
     /// World > Environment actor-animation A/B. Off restores bind palettes;
     /// global time still advances so grass/particle effects stay independent.
     public var actorAnimationsEnabled = true
+    /// The time source every frame clock reads.
+    public let wallClock: any WallClock
     /// Wall-clock delta source for the animation clock, paused in menu mode.
     public var animationClock = FrameSimClock()
     public var lastAnimationUpdateMS = 0.0
@@ -242,10 +244,12 @@ public final class Renderer: NSObject {
         rendering view: MTKView,
         scene: RenderScene? = nil,
         camera: SceneCamera? = nil,
-        shaderLibrary: MTLLibrary? = nil
+        shaderLibrary: MTLLibrary? = nil,
+        wallClock: any WallClock = MediaWallClock()
     ) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
         self.device = device
+        self.wallClock = wallClock
 
         commandQueue = try Self.makeCommandQueue(device: device)
         commandBuffer = try Self.makeCommandBuffer(device: device)

@@ -7,9 +7,9 @@
 // written from the main thread (panel scrubs, global writes, save restore) and
 // read in `draw(in:)`, which MTKView also runs on the main thread.
 
+import Foundation
 import OpenSkyRendering
 import OpenSkyWorldState
-import QuartzCore
 
 /// The renderer's game-time state, grouped so `Renderer` carries one stored
 /// property instead of four.
@@ -54,7 +54,7 @@ extension Renderer {
     /// this, so a fixed clock renders deterministically.
     public func advanceGameClockFromWallClock() {
         let delta = gameTime.frameClock.advance(
-            to: CACurrentMediaTime(), paused: worldSimPaused
+            to: wallClock.now, paused: worldSimPaused
         )
         gameTime.clock.advance(wallDelta: delta, timescale: currentTimescale)
     }
@@ -66,7 +66,7 @@ extension Renderer {
     /// runtime's fixed-step accumulator treats a zero delta as no advance.
     public func updateWorldSimFromWallClock() {
         let delta = worldSimClock.advance(
-            to: CACurrentMediaTime(), paused: worldSimPaused
+            to: wallClock.now, paused: worldSimPaused
         )
         updateWorldSim(deltaTime: delta)
     }
