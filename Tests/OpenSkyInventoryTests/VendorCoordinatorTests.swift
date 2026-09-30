@@ -1,6 +1,6 @@
-// The vendor coordinator over a fake world: merchant lookup, the chest as the
-// counterparty, and the rules a trade runs under. Records come from the
-// synthetic plugin in `VendorRulesTests`.
+// The vendor shell over a fake world: it reads the memberships, the stock,
+// the hour, and item keywords, and hands them to the core. The decisions are
+// tested in `VendorCoreTests`.
 
 import Foundation
 @testable import OpenSkyFactionsInterface
@@ -42,17 +42,12 @@ struct VendorCoordinatorTests {
 
     private static func coordinator(_ world: FakeWorld) throws -> VendorCoordinator {
         try VendorCoordinator(
-            resolver: VendorRulesTests.resolver(),
-            itemPluginName: VendorRulesTests.pluginName,
+            core: VendorCore(
+                resolver: VendorRulesTests.resolver(),
+                itemPluginName: VendorRulesTests.pluginName
+            ),
             world: world
         )
-    }
-
-    @Test func anActorWithNoVendorFactionIsNotAMerchant() throws {
-        let world = FakeWorld()
-        world.memberships[Self.merchant] = VendorRulesTests.memberships([IDs.townsfolk])
-        let result = try Self.coordinator(world).counterparty(for: Self.merchant)
-        #expect(result == .failure(.notAMerchant))
     }
 
     @Test func aResidentMerchantChestIsTheCounterparty() throws {
@@ -68,16 +63,6 @@ struct VendorCoordinatorTests {
         ))
     }
 
-    @Test func aChestThatIsNotStreamedInIsRefused() throws {
-        let world = FakeWorld()
-        world.memberships[Self.merchant] = VendorRulesTests.memberships([IDs.pawnbroker])
-        let result = try Self.coordinator(world).counterparty(for: Self.merchant)
-        guard case .failure(.chestNotResident) = result else {
-            Issue.record("expected chestNotResident, got \(result)")
-            return
-        }
-    }
-
     @Test func theOverrideFactionReplacesTheMemberships() throws {
         let world = FakeWorld()
         world.owners[Self.chest] = .container(base: FormID(0x701))
@@ -86,9 +71,6 @@ struct VendorCoordinatorTests {
             vendorFaction: VendorRulesTests.key(IDs.fence)
         ).get()
         #expect(found.vendor.buysStolen)
-        #expect(try Self.coordinator(world).vendor(
-            faction: VendorRulesTests.key(IDs.townsfolk)
-        ) == nil)
     }
 
     @Test func rulesReadTheHourAndTheItemKeywordsFromTheWorld() throws {
@@ -98,7 +80,7 @@ struct VendorCoordinatorTests {
         world.hourOfDay = 12
         let coordinator = try Self.coordinator(world)
         let pawnbroker = try #require(
-            coordinator.vendor(faction: VendorRulesTests.key(IDs.pawnbroker))
+            coordinator.core.vendor(faction: VendorRulesTests.key(IDs.pawnbroker))
         )
         #expect(coordinator.rules(for: pawnbroker).refusal(for: item)
             == .vendorDoesNotTrade(item: item))

@@ -24,11 +24,11 @@ extension GameViewController {
             let factionStore = social.factionStore,
             let formLists = social.formListStore
         else { return }
-        vendors = VendorCoordinator(
+        let core = VendorCore(
             resolver: VendorResolver(factions: factionStore, formLists: formLists),
-            itemPluginName: (provider as? MagicDataProviding)?.magicItemPluginName,
-            world: self
+            itemPluginName: (provider as? MagicDataProviding)?.magicItemPluginName
         )
+        vendors = VendorCoordinator(core: core, world: self)
     }
 
     /// Opens the barter menu against `actor`'s vendor stock, which is what
