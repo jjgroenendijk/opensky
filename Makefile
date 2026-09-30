@@ -35,8 +35,9 @@ TEST_RESULTS     := $(DERIVED_DATA)/TestResults
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
 
 # Every xcodebuild runs through this wrapper. It keeps the full transcript under
-# logs/ and prints only diagnostics, failures, and the final counts; a failing
-# run prints everything. OPENSKY_XCODEBUILD_RAW=1 always prints everything.
+# logs/ and prints each diagnostic once, failures, and the final counts. It also
+# clears stale module copies (tools/stale-modules.sh). OPENSKY_XCODEBUILD_RAW=1
+# prints everything.
 XCB_RUN          := ./tools/xcodebuild-run.sh
 # Allocates a per-run output directory, logs/<name>/<UTC timestamp>/, and points
 # <name>/latest at it, so `make prune` can age whole runs out (issue #347).

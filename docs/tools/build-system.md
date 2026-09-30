@@ -37,6 +37,7 @@ prefix on every line, which checks that it still holds.
 | `DERIVED_DATA` | `$(CURDIR)/DerivedData` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
 | `XCODEBUILD_FLAGS` | empty | Extra flags or build settings |
 | `OPENSKY_XCODEBUILD_RAW` | unset | `=1` prints the whole transcript instead of the filtered output |
+| `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |
 
 ## Build settings in Config/
 
@@ -170,10 +171,23 @@ with a `TeamIdentifier` is right, and `Signature=adhoc` causes repeated prompts.
 
 `tools/xcodebuild-run.sh` takes a log name and a full xcodebuild command. It writes the whole
 transcript to `logs/<name>/<UTC timestamp>/<name>.log` and prints only diagnostics, tests that did not
-pass, and the closing status line. A failing run prints the whole log, so a failure message never
-exists only in a file. `xcodebuild -quiet` cannot do this: it decides what to print before the text
+pass, and the closing status line. xcodebuild repeats each diagnostic several times, with colour codes
+and absolute paths. The filter strips both, prints each line once, and stops after
+`OPENSKY_MAX_ERRORS` errors. The first screen of a failed build is then the whole answer, and nobody
+has to grep the transcript. A failing run where no line matched the filter prints the last 40
+transcript lines instead. `xcodebuild -quiet` cannot do this: it decides what to print before the text
 exists, keeps no full copy, and drops `** TEST SUCCEEDED **`. Where transcripts go and how they age
 out is on the [run output](/tools/run-output.md) page.
+
+### Stale module copies
+
+xcodebuild sometimes keeps an old copy of a package module in `Build/Products/<config>/` after an
+interface change, while the compiler has emitted the new one under `Build/Intermediates.noindex/`.
+Every module above it then fails with "cannot find in scope", "has no member", or "extra argument",
+and `B=1` does not help ([environment](/tools/environment.md)). After a healthy build the two files
+are identical, so `tools/stale-modules.sh` treats any difference as stale and deletes the copy.
+`tools/xcodebuild-run.sh` runs it before every build. When a build fails and leaves new stale copies,
+it deletes them and builds once more. A test run without building skips both steps.
 
 ## Warnings are errors
 

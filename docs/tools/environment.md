@@ -141,38 +141,17 @@ Retires if a later Xcode lets `-enumerate-tests` take `-derivedDataPath`.
 
 ## A cached module emit can leave a stale module in Products
 
-Observed 2026-09-29 on Xcode 26. A change to the public interface of a package module, for example
-a new parameter on `Renderer.init`, built fine through `swift test`. Through xcodebuild, the next
-module up failed with "extra argument" errors. The "Emitting module" step was a compilation cache
-hit. It wrote the new module under `DerivedData/Build/Intermediates.noindex/`, but the copy in
-`DerivedData/Build/Products/Debug/<Module>.swiftmodule` kept the old interface, and `B=1` did not
-replace it. Deleting that one `.swiftmodule` folder and building again fixed it.
+Observed 2026-09-29 and 2026-09-30 on Xcode 26, for at least eight package modules. After a change
+to the public interface of a package module, the build wrote the new module under
+`DerivedData/Build/Intermediates.noindex/`. The copy in
+`DerivedData/Build/Products/Debug/<Module>.swiftmodule` kept the old interface, or had no
+`.swiftmodule` file at all. The next module up failed with "extra argument", "has no member", or
+"cannot find type in scope", on repeated builds and with `B=1`. It happened with the "Emitting
+module" step both a compilation cache hit and a miss. Deleting the Products copy fixed the next
+build. `tools/xcodebuild-run.sh` does that delete itself
+([build system](/tools/build-system.md#stale-module-copies)).
 
-Seen again the same day for `OpenSkyWorld`: a new method that tests reach through
-`@testable import` failed with "has no member" until the same delete.
+Once, after the delete, the next `make test-fast` ran test bundles built against the old struct layout
+and crashed with `EXC_BAD_ACCESS` in "outlined init with copy". `make test-fast B=1` fixed that.
 
-Seen again the same day for `OpenSkyFormatsSWF`, with the emit a cache miss this time. `make
-test` failed the same way. Every `OpenSkyFormats*` copy in Products was a day older than its
-`Intermediates.noindex` module. Deleting those folders fixed the next build.
-
-Seen again 2026-09-30 for `OpenSkyFormatsCore`: a new public struct failed in `OpenSkyRendering`
-with "cannot find in scope" on two builds in a row, until the same delete.
-
-Seen again 2026-09-30 for `OpenSkyInventory`: a new public class built through `swift test`, but
-the app and `OpenSkyInventoryTests` failed through xcodebuild with "cannot find type in scope"
-until the same delete.
-
-Seen again 2026-09-30 for `OpenSkyGameData`: a new public protocol failed in `GameDataTesting`
-with "cannot find type in scope" on two builds in a row. The Products copy was five hours older
-than the new emit. The same delete fixed it.
-
-Seen again 2026-09-30 for `OpenSkyScripting`: after a public class was removed,
-`OpenSkyScriptingTesting` still expected it, on two builds in a row. The same delete fixed it.
-
-Seen again 2026-09-30 for `OpenSkyConditions`: a new public struct failed in
-`OpenSkyProgressionInterface` with "cannot find type in scope". The Products copy had no
-`.swiftmodule` file at all. The same delete fixed it. The next `make test-fast` then ran test
-bundles with the old struct layout and crashed with `EXC_BAD_ACCESS` in "outlined init with
-copy". `make test-fast B=1` fixed that.
-
-Retires when an interface change builds through xcodebuild without a manual delete.
+Retires when an interface change builds through xcodebuild without the delete.

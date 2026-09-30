@@ -1,12 +1,15 @@
 #!/bin/sh
 # Run an xcodebuild command with its full transcript kept in a run directory
-# and only the interesting lines on stdout. Per-file compile lines and the one
-# line per passing test are the dominant output cost of `make build` and `make
-# test` and carry nothing a green run needs, but they are exactly what you want
-# when something breaks -- so a failing run prints the whole transcript.
+# and only the interesting lines on stdout: each diagnostic once, failed tests,
+# and the closing status. Per-file compile lines and passing tests stay in the
+# transcript. A failing run whose filter caught nothing prints the transcript
+# tail instead, so a failure never shows as silence.
 #
 # xcodebuild's own -quiet cannot do this: it decides what to print before the
 # text exists, leaving no full copy anywhere.
+#
+# A build removes stale module copies first (tools/stale-modules.sh). When a
+# failed build leaves new stale copies, it removes them and builds once more.
 #
 # The transcript goes to logs/<name>/<UTC timestamp>/<name>.log (issue #347);
 # a caller that has already opened a run directory passes it in so one run of
@@ -15,6 +18,7 @@
 # Usage: tools/xcodebuild-run.sh LOG_NAME xcodebuild [args...]
 # Env:   OPENSKY_XCODEBUILD_RAW=1  pass everything through, transcript included
 #        OPENSKY_RUN_DIR           write into this run directory, not a new one
+#        OPENSKY_MAX_ERRORS        unique errors to print (default 40)
 set -eu
 
 if [ "$#" -lt 2 ]; then
@@ -38,19 +42,46 @@ log="$run_dir/$name.log"
 # The pipeline below runs xcodebuild in a subshell, so its exit status comes
 # back through a file rather than $?. `set -o pipefail` is not in POSIX sh.
 status_file="$(mktemp -t opensky-xcodebuild)"
-trap 'rm -f "$status_file"' EXIT INT TERM
-printf '0\n' >"$status_file"
+shown_file="$(mktemp -t opensky-xcodebuild-shown)"
+trap 'rm -f "$status_file" "$shown_file"' EXIT INT TERM
 
-if [ "${OPENSKY_XCODEBUILD_RAW:-0}" = "1" ]; then
-    { "$@" 2>&1 || printf '%s\n' "$?" >"$status_file"; } | tee "$log"
-else
-    { "$@" 2>&1 || printf '%s\n' "$?" >"$status_file"; } | tee "$log" \
-        | xcodebuild_summary
+# test-without-building compiles nothing, so it cannot meet a stale module.
+compiles="yes"
+case " $* " in
+    *" test-without-building "*) compiles="" ;;
+esac
+
+run_once() {
+    printf '0\n' >"$status_file"
+    if [ "${OPENSKY_XCODEBUILD_RAW:-0}" = "1" ]; then
+        { "$@" 2>&1 || printf '%s\n' "$?" >"$status_file"; } | tee "$log"
+    else
+        { "$@" 2>&1 || printf '%s\n' "$?" >"$status_file"; } | tee "$log" \
+            | xcodebuild_summary "$root" | tee "$shown_file"
+    fi
+    status="$(cat "$status_file")"
+}
+
+remove_stale() {
+    stale="$("$root/tools/stale-modules.sh" -d | tr '\n' ' ' | sed 's/ $//')"
+    [ -n "$stale" ] || return 1
+    printf '[INFO] removed stale module copies: %s\n' "$stale"
+}
+
+if [ -n "$compiles" ]; then
+    remove_stale || true
+fi
+run_once "$@"
+if [ "$status" -ne 0 ] && [ -n "$compiles" ] && remove_stale; then
+    printf '[INFO] building once more after removing stale modules\n'
+    log="$run_dir/$name-retry.log"
+    run_once "$@"
 fi
 
-status="$(cat "$status_file")"
-if [ "$status" -ne 0 ] && [ "${OPENSKY_XCODEBUILD_RAW:-0}" != "1" ]; then
-    cat "$log"
+if [ "$status" -ne 0 ] && [ "${OPENSKY_XCODEBUILD_RAW:-0}" != "1" ] \
+    && ! grep -qE 'error: |failed|errored|^✘' "$shown_file"; then
+    printf '[INFO] no diagnostic matched; last 40 transcript lines:\n'
+    tail -n 40 "$log"
 fi
 printf '[INFO] full transcript: %s\n' "$log"
 exit "$status"
