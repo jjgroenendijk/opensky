@@ -44,7 +44,8 @@ final class ScreenshotCoordinator {
 
     private static func flashSaved(on button: NSButton?) {
         button?.title = "Saved"
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        Task { [weak button] in
+            try? await Task.sleep(for: .seconds(1.2))
             button?.title = idleTitle
         }
     }
