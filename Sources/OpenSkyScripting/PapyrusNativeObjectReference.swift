@@ -1,5 +1,5 @@
 // Core `ObjectReference` natives (issue #172): the family that lets a script
-// visibly change the world. Every write goes through `PapyrusWorldAccess` into
+// visibly change the world. Every write goes through `PapyrusWorldBridge` into
 // `WorldStateStore`, so the journal, the dirty counts, the cell rebuild and the
 // save all see it.
 //
@@ -12,7 +12,7 @@
 //   call's declared default and keeps running, so a headless script still
 //   completes — it just changes nothing.
 // * `self` arrives as `PapyrusNativeCall.receiver` and becomes a
-//   `ReferenceKey` through `PapyrusWorldAccess.referenceKey(for:)`. A handle no
+//   `ReferenceKey` through `PapyrusWorldBridge.referenceKey(for:)`. A handle no
 //   world runtime handed out has no world identity and fails the same way.
 // * A write never requires the reference to be resident: a script may disable
 //   a reference in a cell nobody has streamed, and `WorldStateStore` keeps the
@@ -32,7 +32,7 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installObjectReference(into registry: inout PapyrusNativeRegistry) {
         installEnableState(into: &registry)
         installDeletion(into: &registry)
@@ -47,7 +47,7 @@ nonisolated extension PapyrusNativeFunctions {
     public static func worldTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext
-    ) -> (world: PapyrusWorldAccess, key: ReferenceKey)? {
+    ) -> (world: any PapyrusWorldBridge, key: ReferenceKey)? {
         guard
             let world = context.world,
             let receiver = call.receiver,

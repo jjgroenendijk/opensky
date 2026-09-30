@@ -9,6 +9,7 @@ import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 import Testing
 
+@MainActor
 struct PapyrusSchedulerTests {
     @Test func realTimeWaitResumesTheSavedFrameAtTheFixedStep() {
         let (runtime, handle) = waitRuntime(

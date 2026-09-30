@@ -19,7 +19,8 @@ import Testing
 /// Records "Probe.Note" calls in dispatch order while forwarding everything
 /// else (Utility.Wait among them) to the standard native registry, so tests
 /// can assert global event order and latent resumes together.
-nonisolated public final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch {
+@MainActor
+public final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch {
     private let registry: PapyrusNativeRegistry
     public private(set) var notes: [String] = []
     /// Stands in for a not-yet-written native: consulted before
@@ -30,7 +31,7 @@ nonisolated public final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch 
         (PapyrusNativeCall, PapyrusNativeContext) -> PapyrusNativeResult?
     )?
 
-    /// - Parameter context: pass a context carrying a `PapyrusWorldAccess` to
+    /// - Parameter context: pass a context carrying a `PapyrusWorldBridge` to
     ///   give both the standard natives and `probeHandler` world access.
     public init(context: PapyrusNativeContext = PapyrusNativeContext()) {
         registry = .standard(context: context)
@@ -253,7 +254,7 @@ public enum PapyrusWorldFixture {
         )
         bridge.formIDResolver = resolver
         let dispatch = PapyrusWorldProbeDispatch(
-            context: PapyrusNativeContext(world: PapyrusWorldAccess(bridge: bridge))
+            context: PapyrusNativeContext(world: bridge)
         )
         let world = worldRuntime(objects: objects, nativeDispatch: dispatch)
         bridge.world = world
@@ -280,7 +281,7 @@ public enum PapyrusWorldFixture {
     @MainActor
     public static func registry(for session: Session) -> PapyrusNativeRegistry {
         .standard(context: PapyrusNativeContext(
-            world: PapyrusWorldAccess(bridge: session.bridge)
+            world: session.bridge
         ))
     }
 

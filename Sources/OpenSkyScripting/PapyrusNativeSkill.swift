@@ -27,7 +27,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installSkill(into registry: inout PapyrusNativeRegistry) {
         // "Function AdvanceSkill(string asSkillName, float afMagnitude) native
         // global". The page requires a positive magnitude; a zero or negative
@@ -82,7 +82,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func skillCall(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: (PapyrusWorldAccess, Int32) -> PapyrusNativeResult
+        body: (any PapyrusWorldBridge, Int32) -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let world = context.world else {
             return failure(call, "\(call.functionName) needs a world runtime")

@@ -15,7 +15,7 @@ nonisolated public struct PapyrusNativeKey: Equatable, Hashable, Sendable {
 }
 
 nonisolated public struct PapyrusNativeFunction: Sendable {
-    public typealias Body = @Sendable (
+    public typealias Body = @MainActor @Sendable (
         PapyrusNativeCall,
         PapyrusNativeContext
     ) -> PapyrusNativeResult
@@ -50,17 +50,17 @@ nonisolated public final class PapyrusNativeLog {
     }
 }
 
-nonisolated public final class PapyrusNativeContext {
+public final class PapyrusNativeContext {
     public var random: ConditionRandom
     public let log: PapyrusNativeLog
     /// The world a native may read and change, or nil in a headless runtime. A native
     /// that needs it fails rather than guessing.
-    public let world: PapyrusWorldAccess?
+    public let world: any PapyrusWorldBridge?
 
     public init(
         seed: UInt64 = ConditionRandom.defaultSeed,
         log: PapyrusNativeLog = PapyrusNativeLog(),
-        world: PapyrusWorldAccess? = nil
+        world: any PapyrusWorldBridge? = nil
     ) {
         random = ConditionRandom(seed: seed)
         self.log = log
@@ -68,7 +68,7 @@ nonisolated public final class PapyrusNativeContext {
     }
 }
 
-nonisolated public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
+public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
     public static var empty: PapyrusNativeRegistry {
         PapyrusNativeRegistry()
     }

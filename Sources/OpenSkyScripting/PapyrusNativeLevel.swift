@@ -26,7 +26,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installLevel(into registry: inout PapyrusNativeRegistry) {
         // "Gets the actor's current level." — "int Function GetLevel() native"
         // (<https://www.creationkit.com/index.php?title=GetLevel_-_Actor>)

@@ -10,10 +10,10 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     /// `bool Activate(ObjectReference akActivator, bool abDefaultProcessingOnly = false)`.
     ///
-    /// The whole world effect is `PapyrusWorldAccess.activate(_:by:togglesOpen:)`:
+    /// The whole world effect is `PapyrusWorldBridge.activate(_:by:togglesOpen:)`:
     /// one `ReferenceActivationState` write on the receiver and one
     /// `OnActivate` queued per script attached to it. It deliberately does not
     /// re-run the interaction raycast, does not move a door, and does not
@@ -106,7 +106,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func linkedReferenceValue(
         of key: ReferenceKey,
         keyword: ReferenceKey?,
-        world: PapyrusWorldAccess
+        world: any PapyrusWorldBridge
     ) -> PapyrusValue {
         guard
             let placed = world.placedReference(for: key),
@@ -128,7 +128,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func linkedReference(
         in placed: PlacedReference,
         keyword: ReferenceKey?,
-        world: PapyrusWorldAccess
+        world: any PapyrusWorldBridge
     ) -> FormID? {
         guard let keyword else { return placed.linkedReference() }
         return placed.linkedReferences.first { link in

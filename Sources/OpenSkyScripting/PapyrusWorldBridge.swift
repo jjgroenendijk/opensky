@@ -1,8 +1,6 @@
-// The seam between nonisolated Papyrus natives and the main-actor world.
-// `PapyrusWorldBridge` is the `@MainActor` protocol (`PapyrusWorldStateBridge` in
-// production). `PapyrusWorldAccess` is the nonisolated facade natives hold; it
-// hops with `MainActor.assumeIsolated`, since natives only run from the
-// main-actor tick. `PapyrusWorldReferenceSource` supplies references.
+// The seam between Papyrus natives and the world. Natives and the world both run
+// on the main actor. `PapyrusWorldStateBridge` is the production conformer, and
+// `PapyrusWorldReferenceSource` supplies references.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -106,90 +104,4 @@ public protocol PapyrusWorldBridge:
         handle: PapyrusObjectHandle,
         family: PapyrusUpdateTimerFamily
     )
-}
-
-/// Nonisolated facade over a `PapyrusWorldBridge`, held by
-/// `PapyrusNativeContext.world`. Each method hops with `MainActor.assumeIsolated`,
-/// which traps if a native runs off the main actor.
-nonisolated public final class PapyrusWorldAccess: Sendable {
-    /// Internal rather than private so the quest hops can live in
-    /// `PapyrusWorldQuestBridge.swift` beside the protocol they mirror. Only
-    /// this type's own extensions touch it.
-    public let bridge: any PapyrusWorldBridge
-
-    public init(bridge: any PapyrusWorldBridge) {
-        self.bridge = bridge
-    }
-
-    public var playerKey: ReferenceKey {
-        MainActor.assumeIsolated { bridge.playerKey }
-    }
-
-    public func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey? {
-        MainActor.assumeIsolated { bridge.referenceKey(for: handle) }
-    }
-
-    public func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
-        MainActor.assumeIsolated { bridge.objectHandle(for: key) }
-    }
-
-    public func referenceState(for key: ReferenceKey) -> ReferenceState? {
-        MainActor.assumeIsolated { bridge.referenceState(for: key) }
-    }
-
-    public func referenceKey(forFormID formID: FormID) -> ReferenceKey? {
-        MainActor.assumeIsolated { bridge.referenceKey(forFormID: formID) }
-    }
-
-    public func placedReference(for key: ReferenceKey) -> PlacedReference? {
-        MainActor.assumeIsolated { bridge.placedReference(for: key) }
-    }
-
-    @discardableResult
-    public func write(
-        _ component: WorldStateComponentValue, for key: ReferenceKey
-    ) -> Bool {
-        MainActor.assumeIsolated { bridge.write(component, for: key) }
-    }
-
-    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
-        MainActor.assumeIsolated { bridge.globalValue(for: key) }
-    }
-
-    @discardableResult
-    public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
-        MainActor.assumeIsolated { bridge.setGlobal(raw, for: key) }
-    }
-
-    @discardableResult
-    public func activate(
-        _ target: ReferenceKey,
-        by activator: ReferenceKey,
-        togglesOpen: Bool
-    ) -> PapyrusActivationOutcome {
-        MainActor.assumeIsolated {
-            bridge.activate(target, by: activator, togglesOpen: togglesOpen)
-        }
-    }
-
-    public func registerUpdateTimer(
-        handle: PapyrusObjectHandle,
-        slot: PapyrusUpdateTimerSlot,
-        interval: Double
-    ) {
-        MainActor.assumeIsolated {
-            bridge.registerUpdateTimer(
-                handle: handle, slot: slot, interval: interval
-            )
-        }
-    }
-
-    public func unregisterUpdateTimers(
-        handle: PapyrusObjectHandle,
-        family: PapyrusUpdateTimerFamily
-    ) {
-        MainActor.assumeIsolated {
-            bridge.unregisterUpdateTimers(handle: handle, family: family)
-        }
-    }
 }

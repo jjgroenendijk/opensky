@@ -23,7 +23,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installCrime(into registry: inout PapyrusNativeRegistry) {
         installFactionCrimeGold(into: &registry)
         installCrimeAlarms(into: &registry)
@@ -179,7 +179,7 @@ nonisolated extension PapyrusNativeFunctions {
     public static func factionTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: (PapyrusWorldAccess, ReferenceKey) -> PapyrusNativeResult
+        body: (any PapyrusWorldBridge, ReferenceKey) -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let target = worldTarget(call, context) else {
             return failure(

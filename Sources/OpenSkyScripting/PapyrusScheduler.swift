@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-nonisolated public final class PapyrusScheduler {
+public final class PapyrusScheduler {
     private struct Entry {
         let order: UInt64
         let wake: Wake

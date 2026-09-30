@@ -14,7 +14,7 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installGuard(into registry: inout PapyrusNativeRegistry) {
         installGuardQueries(into: &registry)
         installArrestOutcomes(into: &registry)
@@ -107,7 +107,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// reason so the script log says why nothing happened.
     private static func settle(
         _ call: PapyrusNativeCall,
-        _ world: PapyrusWorldAccess,
+        _ world: any PapyrusWorldBridge,
         _ faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> PapyrusNativeResult {

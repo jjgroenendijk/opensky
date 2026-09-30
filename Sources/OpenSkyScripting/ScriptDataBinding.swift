@@ -80,7 +80,7 @@ nonisolated public struct BoundScriptInstance: Sendable {
     public let binding: ScriptBinding
 }
 
-nonisolated extension AttachedScript {
+extension AttachedScript {
     /// Creates one instance through the issue #168 initial-values seam.
     ///
     /// An unfilled alias object and a direct reference with no live opaque
@@ -133,7 +133,7 @@ nonisolated extension AttachedScript {
     }
 }
 
-nonisolated private struct ScriptBindingBuilder {
+private struct ScriptBindingBuilder {
     private static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "ScriptDataBinding"

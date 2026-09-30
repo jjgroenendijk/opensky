@@ -48,18 +48,16 @@ pages.
 
 ## The world bridge
 
-Native bodies are nonisolated and `@Sendable`. The world state store and the world runtime are
-main-actor types. The bridge joins them:
+The Papyrus VM, its natives, the world state store, and the world runtime all run on the main actor.
+The compiler checks this, so a native needs no runtime hop to reach the world. The VM runs from the
+frame tick, and the headless CLI runs on the main actor too. The bridge joins natives to the world:
 
 - A main-actor protocol lists every world operation a native may do: handle and key lookup, resolved
   reference state, the decoded reference, its resident cell, one component write, global reads and
-  writes, and activation.
+  writes, and activation. Natives hold it as `context.world`.
 - The production conformer writes through the world state store, so the journal, the dirty counts,
   and the save see every change. A write names the reference's resident cell when known, so only that
   cell rebuilds.
-- A nonisolated facade, held by natives as `context.world`, forwards each call with
-  `MainActor.assumeIsolated`. That is an assertion, not a suppression: a native reached off the main
-  actor traps instead of racing. `@unchecked Sendable` and a global variable were both rejected.
 
 A headless runtime has no world, so a native that needs one fails cleanly. The registry inside the
 runtime owns the bridge, so the bridge holds the runtime and the streamer weakly.

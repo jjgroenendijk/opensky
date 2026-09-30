@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installFaction(into registry: inout PapyrusNativeRegistry) {
         installFactionMemberships(into: &registry)
         installFactionRanks(into: &registry)
@@ -259,7 +259,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func memberFactionTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: ((world: PapyrusWorldAccess, key: ReferenceKey), ReferenceKey)
+        body: ((world: any PapyrusWorldBridge, key: ReferenceKey), ReferenceKey)
             -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let actor = actorTarget(call, context) else {
@@ -279,7 +279,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func actorPair(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: ((world: PapyrusWorldAccess, key: ReferenceKey), ReferenceKey)
+        body: ((world: any PapyrusWorldBridge, key: ReferenceKey), ReferenceKey)
             -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let actor = actorTarget(call, context) else {

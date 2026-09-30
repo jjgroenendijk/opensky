@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyScriptingTesting
 import Testing
 
+@MainActor
 struct PapyrusOpaqueHandleTests {
     typealias Support = PapyrusTestSupport
 

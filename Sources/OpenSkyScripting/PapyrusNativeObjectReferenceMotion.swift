@@ -10,7 +10,7 @@ import Foundation
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     /// `float GetPositionX()`, `GetPositionY()`, `GetPositionZ()`.
     ///
     /// Read from the resolved `ReferenceState`, so a script that moved the

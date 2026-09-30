@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyWorldState
 import Testing
 
+@MainActor
 struct PapyrusAcceptanceRealDataTests {
     private struct RunEvidence {
         let entryPoints: Int
@@ -20,7 +21,7 @@ struct PapyrusAcceptanceRealDataTests {
         "OnInit", "OnLoad", "OnPlayerLoadGame"
     ]
 
-    private static let dataRoot: GameDataRoot? = {
+    nonisolated private static let dataRoot: GameDataRoot? = {
         let environment = ProcessInfo.processInfo.environment
         guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
         else { return nil }

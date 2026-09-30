@@ -56,7 +56,7 @@ extension GameViewController {
         let world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [],
             nativeDispatch: PapyrusNativeRegistry.standard(
-                context: PapyrusNativeContext(world: PapyrusWorldAccess(bridge: bridge))
+                context: PapyrusNativeContext(world: bridge)
             )
         ))
         // Closes the cycle the other way round: the registry inside `world`

@@ -22,7 +22,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     /// `SetActorValue(string, float)`, `ModActorValue(string, float)` and
     /// `ForceActorValue(string, float)`.
     ///

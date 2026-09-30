@@ -3,7 +3,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installDeferredAnimation(into registry: inout PapyrusNativeRegistry) {
         for functionName in [
             "PlayAnimation",

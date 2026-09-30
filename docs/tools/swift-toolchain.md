@@ -83,9 +83,8 @@ preference order:
 4. **Say `Sendable` where it is already true.** A `@MainActor` class is implicitly
    `Sendable`, but an existential over a `@MainActor` protocol is not unless the
    protocol says so. `PapyrusWorldQuestBridge` declares `Sendable` for exactly that
-   reason, which is what lets `PapyrusWorldAccess` hold one across its hops. A
-   conformance that brings `Sendable` in, directly or through a refined protocol, must
-   sit in the same file as the class declaration. Apple Swift 6.4 rejects it in a
+   reason. A conformance that brings `Sendable` in, directly or through a refined
+   protocol, must sit in the same file as the class declaration. Apple Swift 6.4 rejects it in a
    satellite extension file, so `PapyrusWorldStateBridge` picks up
    `PapyrusWorldQuestBridge` through `PapyrusWorldBridge` on its primary declaration, and
    `PapyrusWorldStateBridgeQuests.swift` only adds members.
@@ -102,6 +101,10 @@ siblings are documented as pure so they can be tested without AppKit; under Swif
 nonisolated test calling them trapped at runtime on an inserted isolation check, and
 the fix was to make the pure helpers `nonisolated`, not to move the tests onto the
 main actor.
+
+The reverse also holds. The Papyrus VM is main-actor isolated, because its natives read
+and write main-actor world state and the VM runs only from the main-actor tick. A
+nonisolated VM would need a `MainActor.assumeIsolated` hop in every world call.
 
 ## Raising the baseline
 

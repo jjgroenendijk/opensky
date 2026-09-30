@@ -10,7 +10,7 @@ nonisolated public enum PapyrusFrameCompletion: Sendable {
     case discard
 }
 
-nonisolated public final class PapyrusFrame {
+public final class PapyrusFrame {
     public let ownerScript: PexObject
     public let function: PexFunction
     public let instanceHandle: PapyrusObjectHandle?

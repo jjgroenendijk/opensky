@@ -37,7 +37,7 @@ import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installSpell(into registry: inout PapyrusNativeRegistry) {
         installSpellKnowledge(into: &registry)
         installSpellEquip(into: &registry)
@@ -251,7 +251,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func spellTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: ((world: PapyrusWorldAccess, key: ReferenceKey), ReferenceKey)
+        body: ((world: any PapyrusWorldBridge, key: ReferenceKey), ReferenceKey)
             -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let actor = actorTarget(call, context) else {
@@ -285,7 +285,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func spellSource(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: ((world: PapyrusWorldAccess, key: ReferenceKey), ReferenceKey, CastingSource)
+        body: ((world: any PapyrusWorldBridge, key: ReferenceKey), ReferenceKey, CastingSource)
             -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         spellTarget(call, context) { actor, spell in
@@ -309,7 +309,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// Papyrus `None` when no handle can be minted for it.
     public static func handle(
         _ key: ReferenceKey,
-        in world: PapyrusWorldAccess
+        in world: any PapyrusWorldBridge
     ) -> PapyrusValue {
         world.objectHandle(for: key).map(PapyrusValue.object) ?? .none
     }

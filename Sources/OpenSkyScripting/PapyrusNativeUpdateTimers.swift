@@ -21,7 +21,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installUpdateTimers(into registry: inout PapyrusNativeRegistry) {
         let slots: [(String, PapyrusUpdateTimerSlot)] = [
             ("RegisterForUpdate", .realRepeating),

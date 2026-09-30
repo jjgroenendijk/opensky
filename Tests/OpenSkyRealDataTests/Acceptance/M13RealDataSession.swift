@@ -46,7 +46,7 @@ final class M13RealDataSession {
         world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [],
             nativeDispatch: PapyrusNativeRegistry.standard(
-                context: PapyrusNativeContext(world: PapyrusWorldAccess(bridge: bridge))
+                context: PapyrusNativeContext(world: bridge)
             )
         ))
         bridge.world = world

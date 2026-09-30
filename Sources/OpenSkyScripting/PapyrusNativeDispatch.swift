@@ -70,11 +70,11 @@ nonisolated public enum PapyrusNativeResult: Equatable, Sendable {
     case deviated(PapyrusValue, PapyrusNativeDeviation)
 }
 
-nonisolated public protocol PapyrusNativeDispatch {
+public protocol PapyrusNativeDispatch {
     func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult
 }
 
-nonisolated public final class PapyrusRecordingNativeDispatch: PapyrusNativeDispatch {
+public final class PapyrusRecordingNativeDispatch: PapyrusNativeDispatch {
     public let callLimit: Int
     public var queuedResults: [PapyrusNativeResult]
 

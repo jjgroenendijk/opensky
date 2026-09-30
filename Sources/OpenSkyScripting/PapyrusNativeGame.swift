@@ -9,7 +9,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     /// `Actor GetPlayer()` — a global function, so it arrives with no receiver.
     ///
     /// The player has no plugin record in this engine and no script instance,

@@ -17,7 +17,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installPerk(into registry: inout PapyrusNativeRegistry) {
         // "Adds the specified perk to this actor."
         // (<https://ck.uesp.net/wiki/AddPerk_-_Actor>) The page notes the
@@ -66,7 +66,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func perkTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: ((world: PapyrusWorldAccess, key: ReferenceKey), ReferenceKey)
+        body: ((world: any PapyrusWorldBridge, key: ReferenceKey), ReferenceKey)
             -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let actor = actorTarget(call, context) else {

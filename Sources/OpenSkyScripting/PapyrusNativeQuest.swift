@@ -4,7 +4,7 @@
 // A quest reaches script code the same way a `GlobalVariable` does — as a VMAD
 // object property, or as `self` inside a quest script — so the receiver handle
 // resolves to the QUST record's `ReferenceKey` and everything below is one
-// `PapyrusWorldAccess` call. Nothing here writes state directly; the seam in
+// `PapyrusWorldBridge` call. Nothing here writes state directly; the seam in
 // `PapyrusWorldStateBridgeQuests.swift` runs every mutation through
 // `QuestRuntime`, so the stage and objective rules stay in one place.
 //
@@ -32,7 +32,7 @@ import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installQuest(into registry: inout PapyrusNativeRegistry) {
         installQuestReads(into: &registry)
         installQuestRunState(into: &registry)
@@ -158,7 +158,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func register(
         _ registry: inout PapyrusNativeRegistry,
         _ names: [String],
-        _ body: @escaping @Sendable (
+        _ body: @escaping @MainActor @Sendable (
             PapyrusNativeCall, QuestRuntimeState
         ) -> PapyrusNativeResult
     ) {
@@ -173,8 +173,8 @@ nonisolated extension PapyrusNativeFunctions {
     private static func registerMutation(
         _ registry: inout PapyrusNativeRegistry,
         _ names: [String],
-        _ body: @escaping @Sendable (
-            PapyrusNativeCall, PapyrusWorldAccess, ReferenceKey
+        _ body: @escaping @MainActor @Sendable (
+            PapyrusNativeCall, any PapyrusWorldBridge, ReferenceKey
         ) throws -> PapyrusNativeResult
     ) {
         for name in names {

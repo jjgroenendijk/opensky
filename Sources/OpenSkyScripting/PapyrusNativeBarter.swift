@@ -31,13 +31,7 @@ extension PapyrusWorldStateBridge {
     }
 }
 
-nonisolated extension PapyrusWorldAccess {
-    public func showBarterMenu(for actor: ReferenceKey) -> (opened: Bool, text: String)? {
-        MainActor.assumeIsolated { bridge.showBarterMenu(for: actor) }
-    }
-}
-
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installBarter(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",

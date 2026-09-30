@@ -166,4 +166,7 @@ Seen again 2026-09-30 for `OpenSkyGameData`: a new public protocol failed in `Ga
 with "cannot find type in scope" on two builds in a row. The Products copy was five hours older
 than the new emit. The same delete fixed it.
 
+Seen again 2026-09-30 for `OpenSkyScripting`: after a public class was removed,
+`OpenSkyScriptingTesting` still expected it, on two builds in a row. The same delete fixed it.
+
 Retires when an interface change builds through xcodebuild without a manual delete.

@@ -11,7 +11,7 @@ nonisolated public enum PapyrusRuntimeError: Error, Equatable {
     case invalidInitialValue(name: String, expected: String, actual: String)
 }
 
-nonisolated public final class PapyrusRuntime {
+public final class PapyrusRuntime {
     public let limits: PapyrusLimits
     public let nativeDispatch: PapyrusNativeDispatch
     public let tally: PapyrusTally
@@ -195,11 +195,11 @@ nonisolated public final class PapyrusRuntime {
         return nextSuspensionValue
     }
 
-    public static func key(_ value: String) -> String {
+    nonisolated public static func key(_ value: String) -> String {
         PapyrusName.key(value)
     }
 
-    public static func matches(_ left: String, _ right: String) -> Bool {
+    nonisolated public static func matches(_ left: String, _ right: String) -> Bool {
         key(left) == key(right)
     }
 

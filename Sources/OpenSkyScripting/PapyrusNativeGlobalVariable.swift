@@ -22,7 +22,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installGlobalVariable(into registry: inout PapyrusNativeRegistry) {
         installGlobalReads(into: &registry)
         installGlobalWrites(into: &registry)

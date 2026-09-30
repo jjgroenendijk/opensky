@@ -38,7 +38,7 @@ struct PexNativeCensusTests {
         })
     }
 
-    @Test func coverageCountsOnlyReferencedRegistryMembers() {
+    @Test @MainActor func coverageCountsOnlyReferencedRegistryMembers() {
         let wait = PexFixture.runtimeFunction(
             returnType: "None",
             flags: .native,
