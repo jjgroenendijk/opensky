@@ -1,15 +1,7 @@
-// Shared texture cache keyed by normalized VFS path + usage: load a DDS once,
-// hand the same MTLTexture to every material that references it (todo 2.7
-// asset caches). Bridges the VFS (bytes) and TextureLoader (upload) so scene
-// build stays ignorant of both. Never throws — a nil key, a missing file, or
-// a bad DDS all resolve to the loader's shared placeholder, cached so each
-// distinct path logs at most once.
-//
-// Single-threaded by confinement, not locking: every touch (scene build) runs
-// on the streamer's ONE serial build queue (SerialCellBuildRunner), never the
-// main thread, so the dictionary needs no lock. Sibling MeshLibrary follows the
-// same confinement rule; VFS itself is mutex-guarded. Decision:
-// docs/engine/cell-streaming.md.
+// Texture cache keyed by normalized VFS path and usage. A nil key, missing
+// file, or bad DDS resolves to the loader's placeholder, logged once per path.
+// Only the one serial cell-build queue touches it, so it needs no lock
+// (docs/engine/cell-streaming.md).
 
 import Foundation
 import Metal
@@ -59,8 +51,8 @@ nonisolated public final class TextureLibrary {
         self.loader = loader
     }
 
-    public convenience init(fileSystem: VirtualFileSystem, device: MTLDevice) {
-        self.init(fileSystem: fileSystem, loader: TextureLoader(device: device))
+    public convenience init(fileSystem: VirtualFileSystem, device: MTLDevice) throws {
+        try self.init(fileSystem: fileSystem, loader: TextureLoader(device: device))
     }
 
     /// Resolves a material's texture key to a ready MTLTexture. nil key ->
@@ -149,14 +141,9 @@ nonisolated public final class TextureLibrary {
         capturedKeys?.insert(key)
     }
 
-    /// Drops the cached textures whose keys are in `keys` -- the set a departing
-    /// cell used that no resident cell still needs (docs/engine/cell-streaming.md
-    /// eviction). Drop-set (not keep-set) so a concurrent build's fresh
-    /// textures are never evicted. GPU memory frees when the last reference
-    /// dies (the composed scene dropped it on recompose; the renderer's retire
-    /// list frees it once in-flight frames drain). Reloads on demand if the
-    /// cell returns, so over-eviction only costs a reload, never correctness.
-    /// Runs on the build queue (confinement). Returns freed entry count.
+    /// Drops the cached textures in `keys` and returns how many it freed. A
+    /// drop-set, not a keep-set, so a concurrent build's new textures survive.
+    /// See docs/engine/cell-streaming.md.
     @discardableResult
     public func evict(dropping keys: Set<String>) -> Int {
         guard !keys.isEmpty else { return 0 }

@@ -1,10 +1,6 @@
-// Parsed DDS -> MTLTexture upload. BCn pixel formats are sampled natively on
-// Apple Silicon. Legacy xRGB8888 maps to BGRA8 after forcing X opaque;
-// RGBA8888 maps directly to RGBA8.
-// Color space is the caller's call per usage (todo 2.5): diffuse maps want
-// the sRGB view, normal/data maps stay linear. Any failure (parse, format,
-// allocation) falls back to a 1x1 placeholder and logs — a bad texture must
-// never take down the engine (AGENTS.md mod-quirk rule).
+// Parsed DDS -> MTLTexture upload. Color maps use the sRGB view; data maps stay
+// linear. A failed load logs and falls back to a 1x1 placeholder, so one bad
+// texture never stops the engine.
 
 import Foundation
 import Metal
@@ -24,6 +20,7 @@ nonisolated public enum TextureLoaderError: Error, Equatable {
     /// Device cannot sample BCn (never on Apple Silicon; paravirtual CI GPUs).
     case bcTextureCompressionUnsupported
     case textureAllocationFailed
+    case placeholderAllocationFailed
 }
 
 /// Uploads DDS bytes to `MTLTexture`s. One per device; placeholders are
@@ -35,13 +32,18 @@ nonisolated public final class TextureLoader {
     )
 
     private let device: MTLDevice
+    private let colorPlaceholder: MTLTexture
+    private let dataPlaceholder: MTLTexture
 
-    public init(device: MTLDevice) {
+    /// Throws when the 1x1 placeholders cannot be allocated, because then no
+    /// failed load has a fallback.
+    public init(device: MTLDevice) throws {
         self.device = device
+        colorPlaceholder = try Self.makePlaceholder(device: device, usage: .color)
+        dataPlaceholder = try Self.makePlaceholder(device: device, usage: .data)
     }
 
-    /// Never fails: parse/upload errors log once and yield the usage's 1x1
-    /// placeholder so scene build keeps going (todo 2.5 fallback rule).
+    /// Never fails: a parse or upload error logs and yields the usage's placeholder.
     public func texture(dds data: Data, usage: TextureUsage, label: String) -> MTLTexture {
         do {
             return try upload(dds: DDSFile(data: data), usage: usage, label: label)
@@ -134,23 +136,15 @@ nonisolated public final class TextureLoader {
 
     // MARK: - Placeholders
 
-    /// Lazy per-usage cache; the loader is used from one thread (scene build).
-    private var placeholders: [MTLTexture?] = [nil, nil]
-
     private func placeholder(usage: TextureUsage) -> MTLTexture {
-        let slot = usage == .color ? 0 : 1
-        if let texture = placeholders[slot] {
-            return texture
-        }
-        let texture = makePlaceholder(usage: usage)
-        placeholders[slot] = texture
-        return texture
+        usage == .color ? colorPlaceholder : dataPlaceholder
     }
 
-    /// 1x1 RGBA8: mid-gray for color (lighting still shades it), flat normal
-    /// for data. Plain formats — `makeTexture` for these cannot reasonably
-    /// fail; if it somehow does the renderer cannot draw anything anyway.
-    private func makePlaceholder(usage: TextureUsage) -> MTLTexture {
+    /// 1x1 RGBA8: mid-gray for color (lighting still shades it), flat normal for data.
+    private static func makePlaceholder(
+        device: MTLDevice,
+        usage: TextureUsage
+    ) throws -> MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
         descriptor.pixelFormat = usage == .color ? .rgba8Unorm_srgb : .rgba8Unorm
@@ -159,7 +153,7 @@ nonisolated public final class TextureLoader {
         descriptor.usage = .shaderRead
         descriptor.storageMode = .shared
         guard let texture = device.makeTexture(descriptor: descriptor) else {
-            fatalError("cannot allocate 1x1 placeholder texture")
+            throw TextureLoaderError.placeholderAllocationFailed
         }
         texture.label = usage == .color ? "placeholder-color" : "placeholder-data"
         var pixel: [UInt8] = usage == .color ? [128, 128, 128, 255] : [128, 128, 255, 255]

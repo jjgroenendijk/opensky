@@ -1,4 +1,4 @@
-// M7.3.2 env-gated acceptance over user's read-only Skyrim SE install.
+// Env-gated acceptance over user's read-only Skyrim SE install.
 // Builds WhiterunWorld cell (4,-2), isolates its paired flame/smoke system,
 // renders two exact simulation times, records numeric delta + PNG evidence.
 
@@ -39,7 +39,7 @@ struct ParticlePlaybackRealDataTests {
         let root = try #require(Self.dataRoot)
         let fileSystem = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
         let cell = try builder.buildScene(

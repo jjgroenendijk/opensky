@@ -169,7 +169,7 @@ extension CrimeRealDataTests {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let file = try ESMFile(url: esmURL)
         let fileSystem = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let builder = CellSceneBuilder(
             file: file,
             meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),

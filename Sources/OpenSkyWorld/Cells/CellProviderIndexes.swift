@@ -152,7 +152,7 @@ nonisolated public struct CellProviderIndexes {
         detectionSettings = tuning.detection
         skillAdvancementSettings = tuning.skillAdvancement
         characterLevelSettings = tuning.characterLevel
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         builder = CellSceneBuilder(
             file: file,

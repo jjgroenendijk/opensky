@@ -146,7 +146,7 @@ struct PreviewRealDataTests {
         vfs: VirtualFileSystem,
         device: MTLDevice
     ) throws {
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let candidates = PreviewCatalog.filter(
             catalog.items(for: .textures),
             query: "textures\\architecture"
@@ -191,7 +191,7 @@ struct PreviewRealDataTests {
         vfs: VirtualFileSystem,
         device: MTLDevice
     ) throws {
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let candidates = PreviewCatalog.filter(
             catalog.items(for: .meshes),

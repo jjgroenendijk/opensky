@@ -71,7 +71,7 @@ struct GrassRealDataTests {
         let device = try #require(Self.device)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let fileSystem = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
 

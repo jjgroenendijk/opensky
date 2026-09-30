@@ -29,12 +29,12 @@ struct TextureLoaderTests {
 
     private func bcLoader() throws -> TextureLoader {
         let device = try #require(Self.bcDevice, "no BCn-capable Metal device")
-        return TextureLoader(device: device)
+        return try TextureLoader(device: device)
     }
 
     private func loader() throws -> TextureLoader {
         let device = try #require(Self.device, "no Metal device")
-        return TextureLoader(device: device)
+        return try TextureLoader(device: device)
     }
 
     @Test(arguments: [

@@ -1,9 +1,5 @@
-// QUST decode over synthetic field bytes only (QuestFixture) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format/QUST" and xEdit dev-4.1.6
-// Core/wbDefinitionsTES5.pas `wbRecord(QUST, 'Quest', ...)` line 8759.
-// See docs/formats/quest-records.md.
+// QUST decode over synthetic field bytes only (QuestFixture).
+// Layout: docs/formats/quest-records.md.
 
 import FormatsESMTesting
 import Foundation
@@ -239,5 +235,15 @@ struct QuestRecordTests {
     /// A four-character code as the little-endian word ENAM stores.
     private func fourCC(_ value: String) -> UInt32 {
         FourCC(stringLiteral: value).rawValue
+    }
+
+    @Test(arguments: [
+        (UInt32(0), Quest.Kind.none),
+        (6, .miscellaneous),
+        (11, .dragonborn),
+        (12, .unknown(12))
+    ])
+    func kindRawValueMapsToCase(raw: UInt32, expected: Quest.Kind) {
+        #expect(Quest.Kind(rawValue: raw) == expected)
     }
 }

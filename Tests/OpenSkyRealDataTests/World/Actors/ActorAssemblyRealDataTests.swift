@@ -56,7 +56,7 @@ struct ActorAssemblyRealDataTests {
         let visual = try resolver.resolve(appearance: appearance)
 
         let vfs = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let assembly = ActorAssembler(provider: meshes).assemble(
             placed: actor,
@@ -89,7 +89,7 @@ struct ActorAssemblyRealDataTests {
     /// (000BAD03) are priority 10, `MonkRobesAA` (000BAD04) is priority 15.
     /// The hood therefore precedes the robes even though the owning ARMO
     /// `ClothesMonkRobesHooded` (00107106) lists its armatures the other way
-    /// round — which is exactly what issue #384 read as nondeterminism. Five
+    /// round — which can look like nondeterminism. Five
     /// consecutive `openskycli actor --npc Heimskr` runs produce this order.
     private func expectWornPartsAreInDrawOrder(
         _ visual: ResolvedActorVisual,

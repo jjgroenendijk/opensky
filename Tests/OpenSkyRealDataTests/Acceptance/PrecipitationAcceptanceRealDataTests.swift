@@ -1,4 +1,4 @@
-// M7.4.2 precipitation acceptance against the user's read-only Skyrim SE
+// Precipitation acceptance against the user's read-only Skyrim SE
 // install. Forces decoded clear/rain/snow presets through the live weather +
 // renderer path, freezes a mid-rain cross-fade while particles keep playing,
 // then resumes and transitions back to clear. Numeric evidence + local PNGs
@@ -153,7 +153,7 @@ struct PrecipitationAcceptanceRealDataTests {
         let root = try #require(Self.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let scene = try CellSceneBuilder(file: file, meshes: meshes, textures: textures)
             .buildScene(

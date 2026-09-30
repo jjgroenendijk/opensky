@@ -39,7 +39,7 @@ struct FaceMorphRenderRealDataTests {
         let root = try #require(Self.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let vfs = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let builder = CellSceneBuilder(
             file: file,

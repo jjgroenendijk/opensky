@@ -1,11 +1,11 @@
-// Loose world items against the real install (issue #177, roadmap item
-// 12.1.3), env-gated and run with `make realtest`.
+// Loose world items against the real install, env-gated and run with
+// `make realtest`.
 //
 // The synthetic suites prove the mechanism; this proves the mechanism meets the
 // data. Widening `ModelBase.supportedTypes` to the six carryable families is
 // only worth anything if real cells actually place them, if their bases resolve
-// a model rather than being counted as markers, and if the item index #175
-// built describes every one of them.
+// a model rather than being counted as markers, and if the item index
+// describes every one of them.
 //
 // Gated on `GameDataLocator.environmentKey` alone — deliberately not on the
 // Steam-default fallback — so a machine without `OPENSKY_DATA_ROOT` skips
@@ -56,7 +56,7 @@ struct WorldItemRealDataTests {
         let root = try #require(Self.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         let builder = CellSceneBuilder(
             file: file, meshes: meshes, textures: textures, fileSystem: vfs

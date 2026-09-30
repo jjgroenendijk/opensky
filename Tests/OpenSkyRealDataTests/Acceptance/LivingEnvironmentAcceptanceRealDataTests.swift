@@ -1,4 +1,4 @@
-// M7.6 integrated acceptance against user's read-only Skyrim SE install.
+// Integrated acceptance against user's read-only Skyrim SE install.
 // One exterior combines actors, shadows, forced rain, world particles,
 // precipitation, and grass; Chillfurrow Farm interior combines animation +
 // its applicable fire effect. Numeric A/B deltas + PNGs stay in ignored logs/.
@@ -227,7 +227,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         let device = try #require(Self.device)
         let fileSystem = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         let builder = CellSceneBuilder(
             file: file,

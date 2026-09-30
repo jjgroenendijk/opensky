@@ -1,12 +1,5 @@
-// Resident-bounds near-plane clamp for cascaded sun shadows (M7.1.2). The
-// scene is the resident cell set, so its world-AABB union bounds every caster:
-// clamping each cascade's casterBackup extension to it is a precision/cost win,
-// never a visual change. Pure math, synthetic fixtures (AGENTS.md testing).
-//
-// Light-space near-distance convention: MatrixMath.orthographic takes a
-// positive near distance; the slice's nearest corner is at sliceNearZ and the
-// full 7.1.1 backup pushes it toward the sun to fullBackupNearZ (more
-// negative). residentNearZ is resident geometry's nearest-toward-sun distance.
+// Resident-bounds near-plane clamp for cascaded sun shadows. Near distances are
+// positive; a more negative value lies further toward the sun.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
@@ -102,7 +95,7 @@ struct ShadowResidentClampTests {
     private static let sun = SIMD3<Float>(0, 0, -1)
 
     private func makeCascades(residentBounds: ModelBounds?) -> [ShadowCascade] {
-        ShadowCascadeMath.makeCascades(
+        ShadowCascadeMath.makeCascades(ShadowCascadeRequest(
             cameraToWorld: Self.cameraToWorld,
             fovYRadians: Self.fovY,
             aspectRatio: Self.aspect,
@@ -114,7 +107,7 @@ struct ShadowResidentClampTests {
             shadowMapResolution: Self.resolution,
             casterBackup: Self.casterBackup,
             residentBounds: residentBounds
-        )
+        ))
     }
 
     @Test func residentBoundsClampNeverWidensAndShrinksSomeCascade() {

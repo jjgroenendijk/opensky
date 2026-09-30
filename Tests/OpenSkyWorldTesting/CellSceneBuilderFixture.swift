@@ -315,7 +315,7 @@ extension CellSceneBuilderFixture {
 
     public func makeBuilder(pluginData: Data, device: MTLDevice) throws -> CellSceneBuilder {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
-        let textures = TextureLibrary(fileSystem: vfs, device: device)
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
         return try CellSceneBuilder(
             file: ESMFile(data: pluginData),

@@ -167,7 +167,7 @@ extension Renderer {
         guard hasCasters else { return true }
 
         let (fovY, aspect) = Self.fovAspect(from: projection)
-        let cascades = ShadowCascadeMath.makeCascades(
+        let cascades = ShadowCascadeMath.makeCascades(ShadowCascadeRequest(
             cameraToWorld: freeFlyCamera.viewMatrix().inverse,
             fovYRadians: fovY,
             aspectRatio: aspect,
@@ -179,7 +179,7 @@ extension Renderer {
             shadowMapResolution: ShadowConstant.mapResolution.rawValue,
             casterBackup: Self.shadowCasterBackup,
             residentBounds: residentCasterBounds()
-        )
+        ))
 
         var state = ShadowPassState(slot: slot, base: slot * shadowInstanceSlotCapacity)
         guard encodeCascades(cascades, state: &state) else { return false }

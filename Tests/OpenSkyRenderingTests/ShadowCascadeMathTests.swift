@@ -73,28 +73,28 @@ struct ShadowCascadeMathTests {
     // MARK: - orthographic
 
     @Test func orthographicMapsCenterToNdcOrigin() {
-        let ortho = MatrixMath.orthographic(
+        let ortho = MatrixMath.orthographic(OrthographicBounds(
             left: -10,
             right: 30,
             bottom: -4,
             top: 16,
             nearZ: 1,
             farZ: 100
-        )
+        ))
         let center = ortho * SIMD4<Float>(10, 6, -50.5, 1)
         #expect(abs(center.x / center.w) < 1e-5)
         #expect(abs(center.y / center.w) < 1e-5)
     }
 
     @Test func orthographicMapsEdgesToNdcCorners() {
-        let ortho = MatrixMath.orthographic(
+        let ortho = MatrixMath.orthographic(OrthographicBounds(
             left: -2,
             right: 6,
             bottom: -3,
             top: 5,
             nearZ: 1,
             farZ: 50
-        )
+        ))
         let low = ortho * SIMD4<Float>(-2, -3, -1, 1)
         let high = ortho * SIMD4<Float>(6, 5, -1, 1)
         #expect(abs(low.x + 1) < 1e-5)
@@ -104,14 +104,14 @@ struct ShadowCascadeMathTests {
     }
 
     @Test func orthographicMapsNearToZeroAndFarToOne() {
-        let ortho = MatrixMath.orthographic(
+        let ortho = MatrixMath.orthographic(OrthographicBounds(
             left: -1,
             right: 1,
             bottom: -1,
             top: 1,
             nearZ: 0.5,
             farZ: 200
-        )
+        ))
         let near = ortho * SIMD4<Float>(0, 0, -0.5, 1)
         let far = ortho * SIMD4<Float>(0, 0, -200, 1)
         #expect(abs(near.z / near.w) < 1e-5)
@@ -131,7 +131,7 @@ struct ShadowCascadeMathTests {
     private static let sun = SIMD3<Float>(0, 0, -1)
 
     private func cascades(cameraToWorld: simd_float4x4 = Self.cameraToWorld) -> [ShadowCascade] {
-        ShadowCascadeMath.makeCascades(
+        ShadowCascadeMath.makeCascades(ShadowCascadeRequest(
             cameraToWorld: cameraToWorld,
             fovYRadians: Self.fovY,
             aspectRatio: Self.aspect,
@@ -142,7 +142,7 @@ struct ShadowCascadeMathTests {
             lambda: 0.6,
             shadowMapResolution: Self.resolution,
             casterBackup: Self.casterBackup
-        )
+        ))
     }
 
     private func sliceCorners(for cascade: ShadowCascade) -> [SIMD3<Float>] {

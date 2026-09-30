@@ -58,7 +58,7 @@ struct DynamicBodyRealDataTests {
         let root = try #require(Self.dataRoot)
         let device = try #require(Self.device)
         let fileSystem = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let builder = try CellSceneBuilder(
             file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
             meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),
@@ -127,7 +127,7 @@ extension DynamicBodyRealDataTests {
         let root = try #require(Self.dataRoot)
         let device = try #require(Self.device)
         let fileSystem = VirtualFileSystem(root: root)
-        let textures = TextureLibrary(fileSystem: fileSystem, device: device)
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let builder = try CellSceneBuilder(
             file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
             meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),
