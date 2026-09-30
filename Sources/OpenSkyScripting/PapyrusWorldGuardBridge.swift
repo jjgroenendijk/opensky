@@ -66,26 +66,3 @@ extension PapyrusWorldStateBridge {
         arrestSession?()?.settleArrest(with: faction, outcome)
     }
 }
-
-/// Nonisolated hops, one `MainActor.assumeIsolated` per method, mirroring the
-/// rest of `PapyrusWorldAccess`.
-nonisolated extension PapyrusWorldAccess {
-    public func crimeFaction(ofActor actor: ReferenceKey) -> ReferenceKey?? {
-        MainActor.assumeIsolated { bridge.crimeFaction(ofActor: actor) }
-    }
-
-    public func isGuard(_ actor: ReferenceKey) -> Bool? {
-        MainActor.assumeIsolated { bridge.isGuard(actor) }
-    }
-
-    public func canPayCrimeGold(to faction: ReferenceKey) -> Bool? {
-        MainActor.assumeIsolated { bridge.canPayCrimeGold(to: faction) }
-    }
-
-    public func settleArrest(
-        with faction: ReferenceKey,
-        _ outcome: ArrestOutcome
-    ) -> Result<ArrestSettlement, ArrestRefusal>? {
-        MainActor.assumeIsolated { bridge.settleArrest(with: faction, outcome) }
-    }
-}

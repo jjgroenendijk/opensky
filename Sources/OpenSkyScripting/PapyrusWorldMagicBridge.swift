@@ -34,10 +34,6 @@ nonisolated public struct PapyrusSpellState: Equatable, Sendable {
 }
 
 /// Magic state and mutations a Papyrus native may perform.
-///
-/// `Sendable` for the reason `PapyrusWorldActorBridge` is: every conformer is a
-/// `@MainActor` class, and the existential only needed to say so before
-/// `PapyrusWorldAccess` can carry it across its hops.
 @MainActor
 public protocol PapyrusWorldMagicBridge: AnyObject, Sendable {
     /// One observation of the magic acting on and known to `key`, or nil when
@@ -96,55 +92,4 @@ public protocol PapyrusWorldMagicBridge: AnyObject, Sendable {
     func castSpell(
         _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
     ) -> Bool
-}
-
-/// Nonisolated hops for the magic operations, mirroring the rest of
-/// `PapyrusWorldAccess`: one `MainActor.assumeIsolated` per method, which is an
-/// assertion that natives run on the main actor rather than a suppression of
-/// the check.
-nonisolated extension PapyrusWorldAccess {
-    public func spellState(for key: ReferenceKey) -> PapyrusSpellState? {
-        MainActor.assumeIsolated { bridge.spellState(for: key) }
-    }
-
-    @discardableResult
-    public func addSpell(_ spell: ReferenceKey, to actor: ReferenceKey) -> Bool {
-        MainActor.assumeIsolated { bridge.addSpell(spell, to: actor) }
-    }
-
-    @discardableResult
-    public func removeSpell(_ spell: ReferenceKey, from actor: ReferenceKey) -> Bool {
-        MainActor.assumeIsolated { bridge.removeSpell(spell, from: actor) }
-    }
-
-    @discardableResult
-    public func equipSpell(
-        _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
-    ) -> Bool {
-        MainActor.assumeIsolated { bridge.equipSpell(spell, source: source, on: actor) }
-    }
-
-    @discardableResult
-    public func unequipSpell(
-        _ spell: ReferenceKey, source: CastingSource, on actor: ReferenceKey
-    ) -> Bool {
-        MainActor.assumeIsolated { bridge.unequipSpell(spell, source: source, on: actor) }
-    }
-
-    @discardableResult
-    public func dispelSpell(_ spell: ReferenceKey, on actor: ReferenceKey) -> Int {
-        MainActor.assumeIsolated { bridge.dispelSpell(spell, on: actor) }
-    }
-
-    @discardableResult
-    public func dispelAllSpells(on actor: ReferenceKey) -> Int {
-        MainActor.assumeIsolated { bridge.dispelAllSpells(on: actor) }
-    }
-
-    @discardableResult
-    public func castSpell(
-        _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
-    ) -> Bool {
-        MainActor.assumeIsolated { bridge.castSpell(spell, from: source, at: target) }
-    }
 }

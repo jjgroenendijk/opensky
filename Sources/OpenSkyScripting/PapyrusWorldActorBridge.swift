@@ -89,10 +89,6 @@ nonisolated public struct PapyrusActorState: ActorValueReadable, Equatable, Send
 }
 
 /// Actor state and mutations a Papyrus native may perform.
-///
-/// `Sendable` for the reason `PapyrusWorldQuestBridge` is: every conformer is a
-/// `@MainActor` class, and the existential only needed to say so before
-/// `PapyrusWorldAccess` can carry it across its hops.
 @MainActor
 public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     /// One observation of the actor `key` names, or nil when this session
@@ -182,91 +178,4 @@ public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     /// - Returns: true when this call killed the actor; false for one already dead.
     @discardableResult
     func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool
-}
-
-/// Nonisolated hops for the actor operations, mirroring the rest of
-/// `PapyrusWorldAccess`: one `MainActor.assumeIsolated` per method, which is an
-/// assertion that natives run on the main actor rather than a suppression of
-/// the check.
-nonisolated extension PapyrusWorldAccess {
-    public func actorState(for key: ReferenceKey) -> PapyrusActorState? {
-        MainActor.assumeIsolated { bridge.actorState(for: key) }
-    }
-
-    @discardableResult
-    public func damageActorValue(
-        at index: Int32, by amount: Float, on key: ReferenceKey
-    ) -> PapyrusActorState? {
-        MainActor.assumeIsolated {
-            bridge.damageActorValue(at: index, by: amount, on: key)
-        }
-    }
-
-    @discardableResult
-    public func restoreActorValue(
-        at index: Int32, by amount: Float, on key: ReferenceKey
-    ) -> PapyrusActorState? {
-        MainActor.assumeIsolated {
-            bridge.restoreActorValue(at: index, by: amount, on: key)
-        }
-    }
-
-    @discardableResult
-    public func writeActorValue(
-        _ write: PapyrusActorValueWrite,
-        at index: Int32,
-        to value: Float,
-        on key: ReferenceKey
-    ) -> PapyrusActorState? {
-        MainActor.assumeIsolated {
-            bridge.writeActorValue(write, at: index, to: value, on: key)
-        }
-    }
-
-    @discardableResult
-    public func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool {
-        MainActor.assumeIsolated { bridge.startActorCombat(key, target: target) }
-    }
-
-    @discardableResult
-    public func stopActorCombat(_ key: ReferenceKey) -> Bool {
-        MainActor.assumeIsolated { bridge.stopActorCombat(key) }
-    }
-
-    @discardableResult
-    public func killActor(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
-        MainActor.assumeIsolated { bridge.killActor(key, killer: killer) }
-    }
-
-    @discardableResult
-    public func addPerk(_ perk: ReferenceKey, to key: ReferenceKey) -> Bool {
-        MainActor.assumeIsolated { bridge.addPerk(perk, to: key) }
-    }
-
-    @discardableResult
-    public func removePerk(_ perk: ReferenceKey, from key: ReferenceKey) -> Bool {
-        MainActor.assumeIsolated { bridge.removePerk(perk, from: key) }
-    }
-
-    public func hasPerk(_ perk: ReferenceKey, on key: ReferenceKey) -> Bool? {
-        MainActor.assumeIsolated { bridge.hasPerk(perk, on: key) }
-    }
-
-    @discardableResult
-    public func advancePlayerSkill(
-        _ advance: PapyrusSkillAdvance, at index: Int32, by magnitude: Float
-    ) -> Bool {
-        MainActor.assumeIsolated {
-            bridge.advancePlayerSkill(advance, at: index, by: magnitude)
-        }
-    }
-
-    public func playerPerkPoints() -> Int? {
-        MainActor.assumeIsolated { bridge.playerPerkPoints() }
-    }
-
-    @discardableResult
-    public func modifyPlayerPerkPoints(by delta: Int) -> Int? {
-        MainActor.assumeIsolated { bridge.modifyPlayerPerkPoints(by: delta) }
-    }
 }

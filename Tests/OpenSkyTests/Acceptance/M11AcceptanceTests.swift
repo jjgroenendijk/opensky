@@ -8,6 +8,7 @@ import OpenSkyScriptingInterface
 import OpenSkyScriptingTesting
 import Testing
 
+@MainActor
 struct M11AcceptanceTests {
     private struct Evidence: Equatable {
         let value: PapyrusValue

@@ -3,7 +3,7 @@
 import Foundation
 import OpenSkyScriptingInterface
 
-nonisolated public enum PapyrusNativeFunctions: Sendable {
+public enum PapyrusNativeFunctions {
     public static func install(into registry: inout PapyrusNativeRegistry) {
         installDebug(into: &registry)
         installUtility(into: &registry)

@@ -1,15 +1,5 @@
-// The perk natives (issue #497, roadmap item 20.4): the `Actor` perk family
-// over 20.4's perk runtime.
-//
-// Policy is the `Actor` and spell families', unchanged: `self` arrives as
-// `PapyrusNativeCall.receiver` and becomes a `ReferenceKey`; a headless
-// runtime, a handle with no world identity, or a session with no perk data is a
-// failure with a reason rather than a guess, and the interpreter substitutes
-// the call's declared default so the script keeps running.
-//
-// Three natives, which is the whole `Actor` perk surface the Creation Kit wiki
-// declares. `Game.GetPerk` and the perk-point functions belong to the perk tree
-// and the level-up screen, which are items 20.6 and 20.7.
+// The perk natives: the whole `Actor` perk surface the Creation Kit wiki
+// declares. A missing world or perk data is a failure with a reason.
 //
 // Documented in docs/engine/papyrus-activation.md and docs/engine/perks.md.
 
@@ -17,7 +7,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installPerk(into registry: inout PapyrusNativeRegistry) {
         // "Adds the specified perk to this actor."
         // (<https://ck.uesp.net/wiki/AddPerk_-_Actor>) The page notes the
@@ -66,7 +56,7 @@ nonisolated extension PapyrusNativeFunctions {
     private static func perkTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: ((world: PapyrusWorldAccess, key: ReferenceKey), ReferenceKey)
+        body: ((world: any PapyrusWorldBridge, key: ReferenceKey), ReferenceKey)
             -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let actor = actorTarget(call, context) else {

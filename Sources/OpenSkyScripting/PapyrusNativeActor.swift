@@ -9,7 +9,7 @@ import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installActor(into registry: inout PapyrusNativeRegistry) {
         installActorValueReads(into: &registry)
         installActorValueWrites(into: &registry)
@@ -100,7 +100,7 @@ nonisolated extension PapyrusNativeFunctions {
     ) {
         let writes: [(
             String,
-            @Sendable (PapyrusWorldAccess, Int32, Float, ReferenceKey) -> Void
+            @MainActor @Sendable (any PapyrusWorldBridge, Int32, Float, ReferenceKey) -> Void
         )] = [
             ("DamageActorValue", { world, index, amount, key in
                 world.damageActorValue(at: index, by: amount, on: key)
@@ -185,7 +185,7 @@ nonisolated extension PapyrusNativeFunctions {
     public static func actorTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext
-    ) -> (world: PapyrusWorldAccess, key: ReferenceKey)? {
+    ) -> (world: any PapyrusWorldBridge, key: ReferenceKey)? {
         worldTarget(call, context)
     }
 

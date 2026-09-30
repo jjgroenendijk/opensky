@@ -10,8 +10,9 @@ import Foundation
 @testable import OpenSkyScripting
 import Testing
 
+@MainActor
 struct ScriptDataRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
+    nonisolated private static let dataRoot: GameDataRoot? = {
         let environment = ProcessInfo.processInfo.environment
         guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
         else { return nil }

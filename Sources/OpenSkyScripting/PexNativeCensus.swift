@@ -62,6 +62,7 @@ nonisolated public struct PexNativeCensus: Equatable, Sendable {
             .map { ($0.key.name, $0.value) }
     }
 
+    @MainActor
     public func coverage(in registry: PapyrusNativeRegistry) -> PexNativeCoverage {
         let implemented = referenceCounts.keys.reduce(into: 0) { count, target in
             if

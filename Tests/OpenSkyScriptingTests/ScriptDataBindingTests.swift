@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyWorldState
 import Testing
 
+@MainActor
 @Suite("VMAD Papyrus binding")
 struct ScriptDataBindingTests {
     @Test("uses decoded PEX backing names and resolved world handles")
@@ -70,11 +71,10 @@ struct ScriptDataBindingTests {
         }
     }
 
-    /// A filled alias binds like any other object property (issue #183): the
+    /// A filled alias binds like any other object property: the
     /// seam turns the quest FormID plus the alias slot into a world reference,
     /// and the `aliasObject` skip is gone for that property.
     @Test("a filled quest alias binds to its world reference")
-    @MainActor
     func bindsFilledAliasObjects() throws {
         let runtime = makeRuntime()
         let quest = try QuestFixture.quest(

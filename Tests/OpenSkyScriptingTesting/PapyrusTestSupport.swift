@@ -23,6 +23,7 @@ public enum PapyrusTestSupport {
         )
     }
 
+    @MainActor
     public static func runtime(
         objects: [PexObject],
         nativeDispatch: PapyrusNativeDispatch = PapyrusRecordingNativeDispatch(),

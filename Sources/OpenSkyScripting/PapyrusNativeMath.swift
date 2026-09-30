@@ -4,7 +4,7 @@ import Darwin
 import Foundation
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installMath(into registry: inout PapyrusNativeRegistry) {
         installMathRounding(into: &registry)
         installMathArithmetic(into: &registry)

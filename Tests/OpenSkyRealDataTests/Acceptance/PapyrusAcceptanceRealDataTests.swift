@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyWorldState
 import Testing
 
+@MainActor
 struct PapyrusAcceptanceRealDataTests {
     private struct RunEvidence {
         let entryPoints: Int
@@ -20,7 +21,7 @@ struct PapyrusAcceptanceRealDataTests {
         "OnInit", "OnLoad", "OnPlayerLoadGame"
     ]
 
-    private static let dataRoot: GameDataRoot? = {
+    nonisolated private static let dataRoot: GameDataRoot? = {
         let environment = ProcessInfo.processInfo.environment
         guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
         else { return nil }
@@ -42,18 +43,8 @@ struct PapyrusAcceptanceRealDataTests {
         #expect(census.declarationTotal == 686)
         #expect(census.referenceTotal == 65477)
         #expect(census.distinctReferencedTotal == 508)
-        // 47 before the `Actor` family (issue #375), 56 after it, 58 once
-        // 16.7 (issue #424) added `StartCombat` and `StopCombat`, and 69 once
-        // 19.11 (issue #474) added the eleven spell natives — every one of
-        // those twenty-two is referenced by the vanilla corpus, which is what
-        // chose them. The progression items brought it to 78: three
-        // actor-value writes (issue #496), the three perk natives (issue #497),
-        // the two skill natives (issue #498) and `Actor.GetLevel` (issue #499).
-        // `Game.GetPerkPoints` and `Game.ModPerkPoints` are SKSE functions and
-        // the vanilla corpus references neither, so they add nothing here.
-        // M21 brought it to 97: the faction and relationship natives (issue
-        // #508), the crime-gold natives (issues #504 and #573), the five guard
-        // and arrest natives (issue #505) and `Actor.ShowBarterMenu` (#506).
+        // Pinned so a new native shows up here. The SKSE perk-point functions add
+        // nothing, because the vanilla corpus never calls them.
         #expect(coverage == PexNativeCoverage(implemented: 97, referenced: 508))
         #expect(run.entryPoints == 577)
         #expect(run.pending == 0)
@@ -62,16 +53,8 @@ struct PapyrusAcceptanceRealDataTests {
         #expect(runtime.tally.faultTotal == 337)
         #expect(runtime.tally.nativeCallTotal == 536)
         #expect(runtime.tally.unimplementedNativeTotal == 320)
-        // The `Quest` family (issue #322), the `Actor` family (issue #375,
-        // widened by #424), the spell family (issue #474) and the progression
-        // families (issues #496 through #499) are registered but need a world,
-        // and this acceptance runs the corpus headless: their calls reach a
-        // native that refuses honestly instead of falling through to the
-        // unimplemented tally, which is where these 137 moved from. 134 before
-        // the M21 natives, 130 before the progression natives, 118 before the spell natives, 117
-        // before
-        // `StartCombat` and `StopCombat`, and 108 before the `Actor` family
-        // landed.
+        // World natives refuse in this headless run, so their calls count as
+        // failures rather than unimplemented natives.
         #expect(runtime.tally.nativeFailureTotal == 137)
         #expect(runtime.tally.deferredAnimationTotal == 18)
         #expect(runtime.tally.rankedFaultKinds.map(\.name) == [

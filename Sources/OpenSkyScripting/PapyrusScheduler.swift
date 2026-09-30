@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
-nonisolated public final class PapyrusScheduler {
+public final class PapyrusScheduler {
     private struct Entry {
         let order: UInt64
         let wake: Wake
@@ -24,7 +24,7 @@ nonisolated public final class PapyrusScheduler {
     public let fixedStepSeconds: Double
     public let maximumGameHoursPerStep: Double
 
-    /// Observation seam for the M11.2 world runtime: called after every woken
+    /// Observation seam for the world runtime: called after every woken
     /// call resumes, before its outcome is routed, so the caller can retire
     /// per-instance bookkeeping and count resumes.
     public var onResume: ((SuspendedCall, PapyrusRunOutcome) -> Void)?

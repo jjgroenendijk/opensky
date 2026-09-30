@@ -17,10 +17,6 @@ nonisolated public enum PapyrusQuestBridgeError: Error, Equatable {
 }
 
 /// Quest state and mutations a Papyrus native may perform.
-///
-/// `Sendable` so `PapyrusWorldAccess` can carry the existential across its
-/// `MainActor.assumeIsolated` hops. Every conformer is a `@MainActor` class and
-/// is therefore already `Sendable`; only the existential needed to say so.
 @MainActor
 public protocol PapyrusWorldQuestBridge: AnyObject, Sendable {
     /// Effective state of the quest `key` names: its runtime component when it
@@ -61,56 +57,4 @@ public protocol PapyrusWorldQuestBridge: AnyObject, Sendable {
     func setQuestObjectiveFailed(
         _ objective: UInt16, _ isFailed: Bool, for key: ReferenceKey
     ) throws
-}
-
-/// Nonisolated hops for the quest operations, mirroring the rest of
-/// `PapyrusWorldAccess`: one `MainActor.assumeIsolated` per method, which is an
-/// assertion that natives run on the main actor rather than a suppression of
-/// the check.
-nonisolated extension PapyrusWorldAccess {
-    public func questState(for key: ReferenceKey) throws -> QuestRuntimeState {
-        try MainActor.assumeIsolated { try bridge.questState(for: key) }
-    }
-
-    @discardableResult
-    public func startQuest(for key: ReferenceKey) throws -> Bool {
-        try MainActor.assumeIsolated { try bridge.startQuest(for: key) }
-    }
-
-    public func stopQuest(for key: ReferenceKey) throws {
-        try MainActor.assumeIsolated { try bridge.stopQuest(for: key) }
-    }
-
-    public func completeQuest(for key: ReferenceKey) throws {
-        try MainActor.assumeIsolated { try bridge.completeQuest(for: key) }
-    }
-
-    @discardableResult
-    public func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
-        try MainActor.assumeIsolated { try bridge.setQuestStage(stage, for: key) }
-    }
-
-    public func setQuestObjectiveDisplayed(
-        _ objective: UInt16, _ isDisplayed: Bool, for key: ReferenceKey
-    ) throws {
-        try MainActor.assumeIsolated {
-            try bridge.setQuestObjectiveDisplayed(objective, isDisplayed, for: key)
-        }
-    }
-
-    public func setQuestObjectiveCompleted(
-        _ objective: UInt16, _ isCompleted: Bool, for key: ReferenceKey
-    ) throws {
-        try MainActor.assumeIsolated {
-            try bridge.setQuestObjectiveCompleted(objective, isCompleted, for: key)
-        }
-    }
-
-    public func setQuestObjectiveFailed(
-        _ objective: UInt16, _ isFailed: Bool, for key: ReferenceKey
-    ) throws {
-        try MainActor.assumeIsolated {
-            try bridge.setQuestObjectiveFailed(objective, isFailed, for: key)
-        }
-    }
 }

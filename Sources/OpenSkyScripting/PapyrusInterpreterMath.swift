@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusInterpreter {
+extension PapyrusInterpreter {
     public func mathOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame

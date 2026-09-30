@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyScriptingInterface
 import OSLog
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     private static var debugLogger: Logger {
         Logger(
             subsystem: Bundle.main.bundleIdentifier ?? "OpenSky",

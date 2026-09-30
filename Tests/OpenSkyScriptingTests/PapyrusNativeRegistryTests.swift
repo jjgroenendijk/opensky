@@ -8,22 +8,11 @@ import Foundation
 import OpenSkyScriptingTesting
 import Testing
 
+@MainActor
 struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
-        // 57 before the `Actor` family (issue #375) added nine, 66 before
-        // 16.7 (issue #424) added `StartCombat` and `StopCombat`, 68 before
-        // 19.11 (issue #474) added the eleven spell natives, 79 before
-        // 20.3 (issue #496) added the three actor-value writes, and 82 before
-        // 20.4 (issue #497) added `AddPerk`, `RemovePerk` and `HasPerk`, 85
-        // before 20.5 (issue #498) added `AdvanceSkill` and `IncrementSkill`,
-        // and 87 before 20.6 (issue #499) added `GetLevel`, `GetPerkPoints`
-        // and `ModPerkPoints`, and 90 before 21.5 (issue #504) added the three
-        // `Faction` crime-gold natives and the two `Actor` alarms, and 95 before
-        // 21.4 (issue #508) added the five `Actor` membership functions, the two
-        // relationship accessors, `GetFactionReaction`, `IsHostileToActor` and
-        // `Faction.GetReaction`, and 105 before issue #563 added the violent and
-        // non-violent crime-gold readers and `SetCrimeGoldViolent`.
+        // Pinned so an added or lost native is a visible change.
         #expect(standard.count == 114)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
@@ -49,8 +38,7 @@ struct PapyrusNativeRegistryTests {
         // (see PapyrusNativeActorValues.swift).
         #expect(standard.contains(scriptName: "Actor", functionName: "SetActorValue"))
         #expect(standard.contains(scriptName: "ACTOR", functionName: "modactorvalue"))
-        // The two skill natives are `Game` globals acting on the player alone
-        // (issue #498).
+        // The two skill natives are `Game` globals acting on the player alone.
         #expect(standard.contains(scriptName: "game", functionName: "ADVANCESKILL"))
         #expect(standard.contains(scriptName: "GAME", functionName: "incrementskill"))
         #expect(standard.contains(scriptName: "actor", functionName: "ForceActorValue"))

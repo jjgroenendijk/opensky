@@ -1,42 +1,22 @@
-// `GlobalVariable` natives (issue #172): the script side of the GLOB
-// write-coercion seam in `Sources/OpenSkyFormatsESM/ESM/Records/Global.swift`, which was
-// written naming Papyrus as its caller.
-//
-// A `GlobalVariable` reaches script code as a VMAD object property, so its
-// receiver handle resolves to a `ReferenceKey` exactly like a reference does;
-// `PapyrusWorldStateBridge` maps that key back to the GLOB's FormID and writes
-// through `WorldStateStore.setGlobal(_:formID:defaults:)`. The store applies
-// `Global.ValueType.coerce`, so a write of 3.7 into a short or long global
-// stores 4 and a read gives 4 back.
-//
-// `Global.isConstant` — record header flag 0x40 — is recorded by the decoder
-// and deliberately not enforced here. The Creation Kit forbids *editing* a
-// constant global in the editor, which is a design-time rule about authored
-// data rather than a runtime one, and no open documentation states that the
-// game engine refuses a scripted write. Refusing one would also need a second
-// bridge method for a rule OpenSky cannot verify. So a scripted write to a
-// constant global is applied and recorded like any other; the flag stays
-// available for the Creation Kit-parity work that has a reason to consult it.
+// `GlobalVariable` natives. A GLOB arrives as a VMAD object property and
+// resolves like a reference. Writes go through `WorldStateStore.setGlobal`, which
+// applies `Global.ValueType.coerce`: 3.7 into a short global stores 4.
+// `Global.isConstant` is not enforced, because no open source says the game
+// refuses a scripted write (docs/engine/papyrus-activation.md).
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installGlobalVariable(into registry: inout PapyrusNativeRegistry) {
         installGlobalReads(into: &registry)
         installGlobalWrites(into: &registry)
     }
 
-    /// `float GetValue()` and `int GetValueInt()`.
-    ///
-    /// A key nothing defines — no GLOB record and no override recorded this
-    /// session — is a failure rather than a zero, because zero is a value a
-    /// script would go on to act upon.
-    ///
-    /// `GetValueInt` on a float global truncates toward zero, matching how
-    /// Papyrus casts a float to an int everywhere else, and saturates at the
-    /// `Int32` bounds rather than trapping on a value no integer can hold.
+    /// `float GetValue()` and `int GetValueInt()`. An undefined global fails
+    /// rather than reading 0, because a script would act on the 0.
+    /// `GetValueInt` truncates toward zero and saturates at the `Int32` bounds.
     private static func installGlobalReads(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -61,13 +41,9 @@ nonisolated extension PapyrusNativeFunctions {
     }
 
     /// `SetValue(float afNewValue)` and `SetValueInt(int aiNewValue)`.
-    ///
-    /// Unlike the reads these do not require the global to be defined already:
-    /// in a session with no `GlobalStore` behind it the first write is what
-    /// creates the override, and refusing it would make a synthetic session
-    /// unable to store anything. A non-finite value is refused, because the
-    /// coercion rule turns it into 0 and a script asking for NaN has a bug the
-    /// tally should show.
+    /// A write needs no existing definition, so a session with no `GlobalStore`
+    /// can still store one. A non-finite value is refused, because coercion
+    /// would turn it into 0 and hide the script's bug.
     private static func installGlobalWrites(
         into registry: inout PapyrusNativeRegistry
     ) {

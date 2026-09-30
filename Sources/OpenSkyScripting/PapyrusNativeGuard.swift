@@ -1,11 +1,6 @@
-// The guard and arrest natives (issue #505, roadmap item 21.6): `Actor`'s
-// `GetCrimeFaction` and `IsGuard`, and `Faction`'s `CanPayCrimeGold`,
-// `PlayerPayCrimeGold` and `SendPlayerToJail`.
-//
-// Policy is the crime family's, unchanged: a headless runtime or a session with
-// no crime or faction data is a failure with a reason, and the interpreter
-// substitutes the declared default. Every signature is quoted from the Creation
-// Kit wiki at the registration site.
+// The guard and arrest natives: `Actor.GetCrimeFaction` and `IsGuard`, and
+// `Faction.CanPayCrimeGold`, `PlayerPayCrimeGold` and `SendPlayerToJail`. The
+// failure policy is the crime family's.
 //
 // Documented in docs/engine/papyrus-activation.md and docs/engine/guard-response.md.
 
@@ -14,7 +9,7 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installGuard(into registry: inout PapyrusNativeRegistry) {
         installGuardQueries(into: &registry)
         installArrestOutcomes(into: &registry)
@@ -87,12 +82,9 @@ nonisolated extension PapyrusNativeFunctions {
         })
 
         // `Function SendPlayerToJail(bool abRemoveInventory = True, bool
-        // abRealJail = True) native`
-        // (<https://ck.uesp.net/wiki/SendPlayerToJail_-_Faction>). Both
-        // parameters are accepted and not yet read: the sentence here is
-        // served at once with no jail cell and no belongings chest, so there
-        // is no inventory to hold and no fake jail to choose instead
-        // (docs/engine/guard-response.md).
+        // abRealJail = True) native` (<https://ck.uesp.net/wiki/SendPlayerToJail_-_Faction>).
+        // Both arguments are ignored: the sentence is served at once, with no jail
+        // cell and no belongings chest (docs/engine/guard-response.md).
         registry.register(PapyrusNativeFunction(
             scriptName: "Faction",
             functionName: "SendPlayerToJail"
@@ -107,7 +99,7 @@ nonisolated extension PapyrusNativeFunctions {
     /// reason so the script log says why nothing happened.
     private static func settle(
         _ call: PapyrusNativeCall,
-        _ world: PapyrusWorldAccess,
+        _ world: any PapyrusWorldBridge,
         _ faction: ReferenceKey,
         _ outcome: ArrestOutcome
     ) -> PapyrusNativeResult {

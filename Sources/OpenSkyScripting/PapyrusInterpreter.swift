@@ -27,7 +27,7 @@ nonisolated public struct SuspendedCall {
     public let continuation: PapyrusContinuation
 }
 
-nonisolated public final class PapyrusContinuation {
+public final class PapyrusContinuation {
     private let interpreter: PapyrusInterpreter
     private var consumed = false
 
@@ -44,7 +44,7 @@ nonisolated public final class PapyrusContinuation {
     }
 }
 
-nonisolated public final class PapyrusInterpreter {
+public final class PapyrusInterpreter {
     public let runtime: PapyrusRuntime
     public var frames: [PapyrusFrame] = []
 

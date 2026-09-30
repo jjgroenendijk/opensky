@@ -8,7 +8,7 @@ import Foundation
 import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
-nonisolated public final class PapyrusInstance {
+public final class PapyrusInstance {
     public let handle: PapyrusObjectHandle
     public let rootScriptName: String
     public var activeState: String

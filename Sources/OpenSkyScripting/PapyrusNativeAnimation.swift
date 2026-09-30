@@ -1,9 +1,10 @@
-// M14 behavior-graph deviations required to keep latent animation chains live.
+// Animation natives answer at once with a deviation, so latent animation chains
+// keep running until the behavior graph can drive them.
 
 import Foundation
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installDeferredAnimation(into registry: inout PapyrusNativeRegistry) {
         for functionName in [
             "PlayAnimation",

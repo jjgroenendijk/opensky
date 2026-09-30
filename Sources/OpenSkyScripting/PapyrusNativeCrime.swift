@@ -1,29 +1,15 @@
-// The crime natives (issue #504, roadmap item 21.5): the `Faction` crime-gold
-// family and the two `Actor` alarms, over 21.5's crime runtime.
+// The crime natives: the `Faction` crime-gold family and the two `Actor` alarms.
+// A missing world or crime runtime is a failure with a reason. Signatures are
+// quoted from the Creation Kit wiki, because compiled mod bytecode depends on them.
 //
-// Policy is the `Actor` and perk families', unchanged: `self` arrives as
-// `PapyrusNativeCall.receiver` and becomes a `ReferenceKey`; a headless
-// runtime, a handle with no world identity, or a session with no crime data is
-// a failure with a reason rather than a guess, and the interpreter substitutes
-// the call's declared default so the script keeps running.
-//
-// Every signature below is quoted from the Creation Kit wiki at the
-// registration site rather than recalled, because a Papyrus signature is an
-// interface a mod's compiled bytecode already agrees with: a wrong argument
-// count is a script that stops working, not a number that reads slightly off.
-//
-// The violent and non-violent halves (issue #563) are the same ledger read and
-// written one half at a time: `GetCrimeGoldViolent`, `GetCrimeGoldNonViolent`
-// and `SetCrimeGoldViolent`, with `ModCrimeGold`'s `abViolent` choosing the
-// half and `SetCrimeGold` documented as setting the non-violent one.
-//
-// Documented in docs/engine/papyrus-activation.md and docs/engine/crime.md.
+// Documented in docs/engine/papyrus-activation.md, docs/engine/crime.md, and
+// docs/engine/bounty-ledger.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installCrime(into registry: inout PapyrusNativeRegistry) {
         installFactionCrimeGold(into: &registry)
         installCrimeAlarms(into: &registry)
@@ -169,17 +155,13 @@ nonisolated extension PapyrusNativeFunctions {
         })
     }
 
-    /// A `Faction` native: resolve the receiver to the FACT's world identity,
-    /// then run `body`.
-    ///
-    /// A `Faction` script's `self` is a form rather than a placed reference, and
-    /// this engine addresses a FACT by the same `ReferenceKey` its memberships
-    /// and its ledger rows are keyed by — so the receiver resolves exactly as an
-    /// `Actor` receiver does and needs no separate lookup.
+    /// Resolves a `Faction` receiver, then runs `body`. A FACT is keyed by the same
+    /// `ReferenceKey` as its memberships and ledger rows, so it resolves like an
+    /// `Actor` receiver.
     public static func factionTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
-        body: (PapyrusWorldAccess, ReferenceKey) -> PapyrusNativeResult
+        body: (any PapyrusWorldBridge, ReferenceKey) -> PapyrusNativeResult
     ) -> PapyrusNativeResult {
         guard let target = worldTarget(call, context) else {
             return failure(

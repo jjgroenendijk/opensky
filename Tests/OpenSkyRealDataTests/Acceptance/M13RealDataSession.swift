@@ -1,13 +1,6 @@
-// The session and the report behind `M13AcceptanceRealDataTests` (issue #185).
-//
-// Split from the test for the reason every other real-data suite splits: the
-// wiring is a paragraph of plumbing that says nothing about the gate, and the
-// report is a formatter. Both are shared with the save half, which builds a
-// second session over the same install.
-//
-// Nothing is written into the install. The quest state lives in an in-memory
-// `WorldStateStore`, and the save slot the gate writes goes to a temporary
-// directory the test removes.
+// The session and report behind `M13AcceptanceRealDataTests`, shared with the save
+// half. Nothing is written into the install: quest state stays in memory, and the
+// save slot goes to a temporary directory the test removes.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -25,7 +18,7 @@ import Foundation
 /// quest layer joining them.
 @MainActor
 final class M13RealDataSession {
-    /// The four quest condition functions issue #182 registered, by raw
+    /// The four quest condition functions, by raw
     /// on-disk index: `GetQuestRunning`, `GetStage`, `GetStageDone` and
     /// `GetQuestCompleted`. The Creation Kit spells each 4096 higher.
     static let questConditionIndices: [UInt16] = [56, 58, 59, 543]
@@ -46,7 +39,7 @@ final class M13RealDataSession {
         world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [],
             nativeDispatch: PapyrusNativeRegistry.standard(
-                context: PapyrusNativeContext(world: PapyrusWorldAccess(bridge: bridge))
+                context: PapyrusNativeContext(world: bridge)
             )
         ))
         bridge.world = world

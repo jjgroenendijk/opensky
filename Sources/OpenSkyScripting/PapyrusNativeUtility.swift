@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyScriptingInterface
 
-nonisolated extension PapyrusNativeFunctions {
+extension PapyrusNativeFunctions {
     public static func installUtility(into registry: inout PapyrusNativeRegistry) {
         installWaits(into: &registry)
         installRandom(into: &registry)
