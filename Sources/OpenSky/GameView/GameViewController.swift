@@ -6,6 +6,7 @@ import AppKit
 import MetalKit
 import OpenSkyAudio
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyScripting
@@ -130,144 +131,88 @@ final class GameViewController: NSViewController {
     var streamerCellProvider: (any CellSceneProvider)?
     /// Cached picker paths — enumerating every archive entry is not free.
     var cachedAudioFileNames: [String]?
-    /// Voice picker filter, playback tracking and last-error state (item
-    /// 17.5). The implementation lives in `GameViewController+AudioVoice.swift`;
-    /// stored here because extensions cannot add state.
+    /// Voice picker filter, playback tracking and last-error state.
     var voice = VoiceLabState()
     /// Selector state owned by the UI Lab SWF bridge
     /// (`GameViewController+SWFLab.swift`); nothing else writes it.
     var swfLab = SWFLabState()
-    /// Vanilla gameplay HUD state. The implementation lives in
-    /// `GameViewController+HUD.swift`; stored here because extensions cannot
-    /// add state.
+    /// Vanilla gameplay HUD state.
     var hud = HUDRuntimeState()
-    /// System menu selector + presentation state. The implementation lives in
-    /// `GameViewController+SystemMenu.swift`; stored here because extensions
-    /// cannot add state.
+    /// System menu selector + presentation state.
     var systemMenu = SystemMenuRuntimeState()
-    /// Inventory menu row list + presentation state. The
-    /// implementation lives in `GameViewController+InventoryMenu.swift`; stored
-    /// here because extensions cannot add state.
+    /// Inventory menu row list + presentation state.
     var inventoryMenu = InventoryMenuRuntimeState()
-    /// Journal page model and presentation state. The
-    /// implementation lives in `GameViewController+Journal.swift`; stored here
-    /// because extensions cannot add state.
+    /// Journal page model and presentation state.
     var journal = JournalRuntimeState()
     /// Dialogue index, conversation model and presentation state.
-    /// The implementation lives in `GameViewController+Dialogue.swift` and
-    /// `GameViewController+DialogueMenu.swift`; stored here because extensions
-    /// cannot add state.
     var dialogue = DialogueBridgeState()
-    /// Conversation camera override and speaker focus. The
-    /// implementation lives in `GameViewController+DialogueCamera.swift`; stored
-    /// here because extensions cannot add state.
+    /// Conversation camera override and speaker focus.
     var dialogueCamera = DialogueCameraBridgeState()
-    /// Container and barter menu two-pane list, merchant nomination and
-    /// presentation state. The implementation lives in
-    /// `GameViewController+ContainerMenu.swift`; stored here because extensions
-    /// cannot add state.
+    /// Container and barter menu two-pane list, merchant nomination and presentation state.
     var containerMenu = ContainerMenuRuntimeState()
-    /// World > Runtime State bridge caches (save store, plugin fingerprint,
-    /// slot list). The implementation lives in
-    /// `GameViewController+RuntimeState.swift`; stored here because extensions
-    /// cannot add state.
+    /// World > Runtime State bridge caches (save store, plugin fingerprint, slot list).
     var runtimeState = RuntimeStateBridgeState()
-    /// World items: the take/drop/container runtime and the panel's last
-    /// outcome line. The implementation lives in
-    /// `GameViewController+Items.swift`; stored here because extensions cannot
-    /// add state.
+    /// World items: the take/drop/container runtime and the panel's last outcome line.
     var worldItems = WorldItemBridgeState()
-    /// Player behavior graph + rendered body state. The
-    /// implementation lives in `GameViewController+PlayerBody.swift`; stored
-    /// here because extensions cannot add state.
+    /// Player behavior graph + rendered body state.
     var playerBodyBridge = PlayerBodyBridgeState()
-    /// Actor values: the damage/restore/regeneration runtime, the HUD meter
-    /// gate and the panel's last outcome line. The implementation
-    /// lives in `GameViewController+ActorValues.swift`; stored here because
-    /// extensions cannot add state.
+    /// Actor values: the damage/restore/regeneration runtime, the HUD meter gate and the
+    /// panel's last outcome line.
     var actorValues = ActorValueBridgeState()
 
-    /// Active magic effects: the apply/tick/dispel runtime, its fixed-step
-    /// accumulator and the panel's last outcome line. The
-    /// implementation lives in `GameViewController+Magic.swift`; stored here
-    /// because extensions cannot add state.
+    /// Active magic effects: the apply/tick/dispel runtime, its fixed-step accumulator and the
+    /// panel's last outcome line.
     var magicEffects = MagicBridgeState()
 
-    /// Spellcasting: the spellbook, the cast loop, the panel's spell selection
-    /// and its last outcome line. The implementation lives in
-    /// `GameViewController+Casting.swift`; stored here because extensions cannot
-    /// add state.
+    /// Spellcasting: the spellbook, the cast loop, the panel's spell selection and its last
+    /// outcome line.
     var casting = CastingBridgeState()
 
-    /// Item enchantments: the ENCH index equipped items resolve through, and the
-    /// last hit and worn-item outcomes the readouts show. The
-    /// implementation lives in `GameViewController+Enchantments.swift`; stored
-    /// here because extensions cannot add state.
+    /// Item enchantments: the ENCH index equipped items resolve through, and the last hit and
+    /// worn-item outcomes the readouts show.
     var enchantments = EnchantmentBridgeState()
 
-    /// Perks: the ownership runtime, the entry-point evaluator behind every
-    /// wired combat and magic seam, and the authored `PRKR` baselines.
-    /// The implementation lives in
-    /// `GameViewController+Perks.swift`; stored here because extensions cannot
-    /// add state.
+    /// Perks: the ownership runtime, the entry-point evaluator behind every wired combat and
+    /// magic seam, and the authored `PRKR` baselines.
     var perks = PerkBridgeState()
 
-    /// Factions: the membership runtime, the interfaction relation index and
-    /// the hostility derivation over both. The implementation
-    /// lives in `GameViewController+Factions.swift`; stored here because
-    /// extensions cannot add state.
+    /// Factions: the membership runtime, the interfaction relation index and the hostility
+    /// derivation over both.
     var factions = FactionBridgeState()
+    /// Nil without a FACT and FLST index.
+    var vendors: VendorCoordinator?
     var crime = CrimeBridgeState()
 
-    /// Skill advancement: the use-to-experience-to-level runtime every combat
-    /// and magic seam reports into, and the last advance the readouts show.
-    /// The implementation lives in
-    /// `GameViewController+Skills.swift`; stored here because extensions cannot
-    /// add state.
+    /// Skill advancement: the use-to-experience-to-level runtime every combat and magic seam
+    /// reports into, and the last advance the readouts show.
     var skills = SkillBridgeState()
 
-    /// Character leveling: the level runtime skill advancement banks into, the
-    /// AVIF perk-tree index a perk-point spend is validated against, and the
-    /// last outcome line. The implementation lives in
-    /// `GameViewController+Progression.swift`; stored here because extensions
-    /// cannot add state.
+    /// Character leveling: the level runtime skill advancement banks into, the AVIF perk-tree
+    /// index a perk-point spend is validated against, and the last outcome line.
     var progression = ProgressionBridgeState()
 
-    /// Melee combat: the swing runtime, the WEAP index it reads combat data
-    /// out of, and the panel's last outcome line. The
-    /// implementation lives in `GameViewController+Melee.swift`; stored here
-    /// because extensions cannot add state.
+    /// Melee combat: the swing runtime, the WEAP index it reads combat data out of, and the
+    /// panel's last outcome line.
     var melee = MeleeBridgeState()
 
     /// Archery: the shot and projectile runtimes, the AMMO/PROJ index, and the
-    /// panel's last outcome line. Stored here because extensions cannot add
-    /// state; the logic is in `GameViewController+Archery.swift`.
+    /// panel's last outcome line.
     var archery = ArcheryBridgeState()
 
-    /// Death and ragdoll: the runtime, the per-skeleton ragdoll definitions it
-    /// spawns from, and the panel's last outcome line. The
-    /// implementation lives in `GameViewController+Ragdoll.swift`; stored here
-    /// because extensions cannot add state.
+    /// Death and ragdoll: the runtime, the per-skeleton ragdoll definitions it spawns from, and
+    /// the panel's last outcome line.
     var ragdoll = RagdollBridgeState()
 
-    /// The combat loop: hostility, the derived combat state, the dev target's
-    /// attack clock and the reaction clips it plays. The
-    /// implementation lives in `GameViewController+Combat.swift`; stored here
-    /// because extensions cannot add state.
+    /// The combat loop: hostility, the derived combat state, the dev target's attack clock and
+    /// the reaction clips it plays.
     var combat = CombatBridgeState()
     /// Kinematic NPC gait clips and failed clip keys.
     var npcMovementBridge = NPCMovementBridgeState()
     /// Live resident-actor package selection.
     var packages = PackageBridgeState()
-    /// The perception pass: view cones, line of sight, and per-pair detection
-    /// levels. The implementation lives in
-    /// `GameViewController+Perception.swift`; stored here because extensions
-    /// cannot add state.
+    /// The perception pass: view cones, line of sight, and per-pair detection levels.
     var perception = PerceptionBridgeState()
-    /// The AI & Navigation panel's shared actor selection and its last outcome
-    /// line. The implementation lives in
-    /// `GameViewController+AINavigation.swift`; stored here because extensions
-    /// cannot add state.
+    /// The AI & Navigation panel's shared actor selection and its last outcome line.
     var aiNavigation = AINavigationBridgeState()
 
     override func loadView() {

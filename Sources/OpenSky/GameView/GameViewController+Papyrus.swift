@@ -203,7 +203,7 @@ extension GameViewController {
         bridge.crimeReporter = { [weak self] in self?.crime.reporter }
         bridge.arrestSession = { [weak self] in self }
         bridge.showBarterMenu = { [weak self] actor in
-            guard let self, vendorResolver() != nil else { return nil }
+            guard let self, vendors != nil else { return nil }
             let text = openBarter(with: actor)
             return (containerMenu.isOpen && containerMenu.vendor != nil, text)
         }

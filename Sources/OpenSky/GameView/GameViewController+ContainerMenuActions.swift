@@ -1,12 +1,6 @@
 // Transactions, merchant nomination and the panel snapshot for the container
-// and barter menus (M12.2.3, issue #179). Satellite of
-// GameViewController+ContainerMenu.swift, which owns the lifecycle and the
-// movie.
-//
-// Every refusal a transaction can produce — an empty chest, a player who cannot
-// pay, a merchant with no gold — lands in `lastActionText` and leaves the world
-// untouched. A menu that throws out of a button action would be a worse answer
-// than one that says why it did nothing.
+// and barter menus. `GameViewController+ContainerMenu.swift` owns the lifecycle.
+// Every refusal lands in `lastActionText` and leaves the world untouched.
 
 import AppKit
 import OpenSkyFormatsESM
@@ -122,13 +116,9 @@ extension GameViewController: ContainerMenuControlProviding {
         return containerMenu.lastActionText ?? ""
     }
 
-    /// Binds one container interaction to the menu as its active target.
-    ///
-    /// The holder carries the reference key, the CONT base its baseline is
-    /// re-derived from, and the cell the mutations are attributed to — the same
-    /// three `WorldItemRuntime.openContainer` builds, resolved the same way, so
-    /// a chest opened from the crosshair and one nominated from the sidebar are
-    /// the same owner.
+    /// Binds one container interaction to the menu as its active target. The
+    /// holder is resolved as `WorldItemRuntime.openContainer` resolves it, so a
+    /// chest opened from the crosshair and one nominated here are one owner.
     @discardableResult
     func nominateContainerMenuMerchant(_ interaction: PlacedInteraction) -> Bool {
         guard worldItems.runtime != nil, let holder = holder(for: interaction) else {
@@ -181,7 +171,7 @@ extension GameViewController: ContainerMenuControlProviding {
             case (.container, .container):
                 // Through the session rather than straight to `transfer`, so a
                 // single-row take marks and reports theft exactly as "take all"
-                // does (issue #504). Two controls over the same act must not
+                // does. Two controls over the same act must not
                 // disagree about whether it is a crime.
                 let bounty = try ContainerSession(runtime: runtime, container: container)
                     .take(entry.item)
@@ -216,7 +206,7 @@ extension GameViewController: ContainerMenuControlProviding {
             runtime: runtime,
             merchant: container,
             pricing: containerMenuPricing,
-            rules: barterRules()
+            rules: vendors?.rules(for: containerMenu.vendor) ?? .unrestricted
         )
     }
 

@@ -13,9 +13,9 @@ import Foundation
 import Testing
 
 struct VendorRulesTests {
-    private static let pluginName = "Vendors.esm"
+    static let pluginName = "Vendors.esm"
 
-    private enum IDs {
+    enum IDs {
         static let pawnbroker: UInt32 = 0x10
         static let fence: UInt32 = 0x11
         static let townsfolk: UInt32 = 0x12
@@ -28,7 +28,7 @@ struct VendorRulesTests {
         static let chest: UInt32 = 0x700
     }
 
-    private static func key(_ objectID: UInt32) -> ReferenceKey {
+    static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: pluginName.lowercased(), objectID: objectID)
     }
 
@@ -63,7 +63,7 @@ struct VendorRulesTests {
 
     /// Belethor's shape and Tonilia's: the same negated two-keyword list, with
     /// the second a fence. The list nests one level so flattening is exercised.
-    private static func resolver() throws -> VendorResolver {
+    static func resolver() throws -> VendorResolver {
         var data = ESMFixture.tes4()
         data += ESMFixture.topGroup(
             "KYWD",
@@ -102,7 +102,7 @@ struct VendorRulesTests {
         )
     }
 
-    private static func memberships(_ factions: [UInt32]) -> ActorFactionState {
+    static func memberships(_ factions: [UInt32]) -> ActorFactionState {
         ActorFactionState(memberships: factions.map {
             ActorFactionMembership(faction: key($0), rank: 0)
         })

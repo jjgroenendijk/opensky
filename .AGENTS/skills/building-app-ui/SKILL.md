@@ -10,9 +10,10 @@ description: Adds or changes OpenSky main-app UI - sidebar destinations, control
 The OpenSky app's own dev and verification UI: sidebar destinations and the control panels
 under them. Not the in-game Scaleform UI. The framework lives in
 `Sources/OpenSky/Shell/`, destination view controllers in `Sources/OpenSky/Panels/`, and the
-`GameViewController` extensions that feed them in `Sources/OpenSky/GameView/`, one
-`GameViewController+Feature.swift` file per feature. The panel seam the view controller
-reads, `XControlProviding.swift`, lives in the engine domain folder it inspects.
+`GameViewController` extensions that feed them in `Sources/OpenSky/GameView/`. A new feature
+gets no new `GameViewController+` file: its logic goes in a coordinator in the feature module
+(`docs/engine/coordinators.md`). The panel seam the view controller reads,
+`XControlProviding.swift`, lives in the engine domain folder it inspects.
 
 Full reference: `docs/tools/app-ui.md`. This skill carries the decisions you must make before
 touching a file and points at the section of that doc holding each detail.

@@ -1,12 +1,6 @@
-// The `World > Crime & Factions` panel's reading half (issue #507, roadmap item
-// 21.8): one snapshot of the bounty ledger, the crosshair's ownership verdict,
-// the player's stolen goods, both actors' memberships, the derivation terms
-// between them and the subject's guard and vendor roles.
-//
-// Every value comes from the runtime the session itself consults — the ledger
-// `GetCrimeGold` reads, the verdict a take is judged by, the derivation the
-// combat loop asks — so the panel cannot disagree with the world it describes.
-// The actions live in `GameViewController+CrimeFactionActions.swift`.
+// The `World > Crime & Factions` panel's reading half. Every value comes from
+// the runtime the session itself consults, so the panel cannot disagree with
+// the world. The actions live in `GameViewController+CrimeFactionActions.swift`.
 
 import AppKit
 import OpenSkyCrime
@@ -70,7 +64,7 @@ extension GameViewController {
             selectedFaction: crime.panel.membershipFaction ?? options.all.first?.key,
             vendorFactions: options.vendors,
             vendorOverride: override,
-            effectiveVendor: override.flatMap(vendor(faction:)) ?? subject.vendor,
+            effectiveVendor: override.flatMap { vendors?.vendor(faction: $0) } ?? subject.vendor,
             hour: renderer?.gameClock.hourOfDay,
             lastCrimeText: crime.lastActionText,
             lastGuardText: crime.lastGuardText,
@@ -174,7 +168,7 @@ extension GameViewController {
             towardPlayer: key == .player ? nil : profile.flatMap(reactionTerms(of:)),
             crimeFaction: profile?.crimeFaction.map { factionOption($0, store) },
             policedFaction: policed.map { factionOption($0, store) },
-            vendor: vendor(of: key)
+            vendor: vendors?.vendor(of: key)
         )
     }
 

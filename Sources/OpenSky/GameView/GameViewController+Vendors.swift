@@ -1,18 +1,13 @@
-// Session wiring for faction vendors (issue #506, roadmap item 21.7): turning a
-// merchant actor into the barter menu's counterparty, and the rules its vendor
-// faction adds to every trade.
+// App shell for `VendorCoordinator`: builds it, answers its `VendorWorld`
+// reads, and opens the barter menu it resolves. The rules live in the
+// coordinator (docs/engine/coordinators.md).
 //
-// The vendor is found and read by the engine's `VendorResolver`; this satellite
-// only resolves the merchant chest to an inventory holder, because only the
-// streamer knows whether it is resident, and hands `BarterSession` the rules.
-//
-// The dialogue route needs nothing of its own: the load order's merchant
-// topics run a fragment that calls `ShowBarterMenu` on the speaker — on the
-// local install 32 of the 39 scripted INFOs conditioned on `JobMerchantFaction`
-// do — and that native lands in `openBarter(with:)`.
+// Merchant dialogue needs nothing here: its fragments call `ShowBarterMenu`
+// on the speaker, and that native lands in `openBarter(with:)`.
 
 import AppKit
 import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -22,53 +17,22 @@ import OpenSkyWorld
 import OpenSkyWorldState
 
 extension GameViewController {
-    /// The engine's vendor reader over the provider's FACT and FLST indexes.
-    /// Nil without game data.
-    func vendorResolver() -> VendorResolver? {
+    /// Wired after `wireFactions`, whose runtime answers the memberships.
+    func wireVendors(provider: any CellSceneProvider) {
         guard
-            let social = streamerCellProvider as? FactionDataProviding,
-            let factions = social.factionStore,
+            let social = provider as? FactionDataProviding,
+            let factionStore = social.factionStore,
             let formLists = social.formListStore
-        else { return nil }
-        return VendorResolver(factions: factions, formLists: formLists)
+        else { return }
+        vendors = VendorCoordinator(
+            resolver: VendorResolver(factions: factionStore, formLists: formLists),
+            itemPluginName: (provider as? MagicDataProviding)?.magicItemPluginName,
+            world: self
+        )
     }
 
-    /// `actor`'s vendor role, from its seeded memberships.
-    func vendor(of actor: ReferenceKey) -> Vendor? {
-        guard let resolver = vendorResolver() else { return nil }
-        if let holder = actorValueHolder(for: actor) {
-            seedFactions(of: holder)
-        }
-        guard let memberships = factions.runtime?.state(of: actor) else { return nil }
-        return resolver.vendor(memberships: memberships)
-    }
-
-    /// The vendor role one vendor faction describes, or nil when `key` is no
-    /// vendor faction this load order carries.
-    func vendor(faction key: ReferenceKey) -> Vendor? {
-        guard
-            let resolver = vendorResolver(),
-            let resolved = resolver.factions.faction(key: key),
-            resolved.faction.isVendor
-        else { return nil }
-        return resolver.vendor(faction: resolved)
-    }
-
-    /// Opens the barter menu against `actor`'s vendor stock — what
-    /// `Actor.ShowBarterMenu` does and what a merchant's dialogue asks for.
-    ///
-    /// The counterparty is the faction's merchant chest when it names one, and
-    /// the actor's own inventory otherwise, which is how the vendors with no
-    /// `VENC` trade (UESP's Merchants page: "outside of Hunters, Peddlers, and
-    /// Skooma Dealers, merchants rely on merchant chests"). A chest that is not
-    /// streamed in is refused rather than read from an empty baseline: its
-    /// stock is a leveled list, and inventing an empty shop would be worse
-    /// than saying why there is none.
-    ///
-    /// `override` names a vendor faction to trade under in place of the one
-    /// `actor`'s memberships resolve — the dev panel's merchant override
-    /// (issue #507), which is how a user checks one faction's hours, list and
-    /// chest without finding the actor that carries it.
+    /// Opens the barter menu against `actor`'s vendor stock, which is what
+    /// `Actor.ShowBarterMenu` does. `override` is the dev panel's vendor faction.
     ///
     /// - Returns: a readout line, which also lands in the menu's action text.
     @discardableResult
@@ -76,62 +40,60 @@ extension GameViewController {
         with actor: ReferenceKey,
         vendorFaction override: ReferenceKey? = nil
     ) -> String {
-        guard let vendor = override.flatMap(vendor(faction:)) ?? vendor(of: actor) else {
+        let result = vendors?.counterparty(for: actor, vendorFaction: override)
+            ?? .failure(.notAMerchant)
+        let counterparty: BarterCounterparty
+        switch result {
+        case let .success(found):
+            counterparty = found
+        case .failure(.notAMerchant):
             return noteBarter("\(dialogueSpeakerLabel(for: actor)) is not a merchant.")
-        }
-        guard let holder = vendorHolder(vendor, actor: actor) else {
-            return noteBarter("\(vendor.factionName)'s merchant chest is not streamed in.")
+        case let .failure(.chestNotResident(factionName)):
+            return noteBarter("\(factionName)'s merchant chest is not streamed in.")
         }
         closeDialogue()
         closeContainerMenuStack()
-        containerMenu.container = holder
+        containerMenu.container = counterparty.holder
         containerMenu.containerName = dialogueSpeakerLabel(for: actor)
-        containerMenu.containerReference = streamer?.referenceEntry(key: holder.key)?.formID
-        containerMenu.vendor = vendor
+        containerMenu.containerReference = streamer?
+            .referenceEntry(key: counterparty.holder.key)?.formID
+        containerMenu.vendor = counterparty.vendor
         containerMenu.mode = .barter
         openContainerMenuStack()
-        return noteBarter("Bartering with \(vendor.factionName).")
-    }
-
-    /// The rules the current counterparty trades under.
-    func barterRules() -> BarterRules {
-        guard let vendor = containerMenu.vendor else { return .unrestricted }
-        let resolver = vendorResolver()
-        let items = worldItems.runtime?.inventory.baselines.items
-        let plugin = (streamerCellProvider as? MagicDataProviding)?.magicItemPluginName
-        return BarterRules(vendor: vendor, hour: renderer?.gameClock.hourOfDay) { item in
-            guard
-                let resolver,
-                let plugin,
-                let raw = items?.definition(item)?.keywords
-            else { return [] }
-            return resolver.keywords(raw, fromPlugin: plugin)
-        }
-    }
-
-    private func vendorHolder(_ vendor: Vendor, actor: ReferenceKey) -> InventoryHolder? {
-        guard let chest = vendor.merchantChest else {
-            guard let placed = streamer?.referenceEntry(key: actor)?.placedActor else {
-                return nil
-            }
-            return InventoryHolder(
-                key: actor,
-                owner: .actor(base: placed.base),
-                cell: streamer?.cellLocation(of: actor)
-            )
-        }
-        guard let placed = streamer?.referenceEntry(key: chest)?.placedReference else {
-            return nil
-        }
-        return InventoryHolder(
-            key: chest,
-            owner: .container(base: placed.base),
-            cell: streamer?.cellLocation(of: chest)
-        )
+        return noteBarter("Bartering with \(counterparty.vendor.factionName).")
     }
 
     private func noteBarter(_ text: String) -> String {
         containerMenu.lastActionText = text
         return text
+    }
+}
+
+extension GameViewController: VendorWorld {
+    func factionMemberships(of actor: ReferenceKey) -> ActorFactionState? {
+        if let holder = actorValueHolder(for: actor) {
+            seedFactions(of: holder)
+        }
+        return factions.runtime?.state(of: actor)
+    }
+
+    func residentOwner(of key: ReferenceKey) -> InventoryOwner? {
+        guard let entry = streamer?.referenceEntry(key: key) else { return nil }
+        if let actor = entry.placedActor {
+            return .actor(base: actor.base)
+        }
+        return entry.placedReference.map { .container(base: $0.base) }
+    }
+
+    func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
+        streamer?.cellLocation(of: key)
+    }
+
+    func itemKeywords(of item: FormID) -> [FormID]? {
+        worldItems.runtime?.inventory.baselines.items.definition(item)?.keywords
+    }
+
+    var hourOfDay: Float? {
+        renderer?.gameClock.hourOfDay
     }
 }
