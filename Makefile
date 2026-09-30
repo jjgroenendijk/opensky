@@ -194,7 +194,13 @@ comment-length: ## Report comment blocks over the line limit (report only for no
 
 ##@ Build checks
 
-.PHONY: verify-build shader-library
+.PHONY: compile verify-build shader-library
+
+# swift build of the package modules the branch changed, or M='A B', plus their
+# dependents. No Xcode, so it is the quick loop while fixing compile errors;
+# Xcode-only code still needs verify-build.
+compile: vendor-link ## Compile changed package modules and their dependents [M='Module ...']
+	@./tools/compile-modules.sh $(M)
 
 # Every target compiled, no test run: OpenSkyTests, the app with
 # OpenSkyRealDataTests, and openskycli. Catches a change that breaks a target it
