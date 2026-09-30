@@ -70,13 +70,9 @@ nonisolated public enum HostilitySource: String, Equatable, Sendable, CaseIterab
     }
 }
 
-/// One derivation's whole answer: what came out, what the records said, and
-/// which term said it.
-///
-/// The reaction travels beside the hostility because they are different facts.
-/// An unaggressive actor regards a bandit as an enemy and still does not attack
-/// it, and a panel that showed only the hostility would make that look like the
-/// records were being ignored.
+/// One derivation's whole answer. The reaction travels beside the hostility
+/// because an unaggressive actor can regard a bandit as an enemy and still not
+/// attack it.
 nonisolated public struct HostilityDecision: Equatable, Sendable {
     public let hostility: ActorHostility
     public let reaction: ActorReaction
@@ -93,15 +89,11 @@ nonisolated public struct HostilityDecision: Equatable, Sendable {
     }
 }
 
-/// Where crime joins the derivation (issues #504 and #505).
-///
-/// A protocol with one question rather than a closure so the bounty runtime can
-/// carry its own state, and so this file names the seam in a way a reader can
-/// find. `NoCrimeHostility` is what the engine runs with until #504 lands.
-nonisolated public protocol CrimeHostilitySource {
-    /// What `observer`'s crime bookkeeping makes of `target`, or nil when crime
-    /// has no opinion — which is the answer for every pair until a bounty, a
-    /// witnessed theft or an assault gives it one.
+/// Where crime joins the derivation. A protocol rather than a closure, so the
+/// bounty runtime can carry its own state.
+nonisolated public protocol CrimeHostilitySource: Sendable {
+    /// Nil when crime has no opinion, which holds until a bounty, a witnessed
+    /// theft, or an assault gives it one.
     func crimeReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
