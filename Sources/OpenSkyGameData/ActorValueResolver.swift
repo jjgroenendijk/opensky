@@ -66,6 +66,11 @@ nonisolated public struct ActorValueResolver: Sendable {
     /// reference, so a level-up applies on the next read. Without progression it
     /// stays 1.
     public let playerLevelSource: PlayerLevelSource
+    private let raceSkips: SkippedRecords
+
+    public var skippedRecords: SkippedRecords {
+        templates.skippedRecords.merging(raceSkips).merging(classes.skippedRecords)
+    }
 
     /// The level as of right now.
     public var playerLevel: Int {
@@ -74,6 +79,7 @@ nonisolated public struct ActorValueResolver: Sendable {
 
     public init(
         templates: ActorTemplateResolver,
+        raceSkips: SkippedRecords = SkippedRecords(),
         races: [UInt32: Race],
         classes: CharacterClassStore = CharacterClassStore(),
         pluginName: String = "",
@@ -81,6 +87,7 @@ nonisolated public struct ActorValueResolver: Sendable {
         playerLevel: PlayerLevelSource = PlayerLevelSource()
     ) {
         self.templates = templates
+        self.raceSkips = raceSkips
         self.races = races
         self.classes = classes
         self.pluginName = pluginName
@@ -100,14 +107,18 @@ nonisolated public struct ActorValueResolver: Sendable {
         playerLevel: PlayerLevelSource = PlayerLevelSource()
     ) -> ActorValueResolver {
         var races: [UInt32: Race] = [:]
+        var skipped = SkippedRecords()
         if let top = file.topGroup(of: "RACE"), let children = try? top.children() {
             for case let .record(record) in children {
                 guard record.type == "RACE", !record.isDeleted else { continue }
-                races[record.formID] = try? Race(record: record, localized: localized)
+                races[record.formID] = skipped.decode(record) {
+                    try Race(record: $0, localized: localized)
+                }
             }
         }
         return ActorValueResolver(
             templates: ActorTemplateResolver.build(from: file, localized: localized),
+            raceSkips: skipped,
             races: races,
             classes: classes ?? CharacterClassStore(file: file, pluginName: pluginName),
             pluginName: pluginName,

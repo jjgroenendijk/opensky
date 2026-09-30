@@ -13,6 +13,7 @@ nonisolated public struct ResolvedGameSetting: Equatable, Sendable {
 
 nonisolated public struct GameSettingStore: Sendable {
     public private(set) var values: [String: ResolvedGameSetting] = [:]
+    public private(set) var skippedRecords = SkippedRecords()
 
     public init(plugins: [(name: String, file: ESMFile)]) {
         for plugin in plugins {
@@ -29,9 +30,12 @@ nonisolated public struct GameSettingStore: Sendable {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         guard let children = try? group.children() else { return }
         for case let .record(record) in children where !record.isDeleted {
-            guard let setting = try? GameSetting(record: record, localized: localized) else {
-                continue
-            }
+            guard
+                let setting = skippedRecords.decode(
+                    record,
+                    using: { try GameSetting(record: $0, localized: localized) }
+                )
+            else { continue }
             values[setting.editorID.lowercased()] = ResolvedGameSetting(
                 setting: setting,
                 sourcePlugin: pluginName

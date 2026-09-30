@@ -32,28 +32,25 @@ nonisolated public struct FormListStore: Sendable {
     )
 
     private let index: RecordIndex
-    public private(set) var formLists: [ResolvedFormID: ResolvedFormList] = [:]
-    private var formListsByEditorID: [String: ResolvedFormList] = [:]
+    private let table: ResolvedRecordTable<ResolvedFormList>
+
+    public var formLists: [ResolvedFormID: ResolvedFormList] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            Self.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "FLST" else { continue }
-            guard
-                case let .decoded(list, sourcePlugin) = index.decode(
-                    id,
-                    using: FormList.init(record:)
-                )
-            else { continue }
-            let resolved = ResolvedFormList(id: id, list: list, sourcePlugin: sourcePlugin)
-            formLists[id] = resolved
-            if let editorID = list.editorID {
-                formListsByEditorID[editorID.lowercased()] = resolved
-            }
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["FLST"],
+            decode: { try FormList(record: $0.record) },
+            editorID: \.editorID,
+            resolve: { ResolvedFormList(id: $0, list: $1, sourcePlugin: $2) }
+        )
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -64,21 +61,15 @@ nonisolated public struct FormListStore: Sendable {
     }
 
     public func formList(_ id: ResolvedFormID) -> ResolvedFormList? {
-        formLists[id] ?? formLists.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        table.value(id)
     }
 
     public func formList(editorID: String) -> ResolvedFormList? {
-        formListsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolvedID(_ entry: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(id) = index.resolve(entry, fromPlugin: pluginName) else {
-            return nil
-        }
-        return id
+        index.resolvedID(entry, fromPlugin: pluginName)
     }
 
     public func flattened(_ id: ResolvedFormID) -> FlattenedFormList? {
@@ -97,8 +88,8 @@ nonisolated public struct FormListStore: Sendable {
         flattened(listID)?.entries.contains { $0 == member } ?? false
     }
 
-    /// Human-readable raw-list entry for `RecordTextDump`. Only record types
-    /// decoded in M18 are named; other resolved identities remain explicit.
+    /// Human-readable raw-list entry for `RecordTextDump`. FLST, KYWD and AACT
+    /// entries show their editor ID; other identities show the FormID.
     public func displayString(for entry: FormID?, fromPlugin pluginName: String) -> String {
         guard let entry else { return "NULL" }
         guard case let .resolved(id) = index.resolve(entry, fromPlugin: pluginName) else {
@@ -108,9 +99,7 @@ nonisolated public struct FormListStore: Sendable {
             return "[UNRESOLVED] \(id)"
         }
         let editorID: String? = switch indexed.record.type {
-        case "FLST": (try? FormList(record: indexed.record))?.editorID
-        case "KYWD": (try? Keyword(record: indexed.record))?.editorID
-        case "AACT": (try? ActionRecord(record: indexed.record))?.editorID
+        case "FLST", "KYWD", "AACT": ESMWalk.editorID(of: indexed.record)
         default: nil
         }
         return editorID ?? id.description
@@ -150,24 +139,6 @@ nonisolated public struct FormListStore: Sendable {
             flatten(nested, depth: depth + 1, active: &active, state: &state)
             active.remove(nested.id)
         }
-    }
-
-    private static func precedes(
-        _ left: ResolvedFormID,
-        _ right: ResolvedFormID,
-        index: RecordIndex
-    ) -> Bool {
-        let leftSource = index.records[left]?.sourcePlugin ?? left.plugin
-        let rightSource = index.records[right]?.sourcePlugin ?? right.plugin
-        let leftPriority = index.priority(ofPlugin: leftSource)
-        let rightPriority = index.priority(ofPlugin: rightSource)
-        if leftPriority != rightPriority {
-            return leftPriority < rightPriority
-        }
-        if left.plugin.caseInsensitiveCompare(right.plugin) != .orderedSame {
-            return left.plugin.localizedCaseInsensitiveCompare(right.plugin) == .orderedAscending
-        }
-        return left.objectID < right.objectID
     }
 }
 

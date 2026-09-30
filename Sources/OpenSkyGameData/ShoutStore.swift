@@ -57,38 +57,53 @@ nonisolated public struct ResolvedShout: Sendable {
 
 nonisolated public struct ShoutStore: Sendable {
     private let index: RecordIndex
+    private let shoutTable: ResolvedRecordTable<ResolvedShout>
+    private let wordTable: ResolvedRecordTable<ResolvedWordOfPower>
+
     /// Every winning SHOU identity in the load order.
-    public private(set) var shouts: [ResolvedFormID: ResolvedShout] = [:]
+    public var shouts: [ResolvedFormID: ResolvedShout] {
+        shoutTable.values
+    }
+
     /// Every winning WOOP identity in the load order.
-    public private(set) var words: [ResolvedFormID: ResolvedWordOfPower] = [:]
-    private var shoutsByEditorID: [String: ResolvedShout] = [:]
+    public var words: [ResolvedFormID: ResolvedWordOfPower] {
+        wordTable.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        shoutTable.skipped.merging(wordTable.skipped)
+    }
 
     public init(index: RecordIndex, spells: SpellStore) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
         // Words first: a shout joins against them as it is built.
-        for id in orderedIDs where index.records[id]?.record.type == "WOOP" {
-            guard
-                case let .decoded(word, _) = index.decodeIndexed(id, using: Self.word)
-            else { continue }
-            words[id] = ResolvedWordOfPower(id: id, word: word)
-        }
-        for id in orderedIDs where index.records[id]?.record.type == "SHOU" {
-            guard
-                case let .decoded(shout, sourcePlugin) = index.decodeIndexed(id, using: Self.shout)
-            else { continue }
-            let resolved = ResolvedShout(
-                id: id,
-                shout: shout,
-                words: join(shout: shout, sourcePlugin: sourcePlugin, spells: spells)
-            )
-            shouts[id] = resolved
-            if let editorID = shout.editorID {
-                shoutsByEditorID[editorID.lowercased()] = resolved
+        let words = ResolvedRecordTable(
+            index: index,
+            types: ["WOOP"],
+            decode: Self.word,
+            editorID: \.editorID,
+            resolve: { id, word, _ in ResolvedWordOfPower(id: id, word: word) }
+        )
+        wordTable = words
+        shoutTable = ResolvedRecordTable(
+            index: index,
+            types: ["SHOU"],
+            decode: Self.shout,
+            editorID: \.editorID,
+            resolve: { id, shout, sourcePlugin in
+                ResolvedShout(
+                    id: id,
+                    shout: shout,
+                    words: Self.join(
+                        shout: shout,
+                        sourcePlugin: sourcePlugin,
+                        spells: spells,
+                        words: words,
+                        index: index
+                    )
+                )
             }
-        }
+        )
     }
 
     public init(index: RecordIndex) {
@@ -105,18 +120,15 @@ nonisolated public struct ShoutStore: Sendable {
     }
 
     public func shout(editorID: String) -> ResolvedShout? {
-        shoutsByEditorID[editorID.lowercased()]
+        shoutTable.value(editorID: editorID)
     }
 
     public func word(_ id: ResolvedFormID) -> ResolvedWordOfPower? {
-        words[id] ?? words.first { key, _ in matches(key, id) }?.value
+        wordTable.value(id)
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolvedID
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolveWord(_ id: FormID, fromPlugin pluginName: String) -> ResolvedWordOfPower? {
@@ -125,25 +137,36 @@ nonisolated public struct ShoutStore: Sendable {
     }
 
     /// Joins one shout's SNAM run against the word index and the spell store.
-    /// Exposed so the text dump, which decodes the record in front of it, gets
-    /// the same names the store holds.
+    /// Public so the text dump gets the same names the store holds.
     public func join(
         shout: Shout,
         sourcePlugin: String,
         spells: SpellStore
     ) -> [ResolvedShoutWord] {
+        Self.join(
+            shout: shout,
+            sourcePlugin: sourcePlugin,
+            spells: spells,
+            words: wordTable,
+            index: index
+        )
+    }
+
+    private static func join(
+        shout: Shout,
+        sourcePlugin: String,
+        spells: SpellStore,
+        words: ResolvedRecordTable<ResolvedWordOfPower>,
+        index: RecordIndex
+    ) -> [ResolvedShoutWord] {
         shout.words.map { entry in
             ResolvedShoutWord(
                 entry: entry,
-                word: entry.word.flatMap { resolveWord($0, fromPlugin: sourcePlugin) },
+                word: index.resolvedID(entry.word, fromPlugin: sourcePlugin)
+                    .flatMap { words.value($0) },
                 spell: entry.spell.flatMap { spells.resolve($0, fromPlugin: sourcePlugin) }
             )
         }
-    }
-
-    private func matches(_ key: ResolvedFormID, _ id: ResolvedFormID) -> Bool {
-        key.objectID == id.objectID
-            && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
     }
 
     private static func shout(_ indexed: IndexedRecord) throws -> Shout {

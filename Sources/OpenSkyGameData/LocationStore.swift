@@ -16,18 +16,26 @@ nonisolated public struct ResolvedLocation: Equatable, Sendable {
 nonisolated public struct LocationStore: Sendable {
     private let index: RecordIndex
     private let keywordStore: KeywordStore
-    public private(set) var locations: [ResolvedFormID: ResolvedLocation] = [:]
-    private var locationsByEditorID: [String: ResolvedLocation] = [:]
+    private let table: ResolvedRecordTable<ResolvedLocation>
+
+    public var locations: [ResolvedFormID: ResolvedLocation] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex) {
         self.index = index
         keywordStore = KeywordStore(index: index)
-        let orderedIDs = index.records.keys.sorted {
-            Self.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs where index.records[id]?.record.type == "LCTN" {
-            addLocation(id)
-        }
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["LCTN"],
+            decode: { try Location(record: $0.record, localized: $0.localized) },
+            editorID: \.editorID,
+            resolve: { ResolvedLocation(id: $0, location: $1, sourcePlugin: $2) }
+        )
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
@@ -38,18 +46,15 @@ nonisolated public struct LocationStore: Sendable {
     }
 
     public func location(_ id: ResolvedFormID) -> ResolvedLocation? {
-        locations[canonicalMatch(id, in: locations)]
+        table.value(id)
     }
 
     public func location(editorID: String) -> ResolvedLocation? {
-        locationsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolved) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolved
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedLocation? {
@@ -159,20 +164,6 @@ nonisolated public struct LocationStore: Sendable {
         return chain
     }
 
-    private mutating func addLocation(_ id: ResolvedFormID) {
-        guard
-            case let .decoded(location, sourcePlugin) = index.decodeIndexed(
-                id,
-                using: { try Location(record: $0.record, localized: $0.localized) }
-            )
-        else { return }
-        let resolved = ResolvedLocation(id: id, location: location, sourcePlugin: sourcePlugin)
-        locations[id] = resolved
-        if let editorID = location.editorID {
-            locationsByEditorID[editorID.lowercased()] = resolved
-        }
-    }
-
     private func parentID(of id: ResolvedFormID) -> ResolvedFormID? {
         guard
             let resolved = location(id),
@@ -202,34 +193,9 @@ nonisolated public struct LocationStore: Sendable {
         return nil
     }
 
-    private func canonicalMatch(
-        _ id: ResolvedFormID,
-        in values: [ResolvedFormID: some Any]
-    ) -> ResolvedFormID {
-        values.keys.first { sameIdentity($0, id) } ?? id
-    }
-
     private func sameIdentity(_ left: ResolvedFormID, _ right: ResolvedFormID) -> Bool {
         left.objectID == right.objectID
             && left.plugin.caseInsensitiveCompare(right.plugin) == .orderedSame
-    }
-
-    private static func precedes(
-        _ left: ResolvedFormID,
-        _ right: ResolvedFormID,
-        index: RecordIndex
-    ) -> Bool {
-        let leftSource = index.records[left]?.sourcePlugin ?? left.plugin
-        let rightSource = index.records[right]?.sourcePlugin ?? right.plugin
-        let leftPriority = index.priority(ofPlugin: leftSource)
-        let rightPriority = index.priority(ofPlugin: rightSource)
-        if leftPriority != rightPriority {
-            return leftPriority < rightPriority
-        }
-        if left.plugin.caseInsensitiveCompare(right.plugin) != .orderedSame {
-            return left.plugin.localizedCaseInsensitiveCompare(right.plugin) == .orderedAscending
-        }
-        return left.objectID < right.objectID
     }
 }
 

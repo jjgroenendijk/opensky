@@ -121,9 +121,10 @@ nonisolated public final class ItemDefinitionStore {
     /// its PROJ, so it is indexed here.
     public let projectiles: [UInt32: Projectile]
 
-    /// Records that failed to decode, by family — surfaced so the real-data
-    /// sweep can assert zero rather than silently indexing fewer items.
+    /// Records that failed to decode, by family, so the real-data sweep can assert zero.
     public let skippedCounts: [ItemDefinition.Family: Int]
+    /// Every skipped record with its first error per type, CONT and PROJ included.
+    public let skippedRecords: SkippedRecords
 
     /// The load-order resolver behind `ItemDefinition.enchantment`, or nil when
     /// the store was built without one and the links stay unresolved.
@@ -135,52 +136,52 @@ nonisolated public final class ItemDefinitionStore {
     public init(file: ESMFile, enchantments: ItemEnchantmentResolver? = nil) {
         self.enchantments = enchantments
         let localized = (try? file.pluginHeader().isLocalized) ?? false
+        var skipped = SkippedRecords()
         var definitions: [UInt32: ItemDefinition] = [:]
-        var skipped: [ItemDefinition.Family: Int] = [:]
         for family in ItemDefinition.Family.allCases {
-            var familySkips = 0
-            for record in Self.records(of: family.recordType, in: file) {
-                guard
-                    let definition = Self.definition(
-                        record: record,
-                        family: family,
-                        localized: localized,
-                        enchantments: enchantments
-                    )
-                else {
-                    familySkips += 1
-                    continue
-                }
-                definitions[definition.formID.rawValue] = definition
+            let decoded = Self.decodeAll(family.recordType, in: file, skipped: &skipped) {
+                try Self.definition(
+                    record: $0,
+                    family: family,
+                    localized: localized,
+                    enchantments: enchantments
+                )
             }
-            skipped[family] = familySkips
+            definitions.merge(decoded) { _, later in later }
         }
         self.definitions = definitions
-        skippedCounts = skipped
-        containers = Self.records(of: "CONT", in: file)
-            .compactMap { try? Container(record: $0, localized: localized) }
-            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
-        armor = Self.records(of: "ARMO", in: file)
-            .compactMap { try? Armor(record: $0, localized: localized) }
-            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
-        weapons = Self.records(of: "WEAP", in: file)
-            .compactMap { try? Weapon(record: $0, localized: localized) }
-            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
-        ammunition = Self.records(of: "AMMO", in: file)
-            .compactMap { try? Ammunition(record: $0, localized: localized) }
-            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
-        projectiles = Self.records(of: "PROJ", in: file)
-            .compactMap { try? Projectile(record: $0) }
-            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
-        ingestibles = Self.records(of: "ALCH", in: file)
-            .compactMap { try? Ingestible(record: $0, localized: localized) }
-            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
-        ingredients = Self.records(of: "INGR", in: file)
-            .compactMap { try? Ingredient(record: $0, localized: localized) }
-            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
-        books = Self.records(of: "BOOK", in: file)
-            .compactMap { try? Book(record: $0, localized: localized) }
-            .reduce(into: [:]) { $0[$1.formID.rawValue] = $1 }
+        skippedCounts = Dictionary(
+            uniqueKeysWithValues: ItemDefinition.Family.allCases.map {
+                ($0, skipped.count(of: $0.recordType))
+            }
+        )
+        containers = Self.decodeAll("CONT", in: file, skipped: &skipped) {
+            try Container(record: $0, localized: localized)
+        }
+        projectiles = Self.decodeAll("PROJ", in: file, skipped: &skipped) {
+            try Projectile(record: $0)
+        }
+        skippedRecords = skipped
+        // The family loop above already counted these decoders' failures.
+        var repeated = SkippedRecords()
+        armor = Self.decodeAll("ARMO", in: file, skipped: &repeated) {
+            try Armor(record: $0, localized: localized)
+        }
+        weapons = Self.decodeAll("WEAP", in: file, skipped: &repeated) {
+            try Weapon(record: $0, localized: localized)
+        }
+        ammunition = Self.decodeAll("AMMO", in: file, skipped: &repeated) {
+            try Ammunition(record: $0, localized: localized)
+        }
+        ingestibles = Self.decodeAll("ALCH", in: file, skipped: &repeated) {
+            try Ingestible(record: $0, localized: localized)
+        }
+        ingredients = Self.decodeAll("INGR", in: file, skipped: &repeated) {
+            try Ingredient(record: $0, localized: localized)
+        }
+        books = Self.decodeAll("BOOK", in: file, skipped: &repeated) {
+            try Book(record: $0, localized: localized)
+        }
     }
 
     /// The armour type of a worn piece — heavy, light or clothing — or nil when
@@ -250,32 +251,43 @@ nonisolated public final class ItemDefinitionStore {
         return resolver.store.enchantment(resolvedID)
     }
 
-    /// Decodes one record into the unified view. Returns nil when the typed
-    /// decode throws, which the caller counts as a skip.
     private static func definition(
         record: ESMRecord,
         family: ItemDefinition.Family,
         localized: Bool,
         enchantments: ItemEnchantmentResolver?
-    ) -> ItemDefinition? {
+    ) throws -> ItemDefinition {
         switch family {
         case .armor:
-            (try? Armor(record: record, localized: localized))
-                .map { view($0, enchantments) }
+            try view(Armor(record: record, localized: localized), enchantments)
         case .ammunition:
-            (try? Ammunition(record: record, localized: localized)).map(view)
+            try view(Ammunition(record: record, localized: localized))
         case .book:
-            (try? Book(record: record, localized: localized)).map(view)
+            try view(Book(record: record, localized: localized))
         case .ingestible:
-            (try? Ingestible(record: record, localized: localized)).map(view)
+            try view(Ingestible(record: record, localized: localized))
         case .ingredient:
-            (try? Ingredient(record: record, localized: localized)).map(view)
+            try view(Ingredient(record: record, localized: localized))
         case .miscellaneous:
-            (try? MiscItem(record: record, localized: localized)).map(view)
+            try view(MiscItem(record: record, localized: localized))
         case .weapon:
-            (try? Weapon(record: record, localized: localized))
-                .map { view($0, enchantments) }
+            try view(Weapon(record: record, localized: localized), enchantments)
         }
+    }
+
+    private static func decodeAll<Value>(
+        _ type: FourCC,
+        in file: ESMFile,
+        skipped: inout SkippedRecords,
+        using decode: (ESMRecord) throws -> Value
+    ) -> [UInt32: Value] {
+        var values: [UInt32: Value] = [:]
+        for record in records(of: type, in: file) {
+            if let value = skipped.decode(record, using: decode) {
+                values[record.formID] = value
+            }
+        }
+        return values
     }
 
     private static func records(of type: FourCC, in file: ESMFile) -> [ESMRecord] {

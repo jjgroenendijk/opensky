@@ -1,11 +1,6 @@
-// Load-order-wide AVIF lookup above RecordIndex, in the MagicEffectStore
-// shape: winning definition per identity, editor-ID lookup, and the join that
-// answers "which record describes actor value 6".
-//
-// The actor-value index is not stored in the record — AVIF carries a name, not
-// a number — so the join runs through `ActorValueIdentity`, which is the one
-// table that numbers the vanilla actor values (docs/engine/actor-values.md).
-// Nothing here introduces a second skill enum.
+// Load-order-wide AVIF lookup above RecordIndex. AVIF carries a name, not an
+// actor-value number, so the index join runs through `ActorValueIdentity`
+// (docs/engine/actor-values.md).
 
 import Foundation
 import OpenSkyFormatsCore
@@ -33,28 +28,32 @@ nonisolated public struct ResolvedActorValueInformation: Equatable, Sendable {
 
 nonisolated public struct ActorValueInformationStore: Sendable {
     private let index: RecordIndex
-    public private(set) var information: [ResolvedFormID: ResolvedActorValueInformation] = [:]
-    private var informationByEditorID: [String: ResolvedActorValueInformation] = [:]
+    private let table: ResolvedRecordTable<ResolvedActorValueInformation>
     private var informationByActorValueIndex: [Int32: ResolvedActorValueInformation] = [:]
+
+    public var information: [ResolvedFormID: ResolvedActorValueInformation] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public init(index: RecordIndex) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "AVIF" else { continue }
-            guard
-                case let .decoded(decoded, sourcePlugin) = index.decodeIndexed(
-                    id,
-                    using: Self.decode
-                )
-            else { continue }
-            add(ResolvedActorValueInformation(
-                id: id,
-                information: decoded,
-                sourcePlugin: sourcePlugin
-            ))
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["AVIF"],
+            decode: Self.decode,
+            editorID: \.editorID,
+            resolve: {
+                ResolvedActorValueInformation(id: $0, information: $1, sourcePlugin: $2)
+            }
+        )
+        for resolved in table.orderedValues {
+            if let actorValueIndex = resolved.actorValueIndex {
+                informationByActorValueIndex[actorValueIndex] = resolved
+            }
         }
     }
 
@@ -62,13 +61,9 @@ nonisolated public struct ActorValueInformationStore: Sendable {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["AVIF"]))
     }
 
-    /// Every record that carries both advancement parameters and a perk tree.
-    ///
-    /// Wider than `skills`: on a load order with Dawnguard this also holds the
-    /// vampire and werewolf trees, which hang off actor values outside the
-    /// skill range and outside the vanilla name table entirely. Ordered by
-    /// actor-value index, with the records the join could not number sorted
-    /// last by editor id so the order stays deterministic with mods installed.
+    /// Every record with both advancement parameters and a perk tree. Wider
+    /// than `skills`: Dawnguard adds the vampire and werewolf trees. Sorted by
+    /// actor-value index, then by editor ID for records without one.
     public var perkTreeRecords: [ResolvedActorValueInformation] {
         information.values
             .filter(\.information.hasPerkTree)
@@ -93,14 +88,11 @@ nonisolated public struct ActorValueInformationStore: Sendable {
     }
 
     public func information(_ id: ResolvedFormID) -> ResolvedActorValueInformation? {
-        information[id] ?? information.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        table.value(id)
     }
 
     public func information(editorID: String) -> ResolvedActorValueInformation? {
-        informationByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     /// The record describing a vanilla actor value, by the index every CTDA
@@ -110,10 +102,7 @@ nonisolated public struct ActorValueInformationStore: Sendable {
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolvedID
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(
@@ -126,16 +115,6 @@ nonisolated public struct ActorValueInformationStore: Sendable {
 
     public func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
         resolve(id, fromPlugin: pluginName)?.displayName ?? "[UNRESOLVED] \(id)"
-    }
-
-    private mutating func add(_ resolved: ResolvedActorValueInformation) {
-        information[resolved.id] = resolved
-        if let editorID = resolved.information.editorID {
-            informationByEditorID[editorID.lowercased()] = resolved
-        }
-        if let actorValueIndex = resolved.actorValueIndex {
-            informationByActorValueIndex[actorValueIndex] = resolved
-        }
     }
 
     private static func decode(_ indexed: IndexedRecord) throws -> ActorValueInformation {

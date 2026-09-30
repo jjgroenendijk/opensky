@@ -68,12 +68,19 @@ nonisolated public struct ResolvedSpell: Sendable {
 
 nonisolated public struct SpellStore: Sendable {
     private let index: RecordIndex
-    /// Every winning SPEL and SCRL identity in the load order.
-    public private(set) var records: [ResolvedFormID: ResolvedSpell] = [:]
-    private var recordsByEditorID: [String: ResolvedSpell] = [:]
+    private let table: ResolvedRecordTable<ResolvedSpell>
     /// The same records under the identity the world state keys them by, so the
     /// spellbook can go from a stored key back to the record.
-    private var recordsByKey: [ReferenceKey: ResolvedSpell] = [:]
+    private let recordsByKey: [ReferenceKey: ResolvedSpell]
+
+    /// Every winning SPEL and SCRL identity in the load order.
+    public var records: [ResolvedFormID: ResolvedSpell] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public var spells: [ResolvedSpell] {
         records.values.filter { $0.recordType == "SPEL" }
@@ -99,30 +106,19 @@ nonisolated public struct SpellStore: Sendable {
 
     public init(index: RecordIndex, effects: MagicEffectStore) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard let type = index.records[id]?.record.type, type == "SPEL" || type == "SCRL"
-            else { continue }
-            guard
-                case let .decoded(decoded, sourcePlugin) = index.decodeIndexed(
-                    id,
-                    using: Self.decode
-                )
-            else { continue }
-            let resolved = Self.join(
-                id: id,
-                record: decoded,
-                sourcePlugin: sourcePlugin,
-                effects: effects
-            )
-            records[id] = resolved
-            recordsByKey[resolved.key] = resolved
-            if let editorID = decoded.editorID {
-                recordsByEditorID[editorID.lowercased()] = resolved
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["SPEL", "SCRL"],
+            decode: Self.decode,
+            editorID: \.editorID,
+            resolve: { id, decoded, sourcePlugin in
+                Self.join(id: id, record: decoded, sourcePlugin: sourcePlugin, effects: effects)
             }
-        }
+        )
+        recordsByKey = Dictionary(
+            table.values.values.map { ($0.key, $0) },
+            uniquingKeysWith: { _, later in later }
+        )
     }
 
     public init(index: RecordIndex) {
@@ -134,14 +130,11 @@ nonisolated public struct SpellStore: Sendable {
     }
 
     public func spell(_ id: ResolvedFormID) -> ResolvedSpell? {
-        records[id] ?? records.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        table.value(id)
     }
 
     public func spell(editorID: String) -> ResolvedSpell? {
-        recordsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     /// The record behind a stored runtime identity, or nil when this load order no
@@ -151,10 +144,7 @@ nonisolated public struct SpellStore: Sendable {
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolvedID
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedSpell? {

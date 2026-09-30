@@ -68,15 +68,22 @@ nonisolated public struct PerkStore: Sendable {
     private static let rankChainCap = 32
 
     private let index: RecordIndex
-    /// Every winning PERK identity in the load order.
-    public private(set) var records: [ResolvedFormID: ResolvedPerk] = [:]
+    private let table: ResolvedRecordTable<ResolvedPerk>
     /// Entry-point id to the effects that hook it, across every perk.
     public private(set) var entryPointIndex: [UInt8: [PerkEntryPointMatch]] = [:]
-    private var recordsByEditorID: [String: ResolvedPerk] = [:]
     private var recordsByKey: [ReferenceKey: ResolvedPerk] = [:]
     /// Each perk that is somebody's `NNAM` target, mapped back to the record naming
     /// it: the reverse of `rankChain(from:)`, so buying a rank finds the one before.
     private var previousRanks: [ResolvedFormID: ResolvedFormID] = [:]
+
+    /// Every winning PERK identity in the load order.
+    public var records: [ResolvedFormID: ResolvedPerk] {
+        table.values
+    }
+
+    public var skippedRecords: SkippedRecords {
+        table.skipped
+    }
 
     public var perks: [ResolvedPerk] {
         Array(records.values)
@@ -94,24 +101,23 @@ nonisolated public struct PerkStore: Sendable {
 
     public init(index: RecordIndex, spells: SpellStore) {
         self.index = index
-        let orderedIDs = index.records.keys.sorted {
-            RecordStoreOrdering.precedes($0, $1, index: index)
-        }
-        for id in orderedIDs {
-            guard index.records[id]?.record.type == "PERK" else { continue }
-            guard
-                case let .decoded(decoded, sourcePlugin) = index.decodeIndexed(
-                    id,
-                    using: Self.decode
+        table = ResolvedRecordTable(
+            index: index,
+            types: ["PERK"],
+            decode: Self.decode,
+            editorID: \.editorID,
+            resolve: { id, decoded, sourcePlugin in
+                Self.join(
+                    id: id,
+                    record: decoded,
+                    sourcePlugin: sourcePlugin,
+                    index: index,
+                    spells: spells
                 )
-            else { continue }
-            add(Self.join(
-                id: id,
-                record: decoded,
-                sourcePlugin: sourcePlugin,
-                index: index,
-                spells: spells
-            ))
+            }
+        )
+        for resolved in table.orderedValues {
+            add(resolved)
         }
     }
 
@@ -127,10 +133,7 @@ nonisolated public struct PerkStore: Sendable {
     }
 
     public func perk(_ id: ResolvedFormID) -> ResolvedPerk? {
-        records[id] ?? records.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        table.value(id)
     }
 
     /// The perk one runtime identity names, which is what the perk runtime
@@ -140,14 +143,11 @@ nonisolated public struct PerkStore: Sendable {
     }
 
     public func perk(editorID: String) -> ResolvedPerk? {
-        recordsByEditorID[editorID.lowercased()]
+        table.value(editorID: editorID)
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        guard case let .resolved(resolvedID) = index.resolve(id, fromPlugin: pluginName) else {
-            return nil
-        }
-        return resolvedID
+        index.resolvedID(id, fromPlugin: pluginName)
     }
 
     public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedPerk? {
@@ -203,13 +203,9 @@ nonisolated public struct PerkStore: Sendable {
     }
 
     private mutating func add(_ resolved: ResolvedPerk) {
-        records[resolved.id] = resolved
         recordsByKey[ReferenceKey(resolved: resolved.id)] = resolved
         if let next = resolved.nextPerk, previousRanks[next] == nil {
             previousRanks[next] = resolved.id
-        }
-        if let editorID = resolved.record.editorID {
-            recordsByEditorID[editorID.lowercased()] = resolved
         }
         for (offset, effect) in resolved.effects.enumerated() {
             guard let entryPoint = effect.entryPoint else { continue }

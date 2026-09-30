@@ -1,16 +1,6 @@
-// QUST index (issue #181, roadmap item 13.1).
-//
-// The plugin side of the quest system, built once from an `ESMFile` and
-// immutable afterwards, exactly like `GlobalStore` and `WeatherStore`: only
-// value types survive construction, so the index is safe to read from any
-// queue. Quest *state* — which quests are running, which stage each one is on
-// — is the runtime's (#182) and deliberately does not live here.
-//
-// Editor-ID lookup is case-insensitive for the same reason globals are: a
-// quest is named by scripts and by the console, and Skyrim has always matched
-// those without regard to case.
-//
-// Documented in docs/formats/quest-records.md.
+// QUST index for one plugin, immutable after construction. Quest state lives
+// in the runtime, not here. Editor-ID lookup ignores case, as scripts and the
+// console do (docs/formats/quest-records.md).
 
 import Foundation
 import OpenSkyFormatsCore
@@ -25,19 +15,18 @@ nonisolated public final class QuestStore: Sendable {
     /// plugin's master list so runtime state and saves never key off a
     /// load-order-relative number.
     private let keysByFormID: [UInt32: ReferenceKey]
-    /// The inverse of `keysByFormID`, which is what the Papyrus side needs:
-    /// a `Quest` native arrives holding a `ReferenceKey` — the identity every
-    /// script handle resolves to — and has to name the QUST record behind it
-    /// before `QuestRuntime` can be asked anything (issue #322).
+    /// The inverse of `keysByFormID`: a Papyrus `Quest` native holds a
+    /// `ReferenceKey` and needs the QUST record behind it.
     private let formIDsByKey: [ReferenceKey: UInt32]
-    /// Master-list resolver of the plugin these records came from, retained
-    /// because alias filling (issue #183) has to resolve FormIDs the QUST
-    /// records *point at* — an ALFR reference — and not only the quest
-    /// FormIDs the index already keyed.
+    /// Master-list resolver of the source plugin. Alias filling resolves the
+    /// FormIDs the QUST records point at, such as an ALFR reference.
     public let resolver: FormIDResolver
-    /// QUST records in the top group that failed to decode. Zero in vanilla
-    /// data; a sweep asserts it rather than silently indexing fewer quests.
-    public let skippedRecordCount: Int
+    /// QUST records in the top group that failed to decode. Zero in vanilla data.
+    public let skippedRecords: SkippedRecords
+
+    public var skippedRecordCount: Int {
+        skippedRecords.total
+    }
 
     public static let empty = QuestStore(
         quests: [],
@@ -51,24 +40,25 @@ nonisolated public final class QuestStore: Sendable {
         let masters = header?.masters ?? []
         let isLocalized = localized ?? (header?.isLocalized ?? false)
         var decoded: [Quest] = []
-        var skipped = 0
+        var skipped = SkippedRecords()
         if let top = file.topGroup(of: "QUST"), let children = try? top.children() {
             for case let .record(record) in children where record.type == "QUST" {
-                guard let quest = try? Quest(record: record, localized: isLocalized) else {
-                    skipped += 1
-                    continue
-                }
-                decoded.append(quest)
+                let quest = skipped.decode(record) { try Quest(record: $0, localized: isLocalized) }
+                decoded.append(contentsOf: quest.map { [$0] } ?? [])
             }
         }
         self.init(
             quests: decoded,
             resolver: FormIDResolver(pluginName: pluginName, masters: masters),
-            skippedRecordCount: skipped
+            skippedRecords: skipped
         )
     }
 
-    public init(quests: [Quest], resolver: FormIDResolver, skippedRecordCount: Int = 0) {
+    public init(
+        quests: [Quest],
+        resolver: FormIDResolver,
+        skippedRecords: SkippedRecords = SkippedRecords()
+    ) {
         var byFormID: [UInt32: Quest] = [:]
         var byEditorID: [String: UInt32] = [:]
         var keys: [UInt32: ReferenceKey] = [:]
@@ -95,7 +85,7 @@ nonisolated public final class QuestStore: Sendable {
         }
         formIDsByKey = inverse
         self.resolver = resolver
-        self.skippedRecordCount = skippedRecordCount
+        self.skippedRecords = skippedRecords
     }
 
     public var count: Int {
@@ -126,8 +116,7 @@ nonisolated public final class QuestStore: Sendable {
     }
 
     /// FormID behind a session-stable key, the direction the Papyrus natives
-    /// read (issue #322). Nil for a key that names no quest this session
-    /// loaded.
+    /// read. Nil for a key that names no loaded quest.
     public func formID(for key: ReferenceKey) -> FormID? {
         formIDsByKey[key].map(FormID.init)
     }
