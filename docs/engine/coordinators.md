@@ -16,8 +16,9 @@ and `openskycli` can use it, because it imports no AppKit.
 `GameViewController` keeps only the view, the input, the render loop, and the panel wiring.
 It holds the coordinators and forwards to them.
 
-The reference example is `VendorCoordinator` in `Sources/OpenSkyInventory/`. Its tests are
-`VendorCoordinatorTests` in `Tests/OpenSkyInventoryTests/`. Copy its shape.
+The reference example is the vendor domain in `Sources/OpenSkyInventory/`: `VendorCore` and
+`VendorCoordinator`. Their tests are `VendorCoreTests` and `VendorCoordinatorTests` in
+`Tests/OpenSkyInventoryTests/`. Copy its shape.
 
 ## Why
 
@@ -29,7 +30,8 @@ coordinator in a package module is tested with `make test-fast` in seconds.
 
 | Part | Where it lives | Example |
 | --- | --- | --- |
-| Coordinator | The feature module | `VendorCoordinator` |
+| Core: the pure rules | The feature module | `VendorCore` |
+| Coordinator: the shell around the core | The feature module | `VendorCoordinator` |
 | Port: what the coordinator reads from the world | The same file, as a protocol | `VendorWorld` |
 | Result and refusal values | The same file, as value types | `BarterCounterparty`, `BarterOpenRefusal` |
 | Adapter: the app's answers to the port | The app, beside the wire function | `extension GameViewController: VendorWorld` |
@@ -45,6 +47,31 @@ The coordinator returns values, not text. The app turns a value into a readout l
 the menu or camera change. Example: `counterparty(for:vendorFaction:)` returns
 `.failure(.chestNotResident(factionName:))`, and the app writes "... merchant chest is not
 streamed in."
+
+## Pure core, thin shell
+
+Every coordinator splits into two parts:
+
+- The core decides. It is pure: values in, values out. It imports no AppKit, Metal, or audio,
+  reads no clock, and calls no port. A test calls it with plain values and needs no fake.
+- The shell does the input and output. It holds the state and the port, reads the world,
+  calls the core, and runs what the core returns.
+
+A core has one of two shapes:
+
+- A domain without state has pure functions. Example: `VendorCore.counterparty(vendor:actor:stock:)`
+  takes the vendor and the stock the shell read, and returns the counterparty or a refusal.
+- A domain with state has a value-type state machine:
+  `(state, input) -> (newState, [Effect])`. An effect is a value that names one action, such
+  as "play this sound" or "open this menu". The shell stores the new state and runs each
+  effect through a port.
+
+Loaded plugin data, such as `VendorResolver`, may sit inside the core. It does not change
+while the game runs, so reading it keeps the core pure.
+
+Test the decisions on the core. Test the shell only for its world reads, with a small fake
+port. Example: `VendorCoreTests` covers every refusal with values, and
+`VendorCoordinatorTests` checks that the shell reads the chest, the hour, and the keywords.
 
 ## Module rules
 
@@ -66,12 +93,14 @@ from `OpenSkyFactionsInterface`. The app answers it from its faction runtime.
 
 1. Pick the logic in the `GameViewController+X` file that decides something. Leave view,
    input, and panel code in the app.
-2. Write the coordinator and its port in the feature module. Every read of `streamer`,
-   `renderer`, or another bridge state becomes one port member.
-3. Write tests with a fake port in the feature's test target.
-4. In the app, add the stored property, the wire function, and the port adapter. Point every
+2. Write the core in the feature module. Every decision goes here, as a pure function or a
+   state machine.
+3. Write the coordinator and its port beside it. Every read of `streamer`, `renderer`, or
+   another bridge state becomes one port member.
+4. Test the core with values. Test the shell with a fake port.
+5. In the app, add the stored property, the wire function, and the port adapter. Point every
    caller at the coordinator, and delete the old functions.
-5. Run `make check` and `make test-fast T='<Feature>Tests'`, then `make verify-build`.
+6. Run `make check` and `make test-fast T='<Feature>Tests'`, then `make verify-build`.
 
 Do not add a new `GameViewController+X` file for new logic. A SwiftLint rule will enforce this
 once every domain has moved ([code-health automation](/decisions/code-health-automation.md)).

@@ -54,8 +54,8 @@ Where it does not apply:
   shape.
 - A small runtime with almost no logic does not need a separate core.
 
-The shape for a coordinator core, `(state, input) -> (newState, [Effect])`, is set by 30.12.1
-([#650](https://github.com/jjgroenendijk/opensky/issues/650)).
+A coordinator follows this style too: a pure core and a thin shell. [Coordinators](/engine/coordinators.md)
+has the rule and the two shapes a core can take.
 
 ## Ports and adapters
 
