@@ -1,10 +1,6 @@
-// Env-gated integration test over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md Legal & IP): builds the
-// FirstRenderCell scene from real data, checks the load summary against the
-// decision-doc expectation, renders offscreen with the framing camera, and
-// dumps a PNG to logs/ for human review. Skips automatically when
-// OPENSKY_DATA_ROOT is unset/unresolvable (CI has no game data) or the
-// machine lacks a Metal 4 GPU.
+// Builds FirstRenderCell from the user's install, checks the load summary,
+// renders offscreen, and writes a PNG to logs/ for review. Skips without
+// OPENSKY_DATA_ROOT or a Metal 4 GPU.
 
 import CoreGraphics
 import Foundation
@@ -86,6 +82,7 @@ struct CellRenderRealDataTests {
         // Loose bounds so vanilla patch-level differences do not fail here.
         #expect(summary.drawnRefCount >= 14, "too few refs drew: \(summary.summaryLine)")
         #expect(summary.totalRefCount >= summary.drawnRefCount)
+        #expect(summary.skippedRecords.isEmpty, "\(summary.skippedRecords.lines)")
 
         let bounds = try #require(cellScene.bounds, "no world bounds — nothing drew")
         let camera = SceneCamera.framing(bounds: bounds)
@@ -108,20 +105,13 @@ struct CellRenderRealDataTests {
         try writeStats(summary: summary, fraction: fraction, pngURL: pngURL)
     }
 
-    /// Hard footprint ceiling for the streaming test (MB). Guard stays far
-    /// above the measured ~450 MB 5x5 fill to tolerate debug/test overhead,
-    /// but below the tools/memguard.sh watchdog so the test aborts itself with
-    /// a clear failure long before the system is at risk.
+    /// Far above the 5x5 fill, but below the tools/memguard.sh watchdog, so the
+    /// test fails itself before the system is at risk.
     private static let footprintCapMB = 3584.0
 
-    /// Drives the live streamer end to end over real data: a
-    /// SerialCellBuildRunner builds the 5x5 around FirstRenderCell off the
-    /// main thread, the sink swaps each recompose into a real Renderer, and
-    /// pumping update() mirrors exactly what the app's per-frame hook does --
-    /// verifying the launch path without opening a window. Also proves the
-    /// memory safeguards: footprint stays bounded during the fill, and a far
-    /// recenter frees the old grid (eviction) instead of doubling memory.
-    /// ALWAYS run under tools/memguard.sh (see docs/engine/cell-streaming.md).
+    /// Streams the 5x5 around FirstRenderCell into a real Renderer the way the
+    /// app's frame hook does, then checks that a far recenter frees the old grid.
+    /// Run under tools/memguard.sh only (docs/engine/cell-streaming.md).
     @Test(.enabled(if: Self.canRun))
     @MainActor
     func streamsFiveByFiveGridToCompletion() throws {

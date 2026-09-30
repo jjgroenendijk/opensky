@@ -1,6 +1,5 @@
-// Cell-scene integration for M7.5: resolve LAND LTEX -> repeated GNAM ->
-// GRAS, retain deterministic CPU placements, load shared models, emit GPU
-// batch inputs with identical cell lifetime.
+// Cell grass: LAND LTEX -> GNAM -> GRAS, deterministic CPU placements, shared
+// models, and GPU batch inputs that live as long as the cell.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -102,7 +101,7 @@ nonisolated extension CellSceneBuilder {
         if let top = file.topGroup(of: "LTEX"), let children = try? top.children() {
             for case let .record(record) in children {
                 guard record.type == "LTEX", !record.isDeleted else { continue }
-                if let texture = try? LandTexture(record: record) {
+                if let texture = decodeOrSkip(record, using: LandTexture.init(record:)) {
                     index[record.formID] = texture
                 }
             }
@@ -119,7 +118,7 @@ nonisolated extension CellSceneBuilder {
         if let top = file.topGroup(of: "GRAS"), let children = try? top.children() {
             for case let .record(record) in children {
                 guard record.type == "GRAS", !record.isDeleted else { continue }
-                if let grass = try? Grass(record: record) {
+                if let grass = decodeOrSkip(record, using: Grass.init(record:)) {
                     index[record.formID] = grass
                 }
             }

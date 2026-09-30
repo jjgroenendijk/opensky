@@ -1,13 +1,8 @@
-// Interior CELL build + door destination resolution (M3.6). Interior cells
-// live under CELL top-group block/sub-block groups instead of WRLD. Group
-// labels are hints only: expected labels come from CELL FormID decimal ones
-// + tens digits, but traversal falls back across siblings when labels lie.
-//
-// References:
-// - UESP CELL: https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL
-// - UESP REFR: https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR
-// - xEdit dev-4.1.6 wbImplementation.pas UpdateInteriorCellGroup:
-//   https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbImplementation.pas
+// Interior cell build and door destination lookup. Block labels under the CELL
+// top group are hints only, so the walk also tries siblings. Sources: UESP
+// https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL and /REFR; xEdit
+// UpdateInteriorCellGroup in
+// https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbImplementation.pas
 
 import Foundation
 import OpenSkyFormatsCore
@@ -90,8 +85,7 @@ nonisolated extension CellSceneBuilder {
         return refs
     }
 
-    /// - Parameter state: runtime deviations to lay over the plugin's data
-    ///   (issue #160), applied through the same path the exterior build uses.
+    /// - Parameter state: runtime changes, applied as in the exterior build.
     nonisolated public func buildInteriorScene(
         cellFormID: FormID,
         state: WorldStateSnapshot = .empty
@@ -109,8 +103,6 @@ nonisolated extension CellSceneBuilder {
             refs: refs, collected: collected, state: state, location: location, counts: &counts
         )
         let effective = resolved.references
-        // Dungeons author trigger volumes heavily, so interiors collect them on
-        // the same path exteriors do.
         let collision = buildCollision(resolved: resolved, location: location)
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildInteriorActors(
@@ -121,8 +113,7 @@ nonisolated extension CellSceneBuilder {
             found: found,
             grid: (x: 0, y: 0),
             instances: instances,
-            // Interiors have no LAND or procedural sky. Interior water needs
-            // room bounds rather than exterior's fixed cell plane -> deferred.
+            // Interior water needs room bounds, not the exterior cell plane.
             geometry: CellGeometryBuild(
                 location: location,
                 doors: resolveDoors(refs: effective),
@@ -147,8 +138,8 @@ nonisolated extension CellSceneBuilder {
         return scene
     }
 
-    /// Resolves source REFR XTEL -> destination door REFR -> owning CELL,
-    /// then builds that exact cell on the same cache-confined queue.
+    /// Source REFR XTEL -> destination door REFR -> owning CELL, then builds it.
+    /// A door REFR that fails to decode throws `CellSceneError.malformedRecord`.
     nonisolated public func buildDoorTransition(
         from sourceDoor: FormID,
         worldspaceEditorID: String,
@@ -156,21 +147,23 @@ nonisolated extension CellSceneBuilder {
     ) throws -> DoorTransition {
         guard
             let sourceRecord = ESMWalk.record(withFormID: sourceDoor.rawValue, in: file),
-            sourceRecord.type == "REFR",
-            let source = try? PlacedReference(record: sourceRecord)
+            sourceRecord.type == "REFR"
         else {
             throw CellSceneError.doorReferenceNotFound(formID: sourceDoor)
         }
+        let source = try Self.placedReference(sourceRecord)
         guard let teleport = source.teleportDestination else {
             throw CellSceneError.doorHasNoTeleport(formID: sourceDoor)
         }
         let destinationID = teleport.door
         guard
             let destinationRecord = ESMWalk.record(withFormID: destinationID.rawValue, in: file),
-            destinationRecord.type == "REFR",
-            let destination = try? PlacedReference(record: destinationRecord),
-            ESMWalk.record(withFormID: destination.base.rawValue, in: file)?.type == "DOOR"
+            destinationRecord.type == "REFR"
         else {
+            throw CellSceneError.teleportDestinationNotFound(formID: destinationID)
+        }
+        let destination = try Self.placedReference(destinationRecord)
+        guard ESMWalk.record(withFormID: destination.base.rawValue, in: file)?.type == "DOOR" else {
             throw CellSceneError.teleportDestinationNotFound(formID: destinationID)
         }
 
@@ -200,9 +193,20 @@ nonisolated extension CellSceneBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
-    /// Expected group labels are decimal ones/tens digits of low-24-bit
-    /// object ID. Matching-label groups run first for normal files; all other
-    /// legal groups still run, because UESP warns labels may be stale.
+    nonisolated private static func placedReference(_ record: ESMRecord) throws -> PlacedReference {
+        do {
+            return try PlacedReference(record: record)
+        } catch {
+            throw CellSceneError.malformedRecord(
+                type: record.type,
+                formID: FormID(record.formID),
+                reason: String(describing: error)
+            )
+        }
+    }
+
+    /// Groups whose labels match the object ID's ones and tens digits run first.
+    /// The rest still run, because UESP warns labels may be stale.
     nonisolated private func findInteriorCell(
         formID: FormID,
         localized: Bool
@@ -231,7 +235,10 @@ nonisolated extension CellSceneBuilder {
             guard
                 case let .record(record) = child, record.type == "CELL",
                 record.formID == formID,
-                let cell = try? Cell(record: record, localized: localized), cell.isInterior
+                let cell = decodeOrSkip(record, using: {
+                    try Cell(record: $0, localized: localized)
+                }),
+                cell.isInterior
             else { continue }
             return FoundCell(
                 cell: cell,
@@ -309,7 +316,9 @@ nonisolated extension CellSceneBuilder {
         for (index, child) in children.enumerated() {
             guard
                 case let .record(record) = child, record.type == "CELL",
-                let cell = try? Cell(record: record, localized: localized),
+                let cell = decodeOrSkip(record, using: {
+                    try Cell(record: $0, localized: localized)
+                }),
                 cell.isInterior == requireInterior
             else { continue }
             let cellChildren = cellChildrenGroup(

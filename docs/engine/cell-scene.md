@@ -63,6 +63,12 @@ records. Actors (`ACHR`) have their own pass and count (see
 [terrain](/engine/terrain.md). A bad group under `WRLD` is skipped with a log, and the other
 blocks still load.
 
+A base, cell, or environment record that does not decode (for example a `STAT`, `CELL`, or
+`WATR`) is logged and counted once per FormID in `CellSceneBuilder.skippedRecords`. The builder
+reads cells again on every build, so it counts each FormID only the first time. The count is
+kept outside the reference buckets and copied into each summary. A door `REFR` that does not
+decode stops the door transition with `CellSceneError.malformedRecord`.
+
 ## Summary line
 
 One line is logged per cell:
@@ -72,7 +78,8 @@ One line is logged per cell:
 9 models, 19 textures (0 missing), 4 terrain quads (14 splat layers)
 ```
 
-Water cells add `, water`. Cells with actors add `, N actors (D drawn, S disabled, F failed)`,
+Water cells add `, water`. A builder that has skipped records adds `, N malformed records`.
+Cells with actors add `, N actors (D drawn, S disabled, F failed)`,
 where N must equal D + S + F. Only nonzero skip buckets are listed. The sky is not counted,
 because it belongs to the worldspace, not the cell.
 

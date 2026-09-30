@@ -44,6 +44,14 @@ public enum ESMFixture: Sendable {
         return out
     }
 
+    /// A record whose fields fail to parse: an `XXXX` field of size 3, not 4.
+    public static func malformedRecord(_ type: String, formID: UInt32) -> Data {
+        var fields = Data("XXXX".utf8)
+        fields.appendUInt16(3)
+        fields.append(Data([0, 0, 0]))
+        return record(type, formID: formID, data: fields)
+    }
+
     /// Record with flag 0x40000: uint32 decompressedSize + zlib stream.
     public static func compressedRecord(
         _ type: String,

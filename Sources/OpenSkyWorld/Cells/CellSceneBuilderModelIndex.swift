@@ -1,10 +1,8 @@
-// Cached STAT/ModelBase indexes and exterior build-source lookup. Split from
-// CellSceneBuilder.swift to keep the primary build flow within strict limits.
+// Cached STAT/ModelBase indexes and the exterior build-source lookup.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyPhysics
-import OSLog
 
 nonisolated public struct ExteriorBuildSource: Sendable {
     public let world: FoundWorld
@@ -46,9 +44,7 @@ nonisolated extension CellSceneBuilder {
         var index: [UInt32: StaticObject] = [:]
         if let top = file.topGroup(of: "STAT"), let children = try? top.children() {
             for case let .record(record) in children where record.type == "STAT" {
-                guard let stat = try? StaticObject(record: record) else {
-                    let id = FormID(record.formID).description
-                    Self.logger.warning("malformed STAT \(id, privacy: .public) skipped")
+                guard let stat = decodeOrSkip(record, using: StaticObject.init(record:)) else {
                     continue
                 }
                 index[record.formID] = stat
@@ -70,18 +66,10 @@ nonisolated extension CellSceneBuilder {
             }
             for case let .record(record) in children where record.type == type {
                 guard
-                    let base = try? ModelBase(
-                        record: record,
-                        localized: pluginLocalized
-                    )
-                else {
-                    let id = FormID(record.formID).description
-                    let name = type.description
-                    Self.logger.warning(
-                        "malformed \(name, privacy: .public) \(id, privacy: .public) skipped"
-                    )
-                    continue
-                }
+                    let base = decodeOrSkip(record, using: {
+                        try ModelBase(record: $0, localized: pluginLocalized)
+                    })
+                else { continue }
                 index[record.formID] = base
             }
         }
@@ -89,10 +77,7 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
-    /// MATT index over the plugin's MATT and LTEX top groups, built on first
-    /// use. A plugin with no MATT group yields the empty index rather than nil,
-    /// so a synthetic scene resolves every surface to no material instead of
-    /// rebuilding the index per cell.
+    /// A plugin without MATT gets an empty index, so it is not rebuilt per cell.
     nonisolated public func materialTypeIndexBuildingIfNeeded() -> MaterialTypeIndex {
         if let materialTypeIndex {
             return materialTypeIndex

@@ -5,7 +5,9 @@
 
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyWorld
 import simd
 import Testing
@@ -129,6 +131,17 @@ struct NavmeshIndexTests {
 
         #expect(index.isEmpty)
         #expect(index.locations.isEmpty)
+    }
+
+    @Test func countsMalformedNaviRecord() throws {
+        let file = try ESMFile(data: NavmeshFixture.plugin(
+            naviRecords: ESMFixture.malformedRecord("NAVI", formID: 0x10)
+                + NavmeshFixture.naviRecord(infos: NavmeshFixture.info(navmesh: 0x100))
+        ))
+        let index = NavmeshIndex(file: file)
+
+        #expect(index.count == 1)
+        #expect(index.skippedRecords.count(of: "NAVI") == 1)
     }
 
     @Test func emptyWithoutANaviGroup() throws {
