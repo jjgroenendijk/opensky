@@ -6,10 +6,11 @@
 // NifTools nif.xml (NiPSysEmitter, NiPSysModifier, AlphaFunction).
 // https://github.com/niftools/nifxml/blob/develop/nif.xml
 
-import Metal
+@preconcurrency import Metal
 import OpenSkyFormatsMesh
 import OpenSkyShaderTypes
 import simd
+import Synchronization
 
 nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
     /// Source alpha over destination (SRC_ALPHA / INV_SRC_ALPHA).
@@ -247,7 +248,12 @@ nonisolated public struct ParticleGPUInstance: Sendable {
     public let uvRect: SIMD4<Float>
 }
 
-nonisolated public final class ParticlePlayback {
+nonisolated public final class ParticlePlayback: Sendable {
+    nonisolated private struct State {
+        var simulator: ParticleSimulator
+        var simulationTime: Float = 0
+    }
+
     public let name: String
     public let sourcePath: String
     public let texture: MTLTexture
@@ -256,11 +262,19 @@ nonisolated public final class ParticlePlayback {
     public let capacity: Int
     public let emitterCount: Int
     private let seed: UInt64
-    public private(set) var simulator: ParticleSimulator
-    public private(set) var simulationTime: Float = 0
+    /// Advanced on the main actor after the build queue hands the scene over.
+    private let state: Mutex<State>
+
+    public var simulator: ParticleSimulator {
+        state.withLock { $0.simulator }
+    }
+
+    public var simulationTime: Float {
+        state.withLock { $0.simulationTime }
+    }
 
     public var liveCount: Int {
-        simulator.particles.count
+        state.withLock { $0.simulator.particles.count }
     }
 
     public init(
@@ -276,13 +290,14 @@ nonisolated public final class ParticlePlayback {
         self.texture = texture
         blendMode = ParticleBlendMode(alpha: definition.alphaProperty)
         self.seed = seed
-        simulator = ParticleSimulator(
+        let simulator = ParticleSimulator(
             definition: definition,
             placementTransform: placementTransform,
             seed: seed
         )
         capacity = simulator.capacity
         emitterCount = definition.emitters.filter(\.active).count
+        state = Mutex(State(simulator: simulator))
         let count = max(capacity, 1) * Renderer.maxFramesInFlight
         guard
             let buffer = device.makeBuffer(
@@ -294,33 +309,40 @@ nonisolated public final class ParticlePlayback {
     }
 
     public func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
-        simulator.advance(deltaTime: deltaTime, wind: wind, emissionScale: emissionScale)
-        simulationTime += max(deltaTime, 0)
+        state.withLock {
+            $0.simulator.advance(deltaTime: deltaTime, wind: wind, emissionScale: emissionScale)
+            $0.simulationTime += max(deltaTime, 0)
+        }
     }
 
     public func translate(by delta: SIMD3<Float>) {
-        simulator.translate(by: delta)
+        state.withLock { $0.simulator.translate(by: delta) }
     }
 
     public func reset() {
-        simulator.reset(seed: seed)
-        simulationTime = 0
+        state.withLock {
+            $0.simulator.reset(seed: seed)
+            $0.simulationTime = 0
+        }
     }
 
     public func seek(to time: Float, wind: WindState, emissionScale: Float) {
         let target = max(time, 0)
-        simulator.reset(seed: seed)
-        simulationTime = 0
-        while simulationTime + 0.05 < target {
-            simulator.advance(deltaTime: 0.05, wind: wind, emissionScale: emissionScale)
-            simulationTime += 0.05
+        state.withLock {
+            $0.simulator.reset(seed: seed)
+            $0.simulationTime = 0
+            while $0.simulationTime + 0.05 < target {
+                $0.simulator.advance(deltaTime: 0.05, wind: wind, emissionScale: emissionScale)
+                $0.simulationTime += 0.05
+            }
+            let remainder = target - $0.simulationTime
+            $0.simulator.advance(deltaTime: remainder, wind: wind, emissionScale: emissionScale)
+            $0.simulationTime = target
         }
-        let remainder = target - simulationTime
-        simulator.advance(deltaTime: remainder, wind: wind, emissionScale: emissionScale)
-        simulationTime = target
     }
 
     public func prepareBuffer(slot: Int) -> (offset: Int, count: Int) {
+        let simulator = simulator
         let particles = simulator.particles
         let offset = slot * max(capacity, 1) * MemoryLayout<ParticleGPUInstance>.stride
         guard !particles.isEmpty else { return (offset, 0) }

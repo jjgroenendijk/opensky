@@ -8,6 +8,7 @@ import OpenSkyAudio
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import Synchronization
 
 nonisolated public enum LipSyncClockMode: String, Equatable, Sendable {
     case audio
@@ -47,7 +48,7 @@ nonisolated extension LIPFile {
     }
 }
 
-nonisolated private struct LipSyncSession {
+nonisolated private struct LipSyncSession: Sendable {
     let track: LIPFile
     let clock: VoicePlaybackClock
     let line: String
@@ -58,17 +59,29 @@ nonisolated private struct LipSyncSession {
 }
 
 nonisolated public final class LipSyncPlayback: RenderAnimation {
+    nonisolated private struct State {
+        var session: LipSyncSession?
+        var snapshot: LipSyncSnapshot
+        var isEnabled = true
+    }
+
     /// Short enough to avoid a held mouth after audio, long enough to keep the
     /// last open shape from snapping to bind pose on one frame.
     public static let decayDuration: Float = 0.15
 
     public let actor: FormID
     private let faceMorph: any LipMorphWeightApplying
-    private var session: LipSyncSession?
-    public private(set) var snapshot = LipSyncSnapshot.empty
-    public var isEnabled = true {
-        didSet {
-            if !isEnabled {
+    private let state: Mutex<State>
+
+    public var snapshot: LipSyncSnapshot {
+        state.withLock { $0.snapshot }
+    }
+
+    public var isEnabled: Bool {
+        get { state.withLock { $0.isEnabled } }
+        set {
+            state.withLock { $0.isEnabled = newValue }
+            if !newValue {
                 _ = faceMorph.clearLipWeights()
             }
         }
@@ -77,7 +90,11 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
     public init(faceMorph: any LipMorphWeightApplying) {
         actor = faceMorph.actor
         self.faceMorph = faceMorph
-        snapshot = LipSyncSnapshot(
+        state = Mutex(State(snapshot: Self.idleSnapshot(actor: faceMorph.actor)))
+    }
+
+    private static func idleSnapshot(actor: FormID) -> LipSyncSnapshot {
+        LipSyncSnapshot(
             actor: actor,
             activeLine: nil,
             trackTime: 0,
@@ -95,13 +112,13 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
         line: String,
         animationTime: Float
     ) {
-        session = LipSyncSession(
+        let session = LipSyncSession(
             track: track,
             clock: clock,
             line: line,
             startAnimationTime: animationTime
         )
-        snapshot = LipSyncSnapshot(
+        let snapshot = LipSyncSnapshot(
             actor: actor,
             activeLine: line,
             trackTime: 0,
@@ -111,15 +128,19 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             isDecaying: false,
             layout: track.layoutDescription
         )
+        state.withLock {
+            $0.session = session
+            $0.snapshot = snapshot
+        }
     }
 
     public func finish(at animationTime: Float) {
-        guard session != nil else { return }
-        session?.finishAnimationTime = animationTime
+        state.withLock { $0.session?.finishAnimationTime = animationTime }
     }
 
     @discardableResult
     public func update(at time: Float) -> Int {
+        let (isEnabled, session) = state.withLock { ($0.isEnabled, $0.session) }
         guard isEnabled, var current = session else { return 0 }
         if let finish = current.finishAnimationTime {
             return updateDecay(session: current, elapsed: max(0, time - finish))
@@ -140,8 +161,7 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
         if trackTime + 0.000_001 >= current.track.duration {
             current.finishAnimationTime = time
         }
-        session = current
-        snapshot = LipSyncSnapshot(
+        let snapshot = LipSyncSnapshot(
             actor: actor,
             activeLine: current.line,
             trackTime: trackTime,
@@ -151,22 +171,20 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             isDecaying: false,
             layout: current.track.layoutDescription
         )
+        state.withLock { [current] in
+            $0.session = current
+            $0.snapshot = snapshot
+        }
         return faceMorph.setLipWeights(mapped.weights)
     }
 
     @discardableResult
     public func resetToBindPose() -> Int {
-        session = nil
-        snapshot = LipSyncSnapshot(
-            actor: actor,
-            activeLine: nil,
-            trackTime: 0,
-            clockMode: .audio,
-            liveWeights: [:],
-            unmappedActiveSlots: [],
-            isDecaying: false,
-            layout: nil
-        )
+        let idle = Self.idleSnapshot(actor: actor)
+        state.withLock {
+            $0.session = nil
+            $0.snapshot = idle
+        }
         return faceMorph.clearLipWeights()
     }
 
@@ -176,16 +194,18 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
         guard elapsed + 0.000_001 < Self.decayDuration else { return resetToBindPose() }
         let scale = 1 - elapsed / Self.decayDuration
         let weights = current.lastWeights.mapValues { $0 * scale }
-        snapshot = LipSyncSnapshot(
-            actor: actor,
-            activeLine: current.line,
-            trackTime: snapshot.trackTime,
-            clockMode: current.clockMode,
-            liveWeights: weights,
-            unmappedActiveSlots: snapshot.unmappedActiveSlots,
-            isDecaying: true,
-            layout: current.track.layoutDescription
-        )
+        state.withLock {
+            $0.snapshot = LipSyncSnapshot(
+                actor: actor,
+                activeLine: current.line,
+                trackTime: $0.snapshot.trackTime,
+                clockMode: current.clockMode,
+                liveWeights: weights,
+                unmappedActiveSlots: $0.snapshot.unmappedActiveSlots,
+                isDecaying: true,
+                layout: current.track.layoutDescription
+            )
+        }
         return faceMorph.setLipWeights(weights)
     }
 }

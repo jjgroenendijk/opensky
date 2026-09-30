@@ -9,8 +9,9 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
 import simd
+import Synchronization
 
-nonisolated public final class ActorAnimationClip {
+nonisolated public final class ActorAnimationClip: Sendable {
     public let skeleton: HKASkeleton
     public let animation: HKASplineCompressedAnimation
     public let binding: HKAAnimationBinding
@@ -97,19 +98,29 @@ nonisolated public enum ActorAnimationLoadError: LocalizedError {
 }
 
 nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
+    nonisolated private struct State {
+        /// The idle clip, or a bounded combat override.
+        var clip: ActorAnimationClip
+        var locomotionClip: ActorAnimationClip
+        /// Animation time the override started at, so it is sampled from its own
+        /// frame zero rather than from wherever the shared clock happened to be.
+        var overrideStart: Float = 0
+        /// Animation time the override ends at. Zero when none is playing.
+        var overrideEnd: Float = 0
+    }
+
     public let actor: FormID
     public let female: Bool
-    /// The clip currently playing: the idle one, or a bounded combat override.
-    public private(set) var clip: ActorAnimationClip
     /// The clip this actor returns to when an override ends.
     private let idleClip: ActorAnimationClip
-    private var locomotionClip: ActorAnimationClip
-    /// Animation time the override started at, so it is sampled from its own
-    /// frame zero rather than from wherever the shared clock happened to be.
-    private var overrideStart: Float = 0
-    /// Animation time the override ends at. Zero when none is playing.
-    private var overrideEnd: Float = 0
+    /// Changed on the main actor after the build queue hands the scene over.
+    private let state: Mutex<State>
     private let meshes: [RenderMesh]
+
+    /// The clip currently playing: the idle one, or a bounded combat override.
+    public var clip: ActorAnimationClip {
+        state.withLock { $0.clip }
+    }
 
     public init(
         actor: FormID,
@@ -119,9 +130,8 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
     ) {
         self.actor = actor
         self.female = female
-        self.clip = clip
         idleClip = clip
-        locomotionClip = clip
+        state = Mutex(State(clip: clip, locomotionClip: clip))
         var seen = Set<ObjectIdentifier>()
         meshes = models.flatMap(\.meshes).filter {
             $0.isSkinned && seen.insert(ObjectIdentifier($0)).inserted
@@ -136,17 +146,21 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         forSeconds seconds: Float
     ) {
         guard seconds > 0, seconds.isFinite else { return }
-        self.clip = clip
-        overrideStart = time
-        overrideEnd = time + seconds
+        state.withLock {
+            $0.clip = clip
+            $0.overrideStart = time
+            $0.overrideEnd = time + seconds
+        }
     }
 
     /// Selects the in-place gait clip a kinematic NPC drive resolved. Combat
     /// overrides remain authoritative until their bounded hold expires.
     public func setLocomotionClip(_ clip: ActorAnimationClip?) {
-        locomotionClip = clip ?? idleClip
-        if overrideEnd == 0 {
-            self.clip = locomotionClip
+        state.withLock {
+            $0.locomotionClip = clip ?? idleClip
+            if $0.overrideEnd == 0 {
+                $0.clip = $0.locomotionClip
+            }
         }
     }
 
@@ -154,12 +168,16 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
     /// The one place the override's own clock is applied, so every consumer —
     /// skinning here, the ragdoll hand-off in the app — reads the same pose.
     public func pose(at time: Float) -> [String: float4x4]? {
-        if overrideEnd > 0, time >= overrideEnd {
-            clip = locomotionClip
-            overrideEnd = 0
-            overrideStart = 0
+        let (clip, clipTime) = state.withLock { state in
+            if state.overrideEnd > 0, time >= state.overrideEnd {
+                state.clip = state.locomotionClip
+                state.overrideEnd = 0
+                state.overrideStart = 0
+            }
+            let clipTime = state.overrideEnd > 0 ? time - state.overrideStart : time
+            return (state.clip, clipTime)
         }
-        return clip.namedWorldTransforms(at: overrideEnd > 0 ? time - overrideStart : time)
+        return clip.namedWorldTransforms(at: clipTime)
     }
 
     @discardableResult

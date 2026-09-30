@@ -15,7 +15,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
-nonisolated public struct DoorTransition {
+nonisolated public struct DoorTransition: Sendable {
     public let sourceDoor: FormID
     public let destinationDoor: FormID
     public let destinationPlacement: PlacedReference.Placement

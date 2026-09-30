@@ -3,7 +3,7 @@
 // Texture lookup stays caller-supplied so demo + VFS-backed scenes share it.
 
 import Foundation
-import Metal
+@preconcurrency import Metal
 import OpenSkyFormatsCore
 import OpenSkyShaderTypes
 import simd
@@ -15,7 +15,7 @@ public typealias TextureProvider = (_ key: String?, _ usage: TextureUsage) -> MT
 /// GPU-side material: resolved diffuse texture + the scalar parameters the
 /// shader consumes. Static NIF alpha blending remains deferred; milestone
 /// 3.5 water uses its dedicated blend pipeline instead.
-nonisolated public struct RenderMaterial {
+nonisolated public struct RenderMaterial: Sendable {
     public let diffuse: MTLTexture
     public let uvOffset: SIMD2<Float>
     public let uvScale: SIMD2<Float>
@@ -37,7 +37,7 @@ nonisolated public struct RenderMaterial {
 
 /// One engine Model uploaded: GPU meshes + resolved materials, shareable
 /// across many instances (todo 2.7 mesh library keys these by VFS path).
-nonisolated public final class RenderModel {
+nonisolated public final class RenderModel: Sendable {
     public let meshes: [RenderMesh]
     public let materials: [RenderMaterial]
 
@@ -52,7 +52,7 @@ nonisolated public final class RenderModel {
 /// One placed model going into a RenderScene: instance transform plus the
 /// world-space AABB used for frustum culling (model bounds pushed through
 /// the transform). nil bounds -> the instance is never culled.
-nonisolated public struct RenderPlacement {
+nonisolated public struct RenderPlacement: Sendable {
     public let model: RenderModel
     public let transform: float4x4
     public let bounds: ModelBounds?
@@ -124,7 +124,7 @@ nonisolated public struct DrawInstance: Sendable {
 /// to exactly one RenderModel whose materials array pins one material per
 /// slot, so identical meshes imply identical material scalars — the diffuse
 /// ObjectIdentifier rides along defensively.
-nonisolated public struct DrawGroup {
+nonisolated public struct DrawGroup: Sendable {
     public let mesh: RenderMesh
     public let material: RenderMaterial
     public let faceMorph: FaceMorphBuffer?
@@ -203,7 +203,7 @@ nonisolated private struct GroupAccumulator {
 /// per-vertex splat-weight stream (TerrainVertexLayout), the BTXT base
 /// material, and the ATXT layer diffuses in blend order. Terrain always
 /// draws opaque (docs/rendering/scene-drawing.md, terrain splat section).
-nonisolated public struct TerrainDrawItem {
+nonisolated public struct TerrainDrawItem: Sendable {
     public let mesh: RenderMesh
     /// Two float4 weight lanes per vertex, vertex-count sized.
     public let weightsBuffer: MTLBuffer
@@ -243,7 +243,7 @@ nonisolated public struct SkyParameters: Equatable, Sendable {
 
 /// One exterior-cell water plane. Geometry is a reusable 4096-unit quad;
 /// modelMatrix places it at CELL/WRLD water height. Colors come from WATR.
-nonisolated public struct WaterDrawItem {
+nonisolated public struct WaterDrawItem: Sendable {
     public let mesh: RenderMesh
     public let modelMatrix: float4x4
     public let shallowColor: SIMD3<Float>
@@ -274,7 +274,7 @@ nonisolated public struct WaterDrawItem {
 /// alpha-tested ones. Terrain items carry their own layer
 /// textures + weight streams and draw through the terrain splat pipeline,
 /// one non-instanced draw each.
-nonisolated public struct RenderScene {
+nonisolated public struct RenderScene: Sendable {
     public let opaque: [DrawGroup]
     public let alphaTested: [DrawGroup]
     public let terrain: [TerrainDrawItem]

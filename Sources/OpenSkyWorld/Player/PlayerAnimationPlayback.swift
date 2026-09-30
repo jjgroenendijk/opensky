@@ -22,6 +22,7 @@ import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyRendering
 import simd
+import Synchronization
 
 /// The latest pose the behavior graph produced, published by the locomotion
 /// bridge and consumed by the render side.
@@ -30,20 +31,42 @@ import simd
 /// simulation ran no step since the last frame — a paused frame, or a frame
 /// shorter than one fixed step — and the palettes already hold the right
 /// matrices, so the whole compose-and-upload path is skipped rather than redone.
-nonisolated public final class PlayerPoseBuffer {
-    public private(set) var bones: [HKABonePose] = []
-    public private(set) var revision = 0
+nonisolated public final class PlayerPoseBuffer: Sendable {
+    nonisolated public struct Snapshot: Sendable {
+        public var bones: [HKABonePose] = []
+        public var revision = 0
+    }
+
+    private let state = Mutex(Snapshot())
+
+    public init() {}
+
+    public var snapshot: Snapshot {
+        state.withLock { $0 }
+    }
+
+    public var bones: [HKABonePose] {
+        state.withLock { $0.bones }
+    }
+
+    public var revision: Int {
+        state.withLock { $0.revision }
+    }
 
     public func publish(_ bones: [HKABonePose]) {
-        self.bones = bones
-        revision &+= 1
+        state.withLock {
+            $0.bones = bones
+            $0.revision &+= 1
+        }
     }
 
     /// Drops the pose, so a body attached after a reset composes from the
     /// reference pose rather than from wherever the player last stood.
     public func clear() {
-        bones = []
-        revision &+= 1
+        state.withLock {
+            $0.bones = []
+            $0.revision &+= 1
+        }
     }
 }
 
@@ -59,9 +82,13 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     public let pose: PlayerPoseBuffer
     private let meshes: [RenderMesh]
     /// The revision last composed, so an unchanged pose costs one comparison.
-    private var appliedRevision: Int?
+    private let appliedRevision = Mutex<Int?>(nil)
+    private let updatedBoneCount = Mutex(0)
+
     /// Bones matched into palettes by the last applied pose, for the readout.
-    public private(set) var lastUpdatedBoneCount = 0
+    public var lastUpdatedBoneCount: Int {
+        updatedBoneCount.withLock { $0 }
+    }
 
     public init(skeleton: HKASkeleton, pose: PlayerPoseBuffer, models: [RenderModel]) {
         self.skeleton = skeleton
@@ -81,27 +108,27 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     /// counts an NPC.
     @discardableResult
     public func update(at _: Float) -> Int {
-        guard appliedRevision != pose.revision else { return lastUpdatedBoneCount }
-        appliedRevision = pose.revision
-        guard !pose.bones.isEmpty else {
-            lastUpdatedBoneCount = 0
-            return 0
+        let latest = pose.snapshot
+        let isNew = appliedRevision.withLock { applied in
+            defer { applied = latest.revision }
+            return applied != latest.revision
         }
+        guard isNew else { return lastUpdatedBoneCount }
+        let count = boneCount(applying: latest.bones)
+        updatedBoneCount.withLock { $0 = count }
+        return count
+    }
+
+    private func boneCount(applying bones: [HKABonePose]) -> Int {
         guard
-            let world = try? SkeletonPoseMath.worldMatrices(
-                skeleton: skeleton,
-                localPoses: pose.bones
-            )
-        else {
-            lastUpdatedBoneCount = 0
-            return 0
-        }
+            !bones.isEmpty,
+            let world = try? SkeletonPoseMath.worldMatrices(skeleton: skeleton, localPoses: bones)
+        else { return 0 }
         var named: [String: float4x4] = [:]
         for (name, transform) in zip(skeleton.boneNames, world) where named[name] == nil {
             named[name] = transform
         }
-        lastUpdatedBoneCount = meshes.reduce(0) { $0 + $1.updateSkinningPose(named) }
-        return lastUpdatedBoneCount
+        return meshes.reduce(0) { $0 + $1.updateSkinningPose(named) }
     }
 
     @discardableResult
@@ -109,8 +136,8 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
         // Forgetting the applied revision is what makes the A/B toggle
         // reversible: turning animation back on must recompose even though the
         // simulation may not have produced a new pose in between.
-        appliedRevision = nil
-        lastUpdatedBoneCount = 0
+        appliedRevision.withLock { $0 = nil }
+        updatedBoneCount.withLock { $0 = 0 }
         return meshes.reduce(0) { $0 + $1.resetSkinningPose() }
     }
 }

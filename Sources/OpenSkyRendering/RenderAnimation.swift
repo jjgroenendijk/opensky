@@ -5,7 +5,7 @@ import simd
 
 /// RenderScene stores these references. Removing a resident CellScene removes
 /// its playback objects; decoded immutable clip assets may remain cache-hot.
-nonisolated public protocol RenderAnimation: AnyObject {
+nonisolated public protocol RenderAnimation: AnyObject, Sendable {
     @discardableResult
     func update(at time: Float) -> Int
 

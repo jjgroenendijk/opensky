@@ -5,10 +5,11 @@
 // defaults instead of failing — vanilla NIFs legitimately omit them.
 
 import Foundation
-import Metal
+@preconcurrency import Metal
 import OpenSkyFormatsCore
 import OpenSkyShaderTypes
 import simd
+import Synchronization
 
 nonisolated public enum RenderMeshError: Error, Equatable {
     /// Triangle index points past the vertex array (defensive: parsers
@@ -166,7 +167,7 @@ nonisolated public enum TerrainVertexLayout: Sendable {
 /// One mesh's GPU residence: interleaved vertex buffer + uint16 index
 /// buffer, plus the mesh-local -> model-root transform and material slot
 /// carried over from the engine Mesh.
-nonisolated public final class RenderMesh {
+nonisolated public final class RenderMesh: Sendable {
     public let name: String?
     public let vertexCount: Int
     public let vertexBuffer: MTLBuffer
@@ -175,7 +176,12 @@ nonisolated public final class RenderMesh {
     public let skinningBuffer: MTLBuffer?
     public let boneMatrixBuffer: MTLBuffer?
     private let skinningPalette: SkinningPalette?
-    public private(set) var currentBoneMatrices: [float4x4]
+    /// Written on the main actor after the build queue hands the mesh over.
+    private let boneMatrices: Mutex<[float4x4]>
+    public var currentBoneMatrices: [float4x4] {
+        boneMatrices.withLock { $0 }
+    }
+
     public var isSkinned: Bool {
         skinningBuffer != nil
     }
@@ -227,7 +233,7 @@ nonisolated public final class RenderMesh {
         skinningBuffer = skinBuffers.attributes
         boneMatrixBuffer = skinBuffers.matrices
         skinningPalette = skinBuffers.palette
-        currentBoneMatrices = mesh.skinning?.bindPoseMatrices ?? []
+        boneMatrices = Mutex(mesh.skinning?.bindPoseMatrices ?? [])
         localTransform = mesh.transform
         self.localBounds = localBounds
         materialSlot = mesh.materialSlot
@@ -295,7 +301,7 @@ nonisolated public final class RenderMesh {
     public func updateSkinningPose(_ transformsByName: [String: float4x4]) -> Int {
         guard let palette = skinningPalette else { return 0 }
         let posed = palette.posed(by: transformsByName)
-        currentBoneMatrices = posed.matrices
+        boneMatrices.withLock { $0 = posed.matrices }
         return posed.matchedBoneCount
     }
 
@@ -304,21 +310,25 @@ nonisolated public final class RenderMesh {
     @discardableResult
     public func resetSkinningPose() -> Int {
         guard let palette = skinningPalette else { return 0 }
-        currentBoneMatrices = palette.bindPoseMatrices
+        boneMatrices.withLock { $0 = palette.bindPoseMatrices }
         return palette.bindPoseMatrices.count
     }
 
     /// Copies current CPU palette into this frame-in-flight slot immediately
     /// before encoding, so CPU updates never race prior GPU frames.
     public func prepareBoneMatrices(slot: Int) {
-        guard let buffer = boneMatrixBuffer, !currentBoneMatrices.isEmpty else { return }
-        buffer.contents().advanced(by: boneMatrixOffset(slot: slot)).copyMemory(
-            from: currentBoneMatrices,
-            byteCount: currentBoneMatrices.count * MemoryLayout<float4x4>.stride
-        )
+        guard let buffer = boneMatrixBuffer else { return }
+        boneMatrices.withLock { matrices in
+            guard !matrices.isEmpty else { return }
+            let offset = slot * matrices.count * MemoryLayout<float4x4>.stride
+            buffer.contents().advanced(by: offset).copyMemory(
+                from: matrices,
+                byteCount: matrices.count * MemoryLayout<float4x4>.stride
+            )
+        }
     }
 
     public func boneMatrixOffset(slot: Int) -> Int {
-        slot * currentBoneMatrices.count * MemoryLayout<float4x4>.stride
+        slot * boneMatrices.withLock { $0.count } * MemoryLayout<float4x4>.stride
     }
 }
