@@ -27,7 +27,7 @@ nonisolated public final class LocalizedStrings: Sendable {
         case failed
     }
 
-    private let vfs: VirtualFileSystem
+    private let vfs: any GameFileSource
     /// Plugin file name as on disk ("Skyrim.esm"); table files are named
     /// after its stem.
     public let pluginName: String
@@ -36,7 +36,7 @@ nonisolated public final class LocalizedStrings: Sendable {
     public let language: String
     private let tables: Mutex<[StringTable.Kind: Slot]>
 
-    public init(vfs: VirtualFileSystem, pluginName: String, language: String = "english") {
+    public init(vfs: any GameFileSource, pluginName: String, language: String = "english") {
         self.vfs = vfs
         self.pluginName = pluginName
         self.language = language

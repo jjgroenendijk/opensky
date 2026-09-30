@@ -71,7 +71,7 @@ nonisolated public struct PlayerBehaviorGraph {
     /// with no graph would look like an animation bug rather than a load
     /// failure (AGENTS.md "Missing -> fail loud").
     public static func load(
-        fileSystem: VirtualFileSystem,
+        fileSystem: any GameFileSource,
         behaviorPath: String = Self.behaviorPath,
         skeletonPath: String = Self.skeletonPath
     ) throws -> PlayerBehaviorGraph {
@@ -111,7 +111,7 @@ nonisolated public struct PlayerBehaviorGraph {
 
     private static func read(
         _ path: String,
-        from fileSystem: VirtualFileSystem
+        from fileSystem: any GameFileSource
     ) throws -> HKXFile {
         guard let data = try? fileSystem.contents(forPath: path) else {
             throw PlayerBehaviorGraphError.missing(path)

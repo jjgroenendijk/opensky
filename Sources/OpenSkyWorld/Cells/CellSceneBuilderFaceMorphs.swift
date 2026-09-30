@@ -47,7 +47,7 @@ nonisolated extension CellSceneBuilder {
     private func associate(
         _ part: HeadPart,
         faceModels: [AssembledActorModel<ActorRenderAsset>],
-        fileSystem: VirtualFileSystem,
+        fileSystem: any GameFileSource,
         state: inout FaceMorphAssociationState
     ) {
         guard let name = part.editorID, let path = part.expressionMorphPath else {

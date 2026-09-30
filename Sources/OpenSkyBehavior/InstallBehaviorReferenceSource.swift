@@ -19,13 +19,13 @@ import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
 nonisolated public final class InstallBehaviorReferenceSource: BehaviorReferenceSource {
-    private let fileSystem: VirtualFileSystem
+    private let fileSystem: any GameFileSource
     /// Lowercased file name -> archive path, for every behavior file in the
     /// folder the root behavior came from.
     private let pathsByName: [String: String]
 
     /// Indexes the behavior folder `rootPath` lives in.
-    public init(fileSystem: VirtualFileSystem, rootPath: String) {
+    public init(fileSystem: any GameFileSource, rootPath: String) {
         self.fileSystem = fileSystem
         let folder = Self.folder(of: rootPath)
         var byName: [String: String] = [:]

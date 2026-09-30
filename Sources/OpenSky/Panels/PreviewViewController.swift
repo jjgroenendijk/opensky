@@ -213,7 +213,7 @@ final class PreviewViewController: NSViewController {
 
     private func catalogDidLoad(
         _ catalog: PreviewCatalog,
-        fileSystem: VirtualFileSystem,
+        fileSystem: any GameFileSource,
         referenceCatalog: ReferenceRecordCatalog,
         referenceInspector: ReferenceRecordInspector
     ) {

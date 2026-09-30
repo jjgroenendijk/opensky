@@ -137,7 +137,7 @@ nonisolated public struct CellProviderIndexes {
 
     public init(
         root: GameDataRoot,
-        fileSystem: VirtualFileSystem,
+        fileSystem: any GameFileSource,
         device: MTLDevice,
         localizationLanguage: String = LocalizationLanguageSettings.fallback,
         terrainLODConfigurationStore: TerrainLODConfigurationStore

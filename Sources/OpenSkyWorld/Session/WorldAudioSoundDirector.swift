@@ -81,7 +81,7 @@ public final class WorldAudioSoundDirector {
         soundStore: SoundRecordStore?,
         weatherStore: WeatherStore?,
         aspcStore: AcousticSpaceStore?,
-        fileSystem: VirtualFileSystem?
+        fileSystem: (any GameFileSource)?
     ) {
         self.engine = engine
         self.soundStore = soundStore

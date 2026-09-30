@@ -28,7 +28,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource, @u
     /// relative to this folder.
     public static let animationPrefix = "meshes\\actors\\character\\animations\\"
 
-    private let fileSystem: VirtualFileSystem
+    private let fileSystem: any GameFileSource
     /// Lowercased file name -> archive path, for every clip under the character
     /// animation folders.
     private let pathsByName: [String: String]
@@ -37,7 +37,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource, @u
     public private(set) var loadedCount = 0
     public private(set) var missCount = 0
 
-    public init(fileSystem: VirtualFileSystem, paths: [String], limit: Int = 512) {
+    public init(fileSystem: any GameFileSource, paths: [String], limit: Int = 512) {
         self.fileSystem = fileSystem
         self.limit = limit
         var byName: [String: String] = [:]
@@ -53,7 +53,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource, @u
 
     /// Indexes every archived character animation, which is the path list the
     /// running player graph needs when nothing narrower is supplied.
-    public convenience init(fileSystem: VirtualFileSystem, limit: Int = 512) {
+    public convenience init(fileSystem: any GameFileSource, limit: Int = 512) {
         self.init(
             fileSystem: fileSystem,
             paths: Self.animationPaths(in: fileSystem),
@@ -62,7 +62,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource, @u
     }
 
     /// Every archived character animation, by archive path.
-    public static func animationPaths(in fileSystem: VirtualFileSystem) -> [String] {
+    public static func animationPaths(in fileSystem: any GameFileSource) -> [String] {
         fileSystem.archiveEntries()
             .map(\.path)
             .filter { $0.hasPrefix(animationPrefix) && $0.hasSuffix(".hkx") }

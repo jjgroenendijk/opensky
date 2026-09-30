@@ -65,7 +65,7 @@ public final class WorldAudioFootstepDirector {
         engine: WorldAudioEngine,
         footstepStore: FootstepStore?,
         soundStore: SoundRecordStore?,
-        fileSystem: VirtualFileSystem?
+        fileSystem: (any GameFileSource)?
     ) {
         self.engine = engine
         self.footstepStore = footstepStore

@@ -25,9 +25,14 @@ nonisolated public struct VFSEntry: Equatable, Sendable {
     public let path: String
     /// File name of the archive whose copy wins the lookup.
     public let archive: String
+
+    public init(path: String, archive: String) {
+        self.path = path
+        self.archive = archive
+    }
 }
 
-nonisolated public final class VirtualFileSystem: Sendable {
+nonisolated public final class VirtualFileSystem: GameFileSource {
     private static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "VFS"

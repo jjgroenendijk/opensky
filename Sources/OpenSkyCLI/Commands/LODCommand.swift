@@ -65,7 +65,7 @@ enum LODCommand {
         worldspace: String,
         terrainPrefix: String,
         archivePaths: [String],
-        fileSystem: VirtualFileSystem
+        fileSystem: any GameFileSource
     ) throws {
         let treePrefix = terrainPrefix + "trees\\"
         let listPath = treePrefix + worldspace + ".lst"

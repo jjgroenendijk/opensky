@@ -37,7 +37,7 @@ nonisolated public enum PlayerBodyError: LocalizedError, Equatable {
 /// What a scene provider has to answer for the app to draw a player.
 nonisolated public protocol PlayerBodyProviding {
     /// The mounted archives, for loading the behavior graph and its clips.
-    var playerAssetFileSystem: VirtualFileSystem? { get }
+    var playerAssetFileSystem: (any GameFileSource)? { get }
 
     /// Assembles the body and binds it to `pose`, the buffer the locomotion
     /// bridge publishes graph poses into.
@@ -57,7 +57,7 @@ nonisolated public protocol PlayerBodyProviding {
 }
 
 nonisolated extension CellSceneBuilder: PlayerBodyProviding {
-    public var playerAssetFileSystem: VirtualFileSystem? {
+    public var playerAssetFileSystem: (any GameFileSource)? {
         fileSystem
     }
 

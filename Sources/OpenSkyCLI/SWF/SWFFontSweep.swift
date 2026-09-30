@@ -119,7 +119,7 @@ struct SWFFontTextTally {
 enum SWFFontConfigReport {
     private static let fontconfigPath = "interface\\fontconfig.txt"
 
-    static func run(vfs: VirtualFileSystem) {
+    static func run(vfs: any GameFileSource) {
         guard let data = try? vfs.contents(forPath: fontconfigPath) else {
             print("[INFO] swf sweep fontconfig: \(fontconfigPath) not found (no report)")
             return

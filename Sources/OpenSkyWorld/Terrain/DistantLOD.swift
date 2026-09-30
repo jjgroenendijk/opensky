@@ -274,7 +274,7 @@ nonisolated public struct DistantLODScene {
 }
 
 nonisolated public final class DistantLODBuilder {
-    public let fileSystem: VirtualFileSystem
+    public let fileSystem: any GameFileSource
     public let meshes: MeshLibrary
     private let textures: TextureLibrary
     private let configurationStore: TerrainLODConfigurationStore
@@ -282,7 +282,7 @@ nonisolated public final class DistantLODBuilder {
     public var treeListByWorldspace: [String: TreeLODList] = [:]
 
     public init(
-        fileSystem: VirtualFileSystem,
+        fileSystem: any GameFileSource,
         meshes: MeshLibrary,
         textures: TextureLibrary,
         configurationStore: TerrainLODConfigurationStore

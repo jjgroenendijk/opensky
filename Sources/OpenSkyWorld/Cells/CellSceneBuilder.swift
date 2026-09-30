@@ -109,7 +109,7 @@ nonisolated public final class CellSceneBuilder {
     public let file: ESMFile
     public let meshes: MeshLibrary
     public let textures: TextureLibrary
-    public let fileSystem: VirtualFileSystem?
+    public let fileSystem: (any GameFileSource)?
     public let collisionModels: NIFCollisionLibrary?
     public var collisionPartitionCache = CellCollisionPartitionCache()
     /// Whether movable clutter leaves the immutable collision set and joins the
@@ -170,7 +170,7 @@ nonisolated public final class CellSceneBuilder {
         file: ESMFile,
         meshes: MeshLibrary,
         textures: TextureLibrary,
-        fileSystem: VirtualFileSystem? = nil,
+        fileSystem: (any GameFileSource)? = nil,
         pluginName: String = "Skyrim.esm",
         localizationLanguage: String = LocalizationLanguageSettings.fallback,
         terrainLODConfigurationStore: TerrainLODConfigurationStore? = nil

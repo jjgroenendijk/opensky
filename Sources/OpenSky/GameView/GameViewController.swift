@@ -108,7 +108,7 @@ final class GameViewController: NSViewController {
 
     /// Resource lookup for World > Audio. Set by the AppDelegate; nil
     /// when game data is missing — the panel then lists nothing to play.
-    var audioFileSystem: VirtualFileSystem?
+    var audioFileSystem: (any GameFileSource)?
     /// World audio graph, created on first enable by the audio bridge
     /// (GameViewController+Audio.swift), which also hands it to the renderer.
     var worldAudio: WorldAudioEngine?

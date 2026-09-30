@@ -159,7 +159,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider, WeatherPr
 
     /// Compiled-script source for the Papyrus world runtime; nil when the
     /// builder was constructed without a file system (synthetic scenes).
-    public var scriptFileSystem: VirtualFileSystem? {
+    public var scriptFileSystem: (any GameFileSource)? {
         builder.fileSystem
     }
 
