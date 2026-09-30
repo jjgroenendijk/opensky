@@ -1,15 +1,11 @@
-// Immutable M18 record-data snapshot for condition functions (issue #455).
-//
-// The evaluator can run off the main actor, so condition bodies never load
-// plugins or reach into a live streamer. A caller builds this value from the
-// three load-order stores and the reference-location facts it owns, then every
-// function reads the same snapshot.
+// Record-data snapshot for condition functions. The evaluator can run off the
+// main actor, so a condition body never loads plugins or reads a live streamer.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-nonisolated public struct ConditionDataResolution: @unchecked Sendable, Sendable {
+nonisolated public struct ConditionDataResolution: Sendable {
     public let keywords: KeywordStore?
     public let formLists: FormListStore?
     public let locations: LocationStore?

@@ -1,32 +1,5 @@
-// The one place a condition asks "what magic is on this actor right now?"
-// (issue #474, roadmap item 19.11), mirroring `ActorStateResolution` and
-// `ConditionDataResolution`.
-//
-// Shaped as a resolved snapshot rather than as a live handle for the reason
-// every other seam on `ConditionContext` is: the evaluator is a nonisolated
-// value a build thread may run, so a condition body cannot reach into
-// `WorldStateStore`, `SpellbookRuntime`, `ActiveEffectRuntime` or
-// `CasterRuntime`. The caller that *is* on the main actor reads all four and
-// hands the result over.
-//
-// ## What one entry carries, and why each field is here
-//
-// Known spells, because `HasSpell` asks nothing else. The MGEF of every active
-// effect, because `HasMagicEffect` compares exactly that. The record each
-// active effect came from, because `IsSpellTarget` names the spell, potion or
-// enchantment rather than the effect. The spell readied in each hand, because
-// the three casting-source functions all start there. And which hands have a
-// cast running, because `IsCasting` is about the cast and not about the hand's
-// contents.
-//
-// The two record stores ride along beside the per-actor states because every
-// one of these functions takes a FormID parameter that has to be resolved
-// against the load order before it can be compared, and two of them read the
-// record afterwards: `GetCurrentCastingType` and `GetCurrentDeliveryType` are
-// SPIT fields of the readied spell. Held the way `ConditionDataResolution`
-// holds its three stores, for the same reason.
-//
-// Documented in docs/engine/condition-functions.md and docs/engine/spellcasting.md.
+// Magic state per actor for the magic condition functions. See
+// docs/engine/condition-functions.md and docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyConditions
@@ -60,9 +33,8 @@ nonisolated public struct MagicConditionState: Equatable, Sendable {
         self.castingHands = castingHands
     }
 
-    /// This actor's state built from the three components the runtime stores,
-    /// so the app-side builder and a test agree on how a component becomes a
-    /// condition fact.
+    /// Built from the runtime components, so the app and a test agree on how
+    /// a component becomes a condition fact.
     public init(
         spellbook: SpellbookState,
         effects: ActiveEffectState,
@@ -84,25 +56,16 @@ nonisolated public struct MagicConditionState: Equatable, Sendable {
     }
 }
 
-/// Which hand or slot a casting-source parameter names.
-///
-/// The values are xEdit dev-4.1.6 `wbCastingSourceEnum` in
-/// Core/wbDefinitionsTES5.pas: `Left`, `Right`, `Voice`, `Instant`. The
-/// Creation Kit wiki's `EquipSpell - Actor` page spells the same numbering for
-/// the Papyrus side — "0: Left hand, 1: Right hand, 2: Voice (use this for
-/// Powers)" — so one type serves the condition parameter and the native
-/// argument.
+/// Which hand or slot a casting-source parameter or Papyrus argument names.
+/// Values from xEdit `wbCastingSourceEnum` (Core/wbDefinitionsTES5.pas).
 nonisolated public enum CastingSource: Int32, CaseIterable, Sendable {
     case left = 0
     case right = 1
     case voice = 2
     case instant = 3
 
-    /// The hand this source is, or nil for the two slots OpenSky readies
-    /// nothing into. A voice slot is where a shout or a greater power sits and
-    /// `SpellbookState` has no such slot; an instant source is not an equip
-    /// slot at all. Both report the gap rather than answering "nothing
-    /// equipped", which is a different fact.
+    /// Nil for voice and instant: `SpellbookState` has no such slot, and a gap
+    /// is a different answer from "nothing equipped".
     public var hand: SpellHand? {
         switch self {
         case .left: .left
@@ -112,21 +75,12 @@ nonisolated public enum CastingSource: Int32, CaseIterable, Sendable {
     }
 }
 
-/// Every actor's magic state plus the record stores the parameters resolve
-/// against.
-///
-/// `@unchecked Sendable` for the reason `ConditionDataResolution` is: the two
-/// stores are immutable value snapshots built once at load, and only their
-/// `RecordIndex` back-reference keeps them from being checked automatically.
-nonisolated public struct MagicConditionResolution: @unchecked Sendable, Sendable {
-    /// Load-order SPEL and SCRL lookup, for the readied spell's SPIT header.
-    public let spells: SpellStore?
+/// Every actor's magic state plus the SPEL and MGEF stores the parameters
+/// resolve against.
+nonisolated public struct MagicConditionResolution: Sendable {
+    public let facts: ActorConditionFacts<SpellStore, MagicConditionState>
     /// Load-order MGEF lookup, for an effect's keyword list.
     public let effects: MagicEffectStore?
-    /// The plugin a condition's FormID parameters are spelled against.
-    public let sourcePlugin: String?
-
-    private let states: [ReferenceKey: MagicConditionState]
 
     public static let empty = MagicConditionResolution()
 
@@ -136,37 +90,34 @@ nonisolated public struct MagicConditionResolution: @unchecked Sendable, Sendabl
         sourcePlugin: String? = nil,
         states: [ReferenceKey: MagicConditionState] = [:]
     ) {
-        self.spells = spells
+        facts = ActorConditionFacts(store: spells, sourcePlugin: sourcePlugin, facts: states)
         self.effects = effects
-        self.sourcePlugin = sourcePlugin
-        self.states = states
+    }
+
+    /// Load-order SPEL and SCRL lookup, for the readied spell's SPIT header.
+    public var spells: SpellStore? {
+        facts.store
     }
 
     public func state(of reference: ReferenceKey) -> MagicConditionState? {
-        states[reference]
+        facts.fact(of: reference)
     }
 
-    /// One FormID parameter as the runtime identity the components store.
-    ///
-    /// Resolution goes through whichever store the session carries, because
-    /// both wrap the same `RecordIndex` master-list machinery and a parameter
-    /// may legitimately name a record neither store holds — `IsSpellTarget`
-    /// names potions and enchantments as readily as spells.
+    /// The record need not exist in either store: `IsSpellTarget` names
+    /// potions and enchantments as readily as spells.
     public func key(of formID: FormID) -> ReferenceKey? {
-        guard let sourcePlugin else { return nil }
-        if let resolved = spells?.resolvedID(formID, fromPlugin: sourcePlugin) {
-            return ReferenceKey(resolved: resolved)
+        if let key = facts.resolvedKey(of: formID) {
+            return key
         }
-        guard let resolved = effects?.resolvedID(formID, fromPlugin: sourcePlugin) else {
-            return nil
-        }
+        guard
+            let sourcePlugin = facts.sourcePlugin,
+            let resolved = effects?.resolvedID(formID, fromPlugin: sourcePlugin)
+        else { return nil }
         return ReferenceKey(resolved: resolved)
     }
 
-    /// Whether any effect acting on `reference` carries `keyword`.
-    ///
-    /// Nil when no effect store is wired, which keeps "OpenSky has no MGEF
-    /// records" apart from "no effect on this actor carries that keyword".
+    /// Nil when no effect store is wired, which keeps "no MGEF records" apart
+    /// from "no effect on this actor carries that keyword".
     public func hasEffectKeyword(_ keyword: ReferenceKey, on state: MagicConditionState) -> Bool? {
         guard let effects else { return nil }
         return state.activeEffects.contains { effect in
@@ -179,14 +130,10 @@ nonisolated public struct MagicConditionResolution: @unchecked Sendable, Sendabl
 nonisolated extension MagicConditionResolution: ConditionResolution {}
 
 nonisolated extension ConditionContext {
-    /// Known spells, active effects and cast state per actor, plus the SPEL
-    /// and MGEF stores their FormID parameters resolve against.
-    /// Empty when no magic runtime is wired, which makes every magic function
-    /// a reason-tagged false rather than an actor who has learned nothing.
+    /// Empty when no magic runtime is wired, so every magic function is a
+    /// reason-tagged false rather than an actor who has learned nothing.
     public var magic: MagicConditionResolution {
         get { self[resolution: MagicConditionResolution.self] }
-        set {
-            self[resolution: MagicConditionResolution.self] = newValue
-        }
+        set { self[resolution: MagicConditionResolution.self] = newValue }
     }
 }

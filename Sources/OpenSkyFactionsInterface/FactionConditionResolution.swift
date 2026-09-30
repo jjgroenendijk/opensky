@@ -1,50 +1,18 @@
-// The one place a condition asks "what does this actor belong to, and what is it
-// to that one?" (issue #508, roadmap item 21.4), mirroring
-// `CrimeConditionResolution` and `PerkConditionResolution`.
-//
-// Shaped as a resolved snapshot rather than as a live handle for the reason every
-// other seam on `ConditionContext` is: the evaluator is a nonisolated value a
-// build thread may run, so a condition body cannot reach into `WorldStateStore`,
-// `FactionRuntime` or `RelationshipRuntime`. The caller that *is* on the main
-// actor assembles the profiles and hands the result over.
-//
-// The FACT store rides along beside the profiles because `GetInFaction`,
-// `GetFactionRank` and `GetFactionRankDifference` all take a `ptFaction`
-// parameter that has to be resolved against the load order before it can be
-// looked up — exactly as the crime seam resolves its `ptFactionNull`.
-//
-// The derivation rides along because two of the six functions are not lookups at
-// all: `GetFactionRelation` is the interfaction reaction between two actors'
-// whole membership sets, and `IsHostileToActor` is the entire precedence list in
-// `HostilityDerivation`. Copying either into this file would be a second answer
-// to keep in step with the one the combat loop uses.
-//
-// Documented in docs/engine/hostility.md and docs/engine/condition-functions.md.
+// Social profiles per actor for the faction and relationship condition
+// functions. See docs/engine/hostility.md and docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-/// Every actor's social profile plus the store a faction parameter resolves
+/// Every actor's social profile plus the FACT store a faction parameter resolves
 /// against and the derivation that answers about a pair.
-///
-/// `@unchecked Sendable` for the reason `CrimeConditionResolution` is: the store
-/// is an immutable value snapshot built once at load, and only its `RecordIndex`
-/// back-reference keeps it from being checked automatically. `HostilityDerivation`
-/// carries a `CrimeHostilitySource` existential for the same reason.
-nonisolated public struct FactionConditionResolution: @unchecked Sendable, Sendable {
-    /// Load-order FACT lookup, for the `ptFaction` parameters. Nil in a session
-    /// with no faction data, which is what makes the faction functions report a
-    /// gap rather than answering "belongs to nothing" for every actor.
-    public let factions: FactionStore?
-    /// The plugin a condition's FormID parameters are spelled against.
-    public let sourcePlugin: String?
-    /// Factions, relationships and crime over the aggression table — the same
-    /// value the combat loop derives hostility from. Nil beside a nil store.
+nonisolated public struct FactionConditionResolution: Sendable {
+    public let facts: ActorConditionFacts<FactionStore, ActorSocialProfile>
+    /// The same derivation the combat loop uses, so a condition and combat
+    /// never disagree about hostility.
     public let derivation: (any HostilityDeriving)?
-
-    private let profiles: [ReferenceKey: ActorSocialProfile]
 
     public static let empty = FactionConditionResolution()
 
@@ -54,65 +22,37 @@ nonisolated public struct FactionConditionResolution: @unchecked Sendable, Senda
         derivation: (any HostilityDeriving)? = nil,
         profiles: [ReferenceKey: ActorSocialProfile] = [:]
     ) {
-        self.factions = factions
-        self.sourcePlugin = sourcePlugin
+        facts = ActorConditionFacts(store: factions, sourcePlugin: sourcePlugin, facts: profiles)
         self.derivation = derivation
-        self.profiles = profiles
     }
 
-    /// Whether the seam can answer at all: a session with no FACT store and no
-    /// derivation cannot, and says so rather than answering zero everywhere.
     public var isAvailable: Bool {
-        factions != nil && derivation != nil
+        facts.isAvailable && derivation != nil
     }
 
-    /// One `ptFaction` parameter as the runtime identity a membership is keyed
-    /// by, or nil when this load order carries no such FACT.
-    ///
-    /// The record has to exist, not merely resolve — the rule the crime, perk and
-    /// keyword seams apply for the same reason: plugin-relative resolution
-    /// answers for any FormID whose plugin is loaded, so a parameter naming a
-    /// faction no plugin defines would otherwise come back as an ordinary key and
-    /// read as "not a member", which is a different answer from "this engine has
-    /// no such faction".
     public func key(of formID: FormID) -> ReferenceKey? {
-        guard
-            let sourcePlugin,
-            let factions,
-            let resolved = factions.resolvedID(formID, fromPlugin: sourcePlugin),
-            factions.faction(resolved) != nil
-        else { return nil }
-        return ReferenceKey(resolved: resolved)
+        facts.key(of: formID)
     }
 
-    /// Everything the derivation knows about one actor, or nil when this session
-    /// carries no profile for it — an actor no cell has streamed, or a key that
-    /// names no actor at all.
+    /// Nil for an actor no cell has streamed, or a key that names no actor.
     public func profile(of key: ReferenceKey) -> ActorSocialProfile? {
         guard isAvailable else { return nil }
-        return profiles[key]
+        return facts.fact(of: key)
     }
 
-    /// Whether `actor` is in `faction` right now.
     public func isMember(_ actor: ReferenceKey, of faction: ReferenceKey) -> Bool? {
         profile(of: actor)?.memberships.isMember(of: faction)
     }
 
-    /// The rank `actor` holds in `faction`, or nil when it is not a member —
-    /// which the two callers spell differently, because the condition function
-    /// and the Papyrus native disagree about the number and both are documented.
+    /// Nil when `actor` is not a member. The condition function and the Papyrus
+    /// native spell that case as different numbers.
     public func rank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8? {
         profile(of: actor)?.memberships.rank(in: faction)
     }
 
-    /// The faction-based reaction between two actors, or nil when either has no
-    /// profile.
-    ///
-    /// Nil from the derivation itself — no membership pair names the other — is
-    /// reported as `.neutral` here rather than passed on, because the Creation
-    /// Kit calls Neutral the relation two factions hold "even if you don't
-    /// specify it" and `GetFactionRelation` has no fifth value to say "unrelated"
-    /// with.
+    /// Nil when either actor has no profile. No declared relation reads as
+    /// `.neutral`, the Creation Kit default, because `GetFactionRelation` has
+    /// no value for "unrelated".
     public func factionReaction(
         of observer: ReferenceKey,
         toward target: ReferenceKey
@@ -125,9 +65,8 @@ nonisolated public struct FactionConditionResolution: @unchecked Sendable, Senda
         return derivation.factionReaction(of: mine, toward: theirs) ?? .neutral
     }
 
-    /// The signed Creation Kit relationship rank between two actors, or nil when
-    /// either has no profile and when neither a script nor a `RELA` record names
-    /// the pair.
+    /// The signed relationship rank, from a script first and a `RELA` record
+    /// second. Nil when neither names the pair.
     public func relationshipRank(of observer: ReferenceKey, toward target: ReferenceKey) -> Int8? {
         guard
             let derivation,
@@ -146,8 +85,6 @@ nonisolated public struct FactionConditionResolution: @unchecked Sendable, Senda
         return Int8(clamping: signed)
     }
 
-    /// Whether `observer` is hostile to `target` right now, through the whole
-    /// precedence list the combat loop uses.
     public func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool? {
         guard
             let derivation,
@@ -161,15 +98,11 @@ nonisolated public struct FactionConditionResolution: @unchecked Sendable, Senda
 nonisolated extension FactionConditionResolution: ConditionResolution {}
 
 nonisolated extension ConditionContext {
-    /// Faction memberships, relationship ranks and the hostility derivation over
-    /// them, plus the FACT store the `ptFaction` parameters resolve against
-    /// . Empty when no faction runtime is wired, which makes every
-    /// faction and relationship function a reason-tagged false rather than an
-    /// actor who belongs to nothing and is friendly with everybody.
+    /// Empty when no faction runtime is wired, so every faction and
+    /// relationship function is a reason-tagged false rather than an actor who
+    /// belongs to nothing.
     public var factions: FactionConditionResolution {
         get { self[resolution: FactionConditionResolution.self] }
-        set {
-            self[resolution: FactionConditionResolution.self] = newValue
-        }
+        set { self[resolution: FactionConditionResolution.self] = newValue }
     }
 }

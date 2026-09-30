@@ -25,7 +25,7 @@ nonisolated public struct FactionSeedReport: Equatable, Sendable {
 
 /// Derives how one actor regards another from faction relations, relationship
 /// ranks, and crime. `HostilityDerivation` conforms.
-nonisolated public protocol HostilityDeriving {
+nonisolated public protocol HostilityDeriving: Sendable {
     var relationships: RelationshipStore { get }
 
     /// The whole answer for one ordered pair.
@@ -43,10 +43,8 @@ nonisolated public protocol HostilityDeriving {
         toward target: ActorSocialProfile
     ) -> ActorReaction?
 
-    /// The scripted rank between the pair, from either actor's component. Both
-    /// sides are written by `RelationshipRuntime`, so the second lookup covers a
-    /// component an older build wrote one-sided rather than a disagreement this
-    /// one can produce.
+    /// The scripted rank between the pair, from either actor's component. The
+    /// second lookup covers a component written one-sided.
     func scriptedRank(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
