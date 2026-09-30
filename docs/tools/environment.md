@@ -169,4 +169,10 @@ than the new emit. The same delete fixed it.
 Seen again 2026-09-30 for `OpenSkyScripting`: after a public class was removed,
 `OpenSkyScriptingTesting` still expected it, on two builds in a row. The same delete fixed it.
 
+Seen again 2026-09-30 for `OpenSkyConditions`: a new public struct failed in
+`OpenSkyProgressionInterface` with "cannot find type in scope". The Products copy had no
+`.swiftmodule` file at all. The same delete fixed it. The next `make test-fast` then ran test
+bundles with the old struct layout and crashed with `EXC_BAD_ACCESS` in "outlined init with
+copy". `make test-fast B=1` fixed that.
+
 Retires when an interface change builds through xcodebuild without a manual delete.
