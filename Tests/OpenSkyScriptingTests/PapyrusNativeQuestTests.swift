@@ -1,11 +1,10 @@
-// The `Quest` native family (issue #322), invoked directly against a synthetic
+// The `Quest` native family, invoked directly against a synthetic
 // quest: one test per registered function plus its failure path.
 //
 // Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
 // boundary").
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyScripting

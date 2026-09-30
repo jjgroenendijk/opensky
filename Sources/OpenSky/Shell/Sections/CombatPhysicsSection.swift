@@ -1,18 +1,7 @@
-// World > Combat & Physics > Physics section (issue #193, roadmap item 15.2,
-// scope point 7; shipped by the M15 gate, issue #198): the body counts the
-// dynamic simulation publishes, with the freeze and reset controls
-// `PhysicsControlProviding` was specified against.
-//
-// Freeze is a state and so is a checkbox; reset is a one-shot and so is a
-// button. The counts are the whole readout: a developer watching clutter settle
-// wants to know how many bodies exist, how many the solver is still paying for,
-// and how much a step cost, and none of those is legible from the picture.
-//
-// Not overridden. Where a crate has fallen to is world state a player put it
-// in, and a "Reset all" that stood every barrel back up would undo it. The
-// freeze *is* a panel state that outlives the panel, so the section resets it
-// deliberately — a session left with the physics frozen looks broken and reads
-// as a bug in the simulation rather than as a control someone left on.
+// World > Combat & Physics > Physics section: the dynamic simulation's body
+// counts and step cost, with freeze (a checkbox) and reset (a button). Where a
+// crate fell is world state, so "Reset all" leaves it. The freeze is reset,
+// because a session left frozen looks like a simulation bug.
 
 import AppKit
 import OpenSkyPhysics
@@ -57,10 +46,6 @@ final class CombatPhysicsSection: PanelSectionViewController {
 
     static func resetToDefaults(provider: (any PhysicsControlProviding)?) {
         provider?.setPhysicsFrozen(false)
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

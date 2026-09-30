@@ -1,12 +1,7 @@
-// The wired session the M20 acceptance drives (issue #500, roadmap item 20.7).
-//
-// A real `GameViewController` with the four progression runtimes attached over
-// the synthetic `PerkRuntimeFixture` load order — no renderer, no window and no
-// game data. That is what makes this suite acceptance evidence rather than a
-// second mock: the panel reaches `GameViewController`'s own
-// `ProgressionControlProviding` conformance, which reaches
-// `SkillAdvancementRuntime`, `PlayerLevelRuntime` and `PerkRuntime` exactly as
-// a session does.
+// The wired session the M20 acceptance drives: a real `GameViewController`
+// with the four progression runtimes over the synthetic `PerkRuntimeFixture`
+// load order, with no renderer, window or game data. The panel reaches the
+// runtimes through the controller's own `ProgressionControlProviding`.
 
 import AppKit
 @testable import OpenSky
@@ -16,8 +11,6 @@ import OpenSkyProgressionTesting
 
 @MainActor
 enum M20Fixture {
-    /// One-handed, the actor value the fixture AVIF record describes.
-    static let skill = PerkRuntimeFixture.oneHandedIndex
     /// The box granting `DamageRank1`, which is the first real perk of the
     /// fixture tree.
     static let damageNode: UInt32 = 1

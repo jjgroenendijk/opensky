@@ -8,7 +8,6 @@ import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
-@testable import OpenSkyScriptingInterface
 import Testing
 
 struct ScriptDataRealDataTests {
@@ -61,9 +60,8 @@ struct ScriptDataRealDataTests {
         #expect(stats.propertyTypes == [
             1: 42885, 2: 179, 3: 3820, 4: 634, 5: 3625, 15: 2
         ])
-        // No QUST or INFO fragments entries: M13.1 and M17.1 decode those
-        // tails instead of skipping them. The alias-object count rose when
-        // object properties inside quest alias scripts became visible.
+        // No QUST or INFO fragment entries: those tails are decoded, not
+        // skipped. Alias scripts count their object properties.
         #expect(stats.skipped.ranked.map(\.count) == [
             12896, 557, 313, 7, 5
         ])
@@ -133,9 +131,8 @@ struct ScriptDataRealDataTests {
         var objectFormats: [Int16: Int] = [:]
         var propertyTypes: [UInt8: Int] = [:]
         var carriers: [String: Int] = [:]
-        /// QUST tails, which M13.1 decodes instead of skipping. Their alias
-        /// scripts are ordinary script entries and are counted in `scripts`,
-        /// `properties` and the PEX probe alongside the primary list.
+        /// QUST tails. Their alias scripts are ordinary script entries, counted in
+        /// `scripts`, `properties` and the PEX probe with the primary list.
         var questFragmentSections = 0
         var questFragments = 0
         var questAliasScriptSections = 0

@@ -1,12 +1,7 @@
-// Accumulator and report for the vanilla QUST sweep (QuestRealDataTests).
-//
-// It answers two questions at once. The invariant half proves the grouping
-// state machine attributed every subrecord to the right parent: targets that
-// name a declared alias, fragments that name a declared stage, alias IDs that
-// are unique within their quest. The census half is the M13 target-quest
-// shortlist evidence — per-quest size, alias fill types, and how much of each
-// quest's condition traffic `ConditionFunctionRegistry.standard` can already
-// answer.
+// Accumulator and report for the vanilla QUST sweep. Invariants: targets name
+// a declared alias, fragments name a declared stage, and alias IDs are unique
+// per quest. Census: per-quest size, alias fill types, and how much condition
+// traffic `ConditionFunctionRegistry.standard` answers.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -23,7 +18,6 @@ struct QuestCensus {
         let stages: Int
         let journalStages: Int
         let objectives: Int
-        let targets: Int
         let aliases: Int
         let fragments: Int
         let conditions: Int
@@ -155,7 +149,6 @@ struct QuestCensus {
             stages: quest.stages.count,
             journalStages: quest.journalStages.count,
             objectives: quest.objectives.count,
-            targets: quest.objectives.reduce(0) { $0 + $1.targets.count },
             aliases: quest.aliases.count,
             fragments: quest.fragments.count,
             conditions: conditions,
@@ -173,7 +166,7 @@ struct QuestCensus {
         return all
     }
 
-    /// Quests that could carry the M13 slice: they show a journal entry, have
+    /// Quests that could carry the quest acceptance: they show a journal entry, have
     /// at least one objective and one stage fragment to drive it, and need no
     /// condition function OpenSky has not implemented.
     var shortlist: [Entry] {

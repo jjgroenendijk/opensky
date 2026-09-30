@@ -1,4 +1,4 @@
-// Per-frame trigger-volume occupancy in the streamer (issue #173): edge
+// Per-frame trigger-volume occupancy in the streamer: edge
 // events, dwelling, teleport-through, the walk-mode gate, a volume straddling
 // a streaming boundary, and the cell-unload containment policy.
 //
@@ -23,7 +23,6 @@ struct CellStreamerTriggerTests {
     }
 
     private struct Harness {
-        let runner: ManualCellBuildRunner
         let streamer: CellStreamer
         let recorder: TriggerRecorder
     }
@@ -56,7 +55,7 @@ struct CellStreamerTriggerTests {
         streamer.update(cameraPosition: center)
         runner.complete(CellStreamerFixture.coordinate(0, 0), with: .success(scene))
         streamer.update(cameraPosition: center)
-        return Harness(runner: runner, streamer: streamer, recorder: recorder)
+        return Harness(streamer: streamer, recorder: recorder)
     }
 
     /// One frame with the capsule's feet at `feet`, in walk mode.

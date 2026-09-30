@@ -28,7 +28,6 @@ nonisolated public enum DialogueMenuMovieBridge: Sendable {
     public static let subtitleTextPath = "\(menuPath)/SubtitleText"
     public static let topicListHolderPath = "\(menuPath)/TopicListHolder"
     public static let topicListPath = "\(topicListHolderPath)/List_mc"
-    public static let exitButtonPath = "\(menuPath)/ExitButton"
 
     /// The list base's backing array and selection, shared with every other
     /// CLIK list in the game.
@@ -39,9 +38,6 @@ nonisolated public enum DialogueMenuMovieBridge: Sendable {
     /// `TopicList`'s own rebuild, which repositions the centred entries after
     /// `InvalidateData` has rebuilt them.
     public static let updateListMethod = "UpdateList"
-    /// `TopicList`'s own selection setter, which moves the highlight and the
-    /// centring together.
-    public static let selectTopicMethod = "SetSelectedTopic"
 
     /// The instance property holding the menu's own state, whose values are the
     /// four `DialogueMenuObj` class constants.
@@ -51,7 +47,6 @@ nonisolated public enum DialogueMenuMovieBridge: Sendable {
     ]
     /// The class the constants and the prototype methods are read off.
     public static let menuClassName = "DialogueMenuObj"
-    public static let listClassName = "TopicList"
 
     /// Engine entry points on the menu instance that OpenSky drives.
     public static let requiredEntryPoints = [
@@ -62,20 +57,11 @@ nonisolated public enum DialogueMenuMovieBridge: Sendable {
         "ShowDialogueList"
     ]
 
-    /// Entry points the movie publishes that OpenSky does not drive yet, with
-    /// the milestone each belongs to. Listed rather than silently absent
-    /// because `docs/decisions/swf-as2-scope.md` requires an unimplemented host
-    /// API to be an accounted no-op: a reader of this file should be able to
-    /// tell "not reached yet" from "does not exist".
-    ///
-    /// * `OnVoiceReady` and `SkipText` are the voice clock's, item 17.5. Line
-    ///   timing is what tells the menu a line finished, and OpenSky has none
-    ///   until `.fuz` playback lands, so responses advance on input instead.
-    /// * `SetAllowProgress` and `StartProgressTimer` gate the same thing from
-    ///   the movie's side, on the 750 ms `ALLOW_PROGRESS_DELAY` its class
-    ///   carries.
-    /// * `AdjustForPALSD` is a standard-definition television layout the macOS
-    ///   target has no use for.
+    /// Entry points the movie publishes that OpenSky does not drive, listed so
+    /// an unimplemented host API is an accounted no-op
+    /// (`docs/decisions/swf-as2-scope.md`). `OnVoiceReady`, `SkipText`,
+    /// `SetAllowProgress` and `StartProgressTimer` belong to line timing;
+    /// responses advance on input instead. `AdjustForPALSD` is a TV layout.
     public static let deferredEntryPoints = [
         "OnVoiceReady", "SkipText", "SetAllowProgress", "StartProgressTimer",
         "AdjustForPALSD"
@@ -138,23 +124,6 @@ nonisolated public enum DialogueMenuMovieBridge: Sendable {
     }
 
     // MARK: - Input
-
-    /// Routes the toolkit-free engine menu event into the Flash key model.
-    ///
-    /// Pointer events are not routed, matching the inventory and system menus:
-    /// a `MenuInputEvent.pointer` carries a delta and the movie's hit test
-    /// needs an absolute stage position, so there is nothing honest to hand it.
-    /// Scope point 5 of issue #205 made that conditional on the inventory
-    /// precedent, and the precedent skips it.
-    ///
-    /// - Returns: whether the movie consumed the event.
-    @discardableResult
-    public static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
-        guard let key = key(for: event) else { return false }
-        let down = runtime.handle(.keyDown(code: key.code, ascii: key.ascii))
-        let up = runtime.handle(.keyUp(code: key.code))
-        return down || up
-    }
 
     public static func key(for event: MenuInputEvent) -> (code: Int, ascii: Int)? {
         switch event {

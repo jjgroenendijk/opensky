@@ -1,4 +1,4 @@
-// Character leveling at runtime (issue #499, roadmap item 20.6): banking
+// Character leveling at runtime: banking
 // experience, crossing thresholds, the attribute pick and the perk-point pool.
 //
 // Baselines are synthetic for the reason `SkillAdvancementRuntimeTests` uses
@@ -17,9 +17,6 @@ import Testing
 
 @MainActor
 struct PlayerLevelRuntimeTests {
-    private static let health = ActorValueIdentity.index(of: .health)
-    private static let stamina = ActorValueIdentity.index(of: .stamina)
-
     private func runtime(
         levelSource: PlayerLevelSource = PlayerLevelSource()
     ) -> (PlayerLevelRuntime, WorldStateStore) {

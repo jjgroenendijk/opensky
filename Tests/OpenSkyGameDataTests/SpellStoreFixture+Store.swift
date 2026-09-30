@@ -2,7 +2,6 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 
 extension SpellStoreFixture {

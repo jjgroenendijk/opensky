@@ -1,10 +1,6 @@
-// The general actor-value store (issue #468, roadmap item 19.5): reads of an
-// untouched value, the base-and-modifiers round trips, the record-derived
-// baselines, and the resistance query with its cap.
-//
-// Records are synthetic and built in code (ESMFixture) — never extracted game
-// files (AGENTS.md "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File
-// Format" RACE, CLAS and NPC_ pages; see docs/formats/actors.md.
+// The general actor-value store: untouched reads, base-and-modifier round
+// trips, record-derived baselines, and the capped resistance query. Records
+// are synthetic (docs/formats/actors.md).
 
 import Foundation
 @testable import OpenSkyActors
@@ -18,7 +14,6 @@ import Testing
 struct ActorValueGeneralStoreTests {
     private static let sneak: Int32 = 15
     private static let speedMult = ActorValueIndex.speedMult
-    private static let carryWeight = ActorValueIndex.carryWeight
     private static let resistFire = ActorValueIndex.resistFire
     private static let resistMagic = ActorValueIndex.resistMagic
     private static let resistDisease = ActorValueIndex.resistDisease

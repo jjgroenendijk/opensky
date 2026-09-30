@@ -1,17 +1,8 @@
-// The engine-side two-pane transfer list (M12.2.3, issue #179): what the
-// container and barter menus show, which side the player is looking at, and
-// what activating a row would do.
-//
-// Both vanilla movies present one item list at a time and swap which owner it
-// belongs to, so this is two `InventoryMenuModel` panes and a side, not a new
-// row type. Reusing #289's list is what keeps the inventory, container and
-// barter menus agreeing about what an item row is, how rows sort, and how gold
-// is split out of them.
-//
-// Device-free, AppKit-free and renderer-free, so it builds into `openskycli` and
-// is unit-testable against a synthetic `ItemDefinitionStore`.
-//
-// Documented in docs/engine/barter.md.
+// The engine-side two-pane transfer list: what the container and barter menus
+// show, which side the player looks at, and what activating a row does. Both
+// vanilla movies show one owner's list at a time, so this is two
+// `InventoryMenuModel` panes and a side. Sharing the inventory list keeps row
+// sorting and gold handling the same in all three menus (docs/engine/barter.md).
 
 import Foundation
 import OpenSkyGameData
@@ -148,25 +139,13 @@ nonisolated public struct ContainerMenuModel: Equatable, Sendable {
         active.moveSelection(by: offset)
     }
 
-    public mutating func moveCategory(by offset: Int) {
-        active.moveCategory(by: offset)
-    }
-
     public mutating func select(_ index: Int) {
         active.select(index)
     }
 
-    public mutating func selectCategory(_ index: Int) {
-        active.selectCategory(index)
-    }
-
-    /// Carries `previous`'s side and both panes' selections onto a freshly
-    /// rebuilt model.
-    ///
-    /// Every transfer rebuilds both panes from the store, and without this a
-    /// player who takes the third item would find the cursor back at the top.
-    /// A selection that no longer exists — the row that just moved out — is
-    /// dropped by `select`'s own bounds check rather than clamped here.
+    /// Carries `previous`'s side and both panes' selections onto a rebuilt
+    /// model, so the cursor stays put after a transfer. A selection that no
+    /// longer exists is dropped by `select`'s bounds check.
     public mutating func restore(from previous: ContainerMenuModel) {
         side = previous.side
         container.selectCategory(previous.container.selectedCategoryIndex)
@@ -179,10 +158,8 @@ nonisolated public struct ContainerMenuModel: Equatable, Sendable {
 @MainActor
 extension ContainerMenuModel {
     /// The live two-pane list for one container, read through the runtime that
-    /// owns both stored inventories and the definitions behind them.
-    ///
-    /// Both panes are built by #289's builder, so the container's rows sort,
-    /// name themselves and split gold out exactly as the player's do.
+    /// owns both inventories. Both panes use the inventory builder, so both
+    /// sort, name, and split gold the same way.
     public static func build(
         container: InventoryHolder,
         containerName: String,

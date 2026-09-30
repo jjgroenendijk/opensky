@@ -1,14 +1,9 @@
-// The World > Progression panel (issue #500, roadmap item 20.7): its geometry,
-// its accessibility-id contract, and that each control sends what its field and
-// popup hold rather than a default it invented.
-//
-// The panel is built through the registry factory the app itself uses, so what
-// is under test is the destination a user clicks rather than a hand-assembled
-// copy of it.
+// The World > Progression panel: its geometry, its accessibility ids, and that
+// each control sends what its field and popup hold. Built through the
+// registry factory, as the app builds it.
 
 import AppKit
 @testable import OpenSky
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
 import OpenSkyProgressionTesting

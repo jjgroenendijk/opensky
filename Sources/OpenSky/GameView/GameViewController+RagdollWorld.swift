@@ -1,18 +1,7 @@
-// `RagdollWorldSeam` conformance (issue #197, roadmap item 15.6): the five
-// answers the ragdoll runtime needs from the session around it.
-//
-// Every one is a plain read off something that already exists — the streamer's
-// resident actors, the render scene's animation playbacks, the cell scene's
-// collision candidates, the locomotion bridge's graph, the world-state store.
-// Nothing here invents an accounting of its own, which is what keeps the
-// runtime's behaviour the same under test as it is in the app.
-//
-// One answer is an honest non-answer and is worth stating rather than papering
-// over: `raiseRagdollEvent(_:on:)` can only reach the player's graph, because
-// item 14.6 attached a behavior graph to the player and to nobody else. Every
-// NPC death therefore takes the runtime's graph-less fallback and hands off
-// immediately, which the runtime counts separately so a session can see that it
-// happened rather than assume the graph drove it.
+// `RagdollWorldSeam` conformance: plain reads off the streamer, the render
+// scene, the cell scene, the locomotion bridge, and the world-state store.
+// `raiseRagdollEvent(_:on:)` reaches only the player's graph, so every NPC death
+// takes the graph-less fallback, which the runtime counts separately.
 
 import AppKit
 import OpenSkyActorsInterface
@@ -23,7 +12,6 @@ import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
@@ -87,7 +75,7 @@ extension GameViewController: RagdollWorldSeam {
         worldState.component(ActorDeathState.self, for: key)
     }
 
-    /// The script half of a death (issue #375). A session with no VM — a
+    /// The script half of a death. A session with no VM — a
     /// synthetic scene, an install whose archives carry no `scripts\` entries —
     /// queues nothing and reports zero, which is the honest count rather than a
     /// silent no-op.

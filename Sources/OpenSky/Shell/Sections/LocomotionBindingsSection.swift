@@ -1,18 +1,7 @@
-// World > Player & Locomotion > Bindings section (issue #191): every gameplay
-// key this milestone added, listed with its live state and reachable from a
-// control.
-//
-// This section exists because of the app-ui rule that no gameplay behavior may
-// be reachable only by an unadvertised keystroke. Sneak is a toggle and is
-// offered as one; jump is momentary and is offered as a button that requests
-// exactly one jump, the same latch the space bar sets. Sprint and run are held
-// modifiers with nothing to latch — a button would assert them for a single
-// frame and read as broken — so they are listed and reported live instead:
-// hold the key and the row turns active.
-//
-// Not overridden. A sneaking player is world state, not a panel setting, and a
-// "Reset all" that stood the player up would undo something the user did on
-// purpose.
+// World > Player & Locomotion > Bindings section: every gameplay key with its
+// live state, so no behavior needs an unadvertised key. Sneak is a toggle; jump
+// is a button that requests one jump. Sprint and run are held modifiers, so
+// they are listed live instead. Not overridden.
 
 import AppKit
 import OpenSkyWorld
@@ -39,10 +28,6 @@ final class LocomotionBindingsSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "locomotionBindings"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

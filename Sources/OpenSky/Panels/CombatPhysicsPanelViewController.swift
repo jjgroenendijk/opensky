@@ -1,16 +1,5 @@
-// World > Combat & Physics destination panel (issue #198, roadmap item 15.9):
-// the sidebar verification surface for the whole M15 fight, composed from
-// sections items 15.2 through 15.7 each specified a provider seam for.
-//
-// A destination of its own rather than more sections under `World > Player &
-// Locomotion`, which is where Melee, Archery and Death & Ragdoll landed while
-// they were three controls each. Six sections and six readouts is past the
-// promotion threshold in docs/tools/app-ui.md, and the M15 gate names this path
-// top-level, which outranks the threshold anyway.
-//
-// Section order follows the order a fight happens in: what the actors are worth,
-// what the player swings, what the player shoots, what dies, who is angry, and
-// what the physics is carrying while all of it runs.
+// World > Combat & Physics destination panel. Sections follow a fight: actor
+// values, melee, archery, death, hostility, and physics.
 
 import AppKit
 import OpenSkyActorsInterface
@@ -74,10 +63,6 @@ final class CombatPhysicsPanelViewController: InspectorPanelViewController {
     /// PlayerLocomotionPanelViewController's convention.
     var damageControl: NSButton {
         actorValuesSection.damageControl
-    }
-
-    var magicConsumeControl: NSButton {
-        magicEffectsSection.consumeControl
     }
 
     var spellcastingLearnControl: NSButton {

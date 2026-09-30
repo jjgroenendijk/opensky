@@ -9,7 +9,6 @@ import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 import OSLog
@@ -56,41 +55,34 @@ final class GameViewController: NSViewController {
     /// provider) for the window's lifetime. Readable by the world-stats bridge
     /// (GameViewController+WorldStats.swift); only this file assigns it.
     var streamer: CellStreamer?
-    /// Mutable runtime world state for this session (issue #160). It is the
+    /// Mutable runtime world state for this session. It is the
     /// production owner of `WorldStateStore`: `wireStreaming` reads snapshots
     /// off it at build dispatch and rebuilds resident cells when it changes.
     /// Papyrus, inventory and quests mutate it later; the sidebar readout
-    /// (issue #162) reads it.
+    /// reads it.
     let worldState = WorldStateStore()
-    /// Papyrus VM for this session (issue #171), built by `wirePapyrus` when
+    /// Papyrus VM for this session, built by `wirePapyrus` when
     /// the provider can supply compiled scripts. Cell streaming attaches and
     /// detaches script instances on it, and the renderer's world-simulation
     /// hook ticks it once per drawn frame. nil without game data.
     var papyrus: PapyrusWorldRuntime?
-    /// Seam Papyrus natives reach the world through (issue #172), built beside
+    /// Seam Papyrus natives reach the world through, built beside
     /// `papyrus`. Retained here because it is also the `onInteraction`
     /// subscriber that turns a use key into a recorded activation.
     var papyrusBridge: PapyrusWorldStateBridge?
-    /// GLOB defaults of the loaded plugin, set by `wireStreaming` (issue
-    /// #165). nil without game data; the time-of-day scrub then writes the
-    /// renderer's clock directly instead of going through the global seam.
+    /// GLOB defaults of the loaded plugin, set by `wireStreaming`. Nil without
+    /// game data; the time-of-day scrub then writes the renderer's clock directly.
     var globalStore: GlobalStore?
-    /// QUST index of the loaded plugin, set by `wirePapyrus` (issue #322). nil
-    /// without game data, and then the `Quest` natives report themselves
-    /// unavailable rather than inventing quest state.
-    var questStore: QuestStore?
     /// Free-fly input shared with the renderer; the view writes it from
-    /// NSEvents, the renderer drains it each frame (todo 2.8).
+    /// NSEvents, the renderer drains it each frame.
     let cameraInput = CameraInputState()
 
-    /// Menu-mode source of truth (todo 8.1.2), shared with the input view and
-    /// the renderer. Entering menu mode pauses world sim and drops held world
-    /// input; leaving it resumes with no time jump. The Developer > UI Lab preview
-    /// (M8.1.4, via GameViewController+UILab.swift) is the only trigger until
-    /// real SWF menus land (M8.2).
+    /// Menu-mode source of truth, shared with the input view and the renderer.
+    /// Entering menu mode pauses world sim and drops held world input; leaving
+    /// it resumes with no time jump.
     let menuMode = MenuModeController()
 
-    /// Which built-in overlay sample Developer > UI Lab shows (M8.1.4). Stored here
+    /// Which built-in overlay sample Developer > UI Lab shows. Stored here
     /// because both samples share `Renderer.uiScene`; the UI Lab bridge maps it
     /// onto the renderer and declares the enum beside itself.
     var uiLabSampleSelection: UILabSampleSelection = .none
@@ -103,38 +95,37 @@ final class GameViewController: NSViewController {
     var installLocalizedLabels: LocalizedLabels?
     var installLocalizedLabelsResolved = false
 
-    /// Builds the plugin's string tables over the located install (issue
-    /// #184). Set by the AppDelegate; nil when game data is missing, and the
-    /// journal then falls back to editor IDs. Invoked once, lazily, by the
-    /// journal bridge, because constructing it walks the VFS.
+    /// Builds the plugin's string tables over the located install. Set by the
+    /// AppDelegate; nil without game data, and the journal then shows editor IDs.
+    /// Called once, lazily, because it walks the VFS.
     var localizedStringsLoader: (() -> LocalizedStrings)?
 
-    /// Builds the SWF movie loader over the located install (M8.2.5). Set by
+    /// Builds the SWF movie loader over the located install. Set by
     /// the AppDelegate; nil when game data is missing. The UI Lab SWF bridge
     /// invokes it once, lazily, into `swfLab`.
     var swfMovieLoaderFactory: (() -> SWFMovieLoader)?
 
-    /// Resource lookup for World > Audio (M9.1.3). Set by the AppDelegate; nil
+    /// Resource lookup for World > Audio. Set by the AppDelegate; nil
     /// when game data is missing — the panel then lists nothing to play.
     var audioFileSystem: VirtualFileSystem?
     /// World audio graph, created on first enable by the audio bridge
     /// (GameViewController+Audio.swift), which also hands it to the renderer.
     var worldAudio: WorldAudioEngine?
-    /// World SFX + ambience director (M9.2.2), built beside the engine on
+    /// World SFX + ambience director, built beside the engine on
     /// first enable. Subscribed to streamer callbacks; lives in
     /// `Sources/OpenSkyWorld/Session/WorldAudioSoundDirector.swift`.
     var soundDirector: WorldAudioSoundDirector?
-    /// Music director (M9.2.3), built beside the engine on first enable.
+    /// Music director, built beside the engine on first enable.
     /// Subscribed to the streamer's music-context callback and ticked by the
     /// renderer; lives in `Sources/OpenSkyWorld/Session/WorldMusicDirector.swift`.
     var musicDirector: WorldMusicDirector?
-    /// Footstep director (issue #352), built beside the engine on first
+    /// Footstep director, built beside the engine on first
     /// enable. Fed by the renderer's audio tick from the locomotion bridge's
     /// fired graph events; lives in
     /// `Sources/OpenSkyWorld/Session/WorldAudioFootstepDirector.swift`.
     var footstepDirector: WorldAudioFootstepDirector?
     /// Cell provider the audio bridge reads sound/aspc stores off when it
-    /// constructs the SFX director (M9.2.2). Held weakly because the build
+    /// constructs the SFX director. Held weakly because the build
     /// runner (and through it the streamer) already retains the provider.
     var streamerCellProvider: (any CellSceneProvider)?
     /// Cached picker paths — enumerating every archive entry is not free.
@@ -154,25 +145,25 @@ final class GameViewController: NSViewController {
     /// `GameViewController+SystemMenu.swift`; stored here because extensions
     /// cannot add state.
     var systemMenu = SystemMenuRuntimeState()
-    /// Inventory menu row list + presentation state (issue #289). The
+    /// Inventory menu row list + presentation state. The
     /// implementation lives in `GameViewController+InventoryMenu.swift`; stored
     /// here because extensions cannot add state.
     var inventoryMenu = InventoryMenuRuntimeState()
-    /// Journal page model and presentation state (issue #184). The
+    /// Journal page model and presentation state. The
     /// implementation lives in `GameViewController+Journal.swift`; stored here
     /// because extensions cannot add state.
     var journal = JournalRuntimeState()
-    /// Dialogue index, conversation model and presentation state (issue #205).
+    /// Dialogue index, conversation model and presentation state.
     /// The implementation lives in `GameViewController+Dialogue.swift` and
     /// `GameViewController+DialogueMenu.swift`; stored here because extensions
     /// cannot add state.
     var dialogue = DialogueBridgeState()
-    /// Conversation camera override and speaker focus (issue #427). The
+    /// Conversation camera override and speaker focus. The
     /// implementation lives in `GameViewController+DialogueCamera.swift`; stored
     /// here because extensions cannot add state.
     var dialogueCamera = DialogueCameraBridgeState()
     /// Container and barter menu two-pane list, merchant nomination and
-    /// presentation state (issue #179). The implementation lives in
+    /// presentation state. The implementation lives in
     /// `GameViewController+ContainerMenu.swift`; stored here because extensions
     /// cannot add state.
     var containerMenu = ContainerMenuRuntimeState()
@@ -182,100 +173,99 @@ final class GameViewController: NSViewController {
     /// cannot add state.
     var runtimeState = RuntimeStateBridgeState()
     /// World items: the take/drop/container runtime and the panel's last
-    /// outcome line (issue #177). The implementation lives in
+    /// outcome line. The implementation lives in
     /// `GameViewController+Items.swift`; stored here because extensions cannot
     /// add state.
     var worldItems = WorldItemBridgeState()
-    /// Player behavior graph + rendered body state (issue #189). The
+    /// Player behavior graph + rendered body state. The
     /// implementation lives in `GameViewController+PlayerBody.swift`; stored
     /// here because extensions cannot add state.
     var playerBodyBridge = PlayerBodyBridgeState()
     /// Actor values: the damage/restore/regeneration runtime, the HUD meter
-    /// gate and the panel's last outcome line (issue #194). The implementation
+    /// gate and the panel's last outcome line. The implementation
     /// lives in `GameViewController+ActorValues.swift`; stored here because
     /// extensions cannot add state.
     var actorValues = ActorValueBridgeState()
 
     /// Active magic effects: the apply/tick/dispel runtime, its fixed-step
-    /// accumulator and the panel's last outcome line (issue #469). The
+    /// accumulator and the panel's last outcome line. The
     /// implementation lives in `GameViewController+Magic.swift`; stored here
     /// because extensions cannot add state.
     var magicEffects = MagicBridgeState()
 
     /// Spellcasting: the spellbook, the cast loop, the panel's spell selection
-    /// and its last outcome line (issue #470). The implementation lives in
+    /// and its last outcome line. The implementation lives in
     /// `GameViewController+Casting.swift`; stored here because extensions cannot
     /// add state.
     var casting = CastingBridgeState()
 
     /// Item enchantments: the ENCH index equipped items resolve through, and the
-    /// last hit and worn-item outcomes the readouts show (issue #472). The
+    /// last hit and worn-item outcomes the readouts show. The
     /// implementation lives in `GameViewController+Enchantments.swift`; stored
     /// here because extensions cannot add state.
     var enchantments = EnchantmentBridgeState()
 
     /// Perks: the ownership runtime, the entry-point evaluator behind every
-    /// wired combat and magic seam, and the authored `PRKR` baselines
-    /// (issue #497). The implementation lives in
+    /// wired combat and magic seam, and the authored `PRKR` baselines.
+    /// The implementation lives in
     /// `GameViewController+Perks.swift`; stored here because extensions cannot
     /// add state.
     var perks = PerkBridgeState()
 
     /// Factions: the membership runtime, the interfaction relation index and
-    /// the hostility derivation over both (issue #503). The implementation
+    /// the hostility derivation over both. The implementation
     /// lives in `GameViewController+Factions.swift`; stored here because
     /// extensions cannot add state.
     var factions = FactionBridgeState()
     var crime = CrimeBridgeState()
 
     /// Skill advancement: the use-to-experience-to-level runtime every combat
-    /// and magic seam reports into, and the last advance the readouts show
-    /// (issue #498). The implementation lives in
+    /// and magic seam reports into, and the last advance the readouts show.
+    /// The implementation lives in
     /// `GameViewController+Skills.swift`; stored here because extensions cannot
     /// add state.
     var skills = SkillBridgeState()
 
     /// Character leveling: the level runtime skill advancement banks into, the
     /// AVIF perk-tree index a perk-point spend is validated against, and the
-    /// last outcome line (issue #499). The implementation lives in
+    /// last outcome line. The implementation lives in
     /// `GameViewController+Progression.swift`; stored here because extensions
     /// cannot add state.
     var progression = ProgressionBridgeState()
 
     /// Melee combat: the swing runtime, the WEAP index it reads combat data
-    /// out of, and the panel's last outcome line (issue #195). The
+    /// out of, and the panel's last outcome line. The
     /// implementation lives in `GameViewController+Melee.swift`; stored here
     /// because extensions cannot add state.
     var melee = MeleeBridgeState()
 
-    /// Archery: the shot and projectile runtimes, the AMMO/PROJ index they
-    /// read flight data out of, and the panel's last outcome line (issue
-    /// #196). The implementation lives in `GameViewController+Archery.swift`;
-    /// stored here because extensions cannot add state.
+    /// Archery: the shot and projectile runtimes, the AMMO/PROJ index, and the
+    /// panel's last outcome line. Stored here because extensions cannot add
+    /// state; the logic is in `GameViewController+Archery.swift`.
     var archery = ArcheryBridgeState()
 
     /// Death and ragdoll: the runtime, the per-skeleton ragdoll definitions it
-    /// spawns from, and the panel's last outcome line (issue #197). The
+    /// spawns from, and the panel's last outcome line. The
     /// implementation lives in `GameViewController+Ragdoll.swift`; stored here
     /// because extensions cannot add state.
     var ragdoll = RagdollBridgeState()
 
     /// The combat loop: hostility, the derived combat state, the dev target's
-    /// attack clock and the reaction clips it plays (issue #374). The
+    /// attack clock and the reaction clips it plays. The
     /// implementation lives in `GameViewController+Combat.swift`; stored here
     /// because extensions cannot add state.
     var combat = CombatBridgeState()
-    /// Kinematic NPC gait clips and failed clip keys (issue #423).
+    /// Kinematic NPC gait clips and failed clip keys.
     var npcMovementBridge = NPCMovementBridgeState()
-    /// Live resident-actor package selection (issue #201).
+    /// Live resident-actor package selection.
     var packages = PackageBridgeState()
     /// The perception pass: view cones, line of sight, and per-pair detection
-    /// levels (issue #202). The implementation lives in
+    /// levels. The implementation lives in
     /// `GameViewController+Perception.swift`; stored here because extensions
     /// cannot add state.
     var perception = PerceptionBridgeState()
-    /// The M16 gate panel's shared actor selection and its last outcome line
-    /// (issue #203). The implementation lives in
+    /// The AI & Navigation panel's shared actor selection and its last outcome
+    /// line. The implementation lives in
     /// `GameViewController+AINavigation.swift`; stored here because extensions
     /// cannot add state.
     var aiNavigation = AINavigationBridgeState()
@@ -325,7 +315,7 @@ final class GameViewController: NSViewController {
             // Persisted World > Environment > Time of day; invalid stored value
             // falls back to 13:00 inside TimeOfDaySettings.load().
             newRenderer.timeOfDay = TimeOfDaySettings.load()
-            // Exterior weather runtime (M7.2.2); nil provider / no weather data
+            // Exterior weather runtime; nil provider / no weather data
             // leaves the renderer on its procedural sky, exactly as before.
             newRenderer.weather = (provider as? WeatherProviding)?.weatherSystem
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
@@ -338,7 +328,7 @@ final class GameViewController: NSViewController {
                 newRenderer?.worldSimPaused = paused
                 // Released on the route flip rather than on the pause, because
                 // the dialogue menu captures input without stopping the world
-                // (issue #205) and a key held into it would otherwise keep
+                // and a key held into it would otherwise keep
                 // driving the camera nobody is steering.
                 if route == .menu {
                     cameraInput?.releaseAll()
@@ -468,6 +458,6 @@ extension GameViewController: TerrainLODControlProviding {
     }
 }
 
-// Weather bridge for the World > Environment panel (M7.2.2). Reads/forces the
+// Weather bridge for the World > Environment panel. Reads/forces the
 // live renderer's weather runtime on the main thread. A nil renderer or no
 // weather data degrades to an empty list + calm readout.

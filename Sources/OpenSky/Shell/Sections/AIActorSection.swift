@@ -1,17 +1,7 @@
-// World > AI & Navigation > Actor section (issue #203, roadmap item 16.8): the
-// one selection every other section under this destination answers for.
-//
-// A popup of resident actors plus a crosshair pick, which is the same pair
-// `World > Container Menu > Merchant` offers and for the same reason: naming a
-// reference by FormID is not something a person should have to do, and the
-// crosshair is how you point at the one you are actually looking at. The popup
-// rebuilds only when the resident list changes, because it ticks at 2 Hz and
-// rebuilding it under an open menu would close it in the user's hand.
-//
-// Not overridden. Which actor you are inspecting is a nomination, not a setting,
-// and a "Reset all" that jumped the selection back to the nearest guard would
-// lose the one you had been following. The Overlays section owns this
-// destination's overridden-ness.
+// World > AI & Navigation > Actor section: the one selection every other
+// section here answers for, as a popup of resident actors plus a crosshair
+// pick. The popup rebuilds only when the resident list changes, so a 2 Hz tick
+// does not close it. Not overridden: the Overlays section owns the override.
 
 import AppKit
 import OpenSkyWorld
@@ -40,10 +30,6 @@ final class AIActorSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "aiActor"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

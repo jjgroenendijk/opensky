@@ -1,17 +1,8 @@
-// Dialogue readout text (issue #205): the device-free half of the dialogue
-// verification surface.
-//
-// Every line the panel shows is a pure function of one
-// `DialogueControlSnapshot`, exactly as `JournalReadout` is of one
-// `JournalControlSnapshot`. Keeping the wording here rather than inside the
-// section view controller is what lets the text be asserted without AppKit,
-// without a Metal device, and without a game install.
-//
-// No AppKit import on purpose: the file compiles into both the app and the CLI
-// target, so it needs no project-membership exception.
+// Dialogue readout text. Each line is a pure function of one
+// `DialogueControlSnapshot`, so the wording is testable without AppKit, a
+// Metal device, or an install. No AppKit import: the CLI builds it too.
 
 import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
 
 nonisolated public enum DialogueReadout: Sendable {
     /// The Talk target, the conversation, and the topics on offer — the three
@@ -58,8 +49,8 @@ nonisolated public enum DialogueReadout: Sendable {
     /// Why the topics that are not listed are not listed, plus what the
     /// evaluator could not answer while deciding.
     ///
-    /// This is the readout item 17.8 needs: "the line I expected is missing" is
-    /// only debuggable if the engine says which check rejected it.
+    /// "The line I expected is missing" is only debuggable if the engine says
+    /// which check rejected it.
     public static func conditionsText(for snapshot: DialogueControlSnapshot) -> String {
         guard snapshot.hasDialogueIndex else {
             return "Condition trace: unavailable (no plugin loaded)"

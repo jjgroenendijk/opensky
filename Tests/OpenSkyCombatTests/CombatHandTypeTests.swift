@@ -1,4 +1,4 @@
-// The `iRightHandType` / `iLeftHandType` encoding (issue #403).
+// The `iRightHandType` / `iLeftHandType` encoding.
 //
 // These pin the thirteen numbers the vanilla graph counts in, and the one
 // conversion that is not the identity. Everything asserted here was read out of
@@ -7,7 +7,6 @@
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
-@testable import OpenSkyCombat
 @testable import OpenSkyFormatsESM
 import Testing
 

@@ -1,22 +1,6 @@
-// M13 acceptance, pixel half (issue #185): advancing a stage puts a new
-// paragraph on the journal page, measured as a changed-pixel count rather than
-// eyeballed.
-//
-// Three frames rather than two, for the reason `M12AcceptanceRenderTests`
-// records: the strongest statement available is not "the count changed" but
-// "the page reached by advancing a stage is byte-identical to a page that was
-// built at that stage all along". So the run renders the quest at its first
-// stage, renders it again after the advance, and then renders a second session
-// that walked straight to the later stage — and asserts both the delta and the
-// agreement.
-//
-// Gated on a Metal 4 device *and* on the install, because the page being drawn
-// is the vanilla `quest_journal.swf` and the paragraphs are the plugin's own
-// strings. The accounting half of the gate, `M13AcceptanceTests`, needs
-// neither, so the loop still stands on a device-less runner.
-//
-// Rendered frames go to gitignored `logs/`: a frame embeds the user's game art
-// and is never committed (AGENTS.md "Legal & IP boundary").
+// M13 acceptance, pixel half: advancing a stage adds a journal paragraph. The
+// advanced page must also be byte-identical to a page built at that stage
+// directly. Needs Metal 4 and the install; frames go to gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -31,8 +15,6 @@ import MetalKit
 import Testing
 
 struct M13AcceptanceRenderTests {
-    private static let targetEditorID = "MGRArniel01"
-    private static let pluginName = "Skyrim.esm"
     private static let width = 1280
     private static let height = 720
 

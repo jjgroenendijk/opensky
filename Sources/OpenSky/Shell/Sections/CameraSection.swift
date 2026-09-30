@@ -1,15 +1,10 @@
-// World > Camera section: the live pose readout plus the camera-mode selector.
-// Camera mode used to be reachable only by pressing `G`; the selector is the
-// visible, settable surface the key now accelerates (docs/tools/app-ui.md).
-// The key cycles fly -> walk -> third person and the popup lists the same three
-// in the same order, so neither can offer a mode the other cannot reach
-// (issue #189).
-// "Copy pose" puts the shared one-line pose description on the pasteboard so a
-// bug report can carry the exact camera that produced a frame.
+// World > Camera section: the live pose readout and the camera-mode selector.
+// The `G` key cycles fly, walk and third person in the popup's order
+// (docs/tools/app-ui.md). "Copy pose" puts the one-line pose on the pasteboard
+// for bug reports.
 
 import AppKit
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld

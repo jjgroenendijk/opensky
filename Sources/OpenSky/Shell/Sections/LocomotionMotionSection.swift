@@ -1,13 +1,7 @@
-// World > Player & Locomotion > Root Motion section (issue #191): which source
-// moved the capsule, and how far each one has carried it.
-//
-// The movement-authority rule says horizontal motion has exactly one source per
-// fixed step — the graph's own root travel when the data carries any, the
-// resolved gait speed otherwise. This section is where that rule is visible:
-// two running totals that cannot both grow on one step, and a trace of the
-// steps at which the answer changed. On vanilla data the root-motion total
-// stays at zero, because Skyrim's locomotion clips animate in place; a data set
-// that does carry extracted motion shows up here rather than looking identical.
+// World > Player & Locomotion > Root Motion section: which source moved the
+// capsule and how far each carried it. Each fixed step has one horizontal
+// source: the graph's root travel, or else the gait speed. Vanilla clips
+// animate in place, so the root-motion total stays zero on vanilla data.
 
 import AppKit
 import OpenSkyWorld
@@ -33,10 +27,6 @@ final class LocomotionMotionSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "locomotionMotion"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

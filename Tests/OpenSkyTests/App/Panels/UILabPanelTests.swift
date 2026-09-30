@@ -1,4 +1,4 @@
-// Main-app UI Lab verification-surface coverage (M8.1.1 + M8.1.4): the panel's
+// Main-app UI Lab verification-surface coverage: the panel's
 // controls keep visible geometry as the surface grows, provider state
 // round-trips through the controls (overlay, samples, scale, menu-mode
 // push/pop/clear), and the live readouts render the UIDrawStats, menu-stack,
@@ -22,7 +22,6 @@ private final class FakeUILabProvider: UILabControlProviding, SWFLabControlProvi
     var uiSnapshot: UILabControlSnapshot {
         UILabControlSnapshot(
             overlayEnabled: uiOverlayEnabled,
-            sampleShown: uiSampleShown,
             scale: uiScale,
             stats: stats
         )
@@ -164,7 +163,7 @@ struct UILabPanelTests {
 
         let readout = panel.statsReadout
         #expect(!readout.isEmpty)
-        // Atlas occupancy + overflow (issue #127) are part of the contract: they
+        // Atlas occupancy + overflow are part of the contract: they
         // are how a user sees glyph cells come back when movies swap.
         for token in ["12", "34", "2", "256", "128", "77 glyphs", "50% full", "overflow: 9"] {
             #expect(readout.contains(token), "missing \(token) in: \(readout)")
@@ -186,7 +185,7 @@ struct UILabPanelTests {
         #expect(panel.menuClearControl.accessibilityIdentifier() == "UIMenuClearControl")
     }
 
-    /// The SWF movie selector (M8.2.5) is a hosted child section: it must be
+    /// The SWF movie selector is a hosted child section: it must be
     /// adopted as a child view controller and appear in the scroll document
     /// under the standard collapsible header.
     @Test @MainActor
@@ -208,7 +207,7 @@ struct UILabPanelTests {
         #expect(document.bounds.intersects(sectionFrame), "SWF section outside document")
     }
 
-    /// The AS2 runtime driver (M8.3.3) is hosted the same way, beside the
+    /// The AS2 runtime driver is hosted the same way, beside the
     /// selector rather than inside it.
     @Test @MainActor
     func swfRuntimeSectionIsHostedInsideThePanel() throws {

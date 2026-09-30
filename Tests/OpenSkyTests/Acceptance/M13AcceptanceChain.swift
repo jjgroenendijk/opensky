@@ -1,25 +1,9 @@
-// The M13 gate's world, built once and driven step by step (issue #185).
-//
-// One synthetic journal-visible quest, one lever that activates it, and one
-// reference its single alias is forced onto. The lever's compiled `OnActivate`
-// body calls `SetStage` on a VMAD quest property, so the whole path from a
-// raycast use-key press to a mutated `WorldStateStore` is the shipping one:
-//
-//   CellStreamer raycast -> InteractionEvent -> PapyrusWorldStateBridge
-//   -> OnActivate -> Quest.SetStage native -> QuestRuntime -> stage fragment
-//   -> Quest.SetObjectiveDisplayed native -> QuestRuntime
-//
-// Nothing here is a shortcut around a layer: every arrow is the same call the
-// app makes. The one place this fixture enters below the app is the use-key
-// press, which is `CellStreamer.update(cameraPosition:interactionRay:activate:)`
-// — the call the render loop makes every frame — because everything above it is
-// `GameViewController` key handling and an `MTKView` draw callback, neither of
-// which a headless test can honestly drive. That is the same entry point
-// `M11ScriptedWorldChain` uses.
-//
-// Every byte is assembled in code from the published QUST, REFR and PEX layouts
-// (AGENTS.md "Legal & IP boundary"); nothing is extracted from an install, and
-// nothing here needs a Metal device or game data.
+// The M13 gate's world: one synthetic quest, one lever that activates it, and
+// one reference its alias is forced onto. A use-key press through
+// `CellStreamer.update(cameraPosition:interactionRay:activate:)` runs the
+// shipping path: OnActivate, `Quest.SetStage`, the stage fragment, and
+// `SetObjectiveDisplayed`. Every byte is built in code from the published QUST,
+// REFR and PEX layouts.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -84,10 +68,6 @@ struct M13AcceptanceChain {
 
     static var questFormID: FormID {
         FormID(questObjectID)
-    }
-
-    static func instanceKey(_ scriptName: String) -> PapyrusInstanceKey {
-        PapyrusInstanceKey(reference: questKey, scriptName: scriptName)
     }
 
     // MARK: - Wiring
@@ -248,13 +228,9 @@ struct M13AcceptanceChain {
     }
 }
 
-/// The far side of the gate's save/load step: a session over the same quest
-/// record with nothing in it, which a saved file is restored into.
-///
-/// No streamer and no cell: a load resumes quest state and quest scripts, and
-/// the point of the step is that it does so without the world that produced
-/// them. `attachQuests` is off so the restore drives the attach, exactly as the
-/// app's load path does.
+/// The save/load target: a session over the same quest record with no state,
+/// no streamer and no cell, because a load resumes quest state without the
+/// world. `attachQuests` is off, so the restore drives the attach like the app.
 @MainActor
 struct M13AcceptanceRestore {
     let session: PapyrusWorldFixture.Session

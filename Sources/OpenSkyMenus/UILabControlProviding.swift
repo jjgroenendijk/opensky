@@ -1,29 +1,24 @@
-// Narrow live-renderer seam consumed by Developer > UI Lab controls (M8.1.1,
-// extended M8.1.4). The panel drives the screen-space UI layer (enable, sample
-// scenes, scale), previews menu mode (push/pop/clear against the real
-// MenuModeController), and reads localized-strings state — only through this
-// bridge, never renderer or controller internals. `refocusGameView` overlaps
-// ShadowControlProviding on purpose so one game-view implementation satisfies
-// both surfaces.
+// Live-renderer seam for Developer > UI Lab. The panel drives the screen-space
+// UI layer, previews menu mode against the real `MenuModeController`, and reads
+// localized-strings state only through this protocol. `refocusGameView`
+// overlaps `ShadowControlProviding` so one game view satisfies both.
 
 // UI Lab readout: overlay state plus the last-frame UIDrawStats mirror.
 import OpenSkyRendering
 
 nonisolated public struct UILabControlSnapshot: Equatable, Sendable {
     public let overlayEnabled: Bool
-    public let sampleShown: Bool
     public let scale: Float
     public let stats: UIDrawStats
 
-    public init(overlayEnabled: Bool, sampleShown: Bool, scale: Float, stats: UIDrawStats) {
+    public init(overlayEnabled: Bool, scale: Float, stats: UIDrawStats) {
         self.overlayEnabled = overlayEnabled
-        self.sampleShown = sampleShown
         self.scale = scale
         self.stats = stats
     }
 }
 
-/// Menu-mode readout for the UI Lab preview (M8.1.4): the live
+/// Menu-mode readout for the UI Lab preview: the live
 /// MenuModeController state the panel mirrors at 2 Hz.
 nonisolated public struct MenuModeControlSnapshot: Equatable, Sendable {
     public let isMenuMode: Bool
@@ -39,7 +34,7 @@ nonisolated public struct MenuModeControlSnapshot: Equatable, Sendable {
     }
 }
 
-/// Localized-strings readout (M8.1.4): synthetic sample state plus the merged
+/// Localized-strings readout: synthetic sample state plus the merged
 /// provider counts over the located install (zero files on vanilla — the
 /// mechanism is used by mods and localized builds).
 nonisolated public struct LocalizedLabelsControlSnapshot: Equatable, Sendable {
@@ -75,13 +70,13 @@ public protocol UILabControlProviding: AnyObject {
     var uiSnapshot: UILabControlSnapshot { get }
     func refocusGameView()
 
-    // Menu-mode preview (M8.1.4): drives the real MenuModeController.
+    // Menu-mode preview: drives the real MenuModeController.
     func pushPreviewMenu()
     func popPreviewMenu()
     func clearPreviewMenus()
     var menuModeSnapshot: MenuModeControlSnapshot { get }
 
-    // Localized-strings preview (M8.1.4).
+    // Localized-strings preview.
     var uiLocalizedSampleShown: Bool { get set }
     var localizedLabelsSnapshot: LocalizedLabelsControlSnapshot { get }
 }

@@ -1,19 +1,8 @@
-// World > Runtime State > Globals section (M10.2.2): looks a GLOB record up by
-// editor ID, shows what the plugin authored beside what the session currently
-// resolves, and writes or drops the runtime override.
-//
-// The readout states the plugin default and the current value separately, and
-// states overridden-ness separately again, because those are three different
-// facts and the obvious shortcut is wrong twice over. Writing a global the
-// value it already held still records an override, and the five clock-projected
-// time globals resolve away from their plugin default with no override at all —
-// so neither "default equals current" nor "default differs from current"
-// answers the question the sidebar's override dot asks.
-//
-// Overridden-ness for this section is the store's own count of overridden
-// globals, and its reset drops every one of them. That mirrors how the Reset
-// section treats dirty references: plugin data is the default, and the session's
-// deviations from it are what the indicator reports.
+// World > Runtime State > Globals section: looks up a GLOB by editor ID, shows
+// the plugin default beside the resolved value, and writes or drops the runtime
+// override. Overridden-ness is the store's count of overridden globals, not a
+// value comparison: writing the same value still overrides, and the clock-fed
+// time globals differ from their default with no override.
 
 import AppKit
 import OpenSkyWorld
@@ -46,10 +35,6 @@ final class RuntimeStateGlobalsSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "runtimeStateGlobals"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     /// Editor ID the buttons act on, trimmed. Empty means no selection, which

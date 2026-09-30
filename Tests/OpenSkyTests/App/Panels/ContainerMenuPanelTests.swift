@@ -1,4 +1,4 @@
-// World > Container Menu acceptance-surface coverage (issue #179). Synthetic
+// World > Container Menu acceptance-surface coverage. Synthetic
 // provider state only; the real-install movie bring-up gate is the env-gated
 // acceptance test and the `swf container-menu` probe.
 
@@ -145,6 +145,7 @@ struct ContainerMenuPanelTests {
         )
         let readout = ContainerMenuSection.readout(for: provider.containerMenuSnapshot)
         #expect(readout.contains("Container menu: open"))
+        #expect(readout.contains("Categories: [All] Weapons Armor"))
         #expect(readout.contains("Gold: player 42 · Test Chest 500"))
         // IronSword is worth 25; at the vanilla factor of 3.105 buying costs 78.
         #expect(readout.contains("Buy price: 78 gold (cannot pay)"))

@@ -1,20 +1,12 @@
-// Session wiring for actor values (issue #194, roadmap item 15.3): builds the
-// runtime over the provider's RACE/CLAS/NPC_ indexes, ticks regeneration on the
-// renderer's world-simulation delta, and publishes the player's values to the
-// vanilla HUD meters.
-//
-// AppKit stays in this controller satellite; the derivation, the runtime and
-// the meter binding are all engine types that build into `openskycli` and are
-// testable without a window.
-//
-// The regeneration tick shares `Renderer.onWorldUpdate` with the Papyrus VM, so
-// a menu-paused frame delivers delta 0 to both and neither advances. That is
-// the established rule and it is why nothing here checks `menuMode` itself.
+// Session wiring for actor values: builds the runtime over the provider's
+// RACE/CLAS/NPC_ indexes, ticks regeneration on the world-simulation delta, and
+// publishes the player's values to the HUD meters. The tick shares
+// `Renderer.onWorldUpdate` with the Papyrus VM, so a menu-paused frame gives
+// both a zero delta.
 
 import AppKit
 import OpenSkyActors
 import OpenSkyActorsInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -36,9 +28,9 @@ struct ActorValueBridgeState {
     var regenAccumulator: Double = 0
     /// Change gate in front of the HUD meter contract.
     var meters = HUDMeterBinding()
-    /// Which target the panel's dev controls act on (item 15.9).
+    /// Which target the panel's dev controls act on.
     var target = ActorValueTargetSelector.player
-    /// Which actor value they act on, by vanilla table index (item 19.5).
+    /// Which actor value they act on, by vanilla table index.
     /// Health until the panel selects another.
     var selection: Int32 = 24
     /// Human-readable result of the last panel action.
@@ -82,16 +74,10 @@ extension GameViewController {
     /// frame for a number nobody can observe.
     func advanceActorValues(delta: Float) {
         guard let runtime = actorValues.runtime else { return }
-        // A caster does not regenerate. UESP states it flatly: "Magicka will not
-        // regenerate while you are casting a spell."
-        // (<https://en.uesp.net/wiki/Skyrim:Magicka>) The player is dropped from
-        // the set entirely rather than having magicka regeneration suppressed on
-        // its own, because the same paragraph names no other value and no source
-        // says health and stamina keep going — see docs/engine/spellcasting.md, which
-        // records that as a stated deviation rather than a silent one.
-        // Every caster, not only the player: item 19.10 casts an NPC's spells
-        // through the same runtime, so a skeleton mid-charge stands down from
-        // regeneration for the same cited reason the player does.
+        // A caster does not regenerate: "Magicka will not regenerate while you
+        // are casting a spell" (<https://en.uesp.net/wiki/Skyrim:Magicka>).
+        // Casters are dropped from the set entirely, for NPCs too; the
+        // deviation is recorded in docs/engine/spellcasting.md.
         let casting = casting.runtime
         let holders = regeneratingHolders().filter { casting?.isCasting($0.key) != true }
         runtime.advance(

@@ -1,29 +1,9 @@
-// `swf dialogue-menu`: drive `interface\dialoguemenu.swf` through
-// `DialogueMenuMovieBridge` against real DIAL/INFO records, and report what the
-// movie built (issue #205, roadmap item 17.3).
-//
-// The bring-up gate for the menu's data contract, in the CLI rather than only
-// in a test for the reason `swf quest-journal` and `swf inventory-menu` are:
-// the real-data XCTest host is unreliable on this machine
-// (docs/tools/environment.md). It only parses arguments and prints; the bridge
-// and the model it publishes live in `Sources/OpenSkyMenus/` and are unit tested
-// there against synthetic fixtures.
-//
-// Rows are built straight off the store rather than through
-// `DialogueRuntime.topics(for:)`, and that is deliberate: selection needs a
-// running quest, a placed speaker and a condition context, all of which item
-// 17.2 already tests, and none of which this gate is about. What this gate
-// answers is whether the *movie* takes the rows OpenSky publishes.
-//
-// `--text` is the measurement mode the text contract was pinned with: it
-// resolves the DIAL FULL, the INFO RNAM prompt and the INFO response text out
-// of all three string tables and prints what each answered, so which table a
-// field belongs to is observed rather than assumed: on vanilla `Skyrim.esm` the
-// DIAL FULL answers out of `.strings` and the response text out of
-// `.ilstrings`, and nothing answers twice. `--probe-rows` publishes rows
-// carrying no fields at all and reports which missing-name counts moved, which
-// on this list is none of the row fields — the centred list draws through the
-// entry clip's own `SetEntryText`.
+// `swf dialogue-menu`: drives `interface\dialoguemenu.swf` through
+// `DialogueMenuMovieBridge` with real DIAL/INFO records and reports what the
+// movie built. Rows come straight off the store, skipping selection, because
+// the question is whether the movie takes the rows. `--text` prints each field
+// from all three string tables. `--probe-rows` publishes empty rows and reports
+// which missing-name counts moved.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -142,7 +122,6 @@ extension SWFDialogueMenuCommand {
                 speakerKey: nil,
                 topics: picked.map { pair in
                     DialogueTopicEntry(
-                        topic: pair.topic.formID,
                         info: pair.info.formID,
                         text: DialogueMenuModel.rowText(
                             topic: pair.topic, info: pair.info, strings: strings

@@ -1,12 +1,11 @@
 // The destination registry is the single registration point for main-app
-// sidebar destinations (issue #98). These tests pin the UI-test accessibility
+// sidebar destinations. These tests pin the UI-test accessibility
 // contract (literal ids) as unit assertions — machine-checkable while make
 // test-ui is blocked — and verify every world-inspector factory builds a panel.
 
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
 import Testing
@@ -132,8 +131,8 @@ struct DestinationRegistryTests {
         reset("hudInteraction", context: context)
         #expect(providers.hudMetersEnabled)
 
-        // M17.8: the conversation's own destination. Lip sync off is its
-        // settings-shaped override; the reset switches it back on.
+        // The conversation's destination: lip sync off is its override, and
+        // the reset switches it back on.
         providers.lipSyncEnabled = false
         #expect(isOverridden("dialogueVoice", context: context))
         reset("dialogueVoice", context: context)
@@ -149,15 +148,15 @@ struct DestinationRegistryTests {
         reset("audio", context: context)
         #expect(!providers.audioEnabled)
 
-        // M9.2.3: a disabled music director is an audio-destination override,
-        // and the destination-level reset re-enables it.
+        // A disabled music director is an audio-destination override, and the
+        // destination-level reset re-enables it.
         providers.musicEnabled = false
         #expect(isOverridden("audio", context: context))
         reset("audio", context: context)
         #expect(providers.musicEnabled)
 
-        // M9.2.4: a muted or soloed category is an audio-destination override,
-        // and the destination-level reset clears both.
+        // A muted or soloed category is an audio-destination override, and the
+        // destination-level reset clears both.
         providers.setAudioCategoryMuted(true, for: .music)
         #expect(isOverridden("audio", context: context))
         reset("audio", context: context)
@@ -173,7 +172,7 @@ struct DestinationRegistryTests {
         reset("uiLab", context: context)
         #expect(providers.uiOverlayEnabled)
 
-        // M21: the vendor-faction override is the crime destination's one
+        // The vendor-faction override is the crime destination's one
         // setting; bounties and memberships are world state it leaves alone.
         providers.vendorOverrideSelection = .plugin(name: "skyrim.esm", objectID: 0x10)
         #expect(isOverridden("crimeFactions", context: context))

@@ -1,13 +1,6 @@
-// Env-gated footstep chain over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md "Legal & IP"), issue #352.
-//
-// The synthetic suites prove the decoders and the routing in isolation. The
-// claim they cannot make is the one that matters: that walking the *vanilla*
-// player graph fires tags the *vanilla* footstep sets answer to, and that those
-// tags reach real audio files. Both ends have to come from the install or the
-// whole feature is a well-tested no-op.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
+// Env-gated footstep chain over the user's install: the vanilla player graph
+// fires tags the vanilla footstep sets answer, and those tags reach real audio
+// files. Run with
 // `make realtest T='FootstepRealDataTests/vanillaGraphFiresTagsTheVanillaSetAnswers()'`.
 
 import Foundation
@@ -19,7 +12,6 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -68,8 +60,8 @@ struct FootstepRealDataTests {
                         "\(editorID) \(gait) \(tag) reaches a SNDR with no track"
                     )
                     let data = try vfs.contents(forPath: path)
-                    // The chain ends at RIFF/WAVE, not xWMA — the finding that
-                    // made issue #352 need a PCM reader at all.
+                    // The chain ends at RIFF/WAVE, not xWMA, so a PCM reader
+                    // is needed.
                     #expect(WorldAudioEngine.isWAV(data), "\(path) is not RIFF/WAVE")
                     _ = try WorldAudioEngine.makeBuffer(wav: data, downmixToMono: true)
                 }
@@ -120,7 +112,7 @@ struct FootstepRealDataTests {
         #expect(!footsteps.isEmpty, "\(detail)")
     }
 
-    /// The material half of the chain (issue #358) against the real plugin:
+    /// The material half of the chain against the real plugin:
     /// every vanilla `MATT` is reachable from a collision mesh by its hash, the
     /// landscape textures name materials, and naming one takes the same tag to a
     /// different sound than the representative fallback does.
@@ -199,13 +191,9 @@ struct FootstepRealDataTests {
     /// forward for a second of fixed steps with its event queue undrained.
     private static func drivenBridge(root: GameDataRoot) throws -> LocomotionBridge {
         let vfs = VirtualFileSystem(root: root)
-        // `PlayerBehaviorGraph.load` rather than a hand-built instance, because
-        // it is what wires `references`: `0_master.hkx` is a shell whose
-        // locomotion branch is a `hkbBehaviorReferenceGenerator` naming
-        // `mt_behavior.hkx`, and the `FootLeft`/`FootRight` clip triggers live
-        // in that referenced file. A graph built without a reference source
-        // reaches only `0_master`'s own states, so it fires transition events
-        // such as `MTState` and never a footstep tag (issues #385 and #394).
+        // `PlayerBehaviorGraph.load` wires `references`: the footstep triggers
+        // live in `mt_behavior.hkx`, which `0_master.hkx` names through a
+        // `hkbBehaviorReferenceGenerator`. Without it only transition events fire.
         let graph = try PlayerBehaviorGraph.load(fileSystem: vfs).instance
         let configuration = PlayerMovementConfiguration.resolve(
             store: GameSettingLoader.load(root: root),

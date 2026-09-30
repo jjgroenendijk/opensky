@@ -1,16 +1,7 @@
-// World > Player & Locomotion > State section (issue #191): where the player
-// is, which gait resolved, and what moved them this step.
-//
-// The camera-mode popup is here as well as under `World > World > Camera`
-// because this destination is where a user comes to drive locomotion, and the
-// capsule only simulates outside fly mode: a panel that showed frozen values
-// with no way to unfreeze them from the same screen would fail the app-ui rule
-// that a behavior be drivable without knowing a key. Both popups set the same
-// renderer state through the same seam, so they cannot drift.
-//
-// Not overridden: camera mode is the `World > World` destination's
-// overridden-ness (`CameraSection`), and claiming it twice would light two dots
-// for one setting.
+// World > Player & Locomotion > State section: where the player is, the
+// resolved gait, and what moved them this step. It repeats the camera-mode
+// popup, because the capsule only simulates outside fly mode. Not overridden:
+// `CameraSection` owns camera mode's override.
 
 import AppKit
 import OpenSkyRendering
@@ -47,10 +38,6 @@ final class LocomotionStateSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "locomotionState"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

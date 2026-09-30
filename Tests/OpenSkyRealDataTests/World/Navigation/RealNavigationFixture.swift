@@ -1,14 +1,6 @@
-// The real-install exterior-to-interior navigation route, shared by the item
-// 16.4 evidence suite and the M16 gate (issues #423 and #203).
-//
-// Extracted from `NPCMovementRealDataTests` when the gate needed the same two
-// cells: a route located twice from two copies of the same CELL walk is a route
-// that can quietly become two different routes, and the whole point of the M16
-// gate reusing 16.4's is that it is the same corridor.
-//
-// Reads the user's own install in place. No bytes, geometry, or positions from
-// it are committed — this file locates records by FormID and hands back live
-// values (AGENTS.md "Legal & IP boundary").
+// The real-install exterior-to-interior navigation route, shared by the
+// movement evidence suite and the M16 gate so both walk the same corridor. It
+// locates records by FormID and returns live values; nothing is committed.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -30,7 +22,6 @@ struct RealLocatedCell {
 struct RealNavigationRoute {
     /// `var` because `findPath` reconciles and remembers as it queries.
     var graph: RuntimeNavigationGraph
-    let exteriorDoor: PlacedReference
     /// Where a walk starts, on the exterior side.
     let start: SIMD3<Float>
     /// Where it ends, 96 units inside the farmhouse.
@@ -61,7 +52,6 @@ enum RealNavigationFixture {
         ) * 96
         return RealNavigationRoute(
             graph: graph,
-            exteriorDoor: exteriorDoor,
             start: SIMD3(WalkPathRoute.exteriorReturn, exteriorDoor.placement.position.z),
             target: target
         )

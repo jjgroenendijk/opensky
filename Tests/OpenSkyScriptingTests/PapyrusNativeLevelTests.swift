@@ -1,17 +1,10 @@
-// The character-level natives (issue #499, roadmap item 20.6): `Actor.GetLevel`
-// and the two SKSE perk-point functions over a live level runtime, plus the
-// refusals a script has to be able to tell apart.
-//
-// The bridge closure is the session's shape — one closure answering both
-// perk-point natives, with a zero delta as the read, for the reason
-// `GameViewControllerPapyrus` carries it that way.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The character-level natives: `Actor.GetLevel` and the two SKSE perk-point
+// functions over a live level runtime, plus the refusals a script must tell
+// apart. One bridge closure answers both perk-point natives, with a zero delta
+// as the read, as the session wires it.
 
 import Foundation
 @testable import OpenSkyActors
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression

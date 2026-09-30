@@ -1,14 +1,9 @@
-// World > Crime & Factions > Bounty (issue #507): the player's ledger per crime
-// faction, the crime faction answering for the cell the player stands in, and
-// the controls that move a bounty or put a guard to the test.
-//
-// Not overridden. A bounty is world state — the save carries it, a script reads
-// it — and a "Reset all" that paid it off would undo the thing the section
-// exists to demonstrate rather than restore a knob.
+// World > Crime & Factions > Bounty: the player's ledger per crime faction, the
+// crime faction for the current cell, and controls that move a bounty or test a
+// guard. Not overridden: a bounty is world state that saves carry.
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyFormatsCore
 
 final class CrimeBountySection: CrimeFactionPanelSection {
     static let defaultAmount: Int32 = 100

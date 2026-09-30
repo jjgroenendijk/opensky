@@ -1,13 +1,7 @@
-// Dialogue menu bridge coverage over a synthetic runtime (issue #205). No game
-// movie or extracted asset is used; the named display objects, the list base's
-// `EntriesA`/`iSelectedIndex` pair and the entry points the bridge drives are
-// installed in code, in the shape `openskycli swf dialogue-menu` measured off
-// the vanilla movie.
-//
-// What these pin is the bridge's half of the contract: the rows it writes, the
-// order it writes them in, the selection it leaves behind, and the fact that a
-// movie missing a piece degrades rather than crashes. Whether the *vanilla*
-// movie still has that shape is the real-data gate's job.
+// Dialogue menu bridge coverage over a synthetic runtime shaped like the
+// measured `dialoguemenu.swf`. It pins the rows the bridge writes, their order,
+// the selection it leaves, and that a missing piece degrades rather than
+// crashes. The real-data gate checks the vanilla movie's shape.
 
 import AppKit
 import FormatsSWFTesting
@@ -30,7 +24,6 @@ private final class DialogueCallLog: @unchecked Sendable {
 
 private struct DialogueHarness {
     let runtime: SWFMovieRuntime
-    let menu: SWFDisplayObject
     let list: SWFDisplayObject
     let log: DialogueCallLog
 }
@@ -79,7 +72,7 @@ struct DialogueMenuMovieBridgeTests {
         if withMenuClass {
             try installMenuClass(runtime: runtime)
         }
-        return DialogueHarness(runtime: runtime, menu: menu, list: list, log: log)
+        return DialogueHarness(runtime: runtime, list: list, log: log)
     }
 
     /// The movie's own state vocabulary, registered under the name the bridge
@@ -100,7 +93,6 @@ struct DialogueMenuMovieBridgeTests {
             speakerKey: nil,
             topics: texts.enumerated().map { index, text in
                 DialogueTopicEntry(
-                    topic: FormID(UInt32(index + 1)),
                     info: FormID(UInt32(index + 0x100)),
                     text: text,
                     endsConversation: false

@@ -1,5 +1,5 @@
-// Live app wiring for issue #201's engine-owned package selector. The future
-// M16 panel reads the retained readouts; this file adds no UI.
+// App wiring for the engine-owned package selector. The AI & Navigation panel
+// reads the retained readouts; this file adds no UI.
 
 import AppKit
 import OpenSkyConditions
@@ -7,7 +7,6 @@ import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -59,20 +58,10 @@ extension GameViewController {
         packages.runtime = runtime
     }
 
-    /// Re-selects `actor`'s package immediately (issue #424).
-    ///
-    /// Combat suspends nothing — an actor that starts fighting simply stops
-    /// acting on its package's movement, because the combat machine owns its
-    /// mover from then on. What ending a pursuit needs is therefore not a
-    /// resume of a saved procedure but a fresh selection: the world has moved on
-    /// by however long the fight lasted, and the package the schedule names now
-    /// is the one the actor should be doing. That is exactly
-    /// `forceReevaluate(actor:clock:context:)`, which the package runtime
-    /// already exposes for the gate panel.
-    ///
-    /// A conversation does suspend selection rather than merely outrunning it
-    /// (issue #427), so this also lifts that latch — which leaves the same
-    /// question either way: what should this actor be doing now?
+    /// Re-selects `actor`'s package now. Combat suspends nothing, so ending a
+    /// pursuit needs a fresh selection for the current time, which is
+    /// `forceReevaluate(actor:clock:context:)`. A conversation does suspend
+    /// selection, so this also lifts that latch.
     func resumePackage(for actor: ReferenceKey) {
         packages.runtime?.setSuspended(false, actor: actor)
         guard
@@ -89,7 +78,7 @@ extension GameViewController {
         packages.runtime = runtime
     }
 
-    /// Current state seam for issue #203's panel.
+    /// Current state seam for the AI & Navigation panel.
     func packageReadouts() -> [PackageActorReadout] {
         packages.runtime?.readouts() ?? []
     }

@@ -1,19 +1,8 @@
-// World > Combat & Physics > Magic Effects section (issue #469, roadmap item
-// 19.6): what is currently acting on the player and on the nearest resident
-// actor, what the runtime has and has not been able to apply, and the two
-// controls that make a potion verifiable without opening a menu.
-//
-// It sits beside Actor Values rather than under a destination of its own
-// because that is what it acts on: every archetype this milestone implements
-// moves an actor value, and the two readouts are read together — a potion that
-// restored health is only convincing next to the health it restored. The M19
-// gate (issue #475) added the nearest resident actor's list for the same
-// reason: an NPC that has just been hit by a hostile spell is read beside the
-// resistance that scaled it.
-//
-// Not overridden. A running effect is world state, not a panel setting, and a
-// "Reset all" that dispelled every buff would undo something the user did on
-// purpose. `MagicEffectDispelControl` is the deliberate way back.
+// World > Combat & Physics > Magic Effects section: what acts on the player
+// and the nearest resident actor, what the runtime could not apply, and two
+// controls to verify a potion without a menu. It sits beside Actor Values,
+// because every effect moves an actor value. Not overridden:
+// `MagicEffectDispelControl` is the way back.
 
 import AppKit
 import OpenSkyMagic
@@ -40,10 +29,6 @@ final class CombatMagicEffectsSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "combatMagicEffects"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

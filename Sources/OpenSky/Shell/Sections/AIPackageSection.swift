@@ -1,16 +1,8 @@
-// World > AI & Navigation > Package section (issue #201, roadmap item 16.5;
-// shipped by the M16 gate, issue #203): which package the selected actor's
-// schedule chose, what procedure it runs, and the force-reevaluate the runtime
-// exposes.
-//
-// One button. Selection is otherwise driven by the game clock and by the
-// conditions the package stack carries, and a panel that could set a package
-// directly would be showing a state the schedule never produced. Reevaluate is
-// the honest control: scrub the clock under `World > Runtime State > Time`,
-// press this, and read which package the same rules pick now.
-//
-// Not overridden. A package selection is world state driven by a clock, not a
-// panel setting.
+// World > AI & Navigation > Package section: which package the selected
+// actor's schedule chose, its procedure, and a force-reevaluate button. There
+// is no direct package control, because the schedule and conditions decide.
+// Scrub the clock under World > Runtime State > Time, then reevaluate. Not
+// overridden.
 
 import AppKit
 import OpenSkyWorld
@@ -34,10 +26,6 @@ final class AIPackageSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "aiPackage"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

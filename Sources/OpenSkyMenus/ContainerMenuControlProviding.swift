@@ -1,23 +1,14 @@
-// Main-app container and barter menu seam (M12.2.3, issue #179). Keeps the
-// verification panel independent of GameViewController while exposing the live
-// menu-stack state, the two-pane transfer list, the resolved barter pricing and
-// the merchant nomination.
-//
-// Mirrors InventoryMenuControlProviding deliberately: the three menus are the
-// same kind of surface, and a reviewer who knows one should not have to learn a
-// third shape.
+// Main-app container and barter menu seam: menu-stack state, the two-pane
+// transfer list, barter pricing, and the merchant nomination. Shaped like
+// `InventoryMenuControlProviding` on purpose.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyRendering
 
-/// One container the panel can nominate as the merchant.
-///
-/// There is no merchant system yet — vanilla merchants sell from a
-/// faction-linked chest, and none of that faction data is decoded — so the
-/// milestone's merchant is a container reference a developer picks. This is the
-/// seam that nomination goes through, and it is what a faction-driven answer
-/// replaces later without the menu changing.
+/// One container the panel can nominate as the merchant. Vanilla merchants sell
+/// from a faction-linked chest, and that faction data is not decoded, so a
+/// developer picks the container.
 nonisolated public struct ContainerMenuMerchantOption: Equatable, Sendable {
     public let reference: FormID
     public let name: String
@@ -169,8 +160,6 @@ public protocol ContainerMenuControlProviding: AnyObject {
 
     // MARK: - Merchant nomination
 
-    /// Resident containers the panel can nominate.
-    var containerMenuMerchantOptions: [ContainerMenuMerchantOption] { get }
     /// Nominates one as the active merchant. The returned text is what the
     /// readout shows, including the reason a nomination was refused.
     @discardableResult

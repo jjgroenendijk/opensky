@@ -199,11 +199,11 @@ struct M17AcceptanceRenderTests {
             speakerKey: .plugin(name: "skyrim.esm", objectID: 0x1B079),
             topics: [
                 DialogueTopicEntry(
-                    topic: FormID(0x1701), info: FormID(0x1711),
+                    info: FormID(0x1711),
                     text: "I will help you.", endsConversation: false
                 ),
                 DialogueTopicEntry(
-                    topic: FormID(0x1703), info: FormID(0x1713),
+                    info: FormID(0x1713),
                     text: "Farewell.", endsConversation: true
                 )
             ]

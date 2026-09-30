@@ -1,12 +1,6 @@
-// World > Container Menu > Merchant: nominates the container reference that
-// stands in as a merchant (M12.2.3, issue #179).
-//
-// This is the seam the milestone's scope calls for. There is no merchant system
-// — vanilla merchants sell out of a faction-linked chest, and no VENDR-style
-// faction data is decoded — so a developer points the menu at a container and
-// that container's stock and gold are the merchant's. Every resident container
-// is offered by name, plus the one under the crosshair, so a nomination never
-// needs a FormID typed in.
+// World > Container Menu > Merchant: nominates the container that stands in as
+// a merchant, because vanilla faction-linked vendor data is not decoded. Every
+// resident container is offered by name, plus the one under the crosshair.
 
 import AppKit
 import OpenSkyMenus
@@ -27,10 +21,6 @@ final class ContainerMerchantSection: PanelSectionViewController {
     /// The options behind the popup's rows, so a selection maps back to a
     /// reference without parsing the title the user sees.
     private var options: [ContainerMenuMerchantOption] = []
-
-    var statsReadout: String {
-        statsLabel.stringValue
-    }
 
     override var sectionTitle: String {
         "Merchant"

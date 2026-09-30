@@ -5,7 +5,6 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorldState
-import PhysicsTesting
 import simd
 
 @MainActor
@@ -49,7 +48,7 @@ public final class FakeRagdollWorld: RagdollWorldSeam {
         states[key]
     }
 
-    /// Where a death's script events go (issue #375). Nil is the seam's own
+    /// Where a death's script events go. Nil is the seam's own
     /// default — a world with no VM — and a test that cares about the events
     /// installs a closure into the real `PapyrusWorldRuntime`.
     public var deathEvents: ((ReferenceKey, ReferenceKey?) -> Int)?

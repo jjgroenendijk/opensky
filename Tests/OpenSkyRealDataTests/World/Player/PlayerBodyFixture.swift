@@ -1,10 +1,5 @@
-// Shared loading for the env-gated player-body suites (issue #189): the
-// install-backed graph, the assembled body, and the bridge that binds them.
-// Split out of `PlayerBodyRealDataTests` so both real-data files stay inside
-// the lint size caps.
-//
-// Everything it reads comes from the user's own install and never enters the
-// repository (AGENTS.md "Legal & IP boundary").
+// Shared loading for the env-gated player-body suites: the install-backed
+// graph, the assembled body, and the bridge that binds them.
 
 import Foundation
 import Metal
@@ -23,9 +18,8 @@ enum PlayerBodyFixture {
         let body: PlayerBody
         let bridge: LocomotionBridge
         let builder: CellSceneBuilder
-        /// The `_1stperson` graph and the arms it poses (issue #190), attached
-        /// to the same bridge so both graphs see the same step.
-        let firstPersonGraph: PlayerBehaviorGraph
+        /// The arms the `_1stperson` graph poses, on the same bridge so both
+        /// graphs see the same step.
         let arms: PlayerFirstPersonRig
     }
 
@@ -81,7 +75,6 @@ enum PlayerBodyFixture {
             body: body,
             bridge: bridge,
             builder: builder,
-            firstPersonGraph: firstPersonGraph,
             arms: arms
         )
     }
@@ -103,10 +96,6 @@ enum PlayerBodyFixture {
     /// compared exactly.
     static func palettes(of body: PlayerBody) -> [float4x4] {
         palettes(of: body.assembly)
-    }
-
-    static func palettes(of rig: PlayerFirstPersonRig) -> [float4x4] {
-        palettes(of: rig.assembly)
     }
 
     private static func palettes(of assembly: ActorAssembly<ActorRenderAsset>) -> [float4x4] {

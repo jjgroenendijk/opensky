@@ -1,24 +1,13 @@
-// Session wiring for melee combat (issue #195, roadmap item 15.4): builds the
-// runtime over the provider's combat GMSTs and weapon index, feeds it the
-// frame's melee intent and the graph events the fixed steps fired, and answers
-// the world questions a landed hit asks.
-//
-// AppKit stays in this controller satellite; the state machine, the sweep, the
-// damage formula and the impact chain are all engine types that build into
-// `openskycli` and are testable without a window.
-//
-// The frame hook shares `Renderer.onFrame` with the HUD and the actor-value
-// meters. It deliberately does *not* share the audio tick that routes
-// footsteps: footsteps are heard at the listener and stop with the audio
-// engine, whereas a swing has to resolve whether audio is on or not. Both
-// consumers read the same `LocomotionGraphEventQueue` through their own cursor,
-// which is what item 15.4 promoted the queue to allow.
+// Session wiring for melee combat: builds the runtime over the provider's
+// combat GMSTs and weapon index, feeds it the frame's melee intent and graph
+// events, and answers the world questions a landed hit asks. The frame hook
+// shares `Renderer.onFrame` with the HUD, not the audio tick: a swing must
+// resolve with audio off.
 
 import AppKit
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -79,7 +68,7 @@ extension GameViewController {
         let hands = equippedHands()
         runtime.weapon = hands.weapon
         runtime.offHand = hands.offHand
-        // A hand holding a readied spell takes its own button (issue #470), the
+        // A hand holding a readied spell takes its own button, the
         // same way a drawn bow takes the attack press away from the swing. The
         // intent is cleared rather than the runtime being told about spells,
         // because whether a hand is casting is the caster runtime's fact and
@@ -94,40 +83,15 @@ extension GameViewController {
         runtime.acceptFrame(intent)
         // Every landed hit is also what turns its target hostile and interrupts
         // the dev target's own attack, so the combat loop is told here rather
-        // than sweeping the trace for new entries (issue #374).
+        // than sweeping the trace for new entries.
         noteCombatHits(runtime.handleGraphEvents(events))
     }
 
-    /// The player's equipped weapon as a swing profile, or the unarmed profile
-    /// when nothing equipped resolves to a WEAP.
-    ///
-    /// Reads the equipped set rather than caching, because equipping is a
-    /// world-state write that can happen from the sidebar, from a script, or
-    /// from a container, and a cache would need invalidating from all three.
-    func equippedWeaponProfile() -> MeleeWeaponProfile {
-        equippedHands().weapon
-    }
-
-    /// Both hands as the behavior graph counts them (issue #403): the swing
-    /// profile for the right hand and one hand type for the left.
-    ///
-    /// A readied spell is read first and outranks everything worn, because
-    /// readying one already unequipped whatever held that hand
-    /// (`SpellbookRuntime.equip`). `CombatHandType.spell` is the value
-    /// `magicbehavior.hkx` reads, so the graph is told a spell is out even
-    /// though no casting clip plays yet — the state is queryable rather than
-    /// invisible, which is issue #470's boundary with M25/M26.
-    ///
-    /// Three readings, in the order vanilla resolves them. A two-handed weapon
-    /// fills both hands and reports its own type on each, which is how
-    /// `1hm_behavior.hkx` refuses a block while a bow is out. A second equipped
-    /// WEAP is the off-hand one. A shield is any equipped ARMO whose body
-    /// template takes slot 39.
-    ///
-    /// Torches are not read here: a torch is a LIGH, which the equipment
-    /// catalog does not index, so a lit hand still reports empty. Dual-wield
-    /// and torch handling are M18's, and both need the equipment runtime to
-    /// track *which* hand an item went into rather than only that it is worn.
+    /// Both hands as the behavior graph counts them. A readied spell wins,
+    /// because readying it unequipped that hand; `CombatHandType.spell` is what
+    /// `magicbehavior.hkx` reads. A two-handed weapon fills both hands, a second
+    /// WEAP is the off-hand one, and a shield is an ARMO using slot 39. Torches
+    /// (LIGH) are not indexed, so a lit hand reports empty.
     func equippedHands() -> (weapon: MeleeWeaponProfile, offHand: CombatHandType) {
         let worn = wornHands()
         return (

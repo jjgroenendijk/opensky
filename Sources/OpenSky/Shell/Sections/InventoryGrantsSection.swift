@@ -1,21 +1,9 @@
-// World > Inventory & Equipment > Grants: the M12 gate's starting state
-// (issue #180).
-//
-// The loop the gate proves — take, transfer, equip, buy, sell, drop — needs a
-// known item in a known inventory before any of it can run. Without this
-// control that means finding one in the world by hand, which is not repeatable
-// and not something an acceptance record can name. Granting is a developer
-// action with no analogue in the shipping game, and it is stated as one: it
-// creates items, so it is the one operation in this milestone that is not
-// conservation-preserving, and the readout says what it created.
-//
-// It carries no override state, for the same reason `ItemsSection` carries
-// none: a grant is a world change recorded in `WorldStateStore`, and
-// `World > Runtime State` already owns resetting those. A second reset here
-// would give the same deltas two owners.
+// World > Inventory & Equipment > Grants: puts a known item in a known
+// inventory, so the take, transfer, equip, buy, sell and drop loop is
+// repeatable. A developer-only action that creates items; the readout says what.
+// No override: World > Runtime State owns resetting world changes.
 
 import AppKit
-import OpenSkyFormatsCore
 import OpenSkyInventory
 
 final class InventoryGrantsSection: PanelSectionViewController {

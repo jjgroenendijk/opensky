@@ -1,18 +1,12 @@
-// `swf render-sweep`: the GPU half of the milestone 8.2.4 gate. One renderer
-// is built over the synthetic demo scene, a movie-free baseline frame is
-// captured, and then every vanilla Interface movie is assigned in turn and
-// rendered through the production display-list layer. Per movie it reports
-// the draw stats and how much of the frame the movie actually changed, so a
-// silently empty layer cannot pass. Any decode/render error fails the gate.
-//
-// Frames stay in memory unless `--out <dir>` is given; rendered vanilla movies
-// embed game art, so captures belong under logs/ (gitignored), never in the
-// repository (AGENTS.md "Legal & IP boundary").
+// `swf render-sweep`: the GPU half of the SWF render gate. One renderer draws
+// the demo scene, a movie-free baseline is captured, then each vanilla
+// Interface movie renders through the production display-list layer. Per movie
+// it reports draw stats and how much of the frame changed, so an empty layer
+// fails. `--out <dir>` writes frames; they hold game art, so use gitignored logs/.
 
 import Foundation
 import Metal
 import MetalKit
-import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering

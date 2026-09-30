@@ -1,23 +1,10 @@
-// The Spellcasting panel's condition probe (issue #474, roadmap item 19.11):
-// the eight magic condition functions evaluated against the player, one line
-// each.
-//
-// This is the surface that makes the registrations verifiable without a CLI
-// command. A reader who has just readied a spell and wants to know what a
-// condition would say about it reads it here, beside the hand it is in, rather
-// than under Runtime State — whose selectable lists are MUST records, which
-// author no magic conditions at all.
-//
-// Every probe goes through `ConditionProbe` over a real `ConditionContext`,
-// built by `magicConditionResolution()`, so the line a reader sees comes out of
-// the same registry and the same function body a quest's condition would reach.
-// A function that cannot answer prints the reason
-// `RuntimeStateConditionRunner` gives it, which is what keeps a gap
-// distinguishable from a zero.
+// The Spellcasting panel's condition probe: the eight magic condition functions
+// evaluated against the player, one line each, through `ConditionProbe` over
+// the context from `magicConditionResolution()`. A function that cannot answer
+// prints the reason `RuntimeStateConditionRunner` gives, so a gap is not a zero.
 
 import AppKit
 import OpenSkyConditions
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic

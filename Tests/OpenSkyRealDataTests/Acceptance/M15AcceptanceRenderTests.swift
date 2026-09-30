@@ -1,37 +1,8 @@
-// M15 acceptance, pixel half (issue #198): the fight is drawn, the drawing
-// follows the combat state, and the change is measured as changed-pixel counts
-// rather than eyeballed.
-//
-// Three frames rather than two, for the reason `M12AcceptanceRenderTests`
-// recorded and `M13` and `M14` reused: the strongest statement available is not
-// "the count changed" but "the frame reached by advancing is byte-identical to
-// a frame built at that state all along". Both axes the gate can measure get
-// that treatment — a weapon draw, and a swing.
-//
-// Two of the four axes issue #198 names are deliberately *not* measured here,
-// and the reason is a property of the engine rather than of this suite:
-//
-// * An arrow in flight has no drawn representation yet. `ProjectileRuntime`
-//   simulates the flight and spawns the arrow that *lands* through
-//   `ReferenceSpawnState`, so the only pixels a shot can produce are the stuck
-//   arrow's, which need a cell rebuild rather than a frame
-//   (docs/engine/archery.md, "Stuck arrows and the streaming lifecycle").
-// * A ragdoll collapse reaches the renderer through `RenderScene.ragdollPoses`,
-//   which is keyed by an ACHR's FormID and merges into that actor's animated
-//   pose. The player rig this suite renders is not an ACHR and takes its pose
-//   from the graph, so a collapse cannot be published onto it.
-//
-// Both are recorded rather than papered over, and both are covered by the
-// deterministic suites instead: `M15AcceptanceTests` pins the arrow's whole
-// trajectory and the ragdoll's spawn, settle and resting pose with numbers.
-// The sidebar-acceptance convention makes pixel evidence optional for exactly
-// this reason (docs/tools/sidebar-acceptance.md).
-//
-// Gated on a Metal 4 device *and* on the install, because what is being drawn
-// is the user's own player mesh under the user's own animation data.
-//
-// Rendered frames go to gitignored `logs/`: a frame embeds the user's game art
-// and is never committed (AGENTS.md "Legal & IP boundary").
+// M15 acceptance, pixel half: weapon draw and swing change the drawn frame, and
+// the advanced frame is byte-identical to one built at that state. Arrows in
+// flight and ragdolls are not drawn on the player rig, so `M15AcceptanceTests`
+// covers them with numbers (docs/tools/sidebar-acceptance.md). Needs Metal 4
+// and the install; frames go to gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -63,8 +34,6 @@ private struct M15RenderStage {
     let renderer: Renderer
     let feet: SIMD3<Float>
     let settings: CombatSettings
-    let device: MTLDevice
-    let root: GameDataRoot
 }
 
 struct M15AcceptanceRenderTests {
@@ -117,7 +86,7 @@ struct M15AcceptanceRenderTests {
 
         let settings = CombatSettings.resolve(store: GameSettingLoader.load(root: root))
         let stage = M15RenderStage(
-            renderer: renderer, feet: feet, settings: settings, device: device, root: root
+            renderer: renderer, feet: feet, settings: settings
         )
         let frames = try Self.poses(assembled, stage: stage)
 
@@ -161,14 +130,8 @@ struct M15AcceptanceRenderTests {
 
     // MARK: - Axes
 
-    /// The three poses one player is taken through, in one sequence with one
-    /// melee runtime: standing, weapon drawn, and partway through a swing.
-    ///
-    /// One runtime for the whole sequence rather than one per pose, because the
-    /// draw state is what decides whether the swing is allowed at all — a fresh
-    /// runtime per pose would be asking a sheathed player to swing. And one
-    /// sequence rather than three entry points, because the third frame's whole
-    /// job is to be the same sequence run again.
+    /// Standing, weapon drawn, and partway through a swing, with one melee
+    /// runtime, because the draw state decides whether a swing is allowed.
     @MainActor
     private static func poses(
         _ assembled: PlayerBodyFixture.Assembled,

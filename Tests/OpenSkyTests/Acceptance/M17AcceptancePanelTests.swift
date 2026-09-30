@@ -1,13 +1,8 @@
-// M17 milestone panel acceptance (issue #209): one uninterrupted run through
-// the real sidebar model and the registry-built World > Dialogue & Voice panel
-// on a single provider set, in the M10-M16 acceptance-triad shape.
-//
-// The readouts are found by their accessibility identifiers, which is the
-// deterministic substitute while UI automation is TCC-blocked
-// (docs/tools/environment.md). What this adds over the section suites is that
-// the whole destination works as one surface, in the order a conversation uses
-// it — open it, read the list and the trace, look at the framing, play the
-// line, watch the mouth, leave — without a single fake being swapped halfway.
+// M17 panel acceptance: one run through the real sidebar model and the
+// registry-built World > Dialogue & Voice panel on one provider set, found by
+// accessibility id. It checks the destination as one surface, in conversation
+// order: open, read list and trace, framing, play the line, watch the mouth,
+// leave.
 
 import AppKit
 @testable import OpenSky
@@ -214,11 +209,11 @@ struct M17AcceptancePanelTests {
         state: "topicList",
         rows: [
             DialogueTopicRow(
-                topic: FormID(0x1701), info: FormID(0x1711),
+                info: FormID(0x1711),
                 text: "I will help you.", endsConversation: false
             ),
             DialogueTopicRow(
-                topic: FormID(0x1703), info: FormID(0x1713),
+                info: FormID(0x1713),
                 text: "Farewell.", endsConversation: true
             )
         ],

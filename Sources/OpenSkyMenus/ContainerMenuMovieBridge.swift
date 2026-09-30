@@ -1,22 +1,9 @@
-// Vanilla presentation layer for the container and barter menus (M12.2.3,
-// issue #179): the measured AS2 contract of `Interface\containermenu.swf` and
-// `Interface\bartermenu.swf`.
-//
-// One bridge for two movies, because they are two skins on one class. Both
-// import the same `InventoryLists`, `ItemCard` and `BottomBar` components that
-// `inventorymenu.swf` imports, both derive their menu class from `ItemMenu`, and
-// both address their lists at the same instance paths. What differs is the
-// engine calls each one makes (`ItemTransfer` and `TakeAllItems` in the
-// container, `SetBarterMultipliers` and the vendor purse in the barter menu),
-// which is what `ContainerMenuModel.Mode` selects between.
-//
-// Every path and name below was read off the user's own installed movies, with
-// `openskycli swf action-run --movie containermenu` and `--movie bartermenu` and
-// from each movie's own AS2 constant pool. Nothing here is reproduced from
-// memory. See docs/engine/barter.md for the measurement.
-//
-// Device-free and AppKit-free, so it builds into `openskycli` and is unit
-// testable against synthetic AS2 fixtures.
+// Vanilla presentation layer for the container and barter menus: the measured
+// AS2 contract of `Interface\containermenu.swf` and `Interface\bartermenu.swf`.
+// One bridge for both, because they share the `ItemMenu` class, components,
+// and list paths; only the engine calls differ, selected by
+// `ContainerMenuModel.Mode`. Every name was read off the installed movies with
+// `openskycli swf action-run` (docs/engine/barter.md).
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -65,25 +52,12 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
     /// `PLATFORM_PC_KBMOUSE`, the same constant the other two menus pass.
     public static let pcPlatform = 0.0
 
-    public static let entryArrayName = InventoryMenuMovieBridge.entryArrayName
-    public static let selectedIndexName = InventoryMenuMovieBridge.selectedIndexName
     public static let invalidateCallback = InventoryMenuMovieBridge.invalidateCallback
 
     // MARK: - The barter contract
 
-    /// Properties `BarterMenu` defines on its own menu instance, read back off
-    /// the movie after bring-up (`swf action-run --movie bartermenu --dump
-    /// /Menu_mc` reports `fBuyMult = 1.0`, `fSellMult = 1.0`, `iPlayerGold =
-    /// 0.0`, `iVendorGold = 0.0`, `iConfirmAmount = 0.0`).
-    ///
-    /// The movie prices a row itself by scaling the row's `value` with these,
-    /// which is why publishing keeps the base value in the row and puts the
-    /// price factors here rather than pre-multiplying. That reading is inferred
-    /// from the names and from the shape of `SetBarterMultipliers(afBuyMult,
-    /// afSellMult)`, not measured against a priced row on screen — the engine's
-    /// own prices come from `BarterPricing` and never from the movie.
-    public static let buyMultiplierName = "fBuyMult"
-    public static let sellMultiplierName = "fSellMult"
+    /// Purse properties `BarterMenu` defines on its menu instance, read back off
+    /// the movie after bring-up (docs/engine/barter.md).
     public static let playerGoldName = "iPlayerGold"
     public static let vendorGoldName = "iVendorGold"
     /// `BarterMenu.SetBarterMultipliers(afBuyMult, afSellMult)`, a method on the
@@ -207,11 +181,9 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
         publishTotals(model, runtime: runtime)
     }
 
-    /// One `EntriesA` row: #289's inventory row plus the barter price.
-    ///
-    /// The base `value` stays as the movie's own price factors expect to find
-    /// it, and `price` carries what OpenSky charges, so the engine's arithmetic
-    /// is what a test compares against rather than the movie's.
+    /// One `EntriesA` row: the inventory row plus the barter price. `value`
+    /// stays the base value the movie's price factors expect; `price` carries
+    /// what OpenSky charges, so tests compare the engine's arithmetic.
     public static func row(
         for entry: InventoryMenuEntry,
         index: Int,

@@ -1,12 +1,7 @@
-// Quests-page bridge coverage over a synthetic runtime (issue #184). No game
-// movie or extracted asset is used: the measured node names, list properties
-// and list methods are installed in code, so the test asserts the *contract*
-// the bridge was written against rather than re-measuring the install.
-//
-// The shape installed below is exactly what `openskycli swf action-run --movie
-// quest_journal.swf --dump-proto` reported for the two lists: `EntriesA` holds
-// the rows, `iSelectedIndex` holds the selection with -1 for none, and
-// `InvalidateData()` and `ClearList()` are methods on the list.
+// Quests-page bridge coverage over a synthetic runtime. The measured node
+// names, `EntriesA`, `iSelectedIndex` (-1 for none), `InvalidateData()` and
+// `ClearList()` are installed in code, so the tests check the bridge against
+// its contract.
 
 import FormatsSWFTesting
 import Foundation
@@ -28,7 +23,6 @@ struct QuestJournalMovieBridgeTests {
     private struct Harness {
         let runtime: SWFMovieRuntime
         let titleList: SWFDisplayObject
-        let objectiveList: SWFDisplayObject
         let log: JournalCallLog
     }
 
@@ -56,7 +50,7 @@ struct QuestJournalMovieBridgeTests {
             }
         }
         return Harness(
-            runtime: runtime, titleList: titleList, objectiveList: objectiveList, log: log
+            runtime: runtime, titleList: titleList, log: log
         )
     }
 

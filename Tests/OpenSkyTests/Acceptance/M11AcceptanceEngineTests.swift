@@ -1,10 +1,9 @@
-// M11 milestone engine acceptance (issue #174): a real PapyrusRuntime,
+// M11 milestone engine acceptance: a real PapyrusRuntime,
 // WorldStateStore and CellStreamer activate a synthetic VMAD-bound lever, then
 // OpenSkySaveStore restores its world mutation, script variable and pending
 // timer into a fresh engine instance. No game bytes or test doubles are used.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
 import OpenSkySaveTesting

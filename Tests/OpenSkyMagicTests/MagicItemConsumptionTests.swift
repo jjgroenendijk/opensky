@@ -1,4 +1,4 @@
-// Consuming a potion and eating an ingredient (issue #469, roadmap item 19.6):
+// Consuming a potion and eating an ingredient:
 // the inventory half of the first consumer.
 //
 // Records are synthetic and built in code (`ActiveEffectFixture`) — never
@@ -28,7 +28,6 @@ struct MagicItemConsumptionTests {
     private struct Harness {
         let effects: ActiveEffectRuntime
         let inventory: InventoryRuntime
-        let store: WorldStateStore
     }
 
     private func harness() throws -> Harness {
@@ -83,8 +82,7 @@ struct MagicItemConsumptionTests {
                 effects: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
                 conditionRegistry: .magicTests
             ),
-            inventory: InventoryRuntime(store: store, baselines: baselines),
-            store: store
+            inventory: InventoryRuntime(store: store, baselines: baselines)
         )
     }
 

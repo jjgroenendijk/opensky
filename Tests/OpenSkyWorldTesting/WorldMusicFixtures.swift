@@ -68,7 +68,6 @@ public enum MusicFixture {
         }
     }
 
-    public static let singleTrackTag: UInt32 = 0x6ED7_E048
     public static let paletteTag: UInt32 = 0x23F6_78C3
     public static let silentTag: UInt32 = 0xA1A9_C4D5
 
@@ -154,7 +153,7 @@ public enum MusicFixture {
         )
     }
 
-    /// The vanilla authoring shape (issue #246): one MUSC whose single MUST
+    /// The vanilla authoring shape: one MUSC whose single MUST
     /// names a `\Data\Music\...\*.wav` the archives do not ship. Used with
     /// `MusicDirectorFixture.makeDirector(engine:musicStore:availablePaths:)`
     /// to model an install that holds only the `.xwm` sibling.

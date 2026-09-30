@@ -1,5 +1,5 @@
 // World > Inventory Menu > Menu: opens the engine's menu stack on the player's
-// inventory and drives the row list (M12.2.2, issue #289). Every button routes
+// inventory and drives the row list. Every button routes
 // the same `MenuInputEvent` the keyboard produces in menu mode, so the panel
 // cannot diverge from live input.
 
@@ -29,10 +29,6 @@ final class InventoryMenuSection: PanelSectionViewController {
         checkboxWithTitle: "Vanilla menu movie", target: nil, action: nil
     )
     private let statsLabel = PanelComponents.statsLabel(identifier: "InventoryMenuStatsLabel")
-
-    var statsReadout: String {
-        statsLabel.stringValue
-    }
 
     override var sectionTitle: String {
         "Menu"
@@ -116,7 +112,7 @@ final class InventoryMenuSection: PanelSectionViewController {
         // "Stolen items in your inventory will be marked with the word
         // 'Stolen'" (<https://en.uesp.net/wiki/Skyrim:Crime>). The count is
         // spelled out when only some of the row is hot, because the row is one
-        // item and the flag is per copy (issue #504).
+        // item and the flag is per copy.
         let stolen = switch entry.stolenCount {
         case 0: ""
         case entry.count: " [stolen]"
@@ -147,7 +143,7 @@ final class InventoryMenuSection: PanelSectionViewController {
     }
 
     /// The equipped-item detail every enchanted piece adds: what it grants and
-    /// how much charge is left (issue #472). One line saying so when nothing
+    /// how much charge is left. One line saying so when nothing
     /// equipped is enchanted, rather than a silently missing block.
     nonisolated static func enchantmentDetail(
         for snapshot: InventoryMenuControlSnapshot

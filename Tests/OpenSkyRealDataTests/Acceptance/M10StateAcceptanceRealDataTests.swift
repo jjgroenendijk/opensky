@@ -1,23 +1,10 @@
-// M10.1 acceptance against the user's read-only Skyrim SE install (issue #162):
-// the real-data half of "world state saves and loads against the load order
-// that is actually installed".
-//
-// The synthetic suite proves the round trip; what it cannot prove is that
-// `OpenSkySaveStore.fingerprint(forRoot:)` reads the shipped plugins at all, or
-// that a save written against them is refused once that load order changes.
-// Both need real TES4 headers, so they live here.
-//
-// Deliberately light: only the TES4 record of each plugin in the load order is
-// decoded, which is one small record at the head of a memory-mapped file. No
-// world is loaded, no cell is built and no archive is opened.
-//
-// No game-derived bytes are written anywhere. The save goes to a temporary
-// directory that is deleted at the end of the test, and it contains OpenSky's
-// own synthetic snapshot plus the plugin names and HEDR stats needed to verify
-// it; the report goes to gitignored `logs/`.
+// World state save acceptance on the user's install: `OpenSkySaveStore
+// .fingerprint(forRoot:)` reads the shipped plugins, and a save is refused once
+// the load order changes. Only each plugin's TES4 record is decoded. The save
+// goes to a temporary directory that is deleted afterwards; the report goes to
+// gitignored `logs/`.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkySave

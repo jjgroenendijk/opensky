@@ -85,8 +85,18 @@ Settings:
   type is read by the synthesized `==` and `hash(into:)`, which the index does not show.
   Example: the fields of a dictionary key such as `AmbienceKey`. Without this setting,
   Periphery reports them as assigned but never read.
-- `retain_assign_only_property_types: [FFmpegDecodeResources]`. A property of this type
-  holds ffmpeg objects alive until `deinit` frees them. Nothing reads it, on purpose.
+- `retain_assign_only_property_types`. A property of one of these types only keeps an
+  object alive. Nothing reads it, on purpose.
+  - `FFmpegDecodeResources` holds ffmpeg objects until `deinit` frees them.
+  - `NSWindowController` is the app delegate's only strong reference to the main window's
+    controller.
+  - `AcceptanceWorld`, `SceneCrimeWorld`, `SceneReferences`, `FakeWorldReferences` and
+    `PapyrusWorldFixture.Session` are test fixtures. The runtime under test holds them
+    weakly (`CasterRuntime.world`, `CrimeReporter.world`, `PapyrusWorldStateBridge.world`),
+    so the fixture must hold them strongly.
+- `retain_equatable_properties` stays off. Most panel snapshot types are `Equatable`, so
+  this setting would hide dead snapshot fields. A test struct compared with `==` reads its
+  fields in an assertion instead.
 - **A decoded field counts as used when a test reads it.** 30.8 keeps record fields that a
   `docs/formats/` page documents. With test targets in the scan, a parser test that
   checks the decoded value is a use. So a documented field needs a test, not a

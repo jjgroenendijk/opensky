@@ -1,17 +1,7 @@
-// World > AI & Navigation > Detection section (issue #202, roadmap item 16.6;
-// shipped by the M16 gate, issue #203): what the perception pass tracked this
-// step, every pair the selected actor is on either side of, and where each
-// detection constant came from.
-//
-// Read-only, and deliberately so. Detection level accumulates from distance,
-// light, sound and line of sight on a fixed step; a control that set a level
-// directly would be showing a number the formula never produced, and the way to
-// make an actor notice you is to walk into its cone. The overlay checkbox that
-// draws those cones is the one control this needs, and it lives in the Overlays
-// section beside the other two rather than being duplicated here.
-//
-// Two providers rather than one: the pass itself, and the selection every
-// section under this destination answers for.
+// World > AI & Navigation > Detection section: what the perception pass
+// tracked, every pair the selected actor is in, and where each detection
+// constant came from. Read-only: a level is only ever the formula's output.
+// The detection-cone checkbox lives in the Overlays section.
 
 import AppKit
 import OpenSkyPerceptionInterface
@@ -43,14 +33,6 @@ final class AIDetectionSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "aiDetection"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
-    }
-
-    var settingsReadout: String {
-        settingsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

@@ -1,14 +1,7 @@
-// `ProgressionControlProviding` conformance (issue #500, roadmap item 20.7):
-// the live readouts and dev controls the `World > Progression` panel is written
-// against.
-//
-// Every action below goes through the same call the runtime makes — a granted
-// use is `SkillAdvancementRuntime.advance`, a spent point is
-// `spendPerkPoint(on:)`, a pick is `PlayerLevelRuntime.chooseAttribute` — so
-// the panel verifies items 20.4 through 20.6 rather than a second
-// implementation of them. Nothing here invents a number.
-//
-// The reading half lives in `GameViewController+ProgressionTree.swift`.
+// `ProgressionControlProviding` conformance for the World > Progression panel.
+// Each action is the runtime's own call (`SkillAdvancementRuntime.advance`,
+// `spendPerkPoint(on:)`, `PlayerLevelRuntime.chooseAttribute`). The reading
+// half is in `GameViewController+ProgressionTree.swift`.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -16,7 +9,6 @@ import OpenSkyGameData
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 
 extension GameViewController: ProgressionControlProviding {
     var progressionSkillSelection: Int32 {

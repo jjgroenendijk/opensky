@@ -1,11 +1,6 @@
-// Dialogue menu model (issue #205, roadmap item 17.3): the cursor, the response
-// lifecycle and the subtitle the HUD is told to show, with no movie, no
-// renderer and no install.
-//
-// The model is the half of the menu that decides what happens; the movie bridge
-// only draws it. So these are the tests that pin behaviour a player would
-// notice: the selection stops at the ends rather than wrapping, a chosen line
-// cannot be chosen over, and the subtitle goes away when the line does.
+// Dialogue menu model: the cursor, the response lifecycle, and the HUD
+// subtitle, with no movie or install. The selection stops at the ends, a
+// chosen line cannot be chosen over, and the subtitle clears with the line.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
@@ -19,7 +14,6 @@ struct DialogueMenuModelTests {
         goodbye: Bool = false
     ) -> DialogueTopicEntry {
         DialogueTopicEntry(
-            topic: FormID(id),
             info: FormID(id + 0x1000),
             text: text,
             endsConversation: goodbye

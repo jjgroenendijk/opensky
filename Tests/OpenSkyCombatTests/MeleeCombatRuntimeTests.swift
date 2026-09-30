@@ -1,18 +1,7 @@
-// The melee runtime end to end (issue #195, roadmap item 15.4).
-//
-// This is the issue's headline acceptance: "a synthetic behavior graph with an
-// attack state and hit-frame event drives a sweep that hits a target capsule;
-// damage matches WEAP data; blocking reduces it per the pinned formula; a swing
-// through two overlapping targets hits each once."
-//
-// The graph is stood in for by the list of names it would have fired, which is
-// exactly what `LocomotionGraphEventQueue` hands the runtime — the graph's
-// contribution to a hit is the event stream and nothing else, and driving a
-// real `BehaviorGraphInstance` here would test the evaluator a second time
-// rather than testing the runtime. `MeleeCombatStateTests` covers the state
-// machine those names drive, `BehaviorStateMachineTests` covers the evaluator
-// that produces them, and the env-gated `MeleeCombatRealDataTests` closes the
-// loop on the vanilla player graph.
+// The melee runtime end to end: a hit-frame event drives a sweep that hits a
+// target capsule, damage matches WEAP data, blocking reduces it, and a swing
+// through two targets hits each once. The graph is stood in for by the event
+// names it would fire; `MeleeCombatRealDataTests` uses the vanilla graph.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
@@ -22,7 +11,6 @@ import OpenSkyCombatTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
-@testable import OpenSkyProgressionInterface
 import simd
 import Testing
 
@@ -119,7 +107,7 @@ struct MeleeCombatRuntimeTests {
         let world = FakeMeleeWorld()
         let runtime = Self.runtime(world: world, damage: 10)
 
-        // Two events per request, in this order (issue #403): the intent the
+        // Two events per request, in this order: the intent the
         // player expressed, then the equip event `0_master.hkx` transitions on.
         runtime.acceptFrame(MeleeIntent(toggleWeaponDrawn: true))
         #expect(

@@ -1,19 +1,8 @@
-// World > Progression > Skills section (issue #500, roadmap item 20.7): the
-// eighteen skills with what each reads, what it was trained to, and how far its
-// next point is — plus the two ways a skill moves.
-//
-// Grant use is `Game.AdvanceSkill`'s unit and the one every swing, shot and
-// cast reports in: the amount is converted by the skill's own AVIF parameters,
-// so what the button demonstrates is the real curve. Grant point is
-// `Game.IncrementSkill`, which is what a trainer or a skill book does — it
-// leaves the accumulated experience alone, because the point did not come from
-// use.
-//
-// The skill popup writes the provider's shared selection, so the Perk Tree
-// section below follows it and the two sections cannot describe different
-// skills.
-//
-// Not overridden: a trained skill is world state, not a panel setting.
+// World > Progression > Skills section: the eighteen skills with their level,
+// trained level and progress. Grant use is `Game.AdvanceSkill` through the
+// skill's AVIF curve; grant point is `Game.IncrementSkill`, like a trainer.
+// The skill popup shares the provider selection with the Perk Tree section.
+// Not overridden.
 
 import AppKit
 import OpenSkyProgression
@@ -41,10 +30,6 @@ final class ProgressionSkillsSection: ProgressionPanelSection {
 
     override var sectionIdentifier: String {
         "progressionSkills"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     /// The use amount the button applies, or the default when the field holds

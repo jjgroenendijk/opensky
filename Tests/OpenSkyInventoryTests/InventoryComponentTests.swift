@@ -1,15 +1,9 @@
-// ReferenceInventoryState unit tests (issue #176): the stack invariants, the
-// arithmetic that mutations are built from, and the equipped set.
-//
-// The value type is tested apart from `InventoryRuntime` because the
-// conservation guarantees the runtime advertises rest on this arithmetic being
-// total: an operation that cannot succeed must produce no value at all, which
-// is what lets the runtime compute both sides of a transfer before writing
-// either.
+// ReferenceInventoryState tests: stack invariants, mutation arithmetic, and the
+// equipped set. An operation that cannot succeed produces no value, which lets
+// the runtime compute both sides of a transfer before writing either.
 
 import Foundation
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyWorldState
 import Testing

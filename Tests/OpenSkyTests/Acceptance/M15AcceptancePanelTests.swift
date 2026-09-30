@@ -1,21 +1,12 @@
-// M15 milestone panel acceptance (issue #198): one uninterrupted run through
-// the real sidebar model and the registry-built World > Combat & Physics panel
-// on a single provider set, in the M10-M14 acceptance-triad shape.
-//
-// The readouts are found by their accessibility identifiers, which is the
-// deterministic substitute while UI automation is TCC-blocked
-// (docs/tools/environment.md). `CombatPhysicsPanelTests`,
-// `CombatMeleePanelTests`, `CombatArcheryPanelTests` and
-// `CombatRagdollPanelTests` cover each section on its own; what this adds is
-// that the whole destination works as one surface, in the order a session would
-// use it — look at the actors, draw, swing, shoot, kill, calm down, freeze the
-// physics — without a single fake being swapped halfway.
+// M15 panel acceptance: one run through the real sidebar model and the
+// registry-built World > Combat & Physics panel on one provider set, found by
+// accessibility id. It checks the destination as one surface, in session order:
+// look, draw, swing, shoot, kill, calm down, freeze physics.
 
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPerceptionInterface

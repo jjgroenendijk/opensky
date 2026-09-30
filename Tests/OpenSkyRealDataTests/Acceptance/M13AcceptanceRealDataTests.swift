@@ -1,32 +1,15 @@
-// M13 acceptance against the user's own read-only Skyrim SE install (issue
-// #185): one vanilla quest walked end to end through its real scripts, with the
-// fault, unimplemented-native and condition tallies pinned rather than
-// described.
-//
-// The quest is `MGRArniel01`, chosen from the issue-#181 census shortlist and
-// not from memory: it is the cheapest journal-visible quest in `Skyrim.esm` —
-// two stages, one objective, one forced-reference alias, no conditions — and it
-// is the same target `QuestScriptRealDataTests` and `JournalAcceptanceRealDataTests`
-// already run against, so the three gates cannot drift onto different quests.
-//
-// Its stages are set from outside rather than by a dialogue INFO, which is the
-// scope decision the issue asked for: `MGRArniel01` advances through dialogue,
-// and no vanilla quest on the shortlist progresses without it, so the gate
-// drives `SetStage` the way the sidebar's Quest Controls do and leaves the
-// dialogue system to a later milestone. The synthetic half of the gate
-// (`M13AcceptanceTests`) is what proves a *world event* can drive the same path.
-//
-// Nothing from the install is committed: the report goes to gitignored `logs/`
-// and carries counts and editor IDs only — never journal text, never a script
-// body. Run it with `make realtest T='M13AcceptanceRealDataTests/...'`, which
-// supplies the data root and the RSS watchdog.
+// M13 acceptance on the user's install: `MGRArniel01` walked end to end through
+// its real scripts, with the fault, native and condition tallies pinned. It is
+// the cheapest journal-visible quest and the same target as the other quest
+// gates. Stages are set from outside, as the Quest Controls do, because it
+// advances through dialogue. The report goes to gitignored `logs/` and holds
+// counts and editor IDs only. Run with `make realtest T='M13AcceptanceRealDataTests/...'`.
 
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
-@testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 import OpenSkySaveTesting
@@ -74,17 +57,11 @@ struct M13AcceptanceRealDataTests {
 
     // MARK: - Assertions
 
-    /// The milestone's stated target: the quest's own scripts ran, reaching for
-    /// no native OpenSky has not written, and the one fault they do produce is
-    /// pinned and explained rather than tolerated as a number.
-    ///
-    /// That fault is `typeMismatch(expected: "Object", actual: "None")` at the
-    /// first instruction of the quest's second fragment. This session loads no
-    /// cell, so the five object properties on the fragment script resolve to no
-    /// live handle and keep their compiler defaults — the five
-    /// `unresolvedReference` binding skips below — and calling a method on one
-    /// of them is a call on `None`. It is the absence of a world, not a quest
-    /// bug: the synthetic gate, which does attach a cell, faults zero times.
+    /// The quest's own scripts ran without reaching for a missing native. The one
+    /// fault is pinned: `typeMismatch(expected: "Object", actual: "None")` in the
+    /// second fragment. No cell is loaded, so its five object properties stay
+    /// `None` (the five `unresolvedReference` skips below). The synthetic gate,
+    /// which attaches a cell, faults zero times.
     @MainActor
     private static func expectCleanRun(_ session: M13RealDataSession) throws {
         let world = session.world
@@ -129,10 +106,8 @@ struct M13AcceptanceRealDataTests {
     }
 
     /// The quest condition functions answered against live state on real data.
-    /// The target quest declares no conditions of its own — the census says so —
-    /// so what is proved here is that the four functions issue #182 registered
-    /// resolve this quest and answer conclusively, which is what a condition
-    /// elsewhere in the corpus asking about it would get.
+    /// The quest declares no conditions, so this proves the four quest functions
+    /// resolve it and answer conclusively.
     @MainActor
     private static func expectConditions(
         _ session: M13RealDataSession,
@@ -160,16 +135,10 @@ struct M13AcceptanceRealDataTests {
         return evaluator.tally
     }
 
-    /// The save half: a real slot written mid-quest and restored into a brand
-    /// new store, runtime and quest layer, producing the identical page.
-    ///
-    /// What is compared is the quest's own state, not the whole snapshot. On
-    /// real data the load path legitimately materializes more than the file
-    /// held: `attachRunningQuestScripts` fills the aliases of every quest
-    /// `Skyrim.esm` flags start-game-enabled, so a restored store holds tables
-    /// a store that only ever started one quest never had. Whole-snapshot
-    /// equality is the synthetic gate's claim (`M13AcceptanceTests`), where the
-    /// session defines exactly one quest and that difference cannot arise.
+    /// A slot written mid-quest and restored into a new store produces the same
+    /// page. Only the quest's own state is compared: on load,
+    /// `attachRunningQuestScripts` fills the aliases of every start-game-enabled
+    /// quest, so a restored store holds more tables than the one saved.
     @MainActor
     private static func expectSaveResumes(
         _ session: M13RealDataSession,

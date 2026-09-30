@@ -1,8 +1,6 @@
-// World > System Menu > Settings: the two placeholders M8.5.1 surfaces behind
-// the menu's Settings row. The data root is read-only here — Settings (Cmd+,)
-// owns changing it — and the volume writes through the same audio seam as
-// World > Audio, so the two surfaces can never disagree. M9 binds the live
-// per-category volumes behind this master.
+// World > System Menu > Settings: the data root, read-only here (Settings,
+// Cmd+, changes it), and the master volume, which writes through the same audio
+// seam as World > Audio so the two cannot disagree.
 
 import AppKit
 import OpenSkyMenus
@@ -24,14 +22,6 @@ final class SystemMenuSettingsSection: PanelSectionViewController {
     private let statsLabel = PanelComponents.statsLabel(
         identifier: "SystemMenuSettingsStatsLabel"
     )
-
-    var dataRootReadout: String {
-        dataRootLabel.stringValue
-    }
-
-    var statsReadout: String {
-        statsLabel.stringValue
-    }
 
     override var sectionTitle: String {
         "Settings"

@@ -1,18 +1,7 @@
-// World > Runtime State > Conditions section (M10.2.4): evaluates one decoded
-// CTDA condition list against the live world and reports the verdict, the
-// reason each individual condition gave, and the session's `ConditionTally`
-// counters.
-//
-// Per-condition reasons are the point of this surface. A list that comes back
-// false because one function is not implemented yet and a list that comes back
-// false because the world genuinely does not satisfy it are the same Boolean
-// and completely different facts, and only the per-condition breakdown tells
-// them apart. The tally readout is the same information aggregated across every
-// evaluation this session, which is what makes coverage measurable from the UI
-// instead of only from a sweep.
-//
-// Never overridden: evaluating a condition reads the world, it does not change
-// it, so there is nothing here for the sidebar's reset to restore.
+// World > Runtime State > Conditions section: evaluates one decoded CTDA list
+// against the live world and reports the verdict, each condition's reason, and
+// the session's `ConditionTally`. The per-condition reasons tell "not
+// implemented" apart from "not satisfied". Never overridden.
 
 import AppKit
 import OpenSkyWorld
@@ -46,14 +35,6 @@ final class RuntimeStateConditionsSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "runtimeStateConditions"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
-    }
-
-    var tallyReadout: String {
-        tallyLabel.stringValue
     }
 
     /// The condition list the Evaluate button acts on.

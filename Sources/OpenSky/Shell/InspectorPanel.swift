@@ -1,5 +1,5 @@
 // Inspector-panel protocol + the 2 Hz readout ticker shared by every main-app
-// destination panel (issue #98). Formerly WorldInspectorPanel + a Timer field
+// destination panel. Formerly WorldInspectorPanel + a Timer field
 // duplicated in each panel; centralized so start/stop lifecycle is written once.
 
 import AppKit
@@ -8,9 +8,6 @@ import AppKit
 /// the containing view leaves screen. Sections and full panels both conform.
 @MainActor
 protocol InspectorPanel: NSViewController {
-    /// True when any control in the panel differs from its documented default.
-    var isOverridden: Bool { get }
-
     /// Reports override changes so shell chrome can update without another timer.
     var onOverrideStateChange: (() -> Void)? { get set }
 

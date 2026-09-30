@@ -1,37 +1,15 @@
-// Engine-side model of one conversation (issue #205, roadmap item 17.3): the
-// topics the player would see listed, the one they picked, and the line being
-// said back, independent of any movie.
-//
-// The same split every other menu in `Sources/OpenSkyMenus/` uses.
-// `DialogueMenuModel` is a `nonisolated struct`; `DialogueMenuMovieBridge` is
-// what pushes it through the measured `dialoguemenu.swf` contract. Keeping the
-// two apart is what lets the panel, the unit suites and the CLI probe assert
-// the same rows with no window, no renderer and no install.
-//
-// Nothing here decides *which* topics are offered. That is #426's
-// `DialogueRuntime`, whose `DialogueSelection` this is built from in
-// `DialogueMenuModelBuild.swift`; this file is rows, a cursor and a small state
-// machine, and it is deliberately testable without a `WorldStateStore`.
-//
-// ## The state machine, and why it has three states
-//
-// The movie's own `DialogueMenuObj` carries four: `SHOW_GREETING`,
-// `TOPIC_LIST_SHOWN`, `TOPIC_CLICKED` and `TRANSITIONING`, measured off the
-// registered class. This models the three that mean something to the engine —
-// the greeting being said, the list being read, a response being said — and
-// leaves `TRANSITIONING` to the movie, which owns the animation between them.
-// Adding a fourth engine state that only ever mirrored an animation frame
-// would be a second clock to keep in step with the movie's own.
-//
-// Documented in docs/engine/dialogue-menu.md.
+// Engine-side model of one conversation: the listed topics, the chosen one,
+// and the line said back. `DialogueMenuMovieBridge` pushes it into
+// `dialoguemenu.swf`; `DialogueRuntime` decides which topics are offered. The
+// movie's `DialogueMenuObj` has four states; this models the three the engine
+// needs and leaves `TRANSITIONING` to the movie's animation
+// (docs/engine/dialogue-menu.md).
 
 import Foundation
 import OpenSkyFormatsESM
 
 /// One selectable line in the topic list.
 nonisolated public struct DialogueTopicEntry: Equatable, Sendable {
-    /// The DIAL record the row stands for.
-    public let topic: FormID
     /// The INFO that won this topic's selection, which is what choosing the row
     /// delivers.
     public let info: FormID
@@ -43,8 +21,7 @@ nonisolated public struct DialogueTopicEntry: Equatable, Sendable {
     /// be told apart from one that leads on without choosing it first.
     public let endsConversation: Bool
 
-    public init(topic: FormID, info: FormID, text: String, endsConversation: Bool) {
-        self.topic = topic
+    public init(info: FormID, text: String, endsConversation: Bool) {
         self.info = info
         self.text = text
         self.endsConversation = endsConversation

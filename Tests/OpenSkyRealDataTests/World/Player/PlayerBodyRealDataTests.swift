@@ -1,24 +1,13 @@
-// Env-gated player-locomotion drive over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md "Legal & IP").
-//
-// This is item 14.6's acceptance run. The vanilla player graph (`0_master.hkx`)
-// and the vanilla player body (`NPC_ 00000007`) are loaded from the install, the
-// body is bound to the graph through the same `PlayerPoseBuffer` the app uses,
-// and a scripted input route drives the real `WalkController` over the launch
-// cell's real LAND terrain: idle, walk, run, sprint, sneak, jump, land, and
-// swim. What is asserted is that every state was actually reached, that the
-// graph produced a distinct pose in each of them, and that the body's bone
-// palettes moved with it.
-//
-// The per-step trace goes to gitignored `logs/`. Skips automatically when
-// OPENSKY_DATA_ROOT is unset or the machine has no Metal 4 device (assembling
-// the body uploads meshes). Run with
+// Env-gated player-locomotion drive over the user's install: the vanilla
+// player graph and body, bound through `PlayerPoseBuffer`, driven by
+// `WalkController` over real terrain through idle, walk, run, sprint, sneak,
+// jump, land and swim. Each state must be reached, pose distinctly, and move
+// the bone palettes. Needs Metal 4. Run with
 // `make realtest T='PlayerBodyRealDataTests/drivesEveryLocomotionStateWithABody()'`.
 
 import Foundation
 import Metal
 @testable import OpenSkyBehavior
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics

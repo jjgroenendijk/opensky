@@ -1,11 +1,10 @@
-// The bridge driving two graphs at once (issue #190): identical inputs, one
+// The bridge driving two graphs at once: identical inputs, one
 // perspective variable that differs, and two instances that cannot perturb
 // each other. Synthetic graphs only — no install.
 
 import BehaviorTesting
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyWorld
 import simd
 import Testing

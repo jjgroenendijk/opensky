@@ -1,11 +1,6 @@
-// World > Player & Locomotion > Behavior Graph section (issue #191): the live
-// graph, read-only.
-//
-// The active state path, the variables the bridge writes with the values the
-// graph holds, the events raised and the events that came back, and the
-// evaluator's own coverage tally. Read-only on purpose: driving the graph is
-// the Dev Controls section's job, and a readout that could also mutate would
-// make "what the graph did" and "what the panel did to it" hard to separate.
+// World > Player & Locomotion > Behavior Graph section: the live graph,
+// read-only, so "what the graph did" stays apart from "what the panel did".
+// Dev Controls drives the graph.
 
 import AppKit
 import OpenSkyWorld
@@ -28,10 +23,6 @@ final class LocomotionGraphSection: PanelSectionViewController {
 
     override var sectionIdentifier: String {
         "locomotionGraph"
-    }
-
-    var readout: String {
-        statsLabel.stringValue
     }
 
     override func makeContentViews() -> [NSView] {

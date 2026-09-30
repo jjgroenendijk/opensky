@@ -1,18 +1,13 @@
-// Synthetic MGEF, ALCH and INGR fixtures for the active-effect suites (issue
-// #469, roadmap item 19.6). Every byte is authored here; nothing comes from the
-// game install (AGENTS.md "Legal & IP boundary").
-//
-// The DATA layout is UESP "Skyrim Mod:Mod File Format/MGEF" — 152 bytes, with
-// the fields these suites care about at 0x00 flags, 0x08 associated item, 0x3C
-// second actor-value weight, 0x40 archetype, 0x44 primary actor value and 0x58
-// second actor value.
+// Synthetic MGEF, ALCH and INGR fixtures for the active-effect suites. The MGEF
+// DATA layout is UESP "Skyrim Mod:Mod File Format/MGEF": 152 bytes, with flags
+// at 0x00, associated item 0x08, second actor-value weight 0x3C, archetype
+// 0x40, primary actor value 0x44, and second actor value 0x58.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-import OpenSkyMagicInterface
 
 @MainActor
 public enum ActiveEffectFixture {
@@ -32,7 +27,7 @@ public enum ActiveEffectFixture {
     /// A peak value modifier sharing keyword 0x900.
     public static let peakResist: UInt32 = 0x15
     /// Fortify Health: value modifier on health with Recover set — a held
-    /// modifier on a primary (issue #511).
+    /// modifier on a primary.
     public static let fortifyHealth: UInt32 = 0x16
 
     public static let stackKeyword: UInt32 = 0x900

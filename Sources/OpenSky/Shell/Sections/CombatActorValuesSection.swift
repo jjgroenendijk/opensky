@@ -1,20 +1,8 @@
-// World > Combat & Physics > Actor Values section (issue #194, roadmap item
-// 15.3, scope point 7; shipped by the M15 gate, issue #198): the health,
-// magicka and stamina readouts for the player and the nearest resident actor,
-// with the damage and restore controls item 15.3 specified its provider seam
-// against.
-//
-// The target selector is a popup rather than two sets of buttons, because
-// "which actor" is one choice a session makes and holds, and duplicating four
-// controls per target would be four more ids to record and to keep honest. The
-// amount is a text field rather than a slider: a gate that damages an actor by
-// exactly 40 has to be able to ask for exactly 40, and a slider's value is a
-// float the user cannot type.
-//
-// Not overridden. A damaged actor is world state, not a panel setting, and a
-// "Reset all" that refilled every bar would undo a fight the user started on
-// purpose. `ActorValueResetControl` is the deliberate way back, and it acts on
-// the selected actor rather than on everything.
+// World > Combat & Physics > Actor Values section: health, magicka and stamina
+// for the player and the nearest resident actor, with damage and restore
+// controls. The amount is a text field so a test can ask for exactly 40. Not
+// overridden: a damaged actor is world state, so "Reset all" leaves it alone;
+// `ActorValueResetControl` resets the selected actor.
 
 import AppKit
 import OpenSkyActorsInterface
@@ -40,8 +28,8 @@ final class CombatActorValuesSection: PanelSectionViewController {
 
     let targetControl = NSPopUpButton()
     let kindControl = NSPopUpButton()
-    /// Any of the other 161 actor values, typed by vanilla name or by index
-    /// (issue #468). Blank means the popup's primary.
+    /// Any of the other 161 actor values, typed by vanilla name or by index.
+    /// Blank means the popup's primary.
     let valueNameControl = NSTextField(string: "")
     let amountControl = NSTextField(string: "10")
     let damageControl = NSButton(title: "Damage", target: nil, action: nil)
@@ -63,10 +51,6 @@ final class CombatActorValuesSection: PanelSectionViewController {
         "combatActorValues"
     }
 
-    var readout: String {
-        statsLabel.stringValue
-    }
-
     /// The amount the two buttons apply, or the default when the field holds
     /// something that is not a number. Never negative: a negative damage is a
     /// restore spelled confusingly, and the section already has a Restore.
@@ -81,13 +65,9 @@ final class CombatActorValuesSection: PanelSectionViewController {
         return kinds.indices.contains(index) ? kinds[index] : .health
     }
 
-    /// The actor value the buttons apply to, by vanilla table index.
-    ///
-    /// The typed name wins when it resolves — by vanilla name, matched the way
-    /// `ActorValueIdentity` matches every other name, or by bare index — and
-    /// the popup answers otherwise. A field holding something that names no
-    /// actor value falls back to the popup rather than acting on a guess, and
-    /// the readout's selected-value line is what shows which one won.
+    /// The actor value the buttons apply to, by vanilla table index. A typed
+    /// name or index wins when it resolves; otherwise the popup answers. The
+    /// readout's selected-value line shows which one won.
     var selectedIndex: Int32 {
         let typed = valueNameControl.stringValue.trimmingCharacters(in: .whitespaces)
         if !typed.isEmpty {

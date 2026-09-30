@@ -1,4 +1,4 @@
-// OpenSkySaveStore tests (issue #162, roadmap item 10.1.5): slot naming, the
+// OpenSkySaveStore tests: slot naming, the
 // save-then-load round trip, listing, and every failure the slot layer reports.
 //
 // Files are written to a per-test temporary directory that is removed again at
@@ -6,7 +6,6 @@
 // state and plugin bytes from ESMFixture, so no game data is involved.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
 import OpenSkySaveTesting

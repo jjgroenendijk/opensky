@@ -1,11 +1,10 @@
-// The perception pass end to end (issue #202, roadmap item 16.6): the wall, the
+// The perception pass end to end: the wall, the
 // cone, the accumulation rates, the decay schedule, the investigate position,
 // the caps and the overlay.
 //
 // The acceptance gate for 16.6 is exactly these behaviours over synthetic
 // geometry, so each `@Test` below names one of its clauses.
 
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface

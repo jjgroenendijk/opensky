@@ -149,7 +149,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var uiSampleShown = false
     var uiScale: Float = 1
     var uiSnapshot = UILabControlSnapshot(
-        overlayEnabled: true, sampleShown: false, scale: 1, stats: UIDrawStats()
+        overlayEnabled: true, scale: 1, stats: UIDrawStats()
     )
     /// Menu mode runs on the real `MenuModeController`, exactly as
     /// `GameViewControllerUILab` wires it, so a test that pushes a menu
@@ -244,7 +244,7 @@ final class FakeWorldProviders: WorldControlProviders {
     }
 
     var selectableAudioFileNames: [String] = []
-    /// Files the Sources section asked to play, in order. The M9 acceptance
+    /// Files the Sources section asked to play, in order. The audio acceptance
     /// gate reads this to prove the trigger reached the provider.
     private(set) var playedAudioFileNames: [String] = []
     /// Failure the next `playAudioFile(named:)` reports; nil means success.
@@ -482,7 +482,6 @@ extension FakeWorldProviders {
             worldSimPaused: systemMenuModel.isOpen,
             dataRootPath: nil,
             dataRootSource: nil,
-            masterVolume: systemMenuMasterVolume,
             audioEnabled: audioEnabled,
             movieEnabled: systemMenuMovieEnabled,
             movieLoaded: false,
