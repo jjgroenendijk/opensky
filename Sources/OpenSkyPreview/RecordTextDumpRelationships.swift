@@ -7,10 +7,10 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated extension RecordTextDump {
-    public static func relationshipSummary(_ record: ESMRecord) -> String? {
+    public static func relationshipSummary(_ record: ESMRecord) throws -> String? {
         switch record.type {
-        case "RELA": relationSummary(record)
-        case "ASTP": associationTypeSummary(record)
+        case "RELA": try relationSummary(record)
+        case "ASTP": try associationTypeSummary(record)
         default: nil
         }
     }
@@ -18,8 +18,8 @@ nonisolated extension RecordTextDump {
     /// RELA: the identity line, then the pair and the rank it holds, then the
     /// association-type link. The link is printed raw because the dump decodes
     /// one record and has no load order to resolve it against.
-    private static func relationSummary(_ record: ESMRecord) -> String? {
-        guard let relationship = try? Relationship(record: record) else { return nil }
+    private static func relationSummary(_ record: ESMRecord) throws -> String? {
+        let relationship = try Relationship(record: record)
         var lines = [
             "decoded RELA: editorID \(relationship.editorID ?? "-"), "
                 + "skipped \(relationship.skipped.total)"
@@ -43,8 +43,8 @@ nonisolated extension RecordTextDump {
 
     /// ASTP: the identity line and the four titles, each printed only when the
     /// record authored it.
-    private static func associationTypeSummary(_ record: ESMRecord) -> String? {
-        guard let type = try? AssociationType(record: record) else { return nil }
+    private static func associationTypeSummary(_ record: ESMRecord) throws -> String? {
+        let type = try AssociationType(record: record)
         var lines = [
             "decoded ASTP: editorID \(type.editorID ?? "-"), "
                 + "family association \(type.isFamilyAssociation), "

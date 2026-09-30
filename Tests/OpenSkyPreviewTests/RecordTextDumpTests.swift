@@ -33,6 +33,16 @@ struct RecordTextDumpTests {
         #expect(dump.contains("EDID 11 bytes \"TestStatic\""))
     }
 
+    @Test func showsAWarningWhenTheDecodeFails() throws {
+        let plugin = ESMFixture.tes4() + ESMFixture.topGroup(
+            "STAT",
+            contents: ESMFixture.malformedRecord("STAT", formID: 0xABC)
+        )
+        let dump = try RecordTextDump.dump(record: firstRecord(in: plugin), localized: false)
+        #expect(dump.contains("[WARNING] STAT decode failed:"))
+        #expect(!dump.contains("decoded STAT"))
+    }
+
     @Test func capsLongFieldLists() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("Big"))
         for _ in 0 ..< 70 {

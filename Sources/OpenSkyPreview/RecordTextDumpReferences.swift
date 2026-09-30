@@ -22,12 +22,12 @@ nonisolated extension RecordTextDump {
         localized: Bool,
         keywordContext: KeywordContext?,
         formListContext: FormListContext?
-    ) -> String? {
-        if let dataRecord = dataReferenceSummary(record: record, localized: localized) {
+    ) throws -> String? {
+        if let dataRecord = try dataReferenceSummary(record: record, localized: localized) {
             return dataRecord
         }
         if
-            let location = locationRecordSummary(
+            let location = try locationRecordSummary(
                 record: record,
                 localized: localized,
                 keywordContext: keywordContext
@@ -37,7 +37,7 @@ nonisolated extension RecordTextDump {
         }
         switch record.type {
         case "KYWD":
-            guard let keyword = try? Keyword(record: record) else { return nil }
+            let keyword = try Keyword(record: record)
             return summary(
                 type: "KYWD",
                 editorID: keyword.editorID,
@@ -45,7 +45,7 @@ nonisolated extension RecordTextDump {
                 skipped: keyword.skipped
             )
         case "AACT":
-            guard let action = try? ActionRecord(record: record) else { return nil }
+            let action = try ActionRecord(record: record)
             return summary(
                 type: "AACT",
                 editorID: action.editorID,
@@ -53,7 +53,7 @@ nonisolated extension RecordTextDump {
                 skipped: action.skipped
             )
         case "FLST":
-            guard let list = try? FormList(record: record) else { return nil }
+            let list = try FormList(record: record)
             let entries = list.entries.prefix(fieldPrintCap).map { entry in
                 if let formListContext {
                     formListContext.store.displayString(
@@ -79,10 +79,10 @@ nonisolated extension RecordTextDump {
     private static func dataReferenceSummary(
         record: ESMRecord,
         localized: Bool
-    ) -> String? {
+    ) throws -> String? {
         switch record.type {
         case "ECZN":
-            guard let zone = try? EncounterZone(record: record) else { return nil }
+            let zone = try EncounterZone(record: record)
             return "decoded ECZN: editorID \(zone.editorID ?? "-"), "
                 + "owner \(zone.owner?.description ?? "-"), "
                 + "location \(zone.location?.description ?? "-"), "
@@ -91,15 +91,13 @@ nonisolated extension RecordTextDump {
                 + "rank \(zone.rank.map(String.init) ?? "-"), "
                 + "flags 0x\(String(zone.flags.rawValue, radix: 16))"
         case "COLL":
-            guard let layer = try? CollisionLayer(record: record, localized: localized) else {
-                return nil
-            }
+            let layer = try CollisionLayer(record: record, localized: localized)
             return "decoded COLL: editorID \(layer.editorID ?? "-"), "
                 + "index \(layer.index.map(String.init) ?? "-"), "
                 + "flags 0x\(String(layer.flags.rawValue, radix: 16)), "
                 + "\(layer.collidesWith.count) collides-with links"
         case "DOBJ":
-            guard let defaults = try? DefaultObjects(record: record) else { return nil }
+            let defaults = try DefaultObjects(record: record)
             let tags = defaults.entries.prefix(12).map(\.tag.description)
             let suffix = defaults.entries.count > 12 ? ", ..." : ""
             return "decoded DOBJ: editorID \(defaults.editorID), "
@@ -114,9 +112,9 @@ nonisolated extension RecordTextDump {
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?
-    ) -> String? {
+    ) throws -> String? {
         if record.type == "LCRT" {
-            guard let refType = try? LocationRefType(record: record) else { return nil }
+            let refType = try LocationRefType(record: record)
             return summary(
                 type: "LCRT",
                 editorID: refType.editorID,
@@ -124,10 +122,8 @@ nonisolated extension RecordTextDump {
                 skipped: refType.skipped
             )
         }
-        guard
-            record.type == "LCTN",
-            let location = try? Location(record: record, localized: localized)
-        else { return nil }
+        guard record.type == "LCTN" else { return nil }
+        let location = try Location(record: record, localized: localized)
         let name = switch location.name {
         case let .inline(value): "\"\(value)\""
         case let .tableID(id): "string #\(id)"

@@ -14,10 +14,10 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: MagicContext?
-    ) -> String? {
+    ) throws -> String? {
         switch record.type {
-        case "AVIF": actorValueInformationSummary(record, localized, context)
-        case "PERK": perkSummary(record, localized, context)
+        case "AVIF": try actorValueInformationSummary(record, localized, context)
+        case "PERK": try perkSummary(record, localized, context)
         default: nil
         }
     }
@@ -30,10 +30,8 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: MagicContext?
-    ) -> String? {
-        guard let value = try? ActorValueInformation(record: record, localized: localized) else {
-            return nil
-        }
+    ) throws -> String? {
+        let value = try ActorValueInformation(record: record, localized: localized)
         let actorValue = value.vanillaActorValueIndex.map {
             "\(ActorValueIdentity.description(of: $0)) (index \($0))"
         } ?? "not a vanilla actor value"
@@ -99,8 +97,8 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: MagicContext?
-    ) -> String? {
-        guard let perk = try? Perk(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let perk = try Perk(record: record, localized: localized)
         let header = perk.data.map {
             String(
                 format: "level %d, declared ranks %d, %@%@%@",

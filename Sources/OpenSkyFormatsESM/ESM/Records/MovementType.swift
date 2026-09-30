@@ -108,6 +108,7 @@ nonisolated public struct MovementType: Equatable, Sendable {
 /// as with GMSTs. Lookup is case-insensitive, like every editor-ID lookup.
 nonisolated public struct MovementTypeStore: Equatable, Sendable {
     public private(set) var types: [String: MovementType] = [:]
+    public private(set) var skippedRecords = SkippedRecords()
 
     public static let empty = MovementTypeStore(types: [:])
 
@@ -140,16 +141,13 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
     }
 
     private mutating func add(file: ESMFile) {
-        guard
-            let group = file.topGroup(of: "MOVT"),
-            let children = try? group.children()
-        else { return }
-        for case let .record(record) in children where !record.isDeleted {
-            guard
-                let decoded = try? MovementType(record: record),
-                let editorID = decoded.editorID
-            else { continue }
-            types[editorID.lowercased()] = decoded
+        let decoded = file.decodeRecords(of: "MOVT", skipped: &skippedRecords) {
+            try MovementType(record: $0)
+        }
+        for type in decoded {
+            if let editorID = type.editorID {
+                types[editorID.lowercased()] = type
+            }
         }
     }
 }

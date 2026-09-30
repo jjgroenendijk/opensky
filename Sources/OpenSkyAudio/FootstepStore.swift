@@ -1,24 +1,8 @@
-// Footstep record index and tag -> sound resolution (issue #352).
-//
-// The chain a footstep travels, and why each link exists:
-//
-//   behavior-graph event ("FootLeft")
-//     -> FSTP whose ANAM tag matches, inside the FSTS list for this gait
-//     -> IPDS the footstep names
-//     -> IPCT for the surface under the foot
-//     -> SNDR the impact plays
-//
-// The set itself comes from the armature on the actor's feet: ARMA.SNDD names
-// an FSTS, so barefoot, light boots, and heavy boots each sound different
-// without the engine choosing anything. An actor whose feet resolve to no
-// armature falls back to `DefaultFootstepSet`.
-//
-// Every link is optional. A tag with no matching footstep, a footstep with no
-// impact data set, an impact with no sound: each ends the walk with nil and a
-// silent step, never a throw. Vanilla raises footstep events far more often
-// than it has sounds for them (the graph fires `FootLeft2` and `FootRight3`
-// for actors whose set names neither), so a missing link is normal data rather
-// than a fault.
+// Footstep records and tag -> sound resolution. The chain one step walks:
+// graph event ("FootLeft") -> FSTP with that ANAM tag in the gait's FSTS list
+// -> IPDS -> IPCT for the surface -> SNDR. ARMA.SNDD on the foot armature picks
+// the FSTS. A missing link ends the walk with nil, because vanilla fires far
+// more footstep events than it has sounds for.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -26,45 +10,43 @@ import OpenSkyFormatsESM
 
 /// What a resolved footstep event turns into.
 nonisolated public struct ResolvedFootstep: Equatable, Sendable {
-    /// The FSTP that matched the tag.
     public let footstep: Footstep
-    /// The IPCT chosen for the surface.
     public let impact: Impact
-    /// The SNDR to play. Never null: a resolution with no sound is reported as
-    /// nil instead.
+    /// A resolution with no sound is nil instead, so this is never null.
     public let sound: FormID
 }
 
 nonisolated public final class FootstepStore {
-    /// Editor ID of the set an actor with no boot armature walks with. Vanilla
-    /// names exactly one FSTS this way (`00012F16`); a load order that does not
-    /// leaves `defaultSet` nil and the player silent until an armature
-    /// resolves, which is visible in the readout rather than guessed around.
+    /// The set for an actor with no boot armature. Vanilla has one (`00012F16`).
     public static let defaultSetEditorID = "DefaultFootstepSet"
 
     public let sets: [UInt32: FootstepSet]
     public let footsteps: [UInt32: Footstep]
     public let impactDataSets: [UInt32: ImpactDataSet]
     public let impacts: [UInt32: Impact]
-    /// ARMA FormID -> FSTS FormID, from ARMA.SNDD. Only the armatures that
-    /// declare a footstep set appear.
+    /// ARMA FormID -> FSTS FormID, from ARMA.SNDD, for armatures that name one.
     public let armatureSets: [UInt32: FormID]
+    public let skippedRecords: SkippedRecords
 
-    /// The set named by `defaultSetEditorID`, or nil when the plugin has none.
+    /// Nil when the plugin has no set named `defaultSetEditorID`.
     public private(set) var defaultSet: FootstepSet?
 
     public init(file: ESMFile) {
-        sets = Self.index(file, type: "FSTS") { try? FootstepSet(record: $0) }
-        footsteps = Self.index(file, type: "FSTP") { try? Footstep(record: $0) }
-        impactDataSets = Self.index(file, type: "IPDS") { try? ImpactDataSet(record: $0) }
-        impacts = Self.index(file, type: "IPCT") { try? Impact(record: $0) }
-        armatureSets = Self.index(file, type: "ARMA") {
-            (try? ArmorAddon(record: $0))?.footstepSound
+        var skipped = SkippedRecords()
+        sets = file.indexRecords(of: "FSTS", skipped: &skipped) { try FootstepSet(record: $0) }
+        footsteps = file.indexRecords(of: "FSTP", skipped: &skipped) { try Footstep(record: $0) }
+        impactDataSets = file.indexRecords(of: "IPDS", skipped: &skipped) {
+            try ImpactDataSet(record: $0)
         }
+        impacts = file.indexRecords(of: "IPCT", skipped: &skipped) { try Impact(record: $0) }
+        armatureSets = file.indexRecords(of: "ARMA", skipped: &skipped) {
+            try ArmorAddon(record: $0).footstepSound
+        }
+        skippedRecords = skipped
         defaultSet = sets.values.first { $0.editorID == Self.defaultSetEditorID }
     }
 
-    /// Test seam: an index built from decoded values rather than from a file.
+    /// Test seam: built from decoded values rather than from a file.
     public init(
         sets: [FootstepSet],
         footsteps: [Footstep],
@@ -87,6 +69,7 @@ nonisolated public final class FootstepStore {
         self.armatureSets = Dictionary(
             uniqueKeysWithValues: armatureSets.map { ($0.key.rawValue, $0.value) }
         )
+        skippedRecords = SkippedRecords()
         defaultSet = sets.first { $0.editorID == Self.defaultSetEditorID }
     }
 
@@ -94,10 +77,8 @@ nonisolated public final class FootstepStore {
         sets[id.rawValue]
     }
 
-    /// The footstep set for the first of `armatures` that declares one, in the
-    /// order given, falling back to `defaultSet`. Callers pass the armatures on
-    /// the actor's feet slot; passing several keeps the choice between a boot
-    /// and the skin under it out of this type.
+    /// The set of the first armature that names one, else `defaultSet`. Callers
+    /// pass the feet-slot armatures, boot before skin.
     public func set(forArmatures armatures: [FormID]) -> FootstepSet? {
         for armature in armatures {
             if let id = armatureSets[armature.rawValue], let set = set(id) {
@@ -107,23 +88,15 @@ nonisolated public final class FootstepStore {
         return defaultSet
     }
 
-    /// Walks one graph event name to the sound it should play.
-    ///
-    /// `material` is the MATT type of the surface under the foot, which the
-    /// walk controller's ground contact reports (issue #358). Nil where the
-    /// surface names none — an airborne player, a mesh with no Havok material,
-    /// a landscape texture with no MNAM — and then the impact table answers
-    /// with its representative entry (`ImpactDataSet.impact(for:)`).
+    /// Walks one graph event name to its sound. `material` is the MATT under
+    /// the foot; nil makes the impact table use its representative entry.
     public func resolve(
         tag: String,
         gait: FootstepGait,
         in set: FootstepSet,
         material: FormID? = nil
     ) -> ResolvedFootstep? {
-        // Record order decides between two footsteps carrying the same tag.
-        // UESP describes a set as alternating its footsteps; no vanilla
-        // humanoid set repeats a tag within one gait, so there is nothing to
-        // alternate and taking the first is the whole behavior.
+        // No vanilla humanoid set repeats a tag in one gait, so the first wins.
         for id in set.footsteps(for: gait) {
             guard
                 let footstep = footsteps[id.rawValue],
@@ -141,27 +114,8 @@ nonisolated public final class FootstepStore {
         return nil
     }
 
-    /// Every tag one gait of a set can answer to, in record order. Drives the
-    /// panel readout and lets the director drop an event without walking the
-    /// whole chain for it.
+    /// Every tag one gait of a set answers to, in record order.
     public func tags(for gait: FootstepGait, in set: FootstepSet) -> [String] {
         set.footsteps(for: gait).compactMap { footsteps[$0.rawValue]?.tag }
-    }
-
-    private static func index<Value>(
-        _ file: ESMFile,
-        type: FourCC,
-        decode: (ESMRecord) -> Value?
-    ) -> [UInt32: Value] {
-        var values: [UInt32: Value] = [:]
-        guard let group = file.topGroup(of: type), let children = try? group.children() else {
-            return values
-        }
-        for case let .record(record) in children where record.type == type {
-            if let value = decode(record) {
-                values[record.formID] = value
-            }
-        }
-        return values
     }
 }

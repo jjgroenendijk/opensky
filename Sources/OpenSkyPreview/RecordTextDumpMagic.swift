@@ -70,16 +70,16 @@ nonisolated extension RecordTextDump {
         keywordContext: KeywordContext?,
         formListContext: FormListContext?,
         magicContext: MagicContext?
-    ) -> String? {
+    ) throws -> String? {
         switch record.type {
-        case "MGEF": magicEffectSummary(record, localized, keywordContext, magicContext)
-        case "SPEL": spellSummary(record, localized, magicContext)
-        case "SCRL": scrollSummary(record, localized, magicContext)
-        case "ENCH": enchantmentSummary(record, localized, formListContext, magicContext)
+        case "MGEF": try magicEffectSummary(record, localized, keywordContext, magicContext)
+        case "SPEL": try spellSummary(record, localized, magicContext)
+        case "SCRL": try scrollSummary(record, localized, magicContext)
+        case "ENCH": try enchantmentSummary(record, localized, formListContext, magicContext)
         // The shout family lives in RecordTextDumpShouts.swift so both files
         // stay inside the strict-lint file-length cap.
         default:
-            shoutFamilySummary(
+            try shoutFamilySummary(
                 record: record,
                 localized: localized,
                 magicContext: magicContext
@@ -92,10 +92,8 @@ nonisolated extension RecordTextDump {
         _ localized: Bool,
         _ keywordContext: KeywordContext?,
         _ magicContext: MagicContext?
-    ) -> String? {
-        guard let effect = try? MagicEffect(record: record, localized: localized) else {
-            return nil
-        }
+    ) throws -> String? {
+        let effect = try MagicEffect(record: record, localized: localized)
         let name = display(effect.name)
         let keywords = if let keywordContext {
             effect.keywords.displayStrings(
@@ -140,8 +138,8 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: MagicContext?
-    ) -> String? {
-        guard let spell = try? Spell(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let spell = try Spell(record: record, localized: localized)
         return castingSummary(.spell(spell), context: context)
     }
 
@@ -149,8 +147,8 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: MagicContext?
-    ) -> String? {
-        guard let scroll = try? Scroll(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let scroll = try Scroll(record: record, localized: localized)
         let value = String(
             format: ", value %d, weight %.2f",
             Int(scroll.itemValue.value),
@@ -207,10 +205,8 @@ nonisolated extension RecordTextDump {
         _ localized: Bool,
         _ formListContext: FormListContext?,
         _ context: MagicContext?
-    ) -> String? {
-        guard
-            let enchantment = try? Enchantment(record: record, localized: localized)
-        else { return nil }
+    ) throws -> String? {
+        let enchantment = try Enchantment(record: record, localized: localized)
         var line = "decoded ENCH: editorID \(enchantment.editorID ?? "-"), "
             + "name \(display(enchantment.name))"
         if let data = enchantment.data {

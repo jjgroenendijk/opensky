@@ -77,6 +77,8 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 
 ## Notes on the probes
 
+- A record that fails to decode prints a `[WARNING]` line to stderr, with its type and error.
+  Stdout keeps only the lines `make probe` greps.
 - Sweeps read one file at a time and keep only counts. An unbounded audio sweep is the kind of run
   that has run this machine out of memory.
 - `audio voice-sweep` exists because the naming rule was derived from the archive listing, so

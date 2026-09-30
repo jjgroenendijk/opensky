@@ -12,13 +12,13 @@ nonisolated extension RecordTextDump {
         record: ESMRecord,
         localized: Bool,
         magicContext: MagicContext?
-    ) -> String? {
+    ) throws -> String? {
         switch record.type {
-        case "SHOU": shoutSummary(record, localized, magicContext)
-        case "WOOP": wordOfPowerSummary(record, localized)
-        case "LVSP": leveledSpellSummary(record, magicContext)
-        case "DUAL": dualCastSummary(record)
-        case "EQUP": equipSlotSummary(record, magicContext)
+        case "SHOU": try shoutSummary(record, localized, magicContext)
+        case "WOOP": try wordOfPowerSummary(record, localized)
+        case "LVSP": try leveledSpellSummary(record, magicContext)
+        case "DUAL": try dualCastSummary(record)
+        case "EQUP": try equipSlotSummary(record, magicContext)
         default: nil
         }
     }
@@ -30,8 +30,8 @@ nonisolated extension RecordTextDump {
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: MagicContext?
-    ) -> String? {
-        guard let shout = try? Shout(record: record, localized: localized) else { return nil }
+    ) throws -> String? {
+        let shout = try Shout(record: record, localized: localized)
         var line = "decoded SHOU: editorID \(shout.editorID ?? "-"), "
             + "name \(displayText(shout.name)), "
             + "description \(displayText(shout.description)), "
@@ -65,10 +65,8 @@ nonisolated extension RecordTextDump {
     private static func wordOfPowerSummary(
         _ record: ESMRecord,
         _ localized: Bool
-    ) -> String? {
-        guard let word = try? WordOfPower(record: record, localized: localized) else {
-            return nil
-        }
+    ) throws -> String? {
+        let word = try WordOfPower(record: record, localized: localized)
         return "decoded WOOP: editorID \(word.editorID ?? "-"), "
             + "word \(displayText(word.name)), "
             + "translation \(displayText(word.translation)), "
@@ -80,8 +78,8 @@ nonisolated extension RecordTextDump {
     private static func leveledSpellSummary(
         _ record: ESMRecord,
         _ context: MagicContext?
-    ) -> String? {
-        guard let list = try? LeveledList(record: record) else { return nil }
+    ) throws -> String? {
+        let list = try LeveledList(record: record)
         let line = "decoded LVSP: editorID \(list.editorID ?? "-"), "
             + "chance none \(list.chanceNone)%, flags 0x"
             + String(format: "%02X", list.flags.rawValue)
@@ -97,8 +95,8 @@ nonisolated extension RecordTextDump {
 
     /// DUAL: the five art links stay raw. Nothing indexes PROJ, EXPL, EFSH,
     /// ARTO or IPDS yet, and printing a FormID honestly beats inventing a name.
-    private static func dualCastSummary(_ record: ESMRecord) -> String? {
-        guard let dual = try? DualCastData(record: record) else { return nil }
+    private static func dualCastSummary(_ record: ESMRecord) throws -> String? {
+        let dual = try DualCastData(record: record)
         var line = "decoded DUAL: editorID \(dual.editorID ?? "-")"
         guard let art = dual.art else {
             return line + ", DATA malformed, skipped \(dual.skipped.total)"
@@ -117,8 +115,8 @@ nonisolated extension RecordTextDump {
     private static func equipSlotSummary(
         _ record: ESMRecord,
         _ context: MagicContext?
-    ) -> String? {
-        guard let slot = try? EquipSlot(record: record) else { return nil }
+    ) throws -> String? {
+        let slot = try EquipSlot(record: record)
         let parents = slot.parents.map { parent in
             context.map { $0.equipSlots.displayString(for: parent, fromPlugin: $0.sourcePlugin) }
                 ?? parent.description
