@@ -12,11 +12,11 @@ nonisolated public enum NIFCollisionLibraryError: Error, Equatable {
 }
 
 nonisolated public final class NIFCollisionLibrary {
-    private let fileSystem: VirtualFileSystem
+    private let fileSystem: any GameFileSource
     private var cache: [String: NIFCollisionModel] = [:]
     private var touchedKeys: Set<String> = []
 
-    public init(fileSystem: VirtualFileSystem) {
+    public init(fileSystem: any GameFileSource) {
         self.fileSystem = fileSystem
     }
 

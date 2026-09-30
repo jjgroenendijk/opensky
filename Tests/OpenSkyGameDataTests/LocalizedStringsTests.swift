@@ -1,51 +1,36 @@
-// LocalizedStrings (lstring -> table lookup through the VFS) tests. Loose
-// synthetic tables in a temp data root — never extracted game files
+// LocalizedStrings (lstring -> table lookup through the VFS) tests. Synthetic
+// tables in an in-memory file source — never extracted game files
 // (AGENTS.md "Legal & IP boundary").
 
 import FormatsCoreTesting
 import Foundation
+import GameDataTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
 
 struct LocalizedStringsTests {
-    private let dataURL: URL
-
-    init() throws {
-        dataURL = FileManager.default.temporaryDirectory
-            .appending(path: "opensky-lstrings-\(UUID().uuidString)", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(
-            at: dataURL.appending(path: "Strings", directoryHint: .isDirectory),
-            withIntermediateDirectories: true
-        )
-    }
-
-    private func writeTable(
-        named name: String,
-        kind: StringTable.Kind,
-        entries: [(id: UInt32, text: String)]
-    ) throws {
-        try StringTableFixture.table(kind: kind, entries: entries)
-            .write(to: dataURL.appending(path: "Strings/\(name)"))
-    }
-
-    private func makeStrings(language: String = "english") -> LocalizedStrings {
+    private func makeStrings(
+        _ files: InMemoryFileSource = InMemoryFileSource(),
+        language: String = "english"
+    ) -> LocalizedStrings {
         LocalizedStrings(
-            vfs: VirtualFileSystem(dataURL: dataURL, archiveURLs: []),
+            vfs: files,
             pluginName: "Skyrim.esm",
             language: language
         )
     }
 
-    @Test func resolvesTableIDFromMatchingKind() throws {
-        try writeTable(named: "Skyrim_English.strings", kind: .strings, entries: [
-            (id: 0x42, text: "Whiterun")
-        ])
-        try writeTable(named: "Skyrim_English.dlstrings", kind: .dlstrings, entries: [
-            (id: 0x42, text: "A book text")
-        ])
-        let strings = makeStrings()
+    @Test func resolvesTableIDFromMatchingKind() {
+        let strings = makeStrings(InMemoryFileSource(files: [
+            "Strings/Skyrim_English.strings": StringTableFixture.table(
+                kind: .strings, entries: [(id: 0x42, text: "Whiterun")]
+            ),
+            "Strings/Skyrim_English.dlstrings": StringTableFixture.table(
+                kind: .dlstrings, entries: [(id: 0x42, text: "A book text")]
+            )
+        ]))
 
         #expect(strings.resolve(.tableID(0x42)) == "Whiterun")
         #expect(strings.resolve(.tableID(0x42), kind: .dlstrings) == "A book text")
@@ -65,11 +50,13 @@ struct LocalizedStringsTests {
         #expect(strings.resolve(.tableID(0x42)) == nil)
     }
 
-    @Test func languageSelectsTableFile() throws {
-        try writeTable(named: "Skyrim_French.strings", kind: .strings, entries: [
-            (id: 0x42, text: "Blancherive")
+    @Test func languageSelectsTableFile() {
+        let files = InMemoryFileSource(files: [
+            "Strings/Skyrim_French.strings": StringTableFixture.table(
+                kind: .strings, entries: [(id: 0x42, text: "Blancherive")]
+            )
         ])
-        #expect(makeStrings(language: "french").resolve(.tableID(0x42)) == "Blancherive")
-        #expect(makeStrings(language: "english").resolve(.tableID(0x42)) == nil)
+        #expect(makeStrings(files, language: "french").resolve(.tableID(0x42)) == "Blancherive")
+        #expect(makeStrings(files, language: "english").resolve(.tableID(0x42)) == nil)
     }
 }

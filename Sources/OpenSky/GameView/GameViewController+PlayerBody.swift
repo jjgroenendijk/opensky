@@ -90,7 +90,7 @@ extension GameViewController {
     /// install whose first-person set is missing or malformed still walks,
     /// still renders a third-person body, and simply has no arms — which the
     /// panel says in as many words.
-    private func wireFirstPersonGraph(fileSystem: VirtualFileSystem, renderer: Renderer) {
+    private func wireFirstPersonGraph(fileSystem: any GameFileSource, renderer: Renderer) {
         do {
             let graph = try PlayerBehaviorGraph.load(
                 fileSystem: fileSystem,

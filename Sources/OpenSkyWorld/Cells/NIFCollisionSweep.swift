@@ -1,5 +1,5 @@
 // Production collision probe over model paths resolved from one exterior
-// cell. Reads through VirtualFileSystem; reports each asset independently so
+// cell. Reads through a GameFileSource; reports each asset independently so
 // one malformed/modded NIF cannot hide coverage for sibling assets.
 
 import Foundation
@@ -48,7 +48,7 @@ nonisolated public struct NIFCollisionSweepResult: Sendable {
 nonisolated public enum NIFCollisionSweep: Sendable {
     public static func run(
         file: ESMFile,
-        fileSystem: VirtualFileSystem,
+        fileSystem: any GameFileSource,
         worldspaceEditorID: String,
         gridX: Int32,
         gridY: Int32
@@ -66,7 +66,7 @@ nonisolated public enum NIFCollisionSweep: Sendable {
 
     private static func inspect(
         path: String,
-        fileSystem: VirtualFileSystem
+        fileSystem: any GameFileSource
     ) -> NIFCollisionAssetReport {
         do {
             let file = try NIFFile(data: fileSystem.contents(forPath: path))

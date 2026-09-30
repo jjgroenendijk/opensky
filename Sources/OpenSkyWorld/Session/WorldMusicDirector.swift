@@ -59,7 +59,7 @@ public final class WorldMusicDirector {
         engine: WorldAudioEngine,
         musicStore: MusicRecordStore?,
         weatherStore: WeatherStore?,
-        fileSystem: VirtualFileSystem?
+        fileSystem: (any GameFileSource)?
     ) {
         self.engine = engine
         self.musicStore = musicStore

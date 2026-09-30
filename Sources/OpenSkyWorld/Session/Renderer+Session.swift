@@ -21,10 +21,15 @@ extension Renderer {
         input: CameraInputState? = nil,
         timeOfDay: Float = Renderer.defaultTimeOfDay,
         movementConfiguration: PlayerMovementConfiguration = .synthetic,
-        shaderLibrary: MTLLibrary? = nil
+        shaderLibrary: MTLLibrary? = nil,
+        wallClock: any WallClock = MediaWallClock()
     ) throws {
         try self.init(
-            rendering: view, scene: scene, camera: camera, shaderLibrary: shaderLibrary
+            rendering: view,
+            scene: scene,
+            camera: camera,
+            shaderLibrary: shaderLibrary,
+            wallClock: wallClock
         )
         frameDriver = GameSession(
             renderer: self,

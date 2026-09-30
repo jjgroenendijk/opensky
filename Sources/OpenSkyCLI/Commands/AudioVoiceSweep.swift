@@ -103,7 +103,7 @@ enum AudioVoiceSweep {
 
     // MARK: - Framing
 
-    private static func frameAll(vfs: VirtualFileSystem, paths: [String], limit: Int?) throws {
+    private static func frameAll(vfs: any GameFileSource, paths: [String], limit: Int?) throws {
         let walked = limit.map { Array(paths.prefix($0)) } ?? paths
         var tally = VoiceFramingTally()
         tally.skipped = paths.count - walked.count

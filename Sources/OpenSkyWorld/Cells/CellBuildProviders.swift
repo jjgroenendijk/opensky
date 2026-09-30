@@ -169,11 +169,11 @@ nonisolated public protocol FactionDataProviding {
 /// with the same master table the cell build used, so a script and the cell
 /// it is attached to agree on reference identity.
 ///
-/// Both values are immutable and thread-safe (`VirtualFileSystem` is
+/// Both values are immutable and thread-safe (`GameFileSource` is
 /// `Sendable`; `FormIDResolver` is a value), so reading them from the main
 /// thread does not break the builder's queue confinement.
 nonisolated public protocol ScriptDataProviding {
-    var scriptFileSystem: VirtualFileSystem? { get }
+    var scriptFileSystem: (any GameFileSource)? { get }
     var scriptFormIDResolver: FormIDResolver { get }
 }
 

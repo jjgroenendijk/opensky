@@ -1,6 +1,6 @@
 // Per-frame actor animation clock + measured palette refresh.
 
-import QuartzCore
+import Foundation
 
 extension Renderer {
     public func updateAnimations(deltaTime: Float) {
@@ -25,7 +25,7 @@ extension Renderer {
     public func updateAnimationsFromWallClock() -> Float {
         // Returned delta also drives particles + precipitation this frame, so a
         // paused (zero) delta freezes all three together.
-        let delta = animationClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
+        let delta = animationClock.advance(to: wallClock.now, paused: worldSimPaused)
         updateAnimations(deltaTime: delta)
         return delta
     }

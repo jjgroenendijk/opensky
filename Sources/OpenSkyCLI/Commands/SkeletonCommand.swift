@@ -57,7 +57,7 @@ enum SkeletonCommand {
     private static func printNameMap(
         skeletons: [HKASkeleton],
         nifKey: String,
-        fileSystem: VirtualFileSystem
+        fileSystem: any GameFileSource
     ) throws {
         guard
             let rig = skeletons.enumerated()

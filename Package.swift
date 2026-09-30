@@ -338,7 +338,7 @@ targets += foundation(
         "FormatsMeshTesting", "OpenSkyFormatsSWF", "RenderingTesting"
     ]
 )
-targets += testing("RenderingTesting", dependencies: [])
+targets += testing("RenderingTesting", dependencies: ["OpenSkyRendering"])
 
 targets += foundation(
     "OpenSkyWorldState",

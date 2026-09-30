@@ -21,7 +21,7 @@ final class PreviewDetailBuilder {
         let image: CGImage?
     }
 
-    private let fileSystem: VirtualFileSystem
+    private let fileSystem: any GameFileSource
     private let referenceInspector: ReferenceRecordInspector?
     /// Nil without a Metal 4 GPU or its texture placeholders; previews are then text-only.
     private let device: (any MTLDevice)?
@@ -29,7 +29,7 @@ final class PreviewDetailBuilder {
     private let meshes: MeshLibrary?
 
     init(
-        fileSystem: VirtualFileSystem,
+        fileSystem: any GameFileSource,
         referenceInspector: ReferenceRecordInspector? = nil
     ) {
         self.fileSystem = fileSystem

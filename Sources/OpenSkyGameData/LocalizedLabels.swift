@@ -66,7 +66,7 @@ nonisolated extension LocalizedLabels {
     /// A malformed file is logged and skipped so one bad file cannot take the
     /// provider down (mod-quirk rule, AGENTS.md).
     public static func load(
-        vfs: VirtualFileSystem,
+        vfs: any GameFileSource,
         language: String = "english"
     ) -> LocalizedLabels {
         let suffix = "_\(language.lowercased()).txt"

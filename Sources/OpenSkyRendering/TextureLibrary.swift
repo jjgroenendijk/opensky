@@ -30,7 +30,7 @@ nonisolated public final class TextureLibrary {
         keyString(path: key.path, usage: key.usage)
     }
 
-    private let fileSystem: VirtualFileSystem
+    private let fileSystem: any GameFileSource
     private let loader: TextureLoader
     private var cache: [CacheKey: MTLTexture] = [:]
 
@@ -46,12 +46,12 @@ nonisolated public final class TextureLibrary {
     /// Distinct paths the VFS could not resolve (each fell back to placeholder).
     public private(set) var missingCount = 0
 
-    public init(fileSystem: VirtualFileSystem, loader: TextureLoader) {
+    public init(fileSystem: any GameFileSource, loader: TextureLoader) {
         self.fileSystem = fileSystem
         self.loader = loader
     }
 
-    public convenience init(fileSystem: VirtualFileSystem, device: MTLDevice) throws {
+    public convenience init(fileSystem: any GameFileSource, device: MTLDevice) throws {
         try self.init(fileSystem: fileSystem, loader: TextureLoader(device: device))
     }
 

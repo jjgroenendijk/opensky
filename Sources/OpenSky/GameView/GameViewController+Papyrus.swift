@@ -123,7 +123,7 @@ extension GameViewController {
     /// and counted as a skipped attach, because a mod-authored or truncated
     /// script must not stop the world from streaming.
     private static func scriptProvider(
-        fileSystem: VirtualFileSystem
+        fileSystem: any GameFileSource
     ) -> (String) -> PexFile? {
         let loader = PexScriptLoader(fileSystem: fileSystem)
         return { name in

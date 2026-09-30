@@ -71,10 +71,12 @@ Where it applies:
   renderer calls it at fixed points in the frame and never imports the game systems.
 - Controls. `AudioControlProviding` is what the audio sidebar section needs.
   `AudioVoiceSection` holds `any AudioControlProviding`, not the audio engine.
-- Files and the game clock, after 30.12.2
-  ([#651](https://github.com/jjgroenendijk/opensky/issues/651)). Until then,
-  `VirtualFileSystem` is a concrete class, and the renderer reads `CACurrentMediaTime()`
-  directly.
+- Files. Code reads game files through `any GameFileSource`. `VirtualFileSystem` is the
+  adapter over the install. A test passes `InMemoryFileSource` from `GameDataTesting`,
+  filled with synthetic bytes.
+- The clock. The frame clocks read `Renderer.wallClock`, an `any WallClock`. The app uses
+  `MediaWallClock`. A test passes `ManualWallClock` from `RenderingTesting` and steps time
+  by hand. Timing reads that only measure how long code took use `DispatchTime` directly.
 
 Where it does not apply: pure code. A parser that takes `Data` needs no port. Do not add a
 protocol that has one conformer and no test fake.

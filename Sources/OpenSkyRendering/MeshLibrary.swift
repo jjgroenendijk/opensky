@@ -30,7 +30,7 @@ nonisolated public enum MeshLibraryError: Error, Equatable {
 }
 
 nonisolated public final class MeshLibrary {
-    public let fileSystem: VirtualFileSystem
+    public let fileSystem: any GameFileSource
     public let device: MTLDevice
     public let textures: TextureLibrary
     private var cache: [String: RenderModel] = [:]
@@ -60,7 +60,7 @@ nonisolated public final class MeshLibrary {
     /// Distinct mesh paths successfully parsed + uploaded.
     public private(set) var loadedCount = 0
 
-    public init(fileSystem: VirtualFileSystem, device: MTLDevice, textures: TextureLibrary) {
+    public init(fileSystem: any GameFileSource, device: MTLDevice, textures: TextureLibrary) {
         self.fileSystem = fileSystem
         self.device = device
         self.textures = textures

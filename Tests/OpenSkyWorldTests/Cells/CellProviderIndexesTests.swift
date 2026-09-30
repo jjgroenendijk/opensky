@@ -35,7 +35,7 @@ struct CellProviderIndexesTests {
         )
         let provider = indexes.makeProvider()
 
-        #expect(provider.builder.fileSystem === fileSystem)
+        #expect(provider.builder.fileSystem as? VirtualFileSystem === fileSystem)
         #expect(provider.builder.localizedStrings?.language == "french")
         #expect(provider.worldspaceEditorID == FirstRenderCell.worldspaceEditorID)
         #expect(provider.weatherSystem == nil)

@@ -20,14 +20,14 @@ nonisolated public final class SWFMovieLoader {
         public let library: SWFFontLibrary
     }
 
-    private let fileSystem: VirtualFileSystem
+    private let fileSystem: any GameFileSource
     private var cachedFonts: FontEnvironment?
     /// Movies decoded to answer an ImportAssets URL, kept for the loader's
     /// lifetime: sibling menus import the same component movies, and a source
     /// nobody can provide is cached as a miss too.
     private var cachedSources: [String: SWFMovie?] = [:]
 
-    public init(fileSystem: VirtualFileSystem) {
+    public init(fileSystem: any GameFileSource) {
         self.fileSystem = fileSystem
     }
 

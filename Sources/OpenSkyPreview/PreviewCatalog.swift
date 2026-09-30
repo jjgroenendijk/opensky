@@ -135,7 +135,7 @@ nonisolated public struct PreviewCatalog: Sendable {
     /// missing/unreadable esm degrades to file browsing with a note, never
     /// a crash. Returns the plugin's localized flag for record decoding.
     public static func load(
-        fileSystem: VirtualFileSystem,
+        fileSystem: any GameFileSource,
         esmURL: URL
     ) -> (catalog: PreviewCatalog, localized: Bool) {
         let files = fileSystem.archiveEntries()

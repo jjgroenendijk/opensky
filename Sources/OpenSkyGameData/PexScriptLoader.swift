@@ -8,9 +8,9 @@ nonisolated public final class PexScriptLoader {
     public static let scriptPrefix = "scripts\\"
     public static let scriptSuffix = ".pex"
 
-    private let fileSystem: VirtualFileSystem
+    private let fileSystem: any GameFileSource
 
-    public init(fileSystem: VirtualFileSystem) {
+    public init(fileSystem: any GameFileSource) {
         self.fileSystem = fileSystem
     }
 

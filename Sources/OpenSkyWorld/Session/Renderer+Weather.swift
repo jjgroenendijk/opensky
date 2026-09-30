@@ -2,7 +2,6 @@
 // world simulation and the renderer's own animation step.
 
 import OpenSkyRendering
-import QuartzCore
 
 extension Renderer {
     /// Advances the weather runtime (transition + reroll accumulation) and
@@ -25,7 +24,7 @@ extension Renderer {
     }
 
     public func updateWeatherFromWallClock() {
-        let delta = weatherClock.advance(to: CACurrentMediaTime(), paused: worldSimPaused)
+        let delta = weatherClock.advance(to: wallClock.now, paused: worldSimPaused)
         updateWeather(deltaTime: delta)
     }
 }
