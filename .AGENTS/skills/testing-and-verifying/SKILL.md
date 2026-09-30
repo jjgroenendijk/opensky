@@ -66,7 +66,7 @@ These commands build, so the background-shell and one-`xcodebuild` rules in the 
   before it arrives. Each check is one more turn, and each turn re-reads the whole context.
 - The output already lists each error once, with repository paths. Read it from the
   notification. Open the transcript only when the output says errors were not shown.
-- The build removes stale module copies itself and retries once
+- The build removes stale module copies itself and retries while it finds new ones
   (`docs/tools/build-system.md`). Do not delete `.swiftmodule` folders by hand.
 
 ## Real-data runs

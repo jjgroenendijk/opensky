@@ -9,7 +9,9 @@
 # text exists, leaving no full copy anywhere.
 #
 # A build removes stale module copies first (tools/stale-modules.sh). When a
-# failed build leaves new stale copies, it removes them and builds once more.
+# failed build leaves new stale copies, it removes them and builds again. A
+# failed build stops at one module layer, so the layer above shows its stale
+# copies only after the next pass: it repeats while each pass finds new ones.
 #
 # The transcript goes to logs/<name>/<UTC timestamp>/<name>.log (issue #347);
 # a caller that has already opened a run directory passes it in so one run of
@@ -19,6 +21,7 @@
 # Env:   OPENSKY_XCODEBUILD_RAW=1  pass everything through, transcript included
 #        OPENSKY_RUN_DIR           write into this run directory, not a new one
 #        OPENSKY_MAX_ERRORS        unique errors to print (default 40)
+#        OPENSKY_STALE_RETRIES     rebuilds after removing stale copies (default 8)
 set -eu
 
 if [ "$#" -lt 2 ]; then
@@ -72,11 +75,15 @@ if [ -n "$compiles" ]; then
     remove_stale || true
 fi
 run_once "$@"
-if [ "$status" -ne 0 ] && [ -n "$compiles" ] && remove_stale; then
-    printf '[INFO] building once more after removing stale modules\n'
-    log="$run_dir/$name-retry.log"
+max_retries="${OPENSKY_STALE_RETRIES:-8}"
+retry=0
+while [ "$status" -ne 0 ] && [ -n "$compiles" ] && [ "$retry" -lt "$max_retries" ] \
+    && remove_stale; do
+    retry=$((retry + 1))
+    printf '[INFO] build %s of %s after removing stale modules\n' "$retry" "$max_retries"
+    log="$run_dir/$name-retry$retry.log"
     run_once "$@"
-fi
+done
 
 if [ "$status" -ne 0 ] && [ "${OPENSKY_XCODEBUILD_RAW:-0}" != "1" ] \
     && ! grep -qE 'error: |failed|errored|^✘' "$shown_file"; then

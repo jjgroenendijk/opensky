@@ -187,7 +187,12 @@ Every module above it then fails with "cannot find in scope", "has no member", o
 and `B=1` does not help ([environment](/tools/environment.md)). After a healthy build the two files
 are identical, so `tools/stale-modules.sh` treats any difference as stale and deletes the copy.
 `tools/xcodebuild-run.sh` runs it before every build. When a build fails and leaves new stale copies,
-it deletes them and builds once more. A test run without building skips both steps.
+it deletes them and builds again. It repeats this while each failed build finds new stale copies,
+up to `OPENSKY_STALE_RETRIES` times (default 8). One pass is often not enough: a failed build stops
+at one module layer, so the modules above it are not emitted again, and their stale copies show
+only after the next pass. Moving `SkippedRecords` from `OpenSkyGameData` down to
+`OpenSkyFormatsESM` needed four passes. A failed build that finds no new stale copies has a real
+error, so it stops at once. A test run without building skips all of this.
 
 ## Warnings are errors
 
