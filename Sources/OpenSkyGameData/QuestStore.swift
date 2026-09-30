@@ -36,13 +36,12 @@ nonisolated public final class QuestStore: Sendable {
     /// - Parameter pluginName: file name of `file`, needed because a plugin
     ///   does not record its own name and `ReferenceKey` is built from it.
     public convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
-        let header = try? file.pluginHeader()
-        let masters = header?.masters ?? []
-        let isLocalized = localized ?? (header?.isLocalized ?? false)
+        let isLocalized = localized ?? file.isLocalized
         var decoded: [Quest] = []
         var skipped = SkippedRecords()
-        if let top = file.topGroup(of: "QUST"), let children = try? top.children() {
-            for case let .record(record) in children where record.type == "QUST" {
+        let masters = skipped.masters(of: file)
+        if let top = file.topGroup(of: "QUST") {
+            for case let .record(record) in skipped.children(of: top) where record.type == "QUST" {
                 let quest = skipped.decode(record) { try Quest(record: $0, localized: isLocalized) }
                 decoded.append(contentsOf: quest.map { [$0] } ?? [])
             }

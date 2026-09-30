@@ -1,11 +1,6 @@
-// Reference collection and runtime-index assembly, split from
-// CellSceneBuilder.swift for file-length limits.
-//
-// A cell stores placements in two children groups: persistent records survive
-// beyond the cell's streaming lifetime, temporary records do not. The render
-// path treats both alike, so collection flattens them; the runtime index needs
-// the distinction, so collection also tags each record with the group it came
-// from. Group nesting reference: UESP "Skyrim Mod:Mod File Format" — Groups.
+// Reference collection and runtime-index assembly. Persistent and temporary
+// placements render alike, so collection flattens them, but the runtime index
+// needs to know which group each came from (UESP "Mod File Format" — Groups).
 
 import Foundation
 import OpenSkyFormatsCore
@@ -26,28 +21,20 @@ nonisolated public struct CollectedActor: Sendable {
 }
 
 nonisolated extension CellSceneBuilder {
-    /// REFR records from the cell's persistent + temporary children groups,
-    /// each tagged with its group. LAND is handled separately (buildTerrain);
-    /// other non-REFR types (NAVM, ACHR, PGRE, ...) are not static placements
-    /// — ignored deliberately and not counted (skip taxonomy,
-    /// docs/engine/cell-scene.md). NAVM has its own walk over the same groups
-    /// in `collectNavmeshes`, off the build path. Deleted REFRs place nothing
-    /// -> also ignored. A REFR that fails to decode is malformed.
+    /// Live REFRs from the persistent and temporary children groups, tagged
+    /// with their group. Other record types are not static placements and are
+    /// not counted (docs/engine/cell-scene.md). A REFR that fails to decode is
+    /// counted as malformed.
     nonisolated public func collectTaggedReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [CollectedReference] {
-        guard let cellChildren, let children = try? cellChildren.children() else {
-            if cellChildren != nil {
-                Self.logger.warning("malformed cell-children group skipped")
-            }
-            return []
-        }
+        guard let cellChildren, let children = childrenOrSkip(cellChildren) else { return [] }
         var refs: [CollectedReference] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = try? group.children()
+                let records = childrenOrSkip(group)
             else { continue }
             let isPersistent = group.kind == .cellPersistentChildren
             for case let .record(record) in records where record.type == "REFR" {
@@ -76,13 +63,9 @@ nonisolated extension CellSceneBuilder {
         collectTaggedReferences(in: cellChildren, counts: &counts).map(\.reference)
     }
 
-    /// Index entries for the references a finished cell actually placed.
-    ///
-    /// `refs` is the post-merge, post-dedupe set the scene was built from;
-    /// `collected` is this cell's own children groups. A reference decoded
-    /// from a local temporary group is temporary, and everything else in the
-    /// final set is persistent — refs merged in from the worldspace persistent
-    /// CELL are stored there precisely because they are persistent.
+    /// Index entries for the references a finished cell placed. A reference from
+    /// a local temporary group is temporary; everything else, including refs
+    /// merged from the worldspace persistent CELL, is persistent.
     nonisolated public func referenceEntries(
         refs: [PlacedReference],
         collected: [CollectedReference]

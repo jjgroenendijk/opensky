@@ -132,8 +132,8 @@ nonisolated public struct ActorTemplateResolver: Sendable {
     public static func build(from file: ESMFile, localized: Bool) -> ActorTemplateResolver {
         var actors: [UInt32: ActorBase] = [:]
         var skipped = SkippedRecords()
-        if let top = file.topGroup(of: "NPC_"), let children = try? top.children() {
-            for case let .record(record) in children {
+        if let top = file.topGroup(of: "NPC_") {
+            for case let .record(record) in skipped.children(of: top) {
                 guard record.type == "NPC_", !record.isDeleted else { continue }
                 actors[record.formID] = skipped.decode(record) {
                     try ActorBase(record: $0, localized: localized)
@@ -155,10 +155,8 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         skipped: inout SkippedRecords
     ) -> [UInt32: LeveledList] {
         var lists: [UInt32: LeveledList] = [:]
-        guard let top = file.topGroup(of: type), let children = try? top.children() else {
-            return lists
-        }
-        for case let .record(record) in children {
+        guard let top = file.topGroup(of: type) else { return lists }
+        for case let .record(record) in skipped.children(of: top) {
             guard record.type == type, !record.isDeleted else { continue }
             lists[record.formID] = skipped.decode(record) { try LeveledList(record: $0) }
         }

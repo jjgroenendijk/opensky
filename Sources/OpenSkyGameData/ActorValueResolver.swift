@@ -108,8 +108,8 @@ nonisolated public struct ActorValueResolver: Sendable {
     ) -> ActorValueResolver {
         var races: [UInt32: Race] = [:]
         var skipped = SkippedRecords()
-        if let top = file.topGroup(of: "RACE"), let children = try? top.children() {
-            for case let .record(record) in children {
+        if let top = file.topGroup(of: "RACE") {
+            for case let .record(record) in skipped.children(of: top) {
                 guard record.type == "RACE", !record.isDeleted else { continue }
                 races[record.formID] = skipped.decode(record) {
                     try Race(record: $0, localized: localized)

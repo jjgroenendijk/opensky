@@ -53,6 +53,7 @@ struct RecordIndexTests {
             in: index
         )
         #expect(entry.sourcePlugin == "Base.esm")
+        #expect(index.skippedRecords.count(of: "KYWD") == 1)
     }
 
     @Test

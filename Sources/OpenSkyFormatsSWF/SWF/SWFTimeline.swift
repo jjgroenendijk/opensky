@@ -110,6 +110,7 @@ nonisolated public struct SWFTimelineDecoder: Sendable {
     private var steps: [SWFTimelineStep] = []
     private var actions: [SWFActionBlock] = []
     private var label: String?
+    private var malformedTags = 0
 
     public init(version: UInt8) {
         self.version = version
@@ -127,7 +128,10 @@ nonisolated public struct SWFTimelineDecoder: Sendable {
              SWFDisplayListParser.removeObject2Code:
             acceptRemoval(tag)
         case SWFDisplayListParser.setBackgroundColorCode:
-            if !frozen, let color = try? SWFDisplayListParser.parseBackgroundColor(tag: tag) {
+            if
+                !frozen,
+                let color = parsed({ try SWFDisplayListParser.parseBackgroundColor(tag: tag) })
+            {
                 backgroundColor = color
             }
         case SWFDisplayListParser.showFrameCode:
@@ -137,12 +141,12 @@ nonisolated public struct SWFTimelineDecoder: Sendable {
             closeFrame()
             frozen = true
         case SWFActionParser.doActionCode:
-            if let block = try? SWFActionParser.parseDoAction(tag: tag) {
+            if let block = parsed({ try SWFActionParser.parseDoAction(tag: tag) }) {
                 actions.append(block)
             }
         case SWFFrameLabel.tagCode:
             // A malformed label loses the name, never the frame.
-            if let decoded = try? SWFFrameLabel.parse(tag: tag), !decoded.name.isEmpty {
+            if let decoded = parsed({ try SWFFrameLabel.parse(tag: tag) }), !decoded.name.isEmpty {
                 label = decoded.name
             }
         default:
@@ -155,15 +159,29 @@ nonisolated public struct SWFTimelineDecoder: Sendable {
         if !steps.isEmpty || !actions.isEmpty || label != nil {
             closeFrame()
         }
-        return SWFTimeline(frames: frames, frame1: builder.placements, tally: builder.tally)
+        var tally = builder.tally
+        tally.malformedTags = malformedTags
+        return SWFTimeline(frames: frames, frame1: builder.placements, tally: tally)
+    }
+
+    private mutating func parsed<Value>(_ parse: () throws -> Value) -> Value? {
+        do {
+            return try parse()
+        } catch {
+            malformedTags += 1
+            return nil
+        }
     }
 
     private mutating func acceptPlacement(_ tag: SWFTag) {
         if !frozen {
             notePlaceTally(tag.code)
         }
+        let version = version
         guard
-            let placement = try? SWFDisplayListParser.parsePlacement(tag: tag, version: version)
+            let placement = parsed({
+                try SWFDisplayListParser.parsePlacement(tag: tag, version: version)
+            })
         else {
             if !frozen {
                 builder.noteDanglingPlacement()
@@ -177,7 +195,7 @@ nonisolated public struct SWFTimelineDecoder: Sendable {
     }
 
     private mutating func acceptRemoval(_ tag: SWFTag) {
-        guard let removal = try? SWFDisplayListParser.parseRemoval(tag: tag) else {
+        guard let removal = parsed({ try SWFDisplayListParser.parseRemoval(tag: tag) }) else {
             return
         }
         steps.append(.remove(removal))

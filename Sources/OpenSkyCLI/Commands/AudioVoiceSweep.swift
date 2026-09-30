@@ -1,16 +1,7 @@
-// `audio voice-sweep`: the two checks that settle the `.fuz` work.
-//
-// Naming — the community descriptions of the voice-file naming scheme disagree
-// (item 17.5), so the rule in `VoiceFilePath` is derived from the archive
-// itself. This sweep re-derives a name for every INFO response in every loaded
-// plugin and compares the result against the archive listing, reporting how
-// many archive names the rule explains and printing the ones it does not.
-//
-// Framing — every `.fuz` entry is framed through the production `FUZFile`
-// parser and its payload through `XWMFile`, one file at a time (bytes are
-// released before the next path is opened), so the walk stays flat in memory
-// over all 75,408 entries. `--limit` bounds the walk and the report states
-// exactly how many entries were skipped.
+// `audio voice-sweep`: checks the `.fuz` voice files against the archive.
+// Naming re-derives every INFO response's file name with `VoiceFilePath` and
+// reports the archive names the rule does not explain. Framing parses each entry
+// through `FUZFile` and `XWMFile`, one file at a time, so memory stays flat.
 
 import Foundation
 import OpenSkyDialogue
@@ -57,7 +48,13 @@ enum AudioVoiceSweep {
         var questStores: [String: QuestStore] = [:]
         for pluginName in voicePlugins {
             let url = context.root.dataURL.appending(path: pluginName)
-            guard let file = try? ESMFile(url: url) else { continue }
+            let file: ESMFile
+            do {
+                file = try ESMFile(url: url)
+            } catch {
+                printError("[WARNING] skipped \(pluginName): \(error)")
+                continue
+            }
             questStores[pluginName.lowercased()] = QuestStore(file: file, pluginName: pluginName)
             let dialogue = DialogueStore(file: file, pluginName: pluginName)
             if dialogue.infoCount > 0 {

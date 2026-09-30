@@ -30,7 +30,7 @@ nonisolated public final class SoundRecordStore {
         descriptors = file.indexRecords(of: "SNDR", skipped: &skipped) {
             try SoundDescriptor(record: $0)
         }
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         categories = file.indexRecords(of: "SNCT", skipped: &skipped) {
             try SoundCategory(record: $0, localized: localized)
         }

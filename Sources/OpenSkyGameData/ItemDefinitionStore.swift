@@ -135,7 +135,7 @@ nonisolated public final class ItemDefinitionStore {
     /// without it the links are still carried, just unresolved.
     public init(file: ESMFile, enchantments: ItemEnchantmentResolver? = nil) {
         self.enchantments = enchantments
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         var skipped = SkippedRecords()
         var definitions: [UInt32: ItemDefinition] = [:]
         for family in ItemDefinition.Family.allCases {
@@ -282,23 +282,12 @@ nonisolated public final class ItemDefinitionStore {
         using decode: (ESMRecord) throws -> Value
     ) -> [UInt32: Value] {
         var values: [UInt32: Value] = [:]
-        for record in records(of: type, in: file) {
+        for record in file.liveRecords(of: type, skipped: &skipped) {
             if let value = skipped.decode(record, using: decode) {
                 values[record.formID] = value
             }
         }
         return values
-    }
-
-    private static func records(of type: FourCC, in file: ESMFile) -> [ESMRecord] {
-        guard
-            let group = file.topGroup(of: type),
-            let children = try? group.children()
-        else { return [] }
-        return children.compactMap { child in
-            guard case let .record(record) = child, record.type == type else { return nil }
-            return record.isDeleted ? nil : record
-        }
     }
 }
 

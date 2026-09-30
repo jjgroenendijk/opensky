@@ -59,15 +59,15 @@ nonisolated public final class WeatherStore {
     public let skippedRecords: SkippedRecords
 
     public init(file: ESMFile) {
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         var skipped = SkippedRecords()
         weathers = Self.index(file, "WTHR", &skipped) { try Weather(record: $0) }
         climates = Self.index(file, "CLMT", &skipped) { try Climate(record: $0) }
         regions = Self.index(file, "REGN", &skipped) { try Region(record: $0) }
         var climateByWorld: [UInt32: FormID] = [:]
         var worldByEditorID: [String: UInt32] = [:]
-        if let top = file.topGroup(of: "WRLD"), let children = try? top.children() {
-            for case let .record(record) in children where record.type == "WRLD" {
+        if let top = file.topGroup(of: "WRLD") {
+            for case let .record(record) in skipped.children(of: top) where record.type == "WRLD" {
                 guard
                     let world = skipped.decode(
                         record,
@@ -126,10 +126,8 @@ nonisolated public final class WeatherStore {
         _ decode: (ESMRecord) throws -> Value
     ) -> [UInt32: Value] {
         var out: [UInt32: Value] = [:]
-        guard let top = file.topGroup(of: type), let children = try? top.children() else {
-            return out
-        }
-        for case let .record(record) in children where record.type == type {
+        guard let top = file.topGroup(of: type) else { return out }
+        for case let .record(record) in skipped.children(of: top) where record.type == type {
             if let value = skipped.decode(record, using: decode) {
                 out[record.formID] = value
             }

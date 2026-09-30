@@ -23,7 +23,7 @@ nonisolated extension CellSceneBuilder {
     nonisolated public func exteriorDoors(
         worldspaceEditorID: String
     ) throws -> [(coordinate: CellCoordinate, door: PlacedDoor)] {
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         let world = try worldChildrenGroup(
             editorID: worldspaceEditorID, localized: localized
         )
@@ -91,7 +91,7 @@ nonisolated extension CellSceneBuilder {
         state: WorldStateSnapshot = .empty
     ) throws -> CellScene {
         resetTouchedAssets()
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         guard let found = findInteriorCell(formID: cellFormID, localized: localized) else {
             throw CellSceneError.interiorCellNotFound(formID: cellFormID)
         }
@@ -167,7 +167,7 @@ nonisolated extension CellSceneBuilder {
             throw CellSceneError.teleportDestinationNotFound(formID: destinationID)
         }
 
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         let interior = findInteriorCell(
             containingReference: destinationID, localized: localized
         )
@@ -230,7 +230,7 @@ nonisolated extension CellSceneBuilder {
         expectedSubBlock: Int32,
         localized: Bool
     ) -> FoundCell? {
-        guard let children = try? group.children() else { return nil }
+        guard let children = childrenOrSkip(group) else { return nil }
         for (index, child) in children.enumerated() {
             guard
                 case let .record(record) = child, record.type == "CELL",
@@ -312,7 +312,7 @@ nonisolated extension CellSceneBuilder {
         localized: Bool,
         requireInterior: Bool
     ) -> FoundCell? {
-        guard let children = try? group.children() else { return nil }
+        guard let children = childrenOrSkip(group) else { return nil }
         for (index, child) in children.enumerated() {
             guard
                 case let .record(record) = child, record.type == "CELL",
@@ -348,11 +348,11 @@ nonisolated extension CellSceneBuilder {
         reference formID: UInt32,
         group: ESMGroup?
     ) -> Bool {
-        guard let group, let children = try? group.children() else { return false }
+        guard let group, let children = childrenOrSkip(group) else { return false }
         for case let .group(child) in children {
             guard
                 child.kind == .cellPersistentChildren || child.kind == .cellTemporaryChildren,
-                let records = try? child.children()
+                let records = childrenOrSkip(child)
             else { continue }
             let contains = records.contains { entry in
                 guard case let .record(record) = entry else { return false }

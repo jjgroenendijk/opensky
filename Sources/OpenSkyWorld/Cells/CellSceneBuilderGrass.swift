@@ -98,7 +98,7 @@ nonisolated extension CellSceneBuilder {
             return landTextureIndex
         }
         var index: [UInt32: LandTexture] = [:]
-        if let top = file.topGroup(of: "LTEX"), let children = try? top.children() {
+        if let top = file.topGroup(of: "LTEX"), let children = childrenOrSkip(top) {
             for case let .record(record) in children {
                 guard record.type == "LTEX", !record.isDeleted else { continue }
                 if let texture = decodeOrSkip(record, using: LandTexture.init(record:)) {
@@ -115,7 +115,7 @@ nonisolated extension CellSceneBuilder {
             return grassIndex
         }
         var index: [UInt32: Grass] = [:]
-        if let top = file.topGroup(of: "GRAS"), let children = try? top.children() {
+        if let top = file.topGroup(of: "GRAS"), let children = childrenOrSkip(top) {
             for case let .record(record) in children {
                 guard record.type == "GRAS", !record.isDeleted else { continue }
                 if let grass = decodeOrSkip(record, using: Grass.init(record:)) {

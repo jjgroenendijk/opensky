@@ -1,14 +1,7 @@
-// `actor-values`: read-only derivation report for one or more NPC_ records
-// (issue #194, roadmap item 15.3). Prints the resolved race, class and level
-// beside the derived maximums, so an unexpected number can be traced to the
-// record that produced it rather than guessed at.
-//
-// `--race` reports one RACE's starting attributes and regen rates instead,
-// which is where the documented player fallback in
-// `ActorValueBaselineResolver` was probed from.
-//
-// Derivation lives in Sources/OpenSkyGameData/ and resolution in Sources/OpenSkyActors/;
-// this file only parses arguments and prints.
+// `actor-values`: prints the resolved race, class and level beside the derived
+// maximums, so an unexpected number can be traced to its record. `--race`
+// reports one RACE's starting attributes and regen rates instead.
+// Derivation and resolution live in their modules; this file parses and prints.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -22,7 +15,7 @@ enum ActorValueCommand {
         try scanner.finish()
 
         let file = try context.loadSkyrimESM()
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         let settings = ActorValueLevelSettings.resolve(
             store: GameSettingLoader.load(root: context.root, baseFile: file)
         )
@@ -80,9 +73,8 @@ enum ActorValueCommand {
         printGeneral(resolved.generalBaseValues)
     }
 
-    /// The non-primary actor values this actor's records author (issue #468),
-    /// in table order with their vanilla names. Every other index reads
-    /// `ActorValueIdentity.defaultValue(at:)` and is left off rather than
+    /// The non-primary actor values this actor's records author, in table order
+    /// with their vanilla names. Unauthored indexes are left off rather than
     /// printed as a number nothing authored.
     private static func printGeneral(_ values: [Int32: Float]) {
         guard !values.isEmpty else { return }

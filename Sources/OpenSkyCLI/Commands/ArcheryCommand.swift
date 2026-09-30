@@ -20,7 +20,7 @@ enum ArcheryCommand {
         let filter = try scanner.option("--ammo")
         try scanner.finish()
         let file = try context.loadSkyrimESM()
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         let projectiles = Self.projectiles(in: file)
         let settings = ArcherySettings.resolve(
             store: GameSettingLoader.load(root: context.root, baseFile: file)

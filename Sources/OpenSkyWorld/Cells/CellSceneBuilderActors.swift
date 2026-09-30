@@ -1,12 +1,7 @@
-// Actor streaming integration (milestone 5.5): ACHR placed actors build and
-// evict with their owning cell on the serial build queue, like statics.
-// Worldspace-persistent ACHRs are stored under the (0,0) persistent CELL and
-// mapped into streamed cells by physical position — same ownership rule as
-// persistent teleport doors (CellSceneBuilderInteriors.swift). Accounting is
-// exact per cell: discovered = rendered + intentional skips + failures.
-//
-// References: UESP "Skyrim Mod:Mod File Format" ACHR/NPC_ pages; resolution
-// chain + record layouts documented in docs/engine/actor-resolution.md.
+// ACHR actors build and evict with their cell on the build queue. Worldspace-
+// persistent ACHRs live under the (0,0) persistent CELL and map into cells by
+// position. Per cell: discovered = rendered + intentional skips + failures.
+// Resolution documented in docs/engine/actor-resolution.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -27,10 +22,8 @@ nonisolated public struct ActorBuildCounts: Sendable {
     public var discovered = 0
     public var rendered = 0
     /// Actors present but deliberately not drawn: initially-disabled ACHRs
-    /// (record-header flag 0x800), plus the ones runtime state disabled or
-    /// deleted since load (issue #160). All three share one bucket so the
-    /// exact-accounting rule above keeps holding; the per-actor log line says
-    /// which of them applied.
+    /// (record flag 0x800) and ones runtime state disabled or deleted. One
+    /// bucket keeps the accounting rule above; the log line says which applied.
     public var disabledSkips = 0
     /// Malformed ACHR records, unresolved template/visual chains, and
     /// assemblies with no core geometry.
@@ -43,15 +36,9 @@ nonisolated public struct ActorBuildCounts: Sendable {
     public var animated = 0
     public var animationFailures = 0
     public var animationFailureReasons: [String] = []
-    /// Every `AppearanceSkip` the visual resolution reported, per actor, as
-    /// "ACHR <id>: <reason> (<subject>)" (issue #180).
-    ///
-    /// Not an error bucket and deliberately outside the exact-accounting
-    /// identity above: an actor whose skin torso is masked by its equipped
-    /// cuirass renders perfectly and still reports a skip. The list exists so
-    /// the `World > Inventory & Equipment` panel can say why a piece of an
-    /// equipped set contributed no geometry, instead of leaving a missing
-    /// gauntlet looking like an equip that silently did nothing.
+    /// Every `AppearanceSkip`, per actor, as "ACHR <id>: <reason> (<subject>)".
+    /// Not an error: a masked skin torso still reports one. The inventory panel
+    /// uses it to say why an equipped piece drew nothing.
     public var appearanceSkipReasons: [String] = []
 }
 
@@ -61,9 +48,8 @@ nonisolated public struct CellActorBuild {
     public var animations: [any RenderAnimation] = []
     public var counts = ActorBuildCounts()
     public var durationMS = 0.0
-    /// Runtime index entries for the ACHRs this cell owns (issue #158).
-    /// Populated for every discovered actor, including ones skipped for
-    /// rendering: an initially-disabled actor still exists at runtime.
+    /// Runtime index entries for every ACHR this cell owns, including ones not
+    /// drawn: an initially-disabled actor still exists at runtime.
     public var entries: [RuntimeReferenceEntry] = []
 }
 
@@ -132,14 +118,14 @@ nonisolated extension CellSceneBuilder {
         in cellChildren: ESMGroup?,
         malformed: inout [String]
     ) -> [CollectedActor] {
-        guard let cellChildren, let children = try? cellChildren.children() else {
+        guard let cellChildren, let children = childrenOrSkip(cellChildren) else {
             return []
         }
         var actors: [CollectedActor] = []
         for case let .group(group) in children {
             guard
                 group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren,
-                let records = try? group.children()
+                let records = childrenOrSkip(group)
             else { continue }
             let isPersistent = group.kind == .cellPersistentChildren
             for case let .record(record) in records where record.type == "ACHR" {
@@ -314,14 +300,9 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    /// The equipped set a dirty actor renders from, or nil when nothing has
-    /// touched its inventory and the plugin `defaultOutfit` still describes it
-    /// (issue #178).
-    ///
-    /// The component is the whole answer: `InventoryBaselineResolver` baselines
-    /// an actor's equipped set to its default outfit, so the first equip
-    /// materializes the outfit *and* the new piece together and this override
-    /// never undresses an actor by accident.
+    /// The equipped set a changed actor renders from, or nil while its default
+    /// outfit still applies. The baseline is the outfit, so the first equip
+    /// keeps the outfit and adds the new piece.
     nonisolated private func runtimeEquipment(
         entry: RuntimeReferenceEntry?,
         deltas: [ReferenceKey: ReferenceStateDelta]
@@ -330,13 +311,9 @@ nonisolated extension CellSceneBuilder {
         return delta.component(ReferenceInventoryState.self)?.equipped
     }
 
-    /// Why this actor is not drawn, or nil when it should be.
-    ///
-    /// The record's initially-disabled flag and the runtime enable/deletion
-    /// components resolve through the one `ReferenceState` path (issue #160),
-    /// so a script that enables a hidden actor makes it appear, and one that
-    /// disables or deletes a visible actor makes it vanish. An actor with no
-    /// index entry has no runtime identity, so only its record flag applies.
+    /// Why this actor is not drawn, or nil when it should be. The disabled flag
+    /// and runtime enable state resolve through `ReferenceState`; an actor with
+    /// no index entry only has its record flag.
     nonisolated private func actorRuntimeSkip(
         actor: PlacedActor,
         entry: RuntimeReferenceEntry?,

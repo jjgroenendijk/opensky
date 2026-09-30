@@ -28,7 +28,7 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         gridX: Int32,
         gridY: Int32
     ) throws -> ExteriorCellModels {
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         var skipped = SkippedRecords()
         let world = try worldChildren(
             editorID: worldspaceEditorID, localized: localized, skipped: &skipped
@@ -45,12 +45,12 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         }
         let bases = baseModelPaths(skipped: &skipped)
         var paths: Set<String> = []
-        forEachReference(in: cell.children) { record in
+        for record in references(in: cell.children, skipped: &skipped) {
             guard
                 !record.isDeleted,
                 let ref = skipped.decode(record, using: PlacedReference.init(record:))
-            else { return }
-            guard let rawPath = bases[ref.base.rawValue], let rawPath else { return }
+            else { continue }
+            guard let rawPath = bases[ref.base.rawValue], let rawPath else { continue }
             if let normalized = try? VirtualFileSystem.normalize(rawPath) {
                 let path = normalized.hasPrefix("meshes\\")
                     ? normalized
@@ -97,7 +97,7 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         localized: Bool,
         skipped: inout SkippedRecords
     ) -> FoundCell? {
-        guard let children = try? group.children() else { return nil }
+        let children = skipped.children(of: group)
         for (index, child) in children.enumerated() {
             switch child {
             case let .record(record) where record.type == "CELL":
@@ -142,35 +142,37 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         return nil
     }
 
-    private func forEachReference(in cellChildren: ESMGroup?, body: (ESMRecord) -> Void) {
-        guard let children = try? cellChildren?.children() else { return }
-        for case let .group(group) in children {
-            guard
-                group.kind == .cellPersistentChildren
-                || group.kind == .cellTemporaryChildren,
-                let records = try? group.children()
+    private func references(
+        in cellChildren: ESMGroup?,
+        skipped: inout SkippedRecords
+    ) -> [ESMRecord] {
+        guard let cellChildren else { return [] }
+        var references: [ESMRecord] = []
+        for case let .group(group) in skipped.children(of: cellChildren) {
+            guard group.kind == .cellPersistentChildren || group.kind == .cellTemporaryChildren
             else { continue }
-            for case let .record(record) in records where record.type == "REFR" {
-                body(record)
+            for case let .record(record) in skipped.children(of: group)
+                where record.type == "REFR"
+            {
+                references.append(record)
             }
         }
+        return references
     }
 
     private func baseModelPaths(skipped: inout SkippedRecords) -> [UInt32: String?] {
         var result: [UInt32: String?] = [:]
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
-        if let top = file.topGroup(of: "STAT"), let children = try? top.children() {
-            for case let .record(record) in children where record.type == "STAT" {
+        let localized = file.isLocalized
+        if let top = file.topGroup(of: "STAT") {
+            for case let .record(record) in skipped.children(of: top) where record.type == "STAT" {
                 if let object = skipped.decode(record, using: StaticObject.init(record:)) {
                     result[record.formID] = object.modelPath
                 }
             }
         }
         for type in ModelBase.supportedTypes {
-            guard let top = file.topGroup(of: type), let children = try? top.children() else {
-                continue
-            }
-            for case let .record(record) in children where record.type == type {
+            guard let top = file.topGroup(of: type) else { continue }
+            for case let .record(record) in skipped.children(of: top) where record.type == type {
                 let object = skipped.decode(record) {
                     try ModelBase(record: $0, localized: localized)
                 }

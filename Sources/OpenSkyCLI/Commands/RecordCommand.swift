@@ -15,7 +15,7 @@ enum RecordCommand {
         try scanner.finish()
         let file = try context.loadSkyrimESM()
         let record = try find(token: token, in: file)
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         let plugins = ActivePluginFiles.load(root: context.root, baseFile: file)
         let index = RecordIndex(
             plugins: plugins,

@@ -168,7 +168,7 @@ nonisolated public struct ActorBase: Sendable {
             case "CNAM":
                 stats.characterClass = try FormID(reader.readUInt32())
             case "DNAM":
-                Self.decodeDNAM(field, stats: &stats)
+                try Self.decodeDNAM(field, stats: &stats)
             case "AIDT":
                 // A malformed AIDT leaves the actor without AI data rather than
                 // failing the record, the rule every optional field group here
@@ -325,15 +325,14 @@ nonisolated public struct ActorBase: Sendable {
     /// uint16 attribute values at 0x24 / 0x26 / 0x28 (UESP NPC_ DNAM). Only the
     /// three attributes are read; the skill bytes wait for M18.
     ///
-    /// Nothing throws here. DNAM is a cross-check rather than an input, so a
-    /// short one simply leaves the baked values absent.
-    private static func decodeDNAM(_ field: ESMField, stats: inout Stats) {
+    /// A short DNAM leaves the baked values absent: it is a cross-check, not an input.
+    private static func decodeDNAM(_ field: ESMField, stats: inout Stats) throws {
         guard field.data.count >= 0x2A else { return }
         var reader = BinaryReader(field.data)
         reader.skip(0x24)
-        stats.bakedHealth = (try? reader.readUInt16()).map { Int16(bitPattern: $0) }
-        stats.bakedMagicka = (try? reader.readUInt16()).map { Int16(bitPattern: $0) }
-        stats.bakedStamina = (try? reader.readUInt16()).map { Int16(bitPattern: $0) }
+        stats.bakedHealth = try Int16(bitPattern: reader.readUInt16())
+        stats.bakedMagicka = try Int16(bitPattern: reader.readUInt16())
+        stats.bakedStamina = try Int16(bitPattern: reader.readUInt16())
     }
 }
 

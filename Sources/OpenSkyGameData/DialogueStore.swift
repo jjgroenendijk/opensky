@@ -39,15 +39,15 @@ nonisolated public final class DialogueStore: Sendable {
     /// - Parameter pluginName: file name of `file`, needed because a plugin
     ///   does not record its own name and `ReferenceKey` is built from it.
     public convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
-        let header = try? file.pluginHeader()
-        let isLocalized = localized ?? (header?.isLocalized ?? false)
+        let isLocalized = localized ?? file.isLocalized
         var topics: [DialogueTopic] = []
         var infosByTopic: [UInt32: [TopicInfo]] = [:]
         var voiceTypes: [VoiceType] = []
         var skipped = SkippedRecords()
+        let masters = skipped.masters(of: file)
 
-        if let top = file.topGroup(of: "DIAL"), let children = try? top.children() {
-            for child in children {
+        if let top = file.topGroup(of: "DIAL") {
+            for child in skipped.children(of: top) {
                 switch child {
                 case let .record(record):
                     guard record.type == "DIAL", !record.isDeleted else { continue }
@@ -69,8 +69,8 @@ nonisolated public final class DialogueStore: Sendable {
             }
         }
 
-        if let top = file.topGroup(of: "VTYP"), let children = try? top.children() {
-            for case let .record(record) in children
+        if let top = file.topGroup(of: "VTYP") {
+            for case let .record(record) in skipped.children(of: top)
                 where record.type == "VTYP" && !record.isDeleted
             {
                 let voice = skipped.decode(record) { try VoiceType(record: $0) }
@@ -81,7 +81,7 @@ nonisolated public final class DialogueStore: Sendable {
             topics: topics,
             infosByTopic: infosByTopic,
             voiceTypes: voiceTypes,
-            resolver: FormIDResolver(pluginName: pluginName, masters: header?.masters ?? []),
+            resolver: FormIDResolver(pluginName: pluginName, masters: masters),
             skippedRecords: skipped
         )
     }

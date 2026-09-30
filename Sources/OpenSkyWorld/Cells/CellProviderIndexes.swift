@@ -245,7 +245,7 @@ nonisolated public struct CellProviderIndexes {
         ActorValueBaselineResolver(
             resolver: ActorValueResolver.build(
                 from: file,
-                localized: (try? file.pluginHeader().isLocalized) ?? false,
+                localized: file.isLocalized,
                 pluginName: pluginName,
                 // Load-order wide, so a patch plugin's CLAS override reaches
                 // the derivation instead of being invisible to it.

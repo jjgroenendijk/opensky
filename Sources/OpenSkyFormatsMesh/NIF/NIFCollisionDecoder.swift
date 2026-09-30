@@ -1,11 +1,7 @@
-// Decode collision graphs rooted at bhkCollisionObject blocks. Rigid-body
-// query metadata stays attached to clean engine geometry; MOPP code is skipped
-// in favor of its child shape. Unknown reachable blocks are reported, while a
-// malformed root cannot discard successfully decoded sibling roots.
-//
-// Reference: NifTools nif.xml bhk object inheritance + field order.
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-collision.md.
+// Decodes collision graphs rooted at bhkCollisionObject blocks. MOPP code is
+// skipped in favor of its child shape. A malformed root is recorded in
+// `failures` and never discards its decoded siblings.
+// Reference: NifTools nif.xml. Layout documented in docs/formats/nif-collision.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -221,10 +217,18 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
         return (index, file.blocks[index])
     }
 
-    private func sceneTargets() -> SceneTargets {
+    /// A root whose walk throws keeps the transforms found before the error.
+    private mutating func sceneTargets() -> SceneTargets {
         var visitor = CollisionTargetTransformVisitor(file: file)
         for root in file.roots {
-            try? visitor.walk(from: root)
+            do {
+                try visitor.walk(from: root)
+            } catch {
+                failures.append(NIFCollisionFailure(
+                    block: Int(root),
+                    message: "scene walk failed: \(error)"
+                ))
+            }
         }
         return SceneTargets(transforms: visitor.transforms, names: visitor.names)
     }

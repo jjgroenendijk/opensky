@@ -1,18 +1,7 @@
-// Per-cell trigger-volume assembly (issue #173), split from
-// CellCollisionBuilder.swift for file-length limits and to keep the static
-// collision loop — a hot path whose `filteredBodyCount` accounting is pinned by
-// the CLI grid acceptance — untouched.
-//
-// Two authored sources feed one `TriggerVolumeSet`:
-//
-// 1. SkyrimLayer 12 bodies inside a placed NIF. `buildStaticCollision` keeps
-//    only player-solid bodies, so these are dropped there; a second pass over
-//    the same cached models routes them here instead.
-// 2. `XPRM` primitives on the REFR itself (docs/formats/placed-references.md), which
-//    authors trigger boxes and spheres with no mesh behind them at all.
-//
-// Both run on the build queue inside the same `SerialCellBuildRunner` call as
-// the render scene, and the resulting set is immutable once built.
+// Per-cell trigger volumes, kept apart from the static collision hot path.
+// Two sources feed one `TriggerVolumeSet`: SkyrimLayer 12 bodies in placed NIFs,
+// which the static build drops, and `XPRM` primitives on the REFR itself
+// (docs/formats/placed-references.md). Both run in the same build-queue call.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -29,8 +18,8 @@ import simd
 nonisolated public struct CellCollisionBuild: Sendable {
     public let staticCollision: StaticCollisionSet
     public let triggerVolumes: TriggerVolumeSet
-    /// Bodies of this cell the dynamic world simulates (issue #193). Empty for
-    /// a build with no reference retention, because a simulated body needs the
+    /// Bodies of this cell the dynamic world simulates. Empty for a build with
+    /// no reference retention, because a simulated body needs the
     /// `ReferenceKey` the entries carry.
     public var dynamicBodies: [DynamicBodyPlacement] = []
 }
@@ -58,19 +47,9 @@ nonisolated extension CellSceneBuilder {
         )
     }
 
-    /// Every authored trigger volume of one cell.
-    ///
-    /// - Parameters:
-    ///   - refs: the cell's effective references, runtime deltas already
-    ///     applied, so a moved or rescaled reference triggers where it now is.
-    ///   - entries: the runtime index entries for those references, which carry
-    ///     the `ReferenceKey` a script instance is addressed by. A reference
-    ///     with no entry has no runtime identity, so its volume would name
-    ///     nothing and is skipped and counted instead.
-    ///   - location: the cell the set belongs to.
-    ///
-    /// Volume order is deterministic: primitives in reference order first, then
-    /// mesh bodies in reference, body and shape order.
+    /// Every authored trigger volume of one cell, primitives first, then mesh
+    /// bodies, each in reference order. `refs` has runtime deltas applied; a
+    /// reference with no `entries` key names nothing, so it is counted and skipped.
     nonisolated public func buildTriggerVolumes(
         refs: [PlacedReference],
         entries: [RuntimeReferenceEntry],
@@ -92,13 +71,9 @@ nonisolated extension CellSceneBuilder {
 
     // MARK: - XPRM primitives
 
-    /// Trigger volumes authored directly on the REFR as an `XPRM` primitive.
-    ///
-    /// The primitive's half-extents are pre-scale and in the reference's local
-    /// frame, so the placement matrix — position, DATA rotation and `XSCL`,
-    /// built by the same `MatrixMath.placement` call
-    /// `resolveCollisionPlacements` uses so there is one Euler convention —
-    /// carries both the pose and the scale.
+    /// Volumes authored on the REFR as an `XPRM` primitive. The half-extents are
+    /// pre-scale and local, so the `MatrixMath.placement` matrix carries pose and
+    /// scale with the same Euler convention as the collision placements.
     nonisolated private func primitiveTriggerVolumes(
         refs: [PlacedReference],
         keys: [FormID: ReferenceKey],
@@ -135,20 +110,10 @@ nonisolated extension CellSceneBuilder {
         return volumes
     }
 
-    /// The collision geometry an `XPRM` primitive stands for, or nil when the
-    /// primitive is deliberately not a gameplay trigger.
-    ///
-    /// Only `box` and `sphere` become volumes. `portalBox` is occlusion
-    /// room-portal geometry and `line` is not a volume at all, so treating
-    /// either as a trigger would fire `OnTriggerEnter` for scripts that never
-    /// asked; `none` describes no shape. All three are counted as exclusions
-    /// rather than silently dropped (docs/engine/trigger-volumes.md).
-    ///
-    /// A sphere's radius is `halfExtents.x`: neither UESP's REFR page nor
-    /// xEdit's `wbStruct(XPRM, ...)` names an axis, but every one of the 137
-    /// sphere primitives in `Skyrim.esm` stores the same value in all three
-    /// axes (`PlacedReferenceXPRMRealDataTests`, observed 2026-07-31), so the
-    /// three are interchangeable and no axis is being guessed.
+    /// The geometry an `XPRM` primitive stands for. Only `box` and `sphere` are
+    /// gameplay triggers; the rest are counted exclusions
+    /// (docs/engine/trigger-volumes.md). A sphere's radius is `halfExtents.x`:
+    /// all 137 spheres in `Skyrim.esm` store one value on every axis.
     nonisolated public static func triggerGeometry(
         of primitive: PlacedReference.Primitive
     ) -> NIFCollisionGeometry? {
@@ -176,6 +141,7 @@ nonisolated extension CellSceneBuilder {
         guard let collisionModels else { return [] }
         var volumes: [TriggerVolume] = []
         for placement in resolveCollisionPlacements(refs: refs) {
+            // The static pass already counted this model's load failure.
             guard let model = try? collisionModels.model(path: placement.modelPath) else {
                 continue
             }

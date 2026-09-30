@@ -226,7 +226,7 @@ nonisolated extension CellSceneBuilder {
         gridY: Int32
     ) throws -> StaticCollisionSet {
         _ = collisionModels?.drainTouchedKeys()
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
         guard
             let found = findCell(

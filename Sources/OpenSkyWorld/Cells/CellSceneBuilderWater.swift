@@ -134,9 +134,9 @@ nonisolated extension CellSceneBuilder {
         if let worldspaceIndex {
             return worldspaceIndex
         }
-        let localized = (try? file.pluginHeader().isLocalized) ?? false
+        let localized = file.isLocalized
         var index: [UInt32: Worldspace] = [:]
-        if let top = file.topGroup(of: "WRLD"), let children = try? top.children() {
+        if let top = file.topGroup(of: "WRLD"), let children = childrenOrSkip(top) {
             for case let .record(record) in children where record.type == "WRLD" {
                 let world = decodeOrSkip(record, using: {
                     try Worldspace(record: $0, localized: localized)
@@ -155,7 +155,7 @@ nonisolated extension CellSceneBuilder {
             return waterTypeIndex
         }
         var index: [UInt32: WaterType] = [:]
-        if let top = file.topGroup(of: "WATR"), let children = try? top.children() {
+        if let top = file.topGroup(of: "WATR"), let children = childrenOrSkip(top) {
             for case let .record(record) in children where record.type == "WATR" {
                 if let water = decodeOrSkip(record, using: WaterType.init(record:)) {
                     index[record.formID] = water

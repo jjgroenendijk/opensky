@@ -1,11 +1,7 @@
-// Single pass over a movie's tag stream, split out of `SWFMovie.swift` to stay
-// under the file-size limit: definition tags feed the character dictionary,
-// control tags and DoAction blocks feed the timeline, and DoInitAction (59)
-// blocks are collected by sprite id.
-//
-// Reference: Adobe SWF File Format Specification, version 19 — chapter 3 "The
-// display list" (pp. 33-51), chapter 5 "Actions" DoInitAction (p. 108), and
-// chapter 13 "Sprites and movie clips" DefineSprite (p. 201).
+// One pass over a movie's tag stream: definition tags feed the character
+// dictionary, control tags feed the timeline, and DoInitAction blocks are
+// collected by sprite id.
+// Reference: Adobe SWF File Format Specification v19, chapters 3, 5 and 13.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -24,6 +20,8 @@ nonisolated public struct SWFMovieDecoder: Sendable {
     public var timeline: SWFTimelineDecoder
     /// Display-list and action counters summed over every sprite.
     public var spriteTally = SWFMovieTally()
+    /// Definition tags this decoder skipped because they failed to parse.
+    public var malformedTags = 0
 
     public init(version: UInt8, jpegTables: Data?) {
         self.version = version
@@ -59,7 +57,7 @@ nonisolated public struct SWFMovieDecoder: Sendable {
             characters[sprite.characterId] = .sprite(sprite)
         } else if tag.code == SWFActionParser.doInitActionCode {
             // A malformed DoInitAction loses its actions, never the movie.
-            if let initAction = try? SWFActionParser.parseDoInitAction(tag: tag) {
+            if let initAction = parsed({ try SWFActionParser.parseDoInitAction(tag: tag) }) {
                 initActions.append(initAction)
             }
         } else if SWFImportedAssets.tagCodes.contains(tag.code) {
@@ -72,9 +70,18 @@ nonisolated public struct SWFMovieDecoder: Sendable {
             // Linkage names: what Object.registerClass and attachMovie address.
             // A malformed table costs the linkage, never the movie — the
             // affected classes simply never instantiate.
-            for asset in (try? SWFExportedAssets.parse(tag: tag))?.assets ?? [] {
+            for asset in parsed({ try SWFExportedAssets.parse(tag: tag) })?.assets ?? [] {
                 exportedNames[asset.name] = asset.characterId
             }
+        }
+    }
+
+    private mutating func parsed<Value>(_ parse: () throws -> Value) -> Value? {
+        do {
+            return try parse()
+        } catch {
+            malformedTags += 1
+            return nil
         }
     }
 
