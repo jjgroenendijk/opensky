@@ -1,19 +1,10 @@
-// The plugin-wide navmesh lookup (issue #199): NAVI decoded once and turned
-// into the two questions cross-cell pathing asks (16.2, issue #200) — which
-// navmeshes belong to a cell, and which navmeshes a given one links to.
-//
-// The geometry itself is deliberately not here. A NAVM record lives in its
-// cell's temporary-children group and is decoded when that cell is built
-// (`CellSceneBuilder.collectNavmeshes`); this index only says which navmeshes
-// exist and where, which is what a route leaving the current cell needs to
-// know before that cell has ever been streamed in.
-//
-// Built once per plugin and read from the build queue like the other record
-// indexes, so it is an immutable value rather than a cache — the same shape
-// `MaterialTypeIndex` uses.
+// The plugin-wide NAVI lookup: which navmeshes belong to a location, and which
+// ones a navmesh links to. NAVM geometry is decoded per cell by
+// `CellSceneBuilder.collectNavmeshes`; this index works before a cell streams in.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OSLog
 
 nonisolated public struct NavmeshIndex: Sendable {
@@ -24,12 +15,11 @@ nonisolated public struct NavmeshIndex: Sendable {
 
     /// Every NVMI entry, by the NAVM FormID it describes.
     public let infos: [UInt32: NavmeshInfo]
-    /// Navmeshes this plugin deletes from its masters. Kept separate from
-    /// `infos` because a deleted navmesh has no entry to look up.
+    /// Navmeshes this plugin deletes from its masters; they have no `infos` entry.
     public let deletedNavmeshes: Set<UInt32>
-    /// Location -> the navmeshes authored there. An exterior square usually
-    /// holds one, but the array is the honest shape: nothing in the format
-    /// forbids more, and island meshes share a square with the ground mesh.
+    /// NAVI records that failed to decode.
+    public private(set) var skippedRecords = SkippedRecords()
+    /// An array, because island meshes share a square with the ground mesh.
     private let byLocation: [NavmeshLocation: [FormID]]
 
     public static let empty = NavmeshIndex(infos: [], deletedNavmeshes: [])
@@ -37,10 +27,11 @@ nonisolated public struct NavmeshIndex: Sendable {
     public init(file: ESMFile) {
         var infos: [NavmeshInfo] = []
         var deleted: [FormID] = []
+        var skipped = SkippedRecords()
         if let group = file.topGroup(of: "NAVI"), let children = try? group.children() {
             for case let .record(record) in children where record.type == "NAVI" {
                 guard !record.isDeleted else { continue }
-                guard let map = try? NavmeshInfoMap(record: record) else {
+                guard let map = skipped.decode(record, using: NavmeshInfoMap.init(record:)) else {
                     let id = FormID(record.formID).description
                     Self.logger.warning("malformed NAVI \(id, privacy: .public) skipped")
                     continue
@@ -54,14 +45,14 @@ nonisolated public struct NavmeshIndex: Sendable {
             }
         }
         self.init(infos: infos, deletedNavmeshes: deleted)
+        skippedRecords = skipped
     }
 
     /// Test seam, and the shape the file initializer funnels into.
     public init(infos: [NavmeshInfo], deletedNavmeshes: [FormID]) {
         self.infos = Dictionary(
             infos.map { ($0.navmesh.rawValue, $0) },
-            // Two NVMI entries cannot name the same NAVM in a well-formed
-            // plugin; if a modded one does, record order decides.
+            // Only a broken mod names one NAVM twice; record order decides.
             uniquingKeysWith: { first, _ in first }
         )
         self.deletedNavmeshes = Set(deletedNavmeshes.map(\.rawValue))
@@ -87,9 +78,7 @@ nonisolated public struct NavmeshIndex: Sendable {
         byLocation[location] ?? []
     }
 
-    /// Navmeshes reachable across a shared edge from `navmesh`. Empty for an
-    /// unknown FormID, which is the same answer as "links nowhere" — a route
-    /// that cannot name its start has nowhere to continue to either.
+    /// Navmeshes across a shared edge. Empty for an unknown FormID.
     public func edgeLinks(from navmesh: FormID) -> [FormID] {
         info(navmesh)?.edgeLinks ?? []
     }

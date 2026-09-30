@@ -5,7 +5,9 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyWorld
 import OpenSkyWorldTesting
 import Testing
@@ -281,5 +283,25 @@ struct ActorVisualResolutionTests {
         #expect(resolver.leveledItems[FID.leveledList]?.entries.count == 1)
         #expect(resolver.formIDResolver.masters == ["Skyrim.esm"])
         #expect(resolver.formIDResolver.pluginName == "Follower.esp")
+    }
+
+    @Test func buildCountsUndecodableRecords() throws {
+        let plugin = ESMFixture.tes4()
+            + ESMFixture.topGroup(
+                "RACE",
+                contents: ESMFixture.malformedRecord("RACE", formID: 0x10)
+            )
+            + ESMFixture.topGroup(
+                "OTFT",
+                contents: ESMFixture.malformedRecord("OTFT", formID: 0x20)
+            )
+        let resolver = try ActorVisualResolver.build(
+            from: ESMFile(data: plugin), localized: false, pluginName: "Skyrim.esm"
+        )
+
+        #expect(resolver.races.isEmpty)
+        #expect(resolver.skippedRecords.count(of: "RACE") == 1)
+        #expect(resolver.skippedRecords.count(of: "OTFT") == 1)
+        #expect(resolver.skippedRecords.total == 2)
     }
 }

@@ -1,6 +1,5 @@
-// Final CellScene assembly split from CellSceneBuilder.swift for file-length
-// limits: flatten placed models, attach terrain/environment draws, union
-// bounds, emit one load summary.
+// Final CellScene assembly: placed models, environment draws, bounds, and one
+// load summary.
 
 import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
@@ -23,28 +22,18 @@ nonisolated public struct CellGeometryBuild {
     public let lighting: RenderLighting?
     public let pointLights: [RenderPointLight]
     public let staticCollision: StaticCollisionSet
-    /// Authored trigger volumes (issue #173). `var` with a default so a build
-    /// that predates trigger collection still constructs.
     public var triggerVolumes: TriggerVolumeSet = .empty
-    /// Simulated rigid bodies this cell places (issue #193). Same defaulting
-    /// reason as the trigger set above.
     public var dynamicBodies: [DynamicBodyPlacement] = []
     /// Decoded NAVM records built beside the rest of the cell-owned geometry.
     public var navmeshes: [Navmesh] = []
-    /// Assembled actor placements + exact accounting (5.5 actor streaming).
     public let actors: CellActorBuild
-    /// WRLD.ZNAM of the owning worldspace (M9.2.3 music selection). `var` with
-    /// a default so the interior path, which has no worldspace, omits it.
+    /// WRLD ZNAM; the interior path has no worldspace and leaves it nil.
     public var worldspaceMusicType: FormID?
-    /// Runtime index entries for this cell's REFRs (issue #158). Actor entries
-    /// travel inside `actors` and are merged in by makeScene.
+    /// REFR entries only; actor entries travel inside `actors`.
     public var referenceEntries: [RuntimeReferenceEntry] = []
-    /// Journal sequence of the world-state snapshot this build applied
-    /// (issue #160); 0 for a build with no runtime state behind it.
+    /// The world-state snapshot sequence applied; 0 means none.
     public var stateSequence: UInt64 = 0
 
-    /// Statics and actors share one per-cell index; both are placements the
-    /// runtime addresses by `ReferenceKey`.
     public var referenceIndex: RuntimeReferenceIndex {
         RuntimeReferenceIndex(entries: referenceEntries + actors.entries)
     }
@@ -154,10 +143,8 @@ nonisolated extension CellSceneBuilder {
         return localizedStrings?.resolve(text)
     }
 
-    /// The mesh + texture keys the cell just touched, drained so streaming
-    /// unload can keep the union over resident cells and evict the rest.
-    /// Empties the libraries' touched sets so the next `drainTouchedAssets`
-    /// reports exactly one cell's working set. Every build path starts with it.
+    /// Every build path starts here, so `drainTouchedAssets` reports one cell's
+    /// working set for streaming unload.
     nonisolated public func resetTouchedAssets() {
         _ = drainTouchedAssets()
     }
@@ -170,8 +157,7 @@ nonisolated extension CellSceneBuilder {
         )
     }
 
-    /// World AABB over everything the cell draws: placed models, actors,
-    /// terrain and water. Nil when nothing drew.
+    /// Nil when nothing drew.
     nonisolated private func unionedBounds(
         placements: [RenderPlacement],
         geometry: CellGeometryBuild
@@ -185,8 +171,6 @@ nonisolated extension CellSceneBuilder {
         return bounds
     }
 
-    /// RenderScene handles opaque/alpha-test order; environment adds terrain,
-    /// water, sky. Model + geometry AABBs feed framing and frustum culling.
     nonisolated public func makeScene(
         found: FoundCell,
         grid: (x: Int32, y: Int32),
@@ -196,9 +180,7 @@ nonisolated extension CellSceneBuilder {
     ) -> CellScene {
         let actors = geometry.actors
         let particles = makeParticlePlaybacks(instances: instances)
-        // A reference the dynamic world simulates is drawn by its live pose
-        // rather than by the matrix baked here (issue #193), so it is the one
-        // kind of placement that carries its identity into the draw list.
+        // A simulated reference draws at its live pose, so it keeps its FormID.
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
         let placed = instances.map { instance in
             RenderPlacement(
@@ -322,6 +304,7 @@ nonisolated extension CellSceneBuilder {
         summary.actorAnimationFailureCount = actors.counts.animationFailures
         summary.actorAnimationFailureReasons = actors.counts.animationFailureReasons
         summary.actorAppearanceSkipReasons = actors.counts.appearanceSkipReasons
+        summary.skippedRecords = skippedRecords
         return summary
     }
 }

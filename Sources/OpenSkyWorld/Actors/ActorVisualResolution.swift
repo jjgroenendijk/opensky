@@ -110,10 +110,8 @@ nonisolated public struct ResolvedActorVisual: Equatable {
     public let skips: [AppearanceSkip]
 }
 
-/// FaceGen asset path convention, verified against the real install
-/// (docs/formats/actors.md): directory is the defining plugin's file name
-/// lowercased; file name is the full FormID with the load-order byte zeroed
-/// (== 8-hex zero-padded objectID); separators + extension lowercase.
+/// FaceGen paths: the defining plugin's lowercased name, then the 8-hex object ID
+/// (docs/formats/actors.md).
 nonisolated public enum FaceGenPaths: Sendable {
     public static func mesh(for id: ResolvedFormID) -> String {
         "meshes\\actors\\character\\facegendata\\facegeom\\"
@@ -145,6 +143,8 @@ nonisolated public struct ActorVisualResolver: Sendable {
     /// HDPT records named by NPC_ and RACE head-part lists. Only the expression TRI
     /// fields are decoded.
     public let headParts: [UInt32: HeadPart]
+    /// Records `build` could not decode; they resolve as dangling.
+    public private(set) var skippedRecords = SkippedRecords()
 
     public init(
         races: [UInt32: Race],
@@ -166,29 +166,32 @@ nonisolated public struct ActorVisualResolver: Sendable {
         self.headParts = headParts
     }
 
-    /// Indexes every decodable RACE/ARMO/ARMA/OTFT/LVLI top-group record.
-    /// Undecodable records drop out and later resolve as dangling.
+    /// Indexes every decodable RACE/ARMO/ARMA/OTFT/LVLI/HDPT top-group record.
     public static func build(
         from file: ESMFile,
         localized: Bool,
         pluginName: String
     ) -> ActorVisualResolver {
         let masters = (try? file.pluginHeader().masters) ?? []
-        return ActorVisualResolver(
-            races: index(file, "RACE") { try Race(record: $0, localized: localized) },
-            armors: index(file, "ARMO") { try Armor(record: $0, localized: localized) },
-            armorAddons: index(file, "ARMA") { try ArmorAddon(record: $0) },
-            outfits: index(file, "OTFT") { try Outfit(record: $0) },
-            leveledItems: index(file, "LVLI") { try LeveledList(record: $0) },
+        var skipped = SkippedRecords()
+        var resolver = ActorVisualResolver(
+            races: index(file, "RACE", &skipped) { try Race(record: $0, localized: localized) },
+            armors: index(file, "ARMO", &skipped) { try Armor(record: $0, localized: localized) },
+            armorAddons: index(file, "ARMA", &skipped, ArmorAddon.init(record:)),
+            outfits: index(file, "OTFT", &skipped, Outfit.init(record:)),
+            leveledItems: index(file, "LVLI", &skipped, LeveledList.init(record:)),
             formIDResolver: FormIDResolver(pluginName: pluginName, masters: masters),
             equipment: EquipmentCatalog.build(from: file),
-            headParts: index(file, "HDPT") { try HeadPart(record: $0) }
+            headParts: index(file, "HDPT", &skipped, HeadPart.init(record:))
         )
+        resolver.skippedRecords = skipped
+        return resolver
     }
 
     private static func index<Value>(
         _ file: ESMFile,
         _ type: FourCC,
+        _ skipped: inout SkippedRecords,
         _ decode: (ESMRecord) throws -> Value
     ) -> [UInt32: Value] {
         var values: [UInt32: Value] = [:]
@@ -197,7 +200,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         }
         for case let .record(record) in children {
             guard record.type == type, !record.isDeleted else { continue }
-            values[record.formID] = try? decode(record)
+            values[record.formID] = skipped.decode(record, using: decode)
         }
         return values
     }

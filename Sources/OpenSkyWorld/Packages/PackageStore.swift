@@ -1,5 +1,5 @@
-// Immutable PACK/NPC_ indexes and template resolution. Built
-// once from Skyrim.esm beside the other CellProviderIndexes stores.
+// Immutable PACK/NPC_ indexes and template resolution, built once beside the
+// other CellProviderIndexes stores.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -29,20 +29,25 @@ nonisolated public struct ResolvedPackage: Equatable, Sendable {
 nonisolated public struct PackageStore: Sendable {
     public let packages: [UInt32: Package]
     public let actorTemplates: ActorTemplateResolver
+    /// PACK records that failed to decode.
+    public private(set) var skippedRecords = SkippedRecords()
 
     public init(file: ESMFile) {
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         actorTemplates = ActorTemplateResolver.build(from: file, localized: localized)
         var decoded: [UInt32: Package] = [:]
+        var skipped = SkippedRecords()
         if let group = file.topGroup(of: "PACK"), let children = try? group.children() {
             for case let .record(record) in children where record.type == "PACK" {
-                guard !record.isDeleted, let package = try? Package(record: record) else {
-                    continue
-                }
+                guard
+                    !record.isDeleted,
+                    let package = skipped.decode(record, using: Package.init(record:))
+                else { continue }
                 decoded[record.formID] = package
             }
         }
         packages = decoded
+        skippedRecords = skipped
     }
 
     public init(packages: [Package], actorTemplates: ActorTemplateResolver) {

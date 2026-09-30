@@ -1,7 +1,6 @@
-// Milestone 3.5 exterior water build: resolve CELL overrides against WRLD
-// defaults + parent inheritance, resolve WATR colors, upload/reuse one flat
-// cell-sized plane, emit a blend-pipeline draw item. Parsing sources:
-// UESP CELL/WRLD/WATR + xEdit dev-4.1.6 wbDefinitionsTES5.pas.
+// Exterior water: CELL overrides over WRLD defaults and parents, WATR colors,
+// and one shared cell-sized plane. Sources: UESP CELL/WRLD/WATR and xEdit
+// dev-4.1.6 wbDefinitionsTES5.pas.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -139,7 +138,10 @@ nonisolated extension CellSceneBuilder {
         var index: [UInt32: Worldspace] = [:]
         if let top = file.topGroup(of: "WRLD"), let children = try? top.children() {
             for case let .record(record) in children where record.type == "WRLD" {
-                if let world = try? Worldspace(record: record, localized: localized) {
+                let world = decodeOrSkip(record, using: {
+                    try Worldspace(record: $0, localized: localized)
+                })
+                if let world {
                     index[record.formID] = world
                 }
             }
@@ -155,7 +157,7 @@ nonisolated extension CellSceneBuilder {
         var index: [UInt32: WaterType] = [:]
         if let top = file.topGroup(of: "WATR"), let children = try? top.children() {
             for case let .record(record) in children where record.type == "WATR" {
-                if let water = try? WaterType(record: record) {
+                if let water = decodeOrSkip(record, using: WaterType.init(record:)) {
                     index[record.formID] = water
                 }
             }
