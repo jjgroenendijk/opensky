@@ -119,7 +119,6 @@ Every package module uses `defaultIsolation(MainActor.self)` (see `librarySettin
 threads is a `nonisolated` `Sendable` value type, for example `SkinningPalette`. Shared
 mutable state off the main thread uses `Mutex`, as in `WorldAudioEngine`.
 
-Which subsystems leave the main actor, and how their results reach the frame loop, is decided
-in 30.15.1 ([#652](https://github.com/jjgroenendijk/opensky/issues/652)). Until then, do not
-add a new `@unchecked Sendable` class, `DispatchQueue`, or `Task.detached`. 30.15
-([#613](https://github.com/jjgroenendijk/opensky/issues/613)) removes the existing ones.
+[Concurrency](/decisions/concurrency.md) decides which subsystems leave the main actor, what
+isolation each one uses, and how their results reach the frame loop. Do not add a new
+`@unchecked Sendable` class or `Task.detached`. A new `DispatchQueue` needs a row on that page.

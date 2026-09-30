@@ -107,7 +107,7 @@ with an example. When you add code:
 - Game logic goes in a coordinator in its feature module, not in `GameViewController`.
 - Change a data layout for speed only after a measurement shows the cost.
 - Code runs on the main actor by default. Do not add a new `@unchecked Sendable` class,
-  `DispatchQueue`, or `Task.detached`.
+  `DispatchQueue`, or `Task.detached`. `docs/decisions/concurrency.md` says what leaves it.
 
 ## Build, run, test
 
