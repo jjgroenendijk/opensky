@@ -54,6 +54,11 @@ The crime domain has `CrimeCore`, `CrimeCoordinator`, and `CrimeSessionWorld` in
 `Sources/OpenSkyCrime/`, answered by `CrimeWorldAdapter`. The coordinator is the bounty
 reporter's `CrimeWorld`. It reaches factions only through its port, because `OpenSkyCrime`
 may not import `OpenSkyFactions`.
+The audio domain has `AudioLabCore` in `Sources/OpenSkyAudio/`, and `AudioCoordinator` with its
+port `AudioWorld` in `Sources/OpenSkyWorld/Session/`, answered by `AudioWorldAdapter`. The
+coordinator sits in `OpenSkyWorld`, not `OpenSkyAudio`, because the directors it owns and
+`LipSyncPlayback` live there. It is also the panel's `AudioControlProviding`. The view
+controller conforms through `AudioControlForwarding`, which forwards every member to it.
 The dialogue domain has `DialogueCore`, `DialogueCoordinator`, and `DialogueWorld` in
 `Sources/OpenSkyDialogue/`, answered by `DialogueWorldAdapter`. The core's speaker focus is a
 state machine: it returns hold, face, and release effects, and the coordinator sends them

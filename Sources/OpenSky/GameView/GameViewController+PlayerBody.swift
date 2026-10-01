@@ -124,10 +124,8 @@ extension GameViewController {
         case let .success(body):
             playerBodyBridge.equipped = equipped
             playerBodyBridge.failureReason = nil
-            // The footstep set follows the boots, so it is re-resolved from
-            // the same assembly that produced the geometry rather than from a
-            // second walk of the equipped list (issue #352).
-            updateFootstepSet(from: body)
+            // The footstep set follows the boots of the assembly just built.
+            audio.updateFootstepSet(feetArmatures: body.feetArmatures)
             do {
                 try renderer.setPlayerBody(body)
             } catch {

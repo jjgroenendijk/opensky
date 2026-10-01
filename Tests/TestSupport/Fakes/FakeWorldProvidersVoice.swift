@@ -9,6 +9,7 @@
 
 import AppKit
 @testable import OpenSky
+import OpenSkyAudio
 @testable import OpenSkyWorld
 
 @MainActor
@@ -35,7 +36,7 @@ extension FakeWorldProviders {
     }
 
     var selectableVoiceFileNames: [String] {
-        Array(matchedVoiceFilePaths.prefix(VoiceLabState.pickerLimit))
+        Array(matchedVoiceFilePaths.prefix(AudioLabCore.voicePickerLimit))
     }
 
     var voiceFileMatchCount: Int {

@@ -202,7 +202,7 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     func setCombatMusicActive(_ active: Bool) {
-        game.musicDirector?.setCombatActive(active)
+        game.audio.musicDirector?.setCombatActive(active)
     }
 
     func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
