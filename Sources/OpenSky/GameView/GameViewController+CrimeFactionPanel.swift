@@ -51,10 +51,10 @@ extension GameViewController {
             isAvailable: true,
             bounties: bountyReadouts(reporter.runtime),
             currentCrimeFaction: here.map { factionOption($0, store) },
-            ownership: targetOwnership(),
+            ownership: inventory.targetOwnership(),
             ownerName: targetOwnerName(store),
-            stolenStacks: worldItems.runtime.map {
-                readout($0.inventory.inventory(of: $0.player).stacks.filter(\.stolen))
+            stolenStacks: inventory.runtime.map {
+                inventory.readout($0.inventory.inventory(of: $0.player).stacks.filter(\.stolen))
             } ?? [],
             crimeFactions: options.crime,
             selectedCrimeFaction: crime.panel.bountyFaction ?? options.crime.first?.key,
@@ -64,7 +64,8 @@ extension GameViewController {
             selectedFaction: crime.panel.membershipFaction ?? options.all.first?.key,
             vendorFactions: options.vendors,
             vendorOverride: override,
-            effectiveVendor: override.flatMap { vendors?.core.vendor(faction: $0) } ?? subject
+            effectiveVendor: override
+                .flatMap { inventory.vendors?.core.vendor(faction: $0) } ?? subject
                 .vendor,
             hour: renderer?.gameClock.hourOfDay,
             lastCrimeText: crime.lastActionText,
@@ -131,7 +132,7 @@ extension GameViewController {
     /// reference's own.
     private func targetOwnerName(_ store: FactionStore) -> String? {
         guard
-            let interaction = currentInteraction,
+            let interaction = hud.interactionTarget?.interaction,
             let entry = streamer?.referenceEntry(formID: interaction.reference)
         else { return nil }
         switch ownershipVerdict(on: entry.key).owner {
@@ -169,7 +170,7 @@ extension GameViewController {
             towardPlayer: key == .player ? nil : profile.flatMap(reactionTerms(of:)),
             crimeFaction: profile?.crimeFaction.map { factionOption($0, store) },
             policedFaction: policed.map { factionOption($0, store) },
-            vendor: vendors?.vendor(of: key)
+            vendor: inventory.vendors?.vendor(of: key)
         )
     }
 

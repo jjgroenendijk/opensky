@@ -106,7 +106,7 @@ extension GameViewController: CrimeFactionControlProviding {
     @discardableResult
     func selectSocialSubjectFromCrosshair() -> String {
         guard
-            let interaction = currentInteraction,
+            let interaction = hud.interactionTarget?.interaction,
             let entry = streamer?.referenceEntry(formID: interaction.reference),
             entry.placedActor != nil
         else { return notePanel("The crosshair is not on an actor.") }
@@ -153,7 +153,7 @@ extension GameViewController: CrimeFactionControlProviding {
 
     @discardableResult
     func barterWithSocialSubject() -> String {
-        notePanel(openBarter(
+        notePanel(containerMenu.openBarter(
             with: crime.panel.subject ?? .player,
             vendorFaction: crime.panel.vendorOverride
         ))

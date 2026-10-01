@@ -56,7 +56,7 @@ nonisolated public struct BodySlots: OptionSet, Equatable, Sendable {
     /// spell a slot mask without a switch at the call site (issue #178). Slots
     /// with no name here stay reachable through `rawValue`, and a caller that
     /// prints this list is responsible for saying so — see
-    /// `GameViewController.describe(_:)`, which appends the unnamed remainder
+    /// `InventoryCore.describe(_:)`, which appends the unnamed remainder
     /// rather than dropping it.
     public static let namedSlots: [(name: String, slots: BodySlots)] = [
         ("head", .head), ("hair", .hair), ("body", .body), ("hands", .hands),

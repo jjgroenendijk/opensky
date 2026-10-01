@@ -63,7 +63,7 @@ final class MagicWorldAdapter {
                 store: game.worldState,
                 spells: spells,
                 equipSlots: equipSlots,
-                equipment: game.worldItems.equipment
+                equipment: game.inventory.equipment
             ),
             values: values,
             spellPluginName: magic.magicItemPluginName,
@@ -97,11 +97,11 @@ extension MagicWorldAdapter: MagicWorld {
     }
 
     var inventory: (any InventoryAccess)? {
-        game.worldItems.runtime?.inventory
+        game.inventory.runtime?.inventory
     }
 
     var equipment: (any EquipmentAccess)? {
-        game.worldItems.equipment
+        game.inventory.equipment
     }
 
     @discardableResult
@@ -130,7 +130,7 @@ extension MagicWorldAdapter: MagicWorld {
     }
 
     func itemName(_ item: FormID) -> String {
-        game.name(of: item)
+        game.inventory.name(of: item)
     }
 
     /// The race the actor-value baseline derives from, so a session cannot

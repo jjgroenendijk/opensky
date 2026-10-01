@@ -6,8 +6,10 @@ import AppKit
 import MetalKit
 import OpenSkyAudio
 import OpenSkyCombat
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
@@ -143,7 +145,7 @@ final class GameViewController: NSViewController {
     /// System menu selector + presentation state.
     var systemMenu = SystemMenuRuntimeState()
     /// Inventory menu row list + presentation state.
-    var inventoryMenu = InventoryMenuRuntimeState()
+    lazy var inventoryMenu = InventoryMenuController(game: self)
     /// Journal page model and presentation state.
     var journal = JournalRuntimeState()
     /// Dialogue index, conversation model and presentation state.
@@ -151,11 +153,12 @@ final class GameViewController: NSViewController {
     /// Conversation camera override and speaker focus.
     var dialogueCamera = DialogueCameraBridgeState()
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
-    var containerMenu = ContainerMenuRuntimeState()
+    lazy var containerMenu = ContainerMenuController(game: self)
     /// World > Runtime State bridge caches (save store, plugin fingerprint, slot list).
     var runtimeState = RuntimeStateBridgeState()
-    /// World items: the take/drop/container runtime and the panel's last outcome line.
-    var worldItems = WorldItemBridgeState()
+    /// World items, equipment, vendors and trades. Its runtimes stay nil without game data.
+    let inventory = InventoryCoordinator()
+    lazy var inventoryWorld = InventoryWorldAdapter(game: self)
     /// Player behavior graph + rendered body state.
     var playerBodyBridge = PlayerBodyBridgeState()
     /// Actor values: the damage/restore/regeneration runtime, the HUD meter gate and the
@@ -174,8 +177,6 @@ final class GameViewController: NSViewController {
     /// Factions: the membership runtime, the interfaction relation index and the hostility
     /// derivation over both.
     var factions = FactionBridgeState()
-    /// Nil without a FACT and FLST index.
-    var vendors: VendorCoordinator?
     var crime = CrimeBridgeState()
 
     /// Skill advancement: the use-to-experience-to-level runtime every combat and magic seam
@@ -494,5 +495,155 @@ extension GameViewController: CastingControlProviding {
     @discardableResult
     func castReadiedSpell(in hand: SpellHand) -> String {
         magic.castReadiedSpell(in: hand)
+    }
+}
+
+extension GameViewController: ItemControlProviding {
+    var itemControlSnapshot: ItemControlSnapshot {
+        inventory.itemControlSnapshot
+    }
+
+    @discardableResult
+    func takeInteractionTarget() -> String {
+        inventory.takeInteractionTarget()
+    }
+
+    @discardableResult
+    func openInteractionTargetContainer() -> String {
+        inventory.openInteractionTargetContainer()
+    }
+
+    @discardableResult
+    func takeAllFromOpenContainer() -> String {
+        inventory.takeAllFromOpenContainer()
+    }
+
+    @discardableResult
+    func closeOpenContainer() -> String {
+        inventory.closeOpenContainer()
+    }
+
+    @discardableResult
+    func dropPlayerItem(_ item: FormID?, count: Int32) -> String {
+        inventory.dropPlayerItem(item, count: count)
+    }
+
+    @discardableResult
+    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+        inventory.equipItem(item, on: target)
+    }
+
+    @discardableResult
+    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
+        inventory.unequipItem(item, on: target)
+    }
+}
+
+extension GameViewController: InventoryEquipmentControlProviding {
+    var inventoryEquipmentInspectionTarget: EquipmentTargetSelector {
+        get { inventory.inspectionTarget }
+        set { inventory.inspectionTarget = newValue }
+    }
+
+    var inventoryEquipmentSnapshot: InventoryEquipmentSnapshot {
+        inventory.inventoryEquipmentSnapshot
+    }
+
+    @discardableResult
+    func grantItem(_ item: FormID, count: Int32, to target: InventoryGrantTarget) -> String {
+        inventory.grantItem(item, count: count, to: target)
+    }
+}
+
+extension GameViewController: InventoryMenuControlProviding {
+    var inventoryMenuIsOpen: Bool {
+        inventoryMenu.isOpen
+    }
+
+    var inventoryMenuMovieEnabled: Bool {
+        get { inventoryMenu.movieEnabled }
+        set { inventoryMenu.setMovieEnabled(newValue) }
+    }
+
+    var inventoryMenuSnapshot: InventoryMenuControlSnapshot {
+        inventoryMenu.snapshot
+    }
+
+    func openInventoryMenu() {
+        inventoryMenu.open()
+    }
+
+    func closeInventoryMenu() {
+        inventoryMenu.close()
+    }
+
+    func sendInventoryMenuInput(_ event: MenuInputEvent) {
+        inventoryMenu.route(event)
+    }
+
+    func activateInventoryMenuSelection() {
+        inventoryMenu.activateSelection()
+    }
+
+    func dropInventoryMenuSelection() {
+        inventoryMenu.dropSelection()
+    }
+
+    func consumeInventoryMenuSelection() {
+        inventoryMenu.consumeSelection()
+    }
+}
+
+extension GameViewController: ContainerMenuControlProviding {
+    var containerMenuIsOpen: Bool {
+        containerMenu.isOpen
+    }
+
+    var containerMenuMode: ContainerMenuModel.Mode {
+        get { containerMenu.mode }
+        set { containerMenu.setMode(newValue) }
+    }
+
+    var containerMenuMovieEnabled: Bool {
+        get { containerMenu.movieEnabled }
+        set { containerMenu.setMovieEnabled(newValue) }
+    }
+
+    var containerMenuSnapshot: ContainerMenuControlSnapshot {
+        containerMenu.snapshot
+    }
+
+    func openContainerMenu() {
+        containerMenu.open()
+    }
+
+    func closeContainerMenu() {
+        containerMenu.close()
+    }
+
+    func sendContainerMenuInput(_ event: MenuInputEvent) {
+        containerMenu.route(event)
+    }
+
+    func switchContainerMenuSide() {
+        containerMenu.switchSide()
+    }
+
+    func activateContainerMenuSelection() {
+        containerMenu.activateSelection()
+    }
+
+    func takeAllFromContainerMenu() {
+        containerMenu.takeAll()
+    }
+
+    @discardableResult
+    func selectContainerMenuMerchant(_ reference: FormID) -> String {
+        containerMenu.selectMerchant(reference)
+    }
+
+    @discardableResult
+    func selectContainerMenuMerchantFromInteraction() -> String {
+        containerMenu.selectMerchantFromInteraction()
     }
 }

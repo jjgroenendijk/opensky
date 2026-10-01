@@ -191,7 +191,7 @@ extension GameViewController {
     /// is what dresses the player before the first equip (issue #178).
     private func playerEquippedSet() -> [FormID]? {
         guard
-            let equipment = worldItems.equipment,
+            let equipment = inventory.equipment,
             equipment.inventory.hasRuntimeInventory(InventoryHolder.player)
         else { return nil }
         return equipment.equipped(on: InventoryHolder.player)

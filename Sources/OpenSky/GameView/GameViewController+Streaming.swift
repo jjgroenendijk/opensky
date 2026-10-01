@@ -79,7 +79,7 @@ extension GameViewController {
         wirePapyrus(provider: provider, renderer: renderer, streamer: controller)
         // Last in the multicast order: the activation sound and
         // the recorded activation both land before the item leaves the world.
-        wireWorldItems(provider: provider, streamer: controller)
+        inventoryWorld.wireWorldItems(provider: provider, streamer: controller)
         // After the item runtime, which owns the equipped set the body is
         // assembled from.
         wirePlayerBody(provider: provider, renderer: renderer)
@@ -136,7 +136,7 @@ extension GameViewController {
         // Memberships resolve through the template chain the actor-value
         // baselines already indexed.
         wireFactions(provider: provider)
-        wireVendors(provider: provider)
+        inventoryWorld.wireVendors(provider: provider)
         // Writes through the actor-value runtime and reads the equipment runtime.
         wireSkills(provider: provider)
         // Hands itself to the skill runtime and checks a perk spend against the

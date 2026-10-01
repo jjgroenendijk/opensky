@@ -71,7 +71,7 @@ extension GameViewController {
     /// guessed. The item index is the melee runtime's, to avoid a second decode.
     func wornArmor(of key: ReferenceKey) -> WornArmorProfile {
         guard
-            let equipment = worldItems.equipment,
+            let equipment = inventory.equipment,
             let items = combat.items,
             let holder = inventoryHolder(of: key)
         else { return .none }

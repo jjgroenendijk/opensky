@@ -248,7 +248,7 @@ extension GameViewController: CrimeArrestSession {
     func crimeArrest() -> CrimeArrest? {
         guard
             let runtime = crime.reporter?.runtime,
-            let inventory = worldItems.runtime?.inventory
+            let inventory = inventory.runtime?.inventory
         else { return nil }
         return CrimeArrest(crime: runtime, inventory: inventory)
     }

@@ -104,7 +104,7 @@ struct ContainerMenuAcceptanceRealDataTests {
         try renderer.updateSWFRuntime { runtime in
             ContainerMenuMovieBridge.activate(runtime: runtime, mode: mode) { _ in }
         }
-        for _ in 0 ..< GameViewController.containerMenuActivationTicks {
+        for _ in 0 ..< ContainerMenuController.activationTicks {
             try renderer.advanceSWFRuntime()
         }
         return runtime
