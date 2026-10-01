@@ -29,11 +29,7 @@ public enum FormListFixture: Sendable {
     }
 
     public static func parse(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
+        try ESMFixture.parseRecord(bytes)
     }
 
     public static func uint32(_ value: UInt32) -> Data {

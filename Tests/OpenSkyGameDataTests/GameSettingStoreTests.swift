@@ -1,7 +1,6 @@
 // Cross-plugin GMST precedence over synthetic plugins. Later valid values win;
 // malformed records never erase the last usable setting.
 
-@testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -11,8 +10,16 @@ import Testing
 struct GameSettingStoreTests {
     @Test
     func laterValidOverrideWinsByEditorIDNotFormID() throws {
-        let base = try plugin(editorID: "fMoveCharWalkBase", value: 100, formID: 0x10)
-        let override = try plugin(editorID: "fMoveCharWalkBase", value: 155, formID: 0x99)
+        let base = try GameSettingFixture.plugin(
+            editorID: "fMoveCharWalkBase",
+            value: 100,
+            formID: 0x10
+        )
+        let override = try GameSettingFixture.plugin(
+            editorID: "fMoveCharWalkBase",
+            value: 155,
+            formID: 0x99
+        )
         let store = GameSettingStore(plugins: [
             ("Skyrim.esm", base),
             ("Movement.esp", override)
@@ -24,8 +31,12 @@ struct GameSettingStoreTests {
 
     @Test
     func malformedLaterRecordDoesNotEraseValidValueAndMissingStaysNil() throws {
-        let base = try plugin(editorID: "fMoveCharWalkBase", value: 100, formID: 1)
-        let malformed = try plugin(
+        let base = try GameSettingFixture.plugin(
+            editorID: "fMoveCharWalkBase",
+            value: 100,
+            formID: 1
+        )
+        let malformed = try GameSettingFixture.plugin(
             editorID: "fMoveCharWalkBase",
             rawData: Data([0, 0, 0]),
             formID: 2
@@ -33,24 +44,5 @@ struct GameSettingStoreTests {
         let store = GameSettingStore(plugins: [("Base.esm", base), ("Broken.esp", malformed)])
         #expect(store.setting(editorID: "fMoveCharWalkBase")?.setting.value == .float(100))
         #expect(store.setting(editorID: "fMissing") == nil)
-    }
-
-    private func plugin(editorID: String, value: Float, formID: UInt32) throws -> ESMFile {
-        try plugin(editorID: editorID, rawData: scalar(value.bitPattern), formID: formID)
-    }
-
-    private func plugin(editorID: String, rawData: Data, formID: UInt32) throws -> ESMFile {
-        let fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-            + ESMFixture.field("DATA", rawData)
-        return try ESMFile(data: ESMFixture.tes4() + ESMFixture.topGroup(
-            "GMST",
-            contents: ESMFixture.record("GMST", formID: formID, data: fields)
-        ))
-    }
-
-    private func scalar(_ value: UInt32) -> Data {
-        var data = Data()
-        data.appendUInt32(value)
-        return data
     }
 }

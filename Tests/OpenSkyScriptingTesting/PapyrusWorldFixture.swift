@@ -313,6 +313,30 @@ public enum PapyrusWorldFixture {
 
     /// Steps until a tick neither dispatches, resumes, nor leaves anything
     /// queued, bounded so a broken queue fails the test instead of hanging.
+    /// A world with two attached instances, references 1 (`AScript`) and 2
+    /// (`BScript`), whose `OnLoad` notes "a.onload" and "b.onload". The attach
+    /// events are dropped, so nothing is pending and nothing has run.
+    @MainActor
+    public static func twoInstanceWorld(
+        probe: PapyrusWorldProbeDispatch
+    ) throws -> PapyrusWorldRuntime {
+        let aScript = eventScript("AScript", events: [("OnLoad", probeBody(note: "a.onload"))])
+        let bScript = eventScript("BScript", events: [("OnLoad", probeBody(note: "b.onload"))])
+        let world = worldRuntime(objects: [aScript, bScript], nativeDispatch: probe)
+        let references = try index([
+            referenceEntry(objectID: 1, scripts: [.init("AScript", properties: [])]),
+            referenceEntry(objectID: 2, scripts: [.init("BScript", properties: [])])
+        ])
+        world.attach(
+            cell: cell,
+            references: references,
+            formIDResolver: resolver,
+            firstIntegration: true
+        )
+        world.eventQueue.removeAll()
+        return world
+    }
+
     @MainActor
     public static func drain(_ world: PapyrusWorldRuntime, maxSteps: Int = 64) {
         for _ in 0 ..< maxSteps {

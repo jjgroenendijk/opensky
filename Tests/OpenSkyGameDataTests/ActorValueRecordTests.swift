@@ -1,7 +1,5 @@
-// Stat-record decode + stat-side template resolution tests over
-// synthetic in-code records (ESMFixture) — never extracted game files
-// (AGENTS.md "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format"
-// per-record pages; see docs/formats/actors.md.
+// Stat records and stat-side template resolution. Layout:
+// docs/formats/actors.md.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -60,7 +58,7 @@ struct ActorValueRecordDecodeTests {
         data = data.prefix(20)
         let fields = ESMFixture.field("ACBS", data)
         let actor = try ActorBase(
-            record: record(ESMFixture.record("NPC_", formID: 1, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("NPC_", formID: 1, data: fields)),
             localized: false
         )
         #expect(actor.templateFlags == .useStats)
@@ -77,9 +75,13 @@ struct ActorValueRecordDecodeTests {
         #expect(actor.stats.bakedStamina == 200)
 
         let short = try ActorBase(
-            record: record(ESMFixture.record("NPC_", formID: 2, data: ESMFixture.field(
-                "ACBS", acbs()
-            ) + ESMFixture.field("DNAM", Data(count: 12)))),
+            record: ESMFixture.parseRecord(ESMFixture.record(
+                "NPC_",
+                formID: 2,
+                data: ESMFixture.field(
+                    "ACBS", acbs()
+                ) + ESMFixture.field("DNAM", Data(count: 12))
+            )),
             localized: false
         )
         #expect(short.stats.bakedHealth == nil)
@@ -107,7 +109,7 @@ struct ActorValueRecordDecodeTests {
         let full = raceDATA(starting: Triple(50, 60, 70), regen: Triple(0.7, 3, 5))
         let truncated = full.prefix(0x40)
         let decoded = try Race(
-            record: record(ESMFixture.record(
+            record: ESMFixture.parseRecord(ESMFixture.record(
                 "RACE", formID: 0x201, data: ESMFixture.field("DATA", truncated)
             )),
             localized: false
@@ -116,7 +118,7 @@ struct ActorValueRecordDecodeTests {
         #expect(decoded.stats.staminaRegenPercent == 0)
 
         let tiny = try Race(
-            record: record(ESMFixture.record(
+            record: ESMFixture.parseRecord(ESMFixture.record(
                 "RACE", formID: 0x202, data: ESMFixture.field("DATA", Data(count: 0x24))
             )),
             localized: false
@@ -140,7 +142,7 @@ struct ActorValueRecordDecodeTests {
     /// that spreads nothing is a usable answer, a thrown error is not.
     @Test func shortClassDATAYieldsZeroWeights() throws {
         let decoded = try CharacterClass(
-            record: record(ESMFixture.record(
+            record: ESMFixture.parseRecord(ESMFixture.record(
                 "CLAS", formID: 0x301, data: ESMFixture.field("DATA", Data(count: 8))
             )),
             localized: false
@@ -153,7 +155,7 @@ struct ActorValueRecordDecodeTests {
     @Test func classRejectsOtherRecordTypes() throws {
         #expect(throws: ESMError.self) {
             _ = try CharacterClass(
-                record: record(ESMFixture.record("NPC_", formID: 1, data: Data())),
+                record: ESMFixture.parseRecord(ESMFixture.record("NPC_", formID: 1, data: Data())),
                 localized: false
             )
         }
@@ -240,14 +242,6 @@ struct ActorStatTemplateResolutionTests {
 }
 
 // MARK: - Fixture builders (file-scope: shared by both suites)
-
-private func record(_ bytes: Data) throws -> ESMRecord {
-    let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-    guard case let .record(record)? = children.first else {
-        throw ESMError.malformed("fixture did not produce a record")
-    }
-    return record
-}
 
 /// ACBS, 24 bytes (UESP NPC_): uint32 flags, int16 magicka offset, int16
 /// stamina offset, uint16 level, calc min, calc max, speed mult, disposition,
@@ -340,7 +334,7 @@ private func npc(
         fields += ESMFixture.field("DNAM", dnam(baked))
     }
     return try ActorBase(
-        record: record(ESMFixture.record("NPC_", formID: formID, data: fields)),
+        record: ESMFixture.parseRecord(ESMFixture.record("NPC_", formID: formID, data: fields)),
         localized: false
     )
 }
@@ -367,7 +361,7 @@ private func race(
     regen: Triple<Float>
 ) throws -> Race {
     try Race(
-        record: record(ESMFixture.record(
+        record: ESMFixture.parseRecord(ESMFixture.record(
             "RACE",
             formID: formID,
             data: ESMFixture.field("DATA", raceDATA(starting: starting, regen: regen))
@@ -391,7 +385,7 @@ private func characterClass(
     let fields = ESMFixture.field("EDID", ESMFixture.zstring("TestClass"))
         + ESMFixture.field("DATA", data)
     return try CharacterClass(
-        record: record(ESMFixture.record("CLAS", formID: formID, data: fields)),
+        record: ESMFixture.parseRecord(ESMFixture.record("CLAS", formID: formID, data: fields)),
         localized: false
     )
 }

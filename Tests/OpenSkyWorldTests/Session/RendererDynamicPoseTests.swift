@@ -1,33 +1,21 @@
-// A simulated body is drawn where the solver put it (issue #193), proved on
-// pixels rather than on matrices: one crate is tagged as a reference the
-// dynamic world owns, the renderer is handed the displacement that world would
-// publish, and the crate has to be gone from where the cell build baked it and
-// present where the body is. The arithmetic behind the displacement is
-// DynamicBodyRenderPoseTests; this is the evidence it reaches the screen.
-//
-// Skips without a Metal 4 device (paravirtual CI), like every render suite.
+// A simulated body is drawn where the solver put it, proved on pixels. One
+// crate belongs to the dynamic world; with its displacement applied it must
+// leave its baked spot and appear at the body. `DynamicBodyRenderPoseTests`
+// covers the arithmetic. Skips without Metal 4.
 
 import Foundation
 import Metal
-import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import RenderingTesting
 import simd
 import Testing
 
 struct RendererDynamicPoseTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4) else { return nil }
-        return device
-    }()
-
-    private static var hasMetal4Device: Bool {
-        device != nil
-    }
+    private static let device = OffscreenRendererFixture.device
+    private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
 
     private static let width = 480
     private static let height = 320
@@ -54,8 +42,10 @@ struct RendererDynamicPoseTests {
         let renderer = try Self.makeRenderer(device: device)
 
         // Nothing has moved: the crate is where the build put it.
-        let atRest = try Self.readPixels(
-            texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
+        let atRest = try OffscreenRendererFixture.pixels(of: renderer.renderOffscreen(
+            width: Self.width,
+            height: Self.height
+        )
         )
         #expect(try !Self.isBackground(atRest, at: #require(Self.project(Self.center(of:
             Self.bakedPosition
@@ -67,8 +57,10 @@ struct RendererDynamicPoseTests {
         renderer.dynamicInstanceDeltas = [
             Self.reference: MatrixMath.translation(Self.shovedPosition - Self.bakedPosition)
         ]
-        let shoved = try Self.readPixels(
-            texture: renderer.renderOffscreen(width: Self.width, height: Self.height)
+        let shoved = try OffscreenRendererFixture.pixels(of: renderer.renderOffscreen(
+            width: Self.width,
+            height: Self.height
+        )
         )
 
         #expect(try Self.isBackground(shoved, at: #require(Self.project(Self.center(of:
@@ -111,7 +103,7 @@ struct RendererDynamicPoseTests {
             materials: [Material.fallback],
             skippedShapeCount: 0
         )
-        let texture = try solidTexture(device: device)
+        let texture = try OffscreenRendererFixture.solidTexture(device: device)
         let render = try RenderModel(device: device, model: model) { _, _ in texture }
         let bounds = try #require(ModelBounds.containing(model: model))
         let transform = MatrixMath.translation(bakedPosition)
@@ -121,14 +113,8 @@ struct RendererDynamicPoseTests {
             bounds: bounds.transformed(by: transform),
             referenceFormID: reference
         )])
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: width, height: height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(
-            view: view,
+        return try OffscreenRendererFixture.makeRenderer(
+            device: device, width: width, height: height,
             scene: scene,
             camera: camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
@@ -140,59 +126,11 @@ struct RendererDynamicPoseTests {
         position + SIMD3(0, 0, 32)
     }
 
-    private static func solidTexture(device: MTLDevice) throws -> MTLTexture {
-        let descriptor = MTLTextureDescriptor()
-        descriptor.textureType = .type2D
-        descriptor.pixelFormat = .rgba8Unorm_srgb
-        descriptor.width = 2
-        descriptor.height = 2
-        descriptor.usage = .shaderRead
-        descriptor.storageMode = .shared
-        let texture = try #require(device.makeTexture(descriptor: descriptor))
-        let bytes = [UInt8](repeating: 200, count: 2 * 2 * 4)
-        texture.replace(
-            region: MTLRegionMake2D(0, 0, 2, 2),
-            mipmapLevel: 0,
-            withBytes: bytes,
-            bytesPerRow: 2 * 4
-        )
-        return texture
-    }
-
     private static func project(_ world: SIMD3<Float>) -> (x: Int, y: Int)? {
-        let viewMatrix = FreeFlyCamera(framing: camera).viewMatrix()
-        let projection = MatrixMath.perspective(
-            fovYRadians: MatrixMath.radians(fromDegrees: 65),
-            aspectRatio: Float(width) / Float(height),
-            nearZ: Renderer.nearPlane,
-            farZ: Renderer.farPlane
-        )
-        let clip = projection * viewMatrix * SIMD4(world, 1)
-        guard clip.w > 0 else { return nil }
-        let ndc = SIMD3(clip.x, clip.y, clip.z) / clip.w
-        guard abs(ndc.x) < 1, abs(ndc.y) < 1 else { return nil }
-        return (
-            x: Int((ndc.x + 1) / 2 * Float(width)),
-            y: Int((1 - ndc.y) / 2 * Float(height))
-        )
-    }
-
-    private static func readPixels(texture: MTLTexture) -> [UInt8] {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return } // non-empty
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
+        OffscreenRendererFixture.project(world, camera: camera, width: width, height: height)
     }
 
     private static func isBackground(_ pixels: [UInt8], at point: (x: Int, y: Int)) -> Bool {
-        let offset = (point.y * width + point.x) * 4
-        return pixels[offset] == 0 && pixels[offset + 1] == 0 && pixels[offset + 2] == 0
+        OffscreenRendererFixture.isBackground(pixels, at: point, width: width)
     }
 }

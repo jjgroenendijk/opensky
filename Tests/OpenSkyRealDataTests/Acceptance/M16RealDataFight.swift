@@ -1,21 +1,13 @@
-// The perception-and-combat half of the M16 real-data gate (issue #203), as a
-// small world both runtimes share.
-//
-// Separate from `M16AcceptanceRealDataTests` for the strict-lint type-length
-// cap, and separate from `M16AcceptanceChain` because the two answer different
-// questions: the synthetic chain drives navigation, packages, perception and
-// combat together over invented geometry, while this drives perception and
-// combat alone over *vanilla constants* at a position the real mover produced.
-// Sharing one harness would mean the real-data gate carried a synthetic navmesh
-// it never uses.
-//
-// Nothing here reads the install directly. It is handed the resolved settings
-// and the arrival position, which is what keeps the record-reading in one place.
+// The perception and combat half of the M16 real-data gate: a small world both
+// runtimes share, over vanilla constants at a position the real mover produced.
+// The synthetic `M16AcceptanceChain` also drives navigation over invented
+// geometry, which this gate does not need. It never reads the install itself.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyCombatTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
@@ -104,25 +96,7 @@ extension M16RealDataFight: PerceptionWorld {
     }
 }
 
-extension M16RealDataFight: CombatLoopWorld {
-    /// Casting is item 19.10's. This chain's fight is a melee one, and an actor
-    /// with nothing castable takes the path it took before 19.10 existed.
-    func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
-        .none
-    }
-
-    @discardableResult
-    func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        false
-    }
-
-    @discardableResult
-    func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        false
-    }
-
-    func cancelCombatCast(by key: ReferenceKey) {}
-
+extension M16RealDataFight: NoCasterCombatWorld {
     var combatPlayer: MeleeAttacker {
         MeleeAttacker(key: .player, feet: playerFeet, facing: 0)
     }

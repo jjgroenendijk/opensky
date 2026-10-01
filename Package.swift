@@ -524,7 +524,7 @@ targets += testing(
     dependencies: [
         "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyActors", "OpenSkyInventory",
         "OpenSkyProgression", "OpenSkyProgressionInterface", "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState", "OpenSkyConditions",
         "FormatsCoreTesting", "FormatsESMTesting"
     ]
 )
@@ -735,7 +735,7 @@ targets += feature(
         "OpenSkyInventoryTesting", "OpenSkyQuestsInterface", "OpenSkyQuests", "OpenSkyShaderTypes",
         "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyPerceptionInterface", "OpenSkyActors",
         "OpenSkyWorldInterface", "OpenSkyWorld", "RenderingTesting",
-        "GameDataTesting"
+        "GameDataTesting", "OpenSkyWorldTesting"
     ]
 )
 

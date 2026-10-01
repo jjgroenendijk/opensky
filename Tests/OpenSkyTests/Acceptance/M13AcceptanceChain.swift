@@ -211,20 +211,7 @@ struct M13AcceptanceChain {
     }
 
     private static var leverCollision: StaticCollisionSet {
-        let extent = SIMD3<Float>(repeating: 1)
-        let position = leverTarget
-        var stats = StaticCollisionStats()
-        stats.shapeCount = 1
-        return StaticCollisionSet(
-            location: nil,
-            shapes: [StaticCollisionShape(
-                reference: FormID(leverObjectID),
-                transform: MatrixMath.translation(position),
-                geometry: .box(halfExtents: extent),
-                bounds: ModelBounds(min: position - extent, max: position + extent)
-            )],
-            stats: stats
-        )
+        CellStreamerFixture.collision(reference: leverObjectID, position: leverTarget)
     }
 }
 

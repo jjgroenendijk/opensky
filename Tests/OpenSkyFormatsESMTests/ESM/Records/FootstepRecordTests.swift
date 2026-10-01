@@ -14,7 +14,7 @@ struct FootstepRecordTests {
             + ESMFixture.field("DATA", uint32(0x12F0B))
             + ESMFixture.field("ANAM", ESMFixture.zstring("FootLeft"))
         let footstep = try Footstep(
-            record: record(ESMFixture.record("FSTP", formID: 0x12F0F, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("FSTP", formID: 0x12F0F, data: fields))
         )
 
         #expect(footstep.formID == FormID(0x12F0F))
@@ -25,11 +25,14 @@ struct FootstepRecordTests {
 
     @Test func nullAndWrongSizeImpactLinksDecodeAsAbsent() throws {
         let fields = ESMFixture.field("DATA", uint32(0))
-        let nulled = try Footstep(record: record(ESMFixture.record("FSTP", data: fields)))
+        let nulled = try Footstep(record: ESMFixture.parseRecord(ESMFixture.record(
+            "FSTP",
+            data: fields
+        )))
         #expect(nulled.impactDataSet == nil)
 
         let short = try Footstep(
-            record: record(
+            record: ESMFixture.parseRecord(
                 ESMFixture.record("FSTP", data: ESMFixture.field("DATA", Data(count: 2)))
             )
         )
@@ -38,10 +41,16 @@ struct FootstepRecordTests {
 
     @Test func wrongRecordTypeThrows() {
         #expect(throws: ESMError.self) {
-            _ = try Footstep(record: record(ESMFixture.record("FSTS", data: Data())))
+            _ = try Footstep(record: ESMFixture.parseRecord(ESMFixture.record(
+                "FSTS",
+                data: Data()
+            )))
         }
         #expect(throws: ESMError.self) {
-            _ = try FootstepSet(record: record(ESMFixture.record("FSTP", data: Data())))
+            _ = try FootstepSet(record: ESMFixture.parseRecord(ESMFixture.record(
+                "FSTP",
+                data: Data()
+            )))
         }
     }
 
@@ -74,7 +83,10 @@ struct FootstepRecordTests {
     @Test func wrongSizeCountStructLeavesEveryListEmpty() throws {
         let fields = ESMFixture.field("XCNT", Data(count: 16))
             + ESMFixture.field("DATA", uint32(1) + uint32(2))
-        let set = try FootstepSet(record: record(ESMFixture.record("FSTS", data: fields)))
+        let set = try FootstepSet(record: ESMFixture.parseRecord(ESMFixture.record(
+            "FSTS",
+            data: fields
+        )))
 
         for gait in FootstepGait.allCases {
             #expect(set.footsteps(for: gait).isEmpty)
@@ -86,7 +98,7 @@ struct FootstepRecordTests {
             + ESMFixture.field("SNAM", uint32(0x300))
             + ESMFixture.field("NAM1", uint32(0x301))
         let impact = try Impact(
-            record: record(ESMFixture.record("IPCT", formID: 0x200, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("IPCT", formID: 0x200, data: fields))
         )
 
         #expect(impact.formID == FormID(0x200))
@@ -103,7 +115,7 @@ struct FootstepRecordTests {
             + ESMFixture.field("PNAM", uint32(0x13) + uint32(0)) // null impact, dropped
             + ESMFixture.field("PNAM", Data(count: 4)) // short pair, dropped
         let set = try ImpactDataSet(
-            record: record(ESMFixture.record("IPDS", formID: 0x400, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("IPDS", formID: 0x400, data: fields))
         )
 
         #expect(set.editorID == "StoneSet")
@@ -122,13 +134,13 @@ struct FootstepRecordTests {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("NakedFeet"))
             + ESMFixture.field("SNDD", uint32(0x21468))
         let addon = try ArmorAddon(
-            record: record(ESMFixture.record("ARMA", formID: 0x500, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("ARMA", formID: 0x500, data: fields))
         )
 
         #expect(addon.footstepSound == FormID(0x21468))
 
         let nulled = try ArmorAddon(
-            record: record(
+            record: ESMFixture.parseRecord(
                 ESMFixture.record("ARMA", data: ESMFixture.field("SNDD", uint32(0)))
             )
         )
@@ -148,15 +160,10 @@ struct FootstepRecordTests {
         }
         let fields = ESMFixture.field("XCNT", countData)
             + ESMFixture.field("DATA", listData)
-        return try FootstepSet(record: record(ESMFixture.record("FSTS", data: fields)))
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
+        return try FootstepSet(record: ESMFixture.parseRecord(ESMFixture.record(
+            "FSTS",
+            data: fields
+        )))
     }
 
     private func uint32(_ value: UInt32) -> Data {

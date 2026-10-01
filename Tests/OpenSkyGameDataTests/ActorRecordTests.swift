@@ -1,7 +1,5 @@
-// Actor record decoder + template resolver tests (ACHR, NPC_, LVLN) over
-// synthetic in-code records (ESMFixture) — never extracted game files
-// (AGENTS.md "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File
-// Format" per-record pages; see docs/formats/actors.md.
+// ACHR, NPC_ and LVLN decoding and template resolution. Layout:
+// docs/formats/actors.md.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -21,7 +19,7 @@ struct ActorRecordDecodeTests {
             scale: 1.5
         )
         let actor = try PlacedActor(
-            record: record(ESMFixture.record("ACHR", formID: 0x2000, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("ACHR", formID: 0x2000, data: fields))
         )
         #expect(actor.formID == FormID(0x2000))
         #expect(actor.base == FormID(0x0001_3BBF))
@@ -32,7 +30,7 @@ struct ActorRecordDecodeTests {
 
     @Test func placedActorScaleDefaultsToOne() throws {
         let actor = try PlacedActor(
-            record: record(ESMFixture.record("ACHR", formID: 1, data: achrFields()))
+            record: ESMFixture.parseRecord(ESMFixture.record("ACHR", formID: 1, data: achrFields()))
         )
         #expect(actor.scale == 1)
     }
@@ -40,12 +38,12 @@ struct ActorRecordDecodeTests {
     /// Record-header flag 0x800 = initially disabled (UESP record flags):
     /// the actor exists but must not render until scripts enable it.
     @Test func placedActorDecodesInitiallyDisabledHeaderFlag() throws {
-        let disabled = try PlacedActor(record: record(
+        let disabled = try PlacedActor(record: ESMFixture.parseRecord(
             ESMFixture.record("ACHR", formID: 1, flags: 0x0000_0800, data: achrFields())
         ))
         #expect(disabled.isInitiallyDisabled)
         let enabled = try PlacedActor(
-            record: record(ESMFixture.record("ACHR", formID: 2, data: achrFields()))
+            record: ESMFixture.parseRecord(ESMFixture.record("ACHR", formID: 2, data: achrFields()))
         )
         #expect(!enabled.isInitiallyDisabled)
     }
@@ -55,7 +53,7 @@ struct ActorRecordDecodeTests {
         name.appendUInt32(0x1000)
         let baseOnly = ESMFixture.record("ACHR", formID: 1, data: ESMFixture.field("NAME", name))
         #expect(throws: ESMError.self) {
-            _ = try PlacedActor(record: record(baseOnly))
+            _ = try PlacedActor(record: ESMFixture.parseRecord(baseOnly))
         }
         var data = Data()
         for _ in 0 ..< 6 {
@@ -63,14 +61,14 @@ struct ActorRecordDecodeTests {
         }
         let dataOnly = ESMFixture.record("ACHR", formID: 1, data: ESMFixture.field("DATA", data))
         #expect(throws: ESMError.self) {
-            _ = try PlacedActor(record: record(dataOnly))
+            _ = try PlacedActor(record: ESMFixture.parseRecord(dataOnly))
         }
     }
 
     @Test func placedActorRejectsOtherRecordTypes() throws {
         let refr = ESMFixture.record("REFR", formID: 1, data: achrFields())
         #expect(throws: ESMError.self) {
-            _ = try PlacedActor(record: record(refr))
+            _ = try PlacedActor(record: ESMFixture.parseRecord(refr))
         }
     }
 
@@ -122,7 +120,7 @@ struct ActorRecordDecodeTests {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("NoACBS"))
         let bytes = ESMFixture.record("NPC_", formID: 1, data: fields)
         #expect(throws: ESMError.self) {
-            _ = try ActorBase(record: record(bytes), localized: false)
+            _ = try ActorBase(record: ESMFixture.parseRecord(bytes), localized: false)
         }
     }
 
@@ -130,7 +128,7 @@ struct ActorRecordDecodeTests {
         let fields = ESMFixture.field("ACBS", Data(count: 8))
         let bytes = ESMFixture.record("NPC_", formID: 1, data: fields)
         #expect(throws: ESMError.self) {
-            _ = try ActorBase(record: record(bytes), localized: false)
+            _ = try ActorBase(record: ESMFixture.parseRecord(bytes), localized: false)
         }
     }
 
@@ -158,7 +156,7 @@ struct ActorRecordDecodeTests {
         let fields = ESMFixture.field("LVLO", Data(count: 4))
         let bytes = ESMFixture.record("LVLN", formID: 1, data: fields)
         #expect(throws: ESMError.self) {
-            _ = try LeveledList(record: record(bytes))
+            _ = try LeveledList(record: ESMFixture.parseRecord(bytes))
         }
     }
 
@@ -170,7 +168,7 @@ struct ActorRecordDecodeTests {
         data.appendUInt32(0x40)
         let fields = ESMFixture.field("LVLO", data)
         let list = try LeveledList(
-            record: record(ESMFixture.record("LVLN", formID: 1, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("LVLN", formID: 1, data: fields))
         )
         #expect(list.entries == [LeveledList.Entry(level: 7, reference: FormID(0x40), count: 1)])
     }
@@ -347,14 +345,7 @@ struct ActorTemplateResolverTests {
 
 // MARK: - Fixture builders (file-scope: shared by both suites)
 
-/// Parses one synthetic record through the container walk.
-private func record(_ bytes: Data) throws -> ESMRecord {
-    let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-    guard case let .record(record)? = children.first else {
-        throw ESMError.malformed("fixture did not produce a record")
-    }
-    return record
-}
+// Parses one synthetic record through the container walk.
 
 private func achrFields(
     base: UInt32 = 0x1000,
@@ -437,7 +428,7 @@ private func npc(
         fields += formIDField("DOFT", defaultOutfit)
     }
     return try ActorBase(
-        record: record(ESMFixture.record("NPC_", formID: formID, data: fields)),
+        record: ESMFixture.parseRecord(ESMFixture.record("NPC_", formID: formID, data: fields)),
         localized: false
     )
 }
@@ -461,7 +452,7 @@ private func lvln(
         fields += ESMFixture.field("LVLO", data)
     }
     return try LeveledList(
-        record: record(ESMFixture.record("LVLN", formID: formID, data: fields))
+        record: ESMFixture.parseRecord(ESMFixture.record("LVLN", formID: formID, data: fields))
     )
 }
 

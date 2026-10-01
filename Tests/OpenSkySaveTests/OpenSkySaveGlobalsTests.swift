@@ -1,6 +1,5 @@
-// GVAR chunk coverage for the OpenSky native save container (issue #165): the
-// runtime global overrides round-trip, the bytes stay deterministic, an absent
-// chunk means no overrides, and a corrupt payload throws rather than crashes.
+// GVAR chunk: global overrides round-trip, the bytes stay deterministic, an
+// absent chunk means no overrides, and a corrupt payload throws.
 // See docs/formats/opensky-save-world-chunks.md.
 
 @testable import FormatsCoreTesting
@@ -16,11 +15,7 @@ import WorldStateTesting
 @MainActor
 struct OpenSkySaveGlobalsTests {
     private func encode(_ snapshot: WorldStateSnapshot) -> Data {
-        OpenSkySaveEncoder.encode(
-            snapshot: snapshot,
-            fingerprint: OpenSkySaveFixture.fingerprint,
-            metadata: OpenSkySaveFixture.metadata
-        )
+        OpenSkySaveFixture.encode(snapshot)
     }
 
     @Test func globalsSurviveARoundTrip() throws {

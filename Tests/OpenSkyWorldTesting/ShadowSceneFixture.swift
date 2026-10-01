@@ -3,7 +3,6 @@
 
 import Foundation
 import Metal
-import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
@@ -11,21 +10,12 @@ import RenderingTesting
 import simd
 
 public enum ShadowSceneFixtureError: Error {
-    case textureAllocationFailed
     case emptyModel
 }
 
 public enum ShadowSceneFixture {
-    public static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4) else { return nil }
-        return device
-    }()
-
-    public static var hasMetal4Device: Bool {
-        device != nil
-    }
+    public static let device = OffscreenRendererFixture.device
+    public static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
 
     public static let width = 320
     public static let height = 240
@@ -49,60 +39,21 @@ public enum ShadowSceneFixture {
         device: MTLDevice,
         scene: RenderScene? = nil
     ) throws -> Renderer {
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: width, height: height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(
-            view: view,
-            scene: scene ?? shadowScene(device: device),
+        try OffscreenRendererFixture.makeRenderer(
+            device: device,
+            width: width,
+            height: height,
+            scene: scene ?? towerScene(device: device, towerOffsets: [.zero]),
             camera: camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
     }
 
-    /// Ground + a near tower + a second tower far past shadowDistance on +X.
-    /// The two towers share one RenderModel -> one DrawGroup with two
-    /// instances, so per-cascade culling must keep the near instance and drop
-    /// the far one from every cascade.
+    /// A second tower stands far past `shadowDistance` on +X. Both towers share
+    /// one `RenderModel`, so one `DrawGroup` has two instances, and cascade
+    /// culling must keep the near one and drop the far one.
     public static func cullingScene(device: MTLDevice) throws -> RenderScene {
-        let texture = try solidTexture(device: device)
-        let provider: TextureProvider = { _, _ in texture }
-        let groundModel = Model(
-            meshes: [DemoScene.planeMesh(halfSize: 1500, uvRepeat: 1)],
-            materials: [Material.fallback],
-            skippedShapeCount: 0
-        )
-        let towerModel = Model(
-            meshes: [DemoScene.boxMesh(halfWidth: 45, halfDepth: 45, height: 420)],
-            materials: [Material.fallback],
-            skippedShapeCount: 0
-        )
-        let ground = try RenderModel(device: device, model: groundModel, textureProvider: provider)
-        let tower = try RenderModel(device: device, model: towerModel, textureProvider: provider)
-        let groundBounds = try bounds(of: groundModel)
-        let towerBounds = try bounds(of: towerModel)
-        let identity = matrix_identity_float4x4
-        let far = MatrixMath.translation(SIMD3<Float>(200_000, 0, 0))
-        return RenderScene(
-            instances: [
-                RenderPlacement(
-                    model: ground, transform: identity,
-                    bounds: groundBounds.transformed(by: identity)
-                ),
-                RenderPlacement(
-                    model: tower, transform: identity,
-                    bounds: towerBounds.transformed(by: identity)
-                ),
-                RenderPlacement(
-                    model: tower, transform: far,
-                    bounds: towerBounds.transformed(by: far)
-                )
-            ],
-            sky: SkyParameters()
-        )
+        try towerScene(device: device, towerOffsets: [.zero, SIMD3(200_000, 0, 0)])
     }
 
     /// Count of pixels the shadowed render darkened past a small threshold.
@@ -120,11 +71,13 @@ public enum ShadowSceneFixture {
         return darker
     }
 
-    /// Flat ground quad + a tall thin tower caster at the origin, under a sky.
-    private static func shadowScene(device: MTLDevice) throws -> RenderScene {
-        let texture = try solidTexture(device: device)
+    /// Flat ground under a sky, with one tall thin tower at each offset.
+    private static func towerScene(
+        device: MTLDevice,
+        towerOffsets: [SIMD3<Float>]
+    ) throws -> RenderScene {
+        let texture = try OffscreenRendererFixture.solidTexture(device: device)
         let provider: TextureProvider = { _, _ in texture }
-
         let groundModel = Model(
             meshes: [DemoScene.planeMesh(halfSize: 1500, uvRepeat: 1)],
             materials: [Material.fallback],
@@ -140,56 +93,20 @@ public enum ShadowSceneFixture {
         let groundBounds = try bounds(of: groundModel)
         let towerBounds = try bounds(of: towerModel)
         let identity = matrix_identity_float4x4
-        return RenderScene(
-            instances: [
-                RenderPlacement(
-                    model: ground,
-                    transform: identity,
-                    bounds: groundBounds.transformed(by: identity)
-                ),
-                RenderPlacement(
-                    model: tower,
-                    transform: identity,
-                    bounds: towerBounds.transformed(by: identity)
-                )
-            ],
-            sky: SkyParameters()
-        )
-    }
-
-    private static func solidTexture(device: MTLDevice) throws -> MTLTexture {
-        let descriptor = MTLTextureDescriptor()
-        descriptor.textureType = .type2D
-        descriptor.pixelFormat = .rgba8Unorm_srgb
-        descriptor.width = 2
-        descriptor.height = 2
-        descriptor.usage = .shaderRead
-        descriptor.storageMode = .shared
-        guard let texture = device.makeTexture(descriptor: descriptor) else {
-            throw ShadowSceneFixtureError.textureAllocationFailed
+        let towers = towerOffsets.map { offset in
+            let transform = MatrixMath.translation(offset)
+            return RenderPlacement(
+                model: tower, transform: transform, bounds: towerBounds.transformed(by: transform)
+            )
         }
-        let bytes = [UInt8](repeating: 200, count: 2 * 2 * 4)
-        texture.replace(
-            region: MTLRegionMake2D(0, 0, 2, 2),
-            mipmapLevel: 0,
-            withBytes: bytes,
-            bytesPerRow: 2 * 4
+        let groundPlacement = RenderPlacement(
+            model: ground, transform: identity, bounds: groundBounds.transformed(by: identity)
         )
-        return texture
+        return RenderScene(instances: [groundPlacement] + towers, sky: SkyParameters())
     }
 
     public static func readPixels(texture: MTLTexture) -> [UInt8] {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return } // non-empty
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
+        OffscreenRendererFixture.pixels(of: texture)
     }
 
     private static func bounds(of model: Model) throws -> ModelBounds {

@@ -45,25 +45,7 @@ struct M17AcceptancePanelTests {
     private static func buildPanel(
         providers: FakeWorldProviders
     ) throws -> DialoguePanelViewController {
-        let worldGroup = try #require(
-            AppSidebarModel.groups().first { $0.section == .world }
-        )
-        let descriptor = try #require(
-            worldGroup.destinations.first { $0.id == "dialogueVoice" }
-        )
-        #expect(descriptor.sidebarIdentifier == "Destination-dialogueVoice")
-        #expect(descriptor.title == "Dialogue & Voice")
-
-        guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("World > Dialogue & Voice is not a world inspector")
-            throw M17PanelAcceptanceError.notAWorldInspector
-        }
-        let panel = try #require(
-            makePanel(WorldPanelContext(providers: providers))
-                as? DialoguePanelViewController
-        )
-        panel.loadViewIfNeeded()
-        return panel
+        try buildWorldPanel("dialogueVoice", title: "Dialogue & Voice", providers: providers)
     }
 
     /// Every readout the destination publishes, read back by accessibility id.
@@ -289,8 +271,5 @@ struct M17AcceptancePanelTests {
     )
 }
 
-/// Thrown only to end the run early when the registry hands back something
-/// other than a world inspector, which `Issue.record` has already reported.
-private enum M17PanelAcceptanceError: Error {
-    case notAWorldInspector
-}
+// Thrown only to end the run early when the registry hands back something
+// other than a world inspector, which `Issue.record` has already reported.

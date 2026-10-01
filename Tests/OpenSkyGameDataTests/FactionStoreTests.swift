@@ -10,10 +10,10 @@ import Testing
 struct FactionStoreTests {
     @Test
     func laterPluginWinsByIdentityAndEditorID() throws {
-        let base = try plugin(factions: [
+        let base = try FactionFixture.plugin(factions: [
             FactionFixture.record(formID: 0x10, editorID: "OldName")
         ])
-        let patch = try plugin(
+        let patch = try FactionFixture.plugin(
             masters: ["Base.esm"],
             factions: [FactionFixture.record(formID: 0x10, editorID: "NewName")]
         )
@@ -29,7 +29,7 @@ struct FactionStoreTests {
 
     @Test
     func classifiesVendorAndCrimeFactionsAndJoinsRelations() throws {
-        let file = try plugin(factions: [
+        let file = try FactionFixture.plugin(factions: [
             FactionFixture.record(
                 formID: 0x10,
                 editorID: "GuardFaction",
@@ -64,11 +64,11 @@ struct FactionStoreTests {
 
     @Test
     func negativeRanksAndUnresolvedLinksSurviveTheJoin() throws {
-        let file = try plugin(factions: [
+        let file = try FactionFixture.plugin(factions: [
             FactionFixture.record(formID: 0x10, editorID: "KnownFaction")
         ])
         let store = FactionStore(plugins: [("Base.esm", file)])
-        let npc = try actor(
+        let npc = try FactionFixture.actorBase(
             formID: 0x600,
             editorID: "Outsider",
             factions: [(0x10, -1), (0x99, 3)]
@@ -81,31 +81,6 @@ struct FactionStoreTests {
         #expect(store.rankTitle(of: resolved[0], female: false) == nil)
         #expect(!resolved[1].isResolved)
         #expect(resolved[1].displayName == "[UNRESOLVED] 00000099")
-    }
-
-    private func actor(
-        formID: UInt32,
-        editorID: String,
-        templateFlags: UInt16 = 0,
-        template: UInt32? = nil,
-        factions: [(faction: UInt32, rank: Int8)] = []
-    ) throws -> ActorBase {
-        try ActorBase(
-            record: FactionFixture.decode(FactionFixture.actor(
-                formID: formID,
-                editorID: editorID,
-                templateFlags: templateFlags,
-                template: template,
-                factions: factions
-            )),
-            localized: false
-        )
-    }
-
-    private func plugin(masters: [String] = [], factions: [Data]) throws -> ESMFile {
-        var data = ESMFixture.tes4(masters: masters)
-        data += ESMFixture.topGroup("FACT", contents: factions.reduce(Data(), +))
-        return try ESMFile(data: data)
     }
 
     private func id(_ plugin: String, _ objectID: UInt32) -> ResolvedFormID {

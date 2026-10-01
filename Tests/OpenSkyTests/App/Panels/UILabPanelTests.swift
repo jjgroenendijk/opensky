@@ -6,13 +6,12 @@
 
 import AppKit
 @testable import OpenSky
-@testable import OpenSkyFormatsSWF
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import Testing
 
 @MainActor
-private final class FakeUILabProvider: UILabControlProviding, SWFLabControlProviding {
+private final class FakeUILabProvider: UILabControlProviding {
     var uiOverlayEnabled = true
     var uiSampleShown = false
     var uiScale: Float = 1
@@ -55,21 +54,6 @@ private final class FakeUILabProvider: UILabControlProviding, SWFLabControlProvi
         sampleShown: false, sampleKeyCount: 0, language: "english",
         installLoaded: false, installFileCount: 0, installKeyCount: 0
     )
-
-    var swfMoviePaths: [String] = []
-    var swfLayerEnabled = true
-    func selectSWFMovie(path _: String?) {}
-    var swfLabSnapshot = SWFLabControlSnapshot(
-        selectedPath: nil, layerEnabled: true, loadError: nil, tally: nil,
-        unresolvedFontNames: [], drawStats: SWFDrawStats(), installLoaded: false,
-        runtime: nil
-    )
-    func startSWFRuntime() {}
-    func advanceSWFRuntime(ticks _: Int) {}
-    func stopSWFRuntime() {}
-    func sendSWFRuntimeInput(_: SWFInputEvent) {}
-    func callSWFRuntimeMovie(_: String) {}
-    func clearSWFInvokeLog() {}
 }
 
 struct UILabPanelTests {
@@ -252,7 +236,7 @@ struct UILabPanelTests {
     func swfProviderReachesTheHostedSection() {
         let panel = UILabPanelViewController()
         panel.loadViewIfNeeded()
-        let fake = FakeUILabProvider()
+        let fake = FakeWorldProviders()
         panel.swfProvider = fake
         #expect(panel.swfSection.provider === fake)
         #expect(panel.swfRuntimeSection.provider === fake)

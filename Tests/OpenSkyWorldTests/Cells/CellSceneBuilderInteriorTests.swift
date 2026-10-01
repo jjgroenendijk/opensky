@@ -76,7 +76,11 @@ extension CellSceneBuilderTests {
                     type: "DOOR", formID: 0x100, modelPath: "arch\\door.nif"
                 )
             ],
-            extraWorldChildren: persistentExteriorCell(refs: outsideDoor),
+            extraWorldChildren: persistentActorCell(
+                refs: outsideDoor,
+                cellID: 0x40,
+                editorID: "Persistent"
+            ),
             interiorRecords: interiorCellGroup(formID: interiorID, refs: insideDoor)
         )
         let device = try #require(Self.device)
@@ -99,31 +103,5 @@ extension CellSceneBuilderTests {
         )
         #expect(leave.destinationDoor == FormID(0x200))
         #expect(leave.scene.location == .exterior(CellCoordinate(x: 6, y: -2)))
-    }
-
-    private func persistentExteriorCell(refs: Data) -> Data {
-        let cellID: UInt32 = 0x40
-        let cell = ESMFixture.record(
-            "CELL",
-            formID: cellID,
-            data: cellFields(
-                editorID: "Persistent",
-                grid: (0, 0),
-                flags: 0,
-                waterHeightBits: nil,
-                waterType: nil
-            )
-        )
-        let children = ESMFixture.childGroup(
-            parent: cellID,
-            groupType: 6,
-            contents: ESMFixture.childGroup(parent: cellID, groupType: 8, contents: refs)
-        )
-        let subBlock = ESMFixture.exteriorBlock(
-            x: 0, y: 0, groupType: 5, contents: cell + children
-        )
-        return ESMFixture.exteriorBlock(
-            x: 0, y: 0, groupType: 4, contents: subBlock
-        )
     }
 }

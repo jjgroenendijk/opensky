@@ -23,7 +23,7 @@ struct GrassRecordTests {
                 wavePeriod: 2.5,
                 flags: 0x07
             ))
-        let grass = try Grass(record: record(
+        let grass = try Grass(record: ESMFixture.parseRecord(
             ESMFixture.record("GRAS", formID: 0x1234, data: fields)
         ))
 
@@ -45,7 +45,7 @@ struct GrassRecordTests {
 
     @Test func preservesUnknownWaterRuleAndUnknownFlagBits() throws {
         let data = placementData(waterRule: 99, flags: 0x84)
-        let grass = try Grass(record: record(
+        let grass = try Grass(record: ESMFixture.parseRecord(
             ESMFixture.record("GRAS", data: ESMFixture.field("DATA", data))
         ))
         #expect(grass.placement?.waterRule == .unknown(99))
@@ -53,7 +53,7 @@ struct GrassRecordTests {
     }
 
     @Test func missingDATAStaysRepresentable() throws {
-        let grass = try Grass(record: record(ESMFixture.record(
+        let grass = try Grass(record: ESMFixture.parseRecord(ESMFixture.record(
             "GRAS",
             data: ESMFixture.field("EDID", ESMFixture.zstring("IncompleteGrass"))
         )))
@@ -63,16 +63,16 @@ struct GrassRecordTests {
 
     @Test func rejectsWrongTypeAndMalformedDATA() {
         #expect(throws: (any Error).self) {
-            _ = try Grass(record: record(ESMFixture.record("STAT", data: Data())))
+            _ = try Grass(record: ESMFixture.parseRecord(ESMFixture.record("STAT", data: Data())))
         }
         #expect(throws: (any Error).self) {
-            _ = try Grass(record: record(ESMFixture.record(
+            _ = try Grass(record: ESMFixture.parseRecord(ESMFixture.record(
                 "GRAS",
                 data: ESMFixture.field("DATA", Data(count: 31))
             )))
         }
         #expect(throws: (any Error).self) {
-            _ = try Grass(record: record(ESMFixture.record(
+            _ = try Grass(record: ESMFixture.parseRecord(ESMFixture.record(
                 "GRAS",
                 data: ESMFixture.field("DATA", Data(count: 33))
             )))
@@ -86,7 +86,7 @@ struct GrassRecordTests {
         second.appendUInt32(0x20)
         let fields = ESMFixture.field("GNAM", first)
             + ESMFixture.field("GNAM", second)
-        let texture = try LandTexture(record: record(
+        let texture = try LandTexture(record: ESMFixture.parseRecord(
             ESMFixture.record("LTEX", data: fields)
         ))
         #expect(texture.grasses == [FormID(0x10), FormID(0x20)])
@@ -94,19 +94,11 @@ struct GrassRecordTests {
 
     @Test func landTextureRejectsTruncatedGNAM() {
         #expect(throws: (any Error).self) {
-            _ = try LandTexture(record: record(ESMFixture.record(
+            _ = try LandTexture(record: ESMFixture.parseRecord(ESMFixture.record(
                 "LTEX",
                 data: ESMFixture.field("GNAM", Data(count: 3))
             )))
         }
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 
     private func placementData(

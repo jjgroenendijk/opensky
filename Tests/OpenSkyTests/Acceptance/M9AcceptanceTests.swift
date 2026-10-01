@@ -1,18 +1,7 @@
-// M9 milestone acceptance (issue #157). Drives the whole World > Audio gate
-// sentence — mute and solo categories, inspect sources, trigger a selected
-// sound, force a track, toggle SFX and ambience — through the real shell types:
-// the destination registry, the sidebar view controller, the registry's own
-// panel factory, and the controls a user clicks. The only stand-in is
-// `FakeWorldProviders` (shared with the other panel tests), which is the same
-// provider surface the game controller implements.
-//
-// `make test-ui` is blocked on the development machine (TCC harness init), so
-// this unit-level test is the deterministic evidence for the gate. Readouts are
-// read back by accessibility identifier out of the built view hierarchy, which
-// also pins those identifiers as the UI-test contract. No game data, no audio
-// device and no rendered frames are involved; the audible half of the gate is
-// the human step written down in docs/engine/world-sfx.md and
-// docs/engine/music.md, and the real-install half is
+// M9 acceptance for World > Audio: mute and solo categories, inspect sources,
+// trigger a sound, force a track, and toggle SFX and ambience, through the real
+// sidebar, registry, and panel controls. The audible half is a human step in
+// docs/engine/world-sfx.md and docs/engine/music.md; the real-install half is
 // `M9AudioAcceptanceRealDataTests`.
 
 import AppKit
@@ -20,45 +9,9 @@ import AppKit
 @testable import OpenSkyAudio
 import Testing
 
-/// One M9 acceptance session: the provider set the panel binds to, the real
-/// sidebar, and the registry factory that builds the Audio destination's panel.
+/// The shared sidebar session plus the Audio panel's own steps.
 @MainActor
-private final class M9AcceptanceHarness {
-    let providers = FakeWorldProviders()
-    let sidebar = AppSidebarViewController()
-
-    /// Last destination the sidebar reported through the shell's own callback.
-    private(set) var selectedDestinationID: String?
-
-    var context: WorldPanelContext {
-        WorldPanelContext(providers: providers)
-    }
-
-    init() {
-        sidebar.onSelect = { [weak self] descriptor in
-            self?.selectedDestinationID = descriptor.id
-        }
-        sidebar.isDestinationOverridden = { [weak self] id in
-            guard let self else { return false }
-            return DestinationRegistry.destination(id: id)?
-                .overrides?.isOverridden(context) ?? false
-        }
-        _ = sidebar.view
-    }
-
-    /// Selects the sidebar row and builds that destination's panel through the
-    /// registry factory, exactly as the shell does on selection.
-    func select(_ id: String) -> (any InspectorPanel)? {
-        sidebar.select(id: id)
-        guard
-            case let .worldInspector(makePanel) = DestinationRegistry.destination(id: id)?.content
-        else { return nil }
-        let panel = makePanel(context)
-        panel.loadViewIfNeeded()
-        refresh(panel)
-        return panel
-    }
-
+private final class M9AcceptanceHarness: SidebarAcceptanceHarness {
     /// Builds the Audio panel and puts the engine in the state the readouts
     /// describe once a user has ticked `AudioEnabledControl`.
     func selectAudioAndEnable() throws -> AudioPanelViewController {
@@ -70,26 +23,7 @@ private final class M9AcceptanceHarness {
         return panel
     }
 
-    /// Runs one inspection pass (sync controls, refresh readouts) without
-    /// leaving the 2 Hz ticker running, so assertions stay deterministic.
-    func refresh(_ panel: any InspectorPanel) {
-        panel.startInspecting()
-        panel.stopInspecting()
-    }
-
-    func overrideIndicatorIsVisible(_ id: String) -> Bool? {
-        sidebar.refreshOverrideIndicators()
-        return sidebar.overrideIndicatorIsVisible(destinationID: id)
-    }
-
-    /// Text of the readout label carrying `identifier`, found in the built
-    /// panel; nil when no such label is on screen.
-    func readout(_ identifier: String, in panel: any InspectorPanel) -> String? {
-        Self.label(identifier, in: panel.view)
-    }
-
-    /// What the engine publishes once it is enabled and running, with whatever
-    /// sources the case under test wants listed.
+    /// What the engine publishes once it is enabled and running.
     static func runningSnapshot(
         sources: [AudioSourceStatsSnapshot]
     ) -> AudioStatsSnapshot {
@@ -100,19 +34,6 @@ private final class M9AcceptanceHarness {
             sources: sources,
             sourceCap: WorldAudioEngine.maxConcurrentSources
         )
-    }
-
-    @MainActor
-    private static func label(_ identifier: String, in view: NSView) -> String? {
-        if view.accessibilityIdentifier() == identifier, let field = view as? NSTextField {
-            return field.stringValue
-        }
-        for subview in view.subviews {
-            if let found = label(identifier, in: subview) {
-                return found
-            }
-        }
-        return nil
     }
 }
 

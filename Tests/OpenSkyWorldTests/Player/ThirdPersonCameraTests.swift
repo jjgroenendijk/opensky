@@ -1,5 +1,5 @@
-// Third-person camera framing, mode cycling, and collision zoom (issue #189).
-// Synthetic geometry only — no install, no device.
+// Third-person camera framing, mode cycling, and collision zoom. Synthetic
+// geometry only.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -7,6 +7,7 @@
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import PhysicsTesting
 import simd
 import Testing
 
@@ -122,7 +123,7 @@ struct ThirdPersonCameraTests {
     func aWallBehindThePlayerPullsTheCameraIn() {
         var camera = ThirdPersonCamera()
         let wallX: Float = -60
-        let wall = Self.quad(
+        let wall = DynamicBodyScene.quad(
             SIMD3(wallX, -400, -400), SIMD3(wallX, 400, -400),
             SIMD3(wallX, 400, 400), SIMD3(wallX, -400, 400)
         )
@@ -130,7 +131,7 @@ struct ThirdPersonCameraTests {
             feetPosition: .zero,
             yaw: 0,
             pitch: 0,
-            collisionQuery: Self.query([wall])
+            collisionQuery: DynamicBodyScene.candidateQuery([wall])
         )
         #expect(camera.isCollisionLimited)
         #expect(camera.resolvedDistance < ThirdPersonCamera.orbitDistance)
@@ -146,7 +147,7 @@ struct ThirdPersonCameraTests {
     @Test
     func theZoomNeverCollapsesPastTheMinimum() {
         var camera = ThirdPersonCamera()
-        let wall = Self.quad(
+        let wall = DynamicBodyScene.quad(
             SIMD3(-2, -400, -400), SIMD3(-2, 400, -400),
             SIMD3(-2, 400, 400), SIMD3(-2, -400, 400)
         )
@@ -154,7 +155,7 @@ struct ThirdPersonCameraTests {
             feetPosition: .zero,
             yaw: 0,
             pitch: 0,
-            collisionQuery: Self.query([wall])
+            collisionQuery: DynamicBodyScene.candidateQuery([wall])
         )
         #expect(camera.resolvedDistance >= ThirdPersonCamera.minimumDistance)
     }
@@ -163,12 +164,13 @@ struct ThirdPersonCameraTests {
     @Test
     func resetRestoresTheOrbitDistance() {
         var camera = ThirdPersonCamera()
-        let wall = Self.quad(
+        let wall = DynamicBodyScene.quad(
             SIMD3(-60, -400, -400), SIMD3(-60, 400, -400),
             SIMD3(-60, 400, 400), SIMD3(-60, -400, 400)
         )
         _ = camera.resolve(
-            feetPosition: .zero, yaw: 0, pitch: 0, collisionQuery: Self.query([wall])
+            feetPosition: .zero, yaw: 0, pitch: 0,
+            collisionQuery: DynamicBodyScene.candidateQuery([wall])
         )
         camera.reset()
         #expect(camera.resolvedDistance == ThirdPersonCamera.orbitDistance)
@@ -176,29 +178,4 @@ struct ThirdPersonCameraTests {
     }
 
     // MARK: - Synthetic geometry
-
-    private static func query(
-        _ shapes: [StaticCollisionShape]
-    ) -> WalkController.CollisionQuery {
-        StaticCollisionSet(
-            location: nil,
-            shapes: shapes,
-            stats: StaticCollisionStats()
-        ).candidates
-    }
-
-    private static func quad(
-        _ first: SIMD3<Float>,
-        _ second: SIMD3<Float>,
-        _ third: SIMD3<Float>,
-        _ fourth: SIMD3<Float>
-    ) -> StaticCollisionShape {
-        let vertices = [first, second, third, fourth]
-        return StaticCollisionShape(
-            reference: FormID(1),
-            transform: matrix_identity_float4x4,
-            geometry: .triangleSoup(vertices: vertices, indices: [0, 1, 2, 0, 2, 3]),
-            bounds: ModelBounds.containing(vertices) ?? ModelBounds(min: .zero, max: .zero)
-        )
-    }
 }

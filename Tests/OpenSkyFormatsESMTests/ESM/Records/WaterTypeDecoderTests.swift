@@ -16,7 +16,7 @@ struct WaterTypeDecoderTests {
             dnam.append(Data(count: size - dnam.count))
             let fields = ESMFixture.field("EDID", ESMFixture.zstring("TestWater"))
                 + ESMFixture.field("DNAM", dnam)
-            let water = try WaterType(record: record(ESMFixture.record(
+            let water = try WaterType(record: ESMFixture.parseRecord(ESMFixture.record(
                 "WATR", formID: 0x18, data: fields
             )))
             #expect(water.formID == FormID(0x18))
@@ -30,15 +30,10 @@ struct WaterTypeDecoderTests {
 
     @Test func skipsUnknownDNAMVariant() throws {
         let fields = ESMFixture.field("DNAM", Data(count: 52))
-        let water = try WaterType(record: record(ESMFixture.record("WATR", data: fields)))
+        let water = try WaterType(record: ESMFixture.parseRecord(ESMFixture.record(
+            "WATR",
+            data: fields
+        )))
         #expect(water.colors == nil)
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 }

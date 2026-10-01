@@ -10,7 +10,7 @@ import Testing
 
 struct EncounterZoneTests {
     @Test func decodesPackedDataAndToleratesTruncation() throws {
-        let full = try EncounterZone(record: record(
+        let full = try EncounterZone(record: ESMFixture.parsedRecord(
             type: "ECZN",
             fields: zoneFields(editorID: "BleakFallsBarrowZone", data: zoneData())
         ))
@@ -23,7 +23,7 @@ struct EncounterZoneTests {
         #expect(full.flags.contains(.matchesPlayerBelowMinimumLevel))
         #expect(full.maximumLevel == 24)
 
-        let short = try EncounterZone(record: record(
+        let short = try EncounterZone(record: ESMFixture.parsedRecord(
             type: "ECZN",
             fields: zoneFields(editorID: "LegacyZone", data: zoneData().prefixData(8))
         ))
@@ -32,7 +32,7 @@ struct EncounterZoneTests {
         #expect(short.rank == nil)
         #expect(short.maximumLevel == nil)
 
-        let veryShort = try EncounterZone(record: record(
+        let veryShort = try EncounterZone(record: ESMFixture.parsedRecord(
             type: "ECZN",
             fields: zoneFields(editorID: "ModZone", data: Data([1, 2, 3]))
         ))
@@ -52,7 +52,7 @@ struct EncounterZoneTests {
     }
 
     @Test func wrongRecordTypeThrows() throws {
-        let wrong = try record(type: "KYWD", fields: Data())
+        let wrong = try ESMFixture.parsedRecord(type: "KYWD", fields: Data())
         #expect(throws: ESMError.self) { try EncounterZone(record: wrong) }
     }
 
@@ -82,11 +82,11 @@ struct EncounterZoneTests {
         var link = Data()
         link.appendUInt32(0x42)
         let cell = try Cell(
-            record: record(type: "CELL", fields: ESMFixture.field("XEZN", link)),
+            record: ESMFixture.parsedRecord(type: "CELL", fields: ESMFixture.field("XEZN", link)),
             localized: false
         )
         let world = try Worldspace(
-            record: record(type: "WRLD", fields: ESMFixture.field("XEZN", link)),
+            record: ESMFixture.parsedRecord(type: "WRLD", fields: ESMFixture.field("XEZN", link)),
             localized: false
         )
         #expect(store.encounterZone(containing: cell, fromPlugin: "Patch.esp")?.id == id)
@@ -107,18 +107,6 @@ struct EncounterZoneTests {
     private func zoneFields(editorID: String, data: Data) -> Data {
         ESMFixture.field("EDID", ESMFixture.zstring(editorID))
             + ESMFixture.field("DATA", data)
-    }
-
-    private func record(type: String, fields: Data) throws -> ESMRecord {
-        let file = try plugin(type: type, records: [
-            ESMFixture.record(type, formID: 1, data: fields)
-        ])
-        let group = try #require(file.topGroups.first)
-        let children = try group.children()
-        guard case let .record(record) = try #require(children.first) else {
-            throw ESMError.malformed("fixture record missing")
-        }
-        return record
     }
 
     private func plugin(

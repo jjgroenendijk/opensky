@@ -1,17 +1,7 @@
-// M8 milestone acceptance (issue #150). Drives the whole gate flow — select
-// World, enter walk mode, inspect the live HUD, pause, change a setting while
-// paused, resume — through the real shell types: the destination registry, the
-// sidebar view controller, the registry's own panel factories, and the panel
-// controls a user clicks. Nothing here is a second mocking layer: the only
-// stand-in is `FakeWorldProviders` (shared with the other panel tests), which
-// is the same provider surface the game controller implements, and its
-// menu-mode state runs on the real `MenuModeController`.
-//
-// `make test-ui` is blocked on the development machine (TCC harness init), so
-// this unit-level test is the deterministic evidence for the gate. Readouts are
-// read back by accessibility identifier out of the built view hierarchy, which
-// also pins those identifiers as the UI-test contract. No game data and no
-// rendered frames are involved; see docs/tools/sidebar-acceptance.md.
+// M8 acceptance: select World, enter walk mode, read the HUD, pause, change a
+// setting while paused, and resume, through the real sidebar, registry, and
+// panel controls. `FakeWorldProviders` is the only stand-in; its menu mode runs
+// on the real `MenuModeController`. See docs/tools/sidebar-acceptance.md.
 
 import AppKit
 @testable import OpenSky
@@ -22,77 +12,6 @@ import AppKit
 @testable import OpenSkyWorld
 import simd
 import Testing
-
-/// One M8 acceptance session: the provider set the panels bind to, the real
-/// sidebar, and the registry factories that build each destination's panel.
-@MainActor
-private final class M8AcceptanceHarness {
-    let providers = FakeWorldProviders()
-    let sidebar = AppSidebarViewController()
-
-    /// Last destination the sidebar reported through the shell's own callback.
-    private(set) var selectedDestinationID: String?
-
-    var context: WorldPanelContext {
-        WorldPanelContext(providers: providers)
-    }
-
-    init() {
-        sidebar.onSelect = { [weak self] descriptor in
-            self?.selectedDestinationID = descriptor.id
-        }
-        sidebar.isDestinationOverridden = { [weak self] id in
-            guard let self else { return false }
-            return DestinationRegistry.destination(id: id)?
-                .overrides?.isOverridden(context) ?? false
-        }
-        _ = sidebar.view
-    }
-
-    /// Selects the sidebar row and builds that destination's panel through the
-    /// registry factory, exactly as the shell does on selection.
-    func select(_ id: String) -> (any InspectorPanel)? {
-        sidebar.select(id: id)
-        guard
-            case let .worldInspector(makePanel) = DestinationRegistry.destination(id: id)?.content
-        else { return nil }
-        let panel = makePanel(context)
-        panel.loadViewIfNeeded()
-        refresh(panel)
-        return panel
-    }
-
-    /// Runs one inspection pass (sync controls, refresh readouts) without
-    /// leaving the 2 Hz ticker running, so assertions stay deterministic.
-    func refresh(_ panel: any InspectorPanel) {
-        panel.startInspecting()
-        panel.stopInspecting()
-    }
-
-    func overrideIndicatorIsVisible(_ id: String) -> Bool? {
-        sidebar.refreshOverrideIndicators()
-        return sidebar.overrideIndicatorIsVisible(destinationID: id)
-    }
-
-    /// Text of the readout label carrying `identifier`, found in the built
-    /// panel; nil when no such label is on screen.
-    func readout(_ identifier: String, in panel: any InspectorPanel) -> String? {
-        Self.label(identifier, in: panel.view)
-    }
-
-    @MainActor
-    private static func label(_ identifier: String, in view: NSView) -> String? {
-        if view.accessibilityIdentifier() == identifier, let field = view as? NSTextField {
-            return field.stringValue
-        }
-        for subview in view.subviews {
-            if let found = label(identifier, in: subview) {
-                return found
-            }
-        }
-        return nil
-    }
-}
 
 @MainActor
 private func send(_ control: NSControl) {
@@ -107,7 +26,7 @@ struct M8AcceptanceTests {
     /// readout.
     @Test @MainActor
     func selectingWorldBuildsTheLaunchInspector() throws {
-        let harness = M8AcceptanceHarness()
+        let harness = SidebarAcceptanceHarness()
         let descriptor = try #require(DestinationRegistry.destination(id: "world"))
         #expect(descriptor.sidebarIdentifier == "Destination-world")
         #expect(DestinationRegistry.defaultDestinationID == "world")
@@ -131,7 +50,7 @@ struct M8AcceptanceTests {
     /// reports the non-default state.
     @Test @MainActor
     func enteringWalkModeTakesAndShowsAsAnOverride() throws {
-        let harness = M8AcceptanceHarness()
+        let harness = SidebarAcceptanceHarness()
         let panel = try #require(harness.select("world") as? WorldPanelViewController)
         #expect(harness.overrideIndicatorIsVisible("world") == false)
 
@@ -151,7 +70,7 @@ struct M8AcceptanceTests {
     /// the element state and the current interaction target.
     @Test @MainActor
     func hudDestinationTogglesElementsAndReportsTheLiveTarget() throws {
-        let harness = M8AcceptanceHarness()
+        let harness = SidebarAcceptanceHarness()
         harness.providers.hudControlSnapshot = Self.liveHUDSnapshot
         let panel = try #require(
             harness.select("hudInteraction") as? HUDInteractionPanelViewController
@@ -184,7 +103,7 @@ struct M8AcceptanceTests {
     /// popping the menu resumes, and the setting survives the resume.
     @Test @MainActor
     func menuModePausesWorldSimWhileASettingStillApplies() throws {
-        let harness = M8AcceptanceHarness()
+        let harness = SidebarAcceptanceHarness()
         let uiLab = try #require(harness.select("uiLab") as? UILabPanelViewController)
         let running = try Self.menuReadout(harness, uiLab)
         #expect(running.contains("World sim: running"))
@@ -212,7 +131,7 @@ struct M8AcceptanceTests {
     /// pauses world sim and Resume clears it.
     @Test @MainActor
     func systemMenuPausesAndResumesWorldSim() throws {
-        let harness = M8AcceptanceHarness()
+        let harness = SidebarAcceptanceHarness()
         let panel = try #require(harness.select("systemMenu") as? SystemMenuPanelViewController)
         let closed = try #require(harness.readout("SystemMenuStatsLabel", in: panel))
         #expect(closed.contains("world sim running"))
@@ -237,7 +156,7 @@ struct M8AcceptanceTests {
     /// HUD & Interaction, pause, a setting change while paused, resume.
     @Test @MainActor
     func acceptanceFlowRunsEndToEndWithoutTheCLI() throws {
-        let harness = M8AcceptanceHarness()
+        let harness = SidebarAcceptanceHarness()
         harness.providers.hudControlSnapshot = Self.liveHUDSnapshot
 
         let world = try #require(harness.select("world") as? WorldPanelViewController)
@@ -281,7 +200,7 @@ struct M8AcceptanceTests {
     /// Changes an Environment setting through its sidebar control and checks it
     /// applied and reached the readout. Called while world sim is paused.
     @MainActor
-    private static func changeShadowQualityWhilePaused(_ harness: M8AcceptanceHarness) throws {
+    private static func changeShadowQualityWhilePaused(_ harness: SidebarAcceptanceHarness) throws {
         let panel = try #require(harness.select("environment") as? EnvironmentPanelViewController)
         panel.sunShadowsEnabledControl.state = .off
         send(panel.sunShadowsEnabledControl)
@@ -299,7 +218,7 @@ struct M8AcceptanceTests {
 
     @MainActor
     private static func menuReadout(
-        _ harness: M8AcceptanceHarness, _ panel: UILabPanelViewController
+        _ harness: SidebarAcceptanceHarness, _ panel: UILabPanelViewController
     ) throws -> String {
         try #require(harness.readout("UIMenuStatsLabel", in: panel))
     }

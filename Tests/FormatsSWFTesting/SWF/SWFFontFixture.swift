@@ -1,7 +1,6 @@
-// Synthetic DefineFont2/DefineFont3 tag-body builder for font parser tests.
-// Bodies are assembled byte-by-byte in code following the Adobe SWF File Format
-// Specification v19 chapter 10 layouts — never extracted game files
-// (AGENTS.md "Legal & IP boundary"). Glyph shapes reuse SWFShapeBodyBuilder.
+// Synthetic DefineFont2 and DefineFont3 tag bodies, built in code from the SWF
+// File Format Specification v19, chapter 10. Glyph shapes use
+// `SWFShapeBodyBuilder`.
 
 import FormatsCoreTesting
 import Foundation
@@ -45,6 +44,27 @@ public struct SWFFontBodyBuilder: Sendable {
     /// One bare glyph SHAPE (NumFillBits/NumLineBits + records) per glyph.
     public var shapes: [Data] = []
     public var layout: Layout?
+
+    /// A DefineFont2 with triangle glyphs for "A" (advance 600) and "B"
+    /// (advance 500), ascent 800 and descent 200.
+    public static func abFont(fontID: UInt16) -> SWFFontBodyBuilder {
+        var builder = SWFFontBodyBuilder()
+        builder.fontID = fontID
+        builder.flags.hasLayout = true
+        builder.codes = [65, 66]
+        builder.shapes = [triangleGlyphShape(size: 700), triangleGlyphShape(size: 600)]
+        builder.layout = Layout(
+            ascent: 800,
+            descent: 200,
+            leading: 0,
+            advances: [600, 500],
+            bounds: [
+                SWFRect(xMin: 0, xMax: 700, yMin: -700, yMax: 0),
+                SWFRect(xMin: 0, xMax: 600, yMin: -600, yMax: 0)
+            ]
+        )
+        return builder
+    }
 
     /// A bare glyph SHAPE for a filled triangle spanning `size` glyph units,
     /// starting at the origin (SWF glyph space is y-down).

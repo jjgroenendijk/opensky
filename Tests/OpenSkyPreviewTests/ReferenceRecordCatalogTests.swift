@@ -12,10 +12,10 @@ import Testing
 struct ReferenceRecordCatalogTests {
     @Test
     func allElevenTypesListByEditorIDAndNameTheWinningPlugin() throws {
-        let base = try plugin(records: ReferenceRecordType.allCases.enumerated().map {
+        let base = try ESMFixture.plugin(records: ReferenceRecordType.allCases.enumerated().map {
             record($0.element.rawValue, formID: UInt32($0.offset + 1), editorID: "Base\($0.offset)")
         })
-        let patch = try plugin(
+        let patch = try ESMFixture.plugin(
             masters: ["Base.esm"],
             records: [record("KYWD", formID: 1, editorID: "WinningKeyword")]
         )
@@ -54,7 +54,7 @@ struct ReferenceRecordCatalogTests {
             editorID: "TestList",
             extraFields: ESMFixture.field("LNAM", words([0x99]))
         )
-        let file = try plugin(records: [keyword, item, list])
+        let file = try ESMFixture.plugin(records: [keyword, item, list])
         let index = RecordIndex(
             plugins: [("Base.esm", file)],
             recordTypes: RecordIndex.referenceRecordTypes
@@ -86,17 +86,6 @@ struct ReferenceRecordCatalogTests {
             throw ESMError.malformed("expected record preview")
         }
         return preview
-    }
-
-    private func plugin(masters: [String] = [], records: [Data]) throws -> ESMFile {
-        let grouped = Dictionary(grouping: records) { data in
-            String(bytes: data.prefix(4), encoding: .ascii) ?? "KYWD"
-        }
-        var bytes = ESMFixture.tes4(masters: masters)
-        for (type, values) in grouped.sorted(by: { $0.key < $1.key }) {
-            bytes += ESMFixture.topGroup(type, contents: values.reduce(Data(), +))
-        }
-        return try ESMFile(data: bytes)
     }
 
     private func record(

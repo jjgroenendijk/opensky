@@ -1,8 +1,6 @@
-// Voice entry point (item 17.5): container framing, routing and error policy.
-// The payload here is a synthetic xWMA stream, so the source starts, is routed
-// and is reported exactly as a real line would be; it decodes to nothing,
-// because no WMA fixture may enter the repository and the decode itself is
-// covered by the real-data sweep instead.
+// Voice entry point: container framing, routing, and error policy. The payload
+// is a synthetic xWMA stream that decodes to nothing; the real-data sweep
+// covers decoding.
 
 import AVFAudio
 import FormatsAudioTesting
@@ -13,16 +11,6 @@ import Testing
 
 @MainActor
 struct WorldAudioEngineVoiceTests {
-    private func makeRunningEngine() throws -> WorldAudioEngine {
-        let format = try #require(
-            AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
-        )
-        let engine = WorldAudioEngine(manualRenderingFormat: format)
-        engine.isEnabled = true
-        try #require(engine.isRunning, "offline engine failed: \(engine.unavailableReason ?? "")")
-        return engine
-    }
-
     /// A mono 44.1 kHz voice line, which is the shape every vanilla `.fuz`
     /// carries.
     private func makeVoiceFile(lipByteCount: Int = 1728) -> Data {
@@ -34,7 +22,7 @@ struct WorldAudioEngineVoiceTests {
 
     @Test("a voice line starts positionally on the voice submix and hands back its lip data")
     func playVoiceRoutesToVoiceCategory() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         let playback = try engine.playVoice(
             fuzData: makeVoiceFile(),
             name: "sound\\voice\\skyrim.esm\\femaleeventoned\\wigreeting__000c7917_1.fuz",
@@ -52,7 +40,7 @@ struct WorldAudioEngineVoiceTests {
 
     @Test("a line without lip data still plays")
     func playVoiceWithoutLipData() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         let playback = try engine.playVoice(
             fuzData: makeVoiceFile(lipByteCount: 0), name: "line", worldPosition: .zero
         )
@@ -62,7 +50,7 @@ struct WorldAudioEngineVoiceTests {
 
     @Test("a malformed container throws instead of starting a silent source")
     func malformedContainerThrows() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         #expect(throws: FUZError.self) {
             try engine.playVoice(fuzData: Data([0, 1, 2, 3]), name: "line", worldPosition: .zero)
         }
@@ -71,7 +59,7 @@ struct WorldAudioEngineVoiceTests {
 
     @Test("a container whose payload is not xWMA throws from the audio side")
     func malformedPayloadThrows() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         let file = FUZFixture.file(audio: Data(repeating: 7, count: 64))
         #expect(throws: XWMError.self) {
             try engine.playVoice(fuzData: file, name: "line", worldPosition: .zero)

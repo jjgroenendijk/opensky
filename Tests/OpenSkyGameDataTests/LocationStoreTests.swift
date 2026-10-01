@@ -12,11 +12,11 @@ struct LocationStoreTests {
     func parentContainmentAndInheritedKeywordQueriesTerminateAtCycles() throws {
         let file = try plugin(
             locations: [
-                location(0x10, "Hold", parent: 0x30, keywords: [0x40]),
-                location(0x20, "Dungeon", parent: 0x10),
-                location(0x30, "Cycle", parent: 0x20)
+                LocationFixture.recordBytes(0x10, "Hold", parent: 0x30, keywords: [0x40]),
+                LocationFixture.recordBytes(0x20, "Dungeon", parent: 0x10),
+                LocationFixture.recordBytes(0x30, "Cycle", parent: 0x20)
             ],
-            keywords: [keyword(0x40, "LocTypeHold")]
+            keywords: [KeywordFixture.recordBytes(formID: 0x40, editorID: "LocTypeHold")]
         )
         let store = LocationStore(plugins: [("Base.esm", file)])
         let dungeon = id("Base.esm", 0x20)
@@ -30,10 +30,10 @@ struct LocationStoreTests {
 
     @Test
     func laterPluginWinsByIdentityAndEditorID() throws {
-        let base = try plugin(locations: [location(0x10, "OldName")])
+        let base = try plugin(locations: [LocationFixture.recordBytes(0x10, "OldName")])
         let patch = try plugin(
             masters: ["Base.esm"],
-            locations: [location(0x10, "NewName")]
+            locations: [LocationFixture.recordBytes(0x10, "NewName")]
         )
         let store = LocationStore(plugins: [("Base.esm", base), ("Patch.esp", patch)])
 
@@ -46,7 +46,7 @@ struct LocationStoreTests {
 
     @Test
     func cellLocationLinkResolvesThroughTheStore() throws {
-        let file = try plugin(locations: [location(0x10, "InteriorLocation")])
+        let file = try plugin(locations: [LocationFixture.recordBytes(0x10, "InteriorLocation")])
         let store = LocationStore(plugins: [("Base.esm", file)])
         let cell = try cell(location: 0x10)
 
@@ -70,47 +70,14 @@ struct LocationStoreTests {
         return try ESMFile(data: data)
     }
 
-    private func location(
-        _ formID: UInt32,
-        _ editorID: String,
-        parent: UInt32? = nil,
-        keywords: [UInt32] = []
-    ) -> Data {
-        var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-        if let parent {
-            fields += ESMFixture.field("PNAM", words([parent]))
-        }
-        if !keywords.isEmpty {
-            fields += ESMFixture.field("KSIZ", words([UInt32(keywords.count)]))
-                + ESMFixture.field("KWDA", words(keywords))
-        }
-        return ESMFixture.record("LCTN", formID: formID, data: fields)
-    }
-
-    private func keyword(_ formID: UInt32, _ editorID: String) -> Data {
-        ESMFixture.record(
-            "KYWD",
-            formID: formID,
-            data: ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-        )
-    }
-
     private func cell(location: UInt32) throws -> Cell {
-        let fields = ESMFixture.field("XLCN", words([location]))
+        let fields = ESMFixture.field("XLCN", ESMFixture.words([location]))
         let bytes = ESMFixture.record("CELL", formID: 0x50, data: fields)
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {
             throw ESMError.malformed("cell fixture did not produce a record")
         }
         return try Cell(record: record, localized: false)
-    }
-
-    private func words(_ values: [UInt32]) -> Data {
-        var data = Data()
-        for value in values {
-            data.appendUInt32(value)
-        }
-        return data
     }
 
     private func id(_ plugin: String, _ objectID: UInt32) -> ResolvedFormID {

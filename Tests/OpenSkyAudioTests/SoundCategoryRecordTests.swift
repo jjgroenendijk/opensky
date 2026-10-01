@@ -22,7 +22,7 @@ struct SoundCategoryRecordTests {
             + ESMFixture.field("VNAM", staticVolume)
             + ESMFixture.field("UNAM", menuValue)
         let category = try SoundCategory(
-            record: record(ESMFixture.record("SNCT", formID: 0x200, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("SNCT", formID: 0x200, data: fields)),
             localized: false
         )
 
@@ -42,7 +42,7 @@ struct SoundCategoryRecordTests {
             + ESMFixture.field("VNAM", Data(count: 1))
             + ESMFixture.field("UNAM", Data(count: 3))
         let category = try SoundCategory(
-            record: record(ESMFixture.record("SNCT", data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("SNCT", data: fields)),
             localized: false
         )
 
@@ -55,7 +55,7 @@ struct SoundCategoryRecordTests {
     @Test func wrongRecordTypeThrows() throws {
         #expect(throws: ESMError.self) {
             _ = try SoundCategory(
-                record: record(ESMFixture.record("SNDR", data: Data())),
+                record: ESMFixture.parseRecord(ESMFixture.record("SNDR", data: Data())),
                 localized: false
             )
         }
@@ -116,14 +116,6 @@ struct SoundCategoryRecordTests {
             )
             + ESMFixture.topGroup("SNCT", contents: categories)
         return try SoundRecordStore(file: ESMFile(data: plugin))
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 
     private func uint32(_ value: UInt32) -> Data {

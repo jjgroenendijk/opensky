@@ -1,7 +1,5 @@
-// Shared footstep half of `AudioControlProviding` for the two panel fakes
-// (issue #352). Both `FakeAudioProvider` and `FakeWorldProviders` hold one of
-// these and forward to it, which is the same delegation their runtime-state
-// and trigger halves already use to stay inside the strict-lint type-body cap.
+// The footstep half of `AudioControlProviding` that both panel fakes share.
+// They forward to it, which keeps each fake under the type-body length limit.
 
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
@@ -14,7 +12,7 @@ final class FakeFootstepControls {
     var lastFootstepDescription: String?
     var lastFootstepError: String?
     var footstepCounts: (routed: Int, played: Int) = (0, 0)
-    /// Materials the section can pin (issue #358), and the pinned one.
+    /// Materials the section can pin, and the pinned one.
     var footstepMaterialOptions: [(id: FormID, name: String)] = []
     var forcedFootstepMaterial: FormID?
     /// What the ground contact reports when nothing is pinned.
@@ -45,7 +43,14 @@ final class FakeFootstepControls {
     }
 }
 
-extension FakeAudioProvider {
+/// A fake that holds a `FakeFootstepControls` and forwards the footstep half
+/// of `AudioControlProviding` to it.
+@MainActor
+protocol FakeFootstepForwarding: AnyObject {
+    var footsteps: FakeFootstepControls { get }
+}
+
+extension FakeFootstepForwarding {
     var footstepsEnabled: Bool {
         get { footsteps.footstepsEnabled }
         set { footsteps.footstepsEnabled = newValue }
@@ -89,46 +94,6 @@ extension FakeAudioProvider {
     }
 }
 
-extension FakeWorldProviders {
-    var footstepsEnabled: Bool {
-        get { footsteps.footstepsEnabled }
-        set { footsteps.footstepsEnabled = newValue }
-    }
+extension FakeAudioProvider: FakeFootstepForwarding {}
 
-    var currentFootstepSetDescription: String {
-        footsteps.currentFootstepSetDescription
-    }
-
-    var currentFootstepTags: [String] {
-        footsteps.currentFootstepTags
-    }
-
-    var lastFootstepDescription: String? {
-        footsteps.lastFootstepDescription
-    }
-
-    var lastFootstepError: String? {
-        footsteps.lastFootstepError
-    }
-
-    var footstepCounts: (routed: Int, played: Int) {
-        footsteps.footstepCounts
-    }
-
-    var currentFootstepMaterialDescription: String {
-        footsteps.currentFootstepMaterialDescription
-    }
-
-    var footstepMaterialOptions: [(id: FormID, name: String)] {
-        footsteps.footstepMaterialOptions
-    }
-
-    var forcedFootstepMaterial: FormID? {
-        get { footsteps.forcedFootstepMaterial }
-        set { footsteps.forcedFootstepMaterial = newValue }
-    }
-
-    func forcePlayFootstep(tag: String) -> String? {
-        footsteps.forcePlayFootstep(tag: tag)
-    }
-}
+extension FakeWorldProviders: FakeFootstepForwarding {}

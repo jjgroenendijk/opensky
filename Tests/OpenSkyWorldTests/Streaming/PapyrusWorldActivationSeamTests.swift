@@ -1,9 +1,6 @@
-// The multicast interaction seam end to end (issue #172): a real
-// `CellStreamer` raycast activation delivered to both the engine's own
-// subscriber and the Papyrus world bridge.
-//
-// Satellite of `PapyrusWorldActivationTests`, split off to stay under the
-// strict-lint type size cap.
+// The multicast interaction seam end to end: a real `CellStreamer` raycast
+// activation reaches both the engine's own subscriber and the Papyrus world
+// bridge.
 
 @testable import FormatsESMTesting
 import Foundation
@@ -65,7 +62,10 @@ struct PapyrusWorldActivationSeamTests {
             with: .success(CellStreamerFixture.cellScene(
                 location: .exterior(CellStreamerFixture.coordinate(0, 0)),
                 interactions: [placed.reference: placed],
-                staticCollision: Self.collision(reference: Self.doorID, position: position),
+                staticCollision: CellStreamerFixture.collision(
+                    reference: Self.doorID,
+                    position: position
+                ),
                 references: RuntimeReferenceIndex(entries: [entry])
             ))
         )
@@ -89,24 +89,5 @@ struct PapyrusWorldActivationSeamTests {
             in: .exterior(CellStreamerFixture.coordinate(0, 0))
         ) == 1)
         #expect(session.world.eventQueue.contains { $0.functionName == "OnActivate" })
-    }
-
-    private static func collision(
-        reference: UInt32,
-        position: SIMD3<Float>
-    ) -> StaticCollisionSet {
-        let extent = SIMD3<Float>(repeating: 1)
-        var stats = StaticCollisionStats()
-        stats.shapeCount = 1
-        return StaticCollisionSet(
-            location: nil,
-            shapes: [StaticCollisionShape(
-                reference: FormID(reference),
-                transform: MatrixMath.translation(position),
-                geometry: .box(halfExtents: extent),
-                bounds: ModelBounds(min: position - extent, max: position + extent)
-            )],
-            stats: stats
-        )
     }
 }

@@ -12,7 +12,7 @@ import Testing
 struct CollisionLayerTests {
     @Test func decodesFieldsAndRejectsTheWrongType() throws {
         let layer = try CollisionLayer(
-            record: record(type: "COLL", fields: fields(editorID: "L_ACTORZONE")),
+            record: ESMFixture.parsedRecord(type: "COLL", fields: fields(editorID: "L_ACTORZONE")),
             localized: false
         )
         #expect(layer.formID == FormID(1))
@@ -27,7 +27,7 @@ struct CollisionLayerTests {
         #expect(layer.interactablesCount == 2)
         #expect(layer.collidesWith == [FormID(1), FormID(2)])
 
-        let wrong = try record(type: "KYWD", fields: Data())
+        let wrong = try ESMFixture.parsedRecord(type: "KYWD", fields: Data())
         #expect(throws: ESMError.self) {
             try CollisionLayer(record: wrong, localized: false)
         }
@@ -45,7 +45,7 @@ struct CollisionLayerTests {
 
     @Test func malformedLinkArrayIsTalliedWithoutThrowing() throws {
         let layer = try CollisionLayer(
-            record: record(
+            record: ESMFixture.parsedRecord(
                 type: "COLL",
                 fields: ESMFixture.field("CNAM", Data([1, 2, 3]))
             ),
@@ -100,18 +100,6 @@ struct CollisionLayerTests {
             + ESMFixture.field("MNAM", ESMFixture.zstring(editorID))
             + ESMFixture.field("INTV", count)
             + (links.isEmpty ? Data() : ESMFixture.field("CNAM", cnam))
-    }
-
-    private func record(type: String, fields: Data) throws -> ESMRecord {
-        let file = try plugin(type: type, records: [
-            ESMFixture.record(type, formID: 1, data: fields)
-        ])
-        let group = try #require(file.topGroups.first)
-        let children = try group.children()
-        guard case let .record(record) = try #require(children.first) else {
-            throw ESMError.malformed("fixture record missing")
-        }
-        return record
     }
 
     private func plugin(

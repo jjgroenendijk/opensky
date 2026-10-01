@@ -4,6 +4,7 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+import GameDataTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -14,10 +15,10 @@ struct RecordTextDumpStoreTests {
     @Test
     func recordDumpNamesResolvedLocationKeywords() throws {
         let locationFields = ESMFixture.field("EDID", ESMFixture.zstring("DumpLocation"))
-            + ESMFixture.field("PNAM", words([0x11]))
-            + ESMFixture.field("KSIZ", words([1]))
-            + ESMFixture.field("KWDA", words([0x40]))
-        let file = try plugin(records: [
+            + ESMFixture.field("PNAM", ESMFixture.words([0x11]))
+            + ESMFixture.field("KSIZ", ESMFixture.words([1]))
+            + ESMFixture.field("KWDA", ESMFixture.words([0x40]))
+        let file = try ESMFixture.plugin(records: [
             ESMFixture.record("LCTN", formID: 0x10, data: locationFields),
             ESMFixture.record(
                 "KYWD",
@@ -46,25 +47,7 @@ struct RecordTextDumpStoreTests {
 
     @Test
     func alchemyDumpPrintsTheResolvedEffectName() throws {
-        let base = try plugin(records: [
-            ESMFixture.record(
-                "MGEF",
-                formID: 1,
-                data: ESMFixture.field("EDID", ESMFixture.zstring("RestoreHealth"))
-                    + ESMFixture.field("FULL", ESMFixture.zstring("Restore Health"))
-                    + ESMFixture.field("DATA", MagicEffectFixture.data())
-            )
-        ])
-        let alchemyFields = ESMFixture.field("EDID", ESMFixture.zstring("TestPotion"))
-            + InventoryFixture.effectFields(effect: 1, magnitude: 10, area: 0, duration: 0)
-        let child = try plugin(
-            masters: ["Base.esm"],
-            records: [ESMFixture.record("ALCH", formID: 0x0100_0002, data: alchemyFields)]
-        )
-        let index = RecordIndex(
-            plugins: [("Base.esm", base), ("Patch.esp", child)],
-            recordTypes: ["MGEF", "ALCH"]
-        )
+        let index = try PotionIndexFixture.index().index
         let store = MagicEffectStore(index: index)
         let key = ResolvedFormID(plugin: "Patch.esp", objectID: 0x02)
         let alchemyRecord = try #require(index.records[key]?.record)
@@ -85,24 +68,5 @@ struct RecordTextDumpStoreTests {
         )
         #expect(dump.contains("1 effects [Restore Health]"))
         #expect(!dump.contains("1 effects [00000001]"))
-    }
-
-    private func plugin(masters: [String] = [], records: [Data]) throws -> ESMFile {
-        let grouped = Dictionary(grouping: records) { record in
-            String(bytes: record.prefix(4), encoding: .ascii) ?? "MISC"
-        }
-        var data = ESMFixture.tes4(masters: masters)
-        for (type, groupedRecords) in grouped.sorted(by: { $0.key < $1.key }) {
-            data += ESMFixture.topGroup(type, contents: groupedRecords.reduce(Data(), +))
-        }
-        return try ESMFile(data: data)
-    }
-
-    private func words(_ values: [UInt32]) -> Data {
-        var data = Data()
-        for value in values {
-            data.appendUInt32(value)
-        }
-        return data
     }
 }

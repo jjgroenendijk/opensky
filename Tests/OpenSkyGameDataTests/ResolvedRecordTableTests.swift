@@ -11,10 +11,10 @@ import Testing
 struct ResolvedRecordTableTests {
     @Test
     func undecodableIdentityIsCountedWithItsFirstError() throws {
-        let file = try plugin(keywords: [
-            keyword(formID: 0x10, editorID: "Readable"),
-            keyword(formID: 0x20, editorID: "Broken"),
-            keyword(formID: 0x30, editorID: "Broken")
+        let file = try KeywordFixture.plugin(keywords: [
+            KeywordFixture.recordBytes(formID: 0x10, editorID: "Readable"),
+            KeywordFixture.recordBytes(formID: 0x20, editorID: "Broken"),
+            KeywordFixture.recordBytes(formID: 0x30, editorID: "Broken")
         ])
         let index = RecordIndex(plugins: [("Base.esm", file)], recordTypes: ["KYWD"])
         let table = ResolvedRecordTable(
@@ -53,10 +53,13 @@ struct ResolvedRecordTableTests {
 
     @Test
     func overrideThatFallsBackToAnEarlierDefinitionIsNotASkip() throws {
-        let base = try plugin(keywords: [keyword(formID: 0x42, editorID: "BaseKeyword")])
-        let patch = try plugin(
+        let base = try KeywordFixture.plugin(keywords: [KeywordFixture.recordBytes(
+            formID: 0x42,
+            editorID: "BaseKeyword"
+        )])
+        let patch = try KeywordFixture.plugin(
             masters: ["Base.esm"],
-            keywords: [keyword(formID: 0x42, editorID: "Broken")]
+            keywords: [KeywordFixture.recordBytes(formID: 0x42, editorID: "Broken")]
         )
         let index = RecordIndex(
             plugins: [("Base.esm", base), ("Patch.esp", patch)],
@@ -76,7 +79,10 @@ struct ResolvedRecordTableTests {
 
     @Test
     func lookupFallsBackToACaseInsensitivePluginName() throws {
-        let file = try plugin(keywords: [keyword(formID: 0x10, editorID: "Readable")])
+        let file = try KeywordFixture.plugin(keywords: [KeywordFixture.recordBytes(
+            formID: 0x10,
+            editorID: "Readable"
+        )])
         let store = KeywordStore(plugins: [("Base.esm", file)])
 
         #expect(store.keyword(ResolvedFormID(plugin: "BASE.ESM", objectID: 0x10)) != nil)
@@ -96,21 +102,6 @@ struct ResolvedRecordTableTests {
         #expect(merged.byType["KYWD"]?.firstError.contains("left") == true)
         #expect(merged.count(of: "FLST") == 1)
         #expect(merged.total == 3)
-    }
-
-    private func plugin(masters: [String] = [], keywords: [Data]) throws -> ESMFile {
-        try ESMFile(
-            data: ESMFixture.tes4(masters: masters)
-                + ESMFixture.topGroup("KYWD", contents: keywords.reduce(Data(), +))
-        )
-    }
-
-    private func keyword(formID: UInt32, editorID: String) -> Data {
-        ESMFixture.record(
-            "KYWD",
-            formID: formID,
-            data: ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-        )
     }
 
     private static func rejectingBroken(_ indexed: IndexedRecord) throws -> Keyword {

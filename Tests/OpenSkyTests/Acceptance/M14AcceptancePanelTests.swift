@@ -1,13 +1,7 @@
-// M14 milestone panel acceptance (issue #191): one uninterrupted run through
-// the real sidebar model and the registry-built World > Player & Locomotion
-// panel on a single provider set, in the M10-M13 acceptance-triad shape.
-//
-// The readouts are found by their accessibility identifiers, which is the
-// deterministic substitute while UI automation is TCC-blocked
-// (docs/tools/environment.md). `PlayerLocomotionPanelTests` covers each section
-// on its own; what this adds is that the whole destination works as one
-// surface, in the order a session would use it, without a single fake being
-// swapped halfway.
+// M14 panel acceptance: one run through World > Player & Locomotion on one
+// provider set, in the order a session uses it.
+// Readouts are found by accessibility id, the deterministic substitute while
+// UI automation cannot run here (docs/tools/environment.md).
 
 import AppKit
 @testable import OpenSky
@@ -45,25 +39,7 @@ struct M14AcceptancePanelTests {
     private static func buildPanel(
         providers: FakeWorldProviders
     ) throws -> PlayerLocomotionPanelViewController {
-        let worldGroup = try #require(
-            AppSidebarModel.groups().first { $0.section == .world }
-        )
-        let descriptor = try #require(
-            worldGroup.destinations.first { $0.id == "playerLocomotion" }
-        )
-        #expect(descriptor.sidebarIdentifier == "Destination-playerLocomotion")
-        #expect(descriptor.title == "Player & Locomotion")
-
-        guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("World > Player & Locomotion is not a world inspector")
-            throw M14PanelAcceptanceError.notAWorldInspector
-        }
-        let panel = try #require(
-            makePanel(WorldPanelContext(providers: providers))
-                as? PlayerLocomotionPanelViewController
-        )
-        panel.loadViewIfNeeded()
-        return panel
+        try buildWorldPanel("playerLocomotion", title: "Player & Locomotion", providers: providers)
     }
 
     /// Step 1 — the session starts in fly mode, where no player is simulated,
@@ -201,8 +177,5 @@ struct M14AcceptancePanelTests {
     ]
 }
 
-/// Thrown only to end the run early when the registry hands back something
-/// other than a world inspector, which `Issue.record` has already reported.
-private enum M14PanelAcceptanceError: Error {
-    case notAWorldInspector
-}
+// Thrown only to end the run early when the registry hands back something
+// other than a world inspector, which `Issue.record` has already reported.

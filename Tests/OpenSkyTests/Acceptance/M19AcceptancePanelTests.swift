@@ -1,17 +1,9 @@
-// M19 milestone panel acceptance (issue #475, roadmap item 19.12): one
-// uninterrupted run through the real sidebar model and the registry-built
-// World > Combat & Physics panel on a single provider set, in the M10-M18
-// acceptance-triad shape, plus the two surfaces the milestone's magic also
-// prints on — the enchanted-equipment readout and the Asset Browser's magic
-// record families.
-//
-// The readouts are found by their accessibility identifiers, which is the
-// deterministic substitute while UI automation is TCC-blocked
-// (docs/tools/environment.md). What this adds over the section suites is that
-// the whole surface works as one, in the order a magic session uses it: read
-// what the actor is worth and what resists what, learn a spell, ready it to a
-// hand, cast it, read what the projectile did to whom, and read what the
-// enchanted weapon has left — without a single fake being swapped halfway.
+// M19 panel acceptance: one run through World > Combat & Physics on one
+// provider set, in the order a magic session uses it: read values and
+// resistances, learn, ready, and cast a spell, and read the enchanted weapon.
+// It also checks the enchanted-equipment readout and the magic record families.
+// Readouts are found by accessibility id, the deterministic substitute while
+// UI automation cannot run here (docs/tools/environment.md).
 
 import AppKit
 @testable import OpenSky
@@ -47,25 +39,7 @@ struct M19AcceptancePanelTests {
     private static func buildPanel(
         providers: FakeWorldProviders
     ) throws -> CombatPhysicsPanelViewController {
-        let worldGroup = try #require(
-            AppSidebarModel.groups().first { $0.section == .world }
-        )
-        let descriptor = try #require(
-            worldGroup.destinations.first { $0.id == "combatPhysics" }
-        )
-        #expect(descriptor.sidebarIdentifier == "Destination-combatPhysics")
-        #expect(descriptor.title == "Combat & Physics")
-
-        guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("World > Combat & Physics is not a world inspector")
-            throw M19PanelAcceptanceError.notAWorldInspector
-        }
-        let panel = try #require(
-            makePanel(WorldPanelContext(providers: providers))
-                as? CombatPhysicsPanelViewController
-        )
-        panel.loadViewIfNeeded()
-        return panel
+        try buildWorldPanel("combatPhysics", title: "Combat & Physics", providers: providers)
     }
 
     /// The four magic sections sit in the order a cast is read in — what the
@@ -182,7 +156,7 @@ struct M19AcceptancePanelTests {
         #expect(descriptor.sidebarIdentifier == "Destination-inventoryEquipment")
         guard case let .worldInspector(makePanel) = descriptor.content else {
             Issue.record("World > Inventory & Equipment is not a world inspector")
-            throw M19PanelAcceptanceError.notAWorldInspector
+            throw WorldPanelAcceptanceError.notAWorldInspector
         }
         let panel = try #require(
             makePanel(WorldPanelContext(providers: providers))
@@ -237,8 +211,5 @@ struct M19AcceptancePanelTests {
     }
 }
 
-/// Thrown only to end the run early when the registry hands back something
-/// other than a world inspector, which `Issue.record` has already reported.
-private enum M19PanelAcceptanceError: Error {
-    case notAWorldInspector
-}
+// Thrown only to end the run early when the registry hands back something
+// other than a world inspector, which `Issue.record` has already reported.

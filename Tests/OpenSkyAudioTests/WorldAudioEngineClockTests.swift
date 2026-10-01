@@ -1,13 +1,6 @@
-// Playback clock and line-finished callback (item 17.5), under deterministic
-// offline rendering: no output device, no decode queue, no wall clock. The
-// clock is elapsed-render accounting against the engine's manual-rendering
-// sample time, which advances by exactly the frames each
-// `renderOffline(_:to:)` call produced — so a rendered frame count converts
-// straight into an expected reading.
-//
-// The material here is a synthetic PCM buffer, not a decoded file: the buffer
-// entry point is the same source lifecycle the streamed path uses from the
-// player node down, and no WMA fixture may enter the repository.
+// Playback clock and line-finished callback under offline rendering. The clock
+// counts rendered frames against the engine's sample time, so a frame count
+// converts straight into an expected reading. The tone is synthetic PCM.
 
 import AVFAudio
 @testable import OpenSkyAudio
@@ -19,32 +12,6 @@ import Testing
 struct WorldAudioEngineClockTests {
     private static let sampleRate = 44100.0
     private static let toneSeconds = 0.5
-
-    private func makeRunningEngine() throws -> WorldAudioEngine {
-        let format = try #require(
-            AVAudioFormat(standardFormatWithSampleRate: Self.sampleRate, channels: 2)
-        )
-        let engine = WorldAudioEngine(manualRenderingFormat: format)
-        engine.isEnabled = true
-        try #require(engine.isRunning, "offline engine failed: \(engine.unavailableReason ?? "")")
-        return engine
-    }
-
-    private func makeToneBuffer(seconds: Double = toneSeconds) throws -> AVAudioPCMBuffer {
-        let format = try #require(
-            AVAudioFormat(standardFormatWithSampleRate: Self.sampleRate, channels: 1)
-        )
-        let frameCount = AVAudioFrameCount(seconds * Self.sampleRate)
-        let buffer = try #require(
-            AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)
-        )
-        let channel = try #require(buffer.floatChannelData?[0])
-        for frame in 0 ..< Int(frameCount) {
-            channel[frame] = sinf(2 * .pi * 440 * Float(frame) / Float(Self.sampleRate)) * 0.5
-        }
-        buffer.frameLength = frameCount
-        return buffer
-    }
 
     /// Renders `frames` frames offline and returns how many actually rendered.
     @discardableResult
@@ -65,14 +32,14 @@ struct WorldAudioEngineClockTests {
         -> Int
     {
         try engine.playPositional(
-            buffer: makeToneBuffer(seconds: seconds),
+            buffer: OfflineAudioFixture.makeToneBuffer(seconds: seconds),
             request: AudioPlayRequest(name: "line", category: .voice, worldPosition: .zero)
         )
     }
 
     @Test("a source with nothing rendered since it started has no reading, nor has an unknown id")
     func noReadingBeforeRendering() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         let id = try startTone(on: engine)
         #expect(engine.playbackPosition(ofSource: id) == nil)
         #expect(engine.playbackPosition(ofSource: id + 1000) == nil)
@@ -80,7 +47,7 @@ struct WorldAudioEngineClockTests {
 
     @Test("the clock advances monotonically with the frames rendered")
     func clockAdvancesWithRenderedFrames() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         let id = try startTone(on: engine)
         var readings: [Double] = []
         for _ in 0 ..< 4 {
@@ -96,7 +63,7 @@ struct WorldAudioEngineClockTests {
 
     @Test("the clock reaches the material's length by the time it has all played")
     func clockReachesDuration() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         let id = try startTone(on: engine)
         try render(engine, frames: Int(Self.toneSeconds * Self.sampleRate))
         let position = try #require(engine.playbackPosition(ofSource: id))
@@ -105,7 +72,7 @@ struct WorldAudioEngineClockTests {
 
     @Test("a source that plays out reports finished once, and only on its own end")
     func finishedCallbackFiresOnce() async throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         var finished: [Int] = []
         engine.onSourceFinished = { finished.append($0) }
         let id = try startTone(on: engine)
@@ -127,7 +94,7 @@ struct WorldAudioEngineClockTests {
 
     @Test("two sources started at different times read different positions")
     func positionsAreRelativeToEachSourcesStart() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         let first = try startTone(on: engine)
         try render(engine, frames: 8820)
         let second = try startTone(on: engine)
@@ -140,7 +107,7 @@ struct WorldAudioEngineClockTests {
 
     @Test("a source stopped by hand does not report finished")
     func stoppingDoesNotReportFinished() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         var finished: [Int] = []
         engine.onSourceFinished = { finished.append($0) }
         let id = try startTone(on: engine)
@@ -152,7 +119,7 @@ struct WorldAudioEngineClockTests {
 
     @Test("the panel snapshot carries the same clock reading the engine reports")
     func snapshotCarriesPosition() throws {
-        let engine = try makeRunningEngine()
+        let engine = try OfflineAudioFixture.makeRunningEngine()
         let id = try startTone(on: engine)
         try render(engine, frames: 4410)
         let source = try #require(engine.statsSnapshot().sources.first)

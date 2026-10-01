@@ -1,13 +1,8 @@
-// DLGS chunk tests (issue #426): the additive dialogue said-state chunk in the
-// OpenSky native save container.
-//
-// Beyond the round trip, the same three properties `QuestSaveTests` pins hold
-// here and for the same reasons. A save carrying said-state must still load in
-// a build that knows nothing about the chunk, which the "older build" case
-// simulates by renaming the tag; `RDLT` must gain nothing, so a response —
-// which carries no other component — leaves no entry there for an older build
-// to restore as an empty reference; and a session in which nobody spoke must
-// write the bytes this encoder produced before the chunk existed.
+// DLGS chunk: dialogue said-state in the native save.
+// An older build must still load the save, which the renamed-tag case
+// simulates, and `RDLT` must gain no entry for a reference whose only
+// component is this one.
+// A session where nobody spoke writes the same bytes as before the chunk.
 
 import Foundation
 @testable import OpenSkyDialogue
@@ -34,26 +29,18 @@ struct DialogueSaveTests {
                 key: repeated,
                 cell: nil,
                 components: [DialogueRuntimeState(saidCount: 7).erased]
-            ),
-            OpenSkySaveFixture.entry(
-                key: .plugin(name: "skyrim.esm", objectID: 1),
-                cell: OpenSkySaveFixture.whiterun,
-                components: [ReferenceDeletionState.deleted.erased]
             )
         ]
-        return WorldStateSnapshot(
-            entries: entries.sorted { $0.key < $1.key },
+        return OpenSkySaveFixture.snapshot(
+            entries,
+            bystanderCell: OpenSkySaveFixture.whiterun,
             nextGeneratedSequence: 3,
             sequence: 42
         )
     }
 
     private func encode(_ snapshot: WorldStateSnapshot) -> Data {
-        OpenSkySaveEncoder.encode(
-            snapshot: snapshot,
-            fingerprint: OpenSkySaveFixture.fingerprint,
-            metadata: OpenSkySaveFixture.metadata
-        )
+        OpenSkySaveFixture.encode(snapshot)
     }
 
     // MARK: - Round trip

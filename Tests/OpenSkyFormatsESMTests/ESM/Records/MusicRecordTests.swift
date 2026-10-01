@@ -23,7 +23,7 @@ struct MusicRecordTests {
             + ESMFixture.field("PNAM", pnam)
             + ESMFixture.field("WNAM", wnam)
             + ESMFixture.field("TNAM", uint32(0x100) + uint32(0x101) + uint32(0x102))
-        let musc = try MusicType(record: record(ESMFixture.record(
+        let musc = try MusicType(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUSC", formID: 0x20, data: fields
         )))
 
@@ -41,7 +41,7 @@ struct MusicRecordTests {
     }
 
     @Test func decodesBareMusicType() throws {
-        let musc = try MusicType(record: record(ESMFixture.record(
+        let musc = try MusicType(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUSC", data: ESMFixture.field("EDID", ESMFixture.zstring("Bare"))
         )))
         #expect(musc.flags.isEmpty)
@@ -56,7 +56,7 @@ struct MusicRecordTests {
             + ESMFixture.field("PNAM", Data(count: 3))
             + ESMFixture.field("WNAM", Data(count: 5))
             + ESMFixture.field("TNAM", Data(count: 6))
-        let musc = try MusicType(record: record(ESMFixture.record(
+        let musc = try MusicType(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUSC", formID: 0x21, data: fields
         )))
         #expect(musc.flags.isEmpty)
@@ -67,7 +67,7 @@ struct MusicRecordTests {
 
     @Test func keepsNullTrackLinksInRecordOrder() throws {
         let fields = ESMFixture.field("TNAM", uint32(0x100) + uint32(0) + uint32(0x102))
-        let musc = try MusicType(record: record(ESMFixture.record(
+        let musc = try MusicType(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUSC", formID: 0x22, data: fields
         )))
         #expect(musc.tracks == [FormID(0x100), FormID(0), FormID(0x102)])
@@ -75,7 +75,10 @@ struct MusicRecordTests {
 
     @Test func wrongMusicTypeRecordTypeThrows() throws {
         #expect(throws: ESMError.self) {
-            _ = try MusicType(record: record(ESMFixture.record("MUST", data: Data())))
+            _ = try MusicType(record: ESMFixture.parseRecord(ESMFixture.record(
+                "MUST",
+                data: Data()
+            )))
         }
     }
 
@@ -95,7 +98,7 @@ struct MusicRecordTests {
             + ESMFixture.field("BNAM", ESMFixture.zstring("Music\\Explore\\mus_finale.xwm"))
             + ESMFixture.field("LNAM", lnam)
             + ESMFixture.field("FNAM", fnam)
-        let must = try MusicTrack(record: record(ESMFixture.record(
+        let must = try MusicTrack(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUST", formID: 0x100, data: fields
         )))
 
@@ -118,7 +121,7 @@ struct MusicRecordTests {
         fltv.appendFloat32(12)
         let fields = ESMFixture.field("CNAM", uint32(0xA1A9_C4D5))
             + ESMFixture.field("FLTV", fltv)
-        let must = try MusicTrack(record: record(ESMFixture.record(
+        let must = try MusicTrack(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUST", formID: 0x101, data: fields
         )))
         #expect(must.trackType == .silentTrack)
@@ -133,7 +136,7 @@ struct MusicRecordTests {
             + ESMFixture.field("CNAM", uint32(0x23F6_78C3))
             + ESMFixture.field("DNAM", dnam)
             + ESMFixture.field("SNAM", uint32(0x100) + uint32(0) + uint32(0x101))
-        let must = try MusicTrack(record: record(ESMFixture.record(
+        let must = try MusicTrack(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUST", formID: 0x102, data: fields
         )))
         #expect(must.trackType == .palette)
@@ -143,7 +146,7 @@ struct MusicRecordTests {
     }
 
     @Test func unknownTrackTypeRoundTrips() throws {
-        let must = try MusicTrack(record: record(ESMFixture.record(
+        let must = try MusicTrack(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUST", formID: 0x103, data: ESMFixture.field("CNAM", uint32(0xDEAD_BEEF))
         )))
         #expect(must.trackType == .unknown(0xDEAD_BEEF))
@@ -156,7 +159,7 @@ struct MusicRecordTests {
             + ESMFixture.field("LNAM", Data(count: 11))
             + ESMFixture.field("FNAM", Data(count: 6))
             + ESMFixture.field("SNAM", Data(count: 7))
-        let must = try MusicTrack(record: record(ESMFixture.record(
+        let must = try MusicTrack(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUST", formID: 0x104, data: fields
         )))
         #expect(must.trackType == nil)
@@ -183,7 +186,7 @@ struct MusicRecordTests {
             + ESMFixture.field("CITC", uint32(1))
             + ESMFixture.field("CTDA", ctda)
             + ESMFixture.field("ANAM", ESMFixture.zstring("Music\\mus.xwm"))
-        let must = try MusicTrack(record: record(ESMFixture.record(
+        let must = try MusicTrack(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUST", formID: 0x105, data: fields
         )))
         #expect(must.trackType == .singleTrack)
@@ -204,7 +207,7 @@ struct MusicRecordTests {
         let fields = ESMFixture.field("CITC", uint32(1))
             + ESMFixture.field("CTDA", Data(count: 20))
             + ESMFixture.field("ANAM", ESMFixture.zstring("Music\\mus.xwm"))
-        let must = try MusicTrack(record: record(ESMFixture.record(
+        let must = try MusicTrack(record: ESMFixture.parseRecord(ESMFixture.record(
             "MUST", formID: 0x106, data: fields
         )))
         #expect(must.conditions.isEmpty)
@@ -214,7 +217,10 @@ struct MusicRecordTests {
 
     @Test func wrongMusicTrackRecordTypeThrows() throws {
         #expect(throws: ESMError.self) {
-            _ = try MusicTrack(record: record(ESMFixture.record("MUSC", data: Data())))
+            _ = try MusicTrack(record: ESMFixture.parseRecord(ESMFixture.record(
+                "MUSC",
+                data: Data()
+            )))
         }
     }
 
@@ -224,13 +230,5 @@ struct MusicRecordTests {
         var data = Data()
         data.appendUInt32(value)
         return data
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 }

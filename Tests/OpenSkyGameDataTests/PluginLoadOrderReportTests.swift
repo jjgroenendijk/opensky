@@ -2,37 +2,27 @@
 // the engine so they are assertable without driving AppKit.
 
 import Foundation
+import GameDataTesting
 @testable import OpenSkyGameData
 import Testing
 
 struct PluginLoadOrderReportTests {
-    private let installURL: URL
-    private let dataURL: URL
+    private let install: TemporaryInstall
 
     init() throws {
-        installURL = FileManager.default.temporaryDirectory
-            .appending(path: "opensky-report-\(UUID().uuidString)", directoryHint: .isDirectory)
-        dataURL = installURL.appending(path: "Data", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(at: dataURL, withIntermediateDirectories: true)
-    }
-
-    private var root: GameDataRoot {
-        GameDataRoot(installURL: installURL, dataURL: dataURL, source: .environment)
-    }
-
-    private func touch(_ names: [String]) throws {
-        for name in names {
-            try Data().write(to: dataURL.appending(path: name, directoryHint: .notDirectory))
-        }
+        install = try TemporaryInstall(prefix: "opensky-report")
     }
 
     @Test func rowsNumberActivePluginsAndAppendMissingOnes() throws {
-        try touch(["Skyrim.esm", "Mod.esp"])
-        let pluginsURL = installURL.appending(path: "plugins.txt", directoryHint: .notDirectory)
+        try install.touch(["Skyrim.esm", "Mod.esp"])
+        let pluginsURL = install.installURL.appending(
+            path: "plugins.txt",
+            directoryHint: .notDirectory
+        )
         try Data("*Mod.esp\n*Gone.esp\n".utf8).write(to: pluginsURL)
 
         let report = PluginLoadOrderReport(resolution: PluginLoadOrder.resolve(
-            root: root,
+            root: install.root,
             location: .located(url: pluginsURL, source: .installFolder)
         ))
 
@@ -47,10 +37,10 @@ struct PluginLoadOrderReportTests {
     }
 
     @Test func fallbackSaysSoAndOffersTheProblemAsAPrompt() throws {
-        try touch(["Skyrim.esm"])
+        try install.touch(["Skyrim.esm"])
 
         let report = PluginLoadOrderReport(resolution: PluginLoadOrder.resolve(
-            root: root,
+            root: install.root,
             location: .notFound(searched: ["/nowhere/plugins.txt"])
         ))
 
@@ -63,10 +53,10 @@ struct PluginLoadOrderReportTests {
     }
 
     @Test func aBadOverrideKeepsItsPathVisibleSoItCanBeCorrected() throws {
-        try touch(["Skyrim.esm"])
+        try install.touch(["Skyrim.esm"])
 
         let report = PluginLoadOrderReport(resolution: PluginLoadOrder.resolve(
-            root: root,
+            root: install.root,
             location: .overrideMissing(path: "/typo/plugins.txt", source: .userDefaults)
         ))
 

@@ -1,17 +1,8 @@
-// M20 milestone panel acceptance (issue #500, roadmap item 20.7): one
-// uninterrupted run through the real sidebar model and the registry-built
-// `World > Progression` panel on one wired session, in the M10-M19
-// acceptance-triad shape, plus the Asset Browser families the milestone's two
-// new record types are browsable from.
-//
-// The readouts are found by their accessibility identifiers, which is the
-// deterministic substitute while UI automation is TCC-blocked
-// (docs/tools/environment.md). What this adds over the section suite is that
-// the whole surface works as one, in the order progression happens in: read
-// what the character is, use a skill until it levels, spend the character
-// experience that banked, take the attribute the level owes, buy a perk with
-// the point it granted, and read the record that perk resolves to — with no
-// fake standing in for a runtime anywhere.
+// M20 panel acceptance: one run through `World > Progression` on a wired
+// session, in the order progression happens: level a skill, spend experience,
+// take the attribute, buy a perk, and read its record in the Asset Browser.
+// Readouts are found by accessibility id, the deterministic substitute while
+// UI automation cannot run here (docs/tools/environment.md).
 
 import AppKit
 @testable import OpenSky
@@ -44,25 +35,7 @@ struct M20AcceptancePanelTests {
     private static func buildPanel(
         providers: GameViewController
     ) throws -> ProgressionPanelViewController {
-        let worldGroup = try #require(
-            AppSidebarModel.groups().first { $0.section == .world }
-        )
-        let descriptor = try #require(
-            worldGroup.destinations.first { $0.id == "progression" }
-        )
-        #expect(descriptor.sidebarIdentifier == "Destination-progression")
-        #expect(descriptor.title == "Progression")
-
-        guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("World > Progression is not a world inspector")
-            throw ProgressionPanelError.notAWorldInspector
-        }
-        let panel = try #require(
-            makePanel(WorldPanelContext(providers: providers))
-                as? ProgressionPanelViewController
-        )
-        panel.loadViewIfNeeded()
-        return panel
+        try buildWorldPanel("progression", title: "Progression", providers: providers)
     }
 
     /// Scope point 2: level, experience, perk points and the eighteen skills

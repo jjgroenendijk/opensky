@@ -168,14 +168,7 @@ public enum ActiveEffectFixture {
     }
 
     public static func plugin(records: [Data]) throws -> ESMFile {
-        let grouped = Dictionary(grouping: records) { record in
-            String(bytes: record.prefix(4), encoding: .ascii) ?? "MGEF"
-        }
-        var data = ESMFixture.tes4()
-        for (type, groupedRecords) in grouped.sorted(by: { $0.key < $1.key }) {
-            data += ESMFixture.topGroup(type, contents: groupedRecords.reduce(Data(), +))
-        }
-        return try ESMFile(data: data)
+        try ESMFixture.plugin(records: records)
     }
 
     // MARK: - Private

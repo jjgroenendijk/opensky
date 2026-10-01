@@ -1,17 +1,9 @@
-// CBTS chunk tests (issue #374): the additive hostility chunk in the OpenSky
-// native save container.
-//
-// The same promises `AVAL` and `DETH` make, for the same reasons: a save
-// carrying an angry actor must still load in a build that knows nothing about
-// the chunk, and `RDLT` must gain nothing so an actor whose only component is
-// its hostility leaves no entry there for an older build to restore as an empty
-// reference.
-//
-// Beyond the round trip, this suite pins the item's stated persistence choice: a
-// fight saved mid-swing reloads with the opponent still hostile, because that is
-// what makes a reloaded fight still a fight, while an actor calmed back down
-// keeps its component rather than being written out and re-reading as neutral by
-// accident.
+// CBTS chunk: actor hostility in the native save.
+// An older build must still load the save, which the renamed-tag case
+// simulates, and `RDLT` must gain no entry for a reference whose only
+// component is this one.
+// A fight saved mid-swing reloads still hostile, and a calmed actor keeps its
+// neutral component.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -41,26 +33,13 @@ struct CombatHostilitySaveTests {
                 key: calmed,
                 cell: OpenSkySaveFixture.whiterun,
                 components: [ActorCombatState.neutral.erased]
-            ),
-            OpenSkySaveFixture.entry(
-                key: .plugin(name: "skyrim.esm", objectID: 1),
-                cell: OpenSkySaveFixture.riverwood,
-                components: [ReferenceDeletionState.deleted.erased]
             )
         ]
-        return WorldStateSnapshot(
-            entries: entries.sorted { $0.key < $1.key },
-            nextGeneratedSequence: 5,
-            sequence: 11
-        )
+        return OpenSkySaveFixture.snapshot(entries, bystanderCell: OpenSkySaveFixture.riverwood)
     }
 
     private func encode(_ snapshot: WorldStateSnapshot) -> Data {
-        OpenSkySaveEncoder.encode(
-            snapshot: snapshot,
-            fingerprint: OpenSkySaveFixture.fingerprint,
-            metadata: OpenSkySaveFixture.metadata
-        )
+        OpenSkySaveFixture.encode(snapshot)
     }
 
     // MARK: - Round trip

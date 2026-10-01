@@ -1,7 +1,6 @@
-// ImportAssets (57) / ImportAssets2 (71) decoding and the font resolution it
-// unlocks (milestone 8.2.4): a vanilla edit text names a FontID its own movie
-// never defines, because the movie imports that character by name from a
-// fontlib. Synthetic fixtures only.
+// ImportAssets (57) and ImportAssets2 (71), and the font resolution they allow:
+// a vanilla edit text can name a font its own movie imports by name from a
+// fontlib.
 
 @testable import FormatsCoreTesting
 import FormatsSWFTesting
@@ -118,24 +117,7 @@ struct SWFImportAssetsTests {
     }
 
     private static func makeFont() throws -> SWFFontDefinition {
-        var builder = SWFFontBodyBuilder()
-        builder.fontID = 1
-        builder.flags.hasLayout = true
-        builder.codes = [65, 66]
-        builder.shapes = [
-            SWFFontBodyBuilder.triangleGlyphShape(size: 700),
-            SWFFontBodyBuilder.triangleGlyphShape(size: 600)
-        ]
-        builder.layout = SWFFontBodyBuilder.Layout(
-            ascent: 800,
-            descent: 200,
-            leading: 0,
-            advances: [600, 500],
-            bounds: [
-                SWFRect(xMin: 0, xMax: 700, yMin: -700, yMax: 0),
-                SWFRect(xMin: 0, xMax: 600, yMin: -600, yMax: 0)
-            ]
-        )
+        let builder = SWFFontBodyBuilder.abFont(fontID: 1)
         return try SWFFontParser.parse(tag: SWFTag(code: 48, body: builder.build()))
     }
 }

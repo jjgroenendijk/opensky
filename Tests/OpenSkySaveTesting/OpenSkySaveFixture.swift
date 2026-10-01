@@ -1,12 +1,6 @@
-// Synthetic fixtures for the OpenSky native save container tests (issue #161).
-//
-// Everything here is built in code: a save is OpenSky's own format, so no game
-// data is involved at all, and no test reads a file from the install.
-//
-// Two construction paths exist on purpose. `richSnapshot` feeds the real
-// encoder for round-trip and determinism coverage, while the byte builders
-// assemble files field by field so a corruption test can put an exact bad
-// value at an exact offset instead of hunting for one in encoder output.
+// Synthetic fixtures for the native save container, built in code. `richSnapshot`
+// feeds the real encoder; the byte builders write a file field by field, so a
+// corruption test can put an exact bad value at an exact offset.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -108,12 +102,32 @@ nonisolated public enum OpenSkySaveFixture {
         return WorldStateSnapshotEntry(key: key, delta: delta)
     }
 
-    public static func encodedRichSave() -> Data {
-        OpenSkySaveEncoder.encode(
-            snapshot: richSnapshot(),
-            fingerprint: fingerprint,
-            metadata: metadata
+    /// `entries` plus a deleted reference that carries no chunk component, in
+    /// key order. The extra entry shows that a chunk leaves other references alone.
+    public static func snapshot(
+        _ entries: [WorldStateSnapshotEntry],
+        bystanderCell: CellSceneLocation?,
+        nextGeneratedSequence: UInt64 = 5,
+        sequence: UInt64 = 11
+    ) -> WorldStateSnapshot {
+        let bystander = entry(
+            key: .plugin(name: "skyrim.esm", objectID: 1),
+            cell: bystanderCell,
+            components: [ReferenceDeletionState.deleted.erased]
         )
+        return WorldStateSnapshot(
+            entries: (entries + [bystander]).sorted { $0.key < $1.key },
+            nextGeneratedSequence: nextGeneratedSequence,
+            sequence: sequence
+        )
+    }
+
+    public static func encode(_ snapshot: WorldStateSnapshot) -> Data {
+        OpenSkySaveEncoder.encode(snapshot: snapshot, fingerprint: fingerprint, metadata: metadata)
+    }
+
+    public static func encodedRichSave() -> Data {
+        encode(richSnapshot())
     }
 
     // MARK: - Byte builders

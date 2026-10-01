@@ -15,7 +15,7 @@ struct AcousticSpaceRecordTests {
             + ESMFixture.field("SNAM", formID(0x100))
             + ESMFixture.field("RDAT", formID(0x200))
             + ESMFixture.field("BNAM", formID(0x300))
-        let aspc = try AcousticSpace(record: record(ESMFixture.record(
+        let aspc = try AcousticSpace(record: ESMFixture.parseRecord(ESMFixture.record(
             "ASPC", formID: 0x10, data: fields
         )))
 
@@ -27,7 +27,7 @@ struct AcousticSpaceRecordTests {
     }
 
     @Test func decodesBareAcousticSpace() throws {
-        let aspc = try AcousticSpace(record: record(ESMFixture.record(
+        let aspc = try AcousticSpace(record: ESMFixture.parseRecord(ESMFixture.record(
             "ASPC", data: ESMFixture.field("EDID", ESMFixture.zstring("Bare"))
         )))
         #expect(aspc.ambientSound == nil)
@@ -40,7 +40,7 @@ struct AcousticSpaceRecordTests {
         let fields = ESMFixture.field("SNAM", Data(count: 3))
             + ESMFixture.field("RDAT", Data(count: 5))
             + ESMFixture.field("BNAM", Data(count: 2))
-        let aspc = try AcousticSpace(record: record(ESMFixture.record(
+        let aspc = try AcousticSpace(record: ESMFixture.parseRecord(ESMFixture.record(
             "ASPC", formID: 0x11, data: fields
         )))
         #expect(aspc.ambientSound == nil)
@@ -51,7 +51,7 @@ struct AcousticSpaceRecordTests {
     @Test func ignoresNullFormIDs() throws {
         let fields = ESMFixture.field("SNAM", formID(0))
             + ESMFixture.field("RDAT", formID(0))
-        let aspc = try AcousticSpace(record: record(ESMFixture.record(
+        let aspc = try AcousticSpace(record: ESMFixture.parseRecord(ESMFixture.record(
             "ASPC", formID: 0x12, data: fields
         )))
         #expect(aspc.ambientSound == nil)
@@ -60,7 +60,7 @@ struct AcousticSpaceRecordTests {
 
     @Test func wrongRecordTypeThrows() throws {
         #expect(throws: ESMError.self) {
-            _ = try AcousticSpace(record: record(ESMFixture.record(
+            _ = try AcousticSpace(record: ESMFixture.parseRecord(ESMFixture.record(
                 "STAT", data: Data()
             )))
         }
@@ -70,13 +70,5 @@ struct AcousticSpaceRecordTests {
         var data = Data()
         data.appendUInt32(value)
         return data
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 }

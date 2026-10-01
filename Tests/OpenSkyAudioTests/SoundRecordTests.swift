@@ -29,7 +29,7 @@ struct SoundRecordTests {
             + ESMFixture.field("ONAM", uint32(0x102))
             + ESMFixture.field("LNAM", Data([4, 8, 5, 6]))
             + ESMFixture.field("BNAM", parameters)
-        let descriptor = try SoundDescriptor(record: record(
+        let descriptor = try SoundDescriptor(record: ESMFixture.parseRecord(
             ESMFixture.record("SNDR", formID: 0x200, data: fields)
         ))
 
@@ -54,7 +54,7 @@ struct SoundRecordTests {
             + ESMFixture.field("SDSC", uint32(0x200))
             + ESMFixture.field("FNAM", Data([1]))
             + ESMFixture.field("SNDD", Data([2, 3]))
-        let sound = try SoundMarker(record: record(
+        let sound = try SoundMarker(record: ESMFixture.parseRecord(
             ESMFixture.record("SOUN", formID: 0x300, data: fields)
         ))
 
@@ -74,7 +74,7 @@ struct SoundRecordTests {
 
         for (selector, expected) in cases {
             let fields = ESMFixture.field("LNAM", Data([1, selector, 2, 3]))
-            let descriptor = try SoundDescriptor(record: record(
+            let descriptor = try SoundDescriptor(record: ESMFixture.parseRecord(
                 ESMFixture.record("SNDR", data: fields)
             ))
             #expect(descriptor.looping == expected)
@@ -88,7 +88,7 @@ struct SoundRecordTests {
             + ESMFixture.field("ONAM", Data(count: 2))
             + ESMFixture.field("LNAM", Data(count: 3))
             + ESMFixture.field("BNAM", Data(count: 5))
-        let descriptor = try SoundDescriptor(record: record(
+        let descriptor = try SoundDescriptor(record: ESMFixture.parseRecord(
             ESMFixture.record("SNDR", data: descriptorFields)
         ))
         #expect(descriptor.descriptorType == nil)
@@ -99,7 +99,7 @@ struct SoundRecordTests {
         #expect(descriptor.parameters == nil)
 
         let markerFields = ESMFixture.field("SDSC", Data(count: 3))
-        let marker = try SoundMarker(record: record(
+        let marker = try SoundMarker(record: ESMFixture.parseRecord(
             ESMFixture.record("SOUN", data: markerFields)
         ))
         #expect(marker.descriptor == nil)
@@ -107,12 +107,12 @@ struct SoundRecordTests {
 
     @Test func wrongRecordTypesThrow() throws {
         #expect(throws: ESMError.self) {
-            _ = try SoundDescriptor(record: record(
+            _ = try SoundDescriptor(record: ESMFixture.parseRecord(
                 ESMFixture.record("SOUN", data: Data())
             ))
         }
         #expect(throws: ESMError.self) {
-            _ = try SoundMarker(record: record(
+            _ = try SoundMarker(record: ESMFixture.parseRecord(
                 ESMFixture.record("SNDR", data: Data())
             ))
         }
@@ -228,14 +228,6 @@ struct SoundRecordTests {
             + ESMFixture.topGroup("SOUN", contents: sounds)
             + ESMFixture.topGroup("SNCT", contents: categories)
         return try SoundRecordStore(file: ESMFile(data: plugin))
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 
     private func uint32(_ value: UInt32) -> Data {

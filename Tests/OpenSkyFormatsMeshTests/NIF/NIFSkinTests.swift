@@ -1,5 +1,4 @@
-// Synthetic skin block + bind-pose flatten tests. Layouts follow NifTools
-// nif.xml; fixtures contain no game bytes (AGENTS.md legal boundary).
+// Skin blocks and the bind-pose flatten. Layout: docs/formats/nif.md.
 
 import FormatsMeshTesting
 import Foundation
@@ -155,38 +154,26 @@ struct NIFSkinTests {
             strideDwords: 8,
             vertexCountOverride: Self.positions.count
         )
-        let blocks: [NIFFixture.Block] = [
-            .init("NiNode", NIFFixture.niNode(
+        let blocks = NIFFixture.dynamicSkinBlocks(
+            root: NIFFixture.niNode(
                 prefix: NIFFixture.avObjectPrefix(nameIndex: 0),
                 children: [1, 2]
-            )),
-            .init("NiNode", NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(
+            ),
+            bone: NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(
                 nameIndex: 1,
                 translation: SIMD3(10, 0, 0)
-            ))),
-            .init("BSDynamicTriShape", NIFFixture.bsDynamicTriShape(
-                inherited: inherited,
-                positions: Self.positions
             )),
-            .init("NiSkinInstance", NIFFixture.skinInstance(
-                dataRef: 4,
-                partitionRef: 5,
-                skeletonRootRef: 0,
-                boneRefs: [1]
-            )),
-            .init("NiSkinData", NIFFixture.skinData(
-                boneTransforms: [NIFFixture.niTransform()],
-                vertexWeights: [[]]
-            )),
-            .init("NiSkinPartition", NIFFixture.skinPartition(
+            inherited: inherited,
+            positions: Self.positions,
+            partition: NIFFixture.skinPartition(
                 vertexRecords: records,
                 topLevelVertexRecords: [],
                 triangles: [0, 1, 2],
                 bonePalette: [0],
                 weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
                 boneIndices: Array(repeating: .zero, count: 3)
-            ))
-        ]
+            )
+        )
 
         let externalSkeleton = try skeleton(headTranslation: 20)
         let model = try NIFFile(data: NIFFixture.file(
@@ -213,24 +200,10 @@ struct NIFSkinTests {
             strideDwords: 5,
             vertexCountOverride: Self.positions.count
         )
-        let blocks: [NIFFixture.Block] = [
-            .init("NiNode", NIFFixture.niNode(children: [1, 2])),
-            .init("NiNode", NIFFixture.niNode()),
-            .init("BSDynamicTriShape", NIFFixture.bsDynamicTriShape(
-                inherited: inherited,
-                positions: Self.positions
-            )),
-            .init("NiSkinInstance", NIFFixture.skinInstance(
-                dataRef: 4,
-                partitionRef: 5,
-                skeletonRootRef: 0,
-                boneRefs: [1]
-            )),
-            .init("NiSkinData", NIFFixture.skinData(
-                boneTransforms: [NIFFixture.niTransform()],
-                vertexWeights: [[]]
-            )),
-            .init("NiSkinPartition", NIFFixture.skinPartition(
+        let blocks = NIFFixture.dynamicSkinBlocks(
+            inherited: inherited,
+            positions: Self.positions,
+            partition: NIFFixture.skinPartition(
                 vertexRecords: records,
                 triangles: [0, 1, 2],
                 bonePalette: [0],
@@ -238,8 +211,8 @@ struct NIFSkinTests {
                 boneIndices: Array(repeating: .zero, count: 3),
                 attributes: attributes,
                 strideDwords: 5
-            ))
-        ]
+            )
+        )
 
         let model = try NIFFile(data: NIFFixture.file(blocks: blocks)).model()
         let mesh = try #require(model.meshes.first)

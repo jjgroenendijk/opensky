@@ -1,9 +1,6 @@
-// The fixture behind `M11ScriptedWorldAcceptanceTests` (issue #172): a lever
-// whose compiled `OnActivate` body calls `GetLinkedRef` and then `Disable`,
-// wired to a real `CellStreamer` and driven by a real raycast activation.
-//
-// Every byte is built in code — REFR records, PEX objects, and the plugin the
-// rebuild reads — never extracted game files (AGENTS.md "Legal & IP boundary").
+// The fixture behind `M11ScriptedWorldAcceptanceTests`: a lever whose compiled
+// `OnActivate` calls `GetLinkedRef` and then `Disable`, on a real `CellStreamer`
+// and driven by a real raycast activation. Every byte is built in code.
 
 import FormatsESMTesting
 import FormatsPEXTesting
@@ -119,7 +116,10 @@ struct M11ScriptedWorldChain {
             with: .success(CellStreamerFixture.cellScene(
                 location: cell,
                 interactions: [lever.reference: lever],
-                staticCollision: collision(reference: leverID, position: leverTarget),
+                staticCollision: CellStreamerFixture.collision(
+                    reference: leverID,
+                    position: leverTarget
+                ),
                 references: RuntimeReferenceIndex(entries: entries)
             ))
         )
@@ -145,25 +145,6 @@ struct M11ScriptedWorldChain {
     /// the view ray reaches it.
     private static var leverTarget: SIMD3<Float> {
         CellStreamerFixture.center + SIMD3<Float>(10, 0, 0)
-    }
-
-    private static func collision(
-        reference: UInt32,
-        position: SIMD3<Float>
-    ) -> StaticCollisionSet {
-        let extent = SIMD3<Float>(repeating: 1)
-        var stats = StaticCollisionStats()
-        stats.shapeCount = 1
-        return StaticCollisionSet(
-            location: nil,
-            shapes: [StaticCollisionShape(
-                reference: FormID(reference),
-                transform: MatrixMath.translation(position),
-                geometry: .box(halfExtents: extent),
-                bounds: ModelBounds(min: position - extent, max: position + extent)
-            )],
-            stats: stats
-        )
     }
 
     // MARK: - The compiled scripts
@@ -197,9 +178,7 @@ struct M11ScriptedWorldChain {
     /// EndEvent
     /// ```
     ///
-    /// assembled as the three instructions a compiler emits for it. The
-    /// `Probe.Seen` call is the test's only addition, and it observes
-    /// `akActionRef` without affecting the world.
+    /// as three compiled instructions. `Probe.Seen` only observes the caller.
     static func leverScript() -> PexObject {
         let body = PexFixture.runtimeFunction(
             parameters: [PexTypedName(name: "akActionRef", typeName: "ObjectReference")],
