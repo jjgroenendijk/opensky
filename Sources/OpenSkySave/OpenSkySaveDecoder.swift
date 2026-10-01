@@ -40,7 +40,9 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
     /// The `RDLT` entries with every side-chunk laid back over them. Each merge
     /// fills its own component slot, so only the commented steps depend on order.
     private static func mergedEntries(of body: Body) -> [WorldStateSnapshotEntry] {
-        var entries = OpenSkySaveDeltaMerge.merge(body.inventories, into: body.entries)
+        // A repeated `RDLT` key keeps its last entry, as every merge below does.
+        let deltas = OpenSkySaveDeltaMerge.sorted(OpenSkySaveDeltaMerge.index(body.entries))
+        var entries = OpenSkySaveDeltaMerge.merge(body.inventories, into: deltas)
         entries = OpenSkySaveDeltaMerge.merge(body.spawns, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.quests, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.questAliases, into: entries)

@@ -9,6 +9,7 @@
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyWorldState
@@ -188,6 +189,54 @@ struct OpenSkySaveEntryCorruptionTests {
             save(componentCount: 1, components: writer.data),
             context: "reference key kind tag 9"
         )
+    }
+
+    // MARK: - Repeated keys
+
+    /// No other side chunk re-keys the entries first, so the raw `RDLT` list
+    /// reaches the `QLOC` merge with its repeated key.
+    @Test func aRepeatedReferenceKeyBeforeALocationAliasChunkKeepsTheLastEntry() throws {
+        let disabled = OpenSkySaveFixture.entryBytes(
+            componentCount: 1, components: OpenSkySaveFixture.bytes([0, 0])
+        )
+        let enabled = OpenSkySaveFixture.entryBytes(
+            componentCount: 1, components: OpenSkySaveFixture.bytes([0, 1])
+        )
+        var aliases = BinaryWriter()
+        aliases.writeUInt32(1)
+        aliases.write(OpenSkySaveFixture.pluginKeyBytes())
+        aliases.writeUInt32(1)
+        aliases.writeUInt32(4)
+        aliases.write(OpenSkySaveFixture.pluginKeyBytes(objectID: 0x0C0C))
+        let data = OpenSkySaveFixture.file(chunks: [
+            OpenSkySaveFixture.deltasChunk(count: 2, entries: disabled + enabled),
+            OpenSkySaveFixture.chunk(
+                OpenSkySaveFormat.ChunkTag.questLocationAliases, aliases.data
+            )
+        ])
+        let file = try OpenSkySaveDecoder.decode(data)
+        let key = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0BAD)
+        #expect(file.snapshot.entries.map(\.key) == [key])
+        let delta = try #require(file.snapshot[key])
+        #expect(delta.component(ReferenceEnableState.self)?.isEnabled == true)
+        let fills = delta.component(QuestAliasState.self)?.locationFills
+        #expect(fills?.map(\.aliasID) == [4])
+    }
+
+    @Test func aRepeatedReferenceKeyWithNoSideChunkLeavesOneSnapshotEntry() throws {
+        let disabled = OpenSkySaveFixture.entryBytes(
+            componentCount: 1, components: OpenSkySaveFixture.bytes([0, 0])
+        )
+        let enabled = OpenSkySaveFixture.entryBytes(
+            componentCount: 1, components: OpenSkySaveFixture.bytes([0, 1])
+        )
+        let data = OpenSkySaveFixture.file(chunks: [
+            OpenSkySaveFixture.deltasChunk(count: 2, entries: enabled + disabled)
+        ])
+        let snapshot = try OpenSkySaveDecoder.decode(data).snapshot
+        let key = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0BAD)
+        #expect(snapshot.entries.map(\.key) == [key])
+        #expect(ReferenceEnableResolution(snapshot: snapshot)[key]?.isEnabled == false)
     }
 
     // MARK: - Well-formed control
