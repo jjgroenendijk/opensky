@@ -53,12 +53,15 @@ PRUNE_DAYS       ?= 14
 # location, and XCODEBUILD_FLAGS cannot drift apart. tools/xcodebuild-lib.sh is
 # the shell twin of this.
 xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
-	$(XCODEBUILD_DD) $(COVERAGE_$(2)) $(XCODEBUILD_FLAGS)
+	$(XCODEBUILD_DD) $(COVERAGE_$(2)) $(ARCHS_$(2)) $(XCODEBUILD_FLAGS)
 # A test build compiles every target with coverage and a plain build does not, and
 # both write the same package intermediates. So each Debug build turns coverage on,
 # or `make cli` and `make test` rebuild each other's engine (issue #714). Only the
 # command line wins over the setting each action picks; an xcconfig does not.
 COVERAGE_Debug   := CLANG_COVERAGE_MAPPING=YES
+# Apple Silicon only. Release would also compile x86_64, where Float16 does not
+# exist. ARCHS in Overrides.xcconfig still left package targets on x86_64.
+ARCHS_Release    := ARCHS=arm64
 XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
 XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
 XCB_RELEASE      := $(call xcb,$(SCHEME),Release)
@@ -262,7 +265,7 @@ run-cli: cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
 # Release shares the Debug cache directory (xcodebuild keeps the configurations
 # apart inside it), so a repeat install builds incrementally.
 install: link-shared ## Build the Release app and copy it to /Applications
-	@$(XCB_RUN) install $(XCB_RELEASE) ARCHS=arm64 build
+	@$(XCB_RUN) install $(XCB_RELEASE) build
 	@rm -rf /Applications/OpenSky.app
 	@ditto $(DERIVED_DATA)/Build/Products/Release/OpenSky.app /Applications/OpenSky.app
 	@echo "[ OK ] /Applications/OpenSky.app updated"
