@@ -8,6 +8,7 @@
 @testable import OpenSkyPhysics
 import simd
 
+@MainActor
 final class FakeRagdollSessionWorld: RagdollSessionWorld {
     static let skeleton = HKASkeleton(
         name: "rig",

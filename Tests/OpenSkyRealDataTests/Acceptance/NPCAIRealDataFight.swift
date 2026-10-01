@@ -12,6 +12,7 @@ import OpenSkyCombatFixtures
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+@testable import OpenSkyProgressionInterface
 import simd
 
 @MainActor

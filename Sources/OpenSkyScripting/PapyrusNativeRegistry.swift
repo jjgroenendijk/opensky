@@ -55,12 +55,12 @@ public final class PapyrusNativeContext {
     public let log: PapyrusNativeLog
     /// The world a native may read and change, or nil in a headless runtime. A native
     /// that needs it fails rather than guessing.
-    public let world: any PapyrusWorldBridge?
+    public let world: (any PapyrusWorldBridge)?
 
     public init(
         seed: UInt64 = ConditionRandom.defaultSeed,
         log: PapyrusNativeLog = PapyrusNativeLog(),
-        world: any PapyrusWorldBridge? = nil
+        world: (any PapyrusWorldBridge)? = nil
     ) {
         random = ConditionRandom(seed: seed)
         self.log = log

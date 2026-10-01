@@ -58,8 +58,8 @@ public final class VendorCoordinator {
         vendorFaction override: ReferenceKey? = nil
     ) -> Result<BarterCounterparty, BarterOpenRefusal> {
         let vendor = override.flatMap(core.vendor(faction:)) ?? vendor(of: actor)
-        let stock = vendor.flatMap { stock(at: VendorCore.stockKey(of: $0, actor: actor)) }
-        return VendorCore.counterparty(vendor: vendor, actor: actor, stock: stock)
+        let vendorStock = vendor.flatMap { stock(at: VendorCore.stockKey(of: $0, actor: actor)) }
+        return VendorCore.counterparty(vendor: vendor, actor: actor, stock: vendorStock)
     }
 
     /// The rules a trade with `vendor` runs under. A nil vendor is a nominated
