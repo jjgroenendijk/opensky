@@ -1,19 +1,6 @@
-// RELS chunk decoding for the OpenSky native save container (issue #508).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly
-// like `FCTN`, `PRKS` and `SPLB`: an actor whose only delta is a scripted
-// relationship rank has no `RDLT` entry, so merging by `ReferenceKey` is what
-// lets the encoder omit one.
-//
-// Bounds, as everywhere else in this decoder: a declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
-//
-// Nothing here rejects an override on content. A repeated actor collapses in
-// `ActorRelationshipState.init`, and a rank outside the Creation Kit's -4...4 is
-// kept, because the wiki names that range as "acceptable" without saying what a
-// value outside it means and clamping would invent a rank the script did not
-// set.
+// RELS chunk: scripted relationship ranks, merged into the `RDLT` deltas by
+// `ReferenceKey`. A rank outside -4...4 is kept, because clamping would invent a
+// rank the script did not set.
 
 import Foundation
 import OpenSkyFactionsInterface
@@ -47,30 +34,6 @@ nonisolated public enum OpenSkySaveRelationshipDecoder: Sendable {
         return entries
     }
 
-    /// Lays each saved override list over the matching `RDLT` delta, adding an
-    /// entry for an actor that had no other component, and re-sorts the result
-    /// into `ReferenceKey` total order.
-    public static func merge(
-        _ values: [SaveRelationshipEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !values.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + values.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in values where !entry.state.isEmpty {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
-    }
-
     // MARK: - Private
 
     private static func decodeEntry(
@@ -97,5 +60,15 @@ nonisolated public enum OpenSkySaveRelationshipDecoder: Sendable {
             cell: cell,
             state: ActorRelationshipState(overrides: overrides)
         )
+    }
+}
+
+nonisolated extension SaveRelationshipEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.isEmpty ? nil : state.erased
     }
 }

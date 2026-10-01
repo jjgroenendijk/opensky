@@ -1,15 +1,7 @@
-// AVIF, the Actor Value Information record: the name, abbreviation and
-// description of one actor value, plus — for the eighteen skills — the
-// experience parameters that drive advancement and the perk-tree node graph.
-//
-// References: UESP "Skyrim Mod:Mod File Format/AVIF"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AVIF
-// Cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas,
-//   `wbRecord(AVIF, 'Actor Value Information', [...])`: EDID, FULL, required
-//   DESC, ICON, ANAM, the CNAM skill-category enum, the four-float AVSK struct
-//   and the `wbRArray('Perk Tree', ...)` decoded in
-//   ActorValueInformationPerkTree.swift.
-// Layout and real-install evidence: docs/formats/actor-value-information.md.
+// AVIF: the name and description of one actor value, plus, for the skills, the
+// experience parameters and the perk-tree node graph.
+// Sources: UESP "Skyrim Mod:Mod File Format/AVIF" and xEdit wbDefinitionsTES5.pas.
+// Layout: docs/formats/actor-value-information.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -22,25 +14,11 @@ nonisolated public enum ActorValueInformationSkipKind: Hashable, Sendable {
     case incompletePerkTreeNode
 }
 
-nonisolated public struct ActorValueInformationTally: Equatable, Sendable {
-    public private(set) var counts: [ActorValueInformationSkipKind: Int] = [:]
+public typealias ActorValueInformationTally = SkipTally<ActorValueInformationSkipKind>
 
-    public var total: Int {
-        counts.values.reduce(0, +)
-    }
-
-    public mutating func note(_ kind: ActorValueInformationSkipKind) {
-        counts[kind, default: 0] += 1
-    }
-}
-
-/// CNAM at record level: which of the three menu columns a skill's perk tree
-/// is drawn under.
-///
-/// UESP records that on a record with no perk tree the same field carries
-/// something else ("large 4byte info"), so the raw word is kept on the record
-/// and this enum is derived from it. An out-of-range word is `unknown` rather
-/// than a decode failure.
+/// CNAM at record level: the menu column a skill's perk tree is drawn under.
+/// On a record with no perk tree the field means something else, so the raw word
+/// stays on the record and an out-of-range word reads as `unknown`.
 nonisolated public enum ActorValueSkillCategory: Equatable, CustomStringConvertible, Sendable {
     case none
     case combat
@@ -69,13 +47,8 @@ nonisolated public enum ActorValueSkillCategory: Equatable, CustomStringConverti
     }
 }
 
-/// AVSK, the four floats that turn skill use into skill level.
-///
-/// The two sources disagree on the name of the second float: UESP calls it
-/// "Skill Use Offset" and xEdit "Skill Offset Mult". Nothing here depends on
-/// the reading, so the field is stored under UESP's name and the disagreement
-/// is left visible instead of being resolved by guesswork. Consuming these for
-/// experience gain is issue 20.5.
+/// AVSK, the four floats that turn skill use into skill level. UESP names the
+/// second float "Skill Use Offset", xEdit "Skill Offset Mult"; the UESP name is kept.
 nonisolated public struct SkillUseParameters: Equatable, Sendable {
     public static let byteCount = 16
 
@@ -129,29 +102,16 @@ nonisolated public struct ActorValueInformation: Equatable, Sendable {
         categoryRaw.map(ActorValueSkillCategory.init(rawValue:))
     }
 
-    /// Whether this record carries a tree to spend perk points in, together
-    /// with the advancement parameters that go beside one.
-    ///
-    /// This is not the same question as "is this one of the eighteen skills".
-    /// Dawnguard hangs the vampire and werewolf trees off actor values that
-    /// are not skills and that the vanilla name table does not carry, so a
-    /// caller that means the skills has to join the index and ask
-    /// `ActorValueIdentity.isSkill(index:)` — which is what the store's
-    /// `skills` does.
+    /// Whether this record has a perk tree and its advancement parameters.
+    /// Dawnguard trees hang off values that are not skills, so to ask "is this a
+    /// skill" use `ActorValueIdentity.isSkill(index:)`, as the store's `skills` does.
     public var hasPerkTree: Bool {
         skillUse != nil && !perkTree.isEmpty
     }
 
-    /// The vanilla actor-value index this record describes, or nil when no
-    /// vanilla name matches it.
-    ///
-    /// The join is by name, because AVIF carries no index of its own. Editor
-    /// IDs are tried first and the localizable FULL name last: a FULL that
-    /// lives in a string table decodes to an ID rather than text, so it cannot
-    /// be the primary key. `ActorValueIdentity.index(recordName:)` compares
-    /// with punctuation dropped and case folded, which is what makes the
-    /// table's `One-Handed` and an editor ID's `OneHanded` one name, and it
-    /// carries the three legacy spellings vanilla editor ids use.
+    /// The vanilla actor-value index, joined by name because AVIF has no index.
+    /// Editor IDs come first: a localized FULL decodes to a string ID, not text.
+    /// `ActorValueIdentity.index(recordName:)` ignores case and punctuation.
     public var vanillaActorValueIndex: Int32? {
         if let editorID {
             if let index = ActorValueIdentity.index(recordName: editorID) {
@@ -194,13 +154,8 @@ nonisolated public struct ActorValueInformation: Equatable, Sendable {
     }
 }
 
-/// Field-order-sensitive accumulator.
-///
-/// AVIF is the first record OpenSky decodes where one field tag means two
-/// different things depending on position: CNAM before the first PNAM is the
-/// record's skill category, and every CNAM after one is a connection line
-/// inside the perk-tree node that PNAM opened. Tracking the open node is
-/// therefore not an optimization, it is the disambiguation.
+/// Field-order-sensitive accumulator. A CNAM before the first PNAM is the skill
+/// category; a CNAM after one is a connection line in the open perk-tree node.
 nonisolated private struct ActorValueInformationFields {
     let localized: Bool
     var editorID: String?

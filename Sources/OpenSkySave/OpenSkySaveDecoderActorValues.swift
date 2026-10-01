@@ -41,31 +41,6 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
         return entries
     }
 
-    /// Lays each saved state over the matching `RDLT` delta, adding an entry
-    /// for an actor that had no other component, and re-sorts the result into
-    /// `ReferenceKey` total order — the order `WorldStateSnapshot` promises,
-    /// which a chunk-order insertion would otherwise break.
-    public static func merge(
-        _ values: [SaveActorValueEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !values.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + values.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in values {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
-    }
-
     /// `AVOV`: one entry per actor with overrides, each a list of
     /// `(index, base offset, permanent, damage)` records.
     public static func decodeActorValueOverrides(
@@ -156,5 +131,15 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
             cell: cell,
             state: ActorValueState(current: current)
         )
+    }
+}
+
+nonisolated extension SaveActorValueEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.erased
     }
 }

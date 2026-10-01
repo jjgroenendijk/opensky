@@ -1,13 +1,6 @@
-// Vanilla presentation layer for the system menu (M8.5.1): the measured AS2
-// contract of `Interface\quest_journal.swf`. Device-free and AppKit-free so it
-// builds into the CLI target and can be unit-tested against synthetic AS2
-// fixtures; it owns no renderer and no movie lifetime. The engine-side selector
-// it presents is UI/SystemMenuModel.swift.
-//
-// `quest_journal.swf` was the worst faulter before issue #136 at 159
-// `callDepthExceeded` faults. It now starts and drives with zero faults. Its
-// `SystemPage` builds the actual in-game system categories and their Settings
-// and Quit submenus; no game-derived data is embedded here.
+// The measured AS2 contract of `Interface\quest_journal.swf`, the system menu.
+// It has no AppKit and no renderer, so the CLI builds it and tests drive it with
+// synthetic AS2. The selector it shows is SystemMenuModel.swift.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -101,7 +94,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         {
             return true
         }
-        guard let key = key(for: event) else {
+        guard let key = event.swfKey else {
             return false
         }
         let down = runtime.handle(.keyDown(code: key.code, ascii: key.ascii))
@@ -134,44 +127,15 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     /// entry array. These prove that the expected movie loaded; `currentState`
     /// separately proves that activation brought the System page to the front.
     public static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
-        entryLabels(runtime: runtime, atPath: systemCategoryListPath)
+        MenuMovieEntryList.labels(atPath: systemCategoryListPath, runtime: runtime)
     }
 
     /// Settings categories reached by activating the `$SETTINGS` system row.
     public static func settingsCategoryLabels(runtime: SWFMovieRuntime) -> [String] {
-        entryLabels(runtime: runtime, atPath: settingsCategoryListPath)
+        MenuMovieEntryList.labels(atPath: settingsCategoryListPath, runtime: runtime)
     }
 
     // MARK: - Private
-
-    private static func entryLabels(
-        runtime: SWFMovieRuntime,
-        atPath path: String
-    ) -> [String] {
-        guard
-            let listNode = runtime.node(atPath: path, from: runtime.root),
-            let entries = listNode.object.lookup(entryArrayName)?.property.value.objectValue
-        else {
-            return []
-        }
-        // `entryList` is an AS2 array, so its rows are numeric property names.
-        // Sort numerically — lexical order would put row 10 before row 2.
-        let indexed: [(Int, String)] = entries.ownPropertyNames.compactMap { name in
-            guard let index = Int(name) else { return nil }
-            return (index, name)
-        }
-        return indexed
-            .sorted { $0.0 < $1.0 }
-            .compactMap { _, name in
-                guard
-                    let row = entries.lookup(name)?.property.value.objectValue,
-                    case let .string(text) = row.lookup("text")?.property.value
-                else {
-                    return nil
-                }
-                return text
-            }
-    }
 
     private static func showSystemPage(runtime: SWFMovieRuntime) {
         if
@@ -218,19 +182,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         return true
     }
 
-    private static func key(for event: MenuInputEvent) -> (code: Int, ascii: Int)? {
-        switch event {
-        case .move(.up): (SWFKeyCode.up, 0)
-        case .move(.down): (SWFKeyCode.down, 0)
-        case .move(.left): (SWFKeyCode.left, 0)
-        case .move(.right): (SWFKeyCode.right, 0)
-        case .button(.accept): (SWFKeyCode.enter, 13)
-        case .button(.cancel): (SWFKeyCode.escape, 0)
-        case .pointer: nil
-        }
-    }
-
     /// `SystemCategoriesList`'s backing array of row objects.
-    public static let entryArrayName = "EntriesA"
+    public static let entryArrayName = MenuMovieEntryList.arrayName
     public static let settingsCategoryIndex = 4
 }

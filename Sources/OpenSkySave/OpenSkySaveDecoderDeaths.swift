@@ -1,12 +1,4 @@
-// DETH chunk decoding for the OpenSky native save container (issue #197).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly
-// like `INVN`, `QSTS` and `AVAL`: an actor whose only delta is its death has no
-// `RDLT` entry, so merging by `ReferenceKey` is what lets the encoder omit one.
-//
-// Bounds, as everywhere else in this decoder: the declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
+// DETH chunk: death state, merged into the `RDLT` deltas by `ReferenceKey`.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -37,30 +29,6 @@ nonisolated public enum OpenSkySaveDeathDecoder: Sendable {
             try entries.append(decodeEntry(&reader))
         }
         return entries
-    }
-
-    /// Lays each saved death over the matching `RDLT` delta, adding an entry
-    /// for an actor that had no other component, and re-sorts the result into
-    /// `ReferenceKey` total order.
-    public static func merge(
-        _ deaths: [SaveDeathEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !deaths.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + deaths.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in deaths {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
     }
 
     // MARK: - Private
@@ -101,5 +69,15 @@ nonisolated public enum OpenSkySaveDeathDecoder: Sendable {
             reader.float32("\(name).y"),
             reader.float32("\(name).z")
         )
+    }
+}
+
+nonisolated extension SaveDeathEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.erased
     }
 }

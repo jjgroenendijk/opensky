@@ -6,7 +6,7 @@
 import Foundation
 import OpenSkyFormatsCore
 
-nonisolated public enum PerkSkipKind: Hashable, Sendable {
+nonisolated public enum PerkSkipKind: SkipTallyKind {
     case unknownField(FourCC)
     case malformedField(FourCC)
     /// An effect-only subrecord (DATA payload, PRKC, EPFT, EPFD, ...) that
@@ -28,37 +28,7 @@ nonisolated public enum PerkSkipKind: Hashable, Sendable {
     }
 }
 
-nonisolated public struct PerkTally: Equatable, Sendable {
-    public private(set) var counts: [PerkSkipKind: Int] = [:]
-
-    public var total: Int {
-        counts.values.reduce(0, +)
-    }
-
-    public var isEmpty: Bool {
-        counts.isEmpty
-    }
-
-    public var ranked: [(name: String, count: Int)] {
-        counts
-            .sorted {
-                $0.value == $1.value
-                    ? $0.key.name < $1.key.name
-                    : $0.value > $1.value
-            }
-            .map { ($0.key.name, $0.value) }
-    }
-
-    public mutating func note(_ kind: PerkSkipKind, count: Int = 1) {
-        counts[kind, default: 0] += count
-    }
-
-    public mutating func merge(_ other: PerkTally) {
-        for (kind, count) in other.counts {
-            note(kind, count: count)
-        }
-    }
-}
+public typealias PerkTally = SkipTally<PerkSkipKind>
 
 /// Record-level DATA: trait, level, rank count, playable, hidden. Measured on
 /// vanilla, `level` is always 0 and `rankCount` does not track the NNAM chain;

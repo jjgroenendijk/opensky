@@ -5,6 +5,7 @@
 // ends; a latent call on a retired instance faults when it wakes and is counted.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyGameData

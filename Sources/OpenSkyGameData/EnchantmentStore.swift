@@ -111,31 +111,18 @@ nonisolated public struct EnchantmentStore: Sendable {
         return chain
     }
 
-    /// Joins one record's effect list against the effect store. Exposed so a
-    /// caller holding an already-decoded record — the text dump, which decodes
-    /// the record in front of it — gets the same numbers the store holds.
+    /// Joins one record's effect list against the effect store. A caller that
+    /// already decoded the record, such as the text dump, gets the store's numbers.
     public static func resolvedEffects(
         of record: Enchantment,
         fromPlugin pluginName: String,
         effects store: MagicEffectStore
     ) -> [ResolvedSpellEffect] {
-        let castingType = record.data?.castingType ?? .fireAndForget
-        return record.effects.map { item in
-            let resolved = store.resolve(item, fromPlugin: pluginName)
-            let baseCost = resolved?.effect.data?.baseCost
-            return ResolvedSpellEffect(
-                item: item,
-                effect: resolved,
-                cost: baseCost.map {
-                    SpellCost.effectCost(
-                        baseCost: $0,
-                        magnitude: item.magnitude,
-                        duration: item.duration,
-                        castingType: castingType
-                    )
-                } ?? 0
-            )
-        }
+        store.resolvedEffects(
+            record.effects,
+            fromPlugin: pluginName,
+            castingType: record.data?.castingType ?? .fireAndForget
+        )
     }
 
     /// Totals joined effects into the cost the enchantment charges per use.

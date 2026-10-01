@@ -1,15 +1,5 @@
-// INVN chunk decoding for the OpenSky native save container (issue #176).
-//
-// The chunk is decoded on its own and merged into the `RDLT` entries
-// afterwards, because the two chunks describe the same references from
-// different sides: `RDLT` carries a reference's placement, enable and
-// activation deltas, `INVN` carries its items, and either may be present
-// without the other. Merging by `ReferenceKey` rather than by position is what
-// lets the encoder omit an `RDLT` entry whose only component was inventory.
-//
-// Bounds, as everywhere else in this decoder: every declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
+// INVN chunk: reference inventories, merged into the `RDLT` deltas by
+// `ReferenceKey`, so a reference with only items needs no `RDLT` entry.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -40,34 +30,6 @@ nonisolated public enum OpenSkySaveInventoryDecoder: Sendable {
             try entries.append(decodeEntry(&reader))
         }
         return entries
-    }
-
-    /// Lays each saved inventory over the matching `RDLT` delta, adding an
-    /// entry for an owner that had no other component, and re-sorts the result
-    /// into `ReferenceKey` total order.
-    ///
-    /// Re-sorting is not defensive tidying: `WorldStateSnapshot` promises that
-    /// order, and an owner that appears only in `INVN` is inserted in whatever
-    /// position the chunk listed it.
-    public static func merge(
-        _ inventories: [SaveInventoryEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !inventories.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + inventories.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in inventories {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.inventory.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
     }
 
     // MARK: - Private
@@ -121,5 +83,15 @@ nonisolated public enum OpenSkySaveInventoryDecoder: Sendable {
             try equipped.append(FormID(reader.uint32("INVN equipped item")))
         }
         return equipped
+    }
+}
+
+nonisolated extension SaveInventoryEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        inventory.erased
     }
 }

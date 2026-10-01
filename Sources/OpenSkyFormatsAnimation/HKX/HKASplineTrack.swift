@@ -95,24 +95,19 @@ nonisolated public struct HKASplineHeader: Sendable {
     public let controlPointCount: Int
 
     public func value(at frame: Float, controlPoints: [Float]) -> Float {
-        let span = knotSpan(for: frame)
-        var points = (0 ... degree).map { controlPoints[span - degree + $0] }
-        for level in 1 ... degree {
-            for index in stride(from: degree, through: level, by: -1) {
-                let knotIndex = span - degree + index
-                let denominator = Float(
-                    Int(knots[knotIndex + degree - level + 1]) - Int(knots[knotIndex])
-                )
-                let alpha = denominator == 0
-                    ? 0
-                    : (frame - Float(knots[knotIndex])) / denominator
-                points[index] = (1 - alpha) * points[index - 1] + alpha * points[index]
-            }
-        }
-        return points[degree]
+        deBoor(at: frame, controlPoints: controlPoints) { (1 - $2) * $0 + $2 * $1 }
     }
 
     public func value(at frame: Float, controlPoints: [SIMD4<Float>]) -> SIMD4<Float> {
+        deBoor(at: frame, controlPoints: controlPoints) { (1 - $2) * $0 + $2 * $1 }
+    }
+
+    /// De Boor's algorithm. `blend(a, b, alpha)` returns `(1 - alpha) * a + alpha * b`.
+    private func deBoor<Point>(
+        at frame: Float,
+        controlPoints: [Point],
+        blend: (Point, Point, Float) -> Point
+    ) -> Point {
         let span = knotSpan(for: frame)
         var points = (0 ... degree).map { controlPoints[span - degree + $0] }
         for level in 1 ... degree {
@@ -124,7 +119,7 @@ nonisolated public struct HKASplineHeader: Sendable {
                 let alpha = denominator == 0
                     ? 0
                     : (frame - Float(knots[knotIndex])) / denominator
-                points[index] = (1 - alpha) * points[index - 1] + alpha * points[index]
+                points[index] = blend(points[index - 1], points[index], alpha)
             }
         }
         return points[degree]

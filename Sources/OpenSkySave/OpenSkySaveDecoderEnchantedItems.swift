@@ -1,22 +1,6 @@
-// ECHG chunk decoding for the OpenSky native save container (issue #472).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly like
-// `SPLB`, `AEFF`, `AVAL` and `DETH`: an owner whose only delta is its enchanted
-// items has no `RDLT` entry, so merging by `ReferenceKey` is what lets the
-// encoder omit one.
-//
-// Bounds, as everywhere else in this decoder: a declared count is checked against
-// the bytes actually left before an array is reserved, so a corrupt length is a
-// thrown error rather than a multi-gigabyte allocation.
-//
-// Nothing here rejects a state on content. A non-finite charge, a charge above the
-// item's capacity and a sequence naming an effect the `AEFF` chunk no longer
-// carries are all normalized or simply carried by `EnchantedItemState.init` rather
-// than failing a load: the invariant belongs to the type, and one stale sequence is
-// not a reason to refuse a whole save. A stale sequence dispels nothing when the
-// item comes off, which is the same answer as an item that granted nothing. There
-// is no hard stop of the kind `AEFF` has, because this chunk carries no closed
-// enumeration: every field is a FormID, a count, a float or a sequence.
+// ECHG chunk: enchanted items, merged into the `RDLT` deltas by `ReferenceKey`.
+// `EnchantedItemState.init` normalizes bad charges and stale sequences, so no
+// content error fails a load.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -48,30 +32,6 @@ nonisolated public enum OpenSkySaveEnchantedItemDecoder: Sendable {
             try entries.append(decodeEntry(&reader))
         }
         return entries
-    }
-
-    /// Lays each saved state over the matching `RDLT` delta, adding an entry for
-    /// an owner that had no other component, and re-sorts the result into
-    /// `ReferenceKey` total order.
-    public static func merge(
-        _ values: [SaveEnchantedItemEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !values.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + values.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in values where !entry.state.isEmpty {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
     }
 
     // MARK: - Private
@@ -139,5 +99,15 @@ nonisolated public enum OpenSkySaveEnchantedItemDecoder: Sendable {
             try sequences.append(reader.uint64("ECHG worn sequence"))
         }
         return sequences
+    }
+}
+
+nonisolated extension SaveEnchantedItemEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.isEmpty ? nil : state.erased
     }
 }

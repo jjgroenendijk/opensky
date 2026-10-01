@@ -1,11 +1,8 @@
-// Update-timer save seam and lifecycle containment (issue #277):
-// `timerStates()` / `restore(timerStates:)` round trip at the runtime level,
-// persistent-only snapshot membership, the unknown-target skip tally, restore
-// re-anchoring against the current clock, and cell detach purging a
-// non-persistent instance's timers. Stage B serializes these states into the
-// save chunk; nothing here touches bytes.
+// Update-timer save seam: the `timerStates()` round trip, persistent-only
+// snapshots, unknown-target skips, re-anchoring to the clock, and detach purges.
 
 import FormatsESMTesting
+import OpenSkyFormatsCore
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

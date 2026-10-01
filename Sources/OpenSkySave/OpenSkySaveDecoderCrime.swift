@@ -1,21 +1,6 @@
-// CRIM and STOL chunk decoding for the OpenSky native save container (issue
-// #504).
-//
-// Both are decoded on their own and merged into the `RDLT` entries afterwards,
-// exactly like `FCTN`, `PRKS` and `INVN`: an actor whose only delta is its
-// bounty has no `RDLT` entry, so merging by `ReferenceKey` is what lets the
-// encoder omit one.
-//
-// `STOL` merges *after* `INVN`, and the ordering is load-bearing rather than
-// incidental: `INVN` carries per-item totals and `STOL` says how many of each
-// were stolen, so the split can only be applied once the totals are in place.
-// A `STOL` row for an owner with no inventory at all is dropped rather than
-// conjuring a stack out of it — the goods are what `INVN` says they are, and
-// this chunk only re-flags them.
-//
-// Bounds, as everywhere else in this decoder: a declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
+// CRIM and STOL chunks: bounties and stolen counts. CRIM merges into the `RDLT`
+// deltas by `ReferenceKey`. STOL must merge after INVN, because it re-flags the
+// stacks INVN restored; a STOL row with no inventory is dropped.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -58,23 +43,6 @@ nonisolated public enum OpenSkySaveCrimeDecoder: Sendable {
         return entries
     }
 
-    /// Lays each saved ledger over the matching `RDLT` delta, adding an entry
-    /// for an actor that had no other component, and re-sorts the result into
-    /// `ReferenceKey` total order.
-    public static func merge(
-        _ values: [SaveCrimeLedgerEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !values.isEmpty else { return entries }
-        var deltasByKey = Self.index(entries)
-        for entry in values where !entry.ledger.isEmpty {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.ledger.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return Self.sorted(deltasByKey)
-    }
-
     // MARK: - STOL
 
     public static func decodeStolenGoods(_ payload: Data) throws -> [SaveStolenGoodsEntry] {
@@ -105,7 +73,7 @@ nonisolated public enum OpenSkySaveCrimeDecoder: Sendable {
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
         guard !values.isEmpty else { return entries }
-        var deltasByKey = Self.index(entries)
+        var deltasByKey = OpenSkySaveDeltaMerge.index(entries)
         for entry in values {
             guard
                 var delta = deltasByKey[entry.key],
@@ -114,7 +82,7 @@ nonisolated public enum OpenSkySaveCrimeDecoder: Sendable {
             delta.set(Self.applying(entry.stolen, to: inventory).erased)
             deltasByKey[entry.key] = delta
         }
-        return Self.sorted(deltasByKey)
+        return OpenSkySaveDeltaMerge.sorted(deltasByKey)
     }
 
     // MARK: - Private
@@ -200,24 +168,14 @@ nonisolated public enum OpenSkySaveCrimeDecoder: Sendable {
         }
         return result
     }
+}
 
-    private static func index(
-        _ entries: [WorldStateSnapshotEntry]
-    ) -> [ReferenceKey: ReferenceStateDelta] {
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        return deltasByKey
+nonisolated extension SaveCrimeLedgerEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
     }
 
-    private static func sorted(
-        _ deltasByKey: [ReferenceKey: ReferenceStateDelta]
-    ) -> [WorldStateSnapshotEntry] {
-        deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
+    public var deltaComponent: WorldStateComponentValue? {
+        ledger.isEmpty ? nil : ledger.erased
     }
 }

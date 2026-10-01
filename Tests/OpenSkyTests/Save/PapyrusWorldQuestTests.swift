@@ -6,6 +6,7 @@
 
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 import OpenSkySaveFixtures

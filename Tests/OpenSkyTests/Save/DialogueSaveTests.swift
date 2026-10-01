@@ -147,6 +147,6 @@ struct DialogueSaveTests {
         payload.writeUInt32(0)
         let entries = try OpenSkySaveDialogueDecoder.decodeDialogueStates(payload.data)
         #expect(entries.count == 1)
-        #expect(OpenSkySaveDialogueDecoder.merge(entries, into: []).isEmpty)
+        #expect(OpenSkySaveDeltaMerge.merge(entries, into: []).isEmpty)
     }
 }

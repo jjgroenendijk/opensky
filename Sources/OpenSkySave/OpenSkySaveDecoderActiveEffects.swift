@@ -1,20 +1,6 @@
-// AEFF chunk decoding for the OpenSky native save container (issue #469).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly
-// like `AVAL` and `DETH`: an actor whose only delta is its effects has no
-// `RDLT` entry, so merging by `ReferenceKey` is what lets the encoder omit one.
-//
-// Bounds, as everywhere else in this decoder: a declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
-//
-// A nonsensical float, a duration of zero or an effect with no values is
-// normalized away by `ActiveEffect.init` and `ActiveEffectState.init` rather
-// than rejected here, for the same reason a corrupt current value is: the
-// invariant belongs to the type, and one bad effect is not a reason to fail a
-// whole save. An unknown source kind or mode is the one hard stop — both are
-// closed enumerations this build wrote itself, so an unreadable one means the
-// bytes are not what they claim to be.
+// AEFF chunk: active effects, merged into the `RDLT` deltas by `ReferenceKey`.
+// Bad floats and empty effects are normalized by the state types. An unknown
+// source kind or mode throws: this build wrote both closed enums itself.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -46,30 +32,6 @@ nonisolated public enum OpenSkySaveActiveEffectDecoder: Sendable {
             try entries.append(decodeEntry(&reader))
         }
         return entries
-    }
-
-    /// Lays each saved effect list over the matching `RDLT` delta, adding an
-    /// entry for an actor that had no other component, and re-sorts the result
-    /// into `ReferenceKey` total order.
-    public static func merge(
-        _ values: [SaveActiveEffectEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !values.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + values.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in values where !entry.state.isEmpty {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
     }
 
     // MARK: - Private
@@ -152,5 +114,15 @@ nonisolated public enum OpenSkySaveActiveEffectDecoder: Sendable {
         let present = try reader.uint8("AEFF optional key tag")
         guard present != 0 else { return nil }
         return try OpenSkySaveEntryDecoder.decodeKey(&reader)
+    }
+}
+
+nonisolated extension SaveActiveEffectEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.isEmpty ? nil : state.erased
     }
 }

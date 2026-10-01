@@ -139,8 +139,8 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
                 transform: shape.transform
             )
         case let .sphere(radius):
-            let center = Self.transform(.zero, by: shape.transform)
-            let scaledRadius = radius * Self.maximumScale(of: shape.transform)
+            let center = DynamicCollisionMath.transform(.zero, by: shape.transform)
+            let scaledRadius = radius * DynamicCollisionMath.maximumScale(of: shape.transform)
             return sphereContact(
                 segment: segment,
                 motion: motion,
@@ -149,14 +149,14 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
             ).map { [$0] } ?? []
         case let .capsule(first, second, radius):
             let obstacle = (
-                Self.transform(first, by: shape.transform),
-                Self.transform(second, by: shape.transform)
+                DynamicCollisionMath.transform(first, by: shape.transform),
+                DynamicCollisionMath.transform(second, by: shape.transform)
             )
             return capsuleContact(
                 segment: segment,
                 motion: motion,
                 obstacle: obstacle,
-                radius: radius * Self.maximumScale(of: shape.transform)
+                radius: radius * DynamicCollisionMath.maximumScale(of: shape.transform)
             ).map { [$0] } ?? []
         }
     }
@@ -170,9 +170,18 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
     ) -> [CapsuleCollisionContact] {
         var result: [CapsuleCollisionContact] = []
         for offset in stride(from: 0, to: indices.count - indices.count % 3, by: 3) {
-            let first = Self.transform(vertices[Int(indices[offset])], by: transform)
-            let second = Self.transform(vertices[Int(indices[offset + 1])], by: transform)
-            let third = Self.transform(vertices[Int(indices[offset + 2])], by: transform)
+            let first = DynamicCollisionMath.transform(
+                vertices[Int(indices[offset])],
+                by: transform
+            )
+            let second = DynamicCollisionMath.transform(
+                vertices[Int(indices[offset + 1])],
+                by: transform
+            )
+            let third = DynamicCollisionMath.transform(
+                vertices[Int(indices[offset + 2])],
+                by: transform
+            )
             let triangle = CollisionTriangle(first: first, second: second, third: third)
             guard
                 let contact = triangleContact(
@@ -282,19 +291,6 @@ nonisolated extension CapsuleWorldCollider {
             SIMD3(-half.x, -half.y, half.z), SIMD3(half.x, -half.y, half.z),
             SIMD3(half.x, half.y, half.z), SIMD3(-half.x, half.y, half.z)
         ]
-    }
-
-    fileprivate static func transform(_ point: SIMD3<Float>, by matrix: float4x4) -> SIMD3<Float> {
-        let transformed = matrix * SIMD4<Float>(point, 1)
-        return SIMD3(transformed.x, transformed.y, transformed.z)
-    }
-
-    fileprivate static func maximumScale(of matrix: float4x4) -> Float {
-        max(
-            simd_length(SIMD3(matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z)),
-            simd_length(SIMD3(matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z)),
-            simd_length(SIMD3(matrix.columns.2.x, matrix.columns.2.y, matrix.columns.2.z))
-        )
     }
 
     fileprivate static func closestSegmentTriangle(

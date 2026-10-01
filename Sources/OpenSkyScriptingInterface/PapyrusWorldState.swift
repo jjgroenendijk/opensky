@@ -1,8 +1,8 @@
-// Value types for the main-actor Papyrus world runtime (issue #171):
-// instance identity, persisted instance state, queued script events, and the
-// per-tick budget and report.
+// Value types for the Papyrus world runtime: instance identity and state, queued
+// events, and the per-tick budget and report.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 /// World-side identity of one attached script instance: the reference the
@@ -40,13 +40,8 @@ nonisolated public struct PapyrusVariableState: Equatable, Sendable {
     }
 }
 
-/// Persisted state of one script instance, the unit a `PSCR` save chunk
-/// serializes.
-///
-/// Stated deviation: `PapyrusValue.object` and `PapyrusValue.array` hold
-/// runtime-allocated identity with no world meaning, so they are not
-/// persistable; `PapyrusWorldRuntime.instanceStates()` snapshots both as
-/// `.none` and a restore leaves the PEX default in their place.
+/// Saved state of one script instance, written as a `PSCR` chunk. Object and
+/// array values have no world meaning, so they save as `.none`.
 nonisolated public struct PapyrusInstanceState: Equatable, Sendable {
     public let key: PapyrusInstanceKey
     public let activeState: String
@@ -72,11 +67,8 @@ nonisolated public struct PapyrusScriptEvent: Equatable, Sendable {
     public let target: PapyrusInstanceKey
     public let functionName: String
     public let arguments: [PapyrusValue]
-    /// How many script-driven activations deep this event is (issue #172). A
-    /// player use key queues `OnActivate` at depth 1; an `Activate` native
-    /// called from that handler queues at depth 2, and
-    /// `PapyrusWorldRuntime.maximumActivationDepth` stops the chain. Every
-    /// other event stays at 0.
+    /// Script-driven activation depth: 1 for a player use, +1 per nested
+    /// `Activate`, capped by `PapyrusWorldRuntime.maximumActivationDepth`.
     public let activationDepth: Int
 
     public init(
@@ -92,14 +84,9 @@ nonisolated public struct PapyrusScriptEvent: Equatable, Sendable {
     }
 }
 
-/// Per-tick dispatch ceiling.
-///
-/// The defaults bound one 1/30 s step, not throughput: 32 events keeps a
-/// burst (a cell attach enqueues three events per instance, so a ten-script
-/// cell drains in one step) while a mass attach carries over instead of
-/// hitching the frame, and 100 000 instructions is a tenth of the existing
-/// per-invocation `PapyrusLimits.instructionBudget`, so one runaway handler
-/// cannot consume more of a frame than a whole invocation may consume total.
+/// Per-tick dispatch ceiling for one 1/30 s step. 32 events drain a ten-script
+/// cell attach in one step; 100 000 instructions is a tenth of
+/// `PapyrusLimits.instructionBudget`.
 nonisolated public struct PapyrusTickBudget: Equatable, Sendable {
     public var events: Int
     public var instructions: Int
@@ -156,7 +143,7 @@ nonisolated public struct PapyrusTickReport: Equatable, Sendable {
 /// Why the world runtime skipped an attach, an event, or a piece of save
 /// data. Skips are counted, never faults: malformed or unknown input must
 /// not crash.
-nonisolated public enum PapyrusWorldSkipReason: Hashable, Sendable {
+nonisolated public enum PapyrusWorldSkipReason: SkipTallyKind {
     case removedScript
     case missingScript
     case instanceCreationFailed
@@ -166,8 +153,7 @@ nonisolated public enum PapyrusWorldSkipReason: Hashable, Sendable {
     case unknownSaveScript
     case unknownSaveVariable
     case unknownSaveTimerTarget
-    /// A stage fragment named a script the quest holds no live instance of,
-    /// so there was nothing to send the fragment function to (issue #322).
+    /// A stage fragment named a script the quest has no live instance of.
     case missingQuestFragmentInstance
 
     public var name: String {
@@ -188,28 +174,4 @@ nonisolated public enum PapyrusWorldSkipReason: Hashable, Sendable {
 
 /// Counter set for `PapyrusWorldSkipReason`, mirroring `ScriptBindingTally`
 /// so inspection UI can rank both the same way.
-nonisolated public struct PapyrusWorldSkipTally: Equatable, Sendable {
-    public private(set) var counts: [PapyrusWorldSkipReason: Int] = [:]
-
-    public var total: Int {
-        counts.values.reduce(0, +)
-    }
-
-    public var ranked: [(name: String, count: Int)] {
-        counts
-            .sorted {
-                $0.value == $1.value
-                    ? $0.key.name < $1.key.name
-                    : $0.value > $1.value
-            }
-            .map { ($0.key.name, $0.value) }
-    }
-
-    public mutating func note(_ reason: PapyrusWorldSkipReason) {
-        counts[reason, default: 0] += 1
-    }
-
-    public init(counts: [PapyrusWorldSkipReason: Int] = [:]) {
-        self.counts = counts
-    }
-}
+public typealias PapyrusWorldSkipTally = SkipTally<PapyrusWorldSkipReason>

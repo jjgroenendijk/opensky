@@ -4,6 +4,7 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing

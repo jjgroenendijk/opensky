@@ -3,6 +3,7 @@
 // the caller supplies the opaque Papyrus handle for that live reference.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyQuestsInterface
@@ -13,7 +14,7 @@ nonisolated public enum ScriptBindingError: Error, Equatable {
     case removedScript(String)
 }
 
-nonisolated public enum ScriptBindingSkipReason: Hashable, Sendable {
+nonisolated public enum ScriptBindingSkipReason: SkipTallyKind {
     case removedProperty
     case missingProperty
     case manualProperty
@@ -39,33 +40,7 @@ nonisolated public enum ScriptBindingSkipReason: Hashable, Sendable {
     }
 }
 
-nonisolated public struct ScriptBindingTally: Equatable, Sendable {
-    public private(set) var counts: [ScriptBindingSkipReason: Int] = [:]
-
-    public var total: Int {
-        counts.values.reduce(0, +)
-    }
-
-    public var ranked: [(name: String, count: Int)] {
-        counts
-            .sorted {
-                $0.value == $1.value
-                    ? $0.key.name < $1.key.name
-                    : $0.value > $1.value
-            }
-            .map { ($0.key.name, $0.value) }
-    }
-
-    public mutating func note(_ reason: ScriptBindingSkipReason) {
-        counts[reason, default: 0] += 1
-    }
-
-    public mutating func merge(_ other: ScriptBindingTally) {
-        for (reason, count) in other.counts {
-            counts[reason, default: 0] += count
-        }
-    }
-}
+public typealias ScriptBindingTally = SkipTally<ScriptBindingSkipReason>
 
 nonisolated public struct ScriptBinding: Sendable {
     public let initialValues: [String: PapyrusValue]

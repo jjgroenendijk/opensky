@@ -5,6 +5,7 @@
 // return. Render and panel halves are the other `M13Acceptance*` suites.
 
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
 @testable import OpenSkyQuestsInterface

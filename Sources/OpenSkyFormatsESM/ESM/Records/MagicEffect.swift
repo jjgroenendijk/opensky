@@ -42,17 +42,7 @@ nonisolated public enum MagicEffectSkipKind: Hashable, Sendable {
     case malformedField(FourCC)
 }
 
-nonisolated public struct MagicEffectTally: Equatable, Sendable {
-    public private(set) var counts: [MagicEffectSkipKind: Int] = [:]
-
-    public var total: Int {
-        counts.values.reduce(0, +)
-    }
-
-    public mutating func note(_ kind: MagicEffectSkipKind) {
-        counts[kind, default: 0] += 1
-    }
-}
+public typealias MagicEffectTally = SkipTally<MagicEffectSkipKind>
 
 nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let flags: MagicEffectFlags

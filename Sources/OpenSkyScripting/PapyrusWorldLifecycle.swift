@@ -1,16 +1,9 @@
-// Cell attach and detach for `PapyrusWorldRuntime` (issue #171).
-//
-// The API takes plain data — a cell location, the cell's reference index, and
-// a resolver — so it is testable with synthetic fixtures and carries no
-// `CellStreamer` dependency; stage C wires it to streaming.
-//
-// `PapyrusAttachItem`, `instantiate`, `bind` and `retire` are internal rather
-// than private because quest script instances (issue #322,
-// `PapyrusWorldQuests.swift`) are created and retired by exactly these rules
-// while belonging to no cell. Everything that decides *which* scripts a cell
-// attach covers stays private here.
+// Cell attach and detach for `PapyrusWorldRuntime`. It takes plain data, not a
+// `CellStreamer`, so tests use synthetic fixtures. `instantiate`, `bind` and
+// `retire` are internal because quest scripts (PapyrusWorldQuests.swift) reuse them.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScriptingInterface
@@ -25,18 +18,9 @@ nonisolated public struct PapyrusAttachItem: Sendable {
 }
 
 extension PapyrusWorldRuntime {
-    /// Instantiates scripts for every reference in `references` that carries
-    /// VMAD script data.
-    ///
-    /// `firstIntegration == false` marks a rebuild: existing instances are
-    /// kept and no `OnLoad`/`OnCellAttach` is enqueued. Rebuild edge, decided
-    /// here: a reference newly appearing in a rebuilt cell still gets its
-    /// instance created and its `OnInit` enqueued (it has never fired), but
-    /// no `OnCellAttach`/`OnLoad`, matching the cell not re-attaching.
-    ///
-    /// Event order on first integration, per instance in sorted order:
-    /// `OnInit` (only if never fired) then `OnCellAttach` then `OnLoad` —
-    /// enqueued, never dispatched inline.
+    /// Creates instances for every reference with VMAD script data and enqueues
+    /// `OnInit` (if never fired), `OnCellAttach`, `OnLoad`. On a rebuild
+    /// (`firstIntegration == false`) only new references get `OnInit`.
     public func attach(
         cell: CellSceneLocation,
         references: RuntimeReferenceIndex,

@@ -1,17 +1,7 @@
-// List and text plumbing for the dialogue menu (issue #205). Satellite of
-// UI/DialogueMenuMovieBridge.swift, which holds the measured contract.
-//
-// Same degradation rule as every other movie bridge: a list the movie has not
-// built, a row that is not an object, a text field that is not there — each
-// answers nil or does nothing. A vanilla movie whose shape moved must leave an
-// entry in the missing-API tally and an empty readout, never take the app down.
-//
-// Publishing goes through the movie's own entry points where it has them and
-// falls back to writing `EntriesA` directly where it does not. Both are here
-// rather than one or the other because they answer different questions: the
-// entry point is what the vanilla host calls and therefore what keeps the
-// menu's own state machine and animations in step, while the array write is
-// what a bring-up gate reads back to prove the rows arrived.
+// List and text plumbing for the dialogue menu. The measured contract is in
+// DialogueMenuMovieBridge.swift. A missing list, row, or field is skipped, never
+// thrown. Rows go through the movie's own entry points, which keep its state
+// machine in step, and are also written to `EntriesA`, which a gate reads back.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -20,13 +10,8 @@ import OpenSkyFormatsSWF
 nonisolated extension DialogueMenuMovieBridge {
     // MARK: - Writing
 
-    /// Pushes the whole model into the movie: speaker, topic rows, selection,
-    /// and whatever line is being said.
-    ///
-    /// Order matters and follows the journal's measured one: `InvalidateData`
-    /// rebuilds the entry clips from the array and resets `iSelectedIndex` to
-    /// the base's -1 sentinel as it goes, so the selection is written
-    /// afterwards, never before.
+    /// Pushes the whole model into the movie. `InvalidateData` resets
+    /// `iSelectedIndex` to -1, so the selection is written after it.
     public static func publish(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
         setSpeakerName(model.speaker, runtime: runtime)
         publishTopics(model, runtime: runtime)
@@ -34,20 +19,10 @@ nonisolated extension DialogueMenuMovieBridge {
         setMenuState(model.state, runtime: runtime)
     }
 
-    /// Writes the movie's own state field to match the engine's.
-    ///
-    /// The vanilla host owns this field — `DialogueMenuObj` publishes a
-    /// `menuState` property over it and the movie's `handleInput` branches on
-    /// it — and measurement shows the entry points do not set it themselves:
-    /// `swf dialogue-menu --speak` reports `eMenuState` still on
-    /// `TOPIC_LIST_SHOWN` after `ShowDialogueText` has put the line in the
-    /// field. Routing key input into a movie whose state field disagreed with
-    /// what is on screen is exactly how a menu starts answering the wrong key,
-    /// so the engine writes it.
-    ///
-    /// The value comes off the movie's own class constants rather than from a
-    /// number pinned here, so a movie whose vocabulary moved is a no-op rather
-    /// than a wrong state.
+    /// Writes the movie's state field to match the engine. The entry points do
+    /// not set it themselves (measured with `swf dialogue-menu --speak`), and a
+    /// stale state makes the menu answer the wrong key. The value comes from the
+    /// movie's own class constants, so a changed movie makes this a no-op.
     public static func setMenuState(_ state: DialogueMenuModel.State, runtime: SWFMovieRuntime) {
         guard
             let value = stateConstant(constantName(for: state), runtime: runtime),
@@ -93,14 +68,8 @@ nonisolated extension DialogueMenuMovieBridge {
         )
     }
 
-    /// The subtitle field, and the movie's own show/hide around it.
-    ///
-    /// A menu with a line to say shows it; a menu with none hides it and hands
-    /// the list back. Both go through the movie's entry points, so its own
-    /// transition between the two runs rather than being skipped by writing the
-    /// field directly. The rows stay listed behind a line either way — what
-    /// stops a second choice landing on top of the first is the selection,
-    /// which `publishTopics` writes as -1 while a response is being said.
+    /// Shows the line being said, or hides the subtitle and returns to the list.
+    /// Both go through the movie's entry points so its own transition runs.
     public static func publishLine(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
         guard let line = model.line else {
             setSubtitle(nil, runtime: runtime)
@@ -136,30 +105,12 @@ nonisolated extension DialogueMenuMovieBridge {
         atPath path: String,
         runtime: SWFMovieRuntime
     ) {
-        guard let list = runtime.node(atPath: path, from: runtime.root) else { return }
-        let entries = runtime.runtime.makeArray(
-            rows.map { fields in
-                let row = runtime.runtime.makeObject()
-                // Sorted so two publishes of equal rows build identical
-                // objects, which is what makes a published list comparable.
-                for name in fields.keys.sorted() {
-                    row.assign(fields[name] ?? .undefined, for: name)
-                }
-                return .object(row)
-            }
-        )
-        list.object.assign(.object(entries), for: entryArrayName)
+        MenuMovieEntryList.publish(rows, atPath: path, runtime: runtime)
     }
 
-    /// Points the list at `index`, or at nothing when `index` is negative.
-    ///
-    /// Written onto `iSelectedIndex` and followed by `UpdateList`, which is what
-    /// repositions the centred entry clips around the new selection.
-    /// `TopicList.SetSelectedTopic` was measured and deliberately not used:
-    /// `swf dialogue-menu --down 2` reports the movie back at row 0 when that
-    /// method is called with the row index and at row 2 when it is not, so
-    /// whatever it takes, it is not the index — and calling it would silently
-    /// undo the selection the engine just made.
+    /// Points the list at `index`, or at nothing when `index` is negative, then
+    /// calls `UpdateList`. `TopicList.SetSelectedTopic` does not take the row
+    /// index (measured with `swf dialogue-menu --down 2`), so it is not used.
     public static func select(_ index: Int, count: Int, runtime: SWFMovieRuntime) {
         guard let list = runtime.node(atPath: topicListPath, from: runtime.root) else {
             return
@@ -172,21 +123,9 @@ nonisolated extension DialogueMenuMovieBridge {
 
     // MARK: - Rows
 
-    /// One topic row.
-    ///
-    /// The four field names are the ones `swf action-sweep --movie
-    /// dialoguemenu.swf` resolves off the rows the movie is handed: `text` is
-    /// what the entry clip draws, `topicIndex` is the row's own position that
-    /// a movie-driven selection reports back, `topicIsNew` drives the
-    /// never-heard marker, and `responseHash` is the identity the vanilla host
-    /// uses to name the chosen response.
-    ///
-    /// `topicIsNew` is published false rather than guessed: OpenSky does not
-    /// model whether the player has heard a topic before. Said-state is per
-    /// INFO (`DialogueRuntimeState`), which is not the same question — a topic
-    /// whose winning response changed is not a topic the player has not seen.
-    /// `responseHash` carries the winning INFO's FormID, which is the identity
-    /// OpenSky actually addresses a response by.
+    /// One topic row, with the field names `swf action-sweep` reads off the movie.
+    /// `topicIsNew` is false because OpenSky does not track heard topics, and
+    /// `responseHash` carries the winning INFO's FormID.
     public static func topicRow(_ entry: DialogueTopicEntry, index: Int) -> [String: AS2Value] {
         [
             "text": .string(entry.text),
@@ -199,28 +138,8 @@ nonisolated extension DialogueMenuMovieBridge {
     // MARK: - Reading
 
     /// Row `text` values in numeric row order.
-    ///
-    /// `EntriesA` is an AS2 array, so its rows are numeric property names and
-    /// have to be sorted numerically — lexical order puts row 10 before row 2.
     public static func topicLabels(runtime: SWFMovieRuntime) -> [String] {
-        guard
-            let list = runtime.node(atPath: topicListPath, from: runtime.root),
-            let entries = list.object.lookup(entryArrayName)?.property.value.objectValue
-        else {
-            return []
-        }
-        return entries.ownPropertyNames
-            .compactMap { name in Int(name).map { ($0, name) } }
-            .sorted { $0.0 < $1.0 }
-            .compactMap { _, name in
-                guard
-                    let row = entries.lookup(name)?.property.value.objectValue,
-                    case let .string(text) = row.lookup("text")?.property.value
-                else {
-                    return nil
-                }
-                return text
-            }
+        MenuMovieEntryList.labels(atPath: topicListPath, runtime: runtime)
     }
 
     /// The row the movie has selected, or nil when it has none.

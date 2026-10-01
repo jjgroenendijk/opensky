@@ -28,7 +28,12 @@ enum ActorCommand {
             try reportNamed(npc, file: file, localized: localized)
             return
         }
-        guard let world = worldChildren(editorID: worldspace, file: file, localized: localized)
+        guard
+            let world = CLIWorldTreeWalk.worldChildren(
+                editorID: worldspace,
+                file: file,
+                localized: localized
+            )
         else {
             throw CLIError.failure("worldspace \(worldspace) not found")
         }
@@ -256,7 +261,13 @@ extension ActorCommand {
             for offsetX in -radius ... radius {
                 let x = gridX + offsetX
                 let y = gridY + offsetY
-                guard let found = findCell(in: world, x: x, y: y, localized: localized)
+                guard
+                    let found = CLIWorldTreeWalk.findCell(
+                        in: world,
+                        x: x,
+                        y: y,
+                        localized: localized
+                    )
                 else { continue }
                 forEachActor(in: found.children, counting: &collection) { actor in
                     byID[actor.formID.rawValue] = LocatedActor(
@@ -269,7 +280,7 @@ extension ActorCommand {
         }
         // Worldspace persistent refs are stored at grid (0,0); physical
         // position decides which streamed cell owns them.
-        if let persistent = findCell(in: world, x: 0, y: 0, localized: localized) {
+        if let persistent = CLIWorldTreeWalk.findCell(in: world, x: 0, y: 0, localized: localized) {
             forEachActor(in: persistent.children, counting: &collection) { actor in
                 let coordinate = CellGridManager.cellCoordinate(for: actor.placement.position)
                 guard
@@ -314,84 +325,7 @@ extension ActorCommand {
     }
 }
 
-// MARK: - WRLD tree walk (read-only mirror of CellCommand)
-
 extension ActorCommand {
-    private static func worldChildren(
-        editorID: String,
-        file: ESMFile,
-        localized: Bool
-    ) -> ESMGroup? {
-        guard let top = file.topGroup(of: "WRLD"), let children = childrenOrWarn(top) else {
-            return nil
-        }
-        var matchedFormID: UInt32?
-        for child in children {
-            switch child {
-            case let .record(record) where record.type == "WRLD":
-                let world = decodeOrWarn(record) { try Worldspace(record: $0, localized: localized)
-                }
-                matchedFormID = world?.editorID == editorID ? record.formID : nil
-            case let .group(group)
-                where group.kind == .worldChildren && group.parentFormID == matchedFormID:
-                return group
-            default:
-                break
-            }
-        }
-        return nil
-    }
-
-    private struct FoundCell {
-        let children: ESMGroup?
-    }
-
-    private static func findCell(
-        in group: ESMGroup,
-        x: Int32,
-        y: Int32,
-        localized: Bool
-    ) -> FoundCell? {
-        guard let children = childrenOrWarn(group) else { return nil }
-        for (index, child) in children.enumerated() {
-            switch child {
-            case let .record(record) where record.type == "CELL":
-                guard
-                    let cell = decodeOrWarn(
-                        record,
-                        using: { try Cell(record: $0, localized: localized) }
-                    ),
-                    let grid = cell.grid, grid.x == x, grid.y == y
-                else { continue }
-                let cellChildren = cellChildren(
-                    following: index, in: children, formID: record.formID
-                )
-                return FoundCell(children: cellChildren)
-            case let .group(sub)
-                where sub.kind == .exteriorCellBlock || sub.kind == .exteriorCellSubBlock:
-                if let found = findCell(in: sub, x: x, y: y, localized: localized) {
-                    return found
-                }
-            default:
-                break
-            }
-        }
-        return nil
-    }
-
-    private static func cellChildren(
-        following index: Int,
-        in children: [ESMGroup.Child],
-        formID: UInt32
-    ) -> ESMGroup? {
-        for case let .group(sub) in children[(index + 1)...] where sub.kind == .cellChildren {
-            if sub.parentFormID == formID {
-                return sub
-            }
-        }
-        return nil
-    }
-
     private static func int32(_ value: String?, name: String) throws -> Int32? {
         guard let value else { return nil }
         guard let parsed = Int32(value) else {
