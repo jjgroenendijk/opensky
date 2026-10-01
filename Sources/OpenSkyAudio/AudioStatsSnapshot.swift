@@ -21,10 +21,8 @@ nonisolated public struct AudioSourceStatsSnapshot: Equatable, Sendable {
     public let isFading: Bool
     /// master x category x source x fade gain, before distance attenuation.
     public let effectiveGain: Float
-    /// How far into its material the source has played, in seconds, or nil
-    /// before its player node has rendered anything. This is the playback
-    /// clock item 17.5 added, surfaced so the panel shows a voice line
-    /// advancing rather than only that it started.
+    /// How far into its material the source has played, in seconds; nil before its player
+    /// node renders. The panel uses it to show a voice line advancing.
     public let positionSeconds: Double?
 }
 

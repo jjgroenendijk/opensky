@@ -1,5 +1,4 @@
-// NPC entry point over WalkController's existing player update path
-// (issue #423). Kept outside the controller body for the lint size cap.
+// NPC entry point over WalkController's player update path, kept apart for the size cap.
 
 import OpenSkyRendering
 

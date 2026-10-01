@@ -1,11 +1,6 @@
-// Display model for a resolved plugin load order: the rows and the summary the
-// Load Order panel shows. It lives in the engine rather than in the panel so
-// the strings a user reads are unit-tested and the AppKit file stays a shell.
-//
-// Positions are 1-based and decimal, not the hex master index a mod manager
-// shows. The hex index is only meaningful once light plugins are placed in the
-// 0xFE space, which OpenSky does not model yet (docs/formats/formid.md), and a
-// hex column that is wrong for every .esl would read as authoritative.
+// The rows and summary the Load Order panel shows, built here so the strings are
+// unit-tested. Positions are 1-based decimal, not hex: light plugins in 0xFE are not
+// modelled (docs/formats/formid.md), and a wrong hex index would look authoritative.
 
 import Foundation
 

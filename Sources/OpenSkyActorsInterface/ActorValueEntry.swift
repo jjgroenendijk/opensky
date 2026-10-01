@@ -1,39 +1,9 @@
-// One actor value as a caller *reads* it (issue #468, roadmap item 19.5): a
-// base value plus the three modifier slots the Creation Kit's own actor-value
-// vocabulary names.
-//
-// The resolved view, not the stored one. `ActorValueOverride` is what the store
-// actually holds — the same three modifiers over a base *offset* rather than an
-// absolute base, so the derived baseline stays authoritative (issue #496).
-//
-// ## Why a base and three modifiers rather than one number
-//
-// The scripting surface distinguishes them by name, so a store that kept only
-// the current number could not answer the questions the natives ask. The wiki
-// states the split directly: "While GetActorValue returns the current value,
-// SetActorValue sets the base value ... Any modifiers are left intact."
-// (<https://www.creationkit.com/index.php?title=SetActorValue_-_Actor>) The
-// three modifier slots are the three the same reference names —
-// `ModActorValue` writes the permanent one, a magic effect writes the temporary
-// one, and `DamageActorValue` writes the damage one
-// (<https://www.creationkit.com/index.php?title=DamageActorValue_-_Actor>).
-//
-// The current value is therefore derived, never stored, which is the same rule
-// `ActorValueState.hasZeroHealth` follows: a stored current value and a stored
-// base can disagree, and after a save round trip there is no way to say which
-// was right.
-//
-// ## Which slot means what
-//
-// * `base` — what the records author, what `SetActorValue` would write.
-// * `permanent` — a lasting adjustment that outlives the thing that made it.
-// * `temporary` — an active magic effect's contribution, which is why it is
-//   the one slot the save deliberately does not carry (issue 19.6 owns the
-//   effects that re-establish it).
-// * `damage` — never positive. Damage lowers a value without touching its
-//   base, and restoring puts the damage back toward zero rather than above it.
-//
-// Documented in docs/engine/actor-value-store.md.
+// One actor value as a caller reads it: a base plus the permanent, temporary and
+// damage modifiers the Creation Kit names. "GetActorValue returns the current
+// value, SetActorValue sets the base value" (<https://ck.uesp.net/wiki/SetActorValue_-_Actor>),
+// so the current value is derived, never stored. `damage` is never positive, and
+// the save skips `temporary`, which active effects rebuild. `ActorValueOverride` is
+// the stored form. See docs/engine/actor-value-store.md.
 
 import Foundation
 

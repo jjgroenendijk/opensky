@@ -209,14 +209,9 @@ extension Renderer {
         return offset
     }
 
-    /// Encodes instanced draw groups: per group, cull per instance, write
-    /// only the visible instances' transforms, bind the transform ring at
-    /// the group's base offset ([[instance_id]] starts at 0 per draw), and
-    /// draw once with the visible instanceCount. All-culled groups encode
-    /// nothing and consume no uniform slot.
-    /// Internal rather than private: the first-person arms are encoded through
-    /// this same path, from `RendererFirstPersonArms.swift`, so they cull,
-    /// light, and bind exactly as every other skinned actor does.
+    /// Encodes instanced draw groups: cull per instance, write visible transforms, bind
+    /// the ring at the group offset, draw once. Empty groups encode nothing. Internal,
+    /// so the first-person arms use the same path.
     public func encode(
         groups: [DrawGroup],
         staticPipeline: MTLRenderPipelineState,

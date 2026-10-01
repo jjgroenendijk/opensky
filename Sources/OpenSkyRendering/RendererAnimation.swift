@@ -11,9 +11,8 @@ extension Renderer {
         } else {
             scene.resetAnimationsToBindPose()
         }
-        // The player's own animation is stepped by the simulation, not by this
-        // clock; the call publishes the pose it already produced and honours the
-        // same A/B toggle (issue #189, PlayerAnimationPlayback.swift).
+        // The simulation steps the player's animation; this only publishes the pose and
+        // honours the same A/B toggle (PlayerAnimationPlayback.swift).
         lastAnimationUpdatedBoneCount = sceneBones
             + (frameDriver?.playerBodyRig?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)
             + (frameDriver?.firstPersonRig?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)

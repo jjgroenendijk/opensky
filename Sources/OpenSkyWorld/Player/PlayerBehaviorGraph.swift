@@ -1,14 +1,7 @@
-// Loading the player's own behavior graph out of the install (issue #189).
-//
-// `0_master.hkx` is the entry point all three vanilla character files
-// (`defaultmale.hkx`, `defaultfemale.hkx`, `default.hkx`) name, so it is the
-// graph the player runs. Item 14.5 (#188) drove it from an env-gated test; this
-// is the same recipe, moved into the engine so the running app plays what that
-// test asserts against.
-//
-// Nothing here caches globally. One call produces one instance over one decode,
-// which is what item 14.7 needs when it puts a first-person graph beside this
-// one (docs/engine/behavior-runtime.md).
+// Loads the player's behavior graph from the install. `0_master.hkx` is the entry all
+// three vanilla character files name. Nothing caches globally: one call is one instance
+// over one decode, so a first-person graph can run beside it.
+// See docs/engine/behavior-runtime.md.
 
 import Foundation
 import OpenSkyBehavior
@@ -36,13 +29,9 @@ nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable {
 nonisolated public struct PlayerBehaviorGraph {
     public static let behaviorPath = "meshes\\actors\\character\\behaviors\\0_master.hkx"
     public static let skeletonPath = "meshes\\actors\\character\\character assets\\skeleton.hkx"
-    /// The first-person set (issue #190). A peer of the third-person one rather
-    /// than a subset: its own `0_master.hkx` over its own 17 behavior files,
-    /// its own 99-bone rig, and its own NIF skeleton for the arm meshes to skin
-    /// against. All three paths are read off the install's own archive listing
-    /// (`openskycli vfs ls _1stperson`), never spelled from memory, and the
-    /// folder is `characterassets` with no space where the third-person one is
-    /// `character assets` with one.
+    /// The first-person set: its own `0_master.hkx`, 99-bone rig and NIF skeleton. Paths
+    /// come from the install's archive listing (`openskycli vfs ls _1stperson`). The folder
+    /// is `characterassets`, with no space, unlike the third-person `character assets`.
     public static let firstPersonBehaviorPath =
         "meshes\\actors\\character\\_1stperson\\behaviors\\0_master.hkx"
     public static let firstPersonSkeletonPath =
@@ -62,14 +51,9 @@ nonisolated public struct PlayerBehaviorGraph {
     /// a readout can report how many behavior files the folder offered.
     public let referenceSource: InstallBehaviorReferenceSource
 
-    /// Loads a player graph and the rig it poses. Defaults name the
-    /// third-person set; item 14.7 passes the `_1stperson` pair, and the two
-    /// calls produce two instances that share nothing (see the file comment).
-    ///
-    /// Throws rather than degrading: a missing or malformed `0_master.hkx` is a
-    /// fact about the install the caller has to report, and silently running
-    /// with no graph would look like an animation bug rather than a load
-    /// failure (AGENTS.md "Missing -> fail loud").
+    /// Loads a player graph and its rig; defaults name the third-person set. Throws on a
+    /// missing or malformed `0_master.hkx`, because running without a graph would look
+    /// like an animation bug, not a load failure.
     public static func load(
         fileSystem: any GameFileSource,
         behaviorPath: String = Self.behaviorPath,

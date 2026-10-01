@@ -1,11 +1,5 @@
-// Renderer-side game-clock glue (issue #164), split from Renderer.swift
-// (file-length limits): the per-frame clock advance, the timescale read
-// through the global seam, and the `timeOfDay` projection every existing
-// consumer (shader uniform, weather blend, panel slider, tests) keeps using.
-//
-// Threading: `gameTime` follows the same rule the old `timeOfDay` float did —
-// written from the main thread (panel scrubs, global writes, save restore) and
-// read in `draw(in:)`, which MTKView also runs on the main thread.
+// Game-clock glue: the per-frame advance, the timescale read, and the `timeOfDay`
+// projection. `gameTime` is written and read on the main thread only.
 
 import Foundation
 import OpenSkyRendering
@@ -59,11 +53,8 @@ extension Renderer {
         gameTime.clock.advance(wallDelta: delta, timescale: currentTimescale)
     }
 
-    /// Per-frame world simulation tick (issue #171). Runs immediately after
-    /// the game clock advances, so a script waking on game time sees this
-    /// frame's clock. Menu pause is honoured through the clock rather than a
-    /// branch: `worldSimClock` returns zero while paused, and the world
-    /// runtime's fixed-step accumulator treats a zero delta as no advance.
+    /// Per-frame world simulation tick, after the clock advances, so a script sees this
+    /// frame's time. While paused `worldSimClock` returns zero, which is no advance.
     public func updateWorldSimFromWallClock() {
         let delta = worldSimClock.advance(
             to: wallClock.now, paused: worldSimPaused

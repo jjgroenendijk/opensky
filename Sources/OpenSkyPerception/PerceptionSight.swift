@@ -1,33 +1,16 @@
-// The geometry half of perception (issue #202, roadmap item 16.6): where a pair
-// stands relative to each other, and whether the observer is facing the target.
-//
-// Pure functions over points, split from `DetectionFormula` because they answer
-// a different kind of question. The formula turns numbers into a detection
-// value; this file turns two poses into the two booleans and one distance the
-// formula takes. The third input the formula needs — whether anything is in the
-// way — is a world query and lives on `PerceptionWorld`, because it is the only
-// part of perception that cannot be answered from the pair alone.
-//
-// Documented in docs/engine/detection.md.
+// The geometry half of perception: distance and facing between two poses.
+// Split from `DetectionFormula`, which turns these into a detection value.
+// Line of sight is a world query and lives on `PerceptionWorld`.
+// See docs/engine/detection.md.
 
 import Foundation
 import OpenSkyPerceptionInterface
 import simd
 
 nonisolated public enum PerceptionSight: Sendable {
-    /// Whether `target` lies inside a cone of half-angle `cosine` about
-    /// `observer`'s heading.
-    ///
-    /// A yaw cone: the offset is flattened into the XY plane before the angle
-    /// is taken, so a target on a balcony directly ahead is inside the cone and
-    /// one directly behind at the same height is not. Nothing in this engine
-    /// pitches an actor's head, so a solid-angle test would differ from this
-    /// one only by rejecting targets an actor would in fact see.
-    ///
-    /// A target standing exactly on the observer — zero horizontal offset — is
-    /// inside every cone. It has no direction to be outside one in, and
-    /// reporting "not seen" for something occupying your own space would be the
-    /// stranger answer.
+    /// Whether `target` lies in the yaw cone of half-angle `cosine` about the
+    /// observer's heading. Height is ignored, because no actor here pitches its head.
+    /// A target with zero horizontal offset is inside every cone.
     public static func isInViewCone(
         observer: PerceptionObserver,
         target: PerceptionTarget,

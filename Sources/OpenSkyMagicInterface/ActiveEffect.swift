@@ -1,34 +1,8 @@
-// One magic effect currently acting on an actor (issue #469, roadmap item
-// 19.6): what was applied, by what, to which actor values, and how much of the
-// duration is left.
-//
-// ## The two ways a timed effect works
-//
-// The Creation Kit wiki's Magic Effect page states the rule the Recover flag
-// selects, and it is the whole reason this type carries a mode:
-//
-//   "Recover: When this Effect expires, the attribute returns to its previous
-//   state. If checked, Value Modifier and Peak Value Modifier archetypes will
-//   modify their actor value once at the start, then modify it back once the
-//   Effect expires; if unchecked, the actor value will get modified every
-//   second and will not be reset at the end."
-//   (<https://ck.uesp.net/wiki/Magic_Effect>, read through the Wayback Machine
-//   because the live host refuses automated requests.)
-//
-// So a `modifier` effect owns a slice of its actor values' temporary modifier
-// slot for the whole duration and hands it back on expiry, and a `perSecond`
-// effect pays its magnitude out once per completed second and reverses nothing.
-// A zero-duration effect is neither: it applies once and is never stored, which
-// is why `ActiveEffectMode` has no `instant` case.
-//
-// ## What is deliberately not modelled
-//
-// Tapering (the MGEF taper weight, curve and duration) is not applied. The same
-// page documents the formula, but no vanilla potion or ingredient effect this
-// item consumes uses it, so implementing it here would be untested ground; it
-// is named in docs/engine/magic.md as a known gap rather than silently ignored.
-//
-// Documented in docs/engine/magic.md.
+// One magic effect acting on an actor. The Recover flag picks the mode
+// (<https://ck.uesp.net/wiki/Magic_Effect>): `modifier` holds a temporary slice
+// and returns it on expiry; `perSecond` pays out each second and reverses nothing.
+// A zero-duration effect applies once and is never stored. Tapering is not
+// applied; no vanilla effect used here needs it. See docs/engine/magic.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -43,12 +17,10 @@ nonisolated public enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, 
     case ingredient = 1
     /// A SPEL or SCRL cast at the actor (issues 19.7 and 19.8).
     case spell = 2
-    /// An ENCH enchantment that fired (issue 19.9).
+    /// An ENCH enchantment that fired.
     case enchantment = 3
-    /// A SPEL an owned PERK grants as a constant ability (issue #497). Its own
-    /// kind rather than `spell`, because what takes it back off is losing the
-    /// perk rather than a dispel, and the two have to be told apart in the
-    /// stored list for that to be possible.
+    /// A SPEL an owned PERK grants as a constant ability. Not `spell`, because
+    /// losing the perk removes it, not a dispel.
     case perk = 4
 
     public var describedName: String {
@@ -90,18 +62,9 @@ nonisolated public enum ActiveEffectMode: UInt32, CaseIterable, Hashable, Sendab
     /// Recover clear: the magnitude is paid into the value once per completed
     /// second and never taken back.
     case perSecond = 1
-    /// A constant effect (issue #472, roadmap item 19.9): the magnitude is held
-    /// in the temporary modifier slot exactly as `modifier` holds it, and
-    /// nothing ever takes it back on its own.
-    ///
-    /// A third mode rather than a `modifier` effect with a very long duration,
-    /// because the two differ in what ends them. The Creation Kit wiki states
-    /// that "Armor Enchantments must use the 'Constant Effect' casting type"
-    /// (<https://ck.uesp.net/wiki/Enchantment>) and every one of the 2,885
-    /// vanilla ARMO enchantments does, with 618 of the 620 effect entries
-    /// behind them authoring an EFIT duration of zero. So a constant effect is
-    /// not a timer at all: it lasts while the item is worn, and taking the item
-    /// off is the only thing that removes it.
+    /// A constant effect: held in the temporary slot like `modifier`, with no timer.
+    /// Armor enchantments must be constant (<https://ck.uesp.net/wiki/Enchantment>),
+    /// so only taking the item off removes it.
     case constant = 2
 
     /// Whether this mode owns a slice of its actor values' temporary modifier
@@ -145,14 +108,8 @@ nonisolated public struct ActiveEffectValue: Equatable, Sendable {
 /// returns a new one, which is what lets the runtime compute a whole tick and
 /// write the result once.
 nonisolated public struct ActiveEffect: Equatable, Sendable {
-    /// Per-actor application number, assigned by `ActiveEffectState` in
-    /// ascending order.
-    ///
-    /// Two applications of the same effect from the same potion are genuinely
-    /// two effects, so they need something to tell them apart that is neither
-    /// the MGEF nor the source record. Assigned by the component rather than by
-    /// a global allocator so it survives a save round trip without the save
-    /// having to carry an allocator of its own.
+    /// Per-actor application number, ascending, from `ActiveEffectState`. Two
+    /// doses of one potion are two effects. Per component, so a save needs no allocator.
     public let sequence: UInt64
     public let source: ActiveEffectSource
     /// The MGEF this is an application of.
@@ -227,15 +184,9 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         values.map(\.magnitude).max() ?? 0
     }
 
-    /// Tolerance a whole second is counted within.
-    ///
-    /// The simulation step is 1/60 s, which has no exact binary representation,
-    /// so sixty of them sum to slightly under one second and a hundred and
-    /// twenty to slightly under two. Without a tolerance an effect would take
-    /// one extra step to expire and a per-second effect would skip its last
-    /// pay-out — a real failure the suites caught, not a theoretical one. A
-    /// millisecond is far below anything a player can observe and far above the
-    /// accumulated error, which is on the order of a microsecond per second.
+    /// Tolerance for counting a whole second. Sixty 1/60 s steps sum to just under
+    /// one second, which made effects expire a step late and skip their last payout.
+    /// A millisecond is far above the error and far below what a player sees.
     public static let secondTolerance: Float = 1e-3
 
     /// This effect advanced by `seconds`, clamped at its duration.
@@ -252,13 +203,9 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         return copy
     }
 
-    /// How many whole seconds a `perSecond` effect owes but has not paid.
-    ///
-    /// A second is owed once it has fully elapsed, so an effect with a duration
-    /// of ten seconds pays ten times, the first payment landing one second after
-    /// it was applied. The pay-out count is stored rather than derived from
-    /// `elapsed` alone so that repeated small ticks cannot round into an extra
-    /// payment.
+    /// Whole seconds a `perSecond` effect owes but has not paid. A ten-second
+    /// effect pays ten times, the first after one second. The payout count is
+    /// stored, so small ticks cannot round into an extra payment.
     public var unpaidSeconds: UInt32 {
         guard mode == .perSecond else { return 0 }
         let whole = UInt32(clamping: Int((elapsed + Self.secondTolerance).rounded(.down)))

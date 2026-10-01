@@ -1,10 +1,5 @@
-// Writer for the OpenSky native save container (issue #161).
-//
-// Encoding is total: every input this engine can produce has a byte
-// representation, so `encode` does not throw. The one lossy edge is a string
-// longer than 64 KiB, which is truncated at a UTF-8 boundary rather than
-// failing the save — a plugin file name or app version that long is already
-// nonsense, and losing a save over it would be worse than losing the tail.
+// Writer for the OpenSky native save container. `encode` never throws. A string over
+// 64 KiB is truncated at a UTF-8 boundary rather than failing the save.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -14,19 +9,9 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 nonisolated public enum OpenSkySaveEncoder: Sendable {
-    /// Serializes a snapshot, its load-order fingerprint and header metadata.
-    ///
-    /// Byte-for-byte deterministic given equal arguments: entries are written
-    /// in the snapshot's `ReferenceKey` order, components in ascending on-disk
-    /// tag order, and nothing consults the clock or a hash seed. Only the
-    /// header region depends on `metadata`, so two saves of the same state
-    /// taken at different times share an identical tail.
-    /// `clock` is optional so pre-clock call sites keep compiling; nil writes
-    /// no `CLOK` chunk, which decodes as the vanilla-start clock. `scripts` is
-    /// defaulted empty for the same reason, and an empty list writes no `PSCR`
-    /// chunk at all, so a session with no VM produces the same bytes it always
-    /// did. `timers` behaves the same way and writes no `PTMR` chunk when it
-    /// is empty.
+    /// Serializes a snapshot, its fingerprint and header metadata, byte-deterministic:
+    /// key order, ascending tags, no clock or hash seed. Only the header depends on
+    /// `metadata`. A nil `clock` or empty `scripts`/`timers` writes no chunk.
     public static func encode(
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
@@ -85,16 +70,9 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         return writer.data
     }
 
-    /// Every component that travels in a chunk of its own rather than inside
-    /// `RDLT`, in the order the file lists them.
-    ///
-    /// Split out of `encode` because that function reached the body-length cap
-    /// once crime added its two, and the split is along a real seam: everything
-    /// above it is the header, the fingerprint and the three chunks that are not
-    /// per-component, while everything here is one call per component kind. Each
-    /// writer emits nothing when no entry carries its component, which is what
-    /// keeps a session that touched none byte-identical to an older build's
-    /// output.
+    /// Every component that has its own chunk instead of `RDLT`, in file order. Each
+    /// writer emits nothing when no entry has its component, so untouched sessions match
+    /// older builds' bytes.
     private static func writeComponentChunks(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
@@ -299,17 +277,9 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
 
     // MARK: - Papyrus update timers
 
-    /// One `PTMR` entry: the instance the timer belongs to, which slot of the
-    /// four it occupies, its registered interval, and the delay still to run.
-    /// Both doubles go out as their IEEE bit pattern for the same reason
-    /// script floats do — the byte shape is exact and deterministic.
-    ///
-    /// The slot goes out as its enum raw value, which is a declared on-disk
-    /// number rather than a source-order accident (see
-    /// `PapyrusUpdateTimerSlot`), so no separate tag table is needed here.
-    /// Order is the caller's, which is `PapyrusWorldRuntime.timerStates()`
-    /// sorted by instance key then slot, so re-encoding an unchanged runtime
-    /// produces identical bytes.
+    /// One `PTMR` entry: instance, slot, interval and remaining delay. Doubles go out as
+    /// IEEE bits; the slot as its declared raw value (`PapyrusUpdateTimerSlot`). Callers
+    /// pass `timerStates()` sorted by key then slot, so bytes repeat.
     private static func writeTimer(
         _ state: PapyrusTimerState,
         into writer: inout BinaryWriter

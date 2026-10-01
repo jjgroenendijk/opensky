@@ -1,7 +1,5 @@
-// Scene swap and GPU ring management, split out of Renderer.swift for the
-// strict-lint file cap. The renderer's draw-side rings are sized to whatever it
-// draws in one frame, which since issue #189 is the streamed scene plus the
-// player body, so the two sizing callers live together here.
+// Scene swap and GPU ring management. The rings cover the streamed scene plus the
+// player body, so both sizing callers live here.
 
 import Metal
 import OpenSkyShaderTypes
@@ -10,21 +8,13 @@ import simd
 // MARK: - Scene swap (cell streaming)
 
 extension Renderer {
-    /// Replaces the drawable scene between frames; optional `camera` reseeds
-    /// sun/ambient and the free-fly pose (a first real scene after an empty
-    /// launch scene needs a framing pose).
-    ///
-    /// Threading: must run on the thread that drives draw(in:) /
-    /// renderOffscreen — the main thread. The renderer has no internal locking;
-    /// "between frames" is guaranteed by that shared thread. The GPU may still
-    /// be executing frames that reference the OLD scene: those resources go on
-    /// the retire list instead of being released here — never blocks the GPU.
+    /// Replaces the scene between frames; `camera` reseeds sun, ambient and the fly pose.
+    /// Main thread only. In-flight frames may use the old scene, so its resources go on
+    /// the retire list; the GPU is never blocked.
     public func setScene(_ newScene: RenderScene, camera newCamera: SceneCamera? = nil) throws {
         purgeRetiredResources()
-        // Allocate every fallible buffer before mutating live state; a failure
-        // leaves the old scene + rings intact. The player body draws from the
-        // same rings and survives the swap, so its groups are part of the size
-        // the new rings have to cover (issue #189).
+        // Allocate every fallible buffer first, so a failure keeps the old scene. The new
+        // rings must also cover the player body.
         let newDraw = try regrownDrawRing(
             for: newScene.drawCount + (frameDriver?.playerBodyRig?.render.drawCount ?? 0)
                 + (frameDriver?.firstPersonRig?.render.drawCount ?? 0)
@@ -57,10 +47,8 @@ extension Renderer {
         ))
     }
 
-    /// Grows the rings to cover a frame that draws `drawCount` groups and
-    /// `instanceCount` instances, doing nothing when they already fit. The
-    /// player body calls this on attach: the scene it is drawn beside was sized
-    /// without it (issue #189).
+    /// Grows the rings to fit `drawCount` groups and `instanceCount` instances. The
+    /// player body calls it on attach, because the scene was sized without it.
     public func growRings(drawCount: Int, instanceCount: Int) throws {
         let newDraw = try regrownDrawRing(for: drawCount)
         let newInstance = try regrownInstanceRing(for: instanceCount)
@@ -171,14 +159,9 @@ extension Renderer {
         ))
     }
 
-    /// Drops retire-list entries whose frames provably drained
-    /// (endFrameEvent.signaledValue >= tag), removing their allocations from
-    /// the residency set. MTLResidencySet membership is a plain set — removals
-    /// take effect at commit() even if queued frames still reference the
-    /// allocation — so removal waits for the drain proof, and must skip
-    /// anything the CURRENT scene or rings also use (swap A -> B -> A, or
-    /// adjacent cells sharing meshes: the allocation is both retired and live).
-    /// Called opportunistically from draw(in:) and setScene.
+    /// Drops retire-list entries whose frames drained (`signaledValue >= tag`) from the
+    /// residency set, skipping anything the current scene or rings still use. Called
+    /// from draw(in:) and setScene.
     public func purgeRetiredResources() {
         guard !retired.isEmpty else { return }
         let drained = endFrameEvent.signaledValue

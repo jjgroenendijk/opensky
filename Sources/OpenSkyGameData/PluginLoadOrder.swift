@@ -1,22 +1,8 @@
-// The engine's plugin load order: which plugins are active and in what order
-// (issue #73). Everything that merges records across plugins — GMST, MOVT, the
-// save fingerprint, the archive order — reads this list rather than a
-// hardcoded master list.
-//
-// The order is built from three sources, lowest priority first:
-//   1. The official masters (game + DLC), pinned in canonical order. The game
-//      hardcodes these ahead of everything else and does not list them as
-//      toggleable, so a plugins.txt entry for one only deduplicates.
-//   2. Skyrim.ccc, the Creation Club manifest shipped in the install root.
-//   3. plugins.txt, in file order. Only `*`-starred lines are active; an
-//      unstarred line is a plugin the user has installed and switched off.
-//
-// No plugins.txt on disk -> the official masters alone, which is what a stock
-// install loads anyway. Every name resolves case-insensitively against the
-// real `Data/` listing, and a listed plugin that is not there is reported in
-// `Resolution.missing` rather than dropped silently.
-//
-// Format notes and the layouts searched: docs/formats/plugins-txt.md.
+// The plugin load order everything that merges records reads. Lowest priority first:
+// the official masters in canonical order, then Skyrim.ccc, then `*`-starred
+// plugins.txt lines. No plugins.txt means the masters alone. Names match `Data/`
+// case-insensitively; an absent plugin goes to `Resolution.missing`.
+// See docs/formats/plugins-txt.md.
 
 import Foundation
 

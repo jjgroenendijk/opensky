@@ -148,9 +148,9 @@ nonisolated public struct WorldOverlayDrawList: Sendable {
 nonisolated public struct WorldOverlayFrameContext: Equatable, Sendable {
     public let navmeshOverlayEnabled: Bool
     public let pathOverlayEnabled: Bool
-    /// Perception view cones and investigate positions (issue #202).
+    /// Perception view cones and investigate positions.
     public let detectionOverlayEnabled: Bool
-    /// The conversation camera's pivot, sightline and eye (issue #427).
+    /// The conversation camera's pivot, sightline and eye.
     public let dialogueCameraOverlayEnabled: Bool
 
     public init(

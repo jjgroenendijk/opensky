@@ -1,23 +1,13 @@
-// The bridge's dev-control half (issue #191): the two actions behind
-// `World > Player & Locomotion > Dev Controls`, and the sneak reading the
-// forced gait changes.
-//
-// It is a satellite of `LocomotionBridge.swift` for the type-length cap, and
-// the split falls where it does on purpose: everything here is driven by the
-// panel rather than by a frame, and none of it is on the per-step path except
-// `isSneakingNow`, which the step consults but does not own.
+// The bridge's dev-control half for `World > Player & Locomotion > Dev Controls`, and
+// the sneak reading the forced gait changes. Panel-driven; only `isSneakingNow` is on
+// the step path.
 
 import Foundation
 import OpenSkyPhysics
 
 nonisolated extension LocomotionBridge {
-    /// Raises one event on every attached graph by name, exactly as an edge
-    /// would, and reports whether the third-person graph declared it.
-    ///
-    /// It goes through the same `raise` the edges use, so an event fired from
-    /// the sidebar is indistinguishable from one the player produced —
-    /// including its effect on the status tallies, which is what makes the
-    /// control evidence rather than a side channel.
+    /// Raises one event by name on every graph through the same `raise` the edges use,
+    /// tallies included, and reports whether the third-person graph declares it.
     @discardableResult
     public func raiseGraphEvent(named name: String) -> Bool {
         raise(name)

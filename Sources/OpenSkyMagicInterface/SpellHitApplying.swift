@@ -1,8 +1,5 @@
-/// Applying one landed spell, wherever it came from.
-///
-/// Its own protocol for the reason `ScriptHitReporting` is: a projectile, a
-/// target-actor cast and a concentration beam all land the same way, and the
-/// session implements the answer once for all three (issue #471).
+/// Applying one landed spell. A projectile, a target-actor cast and a beam land the
+/// same way, so the session implements it once.
 @MainActor
 public protocol SpellHitApplying: AnyObject {
     /// Applies one landed spell to the actors it reached.

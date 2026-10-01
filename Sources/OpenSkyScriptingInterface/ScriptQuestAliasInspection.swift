@@ -1,5 +1,5 @@
-/// One reference alias of a quest, as the Quests section shows it (issue
-/// #183): what the record authored, and what the session filled it with.
+/// One reference alias of a quest, as the Quests section shows it: what the record
+/// authored, and what the session filled it with.
 nonisolated public struct ScriptQuestAliasRow: Equatable, Sendable {
     /// ALST/ALLS number scripts and conditions address the alias by.
     public let aliasID: UInt32

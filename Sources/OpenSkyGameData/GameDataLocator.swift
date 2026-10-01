@@ -1,13 +1,7 @@
-// Locates the user's Skyrim Special Edition install on disk. The install is
-// read-only external input — never bundled, never copied (AGENTS.md, Legal & IP).
-//
-// Resolution order (first configured source wins; a configured-but-invalid
-// override fails loud instead of falling through):
-//   1. OPENSKY_DATA_ROOT environment variable (tests, CLI runs)
-//   2. UserDefaults key "OpenSkyDataRoot" (persistent per-machine setting)
-//   3. Default Steam library path under ~/Library/Application Support
-//
-// Inside an XCTest host only source 1 applies: see `persistedRootDefaults`.
+// Locates the user's Skyrim SE install, read-only (AGENTS.md, Legal & IP). First
+// configured source wins, and an invalid one fails loud: `OPENSKY_DATA_ROOT`, then
+// UserDefaults "OpenSkyDataRoot", then the default Steam path. A test host reads only
+// the environment variable (`persistedRootDefaults`).
 
 import Foundation
 
@@ -82,8 +76,8 @@ nonisolated public enum GameDataLocator: Sendable {
             .appending(path: "Skyrim Special Edition")
     }
 
-    /// True inside a unit-test host. The host is the app bundle itself, so it
-    /// inherits the developer's app settings and home directory (issue #362).
+    /// True inside a unit-test host. The host is the app bundle, so it inherits the
+    /// developer's app settings and home directory.
     public static var isRunningInTestHost: Bool {
         let process = ProcessInfo.processInfo
         // Xcode sets the configuration path. `swift test` sets nothing, so its two

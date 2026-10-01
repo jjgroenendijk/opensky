@@ -1,37 +1,8 @@
-// `OnHit`, `OnDying` and `OnDeath` dispatch (issue #375, roadmap item 15.8).
-//
-// Structurally this is `queueOnTriggerEnter` from PapyrusWorldTriggers.swift:
-// one edge in the world becomes one queued event per script attached to the
-// reference it happened to, at activation depth 0. A hit and a death are not
-// activation chains — nothing a handler can call raises another hit — so they
-// never consume the recursion cap that a player standing in a trigger volume
-// would otherwise spend.
-//
-// A script attached to an actor that does not implement the handler is a
-// counted no-op (`undefinedEventFunction`), not a fault, so queuing on every
-// script of the actor is both free and correct.
-//
-// ## Exactly once
-//
-// Nothing here deduplicates, and nothing here needs to: the death latch does.
-// `RagdollRuntime.noteZeroHealth(of:killer:)` writes `ActorDeathState` only for
-// an actor not already recorded dead and raises the pair from inside that
-// guard, so a per-frame sweep over every resident actor, a script `Kill`, and a
-// fatal sword blow between them queue one `OnDying` and one `OnDeath` in total.
-//
-// ## `akKiller` and `akAggressor`
-//
-// Both are `ObjectReference`/`Actor` parameters and travel as world identities,
-// so they become handles through `objectHandle(for:)` exactly as `akActionRef`
-// does. A death nothing attributed — the sweep noticing a corpse whose killer
-// no call named — passes `None`, which is what the Creation Kit documents the
-// parameter's default to be.
-//
-// `akSource` and `akProjectile` are `Form` parameters naming a base record
-// rather than a placed reference. A handle minted for one names the record and
-// resolves to no script instance, so a handler may compare it and log it but
-// cannot call a method on it. That is stated rather than hidden, and it is
-// still more than the `None` the parameter would otherwise carry.
+// `OnHit`, `OnDying` and `OnDeath` dispatch: one event per attached script at depth 0,
+// like `queueOnTriggerEnter`. The death latch in `RagdollRuntime.noteZeroHealth` makes
+// death fire once. Killer and aggressor become handles via `objectHandle(for:)`, or
+// `None` when unknown; `akSource` and `akProjectile` name base records, so methods on
+// them fail. Handlers a script lacks are counted no-ops.
 
 import Foundation
 import OpenSkyCombatInterface
@@ -39,16 +10,10 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
-    /// Queues `OnHit(akAggressor, akSource, akProjectile, abPowerAttack,
-    /// abSneakAttack, abBashAttack, abHitBlocked)` on every script attached to
-    /// `hit.target`.
-    ///
-    /// Parameter order and meaning are the Creation Kit wiki's
-    /// (<https://www.creationkit.com/index.php?title=OnHit_-_ObjectReference>).
-    /// The event is declared on `ObjectReference`, not on `Actor`, so it
-    /// reaches a scripted crate the same way it reaches a scripted bandit.
-    ///
-    /// - Returns: how many events were queued.
+    /// Queues `OnHit` with the Creation Kit's seven parameters
+    /// (<https://www.creationkit.com/index.php?title=OnHit_-_ObjectReference>) on each
+    /// script of `hit.target`. Declared on `ObjectReference`, so crates get it too.
+    /// Returns the count.
     @discardableResult
     public func queueOnHit(_ hit: ScriptHitEvent) -> Int {
         queueActorEvent(
@@ -66,19 +31,9 @@ extension PapyrusWorldRuntime {
         )
     }
 
-    /// Queues `OnDying(akKiller)` then `OnDeath(akKiller)` on every script
-    /// attached to `actor`.
-    ///
-    /// Both, in that order, and both from the same call. The Creation Kit
-    /// distinguishes them by *when* they fire — "when the actor begins dying"
-    /// against "when the actor finishes dying" — and this engine has one death
-    /// moment: the latch. Firing them a variable number of frames apart would
-    /// mean inventing a dying duration the ragdoll hand-off does not define, so
-    /// they are adjacent in the queue instead. `OnDying` is still ahead of
-    /// `OnDeath` for every instance, which is the ordering script code relies
-    /// on.
-    ///
-    /// - Returns: how many events were queued, across both names.
+    /// Queues `OnDying(akKiller)` then `OnDeath(akKiller)` on each script of `actor`, from
+    /// one call: there is one death moment, and inventing a dying duration is worse.
+    /// `OnDying` still comes first. Returns the count across both names.
     @discardableResult
     public func queueActorDeath(actor: ReferenceKey, killer: ReferenceKey?) -> Int {
         let arguments: [PapyrusValue] = [

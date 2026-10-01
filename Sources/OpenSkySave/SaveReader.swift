@@ -1,12 +1,6 @@
-// Save-flavoured cursor over save bytes (issue #161).
-//
-// `BinaryReader` already does the bounds checking; this wrapper exists so the
-// decoder never has to hand a `BinaryReaderError` to its caller. Running out
-// of bytes always means the file is truncated inside some named structure, so
-// every read takes the name of that structure and every reader failure becomes
-// `OpenSkySaveError.truncated(context:)`. Value-typed like the reader it
-// wraps, so a chunk payload is decoded by making a fresh `SaveReader` over the
-// payload slice and letting its bounds do the containment for free.
+// A cursor over save bytes that turns every `BinaryReaderError` into
+// `OpenSkySaveError.truncated(context:)` naming the structure. A value type, so a chunk
+// is decoded by a fresh reader over its payload slice.
 
 import Foundation
 import OpenSkyFormatsCore

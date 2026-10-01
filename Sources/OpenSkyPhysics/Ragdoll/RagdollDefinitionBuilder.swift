@@ -1,28 +1,14 @@
-// Building a `RagdollDefinition` from decoded skeleton data (issue #197,
-// roadmap item 15.6), split from the value types for the file-length limit.
-//
-// The input is exactly what item 15.1 already produces plus what the animation
-// layer already holds: an `NIFCollisionModel` decoded from `skeleton.nif`, and
-// the animation skeleton's bone names with the bind-pose world matrix of each.
-// Nothing here reads a file.
-//
-// Documented in docs/engine/ragdoll-solver.md.
+// Builds a `RagdollDefinition` from a decoded `skeleton.nif` collision model and the
+// animation skeleton's bind matrices. Reads no file. See docs/engine/ragdoll-solver.md.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import simd
 
 nonisolated extension RagdollDefinition {
-    /// Resolves a decoded skeleton NIF onto an animation skeleton.
-    ///
-    /// `bindMatrices` are the bone world matrices of the skeleton's own
-    /// reference pose, in the same model space `NIFCollisionBody.transform`
-    /// places bodies in. `SkeletonPoseMath.worldMatrices(skeleton:localPoses:)`
-    /// over the reference pose produces exactly that list.
-    ///
-    /// Nil only when nothing at all survived: no body resolved onto a bone. A
-    /// partial ragdoll is a result, not a failure, and `skipped` says what was
-    /// lost.
+    /// Resolves a decoded skeleton NIF onto an animation skeleton. `bindMatrices` come
+    /// from `SkeletonPoseMath.worldMatrices` over the reference pose. Nil only when no
+    /// body resolved; `skipped` lists what a partial ragdoll lost.
     public init?(
         model: NIFCollisionModel,
         boneNames: [String],
@@ -160,13 +146,8 @@ nonisolated public struct RagdollBodyPlacement: Sendable {
 }
 
 nonisolated extension RagdollJointDefinition {
-    /// One decoded joint in solver terms, or nil for a class this solver has no
-    /// limits for.
-    ///
-    /// The two frames a hinge and a ragdoll cone carry are read into the same
-    /// two-axis shape: `primaryAxis` is the thing the joint is *about* — the
-    /// cone's twist axis, the hinge's rotation axis — and `secondaryAxis` is the
-    /// reference direction a rotation about the primary one is measured from.
+    /// One decoded joint in solver terms, or nil for a class without limits.
+    /// `primaryAxis` is the twist or hinge axis; `secondaryAxis` is the zero reference.
     public init?(
         data: NIFConstraintData,
         bodyA: Int,

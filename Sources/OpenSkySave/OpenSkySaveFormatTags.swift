@@ -1,36 +1,13 @@
-// On-disk tags for the values that ride inside a chunk (issue #161), split out
-// of `OpenSkySaveFormat.swift` when that file reached its size cap.
-//
-// The split is along a real seam rather than an arbitrary line count.
-// `OpenSkySaveFormat` names the file's own vocabulary — the magic, the version,
-// the chunk tags and the size bounds. These extensions map *engine* enums onto
-// bytes: which component slot travels in `RDLT`, and how a global's declared
-// type is spelled. Both are written out case by case rather than derived from
-// declaration order, because declaration order is a source-level detail that may
-// change while these byte values may not.
+// On-disk tags for engine enums inside a chunk: component slots in `RDLT` and global
+// types. Written case by case, because declaration order may change but bytes may not.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
-/// On-disk tag of a component slot inside `RDLT`.
-///
-/// The mapping is written out case by case rather than derived from
-/// `WorldStateComponentKind.order`, because that order is a source-level
-/// detail that may change while these byte values may not.
-///
-/// Optional because not every component slot travels in `RDLT`. `.inventory`,
-/// `.spawn`, `.quest`, `.questAliases`, `.actorValues`, `.death`, `.combat` and
-/// `.dialogue` have no tag
-/// at all: each is carried by its own chunk so that an older build skips it
-/// rather than refusing the file (see `ChunkTag.inventories`,
-/// `ChunkTag.spawnedReferences`, `ChunkTag.questStates`, `ChunkTag.questAliases`,
-/// `ChunkTag.actorValues`, `ChunkTag.deaths`, `ChunkTag.combatStates` and
-/// `ChunkTag.dialogueStates`). A nil tag is the encoder's
-/// instruction to leave the
-/// component out of `RDLT`, and leaving `init?(saveTag:)` without a case for it
-/// is what keeps the decoder's "an unknown component kind in `RDLT` is an
-/// error" rule intact.
+/// On-disk tag of a component slot inside `RDLT`, written case by case. Nil for slots
+/// carried by their own chunk (inventory, spawn, quests, actor values, death, combat,
+/// dialogue): the encoder leaves them out, and the decoder still errors on unknown kinds.
 nonisolated extension WorldStateComponentKind {
     public var saveTag: UInt8? {
         switch self {
@@ -95,14 +72,8 @@ nonisolated public struct SaveCreationMetadata: Equatable, Sendable {
     }
 }
 
-/// One plugin's identity in the load order a save was written against.
-///
-/// The three stats come straight from the plugin's TES4 HEDR field, which the
-/// Creation Kit rewrites whenever the file changes, so together they are a
-/// cheap "is this the same plugin as before" check without hashing whole
-/// archives. The name is stored with the case it has on disk; comparison is
-/// case-insensitive, because the game's original platform treated plugin file
-/// names that way and `ReferenceKey` already normalizes to lowercase.
+/// One plugin in the saved load order. The TES4 HEDR stats change whenever the file
+/// changes, so they are a cheap identity check. The name keeps its case; comparison ignores it.
 nonisolated public struct SavePluginFingerprint: Equatable, Sendable {
     /// Plugin file name, spelled as it appears on disk.
     public let name: String

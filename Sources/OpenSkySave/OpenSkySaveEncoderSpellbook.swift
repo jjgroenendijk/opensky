@@ -1,17 +1,6 @@
-// SPLB chunk writing for the OpenSky native save container (issue #470).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the AEFF, AVAL and
-// DETH writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// Per actor, in order: the key, the cell, the known-spell list, the read-book
-// list, the two readied hands each behind a presence byte, and the spent-power
-// list as `(power, whole game day)` pairs.
-//
-// Every list is written in the component's own ascending key order, which
-// `SpellbookState.init` establishes, so re-encoding an unchanged spellbook
-// produces identical bytes.
+// SPLB chunk writing. Per actor: key, cell, known spells, read books, the two readied
+// hands behind presence bytes, and `(power, game day)` spent pairs. `SpellbookState.init`
+// sorts every list, so an unchanged spellbook re-encodes identically.
 
 import Foundation
 import OpenSkyFormatsCore

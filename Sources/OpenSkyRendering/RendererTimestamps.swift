@@ -9,8 +9,8 @@ import MetalKit
 extension Renderer {
     public static func configure(view: MTKView) {
         view.colorPixelFormat = .bgra8Unorm_srgb
-        // Combined depth + stencil: the SWF layer's clip masks (M8.2.4) need
-        // a stencil attachment in the scene pass; the 3D passes ignore it.
+        // Depth plus stencil: SWF clip masks need a stencil attachment; the 3D passes
+        // ignore it.
         view.depthStencilPixelFormat = .depth32Float_stencil8
         view.sampleCount = 1
     }

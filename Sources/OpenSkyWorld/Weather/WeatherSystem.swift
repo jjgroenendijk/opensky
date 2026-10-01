@@ -1,14 +1,6 @@
-// Weather runtime state machine (M7.2.2): drives region/climate selection,
-// timed current->target transitions, and the time-of-day blend, producing a
-// ResolvedWeather + published WindState each frame. The renderer advances it
-// from wall-clock delta + the time-of-day input and feeds ResolvedWeather into
-// FrameUniforms; nil ResolvedWeather leaves the procedural sky untouched.
-//
-// Design + spec citations + deviations: docs/engine/weather.md.
-//
-// Threading: constructed on the cell-provider setup thread, then owned and
-// mutated only by the renderer's main-thread draw loop (like the other
-// renderer state). The WeatherStore it reads is immutable after construction.
+// Weather runtime: region and climate selection, timed transitions, and the time-of-day
+// blend, giving a `ResolvedWeather` and `WindState` each frame. Owned by the main-thread
+// draw loop. See docs/engine/weather.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -64,10 +56,8 @@ nonisolated public final class WeatherSystem {
     /// precipitation particle playback continue, enabling a stable mid-storm
     /// inspection frame in the main app.
     public var transitionsPaused = false
-    /// Current global-variable values, used to honour the CLMT WLST global on
-    /// each climate weather chance (issue #165). Nil leaves every chance at the
-    /// authored number. Replaced through `setGlobalResolution(_:)` whenever the
-    /// session mutates a global.
+    /// Current globals, for the CLMT WLST global on each weather chance. Nil keeps the
+    /// authored chances. Replaced by `setGlobalResolution(_:)`.
     public private(set) var globalResolution: GlobalResolution?
 
     public init(store: WeatherStore, worldspaceFormID: UInt32?) {
@@ -151,12 +141,9 @@ nonisolated public final class WeatherSystem {
         beginTransition(to: weather, transition: transition)
     }
 
-    /// Advances the transition by real `deltaTime` seconds and the reroll
-    /// cadence by `elapsedGameHours` — real game hours off the game clock
-    /// (issue #164), replacing the old hour-delta wrap heuristic — then
-    /// recomputes the resolved blend at `hour`. A clock that never advances
-    /// elapses zero hours and so never auto-rerolls, which keeps forced
-    /// weather deterministic for tests and offscreen renders.
+    /// Advances the transition by `deltaTime` seconds and rerolls by `elapsedGameHours`,
+    /// then resolves the blend at `hour`. A still clock never rerolls, so forced weather
+    /// stays deterministic.
     public func update(deltaTime: Float, hour: Float, elapsedGameHours: Float = 0) {
         advanceTransition(deltaTime: max(0, deltaTime))
         if elapsedGameHours.isFinite, elapsedGameHours > 0 {

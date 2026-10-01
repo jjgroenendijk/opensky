@@ -1,18 +1,6 @@
-// Main-app actor-value inspection seam (issue #194, roadmap item 15.3). The
-// provider keeps a future panel independent of `GameViewController` while
-// exposing the engine-owned damage, restore and reset operations.
-//
-// Specified here and shipped with the M15 acceptance gate (item 15.9), which is
-// what the issue asks for: the protocol is the contract the panel is written
-// against, and defining it now means the runtime below it is already built to
-// answer the questions a panel asks rather than being retrofitted to.
-//
-// One snapshot value rather than a bag of protocol properties, for the same
-// reason `ItemControlSnapshot` is one: the readout has to be a pure function of
-// a single engine observation, not of several taken microseconds apart while
-// the streamer is mutating between them.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// The seam the actor-value panel is written against: the engine-owned damage,
+// restore and reset operations, without `GameViewController`. One snapshot value,
+// so the readout comes from a single observation while the streamer mutates.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -32,7 +20,7 @@ nonisolated public struct ActorValueReadout: Equatable, Sendable {
     public let level: Int
     /// Whether the per-level class spread applied.
     public let autoCalculatesStats: Bool
-    /// The flag item 15.6 consumes.
+    /// The flag ragdoll and death consume.
     public let hasZeroHealth: Bool
 
     public static let empty = ActorValueReadout(
@@ -64,11 +52,8 @@ nonisolated public struct ActorValueReadout: Equatable, Sendable {
     }
 }
 
-/// One actor value as the panel inspects it (issue #468, roadmap item 19.5).
-///
-/// Carries the modifier slots separately rather than only the current number,
-/// because the whole point of the general store is that a damaged resistance
-/// and a lowered base are different states that read the same at a glance.
+/// One actor value as the panel inspects it. The modifier slots stay separate,
+/// because a damaged value and a lowered base read the same at a glance.
 nonisolated public struct ActorValueInspection: Equatable, Sendable {
     /// Vanilla name, or the bare index when the selection names none, so a
     /// readout line always names something.
@@ -139,8 +124,7 @@ nonisolated public struct ActorValueControlSnapshot: Equatable, Sendable {
     public let nearestActor: ActorValueReadout?
     /// Which target the dev controls act on.
     public let target: ActorValueTargetSelector
-    /// The actor value the controls act on, read off the selected target
-    /// (issue #468).
+    /// The actor value the controls act on, read off the selected target.
     public let selection: ActorValueInspection
     /// How many references currently carry an actor-value component, across
     /// every cell whether resident or not.
@@ -185,7 +169,7 @@ public protocol ActorValueControlProviding: AnyObject {
     /// Which target the damage and restore controls act on.
     var actorValueTarget: ActorValueTargetSelector { get set }
 
-    /// Which actor value they act on, by vanilla table index (issue #468).
+    /// Which actor value they act on, by vanilla table index.
     /// Health until a panel selects another, and any of the 164 after that.
     var actorValueSelection: Int32 { get set }
 
@@ -209,14 +193,9 @@ public protocol ActorValueControlProviding: AnyObject {
     @discardableResult
     func setSelectedActorValue(to value: Float) -> String
 
-    /// Sets the selected value's *base* outright — `SetActorValue`'s write,
-    /// which for a primary moves its maximum rather than its current value
-    /// (issue #496, roadmap item 20.3).
-    ///
-    /// Stored as a delta on the re-derived baseline, so "Reset to records" is
-    /// still the way back and a changed load order still moves the number.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    /// Sets the selected value's base outright, as `SetActorValue` does; for a
+    /// primary that moves its maximum. Stored as a delta, so "Reset to records"
+    /// still works. Returns a readable outcome the panel shows verbatim.
     @discardableResult
     func setSelectedActorBase(to value: Float) -> String
 

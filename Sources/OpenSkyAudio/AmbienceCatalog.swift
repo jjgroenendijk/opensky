@@ -1,17 +1,7 @@
-// Per-cell ambient sound bed resolution (M9.2.2). Pure value logic over the
-// decoded REGN/ASPC stores; the runtime director diffs a freshly resolved bed
-// against its active sources and starts/stops as needed.
-//
-// Resolution paths:
-//   Exterior CELL -> XCLR REGN set -> each region's type-7 RDAT sound area
-//                                       (RDSA entries: SNDR/SOUN FormIDs).
-//   Interior CELL -> XCAS ASPC     -> ASPC.SNAM (direct SNDR) plus optionally
-//                                       ASPC.RDAT (a borrowed region whose
-//                                       sound area drives this interior).
-//
-// Sources:
-//   REGN.RDSA structure: xEdit dev-4.1.6 wbDefinitionsCommon.pas:8729-8747.
-//   ASPC record body:    xEdit wbDefinitionsTES5.pas:5401-5407.
+// Per-cell ambient sound bed resolution, pure over the REGN/ASPC stores.
+//   Exterior: CELL XCLR -> REGN -> type-7 RDAT sound area (RDSA: SNDR/SOUN)
+//   Interior: CELL XCAS -> ASPC SNAM (SNDR), plus an optional borrowed RDAT region
+// Sources: xEdit wbDefinitionsCommon.pas (REGN.RDSA), wbDefinitionsTES5.pas (ASPC).
 
 import Foundation
 import OpenSkyFormatsESM

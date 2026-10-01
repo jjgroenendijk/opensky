@@ -74,12 +74,9 @@ nonisolated public struct SkillAdvanceOutcome: Equatable, Sendable {
 }
 
 nonisolated public enum SkillAdvancement: Sendable {
-    /// The level a skill stops at. Not a game setting: no active plugin on this
-    /// machine authors one, and UESP states the ceiling in prose instead —
-    /// "Perks can be reset by reaching 100 in the appropriate skill and making
-    /// it legendary", and its per-skill table totals the experience "needed for
-    /// 15 -> 100" (<https://en.uesp.net/wiki/Skyrim:Leveling>). Legendary
-    /// resets are item 20.6's and above.
+    /// The level a skill stops at. No plugin here authors it; UESP states it in prose
+    /// ("reaching 100 in the appropriate skill", <https://en.uesp.net/wiki/Skyrim:Leveling>).
+    /// Legendary resets are not modelled.
     public static let skillCeiling: Float = 100
 
     /// Most whole levels one advance may cross, so a script that hands over a

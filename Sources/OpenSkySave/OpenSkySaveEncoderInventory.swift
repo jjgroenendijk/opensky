@@ -1,10 +1,5 @@
-// INVN chunk writing for the OpenSky native save container (issue #176).
-//
-// A satellite of `OpenSkySaveEncoder` rather than more of its body: the
-// encoder was already at the type-length limit, and inventory is the one chunk
-// with a nested count inside each entry, so it reads better on its own. The
-// three shared writers it uses — `writeChunk`, `writeKey`, `writeCell` — are
-// internal on the parent for exactly this reason.
+// INVN chunk writing, the one chunk with a nested count per entry. The shared
+// `writeChunk`, `writeKey` and `writeCell` are internal on the encoder for files like this.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -19,15 +14,8 @@ nonisolated extension OpenSkySaveEncoder {
         let inventory: ReferenceInventoryState
     }
 
-    /// The `INVN` chunk: every snapshot entry that carries an inventory
-    /// component, in the snapshot's `ReferenceKey` order.
-    ///
-    /// Each entry repeats its key and cell rather than referring back to an
-    /// `RDLT` entry by index, because an owner whose only delta is its
-    /// inventory has no `RDLT` entry at all, and an index into a list that may
-    /// not contain the item is not a layout worth having. A session that
-    /// touched no inventory writes no chunk, so its bytes match what this
-    /// encoder produced before the chunk existed.
+    /// The `INVN` chunk: every entry with an inventory, in key order. Each repeats its key
+    /// and cell, because an inventory-only owner has no `RDLT` entry.
     public static func writeInventories(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
@@ -49,18 +37,9 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
-    /// Stack count, then item plus count per stack; equipped count, then one
-    /// FormID each. Both lists arrive already sorted by the component's own
-    /// invariant, so nothing is sorted here and the bytes stay a pure function
-    /// of the state.
-    ///
-    /// One row per *item*, honest and stolen copies summed. Since issue #504 a
-    /// stack is keyed by (form, stolen) and an owner may hold two rows for one
-    /// form, but `INVN` entries are a flat positional layout with no per-entry
-    /// length: appending a flag to them would make every older build misparse
-    /// the whole chunk rather than skip the new part. So the totals stay here,
-    /// where an older build reads a complete inventory, and the stolen half
-    /// rides in the additive `STOL` chunk beside it.
+    /// Stack count, then item and count per stack; equipped count, then FormIDs. Both are
+    /// pre-sorted. One row per item, stolen copies summed: the layout has no per-entry
+    /// length, so the stolen split goes in the additive `STOL` chunk.
     private static func writeItems(
         _ inventory: ReferenceInventoryState,
         into writer: inout BinaryWriter

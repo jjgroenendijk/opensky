@@ -44,13 +44,9 @@ nonisolated public struct EnchantmentCharge: Equatable, Sendable {
         return Int((remaining / costPerUse).rounded(.down))
     }
 
-    /// Whether the next hit can pay for itself.
-    ///
-    /// A weapon holding less than one whole use cannot fire: vanilla's own
-    /// enchanting menu refuses a soul gem too small to buy "at least one
-    /// charge" (<https://en.uesp.net/wiki/Skyrim:Enchanting>), so a fraction of
-    /// a use is not a use. The leftover is stranded rather than spent, which is
-    /// also why `usesRemaining` floors.
+    /// Whether the next hit can pay for itself. Less than one whole use cannot fire
+    /// (<https://en.uesp.net/wiki/Skyrim:Enchanting>), so the remainder is stranded
+    /// and `usesRemaining` floors.
     public var canFire: Bool {
         !isMetered || remaining >= costPerUse
     }

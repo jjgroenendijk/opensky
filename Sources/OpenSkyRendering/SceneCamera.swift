@@ -1,7 +1,5 @@
-// Camera + light parameters the renderer folds into FrameUniforms (todo 2.7
-// app wiring). Decouples Renderer from DemoScene: the app injects a framing
-// camera for a built cell; `demo` mirrors the DemoScene constants for the
-// synthetic fallback scene.
+// Camera and light parameters the renderer folds into FrameUniforms. The app injects a
+// framing camera for a built cell; `demo` matches the synthetic DemoScene.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

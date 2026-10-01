@@ -257,11 +257,8 @@ public final class ProjectileRuntime {
         )
     }
 
-    /// Leaves the arrow standing in what it hit, evicting the oldest when the
-    /// cap is reached.
-    ///
-    /// Only an arrow sticks. A spell projectile is spent on impact and leaves
-    /// nothing behind — the hit art and the explosion that would are M26.
+    /// Leaves the arrow standing in what it hit, evicting the oldest at the cap. Only an
+    /// arrow sticks; a spell projectile is spent on impact.
     private func stick(_ projectile: LiveProjectile, at impact: ProjectileImpact) -> Bool {
         guard
             let world,

@@ -1,6 +1,5 @@
-// The session's half of the third-person player body (issue #189): attaching
-// it to the renderer and placing it on the capsule each input frame. The
-// renderer's half, which draws it, is `RendererPlayerBody.swift`.
+// The session's half of the third-person body: attach, and place on the capsule each
+// frame. The renderer's half is `RendererPlayerBody.swift`.
 
 import Metal
 import OpenSkyRendering

@@ -1,11 +1,6 @@
-// Runtime reference index (issue #158 stage B): the decoded REFR/ACHR records
-// of one built cell, retained beside its render data and addressable by
-// session-stable `ReferenceKey`.
-//
-// Lifetime is the cell's. The index is assembled once on the build queue and
-// is immutable afterwards, so it crosses to the main thread as part of the
-// `CellScene` value without locking. Mutable runtime state that must outlive a
-// cell unload belongs in a store above this layer, not here.
+// The decoded REFR/ACHR records of one built cell, keyed by `ReferenceKey`.
+// Built once on the build queue and immutable, so it crosses to the main thread in
+// `CellScene` without a lock. State that outlives the cell lives in a store above.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -55,13 +50,8 @@ nonisolated public struct RuntimeReferenceEntry: Sendable {
     }
 }
 
-/// Immutable per-cell lookup over `RuntimeReferenceEntry`, keyed both by
-/// `ReferenceKey` and by raw FormID.
-///
-/// Duplicate keys resolve last-writer-wins, matching the FormID dedupe the
-/// exterior reference merge already performs: a worldspace-persistent record
-/// overriding a local placement of the same object must leave exactly one
-/// entry behind.
+/// Immutable per-cell lookup by `ReferenceKey` and by FormID. The last duplicate wins,
+/// as in the exterior reference merge.
 nonisolated public struct RuntimeReferenceIndex: Sendable {
     private var entriesByKey: [ReferenceKey: RuntimeReferenceEntry]
     private var keysByFormID: [FormID: ReferenceKey]

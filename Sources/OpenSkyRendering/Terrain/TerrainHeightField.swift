@@ -10,10 +10,8 @@ import simd
 nonisolated public struct TerrainGroundSample: Equatable, Sendable {
     public let height: Float
     public let normal: SIMD3<Float>
-    /// The MATT material of the ground here (issue #358), from the landscape
-    /// texture painted heaviest at the nearest terrain vertex. Nil where the
-    /// cell carries no resolved material — a LAND-less fallback plane, or a
-    /// texture whose LTEX names no MATT.
+    /// The MATT material of the ground here: the heaviest-painted texture at the nearest
+    /// vertex. Nil without LAND or when the LTEX names no MATT.
     public let material: FormID?
 
     public init(height: Float, normal: SIMD3<Float>, material: FormID? = nil) {

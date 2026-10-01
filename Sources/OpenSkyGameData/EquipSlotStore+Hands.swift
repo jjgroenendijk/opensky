@@ -11,8 +11,8 @@ nonisolated extension EquipSlotStore {
         handChoice(of: id, fromPlugin: pluginName)?.hands
     }
 
-    /// The same answer keeping the all-parents/choose-one distinction, which is
-    /// what equipping a spell to a named hand needs (issue #470).
+    /// The same answer, keeping the all-parents/choose-one distinction that equipping
+    /// a spell to a named hand needs.
     public func handChoice(
         of id: FormID?,
         fromPlugin pluginName: String

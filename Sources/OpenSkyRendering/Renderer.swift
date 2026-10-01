@@ -50,10 +50,8 @@ public final class Renderer: NSObject {
     /// Render-debug twins of the five geometry paths, bound instead of their
     /// shipping counterparts while `renderDebug.mode` is not `.off`.
     public let debugPipelines: DebugRenderPipelines
-    /// Which debug channel the scene pass writes and which layers it draws
-    /// (issue #144, `Rendering/RendererDebugState.swift`). Never persisted, and
-    /// deliberately not carried into `renderOffscreen` — see
-    /// `renderDebugAppliesOffscreen`.
+    /// The scene pass's debug channel and drawn layers (`RendererDebugState.swift`).
+    /// Not persisted, and not used offscreen unless `renderDebugAppliesOffscreen`.
     public var renderDebug = RenderDebugState()
     /// Whether an offscreen frame honours `renderDebug`. Off by default so
     /// screenshots and bench runs render the shipping frame however the dev
@@ -62,20 +60,17 @@ public final class Renderer: NSObject {
     public let depthState: MTLDepthStencilState
     public let waterDepthState: MTLDepthStencilState
     public let sampler: MTLSamplerState
-    /// Screen-space UI overlay (M8.1.1): pipeline (solid fills + text
-    /// premultiplied over the finished 3D frame, depth-test-always, writes
-    /// off), depth state, atlas sampler, r8 glyph/solid atlas texture, the
-    /// triple-buffered vertex + uniform rings, and the CPU shelf-packed glyph
-    /// atlas backing the texture. Encode + resolve live in RendererUIPass.swift.
+    /// Screen-space UI overlay: pipeline (fills and text premultiplied over the 3D frame,
+    /// depth off), sampler, r8 glyph atlas, and the triple-buffered rings. Encode and
+    /// resolve live in RendererUIPass.swift.
     public let uiResources: UIResources
     /// Depth-tested world-space debug overlay: blended pipeline, read-only
     /// depth state and fixed per-frame vertex ring (RendererOverlayPass.swift).
     public let worldOverlayResources: WorldOverlayResources
     /// Atlas revision last copied into the atlas texture; re-upload on change.
     public var uiUploadedAtlasRevision = -1
-    /// SWF display-list layer (M8.2.4): content/mask pipelines + counting
-    /// stencil states built at init; the movie package swaps via
-    /// `setSWFMovie`. State accessors + encode live in RendererSWFPass.swift.
+    /// SWF display-list layer: content and mask pipelines and counting stencil states.
+    /// `setSWFMovie` swaps the movie; encode lives in RendererSWFPass.swift.
     public let swf: SWFPassResources
     /// Sun-shadow pipelines + compare sampler + the shared cascade array
     /// (depth32Float, ShadowConstantCascadeCount slices). The array is created
@@ -85,10 +80,8 @@ public final class Renderer: NSObject {
     /// A/B toggle from `World > Environment > Sun shadows`. Default on; ANDed
     /// with `shadowQuality` so it flips shadows without discarding the tier.
     public var sunShadowsEnabled = true
-    /// Sun-shadow quality tier (M7.1.2). `.off` skips the pass entirely; `.low`
-    /// and `.high` differ in cascade count, range, and PCF taps (see the
-    /// RendererShadowPass computed parameters). Set on the main thread between
-    /// frames like other renderer state; the UI agent owns persistence.
+    /// Sun-shadow quality. `.off` skips the pass; `.low` and `.high` differ in cascades,
+    /// range and PCF taps. Set on the main thread between frames.
     public var shadowQuality = ShadowQuality.high
     /// This frame's cascades, produced by encodeShadowPass, consumed by
     /// updateFrameUniforms. Empty when shadows are off/idle this frame.
@@ -109,21 +102,17 @@ public final class Renderer: NSObject {
     public var camera: SceneCamera
     /// Live view pose, seeded from `camera`, advanced each frame from `input`.
     public var freeFlyCamera: FreeFlyCamera
-    /// Fly remains default dev mode. `G` cycles fly -> first-person walk ->
-    /// third person (issue #189).
+    /// Fly is the default dev mode. `G` cycles fly -> first-person walk -> third person.
     public var movementMode = CameraMovementMode.fly
     /// Resident static collision broadphase, wired beside terrain by
     /// GameViewController. Empty in renderer-only paths. Walk mode, the
     /// cameras and precipitation all query it.
     public var collisionQuery: CapsuleWorldCollider.CandidateQuery?
-    /// Draws the dialogue camera's pivot, sightline and eye through the M16
-    /// world-overlay registry. Off by default like every other overlay.
+    /// Draws the dialogue camera's pivot, sightline and eye through the world-overlay
+    /// registry. Off by default like every other overlay.
     public var dialogueCameraOverlayEnabled = false
-    /// Where the simulated rigid bodies have moved since their cells were
-    /// built, keyed by REFR FormID (issue #193). Published once per frame by
-    /// the streaming controller's physics tick, read by the two passes that
-    /// upload instance transforms. Empty in every path that runs no physics,
-    /// which is what leaves those passes unchanged there.
+    /// How far simulated bodies moved since their cells were built, by REFR FormID.
+    /// Published once per frame by the physics tick; empty without physics.
     public var dynamicInstanceDeltas: [UInt32: float4x4] = [:]
     public var npcInstanceDeltas: [UInt32: float4x4] = [:]
     /// This frame's resolved weather (exterior only). nil -> no weather active.
@@ -159,11 +148,8 @@ public final class Renderer: NSObject {
     /// UI points -> framebuffer pixels multiplier (user preset x backing
     /// scale, supplied by the app). Clamped to UIScale.range at encode.
     public var uiScale: Float = 1
-    /// Menu-mode world-sim pause gate (todo 8.1.2). True freezes the per-frame
-    /// time advance (game time, camera, animations, weather, particles,
-    /// precipitation) while the frame still renders and the screen-space UI
-    /// still draws. Driven by MenuModeController.isWorldSimPaused; the frame
-    /// clocks keep their marks fresh while paused so resume carries no time jump.
+    /// Menu-mode pause gate. True freezes the per-frame time advance while the frame and
+    /// UI still draw. Clocks keep their marks fresh while paused, so resume has no jump.
     public var worldSimPaused = false
     /// The simulation side of each frame (`RenderFrameDriver.swift`). The
     /// renderer holds it strongly; the driver holds the renderer unowned.
@@ -195,9 +181,8 @@ public final class Renderer: NSObject {
     public var drawUniformSlotCapacity: Int
     /// Per-draw nearest-light arrays, same draw-slot indexing as uniforms.
     public var pointLightBuffer: MTLBuffer
-    /// Per-instance transform ring (todo 3.2 instancing): tightly packed
-    /// InstanceTransform entries, instanceSlotCapacity per in-flight frame.
-    /// Same regrow-on-swap treatment as the draw-uniform ring.
+    /// Per-instance transform ring: packed `InstanceTransform` entries,
+    /// `instanceSlotCapacity` per in-flight frame. Regrows like the draw-uniform ring.
     public var instanceTransformBuffer: MTLBuffer
     /// Instances per frame slot of the transform ring — power-of-two
     /// headroom over the scene's instanceCount.
@@ -222,9 +207,8 @@ public final class Renderer: NSObject {
 
     public var frameIndex: Int
     public var projectionMatrix = matrix_identity_float4x4
-    /// The drawable's aspect ratio, kept so the projection can be rebuilt
-    /// without waiting for the next resize. Camera mode and the first-person
-    /// field of view both change it mid-session (issue #190).
+    /// The drawable's aspect ratio, kept so the projection can be rebuilt when the camera
+    /// mode or the first-person FOV changes.
     public var drawableAspectRatio: Float = 1
     /// Culling/draw counts of the last encoded frame (see SceneDrawStats).
     /// Written only by encodeScenePass (RendererScenePass.swift).

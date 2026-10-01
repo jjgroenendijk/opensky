@@ -1,16 +1,7 @@
-// Shared model cache keyed by normalized VFS mesh path: parse + upload a NIF
-// once, hand the same RenderModel to every reference that places it (todo 2.7
-// asset caches). Bridges the VFS (bytes), the NIF flattener, and RenderModel
-// (GPU upload + material resolution via TextureLibrary). Failures surface as
-// typed errors so scene build can log + skip one ref instead of aborting the
-// whole cell (AGENTS.md mod-quirk rule).
-//
-// Single-threaded by confinement, not locking: every touch (scene build) runs
-// on the streamer's ONE serial build queue (SerialCellBuildRunner), never the
-// main thread, so the dictionary needs no lock. Main only receives finished
-// CellScene values. GPU uploads (RenderModel/RenderMesh) off that queue are
-// safe. TextureLibrary + VFS follow the same confinement rule. Decision:
-// docs/engine/cell-streaming.md.
+// Model cache keyed by normalized mesh path: parse and upload a NIF once, share the
+// `RenderModel`. Failures are typed, so a scene build skips one reference. Confined to
+// the streamer's one serial build queue, so it needs no lock; main only gets finished
+// `CellScene` values. See docs/engine/cell-streaming.md.
 
 import Foundation
 import Metal
@@ -172,11 +163,8 @@ nonisolated public final class MeshLibrary {
         return render
     }
 
-    /// Uploads an engine-built terrain patch: the quadrant mesh plus its
-    /// packed splat-weight stream (two float4 lanes per vertex,
-    /// TerrainVertexLayout) — terrain from LAND (todo 3.1). Shares the
-    /// library's device so terrain draws through the same residency set. Not
-    /// cached: terrain patches are per-cell and unique, unlike shared NIFs.
+    /// Uploads a LAND terrain patch: the quadrant mesh and its splat-weight stream (two
+    /// float4 per vertex, `TerrainVertexLayout`). Not cached: each patch is unique.
     public func terrainMesh(
         _ mesh: Mesh,
         weights: [SIMD4<Float>]
@@ -273,14 +261,9 @@ nonisolated public final class MeshLibrary {
         return out
     }
 
-    /// Drops the cached models (+ bounds/skip counts) whose keys are in `keys`
-    /// -- the set a departing cell used that no resident cell still needs
-    /// (docs/engine/cell-streaming.md eviction). Drop-set (not keep-set) so a
-    /// concurrent build's fresh models are never evicted. The RenderModel
-    /// deallocates once the last reference dies: no resident composed scene
-    /// references a departed cell's meshes, and the renderer's retire list
-    /// frees the GPU buffers when in-flight frames drain. Reloads on demand if
-    /// the cell returns. Runs on the build queue. Returns freed model count.
+    /// Drops the cached models in `keys`: those a departing cell used and no resident
+    /// cell needs. A drop-set, so a concurrent build's models survive. The retire list
+    /// frees GPU buffers later. Runs on the build queue. Returns the freed count.
     @discardableResult
     public func evict(dropping keys: Set<String>) -> Int {
         var freed = 0

@@ -1,13 +1,7 @@
-// Resolves LStrings for one plugin: loads the plugin's per-language string
-// tables (Strings/<plugin>_<language>.{strings,dlstrings,ilstrings}) through
-// the VFS on first use and answers lookups. Which of the three tables an ID
-// points into depends on the record field (FULL -> .strings, journal and book
-// entries -> .dlstrings, subtitled conversations -> .ilstrings), so callers
-// pass the kind.
-//
-// Missing or malformed tables are logged once and yield nil lookups — a
-// plugin without shipped tables must not take the engine down (mod-quirk
-// rule, AGENTS.md). Format: docs/formats/strings.md.
+// Resolves one plugin's lstrings from Strings/<plugin>_<language>.{strings,dlstrings,
+// ilstrings}, loaded lazily. The field picks the table (FULL -> .strings, journal and
+// books -> .dlstrings, dialogue -> .ilstrings), so callers pass the kind. A missing or
+// bad table is logged once and gives nil. See docs/formats/strings.md.
 
 import Foundation
 import OpenSkyFormatsCore

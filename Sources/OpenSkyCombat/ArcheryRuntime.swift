@@ -1,31 +1,8 @@
-// Archery (issue #196, roadmap item 15.5, scope point 2): the runtime that
-// turns a held attack button into census-named graph events, reads the graph's
-// answer back, and fires a projectile on the frame the arrow leaves the string.
-//
-// The order every frame runs in, and why it is that order, is `MeleeCombatRuntime`'s:
-//
-//   1. `acceptFrame(_:)` — intent edges become raised events. The engine only
-//      ever *asks*: it raises `bowDrawStart`, it does not decide that a draw
-//      began.
-//   2. the fixed steps advance the graph, and the graph fires whatever it fires.
-//   3. `handleGraphEvents(_:)` — the drained names advance `ArcheryState` and,
-//      on `arrowRelease`, assemble the shot and hand it to
-//      `ProjectileRuntime`.
-//
-// So a draw the graph refuses — bow sheathed, staggered, no arrows — costs one
-// ignored event and nothing else. There is no engine-side draw timer to get out
-// of step with the animation.
-//
-// One thing *is* timed, and it is worth being explicit about why that is not a
-// contradiction: how long the button was held. UESP's draw-damage formula is a
-// function of exactly that, in frames, and it is the player's input being
-// measured rather than the animation's phase. The graph is still what decides
-// when the arrow leaves; the hold time only decides how hard it leaves.
-//
-// Main-actor, like the other directors, and driven from the frame the renderer
-// already runs there.
-//
-// Documented in docs/engine/archery.md.
+// Archery: a held button becomes raised graph events, and a projectile fires on the
+// graph's `arrowRelease`. Each frame: `acceptFrame(_:)` raises, fixed steps advance the
+// graph, `handleGraphEvents(_:)` reacts. A refused draw costs one ignored event. Only the
+// hold time is measured, because UESP's draw damage depends on it.
+// See docs/engine/archery.md.
 
 import Foundation
 import OpenSkyBehavior
@@ -58,14 +35,8 @@ public final class ArcheryRuntime {
     /// launches, and the FormID the inventory consumes. Nil with an empty
     /// quiver, and then a draw is allowed and a loose does nothing.
     public var arrow: ArcheryAmmunition?
-    /// The shooter's fortify multiplier — `ArcheryDamage`'s `bonusMultiplier`
-    /// (issue #472).
-    ///
-    /// A written property rather than a world seam, for the reason `bow` and
-    /// `arrow` are: the session refreshes all three on the same frame, from the
-    /// same equipment, and a runtime that asked for it would need an actor-value
-    /// surface it otherwise has no use for. 1 until something writes it, which is
-    /// what the formula reduces to for a shooter with no fortify effect.
+    /// The shooter's fortify multiplier, `ArcheryDamage`'s `bonusMultiplier`. Written by
+    /// the session on the same frame as `bow` and `arrow`; 1 until then.
     public var attackMultiplier: Float = 1
 
     private weak var world: (any ProjectileWorld)?
@@ -130,16 +101,8 @@ public final class ArcheryRuntime {
         return launched
     }
 
-    /// Assembles and fires the shot the current draw earned, whatever released
-    /// it.
-    ///
-    /// Public so the panel's dev spawn control reaches the same code path the
-    /// graph does — a shot requested from the sidebar has to be
-    /// indistinguishable downstream from one the player took, which is the
-    /// whole point of offering the control.
-    ///
-    /// - Parameter consumesArrow: false spawns without touching the quiver,
-    ///   which is what the dev control wants and what a real shot must never do.
+    /// Assembles and fires the shot the current draw earned. Public, so the dev spawn
+    /// uses the same path. `consumesArrow` false skips the quiver; real shots never do.
     @discardableResult
     public func loose(consumesArrow: Bool = true) -> LiveProjectile? {
         guard let arrow else { return nil }

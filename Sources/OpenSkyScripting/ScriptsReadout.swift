@@ -1,14 +1,5 @@
-// World > Scripts readout text (issue #278): the device-free half of the
-// Papyrus verification surface.
-//
-// Every line the four Scripts sections show is a pure function of one
-// `ScriptsSnapshot`, exactly as `SWFLabReadout` is a pure function of one
-// `SWFLabControlSnapshot`. Keeping the wording here rather than inside the
-// section view controllers is what lets the text be asserted without AppKit,
-// without a Metal device, and without a game install.
-//
-// No AppKit import on purpose: the file compiles into both the app and the CLI
-// target, so it needs no project-membership exception.
+// World > Scripts readout text: pure functions of one `ScriptsSnapshot`, so the wording
+// is tested without AppKit, Metal or an install. No AppKit import, so the CLI builds it.
 
 import OpenSkyScriptingInterface
 
@@ -30,12 +21,8 @@ nonisolated public enum ScriptsReadout: Sendable {
         """
     }
 
-    /// Quest script instances, the quests behind them, and stage-fragment
-    /// dispatch (issue #322).
-    ///
-    /// Running quests and quests with instances are two different numbers on
-    /// purpose: a quest that carries no scripts runs perfectly well without
-    /// any, so the gap between them is information rather than an error.
+    /// Quest script instances, their quests, and stage-fragment dispatch. Running quests
+    /// and quests with instances differ on purpose: a quest needs no scripts to run.
     public static func questsText(for snapshot: ScriptsSnapshot) -> String {
         [
             "Running quests: \(snapshot.runningQuestCount)"
@@ -51,14 +38,9 @@ nonisolated public enum ScriptsReadout: Sendable {
         ].joined(separator: "\n")
     }
 
-    /// One quest's alias table (issue #183), one line per alias in the order
-    /// the quest fills them.
-    ///
-    /// An empty alias reads as "empty" beside the fill type that was supposed
-    /// to fill it, so an unimplemented fill type and a fill that genuinely
-    /// found nothing are told apart on screen rather than both reading as a
-    /// blank. A quest that is not running shows every alias empty, which is
-    /// what the Creation Kit describes rather than a fault.
+    /// One quest's alias table, one line per alias in fill order. An empty alias shows
+    /// its fill type, so an unimplemented type differs from an empty result. A stopped
+    /// quest shows all aliases empty.
     public static func questAliasText(
         for table: ScriptQuestAliasInspection?,
         editorID: String

@@ -103,12 +103,8 @@ public struct DialogueRuntime: DialogueAccess {
 
     // MARK: - Private
 
-    /// One pass over `topics`, ordered and traced.
-    ///
-    /// Every topic is evaluated even once several have won, because the tally
-    /// and the rejected list are results in their own right: item 17.8 has to
-    /// explain why a line the player expected did not appear, and a
-    /// short-circuit would leave exactly that case unexplained.
+    /// One pass over `topics`, ordered and traced. Every topic is evaluated, even after
+    /// winners, so the tally can explain why an expected line did not appear.
     private func select(topics: [DialogueTopic], speaker: ReferenceKey) -> DialogueSelection {
         var evaluator = ConditionEvaluator(
             context: context, registry: registry, tally: ConditionTally()

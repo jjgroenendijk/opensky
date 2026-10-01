@@ -1,16 +1,8 @@
-// Bridges a framed xWMA container to the WMA decoder, including the extradata
-// policy the container parser deliberately does not own (docs/formats/xwm.md).
-//
-// Vanilla Skyrim SE `.xwm` carries `cbSize == 0`, so `XWMCodecParameters.extraData`
-// is empty, while ffmpeg's WMAv2 decoder reads its stream configuration flags from
-// extradata. FFmpeg's own xWMA demuxer solves this by synthesizing a six-byte
-// WMAv2 extradata block with byte 4 set to 31, described in its source as an
-// experimentally obtained value:
-//   https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/xwma.c
-// OpenSky applies the same substitution here, at the decode boundary. Verified
-// against the real install 2026-07-25: with the synthesized block every vanilla
-// file decodes to exactly the frame count its `dpds` table declares; see
-// docs/engine/audio-decoding.md.
+// Bridges a framed xWMA container to the WMA decoder. Vanilla `.xwm` has
+// `cbSize == 0`, but ffmpeg's WMAv2 decoder reads flags from extradata, so this
+// synthesizes the six-byte block with byte 4 = 31, as ffmpeg's xwma.c demuxer does.
+// With it every vanilla file decodes to its `dpds` frame count.
+// See docs/formats/xwm.md and docs/engine/audio-decoding.md.
 
 import Foundation
 import OpenSkyFormatsAudio

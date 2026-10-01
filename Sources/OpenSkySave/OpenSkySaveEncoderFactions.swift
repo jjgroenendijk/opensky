@@ -1,14 +1,5 @@
-// FCTN chunk writing for the OpenSky native save container (issue #503).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the PRKS and SPLB
-// writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// Per actor, in order: the key, the cell, then the membership list. The list is
-// written in the component's own ascending faction-key order, which
-// `ActorFactionState.init` establishes, so re-encoding an unchanged membership
-// set produces identical bytes.
+// FCTN chunk writing. Per actor: key, cell, then memberships in the ascending order
+// `ActorFactionState.init` sets, so an unchanged set re-encodes identically.
 
 import Foundation
 import OpenSkyFactionsInterface

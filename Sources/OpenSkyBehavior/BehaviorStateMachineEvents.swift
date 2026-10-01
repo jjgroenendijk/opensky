@@ -1,15 +1,6 @@
-// The event, condition, and reporting half of state-machine evaluation
-// (issue #330). Split from `BehaviorStateMachineEvaluation.swift` so neither
-// file passes the length limit.
-//
-// Three things live here. The notify events a state raises on entry and exit,
-// including the ones a machine raises when it is deactivated mid-state. The
-// condition gate, which parses `m_condition` once per object and answers false
-// when it cannot — a wrong answer fires a wrong transition, so an unresolvable
-// condition blocks rather than defaults. And the four machine-level event ids
-// (`m_returnToPreviousStateEventId` and friends), which the vanilla player
-// graph barely uses: of 530 machines in the two mt_behavior files, four name a
-// random-transition event and none name the other three.
+// The event and condition half of state-machine evaluation: enter and exit notify
+// events, the condition gate (an unparsable `m_condition` blocks, so no wrong transition
+// fires), and the four machine-level event ids, which vanilla barely uses.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -54,13 +45,9 @@ nonisolated extension BehaviorGraphInstance {
 
     // MARK: - Conditions
 
-    /// True when a transition's condition permits it to fire.
-    ///
-    /// `FLAG_DISABLE_CONDITION` is set by the exporter on every transition that
-    /// carries no condition object, so it is checked first and the null pointer
-    /// is a permit rather than a block. A condition that will not parse, or
-    /// that names a variable this graph does not declare, blocks and is
-    /// tallied.
+    /// True when a transition's condition permits it. `FLAG_DISABLE_CONDITION` marks
+    /// "no condition" and is checked first. An unparsable condition or unknown variable
+    /// blocks and is tallied.
     public func isConditionMet(_ info: HKBStateMachineTransitionInfo) -> Bool {
         guard info.flags & BehaviorTransitionFlag.disableCondition == 0 else { return true }
         guard let target = info.condition else { return true }

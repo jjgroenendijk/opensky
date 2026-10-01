@@ -1,32 +1,7 @@
-// Bounds on everything a fight spawns (issue #374, roadmap item 15.7, scope
-// point 5).
-//
-// Four populations grow while a fight runs and none of them shrinks on its own:
-// arrows in flight, arrows standing in what they hit, corpses simulating, and
-// clutter the fight knocked awake. Left alone, a long session in one room ends
-// with a thousand of each, and the frame budget the milestone gate measures
-// stops meaning anything.
-//
-// The numbers are OpenSky's, not Bethesda's. Vanilla's own caps live in its
-// code rather than in any record this engine reads, and there is no open source
-// that states them, so inventing a number and citing it would be worse than
-// choosing one and saying it was chosen. Each is picked from what the engine
-// can actually carry at frame rate — the 15.2 clutter stress and the 15.6
-// repeated-collapse stress are the measurements behind them — and is stated on
-// its own field.
-//
-// Trimming order is per population, and the difference is worth stating because
-// only two of the three registries know what "oldest" means. Projectiles and
-// ragdolls do — both are appended to in spawn order — so those trim oldest
-// first. Dynamic bodies do not: a body is placed by its cell build and carries
-// no spawn time, so the awake cap sleeps them in ascending `ReferenceKey`, the
-// registry's own order everywhere else.
-//
-// Nothing here deletes what a player is looking at. A capped corpse stops
-// simulating and falls back to the resting transform its death state recorded;
-// a capped body sleeps where it stands. The cap costs motion, not position.
-//
-// Documented in docs/engine/combat.md.
+// Caps on what a fight spawns: flying arrows, stuck arrows, simulating corpses, awake
+// clutter. Our numbers, sized from the clutter and ragdoll stress tests. Arrows and
+// ragdolls trim oldest first; bodies have no spawn time, so they sleep by `ReferenceKey`.
+// A cap stops motion, never moves anything. See docs/engine/combat.md.
 
 import Foundation
 

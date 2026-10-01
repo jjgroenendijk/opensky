@@ -1,17 +1,7 @@
-// The dynamic SWF path (M8.3.2): bringing a movie's ActionScript up, ticking
-// it, and pushing the resulting draw-command stream into the already-built GPU
-// package.
-//
-// `setSWFMovie` stays the heavy call — it tessellates every shape, uploads
-// every bitmap, and bakes the gradient ramp. `updateSWFScene` is the cheap one:
-// it re-plans draw ops, uniforms, and text runs from a new command stream and
-// keeps every static GPU resource, which is what makes per-frame AS2 mutation
-// affordable.
-//
-// The layer is driven by an explicit tick and nothing else. `advanceSWFRuntime`
-// is the only thing that moves a playhead; a renderer that never calls it
-// produces byte-identical frames forever, which is the determinism contract in
-// docs/rendering/swf-layer.md.
+// The dynamic SWF path: start a movie's ActionScript, tick it, and push the draw
+// commands into the built package. `updateSWFScene` re-plans cheaply; `setSWFMovie` is
+// the heavy build. Only `advanceSWFRuntime` moves a playhead, so frames are
+// deterministic (docs/rendering/swf-layer.md).
 
 import Metal
 import OpenSkyFormatsSWF
@@ -23,14 +13,9 @@ extension Renderer {
         swf.runtime
     }
 
-    /// Brings the assigned movie's ActionScript up — every `DoInitAction`
-    /// block, then frame 1, then that frame's `DoAction` — and pushes the
-    /// display list it produced. Returns nil when no movie is assigned.
-    ///
-    /// `prepare` runs on the fresh runtime *before* `start()`. Bring-up is the
-    /// first thing that calls out to the host — `startmenu.swf` makes 24
-    /// `myLog` calls inside its own `DoInitAction` blocks — so a host surface
-    /// installed after this returns arrives too late to answer them.
+    /// Starts the movie's ActionScript (`DoInitAction`, frame 1, `DoAction`) and pushes its
+    /// display list. Nil without a movie. `prepare` runs before `start()`, because bring-up
+    /// already calls the host (`startmenu.swf` logs 24 times).
     @discardableResult
     public func startSWFRuntime(
         limits: AS2Limits = .standard,

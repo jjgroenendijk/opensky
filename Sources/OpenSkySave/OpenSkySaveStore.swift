@@ -1,17 +1,6 @@
-// Named save slots on top of the OpenSky native save container (issue #162,
-// roadmap item 10.1.5).
-//
-// The encoder, decoder and atomic writer from issue #161 each do one thing and
-// none of them knows where a save lives or what it is called. This type is the
-// small amount of glue between them and a user who thinks in slot names: it
-// turns a name into a URL, refuses names that would escape the saves
-// directory, and reports every failure as a typed error so a panel can show
-// what went wrong without a crash.
-//
-// Nothing here is main-actor bound. A save is a value plus a file, so the CLI
-// and a background task can use this exactly like the app does.
-//
-// Documented in docs/formats/opensky-save.md.
+// Named save slots over the encoder, decoder and atomic writer: a name becomes a URL,
+// names that escape the saves directory are refused, and failures are typed. Not
+// main-actor bound, so the CLI can use it. See docs/formats/opensky-save.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -109,15 +98,8 @@ nonisolated public struct OpenSkySaveStore {
 
     // MARK: - Saving and loading
 
-    /// Encodes and atomically writes `snapshot` to `slot`.
-    ///
-    /// The generated-key allocator is not a separate parameter: its entire
-    /// state is one number, the snapshot already carries it as
-    /// `nextGeneratedSequence`, and the decoder rebuilds
-    /// `OpenSkySaveFile.allocator` from that same number. Passing an allocator
-    /// alongside a snapshot would make it possible to save two positions that
-    /// disagree.
-    ///
+    /// Encodes and atomically writes `snapshot` to `slot`. The key allocator travels as
+    /// `nextGeneratedSequence`, so no second value can disagree with it.
     /// - Returns: the file that was written.
     @discardableResult
     public func save(
@@ -203,16 +185,9 @@ nonisolated extension OpenSkySaveStore {
         )
     }
 
-    /// Fingerprint of an already-resolved load order.
-    ///
-    /// Only the TES4 record of each plugin is decoded, which is one small
-    /// record at the head of a memory-mapped file, so fingerprinting a full
-    /// load order costs no more than opening it.
-    ///
-    /// - Throws: `OpenSkySaveStoreError.unreadablePlugin` naming the first
-    ///   plugin that could not be read or parsed. A save written against a
-    ///   load order that was only partly readable would verify against
-    ///   nothing, so this fails rather than skipping the entry.
+    /// Fingerprint of a resolved load order; decodes only each TES4 record. Throws
+    /// `OpenSkySaveStoreError.unreadablePlugin` for the first unreadable plugin, because
+    /// a partial fingerprint would verify against nothing.
     public static func fingerprint(
         forPlugins entries: [PluginLoadOrder.Entry]
     ) throws -> [SavePluginFingerprint] {

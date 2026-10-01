@@ -16,8 +16,8 @@ nonisolated public protocol ActorValueReadable {
     var maximums: ActorValues { get }
     /// Values this actor has moved off its baseline, resolved against it.
     var general: [Int32: ActorValueEntry] { get }
-    /// Base values this actor's records author, keyed by vanilla index. The
-    /// primaries are in here too since item 20.3, at their derived maximums.
+    /// Base values this actor's records author, keyed by vanilla index. Primaries are
+    /// included, at their derived maximums.
     var generalBaseline: [Int32: Float] { get }
 }
 

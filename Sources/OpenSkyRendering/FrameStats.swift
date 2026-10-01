@@ -1,12 +1,7 @@
-// CPU + GPU frame statistics (todo 2.6): rolling window, one log line per
-// window — the measurable basis for the milestone 2.9 ">30 fps sustained"
-// gate; never judged by eye. CPU side times the encode work and the
-// frame-to-frame interval; GPU side consumes MTL4 counter-heap timestamp
-// ticks, converted to wall time via MTLDevice.sampleTimestamps correlation
-// pairs taken at window boundaries (GPU ticks are not nanoseconds).
-// A second, shorter window runs in parallel purely to feed live readouts
-// (`snapshot()`); it accumulates the same measurements on its own cadence and
-// never touches the 120-frame window's state.
+// CPU and GPU frame statistics over a rolling 120-frame window, one log line each; the
+// measured basis for frame-rate gates. GPU ticks come from the MTL4 counter heap and
+// convert to time through `sampleTimestamps` pairs. A shorter parallel window feeds
+// `snapshot()` for live readouts.
 
 import Foundation
 import Metal

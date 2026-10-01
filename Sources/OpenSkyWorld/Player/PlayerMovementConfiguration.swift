@@ -1,11 +1,7 @@
-// Immutable controller tuning resolved once at setup. The controller never
-// reaches back into game data, which keeps fixed-step simulation deterministic.
-//
-// Every value carries the name of where it came from, so a readout can say
-// "this is Skyrim.esm's number" or "this is an OpenSky fallback" rather than
-// presenting both as the same kind of fact. Walk and run come from GMSTs; the
-// sneak, sprint, and swim gaits have no GMST and come from the MOVT records the
-// player's gaits are authored in (docs/formats/records.md).
+// Controller tuning, resolved once at setup, so the fixed step never reads game data.
+// Each value names its source, so a readout can tell Skyrim.esm data from an OpenSky
+// fallback. Walk and run come from GMSTs; sneak, sprint and swim from MOVT records
+// (docs/formats/records.md).
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -14,7 +10,7 @@ import OpenSkyPhysics
 nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
     public let walkSpeed: MovementSetting
     public let runSpeed: MovementSetting
-    /// Sprint gait, `NPC_Sprinting_MT` forward run in vanilla (issue #188).
+    /// Sprint gait, `NPC_Sprinting_MT` forward run in vanilla.
     public let sprintSpeed: MovementSetting
     /// Sneak gait, `NPC_Sneaking_MT` forward run.
     public let sneakSpeed: MovementSetting
@@ -25,11 +21,8 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
     /// `fJumpHeightMin` states and the controller's own gravity.
     public let jumpTakeoffSpeed: MovementSetting
 
-    /// The gaits added in item 14.5 default to ratios of the two that came
-    /// before them, so a caller that only knows about walk and run — a
-    /// synthetic scene, a benchmark — still builds a complete configuration.
-    /// Nothing resolving from real data uses these defaults; `resolve` passes
-    /// every field.
+    /// Sneak, sprint and swim default to ratios of walk and run, so a synthetic scene or
+    /// benchmark still builds a full configuration. `resolve` sets every field.
     public init(
         walkSpeed: MovementSetting,
         runSpeed: MovementSetting,
@@ -116,13 +109,8 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
         )
     }
 
-    /// Takeoff speed for the jump height the data states.
-    ///
-    /// `fJumpHeightMin` is a height in world units (76 in Skyrim.esm), not a
-    /// speed, so it converts through the controller's own gravity: reaching
-    /// height `h` under constant gravity `g` needs `sqrt(2 g h)`. That keeps
-    /// the apex on the authored number instead of on a hand-tuned impulse, and
-    /// it stays right if either the GMST or the gravity constant changes.
+    /// Takeoff speed for the data's jump height. `fJumpHeightMin` is a height (76 in
+    /// Skyrim.esm), so the speed is `sqrt(2 g h)` with the controller's own gravity.
     private static func jumpTakeoff(store: GameSettingStore) -> MovementSetting {
         let height = float(
             editorID: "fJumpHeightMin",

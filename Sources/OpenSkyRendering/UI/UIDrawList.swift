@@ -1,7 +1,5 @@
-// Immediate-mode UI draw-list builder (M8.1.1). Produces a flat triangle-list
-// of UIVertex (pixel position, atlas uv, straight RGBA). Solid quads sample the
-// atlas white texel so one pipeline draws fills, strokes, and text. Pure value
-// type, unit-testable without Metal.
+// Immediate-mode UI draw-list builder: a flat triangle list of `UIVertex`. Solid quads
+// sample the atlas white texel, so one pipeline draws fills and text. Testable without Metal.
 
 import OpenSkyShaderTypes
 import simd
@@ -25,8 +23,8 @@ nonisolated public struct UIDrawStats: Equatable, Sendable {
     public var atlasGlyphs = 0
     /// Occupied fraction of the atlas, 0...1.
     public var atlasOccupancy: Float = 0
-    /// Glyphs dropped because the atlas was full, since the last eviction.
-    /// Non-zero means text is missing from the frame (issue #127).
+    /// Glyphs dropped because the atlas was full, since the last eviction. Non-zero means
+    /// text is missing from the frame.
     public var atlasPackFailures = 0
 
     public init(

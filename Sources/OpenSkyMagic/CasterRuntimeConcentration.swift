@@ -1,18 +1,6 @@
-// Maintained casts (issue #470, roadmap item 19.7): the half of the cast loop
-// that drains magicka for as long as a concentration spell is held, applies its
-// effect list once a second, and stops when the pool runs dry or the release is
-// due.
-//
-// A satellite of `CasterRuntime` so that type stays under the strict-lint body
-// cap, and along a real seam: everything in the parent is a cast that happens
-// at an instant, and everything here is a cast that happens over time.
-//
-// The cadence is UESP's rule rather than a chosen one: "Concentration spells do
-// not have a set duration. Rather, the duration is determined by how long you
-// hold the casting trigger."
-// (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>)
-//
-// Documented in docs/engine/spellcasting.md.
+// Maintained casts: drain magicka while a concentration spell is held, apply its
+// effects once a second, and stop when magicka runs out or the release is due
+// (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>). See docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyActorsInterface

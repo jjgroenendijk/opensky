@@ -1,12 +1,7 @@
-// Orders the .bsa archives the engine opens, mirroring the game's rules:
-// ini resource lists first, then archives named after plugins present in
-// `Data/`. Later archives take priority over earlier ones on conflicting
-// paths; loose files beat every archive (see VirtualFileSystem).
-//
-// Reference: UESP "Skyrim Mod:Archive File Format" (load-order notes) —
-//   https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format
-// Vanilla resource lists observed in Skyrim_Default.ini shipped with SSE 1.6.
-// Full resolution rules + provisional plugin ordering: docs/formats/vfs.md.
+// Orders the .bsa archives like the game: ini resource lists first, then archives
+// named after plugins in `Data/`. Later archives win on a path conflict; loose files
+// beat all archives. Source: UESP "Skyrim Mod:Archive File Format"; vanilla lists from
+// Skyrim_Default.ini (SSE 1.6). See docs/formats/vfs.md.
 
 import Foundation
 import OSLog
@@ -51,15 +46,9 @@ nonisolated public enum ArchiveLoadOrder: Sendable {
         "Dragonborn.esm"
     ]
 
-    /// Resolves the ordered archive list for one install. First = opened
-    /// first = lowest lookup priority. Names resolve case-insensitively
-    /// against the on-disk `Data/` listing; listed-but-absent archives are
-    /// logged and skipped (vanilla ini lists "Skyrim - Patch.bsa", which
-    /// current installs no longer ship).
-    /// - Parameter pluginOrder: the resolved plugin load order
-    ///   (`PluginLoadOrder`), lowest priority first. Plugin-named archives
-    ///   follow it; anything in `Data/` the order does not name keeps the
-    ///   alphabetical tail described in `pluginArchiveCandidates`.
+    /// The ordered archive list, lowest priority first. Names match `Data/`
+    /// case-insensitively; a listed but absent archive is logged and skipped.
+    /// Plugin archives follow `pluginOrder`, then the alphabetical tail.
     public static func resolve(installURL: URL, dataURL: URL, pluginOrder: [String] = []) -> [URL] {
         let contents = (try? FileManager.default.contentsOfDirectory(
             atPath: dataURL.path(percentEncoded: false)
@@ -120,16 +109,9 @@ nonisolated public enum ArchiveLoadOrder: Sendable {
             .filter { !$0.isEmpty } ?? []
     }
 
-    /// `<plugin>.bsa` + `<plugin> - Textures.bsa` for each plugin in `Data/`
-    /// (SSE auto-load convention, UESP archive notes), in `pluginOrder` first
-    /// and then whatever `Data/` holds that the order did not name,
-    /// alphabetically.
-    ///
-    /// The game loads an archive only for an active plugin. OpenSky keeps the
-    /// unnamed tail instead of dropping it, because a machine with no
-    /// plugins.txt to find would otherwise lose every mod archive it can
-    /// currently read; the tail sits at the lowest priority, below everything
-    /// the load order does name (docs/formats/plugins-txt.md).
+    /// `<plugin>.bsa` and `<plugin> - Textures.bsa` in `pluginOrder`, then the rest of
+    /// `Data/` alphabetically. The game skips inactive plugins; this keeps them at the
+    /// lowest priority, so mods still load without plugins.txt (docs/formats/plugins-txt.md).
     private static func pluginArchiveCandidates(
         dataContents: [String],
         pluginOrder: [String]

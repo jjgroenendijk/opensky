@@ -1,12 +1,6 @@
-// One lookup layer over the game data root. Per-lookup resolution order:
-//   1. Loose files under `Data/` (modding convention: loose overrides archives)
-//   2. Archives, last-opened wins (plugin archives override base archives)
-//
-// Keys are case-insensitive and separator-insensitive ("/" == "\") because
-// records reference resources with inconsistent casing and separators.
-// Archives open lazily on first lookup; a malformed archive is logged and
-// skipped, never fatal (mod-quirk rule, AGENTS.md). Full rules + references:
-// docs/formats/vfs.md.
+// One lookup layer over the data root: loose files under `Data/` first, then
+// archives, last opened wins. Keys ignore case and separator. Archives open lazily; a
+// malformed one is logged and skipped. See docs/formats/vfs.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -122,13 +116,9 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
         return result.sorted { $0.path < $1.path }
     }
 
-    /// Canonical VFS keys of files directly inside `directory` (one level, no
-    /// recursion), from loose files and every archive combined. Loose and
-    /// archive contributions union — either source makes the path resolvable via
-    /// `contents(forPath:)`; a loose file still wins the actual read. For
-    /// subsystems that must discover a known bounded directory (e.g.
-    /// Interface/Translations) without walking all of `Data/`. Opens every
-    /// archive, so callers use it sparingly. Sorted for stable output.
+    /// Sorted VFS keys of files directly inside `directory`, from loose files and all
+    /// archives. Opens every archive, so use it only for small known folders such as
+    /// Interface/Translations.
     public func fileNames(inDirectory directory: String) -> [String] {
         guard let normalized = try? Self.normalize(directory) else { return [] }
         let prefix = normalized + "\\"

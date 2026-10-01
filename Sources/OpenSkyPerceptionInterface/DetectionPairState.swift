@@ -1,29 +1,9 @@
-// What one observer currently makes of one target (issue #202, roadmap item
-// 16.6): a level that climbs while something is being perceived and decays
-// while nothing is, the three states that level is read as, and the position an
-// alerted actor would go and look at.
-//
-// ## Why a level and not a boolean
-//
-// Detection in vanilla is described as "an entire system of Stealth Points,
-// like hit points but for stealth" (UESP "Skyrim:Sneak"), and every visible
-// behaviour depends on that continuity: the eye opening gradually, a guard
-// glancing over and going back to work, an alerted guard spotting you faster
-// the second time. A boolean recomputed per frame gives none of that and
-// flickers on every doorway the sight line clips.
-//
-// The rates are OpenSky's — no record documents vanilla's — so they are named
-// constants on `DetectionSettings` rather than literals here.
-//
-// ## Determinism
-//
-// `advance(by:)` is a pure function of the previous state, the inputs and the
-// elapsed seconds. It never reads a clock and never samples anything, so the
-// same sequence of steps always produces the same level. That is what lets the
-// runtime evaluate a pair every eighth step, hand it the elapsed time since it
-// was last looked at, and get the same answer as if it had run every step.
-//
-// Documented in docs/engine/detection.md.
+// What one observer makes of one target: a level that climbs while it perceives
+// and decays while it does not, read as three states. A level, not a boolean, so
+// the eye opens gradually and a clipped doorway does not flicker (UESP
+// "Skyrim:Sneak"). The rates are ours, on `DetectionSettings`. `advance(by:)` is
+// pure, so stepping a pair every eighth step gives the same answer as every step.
+// See docs/engine/detection.md.
 
 import Foundation
 import simd

@@ -1,17 +1,6 @@
-// ECHG chunk writing for the OpenSky native save container (issue #472).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the SPLB, AEFF, AVAL
-// and DETH writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// Per owner, in order: the key, the cell, the charge list as `(item FormID,
-// remaining charge)` pairs, then the worn-item list as `(item FormID, sequence
-// count, sequences)` groups.
-//
-// Both lists are written in ascending FormID order and the sequences inside a
-// group ascend, which `EnchantedItemState.init` establishes, so re-encoding an
-// unchanged owner produces identical bytes.
+// ECHG chunk writing. Per owner: key, cell, `(item FormID, charge)` pairs, then
+// `(item FormID, count, sequences)` worn groups. `EnchantedItemState.init` sorts both,
+// so an unchanged owner re-encodes identically.
 
 import Foundation
 import OpenSkyFormatsCore

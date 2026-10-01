@@ -16,8 +16,7 @@ nonisolated public struct NIFCollisionAssetReport: Sendable {
     public let triangleCount: Int
     public let filteredBodyCount: Int
     public let unsupportedReachableBlocks: [String: Int]
-    /// Havok material value -> how many shapes name it (issue #358). Shapes
-    /// carrying no material are absent rather than counted under zero.
+    /// Havok material value -> how many shapes name it. Shapes without one are absent.
     public let shapeMaterials: [UInt32: Int]
     public let decodeFailures: [NIFCollisionFailure]
     public let collisionBounds: ModelBounds?

@@ -1,4 +1,4 @@
-// Interior crossing + paired exterior return for M4.5 walk benchmark.
+// Interior crossing and paired exterior return for the walk benchmark.
 
 import OpenSkyGameData
 import OpenSkyRendering

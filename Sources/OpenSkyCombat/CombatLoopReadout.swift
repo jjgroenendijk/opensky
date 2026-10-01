@@ -1,15 +1,6 @@
-// Combat-loop readout lines (issues #374 and #424, roadmap items 15.7 and
-// 16.7), formatted here rather than in the panel section for the reason
-// `RagdollReadout`, `ArcheryReadout` and `MeleeCombatReadout` are: a string a
-// milestone gate asserts on belongs in the engine target, where a unit test can
-// reach it without a window.
-//
-// The dev-target line is gone with the dev target. What replaced it is one line
-// per fighting actor — who, in which phase, how far away, how hurt, and what it
-// currently makes of the player — which is scope point 8's "real per-actor
-// combat readout" and what item 16.8's gate panel is written against.
-//
-// Documented in docs/engine/combat.md.
+// Combat-loop readout lines, formatted in the engine target so a unit test can check
+// them without a window: one line per fighting actor with its phase, distance, health
+// and regard for the player. See docs/engine/combat.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -33,8 +24,7 @@ nonisolated public struct CombatActorReadout: Equatable, Sendable {
     public let contactCount: Int
     public let blockCount: Int
     public let searchCount: Int
-    /// Casts begun since it first fought, and how many spells it could cast
-    /// from where it is standing right now (issue #473).
+    /// Casts begun since it first fought, and how many spells it could cast from here now.
     public let castCount: Int
     public let spellOptionCount: Int
 
@@ -105,7 +95,7 @@ nonisolated public enum CombatLoopReadout: Sendable {
             + situation + " — " + counts
     }
 
-    /// Whether fighters may cast, and what casting they have done (issue #473).
+    /// Whether fighters may cast, and what casting they have done.
     public static func castingText(for snapshot: CombatLoopSnapshot) -> String {
         guard snapshot.isAvailable else { return "AI casting: unavailable" }
         guard snapshot.isActorCastingEnabled else {

@@ -1,39 +1,8 @@
-// What a swing connects with (issue #195, roadmap item 15.4, scope points 4
-// and 5).
-//
-// The swing volume is a `ShapeSweepQuery` and the targets are actor capsules,
-// so the narrowphase is capsule against capsule: the shortest distance between
-// two segments, compared against the sum of the radii. That is exact rather
-// than conservative, and it is the one place a sweep against *actors* differs
-// from `ShapeSweeper`, which answers against placed static geometry and grows
-// triangles and hulls to do it.
-//
-// The sweep is sampled the way `ShapeSweeper` samples: a fixed number of steps
-// along the travel, nearest touching sample wins, ties broken on the lower
-// reference. There is no bisection, and that is deliberate — 15.2 refines the
-// touch distance because a tunneling guard and a contact solver need the exact
-// moment of contact, whereas a swing needs to know *whether* it connected and
-// roughly where, and a quarter-unit error in "where" is invisible. Sampling
-// alone also keeps the whole query a pure function of a small array, which is
-// what makes the two-overlapping-targets acceptance test a plain unit test.
-//
-// Filtering, in the order the issue states it:
-//
-// 1. Actors only. The caller supplies the target list, so a barrel is never in
-//    it; this type does not know what a barrel is.
-// 2. Never the attacker. Matched on `ReferenceKey`, not on distance — an
-//    attacker whose own capsule the swing starts inside would otherwise be the
-//    nearest thing to it every single time.
-// 3. At most one hit per swing per target. Held by swing id rather than by
-//    time, so a graph that fires two `HitFrame` annotations in one attack (the
-//    census shows `2_HitFrame` beside `HitFrame`) still lands one hit, while
-//    the next swing hits the same target again.
-//
-// Every target the swing reaches is returned, not just the nearest: a two-
-// handed sweep through a crowd hits the crowd, and picking one would be a
-// gameplay rule invented here rather than read from anywhere.
-//
-// Documented in docs/engine/melee-combat.md.
+// What a swing hits: a swept capsule against actor capsules, sampled in fixed steps.
+// No bisection, because a swing needs "whether", not the exact moment. The caller
+// passes actors only; the attacker is skipped by `ReferenceKey`; each target is hit
+// once per swing id. Every target reached is returned, so a sweep hits a crowd.
+// See docs/engine/melee-combat.md.
 
 import OpenSkyFormatsESM
 import simd
@@ -56,15 +25,8 @@ nonisolated public enum MeleeHitDetector: Sendable {
     /// the spacing is under 6 units against a 24-unit capsule radius.
     public static let sampleCount = 24
 
-    /// Every target `swing` reaches, nearest first, ties broken on the lower
-    /// reference so two coincident targets always come back in the same order.
-    ///
-    /// - Parameters:
-    ///   - swing: the volume from `MeleeSwing.volume(feet:capsule:facing:reach:)`.
-    ///   - targets: the actors in range. The caller filters to actors; this
-    ///     filters out `attacker`.
-    ///   - attacker: the swinging reference, never hit by its own swing.
-    ///   - alreadyHit: targets this swing has already landed on.
+    /// Every target `swing` reaches, nearest first, ties on the lower reference.
+    /// `attacker` and `alreadyHit` are skipped.
     public static func hits(
         swing: ShapeSweepQuery,
         targets: [MeleeTarget],

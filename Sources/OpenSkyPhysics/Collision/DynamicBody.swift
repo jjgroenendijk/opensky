@@ -1,15 +1,7 @@
-// One simulated rigid body: the immutable inertial description built from
-// decoded Havok data, and the mutable state the integrator advances (issue
-// #193, roadmap item 15.2).
-//
-// Working units are the engine's, not Havok's. Lengths are Skyrim units,
-// time is seconds, mass is kilograms, so gravity is `WalkController.gravity`
-// and a metre-denominated field out of `NIFRigidBodyDynamics` is converted
-// once, here, by `NIFCollisionModel.havokToEngineScale`. Inertia carries
-// length squared and so converts by the square of it. Doing this at the
-// boundary is why nothing below has to remember which unit a number is in.
-//
-// Documented in docs/engine/dynamic-bodies.md.
+// One simulated rigid body: the inertial definition from Havok data and the state the
+// integrator advances. Units are the engine's (Skyrim units, seconds, kg); metre fields
+// convert once here by `NIFCollisionModel.havokToEngineScale`, inertia by its square.
+// See docs/engine/dynamic-bodies.md.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -75,27 +67,9 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
     public static let defaultMaximumLinearSpeed: Float = 8000
     public static let defaultMaximumAngularSpeed: Float = 40
 
-    /// One simulated rigid body for a whole placed reference, from every
-    /// simulated `bhkRigidBody` its model carries, at the reference's uniform
-    /// XSCL scale.
-    ///
-    /// It is deliberately *one* body per reference rather than one per decoded
-    /// `bhkRigidBody`. A reference has a single `ReferenceKey`, a single drawn
-    /// placement, and a single `.transform` component to persist into; a model
-    /// whose several bodies were registered separately would collide on all
-    /// three. Where a model does carry several — a cupboard with its doors — the
-    /// bodies are welded into one rigid body: the masses add, the centre of mass
-    /// is their mass-weighted mean, and every shape joins the collider. That is
-    /// the right answer until joints are solved (item 15.6), because an
-    /// unjointed multi-body model would otherwise fly apart.
-    ///
-    /// Everything stays in the reference's own model space — each body's
-    /// model-local transform is folded in, the placement's rotation and
-    /// translation are not, because those are the pose `DynamicBody` integrates
-    /// and a definition is shared across steps.
-    ///
-    /// Nil where nothing is simulable: no body has a known simulated motion
-    /// system with a positive finite mass, or no convex volume survived.
+    /// One body per placed reference, at its XSCL scale, because a reference has one key,
+    /// one placement and one `.transform`. Several `bhkRigidBody` blocks are welded: masses
+    /// add, shapes join. Model space; nil when nothing has positive mass and convex volume.
     public init?(
         bodies: [NIFCollisionBody],
         referenceScale: Float,
@@ -216,14 +190,8 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
         boundingRadius = volumes.reduce(0) { max($0, $1.boundingRadius) }
     }
 
-    /// The decoded tensor where it inverts cleanly, and the collider's own box
-    /// approximation where it does not.
-    ///
-    /// Vanilla writes an inertia tensor for every dynamic body, but a modded or
-    /// truncated one can be singular or scaled for a different unit system, and
-    /// a bad tensor makes a body spin without bound. Falling back to a tensor
-    /// derived from the shape the solver is actually going to collide keeps
-    /// such a body plausible instead of explosive.
+    /// The decoded tensor when it inverts cleanly, else the collider's box estimate. A
+    /// singular or mis-scaled modded tensor would make a body spin without bound.
     private static func resolvedInverseInertia(
         of dynamics: NIFRigidBodyDynamics,
         volumes: [DynamicCollisionVolume],
@@ -343,16 +311,9 @@ nonisolated public struct DynamicBody: Sendable {
         MatrixMath.translation(position) * float4x4(orientation)
     }
 
-    /// How far this body has moved from the pose its cell build drew it at, as
-    /// the rigid transform that carries the one onto the other (issue #193).
-    ///
-    /// A cell build bakes `T(position) * R(rotation) * S(scale)` into every
-    /// instance matrix, and a body's own placed pose is the same translation
-    /// and rotation without the scale. So `delta * baked` is the live matrix
-    /// for every mesh of the reference, whatever the scale and whatever local
-    /// transform the mesh carries, and no draw call has to know which is which.
-    /// Nil when nothing has moved, which is the resting case and keeps the map
-    /// the renderer consults empty in a world that is standing still.
+    /// The rigid transform from the built pose to the live one. The build bakes
+    /// `T * R * S`, so `delta * baked` is the live matrix for every mesh. Nil when
+    /// nothing moved, which keeps the renderer's map empty at rest.
     public func instanceDelta(
         fromPlacedPosition placed: SIMD3<Float>,
         orientation placedOrientation: simd_quatf

@@ -1,48 +1,21 @@
-// Mutable world state (issue #159, roadmap item 10.1.2): the one place runtime
-// deviations from plugin data live, and the substrate Papyrus (M11), inventory
-// (M12) and quests (M13) mutate.
-//
-// Scope note: this issue owns storage, dirty tracking, reset, the change
-// journal and the snapshot. Applying deltas during a cell build is #160,
-// serialization is #161 and the sidebar readout is #162.
-//
-// Documented in docs/engine/runtime-state.md.
+// Mutable world state: the one place runtime deviations from plugin data live,
+// mutated by Papyrus, inventory and quests. See docs/engine/runtime-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
-/// Mutable, main-actor-owned store of per-reference runtime state.
-///
-/// Unlike `WeatherStore`, `SoundRecordStore` and `MusicRecordStore` — immutable
-/// read-only indices built once from an `ESMFile` and freely readable from any
-/// thread — this store is mutable for the whole life of a session. It is
-/// therefore `@MainActor`, owned alongside `CellStreamer`, and holds no locks:
-/// the only thing that crosses to the serial cell-build queue is the
-/// `WorldStateSnapshot` value returned by `snapshot()`.
-///
-/// Failure model: no operation on this store throws. Mutating an unknown key is
-/// not an error, because a reference need not be resident, or even plugin
-/// defined, for state to be recorded against it — a script may disable an
-/// object in a cell that has never been loaded. Resetting a clean reference is
-/// likewise a no-op that reports `false` rather than failing. This is runtime
-/// state, not file parsing; there is no malformed input to reject.
-///
-/// Baselines are never stored. A caller that wants the effective state of a
-/// reference passes the `RuntimeReferenceEntry` from the #158 index to
-/// `resolvedState(for:)`, which re-derives the plugin default from the decoded
-/// record every time, so a reset genuinely restores whatever the record now
-/// says.
+/// Main-actor store of per-reference runtime state; only `snapshot()` values cross
+/// threads. Nothing throws: state may be recorded for a key that is not resident.
+/// Baselines are never stored; `resolvedState(for:)` re-derives them from the record.
 @MainActor
 public final class WorldStateStore {
     /// Per-reference deltas. Only dirty references have an entry: clearing the
     /// last component removes the key entirely, which is what keeps
     /// `dirtyCount` honest.
     private var deltas: [ReferenceKey: ReferenceStateDelta] = [:]
-    /// Runtime global-variable overrides (issue #165), keyed by the GLOB
-    /// record's session-stable key. A sibling map rather than a component on a
-    /// reference: a global is not placed anywhere, has no cell, and must not
-    /// drag a cell rebuild behind it when it changes.
+    /// Runtime global overrides, keyed by the GLOB's key. Separate from components,
+    /// because a global has no cell and must not trigger a cell rebuild.
     private var globalValues: [ReferenceKey: GlobalValue] = [:]
     /// Dirty reference count per cell, maintained incrementally so a sidebar
     /// readout costs a dictionary lookup rather than a scan.
@@ -50,40 +23,18 @@ public final class WorldStateStore {
     private var changeJournal: WorldStateJournal
     private var allocator: GeneratedReferenceAllocator
 
-    /// Fires once per journalled mutation with the cell the mutation was
-    /// attributed to (nil when it was not attributed to any cell) and the
-    /// journal sequence a snapshot taken immediately afterwards would carry.
-    ///
-    /// This is how `CellStreamer` learns that a resident scene no longer
-    /// matches the store (issue #160). It deliberately carries no payload
-    /// beyond the location and the sequence: the streamer rebuilds whole
-    /// cells from plugin bytes plus a fresh snapshot rather than patching
-    /// individual instances, so it needs to know only that something changed
-    /// and how recently.
+    /// Fires per journalled mutation with its cell (or nil) and the next snapshot's
+    /// sequence. `CellStreamer` uses it to rebuild stale cells; it needs no payload.
     public var onMutation: ((CellSceneLocation?, UInt64) -> Void)?
 
-    /// Fires once per journalled global mutation with the journal sequence a
-    /// snapshot taken immediately afterwards would carry.
-    ///
-    /// Deliberately separate from `onMutation`, which rebuilds cells. A global
-    /// is not part of any cell's geometry, and a game clock ticking a global
-    /// once a frame through `onMutation` would rebuild the whole resident grid
-    /// every frame. Consumers of global values — the weather chance selection
-    /// (issue #165), conditions (#251), the clock (#164) — refresh their
-    /// `GlobalResolution` from here instead.
+    /// Fires per journalled global mutation with the next snapshot's sequence.
+    /// Separate from `onMutation`, so a clock ticking a global each frame does not
+    /// rebuild every cell. Global readers refresh `GlobalResolution` here.
     public var onGlobalMutation: ((UInt64) -> Void)?
 
-    /// Redirect for writes to the five clock-owned time globals (issue #164).
-    ///
-    /// When set, `setGlobal(_:formID:defaults:)` on `GameHour`,
-    /// `GameDaysPassed`, `GameDay`, `GameMonth` or `GameYear` moves the game
-    /// clock instead of recording an override — one source of truth, no
-    /// stored value to drift from the projection. The handler applies the
-    /// write and returns the value the global projected before it, or nil to
-    /// decline (no clock attached), which falls back to a plain override.
-    /// Redirected writes journal through the globals ring but do not fire
-    /// `onGlobalMutation`: the clock's motion is already continuous for its
-    /// consumers, and firing would reroll the weather on every scrub tick.
+    /// Redirect for writes to `GameHour`, `GameDaysPassed`, `GameDay`, `GameMonth` and
+    /// `GameYear`: the clock moves instead of storing an override. Returns the prior
+    /// value, or nil to decline. Does not fire `onGlobalMutation`, so weather is stable.
     public var onTimeGlobalWrite: ((GameClock.TimeGlobal, Float) -> Float?)?
 
     /// - Parameters:
@@ -122,14 +73,8 @@ public final class WorldStateStore {
 
     // MARK: - Writing components
 
-    /// Records `component` for `key`, attributing it to `cell`.
-    ///
-    /// Writing a value equal to the one already stored is a no-op: nothing is
-    /// journalled and `false` comes back. Writing a value that happens to equal
-    /// the plugin default still marks the reference dirty, because the store
-    /// has no record index to compare against — use `reset(_:for:)` to go back
-    /// to the default.
-    ///
+    /// Records `component` for `key` in `cell`. An equal value is a no-op. A value
+    /// equal to the plugin default still marks the reference dirty; use `reset(_:for:)`.
     /// - Returns: true when the stored state changed.
     @discardableResult
     public func set(
@@ -217,15 +162,8 @@ public final class WorldStateStore {
         globalValues[key]
     }
 
-    /// Writes `value` to a global, coercing it onto the declared type.
-    ///
-    /// A short or long global rounds (see `Global.ValueType.coerce`), so
-    /// writing 3.7 to a short and reading it back yields 4, not 3.7. Writing
-    /// the value that is already stored is a no-op and reports `false`. Writing
-    /// a value that happens to equal the plugin default still counts as an
-    /// override, exactly as with reference components: use `resetGlobal` to go
-    /// back to the default.
-    ///
+    /// Writes `value` to a global, coerced to its type: a short rounds 3.7 to 4. An
+    /// equal value is a no-op; the plugin default still counts as an override.
     /// - Returns: true when the stored value changed.
     @discardableResult
     public func setGlobal(_ value: GlobalValue, for key: ReferenceKey) -> Bool {
@@ -243,13 +181,9 @@ public final class WorldStateStore {
         setGlobal(GlobalValue(type: type, rawValue: raw), for: key)
     }
 
-    /// Writes a raw number to the global `id` names, taking the declared type
-    /// and the session-stable key from `defaults`. A write to a clock-owned
-    /// time global redirects into the game clock via `onTimeGlobalWrite`
-    /// instead of recording an override (issue #164).
-    ///
-    /// - Returns: false when `defaults` defines no such global, as well as when
-    ///   the write is a no-op.
+    /// Writes a raw number to the global `id` names, typed by `defaults`. A time
+    /// global moves the clock through `onTimeGlobalWrite` instead.
+    /// - Returns: false for an unknown global or a no-op write.
     @discardableResult
     public func setGlobal(_ raw: Float, formID id: FormID, defaults: GlobalStore) -> Bool {
         guard let global = defaults.global(id), let key = defaults.key(for: id) else {
@@ -308,11 +242,8 @@ public final class WorldStateStore {
         changeJournal.droppedGlobalCount
     }
 
-    /// The lookup seam conditions (#251), the game clock (#164) and weather
-    /// chance selection read global values through: this session's overrides
-    /// over `defaults`' plugin values. Passing `clock` projects the five
-    /// time globals from it; a consumer reading time builds a fresh
-    /// resolution, because the projection captures the clock at this moment.
+    /// The global lookup seam: session overrides over `defaults`. With `clock`, the
+    /// five time globals are projected from it at this moment.
     public func globalResolution(
         defaults: GlobalStore?, clock: GameClock? = nil
     ) -> GlobalResolution {
@@ -321,26 +252,9 @@ public final class WorldStateStore {
 
     // MARK: - Restoring a saved session
 
-    /// Replaces every delta in the store with `snapshot`'s entries and resumes
-    /// the generated-key allocator at `snapshot.nextGeneratedSequence`, which
-    /// is how a decoded `OpenSkySaveFile` becomes live state (issue #162).
-    ///
-    /// Journal semantics: the replay records no entries and does not advance
-    /// sequence numbering, because the mutations it replays already happened,
-    /// in the session that wrote the save. The retained window is cleared
-    /// instead, so the readout does not mix this session's history with a
-    /// restored world it no longer describes. `droppedJournalEntryCount` is
-    /// untouched for the same reason `clearJournal()` leaves it alone.
-    ///
-    /// Because nothing is journalled, `snapshot()` taken straight afterwards
-    /// equals the snapshot passed in: `WorldStateSnapshot` equality covers the
-    /// entries and the allocator position and deliberately ignores `sequence`.
-    ///
-    /// One unattributed mutation is announced through `onMutation` so every
-    /// resident cell rebuilds against the restored state. `CellStreamer` queues
-    /// a rebuild for each resident cell on an unattributed mutation regardless
-    /// of sequence, so the world catches up even though the sequence did not
-    /// move.
+    /// Replaces every delta with `snapshot`'s and resumes the key allocator, which is
+    /// how a save becomes live. Nothing is journalled and the window is cleared, so
+    /// `snapshot()` equals the input. One unattributed `onMutation` rebuilds all cells.
     public func restore(from snapshot: WorldStateSnapshot) {
         deltas = [:]
         dirtyCountsByCell = [:]
@@ -445,16 +359,8 @@ public final class WorldStateStore {
 
     // MARK: - Snapshot
 
-    /// Deterministic, immutable view of the current state.
-    ///
-    /// Entries are ordered by `ReferenceKey`'s total order, so the result
-    /// depends only on the end state and not on the order the mutations
-    /// arrived in. This value is the only part of the store that crosses to
-    /// another thread.
-    ///
-    /// The journal sequence travels with it as `WorldStateSnapshot.sequence`,
-    /// so a cell built off this value can be compared against later state
-    /// without the builder ever touching the store.
+    /// Deterministic view of the current state, in `ReferenceKey` order. The only
+    /// part that crosses threads; its `sequence` lets a built cell be checked later.
     public func snapshot() -> WorldStateSnapshot {
         WorldStateSnapshot(
             entries: sortedDirtyKeys().compactMap { key in

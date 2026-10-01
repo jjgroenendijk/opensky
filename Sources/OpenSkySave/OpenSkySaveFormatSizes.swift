@@ -1,16 +1,6 @@
-// Lower bounds on the size of one entry inside each OpenSky save chunk.
-//
-// A satellite of `OpenSkySaveFormat` for the reason the AEFF and SPLB writers
-// are satellites of the encoder: the parent is at its file-length cap. Every
-// constant here answers one question the decoder asks before it reserves an
-// array — "can the bytes actually left possibly hold the count this chunk just
-// declared?" — so a corrupt length is a thrown error rather than a
-// multi-gigabyte allocation.
-//
-// They are lower bounds, not sizes, wherever an entry carries something
-// optional: a generated key is longer than a plugin key with an empty name, and
-// a named cell is longer than the "no cell" tag. Where an entry is fixed width
-// the comment says so.
+// Lower bounds on one entry's size per save chunk. The decoder checks a declared count
+// against the bytes left, so a corrupt length throws instead of allocating gigabytes.
+// Bounds, not sizes, where an entry has optional parts; fixed widths are noted.
 
 import Foundation
 

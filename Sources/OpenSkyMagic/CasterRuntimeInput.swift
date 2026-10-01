@@ -1,26 +1,7 @@
-// Cast input (issue #470, roadmap item 19.7): one frame of held buttons turned
-// into the begin and release edges the cast loop acts on.
-//
-// A satellite of `CasterRuntime` so that file stays under the strict-lint
-// length cap, and because the two halves are genuinely different: the runtime
-// owns what a cast does, this owns when the player asked for one.
-//
-// ## Which button is which hand
-//
-// The same two buttons melee and archery already use, routed by what the hand
-// holds — exactly the rule `ArcheryIntent` states for the bow: "it is the same
-// button: with a bow equipped the attack press draws instead of swinging". A
-// spell readied in the right hand takes the attack button; a spell readied in
-// the left takes the block button. Nothing new is bound, and a hand holding no
-// spell leaves its button to melee.
-//
-// Held levels rather than presses, because casting is a hold: UESP describes
-// both shapes that way — "Some spells will trigger immediately upon being cast
-// and can be maintained as long as held. Others require holding to charge the
-// spell and releasing to cast it."
-// (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>)
-//
-// Documented in docs/engine/spellcasting.md.
+// Cast input: held buttons become begin and release edges. A spell in the right hand
+// takes the attack button, one in the left the block button, like `ArcheryIntent`; an
+// empty hand leaves its button to melee. Held levels, because casting is a hold
+// (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>). See docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyGameData

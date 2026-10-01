@@ -1,25 +1,11 @@
-// Runtime world-state seam consumed by the World sidebar (issue #162, roadmap
-// item 10.1.5). No AppKit here on purpose: the file compiles into both the app
-// and the CLI target, so a protocol added here needs no project-membership
-// change.
-//
-// The seam is deliberately narrow. A panel reads one `RuntimeStateSnapshot`
-// per refresh and calls one mutation entry point per user action; it never
-// sees `WorldStateStore`, `CellStreamer` or `OpenSkySaveStore` directly, so the
-// engine keeps ownership of main-actor state and the panel keeps its
-// independence from the live renderer.
-//
-// Documented in docs/engine/runtime-state.md.
+// The World > Runtime State seam. A panel reads one `RuntimeStateSnapshot` per refresh
+// and calls one mutation per action; it never sees `WorldStateStore` or `CellStreamer`.
+// See docs/engine/runtime-state.md.
 
 import simd
 
-/// Which reference a sidebar mutation applies to.
-///
-/// Two selectors exist because the panel offers two ways to name a reference:
-/// whatever the player is currently looking at, and a FormID typed into a text
-/// field. The FormID case carries the user's raw text rather than a parsed
-/// `FormID`, because parsing and reporting a bad entry is the provider's job —
-/// the panel has no plugin context to resolve a load-order-relative ID with.
+/// Which reference a mutation applies to: the one in view, or a typed FormID. The text is
+/// raw, because only the provider has the plugin context to parse it.
 nonisolated public enum RuntimeStateTargetSelector: Equatable, Sendable {
     /// The reference the interaction ray currently targets, if any.
     case currentTarget
@@ -62,9 +48,7 @@ nonisolated public struct RuntimeStateSnapshot: Equatable, Sendable {
     public let residentReferenceCount: Int
     /// References in the store deviating from plugin data.
     public let dirtyReferenceCount: Int
-    /// Globals carrying a runtime override (issue #166). Trails the other
-    /// members and defaults to zero so the call sites written for M10.1 keep
-    /// compiling unchanged.
+    /// Globals carrying a runtime override.
     public let overriddenGlobalCount: Int
     /// Preformatted journal lines, most recent last, at most
     /// `journalTailLimit` of them. Preformatted because the panel must not
@@ -80,9 +64,7 @@ nonisolated public struct RuntimeStateSnapshot: Equatable, Sendable {
     /// it mutates that reference.
     public let currentTargetDescription: String?
 
-    /// Written out rather than left to the memberwise initializer so
-    /// `overriddenGlobalCount` can trail the list with a default: the M10.1
-    /// call sites keep compiling while the M10.2 globals surface fills it in.
+    /// Explicit, so `overriddenGlobalCount` can default to zero.
     public init(
         residentReferenceCount: Int,
         dirtyReferenceCount: Int,
@@ -167,7 +149,7 @@ public protocol RuntimeStateControlProviding: AnyObject {
     /// result through `lastSaveOutcome`.
     func loadWorldState(slot: String)
 
-    // MARK: Game time (M10.2.1)
+    // MARK: Game time
 
     /// One sample of the game clock, the timescale, and the pause state.
     var runtimeStateClock: RuntimeStateClockSnapshot { get }
@@ -187,7 +169,7 @@ public protocol RuntimeStateControlProviding: AnyObject {
     @discardableResult
     func setGameTimescale(_ timescale: Float) -> Bool
 
-    // MARK: Global variables (M10.2.2)
+    // MARK: Global variables
 
     /// Editor IDs of every global the loaded plugins define, in the store's
     /// sorted order, so the panel can offer completion over them.
@@ -213,7 +195,7 @@ public protocol RuntimeStateControlProviding: AnyObject {
     /// Drops every global override.
     func resetAllGlobalOverrides()
 
-    // MARK: Conditions (M10.2.4)
+    // MARK: Conditions
 
     /// Names of the condition lists the session can evaluate, sorted. Today
     /// these are the music tracks carrying CTDA conditions, which is the only

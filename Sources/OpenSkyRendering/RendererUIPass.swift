@@ -1,8 +1,6 @@
-// Screen-space UI pass (M8.1.1): resolves the UI scene to a pixel-space draw
-// list, uploads any newly-packed glyphs to the r8 atlas, applies a hard
-// per-frame quad budget, and records it as the final draws of the scene pass
-// (depth-test-always, writes off, premultiplied-over blend, single draw call).
-// Setup factory + encode live together, following RendererGrassPass precedent.
+// Screen-space UI pass: resolves the UI scene to pixel draws, uploads new glyphs,
+// applies a quad budget, and records it as the last draw of the scene pass (depth off,
+// premultiplied-over, one draw call).
 
 import Metal
 import MetalKit

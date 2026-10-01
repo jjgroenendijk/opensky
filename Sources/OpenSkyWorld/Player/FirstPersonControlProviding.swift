@@ -1,17 +1,6 @@
-// Live-renderer seam for the `World > First person` section (issue #190).
-//
-// Same shape as the other panel bridges: one Equatable snapshot crosses from
-// the engine to the readout at 2 Hz, plus the settings the section writes.
-//
-// What the readout has to be able to say, and why each line is here rather
-// than inferred: whether the `_1stperson` graph loaded at all and why not if
-// it did not, how many arm meshes survived the MOD4/MOD5 projection and how
-// many pieces were dropped for declaring none (the flagged assumption in
-// `ActorVisualResolutionFirstPerson.swift` — a user who wonders where their
-// gauntlets went reads the answer here), whether the rig actually carries the
-// `Camera1st [Cam1]` bone the eye rides, and what the arms' own graph is
-// firing. None of that is visible from a frame: an arm that is missing and an
-// arm that is behind you look the same.
+// The `World > First person` seam: one Equatable snapshot at 2 Hz plus the settings it
+// writes. It reports whether the `_1stperson` graph loaded, kept and dropped arm meshes,
+// the `Camera1st [Cam1]` bone, and the arms' graph events, none of which a frame shows.
 
 import Foundation
 import simd

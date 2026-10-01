@@ -1,7 +1,5 @@
-// Renderer-owned camera-following rain + snow volume (M7.4.1). Synthetic
-// engine definitions feed the shared M7.3 particle simulator, GPU instance
-// buffers, billboard shader, and alpha pipeline. No game texture is bundled:
-// tiny streak/flake masks are generated at runtime.
+// Camera-following rain and snow, fed through the shared particle simulator and
+// billboard pipeline. No game texture: streak and flake masks are generated at runtime.
 
 import Metal
 import OpenSkyFormatsMesh

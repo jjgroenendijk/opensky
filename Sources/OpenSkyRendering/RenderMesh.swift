@@ -1,8 +1,6 @@
-// Engine Mesh -> GPU buffers for the static-mesh pipeline (todo 2.6).
-// Vertex data is interleaved into one buffer whose layout is defined once
-// here (offsets + MTLVertexDescriptor) so Swift packing and the shader's
-// stage_in view cannot drift apart. Missing attribute arrays get neutral
-// defaults instead of failing — vanilla NIFs legitimately omit them.
+// Engine Mesh -> GPU buffers for the static-mesh pipeline. The interleaved layout is
+// defined once here, so Swift packing and the shader's `stage_in` cannot drift. Missing
+// attributes get neutral defaults, because vanilla NIFs omit them legitimately.
 
 import Foundation
 @preconcurrency import Metal

@@ -1,14 +1,5 @@
-// RELS chunk writing for the OpenSky native save container (issue #508).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason `OpenSkySaveEncoder`
-// splits FCTN, PRKS and SPLB out: the encoder is at its type-length limit. The
-// three shared writers used here — `writeChunk`, `writeKey`, `writeCell` — are
-// internal on the parent for exactly this reason.
-//
-// Per actor, in order: the key, the cell, then the override list. The list is
-// written in the component's own ascending key order, which
-// `ActorRelationshipState.init` establishes, so re-encoding an unchanged set
-// produces identical bytes.
+// RELS chunk writing. Per actor: key, cell, then overrides in the ascending order
+// `ActorRelationshipState.init` sets, so an unchanged set re-encodes identically.
 
 import Foundation
 import OpenSkyFactionsInterface

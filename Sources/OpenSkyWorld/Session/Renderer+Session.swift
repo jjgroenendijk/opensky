@@ -9,11 +9,9 @@ import OpenSkyAudio
 import OpenSkyRendering
 
 extension Renderer {
-    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
-    /// `input` nil -> static seeded pose (offscreen/tests). The app passes a
-    /// built cell scene + `SceneCamera.framing(bounds:)` + a shared
-    /// `CameraInputState` for free-fly (todo 2.8). `shaderLibrary` nil -> the
-    /// bundled `default.metallib`, as in `init(rendering:)`.
+    /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera; `input` nil ->
+    /// static pose (offscreen, tests); `shaderLibrary` nil -> bundled `default.metallib`.
+    /// The app passes a cell scene, `SceneCamera.framing(bounds:)` and `CameraInputState`.
     public convenience init(
         view: MTKView,
         scene: RenderScene? = nil,

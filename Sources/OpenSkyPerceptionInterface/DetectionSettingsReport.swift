@@ -1,10 +1,5 @@
-// The reporting half of `DetectionSettings` (issue #202), split off so the
-// settings type itself stays a list of fields and their provenance.
-//
-// One ordered table rather than a printer per consumer: `openskycli gmst
-// detection` and the panel readout show the same rows in the same order, so a
-// number a user reads in the app is the number a maintainer greps in a CLI
-// transcript.
+// The reporting half of `DetectionSettings`. One ordered table, so
+// `openskycli gmst detection` and the panel show the same rows in the same order.
 
 import Foundation
 import OpenSkyPhysics

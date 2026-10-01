@@ -1,22 +1,7 @@
-// The third-person orbit camera (issue #189): where the eye sits when the
-// player is watched from behind rather than looked out of.
-//
-// Every distance below is derived from something OpenSky can measure, and the
-// derivation is spelled out rather than a remembered number, because the
-// numbers vanilla's own camera uses are not in the data. The probe is on
-// record: `Skyrim.esm` declares no `fOverShoulder*`, `fVanityMode*`, or
-// `fMouseWheelZoom*` game setting, and the install's shipped
-// `Skyrim_Default.ini` carries no `[Camera]` section at all — those values live
-// in the retail executable and in a user's own `My Games` profile, neither of
-// which OpenSky reads. So the framing is computed from two things that are
-// measurable here: the player capsule (`PlayerCapsule.standard`, itself derived
-// in docs/engine/player-camera.md) and the vertical field of view the renderer
-// projects with. See docs/engine/player-camera.md, "Third-person framing".
-//
-// The camera never integrates a pose of its own. It is a pure function of the
-// capsule's feet position and the look angles the shared `FreeFlyCamera`
-// already owns, so switching between `.walk` and `.thirdPerson` changes where
-// the eye is and nothing about where the player is looking.
+// The third-person orbit camera. Skyrim.esm has no `fOverShoulder*` or `fVanityMode*`
+// GMST and the shipped INI has no `[Camera]` section, so framing is derived from the
+// player capsule and the vertical FOV. The camera is a pure function of the capsule's feet
+// and the shared look angles. See docs/engine/player-camera.md, "Third-person framing".
 
 import OpenSkyFormatsCore
 import OpenSkyPhysics
@@ -90,21 +75,16 @@ nonisolated public struct ThirdPersonCamera: Equatable, Sendable {
         return camera.right * shoulderOffset - camera.forward * orbitDistance
     }
 
-    /// The swept probe this camera pulls in with. Shared with the dialogue
-    /// camera (`CameraCollisionProbe`, issue #427), so the two cannot disagree
-    /// about what a wall does to an eye.
+    /// The swept probe this camera pulls in with. Shared with the dialogue camera, so the
+    /// two agree about what a wall does to an eye.
     public static let collisionProbe = CameraCollisionProbe(
         radius: collisionRadius,
         minimumDistance: minimumDistance
     )
 
-    /// Resolves this frame's eye position, pulling in along the pivot-to-eye
-    /// line when static geometry is in the way.
-    ///
-    /// The pull-in goes through the same `CapsuleWorldCollider` seam the
-    /// character controller collides with (`WalkController.CollisionQuery`), so
-    /// the camera sees exactly the shapes the player does and no second
-    /// collision world exists to disagree with the first.
+    /// This frame's eye position, pulled in along the pivot-to-eye line when geometry is
+    /// in the way. It uses the controller's `CapsuleWorldCollider`, so camera and player
+    /// see the same shapes.
     public mutating func resolve(
         feetPosition: SIMD3<Float>,
         yaw: Float,

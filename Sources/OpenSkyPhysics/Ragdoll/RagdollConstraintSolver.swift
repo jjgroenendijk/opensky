@@ -1,48 +1,8 @@
-// The joint solver (issue #197, roadmap item 15.6): what holds a ragdoll's
-// bones together once the 15.2 integrator has moved them apart.
-//
-// ## The choice, and what was rejected
-//
-// This is a **sequential-impulse** solver. Each joint is visited a fixed number
-// of times per substep; each visit computes the constraint's current violation,
-// solves for the impulse that removes the violation's *rate*, and applies it to
-// both bodies at once. Whatever positional drift survives the velocity pass is
-// then pushed out of the positions, not out of the velocities.
-//
-// The rejected alternative was **position-based dynamics** (XPBD): project the
-// positions onto the constraint manifold directly and read the velocities back
-// out of the projection. PBD is more forgiving of stiff joint chains at low
-// iteration counts, which is a real advantage for an eighteen-bone ragdoll, and
-// it was seriously considered. It lost on one point: the contact solver item
-// 15.2 already shipped is sequential-impulse with position-level penetration
-// recovery (`DynamicBodySolverContacts.swift`), and a ragdoll bone is in contact
-// with the floor and jointed to its neighbour *in the same substep*. Running two
-// different solver families over one body's velocities means each family
-// undoes part of the other's work every iteration, and the joint that lost the
-// argument is the one visited first. Matching the contact solver's family makes
-// the two passes composable — they are the same fixed-point iteration over the
-// same quantity — and keeps a single set of tuning constants for both.
-//
-// ## Stability
-//
-// Three rules keep repeated collapse bounded, which is the acceptance gate:
-//
-//  1. Every impulse is derived from an effective mass that is checked for a
-//     usable magnitude before it divides anything, and every result is
-//     finite-checked before it reaches a body. A degenerate joint contributes
-//     nothing rather than a NaN.
-//  2. Positional error is corrected at a rate below one, so a joint pulled apart
-//     by a deep contact recovery converges over several substeps instead of
-//     snapping and injecting the energy the snap represents.
-//  3. A limit impulse is one-sided and accumulated: it may only ever push back
-//     into the allowed range, never pull, so a bone resting against its own
-//     limit cannot be driven through it and out the other side.
-//
-// Determinism follows from the same shape as the contact solver: joints are
-// visited in list order, for a fixed iteration count, with no early exit that
-// depends on anything but the joint's own numbers.
-//
-// Documented in docs/engine/ragdoll-solver.md.
+// The ragdoll joint solver: sequential impulses, then position correction, matching
+// the contact solver's family so both passes compose. Effective masses are checked
+// and results finite-checked; position error corrects at a rate below one; limit
+// impulses only push back. List order and fixed counts keep it deterministic.
+// See docs/engine/ragdoll-solver.md.
 
 import OpenSkyBehavior
 import simd
@@ -53,23 +13,9 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
     /// one link per iteration, and a humanoid ragdoll is six links from pelvis
     /// to hand.
     public static let iterationCount = 16
-    /// Passes the position and orientation corrections make over the joint list
-    /// before anything is actually moved.
-    ///
-    /// More than one because a correction propagates exactly one link per pass:
-    /// the first tells the pelvis to move toward the thigh, and only the second
-    /// tells the calf that the thigh moved. With a single pass the real-data
-    /// probe measured the vanilla humanoid's knees sitting seven engine units
-    /// apart forever, because the chain never converged and so the joints never
-    /// stopped pulling.
-    ///
-    /// The passes accumulate into one move per body and that move is applied —
-    /// and clamped — once. Applying each pass in turn instead lets a substep
-    /// spend the whole `maximumPositionCorrection` budget `positionIterationCount`
-    /// times over, which is a teleport rather than a correction: the same probe
-    /// measured a settled corpse crawling across the floor at better than a unit
-    /// a second, driven by nothing but its own position corrections doing work
-    /// against gravity.
+    /// Position and orientation correction passes per substep. A correction moves one
+    /// link per pass, so one pass never converges. Passes add into one move per body,
+    /// applied and clamped once, so the budget is not spent several times.
     public static let positionIterationCount = 4
     /// Fraction of a joint's remaining positional error removed per substep.
     /// Below one for the reason in the header.
@@ -120,22 +66,9 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
         return violations
     }
 
-    /// The joint's own resistance to being moved: removes a fraction of the
-    /// relative angular velocity of its two bones, at the rate the file's
-    /// `maxFriction` names.
-    ///
-    /// This is the one thing that makes a corpse stop. A jointed chain solved
-    /// by impulses alone has a limit cycle at its ends — the real-data probe
-    /// measured a vanilla humanoid lying on a floor whose hands and head still
-    /// carried thirty-odd engine units a second after thirty seconds, with the
-    /// whole body crawling a unit a second across the floor as a result. It is
-    /// also the physically honest answer: a real body's joints are not
-    /// frictionless, and the format authors a friction value for every one of
-    /// them precisely because Havok uses it.
-    ///
-    /// It cannot destabilize anything, whatever the unit turns out to be. The
-    /// impulse only ever opposes the existing relative motion and is clamped to
-    /// at most all of it, so friction takes energy out and never puts any in.
+    /// Joint friction: removes part of the bones' relative spin at the `maxFriction`
+    /// rate. It is what lets a corpse stop. It only opposes motion, clamped to all of
+    /// it, so it can never add energy.
     public static func applyFriction(
         _ joint: RagdollJointDefinition,
         bodies: inout [DynamicBody],
@@ -158,14 +91,9 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
 
     // MARK: - Point constraint
 
-    /// Holds the two pivots together (or, for a stiff spring, `length` apart) by
-    /// cancelling the relative velocity of the two anchor points.
-    ///
-    /// The three-by-three effective mass is the standard one: the two inverse
-    /// masses on the diagonal, minus each body's lever arm run through its own
-    /// world inverse inertia. Inverting it directly rather than iterating three
-    /// scalar rows is what makes one visit remove the whole relative motion
-    /// instead of a third of it.
+    /// Holds the two pivots together (or `length` apart) by cancelling the anchors'
+    /// relative velocity. The 3x3 effective mass is inverted directly, so one visit
+    /// removes all of it.
     public static func solvePoint(
         _ joint: RagdollJointDefinition,
         bodies: inout [DynamicBody]
@@ -251,27 +179,9 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
         return violations
     }
 
-    /// One one-sided angular limit: cancels whatever relative spin is carrying
-    /// the joint further past the limit, and nothing more.
-    ///
-    /// The sign convention is stated once and held everywhere:
-    /// `RagdollJointLimitPass.axis` is the direction for which
-    /// `dot(angularVelocityB - angularVelocityA, axis)` is the rate the
-    /// violation grows at. So the impulse that shrinks it is negative along that
-    /// axis, and the accumulated total is clamped at or below zero — a limit
-    /// stops a bone leaving its range and never pulls one back toward it.
-    ///
-    /// **No restoring bias.** A first draft added one, driving the rate to a
-    /// negative multiple of the error so a violated limit would recover through
-    /// the velocities. That is the textbook Baumgarte term and it is exactly
-    /// what `DynamicBodySolverContacts` already refuses to do with penetration,
-    /// for the same reason: the velocity it writes is energy the constraint
-    /// invented, and where the joint cannot actually reach its range the term
-    /// fires every substep forever. The real-data probe measured it — a vanilla
-    /// humanoid dropped on a floor climbed from twenty engine units a second to
-    /// fifty-two over thirty seconds, with one ankle limit's violation growing
-    /// from 0.27 to 1.77 radians as it was pumped. Recovery moved to
-    /// `correctLimits`, which rotates the *poses*, and the divergence went away.
+    /// One one-sided angular limit: cancels the spin carrying the joint past it. The
+    /// accumulated impulse stays at or below zero along `RagdollJointLimitPass.axis`.
+    /// No restoring bias: it pumped energy in; `correctLimits` rotates poses instead.
     private static func apply(
         _ limit: RagdollJointLimitPass,
         accumulated: inout Float,
@@ -296,14 +206,8 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
         addAngularVelocity(applied, to: &bodies[joint.bodyB])
     }
 
-    /// Rotates the poses of every joint that is still outside its limits back
-    /// toward them, after the velocity pass has done what it can.
-    ///
-    /// The angular counterpart of `correctPositions`, and accumulated per body
-    /// for the same reason: a bone carrying three joints would otherwise be
-    /// turned three times for the one misalignment it has. The share each body
-    /// takes is its inverse inertia about the limit's own axis, so a heavy
-    /// torso turns less than the arm hanging off it.
+    /// Rotates still-violating joints' poses back toward their limits. Accumulated per
+    /// body, shared by inverse inertia about the limit axis, so a torso turns less than an arm.
     public static func correctLimits(
         joints: [RagdollJointDefinition],
         bodies: inout [DynamicBody],

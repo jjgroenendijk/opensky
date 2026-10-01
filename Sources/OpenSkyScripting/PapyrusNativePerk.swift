@@ -10,9 +10,8 @@ import OpenSkyScriptingInterface
 extension PapyrusNativeFunctions {
     public static func installPerk(into registry: inout PapyrusNativeRegistry) {
         // "Adds the specified perk to this actor."
-        // (<https://ck.uesp.net/wiki/AddPerk_-_Actor>) The page notes the
-        // function does not spend a perk point, which is what makes it the
-        // right door for a quest reward; spending is item 20.6's.
+        // (<https://ck.uesp.net/wiki/AddPerk_-_Actor>) It spends no perk point, so it
+        // fits a quest reward.
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "AddPerk"

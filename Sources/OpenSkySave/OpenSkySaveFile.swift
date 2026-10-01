@@ -1,11 +1,5 @@
-// Decoded contents of an OpenSky native save (issue #161).
-//
-// Load-order verification is deliberately not part of decoding. Decoding must
-// work with nothing but the file — an inspector, a test, or a repair tool can
-// read a save on a machine with no game install at all — while verification
-// needs the plugins that are currently installed. Keeping them apart also lets
-// the app show what a save contains before it tells the user why it cannot be
-// loaded.
+// Decoded contents of an OpenSky save. Load-order verification is separate, so a file
+// decodes without an install and the app can show a save before saying why it cannot load.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -24,18 +18,13 @@ nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
     /// Allocator resumed at the saved position, so a restored session hands
     /// out generated keys that cannot collide with saved ones.
     public let allocator: GeneratedReferenceAllocator
-    /// Game clock at save time (issue #164), nil when the file carries no
-    /// `CLOK` chunk — a pre-clock save — which restores the vanilla-start
-    /// clock.
+    /// Game clock at save time; nil without a `CLOK` chunk, which means the vanilla start.
     public let clock: GameClock?
-    /// Papyrus script instance state at save time (issue #171), empty when the
-    /// file carries no `PSCR` chunk — a pre-script save, or a session that ran
-    /// no VM — which restores scripts at their compiled defaults.
+    /// Papyrus script state at save time; empty without a `PSCR` chunk, so scripts start
+    /// at their compiled defaults.
     public let scripts: [PapyrusInstanceState]
-    /// Pending Papyrus update timers at save time (issue #277), empty when the
-    /// file carries no `PTMR` chunk — a pre-timer save, or a session in which
-    /// no persistent instance had a timer armed — which restores a world where
-    /// no script has a pending `OnUpdate`.
+    /// Pending Papyrus update timers at save time; empty without a `PTMR` chunk, so no
+    /// `OnUpdate` is pending.
     public let timers: [PapyrusTimerState]
 
     public init(
@@ -58,16 +47,9 @@ nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
         self.timers = timers
     }
 
-    /// Checks the saved load order against the one currently installed.
-    ///
-    /// Order matters: plugin-defined `ReferenceKey`s are name-based and so
-    /// survive reordering, but records, masters and object IDs do not, so a
-    /// reordered load order is reported as a mismatch rather than accepted.
-    /// File-name case is ignored, matching how plugin names are compared
-    /// everywhere else in the engine.
-    ///
-    /// - Throws: `OpenSkySaveError.fingerprintMismatch` naming the first
-    ///   difference.
+    /// Checks the saved load order against the installed one. A reorder is a mismatch,
+    /// because records and object IDs do not survive it. Case is ignored.
+    /// - Throws: `OpenSkySaveError.fingerprintMismatch` naming the first difference.
     public func verifyFingerprint(against current: [SavePluginFingerprint]) throws {
         for index in 0 ..< max(fingerprint.count, current.count) {
             try Self.compare(

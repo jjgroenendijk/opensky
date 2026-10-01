@@ -1,45 +1,8 @@
-// Where the eye sits while a conversation is open (issue #427, roadmap item
-// 17.4).
-//
-// ## Not a fourth camera mode
-//
-// `CameraMovementMode` is what the player chose to look through; a conversation
-// is something that happens to them. So the dialogue camera is an override the
-// renderer applies on top of whichever mode is live and takes back off when the
-// menu closes, never a case in the G-key cycle. Nothing about the player's own
-// mode, capsule or facing changes while it is engaged.
-//
-// ## Where the numbers come from
-//
-// Nothing in the readable install frames a conversation. The probe is on
-// record: `openskycli gmst list --prefix f` over the user's own `Skyrim.esm`
-// declares no `fDialogueCamera*`, no `fOverShoulder*` and no camera framing
-// setting of any kind — the only dialogue-adjacent distances it carries are
-// `fAIInDialogueModeWithPlayerDistance` (500) and
-// `fAIInDialogueModewithPlayerTimer` (60), which decide when an actor considers
-// itself in conversation rather than where a camera stands, and the
-// `fAIHeadTrackDialogue*` family, which is head tracking and out of scope here.
-// The retail executable holds the rest and OpenSky does not read it.
-//
-// So the framing is derived from the two things that *are* measurable: the
-// player capsule (`PlayerCapsule.standard`, derived in
-// docs/engine/player-camera.md) and the vertical field of view the scene pass
-// projects with. The one taste number — how much of the frame the subject
-// fills — is not re-decided here; it is `ThirdPersonCamera.framingFillFraction`,
-// so the engine makes that call exactly once.
-//
-// ## The shot
-//
-// The camera looks at the speaker's head from the side of it the player is
-// standing on, offset to the shoulder so the shot is three-quarter rather than
-// flat head-on, and stands either at the framing distance or just behind the
-// player — whichever is further from the speaker. That second clause is what
-// keeps the player's own body in the frame instead of behind the lens: a player
-// who walked right up gets the tight framing distance, and a player who started
-// the conversation from across the room gets a camera at their shoulder rather
-// than one hovering between them and the speaker.
-//
-// See docs/engine/dialogue-camera.md.
+// Where the eye sits during a conversation: an override on the live mode, not a fourth
+// mode. No GMST frames it (no `fDialogueCamera*` in Skyrim.esm), so framing comes from
+// the player capsule, the FOV and `ThirdPersonCamera.framingFillFraction`. The camera
+// looks at the speaker's head over the player's shoulder, at the framing distance or
+// just behind the player, whichever is further. See docs/engine/dialogue-camera.md.
 
 import OpenSkyPhysics
 import OpenSkyRendering

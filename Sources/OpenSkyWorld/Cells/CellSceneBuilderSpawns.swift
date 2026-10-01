@@ -1,17 +1,6 @@
-// Spawned references during a cell build (issue #177, roadmap item 12.1.3),
-// split from CellSceneBuilderRuntimeState.swift for file-length limits.
-//
-// A spawned object is not in the plugin, so nothing collects it: this file
-// reads `ReferenceSpawnState` components out of the build's snapshot and turns
-// the ones that name this cell into ordinary `PlacedReference` values with
-// ordinary `RuntimeReferenceEntry` index entries. From that point on they are
-// indistinguishable from authored placements — the same `applyRuntimeState`
-// pass moves or hides them, the same instance resolution draws them, the same
-// collision build makes them solid and the same interaction resolution makes
-// them takeable. That is the whole reason drop reuses the component system
-// rather than adding a parallel list of runtime objects.
-//
-// Documented in docs/engine/reference-identity.md.
+// Spawned references during a cell build: `ReferenceSpawnState` components for this cell
+// become ordinary `PlacedReference` values, so the same passes move, draw, collide and
+// take them. See docs/engine/reference-identity.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -28,15 +17,8 @@ nonisolated public struct SpawnedReferenceBuild: Sendable {
 }
 
 nonisolated extension CellSceneBuilder {
-    /// Every spawned object `state` places in `location`.
-    ///
-    /// Snapshot entries are already in `ReferenceKey` total order, so the
-    /// result is deterministic without sorting: two builds of the same cell
-    /// against the same state place the same objects in the same order.
-    ///
-    /// A spawn whose generated sequence has outrun the 24-bit object ID has no
-    /// FormID to be addressed by, so it is dropped and counted rather than
-    /// aliased onto another object's ID.
+    /// Every spawned object `state` places in `location`, in `ReferenceKey` order. A spawn
+    /// past the 24-bit object ID has no FormID, so it is dropped and counted.
     nonisolated public func spawnedReferences(
         in location: CellSceneLocation,
         state: WorldStateSnapshot,

@@ -1,33 +1,8 @@
-// Quest accounting (issue #182, roadmap item 13.2): the mutation API above
-// `WorldStateStore` that starts, stops, completes and advances quests.
-//
-// A thin layer beside the store rather than methods on it, following the M12
-// inventory precedent. The store is the generic substrate that knows about
-// keys, components, journalling and snapshots and deliberately knows nothing
-// about records; quests need `QuestStore` for the record a mutation is
-// validated against and for the session-stable key state is filed under,
-// neither of which belongs inside it. Everything here writes through
-// `WorldStateStore.set(_:for:in:)`, so every mutation lands in the journal, in
-// the dirty counts and in the save exactly like a script's `Disable()` does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the store it writes to is.
-//
-// Nothing is attributed to a cell. A quest is not placed anywhere, so its
-// mutations are unattributed exactly as global writes are, and they never drag
-// a cell rebuild behind them.
-//
-// Failure model: every operation that cannot mean what the caller asked throws
-// a `QuestError` and writes nothing. An unknown quest, an unknown stage index,
-// an unknown objective index and a mutation of a stopped quest are all typed
-// failures rather than clamps, because each of them is a caller bug that a
-// silent no-op would hide inside a quest that simply never advances.
-//
-// Papyrus quest script instances, the `Quest` natives and stage fragment
-// execution are issue #322 (item 13.3); this layer is the state they will
-// mutate, not the script side.
-//
-// Documented in docs/engine/quest-state.md.
+// Quest accounting: start, stop, complete and advance quests through
+// `WorldStateStore.set(_:for:in:)`, so each write reaches the journal and the
+// save. A quest has no cell, so its writes never trigger a cell rebuild.
+// Each impossible request throws a `QuestError` and writes nothing, because a
+// silent no-op would hide a caller bug. See docs/engine/quest-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -78,9 +53,7 @@ public struct QuestRuntime: QuestAccess {
         return try state(of: quest.formID)
     }
 
-    /// Every quest with runtime state, in `ReferenceKey` total order, paired
-    /// with the record it belongs to. For inspection surfaces and for the
-    /// journal UI (#184).
+    /// Every quest with runtime state, in `ReferenceKey` order, with its record.
     public func runtimeQuests() -> [(quest: Quest, state: QuestRuntimeState)] {
         quests.sortedQuests().compactMap { quest in
             guard
@@ -93,13 +66,8 @@ public struct QuestRuntime: QuestAccess {
         }
     }
 
-    /// Every quest whose effective state is running — runtime states over
-    /// plugin baselines — paired with the key its state is filed under, in
-    /// editor-ID order.
-    ///
-    /// This is the set the Papyrus side instantiates scripts for (issue #322):
-    /// at session wire-up it is the start-game-enabled quests, and after a
-    /// save is restored it is whatever that save recorded.
+    /// Every quest whose effective state is running, with its key, in editor-ID
+    /// order. These are the quests the Papyrus side builds scripts for.
     public func runningQuests() -> [(quest: Quest, key: ReferenceKey)] {
         quests.sortedQuests().compactMap { quest in
             guard let key = quests.key(for: quest.formID) else { return nil }
@@ -127,17 +95,8 @@ public struct QuestRuntime: QuestAccess {
 
     // MARK: - Running state
 
-    /// Starts the quest, filling its aliases first. Starting one that already
-    /// runs is a no-op that still materializes nothing new, because the write
-    /// is skipped when the state is unchanged.
-    ///
-    /// The alias fill comes first and can refuse the start outright: a quest
-    /// whose non-optional alias will not fill "will fail to start" (issue
-    /// #183, `QuestAliasFiller`), and a half-started quest whose scripts hold
-    /// empty aliases is the state that rule exists to prevent.
-    ///
-    /// - Throws: `QuestError.aliasFillFailed` when a non-optional alias stayed
-    ///   empty, in which case neither the table nor the running flag is written.
+    /// Starts the quest, filling its aliases first. A non-optional alias that
+    /// stays empty throws `QuestError.aliasFillFailed` and writes nothing.
     /// - Returns: the state as stored afterwards.
     @discardableResult
     public func startQuest(_ id: FormID) throws -> QuestRuntimeState {
@@ -146,13 +105,8 @@ public struct QuestRuntime: QuestAccess {
         return try apply(to: id) { $0.starting() }
     }
 
-    /// Stops the quest, keeping its reached stages and its completed flag:
-    /// stopping is not resetting. Its alias table is *not* kept — an alias is a
-    /// live pointer into the world, and the Creation Kit fills one only while
-    /// the quest runs. Stopping a quest that is not running is a no-op rather
-    /// than a failure — unlike the mutations that only mean something while it
-    /// runs, "stop this" is already satisfied.
-    ///
+    /// Stops the quest. Reached stages and the completed flag stay; the alias table
+    /// goes, because an alias is filled only while the quest runs.
     /// - Returns: the state as stored afterwards.
     @discardableResult
     public func stopQuest(_ id: FormID) throws -> QuestRuntimeState {
@@ -161,12 +115,8 @@ public struct QuestRuntime: QuestAccess {
         return try apply(to: id) { $0.stopping() }
     }
 
-    /// Flags the quest completed, leaving it running: `CompleteQuest()` is
-    /// documented as flagging completion and nothing else
-    /// (<https://ck.uesp.net/wiki/CompleteQuest_-_Quest>). A quest is usually
-    /// stopped afterwards by a shut-down stage.
-    ///
-    /// - Throws: `QuestError.questNotRunning` for a quest that is not running.
+    /// Flags the quest completed and leaves it running, as `CompleteQuest()` does
+    /// (<https://ck.uesp.net/wiki/CompleteQuest_-_Quest>).
     /// - Returns: the state as stored afterwards.
     @discardableResult
     public func completeQuest(_ id: FormID) throws -> QuestRuntimeState {
@@ -175,24 +125,9 @@ public struct QuestRuntime: QuestAccess {
 
     // MARK: - Stages
 
-    /// Records `index` as reached.
-    ///
-    /// Idempotent per the documented `IsStageDone` semantics: setting a stage
-    /// that was already reached changes nothing, and setting a stage lower than
-    /// the current one leaves the current stage where it was while making the
-    /// lower stage report done
-    /// (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>).
-    ///
-    /// Stage record flags are honoured because they are plain record data: a
-    /// stage flagged `startUpStage` starts the quest, which is also the only way
-    /// a stage may be set on a quest that is not running, and one flagged
-    /// `shutDownStage` stops it afterwards. A stage index may legally appear
-    /// more than once in a QUST, so the flags of every matching stage are
-    /// unioned rather than taken from the first.
-    ///
-    /// - Throws: `QuestError.unknownStage` when the quest defines no such
-    ///   stage, `QuestError.questNotRunning` when it is not running and the
-    ///   stage is not a start-up stage.
+    /// Records `index` as reached. A lower stage reports done without moving the
+    /// current one (<https://ck.uesp.net/wiki/GetStageDone_-_Quest>). The flags of
+    /// every stage with this index count: start-up starts the quest, shut-down stops it.
     /// - Returns: the state as stored afterwards.
     @discardableResult
     public func setStage(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
@@ -263,13 +198,8 @@ public struct QuestRuntime: QuestAccess {
 
     // MARK: - Reset
 
-    /// Drops the quest's runtime state, so it re-derives from plugin data
-    /// again. The component-level counterpart of `WorldStateStore.reset(_:)`.
-    ///
-    /// The alias table goes with it: a quest re-deriving from plugin data has
-    /// not started, and an alias holds nothing before a start.
-    ///
-    /// - Returns: true when runtime state was actually removed.
+    /// Drops the quest's runtime state and alias table, so it re-derives from
+    /// plugin data. Returns true when state was removed.
     @discardableResult
     public func reset(_ id: FormID) -> Bool {
         guard let key = quests.key(for: id) else { return false }

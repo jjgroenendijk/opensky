@@ -243,8 +243,8 @@ typedef struct
     vector_float4 uvRect;
 } ParticleInstance;
 
-/// Per-group material scalars for one instanced static-mesh draw: every
-/// instance of the group shares them. Matrices live in InstanceTransform. Lives in the 256-byte-aligned per-draw uniform ring.
+/// Per-group material scalars for one instanced static-mesh draw, shared by every
+/// instance. Matrices are in InstanceTransform. Lives in the per-draw uniform ring.
 typedef struct
 {
     vector_float2 uvOffset;

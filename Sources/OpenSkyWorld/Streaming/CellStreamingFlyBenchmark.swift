@@ -1,9 +1,6 @@
-// Scripted cross-cell streaming benchmark (todo 3.2 verification). Drives a
-// deterministic east-then-north camera path through the same CellStreamer,
-// Renderer, serial builder, scene swaps, and cache eviction used by the app.
-// One reused offscreen target + 100 Hz pacing keep the verifier bounded while
-// physical-footprint, settlement, unload, and duplicate-build gates make the
-// milestone claims repeatable from openskycli.
+// Scripted cross-cell streaming benchmark: a fixed east-then-north camera path through
+// the app's streamer, renderer and eviction. One offscreen target and 100 Hz pacing keep
+// it bounded; footprint, settlement, unload and duplicate-build gates make it repeatable.
 
 import Foundation
 import OpenSkyDiagnostics

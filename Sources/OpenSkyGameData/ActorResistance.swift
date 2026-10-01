@@ -42,21 +42,9 @@ nonisolated public enum ActorResistance: Sendable {
         isPercentage(index: index) && index != ActorValueIndex.resistDisease
     }
 
-    /// The fraction of damage `percentagePoints` removes, with the cap for
-    /// `index` applied.
-    ///
-    /// **Negative points are a weakness and pass through negative**, which is
-    /// the whole of the weakness mechanic (issue #471): UESP words Weakness to
-    /// Fire as "Target is `<mag>`% weaker to fire damage"
-    /// (<https://en.uesp.net/wiki/Skyrim:Weakness_to_Fire>) and vanilla authors
-    /// it as a detrimental Value Modifier on `Resist Fire`, so a target at -30
-    /// points reads -0.3 here and takes 130% damage through the multiplier
-    /// below. There is no floor, because no source states one; the cap bounds
-    /// the resistant end alone.
-    ///
-    /// - Parameter isPlayer: whether the actor is the player. The 85% cap
-    ///   applies to nobody else, so an atronach's 100% fire resistance really
-    ///   is immunity.
+    /// The damage fraction `percentagePoints` removes, capped for `index`. Negative
+    /// points are a weakness and stay negative: -30 takes 130% damage
+    /// (<https://en.uesp.net/wiki/Skyrim:Weakness_to_Fire>). The 85% cap is player-only.
     public static func fraction(
         percentagePoints: Float,
         at index: Int32,

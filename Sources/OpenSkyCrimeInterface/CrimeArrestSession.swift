@@ -1,9 +1,6 @@
-// The session half of an arrest (issue #505): what `CrimeArrest` cannot do on
-// its own because it needs the clock, the player's placement, the streamer and
-// the guard state, all of which the session owns.
-//
-// Declared in the engine so the Papyrus bridge can reach it, and implemented by
-// the game controller. Documented in docs/engine/guard-response.md.
+// The session half of an arrest: clock, placement, streamer and guard state.
+// The Papyrus bridge reaches it here; the game controller implements it.
+// See docs/engine/guard-response.md.
 
 import Foundation
 import OpenSkyFormatsESM

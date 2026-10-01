@@ -1,7 +1,5 @@
-// Wall-clock frame delta with a pause gate (todo 8.1.2). The renderer advances
-// world simulation (game time, animations, weather, particles) by the real time
-// elapsed since the previous frame; menu mode freezes that advance without a
-// time jump when it resumes. See docs/engine/menu-mode.md.
+// Wall-clock frame delta with a pause gate. Menu mode freezes the simulation advance
+// without a time jump on resume. See docs/engine/menu-mode.md.
 
 import QuartzCore
 

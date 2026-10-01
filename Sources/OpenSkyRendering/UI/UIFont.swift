@@ -1,7 +1,5 @@
-// System-font description for the UI layer (M8.1.1). Value type; resolves to a
-// CoreText CTFont at a requested pixel/point size on demand. The system UI font
-// keeps text native; bold adds the symbolic trait, falling back to the base
-// face when the platform has no bold variant.
+// System-font description for the UI layer, resolved to a CTFont on demand. Bold adds
+// the symbolic trait and falls back to the base face.
 
 import CoreText
 

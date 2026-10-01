@@ -1,8 +1,5 @@
-// Narrow provider seam for `World > Render Debug` (issue #144), so the shell
-// reaches the debug channel and the layer mask without seeing `Renderer`.
-//
-// The readout below is the section's evidence: a mode name alone cannot show
-// that hiding a layer actually removed its draws, and a draw-call delta can.
+// The seam for `World > Render Debug`: the debug channel and the layer mask, without
+// `Renderer`. The readout shows a draw-call delta, which proves a hidden layer is gone.
 
 nonisolated public struct RenderDebugControlSnapshot: Equatable, Sendable {
     public let mode: RenderDebugMode

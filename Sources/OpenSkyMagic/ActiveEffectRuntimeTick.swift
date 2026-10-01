@@ -1,11 +1,5 @@
-// Ticking active effects (issue #469, roadmap item 19.6): the fixed-step
-// advance, the whole-second pay-out a `perSecond` effect owes, and expiry.
-//
-// A satellite of `ActiveEffectRuntime.swift` rather than more of it, following
-// the same split rule `ActorValueRuntimeGeneral.swift` does: that file owns
-// applying, dispelling and reading, and is at its size shape.
-//
-// Documented in docs/engine/magic.md.
+// Ticking active effects: the fixed-step advance, `perSecond` payouts, and expiry.
+// See docs/engine/magic.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -15,26 +9,15 @@ import OpenSkyMagicInterface
 extension ActiveEffectRuntime {
     // MARK: - Ticking
 
-    /// Advances every effect on `holders` by exactly one fixed step.
-    ///
-    /// Deterministic in the two senses the acceptance gate cares about: holders
-    /// are advanced in `ReferenceKey` order, and the amount is a pure function
-    /// of the step and the stored effect.
-    ///
-    /// - Returns: how many effects expired.
+    /// Advances every effect on `holders` one fixed step, in `ReferenceKey` order.
+    /// Returns how many expired.
     @discardableResult
     public mutating func step(over holders: [ActorValueHolder]) -> Int {
         tick(over: holders, seconds: Float(Self.fixedStepSeconds))
     }
 
-    /// Accumulates a wall delta and runs whole fixed steps only, capped at
-    /// `maximumStepsPerAdvance`; the remainder carries in `accumulator`.
-    ///
-    /// A zero delta advances nothing, which is the established menu-pause rule:
-    /// a paused frame reaches this layer as delta 0 exactly as it reaches the
-    /// Papyrus VM and regeneration.
-    ///
-    /// - Returns: how many whole steps ran.
+    /// Runs whole fixed steps from a wall delta, capped at `maximumStepsPerAdvance`; the
+    /// rest carries in `accumulator`. Zero runs nothing (the menu pause). Returns the count.
     @discardableResult
     public mutating func advance(
         delta: Float,

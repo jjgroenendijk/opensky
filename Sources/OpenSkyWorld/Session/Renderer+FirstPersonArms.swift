@@ -1,7 +1,5 @@
-// The session's half of the first-person arms (issue #190): attaching them to
-// the renderer, hanging them off the eye each input frame, and the field of
-// view policy. The renderer's half, which draws them into the near depth
-// slice, is `RendererFirstPersonArms.swift`.
+// The session's half of the first-person arms: attach, place on the eye each frame, and
+// the FOV policy. The renderer's half is `RendererFirstPersonArms.swift`.
 
 import Metal
 import OpenSkyRendering
@@ -41,18 +39,9 @@ extension Renderer {
         )
     }
 
-    /// The vertical field of view this frame projects with: the first-person
-    /// setting in first person, the shared world value everywhere else.
-    ///
-    /// Vanilla applies its own first-person field of view to the whole world
-    /// and not only to the arms, which is what makes it a comfort setting
-    /// rather than a lens on the hands, so this returns one angle for the
-    /// frame rather than two.
-    ///
-    /// A conversation is projected at the shared world angle whatever mode it
-    /// interrupted (issue #427): the dialogue camera stands outside the
-    /// player's head, so the first-person comfort setting has nothing to say
-    /// about it, and every conversation is framed the same way as a result.
+    /// This frame's vertical FOV: the first-person setting in first person, else the world
+    /// value. Vanilla applies it to the whole world, so it is one angle. A conversation
+    /// always uses the world angle, because the dialogue camera is outside the head.
     public var sessionFOVYRadians: Float {
         isDialogueCameraEngaged
             ? DialogueCamera.fovYRadians

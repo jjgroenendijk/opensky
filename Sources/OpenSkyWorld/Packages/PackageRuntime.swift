@@ -1,6 +1,5 @@
-// Schedule/condition package selection for resident actors (issue #201).
-// Evaluation is event-driven: exact daily schedule edges, a bounded game-time
-// interval for calendar/condition changes, and an explicit panel seam.
+// Schedule and condition package selection for resident actors. Event-driven: exact
+// daily edges, a bounded game-time interval for other changes, and a panel seam.
 
 import Foundation
 import OpenSkyConditions
@@ -16,10 +15,8 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
     public let schedule: Package.Schedule?
     public let procedure: PackageProcedureKind?
     public let lastEvaluationGameSeconds: Double?
-    /// True while something outside the schedule is holding this actor — a
-    /// conversation, as of issue #427. A suspended actor keeps the package it
-    /// had, so the readout can say what it will go back to, and is not
-    /// re-evaluated until it is released.
+    /// True while something outside the schedule holds this actor, such as a
+    /// conversation. It keeps its package and is not re-evaluated until released.
     public var isSuspended = false
 
     public init(
@@ -92,14 +89,9 @@ nonisolated public struct ActorPackageRuntime {
         }
     }
 
-    /// Holds one actor out of scheduled selection, or hands it back
-    /// (issue #427).
-    ///
-    /// Suspension is a latch and not a saved procedure. An actor that spent a
-    /// conversation standing still has had the world move on around it, so what
-    /// it needs on release is the package the schedule names *now*, which is
-    /// what `forceReevaluate(actor:clock:context:)` answers — the same
-    /// reasoning combat's own resume follows.
+    /// Holds one actor out of scheduled selection, or releases it. A latch, not a saved
+    /// procedure: on release the actor takes the package the schedule names now
+    /// (`forceReevaluate(actor:clock:context:)`).
     public mutating func setSuspended(_ suspended: Bool, actor: ReferenceKey) {
         actors[actor]?.isSuspended = suspended
     }
@@ -108,7 +100,7 @@ nonisolated public struct ActorPackageRuntime {
         actors[actor]?.isSuspended ?? false
     }
 
-    /// On-demand seam for the M16 gate panel.
+    /// On-demand seam for the AI gate panel.
     public mutating func forceReevaluate(
         actor: ReferenceKey,
         clock: GameClock,

@@ -1,14 +1,6 @@
-// The value a condition is evaluated against, and one function invocation over
-// it (issue #251), split out of `ConditionEvaluator.swift` when that file
-// reached its size cap.
-//
-// The split is along a real seam rather than an arbitrary line count.
-// `ConditionEvaluator` is the machinery: comparison, OR grouping, the tally.
-// `ConditionContext` and `ConditionCall` are the *inputs* — which seams a
-// condition may read and how a run-on picks the object it runs against — and
-// they are what a caller builds and what a condition function body talks to.
-// A reader wiring a new evaluation site needs this file; a reader changing how
-// a list combines needs the other one.
+// The inputs to a condition: `ConditionContext` (what it may read) and
+// `ConditionCall` (how a run-on picks its object). `ConditionEvaluator.swift` holds
+// the machinery: comparison, OR grouping and the tally.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -38,17 +30,9 @@ nonisolated public protocol ConditionCombatTargetResolving: Sendable {
     func combatTarget(of key: ReferenceKey) -> ReferenceKey?
 }
 
-/// Everything a condition is evaluated against: the globals seam, the game
-/// clock, the reference index, which references the Subject and Target run-ons
-/// name, the random source, and one resolution per feature.
-///
-/// A value type on purpose. Building one is cheap, so a caller evaluating
-/// against a snapshot off the main actor builds its own rather than reaching
-/// into live stores.
-///
-/// The feature seams are stored by type (`ConditionResolution`), so this core
-/// names none of them. Each feature adds a typed accessor, for example
-/// `context.magic`.
+/// Everything a condition is evaluated against. A cheap value type, so off-main-actor
+/// code builds one from a snapshot. Feature seams are stored by type
+/// (`ConditionResolution`); each feature adds an accessor such as `context.magic`.
 nonisolated public struct ConditionContext: Sendable {
     /// The one seam global values come through (`GlobalResolution`).
     public var globals: GlobalResolution = .empty
@@ -60,15 +44,8 @@ nonisolated public struct ConditionContext: Sendable {
     /// Runtime enable overrides for `GetDisabled`. When absent for a key, the
     /// function falls back to the placement record's initial flag.
     public var referenceEnable: ReferenceEnableResolution = .empty
-    /// Quest whose alias table a `questAlias` run-on and a CIS1/CIS2 name
-    /// override are resolved against.
-    ///
-    /// Alias references are only meaningful relative to an owning quest, and a
-    /// CTDA does not carry one: the record the condition was read from does.
-    /// A QUST's own condition runs are evaluated with that quest here; a
-    /// dialogue or package condition is evaluated with the quest that owns the
-    /// topic. Nil means the caller had no quest scope, which makes every alias
-    /// path a reason-tagged failure rather than a wrong answer.
+    /// The quest a `questAlias` run-on and a CIS1/CIS2 override resolve against. A CTDA
+    /// names no quest; the owning record does. Nil makes every alias path a tagged failure.
     public var aliasQuest: FormID?
     /// Game clock the time functions read. Nil in a context with no world
     /// running, which makes those functions reason-tagged false rather than
@@ -108,14 +85,9 @@ nonisolated public struct ConditionCall: Sendable {
     public let condition: Condition
     public var context: ConditionContext
 
-    /// Parameter #1, with CIS1 taking precedence when the record carried one.
-    ///
-    /// A CIS1 string names a quest alias rather than a form, so the resolved
-    /// parameter is that alias's *ID* — the number every other alias-typed
-    /// parameter on disk carries — and a caller wanting the reference behind it
-    /// asks `aliasReference(_:)`. A name that matches no alias of the context's
-    /// quest, or one nothing has filled, reports nil, and the function turns
-    /// that into `ConditionFailure.unresolvedParameter` (issue #183).
+    /// Parameter #1, with CIS1 first when present. A CIS1 name resolves to the alias
+    /// ID; `aliasReference(_:)` gives the reference. An unmatched or unfilled name is
+    /// nil, which becomes `ConditionFailure.unresolvedParameter`.
     public var parameter1: Condition.Parameter? {
         guard let name = condition.parameter1Name else { return condition.parameter1 }
         return aliasParameter(named: name)
@@ -153,19 +125,9 @@ nonisolated public struct ConditionCall: Sendable {
         return Condition.Parameter(rawValue: aliasID)
     }
 
-    /// The reference this condition's run-on names.
-    ///
-    /// The `swapSubjectAndTarget` flag (0x10) is honoured here, which is the
-    /// only place it can matter. Run-on types with no live resolution fail as
-    /// `.unsupportedRunOn`; a supported run-on naming nothing the index holds
-    /// fails as `.unresolvedReference`. Only functions that actually need a
-    /// reference ask for one, so a time function still answers under a run-on
-    /// OpenSky cannot resolve.
-    ///
-    /// Quest Alias (run-on 5) resolves through the filled table (issue #183).
-    /// Its alias number is parameter #3 at CTDA offset 28, "the quest-alias /
-    /// package-data index" — see `Condition` — and the quest it belongs to is
-    /// the context's `aliasQuest`, because a CTDA does not name one.
+    /// The reference the run-on names, honouring `swapSubjectAndTarget` (0x10). Fails
+    /// as `.unsupportedRunOn` or `.unresolvedReference`. Quest Alias (run-on 5) reads
+    /// parameter #3 (CTDA offset 28) against the context's `aliasQuest`.
     public func reference() -> Result<RuntimeReferenceEntry, ConditionFailure> {
         referenceKey().flatMap { key in
             guard let entry = context.references[key] else {
@@ -195,15 +157,8 @@ nonisolated public struct ConditionCall: Sendable {
         }
     }
 
-    /// The world identity this condition's run-on names, without requiring the
-    /// reference index to hold a decoded record for it.
-    ///
-    /// Split out of `reference()` because the two questions genuinely differ
-    /// (issue #375). `GetIsID` needs the decoded placement, because it compares
-    /// base forms; the actor functions need only identity, and the player has a
-    /// `ReferenceKey` and no plugin record at all. Asking for the record first
-    /// would have made every actor condition about the player an unresolved
-    /// reference — a failure with nothing wrong behind it.
+    /// The identity the run-on names, without a decoded record. `GetIsID` needs the
+    /// record; actor functions need only identity, and the player has no record.
     public func referenceKey() -> Result<ReferenceKey, ConditionFailure> {
         let runOn = condition.runOn
         let swapped = condition.flags.contains(.swapSubjectAndTarget)
@@ -226,15 +181,8 @@ nonisolated public struct ConditionCall: Sendable {
         }
     }
 
-    /// The reference this condition's *subject* is fighting (issue #375).
-    ///
-    /// Run-on type 3 asks about the combat target of the object the condition
-    /// runs against, so it is resolved by looking the subject up in the actor
-    /// seam rather than by reading one session-wide "the fight". 15.7 derives
-    /// the player's target and gives each hostile actor the player as its own,
-    /// so both directions of a fight answer. Nil — no subject bound, no actor
-    /// state for it, or an actor fighting nobody — is one
-    /// `.unresolvedReference`, because the run-on itself is supported now.
+    /// The reference the subject is fighting (run-on type 3), from the actor seam.
+    /// Both sides of a fight answer. Nil is `.unresolvedReference`.
     private func combatTargetKey(swapped: Bool) -> ReferenceKey? {
         guard let subject = swapped ? context.target : context.subject else {
             return nil

@@ -1,29 +1,9 @@
-// Faction membership at runtime, and the hostility that falls out of it
-// (issue #503, roadmap item 21.3).
-//
-// A thin layer beside `WorldStateStore`, following `PerkRuntime`,
-// `SpellbookRuntime` and `ActorValueRuntime`. Every mutation writes through
-// `WorldStateStore.set`, so joining a faction lands in the journal, in the
-// dirty counts and in the save exactly as learning a spell does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window, which is what lets the real-data suite ask the production
-// derivation whether a vanilla bandit is hostile without building a session.
-// `@MainActor` only because the store it writes to is.
-//
-// Failure model: nothing here throws. A faction this load order does not carry
-// is a refused join rather than an error, and an actor whose template chain
-// cannot be walked is seeded with nothing.
-//
-// ## Seeding
-//
-// An actor's `SNAM` run is copied into the component the first time anything
-// asks about that actor, not at cell build: a street of forty townsfolk who
-// never meet the player would otherwise write forty components into the save to
-// say what their base records already say. `seed(_:)` is idempotent per actor
-// per session, so the caller can do it lazily on every query.
-//
-// Documented in docs/engine/hostility.md.
+// Faction membership at runtime, and the hostility that follows from it.
+// Every mutation writes through `WorldStateStore.set`, so a join reaches the
+// journal and the save. Nothing throws: an unknown faction is a refused join.
+// An actor's `SNAM` run is seeded lazily on first query, not at cell build, so
+// townsfolk who never meet the player add nothing to the save.
+// See docs/engine/hostility.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -96,15 +76,8 @@ public struct FactionRuntime: FactionAccess {
 
     // MARK: - Writing
 
-    /// Puts `key` in `faction` at `rank`, or moves an existing membership to
-    /// that rank.
-    ///
-    /// A faction this load order does not carry is refused: a key nothing
-    /// resolves could never be read back, and storing it would put a permanent
-    /// unreadable entry in the save. That is the opposite of the rule for a
-    /// *stored* membership, which is kept when it stops resolving — the
-    /// difference is direction, exactly as it is for an owned perk.
-    ///
+    /// Puts `key` in `faction` at `rank`, or moves it to that rank. An unknown
+    /// faction is refused, because a key nothing resolves could never be read back.
     /// - Returns: true when the stored state changed.
     @discardableResult
     public func join(
@@ -200,9 +173,8 @@ public struct FactionRuntime: FactionAccess {
         )
     }
 
-    /// The crime faction `subject` reports crimes to — its authored `CRIF`
-    /// resolved against the load order (issue #505). Nil for the player, a
-    /// generated actor, and a link no plugin defines.
+    /// The crime faction `subject` reports crimes to: its `CRIF` resolved against
+    /// the load order. Nil for the player, a generated actor, and an unknown link.
     public func crimeFaction(of subject: ActorValueSubject) -> ReferenceKey? {
         guard
             let pluginName,

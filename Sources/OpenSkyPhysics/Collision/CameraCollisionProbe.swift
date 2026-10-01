@@ -1,17 +1,7 @@
-// The pull-in every world-space camera performs when geometry stands between
-// the point it frames and the point it wants to watch from (issues #189, #427).
-//
-// Extracted from `ThirdPersonCamera.resolve` when the dialogue camera became
-// the second camera that needed it. Both cameras have the same shape — a pivot
-// they orbit, an offset they would like to sit at, and a wall that may be in
-// the way — and both must collide against the *same* shapes the character
-// controller does, so the sweep goes through `CapsuleWorldCollider` and the
-// `CapsuleWorldCollider.CandidateQuery` seam rather than through a second collision
-// world that could disagree with the first.
-//
-// The sweep is a small capsule rather than a ray because a ray slips through
-// the seam between two walls that a camera's near plane would clip through.
-// See docs/engine/player-camera.md, "Third-person framing".
+// The pull-in a world-space camera does when geometry blocks its view. Shared by the
+// third-person and dialogue cameras, and swept through `CapsuleWorldCollider` so it hits
+// the same shapes as the character controller. A small capsule, not a ray, because a ray
+// slips through wall seams. See docs/engine/player-camera.md, "Third-person framing".
 
 import simd
 

@@ -26,10 +26,8 @@ extension PapyrusWorldStateBridge {
         return state.isRunning
     }
 
-    /// Stops the quest and retires its scripts. Stopping keeps the reached
-    /// stages and the completed flag — item 13.2's rule — while the script
-    /// instances and their variables go, so a later `Start` runs `OnInit`
-    /// again on fresh ones.
+    /// Stops the quest and retires its scripts. Reached stages and the completed flag
+    /// stay; instances go, so a later `Start` runs `OnInit` again.
     public func stopQuest(for key: ReferenceKey) throws {
         let resolved = try resolveQuest(key)
         try resolved.runtime.stopQuest(resolved.quest.formID)

@@ -1,29 +1,8 @@
-// Memoized per-skill perk-tree counts for the `World > Progression` panel
-// (issue #556).
-//
-// The Skills section names, for each of the eighteen skills, how many boxes of
-// that skill's AVIF tree the player owns out of how many the tree has. Building
-// that line from the records means resolving every `PNAM` of all eighteen trees
-// — roughly nine hundred `PerkStore.resolve` calls on a vanilla load order —
-// and then asking the perk component about each resolved key. The panel refreshes
-// twice a second, so without a cache that walk runs twice a second while the
-// panel is open.
-//
-// ## The two things that stale an entry, and only those
-//
-// A tree's membership is a pure function of the AVIF record and the PERK records
-// its `PNAM` links resolve to. Nothing at runtime rewrites those, so a resolved
-// key list survives for as long as the stores behind it stand: `invalidate()` on
-// a rewire is the only thing that can drop one.
-//
-// The owned count is a function of that key list and the player's own
-// `PerkState`, which a spend, a grant, a revoke or a script's `AddPerk` all move.
-// Rather than asking every mutation site to report in, the cache keeps the
-// owned-perk list it last counted against and recounts when the list it is
-// handed differs. That is one array comparison per ask against a list a few
-// dozen entries long, in place of a walk of the whole tree.
-//
-// Documented in docs/engine/character-leveling.md.
+// Memoized per-skill perk-tree counts for the `World > Progression` panel, which
+// refreshes twice a second; one walk is about 900 `PerkStore.resolve` calls.
+// A tree's key list changes only on a rewire (`invalidate()`). The owned count is
+// recounted when the owned list differs from the last one, which costs one short
+// array compare. See docs/engine/character-leveling.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -72,18 +51,8 @@ nonisolated public struct PerkTreeCountCache: Sendable {
         keys.isEmpty
     }
 
-    /// How much of `index`'s tree `owned` covers, resolving the tree through
-    /// `tree` the first time that skill is asked about and recounting only when
-    /// the owned list has moved since the last count.
-    ///
-    /// - Parameters:
-    ///   - owned: the player's owned perks, which the counts are taken against.
-    ///     Compared as given, so a caller must hand over the same ordering every
-    ///     time — `PerkState.owned` is sorted and deduplicated, which is exactly
-    ///     that.
-    ///   - tree: what to do when the skill's tree has not been resolved yet.
-    ///     Called at most once per skill per wiring, so a caller may do the full
-    ///     record walk in it.
+    /// How much of `index`'s tree `owned` covers. `tree` runs at most once per skill
+    /// per wiring. `owned` is compared as given, so pass `PerkState.owned` (sorted).
     public mutating func counts(
         forSkill index: Int32,
         owned: [ReferenceKey],

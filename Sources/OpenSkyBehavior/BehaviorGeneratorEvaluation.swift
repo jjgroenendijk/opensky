@@ -1,21 +1,8 @@
-// Generator evaluation (issue #187): the walk that turns a decoded node tree
-// into one pose.
-//
-// The traversal is depth first from the root generator, children in the order
-// the class declares them, first-reach activation, and no revisit protection
-// beyond the depth cap — a behavior graph is a DAG, and a generator legitimately
-// reached twice in one update (a blender child that is also a selector child)
-// is evaluated twice, because both parents want its pose.
-//
-// Every class the class registry decodes is routed here. A class with real
-// semantics gets them; a class without gets its child's pose, or the reference
-// pose, plus a `BehaviorTally` entry naming what is still owed. Nothing is
-// silently approximated: `docs/engine/behavior-runtime.md` lists every entry
-// this file can produce and what it will take to clear it.
-//
-// State machines are routed from here into
-// `BehaviorStateMachineEvaluation.swift`, which item 14.4 (#330) added: states,
-// event-driven transitions, crossfades, and nesting.
+// Generator evaluation: a depth-first walk from the root generator, children in
+// declared order. A node reached twice is evaluated twice, because both parents want
+// its pose. A class without semantics passes its child's or the reference pose and adds
+// a `BehaviorTally` entry (docs/engine/behavior-runtime.md). State machines continue
+// in `BehaviorStateMachineEvaluation.swift`.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -148,13 +135,8 @@ nonisolated extension BehaviorGraphInstance {
 
     // MARK: - Blending
 
-    /// `hkbBlenderGenerator`: every child evaluated, poses mixed by normalized
-    /// weight. The pose blend uses `m_weight`; the root travel uses
-    /// `m_worldFromModelWeight`, which is the member whose whole purpose is to
-    /// let a child drive motion without driving the pose.
-    ///
-    /// A child under `m_referencePoseWeightThreshold` is dropped rather than
-    /// blended, which is what the member is for.
+    /// `hkbBlenderGenerator`: mixes child poses by `m_weight` and root travel by
+    /// `m_worldFromModelWeight`. A child under `m_referencePoseWeightThreshold` is dropped.
     public func evaluateBlend(
         _ blender: HKBBlenderFields,
         bound: [String: BehaviorVariableValue],
@@ -187,14 +169,8 @@ nonisolated extension BehaviorGraphInstance {
         return blended
     }
 
-    /// Evaluates every contributing child, sync master first.
-    ///
-    /// `m_indexOfSyncMasterChild` names the child whose playback phase the rest
-    /// follow, which is what keeps a walk clip and a run clip of different
-    /// lengths in step as the blend weight moves between them. The master is
-    /// evaluated before its siblings so its phase is current when they read it,
-    /// and its result is slotted back at its own index so the blend still folds
-    /// in declared order.
+    /// Evaluates every contributing child, the sync master first so its phase is
+    /// current for the rest. Its result returns to its own index, keeping blend order.
     private func blendChildren(
         _ blender: HKBBlenderFields,
         threshold: Float,

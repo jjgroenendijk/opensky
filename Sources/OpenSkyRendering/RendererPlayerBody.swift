@@ -1,29 +1,15 @@
-// The renderer's half of the third-person player body (issue #189).
-//
-// The body is held here rather than in the scene because it is
-// streaming-independent: `setScene` replaces every cell-owned draw list several
-// times a minute, and the player is not owned by a cell. So its draw groups are
-// appended to the scene's at encode time (`opaqueDrawGroups`,
-// `alphaTestedDrawGroups`), which both the scene pass and the shadow pass read,
-// and its GPU allocations join the residency set once and stay.
-//
-// See docs/engine/actor-animation.md for the clock split: the pose the body
-// draws comes from the behavior graph stepped on the simulation clock, and this
-// file only publishes it.
+// The renderer's half of the third-person body. No cell owns the player, so its draw
+// groups join the scene's at encode time and its GPU allocations stay resident.
+// The pose comes from the behavior graph on the simulation clock
+// (docs/engine/actor-animation.md).
 
 import Metal
 import simd
 
 extension Renderer {
-    /// Scene opaque groups plus the player's, so one list feeds the scene pass
-    /// and it cannot forget the body.
-    ///
-    /// The player draws last within its own list. Order between groups is a
-    /// draw-call ordering only — depth testing decides what is visible — so this
-    /// is about keeping the scene's grouping stable across frames rather than
-    /// about correctness. The first-person arms are *not* here: they are
-    /// encoded after everything else into their own depth slice
-    /// (`RendererFirstPersonArms.swift`).
+    /// Scene opaque groups plus the player's, so the scene pass cannot forget the body.
+    /// Order is for stable grouping only; depth decides visibility. The first-person arms
+    /// are drawn separately (`RendererFirstPersonArms.swift`).
     public var opaqueDrawGroups: [DrawGroup] {
         guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
             return scene.opaque

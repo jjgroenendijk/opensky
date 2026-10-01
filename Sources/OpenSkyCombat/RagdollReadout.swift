@@ -1,9 +1,5 @@
-// Ragdoll readout lines (issue #197, roadmap item 15.6), formatted here rather
-// than in the panel section for the reason `ArcheryReadout` and
-// `MeleeCombatReadout` are: a string a milestone gate asserts on belongs in the
-// engine target, where a unit test can reach it without a window.
-//
-// Documented in docs/engine/ragdoll.md.
+// Ragdoll readout lines, formatted in the engine target so a unit test can check them
+// without a window. See docs/engine/ragdoll.md.
 
 import Foundation
 import OpenSkyPhysics
@@ -20,7 +16,7 @@ nonisolated public enum RagdollReadout: Sendable {
             + " \(snapshot.settledRagdollCount) settled\(frozen))"
     }
 
-    /// The bone-body readout item 15.6 scope point 7 asks for.
+    /// The bone-body readout.
     public static func boneBodyText(for snapshot: RagdollStatsSnapshot) -> String {
         "Bone bodies: \(snapshot.boneBodyCount) over \(snapshot.jointCount) joints"
     }
@@ -34,10 +30,8 @@ nonisolated public enum RagdollReadout: Sendable {
         return "Solver: \(snapshot.solverIterationCount) iterations/substep, \(converged)"
     }
 
-    /// What the biped filter admitted and what is touching right now (issue
-    /// #413). The pair count is the size of the set self-collision may work
-    /// over, so a reader can tell "nothing is touching" from "nothing was ever
-    /// allowed to".
+    /// What the biped filter admitted and what touches now, so "nothing touching" differs
+    /// from "nothing allowed".
     public static func selfCollisionText(for snapshot: RagdollStatsSnapshot) -> String {
         guard snapshot.isSelfCollisionEnabled else {
             return "Self-collision: off"

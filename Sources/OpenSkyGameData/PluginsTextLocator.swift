@@ -1,23 +1,7 @@
-// Finds the `plugins.txt` that carries the user's plugin load order (issue #73).
-//
-// The game writes this file into its Windows per-user application data folder,
-// which on this platform only exists inside whatever compatibility layer runs
-// the game — a Steam Proton prefix, a Wine prefix, a CrossOver or Whisky
-// bottle. There is no single correct path, so the locator searches the layouts
-// that exist in practice and lets the user name the file outright when theirs
-// is somewhere else.
-//
-// Resolution order (first configured source wins):
-//   1. OPENSKY_PLUGINS_TXT environment variable (tests, CLI runs)
-//   2. UserDefaults key "OpenSkyPluginsText" (Settings)
-//   3. The first candidate layout that exists on disk
-//
-// Nothing here fails the load: a missing plugins.txt is an ordinary state that
-// resolves to the vanilla masters (see `PluginLoadOrder`). An explicitly
-// configured path that does not exist is reported rather than ignored, so the
-// Settings window can say so instead of silently loading a different order.
-//
-// Format and layout notes: docs/formats/plugins-txt.md.
+// Finds `plugins.txt`, which lives in a Proton, Wine, CrossOver or Whisky prefix.
+// First source wins: `OPENSKY_PLUGINS_TXT`, UserDefaults "OpenSkyPluginsText", then the
+// first known layout on disk. A missing file means vanilla masters; a configured path
+// that is missing is reported. See docs/formats/plugins-txt.md.
 
 import Foundation
 

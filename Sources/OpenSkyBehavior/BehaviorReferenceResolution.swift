@@ -1,49 +1,8 @@
-// Resolving `hkbBehaviorReferenceGenerator` (issue #189).
-//
-// Skyrim's player graph is not one file. `0_master.hkx` is a shell: its jump,
-// movement, combat, and magic branches are `hkbBehaviorReferenceGenerator`
-// nodes that name another behavior file — `mt_behavior.hkx`, `1hm_behavior.hkx`
-// and the rest — rather than pointing at a subtree. Items 14.3 and 14.4 left
-// those unresolved and tallied, which was correct then: with only `0_master`
-// loaded, the graph could enter its jump states and nothing else. The
-// locomotion states item 14.6 has to reach all live behind one of these
-// references, so this is where they get followed.
-//
-// How a reference is evaluated, and why:
-//
-// * The referenced file becomes its own `BehaviorGraphInstance`, over its own
-//   decode, with the parent's skeleton and the parent's clip source. It has to
-//   be its own instance because it has its own variables, its own events, and
-//   its own per-node state, exactly as Havok's `hkbBehaviorGraph` does.
-// * Variables cross by name, parent to child, before every child update. That
-//   is what Havok's variable mapping does in effect: the sub-behaviors declare
-//   the same authored names (`Speed`, `Direction`, `bIsSprinting`) and read the
-//   values the character wrote on the root graph.
-// * Events cross both ways by name: the parent's active set is raised on the
-//   child before its update, and what the child *raised during* its update is
-//   raised back on the parent for the parent's next update. A transition in
-//   `mt_behavior` that `0_master` needs to see therefore arrives one update
-//   later, which is the same one-update latency every event in this evaluator
-//   already has.
-// * What comes back up is the child's `pending` queue, not the `firedEvents`
-//   its update returned, and each direction refuses what the other just sent.
-//   `firedEvents` is the child's *active* set, which by construction already
-//   holds everything the parent pushed in on the previous update: raising that
-//   back on the parent made every crossing event echo between the two graphs
-//   forever, one copy per update each way. The player graph therefore re-fired
-//   `moveStart` and `IdleStop` on every single update, which saturated the
-//   bounded drain in `LocomotionGraphEventQueue` and pushed the real footstep
-//   tags out of it before an audio frame could read them (issues #385, #394).
-//   `pending` holds exactly what the child's own nodes raised, and skipping the
-//   names just pulled from a child when pushing back into it keeps a child's
-//   own event from being delivered to it a second time.
-// * A reference reached twice in one parent update is evaluated once. Without
-//   the memo the child would advance its clock once per reach and run fast.
-//
-// Cycles are impossible to rule out in modded data, so a child that references
-// its own ancestor is refused by name rather than by recursion depth.
-//
-// See docs/engine/behavior-clips.md.
+// Resolves `hkbBehaviorReferenceGenerator`: each referenced file (`mt_behavior.hkx`)
+// becomes its own instance with the parent's skeleton and clip source. Variables pass
+// down by name; events pass both ways one update late. Only the child's `pending`
+// queue goes up, so events do not echo forever. A reference reached twice runs once,
+// and an ancestor cycle is refused by name. See docs/engine/behavior-clips.md.
 
 import Foundation
 import OpenSkyFormatsAnimation

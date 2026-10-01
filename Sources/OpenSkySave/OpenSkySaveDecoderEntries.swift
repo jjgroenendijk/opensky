@@ -1,9 +1,5 @@
-// RDLT chunk decoding for the OpenSky native save container (issue #161):
-// reference keys, cell locations and component values.
-//
-// The payload arrives as its own `Data`, so the chunk's declared length is the
-// bound on every read in here — a corrupt count inside the chunk can never
-// walk into the next chunk's bytes.
+// RDLT chunk decoding: reference keys, cell locations and component values. The
+// payload is its own `Data`, so a corrupt count cannot read into the next chunk.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -30,8 +26,7 @@ nonisolated public enum OpenSkySaveEntryDecoder: Sendable {
         return entries
     }
 
-    /// GVAR chunk: count, then key + declared-type tag + float32 value per
-    /// overridden global (issue #165).
+    /// GVAR chunk: count, then key + declared-type tag + float32 value per global.
     public static func decodeGlobals(_ payload: Data) throws -> [WorldStateGlobalSnapshotEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("GVAR entry count")

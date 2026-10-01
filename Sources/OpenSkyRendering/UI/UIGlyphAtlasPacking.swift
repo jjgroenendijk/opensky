@@ -1,13 +1,6 @@
-// Rasterization, shelf packing, and eviction for UIGlyphAtlas (issue #127).
-// Split out of UIGlyphAtlas.swift so the class body stays inside the strict-lint
-// type-body limit.
-//
-// Eviction exists because the atlas is one fixed-size texture shared by every
-// movie: a host that swaps SWF movies (the UI Lab selector, later real menus)
-// otherwise accumulates cells for fonts nothing draws any more, and the shelf
-// runs out mid-sweep — later movies then render with no text at all. Releasing
-// a movie drops its glyphs and repacks the survivors, which is exact because
-// every packed cell keeps the coverage bytes it was rasterized from.
+// Rasterization, shelf packing and eviction for `UIGlyphAtlas`. The atlas is one
+// fixed texture for all movies, so swapping movies would fill it; releasing a movie
+// repacks the survivors from their kept bytes.
 
 import CoreGraphics
 import simd
@@ -24,14 +17,9 @@ nonisolated extension UIGlyphAtlas {
         public let bearingY: Int
     }
 
-    /// Drops every SWF glyph whose `fontKey` satisfies `isReleased` and repacks
-    /// the survivors from their retained coverage, reclaiming the freed cells.
-    /// System-font glyphs are never released — they belong to the dev UI, which
-    /// outlives any movie. Returns the number of glyph cells dropped.
-    ///
-    /// Callers must not hold `UIGlyphEntry` values across this call: survivors
-    /// keep their metrics but move, so their UVs change. Consumers re-query per
-    /// frame, and the bumped `revision` re-uploads the texture.
+    /// Drops SWF glyphs whose `fontKey` is released and repacks the rest; system-font
+    /// glyphs stay. Returns the dropped count. Survivors move, so do not hold
+    /// `UIGlyphEntry` values across the call; `revision` triggers a re-upload.
     @discardableResult
     public func releaseSWFGlyphs(where isReleased: (Int) -> Bool) -> Int {
         let released = cache.filter { key, _ in

@@ -1,24 +1,7 @@
-// The collider one dynamic rigid body presents to the solver (issue #193,
-// roadmap item 15.2).
-//
-// A simulated body is always convex here, which is what lets contact generation
-// stay a closed-form query rather than a general mesh-mesh intersection. Two
-// representations cover every shape the dynamics census found on vanilla
-// clutter:
-//
-// * `radial` is a segment with a radius, so one case covers both a sphere (the
-//   segment is a point) and a capsule.
-// * `hull` is a point cloud with the outward face planes derived from it, which
-//   covers `bhkBoxShape` and `bhkConvexVerticesShape`. A dynamic body whose
-//   shape is a triangle soup degrades to the soup's box, because a concave
-//   collider has no meaning to this solver and a wrong-shaped body is better
-//   than an unsimulated one falling through the floor.
-//
-// Both answer the same two questions, which together are the whole narrowphase:
-// which world points to test against the rest of the world (`contactSamples`),
-// and how deep an external sphere sits inside this volume (`penetration`).
-//
-// Documented in docs/engine/dynamic-bodies.md.
+// The convex collider a dynamic body gives the solver. `radial` is a segment with a
+// radius (sphere or capsule); `hull` is points and face planes (box or convex
+// vertices). A triangle-soup body falls back to its box. Both answer `contactSamples`
+// and `penetration`. See docs/engine/dynamic-bodies.md.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh

@@ -5,15 +5,9 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension FactionStore {
-    /// An actor's memberships after `useFactions` template inheritance, each
-    /// joined to the faction record.
-    ///
-    /// The chain walk is `ActorTemplateResolver`'s, which indexes one plugin by
-    /// raw FormID, so `sourcePlugin` names the plugin those FormIDs belong to.
-    /// A chain that cannot be walked — a dangling TPLT, a cycle, an empty
-    /// leveled list — yields an empty list rather than throwing: a caller
-    /// asking who an actor sides with wants an answer it can act on, and the
-    /// resolver's own suites cover the failure modes.
+    /// An actor's memberships after `useFactions` inheritance, joined to their records.
+    /// `sourcePlugin` names the plugin the FormIDs belong to. A broken chain gives an
+    /// empty list.
     public func memberships(
         ofBase base: FormID,
         resolver: ActorTemplateResolver,

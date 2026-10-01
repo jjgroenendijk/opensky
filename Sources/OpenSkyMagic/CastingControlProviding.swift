@@ -1,13 +1,6 @@
-// Main-app spellcasting seam (issue #470, roadmap item 19.7). The provider keeps
-// the panel independent of `GameViewController` while exposing the engine-owned
-// learn, read, ready and cast operations.
-//
-// One snapshot value rather than a bag of protocol properties, for the same
-// reason `MagicEffectControlSnapshot` is one: the readout has to be a pure
-// function of a single engine observation, not of several taken microseconds
-// apart while the simulation is mutating between them.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// The spellcasting panel's seam: learn, read, ready and cast, without
+// `GameViewController`. One snapshot value, so the readout comes from a single
+// observation.
 
 import Foundation
 import OpenSkyMagicInterface
@@ -21,8 +14,7 @@ nonisolated public struct KnownSpellReadout: Equatable, Sendable {
     public let typeName: String
     /// SPIT casting type, spelled for a reader.
     public let castingName: String
-    /// SPIT delivery, spelled for a reader. Anything but self is the ground
-    /// issue 19.8 covers, and the line says so.
+    /// SPIT delivery, spelled for a reader.
     public let deliveryName: String
     /// Magicka the cast costs, which for a concentration spell is per second.
     public let cost: UInt32
@@ -93,7 +85,7 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     /// Ability effect entries carrying no duration, which the active-effect
     /// runtime has no permanent mode to hold.
     public let unheldAbilityEntries: Int
-    /// Spell projectiles launched this session (issue #471).
+    /// Spell projectiles launched this session.
     public let projectileCount: Int
     /// Casts per delivery kind, most frequent first, already spelled
     /// `kind x count`.
@@ -104,12 +96,8 @@ nonisolated public struct CastingControlSnapshot: Equatable, Sendable {
     /// already spelled `effect on target: base x multiplier = adjusted`. This
     /// is the debug-level readout the resistance rule is asserted through.
     public let lastHitAdjustments: [String]
-    /// The magic condition functions evaluated against the player right now
-    /// (issue #474), each already spelled `name = value` or `name: reason`.
-    ///
-    /// Here rather than under Runtime State because this is where the state
-    /// they read is: a reader who has just readied a spell and wants to know
-    /// what a condition would say about it is looking at this panel.
+    /// The magic condition functions for the player now, each as `name = value` or
+    /// `name: reason`. Here, beside the readied spells they read.
     public let conditionLines: [String]
     /// Human-readable result of the last panel action.
     public let lastActionText: String
@@ -211,13 +199,8 @@ public protocol CastingControlProviding: AnyObject {
     @discardableResult
     func readySelectedSpell(in hand: SpellHand) -> String
 
-    /// Runs one whole cast in `hand` without the player holding a button: the
-    /// charge is fast-forwarded, then the cast is released.
-    ///
-    /// Exists beside the held-button path so the behaviour is verifiable from
-    /// the panel alone, which is what makes it the milestone's evidence.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    /// Runs one whole cast in `hand` with no button: charge, then release, so the panel
+    /// alone can verify it. Returns a readable outcome the panel shows verbatim.
     @discardableResult
     func castReadiedSpell(in hand: SpellHand) -> String
 }

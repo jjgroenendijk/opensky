@@ -1,14 +1,6 @@
-// What the condition evaluator could not answer (issue #251).
-//
-// The evaluator never throws and never crashes: a condition it cannot answer
-// becomes a reason-tagged false plus one tally entry. That makes the tally a
-// first-class result rather than a debug aid — it is the coverage evidence for
-// "which CTDA functions does OpenSky still owe Skyrim?", the same role
-// `AS2Tally` plays for ActionScript, and it is what the real-data sweep reads.
-//
-// Every name table is capped so a pathological plugin cannot grow the tally
-// without bound, and every total keeps counting past its cap: a truncated table
-// still reports how much it stopped naming.
+// What the condition evaluator could not answer: one entry per tagged false. It is
+// the coverage evidence the real-data sweep reads, as `AS2Tally` is for ActionScript.
+// Name tables are capped; totals keep counting past the cap.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -33,7 +25,7 @@ nonisolated public struct ConditionTally: Equatable, Sendable {
     public private(set) var unresolvedGlobalTotal = 0
     public private(set) var unnamedUnresolvedGlobals = 0
 
-    /// QUST FormID -> times a quest function could not resolve it (issue #182).
+    /// QUST FormID -> times a quest function could not resolve it.
     public private(set) var unresolvedQuests: [FormID: Int] = [:]
     public private(set) var unresolvedQuestTotal = 0
     public private(set) var unnamedUnresolvedQuests = 0
@@ -60,45 +52,35 @@ nonisolated public struct ConditionTally: Equatable, Sendable {
     /// Conditions that needed a game clock in a context that has none.
     public private(set) var unavailableClock = 0
 
-    /// Conditions that needed actor state the context carries none of (issue
-    /// #375): an unknown actor, or one whose weapon draw state nothing
-    /// observes.
+    /// Conditions that needed actor state the context lacks: an unknown actor, or
+    /// an unobserved draw state.
     public private(set) var unavailableActorState = 0
 
-    /// Conditions that needed perception the context carries none of (issue
-    /// #202): a pair the pass is not watching, or a reference it cannot place.
+    /// Conditions that needed perception the context lacks: an unwatched pair, or a
+    /// reference it cannot place.
     public private(set) var unavailableDetection = 0
 
-    /// Conditions that needed a dialogue fact the context carries none of
-    /// (issue #426): a run-on reference this session resolved no voice type
-    /// for. Deliberately not treated as a voice-type mismatch, which is a
-    /// different answer.
+    /// Conditions that needed a voice type the session did not resolve. Not counted
+    /// as a mismatch.
     public private(set) var unavailableDialogue = 0
 
-    /// M18 store or resolution misses, grouped by the domain that could not
-    /// answer rather than silently counted as a negative match.
+    /// Record-data store or resolution misses, grouped by the domain that could not
+    /// answer, not counted as a negative match.
     public private(set) var unavailableData: [ConditionDataDomain: Int] = [:]
 
-    /// Magic seam misses (issue #474), grouped the same way and for the same
-    /// reason: an actor with no magic state and a casting source OpenSky
-    /// readies nothing into are different gaps.
+    /// Magic seam misses, grouped because a missing actor state and an unreadied
+    /// casting source are different gaps.
     public private(set) var unavailableMagic: [ConditionMagicDomain: Int] = [:]
 
-    /// Perk seam misses (issue #497): `HasPerk` in a session with no PERK data,
-    /// or against a parameter no loaded plugin carries. Deliberately not
-    /// counted as an actor who has not taken the perk.
+    /// Perk seam misses: `HasPerk` without PERK data or with an unknown parameter.
     public private(set) var unavailablePerks = 0
 
-    /// Crime seam misses (issue #504): `GetCrimeGold` in a session with no FACT
-    /// data, against a parameter no loaded plugin carries, or with a null
-    /// parameter outside any hold. Deliberately not counted as an actor who
-    /// owes nothing.
+    /// Crime seam misses: `GetCrimeGold` without FACT data, with an unknown
+    /// parameter, or with a null parameter outside any hold.
     public private(set) var unavailableCrime = 0
 
-    /// Faction seam misses (issue #508): a faction or relationship function in a
-    /// session with no FACT data, against a parameter no loaded plugin carries,
-    /// or about an actor this session carries no social profile for.
-    /// Deliberately not counted as an actor who belongs to nothing.
+    /// Faction seam misses: no FACT data, an unknown parameter, or an actor with no
+    /// social profile.
     public private(set) var unavailableFactions = 0
 
     public private(set) var conditionsEvaluated = 0

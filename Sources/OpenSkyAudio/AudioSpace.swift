@@ -1,13 +1,7 @@
-// World-to-listener coordinate conversion for 3D audio.
-//
-// Skyrim's world is right-handed Z-up (+X east, +Y north, +Z up) in native units,
-// 1 unit = 0.0142875 m (docs/decisions/coordinates.md). AVAudioEnvironmentNode's
-// listener space is right-handed Y-up, and its distance-attenuation parameters are
-// expressed in the same unit as positions, which OpenSky fixes as meters. The
-// conversion is therefore the basis change (x, y, z) -> (x, z, -y) — the same
-// `MatrixMath.zUpToYUp` mapping the renderer's debug cameras use — plus the
-// units-to-meters scale for positions (directions are left unscaled).
-// Full conversion table: docs/engine/audio.md.
+// World-to-listener conversion for 3D audio. Skyrim is right-handed Z-up in units of
+// 0.0142875 m; the listener space is right-handed Y-up in meters. So positions map
+// (x, y, z) -> (x, z, -y), as `MatrixMath.zUpToYUp` does, then scale to meters;
+// directions are not scaled. See docs/engine/audio.md.
 
 import simd
 

@@ -1,5 +1,4 @@
-// Per-reference draw-list extraction for exterior dynamic-body handoff
-// (issue #401). Kept beside RenderScene.swift as its streaming satellite.
+// Per-reference draw-list extraction for exterior dynamic-body handoff.
 
 nonisolated extension RenderScene {
     /// The ordinary scene with selected simulated references removed. Their

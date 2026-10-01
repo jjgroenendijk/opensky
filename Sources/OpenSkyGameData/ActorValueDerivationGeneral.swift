@@ -1,54 +1,16 @@
-// Record-authored *non-primary* actor values for one actor (issue #468,
-// roadmap item 19.5): the baselines an actor has before the session touches
-// anything, for the 161 values outside health, magicka and stamina.
-//
-// A satellite of `ActorValueDerivation.swift` rather than more of it, following
-// the `RendererScenePass` split rule: that file holds the primary formula and
-// is at its size shape.
-//
-// Every rule here is quoted from an open source, as the primary formula's are:
-//
-//   "Skill = 15 + [Racial bonus] + 8*(Level-1)/(Sum of class' skill
-//   weights)*[Skill weight]", with the leftover points assigned "one at a time
-//   by looping over all the skills in order. Skills are ordered first by their
-//   weight (higher skills ordered first) and second by their actor value index
-//   (lower indices are ordered first)."
-//   (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>) Note the tie
-//   rule is the *opposite* of the attribute one, which breaks ties in reverse
-//   index order; both are transcribed as stated rather than unified.
-//
-//   RACE DATA authors four numbers that are actor values by name: the seven
-//   "Racial bonus for skill N" bytes, "Base Carry Weight", "Base Mass" and
-//   "Unarmed Damage" (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/RACE>).
-//
-//   NPC_ ACBS authors one more: "Speed Multiplier"
-//   (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_>), which is
-//   actor value 30, `Speed Mult`.
-//
-// ## What is deliberately not read
-//
-// NPC_ DNAM carries "18 base skills, 18 skill mods". Neither this file nor the
-// docs claim to know how those two arrays combine — no open source distinguishes
-// them, and the CLAS formula above is stated as approximate ("generally only be
-// accurate to within a couple points") so it cannot settle the question either.
-// Storing a number whose provenance is unresolved is worse than reading the
-// documented floor, so the skill baselines here come from the formula and the
-// DNAM block waits for M20's skill work with a real-data comparison behind it.
-//
-// Documented in docs/engine/actor-values.md.
+// Record-authored non-primary actor values. Skills are 15 + race bonus + 8 points
+// per level spread by class weight, leftovers by weight with ties in ascending index
+// order (UESP CLAS; the opposite of the attribute rule). RACE DATA and NPC_ ACBS give
+// carry weight, mass, unarmed damage and `Speed Mult`. NPC_ DNAM skills are not read:
+// no source says how its two arrays combine. See docs/engine/actor-values.md.
 
 import Foundation
 import OpenSkyFormatsESM
 
 nonisolated extension ActorValueDerivation {
-    /// Base values for every non-primary actor value one actor's records
-    /// author, keyed by vanilla table index.
-    ///
-    /// Sparse: an index absent from the result reads
-    /// `ActorValueIdentity.defaultValue(at:)`, so this carries only what a
-    /// record actually said. The eighteen skills are always present, because
-    /// the race bonus and the class spread both apply on top of a floor that is
-    /// itself documented rather than assumed.
+    /// Base values for every non-primary value the records author, by table index.
+    /// Sparse: a missing index reads `ActorValueIdentity.defaultValue(at:)`. The
+    /// eighteen skills are always present.
     public static func generalBaseValues(
         inputs: ActorValueInputs,
         settings: ActorValueLevelSettings = .documentedDefaults,
@@ -94,15 +56,8 @@ nonisolated extension ActorValueDerivation {
         return values
     }
 
-    /// Spreads `points` across the eighteen skills by their class weights,
-    /// following the exact method UESP states (see the file header): whole sets
-    /// first, then the leftover one point at a time in decreasing weight order
-    /// with ties broken by ascending actor-value index, never taking a skill
-    /// past its own weight in a single pass.
-    ///
-    /// Returns whole points per index, omitting the skills that got none. A
-    /// class with no weights spreads nothing, which is what a class record
-    /// with a zero-weight DATA or no class at all should do.
+    /// Spreads `points` across the eighteen skills by class weight (file header).
+    /// Returns whole points per index, omitting zeros. Zero weights spread nothing.
     public static func distributeSkillPoints(
         points: Int,
         weights: CharacterClass.SkillWeights

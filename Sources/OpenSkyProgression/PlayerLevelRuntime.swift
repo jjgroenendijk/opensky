@@ -1,39 +1,9 @@
-// Character leveling at runtime (issue #499, roadmap item 20.6): the mutation
-// layer over `PlayerProgressState` — banking character experience, crossing the
-// level threshold, applying an attribute pick, and handing out and taking back
-// perk points.
-//
-// A thin layer beside `ActorValueRuntime`, following `SkillAdvancementRuntime`
-// and `PerkRuntime`. Every write goes through one of those two, so a level and
-// the ten points it grants land in the journal, the dirty counts and the save
-// exactly like a sword's damage does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the runtime it writes through is.
-//
-// Failure model: nothing here throws. An attribute pick nobody is owed and a
-// perk point nobody has are refused answers rather than errors.
-//
-// ## When the level actually moves
-//
-// The moment the experience crosses the threshold. Vanilla banks the levels and
-// moves the number in the HUD only once the player opens the skills menu —
-// "when you do choose to level, you will be raised to the highest level earned
-// through skill progression" — and `Actor.GetLevel` follows the HUD there:
-// "if you have leveled up but have yet to go into the perk menu screen, this
-// will still return your level seen in the HUD"
-// (<https://www.creationkit.com/index.php?title=GetLevel_-_Actor>).
-//
-// OpenSky raises the level, the perk point and the owed attribute pick together
-// at the moment they are earned, and leaves only the *choice* pending. That is
-// a stated deviation, not an oversight: the confirmation step is a menu, item
-// 20.7 owns menus, and a level that is earned but invisible to `GetLevel`, to
-// `PC Level Mult` scaling and to every condition until a screen exists would be
-// a worse answer than one that is slightly early. The owed picks queue exactly
-// as vanilla queues them, so the screen 20.7 builds still has its four prompts
-// in succession to make.
-//
-// Documented in docs/engine/character-leveling.md.
+// Character leveling: banking experience, crossing the threshold, attribute picks
+// and perk points, all written through `ActorValueRuntime` and `PerkRuntime`.
+// Nothing throws; an unowed pick is a refused answer. Deviation: the level moves as
+// soon as it is earned, not when the skills menu opens (vanilla, per
+// <https://www.creationkit.com/index.php?title=GetLevel_-_Actor>); only the choice
+// waits. See docs/engine/character-leveling.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -63,11 +33,8 @@ nonisolated public struct PlayerLevelUpReport: Equatable, Sendable {
     }
 }
 
-/// Why an attribute pick or a perk-point spend was refused.
-///
-/// Typed and exhaustive rather than a bool, because every case is something a
-/// level-up screen has to say out loud: item 20.7 turns each of these into the
-/// reason a button is disabled.
+/// Why an attribute pick or perk-point spend was refused. Not a bool, because the level-up
+/// screen shows each case as the reason a button is disabled.
 nonisolated public enum PlayerProgressError: Error, Equatable, Sendable {
     /// No attribute pick is owed.
     case noAttributePickOwed
@@ -98,14 +65,8 @@ public struct PlayerLevelRuntime {
         publishLevel()
     }
 
-    /// Where the live level is published so every derivation reading it
-    /// re-derives against the new number.
-    ///
-    /// Taken from the baselines this runtime already writes through rather than
-    /// passed in: the resolver that answers "what is the player's level?" and
-    /// the one that scales a `PC Level Mult` actor against it are the same
-    /// value, so there is no wiring step that can connect one and forget the
-    /// other.
+    /// Where the live level is published, taken from the baselines this runtime
+    /// writes through, so no wiring step can connect one reader and forget another.
     public var levelSource: PlayerLevelSource {
         values.baselines.playerLevel
     }
@@ -158,24 +119,10 @@ public struct PlayerLevelRuntime {
         write(state.notingSkillIncreases(count))
     }
 
-    /// Spends one owed attribute pick on `kind`.
-    ///
-    /// The chosen attribute gains `iAVDhmsLevelUp` points as a *base offset*,
-    /// so it rides on top of whatever the records author rather than replacing
-    /// it (item 20.3). A stamina pick also adds `fLevelUpCarryWeightMod` to
-    /// carry weight, which UESP states as a rule of the pick rather than of
-    /// stamina: "Adding to your base stamina when you level up increases your
-    /// carry weight by 5. ... Temporary changes to your stamina (such as
-    /// damage, drain, or fortify) do not affect your carry weight."
-    /// (<https://en.uesp.net/wiki/Skyrim:Stamina>)
-    ///
-    /// The three values are then filled, which is the other half of accepting a
-    /// level: "When you accept the new level ... your character is fully
-    /// healed, regaining any Health, Magicka, and Stamina that was depleted."
-    /// (<https://en.uesp.net/wiki/Skyrim:Leveling>)
-    ///
-    /// - Returns: the state afterwards, or `.noAttributePickOwed` when nothing
-    ///   is owed. Never traps and never hands out an unpaid-for ten points.
+    /// Spends one owed attribute pick on `kind`: `iAVDhmsLevelUp` as a base offset,
+    /// plus `fLevelUpCarryWeightMod` carry weight for stamina (UESP Skyrim:Stamina).
+    /// The three values are then refilled (UESP Skyrim:Leveling). Returns
+    /// `.noAttributePickOwed` when nothing is owed.
     @discardableResult
     public func chooseAttribute(_ kind: ActorValueKind) -> PlayerProgressResult {
         guard let chosen = state.choosing(kind) else {

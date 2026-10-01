@@ -55,9 +55,8 @@ public final class MenuModeController {
     /// mode regardless of whether a consumer is attached.
     public weak var inputConsumer: MenuInputConsumer?
 
-    /// World policy of each menu that declared one, keyed by name. A menu
-    /// absent from the table pauses, which is what every menu before item 17.3
-    /// did and what a caller that never mentions a policy still gets.
+    /// World policy of each menu that declared one, keyed by name. A menu absent from the
+    /// table pauses, which is the default for a caller that names no policy.
     private var policies: [MenuIdentifier: MenuWorldPolicy] = [:]
 
     /// Called after a change to the input route or the world-sim pause, with

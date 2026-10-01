@@ -1,28 +1,7 @@
-// The bridge's first-person half (issue #190): the second graph instance, fed
-// the same state as the first.
-//
-// Item 14.6 established that one fixed step writes variables, raises edge
-// events, updates the graph, and reads root motion back. Item 14.7 adds a
-// second graph over the install's `_1stperson` behavior set and runs it through
-// exactly the same four steps in the same order, from the same call sites. The
-// fan-out lives in `LocomotionBridge.write` and `LocomotionBridge.raise` rather
-// than in a second loop here, which is what makes "both graphs see identical
-// input state" a property of the code shape instead of a promise: there is one
-// place per variable and one place per event, and neither can reach one graph
-// without reaching the other.
-//
-// The two instances share nothing else. `BehaviorGraphInstance` keys its
-// runtime state per instance, so stepping one cannot perturb the other's poses,
-// events, or state paths — asserted by `LocomotionBridgeFirstPersonTests`.
-//
-// The one input that deliberately *differs* is `IsFirstPerson`. Both vanilla
-// `0_master.hkx` files declare it as a bool initialised to false, and it is the
-// variable the graphs' own conditions read to tell the two perspectives apart
-// (`docs/engine/behavior-state-machines.md`, "Transition conditions"). Writing it true
-// on the first-person instance and false on the third-person one is therefore
-// not a deviation but the whole point of running two: same state, different
-// perspective. It is seeded once at attach and at every reset rather than
-// written per step, because it does not change between steps.
+// The bridge's first-person half: a second graph over `_1stperson`, stepped with the
+// same inputs through the fan-out in `write` and `raise`. The instances share no state
+// (`LocomotionBridgeFirstPersonTests`). Only `IsFirstPerson` differs, seeded at attach
+// and reset (docs/engine/behavior-state-machines.md, "Transition conditions").
 
 import OpenSkyBehavior
 import simd

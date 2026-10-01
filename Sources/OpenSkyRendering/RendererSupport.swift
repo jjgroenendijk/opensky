@@ -1,5 +1,4 @@
-// Renderer support types, split from Renderer.swift to keep that file inside
-// the 500-line limit when the audio subsystem fields landed (M9.1.3).
+// Renderer support types, kept apart to hold Renderer.swift under the file limit.
 
 import Metal
 

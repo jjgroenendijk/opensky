@@ -1,21 +1,7 @@
-// World SFX + ambience director (M9.2.2, issue #155). Subscribes to the
-// streamer's interaction + ambience-context callbacks and drives the audio
-// engine accordingly:
-//
-//   - One-shot SFX (door open, activator activate) on use-key events, routed
-//     through the descriptor's SNDR.GNAM -> SNCT parent chain.
-//   - Continuous ambience loop set when the center cell changes, using the
-//     same authored category resolution and routed non-positionally through
-//     that category's submix. Bed sources are started as loops, so they rewind
-//     in the streamer rather than ending after one pass; the panel toggle
-//     retires and restarts them live.
-//
-// Main-actor only (the engine + streamer are main-actor); decode work runs
-// inside WorldAudioEngine's decode queue. Defensive: an absent engine, store,
-// or file-system entry degrades silently — no audio, no crash. The director
-// is the single consumer of the CellStreamer.onInteraction seam the M8 work
-// reserved for "the later Papyrus OnActivate subscriber"; that Papyrus
-// subscriber will subscribe alongside, not replace this one.
+// World SFX and ambience. One-shots play on use-key events, routed through SNDR.GNAM to
+// the SNCT chain. The ambience loop changes with the center cell, through its category's
+// submix. A missing engine, store or file means silence, not a crash. Papyrus subscribes
+// to the same `onInteraction` seam beside this.
 
 import Foundation
 import OpenSkyAudio

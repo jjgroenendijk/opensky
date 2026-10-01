@@ -1,15 +1,6 @@
-// Filesystem side of the OpenSky native save container (issue #161).
-//
-// Saves live in the user's Application Support directory, never in the repo
-// and never in the game install: the install is read-only external input
-// (AGENTS.md "Loading game data"), and a save is the user's data, not ours.
-//
-// Writing goes through a temp file, an explicit fsync and a rename. A rename
-// within one filesystem replaces the destination in a single step, so a crash
-// or a full disk mid-write leaves the previous save intact instead of a
-// half-written file. Skipping the fsync would keep the rename atomic but allow
-// the metadata to land before the contents after a power loss, which is the
-// classic way to end up with a file full of zeroes.
+// File side of the save container. Saves live in Application Support, never the repo or
+// the install. Writes go temp file, fsync, rename, so a crash keeps the old save; without
+// the fsync, a power loss could leave a file of zeroes.
 
 import Foundation
 

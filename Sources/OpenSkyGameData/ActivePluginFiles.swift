@@ -1,11 +1,6 @@
-// Opening every active plugin once, in load order, for the index builders that
-// need the whole load order rather than Skyrim.esm alone.
-//
-// `GameSettingStore` (GMST) and `MovementTypeStore` (MOVT) both walk the same
-// list and both want the same override rule — later plugin wins — so the walk
-// lives here instead of once per index. A plugin that will not open is logged
-// and skipped: one unreadable mod must not cost the caller every setting in
-// the game.
+// Opens every active plugin once, in load order, for index builders such as
+// `GameSettingStore` and `MovementTypeStore` (later plugin wins). A plugin that
+// will not open is logged and skipped, so one bad mod does not cost every setting.
 
 import Foundation
 import OpenSkyFormatsESM

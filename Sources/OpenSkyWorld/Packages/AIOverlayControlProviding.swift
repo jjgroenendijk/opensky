@@ -1,6 +1,5 @@
-// Narrow provider seam for the M16 acceptance panel. Issue #422 supplies the
-// renderer toggles and readout; issue #203 adds the actual controls without
-// exposing Renderer or CellStreamer to the shell.
+// The AI overlay panel's seam: renderer toggles and readout, without exposing `Renderer`
+// or `CellStreamer` to the shell.
 
 import OpenSkyRendering
 

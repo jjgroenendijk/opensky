@@ -1,33 +1,9 @@
-// What a guard does about the player's bounty (issue #505, roadmap item 21.6):
-// who counts as a guard, which bounty earns a conversation and which earns a
-// sword, and the crime term the hostility derivation reads.
-//
-// ## Who is a guard
-//
-// An actor polices a crime faction when it is a member of the faction the
-// `GFAC` ("Guard Faction") default object names and its `CRIF` names that
-// crime faction. Both halves were confirmed on this install rather than
-// assumed: `GFAC` names `IsGuardFaction`, and every one of the 463 NPC_ records
-// in `IsGuardFaction` authors a `CRIF` it is also a member of —
-// `GuardWhiterunImperialPatrolDay` reports to `CrimeFactionWhiterun`. The
-// Creation Kit wiki gives the `CRIF` meaning: `Actor.GetCrimeFaction` "Obtains
-// the Faction this actor reports it's crimes to"
-// (<https://ck.uesp.net/wiki/GetCrimeFaction_-_Actor>).
-//
-// ## Arrest or attack
-//
-// The crime faction's `CRVA` carries two flags the Creation Kit's Faction page
-// defines: "Attack on Sight: If checked, guards will attack the player on sight
-// if crime gold is high enough" and "Arrest: If checked, guards will try to
-// arrest the player" (<https://ck.uesp.net/wiki/Faction>). How high "high
-// enough" is has no open source. No `iCrimeGold*` setting prices it on this
-// install — `openskycli gmst list --prefix iCrime` reports only
-// `iCrimeGoldStealHorse` and `iCrimeGoldWerewolf` — and UESP's talk pages only
-// say that "Normally a 1000 bounty will cause them to arrest you on sight".
-// `CrimeResponsePolicy.attackOnSightGold` is therefore 1000, the vanilla murder
-// bounty, stated as this engine's choice and flagged in docs/engine/guard-response.md.
-//
-// Documented in docs/engine/guard-response.md.
+// What a guard does about the player's bounty. A guard is a member of the `GFAC`
+// faction (`IsGuardFaction`) whose `CRIF` names the crime faction; all 463 such
+// NPC_ records on this install confirm it. `CRVA` flags choose arrest or attack
+// (<https://ck.uesp.net/wiki/Faction>). No source prices "high enough", so
+// `CrimeResponsePolicy.attackOnSightGold` is our 1000, the murder bounty.
+// See docs/engine/guard-response.md.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -62,14 +38,8 @@ nonisolated public enum CrimeResponsePolicy: Sendable {
 }
 
 /// The crime term of the hostility derivation, over a snapshot of the player's
-/// ledger (issue #505).
-///
-/// A guard that polices a faction the player owes is hostile when that faction
-/// attacks on sight at this bounty, or when the player resisted arrest with it.
-/// Everybody else gets no opinion from crime, so the record terms decide. A
-/// value snapshot rather than a live handle because the derivation is
-/// nonisolated; the session refreshes it whenever the ledger or the resisted
-/// set moves.
+/// ledger. A guard is hostile when its faction attacks on sight at this bounty or
+/// the player resisted arrest. A snapshot, because the derivation is nonisolated.
 nonisolated public struct GuardCrimeHostility: CrimeHostilitySource, Sendable {
     public let guardFaction: ReferenceKey?
     /// Bounty per crime faction, which is all the term reads.
@@ -176,13 +146,8 @@ nonisolated public struct GuardResponseState: Equatable, Sendable {
 
     public init() {}
 
-    /// What to do this tick, given every guard in view and the player's
-    /// bounties.
-    ///
-    /// At most one confrontation at a time — the nearest eligible guard — and
-    /// none while one is already open. A guard of an attack-on-sight bounty is
-    /// not listed: the hostility term already turned it hostile, and the
-    /// combat loop owns what happens next.
+    /// What to do this tick. At most one confrontation at a time, with the nearest
+    /// eligible guard. An attack-on-sight guard is skipped: it is already hostile.
     public func actions(
         guards: [GuardCandidate],
         bounty: (ReferenceKey) -> Int32,

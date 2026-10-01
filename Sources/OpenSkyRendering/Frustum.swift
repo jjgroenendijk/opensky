@@ -1,16 +1,7 @@
-// View-frustum vs world-space AABB culling math. Pure, renderer-independent —
-// Renderer.swift wires this into the draw loop in a later milestone-3.2 commit.
-//
-// Plane extraction: Gribb, Eric & Hartmann, Klaus, "Fast Extraction of Viewing
-// Frustum Planes from the World-View-Projection Matrix" (2001). Their derivation
-// uses row vectors (clip = v * M); OpenSky's convention is column vectors
-// (clip = M * v, see docs/decisions/coordinates.md), so planes come from the
-// *rows* of the combined view-projection matrix instead of its columns. Their
-// paper also targets OpenGL's z in [-1, 1] clip range, where near = row3 + row2;
-// OpenSky's projection (MatrixMath.perspective) maps to Metal's z in [0, 1]
-// instead, so clip.z alone is already the near-plane half-space test and near
-// is row2 by itself (far stays row3 - row2). Verified against
-// MatrixMath.perspective's actual coefficients before writing this.
+// View-frustum vs world AABB culling. Planes per Gribb and Hartmann (2001), from the
+// rows of view-projection because OpenSky uses column vectors
+// (docs/decisions/coordinates.md). Metal clip z is [0, 1], so near is row2 alone and
+// far is row3 - row2, checked against `MatrixMath.perspective`.
 
 import OpenSkyFormatsCore
 import simd

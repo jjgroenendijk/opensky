@@ -45,12 +45,9 @@ public final class ActiveAudioSource {
     /// `playbackPosition(ofSource:)` subtracts from. Written by `adoptSource`
     /// rather than by `init`, because the clock belongs to the engine.
     public var startClockSeconds: Double = 0
-    /// Set when a buffer-backed source's scheduled buffer has played out.
-    /// Buffer sources have no streamer to report completion, so without this
-    /// a one-shot `.wav` effect would sit in `sources` until the FIFO budget
-    /// evicted it — a leak the moment footsteps started arriving twice a
-    /// second (issue #352). Written from the main actor by the completion
-    /// handler's hop; read by `retireFinishedSources`.
+    /// Set when a buffer source has played out. Without it a one-shot `.wav` stays in
+    /// `sources` until evicted, which leaks with footsteps. Set on the main actor;
+    /// read by `retireFinishedSources`.
     public var bufferFinished = false
     /// Fade multiplier in [0, 1], folded into the node volume on top of `gain`.
     /// Owned by WorldAudioEngineFades.swift (internal because that file is a
@@ -275,13 +272,8 @@ extension WorldAudioEngine {
         return source.id
     }
 
-    /// Schedules one buffer and, for a one-shot, arranges for the source to be
-    /// retired once it has played out.
-    ///
-    /// The completion handler fires on an AVFAudio-internal thread, so it hops
-    /// to the main actor before touching the source. A looping request gets no
-    /// handler at all: it never finishes on its own and is retired by whoever
-    /// started it.
+    /// Schedules one buffer; a one-shot is retired once it plays out. The completion
+    /// handler hops to the main actor. A looping source gets no handler.
     private func schedule(
         _ buffer: AVAudioPCMBuffer,
         on node: AVAudioPlayerNode,
@@ -305,9 +297,8 @@ extension WorldAudioEngine {
         }
     }
 
-    /// Stops one source by id. Returns true when a source was stopped. Used by
-    /// the world sound director to retire ambience beds without losing
-    /// unrelated one-shot SFX (issue #155).
+    /// Stops one source by id. Returns true when a source was stopped. The sound
+    /// director retires ambience beds this way without touching one-shot SFX.
     @discardableResult
     public func stopSource(id: Int) -> Bool {
         guard let source = sources.first(where: { $0.id == id }) else { return false }
@@ -315,14 +306,9 @@ extension WorldAudioEngine {
         return true
     }
 
-    /// Detaches sources whose stream reported completion. Called from the
-    /// per-frame audio tick.
-    ///
-    /// `onSourceFinished` fires here and only here, so it means "this source
-    /// played to its end" — a source stopped by hand, evicted by the budget or
-    /// purged with its cell does not report. That distinction is what lets the
-    /// dialogue subtitle clear on the line ending rather than on the line
-    /// being cut off (item 17.3).
+    /// Detaches sources whose stream completed; called from the audio tick.
+    /// `onSourceFinished` fires only here, so it means "played to the end", not
+    /// stopped or evicted. Dialogue subtitles rely on that.
     public func retireFinishedSources() {
         for source in sources where source.streamer?.isFinished == true || source.bufferFinished {
             let id = source.id
@@ -355,14 +341,9 @@ extension WorldAudioEngine {
         }
     }
 
-    /// Pushes one source's node-level gain product.
-    ///
-    /// Category volume is applied exactly once per source: a positional source
-    /// bypasses the submixes (each needs its own environment-node input), so it
-    /// carries the category factor at its node; a non-positional source already
-    /// passes through the category submix, which carries it. Master volume
-    /// lives on the main mixer and is never part of this product. The category
-    /// factor is `audibleVolume(for:)`, so mute and solo apply on both paths.
+    /// Pushes one source's node gain. Category volume applies once: at the node for a
+    /// positional source, at the submix otherwise. Master lives on the main mixer.
+    /// `audibleVolume(for:)` applies mute and solo on both paths.
     public func applyVolume(to source: ActiveAudioSource) {
         let categoryFactor = source.isPositional ? audibleVolume(for: source.category) : 1
         source.node.volume = categoryFactor * source.gain * source.fadeGain
@@ -385,8 +366,8 @@ extension WorldAudioEngine {
         let node = AVAudioPlayerNode()
         engine.attach(node)
         engine.connect(node, to: environment, format: format)
-        // Equal-power panning is deterministic and cheap; HRTF selection is a
-        // later, provisional-free decision alongside the M9.2 attenuation data.
+        // Equal-power panning is deterministic and cheap; HRTF waits for the
+        // authored attenuation data.
         node.renderingAlgorithm = .equalPowerPanning
         let position = AudioSpace.listenerPosition(fromWorld: request.worldPosition)
         node.position = AVAudio3DPoint(x: position.x, y: position.y, z: position.z)
@@ -413,12 +394,9 @@ extension WorldAudioEngine {
         return node
     }
 
-    /// Budget rule: at `maxConcurrentSources` positional sources, starting
-    /// another one evicts the oldest playing positional source (FIFO by start
-    /// order). Oldest-first is predictable, cheap, and matches how short
-    /// one-shot effects naturally expire; a priority scheme waits for
-    /// game-authored data in M9.2. Non-positional sources are outside the
-    /// budget entirely — a 2D bed must not be evicted by a burst of SFX.
+    /// At `maxConcurrentSources` positional sources, a new one evicts the oldest
+    /// (FIFO): predictable, and short effects expire first anyway. Non-positional
+    /// beds are outside the budget, so SFX cannot evict them.
     private func makeRoomForNewSource() {
         while
             sources.count(where: \.isPositional) >= Self.maxConcurrentSources,

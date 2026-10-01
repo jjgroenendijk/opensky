@@ -1,43 +1,8 @@
-// Turning skill use into skill level (issue #498, roadmap item 20.5): the layer
-// that takes a `SkillUseEvent` from a combat or magic runtime, converts it with
-// the skill's own AVIF parameters, banks it, and spends it on a level when it
-// crosses the threshold.
-//
-// A thin layer beside `ActorValueRuntime`, following `PerkRuntime` and
-// `SpellbookRuntime`. Every write goes through `ActorValueRuntime`, so a skill
-// point and the experience under it land in the journal, the dirty counts and
-// the save exactly like a sword's damage does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the runtime it writes through is.
-//
-// Failure model: nothing here throws. A use no skill claims, a use by an NPC,
-// and a load order with no AVIF parameters are each a counted drop rather than
-// an error — a fight that stops because progression could not resolve a skill
-// would be a far worse outcome than a fight that levels nothing.
-//
-// ## Where accumulated experience is stored, and why not in a component
-//
-// In the `Skill Advance` actor values — the eighteen slots at indices 114
-// through 131 that the vanilla actor-value table names one per skill and that
-// nothing else in the engine writes. A dedicated world-state component was the
-// alternative and was rejected for three reasons:
-//
-// 1. The table already has exactly these slots and they hold exactly this
-//    quantity. A component beside them would be a second place skill progress
-//    lives, and the two could disagree.
-// 2. `GetActorValue OneHandedSkillAdvance` is a question the game's own script
-//    corpus and console can ask. Answering it from the same number the
-//    progression runtime spends is free this way and impossible the other way
-//    without a bridge.
-// 3. Persistence, the journal and the save already carry actor values, so the
-//    skill half of progression survives a reload with no new save chunk.
-//
-// The cost of the decision is that a script can write skill progress with
-// `SetActorValue`, which vanilla also allows, so it is a shared behaviour
-// rather than a hole.
-//
-// Documented in docs/engine/skill-advancement.md.
+// Turns a `SkillUseEvent` into skill levels with the skill's AVIF parameters.
+// Every write goes through `ActorValueRuntime`. Nothing throws: an unclaimed use is
+// a counted drop. Experience lives in the `Skill Advance` actor values (114-131),
+// not a component: the slots exist, scripts can read them, and the save already
+// carries them. See docs/engine/skill-advancement.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -45,13 +10,8 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
 
-/// Where a skill's `AVSK` advancement parameters come from.
-///
-/// A lookup rather than the store itself, so a unit test can state a skill's
-/// four numbers directly while a session reads the winning AVIF record for the
-/// same index. Both forms answer the identical question, which is what makes
-/// the synthetic suites and `SkillAdvancementRealDataTests` two views of one
-/// code path rather than two code paths.
+/// Where a skill's `AVSK` parameters come from. A lookup, so a unit test states
+/// the four numbers while a session reads the AVIF record, through one code path.
 nonisolated public struct SkillUseParameterSource: Sendable {
     private let lookup: @Sendable (Int32) -> SkillUseParameters?
 
@@ -100,10 +60,8 @@ public struct SkillAdvancementRuntime {
     /// resolution, and an armoured hit then credits nothing rather than
     /// guessing a skill.
     public var wornArmor: @MainActor (ReferenceKey) -> WornArmorProfile = { _ in .none }
-    /// Character leveling, which is what a skill point's banked experience is
-    /// spent on (issue #499). Nil in a session with no character leveling, and
-    /// the experience is then computed and reported but not banked anywhere —
-    /// which is what every synthetic suite that drives skills alone does.
+    /// Character leveling, where banked experience is spent. Nil in a session
+    /// without leveling: experience is then reported but not banked.
     public var leveling: PlayerLevelRuntime?
     public private(set) var tally = SkillAdvancementTally()
 
@@ -138,9 +96,8 @@ public struct SkillAdvancementRuntime {
         values.baseValue(at: index, on: holder) ?? ActorValueIdentity.skillFloor
     }
 
-    /// Experience accumulated toward `skill`'s next level, read out of the
-    /// skill's `Skill Advance` slot. Zero for a skill nothing has used, and the
-    /// read the progression panel of item 20.7 takes.
+    /// Experience toward `skill`'s next level, from its `Skill Advance` slot. Zero for an
+    /// unused skill. The progression panel reads it.
     public func experience(forSkill index: Int32, on holder: ActorValueHolder) -> Float {
         guard let slot = ActorValueIdentity.skillAdvanceIndex(forSkill: index) else { return 0 }
         return max(0, values.baseValue(at: slot, on: holder) ?? 0)
@@ -182,14 +139,9 @@ public struct SkillAdvancementRuntime {
         return advance(skill: credited.skill, byUse: credited.amount, on: player)
     }
 
-    /// Advances one skill by a use amount, which is `Game.AdvanceSkill`'s own
-    /// unit: "The amount by which the skill progress will be advanced. This is
-    /// in Skill Usage amounts, so it will count towards skill progression but
-    /// won't necessarily change the Skill itself"
-    /// (<https://ck.uesp.net/wiki/AdvanceSkill_-_Game>).
-    ///
-    /// - Returns: nil for an index that is not one of the eighteen skills, and
-    ///   for a load order carrying no parameters for it.
+    /// Advances one skill by a use amount, `Game.AdvanceSkill`'s unit
+    /// (<https://ck.uesp.net/wiki/AdvanceSkill_-_Game>). Returns nil for a non-skill
+    /// index or a load order without its parameters.
     @discardableResult
     public mutating func advance(
         skill index: Int32,
@@ -231,18 +183,9 @@ public struct SkillAdvancementRuntime {
         )
     }
 
-    /// Raises one skill by a whole point, which is `Game.IncrementSkill`:
-    /// "Advances the provided Skill by the one point (for the player only)"
-    /// (<https://ck.uesp.net/wiki/IncrementSkill_-_Game>).
-    ///
-    /// The accumulated experience is left exactly where it was. The point did
-    /// not come from use — a trainer, a skill book, a quest reward — so
-    /// spending the progress the character earned by using the skill would take
-    /// away something the point did not pay for. The character experience is
-    /// banked, because the level was still acquired.
-    ///
-    /// - Returns: nil for an index that is not a skill, and for a skill already
-    ///   at the ceiling, which cannot take the point.
+    /// Raises one skill by a point, as `Game.IncrementSkill` does. Skill progress
+    /// stays, because the point did not come from use; character experience is
+    /// banked. Returns nil for a non-skill index or a skill at the ceiling.
     @discardableResult
     public mutating func increment(
         skill index: Int32,

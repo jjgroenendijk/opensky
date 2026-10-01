@@ -24,10 +24,8 @@ nonisolated public struct ArcheryDamageResult: Equatable, Sendable {
 }
 
 nonisolated public enum ArcheryDamage: Sendable {
-    /// The Archery skill a character with no skill table is assumed to have.
-    /// UESP "Skyrim:Archery" gives 15 as the starting value for a race with no
-    /// Archery bonus; the real per-actor number arrives with the rest of the
-    /// actor-value table in M18. The same reasoning and the same default as
+    /// The Archery skill assumed for a character with no skill table: 15, the starting
+    /// value for a race with no Archery bonus (UESP "Skyrim:Archery"). Same reasoning as
     /// `MeleeDamage.defaultBlockSkill`.
     public static let defaultArcherySkill: Float = 15
 
@@ -39,16 +37,9 @@ nonisolated public enum ArcheryDamage: Sendable {
     /// it in frames and says "to calculate using seconds, replace t by 60t".
     public static let drawFormulaFrameRate: Float = 60
 
-    /// What one landed arrow takes off the target's health.
-    ///
-    /// - Parameters:
-    ///   - bowDamage: WEAP base damage of the bow that fired it.
-    ///   - arrowDamage: AMMO base damage of the arrow.
-    ///   - drawFraction: the draw-time term, `0...1`. 1 is a full draw.
-    ///   - skill: the shooter's Archery skill.
-    ///   - bonusMultiplier: the perk, enchantment and potion terms folded into
-    ///     one. 1 for a character with none; `CombatFortifyBonus.archery`
-    ///     supplies the enchantment and potion halves (issue #472).
+    /// What one landed arrow takes off the target's health. `drawFraction` is 0...1 (1 is
+    /// a full draw). `bonusMultiplier` folds perks, enchantments and potions; 1 for none.
+    /// `CombatFortifyBonus.archery` supplies the enchantment and potion part.
     public static func resolve(
         bowDamage: Float,
         arrowDamage: Float,
@@ -70,14 +61,8 @@ nonisolated public enum ArcheryDamage: Sendable {
         )
     }
 
-    /// The draw-time fraction for a shot released after `heldSeconds`, from
-    /// UESP's three-branch formula.
-    ///
-    /// - Parameters:
-    ///   - heldSeconds: how long the attack button was held.
-    ///   - speed: WEAP DNAM `speed` times any weapon-speed multiplier. A
-    ///     non-positive or non-finite value falls back to 1, which is the
-    ///     multiplier a weapon with no speed data would have had anyway.
+    /// The draw fraction after `heldSeconds`, from UESP's three-branch formula. `speed` is
+    /// WEAP DNAM speed times any multiplier; a non-positive or non-finite one becomes 1.
     public static func drawFraction(heldSeconds: Float, speed: Float) -> Float {
         let scale = speed.isFinite && speed > 0 ? speed : 1
         let frames = heldSeconds.isFinite ? max(0, heldSeconds) * drawFormulaFrameRate : 0

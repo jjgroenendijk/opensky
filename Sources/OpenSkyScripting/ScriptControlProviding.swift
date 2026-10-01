@@ -1,15 +1,6 @@
-// Papyrus VM seam consumed by the World > Scripts sidebar (issue #278). No
-// AppKit here on purpose: the file compiles into both the app and the CLI
-// target, so a protocol added here needs no project-membership change.
-//
-// The seam mirrors `RuntimeStateControlProviding`: a panel reads one
-// `ScriptsSnapshot` per refresh and calls one mutation entry point per user
-// action. It never sees `PapyrusWorldRuntime`, `PapyrusScheduler` or
-// `PapyrusTally` directly, so the engine keeps ownership of main-actor state.
-// `PapyrusWorldRuntime.scriptsSnapshot(target:targetDescription:)` builds the
-// snapshot; `PapyrusWorldScriptsSnapshot.swift` holds that builder.
-//
-// Documented in docs/engine/papyrus-world.md.
+// The World > Scripts sidebar's VM seam: one `ScriptsSnapshot` per refresh, one call per
+// action, built by `PapyrusWorldRuntime.scriptsSnapshot`. No AppKit, so the CLI builds it.
+// See docs/engine/papyrus-world.md.
 
 // One native function name and how often the session called it.
 import OpenSkyScriptingInterface
@@ -82,8 +73,8 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
 
     // MARK: Quests
 
-    /// Script instances belonging to a quest rather than to a placed
-    /// reference (issue #322). A subset of `instanceCount`.
+    /// Script instances owned by a quest, not a placed reference. A subset of
+    /// `instanceCount`.
     public let questInstanceCount: Int
     /// Quests holding at least one of those instances.
     public let questCount: Int
@@ -96,9 +87,8 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     /// Newest stage fragment enqueued, worded like a recent-event entry. Nil
     /// until a stage carrying a fragment is set.
     public let lastQuestFragment: String?
-    /// Script instances belonging to a filled quest alias (issue #183). Keyed
-    /// by the filled reference rather than by the quest, so these are *not* a
-    /// subset of `questInstanceCount`, though they are one of `instanceCount`.
+    /// Script instances of filled quest aliases, keyed by the filled reference: part of
+    /// `instanceCount`, not of `questInstanceCount`.
     public let questAliasInstanceCount: Int
     /// Aliases filled across every quest this session.
     public let filledAliasCount: Int

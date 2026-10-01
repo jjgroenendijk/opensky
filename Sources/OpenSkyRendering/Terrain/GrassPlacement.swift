@@ -1,10 +1,6 @@
-// Deterministic CPU grass placement for milestone 7.5.1. LAND texture
-// coverage selects LTEX-linked GRAS definitions; renderer consumes these
-// immutable placements through cell-owned instanced batches.
-//
-// Record controls: xEdit wbDefinitionsTES5.pas wbGRAS + Creation Kit Grass.
-// Exact Bethesda candidate-grid/PRNG behavior is undocumented. OpenSky's
-// explicit approximation + observed density evidence: docs/engine/grass.md.
+// Deterministic grass placement: LAND texture coverage picks LTEX-linked GRAS. Record
+// fields from xEdit wbGRAS and the Creation Kit; Bethesda's grid and PRNG are
+// undocumented, so this approximates (docs/engine/grass.md).
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

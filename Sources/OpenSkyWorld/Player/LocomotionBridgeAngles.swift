@@ -1,12 +1,6 @@
-// Gait speeds and the angle math the locomotion bridge resolves with, split
-// out of LocomotionBridge.swift for the strict-lint type-body cap.
-//
-// Everything here is a pure function of its arguments and the resolved movement
-// configuration: no edge state, no graph, no capsule. That is what makes the
-// direction convention below testable on its own, which matters because it is
-// the one place OpenSky's yaw convention (counterclockwise from +X) is
-// translated into the one Havok's `Direction` variable uses (radians away from
-// facing, positive to the left).
+// Gait speeds and angle math for the locomotion bridge, pure functions of their
+// arguments. The one place OpenSky's yaw (counterclockwise from +X) becomes Havok's
+// `Direction` (radians from facing, positive left).
 
 import OpenSkyPhysics
 import simd

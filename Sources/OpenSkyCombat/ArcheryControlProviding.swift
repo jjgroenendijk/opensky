@@ -1,13 +1,5 @@
-// Main-app archery inspection seam (issue #196, roadmap item 15.5, scope point
-// 6): the shot state, the live projectile count, the last-trajectory readout,
-// and the dev spawn control the issue asks for.
-//
-// One snapshot value rather than a bag of protocol properties, for the same
-// reason `MeleeCombatSnapshot` is one: the readout has to be a pure function of
-// a single engine observation, not of several taken microseconds apart while an
-// arrow is in the air between them.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// The archery panel's seam: shot state, live projectile count, the last trajectory, and
+// a dev spawn. One snapshot value, so the readout comes from a single observation.
 
 import Foundation
 
@@ -177,17 +169,9 @@ nonisolated public struct ArcherySnapshot: Equatable, Sendable {
 public protocol ArcheryControlProviding: AnyObject {
     var archerySnapshot: ArcherySnapshot { get }
 
-    /// Fires one projectile from the current aim without touching the quiver.
-    ///
-    /// The dev spawn control scope point 6 asks for. It reaches the same
-    /// `ArcheryRuntime.loose` the graph's `arrowRelease` reaches, so a shot
-    /// taken from the sidebar is indistinguishable downstream from one the
-    /// player took — which is what makes the control a way to verify the
-    /// binding rather than a second implementation of it. The quiver is left
-    /// alone on purpose: a developer watching a trajectory should not have to
-    /// keep buying arrows.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    /// Fires one projectile from the current aim without using an arrow. It reaches the
+    /// same `ArcheryRuntime.loose` as `arrowRelease`, so it verifies the real binding.
+    /// - Returns: a readable outcome the panel shows verbatim.
     @discardableResult
     func spawnDevProjectile() -> String
 

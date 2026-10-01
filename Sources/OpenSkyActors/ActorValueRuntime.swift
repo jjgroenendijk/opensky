@@ -1,26 +1,7 @@
-// Actor-value accounting (issue #194, roadmap item 15.3): the mutation API
-// above `WorldStateStore` — damage, restore, regeneration — and the clamping
-// that keeps every value inside its re-derived maximum.
-//
-// A thin layer beside the store rather than methods on it, following the
-// `InventoryRuntime` and `QuestRuntime` precedent. The store is the generic
-// substrate that knows about keys, components, journalling and snapshots and
-// deliberately knows nothing about records; actor values need
-// `ActorValueBaselineResolver` for maximums, which does not belong inside it.
-// Everything here writes through `WorldStateStore.set(_:for:in:)`, so every
-// mutation lands in the journal, in the dirty counts and in the save exactly
-// like a script's `Disable()` does.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the store it writes to is.
-//
-// Failure model: nothing here throws. A damage amount that is negative or NaN
-// is ignored, an unknown subject falls back to a documented baseline, and every
-// write is clamped. Runtime state is not file parsing — there is no malformed
-// input to reject, and an actor that cannot be hit because a mutation threw is
-// a worse outcome than one that takes a clamped hit.
-//
-// Documented in docs/engine/actor-value-store.md.
+// Actor-value accounting: damage, restore and regeneration, clamped to the re-derived
+// maximum, written through `WorldStateStore.set(_:for:in:)` so it reaches the journal
+// and the save. Nothing throws: negative or NaN amounts are ignored and every write is
+// clamped. See docs/engine/actor-value-store.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -51,18 +32,9 @@ public struct ActorValueRuntime: ActorValueAccess {
             ?? ActorValueState.baseline(maximums: baseline(of: holder).maximums)
     }
 
-    /// `holder`'s effective maximums: the re-derived numbers, plus whatever an
-    /// explicit base write moved them by, plus the permanent and temporary
-    /// modifiers a script or a magic effect put on them (issue #496, item 20.3).
-    ///
-    /// The derived part is re-read every time, so a level change or a reordered
-    /// load order moves it and the session's own offsets ride on top unchanged.
-    ///
-    /// Damage is deliberately not in here. "ModActorValue is distinct from
-    /// DamageActorValue because it adjusts the maximum value for the AV, while
-    /// DamageActorValue or RestoreActorValue only adjust the current value"
-    /// (<https://ck.uesp.net/wiki/ModActorValue_-_Actor>), and a primary's
-    /// damage is the drop in its stored current value rather than a slot.
+    /// `holder`'s effective maximums: re-derived each time, plus base offsets and the
+    /// permanent and temporary modifiers. Damage is not included: it lowers the current
+    /// value only (<https://ck.uesp.net/wiki/ModActorValue_-_Actor>).
     public func maximums(of holder: ActorValueHolder) -> ActorValues {
         Self.maximums(derived: baseline(of: holder).maximums, state: state(of: holder))
     }
@@ -99,20 +71,16 @@ public struct ActorValueRuntime: ActorValueAccess {
         current(of: holder).fractions(of: maximums(of: holder))
     }
 
-    /// Whether `holder` is at zero health. The flag item 15.6 consumes; this
-    /// layer does not act on it.
+    /// Whether `holder` is at zero health. Ragdoll and death consume the flag; this layer
+    /// does not act on it.
     public func hasZeroHealth(_ holder: ActorValueHolder) -> Bool {
         state(of: holder).hasZeroHealth
     }
 
     // MARK: - Mutating
 
-    /// Takes `amount` off one of `holder`'s values, floored at zero.
-    ///
-    /// The first mutation materializes the baseline into the component, so an
-    /// actor with 120 maximum health that takes 20 damage ends up with a
-    /// component holding 100 rather than a delta holding -20.
-    ///
+    /// Takes `amount` off one of `holder`'s values, floored at zero. The first write
+    /// stores the full state (120 - 20 stores 100, not -20).
     /// - Returns: the state as stored afterwards.
     @discardableResult
     public func damage(
@@ -180,39 +148,17 @@ public struct ActorValueRuntime: ActorValueAccess {
 
     // MARK: - Regeneration
 
-    /// Advances regeneration by exactly one fixed step for every holder in
-    /// `holders`.
-    ///
-    /// Deterministic in two senses the acceptance gate cares about. The order
-    /// is the caller's `ReferenceKey` order — `regeneration(over:)` sorts, so a
-    /// set of actors regenerates identically whichever order they were
-    /// collected in. And the amount is a pure function of the step and the
-    /// baseline, with no accumulated float drift per actor: each step adds
-    /// `maximum * percent / 100 * step`.
-    ///
-    /// Health does not regenerate at zero. An actor at zero health is dead or
-    /// in bleedout, and both are 15.6's to decide; silently healing one back to
-    /// life here would make that decision on 15.6's behalf.
-    ///
-    /// - Returns: the holders whose stored state actually changed.
+    /// Advances regeneration one fixed step for each holder, in `ReferenceKey` order,
+    /// adding `maximum * percent / 100 * step` with no drift. Health at zero does not
+    /// regenerate; death decides that. Returns the holders that changed.
     @discardableResult
     public func stepRegeneration(over holders: [ActorValueHolder]) -> [ActorValueHolder] {
         regenerate(over: holders, seconds: Self.fixedStepSeconds)
     }
 
-    /// Accumulates a wall delta and runs whole fixed steps only, capped at
-    /// `maximumStepsPerAdvance`; the remainder carries in `accumulator`.
-    ///
-    /// A zero delta advances nothing, regenerates nothing, and is safe to call
-    /// every frame — the established menu-pause rule, which reaches this layer
-    /// as delta 0 exactly as it reaches the Papyrus VM. A negative or
-    /// non-finite delta is treated the same way rather than run backwards.
-    ///
-    /// The accumulator is the caller's, not the runtime's, because this type is
-    /// a struct over a shared store: two of them may exist at once and a
-    /// per-instance accumulator would silently split the simulation in half.
-    ///
-    /// - Returns: how many whole steps ran.
+    /// Runs whole fixed steps from a wall delta, capped at `maximumStepsPerAdvance`; the
+    /// rest carries in the caller's `accumulator`. Zero, negative or non-finite runs
+    /// nothing, which is the menu pause. Returns the step count.
     @discardableResult
     public func advance(
         delta: Float,
@@ -249,15 +195,9 @@ public struct ActorValueRuntime: ActorValueAccess {
 
     // MARK: - Private
 
-    /// Stores `state`, unless doing so would materialize a baseline that has
-    /// not moved.
-    ///
-    /// The guard matters because `state(of:)` hands back a full baseline for an
-    /// untouched actor: without it, a rejected mutation — a zero damage, a NaN
-    /// restore — would write that baseline straight back and mark a reference
-    /// dirty that nothing had touched. An actor with a component already writes
-    /// unconditionally, because `WorldStateStore.set` is itself a no-op for an
-    /// unchanged value.
+    /// Stores `state` unless it is an unmoved baseline, so a rejected mutation does not
+    /// mark a clean actor dirty. An existing component always writes; `set` skips
+    /// equal values.
     private func write(
         _ state: ActorValueState,
         for holder: ActorValueHolder
@@ -295,10 +235,8 @@ public struct ActorValueRuntime: ActorValueAccess {
                 updated[kind] = min(maximum, updated[kind] + gain)
             }
             guard updated != state.current else { continue }
-            // The override table travels with the write: an actor carrying a
-            // magic effect's temporary modifier (issue #469) regenerates health
-            // sixty times a second, and rebuilding the state from the primaries
-            // alone would drop that modifier on the next frame.
+            // Keep the override table in the write, or 60 regeneration writes a second
+            // would drop a magic effect's temporary modifier.
             store.set(
                 ActorValueState(current: updated, overrides: state.overrides),
                 for: holder.key,

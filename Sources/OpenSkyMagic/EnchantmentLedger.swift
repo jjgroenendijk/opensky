@@ -1,23 +1,7 @@
-// The stored half of enchanted-item state (issue #472, roadmap item 19.9):
-// reading and writing one owner's `EnchantedItemState` through the world-state
-// store.
-//
-// A thin layer beside `WorldStateStore`, following the `InventoryRuntime`,
-// `ActorValueRuntime` and `ActiveEffectRuntime` precedent: every mutation writes
-// through `WorldStateStore.set`, so it lands in the journal, in the dirty counts
-// and in the save. The store is the generic substrate that knows about keys and
-// components and deliberately knows nothing about records, which is why the
-// charge arithmetic lives in `EnchantmentCharge` and the record resolution in
-// `ItemEnchantmentProfile`.
-//
-// Headless and AppKit-free, so it compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the store it writes to is.
-//
-// Failure model: nothing here throws. An item nobody has spent charge on reads
-// its record's full charge, and an owner with nothing enchanted has no component
-// at all.
-//
-// Documented in docs/engine/item-enchantments.md.
+// Reads and writes one owner's `EnchantedItemState` through `WorldStateStore.set`.
+// Charge math is in `EnchantmentCharge`, record resolution in `ItemEnchantmentProfile`.
+// Nothing throws: an unspent item reads its full record charge.
+// See docs/engine/item-enchantments.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -67,12 +51,8 @@ public struct EnchantmentLedger {
         return after
     }
 
-    /// Puts `profile`'s item back to full charge and stops recording it, so it
-    /// reads as its record authored it again.
-    ///
-    /// Not a soul gem: recharging is out of item 19.9's scope and an empty weapon
-    /// stays empty. This exists for the dev control and for a test that needs a
-    /// fresh weapon.
+    /// Restores `profile`'s item to full charge and stops recording it. Not a soul gem:
+    /// recharging is not modelled. For the dev control and tests.
     public func recharge(_ profile: ItemEnchantmentProfile, on holder: ActorValueHolder) {
         write(state(of: holder).clearingCharge(of: profile.item), for: holder)
     }

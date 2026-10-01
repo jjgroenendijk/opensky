@@ -199,9 +199,8 @@ nonisolated public final class BehaviorGraphInstance {
 
     // MARK: - External input
 
-    /// Sets a graph variable by name. False when the graph declares no such
-    /// variable, which is how item 14.5 will learn that an engine input has no
-    /// home in this graph rather than silently dropping it.
+    /// Sets a graph variable by name. False when the graph declares no such variable, so a
+    /// caller learns an input has no home instead of losing it silently.
     @discardableResult
     public func setVariable(_ value: BehaviorVariableValue, named name: String) -> Bool {
         variables.setValue(value, of: name)
@@ -384,8 +383,8 @@ nonisolated public final class BehaviorGraphInstance {
     /// cannot be applied.
     private func resolve(_ binding: HKBVariableBinding) -> BehaviorVariableValue? {
         guard binding.bindingType == 0 else {
-            // Character properties come from `hkbCharacterData`, which this
-            // instance does not hold; item 14.5 supplies them.
+            // Character properties come from `hkbCharacterData`, which this instance
+            // does not hold; the locomotion bridge supplies them.
             tally.noteUnappliedBinding(binding.memberPath)
             return nil
         }

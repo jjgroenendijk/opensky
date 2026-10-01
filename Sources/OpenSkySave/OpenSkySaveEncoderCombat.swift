@@ -1,17 +1,5 @@
-// CBTS chunk writing for the OpenSky native save container (issue #374).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the INVN, QSTS, AVAL
-// and DETH writers are: the encoder is at its type-length limit. The three
-// shared writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal
-// on the parent for exactly this reason.
-//
-// The cell travels with each entry, as it does for an actor's values and its
-// death: an actor is a placed reference and its cell is what the store's
-// per-cell dirty counts are keyed by.
-//
-// A neutral actor is written like any other. Neutrality is the default an
-// untouched actor reads, but an actor *returned* to neutral from hostile has a
-// component and has to keep it, or a reload would find it angry again.
+// CBTS chunk writing. Each entry carries its cell. A neutral actor is still written: an
+// actor returned to neutral keeps its component, or a reload would find it angry.
 
 import Foundation
 import OpenSkyActorsInterface

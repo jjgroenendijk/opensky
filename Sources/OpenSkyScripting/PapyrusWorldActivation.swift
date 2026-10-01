@@ -1,30 +1,16 @@
-// Activation events and world object handles for `PapyrusWorldRuntime`
-// (issue #172).
-//
-// Two jobs, both about naming world things from script code:
-//
-// * `OnActivate` queuing, one event per script attached to the activated
-//   reference, with `akActionRef` as argument 0.
-// * Object handles for references that carry no script instance, which is the
-//   only way the player — no plugin record, no VMAD — can be an `akActionRef`
-//   at all.
+// Activation events and world object handles for `PapyrusWorldRuntime`: one
+// `OnActivate` per attached script, and handles for unscripted references, which is how
+// the player (no record, no VMAD) can be an `akActionRef`.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
-    /// Queues `OnActivate(akActionRef)` on every script instance attached to
-    /// `target`, in `PapyrusInstanceKey` order so the queue is deterministic.
-    ///
-    /// The activator becomes argument 0 as `PapyrusValue.object(handle)`,
-    /// matching `OnActivate(ObjectReference akActionRef)`. A target with no
-    /// attached scripts queues nothing and is not an error: recording the
-    /// activation in `WorldStateStore` is the caller's job and happens either
-    /// way.
-    ///
-    /// The events inherit depth `currentActivationDepth + 1`, and a chain that
-    /// would exceed `maximumActivationDepth` queues nothing and is tallied.
+    /// Queues `OnActivate(akActionRef)` on each script of `target`, in
+    /// `PapyrusInstanceKey` order, with the activator as argument 0. No scripts is not
+    /// an error. Depth is `currentActivationDepth + 1`; a chain past
+    /// `maximumActivationDepth` is tallied.
     @discardableResult
     public func queueOnActivate(
         target: ReferenceKey,
@@ -53,20 +39,9 @@ extension PapyrusWorldRuntime {
         )
     }
 
-    /// The handle that names `key` in script code, stable for the session.
-    ///
-    /// A reference carrying scripts answers with its live instance handle —
-    /// the same one `referenceHandleMap()` binds VMAD object properties to, so
-    /// a method call on it dispatches into the script. Anything else, the
-    /// player included, gets an opaque handle with no instance behind it;
-    /// `PapyrusInterpreter` routes method calls on such a handle through the
-    /// operand's declared type, which is how `ObjectReference` natives still
-    /// resolve.
-    ///
-    /// Stated edge: a reference that gains a script instance after an opaque
-    /// handle was handed out keeps both handles alive. Both resolve back to
-    /// the same `ReferenceKey`, so world writes stay correct; only handle
-    /// identity comparison in script code would notice.
+    /// The session-stable handle for `key`: its live instance handle when scripted, else
+    /// an opaque handle that `PapyrusInterpreter` dispatches by declared type. A reference
+    /// scripted later keeps both handles; both resolve to the same `ReferenceKey`.
     public func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle {
         if let existing = instanceHandle(for: key) {
             return existing

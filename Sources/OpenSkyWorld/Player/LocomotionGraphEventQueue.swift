@@ -1,33 +1,7 @@
-// The hand-off between the graph events a fixed step fires and the frame-rate
-// consumers that act on them (issues #352 and #195), split out of
-// LocomotionBridge.swift for the strict-lint type-body cap.
-//
-// This is a queue rather than a readout, and the difference is the whole
-// point. `LocomotionStatus.recentGraphEvents` keeps the newest names so the
-// panel can show them and never consumes any: read it twice and you see the
-// same names twice. A consumer that *acts* on an event — the footstep director
-// playing a sound, the melee runtime opening a hit window — has to see each
-// fired event exactly once, so it drains.
-//
-// Item 15.4 gave the queue a second consumer, and a drain-once queue cannot
-// have two: whichever of them drained first would take the whole batch and the
-// other would see an empty list. So the queue holds one cursor per registered
-// consumer instead of one shared read head. Each consumer sees every name
-// exactly once, in fire order, whatever order the consumers drain in and
-// however many frames apart they do it.
-//
-// Cursors are positions in a monotonic sequence rather than indices into the
-// storage, so trimming the front of the buffer cannot silently rewind or
-// advance anybody. A name is dropped from storage once every consumer has read
-// past it, which is the ordinary case and costs nothing.
-//
-// Steps run at 120 Hz and frames at whatever the display gives, so several
-// steps' events accumulate between two drains. The queue is bounded and drops
-// the oldest names past the bound: a consumer that stops draining entirely
-// (audio switched off, a long build stall) must cost a fixed amount of memory
-// and must not flush a minute of stale footsteps the moment it comes back. The
-// bound is over the *undrained* names, so a slow consumer costs the fast one
-// nothing but its own lost tail.
+// Hands fixed-step graph events to frame-rate consumers. Each consumer has its own
+// cursor in a monotonic sequence, so each sees every event once, in order, whenever it
+// drains. Storage is bounded and drops the oldest undrained names, so a stalled consumer
+// costs fixed memory and does not replay stale footsteps.
 
 import OpenSkyBehavior
 
@@ -38,13 +12,8 @@ nonisolated public final class LocomotionGraphEventQueue {
     /// headroom while staying a fixed, small bound.
     public static let limit = 64
 
-    /// One consumer's place in the stream.
-    ///
-    /// A reference type held by both the queue and its owner, so a consumer
-    /// registered at wiring time keeps its position across every reset the
-    /// bridge does. It carries no behavior and no identity beyond its cursor:
-    /// there is deliberately no unregister, because every consumer here is
-    /// wired once at setup and lives as long as the session does.
+    /// One consumer's place in the stream, shared by the queue and its owner so it
+    /// survives resets. There is no unregister: consumers live for the whole session.
     public final class Consumer {
         /// Sequence number of the next name this consumer has not seen.
         fileprivate var next: Int

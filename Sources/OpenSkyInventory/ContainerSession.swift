@@ -1,19 +1,7 @@
-// Container transfer sessions (issue #177, roadmap item 12.1.3): the
-// engine-level object a menu will eventually sit on top of.
-//
-// A session is a live handle on one container reference, not a snapshot of it.
-// `contents` is read through `InventoryRuntime` every time it is asked for, so
-// a script that empties the chest while the session is open is visible to the
-// next read rather than being papered over by a stale copy. That is the same
-// never-cache-a-baseline rule the rest of the runtime-state layer follows.
-//
-// Everything the session moves goes through `InventoryRuntime.transfer`, which
-// computes both resulting inventories before writing either. A transfer that
-// cannot complete therefore writes nothing at all and the total item count
-// across the container and the player is unchanged — which is what makes
-// `takeAll()` safe to describe as "conserving", one stack at a time.
-//
-// Documented in docs/engine/interaction.md.
+// A live handle on one container reference. `contents` is read through
+// `InventoryRuntime` on every call, so a script that empties the chest shows at
+// once. Every move goes through `InventoryRuntime.transfer`, which writes nothing
+// when it fails, so item totals are conserved. See docs/engine/interaction.md.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -65,30 +53,15 @@ public final class ContainerSession {
 
     // MARK: - Transfers
 
-    /// Whether taking from this container would be theft, and who it would be
-    /// theft from (issue #504).
-    ///
-    /// Read once per call rather than cached for the session's lifetime, for
-    /// the reason `contents` is not cached: a quest that hands the player the
-    /// key to a house while the chest is open must change the answer.
+    /// Whether taking from this container is theft, and from whom. Not cached, so
+    /// a key handed over while the chest is open changes the answer.
     public var ownership: OwnershipVerdict {
         runtime.crime?.verdict(on: container.key) ?? .unowned
     }
 
-    /// Moves `count` of `item` from the container to the player.
-    ///
-    /// Taking out of a container somebody else owns is theft: the goods arrive
-    /// marked stolen and the bounty is reported. "Viewing items in an owned
-    /// container, taking your own items out of an owned container, and taking
-    /// items from a dead NPC are not considered stealing"
-    /// (<https://en.uesp.net/wiki/Skyrim:Crime>) — the first and second of
-    /// those are what `ownership` answers, and the third is why a corpse's
-    /// container is left unowned by the session that builds it.
-    ///
-    /// - Returns: the bounty the take accrued, zero when it was no crime or
-    ///   nobody saw.
-    /// - Throws: `InventoryError.insufficientCount` when the container holds
-    ///   fewer, which writes nothing.
+    /// Moves `count` of `item` to the player. Taking from an owned container marks
+    /// the goods stolen and reports the crime (<https://en.uesp.net/wiki/Skyrim:Crime>).
+    /// Returns the bounty; throws `InventoryError.insufficientCount`, writing nothing.
     @discardableResult
     public func take(_ item: FormID, count: Int32 = 1) throws -> Int32 {
         let verdict = ownership
@@ -101,15 +74,9 @@ public final class ContainerSession {
         ).gold ?? 0
     }
 
-    /// Moves everything the container holds to the player, stack by stack.
-    ///
-    /// Not atomic across stacks, and deliberately so: the only way a later
-    /// stack can fail is `countOverflow` on a player stack of over two billion,
-    /// and stopping there having moved the earlier stacks is a better outcome
-    /// than refusing to empty a chest. Each individual stack is still
-    /// all-or-nothing, so no count is ever lost.
-    ///
-    /// - Returns: the stacks that moved, in the order they moved.
+    /// Moves every stack to the player. Not atomic across stacks: only a count
+    /// overflow can stop it, and a half-emptied chest beats a refusal.
+    /// - Returns: the stacks that moved, in order.
     @discardableResult
     public func takeAll() throws -> [InventoryStack] {
         let moving = contents
@@ -129,13 +96,8 @@ public final class ContainerSession {
 
     // MARK: - Open state
 
-    /// Records the container's open state on `ReferenceActivationState`.
-    ///
-    /// Set explicitly rather than toggled. The Papyrus activation bridge
-    /// toggles `isOpen` for doors, where one activation is one swing; a
-    /// container's open state is the lifetime of a session, and only the
-    /// session knows when that starts and ends. An activation that opens a
-    /// session therefore records the state here and not there.
+    /// Records the container's open state. Set, not toggled: a door toggles once per
+    /// swing, but a container stays open for the life of the session.
     public func setOpen(_ open: Bool) {
         let current = runtime.store
             .component(ReferenceActivationState.self, for: container.key)

@@ -1,9 +1,6 @@
-// Offscreen render path + sustained bench, split from Renderer.swift
-// (file-length limits, RendererSetup.swift precedent). Single frames feed
-// deterministic render tests and engine-output screenshots; the sustained
-// loop is the milestone fps gate (todo 2.11): every frame runs through the
-// FrameStats instrument (todo 2.6) with counter-heap GPU timestamps, so the
-// ">30 fps" claim is measured, never eyeballed.
+// Offscreen render path and sustained bench. Single frames feed render tests and
+// screenshots; the sustained loop is the fps gate, timed by `FrameStats` with
+// counter-heap GPU timestamps, so the fps claim is measured.
 
 import Metal
 import MetalKit
@@ -21,14 +18,11 @@ nonisolated public struct OffscreenBenchResult: Sendable {
     public let windowSummaries: [String]
     /// CPU time spent sampling + composing + refreshing resident actor palettes.
     public let animationMS: [Double]
-    /// CPU wall time of `encodeShadowPass` per frame (cascade fit + caster
-    /// culling/writes + encode) — the M7.1.2 sun-shadow budget metric. Mirrors
-    /// `animationMS`; empty when the run never sampled it.
+    /// CPU time of `encodeShadowPass` per frame: the sun-shadow budget metric. Mirrors
+    /// `animationMS`; empty when never sampled.
     public let shadowMS: [Double]
-    /// CPU wall time of the per-frame audio update per frame (listener pose +
-    /// `WorldAudioEngine.tick` + music director) — the M9.2.4 audio budget
-    /// metric. Mirrors `animationMS`; every entry is zero on a run with no
-    /// audio engine attached, and the array is empty when never sampled.
+    /// CPU time of the audio update per frame: the audio budget metric. Mirrors
+    /// `animationMS`; zeros without an audio engine, empty when never sampled.
     public let audioUpdateMS: [Double]
     /// CPU wall time of the world-simulation callback per frame. The callback
     /// owns the Papyrus VM advance; every entry is zero when none is attached.
@@ -159,8 +153,7 @@ extension Renderer {
         return descriptor
     }
 
-    /// The offscreen projection, built from the same mode-aware field of view
-    /// the live view uses (`activeFOVYRadians`, issue #190) so a verification
+    /// The offscreen projection, from the same `activeFOVYRadians` as the live view, so a
     /// capture frames what the window frames.
     private func offscreenProjection(width: Int, height: Int) -> float4x4 {
         MatrixMath.perspective(
@@ -182,30 +175,24 @@ extension Renderer {
         advanceAnimation: Bool = true
     ) throws -> String? {
         let cpuStart = frameStats.beginFrame()
-        // Render debug views and layer isolation are dev-shell view filters, so
-        // a screenshot, a bench run or a deterministic render test renders the
-        // shipping frame whatever the sidebar is currently set to (issue #144).
-        // The debug-view tests opt in through `renderDebugAppliesOffscreen`.
+        // Debug views are dev filters, so captures and tests render the shipping frame.
+        // Debug-view tests opt in through `renderDebugAppliesOffscreen`.
         let requestedDebug = renderDebug
         if !renderDebugAppliesOffscreen {
             renderDebug = .production
         }
         defer { renderDebug = requestedDebug }
-        // Menu mode freezes the sim while the frame still renders (todo 8.1.2):
-        // a paused frame advances every sim clock by zero, so successive frames
-        // are byte-identical, yet the pass below still encodes and presents.
+        // A paused frame advances every clock by zero, so frames are byte-identical,
+        // yet the pass below still encodes and presents.
         let simDelta: Float = worldSimPaused ? 0 : 1 / 30
         if advanceAnimation {
             updateAnimations(deltaTime: simDelta)
-            // World simulation (issue #171) runs on the same fixed step, so an
-            // offscreen bench or test drives the Papyrus VM deterministically.
-            // The game clock still never advances here.
+            // The world simulation runs on the same fixed step, so the Papyrus VM is
+            // deterministic offscreen. The game clock never advances here.
             frameDriver?.updateWorldSim(deltaTime: simDelta)
         }
-        // Weather resolves from the current time-of-day each frame; forced
-        // weather (tests) stays deterministic because the offscreen path never
-        // advances the game clock, so no game-hours elapse and auto reroll
-        // never fires (issue #164).
+        // Weather resolves from the time of day each frame. Offscreen the game clock never
+        // advances, so forced weather never rerolls.
         frameDriver?.updateWeather(deltaTime: advanceAnimation ? simDelta : 0)
         if advanceAnimation {
             updateParticles(deltaTime: simDelta)
@@ -248,9 +235,8 @@ extension Renderer {
         )
     }
 
-    /// Renders one frame into an offscreen texture and blocks until the GPU
-    /// finishes it — deterministic render tests and engine-output
-    /// screenshots (todo 2.9) without drawable/compositor involvement.
+    /// Renders one frame offscreen and waits for the GPU, for deterministic tests and
+    /// screenshots without a drawable.
     public func renderOffscreen(width: Int, height: Int) throws -> MTLTexture {
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
         residencySet.addAllocations([color, depth])

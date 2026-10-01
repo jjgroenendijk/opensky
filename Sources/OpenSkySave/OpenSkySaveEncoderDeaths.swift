@@ -1,17 +1,5 @@
-// DETH chunk writing for the OpenSky native save container (issue #197).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the INVN, QSTS and
-// AVAL writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// The cell travels with each entry, as it does for an actor's values: an actor
-// is a placed reference and its cell is what the store's per-cell dirty counts
-// are keyed by.
-//
-// The resting transform is optional in the bytes as well as in the type. A
-// corpse still falling when the save was written has none, and writing a
-// mid-flight pose would put the body back in the air on reload.
+// DETH chunk writing. Each entry carries its cell. The resting transform is optional: a
+// corpse still falling has none, and a mid-air pose would float on reload.
 
 import Foundation
 import OpenSkyActorsInterface

@@ -115,13 +115,8 @@ nonisolated public enum PerkEntryPointEvaluator: Sendable {
         return finite(operand, result)
     }
 
-    /// The EPFD payload of a single-float function, or nil when the effect
-    /// carried a payload of a different shape.
-    ///
-    /// A `floatPair` is accepted at its first component: a record whose EPFT
-    /// declared a pair under a function that reads one float is exactly the
-    /// disagreement `PerkEffect` keeps rather than resolves, and reading the
-    /// first float is what the declared *function* asks for.
+    /// The EPFD payload of a single-float function, or nil for another shape.
+    /// A `floatPair` gives its first float, which is what the function reads.
     private static func float(_ operand: PerkEntryPointOperand) -> Float? {
         switch operand.data {
         case let .float(value): value

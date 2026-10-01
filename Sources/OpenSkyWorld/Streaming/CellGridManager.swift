@@ -1,9 +1,6 @@
-// Streaming grid manager (todo 3.2 grid manager): camera position -> desired
-// NxN exterior-cell grid, diffed against whatever the caller currently has
-// loaded. Pure math — no AppKit/Metal, no I/O, no async — so the mapping,
-// grid contents, diffing and hysteresis are all unit-testable in isolation
-// from the async build/streaming controller that will drive this on later
-// commits of this branch. See docs/engine/cell-streaming.md.
+// Streaming grid manager: camera position -> desired NxN exterior grid, diffed against
+// what the caller has loaded. Pure math, so mapping, diffing and hysteresis are
+// unit-testable. See docs/engine/cell-streaming.md.
 
 import OpenSkyFormatsCore
 import OpenSkyRendering
@@ -18,22 +15,9 @@ nonisolated public struct CellGridDiff: Equatable, Sendable {
     public let unloads: Set<CellCoordinate>
 }
 
-/// Camera position -> desired streaming grid, with hysteresis against
-/// border thrash. Value type, `simd`-only — safe to construct, mutate and
-/// test without a renderer or file I/O.
-///
-/// Ownership split (the design this type settles on): `CellGridManager`
-/// tracks only its own desired *center* cell, not the set of cells actually
-/// loaded. The loaded set stays entirely with the caller (the async
-/// streaming controller landing in a later commit on this branch), because
-/// that caller's loads are async and can finish out of order or fail
-/// outright — if the manager guessed at completion it would drift from
-/// reality. Instead `update(cameraPosition:loaded:)` takes the caller's
-/// current loaded set as an argument every frame and returns a fresh diff
-/// against it; a load that failed or is still in flight simply reappears in
-/// `loads` on the next call. No separate confirm/cancel/retry API needed —
-/// the loaded set the caller passes in next frame is the only state that
-/// matters.
+/// Camera position -> desired streaming grid, with hysteresis. It tracks only its center;
+/// the caller passes the loaded set each frame and gets a fresh diff, so a failed or
+/// in-flight load reappears in `loads` without a retry API.
 nonisolated public struct CellGridManager: Sendable {
     /// uGridsToLoad default = 5 (full grid side length, always odd) -> 2
     /// rings around the center cell. Ref: UESP "Skyrim:INI Settings" (Grid
@@ -41,16 +25,9 @@ nonisolated public struct CellGridManager: Sendable {
     /// odd-side-length, center-plus-N-rings convention.
     public static let defaultRadius: Int32 = 2
 
-    /// Camera must sit at least this far inside a newly-crossed cell border
-    /// before the grid re-centers. Rationale: floor-division alone
-    /// re-centers on every crossing of the exact 4096-unit boundary, so a
-    /// camera drifting back and forth across one border (patrol path, mouse
-    /// jitter, floating-point noise right at the line) thrashes load/unload
-    /// every frame. 128 units (~1.8 m, docs/decisions/coordinates.md scale)
-    /// is small next to the 4096-unit cell -- negligible for "which cell is
-    /// this really" purposes -- but comfortably larger than positional
-    /// noise, so a border crossed once decisively still re-centers on the
-    /// very next `update`.
+    /// How far inside a crossed border the camera must be before the grid re-centers, so
+    /// jitter at the line does not thrash. 128 units (about 1.8 m) is small next to a
+    /// 4096-unit cell but larger than positional noise.
     public static let hysteresisMargin: Float = 128
 
     /// One exterior cell edge, world units. Shares `TerrainMeshBuilder`'s

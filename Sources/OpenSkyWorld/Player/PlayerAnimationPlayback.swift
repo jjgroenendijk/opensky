@@ -1,22 +1,8 @@
-// The graph-driven `RenderAnimation` (issue #189): the conformer that turns the
-// behavior graph's per-step pose into the player body's bone palettes.
-//
-// Two clocks meet here and it matters which one wins. The behavior graph is
-// stepped by `LocomotionBridge.plan` on the *simulation* clock — the fixed 120
-// Hz substeps `Renderer.advanceCamera` drives — because the graph is part of
-// movement: it consumes the same `Speed` and `Direction` the capsule moves by,
-// and a graph advanced on a second clock could report a state the capsule was
-// never in. The renderer's wall-clock animation pass
-// (`Renderer.updateAnimations(deltaTime:)`) therefore does not advance this
-// animation at all. It only *publishes* the pose the simulation already
-// produced, so `update(at:)` ignores its time argument. NPCs keep the wall-clock
-// single-clip path from M6 unchanged; graph-driven NPC locomotion is M16 AI
-// (docs/engine/actor-animation.md).
-//
-// The pose crosses between the two through `PlayerPoseBuffer`, a plain box both
-// sides hold. Neither owns the other, so there is no cycle between the bridge
-// and the render side, and a body that is rebuilt (a new appearance, a new
-// equipped set) reattaches to the same running graph.
+// The graph-driven `RenderAnimation` for the player body. The graph steps on the 120 Hz
+// simulation clock in `LocomotionBridge.plan`, because it moves the capsule; this only
+// publishes that pose, so `update(at:)` ignores its time. `PlayerPoseBuffer` sits between
+// the two, so a rebuilt body reattaches to the running graph.
+// See docs/engine/actor-animation.md.
 
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
@@ -24,13 +10,8 @@ import OpenSkyRendering
 import simd
 import Synchronization
 
-/// The latest pose the behavior graph produced, published by the locomotion
-/// bridge and consumed by the render side.
-///
-/// `revision` is what makes the consumer cheap: an unchanged revision means the
-/// simulation ran no step since the last frame — a paused frame, or a frame
-/// shorter than one fixed step — and the palettes already hold the right
-/// matrices, so the whole compose-and-upload path is skipped rather than redone.
+/// The latest pose the behavior graph produced. An unchanged `revision` means no step ran
+/// since the last frame, so the consumer skips the compose-and-upload path.
 nonisolated public final class PlayerPoseBuffer: Sendable {
     nonisolated public struct Snapshot: Sendable {
         public var bones: [HKABonePose] = []
@@ -70,13 +51,8 @@ nonisolated public final class PlayerPoseBuffer: Sendable {
     }
 }
 
-/// Drives one set of skinned meshes from a `PlayerPoseBuffer`.
-///
-/// This is a `RenderAnimation` like `ActorAnimationPlayback`, so it can join
-/// `RenderScene.animations` unchanged if a future caller wants it there. The
-/// player's own instance does not: the body is streaming-independent and the
-/// renderer holds it directly (`RendererPlayerBody.swift`), because everything
-/// in `RenderScene.animations` is evicted with its owning cell.
+/// Drives one set of skinned meshes from a `PlayerPoseBuffer`. The player's instance is not
+/// in `RenderScene.animations`, because that list is evicted with its cell.
 nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     public let skeleton: HKASkeleton
     public let pose: PlayerPoseBuffer
@@ -99,13 +75,8 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
         }
     }
 
-    /// Publishes the newest simulated pose into the palettes.
-    ///
-    /// The time argument is deliberately unused: this animation's clock is the
-    /// simulation, not the wall clock (see the file comment). Returning the
-    /// matched bone count keeps the `RenderAnimation` contract, so the
-    /// renderer's per-frame bone accounting counts the player exactly as it
-    /// counts an NPC.
+    /// Publishes the newest simulated pose. The time is unused: this clock is the
+    /// simulation. Returns the matched bone count, so bone accounting counts the player.
     @discardableResult
     public func update(at _: Float) -> Int {
         let latest = pose.snapshot

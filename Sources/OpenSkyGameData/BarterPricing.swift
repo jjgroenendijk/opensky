@@ -23,11 +23,9 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     /// effect".
     public static let maximumSpeechSkill: Double = 100
 
-    /// The Speech value this milestone prices at. 15 is the vanilla starting
-    /// Speech skill, and UESP tabulates it as a worked example ("At 15 skill and
-    /// no perks, the final price factor is 3.10 for buying and 0.322 for
-    /// selling"), which makes it the value with a published expectation to check
-    /// against. Skill progression is M18+.
+    /// The Speech value prices use: 15, the vanilla start. UESP gives it as a worked
+    /// example ("At 15 skill and no perks, the final price factor is 3.10 for buying and
+    /// 0.322 for selling"), so there is a published value to check.
     public static let defaultSpeechSkill: Double = 15
 
     /// Trade price caps, from the same section: a merchant never pays more than

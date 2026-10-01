@@ -1,10 +1,5 @@
-// Dynamic rigid-body readout lines (issue #193, roadmap item 15.2), written
-// for the M15 gate panel (issue #198) and formatted here rather than in the
-// panel section for the reason `RagdollReadout` is: a string a milestone gate
-// asserts on belongs in the engine target, where a unit test can reach it
-// without a window.
-//
-// Documented in docs/engine/dynamic-bodies.md.
+// Dynamic rigid-body readout lines, formatted in the engine target so a unit test can
+// check them without a window. See docs/engine/dynamic-bodies.md.
 
 import Foundation
 
