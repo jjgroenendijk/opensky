@@ -1,6 +1,6 @@
 // ACHR actors build and evict with their cell on the build queue. Worldspace-
-// persistent ACHRs live under the (0,0) persistent CELL and map into cells by
-// position. Per cell: discovered = rendered + intentional skips + failures.
+// persistent ACHRs live under the worldspace persistent CELL and map into cells
+// by position. Per cell: discovered = rendered + intentional skips + failures.
 // Resolution documented in docs/engine/actor-resolution.md.
 
 import Foundation
@@ -144,10 +144,9 @@ nonisolated extension CellSceneBuilder {
         return actors
     }
 
-    /// ACHRs of the worldspace persistent CELL at grid (0,0), cached per
-    /// WRLD like exteriorPersistentTeleportRefs. Malformed persistent records
-    /// are logged once here — they carry no position, so no streamed cell can
-    /// own (or count) them.
+    /// ACHRs of the worldspace persistent CELL, cached per WRLD like
+    /// exteriorPersistentRefs. Malformed persistent records are logged once
+    /// here — they carry no position, so no streamed cell can own (or count) them.
     nonisolated private func persistentActors(
         in world: ESMGroup,
         localized: Bool
@@ -157,7 +156,7 @@ nonisolated extension CellSceneBuilder {
             return cached
         }
         var actors: [PlacedActor] = []
-        if let persistent = findCell(in: world, gridX: 0, gridY: 0, localized: localized) {
+        if let persistent = persistentCell(in: world, localized: localized) {
             var malformed: [String] = []
             actors = decodeActors(in: persistent.children, malformed: &malformed)
                 .map(\.actor)

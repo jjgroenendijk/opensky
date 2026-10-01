@@ -38,7 +38,8 @@ enum CLIWorldTreeWalk {
     }
 
     /// Depth-first over exterior (sub-)blocks. Matches the decoded XCLC grid,
-    /// because block labels are unreliable (see `ESMGroup`).
+    /// because block labels are unreliable (see `ESMGroup`). Skips the
+    /// persistent CELL, which also carries XCLC (0,0).
     static func findCell(
         in group: ESMGroup,
         x: Int32,
@@ -48,7 +49,7 @@ enum CLIWorldTreeWalk {
         guard let children = childrenOrWarn(group) else { return nil }
         for (index, child) in children.enumerated() {
             switch child {
-            case let .record(record) where record.type == "CELL":
+            case let .record(record) where record.type == "CELL" && group.kind != .worldChildren:
                 guard
                     let cell = decodeOrWarn(
                         record,
@@ -66,6 +67,24 @@ enum CLIWorldTreeWalk {
             default:
                 break
             }
+        }
+        return nil
+    }
+
+    /// The worldspace persistent CELL: the CELL stored directly in the world
+    /// children group, not in a block.
+    static func persistentCell(in worldChildren: ESMGroup, localized: Bool) -> FoundCell? {
+        guard let children = childrenOrWarn(worldChildren) else { return nil }
+        for (index, child) in children.enumerated() {
+            guard
+                case let .record(record) = child, record.type == "CELL",
+                let cell = decodeOrWarn(
+                    record,
+                    using: { try Cell(record: $0, localized: localized) }
+                )
+            else { continue }
+            let children = cellChildren(following: index, in: children, formID: record.formID)
+            return FoundCell(cell: cell, formID: record.formID, children: children)
         }
         return nil
     }

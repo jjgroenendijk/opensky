@@ -28,8 +28,11 @@ From the UESP "Groups" page:
    cell with no references, not an error.
 4. Both the persistent (type 8) and temporary (type 9) groups, for their `REFR` records.
 
-Persistent teleport doors are stored in the (0, 0) cell but are added to the cell where they
-stand (see [interiors](/engine/interiors.md#finding-the-target)).
+The worldspace persistent cell is not a grid cell, even though its `XCLC` says (0, 0)
+([ESM groups](/formats/esm.md#worldspace-persistent-cell)). Each of its `REFR` and `ACHR`
+records is added to the cell where it stands, found by dividing its position by 4096 and
+rounding down. Teleport doors use the same rule
+(see [interiors](/engine/interiors.md#finding-the-target)).
 
 The walk is lazy. Only group headers are read. A record is decoded only when needed, and only
 the record types the scene uses.

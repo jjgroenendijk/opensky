@@ -100,7 +100,8 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         let children = skipped.children(of: group)
         for (index, child) in children.enumerated() {
             switch child {
-            case let .record(record) where record.type == "CELL":
+            // A CELL directly in the world children is the persistent CELL, not grid (0,0).
+            case let .record(record) where record.type == "CELL" && group.kind != .worldChildren:
                 guard
                     let cell = skipped.decode(record, using: {
                         try Cell(record: $0, localized: localized)

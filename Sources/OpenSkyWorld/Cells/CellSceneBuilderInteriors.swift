@@ -18,8 +18,8 @@ nonisolated public struct DoorTransition: Sendable {
 }
 
 nonisolated extension CellSceneBuilder {
-    /// Lightweight door probe over WRLD persistent refs. Their storage CELL
-    /// is (0,0); physical REFR position supplies streamed-cell ownership.
+    /// Lightweight door probe over WRLD persistent refs. Their storage is the
+    /// persistent CELL; physical REFR position supplies streamed-cell ownership.
     nonisolated public func exteriorDoors(
         worldspaceEditorID: String
     ) throws -> [(coordinate: CellCoordinate, door: PlacedDoor)] {
@@ -27,7 +27,8 @@ nonisolated extension CellSceneBuilder {
         let world = try worldChildrenGroup(
             editorID: worldspaceEditorID, localized: localized
         )
-        return persistentTeleportReferences(in: world.children, localized: localized)
+        return persistentReferences(in: world.children, localized: localized)
+            .filter { $0.teleportDestination != nil }
             .flatMap { ref -> [(coordinate: CellCoordinate, door: PlacedDoor)] in
                 let doors = resolveDoors(refs: [ref])
                 let coordinate = CellGridManager.cellCoordinate(for: ref.placement.position)
@@ -35,8 +36,8 @@ nonisolated extension CellSceneBuilder {
             }
     }
 
-    /// Merges local refs with XTEL refs from persistent CELL, filtering both
-    /// by physical coordinate. Prevents persistent doors drawing in (0,0).
+    /// Merges local refs with the persistent CELL refs whose position lies in
+    /// `coordinate`. Local teleport doors are filtered by position too.
     nonisolated public func exteriorReferences(
         local: [PlacedReference],
         world: ESMGroup,
@@ -47,8 +48,9 @@ nonisolated extension CellSceneBuilder {
         for ref in local where exteriorReference(ref, belongsTo: coordinate) {
             byID[ref.formID] = ref
         }
-        for ref in persistentTeleportReferences(in: world, localized: localized) {
-            guard exteriorReference(ref, belongsTo: coordinate) else { continue }
+        for ref in persistentReferences(in: world, localized: localized)
+            where CellGridManager.cellCoordinate(for: ref.placement.position) == coordinate
+        {
             byID[ref.formID] = ref
         }
         return byID.values.sorted { $0.formID.rawValue < $1.formID.rawValue }
@@ -62,26 +64,19 @@ nonisolated extension CellSceneBuilder {
         return CellGridManager.cellCoordinate(for: reference.placement.position) == coordinate
     }
 
-    nonisolated private func persistentTeleportReferences(
+    nonisolated private func persistentReferences(
         in world: ESMGroup,
         localized: Bool
     ) -> [PlacedReference] {
         let key = world.parentFormID ?? 0
-        if let cached = exteriorPersistentTeleportRefs[key] {
+        if let cached = exteriorPersistentRefs[key] {
             return cached
         }
-        guard
-            let persistent = findCell(
-                in: world, gridX: 0, gridY: 0, localized: localized
-            )
-        else {
-            exteriorPersistentTeleportRefs[key] = []
-            return []
-        }
         var counts = BuildCounts()
-        let refs = collectReferences(in: persistent.children, counts: &counts)
-            .filter { $0.teleportDestination != nil }
-        exteriorPersistentTeleportRefs[key] = refs
+        let refs = persistentCell(in: world, localized: localized).map {
+            collectReferences(in: $0.children, counts: &counts)
+        } ?? []
+        exteriorPersistentRefs[key] = refs
         return refs
     }
 
