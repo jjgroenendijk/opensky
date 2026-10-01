@@ -30,8 +30,7 @@ extension GameViewController {
     /// mutable conditions. An actor leaving residency stops being simulated.
     func advancePackages(renderer: Renderer?) {
         guard var runtime = packages.runtime, let streamer, let renderer else { return }
-        let residents = Dictionary(uniqueKeysWithValues: streamer.residentActorEntries()
-            .compactMap { entry in entry.placedActor.map { (entry.key, $0.base) } })
+        let residents = ActorPackageRuntime.residentBases(streamer.residentActorEntries())
         for actor in packages.registeredActors.keys where residents[actor] == nil {
             runtime.unregister(actor: actor)
             packages.registeredActors.removeValue(forKey: actor)
