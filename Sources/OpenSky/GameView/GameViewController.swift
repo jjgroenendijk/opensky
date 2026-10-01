@@ -7,6 +7,7 @@ import MetalKit
 import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyCrime
+import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -15,6 +16,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
@@ -148,12 +150,24 @@ final class GameViewController: NSViewController {
     var systemMenu = SystemMenuRuntimeState()
     /// Inventory menu row list + presentation state.
     lazy var inventoryMenu = InventoryMenuController(game: self)
-    /// Journal page model and presentation state.
-    var journal = JournalRuntimeState()
-    /// Dialogue index, conversation model and presentation state.
-    var dialogue = DialogueBridgeState()
-    /// Conversation camera override and speaker focus.
-    var dialogueCamera = DialogueCameraBridgeState()
+    /// The quest the journal panel names and the quest changes it runs.
+    lazy var journal: JournalCoordinator = {
+        let journal = JournalCoordinator()
+        journal.attach(world: journalMenu)
+        return journal
+    }()
+
+    lazy var journalMenu = JournalMenuController(game: self)
+    /// The dialogue index, the open conversation, and the speaker focus.
+    lazy var dialogue: DialogueCoordinator = {
+        let dialogue = DialogueCoordinator(store: worldState)
+        dialogue.attach(world: dialogueWorld)
+        return dialogue
+    }()
+
+    lazy var dialogueWorld = DialogueWorldAdapter(game: self)
+    lazy var dialogueMenu = DialogueMenuController(game: self)
+    lazy var dialogueCamera = DialogueCameraController(game: self)
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
     lazy var containerMenu = ContainerMenuController(game: self)
     /// World > Runtime State bridge caches (save store, plugin fingerprint, slot list).
@@ -212,7 +226,7 @@ final class GameViewController: NSViewController {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput
         gameView.menuMode = menuMode
-        gameView.onJournalKey = { [weak self] in self?.openJournal() }
+        gameView.onJournalKey = { [weak self] in self?.journalMenu.open() }
         view = gameView
     }
 
@@ -385,336 +399,5 @@ extension GameViewController: TerrainLODControlProviding {
         let root = try? GameDataLocator.locate()
         terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: root))
         streamer?.invalidateDistantLOD()
-    }
-}
-
-// Weather bridge for the World > Environment panel. Reads/forces the
-// live renderer's weather runtime on the main thread. A nil renderer or no
-// weather data degrades to an empty list + calm readout.
-
-/// The Combat & Physics panel reads the coordinator.
-extension GameViewController: MeleeCombatControlProviding {
-    var meleeCombatSnapshot: MeleeCombatSnapshot {
-        combat.meleeCombatSnapshot
-    }
-
-    var isWeaponDrawn: Bool {
-        get { combat.isWeaponDrawn }
-        set { combat.isWeaponDrawn = newValue }
-    }
-
-    @discardableResult
-    func requestMeleeAttack() -> String {
-        combat.requestMeleeAttack()
-    }
-
-    func clearMeleeTrace() {
-        combat.clearMeleeTrace()
-    }
-}
-
-extension GameViewController: ArcheryControlProviding {
-    var archerySnapshot: ArcherySnapshot {
-        combat.archerySnapshot
-    }
-
-    @discardableResult
-    func spawnDevProjectile() -> String {
-        combat.spawnDevProjectile()
-    }
-
-    func despawnProjectiles() {
-        combat.despawnProjectiles()
-    }
-
-    func clearStuckProjectiles() {
-        combat.clearStuckProjectiles()
-    }
-
-    func clearProjectileTrace() {
-        combat.clearProjectileTrace()
-    }
-}
-
-extension GameViewController: CombatLoopControlProviding {
-    var combatLoopSnapshot: CombatLoopSnapshot {
-        combat.combatLoopSnapshot
-    }
-
-    var selectedActorIsHostile: Bool {
-        get { combat.selectedActorIsHostile }
-        set { combat.selectedActorIsHostile = newValue }
-    }
-
-    var isActorCastingEnabled: Bool {
-        get { combat.isActorCastingEnabled }
-        set { combat.isActorCastingEnabled = newValue }
-    }
-
-    func clearCombatTrace() {
-        combat.clearCombatTrace()
-    }
-}
-
-extension GameViewController: MagicEffectControlProviding {
-    var magicEffectControlSnapshot: MagicEffectControlSnapshot {
-        magic.magicEffectControlSnapshot
-    }
-
-    @discardableResult
-    func consumeFirstCarriedMagicItem() -> String {
-        magic.consumeFirstCarriedMagicItem()
-    }
-
-    @discardableResult
-    func dispelPlayerMagicEffects() -> String {
-        magic.dispelPlayerMagicEffects()
-    }
-}
-
-extension GameViewController: CastingControlProviding {
-    var castingControlSnapshot: CastingControlSnapshot {
-        magic.castingControlSnapshot
-    }
-
-    @discardableResult
-    func grantPlayerStartSpells() -> String {
-        magic.grantPlayerStartSpells()
-    }
-
-    @discardableResult
-    func readFirstCarriedSpellTome() -> String {
-        magic.readFirstCarriedSpellTome()
-    }
-
-    @discardableResult
-    func selectNextKnownSpell() -> String {
-        magic.selectNextKnownSpell()
-    }
-
-    @discardableResult
-    func readySelectedSpell(in hand: SpellHand) -> String {
-        magic.readySelectedSpell(in: hand)
-    }
-
-    @discardableResult
-    func castReadiedSpell(in hand: SpellHand) -> String {
-        magic.castReadiedSpell(in: hand)
-    }
-}
-
-extension GameViewController: ItemControlProviding {
-    var itemControlSnapshot: ItemControlSnapshot {
-        inventory.itemControlSnapshot
-    }
-
-    @discardableResult
-    func takeInteractionTarget() -> String {
-        inventory.takeInteractionTarget()
-    }
-
-    @discardableResult
-    func openInteractionTargetContainer() -> String {
-        inventory.openInteractionTargetContainer()
-    }
-
-    @discardableResult
-    func takeAllFromOpenContainer() -> String {
-        inventory.takeAllFromOpenContainer()
-    }
-
-    @discardableResult
-    func closeOpenContainer() -> String {
-        inventory.closeOpenContainer()
-    }
-
-    @discardableResult
-    func dropPlayerItem(_ item: FormID?, count: Int32) -> String {
-        inventory.dropPlayerItem(item, count: count)
-    }
-
-    @discardableResult
-    func equipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
-        inventory.equipItem(item, on: target)
-    }
-
-    @discardableResult
-    func unequipItem(_ item: FormID?, on target: EquipmentTargetSelector) -> String {
-        inventory.unequipItem(item, on: target)
-    }
-}
-
-extension GameViewController: InventoryEquipmentControlProviding {
-    var inventoryEquipmentInspectionTarget: EquipmentTargetSelector {
-        get { inventory.inspectionTarget }
-        set { inventory.inspectionTarget = newValue }
-    }
-
-    var inventoryEquipmentSnapshot: InventoryEquipmentSnapshot {
-        inventory.inventoryEquipmentSnapshot
-    }
-
-    @discardableResult
-    func grantItem(_ item: FormID, count: Int32, to target: InventoryGrantTarget) -> String {
-        inventory.grantItem(item, count: count, to: target)
-    }
-}
-
-extension GameViewController: InventoryMenuControlProviding {
-    var inventoryMenuIsOpen: Bool {
-        inventoryMenu.isOpen
-    }
-
-    var inventoryMenuMovieEnabled: Bool {
-        get { inventoryMenu.movieEnabled }
-        set { inventoryMenu.setMovieEnabled(newValue) }
-    }
-
-    var inventoryMenuSnapshot: InventoryMenuControlSnapshot {
-        inventoryMenu.snapshot
-    }
-
-    func openInventoryMenu() {
-        inventoryMenu.open()
-    }
-
-    func closeInventoryMenu() {
-        inventoryMenu.close()
-    }
-
-    func sendInventoryMenuInput(_ event: MenuInputEvent) {
-        inventoryMenu.route(event)
-    }
-
-    func activateInventoryMenuSelection() {
-        inventoryMenu.activateSelection()
-    }
-
-    func dropInventoryMenuSelection() {
-        inventoryMenu.dropSelection()
-    }
-
-    func consumeInventoryMenuSelection() {
-        inventoryMenu.consumeSelection()
-    }
-}
-
-extension GameViewController: ContainerMenuControlProviding {
-    var containerMenuIsOpen: Bool {
-        containerMenu.isOpen
-    }
-
-    var containerMenuMode: ContainerMenuModel.Mode {
-        get { containerMenu.mode }
-        set { containerMenu.setMode(newValue) }
-    }
-
-    var containerMenuMovieEnabled: Bool {
-        get { containerMenu.movieEnabled }
-        set { containerMenu.setMovieEnabled(newValue) }
-    }
-
-    var containerMenuSnapshot: ContainerMenuControlSnapshot {
-        containerMenu.snapshot
-    }
-
-    func openContainerMenu() {
-        containerMenu.open()
-    }
-
-    func closeContainerMenu() {
-        containerMenu.close()
-    }
-
-    func sendContainerMenuInput(_ event: MenuInputEvent) {
-        containerMenu.route(event)
-    }
-
-    func switchContainerMenuSide() {
-        containerMenu.switchSide()
-    }
-
-    func activateContainerMenuSelection() {
-        containerMenu.activateSelection()
-    }
-
-    func takeAllFromContainerMenu() {
-        containerMenu.takeAll()
-    }
-
-    @discardableResult
-    func selectContainerMenuMerchant(_ reference: FormID) -> String {
-        containerMenu.selectMerchant(reference)
-    }
-
-    @discardableResult
-    func selectContainerMenuMerchantFromInteraction() -> String {
-        containerMenu.selectMerchantFromInteraction()
-    }
-}
-
-extension GameViewController: CrimeFactionControlProviding {
-    var crimeFactionSnapshot: CrimeFactionControlSnapshot {
-        crime.crimeFactionSnapshot
-    }
-
-    var bountyFactionSelection: ReferenceKey? {
-        get { crime.bountyFactionSelection }
-        set { crime.bountyFactionSelection = newValue }
-    }
-
-    var membershipFactionSelection: ReferenceKey? {
-        get { crime.membershipFactionSelection }
-        set { crime.membershipFactionSelection = newValue }
-    }
-
-    var vendorOverrideSelection: ReferenceKey? {
-        get { crime.vendorOverrideSelection }
-        set { crime.vendorOverrideSelection = newValue }
-    }
-
-    @discardableResult
-    func modifySelectedBounty(by gold: Int32, violent: Bool) -> String {
-        crime.modifySelectedBounty(by: gold, violent: violent)
-    }
-
-    @discardableResult
-    func clearSelectedBounty() -> String {
-        crime.clearSelectedBounty()
-    }
-
-    @discardableResult
-    func checkGuardConfrontation() -> String {
-        crime.checkGuardConfrontation()
-    }
-
-    @discardableResult
-    func resistArrestWithSelectedFaction() -> String {
-        crime.resistArrestWithSelectedFaction()
-    }
-
-    @discardableResult
-    func selectSocialSubjectFromCrosshair() -> String {
-        crime.selectSocialSubjectFromCrosshair()
-    }
-
-    @discardableResult
-    func selectPlayerAsSocialSubject() -> String {
-        crime.selectPlayerAsSocialSubject()
-    }
-
-    @discardableResult
-    func joinSelectedFaction(rank: Int8) -> String {
-        crime.joinSelectedFaction(rank: rank)
-    }
-
-    @discardableResult
-    func leaveSelectedFaction() -> String {
-        crime.leaveSelectedFaction()
-    }
-
-    @discardableResult
-    func barterWithSocialSubject() -> String {
-        crime.barterWithSocialSubject()
     }
 }

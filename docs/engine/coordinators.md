@@ -54,10 +54,20 @@ The crime domain has `CrimeCore`, `CrimeCoordinator`, and `CrimeSessionWorld` in
 `Sources/OpenSkyCrime/`, answered by `CrimeWorldAdapter`. The coordinator is the bounty
 reporter's `CrimeWorld`. It reaches factions only through its port, because `OpenSkyCrime`
 may not import `OpenSkyFactions`.
+The dialogue domain has `DialogueCore`, `DialogueCoordinator`, and `DialogueWorld` in
+`Sources/OpenSkyDialogue/`, answered by `DialogueWorldAdapter`. The core's speaker focus is a
+state machine: it returns hold, face, and release effects, and the coordinator sends them
+through the port. The journal has `JournalCore`, `JournalCoordinator`, and `JournalWorld` in
+`Sources/OpenSkyQuests/`.
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and
-every transaction it runs is a coordinator call.
+every transaction it runs is a coordinator call. `DialogueMenuController` and
+`JournalMenuController` work the same way. `DialogueCameraController` holds the camera's
+panel state and asks the dialogue coordinator to hold the speaker.
+
+The panel forwards live in `GameViewControllerPanels.swift`, so `GameViewController.swift`
+stays under the file length limit.
 
 A port is a protocol that names what the coordinator needs from outside, such as the streamed
 references or the game hour. A test passes a fake that returns plain values. The app passes

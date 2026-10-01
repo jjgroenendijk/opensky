@@ -91,15 +91,15 @@ extension ContainerMenuController {
         case let .success(found):
             counterparty = found
         case .failure(.notAMerchant):
-            return note("\(game.dialogueSpeakerLabel(for: actor)) is not a merchant.")
+            return note("\(game.dialogueWorld.speakerLabel(for: actor)) is not a merchant.")
         case let .failure(.chestNotResident(factionName)):
             return note("\(factionName)'s merchant chest is not streamed in.")
         }
-        game.closeDialogue()
+        game.dialogueMenu.close()
         close()
         target(
             counterparty.holder,
-            name: game.dialogueSpeakerLabel(for: actor),
+            name: game.dialogueWorld.speakerLabel(for: actor),
             reference: game.streamer?.referenceEntry(key: counterparty.holder.key)?.formID,
             vendor: counterparty.vendor
         )

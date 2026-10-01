@@ -154,10 +154,10 @@ extension GameViewController: MenuInputConsumer {
             inventoryMenu.route(event)
         case ContainerMenuController.containerIdentifier, ContainerMenuController.barterIdentifier:
             containerMenu.route(event)
-        case Self.journalIdentifier:
-            routeJournalInput(event)
-        case Self.dialogueIdentifier:
-            routeDialogueInput(event)
+        case JournalMenuController.identifier:
+            journalMenu.route(event)
+        case DialogueMenuController.identifier:
+            dialogueMenu.route(event)
         default:
             routeSystemMenuInput(event)
         }

@@ -26,7 +26,7 @@ enum JournalMovieFixture {
             SystemMenuMovieBridge.activate(runtime: runtime) {}
             QuestJournalMovieBridge.activate(runtime: runtime)
         }
-        for _ in 0 ..< GameViewController.journalActivationTicks {
+        for _ in 0 ..< GameViewController.systemMenuActivationTicks {
             try renderer.advanceSWFRuntime()
         }
         return runtime

@@ -222,7 +222,7 @@ extension GameViewController {
     private func selectedLipSyncPlayback() -> LipSyncPlayback? {
         guard
             let renderer,
-            let key = dialogue.model.speakerKey ?? streamer?.talk.speaker,
+            let key = dialogueMenu.speakerOrTarget,
             let actor = streamer?.referenceEntry(key: key)?.placedActor?.formID
         else { return nil }
         return renderer.scene.animations.lazy
