@@ -1,6 +1,6 @@
 // `OnTriggerEnter` and `OnTriggerLeave` dispatch: queue shape, the player as
 // `akActionRef`, missing handlers, the bridge, and unload order against
-// `detach`. The end-to-end walk is in M11TriggerVolumeWalkTests.
+// `detach`. The end-to-end walk is in TriggerVolumeWalkTests.
 
 import FormatsESMTesting
 import OpenSkyFormatsCore
