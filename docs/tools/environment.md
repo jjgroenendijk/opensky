@@ -185,3 +185,27 @@ workspace only the package variants are dylibs. Their imports are still checked 
 
 Retires when the installed Xcode ships that fix: delete the override, and a clean
 `make verify-build` prints no `is missing a dependency on` line.
+
+## A compilation cache hit leaves the driver record dirty
+
+Observed 2026-10-01 on Xcode 27.0 (27A266a). In swift-build, `SwiftDriverJobTaskAction` returns
+`.succeeded` for a compile job that the compilation cache replays. It does not call
+`jobFinished`, so the Swift driver never learns that the job ran. The driver then writes each of
+those files into its build record (`<Module>-primary.priors`) as `needsNonCascadingBuild`. The
+next time the driver plans that module, it compiles every file again, again from the cache, so
+the record never becomes clean. Source: `Sources/SWBTaskExecution/TaskActions/SwiftDriverJobTaskAction.swift`
+in [swift-build](https://github.com/swiftlang/swift-build), still so at commit `748527d` (2026-09-30).
+
+The driver plans a module again only when its planning task's signature changes. Two builds in
+the same context skip it. A plain `build` and a `build-for-testing`, or the `OpenSky` and
+`OpenSkyCLI` schemes, give it different signatures. So a switch between them recompiled
+`OpenSkyFormatsCore` and `OpenSkyDiagnostics` (records left dirty by earlier cache hits) and
+relinked and re-signed every framework above them. That is why `make verify-build` builds the
+CLI through the `OpenSky` scheme.
+
+To see the driver's reasons, export `ADDITIONAL_SWIFT_DRIVER_FLAGS=-driver-show-incremental`
+before a build. The same flag in `OTHER_SWIFT_FLAGS` does nothing. A record dirtied this way shows
+`Scheduling noncascading build` for every file.
+
+Retires when swift-build reports a replayed job to the driver: then `make cli` followed by
+`make test` compiles no Swift file.
