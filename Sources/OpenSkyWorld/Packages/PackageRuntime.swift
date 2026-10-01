@@ -55,6 +55,20 @@ nonisolated public struct ActorPackageRuntime {
         self.store = store
     }
 
+    /// The base of each resident actor. A repeated key keeps its first entry,
+    /// so the reconcile never traps on plugin data that places one actor twice.
+    public static func residentBases(
+        _ entries: [RuntimeReferenceEntry]
+    ) -> [ReferenceKey: FormID] {
+        var bases: [ReferenceKey: FormID] = [:]
+        for entry in entries where bases[entry.key] == nil {
+            if let actor = entry.placedActor {
+                bases[entry.key] = actor.base
+            }
+        }
+        return bases
+    }
+
     public mutating func register(actor: ReferenceKey, base: FormID) throws {
         let stack = try store.packageStack(for: base).value
         actors[actor] = ActorState(base: base, stack: stack)

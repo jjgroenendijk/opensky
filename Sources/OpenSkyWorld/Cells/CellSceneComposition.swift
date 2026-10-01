@@ -191,13 +191,14 @@ nonisolated public struct CellSceneComposition {
         return nil
     }
 
-    /// Every resident ACHR entry, in `ReferenceKey` order within each cell and
-    /// grid order across cells — deterministic, because "the nearest actor" has
-    /// to answer the same way twice when two actors are equidistant.
+    /// Every resident ACHR, by `ReferenceKey` in a cell and by grid across cells, so
+    /// "the nearest actor" answers the same way twice. One entry per key: the first
+    /// cell in grid order wins, because the worldspace persistent CELL repeats actors.
     public func actorEntries() -> [RuntimeReferenceEntry] {
-        cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+        var seen = Set<ReferenceKey>()
+        return cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
             .flatMap { $0.value.references.sortedEntries() }
-            .filter { $0.placedActor != nil }
+            .filter { $0.placedActor != nil && seen.insert($0.key).inserted }
     }
 
     /// Every resident placement, ordered by cell and then stable reference
