@@ -12,6 +12,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting

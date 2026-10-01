@@ -5,7 +5,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
-@testable import OpenSkyQuests
+import OpenSkyQuestsTesting
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState
@@ -89,20 +89,21 @@ struct ScriptDataBindingTests {
                 )
         )
         let store = QuestStore(quests: [quest], resolver: resolver)
-        let quests = QuestRuntime(store: WorldStateStore(), quests: store)
-        try quests.startQuest(quest.formID)
 
         let attached = try script(properties: [
             .init("Target", .object(VMADFixture.object(0x0000_1200, alias: 3)))
         ])
         // Master index 0 of this resolver is Skyrim.esm, so both the quest and
-        // the reference it forces resolve into that plugin's key space.
+        // the reference its alias forces resolve into that plugin's key space.
         let key = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x1234)
+        let aliases = QuestAliasFixture.resolution(
+            store: store, fills: [quest.formID: [3: key]]
+        )
         let worldHandle = PapyrusObjectHandle(901)
         let bound = try attached.makeInstance(
             in: runtime,
             formIDResolver: resolver,
-            aliases: quests.aliasResolution()
+            aliases: aliases
         ) { $0 == key ? worldHandle : nil }
 
         let instance = try #require(runtime.instance(for: bound.handle))

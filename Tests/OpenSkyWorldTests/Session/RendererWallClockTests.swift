@@ -6,6 +6,7 @@ import Metal
 import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldState
 import OpenSkyWorldTesting
 import RenderingTesting

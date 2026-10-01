@@ -5,8 +5,8 @@
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
+import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
-import OpenSkyCombatTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerception

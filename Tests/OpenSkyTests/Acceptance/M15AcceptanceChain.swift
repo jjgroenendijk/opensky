@@ -41,6 +41,7 @@ import OpenSkyInventoryTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
 import simd

@@ -1,12 +1,8 @@
 #!/bin/sh
 # Module-graph check for The Modular Architecture (issue #636,
 # docs/decisions/modular-architecture.md). Reads the package graph from
-# `swift package dump-package`, so it needs no build. Rules 1-3 and 6-8 fail;
-# rules 4 and 5 only report until issue 30.22 fixes them. `--report` lists them.
+# `swift package dump-package`, so it needs no build. Every rule is a gate.
 set -eu
-
-MODULE_GRAPH_REPORT="${1:-}"
-export MODULE_GRAPH_REPORT
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -44,8 +40,9 @@ MISSING = {
     ("OpenSkyMenus", "Interface"): "nothing depends on menus",
     ("OpenSkyMenus", "Testing"): "no other tests need menu fakes",
     ("OpenSkySave", "Interface"): "nothing depends on saves",
-    ("OpenSkyActors", "Testing"): "added in 30.22",
-    ("OpenSkyQuests", "Testing"): "added in 30.22",
+    ("OpenSkyCombat", "Testing"): "its fakes fake seams the implementation declares",
+    ("OpenSkySave", "Testing"): "nothing depends on saves",
+    ("OpenSkyScripting", "Testing"): "its fixtures run the Papyrus implementation",
 }
 
 layer = {name: index for index, names in enumerate(LAYERS) for name in names}
@@ -57,11 +54,18 @@ deps = {
     for target in targets
 }
 tests = {t["name"] for t in targets if t["type"] == "test"}
-testing = {t["name"] for t in targets
-           if t["type"] == "regular" and (t.get("path") or "").startswith("Tests/")}
+test_side = {t["name"] for t in targets
+             if t["type"] == "regular" and (t.get("path") or "").startswith("Tests/")}
+testing = {n for n in test_side if n.endswith("Testing")}
+fixtures = {n for n in test_side if n.endswith("Fixtures")}
 interfaces = {n for n in names if n.endswith("Interface") and n not in tests}
-features = names - set(layer) - COMPOSITION - tests - testing - interfaces
-failures, reports = [], []
+features = names - set(layer) - COMPOSITION - tests - test_side - interfaces
+failures = []
+for name in sorted(test_side - testing - fixtures):
+    failures.append(f"library {name} under Tests/ is named neither ...Testing nor ...Fixtures")
+for name in sorted(fixtures):
+    if name[:-len("Fixtures")] not in features:
+        failures.append(f"fixtures library {name} names no feature")
 
 
 def kind(name):
@@ -71,6 +75,8 @@ def kind(name):
         return "interface"
     if name in testing:
         return "testing"
+    if name in fixtures:
+        return "fixtures"
     return "feature"
 
 
@@ -91,12 +97,18 @@ for name in sorted(names):
             if kind(dep) not in ("lower", "interface"):
                 failures.append(f"rule 3: interface {name} depends on {dep}")
         elif name in testing:
-            if dep in features or dep in COMPOSITION:
-                reports.append(f"rule 4: testing library {name} depends on {dep}")
+            if kind(dep) in ("feature", "fixtures") or dep in COMPOSITION:
+                failures.append(f"rule 4: testing library {name} depends on {dep}")
+        elif name in fixtures:
+            own = name[:-len("Fixtures")]
+            if kind(dep) in ("feature", "fixtures") and dep != own or dep in COMPOSITION:
+                failures.append(f"rule 4: fixtures library {name} depends on {dep}")
         elif name in tests:
             own = name[:-len("Tests")]
             if (dep in features or dep in COMPOSITION) and dep != own:
-                reports.append(f"rule 5: {name} depends on the implementation {dep}")
+                failures.append(f"rule 5: {name} depends on the implementation {dep}")
+            if dep in fixtures and dep != own + "Fixtures":
+                failures.append(f"rule 5: {name} depends on {dep}, another feature's fixtures")
 
 for feature in sorted(features):
     for part in ("Interface", "Testing", "Tests"):
@@ -129,15 +141,11 @@ for target in targets:
                 failures.append(
                     f"rule 7: {path} imports {module}, which {name} does not declare")
 
-if os.environ["MODULE_GRAPH_REPORT"] == "--report":
-    for line in reports:
-        print(f"[INFO] {line}")
 if failures:
     print("[FAIL] module graph breaks The Modular Architecture:", file=sys.stderr)
     for line in failures:
         print(f"  {line}", file=sys.stderr)
     print("See docs/decisions/modular-architecture.md.", file=sys.stderr)
     raise SystemExit(1)
-print(f"[ OK ] module graph follows TMA ({len(names)} targets, {imports} imports;"
-      f" {len(reports)} rule 4-5 findings, report only until 30.22)")
+print(f"[ OK ] module graph follows TMA ({len(names)} targets, {imports} imports)")
 PY

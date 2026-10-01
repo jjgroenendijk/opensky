@@ -10,8 +10,8 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 import Testing
 

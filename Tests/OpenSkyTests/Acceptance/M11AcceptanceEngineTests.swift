@@ -6,10 +6,10 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
-import OpenSkySaveTesting
+import OpenSkySaveFixtures
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 import Testing
 

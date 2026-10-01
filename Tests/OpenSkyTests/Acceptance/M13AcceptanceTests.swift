@@ -9,10 +9,10 @@ import Foundation
 @testable import OpenSkyMenus
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
-import OpenSkySaveTesting
+import OpenSkySaveFixtures
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 import Testing
 

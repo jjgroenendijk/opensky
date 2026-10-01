@@ -10,7 +10,6 @@
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyWorld
 import OpenSkyWorldTesting

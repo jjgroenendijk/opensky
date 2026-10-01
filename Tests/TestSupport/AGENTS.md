@@ -5,9 +5,10 @@ Test support compiled into two unit-test bundles: `OpenSkyTests` and
 no way to import each other, while a fixture like `FakeWorldProviders` is needed by both.
 Membership follows the folder, exactly as `Sources/OpenSky/` builds into the app alone.
 
-Only fixtures that need the app belong here: the fake world providers, the panel fakes,
-and the acceptance harnesses. A fixture that needs no app code goes in a
-`Tests/<Name>Testing/` library, so the package test targets can use it too
+Only fixtures that need the app or two feature implementations belong here: the fake world
+providers, the panel fakes, the acceptance harnesses, and chains such as
+`CombatCastingChain`. A fixture that needs neither goes in a `Tests/<Name>Testing/` or
+`Tests/<Name>Fixtures/` library, so the package test targets can use it too
 (`Tests/AGENTS.md`).
 
 ## What belongs here
@@ -28,7 +29,7 @@ under `make realtest-all`. Nothing enforces that, so it is a review point.
 
 A suite that shares a fixture with other suites keeps its `@Test` methods in its own type,
 and the fixture is a separate type. Example: `CellStreamerTests` in `OpenSkyWorldTests`
-calls `CellStreamerFixture` in `OpenSkyWorldTesting`, and the acceptance chains call the
+calls `CellStreamerFixture` in `OpenSkyWorldFixtures`, and the acceptance chains call the
 same fixture.
 
 A type whose shared part is only constants does not need that treatment: give the constants

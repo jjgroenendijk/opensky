@@ -6,6 +6,7 @@
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyFactions
+import OpenSkyFactionsFixtures
 @testable import OpenSkyFactionsInterface
 import OpenSkyFactionsTesting
 @testable import OpenSkyFormatsESM

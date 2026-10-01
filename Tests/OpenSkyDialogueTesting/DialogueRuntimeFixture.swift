@@ -8,12 +8,10 @@ import FormatsESMTesting
 import Foundation
 import GameDataTesting
 @testable import OpenSkyConditions
-@testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuestsInterface
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
 
@@ -89,34 +87,15 @@ public enum DialogueRuntimeFixture {
         )
     }
 
-    /// A runtime over a fresh store, with the speaker placed and the two
-    /// quests reading from plugin data.
-    @MainActor
-    public static func runtime(
-        store: WorldStateStore = WorldStateStore(),
-        fragments: (any DialogueFragmentDispatching)? = nil
-    ) throws -> DialogueRuntime {
-        let quests = try questStore()
-        return try DialogueRuntime(
-            store: store,
-            dialogue: dialogueStore(),
-            questStates: QuestResolution(defaults: quests),
-            context: context(),
-            registry: .standard,
-            fragments: fragments
-        )
-    }
-
     public static func context() throws -> ConditionContext {
-        try ConditionContext(
-            quests: .empty,
-            references: ConditionEvaluatorFixture.references([
-                (formID: ConditionEvaluatorFixture.subjectFormID, base: speakerBase),
-                (formID: ConditionEvaluatorFixture.targetFormID, base: otherBase)
-            ]),
-            subject: speakerKey,
-            target: .player
-        )
+        var context = ConditionContext()
+        context.references = try ConditionEvaluatorFixture.references([
+            (formID: ConditionEvaluatorFixture.subjectFormID, base: speakerBase),
+            (formID: ConditionEvaluatorFixture.targetFormID, base: otherBase)
+        ])
+        context.subject = speakerKey
+        context.target = .player
+        return context
     }
 
     // MARK: - Records

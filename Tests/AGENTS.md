@@ -12,9 +12,14 @@ and `OpenSkyRealDataTests`.
 - Declarations that tests use are `public`. A struct a test builds has an explicit
   `public init(...)`.
 - A library may `@testable import` the module it builds fixtures for, and import the
-  modules and testing libraries below it. It may also import feature implementations,
-  because only tests link it. `Package.swift` lists what it may import; any other import
-  fails the build. It is declared after every implementation it builds.
+  modules and testing libraries below it. It never imports a feature implementation, so a
+  test that links it builds no other feature. `make module-graph` fails on such an import.
+- A fixture that needs its feature's implementation, such as a fake of a seam the
+  implementation declares, goes in that feature's `<Name>Fixtures/` library. Only
+  `<Name>Tests` and the Xcode bundles may link it. Example: `FakeCombatWorld` in
+  `OpenSkyCombatFixtures`. One used only by `<Name>Tests` stays in that target.
+- A fixture that needs two implementations goes in `Tests/TestSupport/` when both Xcode
+  bundles use it, else in `Tests/OpenSkyTests/Support/`.
 - A fixture that a package test target and `OpenSkyTests` or `OpenSkyRealDataTests` both
   need goes in a library, never in two copies.
 - A byte builder goes in the lowest library that can build it. A helper that wraps the bytes
@@ -35,7 +40,10 @@ A suite stays in `OpenSkyTests` when it needs something a package test target ca
 have:
 
 - the app module (`@testable import OpenSky`),
-- an acceptance chain in `Tests/OpenSkyTests/Acceptance/`.
+- an acceptance chain in `Tests/OpenSkyTests/Acceptance/`,
+- two feature implementations, for example a Magic suite that spends real actor values.
+  It goes in `Tests/OpenSkyTests/<Feature>/`, named for the feature it tests, because a
+  feature's tests may build no implementation but their own (`make module-graph`, rule 5).
 
 Inside a target, test folders use the subfolder names of the source they test: tests for
 `Sources/OpenSkyWorld/Terrain/DistantLOD.swift` live in `Tests/OpenSkyWorldTests/Terrain/`,

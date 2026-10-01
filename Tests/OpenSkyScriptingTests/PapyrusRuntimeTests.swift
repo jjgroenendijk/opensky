@@ -2,8 +2,8 @@ import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 import Testing
 
 @MainActor

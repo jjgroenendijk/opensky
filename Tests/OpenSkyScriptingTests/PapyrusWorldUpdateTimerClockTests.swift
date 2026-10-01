@@ -5,8 +5,8 @@
 // timer at most once.
 
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 @testable import OpenSkyWorldState
 import Testing
 

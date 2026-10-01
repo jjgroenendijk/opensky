@@ -5,7 +5,7 @@
 // read as stated conditions rather than as blanks.
 
 @testable import OpenSkyScripting
-import OpenSkyScriptingTesting
+import OpenSkyScriptingFixtures
 import Testing
 
 struct ScriptsReadoutTests {

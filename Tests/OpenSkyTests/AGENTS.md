@@ -29,13 +29,15 @@ quietly reach one even by accident (issue #362).
 
 ## What stays in this target
 
-This target holds the suites that need the app module or an acceptance chain. Every other
-suite goes in a package test target, including one that builds a `Renderer`;
+This target holds the suites that need the app module, an acceptance chain, or two feature
+implementations. The last kind lives in `<Feature>/`, for example `Magic/CasterRuntimeTests`.
+Every other suite goes in a package test target, including one that builds a `Renderer`;
 `Tests/AGENTS.md` has the rule.
 
 `Tests/TestSupport/` is compiled into this bundle and `OpenSkyRealDataTests`. It holds the
-fixtures that need the app. Fixtures that do not need the app are in the
-`Tests/<Name>Testing/` libraries, which this bundle links through `OpenSkyTestSupport`.
+fixtures both bundles use that need the app or two implementations. `Support/` holds the
+ones only this bundle uses. Other fixtures are in the `Tests/<Name>Testing/` and
+`Tests/<Name>Fixtures/` libraries, which this bundle links through `OpenSkyTestSupport`.
 
 ## Fixtures and output
 

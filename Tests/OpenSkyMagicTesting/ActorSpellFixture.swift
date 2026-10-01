@@ -14,8 +14,6 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyMagic
-@testable import OpenSkyProgression
 
 public enum ActorSpellFixture {
     /// ACBS, 24 bytes: uint32 flags, 7 stat words, uint16 template flags, two
@@ -120,34 +118,6 @@ public enum ActorSpellFixture {
         }
         return try LeveledList(
             record: record(ESMFixture.record("LVSP", formID: formID, data: fields))
-        )
-    }
-
-    /// The perk half of the same template resolution (issue #497), over the
-    /// same NPC_ records.
-    public static func perkResolver(npcs: [ActorBase]) -> ActorPerkBaselineResolver {
-        ActorPerkBaselineResolver(
-            templates: ActorTemplateResolver(
-                actors: Dictionary(uniqueKeysWithValues: npcs.map { ($0.formID.rawValue, $0) }),
-                leveledActors: [:]
-            )
-        )
-    }
-
-    public static func resolver(
-        npcs: [ActorBase],
-        races: [Race] = [],
-        leveledSpells: [LeveledList] = []
-    ) -> ActorSpellBaselineResolver {
-        ActorSpellBaselineResolver(
-            templates: ActorTemplateResolver(
-                actors: Dictionary(uniqueKeysWithValues: npcs.map { ($0.formID.rawValue, $0) }),
-                leveledActors: [:],
-                leveledSpells: Dictionary(
-                    uniqueKeysWithValues: leveledSpells.map { ($0.formID.rawValue, $0) }
-                )
-            ),
-            races: Dictionary(uniqueKeysWithValues: races.map { ($0.formID.rawValue, $0) })
         )
     }
 }

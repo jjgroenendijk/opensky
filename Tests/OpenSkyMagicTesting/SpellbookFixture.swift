@@ -4,12 +4,9 @@
 
 import FormatsESMTesting
 import Foundation
-@testable import OpenSkyActors
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyInventory
-@testable import OpenSkyMagic
 @testable import OpenSkyWorldState
 
 @MainActor
@@ -96,38 +93,5 @@ public enum SpellbookFixture {
     /// same index the arrow path reads, over the fixture's own records.
     public static func projectileStore() throws -> ItemDefinitionStore {
         try ItemDefinitionStore(file: plugin())
-    }
-
-    /// A spellbook runtime over a fresh store, plus the store so a suite can
-    /// snapshot it.
-    public static func runtime(
-        store: WorldStateStore = WorldStateStore(),
-        equipment: EquipmentRuntime? = nil
-    ) throws -> (SpellbookRuntime, WorldStateStore) {
-        let index = try index()
-        return (
-            SpellbookRuntime(
-                store: store,
-                spells: SpellStore(index: index, effects: effectStore(index: index)),
-                equipSlots: EquipSlotStore(index: index),
-                equipment: equipment
-            ),
-            store
-        )
-    }
-
-    /// An actor-value runtime whose subjects all start at 100 of everything and
-    /// regenerate nothing, so a magicka number in a suite is only ever what a
-    /// cast spent.
-    public static func values(store: WorldStateStore) -> ActorValueRuntime {
-        ActorValueRuntime(
-            store: store,
-            baselines: ActorValueBaselineResolver(
-                fallback: ActorValueBaseline(
-                    maximums: ActorValues(repeating: 100),
-                    regenPercentPerSecond: .zero
-                )
-            )
-        )
     }
 }

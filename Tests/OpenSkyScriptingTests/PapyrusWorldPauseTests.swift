@@ -6,8 +6,8 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 import Testing
 
 @MainActor

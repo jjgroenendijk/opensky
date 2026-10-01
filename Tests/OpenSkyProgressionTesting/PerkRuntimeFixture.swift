@@ -12,13 +12,10 @@
 import FormatsESMTesting
 import Foundation
 import GameDataTesting
-@testable import OpenSkyActors
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyMagicTesting
-@testable import OpenSkyProgression
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 
 @MainActor
@@ -91,53 +88,12 @@ public enum PerkRuntimeFixture {
         ActorValueInformationStore(index: index)
     }
 
-    /// Where each fixture perk sits in the fixture tree (issue #499).
-    public static func trees(index: RecordIndex) -> PerkTreeIndex {
-        PerkTreeIndex(
-            information: informationStore(index: index),
-            perks: perkStore(index: index)
-        )
-    }
-
     public static func spellStore(index: RecordIndex) -> SpellStore {
         SpellStore(index: index, effects: MagicEffectStore(index: index))
     }
 
     public static func perkStore(index: RecordIndex) -> PerkStore {
         PerkStore(index: index, spells: spellStore(index: index))
-    }
-
-    /// A perk runtime over a fresh world-state store, plus the store so a suite
-    /// can snapshot it.
-    ///
-    /// The store argument is optional rather than defaulted because a
-    /// main-actor default value cannot be written in a nonisolated context.
-    public static func runtime(
-        store: WorldStateStore? = nil
-    ) throws -> (PerkRuntime, WorldStateStore) {
-        let worldState = store ?? WorldStateStore()
-        return try (
-            PerkRuntime(
-                store: worldState,
-                perks: perkStore(index: index()),
-                conditionRegistry: .standard
-            ),
-            worldState
-        )
-    }
-
-    /// An actor-value runtime whose subjects start at 100 of everything and
-    /// regenerate nothing, matching `SpellbookFixture.values`.
-    public static func values(store: WorldStateStore) -> ActorValueRuntime {
-        ActorValueRuntime(
-            store: store,
-            baselines: ActorValueBaselineResolver(
-                fallback: ActorValueBaseline(
-                    maximums: ActorValues(repeating: 100),
-                    regenPercentPerSecond: .zero
-                )
-            )
-        )
     }
 
     // MARK: - Records

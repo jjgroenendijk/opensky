@@ -7,6 +7,7 @@ import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
@@ -34,7 +35,7 @@ struct TerrainSplatRenderTests {
     func blendsLayerByVertexWeights() throws {
         let device = try #require(Self.device)
         let scene = try Self.terrainScene(device: device)
-        let renderer = try OffscreenRendererFixture.makeRenderer(
+        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: scene,
             camera: Self.camera,

@@ -5,7 +5,7 @@
 
 import AppKit
 @testable import OpenSky
-import OpenSkyScriptingTesting
+import OpenSkyScriptingFixtures
 import Testing
 
 @MainActor

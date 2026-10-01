@@ -16,7 +16,7 @@ import Foundation
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
-import OpenSkySaveTesting
+import OpenSkySaveFixtures
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting

@@ -14,8 +14,8 @@
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
+import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
-import OpenSkyCombatTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPerception

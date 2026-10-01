@@ -9,8 +9,8 @@
 
 import AppKit
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 
 /// Sends a control's action the way a click would, so a test drives the panel
 /// through the same path AppKit does.
