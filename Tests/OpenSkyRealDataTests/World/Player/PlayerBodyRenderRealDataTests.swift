@@ -248,22 +248,9 @@ struct PlayerBodyRenderRealDataTests {
     /// Writes one capture into gitignored `logs/` for human review. A rendered
     /// frame embeds the user's own game assets and is never committed.
     private static func writePNG(_ pixels: [UInt8], name: String) throws {
-        let provider = try #require(CGDataProvider(data: Data(pixels) as CFData))
-        let image = try #require(CGImage(
-            width: size,
-            height: size,
-            bitsPerComponent: 8,
-            bitsPerPixel: 32,
-            bytesPerRow: size * 4,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-            provider: provider,
-            decode: nil,
-            shouldInterpolate: false,
-            intent: .defaultIntent
-        ))
-        try FrameScreenshot.write(
-            image: image, to: PlayerBodyFixture.logsDirectory().appending(path: name)
+        try RenderedPixels.writePNG(
+            pixels, width: size, height: size,
+            to: PlayerBodyFixture.logsDirectory().appending(path: name)
         )
     }
 }

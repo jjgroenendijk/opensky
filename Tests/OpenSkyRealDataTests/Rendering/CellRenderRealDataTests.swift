@@ -4,7 +4,6 @@
 
 import CoreGraphics
 import Foundation
-import ImageIO
 import Metal
 import MetalKit
 @testable import OpenSkyDiagnostics
@@ -14,7 +13,6 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import Testing
-import UniformTypeIdentifiers
 
 @MainActor
 private final class StreamSceneSwapErrorBox {
@@ -324,32 +322,12 @@ extension CellRenderRealDataTests {
     /// Writes the frame to logs/cell-whiterunexterior06.png (gitignored) and
     /// returns the absolute path for the stats log / human review.
     private func writePNG(pixels: [UInt8], width: Int, height: Int) throws -> URL {
-        var data = pixels
-        let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))
-        let context = try #require(CGContext(
-            data: &data,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: width * 4,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-                | CGBitmapInfo.byteOrder32Little.rawValue
-        ))
-        let image = try #require(context.makeImage())
         try FileManager.default.createDirectory(
             at: logsDirectory,
             withIntermediateDirectories: true
         )
         let url = try logsDirectory.appending(path: "cell-whiterunexterior06.png")
-        let destination = try #require(CGImageDestinationCreateWithURL(
-            url as CFURL,
-            UTType.png.identifier as CFString,
-            1,
-            nil
-        ))
-        CGImageDestinationAddImage(destination, image, nil)
-        #expect(CGImageDestinationFinalize(destination))
+        try RenderedPixels.writePNG(pixels, width: width, height: height, to: url)
         return url
     }
 }
