@@ -58,19 +58,35 @@ final class GameViewController: NSViewController {
         renderer != nil
     }
 
-    /// Only this file assigns it.
+    /// Holds the build runner and the provider for the window's lifetime.
+    /// `WorldSessionWiring` assigns it.
     var streamer: CellStreamer?
-    /// `wireStreaming` rebuilds resident cells when it changes.
+    /// The session's runtime world state. Every cell build reads a snapshot of it.
     let worldState = WorldStateStore()
-    /// nil without game data. Ticked once per drawn frame.
-    var papyrus: PapyrusWorldRuntime?
-    /// Seam Papyrus natives reach the world through, built beside
-    /// `papyrus`. Retained here because it is also the `onInteraction`
-    /// subscriber that turns a use key into a recorded activation.
-    var papyrusBridge: PapyrusWorldStateBridge?
-    /// GLOB defaults of the loaded plugin, set by `wireStreaming`. Nil without
-    /// game data; the time-of-day scrub then writes the renderer's clock directly.
-    var globalStore: GlobalStore?
+    /// Reference mutations, save slots, game time, globals, and condition lists.
+    lazy var runtimeState: RuntimeStateCoordinator = {
+        let runtimeState = RuntimeStateCoordinator(store: worldState)
+        runtimeState.attach(world: runtimeStateWorld)
+        return runtimeState
+    }()
+
+    lazy var runtimeStateWorld = RuntimeStateWorldAdapter(game: self)
+    /// The Papyrus VM and its world bridge. Both stay nil without game data.
+    lazy var scripts: ScriptCoordinator = {
+        let scripts = ScriptCoordinator()
+        scripts.attach(world: scriptWorld)
+        return scripts
+    }()
+
+    lazy var scriptWorld = ScriptWorldAdapter(game: self)
+    /// The renderer and streamer controls of the World panels.
+    lazy var renderControls: WorldRenderControls = {
+        let controls = WorldRenderControls(runtimeState: runtimeState)
+        controls.attach(world: self)
+        return controls
+    }()
+
+    lazy var sessionWiring = WorldSessionWiring(game: self)
     /// Free-fly input shared with the renderer; the view writes it from
     /// NSEvents, the renderer drains it each frame.
     let cameraInput = CameraInputState()
@@ -144,8 +160,6 @@ final class GameViewController: NSViewController {
     lazy var dialogueCamera = DialogueCameraController(game: self)
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
     lazy var containerMenu = ContainerMenuController(game: self)
-    /// World > Runtime State bridge caches (save store, plugin fingerprint, slot list).
-    var runtimeState = RuntimeStateBridgeState()
     /// World items, equipment, vendors and trades. Its runtimes stay nil without game data.
     let inventory = InventoryCoordinator()
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
@@ -304,7 +318,7 @@ final class GameViewController: NSViewController {
             }
             if let session {
                 worldData = session.data
-                wireStreaming(session: session, renderer: newRenderer)
+                sessionWiring.wireStreaming(session: session, renderer: newRenderer)
             }
             // After streaming, so the HUD reads the streamer's update of this frame.
             newRenderer.onFrame.add { [weak self] _ in
@@ -363,12 +377,6 @@ final class GameViewController: NSViewController {
     }
 }
 
-/// Renderer bridge for the World > Environment panel. Reads/writes the live
-/// renderer's shadow state on the main thread (same context as draw(in:)) and
-/// persists the quality choice. A nil renderer (Metal 4 unavailable) degrades to
-/// the stored/default quality and empty stats so the panel never crashes.
-extension GameViewController: AudioControlForwarding {}
-
 extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     UILabControlForwarding, SystemMenuControlForwarding {}
 
@@ -395,64 +403,10 @@ extension GameViewController: SystemMenuWorld {
     }
 }
 
-extension GameViewController: ShadowControlProviding {
-    /// Not persisted: an A/B flip is a transient dev comparison, unlike the
-    /// quality tier. A shadowless world restored on next launch would read as a
-    /// rendering bug.
-    var sunShadowsEnabled: Bool {
-        get { renderer?.sunShadowsEnabled ?? true }
-        set { renderer?.sunShadowsEnabled = newValue }
-    }
-
-    var shadowQuality: ShadowQuality {
-        get { renderer?.shadowQuality ?? ShadowQualitySettings.load() }
-        set {
-            renderer?.shadowQuality = newValue
-            ShadowQualitySettings.store(newValue)
-        }
-    }
-
-    var shadowDrawStats: ShadowDrawStats {
-        renderer?.lastShadowDrawStats ?? ShadowDrawStats()
-    }
-
-    var shadowUpdateMS: Double {
-        renderer?.lastShadowUpdateMS ?? 0
-    }
-
-    var shadowsActive: Bool {
-        renderer?.shadowRenders ?? false
-    }
-
+extension GameViewController: AudioControlForwarding, RuntimeStateControlForwarding,
+    ScriptControlForwarding, WorldRenderControlForwarding, RenderControlWorld
+{
     func refocusGameView() {
         view.window?.makeFirstResponder(view)
-    }
-}
-
-extension GameViewController: TerrainLODControlProviding {
-    var terrainLODConfigurationSnapshot: TerrainLODConfigurationSnapshot {
-        terrainLODConfigurationStore.snapshot()
-    }
-
-    var terrainLODOverrideActive: Bool {
-        TerrainLODSettings.hasOverride()
-    }
-
-    func applyTerrainLODConfiguration(_ configuration: TerrainLODConfiguration) -> Bool {
-        guard configuration.isValid else { return false }
-        TerrainLODSettings.store(configuration)
-        terrainLODConfigurationStore.replace(with: TerrainLODConfigurationSnapshot(
-            configuration: configuration,
-            source: "OpenSky sidebar override"
-        ))
-        streamer?.invalidateDistantLOD()
-        return true
-    }
-
-    func resetTerrainLODConfiguration() {
-        TerrainLODSettings.clearOverride()
-        let root = try? GameDataLocator.locate()
-        terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: root))
-        streamer?.invalidateDistantLOD()
     }
 }

@@ -19,6 +19,7 @@ import OpenSkyPhysics
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
@@ -436,7 +437,7 @@ extension GameViewController: JournalControlProviding {
     }
 
     func journalAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
-        questAliasTable(editorID: editorID)
+        scripts.questAliasTable(editorID: editorID)
     }
 }
 

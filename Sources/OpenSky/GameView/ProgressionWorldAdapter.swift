@@ -30,7 +30,7 @@ final class ProgressionWorldAdapter {
         var runtime = PerkRuntime(
             store: game.worldState, perks: store, conditionRegistry: .standard
         )
-        runtime.conditions = ConditionContext(globals: game.runtimeStateGlobalResolution())
+        runtime.conditions = ConditionContext(globals: game.runtimeState.globalResolution())
         game.perks.wire(
             runtime,
             baselines: (provider as? ActorValueDataProviding)?.actorValueBaselines?.resolver
@@ -127,7 +127,7 @@ extension ProgressionWorldAdapter: ProgressionWorld {
     }
 
     func conditionContext() -> ConditionContext {
-        game.runtimeStateConditionContext()
+        game.runtimeState.conditionContext()
     }
 
     func conditionText(_ condition: Condition) -> String {

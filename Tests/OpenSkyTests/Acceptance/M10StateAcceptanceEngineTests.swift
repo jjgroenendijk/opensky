@@ -1,18 +1,8 @@
-// Satellite of M10StateAcceptanceTests (issue #162): the engine half of the
-// M10.1 gate, with no fakes on the engine side at all.
-//
-// Split from the parent file because the two halves stand alone — the parent
-// drives the sidebar panel through `FakeWorldProviders`, while everything here
-// runs a real `WorldStateStore` wired to a real `CellStreamer` exactly as
-// `GameViewController.wireStreaming` wires them, and a real `OpenSkySaveStore`
-// writing to a temporary directory. The only test double is
-// `ManualCellBuildRunner`, which stands in for the serial build queue so the
-// test controls when each build completes; it records the world-state snapshot
-// each build ran against, which is how "the delta is reapplied on reload"
-// becomes an assertion rather than a claim.
-//
-// No Metal and no game data in the streaming cases; the last case builds a real
-// cell scene from synthetic ESM and NIF bytes and is gated on a Metal device.
+// The engine half of the M10.1 gate: a real `WorldStateStore` joined to a real
+// `CellStreamer` by `CellStreamer.bind(to:)`, and an `OpenSkySaveStore` in a
+// temporary folder. `ManualCellBuildRunner` records the snapshot each build ran
+// against, so "the delta is reapplied on reload" is an assertion. The last case
+// builds a cell scene from synthetic bytes and needs a Metal device.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -40,11 +30,7 @@ private struct M10EngineHarness {
 
     init(radius: Int32 = 0) {
         streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
-        let liveStore = store
-        streamer.stateSource = { liveStore.snapshot() }
-        store.onMutation = { [weak streamer] location, sequence in
-            streamer?.noteStateMutation(in: location, sequence: sequence)
-        }
+        streamer.bind(to: store)
     }
 
     /// Runs frames until no new build is dispatched, completing each dispatched

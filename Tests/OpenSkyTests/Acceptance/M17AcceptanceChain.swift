@@ -14,6 +14,7 @@ import OpenSkyDialogue
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
@@ -36,7 +37,7 @@ final class M17AcceptanceChain {
 
     init() throws {
         session = try M17AcceptanceFixture.session(worldState: controller.worldState)
-        controller.papyrusBridge = session.bridge
+        controller.scripts.install(runtime: session.world, bridge: session.bridge)
         streamer = CellStreamerFixture.makeStreamer(runner: runner)
         controller.streamer = streamer
         controller.dialogueWorld.wireDialogue(provider: DialogueOnlyProvider(), streamer: streamer)

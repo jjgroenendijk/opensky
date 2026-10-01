@@ -101,10 +101,10 @@ extension AIWorldAdapter: PackageWorld {
 
     func packageConditionContext(clock: GameClock) -> ConditionContext {
         ConditionContext(
-            globals: game.runtimeStateGlobalResolution(),
-            quests: game.papyrusBridge?.questRuntime?.resolution() ?? .empty,
-            aliases: game.papyrusBridge?.questRuntime?.aliasResolution() ?? .empty,
-            actors: game.runtimeStateActorResolution(),
+            globals: game.runtimeState.globalResolution(),
+            quests: game.scripts.bridge?.questRuntime?.resolution() ?? .empty,
+            aliases: game.scripts.bridge?.questRuntime?.aliasResolution() ?? .empty,
+            actors: game.runtimeStateWorld.actorResolution(),
             detection: game.perception.perceptionResolution(),
             referenceEnable: ReferenceEnableResolution(snapshot: game.worldState.snapshot()),
             clock: clock,

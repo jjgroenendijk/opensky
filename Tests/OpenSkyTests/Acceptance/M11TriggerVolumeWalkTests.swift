@@ -1,11 +1,6 @@
-// End-to-end trigger volumes over the fixed-step path (issue #173): a real
-// `WalkController` walks a synthetic path through a scripted volume placed in
-// a real `CellStreamer`, and the compiled `OnTriggerEnter`/`OnTriggerLeave`
-// bodies run in the Papyrus VM. Also pins the cell-unload containment
-// ordering: leave is queued before `detach` retires the instances.
-//
-// Everything is built in code — REFR records, PEX objects, collision geometry.
-// No game content, no Metal.
+// Trigger volumes end to end: a real `WalkController` walks through a scripted
+// volume in a real `CellStreamer`, and `OnTriggerEnter`/`OnTriggerLeave` run in
+// the VM. Leave is queued before `detach` retires the instances. Built in code.
 
 import FormatsESMTesting
 @testable import OpenSkyGameData
@@ -50,7 +45,7 @@ struct M11TriggerVolumeWalkTests {
     }
 
     /// One resident cell holding a scripted trigger volume, wired to a Papyrus
-    /// world exactly as `GameViewController.wirePapyrus` wires it.
+    /// world exactly as `ScriptWorldAdapter.wirePapyrus` wires it.
     private static func makeHarness(isPersistent: Bool = false) throws -> Harness {
         let entry = try PapyrusWorldFixture.referenceEntry(
             objectID: volumeID,

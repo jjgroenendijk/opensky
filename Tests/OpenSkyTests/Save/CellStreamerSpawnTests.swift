@@ -1,12 +1,6 @@
-// Streaming behaviour of dropped objects (issue #177, roadmap item 12.1.3):
-// a drop rebuilds the cell it landed in, survives that cell being evicted and
-// reloaded, resolves the in-flight-build race deterministically, and comes back
-// from a save/load cycle with its identity intact.
-//
-// The harness is the M10 one: a real `WorldStateStore` wired to the streamer
-// exactly as `GameViewController.wireStreaming` wires it, and a
-// `ManualCellBuildRunner` so the test decides when each build finishes. No
-// Metal, no game data.
+// Dropped objects across streaming: a drop rebuilds its cell, survives eviction
+// and reload, resolves the in-flight-build race, and survives save and load.
+// The store joins the streamer through `CellStreamer.bind(to:)`. No Metal.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -42,10 +36,7 @@ struct CellStreamerSpawnTests {
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
-        streamer.stateSource = { store.snapshot() }
-        store.onMutation = { [weak streamer] location, sequence in
-            streamer?.noteStateMutation(in: location, sequence: sequence)
-        }
+        streamer.bind(to: store)
         let items = try WorldItemRuntime(
             inventory: InventoryRuntime(store: store, baselines: Fixture.resolver()),
             references: streamer

@@ -1,20 +1,7 @@
-// Satellite of M10AcceptanceTests (issue #166): the engine half of the M10 gate,
-// with no fakes on the engine side at all.
-//
-// Split from the parent file because the two halves stand alone — the parent
-// drives the sidebar panel through `FakeWorldProviders`, while everything here
-// runs a real `WorldStateStore` wired to a real `GlobalStore` and a real
-// `GameClock` exactly as `GameViewController` wires them, and a real
-// `OpenSkySaveStore` writing to a temporary directory.
-//
-// This is where the gate's "identical state including journal-independent
-// snapshot equality" is actually asserted. `WorldStateSnapshot.==` deliberately
-// excludes the journal sequence, so a restored store compares equal to the store
-// it was saved from even though the restore records nothing and advances no
-// counter — the assertions below check both halves of that claim rather than
-// only the equality.
-//
-// No game data: the plugin bytes every fixture parses are built in code.
+// The engine half of the M10 gate, with no fakes: a real `WorldStateStore`,
+// `GlobalStore`, `GameClock`, and an `OpenSkySaveStore` in a temporary folder.
+// `WorldStateSnapshot.==` ignores the journal sequence, so the tests check both
+// equality and that a restore records nothing. Plugin bytes are built in code.
 
 import FormatsESMTesting
 import Foundation
@@ -162,7 +149,7 @@ extension M10AcceptanceTests {
             GlobalFixture.key(0x0801): "GameHour"
         ]
         let lines = session.world.globalJournalEntries.map {
-            GameViewController.globalJournalLine($0, name: names[$0.key] ?? "?")
+            RuntimeStateCore.globalJournalLine($0, name: names[$0.key] ?? "?")
         }
         #expect(lines == ["3 set global MyGold = 2500", "4 set global GameHour = 7.25"])
 
