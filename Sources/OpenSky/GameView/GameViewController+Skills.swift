@@ -5,6 +5,7 @@
 // one code path (docs/engine/skill-advancement.md).
 
 import AppKit
+import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -71,7 +72,7 @@ extension GameViewController {
     func wornArmor(of key: ReferenceKey) -> WornArmorProfile {
         guard
             let equipment = worldItems.equipment,
-            let items = melee.weapons,
+            let items = combat.items,
             let holder = inventoryHolder(of: key)
         else { return .none }
         var heavy = 0

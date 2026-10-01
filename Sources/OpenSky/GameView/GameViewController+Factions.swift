@@ -6,6 +6,7 @@
 // session, behind a `Set` check.
 
 import AppKit
+import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyFactions
 import OpenSkyFactionsInterface
@@ -184,6 +185,25 @@ extension GameViewController {
         else { return nil }
         seedFactions(of: observer)
         return runtime.decision(observer, toward: .player)
+    }
+
+    /// The derived answer, or the stored override alone without a faction
+    /// runtime. The override is the first term of the derivation, so it is not
+    /// read twice.
+    func combatHostility(of key: ReferenceKey) -> ActorHostility {
+        if let decision = derivedHostilityDecision(of: key) {
+            return decision.hostility
+        }
+        return worldState.component(ActorCombatState.self, for: key)?.hostility ?? .neutral
+    }
+
+    @discardableResult
+    func setCombatHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
+        worldState.set(
+            ActorCombatState(hostility: hostility),
+            for: key,
+            in: streamer?.cellLocation(of: key)
+        )
     }
 
     /// Copies `holder`'s authored `SNAM` run into the store the first time this

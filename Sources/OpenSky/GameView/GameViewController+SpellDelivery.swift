@@ -1,24 +1,8 @@
-// `SpellHitApplying` and the two aimed-delivery answers (issue #471, roadmap
-// item 19.8): where a cast spell's projectile comes from, what the caster's aim
-// ray reaches, and how a landed spell becomes applied effects.
-//
-// One conformance for both seams. `ProjectileWorld` and `CasterWorld` each
-// refine `SpellHitApplying`, and this controller is both, so a spell that
-// arrived as a projectile and one that was cast straight at an actor take the
-// same path into `ActiveEffectRuntime` — exactly the reason `reportScriptHit`
-// is implemented once for melee, archery and the combat loop.
-//
-// Two answers are honest partial ones and are worth stating rather than
-// papering over:
-//
-// * `aimedSpellTarget(within:)` finds actors and static geometry along the
-//   camera ray with the same queries a projectile's step uses, so a target
-//   behind a wall is not reachable. It does *not* model the aim assist vanilla
-//   applies to a cast, because nothing in this engine models it for an arrow
-//   either.
-// * The PROJ lookup goes through the archery item index, which is the one PROJ
-//   index this session builds. A session with no item index — every synthetic
-//   scene — fires no spell projectile and the caster tally counts the refusal.
+// `SpellHitApplying` and the aimed-delivery answers: where a spell projectile
+// leaves from, what the aim ray reaches, and how a landed spell applies. A
+// projectile hit and a direct cast take one path into `ActiveEffectRuntime`.
+// The aim ray uses the projectile queries but no aim assist, and PROJ lookups
+// use the combat item index, so a session without one fires no spell projectile.
 
 import AppKit
 import OpenSkyCombat
@@ -57,23 +41,16 @@ extension GameViewController {
     /// The flight profile of the PROJ an MGEF names, or nil when this session
     /// cannot resolve one.
     func spellProjectileProfile(_ id: FormID) -> ProjectileProfile? {
-        archery.items?.projectileProfile(id)
+        combat.items?.projectileProfile(id)
     }
 
-    /// Launches a cast spell's projectile through the archery pipeline.
-    ///
-    /// The same `ProjectileRuntime` an arrow flies through, so a spell
-    /// projectile obeys the same fixed step, the same range and lifetime bounds
-    /// and the same impact query — which is the whole point of generalizing the
-    /// shot model rather than writing a second one.
-    ///
-    /// The caster is the payload's own, so an NPC's spell leaves the NPC
-    /// (issue #473) rather than the camera: a fireball that spawned at the
-    /// player's eye and flew at the player would be a shot nobody could read.
+    /// Launches a spell projectile through the arrow's `ProjectileRuntime`, so
+    /// it shares the fixed step, bounds and impact query. It leaves the
+    /// payload's own caster, so an NPC's spell leaves the NPC.
     @discardableResult
     func launchSpellProjectile(_ payload: SpellPayload) -> Bool {
         guard
-            let runtime = archery.runtime,
+            let runtime = combat.archery,
             let link = payload.projectile,
             let profile = spellProjectileProfile(link),
             let shooter = spellShooter(for: payload.caster)
@@ -84,16 +61,11 @@ extension GameViewController {
         ) != nil
     }
 
-    /// Where `caster` casts from and which way, or nil when this session
-    /// cannot place it.
-    ///
-    /// The player casts down the camera ray, which is what the reticle
-    /// promises. Every other actor casts from its own eye at the actor it is
-    /// fighting, which in this build is always the player — `StartCombat`
-    /// refuses any other target and item 16.7 says so rather than
-    /// half-simulating a fight between two NPCs.
+    /// Where `caster` casts from and which way, or nil when it cannot be
+    /// placed. The player casts down the camera ray; an NPC casts from its eye
+    /// at the player, the only target `StartCombat` accepts.
     func spellShooter(for caster: ReferenceKey) -> ProjectileShooter? {
-        guard caster != .player else { return projectileShooter }
+        guard caster != .player else { return combat.projectileShooter }
         guard let origin = actorCastOrigin(of: caster) else { return nil }
         return ProjectileShooter(
             key: caster,
@@ -122,7 +94,7 @@ extension GameViewController {
     /// caster was aiming at a target that moved and not because it was aiming
     /// at the floor.
     func playerCastTarget() -> SIMD3<Float> {
-        let player = meleeAttacker
+        let player = combat.meleeAttacker
         return player.feet + SIMD3(0, 0, player.capsule.height / 2)
     }
 
@@ -138,12 +110,12 @@ extension GameViewController {
         let origin = renderer.freeFlyCamera.position
         let direction = ProjectileFlight.normalized(renderer.freeFlyCamera.forward)
         let reach = castReach(within: range)
-        let candidates = projectileTargets()
+        let candidates = combat.projectileTargets()
         let impact = ProjectileImpactQuery.first(
             step: ProjectileStep(from: origin, to: origin + direction * reach, radius: 0),
             targets: candidates,
             shooter: .player,
-            sweep: { sweepProjectile($0) }
+            sweep: { combat.sweepProjectile($0) }
         )
         return SpellAim(
             target: impact?.target,
@@ -157,12 +129,12 @@ extension GameViewController {
         guard let origin = actorCastOrigin(of: caster) else { return .none }
         let direction = ProjectileFlight.normalized(playerCastTarget() - origin)
         let reach = castReach(within: range)
-        let candidates = projectileTargets()
+        let candidates = combat.projectileTargets()
         let impact = ProjectileImpactQuery.first(
             step: ProjectileStep(from: origin, to: origin + direction * reach, radius: 0),
             targets: candidates,
             shooter: caster,
-            sweep: { sweepProjectile($0) }
+            sweep: { combat.sweepProjectile($0) }
         )
         return SpellAim(
             target: impact?.target,
@@ -173,7 +145,7 @@ extension GameViewController {
 
     /// How far a cast of SPIT range `range` actually reaches in this session.
     func castReach(within range: Float) -> Float {
-        let ceiling = archery.runtime?.settings.visibleMoveDistance.value ?? 0
+        let ceiling = combat.archery?.settings.visibleMoveDistance.value ?? 0
         return [range, ceiling].filter { $0 > 0 }.min() ?? Self.spellAimFallbackReach
     }
 

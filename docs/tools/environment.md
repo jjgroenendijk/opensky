@@ -80,7 +80,11 @@ with "timed out while preparing". Clicking Allow once let the run continue. The 
 targets run in that runner ([Swift modules](/tools/modules.md)), so a machine without the grant sees
 the same dialog on its first unit run.
 
-Retires when `make test-ui` reaches a test case on this machine.
+Observed 2026-10-01: `make test-ui` reaches its test cases, and every case passes except
+`testCapturesRenderedFrame`. That case fails with "Failed to create screenshot. Image creation
+failed." The likely cause is a missing Screen Recording grant for `OpenSkyUITests-Runner.app`.
+
+Retires when `testCapturesRenderedFrame` passes on this machine.
 
 ## Stale testmanagerd
 

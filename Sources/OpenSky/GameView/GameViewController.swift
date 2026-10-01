@@ -5,6 +5,7 @@
 import AppKit
 import MetalKit
 import OpenSkyAudio
+import OpenSkyCombat
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMenus
@@ -190,21 +191,13 @@ final class GameViewController: NSViewController {
     /// index a perk-point spend is validated against, and the last outcome line.
     var progression = ProgressionBridgeState()
 
-    /// Melee combat: the swing runtime, the WEAP index it reads combat data out of, and the
-    /// panel's last outcome line.
-    var melee = MeleeBridgeState()
-
-    /// Archery: the shot and projectile runtimes, the AMMO/PROJ index, and the
-    /// panel's last outcome line.
-    var archery = ArcheryBridgeState()
-
     /// Death and ragdoll: the runtime, the per-skeleton ragdoll definitions it spawns from, and
     /// the panel's last outcome line.
     var ragdoll = RagdollBridgeState()
 
-    /// The combat loop: hostility, the derived combat state, the dev target's attack clock and
-    /// the reaction clips it plays.
-    var combat = CombatBridgeState()
+    /// Melee, archery and the combat loop. Its runtimes stay nil without game data.
+    let combat = CombatCoordinator()
+    lazy var combatWorld = CombatWorldAdapter(game: self)
     /// Kinematic NPC gait clips and failed clip keys.
     var npcMovementBridge = NPCMovementBridgeState()
     /// Live resident-actor package selection.
@@ -397,3 +390,67 @@ extension GameViewController: TerrainLODControlProviding {
 // Weather bridge for the World > Environment panel. Reads/forces the
 // live renderer's weather runtime on the main thread. A nil renderer or no
 // weather data degrades to an empty list + calm readout.
+
+/// The Combat & Physics panel reads the coordinator.
+extension GameViewController: MeleeCombatControlProviding {
+    var meleeCombatSnapshot: MeleeCombatSnapshot {
+        combat.meleeCombatSnapshot
+    }
+
+    var isWeaponDrawn: Bool {
+        get { combat.isWeaponDrawn }
+        set { combat.isWeaponDrawn = newValue }
+    }
+
+    @discardableResult
+    func requestMeleeAttack() -> String {
+        combat.requestMeleeAttack()
+    }
+
+    func clearMeleeTrace() {
+        combat.clearMeleeTrace()
+    }
+}
+
+extension GameViewController: ArcheryControlProviding {
+    var archerySnapshot: ArcherySnapshot {
+        combat.archerySnapshot
+    }
+
+    @discardableResult
+    func spawnDevProjectile() -> String {
+        combat.spawnDevProjectile()
+    }
+
+    func despawnProjectiles() {
+        combat.despawnProjectiles()
+    }
+
+    func clearStuckProjectiles() {
+        combat.clearStuckProjectiles()
+    }
+
+    func clearProjectileTrace() {
+        combat.clearProjectileTrace()
+    }
+}
+
+extension GameViewController: CombatLoopControlProviding {
+    var combatLoopSnapshot: CombatLoopSnapshot {
+        combat.combatLoopSnapshot
+    }
+
+    var selectedActorIsHostile: Bool {
+        get { combat.selectedActorIsHostile }
+        set { combat.selectedActorIsHostile = newValue }
+    }
+
+    var isActorCastingEnabled: Bool {
+        get { combat.isActorCastingEnabled }
+        set { combat.isActorCastingEnabled = newValue }
+    }
+
+    func clearCombatTrace() {
+        combat.clearCombatTrace()
+    }
+}

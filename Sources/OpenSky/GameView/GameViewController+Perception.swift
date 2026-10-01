@@ -1,15 +1,7 @@
-// Session wiring for the perception pass (issue #202, roadmap item 16.6):
-// builds the runtime over the provider's detection GMSTs, advances it on the
-// same paused-aware world delta everything else takes, and registers its world
-// overlay.
-//
-// AppKit stays in this controller satellite; the pass, the formula, the pair
-// states and the readout are all engine types that build into `openskycli` and
-// are testable without a window.
-//
-// Ordering: perception is advanced *after* NPC movement and the combat loop,
-// because it reads where actors ended up this frame and which of them are
-// hostile. A pass that ran first would describe the previous frame's world.
+// Session wiring for the perception pass: builds the runtime over the
+// provider's detection GMSTs and advances it on the paused-aware world delta.
+// It runs after NPC movement and the combat loop, because it reads where actors
+// ended up this frame and which of them are hostile.
 
 import AppKit
 import OpenSkyActorsInterface
@@ -63,21 +55,16 @@ extension GameViewController {
 // MARK: - The world seam
 
 extension GameViewController: PerceptionWorld {
-    /// Every resident actor the AI is driving.
-    ///
-    /// "Driving" is the session's definition and is deliberately narrow: an
-    /// actor is an observer when it is hostile to the player, or when the
-    /// package runtime has selected a package for it. Those are exactly the
-    /// actors something in this engine is already simulating, and simulating
-    /// perception for the rest would be work nobody can observe. A dead actor
-    /// observes nothing whatever else it carries.
+    /// Every living resident actor the AI drives: hostile to the player, or
+    /// running a selected package. Perception for the rest would be work
+    /// nobody can observe.
     func perceptionObservers() -> [PerceptionObserver] {
         let packaged = Set(packageReadouts().filter { $0.currentPackage != nil }.map(\.actor))
         return combatActors().compactMap { actor in
             guard !actor.isDead else { return nil }
             guard
                 combatHostility(of: actor.key) == .hostile
-                || combat.runtime?.phase(of: actor.key)?.isEngaged == true
+                || combat.loop?.phase(of: actor.key)?.isEngaged == true
                 || packaged.contains(actor.key)
             else { return nil }
             return PerceptionObserver(

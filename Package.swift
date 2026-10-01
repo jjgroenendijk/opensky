@@ -1,15 +1,8 @@
 // swift-tools-version: 6.2
-// The engine, one module per layer, laid out by The Modular Architecture
-// (docs/tools/modules.md). The app and OpenSkyCLI link one umbrella product,
-// OpenSkyModules, and the Xcode test bundles link OpenSkyTestSupport, so a new
-// module never edits the project file. OpenSky.xcworkspace holds the project and
-// this package side by side.
-//
-// Modules are declared bottom-up. A module may depend only on modules declared
-// before it, and a feature module never depends on another feature's
-// implementation, only on its interface. The helpers below stop the manifest from
-// loading when either rule breaks, and the compiler rejects an import a target
-// does not list.
+// The engine, one module per layer, by The Modular Architecture
+// (docs/tools/modules.md). Modules are declared bottom-up: a module depends only
+// on earlier ones, and a feature depends on another feature's interface only.
+// The helpers below stop the manifest from loading when a rule breaks.
 
 import PackageDescription
 
@@ -156,15 +149,9 @@ func interface(_ feature: String, dependencies: [String]) -> [Target] {
     return [target]
 }
 
-/// A feature module, by The Modular Architecture:
-/// - `<name>`: the implementation. Only the composition roots import it.
-/// - `<name>Interface`: the protocols and value types other modules use. Declared
-///   when `interface` is non-nil; its dependencies are the list given. An interface
-///   declared earlier with `interface(_:dependencies:)` is used instead.
-/// - `<name>Testing`: fakes and fixtures other modules' tests share. Declared when
-///   `testing` is non-nil.
-/// - `<name>Tests`: the unit tests of `<name>`. Declared when `tests` is non-nil;
-///   its extra dependencies are the list given.
+/// A feature module: `<name>` (the implementation), plus `<name>Interface`,
+/// `<name>Testing`, and `<name>Tests` when the matching argument is non-nil.
+/// An interface declared earlier with `interface(_:dependencies:)` is reused.
 func feature(
     _ name: String,
     dependencies: [String] = [],
@@ -559,8 +546,8 @@ targets += feature(
     tests: [
         "OpenSkyActorsInterface", "OpenSkyBehavior", "OpenSkyCombatFixtures",
         "OpenSkyCombatInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
-        "OpenSkyMagicInterface", "OpenSkyPerceptionInterface", "OpenSkyPhysics",
-        "OpenSkyProgressionInterface", "OpenSkyWorldState", "PhysicsTesting"
+        "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyPerceptionInterface",
+        "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyWorldState", "PhysicsTesting"
     ]
 )
 targets += feature(

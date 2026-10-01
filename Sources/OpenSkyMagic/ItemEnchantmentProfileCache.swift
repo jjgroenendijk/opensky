@@ -1,29 +1,8 @@
-// Memoized `ItemEnchantmentProfile.resolve` results, keyed by the item they were
-// resolved from (issue #489).
-//
-// Two frame hooks ask for an equipped item's enchantment every frame — the melee
-// hook through `wornHands()` for every equipped weapon, and the archery hook
-// through `equippedBowProfile()` while the player is in control. Resolving one is
-// an item-definition lookup, an ENCH lookup, a `EnchantmentStore.baseChain` walk
-// for the worn-restriction link and a copy of the effect-entry array, and none of
-// that changes while the records under it stand still.
-//
-// ## Why a rewire is the only thing that can stale an entry
-//
-// A profile is a pure function of the WEAP or ARMO record and the ENCH record its
-// `EITM` resolves to. Neither is mutable at runtime: equipping, spending a charge
-// and applying a worn effect all write world state, and world state is not read
-// here. So an entry can only go wrong when the stores themselves are replaced,
-// which is what `invalidate()` is for.
-//
-// ## Why a resolved "carries none" is cached too
-//
-// Most equipped items are not enchanted, and those are exactly the lookups the
-// frame hooks repeat. An entry therefore holds `ItemEnchantmentProfile?`: a
-// present entry with a nil value is the answer "this item carries no
-// enchantment", not a miss to be resolved again.
-//
-// Documented in docs/engine/item-enchantments.md.
+// Memoized `ItemEnchantmentProfile.resolve` results, keyed by item. The combat
+// frame hooks ask for every equipped weapon's enchantment each frame. A profile
+// depends only on records that do not change at runtime, so only replaced
+// stores stale an entry (`invalidate()`). A nil value is cached too: it means
+// "carries none". See docs/engine/item-enchantments.md.
 
 import Foundation
 import OpenSkyFormatsESM

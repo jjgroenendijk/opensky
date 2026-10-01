@@ -1,18 +1,8 @@
-// World > Runtime State live bridge (M10.1.5): connects the sidebar panel to
-// the session's `WorldStateStore`, the resident `CellStreamer`, and the
-// on-disk save slots.
-//
-// Everything here degrades to a stated non-answer rather than to a crash or a
-// trap. No streamer means no resident references, so every mutation reports
-// false and the readout shows zeroes; a missing install means the fingerprint
-// cannot be built, which surfaces as a failed save outcome rather than as an
-// exception. That matters because this panel is the milestone's verification
-// surface: it has to stay legible on a machine where the game data moved.
-//
-// Mutations are recorded against no cell (`in: nil`). Resolving a reference to
-// its `CellSceneLocation` would need an index the composition does not keep,
-// and an unattributed mutation rebuilds every resident cell, which is correct —
-// just broader than necessary.
+// World > Runtime State bridge: connects the panel to the `WorldStateStore`,
+// the resident `CellStreamer`, and the save slots. Every failure degrades to a
+// stated non-answer, so the panel stays readable when the game data moved.
+// Mutations are recorded against no cell (`in: nil`), which rebuilds every
+// resident cell: correct, but broader than necessary.
 
 import AppKit
 import OpenSkyCombat
@@ -81,17 +71,9 @@ extension GameViewController: RuntimeStateControlProviding {
         )
     }
 
-    /// The two journal rings interleaved by sequence (issue #166).
-    ///
-    /// Component writes and global writes are recorded in separate rings that
-    /// share one monotonic counter, so ordering by `sequence` reproduces the
-    /// exact causal order the session performed them in. Both rings are already
-    /// oldest-first, so the newest `journalTailLimit` overall can only come
-    /// from the newest `journalTailLimit` of each — the suffixes are taken
-    /// first so a full 4096-entry window is never walked on a 2 Hz readout.
-    ///
-    /// Clock scrubs appear here too: a `GameHour` write journals on the globals
-    /// ring even though it moves the clock instead of storing an override.
+    /// The component and global journal rings interleaved by their shared
+    /// `sequence`, newest `journalTailLimit` entries. Each ring is oldest-first,
+    /// so only each ring's suffix is read. A `GameHour` scrub appears too.
     private func runtimeStateJournalTail() -> [String] {
         let limit = RuntimeStateSnapshot.journalTailLimit
         let names = runtimeStateGlobalNamesByKey()
@@ -162,7 +144,7 @@ extension GameViewController: RuntimeStateControlProviding {
         // snapshot is taken: neither survives a reload, and a save that
         // recorded them would restore a world with an arrow frozen in the air
         // (issue #374).
-        combat.runtime?.prepareForPersistence()
+        combat.loop?.prepareForPersistence()
         do {
             let metadata = SaveCreationMetadata(
                 creationTimestamp: UInt64(max(0, Date().timeIntervalSince1970)),
@@ -201,20 +183,10 @@ extension GameViewController: RuntimeStateControlProviding {
             // clock; setting `gameClock` also resets the weather's
             // elapsed-hours mark so the date jump ages no weather.
             renderer?.gameClock = file.clock ?? GameClock()
-            // Script state is restored last, after the world state, on
-            // purpose. `worldState.restore(from:)` fires one unattributed
-            // mutation, which queues a rebuild for every resident cell; those
-            // rebuilds re-attach their scripts on a later streaming update and
-            // consult `firedOnInit` to decide whether to enqueue `OnInit`.
-            // Restoring the saved instance state after the fan-out is queued
-            // guarantees the fired set is already in place when a rebuild
-            // attach reads it, so no script re-runs its `OnInit` on load.
-            // Quest instances before the saved variables, because the restore
-            // needs somewhere to put them: the loaded state names a different
-            // set of running quests than the session started with, and only
-            // this call creates instances for the quests that just started
-            // being running (issue #322). It is idempotent for the ones the
-            // session already holds.
+            // Script state is restored after the world state, so the fired
+            // `OnInit` set is in place before the queued cell rebuilds re-attach
+            // scripts, and no script re-runs `OnInit` on load. Quest instances
+            // come first, because the saved variables need somewhere to go.
             papyrusBridge?.attachRunningQuestScripts()
             papyrus?.restore(instanceStates: file.scripts)
             // Timers after instances, necessarily: a saved timer names the
@@ -225,15 +197,11 @@ extension GameViewController: RuntimeStateControlProviding {
             // air before the load has nothing to do with the world it just
             // became (issue #374). Hostility and actor values are components
             // and were restored above.
-            combat.runtime?.prepareForPersistence()
-            // The restored `AEFF` effects own temporary modifier slots that
-            // `AVOV` deliberately does not persist, so the effects are what
-            // re-establish them (issue #469's rule, wired here for issue #472:
-            // a worn enchantment's fortify has to survive a reload, and a
-            // reloaded session that skipped this step would show the effect in
-            // the list and none of its bonus in the value). The player only —
-            // no other actor has a resolvable holder before the cells stream
-            // back in, which is stated in docs/engine/magic.md as the gap it is.
+            combat.loop?.prepareForPersistence()
+            // `AVOV` does not persist temporary modifiers, so the restored
+            // `AEFF` effects re-establish them, such as a worn enchantment's
+            // fortify. Player only: other actors have no holder until their
+            // cells stream back in (docs/engine/magic.md).
             magicEffects.runtime?.reestablishModifiers(on: .player)
             runtimeState.lastSaveOutcome = .loaded(slot: slot)
         } catch {
