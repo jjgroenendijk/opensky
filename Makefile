@@ -62,11 +62,22 @@ XCB_TEST         := $(XCB_APP) -destination '$(DESTINATION)'
 # `xcodebuild -showBuildSettings` costs several seconds per call.
 PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
 # The shaders compiled for the package test targets, which have no app bundle to
-# load default.metallib from (tools/shader-library.sh). The unit test plan points
-# at the same path as $(BUILD_DIR)/OpenSkyShaders.metallib.
+# load default.metallib from. Fixtures find it through OPENSKY_SHADER_LIBRARY; the
+# unit test plan points at the same path as $(BUILD_DIR)/OpenSkyShaders.metallib.
 SHADER_LIBRARY   := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
 export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
 SHADER_SOURCES   := Sources/Shaders/Shaders.metal Sources/OpenSkyShaderTypes/ShaderTypes.h
+# Mirrors the Metal settings in Config/Build/*.xcconfig; change both together.
+METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
+	-I Sources/OpenSkyShaderTypes
+
+# A docs page holds only what the code cannot show, so a long one usually repeats
+# the code or the history. Prose wraps at 100 columns, so 400 lines is about
+# twenty minutes of reading. Split or cut a page over it; do not raise it.
+DOCS_MAX_LINES   := 400
+
+ICON_SVG         := Sources/OpenSky/Resources/Branding/opensky-logo.svg
+ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 
 # Test plans (Config/TestPlans/*.xctestplan) choose which test bundles a run builds and
 # runs, instead of -only-testing flags (issue #346). Each plan holds exactly one
@@ -161,8 +172,17 @@ md-lint: ## Lint Markdown strictly
 sh-lint: ## Shellcheck the hooks and tools/ scripts
 	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
 
+# Every Sources/ folder except OpenSky/ is built into or linked by OpenSkyCLI, so an
+# app-only import there breaks the CLI build. This catches it without building.
 cli-boundary: ## Keep AppKit out of the engine and format sources the CLI also builds
-	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
+	@offenders=$$(grep -rlE '^[[:space:]]*import (AppKit|Cocoa|SwiftUI)' --include='*.swift' \
+		$$(find Sources -mindepth 1 -maxdepth 1 -type d ! -name OpenSky) | sort); \
+	if [ -n "$$offenders" ]; then \
+		printf '[FAIL] app-only sources compiled into OpenSkyCLI:\n%s\n' "$$offenders" >&2; \
+		echo 'Fix: move the file to Sources/OpenSky/ with git mv, or drop the import.' >&2; \
+		exit 1; \
+	fi; \
+	echo "[ OK ] CLI target boundary clean"
 
 module-graph: ## Check the package graph follows The Modular Architecture
 	@./tools/lint/module-graph.sh
@@ -177,8 +197,10 @@ no-game-content: ## Check no game assets or rendered captures are tracked
 docs-links: ## Check links inside docs/ resolve
 	@./tools/check-docs-links.sh
 
-docs-length: ## Check no docs page is longer than the limit
-	@./tools/lint/docs-length.sh
+docs-length: ## Check no docs page is longer than DOCS_MAX_LINES
+	@find docs -name '*.md' -exec wc -l {} + | LC_ALL=C sort -k2 | awk -v max=$(DOCS_MAX_LINES) \
+		'$$2 != "total" && $$1 > max { printf "[FAIL] %s has %s lines; the limit is %s. Split or cut it.\n", $$2, $$1, max; bad = 1 } \
+		END { if (!bad) printf "[ OK ] docs pages within %s lines\n", max; exit bad }'
 
 agent-files: ## Check AGENTS.md symlinks and the skill format limits
 	@./tools/lint/agent-files.sh
@@ -216,8 +238,12 @@ verify-build: link-shared ## Compile app, CLI, and both unit bundles without run
 shader-library: $(SHADER_LIBRARY) ## Compile the shaders the package tests load
 
 # Rebuilt only when a shader source is newer, so a warm test run pays nothing.
+# Written to a temporary name first, so a failed compile never leaves a file that
+# looks current to make.
 $(SHADER_LIBRARY): $(SHADER_SOURCES)
-	@./tools/shader-library.sh $@
+	@mkdir -p $(@D)
+	@xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp Sources/Shaders/Shaders.metal
+	@mv $@.tmp $@ && echo "[ OK ] shader library: $@"
 
 ##@ Build and run
 
@@ -249,8 +275,11 @@ cli-path: ## Print the built openskycli path [CONFIG]
 probe: ## Smoke-test the CLI against the local install (skips if absent)
 	@./tools/probe.sh
 
-icon: ## Regenerate the AppIcon PNGs from Sources/OpenSky/Resources/Branding/opensky-logo.svg
-	@./tools/gen-appicon.sh
+icon: ## Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
+	@command -v rsvg-convert >/dev/null || { echo "[ERROR] rsvg-convert not found: brew install librsvg" >&2; exit 1; }
+	@for size in 16 32 64 128 256 512 1024; do \
+		rsvg-convert -w $$size -h $$size $(ICON_SVG) -o $(ICON_DIR)/icon_$$size.png || exit 1; \
+	done; echo "[ OK ] $(ICON_DIR)"
 
 ##@ Test
 

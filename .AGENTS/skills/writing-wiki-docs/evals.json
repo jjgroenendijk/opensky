@@ -19,7 +19,7 @@
     "files": [],
     "expected_behavior": [
       "Splits the page by topic or cuts content",
-      "Does not raise the limit in tools/lint/docs-length.sh",
+      "Does not raise DOCS_MAX_LINES in the Makefile",
       "Fixes links so make docs-links passes"
     ]
   },
