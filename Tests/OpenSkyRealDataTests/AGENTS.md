@@ -10,18 +10,22 @@ engine code against the install to check a hypothesis is a different job — loa
 ## What belongs here
 
 A suite whose test bodies read the real install. `CellRenderRealDataTests.swift` is the
-canonical shape — copy it. Gate on `GameDataLocator.environmentKey` being set through a
-`static let dataRoot: GameDataRoot?`, and deliberately do not consult the Steam-default
-fallback, so a machine without `OPENSKY_DATA_ROOT` skips deterministically. The env var is
-the only way in: `GameDataLocator` withholds the persisted `OpenSkyDataRoot` default and the
-Steam fallback inside a test host, so a suite that forgets its gate cannot quietly reach an
-install (issue #362).
+canonical shape — copy it. Gate every test on `Support/RealDataEnvironment.swift`:
+`.enabled(if: RealDataEnvironment.hasDataRoot)`, or `canRender` when it also needs a Metal 4
+device, then `try #require(RealDataEnvironment.dataRoot)`. Do not declare a `dataRoot` or
+`device` of your own. The gate reads only `OPENSKY_DATA_ROOT`, so a machine without it
+skips. `GameDataLocator` also withholds the persisted `OpenSkyDataRoot` default and the
+Steam fallback inside a test host, so a suite that forgets its gate cannot reach an install.
+
+Shared loading goes in a fixture, not in each suite: `RealDataInstall` loads `Skyrim.esm`
+with texture and mesh libraries, `PlayerBodyFixture.stage()` stands the player in a cell,
+and `HeimskrFace` frames an actor's head.
 
 Keep one gated suite per file, named after the file. `make realdata-plan` (part of
-`make lint`) fails when a file declaring `dataRoot: GameDataRoot?` with a `@Test` sits under
-`Tests/OpenSkyTests/` or `Tests/TestSupport/` instead of here, because such a suite would never
-run: `make realtest-all` would not reach it, and inside `make test` it would silently skip,
-since a plain `xcodebuild test` does not forward `OPENSKY_DATA_ROOT` into the host.
+`make lint`) fails when a file that reads `RealDataEnvironment` or declares
+`dataRoot: GameDataRoot?` has a `@Test` outside this folder, because such a suite would
+never run: `make realtest-all` would not reach it, and a plain `xcodebuild test` does not
+forward `OPENSKY_DATA_ROOT` into the host.
 
 Support code only these suites use — a probe harness, a report writer, a real-terrain
 driver — belongs here too. Support shared with the synthetic suites goes in

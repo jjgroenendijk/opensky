@@ -1,7 +1,6 @@
-// Env-gated SHOU / WOOP / LVSP / DUAL / EQUP sweep over the user's read-only
-// active load order (issue #467). Decodes every record of all five types, pins
-// one vanilla shout by identity, and checks that every WEAP and SPEL ETYP in
-// the load order resolves to an EQUP.
+// SHOU, WOOP, LVSP, DUAL, and EQUP sweep on the real load order: every record
+// decodes, one vanilla shout is pinned, and every WEAP and SPEL ETYP resolves to
+// an EQUP.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -10,13 +9,6 @@ import Foundation
 import Testing
 
 struct ShoutRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Counts observed in this machine's active load order when the sweep was
     /// written. Asserted as floors so a load order with more plugins still
     /// passes; the masters alone supply these.
@@ -28,9 +20,9 @@ struct ShoutRealDataTests {
         static let equipSlots = 7
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryShoutFamilyRecord() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(
             plugins: plugins,
@@ -75,9 +67,9 @@ struct ShoutRealDataTests {
         )
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aPinnedShoutResolvesItsThreeWordsAndSpells() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let store = ShoutStoreLoader.load(root: root)
         let shout = try #require(store.shout(editorID: "FireBreathShout"))
 
@@ -98,9 +90,9 @@ struct ShoutRealDataTests {
         #expect(shout.words.map(\.entry.recoveryTime) == [30, 50, 100])
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyWeaponAndSpellEquipTypeResolvesToAnEquipSlot() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(
             plugins: plugins,

@@ -1,14 +1,7 @@
-// Env-gated state-machine drive over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md Legal & IP).
-//
-// Loads the vanilla third-person movement behavior, steps it headlessly, and
-// raises the locomotion events the file itself declares. The assertions are on
-// state *names* the file declares, so they say something about the graph rather
-// than about ids that could drift.
-//
-// The report is names and counts only and goes to gitignored `logs/`. Skips
-// automatically when OPENSKY_DATA_ROOT is unset. Run with
-// `make realtest T='BehaviorStateMachineRealDataTests/walksThePlayerLocomotionStatePath()'`.
+// State-machine drive on the real install: the vanilla third-person movement
+// behavior steps headlessly under the locomotion events it declares. Checks use
+// the state names the file declares, which do not drift like ids. The report in
+// `logs/` holds names and counts only.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -17,13 +10,6 @@ import Foundation
 import Testing
 
 struct BehaviorStateMachineRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let behaviorPath =
         "meshes\\actors\\character\\behaviors\\mt_behavior.hkx"
     private static let skeletonPath =
@@ -39,9 +25,9 @@ struct BehaviorStateMachineRealDataTests {
     private static let standingState = "MT_Standing_State"
     private static let movingState = "MT_LocomotionType_State"
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func walksThePlayerLocomotionStatePath() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let instance = try instance(vfs)
         var log = ["OpenSky behavior state-path probe — \(Self.behaviorPath)"]

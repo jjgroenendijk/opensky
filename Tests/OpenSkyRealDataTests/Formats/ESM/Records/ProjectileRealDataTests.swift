@@ -1,25 +1,8 @@
-// Env-gated archery over the user's own Skyrim SE install (read-only external
-// input, never committed — AGENTS.md "Legal & IP"), issue #196.
-//
-// The synthetic suites prove the decoder, the flight model, the damage formula
-// and the runtime in isolation. Three claims they cannot make are here:
-//
-// 1. The `gravity` unit finding is a *measurement*, so it has to be taken
-//    against the install rather than asserted from a comment. The census below
-//    is the measurement, and it fails if the arrow band ever stops looking like
-//    a multiplier.
-// 2. The vanilla iron arrow's decoded PROJ values, fired through the flight
-//    model, produce a drop at a fixed distance — the issue's real-data
-//    acceptance, pinned here and captured to gitignored `logs/`.
-// 3. Every census-named archery event has to resolve on the vanilla player
-//    graph. A name the graph refuses would leave every synthetic test green and
-//    the feature dead.
-//
-// The report is counts, editor IDs and numbers only, and goes to gitignored
-// `logs/`; nothing extracted from the install enters the repository.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
-// `make realtest T='ProjectileRealDataTests/censusesProjectileFlightFields()'`.
+// Archery checks on the real install that the synthetic suites cannot make:
+// the PROJ `gravity` census shows the arrow band is a multiplier, the vanilla
+// iron arrow's drop at a fixed distance is pinned, and every census-named
+// archery event resolves on the vanilla player graph. The report in `logs/`
+// holds counts, editor IDs, and numbers only.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -31,13 +14,6 @@ import simd
 import Testing
 
 struct ProjectileRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The distance the drop is reported at. A round number well inside
     /// `fVisibleNavmeshMoveDist`, so it is a shot that could actually be taken.
     private static let dropDistance: Float = 1000
@@ -45,9 +21,9 @@ struct ProjectileRealDataTests {
     /// The measurement that settles what PROJ `gravity` means, plus the
     /// vanilla iron arrow's own numbers through the flight model. Writes the
     /// whole report to gitignored `logs/`.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func censusesProjectileFlightFields() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let items = ItemDefinitionStore(file: file)
         #expect(!items.projectiles.isEmpty, "this load order carries no PROJ records")
@@ -83,9 +59,9 @@ struct ProjectileRealDataTests {
     /// The vanilla iron arrow, end to end: decode its AMMO, follow the PROJ
     /// link, and fly the result. The drop at a fixed distance is the number the
     /// issue's acceptance asks to be pinned.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theVanillaIronArrowDropsWhereTheFlightModelSays() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let items = ItemDefinitionStore(file: file)
         let arrow = try #require(
@@ -118,14 +94,9 @@ struct ProjectileRealDataTests {
         )
         #expect(abs(analytic - 18.90) < 0.05)
 
-        // And the same curve reached by integrating at the runtime's own fixed
-        // step, which is what the app actually does. Compared at the distance
-        // the loop actually stopped at rather than at 1,000 units flat: an
-        // arrow covers 30 units per substep, so it overshoots the mark by up to
-        // a step and picks up another unit of drop doing it. Comparing against
-        // the closed form *at the same x* is the claim worth making — that the
-        // integrator is on the analytic curve — and it holds to a hundredth of
-        // a unit.
+        // The same curve integrated at the runtime's fixed step, as the app does.
+        // An arrow moves 30 units per substep and overshoots 1,000, so compare
+        // with the closed form at the x where the loop stopped.
         var state = ProjectileFlight.launch(
             from: SIMD3(), along: SIMD3(1, 0, 0), profile: shot.profile
         )
@@ -150,9 +121,9 @@ struct ProjectileRealDataTests {
     /// Every archery name has to resolve on the vanilla player graph — the one
     /// that fails loudly if a constant was mistyped or a census reading was
     /// wrong.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func vanillaGraphAcceptsTheCensusNamedArcheryEvents() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let bridge = try Self.bridge(root: root)
 
         for name in ArcheryGraphNames.raisedEvents + ArcheryGraphNames.observedEvents {

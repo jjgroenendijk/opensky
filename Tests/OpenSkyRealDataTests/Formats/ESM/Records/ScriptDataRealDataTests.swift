@@ -12,16 +12,9 @@ import Testing
 
 @MainActor
 struct ScriptDataRealDataTests {
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryVMADInSkyrimESM() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let resolver = try file.pluginHeader().formIDResolver(pluginName: "Skyrim.esm")
         let recordIDs = Set(ESMWalk.recordTypeIndex(in: file).keys.map {

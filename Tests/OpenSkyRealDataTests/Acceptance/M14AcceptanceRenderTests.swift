@@ -1,22 +1,7 @@
-// M14 acceptance, pixel half (issue #191): the player is drawn, the drawing
-// follows the locomotion state, and the two camera modes draw two different
-// things — measured as changed-pixel counts rather than eyeballed.
-//
-// Three frames rather than two, for the reason `M12AcceptanceRenderTests`
-// recorded and `M13AcceptanceRenderTests` reused: the strongest statement
-// available is not "the count changed" but "the frame reached by advancing is
-// byte-identical to a frame built at that state all along". Both axes the gate
-// names get that treatment — a locomotion state change, and a camera-mode
-// switch.
-//
-// Gated on a Metal 4 device *and* on the install, because what is being drawn
-// is the user's own player mesh under the user's own animation data. The
-// accounting half of the gate, `M14AcceptanceTests`, needs neither, and the
-// real-data half, `M14AcceptanceRealDataTests`, needs no device — so the route
-// and its coverage numbers still stand on a device-less runner.
-//
-// Rendered frames go to gitignored `logs/`: a frame embeds the user's game art
-// and is never committed (AGENTS.md "Legal & IP boundary").
+// Locomotion acceptance, pixel half: the player is drawn, the drawing follows
+// the locomotion state, and the two camera modes draw different frames. A
+// changed state is also checked against a frame built at that state from the
+// start, which must match byte for byte. Frames stay in gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -51,42 +36,13 @@ struct M14AcceptanceRenderTests {
 
     private static let step: Float = 1.0 / 120
 
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func drawsThePlayerFollowingItsLocomotionState() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-        let assembled = try PlayerBodyFixture.assemble(device: device, root: root)
-        let scene = try assembled.builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: FirstRenderCell.gridX,
-            gridY: FirstRenderCell.gridY
-        )
-        let bounds = try #require(scene.bounds, "no world bounds — nothing drew")
-        let terrain = try #require(LocomotionRealTerrain.terrainField(root: root))
-        let feet = LocomotionRealTerrain.startPosition(on: terrain)
-        let renderer = try FirstPersonRenderRealDataTests.renderer(
-            device: device, scene: scene, bounds: bounds
-        )
+        let cell = try PlayerBodyFixture.stage()
+        let assembled = cell.assembled
+        let feet = try cell.terrainStart()
+        let renderer = try cell.renderer()
         var report: [String] = []
 
         let empty = try Self.thirdPersonFrame(renderer, feet: feet)
@@ -100,7 +56,7 @@ struct M14AcceptanceRenderTests {
 
         try Self.assertStateChangeIsVisibleAndReproducible(
             assembled,
-            install: M14RenderInstall(device: device, root: root),
+            install: M14RenderInstall(device: cell.device, root: cell.root),
             stage: M14RenderStage(renderer: renderer, feet: feet),
             idle: idle,
             report: &report
@@ -117,18 +73,9 @@ struct M14AcceptanceRenderTests {
 
     // MARK: - Assertions
 
-    /// The locomotion-state axis, all three frames: idle, sprinting, and a
-    /// second player driven through the identical input sequence from a fresh
-    /// graph. The sprint has to differ from idle by more than noise, and the
-    /// independently-driven sprint frame has to be the first one byte for byte
-    /// — which is what says the difference is the state rather than the
-    /// republish, and that the state is reached deterministically.
-    ///
-    /// The cross-check is a second player rather than a return to idle,
-    /// because a locomotion clip is still playing while the player stands
-    /// still: two idle frames a second apart are two phases of the same
-    /// animation and are legitimately different pictures. Two runs of the same
-    /// input from the same start are not.
+    /// Idle, sprint, and a second player driven by the same input. The sprint
+    /// must differ from idle, and both sprints must match byte for byte. A
+    /// return to idle would not do: a playing idle clip changes the frame.
     @MainActor
     private static func assertStateChangeIsVisibleAndReproducible(
         _ assembled: PlayerBodyFixture.Assembled,

@@ -20,19 +20,12 @@ import simd
 import Testing
 
 struct MeleeCombatRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Every name `CombatGraphNames` raises has to resolve on the vanilla
     /// player graph. This is the one that fails loudly if a constant was
     /// mistyped or a census reading was wrong.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func vanillaGraphAcceptsTheCensusNamedCombatEvents() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let bridge = try Self.bridge(root: root)
 
         for name in CombatGraphNames.raisedEvents {
@@ -55,9 +48,9 @@ struct MeleeCombatRealDataTests {
 
     /// The observed half: the names the runtime waits for have to be declared
     /// too, or a hit frame could never arrive.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func vanillaGraphDeclaresTheObservedCombatEvents() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let bridge = try Self.bridge(root: root)
 
         for name in CombatGraphNames.observedEvents {
@@ -73,10 +66,10 @@ struct MeleeCombatRealDataTests {
     /// Draw and attack through the input path (camera input to `LocomotionBridge`
     /// to the melee runtime) with the real graph, headless. With `iRightHandType`
     /// written, the graph runs the equip clip and the swing reaches a contact frame.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func drawAndAttackDriveTheVanillaGraphThroughTheShippingInputPath() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let bridge = try Self.bridge(root: root)
         let world = GraphBackedMeleeWorld(bridge: bridge)
         let runtime = MeleeCombatRuntime(
@@ -134,9 +127,9 @@ struct MeleeCombatRealDataTests {
 
     /// The reach formula against the install's own numbers, for a weapon the
     /// load order actually ships.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func vanillaWeaponsResolveAReachAndAnImpactSet() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let settings = CombatSettings.resolve(
             store: GameSettingLoader.load(root: root, baseFile: file)

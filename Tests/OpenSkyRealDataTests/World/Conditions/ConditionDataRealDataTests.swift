@@ -1,5 +1,5 @@
-// Env-gated issue #455 coverage sweep over the user's active load order. The
-// aggregate counts are evidence only; no game bytes leave the run.
+// Condition coverage sweep over the real load order. Only aggregate counts
+// leave the run.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -9,37 +9,23 @@ import Foundation
 import Testing
 
 struct ConditionDataRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let m18Indices: Set<UInt16> = [
         180, 181, 359, 360, 372, 444, 560, 562, 565, 567, 603, 604, 605, 610
     ]
 
-    /// Every index a later item added. Subtracted out so the two numbers this
-    /// test pins keep meaning what they meant when #455 measured them: the
-    /// registry before and after the M18 functions, not the registry as it
-    /// happens to stand today. `ConditionMagicRealDataTests` pins the M19 step
-    /// from the other side, and excludes the M20 ones for the same reason.
-    ///
-    /// The eight magic indices are item 19.11's (issue #474); `HasPerk` is item
-    /// 20.4's (issue #497); `GetLevel` and `GetBaseActorValue` are item 20.6's
-    /// (issue #499). The six faction indices are item 21.4's (issue #508), and
-    /// the three crime-gold ones are item 21.5's (issue #504).
+    /// Indices added after the M18 functions: magic, `HasPerk`, `GetLevel`,
+    /// `GetBaseActorValue`, faction, and crime-gold. They are subtracted, so the
+    /// two pinned numbers stay the registry before and after M18.
     private static let laterIndices: Set<UInt16> = [
         80, 214, 223, 264, 277, 448, 570, 571, 572, 632, 699,
         60, 71, 73, 403, 449, 719, 375, 376, 459
     ]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func pinsActiveLoadOrderCoverageImprovement() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
-        let coverage = sweep(plugins: plugins)
+        let coverage = ConditionCoverage.sweep(plugins: plugins)
         let registry = ConditionFunctionRegistry.standard
         let later = Self.laterIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
         let afterM18 = coverage.implementedCount(in: registry) - later
@@ -61,25 +47,5 @@ struct ConditionDataRealDataTests {
                 + "\(afterM18)/\(coverage.total)"
         )
         print(coverage.report())
-    }
-
-    private func sweep(
-        plugins: [(name: String, file: ESMFile)]
-    ) -> ConditionCoverage {
-        var coverage = ConditionCoverage()
-        for plugin in plugins {
-            ESMWalk.forEachRecord(in: plugin.file) { record in
-                guard let fields = try? record.fields() else { return true }
-                var list = ConditionList()
-                for field in fields {
-                    _ = try? list.decode(field: field)
-                }
-                for condition in list.conditions {
-                    coverage.record(condition)
-                }
-                return true
-            }
-        }
-        return coverage
     }
 }

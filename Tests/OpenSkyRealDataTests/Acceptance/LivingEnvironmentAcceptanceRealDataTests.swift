@@ -14,23 +14,6 @@ import MetalKit
 import Testing
 
 struct LivingEnvironmentAcceptanceRealDataTests {
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     private static let size = (width: 640, height: 360)
 
     private struct Frame {
@@ -49,7 +32,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         let allOff: Frame
     }
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func exteriorAndInteriorRunEveryApplicableSystem() throws {
         let harness = try makeHarness()
@@ -183,7 +166,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
 
     @MainActor
     private func makeRenderer(scene: CellScene) throws -> Renderer {
-        let device = try #require(Self.device)
+        let device = try #require(RealDataEnvironment.device)
         let bounds = try #require(scene.bounds)
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: Self.size.width, height: Self.size.height),
@@ -223,8 +206,8 @@ struct LivingEnvironmentAcceptanceRealDataTests {
     }
 
     private func makeHarness() throws -> (builder: CellSceneBuilder, weather: WeatherSystem) {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         let fileSystem = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)

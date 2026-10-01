@@ -1,17 +1,7 @@
-// The 19.7 acceptance chain, end to end against the user's own install
-// (issue #470): find the spell tome the game ships, read it, ready the spell it
-// teaches to a hand, cast it, and check that magicka went down and health came
-// back up.
-//
-// Read-only against the install and headless: it builds the same engine types
-// the app wires — `SpellbookRuntime`, `CasterRuntime` and the real
-// `ActiveEffectRuntime` behind them — with no window and no renderer, so what it
-// proves is the chain rather than the panel. `CombatSpellcastingPanelTests`
-// covers the panel; this covers what the panel's Cast button reaches.
-//
-// It writes a one-line summary into gitignored `logs/` so a pull request can
-// link the run. Counts and editor IDs only: no game bytes leave the machine
-// (AGENTS.md "Legal & IP boundary").
+// The spell acceptance chain on the real install: find a shipped spell tome,
+// read it, ready its spell, cast it, and check that magicka drops and health
+// returns. Headless, so it proves the engine chain behind the Cast button, not
+// the panel. The summary in `logs/` holds counts and editor IDs only.
 
 import Foundation
 @testable import OpenSkyActors
@@ -25,13 +15,6 @@ import Foundation
 import Testing
 
 struct CasterAcceptanceRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Forwards a cast's effect list into the real active-effect runtime, which
     /// is exactly what `GameViewController` does.
     @MainActor
@@ -59,11 +42,8 @@ struct CasterAcceptanceRealDataTests {
             ).count
         }
 
-        /// The M19.7 acceptance chain casts one self-delivery heal, so nothing
-        /// here leaves the caster (issue #471). Both answers are the documented
-        /// "this world does not do that" rather than a second application path
-        /// this chain would never exercise; `SpellDeliveryRealDataTests` covers
-        /// the aimed half against the same install.
+        /// The chain casts one self-delivered heal, so nothing leaves the
+        /// caster. `SpellDeliveryRealDataTests` covers aimed delivery.
         @discardableResult
         func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
             false
@@ -153,10 +133,10 @@ struct CasterAcceptanceRealDataTests {
         }
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func aTomeTeachesASpellThatCastsForMagickaAndRestoresHealth() throws {
-        let data = try Data(root: #require(Self.dataRoot))
+        let data = try Data(root: #require(RealDataEnvironment.dataRoot))
 
         // The spell the acceptance picture uses: fire and forget, self
         // delivery, one instant restore-health entry.

@@ -16,13 +16,6 @@ import OpenSkyCombatTesting
 import Testing
 
 struct AICastingAcceptanceRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// `LvlBanditWizard`, the caster `ActorSpellBaselineRealDataTests` pins.
     private static let banditWizard = FormID(0x0001_E79F)
 
@@ -81,10 +74,10 @@ struct AICastingAcceptanceRealDataTests {
 
     /// The acceptance picture: a vanilla caster's own spell list, a fight, and
     /// the player's health going down because of a spell rather than a fist.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func aVanillaCasterCastsAtThePlayerAndTheDamageLands() throws {
-        let (chain, authored) = try Self.chain(root: #require(Self.dataRoot))
+        let (chain, authored) = try Self.chain(root: #require(RealDataEnvironment.dataRoot))
         chain.grant(authored)
         // Well outside weapon reach, so a swing cannot be what lands.
         chain.casterFeet = SIMD3(900, 0, 0)
@@ -109,10 +102,10 @@ struct AICastingAcceptanceRealDataTests {
 
     /// A caster whose magicka is gone stops casting and closes to swing, which
     /// is the self-preservation minimum stated in the issue.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func aDrainedVanillaCasterFallsBackToItsHands() throws {
-        let (chain, authored) = try Self.chain(root: #require(Self.dataRoot))
+        let (chain, authored) = try Self.chain(root: #require(RealDataEnvironment.dataRoot))
         chain.grant(authored)
         chain.values.set(.magicka, to: 0, on: chain.casterHolder)
         chain.casterFeet = SIMD3(60, 0, 0)

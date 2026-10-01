@@ -1,19 +1,8 @@
-// Env-gated XLKR sweep over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md Legal & IP): walks every REFR in
-// Skyrim.esm, tallies the on-disk shape of every linked-reference subrecord,
-// and pins the numbers `PlacedReference.linkedReference(keyword:)` relies on.
-// Skips automatically when OPENSKY_DATA_ROOT is unset (CI has no game data).
-//
-// The counts are asserted rather than only written to logs/, because print()
-// never reaches the .xcresult and a number nobody checks is not evidence.
-//
-// Layout under test: UESP "Skyrim Mod:Mod File Format/REFR" XLKR row ("8-byte
-// struct: formid 0 or KYWD, formid REFR ... 10 instances of 4 byte struct with
-// just a formid in Skyrim.esm") and xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-// line 9910 `wbRArray('Linked References', wbStruct(XLKR, 'Linked Reference',
-// [wbFormIDCk('Keyword/Ref', ...), wbFormIDCk('Ref', ...)], cpNormal, False,
-// nil, 1))`, whose trailing `1` is `aOptionalFromElement` (wbInterface.pas
-// line 4345) and is what makes the second FormID droppable.
+// XLKR sweep over every REFR in `Skyrim.esm`, pinning the numbers
+// `PlacedReference.linkedReference(keyword:)` relies on. Counts are asserted,
+// because print() never reaches the .xcresult. Layout: UESP REFR XLKR row, and
+// xEdit `wbDefinitionsTES5.pas`, whose `aOptionalFromElement` of 1 makes the
+// second FormID optional.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -22,19 +11,9 @@ import Foundation
 import Testing
 
 struct PlacedReferenceLinkedRefRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryLinkedReferenceInSkyrimESM() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let tally = Self.sweep(file: file)
 

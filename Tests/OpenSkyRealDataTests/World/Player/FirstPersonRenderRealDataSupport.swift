@@ -1,7 +1,5 @@
-// Helpers for the first-person arms render check (issue #190), split out of
-// `FirstPersonRenderRealDataTests.swift` for the file and type size limits.
-// Driving the bridge, placing the rigs, and turning a rendered texture into
-// pixels and into a gitignored capture.
+// Helpers for `FirstPersonRenderRealDataTests`: driving the bridge, placing the
+// rigs, and turning a rendered texture into pixels and a capture in `logs/`.
 
 import CoreGraphics
 import Foundation
@@ -100,9 +98,8 @@ extension FirstPersonRenderRealDataTests {
         RenderedPixels.changedCount(lhs, rhs)
     }
 
-    /// Writes one capture into gitignored `logs/`. Never committed: the frame
-    /// embeds the user's own game assets.
-    static func writePNG(_ pixels: [UInt8], name: String) throws {
+    /// Writes one square capture into gitignored `logs/`; the frame embeds game assets.
+    static func writePNG(_ pixels: [UInt8], name: String, size: Int = size) throws {
         let url = try PlayerBodyFixture.logsDirectory().appending(path: name)
         guard
             let provider = CGDataProvider(data: Data(pixels) as CFData),

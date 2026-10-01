@@ -13,24 +13,9 @@ import Metal
 import Testing
 
 struct GrassRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryGrassAndLandTexture() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let grassRecords = records(ofType: "GRAS", in: file)
         let textureRecords = records(ofType: "LTEX", in: file)
@@ -64,27 +49,19 @@ struct GrassRealDataTests {
         try? summary.write(to: sweepLogURL, atomically: true, encoding: .utf8)
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil && Self.device != nil))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func placesFirstRenderCellDeterministically() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let fileSystem = VirtualFileSystem(root: root)
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
 
-        let first = try builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: FirstRenderCell.gridX,
-            gridY: FirstRenderCell.gridY
-        )
-        let second = try builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: FirstRenderCell.gridX,
-            gridY: FirstRenderCell.gridY
-        )
+        let first = try builder.buildFirstRenderCell()
+        let second = try builder.buildFirstRenderCell()
         #expect(!first.grassPlacements.isEmpty, "probe cell produced no grass")
         #expect(first.grassPlacements == second.grassPlacements)
         #expect(first.summary.grassPlacementCount == first.grassPlacements.count)

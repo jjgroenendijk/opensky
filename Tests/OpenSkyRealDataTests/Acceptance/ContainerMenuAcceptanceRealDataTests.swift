@@ -1,8 +1,6 @@
-// M12.2.3 container and barter menu acceptance against the user's read-only
-// Skyrim SE install (issue #179). Both movies decode and statically render but
-// had never been driven; this is the standing gate for their bring-up, their
-// data contract, and a real buy and sell settled through the engine's own
-// accounting. Rendered frames and numeric evidence stay in ignored logs/.
+// Container and barter menu acceptance on the real install: the movies come
+// up, take their data, and settle a real buy and sell through the engine's own
+// accounting. Frames and numbers stay in gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -17,33 +15,16 @@ import MetalKit
 import Testing
 
 struct ContainerMenuAcceptanceRealDataTests {
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     private static let width = 1280
     private static let height = 720
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func vanillaContainerMenuBringsUpCleanAndTransfers() throws {
         try drive(mode: .container)
     }
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func vanillaBarterMenuBringsUpCleanBuysAndSells() throws {
         try drive(mode: .barter)
@@ -53,8 +34,8 @@ struct ContainerMenuAcceptanceRealDataTests {
     /// each side, with a frame captured at every stage.
     @MainActor
     private func drive(mode: ContainerMenuModel.Mode) throws {
-        let root = try #require(Self.dataRoot)
-        let renderer = try makeRenderer(device: #require(Self.device))
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let renderer = try makeRenderer(device: #require(RealDataEnvironment.device))
         let empty = try render(renderer)
 
         let scene = try SWFMovieLoader(fileSystem: VirtualFileSystem(root: root))

@@ -1,15 +1,7 @@
-// Env-gated acceptance for derived hostility over the user's own read-only
-// load order (issue #503, roadmap item 21.3).
-//
-// The question the milestone asks: with nobody touching the dev panel, does a
-// vanilla bandit come out hostile to the player and a vanilla Whiterun guard
-// come out calm, through the same `FactionRuntime` the session wires? Both
-// answers run through the production derivation — the load order's FACT and
-// RELA stores, the actor's own resolved `AIDT`, and the memberships the runtime
-// seeds out of the NPC_ record.
-//
-// Counts, editor IDs and derived verdicts only — no game bytes leave the run
-// (AGENTS.md "Legal & IP boundary").
+// Derived hostility on the real load order: with no dev-panel input, a vanilla
+// bandit is hostile to the player and a Whiterun guard is calm. Both run
+// through the session's `FactionRuntime`, fed by FACT, RELA, the actor's
+// `AIDT`, and its NPC_ memberships. Counts, editor IDs, and verdicts only.
 
 import Foundation
 import Metal
@@ -22,28 +14,12 @@ import Metal
 import Testing
 
 struct DerivedHostilityRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Vanilla's generic bandits are all named this way, so one is found
     /// without pinning a FormID a patch could move.
     private static let banditEditorIDPrefix = "EncBandit"
     /// Every vanilla Whiterun guard's base record is named this way
     /// (`WhiterunGuardFixture`).
     private static let guardEditorIDPrefix = "GuardWhiterun"
-
-    /// Everything one session needs to ask the derivation a question.
-    /// The device the Whiterun cell is built with. Nil on a machine with no
-    /// Metal 4 GPU, which skips the one case that needs geometry.
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
 
     @MainActor
     private struct Harness {
@@ -52,10 +28,10 @@ struct DerivedHostilityRealDataTests {
         let plugin: String
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func aVanillaBanditIsHostileToThePlayerAndAWhiterunGuardIsNot() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         var harness = try Self.harness(root: root)
 
         let bandit = try #require(
@@ -83,18 +59,13 @@ struct DerivedHostilityRealDataTests {
         #expect(guardDecision.reaction == .neutral)
     }
 
-    /// The same question about the guard the perception and combat suites
-    /// fight, located the production way: its own cell built through
-    /// `CellSceneBuilder`, and the lowest ACHR in it whose base is a guard.
-    ///
-    /// A placed reference rather than a base record, because that is the
-    /// identity the combat loop actually holds — and because a derived answer
-    /// that only worked for base records would be useless to it.
-    @Test(.enabled(if: Self.dataRoot != nil && Self.device != nil))
+    /// The guard the perception and combat suites fight: the lowest guard ACHR
+    /// in its cell. A placed reference, because that is what combat holds.
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func theWhiterunGuardInItsOwnCellDerivesAsNeutral() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         var harness = try Self.harness(root: root)
         let scene = try WhiterunGuardFixture.buildCell(root: root, device: device)
         let located = try #require(

@@ -14,23 +14,6 @@ import MetalKit
 import Testing
 
 struct DialogueMenuRealDataTests {
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     private static let width = 1280
     private static let height = 720
     /// Frames a publish needs before the menu's transitions have settled. The
@@ -47,7 +30,7 @@ struct DialogueMenuRealDataTests {
 
     // MARK: - Contract
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func vanillaMovieStillMatchesTheMeasuredContract() throws {
         let runtime = try makeMovieRuntime()
@@ -83,7 +66,7 @@ struct DialogueMenuRealDataTests {
         )
     }
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func publishedConversationReachesTheMovie() throws {
         let runtime = try makeMovieRuntime()
@@ -125,10 +108,10 @@ struct DialogueMenuRealDataTests {
 
     // MARK: - Subtitles on the HUD
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func hudSubtitleFieldTakesALineAndGivesItBack() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let fileSystem = VirtualFileSystem(root: root)
         let runtime = try SWFMovieRuntime(
             movieScene: SWFMovieLoader(fileSystem: fileSystem)
@@ -151,11 +134,11 @@ struct DialogueMenuRealDataTests {
 
     // MARK: - Pixels
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func openMenuChangesRenderedPixels() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         let fileSystem = VirtualFileSystem(root: root)
         let renderer = try makeRenderer(device: device)
         let closed = try render(renderer)
@@ -229,7 +212,7 @@ extension DialogueMenuRealDataTests {
     /// The movie, brought up the way the app brings it up.
     @MainActor
     private func makeMovieRuntime() throws -> SWFMovieRuntime {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let runtime = try SWFMovieRuntime(
             movieScene: SWFMovieLoader(fileSystem: VirtualFileSystem(root: root))
                 .load(path: DialogueMenuMovieBridge.moviePath)
@@ -249,7 +232,7 @@ extension DialogueMenuRealDataTests {
     /// movie takes what OpenSky publishes.
     @MainActor
     private func makeModel() throws -> DialogueMenuModel {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let store = DialogueStore(file: file, pluginName: "Skyrim.esm")
         #expect(store.topicCount > 0, "the install declares no dialogue topics")

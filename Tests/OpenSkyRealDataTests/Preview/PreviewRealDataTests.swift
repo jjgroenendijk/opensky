@@ -22,29 +22,11 @@ import Testing
 import UniformTypeIdentifiers
 
 struct PreviewRealDataTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4) else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func browsesAndPreviewsRealAssets() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let loaded = PreviewCatalog.load(
             fileSystem: vfs,
@@ -76,10 +58,10 @@ struct PreviewRealDataTests {
         try previewMesh(catalog: catalog, vfs: vfs, device: device)
     }
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func previewsSkinnedBodyWithoutBindPoseDistortion() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         try previewSkinnedBody(vfs: VirtualFileSystem(root: root))
     }
 

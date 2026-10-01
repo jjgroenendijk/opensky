@@ -1,16 +1,7 @@
-// The real-data half of item 15.6's acceptance (issue #197): the vanilla
-// humanoid skeleton's ragdoll collapses onto a floor headlessly, with every
-// constraint resolved and no unresolved bone names.
-//
-// Env-gated on `OPENSKY_DATA_ROOT` like every real-data suite, and headless: it
-// decodes `skeleton.nif` and `skeleton.hkx` from the install, builds the ragdoll
-// against the animation rig, drops it on a synthetic floor, and asserts on
-// numbers. No renderer and no window, so it runs under `make realtest` on a
-// machine with no display attached.
-//
-// The report goes to gitignored `logs/`. Nothing extracted from the install is
-// written there: the file records bone names, joint counts and settle times,
-// which are measurements rather than content.
+// Ragdoll acceptance on the real install, headless: the vanilla humanoid
+// skeleton's ragdoll falls onto a synthetic floor with every constraint resolved
+// and every bone name bound. The report in `logs/` holds bone names, joint
+// counts, and settle times only.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -25,16 +16,6 @@ import simd
 import Testing
 
 struct RagdollRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the locator's
-    /// Steam-default fallback is deliberately not consulted so machines without
-    /// the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let skeletonMesh = "meshes\\actors\\character\\character assets\\skeleton.nif"
     private static let skeletonRig = "meshes\\actors\\character\\character assets\\skeleton.hkx"
 
@@ -45,9 +26,9 @@ struct RagdollRealDataTests {
     private static let expectedBoneCount = 18
     private static let expectedJointCount = 17
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theVanillaHumanoidRagdollCollapsesOntoAFloor() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let definition = try #require(Self.definition(vfs: vfs), "no ragdoll built")
 
@@ -65,22 +46,16 @@ struct RagdollRealDataTests {
             key: .generated(1)
         ))
 
-        // Drive the shared solver directly before `RagdollInstance` can apply
-        // its whole-corpse displacement fallback. This is the regression for
-        // issue #407: every vanilla bone must reach 15.2's ordinary sleep test.
+        // Drive the shared solver before `RagdollInstance` can use its
+        // whole-corpse fallback: every vanilla bone must pass the ordinary sleep test.
         let ordinarySleepStep = Self.ordinarySleepStep(
             bodies: instance.bodies, joints: definition.joints
         )
         #expect(ordinarySleepStep != nil, "per-body sleep never settled every vanilla bone")
 
-        // The joints start close to satisfied: a ragdoll handed off from the
-        // bind pose is not already fighting its own limits.
-        //
-        // Close rather than exact, because vanilla authors slack into three of
-        // the seventeen pivots — the knees by 4.3 engine units, the elbows by
-        // 2.6, the neck by 1.4, symmetrically left and right, which is authored
-        // data rather than a decode error. The bound is above the worst of
-        // those and far below a bone length.
+        // The joints start close to satisfied. Not exact: vanilla authors slack
+        // into the knees (4.3 units), elbows (2.6), and neck (1.4). The bound is
+        // above those and far below a bone length.
         Self.verifyInitialJointAlignment(definition: definition, instance: instance)
 
         let world = RagdollFixture.floorWorld()
@@ -97,25 +72,16 @@ struct RagdollRealDataTests {
                 settledStep = step
             }
         }
-        // Settling is the whole-ragdoll displacement test, not 15.2's per-body
-        // one: a jointed chain keeps a residual its bones never fall under
-        // (issue #407). Within five seconds is the fall from a hundred and
-        // twenty units, the bounce and the roll, plus the one-second window
-        // that test watches for; the measured value is a little over four.
+        // Settling uses the whole-ragdoll displacement test, because a jointed
+        // chain keeps a residual per body. Five seconds covers the fall, bounce,
+        // roll, and the one-second watch window; measured, it is just over four.
         #expect(settledStep ?? .max < 600, "settled at step \(settledStep ?? -1)")
 
         #expect(RagdollFixture.isFinite(instance), "the collapse produced a non-finite pose")
         #expect(instance.lastStats.recoveredBodyCount == 0)
         #expect(settledStep != nil, "the ragdoll never came to rest")
-        // Every constraint resolved: at rest the pivots are back together to
-        // within about a unit — a fortieth of a bone — and no limit is more
-        // than two degrees outside its range. Measured at rest rather than at
-        // the worst moment of the fall, which is what "resolved" means for a
-        // solver that recovers over several substeps.
-        //
-        // Not tighter, because the solver stops when the ragdoll sleeps: the
-        // corpse keeps the pose it settled into rather than being ground toward
-        // zero forever by a pass nothing else is moving.
+        // At rest the pivots are within about a unit and no limit is more than
+        // two degrees out. Not tighter: the solver stops when the ragdoll sleeps.
         #expect(worstSeparation < 12, "joints stretched to \(worstSeparation) units")
         for joint in definition.joints {
             let separation = RagdollFixture.separation(of: joint, in: instance)
@@ -144,9 +110,9 @@ struct RagdollRealDataTests {
     /// Every constraint class the skeleton carries is one this solver enforces
     /// limits for. A skeleton that introduced a prismatic joint would fail here
     /// rather than silently losing it.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyVanillaJointCarriesLimits() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let definition = try #require(Self.definition(vfs: vfs))
         var cones = 0

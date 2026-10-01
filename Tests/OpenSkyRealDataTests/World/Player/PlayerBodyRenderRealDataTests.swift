@@ -1,26 +1,9 @@
-// Env-gated offscreen render of the third-person player body (issue #189) over
-// the user's own Skyrim SE install (read-only external input; a rendered frame
-// embeds the user's assets, so captures go to gitignored `logs/` and are never
-// committed — AGENTS.md "Legal & IP").
-//
-// Three things are proved with pixels rather than with numbers:
-//
-// * The body actually draws in third person and actually does not draw in first
-//   person, against the same scene and the same camera pose — leaving only the
-//   shadow it goes on casting there (issue #356).
-// * A posed body is still a standing figure: its silhouette stays within a
-//   bound of the bind-pose body's, which a mesh torn apart by a mismatched
-//   skinning convention cannot pass (issue #354).
-// * A locomotion state change changes the frame — a bound-but-inert graph would
-//   leave it byte-identical.
-// * The M12/M13 cross-check: a body reassembled at a pose is byte-identical to
-//   one assembled at that pose from the start. It is applied on the *assembly*
-//   axis rather than on the graph's, because a crossfading state machine is
-//   time-dependent by construction and two runs that reach a state by different
-//   routes are not required to agree on the frame mid-blend.
-//
-// Run with
-// `make realtest T='PlayerBodyRenderRealDataTests/drawsTheBodyInThirdPersonOnly()'`.
+// Offscreen render of the third-person player body on the real install. The
+// body draws in third person and not in first person (only its shadow stays).
+// A posed body keeps about the bind-pose silhouette, which a torn mesh cannot.
+// A locomotion state change changes the frame. A body reassembled at a pose
+// matches one assembled there from the start; the check uses assembly, because
+// a crossfading graph is time-dependent. Captures stay in gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -48,48 +31,21 @@ struct PlayerBodyRenderRealDataTests {
 
     private static let size = 640
 
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func drawsTheBodyInThirdPersonOnly() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-        let assembled = try PlayerBodyFixture.assemble(device: device, root: root)
-        let scene = try assembled.builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: FirstRenderCell.gridX,
-            gridY: FirstRenderCell.gridY
-        )
-        let bounds = try #require(scene.bounds, "no world bounds — nothing drew")
-        let terrain = try #require(LocomotionRealTerrain.terrainField(root: root))
-        let feet = LocomotionRealTerrain.startPosition(on: terrain)
+        let cell = try PlayerBodyFixture.stage()
+        let assembled = cell.assembled
+        let feet = try cell.terrainStart()
         let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.size, height: Self.size), device: device
+            frame: CGRect(x: 0, y: 0, width: Self.size, height: Self.size), device: cell.device
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(
             view: view,
-            scene: scene.renderScene,
-            camera: SceneCamera.framing(bounds: bounds)
+            scene: cell.scene.renderScene,
+            camera: SceneCamera.framing(bounds: cell.bounds)
         )
         var report: [String] = []
 
@@ -119,14 +75,9 @@ struct PlayerBodyRenderRealDataTests {
             renderer, empty: empty, posed: thirdPerson, report: &report
         )
 
-        // First person must not draw it: the eye is inside the head until 14.7.
-        // The camera pose is left exactly where it is, so the two frames differ
-        // only in whether the body drew. They are not byte-identical, though:
-        // since #356 a body the camera cannot see still rasterizes into the
-        // shadow map (`PlayerRigVisibility.castsBodyShadow` holds for every
-        // player-controlled mode), so the body's own shadow still darkens the
-        // ground it stands on. What must not survive into the frame is the
-        // body, which covers far more of it than its shadow does.
+        // First person must not draw the body; the camera stays put. The frames
+        // still differ a little: the unseen body casts a shadow
+        // (`PlayerRigVisibility.castsBodyShadow`). The body itself must be gone.
         renderer.movementMode = .walk
         let firstPerson = try Self.frame(renderer)
         let shadowPixels = Self.changedPixels(empty, firstPerson)
@@ -141,7 +92,8 @@ struct PlayerBodyRenderRealDataTests {
 
         renderer.movementMode = .thirdPerson
         let stage = Stage(
-            renderer: renderer, assembled: assembled, root: root, device: device, feet: feet
+            renderer: renderer, assembled: assembled, root: cell.root, device: cell.device,
+            feet: feet
         )
         try Self.assertStateChangeChangesTheFrame(
             stage, reference: thirdPerson, report: &report
@@ -157,20 +109,10 @@ struct PlayerBodyRenderRealDataTests {
 
     // MARK: - Assertions
 
-    /// The bound a torn mesh cannot pass (issue #354).
-    ///
-    /// A body posed by the idle graph and the same body drawn from its NIF
-    /// bind palette are the same figure standing in the same place: the pose
-    /// moves limbs, so the two frames are not identical, but the silhouette
-    /// covers roughly the same ground. A mesh skinned through a mismatched
-    /// convention does not fail quietly — it throws long flat shards across
-    /// the frame, and its coverage runs to several times the bind-pose body's.
-    /// Bounding the ratio therefore catches the whole family of composition
-    /// faults without pinning an exact pose, which a crossfading graph could
-    /// not promise anyway.
-    ///
-    /// Both captures go to gitignored `logs/` for human review; a rendered
-    /// frame embeds the user's own assets and is never committed.
+    /// The posed body and the bind-pose body cover about the same ground. A
+    /// mismatched skinning convention throws shards across the frame and
+    /// covers several times more, so bounding the ratio catches it without
+    /// pinning a pose. Both captures go to gitignored `logs/`.
     @MainActor
     private static func assertPosedBodyIsStillAFigure(
         _ renderer: Renderer,

@@ -1,15 +1,5 @@
-// Loose world items against the real install, env-gated and run with
-// `make realtest`.
-//
-// The synthetic suites prove the mechanism; this proves the mechanism meets the
-// data. Widening `ModelBase.supportedTypes` to the six carryable families is
-// only worth anything if real cells actually place them, if their bases resolve
-// a model rather than being counted as markers, and if the item index
-// describes every one of them.
-//
-// Gated on `GameDataLocator.environmentKey` alone — deliberately not on the
-// Steam-default fallback — so a machine without `OPENSKY_DATA_ROOT` skips
-// deterministically. See Tests/OpenSkyTests/AGENTS.md.
+// Checks that real cells place the six carryable item families, that their
+// bases resolve a model, and that the item index describes each one.
 
 import Foundation
 import Metal
@@ -21,19 +11,6 @@ import Metal
 import Testing
 
 struct WorldItemRealDataTests {
-    private static let device = MTLCreateSystemDefaultDevice()
-
-    private static let dataRoot: GameDataRoot? = {
-        guard ProcessInfo.processInfo.environment[GameDataLocator.environmentKey] != nil else {
-            return nil
-        }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     /// The exterior grid swept for loose items. Whiterun's surroundings are the
     /// same cells the render and streaming acceptance tests already build, so
     /// this adds no new assumption about the install's contents.
@@ -49,11 +26,11 @@ struct WorldItemRealDataTests {
         var names: [String] = []
     }
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func realCellsPlaceTakeableItemsThatTheItemIndexDescribes() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let textures = try TextureLibrary(fileSystem: vfs, device: device)

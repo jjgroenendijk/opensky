@@ -17,30 +17,11 @@ import simd
 import Testing
 
 struct ActorAssemblyRealDataTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func rendersHeimskrAtACHRWorldPose() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let record = try #require(ESMWalk.record(withFormID: 0x0001_A682, in: file))
         let actor = try PlacedActor(record: record)
@@ -80,17 +61,9 @@ struct ActorAssemblyRealDataTests {
         try renderAndCapture(assembly, device: device, minimumDraws: expectedPaths.count)
     }
 
-    /// Worn-part order is a contract, not an accident: `ActorVisualResolver`
-    /// sorts every worn armature by ascending ARMA DNAM draw priority, so the
-    /// snapshot above is asserted alongside the rule that produces it.
-    ///
-    /// Measured against the retail install on 2026-08-06 with
-    /// `openskycli record`: `MonkBootsAA` (000BAD02) and `MonkHoodAA`
-    /// (000BAD03) are priority 10, `MonkRobesAA` (000BAD04) is priority 15.
-    /// The hood therefore precedes the robes even though the owning ARMO
-    /// `ClothesMonkRobesHooded` (00107106) lists its armatures the other way
-    /// round — which can look like nondeterminism. Five
-    /// consecutive `openskycli actor --npc Heimskr` runs produce this order.
+    /// `ActorVisualResolver` sorts worn armatures by ARMA DNAM draw priority.
+    /// `MonkBootsAA` and `MonkHoodAA` are 10 and `MonkRobesAA` is 15, so the hood
+    /// comes before the robes, although `ClothesMonkRobesHooded` lists them the other way.
     private func expectWornPartsAreInDrawOrder(
         _ visual: ResolvedActorVisual,
         resolver: ActorVisualResolver

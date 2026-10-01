@@ -1,17 +1,7 @@
-// Env-gated Havok dynamics census over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md Legal & IP). Three
-// sweeps: the models a representative block of Whiterun-area exterior cells
-// places, the clutter meshes that carry the movable bodies, and every actor
-// skeleton, which is where the ragdoll constraints live.
-//
-// The census fixes the motion-system list item 15.2 must support and the
-// constraint list item 15.6 must instantiate — real-data decisions rather than
-// what nif.xml says is representable. The report is counts, names, and paths
-// only and goes to gitignored `logs/`; nothing extracted from the install
-// enters the repository.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset or unresolvable. Run with
-// `make realtest T='NIFDynamicsCensusRealDataTests/censusesHavokDynamics()'`.
+// Havok dynamics census on the real install over Whiterun-area exterior models,
+// clutter meshes with movable bodies, and every actor skeleton (the ragdoll
+// constraints). It sets the motion systems and constraints the physics code must
+// support. The report in `logs/` holds counts, names, and paths only.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -21,16 +11,6 @@ import Foundation
 import Testing
 
 struct NIFDynamicsCensusRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// A three-by-two block of Tamriel around the first render cell. Enough
     /// distinct statics to characterise world geometry without turning the
     /// census into a whole-worldspace sweep.
@@ -42,9 +22,9 @@ struct NIFDynamicsCensusRealDataTests {
     /// because the point of the census is the tail of the mass distribution.
     private static let clutterPrefix = "meshes\\clutter\\"
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func censusesHavokDynamics() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let esm = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
 
@@ -126,9 +106,8 @@ struct NIFDynamicsCensusRealDataTests {
     private func assertClutter(_ census: NIFDynamicsCensus) {
         #expect(census.modelCount > 0, "no clutter meshes found under \(Self.clutterPrefix)")
         #expect(census.loadFailures.isEmpty, "load failures: \(census.loadFailures.prefix(5))")
-        // Every clutter mesh decodes: the three that did not were the only
-        // `bhkNiTriStripsShape` users in the install, and their prefix was
-        // being read two bytes wide (issue #376).
+        // Every clutter mesh decodes, including the only `bhkNiTriStripsShape`
+        // users, whose prefix is two bytes narrower than it looks.
         #expect(
             census.decodeFailureCount == 0,
             "decode failures: \(census.decodeFailures.prefix(5))"

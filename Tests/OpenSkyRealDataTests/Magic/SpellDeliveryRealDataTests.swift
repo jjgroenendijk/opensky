@@ -1,13 +1,7 @@
-// Env-gated aimed-delivery checks against the user's read-only active load
-// order (issue #471, roadmap item 19.8). Read-only throughout: nothing here
-// writes to the install, and no game bytes leave the machine.
-//
-// What it pins is exactly the ground the synthetic suites cannot: that the
-// whole MGEF-to-PROJ chain resolves out of the real load order for a pinned
-// vanilla destruction spell, that the flight numbers that chain produces are
-// sane rather than merely non-nil, and that the two data-side findings this
-// item is built on — the resistance actor value a fire effect names, and the
-// EFIT area a vanilla area spell carries — are what the code assumes.
+// Aimed-delivery checks on the real load order: the MGEF-to-PROJ chain resolves
+// for a pinned destruction spell, its flight numbers are sane, a fire effect
+// names the resistance actor value the code expects, and a vanilla area spell
+// carries the EFIT area the code expects.
 
 import Foundation
 @testable import OpenSkyCombat
@@ -21,13 +15,6 @@ import simd
 import Testing
 
 struct SpellDeliveryRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The spells this suite pins, by editor ID. `Firebolt` is the aimed
     /// point-damage shape and `Fireball` the aimed area shape; both are
     /// `Skyrim.esm` records a vanilla load order always carries.
@@ -42,7 +29,7 @@ struct SpellDeliveryRealDataTests {
     }
 
     private func stores() throws -> Stores {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(
             plugins: plugins,
@@ -65,7 +52,7 @@ struct SpellDeliveryRealDataTests {
     /// The chain the whole item rests on: a vanilla destruction spell resolves
     /// through its MGEF to a PROJ, and that PROJ is one the flight model can
     /// integrate.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aVanillaDestructionSpellResolvesTheWholeEffectToProjectileChain() throws {
         let stores = try stores()
         let bolt = try spell(Pinned.bolt, in: stores)
@@ -83,15 +70,10 @@ struct SpellDeliveryRealDataTests {
         #expect(profile.isFlyable)
     }
 
-    /// The flight the chain produces, checked as trajectory numbers rather than
-    /// as "not nil": a bolt that covers a room in well under a second, drops
-    /// less than a body height doing it, and stops somewhere finite.
-    ///
-    /// The bounds are deliberately wide. What would be wrong here is an order
-    /// of magnitude — a bolt that takes ten seconds to cross a room, or one
-    /// that falls to the floor at the caster's feet — not a particular speed,
-    /// which is the record's business and not this engine's.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// The bolt crosses a room in well under a second, drops less than a body
+    /// height, and stops. The bounds are wide on purpose: they catch an error of
+    /// a whole order of magnitude, not a speed the record chose.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func thePinnedSpellsProjectileFliesSaneNumbers() throws {
         let stores = try stores()
         let bolt = try spell(Pinned.bolt, in: stores)
@@ -130,7 +112,7 @@ struct SpellDeliveryRealDataTests {
     /// The resistance the code scales by is the one the record names: a vanilla
     /// fire-damage effect resists through `Resist Fire`, and it is in the
     /// vanilla actor-value table so the 19.5 helper can answer for it.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aVanillaFireEffectNamesResistFireAsItsResistance() throws {
         let stores = try stores()
         let bolt = try spell(Pinned.bolt, in: stores)
@@ -149,7 +131,7 @@ struct SpellDeliveryRealDataTests {
     /// an EFIT area of 15, which is the same 15 its in-game description prints
     /// as a foot radius (<https://en.uesp.net/wiki/Skyrim:Fireball>). Pinned so
     /// the "areas are authored in feet" reading cannot quietly rot.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aVanillaAreaSpellCarriesItsRadiusInFeet() throws {
         let stores = try stores()
         let ball = try spell(Pinned.ball, in: stores)
@@ -167,7 +149,7 @@ struct SpellDeliveryRealDataTests {
     /// ground items 19.8 does and does not carry is measured rather than
     /// guessed at. Written to gitignored `logs/`, never asserted on a count
     /// that a load order with mods would move.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theDeliveryCensusIsWrittenForTheRecord() throws {
         let stores = try stores()
         var counts: [String: Int] = [:]

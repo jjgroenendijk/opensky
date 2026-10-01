@@ -17,33 +17,14 @@ import simd
 import Testing
 
 struct PlayerBodyRealDataTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     private static let step = LocomotionDriveHarness.step
     private static let secondOfSteps = LocomotionDriveHarness.secondOfSteps
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func drivesEveryLocomotionStateWithABody() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let assembled = try PlayerBodyFixture.assemble(device: device, root: root)
         let body = assembled.body
 

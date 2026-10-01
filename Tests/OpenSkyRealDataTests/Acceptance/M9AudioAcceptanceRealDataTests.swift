@@ -1,24 +1,9 @@
-// M9 acceptance against the user's read-only Skyrim SE install (issue #157):
-// the real-data half of "a Whiterun walk has door SFX, ambience, and music
-// transitioning between interior and exterior". It proves the records the three
-// audio subsystems consume actually resolve on the shipped plugin — the
-// exterior cell's regions yield an ambient bed and its precedence chain yields a
-// playlist, the interior cell's acoustic space yields its own bed and the
-// interior music state, and the door on the route yields open and close sound
-// descriptors that resolve to real files.
-//
-// Deliberately no assertion on audible output: playback needs a device and the
-// vanilla sound effects are `.wav`, which no decoder here reads yet
-// (docs/engine/audio.md). Audible confirmation stays a human step.
-//
-// Route records are the M4 walk route's (`WalkPathRoute`), on the Whiterun-hold
-// approach to Chillfurrow Farm: exterior cell (7,-3), the farmhouse interior,
-// and the farmhouse door. Nothing is identified by a guessed FormID — the two
-// cells are looked up by editor ID and then checked against the route, and the
-// door base comes from the route reference's own `NAME`.
-//
-// No game-derived bytes are written anywhere: the report goes to gitignored
-// `logs/m9-audio-acceptance.log` and names records, paths and counts only.
+// Audio acceptance on the real install, along the Chillfurrow Farm walk route
+// (`WalkPathRoute`). The exterior cell yields an ambient bed and a playlist, the
+// interior yields its own bed and music state, and the door yields open and
+// close sounds that resolve to real files. Nothing is played: vanilla effects
+// are `.wav`, which no decoder reads yet (docs/engine/audio.md). The report in
+// `logs/` names records, paths, and counts only.
 
 import Foundation
 @testable import OpenSkyAudio
@@ -30,27 +15,13 @@ import Foundation
 import Testing
 
 struct M9AudioAcceptanceRealDataTests {
-    /// Env-gated exactly like `CellRenderRealDataTests`: without
-    /// `OPENSKY_DATA_ROOT` the test skips instead of consulting the Steam
-    /// default. No Metal device is needed — nothing here renders or decodes.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        dataRoot != nil
-    }
-
     /// Editor IDs of the two route cells. Resolved by name rather than by
     /// FormID, and the exterior one is then checked against the route grid, so
     /// a wrong record cannot pass unnoticed.
     private static let exteriorCellEditorID = "ChillfurrowFarmExterior"
     private static let interiorCellEditorID = "ChillfurrowFarm"
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     func whiterunExteriorAndInteriorResolveTheirWorldAudio() throws {
         let install = try Install()
         let exterior = try install.verifyExterior()
@@ -77,7 +48,7 @@ struct M9AudioAcceptanceRealDataTests {
         let doorReference: PlacedReference
 
         init() throws {
-            let root = try #require(M9AudioAcceptanceRealDataTests.dataRoot)
+            let root = try #require(RealDataEnvironment.dataRoot)
             let plugin = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
             let isLocalized = (try? plugin.pluginHeader().isLocalized) ?? false
             fileSystem = VirtualFileSystem(root: root)
@@ -190,12 +161,8 @@ struct M9AudioAcceptanceRealDataTests {
             """
         }
 
-        /// Reads a MUST track out of the archives through the engine's own
-        /// resolver — the same `MusicRecordStore.loadAudioFile` the runtime
-        /// director calls, with the VFS as its loader. Vanilla `MUST ANAM`
-        /// names a `.wav` while the shipped asset is the `.xwm` sibling, so
-        /// this is the assertion that the fallback for issue #246 works on the
-        /// real install rather than only on synthetic fixtures.
+        /// Reads a MUST track through `MusicRecordStore.loadAudioFile`. Vanilla
+        /// `ANAM` names a `.wav`, but the archive ships the `.xwm` sibling.
         private func locate(track path: String) -> (key: String, data: Data)? {
             try? MusicRecordStore.loadAudioFile(at: path) { key in
                 try fileSystem.contents(forPath: key)

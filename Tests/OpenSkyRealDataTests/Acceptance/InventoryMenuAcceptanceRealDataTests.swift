@@ -1,9 +1,6 @@
-// M12.2.2 inventory menu acceptance against the user's read-only Skyrim SE
-// install (issue #289). `inventorymenu.swf` is the third-largest AS2 consumer
-// and had never been driven; it also places three characters it does not
-// define, so it needs cross-movie import resolution before it has a list at
-// all. This test is the standing gate for its bring-up, its data contract and
-// its navigation. Rendered frames and numeric evidence stay in ignored logs/.
+// Inventory menu acceptance on the real install. `inventorymenu.swf` places
+// three characters it does not define, so it needs cross-movie imports before
+// it shows a list. Frames and numbers stay in gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -21,31 +18,14 @@ import OpenSkyInventoryTesting
 import Testing
 
 struct InventoryMenuAcceptanceRealDataTests {
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     private static let width = 1280
     private static let height = 720
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func vanillaInventoryMenuBringsUpCleanPublishesItemsAndNavigates() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         let fileSystem = VirtualFileSystem(root: root)
         let renderer = try makeRenderer(device: device)
 

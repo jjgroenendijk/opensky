@@ -1,13 +1,7 @@
-// Env-gated NAVM census over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md Legal & IP): decodes every
-// navmesh in the milestone target area — the Whiterun interior cells, the
-// WhiterunWorld city exteriors, and the Tamriel exteriors around the
-// first-render cell — and reports totals. Acceptance gate for issue #199: the
-// whole set decodes with zero unexplained failures, and every NVNM's own
-// parent matches the CELL it was found under, which is the check that settles
-// xEdit's parent rule against UESP's. Skips automatically when
-// OPENSKY_DATA_ROOT is unset/unresolvable (CI has no game data). Summary
-// printed + written to logs/.
+// NAVM census on the real install: every navmesh in the Whiterun interiors,
+// the WhiterunWorld exteriors, and the Tamriel cells around the first-render
+// cell decodes, and each NVNM parent matches the CELL it sits under. That
+// settles xEdit's parent rule against UESP's. The summary goes to `logs/`.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -17,16 +11,6 @@ import Foundation
 import Testing
 
 struct NavmeshRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Tamriel exteriors around the first-render cell, and the whole of the
     /// WhiterunWorld city worldspace, whose populated span is small.
     private static let targetWorlds: [(editorID: String, span: Int32)] = [
@@ -36,9 +20,9 @@ struct NavmeshRealDataTests {
     /// interiors — the Bannered Mare, Dragonsreach, the houses, the barracks.
     private static let interiorPrefix = "Whiterun"
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryWhiterunAreaNavmesh() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         let index = NavmeshIndex(file: file)

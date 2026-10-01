@@ -5,7 +5,6 @@
 // leave the run.
 
 import Foundation
-import Metal
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFormatsESM
@@ -17,25 +16,6 @@ import Metal
 import Testing
 
 struct CrimeRealDataTests {
-    /// Internal rather than private: the harness half of this suite lives in
-    /// `CrimeRealDataFixture.swift` and reads it (Tests/OpenSkyTests/AGENTS.md).
-    static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    static var canRun: Bool {
-        dataRoot != nil && device != nil
-    }
-
     /// Belethor's shop: an owned Whiterun interior. Located by editor ID rather
     /// than by FormID so a patch that moves the record does not break the
     /// suite; `openskycli record WhiterunBelethorsGeneralGoods` on this install
@@ -47,7 +27,7 @@ struct CrimeRealDataTests {
 
     // MARK: - The acceptance
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func takingAnOwnedItemInAWhiterunShopAccruesTheTheftBountyWhenSeen() throws {
         let harness = try Self.harness()
@@ -97,7 +77,7 @@ struct CrimeRealDataTests {
     /// The two record facts the acceptance rests on, asserted on their own so a
     /// failure says which half moved: the shop's cell is owned, and its
     /// location chain arrives at Whiterun's crime faction.
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func theShopCellIsOwnedAndItsLocationChainNamesWhiterunsCrimeFaction() throws {
         let harness = try Self.harness()

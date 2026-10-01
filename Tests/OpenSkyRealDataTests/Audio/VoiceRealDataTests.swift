@@ -1,13 +1,7 @@
-// Env-gated `.fuz` sweep over the user's read-only vanilla install: frame
-// every voice file the archives hold, re-derive every voice file name from the
-// records and measure it against the archive listing, then take one known line
-// end to end — resolve its path from an INFO, decode it, play it under manual
-// rendering, and watch the playback clock advance to the decoded duration.
-//
-// No game-derived bytes leave the run: the report is counts and derived names
-// only, and it goes to gitignored `logs/`.
-//
-// Run: make realtest T='VoiceRealDataTests/framesEveryVoiceFile()'
+// `.fuz` sweep on the real install: frame every voice file, derive every voice
+// file name from the records and compare it with the archive, then play one
+// line and watch the clock reach its decoded length. The report in `logs/`
+// holds counts and derived names only.
 
 import AVFAudio
 import Foundation
@@ -20,13 +14,6 @@ import simd
 import Testing
 
 struct VoiceRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let pluginNames = [
         "Skyrim.esm", "Update.esm", "Dawnguard.esm", "HearthFires.esm", "Dragonborn.esm"
     ]
@@ -35,9 +22,9 @@ struct VoiceRealDataTests {
     /// changed or the parser did; either way the number is worth failing on.
     private static let expectedEntryCount = 75408
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func framesEveryVoiceFile() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let paths = vfs.archiveEntries().map(\.path).filter { $0.hasSuffix(".fuz") }
         #expect(paths.count == Self.expectedEntryCount, "voice entry count drift")
@@ -90,9 +77,9 @@ struct VoiceRealDataTests {
         try Self.writeReport(report, named: "framing")
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func derivesVoiceFileNamesFromRecords() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let paths = vfs.archiveEntries().map(\.path).filter { $0.hasSuffix(".fuz") }
 
@@ -161,9 +148,9 @@ struct VoiceRealDataTests {
         try Self.writeReport(report, named: "names")
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func playsOneResolvedLineAndAdvancesTheClock() async throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let dialogue = DialogueStore(file: file, pluginName: "Skyrim.esm")

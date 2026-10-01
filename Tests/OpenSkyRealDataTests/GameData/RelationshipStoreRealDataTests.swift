@@ -1,13 +1,6 @@
-// Env-gated RELA and ASTP decode and relationship-store acceptance over the
-// user's own read-only load order (issue #502).
-//
-// Four questions, in the order milestone M21 needs them answered: does every
-// RELA and ASTP record in the load order decode, does every association-type
-// link find a decoded ASTP, does the pair query answer in both argument orders
-// for a real authored pair, and does any record read a field OpenSky does not.
-//
-// Counts, editor IDs and tallies only — no game bytes leave the run
-// (AGENTS.md "Legal & IP boundary").
+// Relationship checks on the real load order: every RELA and ASTP decodes, every
+// association-type link finds its ASTP, the pair query answers in both argument
+// orders for a real pair, and no record holds a field OpenSky does not read.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -16,16 +9,9 @@ import Foundation
 import Testing
 
 struct RelationshipStoreRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryRelationshipAndResolvesEveryAssociationType() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(
             plugins: plugins,
@@ -119,9 +105,8 @@ struct RelationshipStoreRealDataTests {
         #expect(histogram.keys.allSatisfy { !$0.hasPrefix("unknown") })
     }
 
-    /// Every ASTP link a relationship names has to reach a decoded record: the
-    /// dialogue condition `HasAssociationType` (issue #508) reads exactly this
-    /// link, and a dangling one would silently answer false.
+    /// Every ASTP link reaches a decoded record. `HasAssociationType` reads this
+    /// link, and a dangling one would quietly answer false.
     private func checkAssociationTypeLinks(_ store: RelationshipStore) throws {
         var linked = 0
         var unresolved: [String] = []

@@ -28,31 +28,12 @@ struct M11AcceptanceRealDataTests {
     private static let candidateEditorID = "TrapLinker"
     private static let candidateScript = "defaultActivateToggleLinkedRefOnce"
 
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func streamsAttachedScriptsAndActivatesAVisibleVanillaReference() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let setup = try makeSetup(
-            device: #require(Self.device),
+            device: #require(RealDataEnvironment.device),
             root: root
         )
         try drainEvents(setup.world)

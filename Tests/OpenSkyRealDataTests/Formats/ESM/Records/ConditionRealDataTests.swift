@@ -1,19 +1,7 @@
-// Env-gated CTDA sweep over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md Legal & IP): decodes every CTDA
-// subrecord of every record in Skyrim.esm, asserts none of them throws, and
-// tallies how much of that traffic `ConditionFunctionRegistry.standard` can
-// actually evaluate (issue #251). It decodes fields directly rather than
-// through per-record wiring, so a record type nobody has modelled yet still
-// contributes its conditions. Skips automatically when OPENSKY_DATA_ROOT is
-// unset/unresolvable (CI has no game data). Summary and coverage report are
-// printed and written to logs/; the coverage numbers are also asserted,
-// because print() never reaches the .xcresult.
-//
-// Coverage model and report text live in `ConditionCoverageTally.swift` and
-// `ConditionCoverageReport.swift`.
-//
-// Layout: UESP "Skyrim Mod:Mod File Format/CTDA Field" and xEdit dev
-// Core/wbDefinitionsTES5.pas `wbCTDA` (line 6889).
+// CTDA sweep on the real install: every CTDA in `Skyrim.esm` decodes, and the
+// share `ConditionFunctionRegistry.standard` can evaluate is asserted, because
+// print() never reaches the .xcresult. Fields decode directly, so unmodelled
+// record types count too. Layout: UESP "CTDA Field" and xEdit `wbCTDA`.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -24,25 +12,15 @@ import Foundation
 import Testing
 
 struct ConditionRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Raw indices the open sources disagree about, probed for their on-disk
     /// shape. xEdit's TES5 table puts GetRandomPercent at stored 77 while the
     /// older gib.me list implies 76; a no-parameter function compared against
     /// values spread over 0-100 is the one that really is GetRandomPercent.
     private static let disputedIndices: [UInt16] = [76, 77]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryConditionInSkyrimESM() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
 
         let stats = sweep(file: file)

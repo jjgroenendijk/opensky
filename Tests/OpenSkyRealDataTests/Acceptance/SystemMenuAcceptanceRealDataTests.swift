@@ -1,8 +1,5 @@
-// M8.5.1 system menu acceptance against the user's read-only Skyrim SE install.
-// `quest_journal.swf` was the worst faulter before issue #136 at 159
-// `callDepthExceeded` faults. This test is the standing gate for its real
-// in-game System page. Rendered frames and numeric A/B evidence stay in ignored
-// logs/.
+// System menu acceptance on the real install: the System page of
+// `quest_journal.swf` in game. Frames and numbers stay in gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -15,31 +12,14 @@ import MetalKit
 import Testing
 
 struct SystemMenuAcceptanceRealDataTests {
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     private static let width = 1280
     private static let height = 720
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func vanillaQuestJournalSystemPageBringsUpCleanAndDraws() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         let fileSystem = VirtualFileSystem(root: root)
         let renderer = try makeRenderer(device: device)
 

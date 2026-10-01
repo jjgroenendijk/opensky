@@ -11,19 +11,9 @@ import Foundation
 import Testing
 
 struct LandRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryTamrielLand() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let localized = (try? file.pluginHeader().isLocalized) ?? false
 
@@ -82,9 +72,9 @@ struct LandRealDataTests {
     /// row 32 of (x,y) equals row 0 of (x,y+1); col 32 of (x,y) equals col 0 of
     /// (x+1,y) (UESP LAND). Groundwork for cross-cell stitching (streaming, 3.2)
     /// — asserts the shared edges match on real Tamriel data, builds nothing.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func adjacentCellEdgesMatch() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let localized = (try? file.pluginHeader().isLocalized) ?? false
         let world = try #require(worldChildren(of: "Tamriel", in: file, localized: localized))

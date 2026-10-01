@@ -38,43 +38,11 @@ private struct StreamStats {
 }
 
 struct CellRenderRealDataTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4) else { return nil }
-        return device
-    }()
-
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func rendersFirstRenderCellFromRealInstall() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-
-        let vfs = VirtualFileSystem(root: root)
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = try TextureLibrary(fileSystem: vfs, device: device)
-        let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
-        let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
-        let cellScene = try builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: FirstRenderCell.gridX,
-            gridY: FirstRenderCell.gridY
-        )
+        let install = try RealDataInstall.load()
+        let cellScene = try install.sceneBuilder().buildFirstRenderCell()
 
         let summary = cellScene.summary
         // Decision doc expected 16 refs / 15 drawn (STAT-only); 3.2 widened
@@ -87,7 +55,10 @@ struct CellRenderRealDataTests {
         let bounds = try #require(cellScene.bounds, "no world bounds — nothing drew")
         let camera = SceneCamera.framing(bounds: bounds)
 
-        let view = MTKView(frame: CGRect(x: 0, y: 0, width: 1280, height: 720), device: device)
+        let view = MTKView(
+            frame: CGRect(x: 0, y: 0, width: 1280, height: 720),
+            device: install.device
+        )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(view: view, scene: cellScene.renderScene, camera: camera)
@@ -112,11 +83,11 @@ struct CellRenderRealDataTests {
     /// Streams the 5x5 around FirstRenderCell into a real Renderer the way the
     /// app's frame hook does, then checks that a far recenter frees the old grid.
     /// Run under tools/memguard.sh only (docs/engine/cell-streaming.md).
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func streamsFiveByFiveGridToCompletion() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
 
         let harness = try makeStreamHarness(device: device, root: root)
         let renderer = harness.renderer

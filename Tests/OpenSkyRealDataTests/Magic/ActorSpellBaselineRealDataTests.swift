@@ -1,22 +1,8 @@
-// A vanilla caster's spell list, against the user's own install (issue #473,
-// roadmap item 19.10, scope point 7): the NPC_ `SPLO` run resolved through the
-// template chain and the leveled spell lists it routes through, granted into a
-// live `SpellbookState` exactly as the combat loop grants it.
-//
-// Read-only against the install and headless: it builds the same engine types
-// the app wires — `ActorSpellBaselineResolver` and `SpellbookRuntime` — with no
-// window and no renderer.
-//
-// The actor is pinned rather than searched for, so a regression shows up as a
-// failure rather than as the suite quietly picking a different actor.
-// `LvlBanditWizard` (`0x0001E79F`) is the pin, and it is the interesting shape
-// rather than the convenient one: its own record carries no spell list at all,
-// its seven entries arrive through a template, four of them resolve to SPEL
-// records that buff or heal, and its attack spells sit behind two `LVSP` lists.
-//
-// It writes a one-line summary into gitignored `logs/` so a pull request can
-// link the run. Editor IDs and counts only: no game bytes leave the machine
-// (AGENTS.md "Legal & IP boundary").
+// A vanilla caster's spell list from the real install: the NPC_ `SPLO` run,
+// through the template chain and its leveled lists, granted into a live
+// `SpellbookState` as the combat loop does. `LvlBanditWizard` (`0x0001E79F`) is
+// pinned: its own record has no spells, its seven come through a template, and
+// its attack spells sit behind two `LVSP` lists. Editor IDs and counts only.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -28,13 +14,6 @@ import Foundation
 import Testing
 
 struct ActorSpellBaselineRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// `LvlBanditWizard`, the pinned caster.
     private static let banditWizard = FormID(0x0001_E79F)
 
@@ -80,10 +59,10 @@ struct ActorSpellBaselineRealDataTests {
     /// The acceptance shape: instantiate a pinned vanilla caster and check that
     /// what it knows is exactly what its records say, with nothing invented and
     /// nothing dropped.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func aPinnedVanillaCastersKnownSpellsAreItsRecordsOwnList() throws {
-        let session = try Session(root: #require(Self.dataRoot))
+        let session = try Session(root: #require(RealDataEnvironment.dataRoot))
         let baseline = session.baselines.baseline(for: Self.banditWizard)
         #expect(!baseline.actorSpells.isEmpty)
 
@@ -108,10 +87,10 @@ struct ActorSpellBaselineRealDataTests {
     /// The finding this item is built on: a vanilla caster's *attack* spells
     /// arrive through `LVSP` entries, so an engine that only resolved SPEL
     /// links would give it nothing it could throw at anybody.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func theCastersHostileSpellsArriveThroughItsLeveledSpellLists() throws {
-        let session = try Session(root: #require(Self.dataRoot))
+        let session = try Session(root: #require(RealDataEnvironment.dataRoot))
         let baseline = session.baselines.baseline(for: Self.banditWizard)
         let spells = session.spellbook.resolve(baseline.all, fromPlugin: session.plugin)
             .compactMap { session.spellbook.record($0) }

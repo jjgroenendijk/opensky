@@ -1,8 +1,5 @@
-// Env-gated issue #474 coverage sweep over the user's active load order: what
-// the magic condition functions add to the registry's reach.
-//
-// The aggregate counts are evidence only; no game bytes leave the run
-// (AGENTS.md "Legal & IP boundary").
+// Condition coverage sweep over the real load order: what the magic condition
+// functions add to the registry's reach. Only aggregate counts leave the run.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -12,22 +9,12 @@ import Foundation
 import Testing
 
 struct ConditionMagicRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The eight raw indices item 19.11 registers.
     private static let magicIndices: Set<UInt16> = [214, 223, 264, 570, 571, 572, 632, 699]
 
-    /// Indices later items added: `HasPerk` (issue #497, item 20.4), `GetLevel`
-    /// and `GetBaseActorValue` (issue #499, item 20.6), the six faction
-    /// functions (issue #508, item 21.4) and the three crime-gold functions
-    /// (issue #504, item 21.5). Subtracted out for the reason
-    /// `ConditionDataRealDataTests` subtracts the magic ones — this test pins
-    /// the M19 step, not the registry as it happens to stand today.
+    /// Indices added after the magic functions: `HasPerk`, `GetLevel`,
+    /// `GetBaseActorValue`, faction, and crime-gold. They are subtracted, so the
+    /// pinned number stays the M19 step.
     private static let laterIndices: Set<UInt16> = [
         80, 277, 448, 60, 71, 73, 403, 449, 719, 375, 376, 459
     ]
@@ -39,11 +26,11 @@ struct ConditionMagicRealDataTests {
         101, 552, 595, 596, 597, 627, 664, 681, 693, 696, 706, 713, 724
     ]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func pinsMagicConditionCoverageImprovement() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
-        let coverage = Self.sweep(plugins: plugins)
+        let coverage = ConditionCoverage.sweep(plugins: plugins)
         let registry = ConditionFunctionRegistry.standard
         let later = Self.laterIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
         let after = coverage.implementedCount(in: registry) - later
@@ -72,25 +59,5 @@ struct ConditionMagicRealDataTests {
         for index in Self.deferredIndices {
             print("[INFO] still tallied raw \(index): \(coverage.conditions(of: index))")
         }
-    }
-
-    private static func sweep(
-        plugins: [(name: String, file: ESMFile)]
-    ) -> ConditionCoverage {
-        var coverage = ConditionCoverage()
-        for plugin in plugins {
-            ESMWalk.forEachRecord(in: plugin.file) { record in
-                guard let fields = try? record.fields() else { return true }
-                var list = ConditionList()
-                for field in fields {
-                    _ = try? list.decode(field: field)
-                }
-                for condition in list.conditions {
-                    coverage.record(condition)
-                }
-                return true
-            }
-        }
-        return coverage
     }
 }

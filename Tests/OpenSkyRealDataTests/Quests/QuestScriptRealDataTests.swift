@@ -16,16 +16,9 @@ import Testing
 struct QuestScriptRealDataTests {
     private static let targetEditorID = "MGRArniel01"
 
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil)) @MainActor
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot)) @MainActor
     func runsTheTargetQuestsFirstStageFragment() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let pluginName = "Skyrim.esm"
         let file = try ESMFile(url: root.dataURL.appending(path: pluginName))
         let quests = QuestStore(file: file, pluginName: pluginName)

@@ -1,14 +1,7 @@
-// Weather-core acceptance over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md Legal & IP): renders
-// the FirstRenderCell exterior scene offscreen and proves the acceptance gate
-// end to end against real WTHR/CLMT data:
-//   - three distinct vanilla weathers (clear/cloudy/fog) forced by editor ID
-//     paint pairwise-different frames,
-//   - a timed clear->cloudy transition advances monotonically and its
-//     mid-frame differs from both endpoints,
-//   - the same weather at 04:00 vs 13:00 differs (time-of-day keyframe blend).
-// One @Test method so tools/realtest.sh's exactly-one-test gate holds. Skips
-// without OPENSKY_DATA_ROOT or a Metal 4 GPU. Numbers printed + written to logs/.
+// Weather acceptance on the real install, over the `FirstRenderCell` scene:
+// clear, cloudy, and fog draw different frames, a clear-to-cloudy transition
+// moves steadily, and 04:00 differs from 13:00. One `@Test`, because
+// `tools/realtest.sh` runs exactly one test. Numbers go to `logs/`.
 
 import Foundation
 import Metal
@@ -21,27 +14,6 @@ import simd
 import Testing
 
 struct WeatherAcceptanceRealDataTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4) else { return nil }
-        return device
-    }()
-
-    /// Real data only when explicitly pointed at via the env var; the locator's
-    /// Steam-default fallback is deliberately not consulted so machines without
-    /// the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     private static let width = 1280
     private static let height = 720
     /// A pixel counts as changed when any RGB channel moves more than this many
@@ -60,7 +32,7 @@ struct WeatherAcceptanceRealDataTests {
         let fog: FormID
     }
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func forcedWeathersTransitionsAndTimeProduceDistinctFrames() throws {
         let harness = try makeHarness()
@@ -137,22 +109,15 @@ struct WeatherAcceptanceRealDataTests {
 
     @MainActor
     private func makeHarness() throws -> Harness {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-        let vfs = VirtualFileSystem(root: root)
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = try TextureLibrary(fileSystem: vfs, device: device)
-        let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
-        let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
-        let cellScene = try builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: FirstRenderCell.gridX,
-            gridY: FirstRenderCell.gridY
-        )
+        let install = try RealDataInstall.load()
+        let cellScene = try install.sceneBuilder().buildFirstRenderCell()
         #expect(cellScene.renderScene.sky != nil, "exterior scene must draw a sky for weather")
         let bounds = try #require(cellScene.bounds, "no world bounds — nothing drew")
         let weather = try #require(
-            WeatherSystem(file: file, worldspaceEditorID: FirstRenderCell.worldspaceEditorID),
+            WeatherSystem(
+                file: install.file,
+                worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+            ),
             "Skyrim.esm carries no weather data"
         )
         let selectable = weather.store.selectableWeathers()
@@ -163,7 +128,8 @@ struct WeatherAcceptanceRealDataTests {
             )
         }
         let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height), device: device
+            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
+            device: install.device
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false

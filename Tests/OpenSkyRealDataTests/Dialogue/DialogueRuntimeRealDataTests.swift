@@ -17,13 +17,6 @@ import OpenSkyWorldTesting
 import Testing
 
 struct DialogueRuntimeRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// `Skyrim.esm`'s Delphine NPC_ record, and the synthetic placement key she
     /// is selected against. The placement is this test's own: selection needs a
     /// `ReferenceKey` with a base form, not a loaded cell.
@@ -47,7 +40,7 @@ struct DialogueRuntimeRealDataTests {
     private static let expectedGreetingInfo: UInt32 = 0x0008_7940
 
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func selectsADeterministicTopicListForOneSpeaker() throws {
         let world = try Self.world()
         let selection = world.runtime.topics(for: Self.speakerKey)
@@ -81,7 +74,7 @@ struct DialogueRuntimeRealDataTests {
     /// The greeting she opens with, selected by HELO subtype under the same
     /// fixed quest state.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func selectsADeterministicGreeting() throws {
         let world = try Self.world()
         let greeting = try #require(world.runtime.greeting(for: Self.speakerKey))
@@ -93,7 +86,7 @@ struct DialogueRuntimeRealDataTests {
     /// of the list it was offered in. Driven against real records rather than
     /// synthetic ones, because the say-once flag has to come off the disk.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func choosingASayOnceResponseSpendsIt() throws {
         let world = try Self.world()
         let selection = world.runtime.topics(for: Self.speakerKey)
@@ -115,7 +108,7 @@ struct DialogueRuntimeRealDataTests {
     /// selection evaluates, written to a gitignored run directory so the
     /// documented tally has a source.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func recordsConditionCoverageForTheSelection() throws {
         let world = try Self.world()
         let tally = world.runtime.topics(for: Self.speakerKey).tally
@@ -144,7 +137,7 @@ struct DialogueRuntimeRealDataTests {
 
     @MainActor
     private static func world() throws -> World {
-        let root = try #require(dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let localized = try file.pluginHeader().isLocalized
         let dialogue = DialogueStore(

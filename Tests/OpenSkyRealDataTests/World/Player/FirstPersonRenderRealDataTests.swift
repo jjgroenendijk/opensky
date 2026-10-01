@@ -1,22 +1,8 @@
-// Env-gated offscreen render of the first-person arms (issue #190) over the
-// user's own Skyrim SE install (read-only external input; a rendered frame
-// embeds the user's assets, so captures go to gitignored `logs/` and are never
-// committed — AGENTS.md "Legal & IP").
-//
-// What is proved with pixels rather than with numbers:
-//
-// * The arms draw in first person, with a weapon equipped, in idle, walk and
-//   sprint — and each of those three states differs from the others, so a
-//   bound-but-inert first-person graph fails rather than passing quietly.
-// * The visibility matrix holds against the same scene and the same camera:
-//   first person draws the arms and not the body, third person draws the body
-//   and not the arms, and switching back reproduces the first-person frame
-//   byte for byte. That is the three-frame cross-check on the camera-mode axis.
-// * The equipped set reaches both rigs: the arms assembled with a weapon
-//   differ from the arms assembled without one.
-//
-// Run with
-// `make realtest T='FirstPersonRenderRealDataTests/drawsTheArmsInFirstPersonOnly()'`.
+// Offscreen render of the first-person arms on the real install. The arms draw
+// with a weapon in idle, walk, and sprint, and each state differs. First person
+// draws the arms and not the body, third person the reverse, and switching back
+// gives the same frame byte for byte. Arms with a weapon differ from arms
+// without one. Captures stay in gitignored `logs/`.
 
 import CoreGraphics
 import Foundation
@@ -40,38 +26,15 @@ struct FirstPersonRenderRealDataTests {
     private static let ironCuirass = FormID(0x0001_2E49)
     private static let ironSword = FormID(0x0001_2EB7)
 
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func drawsTheArmsInFirstPersonOnly() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let assembled = try PlayerBodyFixture.assemble(
             device: device, root: root, equipped: [Self.ironCuirass, Self.ironSword]
         )
-        let scene = try assembled.builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: FirstRenderCell.gridX,
-            gridY: FirstRenderCell.gridY
-        )
+        let scene = try assembled.builder.buildFirstRenderCell()
         let bounds = try #require(scene.bounds, "no world bounds — nothing drew")
         let terrain = try #require(LocomotionRealTerrain.terrainField(root: root))
         let feet = LocomotionRealTerrain.startPosition(on: terrain)
@@ -114,10 +77,8 @@ struct FirstPersonRenderRealDataTests {
             report.joined(separator: "\n") + "\n", to: "first-person-render.log"
         )
         try Self.writePNG(idle, name: "first-person-arms.png")
-        // The bind-pose capture beside it is what separates "the arms are in
-        // the wrong place" from the open skinning defect the third-person body
-        // shares (issue #354): the same arms, the same camera, the animation
-        // pass off.
+        // The bind-pose capture shows whether the arms are misplaced or only
+        // show the skinning defect the third-person body shares.
         renderer.actorAnimationsEnabled = false
         try Self.writePNG(Self.frame(renderer), name: "first-person-arms-bind-pose.png")
         renderer.actorAnimationsEnabled = true
@@ -174,17 +135,9 @@ struct FirstPersonRenderRealDataTests {
         #expect(frames["sprint"] != frames["walk"], "sprinting matched walking")
     }
 
-    /// The visibility matrix, in pixels, plus the three-frame cross-check on
-    /// the camera-mode axis: first person, third person, and first person
-    /// again, with the graph deliberately not stepped in between. The mode
-    /// switch is the only variable, so the frame it returns to has to be
-    /// byte-identical to the one it left.
-    ///
-    /// The graph is not re-driven here because it is stateful by construction
-    /// — clip phase, crossfade progress, state-machine position — so "the same
-    /// input again" is not "the same pose again". The assembly axis is where
-    /// the reproducibility cross-check belongs, and `PlayerBodyRenderRealDataTests`
-    /// applies it there.
+    /// First person, third person, and first person again, without stepping the
+    /// graph. The mode is the only change, so the last frame must match the
+    /// first byte for byte. The graph is stateful, so it is not driven again.
     @MainActor
     private static func assertModeSwitchCrossCheck(
         _ assembled: PlayerBodyFixture.Assembled,

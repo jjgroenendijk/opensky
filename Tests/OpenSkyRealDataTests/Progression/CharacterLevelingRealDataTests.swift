@@ -13,13 +13,6 @@ import Foundation
 import Testing
 
 struct CharacterLevelingRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The first two ranks of the One-Handed damage chain, and the perk their
     /// tree box hangs off. Editor IDs rather than FormIDs, so this reads as the
     /// names the Creation Kit shows.
@@ -30,9 +23,9 @@ struct CharacterLevelingRealDataTests {
     /// The four settings, as `Skyrim.esm` authors them — which is exactly what
     /// `CharacterLevelSettings.documentedDefaults` carries, so a load order
     /// that retunes any of them is visible here rather than silently absorbed.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theLevelSettingsMatchTheDocumentedNumbers() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let store = GameSettingLoader.load(root: root)
 
         let settings = CharacterLevelSettings.resolve(store: store)
@@ -50,9 +43,9 @@ struct CharacterLevelingRealDataTests {
     /// The AVIF perk trees this install carries, and the shape a spend depends
     /// on: every skill tree has an entry node granting no perk, and the box it
     /// reaches is buyable with nothing owned.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everySkillTreeHasAnEntryNodeReachingABuyableBox() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let information = ActorValueInformationStoreLoader.load(root: root)
         let perks = PerkStoreLoader.load(root: root)
         let trees = PerkTreeIndex(information: information, perks: perks)
@@ -80,9 +73,9 @@ struct CharacterLevelingRealDataTests {
     /// predecessor is owned and One-Handed reaches the 20 its own `CTDA` run
     /// asks for.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aVanillaRankChainIsClimbedInOrder() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let perks = PerkStoreLoader.load(root: root)
         let trees = PerkTreeIndex(
             information: ActorValueInformationStoreLoader.load(root: root), perks: perks
@@ -136,9 +129,9 @@ struct CharacterLevelingRealDataTests {
     /// The install's own One-Handed AVIF record still carries a perk tree whose
     /// entry node grants no perk, which is the assumption the spend rules rest
     /// on.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theOneHandedTreeStillHasANullEntryNode() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let information = ActorValueInformationStoreLoader.load(root: root)
 
         let record = try #require(

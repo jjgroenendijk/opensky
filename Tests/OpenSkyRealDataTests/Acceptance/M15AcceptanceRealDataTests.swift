@@ -1,25 +1,8 @@
-// M15 acceptance against the user's own read-only Skyrim SE install (issue
-// #198): the same fight the synthetic gate drives, over the vanilla player
-// behavior graph, with the honest-coverage tallies pinned rather than
-// described.
-//
-// This is the honest-coverage half of the gate. `M15AcceptanceTests` proves the
-// loop works over a graph OpenSky wrote; what this proves is that the graph the
-// install ships answers the same route — every combat, archery and ragdoll
-// census name declared, a draw and a swing reaching a real contact frame, and
-// the evaluator's own tally over that route reported with numbers instead of
-// adjectives. The two modifiers item 15.6 had to implement rather than tally
-// are named and counted individually, because "implemented" is exactly the kind
-// of claim that stops being true quietly.
-//
-// The whole thing is device-free on purpose (the M13 env-gated/device-gated
-// split): the naming, state and tally evidence stands on a runner with no GPU,
-// and only the pixel evidence in `M15AcceptanceRenderTests` needs one.
-//
-// Nothing from the install is committed: the report goes to gitignored `logs/`
-// and carries class names and counts only — never clip data, never a pose. Run
-// it with `make realtest T='M15AcceptanceRealDataTests/...'`, which supplies
-// the data root and the RSS watchdog.
+// Combat acceptance on the real install: the synthetic fight over the vanilla
+// player behavior graph. Every combat, archery, and ragdoll census name is
+// declared, a draw and a swing reach a real contact frame, and the evaluator's
+// tally is pinned. It needs no GPU; `M15AcceptanceRenderTests` holds the pixel
+// half. The report in `logs/` holds class names and counts only.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -35,13 +18,6 @@ import simd
 import Testing
 
 struct M15AcceptanceRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The two `0_master.hkx` modifiers item 15.6 had to implement rather than
     /// count. Both were pass-throughs over the whole M14 route, 684 evaluations
     /// each, and the M14 close-out named them as M15's to close.
@@ -50,10 +26,10 @@ struct M15AcceptanceRealDataTests {
         "hkbKeyframeBonesModifier"
     ]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func drivesTheWholeFightThroughTheVanillaPlayerGraph() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         var lines = ["OpenSky M15 acceptance fight — \(PlayerBehaviorGraph.behaviorPath)"]
 
         // Two graphs, deliberately. The naming check raises every name in all
@@ -222,14 +198,9 @@ struct M15AcceptanceRealDataTests {
         Self.reportRagdollModifiers(tally, report: &lines)
     }
 
-    /// The two modifiers the M14 close-out named as M15's to implement, counted
-    /// individually: how many times the fight evaluated each, and how many of
-    /// those evaluations were still pass-throughs.
-    ///
-    /// Reported rather than asserted to zero. A route that never reaches a
-    /// ragdoll control modifier evaluates it zero times, and a gate that
-    /// demanded a non-zero implemented count here would be demanding the fight
-    /// take a particular path through a graph it does not own.
+    /// How often the fight evaluated each of the two combat modifiers, and how
+    /// often each was still a pass-through. Reported, not asserted: a route may
+    /// never reach a ragdoll modifier.
     private static func reportRagdollModifiers(
         _ tally: BehaviorTally,
         report lines: inout [String]
@@ -243,13 +214,8 @@ struct M15AcceptanceRealDataTests {
         }
     }
 
-    /// The coverage deltas the milestone close-out quotes: what the condition
-    /// registry and the Papyrus native registry answer today.
-    ///
-    /// Registry sizes rather than a fresh sweep of the install. The sweeps
-    /// themselves are `ConditionRealDataTests` and `PexRealDataTests`, both of
-    /// which are expensive and already run under `make realtest-all`; repeating
-    /// them here would double the cost of the gate to restate their numbers.
+    /// Condition and Papyrus native registry sizes. The full sweeps are
+    /// `ConditionRealDataTests` and `PexRealDataTests`; this does not repeat them.
     @MainActor
     private static func reportHonestCoverage(
         _ bridge: LocomotionBridge,

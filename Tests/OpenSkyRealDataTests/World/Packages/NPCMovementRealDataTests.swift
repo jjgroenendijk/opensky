@@ -1,5 +1,5 @@
-// Real-install NPC locomotion evidence (issue #423). No game bytes or frames
-// leave the read-only install; timings are printed into the realtest run.
+// NPC locomotion on the real install. Timings are printed into the run; no
+// game bytes or frames leave it.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -14,16 +14,9 @@ import Testing
 
 @MainActor
 struct NPCMovementRealDataTests {
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func measuresVanillaGraphsAtMoverCap() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let fileSystem = VirtualFileSystem(root: root)
         let graphs = try (0 ..< NPCMovementRuntime.maximumSimultaneousMovers).map { _ in
             try PlayerBehaviorGraph.load(fileSystem: fileSystem).instance
@@ -84,9 +77,9 @@ struct NPCMovementRealDataTests {
             / 1_000_000 / Double(frames)
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func walksChillfurrowExteriorToInteriorOffscreen() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         var route = try RealNavigationFixture.route(root: root)
         let result = route.graph.findPath(NavigationPathQuery(
             start: route.start, target: route.target

@@ -1,21 +1,8 @@
-// M10 acceptance against the user's read-only Skyrim SE install (issue #166):
-// the real-data half of "weather and time stay synchronized".
-//
-// The synthetic suite in `M10AcceptanceWeatherTests.swift` proves the mechanism
-// over a two-weather fixture plugin. What it cannot prove is that the shipped
-// plugins actually define the globals the mechanism depends on — `TimeScale` and
-// the five clock-owned time globals — that a `TimeScale` override written
-// through the runtime globals layer reaches `Renderer.currentTimescale`'s seam,
-// or that Tamriel's real climate reroll obeys the six-game-hour cadence rather
-// than the fixture's. All three need real records, so they live here.
-//
-// Deliberately light: the GLOB, WTHR, CLMT, REGN and WRLD groups of Skyrim.esm
-// are decoded from a memory-mapped file. No cell is built, no archive is opened
-// and nothing renders, which keeps this well inside the RSS watchdog
-// `tools/realtest.sh` runs.
-//
-// No game-derived bytes are written anywhere: the report goes to gitignored
-// `logs/` and names counts and editor IDs only.
+// Weather and time acceptance on the real install. It checks what the synthetic
+// suite cannot: the plugins define `TimeScale` and the clock globals, a
+// `TimeScale` override reaches the renderer, and Tamriel's climate rerolls every
+// six game hours. It decodes records only (no cell, no archive, no render), so
+// it stays light. The report in `logs/` holds counts and editor IDs only.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -25,28 +12,14 @@ import Foundation
 import Testing
 
 struct M10AcceptanceRealDataTests {
-    /// Env-gated exactly like `M10StateAcceptanceRealDataTests`: without
-    /// `OPENSKY_DATA_ROOT` the test skips instead of consulting the Steam
-    /// default. No Metal device is needed — nothing here renders.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        dataRoot != nil
-    }
-
     /// The gate's first sentence against the installed master: with the clock
     /// running at an elevated timescale written through the real `TimeScale`
     /// global, Tamriel's weather changes only on six-game-hour boundaries, and
     /// the clock, the `GameHour` projection and the panel's clock readout all
     /// describe the same instant at the end of the run.
-    @Test(.enabled(if: Self.canRun)) @MainActor
+    @Test(.enabled(if: RealDataEnvironment.canRender)) @MainActor
     func weatherAndTimeStaySynchronizedAgainstTheInstalledMaster() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let defaults = GlobalStore(file: file, pluginName: "Skyrim.esm")
         let timescaleID = try #require(
@@ -113,16 +86,9 @@ struct M10AcceptanceRealDataTests {
 
     // MARK: - Support
 
-    /// Puts a weather on screen that the automatic pick will not choose, then
-    /// resumes automatic selection with the reroll counter at zero.
-    ///
-    /// Without this the run has nothing to observe. Tamriel's authored chances
-    /// are lopsided enough that every automatic pick across the run lands on the
-    /// same weather, and a reroll that reselects the weather already showing is
-    /// by design a no-op — so "the weather never changed" would say nothing
-    /// about whether the cadence fired. Starting from a weather the pool will
-    /// not return makes the first reroll observable, and it must land exactly on
-    /// the six-game-hour boundary.
+    /// Shows a weather the automatic pick never chooses, then resumes automatic
+    /// selection. Tamriel's pool always lands on one weather, so only a start
+    /// outside the pool makes the first reroll visible.
     @MainActor
     private static func showAContrastingWeather(_ system: WeatherSystem) throws {
         system.update(deltaTime: 100, hour: M10AcceptanceClock.startHour)
