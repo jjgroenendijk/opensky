@@ -2,13 +2,9 @@
 // extracted asset is used; the named display object and its entry points are
 // installed in code.
 
-import AppKit
 import FormatsSWFTesting
-@testable import OpenSky
-@testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyMenus
-@testable import OpenSkyWorldInterface
 import simd
 import Testing
 
@@ -167,38 +163,6 @@ struct HUDMovieBridgeTests {
         #expect(arguments[1] == .string("Open Test Door"))
         #expect(arguments[2] == .boolean(true))
         #expect(arguments[5] == .boolean(true))
-    }
-
-    @Test @MainActor
-    func controllerBuildsPromptHeadingAndTargetMarker() throws {
-        let interaction = PlacedInteraction(
-            reference: FormID(1),
-            base: FormID(2),
-            position: SIMD3<Float>(0, 10, 0),
-            name: "Test Door",
-            action: .open,
-            actionLabel: "Open",
-            sounds: nil
-        )
-        let target = InteractionTarget(
-            interaction: interaction,
-            hitPosition: SIMD3<Float>(0, 10, 0),
-            distance: 10
-        )
-
-        #expect(GameViewController.hudPrompt(for: target) == "Open Test Door")
-        #expect(GameViewController.hudHeadingDegrees(-.pi / 2) == 270)
-        let marker = try #require(
-            GameViewController.hudMarkers(for: target, cameraPosition: .zero).first
-        )
-        #expect(abs(marker.headingDegrees - 90) < 0.001)
-        #expect(marker.kind == .location)
-
-        let controller = GameViewController()
-        controller.updateHUDTarget(target)
-        #expect(controller.hud.interactionTarget?.interaction.reference == FormID(1))
-        #expect(controller.hud.promptNeedsUpdate)
-        #expect(controller.hud.markersNeedUpdate)
     }
 
     // MARK: - Subtitles (issue #205)

@@ -7,6 +7,9 @@ import OpenSkyFormatsSWF
 
 nonisolated public enum SystemMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\quest_journal.swf"
+    /// Ticks the top-level fade needs to settle after `ShowMenu`, measured
+    /// against the install.
+    public static let activationTicks = 20
     /// The `QuestJournalBase` instance. Page switching is a direct method on
     /// this clip; engine lifecycle calls are `GameDelegate` callbacks.
     public static let menuPath = "/QuestJournalFader/Menu_mc"

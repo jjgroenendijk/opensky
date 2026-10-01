@@ -34,7 +34,7 @@ struct HUDAcceptanceRealDataTests {
             fileSystem: fileSystem
         )
         let target = try makeWalkTarget(scene: scene)
-        let prompt = try #require(GameViewController.hudPrompt(for: target))
+        let prompt = try #require(HUDCore.prompt(for: target))
         #expect(target.interaction.reference == WalkPathRoute.farmDoor)
         #expect(target.interaction.action == .open)
 

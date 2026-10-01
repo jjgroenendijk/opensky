@@ -182,14 +182,14 @@ final class DialogueMenuController {
     /// A missing install or a failed movie degrades to a readout, never to a
     /// conversation that cannot be left.
     private func startMovie() {
-        guard let renderer = game.renderer, let loader = game.resolveSWFLoader() else {
+        guard let renderer = game.renderer, let loader = game.swfMovies.loader else {
             movieLoaded = false
             movieError = "No game data located."
             return
         }
         do {
             // The renderer owns one SWF layer; this takes it from the HUD.
-            game.hud.isLoaded = false
+            game.hud.suspend()
             let scene = try loader.load(path: DialogueMenuMovieBridge.moviePath)
             try renderer.setSWFMovie(scene)
             renderer.swfEnabled = true
@@ -225,8 +225,7 @@ final class DialogueMenuController {
     private func stopMovie() {
         movieLoaded = false
         movieError = nil
-        guard let renderer = game.renderer else { return }
-        game.startHUD(renderer: renderer)
+        game.hud.start()
         publishSubtitle()
     }
 

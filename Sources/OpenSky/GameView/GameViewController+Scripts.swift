@@ -1,5 +1,6 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface

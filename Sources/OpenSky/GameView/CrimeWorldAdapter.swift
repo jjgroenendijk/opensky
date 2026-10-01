@@ -13,6 +13,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyRendering
 import OpenSkyWorld

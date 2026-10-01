@@ -3,6 +3,7 @@
 // after the M9.2.2 ambience-context subscription landed here.
 
 import OpenSkyFormatsCore
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -71,7 +72,7 @@ extension GameViewController {
             renderer?.weather?.setRegions(regions)
         }
         controller.onInteractionTargetChanged = { [weak self] target in
-            self?.updateHUDTarget(target)
+            self?.hud.updateTarget(target)
         }
         audioWorld.wireAudioCallbacks(controller)
         // After the audio callbacks, so the engine's own interaction handling

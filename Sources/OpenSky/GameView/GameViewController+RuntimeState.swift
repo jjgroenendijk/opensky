@@ -10,6 +10,7 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyMenus
 import OpenSkySave
 import OpenSkyScripting
 import OpenSkyScriptingInterface

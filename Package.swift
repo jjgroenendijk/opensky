@@ -682,8 +682,9 @@ targets += feature(
         "OpenSkyWorldInterface"
     ],
     tests: [
-        "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyFormatsESM", "OpenSkyFormatsSWF",
-        "OpenSkyGameData", "OpenSkyRendering", "OpenSkyShaderTypes", "RenderingTesting"
+        "FormatsCoreTesting", "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering",
+        "OpenSkyShaderTypes", "OpenSkyWorldInterface", "RenderingTesting"
     ]
 )
 

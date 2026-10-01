@@ -1,22 +1,17 @@
-// Deterministic coverage for the UI Lab SWF bridge on GameViewController
-// (M8.2.5). Runs against a synthetic BSA holding synthetic SWF blobs — never
-// extracted game files (AGENTS.md "Legal & IP boundary") — so movie
-// enumeration, decode, the tally snapshot, and the failure paths are all
-// exercised without game data and without touching Metal (the bridge treats a
-// nil renderer as "no GPU assignment", exactly as the other control bridges).
+// The UI Lab SWF section over a synthetic BSA of synthetic SWF blobs, never
+// extracted game files. No world is attached, so there is no renderer.
 
-import AppKit
 import FormatsCoreTesting
 import FormatsSWFTesting
 import Foundation
-@testable import OpenSky
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
+import RenderingTesting
 import Testing
 
-struct GameViewControllerSWFLabTests {
+struct SWFLabCoordinatorTests {
     private let dataURL: URL
 
     init() throws {
@@ -64,20 +59,24 @@ struct GameViewControllerSWFLabTests {
     }
 
     @MainActor
+    private static func makeLab(factory: (() -> SWFMovieLoader)? = nil) -> SWFLabCoordinator {
+        let movies = SWFMovieSource(factory: factory)
+        return SWFLabCoordinator(movies: movies, hud: HUDCoordinator(movies: movies))
+    }
+
+    @MainActor
     private func makeController(
         movies: [(name: String, data: Data)]
-    ) throws -> GameViewController {
-        let controller = GameViewController()
+    ) throws -> SWFLabCoordinator {
         let loader = try makeLoader(movies: movies)
-        controller.swfMovieLoaderFactory = { loader }
-        return controller
+        return Self.makeLab { loader }
     }
 
     @Test @MainActor
     func snapshotDegradesWithoutGameData() {
-        let controller = GameViewController()
-        #expect(controller.swfMoviePaths.isEmpty)
-        let snapshot = controller.swfLabSnapshot
+        let lab = Self.makeLab()
+        #expect(lab.moviePaths.isEmpty)
+        let snapshot = lab.snapshot
         #expect(!snapshot.installLoaded)
         #expect(snapshot.selectedPath == nil)
         #expect(snapshot.tally == nil)
@@ -89,28 +88,27 @@ struct GameViewControllerSWFLabTests {
     /// readout must never repeat it.
     @Test @MainActor
     func moviePathsAreSortedAndEnumeratedOnce() throws {
-        let controller = GameViewController()
         var builds = 0
         let loader = try makeLoader(movies: [
             ("zeta.swf", Self.movieBytes()), ("alpha.swf", Self.movieBytes())
         ])
-        controller.swfMovieLoaderFactory = {
+        let lab = Self.makeLab {
             builds += 1
             return loader
         }
-        #expect(controller.swfMoviePaths == ["interface\\alpha.swf", "interface\\zeta.swf"])
-        #expect(controller.swfMoviePaths.count == 2)
-        _ = controller.swfLabSnapshot
+        #expect(lab.moviePaths == ["interface\\alpha.swf", "interface\\zeta.swf"])
+        #expect(lab.moviePaths.count == 2)
+        _ = lab.snapshot
         #expect(builds == 1, "loader built \(builds) times, expected once")
-        #expect(controller.swfLabSnapshot.installLoaded)
+        #expect(lab.snapshot.installLoaded)
     }
 
     @Test @MainActor
     func selectingAMovieRecordsItsFrameOneTally() throws {
-        let controller = try makeController(movies: [("alpha.swf", Self.movieBytes())])
-        controller.selectSWFMovie(path: "interface\\alpha.swf")
+        let lab = try makeController(movies: [("alpha.swf", Self.movieBytes())])
+        lab.select(path: "interface\\alpha.swf")
 
-        let snapshot = controller.swfLabSnapshot
+        let snapshot = lab.snapshot
         #expect(snapshot.selectedPath == "interface\\alpha.swf")
         #expect(snapshot.loadError == nil)
         #expect(snapshot.tally?.placeObject2 == 2)
@@ -121,28 +119,27 @@ struct GameViewControllerSWFLabTests {
 
     @Test @MainActor
     func clearingTheSelectionResetsTheSnapshot() throws {
-        let controller = try makeController(movies: [("alpha.swf", Self.movieBytes())])
-        controller.selectSWFMovie(path: "interface\\alpha.swf")
-        controller.selectSWFMovie(path: nil)
+        let lab = try makeController(movies: [("alpha.swf", Self.movieBytes())])
+        lab.select(path: "interface\\alpha.swf")
+        lab.select(path: nil)
 
-        let snapshot = controller.swfLabSnapshot
+        let snapshot = lab.snapshot
         #expect(snapshot.selectedPath == nil)
         #expect(snapshot.tally == nil)
         #expect(snapshot.loadError == nil)
     }
 
-    /// Malformed input must not crash the app: the error is reported in the
-    /// readout and the previous selection is dropped.
+    /// Malformed input is reported in the readout, not thrown.
     @Test @MainActor
     func undecodableMovieSurfacesTheErrorInsteadOfThrowing() throws {
-        let controller = try makeController(movies: [
+        let lab = try makeController(movies: [
             ("alpha.swf", Self.movieBytes()),
             ("broken.swf", Data("not a swf container at all".utf8))
         ])
-        controller.selectSWFMovie(path: "interface\\alpha.swf")
-        controller.selectSWFMovie(path: "interface\\broken.swf")
+        lab.select(path: "interface\\alpha.swf")
+        lab.select(path: "interface\\broken.swf")
 
-        let snapshot = controller.swfLabSnapshot
+        let snapshot = lab.snapshot
         #expect(snapshot.selectedPath == "interface\\broken.swf")
         #expect(snapshot.tally == nil)
         let error = try #require(snapshot.loadError)
@@ -152,61 +149,81 @@ struct GameViewControllerSWFLabTests {
 
     @Test @MainActor
     func missingMoviePathIsReportedNotFatal() throws {
-        let controller = try makeController(movies: [("alpha.swf", Self.movieBytes())])
-        controller.selectSWFMovie(path: "interface\\absent.swf")
-        #expect(controller.swfLabSnapshot.loadError != nil)
+        let lab = try makeController(movies: [("alpha.swf", Self.movieBytes())])
+        lab.select(path: "interface\\absent.swf")
+        #expect(lab.snapshot.loadError != nil)
     }
 
-    /// Without a renderer the toggle reads the documented default (the SWF
-    /// layer is on) and setting it is inert rather than a crash.
+    /// Without a renderer the toggle reads the default, on, and ignores a set.
     @Test @MainActor
     func layerToggleIsInertWithoutARenderer() {
-        let controller = GameViewController()
-        #expect(controller.swfLayerEnabled)
-        controller.swfLayerEnabled = false
-        #expect(controller.swfLayerEnabled)
+        let lab = Self.makeLab()
+        #expect(lab.layerEnabled)
+        lab.layerEnabled = false
+        #expect(lab.layerEnabled)
     }
 
-    /// M8.3.3: every runtime control action reports why it did nothing instead
-    /// of throwing out of the panel. Without a Metal 4 device there is no
-    /// renderer, which is the same shape as a control pressed too early.
+    /// Every runtime action reports why it did nothing instead of throwing.
     @Test @MainActor
     func runtimeControlsReportInsteadOfThrowingWithoutARenderer() {
-        let controller = GameViewController()
-        controller.startSWFRuntime()
-        #expect(controller.swfLabSnapshot.loadError?.contains("No renderer") == true)
-        #expect(controller.swfLabSnapshot.runtime == nil)
+        let lab = Self.makeLab()
+        lab.startRuntime()
+        #expect(lab.snapshot.loadError?.contains("No renderer") == true)
+        #expect(lab.snapshot.runtime == nil)
 
         for action in [
-            { controller.advanceSWFRuntime(ticks: 20) },
-            { controller.sendSWFRuntimeInput(.keyDown(code: SWFKeyCode.right, ascii: 0)) },
-            { controller.callSWFRuntimeMovie("StartOpenMenuAnim") },
-            { controller.stopSWFRuntime() },
-            { controller.clearSWFInvokeLog() }
+            { lab.advanceRuntime(ticks: 20) },
+            { lab.sendRuntimeInput(.keyDown(code: SWFKeyCode.right, ascii: 0)) },
+            { lab.callRuntimeMovie("StartOpenMenuAnim") },
+            { lab.stopRuntime() },
+            { lab.clearInvokeLog() }
         ] {
             action()
         }
-        #expect(controller.swfLabSnapshot.loadError != nil)
+        #expect(lab.snapshot.loadError != nil)
     }
 
     /// An empty callback name is a user mistake, not a bridge call.
     @Test @MainActor
     func blankCallbackNameIsRejectedBeforeTheBridge() {
-        let controller = GameViewController()
-        controller.callSWFRuntimeMovie("   ")
-        #expect(controller.swfLabSnapshot.loadError == "Enter a callback name to call.")
+        let lab = Self.makeLab()
+        lab.callRuntimeMovie("   ")
+        #expect(lab.snapshot.loadError == "Enter a callback name to call.")
     }
 
-    /// The runtime half of the snapshot stays nil while the layer is on the
-    /// static frame-1 path, which is what keeps the M8.2.5 readout unchanged.
+    /// The runtime half stays nil while the layer is on the static frame-1 path.
     @Test @MainActor
     func snapshotCarriesNoRuntimeOnTheStaticPath() throws {
-        let controller = try makeController(movies: [("alpha.swf", Self.movieBytes())])
-        controller.selectSWFMovie(path: "interface\\alpha.swf")
-        let snapshot = controller.swfLabSnapshot
+        let lab = try makeController(movies: [("alpha.swf", Self.movieBytes())])
+        lab.select(path: "interface\\alpha.swf")
+        let snapshot = lab.snapshot
         #expect(snapshot.runtime == nil)
         #expect(SWFLabReadout.runtimeText(for: snapshot).hasPrefix("Runtime: stopped"))
         #expect(SWFLabReadout.invokeText(for: snapshot) == "Invokes: runtime not started")
         #expect(SWFLabReadout.tallyText(for: snapshot) == "Ops: runtime not started")
+    }
+
+    /// With a renderer the lab runs the movie, and clearing the selection hands
+    /// the layer back to the HUD, which fails here: the archive has no HUD movie.
+    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device)) @MainActor
+    func runtimeRunsOnARendererAndClearingRestartsTheHUD() throws {
+        let loader = try makeLoader(movies: [("alpha.swf", Self.movieBytes())])
+        let movies = SWFMovieSource { loader }
+        let hud = HUDCoordinator(movies: movies)
+        let lab = SWFLabCoordinator(movies: movies, hud: hud)
+        let canvas = OffscreenCanvas(width: 64, height: 64, shaders: .packageFixture)
+        let world = try FakeSWFLayerWorld(renderer: canvas.makeRenderer())
+        hud.attach(world: world)
+        lab.attach(world: world)
+
+        lab.select(path: "interface\\alpha.swf")
+        lab.startRuntime()
+        lab.advanceRuntime(ticks: 3)
+        #expect(lab.loadError == nil)
+        #expect(lab.snapshot.runtime?.isStarted == true)
+
+        lab.select(path: nil)
+        #expect(!hud.isLoaded)
+        #expect(hud.loadError != nil)
     }
 }
