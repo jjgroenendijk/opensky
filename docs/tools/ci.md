@@ -43,9 +43,10 @@ names only `Lint`, so it does not change.
 
 ## Tool versions
 
-The workflow `env` block pins every tool version. Local tools come from Homebrew through
-`make bootstrap`. When Homebrew moves a tool to a new version, change the pin to match it, or
-the two can disagree on a file.
+The workflow `env` block pins every tool version. Local tools are always the latest Homebrew
+version, installed through `make bootstrap`. When Homebrew moves a tool to a new version, change
+the pin to match it, or the two can disagree on a file. For example, SwiftFormat 0.63.0 wants
+`///` above a function declared inside another function, and 0.63.1 wants `//`.
 
 The jobs download release binaries or container images. They do not run `brew install`:
 
