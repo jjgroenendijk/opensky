@@ -59,6 +59,13 @@ The dialogue domain has `DialogueCore`, `DialogueCoordinator`, and `DialogueWorl
 state machine: it returns hold, face, and release effects, and the coordinator sends them
 through the port. The journal has `JournalCore`, `JournalCoordinator`, and `JournalWorld` in
 `Sources/OpenSkyQuests/`.
+The actor-value domain has `ActorValueCoordinator` and `ActorValueWorld` in
+`Sources/OpenSkyActors/`, answered by `ActorWorldAdapter`. That adapter also answers which
+actors are resident, through `actorValueHolder(for:)` and `combatActors()`, because every
+other adapter needs those reads. The perk and progression domain has `PerkCoordinator`,
+`ProgressionCoordinator`, and the ports `PerkWorld` and `ProgressionWorld` in
+`Sources/OpenSkyProgression/`, answered by `ProgressionWorldAdapter`. `OpenSkyProgression` may
+not import `OpenSkyMagic`, so perk abilities are applied through `PerkWorld`.
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and

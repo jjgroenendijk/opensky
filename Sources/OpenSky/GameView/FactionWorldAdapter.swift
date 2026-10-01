@@ -57,11 +57,11 @@ final class FactionWorldAdapter {
 
 extension FactionWorldAdapter: FactionWorld {
     func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
-        game.actorValueHolder(for: key)
+        game.actorWorld.actorValueHolder(for: key)
     }
 
     func residentActorKeys() -> [ReferenceKey] {
-        game.combatActors().map(\.key)
+        game.actorWorld.combatActors().map(\.key)
     }
 
     func placedActorBase(of key: ReferenceKey) -> FormID? {

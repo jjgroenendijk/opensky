@@ -62,7 +62,7 @@ extension GameViewController: PerceptionWorld {
     /// nobody can observe.
     func perceptionObservers() -> [PerceptionObserver] {
         let packaged = Set(packageReadouts().filter { $0.currentPackage != nil }.map(\.actor))
-        return combatActors().compactMap { actor in
+        return actorWorld.combatActors().compactMap { actor in
             guard !actor.isDead else { return nil }
             guard
                 factions.hostility(of: actor.key) == .hostile

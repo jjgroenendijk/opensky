@@ -79,7 +79,7 @@ extension GameViewController {
         crosshair: RuntimeReferenceEntry?
     ) -> RuntimeReferenceIndex {
         var entries = crosshair.map { [$0] } ?? []
-        for observation in combatActors() {
+        for observation in actorWorld.combatActors() {
             guard
                 let entry = streamer?.referenceEntry(key: observation.key),
                 entry.key != crosshair?.key
@@ -96,7 +96,7 @@ extension GameViewController {
         var states: [ReferenceKey: ActorConditionState] = [
             .player: actorConditionState(holder: .player, values: values)
         ]
-        for observation in combatActors() {
+        for observation in actorWorld.combatActors() {
             guard let holder = runtimeStateActorHolder(for: observation.key) else {
                 continue
             }

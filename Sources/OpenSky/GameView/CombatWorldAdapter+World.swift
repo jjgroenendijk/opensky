@@ -18,6 +18,7 @@ import OpenSkyMagicInterface
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyScripting
@@ -39,7 +40,7 @@ extension CombatWorldAdapter: CombatWorld {
 
     @discardableResult
     func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        game.reportSkillUse(use)
+        game.progression.reportSkillUse(use)
     }
 
     @discardableResult
@@ -74,12 +75,12 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     func residentActors() -> [CombatActorObservation] {
-        game.combatActors()
+        game.actorWorld.combatActors()
     }
 
     /// The nearest resident actor: the same selector the actor-value controls use.
     func selectedActor() -> ReferenceKey? {
-        game.nearestActorValueHolder()?.key
+        game.actorWorld.nearestActorValueHolder()?.key
     }
 
     /// The ground under the player stands in for the surface that was hit.
@@ -103,24 +104,30 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     func actorValues(of key: ReferenceKey) -> ((Int32) -> Float?)? {
-        guard let runtime = game.actorValues.runtime, let holder = game.actorValueHolder(for: key)
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
         else { return nil }
         return { runtime.value(at: $0, on: holder) }
     }
 
     func perkMultiplier(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Float {
-        game.perkMultiplier(at: entryPoint, on: key)
+        game.perks.multiplier(at: entryPoint, on: key)
     }
 
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {
-        guard let runtime = game.actorValues.runtime, let holder = game.actorValueHolder(for: key)
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
         else { return nil }
         return (runtime.current(of: holder).health, runtime.maximums(of: holder).health)
     }
 
     @discardableResult
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool {
-        guard let runtime = game.actorValues.runtime, let holder = game.actorValueHolder(for: key)
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
         else { return false }
         runtime.damage(.health, by: amount, on: holder)
         return true

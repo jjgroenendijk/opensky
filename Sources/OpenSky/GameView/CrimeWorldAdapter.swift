@@ -201,7 +201,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     func actorsDetectingPlayer() -> [CrimeObserver] {
         guard let perception = game.perception.runtime else { return [] }
         let detecting = Set(perception.observersDetecting(.player))
-        return game.combatActors()
+        return game.actorWorld.combatActors()
             .filter { !$0.isDead && detecting.contains($0.key) }
             .map { CrimeObserver(key: $0.key, feet: $0.feet) }
     }

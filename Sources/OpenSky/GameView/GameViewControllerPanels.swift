@@ -2,14 +2,18 @@
 // controllers `GameViewController` holds. The logic lives behind them
 // (docs/engine/coordinators.md).
 
+import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScriptingInterface
@@ -429,5 +433,107 @@ extension GameViewController: JournalControlProviding {
 
     func journalAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
         questAliasTable(editorID: editorID)
+    }
+}
+
+extension GameViewController: ActorValueControlProviding {
+    var actorValueControlSnapshot: ActorValueControlSnapshot {
+        actorValues.snapshot
+    }
+
+    var actorValueTarget: ActorValueTargetSelector {
+        get { actorValues.target }
+        set { actorValues.target = newValue }
+    }
+
+    var actorValueSelection: Int32 {
+        get { actorValues.selection }
+        set { actorValues.selection = newValue }
+    }
+
+    @discardableResult
+    func damageSelectedActor(by amount: Float) -> String {
+        actorValues.damageSelected(by: amount)
+    }
+
+    @discardableResult
+    func restoreSelectedActor(by amount: Float) -> String {
+        actorValues.restoreSelected(by: amount)
+    }
+
+    @discardableResult
+    func setSelectedActorValue(to value: Float) -> String {
+        actorValues.setSelectedValue(to: value)
+    }
+
+    @discardableResult
+    func setSelectedActorBase(to value: Float) -> String {
+        actorValues.setSelectedBase(to: value)
+    }
+
+    @discardableResult
+    func restoreSelectedActorFully() -> String {
+        actorValues.restoreSelectedFully()
+    }
+
+    @discardableResult
+    func resetSelectedActorValues() -> String {
+        actorValues.resetSelected()
+    }
+}
+
+extension GameViewController: ProgressionControlProviding {
+    var progressionControlSnapshot: ProgressionControlSnapshot {
+        progression.snapshot
+    }
+
+    var progressionSkillSelection: Int32 {
+        get { progression.skillSelection }
+        set { progression.selectSkill(newValue) }
+    }
+
+    var progressionNodeSelection: UInt32 {
+        get { progression.nodeSelection }
+        set { progression.nodeSelection = newValue }
+    }
+
+    @discardableResult
+    func advanceSelectedSkill(byUse amount: Float) -> String {
+        progression.advanceSelectedSkill(byUse: amount)
+    }
+
+    @discardableResult
+    func incrementSelectedSkill() -> String {
+        progression.incrementSelectedSkill()
+    }
+
+    @discardableResult
+    func awardCharacterExperience(_ amount: Float) -> String {
+        progression.awardCharacterExperience(amount)
+    }
+
+    @discardableResult
+    func chooseAttributePick(_ kind: ActorValueKind) -> String {
+        progression.chooseAttributePick(kind)
+    }
+
+    @discardableResult
+    func changePerkPoints(by delta: Int) -> String {
+        progression.changePerkPoints(by: delta)
+    }
+
+    @discardableResult
+    func spendPointOnSelectedPerk() -> String {
+        progression.spendPointOnSelectedPerk()
+    }
+
+    @discardableResult
+    func grantSelectedPerk() -> String {
+        progression.grantSelectedPerk()
+    }
+
+    @discardableResult
+    func revokeSelectedPerk() -> String {
+        progression.revokeSelectedPerk()
     }
 }
