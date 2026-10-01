@@ -34,12 +34,11 @@ failing the build, the linter, or the tests.
 | Gate | How it runs |
 | --- | --- |
 | Local one-shot | `make check` (first step) or `make swift-baseline` |
-| Pre-commit hook | `.githooks/pre-commit/05-swift-baseline.sh` |
 | CI | "Swift baseline" step in the `build-test` job |
 
 The CI step sits behind the same `Xcode >= 26` guard as the build and test steps. A
 hosted runner that lags the toolchain skips the whole job with a warning rather than
-failing on a compiler it was never going to build with; the local hook covers that case
+failing on a compiler it was never going to build with; local `make check` covers that case
 unconditionally, and it is the gate that actually runs today (see
 [Local environment and external state](/tools/environment.md) for the CI suspension).
 

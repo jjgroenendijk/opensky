@@ -1,15 +1,14 @@
 #!/bin/sh
 # Game-content lint (AGENTS.md "Legal & IP boundary"). Two rules, one source of
-# truth so the pre-commit hook and `make lint` cannot drift apart:
+# truth for `make lint` and CI:
 #
 #   1. Extracted Bethesda assets must never be committed, in any form.
 #   2. A frame OpenSky renders embeds the user's own game textures and meshes,
 #      so a rendered capture is game content too. Only the app icon set is a
 #      legitimately tracked image; verification captures go to gitignored logs/.
 #
-# Default: every tracked file. `--staged`: only files staged for the next
-# commit (what the pre-commit hook checks). The tracked-tree mode also catches
-# a blob that arrived by merge or rebase rather than by `git add`.
+# Checks every tracked file, so it also catches a blob that arrived by merge or
+# rebase rather than by `git add`.
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -20,14 +19,11 @@ ALLOWED_IMAGE_PATH_RE='^Sources/OpenSky/Resources/Assets\.xcassets/'
 
 indent() { while IFS= read -r line; do printf '  %s\n' "$line"; done; }
 
-case "${1:-}" in
-  --staged) files="$(git diff --cached --name-only --diff-filter=ACM)" ;;
-  '') files="$(git ls-files)" ;;
-  *)
-    printf '[FAIL] usage: %s [--staged]\n' "$0" >&2
-    exit 2
-    ;;
-esac
+if [ "$#" -ne 0 ]; then
+  printf '[FAIL] usage: %s\n' "$0" >&2
+  exit 2
+fi
+files="$(git ls-files)"
 
 assets="$(printf '%s\n' "$files" | grep -Ei "$FORBIDDEN_EXT_RE" || true)"
 if [ -n "$assets" ]; then

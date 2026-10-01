@@ -18,7 +18,7 @@
     "query": "Add a rule that every Metal shader file must have a header comment.",
     "files": [],
     "expected_behavior": [
-      "Considers a lint check or hook first, because a machine can check the rule",
+      "Considers a lint check or make target first, because a machine can check the rule",
       "If prose is still needed, places it in the nested AGENTS.md or skill where it applies, not the root AGENTS.md",
       "States the reason with the rule"
     ]

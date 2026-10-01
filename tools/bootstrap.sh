@@ -1,5 +1,5 @@
 #!/bin/sh
-# OpenSky one-shot dev bootstrap: install tools + wire git hooks. Idempotent.
+# OpenSky one-shot dev bootstrap: install tools. Idempotent.
 # Invoked by `make bootstrap`.
 set -eu
 
@@ -44,10 +44,5 @@ else
     xcodebuild -downloadComponent MetalToolchain
   fi
 fi
-
-echo "[INFO] Wiring git hooks (.githooks/hooks)..."
-git config core.hooksPath .githooks/hooks
-find .githooks -type f \( -name '*.sh' -o -path '*/hooks/*' \) -exec chmod +x {} +
-echo "  [ OK ] core.hooksPath = $(git config --get core.hooksPath)"
 
 echo "[ OK ] Bootstrap complete. Try: make check"
