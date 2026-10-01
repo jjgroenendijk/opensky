@@ -6,6 +6,8 @@ import AppKit
 import MetalKit
 import OpenSkyAudio
 import OpenSkyCombat
+import OpenSkyCrime
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -174,10 +176,13 @@ final class GameViewController: NSViewController {
     /// magic seam, and the authored `PRKR` baselines.
     var perks = PerkBridgeState()
 
-    /// Factions: the membership runtime, the interfaction relation index and the hostility
-    /// derivation over both.
-    var factions = FactionBridgeState()
-    var crime = CrimeBridgeState()
+    /// Memberships, relationship ranks and derived hostility. Its runtimes stay nil without
+    /// game data.
+    lazy var factions = FactionCoordinator(store: worldState)
+    lazy var factionWorld = FactionWorldAdapter(game: self)
+    /// Bounties, ownership, guard response and the Crime & Factions panel.
+    let crime = CrimeCoordinator()
+    lazy var crimeWorld = CrimeWorldAdapter(game: self)
 
     /// Skill advancement: the use-to-experience-to-level runtime every combat and magic seam
     /// reports into, and the last advance the readouts show.
@@ -645,5 +650,71 @@ extension GameViewController: ContainerMenuControlProviding {
     @discardableResult
     func selectContainerMenuMerchantFromInteraction() -> String {
         containerMenu.selectMerchantFromInteraction()
+    }
+}
+
+extension GameViewController: CrimeFactionControlProviding {
+    var crimeFactionSnapshot: CrimeFactionControlSnapshot {
+        crime.crimeFactionSnapshot
+    }
+
+    var bountyFactionSelection: ReferenceKey? {
+        get { crime.bountyFactionSelection }
+        set { crime.bountyFactionSelection = newValue }
+    }
+
+    var membershipFactionSelection: ReferenceKey? {
+        get { crime.membershipFactionSelection }
+        set { crime.membershipFactionSelection = newValue }
+    }
+
+    var vendorOverrideSelection: ReferenceKey? {
+        get { crime.vendorOverrideSelection }
+        set { crime.vendorOverrideSelection = newValue }
+    }
+
+    @discardableResult
+    func modifySelectedBounty(by gold: Int32, violent: Bool) -> String {
+        crime.modifySelectedBounty(by: gold, violent: violent)
+    }
+
+    @discardableResult
+    func clearSelectedBounty() -> String {
+        crime.clearSelectedBounty()
+    }
+
+    @discardableResult
+    func checkGuardConfrontation() -> String {
+        crime.checkGuardConfrontation()
+    }
+
+    @discardableResult
+    func resistArrestWithSelectedFaction() -> String {
+        crime.resistArrestWithSelectedFaction()
+    }
+
+    @discardableResult
+    func selectSocialSubjectFromCrosshair() -> String {
+        crime.selectSocialSubjectFromCrosshair()
+    }
+
+    @discardableResult
+    func selectPlayerAsSocialSubject() -> String {
+        crime.selectPlayerAsSocialSubject()
+    }
+
+    @discardableResult
+    func joinSelectedFaction(rank: Int8) -> String {
+        crime.joinSelectedFaction(rank: rank)
+    }
+
+    @discardableResult
+    func leaveSelectedFaction() -> String {
+        crime.leaveSelectedFaction()
+    }
+
+    @discardableResult
+    func barterWithSocialSubject() -> String {
+        crime.barterWithSocialSubject()
     }
 }

@@ -22,18 +22,18 @@ struct M21AcceptancePanelTests {
         let controller = GameViewController()
         let factions = try CrimeFixture.factionStore()
         let file = try CrimeFixture.file()
-        controller.factions.runtime = FactionRuntime(
-            store: controller.worldState,
+        controller.factions.attach(world: controller.factionWorld)
+        controller.factions.wire(
             factions: factions,
-            derivation: HostilityDerivation(
-                relations: FactionRelationIndex(store: factions),
-                relationships: RelationshipStore(plugins: [(CrimeFixture.pluginName, file)])
-            ),
+            relationships: RelationshipStore(plugins: [(CrimeFixture.pluginName, file)]),
+            baselines: nil,
             pluginName: CrimeFixture.pluginName
         )
-        controller.crime.reporter = CrimeReporter(
+        controller.crime.attach(world: controller.crimeWorld)
+        controller.crime.wire(
             runtime: CrimeRuntime(store: controller.worldState, factions: factions),
-            world: controller
+            locations: nil,
+            pluginName: CrimeFixture.pluginName
         )
         return controller
     }
@@ -86,7 +86,7 @@ struct M21AcceptancePanelTests {
         bounty.amountControl.stringValue = "1500"
         bounty.violentControl.state = .on
         sendScriptsControl(bounty.addControl)
-        #expect(controller.crimeGold(of: hold) == 1500)
+        #expect(controller.crime.crimeGold(of: hold) == 1500)
         #expect(controller.crime.reporter?.runtime.crimeGold(of: hold, violent: true) == 1500)
 
         bounty.refreshReadout()
@@ -96,7 +96,7 @@ struct M21AcceptancePanelTests {
         #expect(text.contains("guards confront"))
 
         sendScriptsControl(bounty.clearControl)
-        #expect(controller.crimeGold(of: hold) == 0)
+        #expect(controller.crime.crimeGold(of: hold) == 0)
         bounty.refreshReadout()
         #expect(readout("CrimeBountyStatsLabel", in: panel)
             .contains("Cleared 1500 gold owed to CrimeFactionHold."))

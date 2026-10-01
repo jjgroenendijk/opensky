@@ -48,6 +48,12 @@ combat-loop runtimes it owns. The magic domain has the same shape: `MagicCore`,
 `MagicWorldAdapter`. The coordinator is the cast loop's `CasterWorld`. The inventory domain has
 `InventoryCore`, `InventoryCoordinator`, and `InventoryWorld` in `Sources/OpenSkyInventory/`,
 answered by `InventoryWorldAdapter`. The coordinator also holds the `VendorCoordinator`.
+The faction domain has `FactionCoordinator` and `FactionWorld` in `Sources/OpenSkyFactions/`,
+answered by `FactionWorldAdapter`. Its rules are `FactionRuntime` and `HostilityDerivation`.
+The crime domain has `CrimeCore`, `CrimeCoordinator`, and `CrimeSessionWorld` in
+`Sources/OpenSkyCrime/`, answered by `CrimeWorldAdapter`. The coordinator is the bounty
+reporter's `CrimeWorld`. It reaches factions only through its port, because `OpenSkyCrime`
+may not import `OpenSkyFactions`.
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and

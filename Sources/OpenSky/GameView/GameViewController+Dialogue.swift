@@ -9,6 +9,7 @@ import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
@@ -71,7 +72,7 @@ extension GameViewController {
         return combatActors().compactMap { observation in
             guard
                 !observation.isDead,
-                combatHostility(of: observation.key) != .hostile,
+                factions.hostility(of: observation.key) != .hostile,
                 let entry = streamer.referenceEntry(key: observation.key),
                 let actor = entry.placedActor
             else {

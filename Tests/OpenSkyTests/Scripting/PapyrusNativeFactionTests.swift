@@ -283,7 +283,7 @@ struct PapyrusNativeFactionTests {
 @MainActor
 extension PapyrusNativeFactionTests {
     /// Two scripted actors plus a faction runtime wired into the bridge the way
-    /// `GameViewControllerFactions.wireFactionNatives` wires the session's.
+    /// `FactionWorldAdapter.wireNatives(bridge:)` wires the session's.
     struct Fixture {
         let session: PapyrusWorldFixture.Session
         let registry: PapyrusNativeRegistry

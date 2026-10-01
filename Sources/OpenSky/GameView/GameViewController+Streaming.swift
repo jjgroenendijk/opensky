@@ -135,7 +135,7 @@ extension GameViewController {
         wirePerks(provider: provider)
         // Memberships resolve through the template chain the actor-value
         // baselines already indexed.
-        wireFactions(provider: provider)
+        factionWorld.wireFactions(provider: provider)
         inventoryWorld.wireVendors(provider: provider)
         // Writes through the actor-value runtime and reads the equipment runtime.
         wireSkills(provider: provider)
@@ -144,7 +144,7 @@ extension GameViewController {
         wireProgression(provider: provider)
         // Ownership resolves against the FACT store the hostility derivation
         // uses, and the reporter joins the take path the world items built.
-        wireCrime(provider: provider)
+        crimeWorld.wireCrime(provider: provider)
     }
 
     private func wireLateWorldSystems(
@@ -159,7 +159,7 @@ extension GameViewController {
         wirePerception(provider: provider, renderer: renderer)
         // Right after the perception pass, which is what answers "did anybody
         // see it" for every crime.
-        attachCrimeWitnesses(perception: perception.runtime)
+        crimeWorld.attachWitnesses(perception: perception.runtime)
         // Last: the Talk candidate filter reads the death and
         // hostility state the combat and perception runtimes keep, so wiring it
         // earlier would hand the crosshair a list built before they existed.
