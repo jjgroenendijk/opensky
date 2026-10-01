@@ -73,7 +73,7 @@ extension GameViewController {
         controller.onInteractionTargetChanged = { [weak self] target in
             self?.updateHUDTarget(target)
         }
-        wireAudioCallbacks(controller)
+        audioWorld.wireAudioCallbacks(controller)
         // After the audio callbacks, so the engine's own interaction handling
         // stays first in the multicast order and Papyrus runs beside it.
         wirePapyrus(provider: provider, renderer: renderer, streamer: controller)
@@ -219,25 +219,6 @@ extension GameViewController {
             let resolution = self.worldState.globalResolution(defaults: globalStore)
             renderer.gameTime.globalResolution = resolution
             renderer.weather?.setGlobalResolution(resolution)
-        }
-    }
-
-    /// World-audio directors are built lazily alongside the audio engine, so
-    /// each callback remains a no-op until audio is enabled. Papyrus
-    /// `OnActivate` subscribes beside this interaction handler through the
-    /// same `CallbackFanOut`, and does not replace this engine event.
-    private func wireAudioCallbacks(_ controller: CellStreamer) {
-        controller.onInteraction.add { [weak self] event in
-            self?.soundDirector?.handleInteraction(event)
-        }
-        controller.onInteractionAnimation = { [weak self] event in
-            self?.soundDirector?.handleInteractionAnimation(event)
-        }
-        controller.onAmbienceContextChanged = { [weak self] context in
-            self?.soundDirector?.handleAmbienceContext(context)
-        }
-        controller.onMusicContextChanged = { [weak self] context in
-            self?.musicDirector?.handleMusicContext(context)
         }
     }
 }

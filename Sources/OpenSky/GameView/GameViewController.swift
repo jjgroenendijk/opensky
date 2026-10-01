@@ -117,32 +117,19 @@ final class GameViewController: NSViewController {
     /// invokes it once, lazily, into `swfLab`.
     var swfMovieLoaderFactory: (() -> SWFMovieLoader)?
 
-    /// Resource lookup for World > Audio. Set by the AppDelegate; nil
-    /// when game data is missing — the panel then lists nothing to play.
+    /// Resource lookup over the install. Set by the AppDelegate; nil without game data.
     var audioFileSystem: (any GameFileSource)?
-    /// World audio graph, created on first enable by the audio bridge
-    /// (GameViewController+Audio.swift), which also hands it to the renderer.
-    var worldAudio: WorldAudioEngine?
-    /// World SFX + ambience director, built beside the engine on
-    /// first enable. Subscribed to streamer callbacks; lives in
-    /// `Sources/OpenSkyWorld/Session/WorldAudioSoundDirector.swift`.
-    var soundDirector: WorldAudioSoundDirector?
-    /// Music director, built beside the engine on first enable.
-    /// Subscribed to the streamer's music-context callback and ticked by the
-    /// renderer; lives in `Sources/OpenSkyWorld/Session/WorldMusicDirector.swift`.
-    var musicDirector: WorldMusicDirector?
-    /// Footstep director, built beside the engine on first
-    /// enable. Fed by the renderer's audio tick from the locomotion bridge's
-    /// fired graph events; lives in
-    /// `Sources/OpenSkyWorld/Session/WorldAudioFootstepDirector.swift`.
-    var footstepDirector: WorldAudioFootstepDirector?
     /// The session stores the audio, crime and faction bridges read. The build
     /// runner holds the builder half, so the two share nothing mutable.
     var worldData: (any WorldDataProviding)?
-    /// Cached picker paths — enumerating every archive entry is not free.
-    var cachedAudioFileNames: [String]?
-    /// Voice picker filter, playback tracking and last-error state.
-    var voice = VoiceLabState()
+    /// The audio engine, the world directors and the World > Audio lab state.
+    lazy var audio: AudioCoordinator = {
+        let audio = AudioCoordinator()
+        audio.attach(world: audioWorld)
+        return audio
+    }()
+
+    lazy var audioWorld = AudioWorldAdapter(game: self)
     /// Selector state owned by the UI Lab SWF bridge
     /// (`GameViewController+SWFLab.swift`); nothing else writes it.
     var swfLab = SWFLabState()
@@ -351,6 +338,8 @@ final class GameViewController: NSViewController {
 /// renderer's shadow state on the main thread (same context as draw(in:)) and
 /// persists the quality choice. A nil renderer (Metal 4 unavailable) degrades to
 /// the stored/default quality and empty stats so the panel never crashes.
+extension GameViewController: AudioControlForwarding {}
+
 extension GameViewController: ShadowControlProviding {
     /// Not persisted: an A/B flip is a transient dev comparison, unlike the
     /// quality tier. A shadowless world restored on next launch would read as a
