@@ -149,7 +149,7 @@ struct M17AcceptanceRenderTests {
     }
 
     /// Brings the vanilla `dialoguemenu.swf` up over the frame the way
-    /// `GameViewController.startDialogueMovie` does, publishes a two-row list
+    /// `DialogueMenuController.startMovie()` does, publishes a two-row list
     /// into it, and returns the frame it drew.
     @MainActor
     private static func bringUpTheMenu(

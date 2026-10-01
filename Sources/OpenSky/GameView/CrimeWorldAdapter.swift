@@ -6,6 +6,7 @@ import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyCrimeInterface
+import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
@@ -84,7 +85,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     func actorName(_ key: ReferenceKey) -> String {
-        game.dialogueSpeakerLabel(for: key)
+        game.dialogueWorld.speakerLabel(for: key)
     }
 
     var crosshairInteraction: PlacedInteraction? {
@@ -222,7 +223,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     var isDialogueOpen: Bool {
-        game.dialogue.isOpen
+        game.dialogueMenu.isOpen
     }
 
     var lastDialogueOutcome: String? {
@@ -230,6 +231,6 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     func beginDialogue(with speaker: ReferenceKey) {
-        game.beginDialogue(with: speaker)
+        game.dialogueMenu.begin(with: speaker)
     }
 }

@@ -17,7 +17,7 @@ struct DialogueMenuRealDataTests {
     private static let width = 1280
     private static let height = 720
     /// Frames a publish needs before the menu's transitions have settled. The
-    /// same count `GameViewController.dialogueActivationTicks` uses, restated
+    /// same count `DialogueMenuController.activationTicks` uses, restated
     /// rather than read off it: that constant is main-actor isolated and this
     /// is a `nonisolated` stored default.
     private static let activationTicks = 30

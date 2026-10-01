@@ -6,6 +6,7 @@
 
 import AppKit
 @testable import OpenSky
+import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -38,10 +39,10 @@ final class M17AcceptanceChain {
         controller.papyrusBridge = session.bridge
         streamer = CellStreamerFixture.makeStreamer(runner: runner)
         controller.streamer = streamer
-        controller.wireDialogue(provider: DialogueOnlyProvider(), streamer: streamer)
+        controller.dialogueWorld.wireDialogue(provider: DialogueOnlyProvider(), streamer: streamer)
         // The provider seam carries a store only in a session with game data;
         // this one is synthetic, so the index is installed directly.
-        controller.dialogue.store = try M17AcceptanceFixture.dialogueStore()
+        controller.dialogue.index = try M17AcceptanceFixture.dialogueStore()
         // No cell is resident, so the app's own resident-actor walk finds
         // nobody. The speaker is supplied to the same seam it would fill.
         streamer.talk.candidateSource = { [Self.candidate] }
@@ -109,7 +110,7 @@ final class M17AcceptanceChain {
     /// is a runaway guard.
     func finishTheLine() {
         var guardCount = 0
-        while controller.dialogue.isOpen, model.state != .topicList, guardCount < 16 {
+        while controller.dialogueMenu.isOpen, model.state != .topicList, guardCount < 16 {
             choose()
             guardCount += 1
         }
@@ -118,7 +119,7 @@ final class M17AcceptanceChain {
     // MARK: - Reading the session
 
     var model: DialogueMenuModel {
-        controller.dialogue.model
+        controller.dialogueMenu.model
     }
 
     var snapshot: DialogueControlSnapshot {
