@@ -6,8 +6,6 @@ import Foundation
 import Metal
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
-@testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import RenderingTesting
 import simd
 import Testing

@@ -13,9 +13,10 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting

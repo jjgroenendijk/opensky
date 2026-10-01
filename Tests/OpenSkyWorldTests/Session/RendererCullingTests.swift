@@ -7,6 +7,7 @@ import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
@@ -108,7 +109,7 @@ struct RendererCullingTests {
         device: MTLDevice,
         camera: SceneCamera
     ) throws -> Renderer {
-        try OffscreenRendererFixture.makeRenderer(
+        try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: width, height: height,
             scene: twoCrateScene(device: device),
             camera: camera,

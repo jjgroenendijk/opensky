@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
+import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
 import OpenSkyMagicTesting
 @testable import OpenSkyWorldState

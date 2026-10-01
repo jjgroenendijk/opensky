@@ -8,6 +8,7 @@ import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
@@ -113,7 +114,7 @@ struct RendererDynamicPoseTests {
             bounds: bounds.transformed(by: transform),
             referenceFormID: reference
         )])
-        return try OffscreenRendererFixture.makeRenderer(
+        return try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: width, height: height,
             scene: scene,
             camera: camera,

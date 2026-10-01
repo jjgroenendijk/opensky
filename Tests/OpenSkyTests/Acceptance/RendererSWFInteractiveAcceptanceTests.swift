@@ -10,7 +10,9 @@ import Metal
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
+import RenderingTesting
 import simd
 import Testing
 
@@ -110,7 +112,7 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aPointerRolloverChangesTheRenderedFrame() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         let runtime = try #require(try renderer.startSWFRuntime())
         let closed = try Self.canvas.render(renderer)
@@ -146,7 +148,7 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aKeyEventReachesTheMenuHandlerAndChangesTheFrame() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         try renderer.startSWFRuntime()
         let closed = try Self.canvas.render(renderer)
@@ -164,7 +166,7 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func systemMenuBridgeSynchronizesKeyMutationToRenderedFrame() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         try renderer.startSWFRuntime()
         let closed = try Self.canvas.render(renderer)
@@ -184,7 +186,7 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func framesAreByteIdenticalBetweenInjectedEvents() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         try renderer.startSWFRuntime()
         try renderer.sendSWFInput(
@@ -213,7 +215,7 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func anUnhandledBridgeCallLeavesTheFrameUntouched() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         let runtime = try #require(try renderer.startSWFRuntime())
         let before = try Self.canvas.render(renderer)
@@ -230,7 +232,7 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aPathTargetedCallSynchronizesTheRenderedFrame() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         let runtime = try #require(try renderer.startSWFRuntime())
         let highlight = try #require(runtime.root.child(named: "highlight"))

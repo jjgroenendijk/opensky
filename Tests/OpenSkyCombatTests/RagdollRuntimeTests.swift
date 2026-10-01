@@ -7,7 +7,7 @@
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
-import OpenSkyCombatTesting
+import OpenSkyCombatFixtures
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

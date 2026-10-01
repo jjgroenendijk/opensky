@@ -167,8 +167,8 @@ sh-lint: ## Shellcheck the hooks and tools/ scripts
 cli-boundary: ## Keep AppKit out of the engine and format sources the CLI also builds
 	@./tools/lint/cli-boundary.sh && echo "[ OK ] CLI target boundary clean"
 
-module-graph: ## Check the package graph follows The Modular Architecture, with the report
-	@./tools/lint/module-graph.sh --report
+module-graph: ## Check the package graph follows The Modular Architecture
+	@./tools/lint/module-graph.sh
 
 realdata-plan: ## Check every env-gated suite is in the RealData plan
 	@./tools/lint/realdata-plan.sh \

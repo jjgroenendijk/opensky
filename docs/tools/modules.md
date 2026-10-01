@@ -42,6 +42,7 @@ A **feature module** has up to four targets:
 | `XInterface` | the protocols and value types other modules use | another module uses the feature |
 | `XTesting` | fakes and fixtures other modules' tests share | another module's tests need them |
 | `XTests` | the unit tests of `X` | `X` has tests |
+| `XFixtures` | fixtures that build the real `X`, for `XTests` and the Xcode test bundles | both use such a fixture |
 
 A module that uses a feature imports its `XInterface`, never `X`. Only the composition roots,
 the app and `OpenSkyCLI`, import feature implementations. They build the object graph at startup
@@ -239,11 +240,14 @@ module the name is the one the module declares, for example `BehaviorTesting`. F
 is the feature name plus `Testing`, for example `OpenSkyPerceptionTesting`. Its declarations are
 `public`, and it may `@testable import` the module it builds fixtures for.
 
-A testing library may depend on feature implementations, its own and others', because only
-tests link it. The `testing` helper allows that, and it is the only helper that does. A module
-that ships in the app can never depend on a testing library. The library is declared after
-every implementation it uses. Example: `OpenSkyWorldTesting` comes after `OpenSkyWorld`, because
-`CellSceneBuilderFixture` builds real cell scenes.
+A testing library depends on interfaces, lower modules, and other testing libraries, never on
+a feature implementation. So any test target may link it without building another feature.
+A fixture that needs the real implementation goes in the feature's fixtures library,
+`Tests/<Name>Fixtures/`, declared with the `fixtures` helper. It may depend on its own feature's
+implementation and on testing libraries, and only `<Name>Tests` and the Xcode test bundles may
+link it. Example: `CellSceneBuilderFixture` builds real cell scenes, so it is in
+`OpenSkyWorldFixtures`. A module that ships in the app never depends on either kind
+([The Modular Architecture](/decisions/modular-architecture.md)).
 
 A testing library changes how Xcode builds the module it uses. The app and the test bundles
 then share that module, so Xcode builds it as a dynamic framework. A framework cannot use a
@@ -261,4 +265,5 @@ test plan or scheme".
 
 A suite goes in the test target of the highest module it imports, in `Package.swift` order. A
 suite that builds a `Renderer` passes `ShaderLibraryFixture.library(device:)` as its
-`shaderLibrary`. A suite that needs the app or an acceptance chain stays in `Tests/OpenSkyTests/`.
+`shaderLibrary`. A suite that needs the app, an acceptance chain, or two feature
+implementations goes in `Tests/OpenSkyTests/`.

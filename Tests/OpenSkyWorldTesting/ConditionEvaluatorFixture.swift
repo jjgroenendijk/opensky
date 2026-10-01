@@ -12,7 +12,6 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import WorldStateTesting
 
@@ -143,24 +142,16 @@ public enum ConditionEvaluatorFixture {
 
     /// Context with the standard globals, a placed subject and a placed target.
     public static func populatedContext(clock: GameClock? = nil) throws -> ConditionContext {
-        try ConditionContext(
-            globals: standardGlobals(),
-            clock: clock,
-            references: references([
-                (formID: subjectFormID, base: subjectBase),
-                (formID: targetFormID, base: targetBase)
-            ]),
-            subject: key(subjectFormID),
-            target: key(targetFormID)
-        )
-    }
-
-    /// Evaluator over `populatedContext(clock:)`.
-    public static func evaluator(
-        clock: GameClock? = nil,
-        tally: ConditionTally = ConditionTally()
-    ) throws -> ConditionEvaluator {
-        try ConditionEvaluator(context: populatedContext(clock: clock), tally: tally)
+        var context = ConditionContext()
+        context.globals = try standardGlobals()
+        context.clock = clock
+        context.references = try references([
+            (formID: subjectFormID, base: subjectBase),
+            (formID: targetFormID, base: targetBase)
+        ])
+        context.subject = key(subjectFormID)
+        context.target = key(targetFormID)
+        return context
     }
 
     /// `GetIsID(base) == 1` under `runOn`. The condition's own reference word

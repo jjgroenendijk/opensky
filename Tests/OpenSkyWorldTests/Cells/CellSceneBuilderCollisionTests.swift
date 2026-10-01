@@ -8,6 +8,7 @@ import Metal
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import simd
 import Testing

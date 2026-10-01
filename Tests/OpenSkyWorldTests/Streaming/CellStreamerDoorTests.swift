@@ -4,6 +4,7 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import simd

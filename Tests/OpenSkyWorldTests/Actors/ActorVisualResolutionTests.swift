@@ -9,6 +9,7 @@ import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import Testing
 

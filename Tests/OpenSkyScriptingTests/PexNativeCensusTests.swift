@@ -4,7 +4,7 @@ import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
-import OpenSkyScriptingTesting
+import OpenSkyScriptingFixtures
 import Testing
 
 struct PexNativeCensusTests {

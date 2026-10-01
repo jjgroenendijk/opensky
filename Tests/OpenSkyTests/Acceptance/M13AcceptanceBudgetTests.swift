@@ -22,8 +22,8 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyRendering
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-import OpenSkyScriptingTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldTesting
 import Testing

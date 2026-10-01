@@ -28,6 +28,7 @@ import AppKit
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import simd

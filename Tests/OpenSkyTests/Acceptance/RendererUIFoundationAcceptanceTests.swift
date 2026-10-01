@@ -7,7 +7,9 @@ import Metal
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
+import RenderingTesting
 import simd
 import Testing
 
@@ -18,7 +20,7 @@ struct RendererUIFoundationAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func localizedSampleChangesPixelsOverBaseline() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         renderer.uiScene = .empty
         let base = try Self.canvas.render(renderer)
         renderer.uiScene = .localizedSample
@@ -31,7 +33,7 @@ struct RendererUIFoundationAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func localizedSampleScaleChangesPixels() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         renderer.uiScene = .localizedSample
         renderer.uiScale = 1
         let atOne = try Self.canvas.render(renderer)
@@ -47,7 +49,7 @@ struct RendererUIFoundationAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func pausedLocalizedFramesRepeatByteIdentical() throws {
-        let renderer = try Self.canvas.makeRenderer()
+        let renderer = try Self.canvas.makeSessionRenderer()
         renderer.uiScene = .localizedSample
         renderer.worldSimPaused = true
         // Warm the glyph atlas so no upload happens between the compared frames.

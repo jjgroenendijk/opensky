@@ -12,9 +12,10 @@ import AppKit
 @testable import OpenSkyMenus
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
-import OpenSkySaveTesting
-import OpenSkyScriptingTesting
+import OpenSkySaveFixtures
+import OpenSkyScriptingFixtures
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting

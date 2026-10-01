@@ -12,7 +12,7 @@ import Foundation
 @testable import OpenSkyMenus
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
-import OpenSkySaveTesting
+import OpenSkySaveFixtures
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorld

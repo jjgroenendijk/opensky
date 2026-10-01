@@ -3,6 +3,7 @@
 
 import Foundation
 @testable import OpenSkyCrime
+import OpenSkyCrimeFixtures
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM

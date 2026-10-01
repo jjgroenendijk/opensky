@@ -9,6 +9,7 @@ import Metal
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
@@ -59,7 +60,7 @@ struct RendererSceneSwapTests {
     @MainActor
     func swapToLargerSceneRegrowsRingAndRenders() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeRenderer(
+        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: Self.crateScene(device: device, count: 1),
             camera: Self.camera,
@@ -94,7 +95,7 @@ struct RendererSceneSwapTests {
     @MainActor
     func swapToEmptySceneRendersClear() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeRenderer(
+        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: Self.crateScene(device: device, count: 3),
             camera: Self.camera,
@@ -112,7 +113,7 @@ struct RendererSceneSwapTests {
     @MainActor
     func swapCameraReseedsFreeFlyPose() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeRenderer(
+        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: RenderScene(instances: []),
             camera: Self.camera,
@@ -142,7 +143,7 @@ struct RendererSceneSwapTests {
     @MainActor
     func sceneCameraReseedResetsWalkPoseBeforeNextPhysicsStep() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeRenderer(
+        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: RenderScene(instances: []),
             camera: Self.camera,
@@ -176,7 +177,7 @@ struct RendererSceneSwapTests {
     @MainActor
     func teleportCameraUsesActorOriginAsWalkFeet() throws {
         let device = try #require(Self.device)
-        let renderer = try OffscreenRendererFixture.makeRenderer(
+        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: Self.width, height: Self.height,
             scene: RenderScene(instances: []),
             shaderLibrary: ShaderLibraryFixture.library(device: device)

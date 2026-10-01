@@ -7,7 +7,7 @@
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-import OpenSkySaveTesting
+import OpenSkySaveFixtures
 @testable import OpenSkyWorldState
 import Testing
 

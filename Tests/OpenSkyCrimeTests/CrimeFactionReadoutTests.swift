@@ -5,6 +5,7 @@
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCrime
+import OpenSkyCrimeFixtures
 import OpenSkyCrimeTesting
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyGameData

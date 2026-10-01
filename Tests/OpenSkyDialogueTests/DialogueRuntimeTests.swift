@@ -9,6 +9,7 @@
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
+import OpenSkyDialogueFixtures
 @testable import OpenSkyDialogueInterface
 import OpenSkyDialogueTesting
 @testable import OpenSkyFormatsESM

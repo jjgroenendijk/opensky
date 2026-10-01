@@ -13,6 +13,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
 import simd

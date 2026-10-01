@@ -8,6 +8,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyCrime
+import OpenSkyCrimeFixtures
 import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 import Testing

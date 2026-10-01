@@ -13,7 +13,9 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
+import RenderingTesting
 import simd
 import Testing
 

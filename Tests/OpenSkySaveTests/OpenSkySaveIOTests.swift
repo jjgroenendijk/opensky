@@ -9,7 +9,7 @@
 
 import Foundation
 @testable import OpenSkySave
-import OpenSkySaveTesting
+import OpenSkySaveFixtures
 import Testing
 
 /// Redirects `.applicationSupportDirectory` into a caller-owned directory.
