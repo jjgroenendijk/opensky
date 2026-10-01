@@ -1,26 +1,16 @@
-// Metal-gated pixel evidence for the M8.3.2 dynamic-render acceptance (todo
-// 8.3.2 phase 2). The fixture reproduces the vanilla frame-1 pattern in code —
-// content placed behind an alpha-zero CXFORM, revealed only by the movie's own
-// ActionScript — because 1,032 of the 1,902 frame-1 draws across the install
-// resolve to alpha 0 and 20 of the 53 movies change no pixels at all until
-// their script runs.
-//
-// The acceptance points: bringing the AS2 runtime up turns a zero-pixel frame
-// into a many-pixel frame, a movie that is never ticked still renders
-// byte-identically (the determinism contract, now expressed as "advances only
-// on an explicit tick"), and a display list that outgrows the initial ring
-// capacity grows the ring instead of dropping draws.
-//
-// Every movie is synthetic and built in code — never an extracted game file
-// (AGENTS.md "Legal & IP boundary").
+// Dynamic SWF acceptance in pixels. Content sits behind an alpha-zero colour
+// transform until the movie's own ActionScript reveals it, as most vanilla
+// menus do at frame 1. Starting the runtime turns a blank frame into a full
+// one, an unticked movie repeats byte for byte, and a display list larger than
+// the ring grows the ring instead of dropping draws. Movies are built in code.
 
 import FormatsSWFTesting
 import Foundation
 import Metal
-import MetalKit
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -95,37 +85,25 @@ private enum SWFDynamicFixture {
 }
 
 struct RendererSWFDynamicAcceptanceTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4) else { return nil }
-        return device
-    }()
-
-    private static var hasMetal4Device: Bool {
-        device != nil
-    }
-
-    private static let width = 480
-    private static let height = 320
-    private static let animationTime: Float = 1
+    private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
+    private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)
 
     /// The milestone's pixel evidence: the same movie renders nothing at frame
     /// 1 and a full panel once its ActionScript runs.
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func actionScriptRevealsContentHiddenByAnAlphaZeroColorTransform() throws {
-        let renderer = try Self.makeRenderer()
-        let base = try Self.render(renderer)
+        let renderer = try Self.canvas.makeRenderer()
+        let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFDynamicFixture.scene(revealing: true))
-        let hidden = try Self.render(renderer)
+        let hidden = try Self.canvas.render(renderer)
         #expect(renderer.lastSWFDrawStats.drawCalls == 2, "frame 1 should still encode its draws")
-        let hiddenChanged = Self.changedPixels(base, hidden)
+        let hiddenChanged = OffscreenRendererFixture.changedPixels(base, hidden)
         #expect(hiddenChanged == 0, "alpha-zero frame 1 changed \(hiddenChanged) pixels")
 
         let runtime = try #require(try renderer.startSWFRuntime())
-        let revealed = try Self.render(renderer)
-        let revealedChanged = Self.changedPixels(base, revealed)
+        let revealed = try Self.canvas.render(renderer)
+        let revealedChanged = OffscreenRendererFixture.changedPixels(base, revealed)
         // Measured 68,160 changed pixels at 480x320; the threshold leaves room
         // for driver-level rasterization differences.
         #expect(revealedChanged > 60000, "the runtime revealed only \(revealedChanged) pixels")
@@ -139,13 +117,13 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aMovieWithoutTheRevealActionStaysBlank() throws {
-        let renderer = try Self.makeRenderer()
-        let base = try Self.render(renderer)
+        let renderer = try Self.canvas.makeRenderer()
+        let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFDynamicFixture.scene(revealing: false))
         try renderer.startSWFRuntime()
-        let rendered = try Self.render(renderer)
+        let rendered = try Self.canvas.render(renderer)
         #expect(renderer.lastSWFDrawStats.drawCalls == 2)
-        #expect(Self.changedPixels(base, rendered) == 0)
+        #expect(OffscreenRendererFixture.changedPixels(base, rendered) == 0)
     }
 
     /// Determinism survives the dynamic path: the layer moves only when
@@ -154,17 +132,17 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func framesAreByteIdenticalWhileTheRuntimeIsNotAdvanced() throws {
-        let renderer = try Self.makeRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFDynamicFixture.scene(revealing: true))
         try renderer.startSWFRuntime()
-        _ = try Self.render(renderer)
-        let first = try Self.render(renderer)
-        let second = try Self.render(renderer)
+        _ = try Self.canvas.render(renderer)
+        let first = try Self.canvas.render(renderer)
+        let second = try Self.canvas.render(renderer)
         #expect(first == second)
         // Advancing a one-frame movie changes nothing either, because the
         // playhead has nowhere to go.
         try renderer.advanceSWFRuntime()
-        #expect(try Self.render(renderer) == first)
+        #expect(try Self.canvas.render(renderer) == first)
     }
 
     /// The rings are sized for the current stream plus headroom; a tick that
@@ -172,13 +150,13 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aGrowingDisplayListGrowsTheRingsInsteadOfDroppingDraws() throws {
-        let renderer = try Self.makeRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFDynamicFixture.growingScene(count: 200))
         try renderer.startSWFRuntime()
-        _ = try Self.render(renderer)
+        _ = try Self.canvas.render(renderer)
         #expect(renderer.lastSWFDrawStats.drawCalls == 1)
         try renderer.advanceSWFRuntime()
-        _ = try Self.render(renderer)
+        _ = try Self.canvas.render(renderer)
         let stats = renderer.lastSWFDrawStats
         #expect(stats.drawCalls == 201, "encoded \(stats.drawCalls) of 201 draws")
         #expect(stats.skippedItems == 0, "\(stats.skippedItems) draws were dropped")
@@ -189,58 +167,15 @@ struct RendererSWFDynamicAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func stoppingTheRuntimeRestoresTheStaticFrame() throws {
-        let renderer = try Self.makeRenderer()
-        let base = try Self.render(renderer)
+        let renderer = try Self.canvas.makeRenderer()
+        let base = try Self.canvas.render(renderer)
         try renderer.setSWFMovie(SWFDynamicFixture.scene(revealing: true))
-        let hidden = try Self.render(renderer)
+        let hidden = try Self.canvas.render(renderer)
         try renderer.startSWFRuntime()
-        #expect(try Self.changedPixels(base, Self.render(renderer)) > 2000)
+        #expect(try OffscreenRendererFixture
+            .changedPixels(base, Self.canvas.render(renderer)) > 2000)
         try renderer.stopSWFRuntime()
         #expect(renderer.swfRuntime == nil)
-        #expect(try Self.render(renderer) == hidden)
-    }
-
-    // MARK: - Helpers
-
-    @MainActor
-    private static func makeRenderer() throws -> Renderer {
-        let device = try #require(self.device)
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: width, height: height), device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
-    }
-
-    @MainActor
-    private static func render(_ renderer: Renderer) throws -> [UInt8] {
-        let texture = try renderer.renderOffscreen(
-            width: width, height: height, animationTime: animationTime
-        )
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return } // non-empty
-            texture.getBytes(
-                base,
-                bytesPerRow: width * 4,
-                from: MTLRegionMake2D(0, 0, width, height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
-    }
-
-    /// Count of pixels differing beyond a small per-channel threshold.
-    private static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        var changed = 0
-        for pixel in stride(from: 0, to: lhs.count, by: 4) {
-            let delta = (0 ..< 3).map { abs(Int(lhs[pixel + $0]) - Int(rhs[pixel + $0])) }
-                .max() ?? 0
-            if delta > 8 {
-                changed += 1
-            }
-        }
-        return changed
+        #expect(try Self.canvas.render(renderer) == hidden)
     }
 }

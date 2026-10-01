@@ -1,6 +1,5 @@
-// What the player is standing on, reported by the ground contact (issue #358).
-// This is the argument the footstep chain was missing: the collision world
-// carries a per-shape material, and the controller says which one is underfoot.
+// The ground contact reports the material under the player's feet. Each
+// collision shape carries a material, and the footstep chain reads it.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -8,6 +7,7 @@
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import PhysicsTesting
 import simd
 import Testing
 
@@ -19,7 +19,10 @@ struct WalkControllerGroundMaterialTests {
     @Test func standingOnAMeshReportsThatMeshsMaterial() {
         var camera = Self.camera(feet: SIMD3(0, 0, 40))
         var controller = WalkController(cameraPosition: camera.position)
-        let query = Self.query([Self.floor(material: Self.wood)])
+        let query = DynamicBodyScene.candidateQuery([DynamicBodyScene.floor(
+            extent: 200,
+            material: Self.wood
+        )])
 
         Self.settle(&controller, camera: &camera, query: query)
 
@@ -30,7 +33,10 @@ struct WalkControllerGroundMaterialTests {
     @Test func fallingReportsNoMaterialAtAll() {
         var camera = Self.camera(feet: SIMD3(0, 0, 4000))
         var controller = WalkController(cameraPosition: camera.position)
-        let query = Self.query([Self.floor(material: Self.wood)])
+        let query = DynamicBodyScene.candidateQuery([DynamicBodyScene.floor(
+            extent: 200,
+            material: Self.wood
+        )])
 
         controller.update(
             camera: &camera,
@@ -67,7 +73,10 @@ struct WalkControllerGroundMaterialTests {
     @Test func terrainWinsOverAMeshItIsRestingAgainst() {
         var camera = Self.camera(feet: SIMD3(0, 0, 10))
         var controller = WalkController(cameraPosition: camera.position)
-        let query = Self.query([Self.floor(material: Self.wood)])
+        let query = DynamicBodyScene.candidateQuery([DynamicBodyScene.floor(
+            extent: 200,
+            material: Self.wood
+        )])
         let ground: WalkController.GroundSampler = { _ in
             TerrainGroundSample(height: 0, normal: SIMD3(0, 0, 1), material: Self.snow)
         }
@@ -89,12 +98,15 @@ struct WalkControllerGroundMaterialTests {
     @Test func aWallBesideTheFeetDoesNotDecideTheMaterial() {
         var camera = Self.camera(feet: SIMD3(0, 0, 40))
         var controller = WalkController(cameraPosition: camera.position)
-        let wall = Self.quad(
+        let wall = DynamicBodyScene.quad(
             SIMD3(20, -100, -10), SIMD3(20, 100, -10),
             SIMD3(20, 100, 200), SIMD3(20, -100, 200),
             material: Self.stone
         )
-        let query = Self.query([Self.floor(material: Self.wood), wall])
+        let query = DynamicBodyScene.candidateQuery([
+            DynamicBodyScene.floor(extent: 200, material: Self.wood),
+            wall
+        ])
 
         Self.settle(&controller, camera: &camera, query: query, moveForward: 1)
 
@@ -105,7 +117,10 @@ struct WalkControllerGroundMaterialTests {
     @Test func aSurfaceWithNoMaterialReportsNone() {
         var camera = Self.camera(feet: SIMD3(0, 0, 40))
         var controller = WalkController(cameraPosition: camera.position)
-        let query = Self.query([Self.floor(material: nil)])
+        let query = DynamicBodyScene.candidateQuery([DynamicBodyScene.floor(
+            extent: 200,
+            material: nil
+        )])
 
         Self.settle(&controller, camera: &camera, query: query)
 
@@ -116,8 +131,8 @@ struct WalkControllerGroundMaterialTests {
     @Test func resetForgetsTheSurface() {
         var camera = Self.camera(feet: SIMD3(0, 0, 40))
         var controller = WalkController(cameraPosition: camera.position)
-        Self.settle(&controller, camera: &camera, query: Self.query([
-            Self.floor(material: Self.wood)
+        Self.settle(&controller, camera: &camera, query: DynamicBodyScene.candidateQuery([
+            DynamicBodyScene.floor(extent: 200, material: Self.wood)
         ]))
 
         controller.reset(cameraPosition: camera.position)
@@ -151,42 +166,6 @@ struct WalkControllerGroundMaterialTests {
             position: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             yaw: 0,
             pitch: 0
-        )
-    }
-
-    private static func query(
-        _ shapes: [StaticCollisionShape]
-    ) -> WalkController.CollisionQuery {
-        let collision = StaticCollisionSet(
-            location: nil,
-            shapes: shapes,
-            stats: StaticCollisionStats()
-        )
-        return collision.candidates
-    }
-
-    private static func floor(material: FormID?) -> StaticCollisionShape {
-        quad(
-            SIMD3(-200, -200, 0), SIMD3(200, -200, 0),
-            SIMD3(200, 200, 0), SIMD3(-200, 200, 0),
-            material: material
-        )
-    }
-
-    private static func quad(
-        _ first: SIMD3<Float>,
-        _ second: SIMD3<Float>,
-        _ third: SIMD3<Float>,
-        _ fourth: SIMD3<Float>,
-        material: FormID?
-    ) -> StaticCollisionShape {
-        let vertices = [first, second, third, fourth]
-        return StaticCollisionShape(
-            reference: FormID(1),
-            transform: matrix_identity_float4x4,
-            geometry: .triangleSoup(vertices: vertices, indices: [0, 1, 2, 0, 2, 3]),
-            bounds: ModelBounds.containing(vertices) ?? ModelBounds(min: .zero, max: .zero),
-            material: material
         )
     }
 }

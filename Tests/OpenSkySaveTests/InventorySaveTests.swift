@@ -1,12 +1,7 @@
-// INVN chunk tests (issue #176): the additive inventory chunk in the OpenSky
-// native save container.
-//
-// Two properties matter beyond the round trip. First, a save carrying
-// inventory must still be readable by a build that knows nothing about the
-// chunk, which is what the "older build" case simulates by decoding with the
-// tag renamed. Second, `RDLT` must not gain anything: an owner whose only
-// delta is its inventory writes no `RDLT` entry at all, so the bytes an older
-// build sees are exactly the ones it would have written itself.
+// INVN chunk: inventories in the native save.
+// An older build must still load the save, which the renamed-tag case
+// simulates, and `RDLT` must gain no entry for a reference whose only
+// component is this one.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -62,26 +57,18 @@ struct InventorySaveTests {
                 components: [ReferenceInventoryState(
                     stacks: [InventoryStack(item: gold, count: 7)]
                 ).erased]
-            ),
-            OpenSkySaveFixture.entry(
-                key: .plugin(name: "skyrim.esm", objectID: 1),
-                cell: nil,
-                components: [ReferenceDeletionState.deleted.erased]
             )
         ]
-        return WorldStateSnapshot(
-            entries: entries.sorted { $0.key < $1.key },
+        return OpenSkySaveFixture.snapshot(
+            entries,
+            bystanderCell: nil,
             nextGeneratedSequence: 12,
             sequence: 99
         )
     }
 
     private func encode(_ snapshot: WorldStateSnapshot) -> Data {
-        OpenSkySaveEncoder.encode(
-            snapshot: snapshot,
-            fingerprint: OpenSkySaveFixture.fingerprint,
-            metadata: OpenSkySaveFixture.metadata
-        )
+        OpenSkySaveFixture.encode(snapshot)
     }
 
     // MARK: - Round trip

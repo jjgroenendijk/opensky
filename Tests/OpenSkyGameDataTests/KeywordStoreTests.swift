@@ -11,12 +11,16 @@ import Testing
 struct KeywordStoreTests {
     @Test
     func laterOverrideWinsAndEditorIDLookupIsCaseInsensitive() throws {
-        let base = try plugin(keywords: [
-            keyword(formID: 0x42, editorID: "VendorItemWeapon")
+        let base = try KeywordFixture.plugin(keywords: [
+            KeywordFixture.recordBytes(formID: 0x42, editorID: "VendorItemWeapon", hasColor: true)
         ])
-        let patch = try plugin(
+        let patch = try KeywordFixture.plugin(
             masters: ["Base.esm"],
-            keywords: [keyword(formID: 0x42, editorID: "PatchedVendorKeyword")]
+            keywords: [KeywordFixture.recordBytes(
+                formID: 0x42,
+                editorID: "PatchedVendorKeyword",
+                hasColor: true
+            )]
         )
         let store = KeywordStore(plugins: [("Base.esm", base), ("Patch.esp", patch)])
 
@@ -31,11 +35,11 @@ struct KeywordStoreTests {
 
     @Test
     func laterPluginWinsWhenDifferentIdentitiesShareAnEditorID() throws {
-        let base = try plugin(keywords: [
-            keyword(formID: 0x10, editorID: "SharedKeyword")
+        let base = try KeywordFixture.plugin(keywords: [
+            KeywordFixture.recordBytes(formID: 0x10, editorID: "SharedKeyword", hasColor: true)
         ])
-        let patch = try plugin(keywords: [
-            keyword(formID: 0x20, editorID: "SharedKeyword")
+        let patch = try KeywordFixture.plugin(keywords: [
+            KeywordFixture.recordBytes(formID: 0x20, editorID: "SharedKeyword", hasColor: true)
         ])
         let store = KeywordStore(plugins: [("Base.esm", base), ("Patch.esp", patch)])
 
@@ -47,13 +51,17 @@ struct KeywordStoreTests {
 
     @Test
     func keywordListResolvesTwoPluginLinksAndTestsByName() throws {
-        let base = try plugin(keywords: [
-            keyword(formID: 1, editorID: "VendorItemWeapon"),
-            keyword(formID: 2, editorID: "WeapTypeSword")
+        let base = try KeywordFixture.plugin(keywords: [
+            KeywordFixture.recordBytes(formID: 1, editorID: "VendorItemWeapon", hasColor: true),
+            KeywordFixture.recordBytes(formID: 2, editorID: "WeapTypeSword", hasColor: true)
         ])
-        let child = try plugin(
+        let child = try KeywordFixture.plugin(
             masters: ["Base.esm"],
-            keywords: [keyword(formID: 0x0100_0003, editorID: "PatchOnlyKeyword")]
+            keywords: [KeywordFixture.recordBytes(
+                formID: 0x0100_0003,
+                editorID: "PatchOnlyKeyword",
+                hasColor: true
+            )]
         )
         let store = KeywordStore(plugins: [("Base.esm", base), ("Patch.esp", child)])
         var list = KeywordList()
@@ -74,28 +82,12 @@ struct KeywordStoreTests {
 
     @Test
     func danglingKeywordRemainsVisibleInDisplayText() throws {
-        let file = try plugin(keywords: [])
+        let file = try KeywordFixture.plugin(keywords: [])
         let store = KeywordStore(plugins: [("Base.esm", file)])
 
         #expect(
             store.displayString(for: FormID(0x00AB_CDEF), fromPlugin: "Base.esm")
                 == "[UNRESOLVED] 00ABCDEF"
-        )
-    }
-
-    private func plugin(masters: [String] = [], keywords: [Data]) throws -> ESMFile {
-        try ESMFile(
-            data: ESMFixture.tes4(masters: masters)
-                + ESMFixture.topGroup("KYWD", contents: keywords.reduce(Data(), +))
-        )
-    }
-
-    private func keyword(formID: UInt32, editorID: String) -> Data {
-        ESMFixture.record(
-            "KYWD",
-            formID: formID,
-            data: ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-                + ESMFixture.field("CNAM", Data([1, 2, 3, 4]))
         )
     }
 }

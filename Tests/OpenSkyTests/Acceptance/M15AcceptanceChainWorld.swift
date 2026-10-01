@@ -8,6 +8,7 @@
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyCombatTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -196,26 +197,7 @@ extension M15AcceptanceChain: RagdollWorldSeam {
 
 // MARK: - The combat loop
 
-extension M15AcceptanceChain: CombatLoopWorld {
-    /// Casting is item 19.10's, not this chain's: the acceptance fight is a
-    /// melee one and an opponent with nothing castable takes exactly the path
-    /// it took before 19.10 existed.
-    func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
-        .none
-    }
-
-    @discardableResult
-    func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        false
-    }
-
-    @discardableResult
-    func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        false
-    }
-
-    func cancelCombatCast(by key: ReferenceKey) {}
-
+extension M15AcceptanceChain: NoCasterCombatWorld {
     var combatPlayer: MeleeAttacker {
         meleeAttacker
     }

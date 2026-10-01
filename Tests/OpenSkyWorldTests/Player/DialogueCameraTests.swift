@@ -1,6 +1,5 @@
-// Dialogue-camera framing, projection policy, and the speaker's turn
-// (issue #427, roadmap item 17.4, scope point 6). Synthetic transforms only —
-// no install, no device, no window.
+// Dialogue-camera framing, projection policy, and the speaker's turn.
+// Synthetic transforms only.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -10,6 +9,7 @@
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import PhysicsTesting
 import simd
 import Testing
 
@@ -169,12 +169,12 @@ struct DialogueCameraTests {
     func aWallBehindThePlayerPullsTheCameraIn() {
         var camera = DialogueCamera()
         let wallX: Float = 80
-        let wall = Self.quad(
+        let wall = DynamicBodyScene.quad(
             SIMD3(wallX, -400, -400), SIMD3(wallX, 400, -400),
             SIMD3(wallX, 400, 400), SIMD3(wallX, -400, 400)
         )
         let pose = camera.resolve(
-            subject: Self.subject, collisionQuery: Self.query([wall])
+            subject: Self.subject, collisionQuery: DynamicBodyScene.candidateQuery([wall])
         )
         #expect(pose.isCollisionLimited)
         #expect(pose.distance < DialogueCamera.framingDistance())
@@ -193,12 +193,12 @@ struct DialogueCameraTests {
     @Test
     func theCameraNeverEndsUpInsideTheSpeaker() {
         var camera = DialogueCamera()
-        let wall = Self.quad(
+        let wall = DynamicBodyScene.quad(
             SIMD3(2, -400, -400), SIMD3(2, 400, -400),
             SIMD3(2, 400, 400), SIMD3(2, -400, 400)
         )
         let pose = camera.resolve(
-            subject: Self.subject, collisionQuery: Self.query([wall])
+            subject: Self.subject, collisionQuery: DynamicBodyScene.candidateQuery([wall])
         )
         #expect(pose.distance >= PlayerCapsule.standard.radius)
     }
@@ -314,31 +314,6 @@ struct DialogueCameraTests {
             ),
             feetPosition: .zero,
             yaw: yaw
-        )
-    }
-
-    private static func query(
-        _ shapes: [StaticCollisionShape]
-    ) -> WalkController.CollisionQuery {
-        StaticCollisionSet(
-            location: nil,
-            shapes: shapes,
-            stats: StaticCollisionStats()
-        ).candidates
-    }
-
-    private static func quad(
-        _ first: SIMD3<Float>,
-        _ second: SIMD3<Float>,
-        _ third: SIMD3<Float>,
-        _ fourth: SIMD3<Float>
-    ) -> StaticCollisionShape {
-        let vertices = [first, second, third, fourth]
-        return StaticCollisionShape(
-            reference: FormID(1),
-            transform: matrix_identity_float4x4,
-            geometry: .triangleSoup(vertices: vertices, indices: [0, 1, 2, 0, 2, 3]),
-            bounds: ModelBounds.containing(vertices) ?? ModelBounds(min: .zero, max: .zero)
         )
     }
 }

@@ -1,7 +1,5 @@
-// Synthetic FACT and NPC_ records for the faction decoder, store and template
-// suites. Every layout is authored from the cited field spec
-// (docs/formats/factions.md) and contains no bytes from the game install
-// (AGENTS.md "Legal & IP boundary").
+// Synthetic FACT and NPC_ records for the faction suites. Layout:
+// docs/formats/factions.md.
 
 import FormatsCoreTesting
 import Foundation
@@ -176,6 +174,34 @@ public enum FactionFixture: Sendable {
     }
 
     /// Parses one fixture record out of its bytes.
+    /// `actor(...)` decoded into the `ActorBase` a store reads.
+    public static func actorBase(
+        formID: UInt32,
+        editorID: String,
+        templateFlags: UInt16 = 0,
+        template: UInt32? = nil,
+        factions: [(faction: UInt32, rank: Int8)] = []
+    ) throws -> ActorBase {
+        try ActorBase(
+            record: decode(actor(
+                formID: formID,
+                editorID: editorID,
+                templateFlags: templateFlags,
+                template: template,
+                factions: factions
+            )),
+            localized: false
+        )
+    }
+
+    /// A plugin with one FACT group holding `factions`.
+    public static func plugin(masters: [String] = [], factions: [Data]) throws -> ESMFile {
+        try ESMFile(
+            data: ESMFixture.tes4(masters: masters)
+                + ESMFixture.topGroup("FACT", contents: factions.reduce(Data(), +))
+        )
+    }
+
     public static func decode(_ bytes: Data) throws -> ESMRecord {
         let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
         guard case let .record(record)? = children.first else {

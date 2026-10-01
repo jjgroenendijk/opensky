@@ -34,22 +34,8 @@ struct PlacedReferenceXPRMTests {
         return ESMFixture.field("XPRM", payload.prefix(payload.count - truncate))
     }
 
-    private func reference(_ extraFields: Data) throws -> PlacedReference {
-        var name = Data()
-        name.appendUInt32(0x0002_D4E2)
-        let fields = ESMFixture.field("NAME", name)
-            + ESMFixture.field("DATA", Data(count: 24))
-            + extraFields
-        let bytes = ESMFixture.record("REFR", formID: 0x1000, data: fields)
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a REFR record")
-        }
-        return try PlacedReference(record: record)
-    }
-
     @Test func decodesEveryFieldOfAPrimitive() throws {
-        let primitive = try #require(try reference(xprm()).primitive)
+        let primitive = try #require(try PlacedReferenceFixture.reference(xprm()).primitive)
         #expect(primitive.halfExtents == SIMD3(64, 128, 256))
         #expect(primitive.color == SIMD3(0.25, 0.5, 1))
         #expect(primitive.unknown == 0.15)
@@ -66,7 +52,7 @@ struct PlacedReferenceXPRMTests {
         (UInt32(4), PrimitiveType.line)
     ])
     func decodesEveryPrimitiveType(raw: UInt32, expected: PrimitiveType) throws {
-        let refr = try reference(xprm(type: raw))
+        let refr = try PlacedReferenceFixture.reference(xprm(type: raw))
         #expect(refr.primitive?.type == expected)
         #expect(expected.rawValue == raw)
     }
@@ -74,13 +60,16 @@ struct PlacedReferenceXPRMTests {
     /// A zero axis is legal — Skyrim.esm has 129 of them — so a degenerate
     /// volume must decode rather than be rejected.
     @Test func keepsADegenerateHalfExtentAxis() throws {
-        let refr = try reference(xprm(halfExtents: SIMD3(0, 32, 64), type: 4))
+        let refr = try PlacedReferenceFixture.reference(xprm(
+            halfExtents: SIMD3(0, 32, 64),
+            type: 4
+        ))
         #expect(refr.primitive?.halfExtents == SIMD3<Float>(0, 32, 64))
         #expect(refr.primitive?.type == .line)
     }
 
     @Test func absentPrimitiveLeavesTheFieldNil() throws {
-        let refr = try reference(Data())
+        let refr = try PlacedReferenceFixture.reference(Data())
         #expect(refr.primitive == nil)
         #expect(refr.base == FormID(0x0002_D4E2))
     }
@@ -89,19 +78,19 @@ struct PlacedReferenceXPRMTests {
     /// a truncated read would shift every field.
     @Test func rejectsTruncatedPrimitive() throws {
         #expect(throws: ESMError.malformed("REFR 00001000 XPRM has 28 bytes, expected 32")) {
-            _ = try reference(xprm(truncate: 4))
+            _ = try PlacedReferenceFixture.reference(xprm(truncate: 4))
         }
     }
 
     @Test func rejectsOversizedPrimitive() throws {
         #expect(throws: ESMError.malformed("REFR 00001000 XPRM has 36 bytes, expected 32")) {
-            _ = try reference(xprm(trailing: 4))
+            _ = try PlacedReferenceFixture.reference(xprm(trailing: 4))
         }
     }
 
     @Test func rejectsPrimitiveTypeOutsideTheEnum() throws {
         #expect(throws: ESMError.malformed("REFR 00001000 XPRM has unknown type 5")) {
-            _ = try reference(xprm(type: 5))
+            _ = try PlacedReferenceFixture.reference(xprm(type: 5))
         }
     }
 
@@ -110,7 +99,7 @@ struct PlacedReferenceXPRMTests {
     @Test func primitiveCoexistsWithScriptAttachments() throws {
         let script = VMADFixture.Script("OpenSkyProbe", properties: [])
         let vmad = ESMFixture.field("VMAD", VMADFixture.payload(scripts: [script]))
-        let refr = try reference(vmad + xprm(type: 2))
+        let refr = try PlacedReferenceFixture.reference(vmad + xprm(type: 2))
         #expect(refr.primitive?.type == .sphere)
         #expect(refr.scriptData.scripts.map(\.name) == ["OpenSkyProbe"])
     }

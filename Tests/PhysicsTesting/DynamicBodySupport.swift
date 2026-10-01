@@ -1,7 +1,5 @@
-// Shared scene builders for the dynamic rigid-body suites (issue #193).
-// Everything here is synthetic: a floor, a wall, and boxes described in code.
-// No game asset is read and none could be — the solver's inputs are engine
-// values, not NIF bytes.
+// Synthetic collision scenes for the physics, capsule, and camera suites: a
+// floor, walls, boxes, and the queries over them, all built in code.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -12,10 +10,15 @@ import simd
 
 public enum DynamicBodyScene {
     /// A floor quad centred on the origin, `extent` units to each side.
-    public static func floor(z: Float = 0, extent: Float = 400) -> StaticCollisionShape {
+    public static func floor(
+        z: Float = 0,
+        extent: Float = 400,
+        material: FormID? = nil
+    ) -> StaticCollisionShape {
         quad(
             SIMD3(-extent, -extent, z), SIMD3(extent, -extent, z),
-            SIMD3(extent, extent, z), SIMD3(-extent, extent, z)
+            SIMD3(extent, extent, z), SIMD3(-extent, extent, z),
+            material: material
         )
     }
 
@@ -27,29 +30,49 @@ public enum DynamicBodyScene {
         )
     }
 
-    /// A quad whose winding decides which way it faces: the narrowphase reads a
-    /// triangle soup's surface normal straight off its winding, the way vanilla
-    /// authored it (issue #392), so a fixture wound the other way is a
-    /// back-facing surface rather than a two-sided one. `first -> second ->
-    /// third` counter-clockwise seen from the front.
+    /// A one-sided quad: the narrowphase reads the normal off the winding, so
+    /// `first -> second -> third` runs counter-clockwise seen from the front.
     public static func quad(
         _ first: SIMD3<Float>,
         _ second: SIMD3<Float>,
         _ third: SIMD3<Float>,
         _ fourth: SIMD3<Float>,
-        reference: FormID = FormID(1)
+        reference: FormID = FormID(1),
+        material: FormID? = nil
     ) -> StaticCollisionShape {
         let vertices = [first, second, third, fourth]
-        // ModelBounds.containing never returns nil for four points, but the
-        // no-force-unwrap rule holds in tests too.
         let bounds = ModelBounds.containing(vertices)
             ?? ModelBounds(min: .zero, max: .zero)
         return StaticCollisionShape(
             reference: reference,
             transform: matrix_identity_float4x4,
             geometry: .triangleSoup(vertices: vertices, indices: [0, 1, 2, 0, 2, 3]),
-            bounds: bounds
+            bounds: bounds,
+            material: material
         )
+    }
+
+    /// An axis-aligned static box of half-extent `half`, centred at `center`.
+    public static func box(
+        center: SIMD3<Float>,
+        half: SIMD3<Float>,
+        reference: FormID = FormID(2)
+    ) -> StaticCollisionShape {
+        StaticCollisionShape(
+            reference: reference,
+            transform: MatrixMath.translation(center),
+            geometry: .box(halfExtents: half),
+            bounds: ModelBounds(min: center - half, max: center + half)
+        )
+    }
+
+    /// The candidate query of a `StaticCollisionSet` over `shapes`, as a
+    /// streamed cell hands it to the player controller.
+    public static func candidateQuery(_ shapes: [StaticCollisionShape])
+        -> (ModelBounds) -> [StaticCollisionShape]
+    {
+        StaticCollisionSet(location: nil, shapes: shapes, stats: StaticCollisionStats())
+            .candidates
     }
 
     public static func query(_ shapes: [StaticCollisionShape])

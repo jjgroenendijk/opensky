@@ -2,6 +2,7 @@
 
 import FormatsESMTesting
 import Foundation
+import GameDataTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -10,10 +11,10 @@ import Testing
 struct MagicEffectStoreTests {
     @Test
     func laterOverrideWinsAndEditorLookupIsCaseInsensitive() throws {
-        let base = try plugin(records: [
+        let base = try ESMFixture.plugin(records: [
             magicEffect(formID: 0x42, editorID: "BaseEffect", name: "Base name")
         ])
-        let patch = try plugin(
+        let patch = try ESMFixture.plugin(
             masters: ["Base.esm"],
             records: [magicEffect(formID: 0x42, editorID: "PatchedEffect", name: "Winner")]
         )
@@ -31,21 +32,9 @@ struct MagicEffectStoreTests {
 
     @Test
     func alchemyEffectResolvesAcrossTwoPluginIndex() throws {
-        let base = try plugin(records: [
-            magicEffect(formID: 1, editorID: "RestoreHealth", name: "Restore Health")
-        ])
-        let alchemyFields = ESMFixture.field("EDID", ESMFixture.zstring("TestPotion"))
-            + InventoryFixture.effectFields(effect: 1, magnitude: 10, area: 0, duration: 0)
-        let child = try plugin(
-            masters: ["Base.esm"],
-            records: [ESMFixture.record("ALCH", formID: 0x0100_0002, data: alchemyFields)]
-        )
-        let index = RecordIndex(
-            plugins: [("Base.esm", base), ("Patch.esp", child)],
-            recordTypes: ["MGEF", "ALCH"]
-        )
+        let (index, child) = try PotionIndexFixture.index()
         let store = MagicEffectStore(index: index)
-        let alchemyRecord = try firstRecord(type: "ALCH", in: child)
+        let alchemyRecord = try SpellStoreFixture.firstRecord(type: "ALCH", in: child)
         let item = try Ingestible(record: alchemyRecord, localized: false)
         let resolved = try #require(item.effects.first?.resolved(
             fromPlugin: "Patch.esp",
@@ -57,10 +46,10 @@ struct MagicEffectStoreTests {
 
     @Test
     func malformedOverrideFallsBackToEarlierReadableDefinition() throws {
-        let base = try plugin(records: [
+        let base = try ESMFixture.plugin(records: [
             magicEffect(formID: 0x42, editorID: "BaseEffect", name: "Readable")
         ])
-        let patch = try plugin(
+        let patch = try ESMFixture.plugin(
             masters: ["Base.esm"],
             records: [ESMFixture.record(
                 "MGEF",
@@ -78,17 +67,6 @@ struct MagicEffectStoreTests {
         #expect(effect.sourcePlugin == "Base.esm")
     }
 
-    private func plugin(masters: [String] = [], records: [Data]) throws -> ESMFile {
-        let grouped = Dictionary(grouping: records) { record in
-            String(bytes: record.prefix(4), encoding: .ascii) ?? "MGEF"
-        }
-        var data = ESMFixture.tes4(masters: masters)
-        for (type, groupedRecords) in grouped.sorted(by: { $0.key < $1.key }) {
-            data += ESMFixture.topGroup(type, contents: groupedRecords.reduce(Data(), +))
-        }
-        return try ESMFile(data: data)
-    }
-
     private func magicEffect(formID: UInt32, editorID: String, name: String) -> Data {
         ESMFixture.record(
             "MGEF",
@@ -97,14 +75,5 @@ struct MagicEffectStoreTests {
                 + ESMFixture.field("FULL", ESMFixture.zstring(name))
                 + ESMFixture.field("DATA", MagicEffectFixture.data())
         )
-    }
-
-    private func firstRecord(type: String, in file: ESMFile) throws -> ESMRecord {
-        let group = try #require(file.topGroups.first { $0.recordType?.description == type })
-        let child = try #require(try group.children().first)
-        guard case let .record(record) = child else {
-            throw ESMError.malformed("fixture child is not a record")
-        }
-        return record
     }
 }

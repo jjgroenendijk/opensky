@@ -1,10 +1,6 @@
-// The active-effect runtime (issue #469, roadmap item 19.6): instant
-// application and the two timed behaviours the Recover flag selects, including
-// the exact reversal a held modifier makes on expiry. Condition gating, the
-// stacking rules and dispel are `ActiveEffectStackingTests`.
-//
-// Records are synthetic and built in code (`ActiveEffectFixture`) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
+// The active-effect runtime: instant application and the two timed behaviours
+// the Recover flag selects, including the exact reversal on expiry. Conditions,
+// stacking, and dispel are in `ActiveEffectStackingTests`.
 
 import Foundation
 @testable import OpenSkyActors
@@ -20,55 +16,7 @@ import Testing
 @MainActor
 struct ActiveEffectRuntimeTests {
     private func runtime() throws -> (ActiveEffectRuntime, WorldStateStore) {
-        let store = WorldStateStore()
-        let baselines = ActorValueBaselineResolver(
-            fallback: ActorValueBaseline(
-                maximums: ActorValues(repeating: 100),
-                regenPercentPerSecond: .zero
-            )
-        )
-        let values = ActorValueRuntime(store: store, baselines: baselines)
-        let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
-        let effects = MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
-        return (
-            ActiveEffectRuntime(values: values, effects: effects, conditionRegistry: .magicTests),
-            store
-        )
-    }
-
-    private func entry(
-        _ formID: UInt32,
-        magnitude: Float,
-        duration: UInt32 = 0,
-        conditions: ConditionList = ConditionList()
-    ) -> MagicItemEffect {
-        MagicItemEffect(
-            effect: FormID(formID),
-            magnitude: magnitude,
-            area: 0,
-            duration: duration,
-            conditions: conditions
-        )
-    }
-
-    private var source: ActiveEffectSource {
-        ActiveEffectSource(
-            kind: .potion,
-            record: .plugin(name: ActiveEffectFixture.pluginName.lowercased(), objectID: 0x500)
-        )
-    }
-
-    @discardableResult
-    private func apply(
-        _ runtime: inout ActiveEffectRuntime,
-        _ entries: [MagicItemEffect]
-    ) -> [ActiveEffect] {
-        runtime.apply(
-            entries,
-            fromPlugin: ActiveEffectFixture.pluginName,
-            source: source,
-            on: .player
-        )
+        try ActiveEffectFixture.runtime(conditionRegistry: .magicTests)
     }
 
     // MARK: - Instant
@@ -80,7 +28,10 @@ struct ActiveEffectRuntimeTests {
         runtime.values.damage(.health, by: 40, on: .player)
         #expect(runtime.values.current(of: .player).health == 60)
 
-        let stored = apply(&runtime, [entry(ActiveEffectFixture.restoreHealth, magnitude: 25)])
+        let stored = ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(ActiveEffectFixture.restoreHealth, magnitude: 25)]
+        )
         #expect(stored.isEmpty)
         #expect(runtime.values.current(of: .player).health == 85)
         #expect(runtime.active(on: .player).isEmpty)
@@ -90,7 +41,10 @@ struct ActiveEffectRuntimeTests {
     /// A detrimental instant effect routes through damage rather than restore.
     @Test func instantDetrimentalEffectDamages() throws {
         var (runtime, _) = try runtime()
-        apply(&runtime, [entry(ActiveEffectFixture.damageHealth, magnitude: 30)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(ActiveEffectFixture.damageHealth, magnitude: 30)]
+        )
         #expect(runtime.values.current(of: .player).health == 70)
     }
 
@@ -98,7 +52,10 @@ struct ActiveEffectRuntimeTests {
     @Test func instantRestoreIsCappedAtTheMaximum() throws {
         var (runtime, _) = try runtime()
         runtime.values.damage(.health, by: 5, on: .player)
-        apply(&runtime, [entry(ActiveEffectFixture.restoreHealth, magnitude: 500)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(ActiveEffectFixture.restoreHealth, magnitude: 500)]
+        )
         #expect(runtime.values.current(of: .player).health == 100)
     }
 
@@ -109,8 +66,12 @@ struct ActiveEffectRuntimeTests {
     @Test func heldModifierAppliesOnceAndReversesOnExpiry() throws {
         var (runtime, store) = try runtime()
         let index = ActorValueIndex.resistFire
-        let stored = apply(&runtime, [
-            entry(ActiveEffectFixture.fortifyResistFire, magnitude: 20, duration: 2)
+        let stored = ActiveEffectFixture.apply(&runtime, [
+            ActiveEffectFixture.entry(
+                ActiveEffectFixture.fortifyResistFire,
+                magnitude: 20,
+                duration: 2
+            )
         ])
         #expect(stored.count == 1)
         #expect(runtime.values.entry(at: index, on: .player)?.temporary == 20)
@@ -133,7 +94,10 @@ struct ActiveEffectRuntimeTests {
     /// A dual value modifier holds both slots and hands both back.
     @Test func dualValueModifierHoldsAndReleasesBothValues() throws {
         var (runtime, _) = try runtime()
-        apply(&runtime, [entry(ActiveEffectFixture.dualResist, magnitude: 10, duration: 1)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(ActiveEffectFixture.dualResist, magnitude: 10, duration: 1)]
+        )
         #expect(runtime.values.entry(at: ActorValueIndex.resistFire, on: .player)?
             .temporary == 10)
         #expect(runtime.values.entry(at: ActorValueIndex.resistFrost, on: .player)?
@@ -153,7 +117,10 @@ struct ActiveEffectRuntimeTests {
     /// them back.
     @Test func perSecondEffectPaysOncePerWholeSecondAndNeverReverses() throws {
         var (runtime, _) = try runtime()
-        apply(&runtime, [entry(ActiveEffectFixture.damageHealth, magnitude: 2, duration: 3)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(ActiveEffectFixture.damageHealth, magnitude: 2, duration: 3)]
+        )
         #expect(runtime.values.current(of: .player).health == 100)
 
         step(&runtime, seconds: 1)
@@ -168,7 +135,10 @@ struct ActiveEffectRuntimeTests {
     /// sixtieth of a second is not one.
     @Test func partialStepPaysNothing() throws {
         var (runtime, _) = try runtime()
-        apply(&runtime, [entry(ActiveEffectFixture.damageHealth, magnitude: 2, duration: 3)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(ActiveEffectFixture.damageHealth, magnitude: 2, duration: 3)]
+        )
         runtime.step(over: [.player])
         #expect(runtime.values.current(of: .player).health == 100)
         #expect(runtime.tally.secondsPaid == 0)
@@ -180,7 +150,14 @@ struct ActiveEffectRuntimeTests {
     /// together, and expiry puts both numbers back.
     @Test func fortifyHealthRaisesTheMaximumAndExpiryPutsItBack() throws {
         var (runtime, _) = try runtime()
-        apply(&runtime, [entry(ActiveEffectFixture.fortifyHealth, magnitude: 25, duration: 2)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(
+                ActiveEffectFixture.fortifyHealth,
+                magnitude: 25,
+                duration: 2
+            )]
+        )
         #expect(runtime.values.maximums(of: .player).health == 125)
         #expect(runtime.values.current(of: .player).health == 125)
         // The HUD reads the fraction, so a full fortified bar is still full.
@@ -196,7 +173,14 @@ struct ActiveEffectRuntimeTests {
     /// taken, expiry reads 40 of 100 rather than healing or double-charging.
     @Test func damageTakenWhileFortifiedSurvivesExpiry() throws {
         var (runtime, _) = try runtime()
-        apply(&runtime, [entry(ActiveEffectFixture.fortifyHealth, magnitude: 25, duration: 1)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(
+                ActiveEffectFixture.fortifyHealth,
+                magnitude: 25,
+                duration: 1
+            )]
+        )
         runtime.values.damage(.health, by: 60, on: .player)
         #expect(runtime.values.current(of: .player).health == 65)
 
@@ -211,7 +195,14 @@ struct ActiveEffectRuntimeTests {
     /// health point when the effect expires" (UESP, Fortify Health).
     @Test func anExpiryNeverEmptiesTheBar() throws {
         var (runtime, _) = try runtime()
-        apply(&runtime, [entry(ActiveEffectFixture.fortifyHealth, magnitude: 25, duration: 1)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(
+                ActiveEffectFixture.fortifyHealth,
+                magnitude: 25,
+                duration: 1
+            )]
+        )
         runtime.values.damage(.health, by: 115, on: .player)
         #expect(runtime.values.current(of: .player).health == 10)
 
@@ -225,7 +216,14 @@ struct ActiveEffectRuntimeTests {
     /// does not revive the dead.
     @Test func anExpiryDoesNotReviveAnEmptyBar() throws {
         var (runtime, _) = try runtime()
-        apply(&runtime, [entry(ActiveEffectFixture.fortifyHealth, magnitude: 25, duration: 1)])
+        ActiveEffectFixture.apply(
+            &runtime,
+            [ActiveEffectFixture.entry(
+                ActiveEffectFixture.fortifyHealth,
+                magnitude: 25,
+                duration: 1
+            )]
+        )
         runtime.values.damage(.health, by: 500, on: .player)
 
         step(&runtime, seconds: 1)

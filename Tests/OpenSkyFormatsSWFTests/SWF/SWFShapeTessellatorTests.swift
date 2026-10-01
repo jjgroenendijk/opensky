@@ -1,7 +1,5 @@
-// Unit tests for the shape tessellator: filled area correctness for simple
-// polygons, fill0/fill1 side handling, holes under the even-odd rule, shared
-// interior edges, deterministic curve flattening, and the per-character
-// cache.
+// Shape tessellator: filled area, fill sides, holes, shared edges, curve
+// flattening, and the per-character cache.
 
 import Foundation
 @testable import OpenSkyFormatsSWF
@@ -9,6 +7,19 @@ import Testing
 
 struct SWFShapeTessellatorTests {
     private let red = SWFColor(red: 255, green: 0, blue: 0, alpha: 255)
+
+    /// A 100x100 square and a 20x20 square at its center, both clockwise.
+    private func nestedSquares() -> [SWFShapeSegment] {
+        let corners: [[(Int32, Int32)]] = [
+            [(0, 0), (100, 0), (100, 100), (0, 100)],
+            [(40, 40), (60, 40), (60, 60), (40, 60)]
+        ]
+        return corners.flatMap { square in
+            square.indices.map { index in
+                lineSegment(from: square[index], to: square[(index + 1) % 4], fill1: 1)
+            }
+        }
+    }
 
     /// Signed area sum of a run's triangles (absolute value per triangle).
     private func area(of mesh: SWFShapeMesh, run: SWFShapeMesh.FillRun) -> Double {
@@ -87,39 +98,15 @@ struct SWFShapeTessellatorTests {
     @Test func evenOddRuleCutsHole() {
         // 100x100 outer square with a 20x20 inner square: even-odd leaves the
         // inner region unfilled regardless of contour orientation.
-        var segments = [
-            lineSegment(from: (0, 0), to: (100, 0), fill1: 1),
-            lineSegment(from: (100, 0), to: (100, 100), fill1: 1),
-            lineSegment(from: (100, 100), to: (0, 100), fill1: 1),
-            lineSegment(from: (0, 100), to: (0, 0), fill1: 1)
-        ]
-        segments += [
-            lineSegment(from: (40, 40), to: (60, 40), fill1: 1),
-            lineSegment(from: (60, 40), to: (60, 60), fill1: 1),
-            lineSegment(from: (60, 60), to: (40, 60), fill1: 1),
-            lineSegment(from: (40, 60), to: (40, 40), fill1: 1)
-        ]
-        let mesh = SWFShapeTessellator.tessellate(shape(segments: segments))
+        let mesh = SWFShapeTessellator.tessellate(shape(segments: nestedSquares()))
         #expect(abs(area(of: mesh, run: mesh.runs[0]) - (10000 - 400)) < 0.001)
     }
 
     @Test func windingRuleFillsSameOrientationOverlap() {
         // Two same-orientation squares: winding 2 in the overlap. Nonzero
         // fills it; even-odd would cut it out.
-        var segments = [
-            lineSegment(from: (0, 0), to: (100, 0), fill1: 1),
-            lineSegment(from: (100, 0), to: (100, 100), fill1: 1),
-            lineSegment(from: (100, 100), to: (0, 100), fill1: 1),
-            lineSegment(from: (0, 100), to: (0, 0), fill1: 1)
-        ]
-        segments += [
-            lineSegment(from: (40, 40), to: (60, 40), fill1: 1),
-            lineSegment(from: (60, 40), to: (60, 60), fill1: 1),
-            lineSegment(from: (60, 60), to: (40, 60), fill1: 1),
-            lineSegment(from: (40, 60), to: (40, 40), fill1: 1)
-        ]
         let mesh = SWFShapeTessellator.tessellate(
-            shape(segments: segments, windingRule: true)
+            shape(segments: nestedSquares(), windingRule: true)
         )
         #expect(abs(area(of: mesh, run: mesh.runs[0]) - 10000) < 0.001)
     }

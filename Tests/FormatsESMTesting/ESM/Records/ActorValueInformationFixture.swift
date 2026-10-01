@@ -48,30 +48,10 @@ public enum ActorValueInformationFixture: Sendable {
     }
 
     public static func record(type: String, formID: UInt32 = 0, fields: Data) throws -> ESMRecord {
-        let file = try ESMFile(
-            data: ESMFixture.tes4()
-                + ESMFixture.topGroup(
-                    type,
-                    contents: ESMFixture.record(type, formID: formID, data: fields)
-                )
-        )
-        guard let group = file.topGroups.first else {
-            throw ESMError.malformed("fixture has no top group")
-        }
-        guard let child = try group.children().first else {
-            throw ESMError.malformed("fixture group has no child")
-        }
-        guard case let .record(record) = child else {
-            throw ESMError.malformed("fixture child is not a record")
-        }
-        return record
+        try ESMFixture.parsedRecord(type: type, fields: fields, formID: formID)
     }
 
     public static func words(_ values: [UInt32]) -> Data {
-        var data = Data()
-        for value in values {
-            data.appendUInt32(value)
-        }
-        return data
+        ESMFixture.words(values)
     }
 }

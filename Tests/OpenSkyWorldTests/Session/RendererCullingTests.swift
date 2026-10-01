@@ -1,30 +1,20 @@
-// Frustum culling through the real render loop (milestone 3.2): synthetic
-// scene, offscreen deterministic frames (RendererOffscreenTests pattern).
-// Pixel checks prove visible geometry still draws; SceneDrawStats proves the
-// out-of-frustum item was skipped, not rasterized away. Skips without a
-// Metal 4 device (paravirtual CI).
+// Frustum culling through the real render loop. Pixels prove that visible
+// geometry still draws; `SceneDrawStats` proves that the out-of-frustum item
+// was skipped, not rasterized away. Skips without Metal 4.
 
 import Foundation
 import Metal
-import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import RenderingTesting
 import simd
 import Testing
 
 struct RendererCullingTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4) else { return nil }
-        return device
-    }()
-
-    private static var hasMetal4Device: Bool {
-        device != nil
-    }
+    private static let device = OffscreenRendererFixture.device
+    private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
 
     private static let width = 320
     private static let height = 240
@@ -58,7 +48,7 @@ struct RendererCullingTests {
             materials: [Material.fallback],
             skippedShapeCount: 0
         )
-        let texture = try Self.solidTexture(device: device)
+        let texture = try OffscreenRendererFixture.solidTexture(device: device)
         let render = try RenderModel(device: device, model: model) { _, _ in texture }
         let bounds = try #require(ModelBounds.containing(model: model))
         let nearTransform = matrix_identity_float4x4
@@ -83,7 +73,7 @@ struct RendererCullingTests {
         let device = try #require(Self.device)
         let renderer = try Self.makeRenderer(device: device, camera: Self.facingCamera)
         let texture = try renderer.renderOffscreen(width: Self.width, height: Self.height)
-        let pixels = Self.readPixels(texture: texture)
+        let pixels = OffscreenRendererFixture.pixels(of: texture)
 
         // Far crate culled, near crate drawn.
         #expect(renderer.lastDrawStats.culledInstances == 1)
@@ -102,19 +92,12 @@ struct RendererCullingTests {
         let device = try #require(Self.device)
         let renderer = try Self.makeRenderer(device: device, camera: Self.awayCamera)
         let texture = try renderer.renderOffscreen(width: Self.width, height: Self.height)
-        let pixels = Self.readPixels(texture: texture)
+        let pixels = OffscreenRendererFixture.pixels(of: texture)
 
         #expect(renderer.lastDrawStats.culledInstances == 2)
         #expect(renderer.lastDrawStats.drawnInstances == 0)
         #expect(renderer.lastDrawStats.drawCalls == 0)
-        // All-culled frame is pure clear color (black, alpha 1).
-        var lit = 0
-        for pixel in stride(from: 0, to: pixels.count, by: 4) {
-            let dark = pixels[pixel] == 0 && pixels[pixel + 1] == 0 && pixels[pixel + 2] == 0
-            if !dark {
-                lit += 1
-            }
-        }
+        let lit = OffscreenRendererFixture.litPixelCount(pixels)
         #expect(lit == 0, "all-culled frame should be clear color, \(lit) pixels lit")
     }
 
@@ -125,50 +108,11 @@ struct RendererCullingTests {
         device: MTLDevice,
         camera: SceneCamera
     ) throws -> Renderer {
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: width, height: height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(
-            view: view,
+        try OffscreenRendererFixture.makeRenderer(
+            device: device, width: width, height: height,
             scene: twoCrateScene(device: device),
             camera: camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
-    }
-
-    private static func solidTexture(device: MTLDevice) throws -> MTLTexture {
-        let descriptor = MTLTextureDescriptor()
-        descriptor.textureType = .type2D
-        descriptor.pixelFormat = .rgba8Unorm_srgb
-        descriptor.width = 2
-        descriptor.height = 2
-        descriptor.usage = .shaderRead
-        descriptor.storageMode = .shared
-        let texture = try #require(device.makeTexture(descriptor: descriptor))
-        let bytes = [UInt8](repeating: 200, count: 2 * 2 * 4)
-        texture.replace(
-            region: MTLRegionMake2D(0, 0, 2, 2),
-            mipmapLevel: 0,
-            withBytes: bytes,
-            bytesPerRow: 2 * 4
-        )
-        return texture
-    }
-
-    private static func readPixels(texture: MTLTexture) -> [UInt8] {
-        var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return } // non-empty
-            texture.getBytes(
-                base,
-                bytesPerRow: texture.width * 4,
-                from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
     }
 }

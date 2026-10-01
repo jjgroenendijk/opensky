@@ -12,7 +12,7 @@ struct CellRecordTests {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Interior"))
             + ESMFixture.field("DATA", Data([0x01, 0x00])) // interior flag
             + ESMFixture.field("XCAS", formID(0xABC))
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x10, data: fields
         )), localized: false)
 
@@ -23,7 +23,7 @@ struct CellRecordTests {
     @Test func acousticSpaceNilWhenAbsent() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Quiet"))
             + ESMFixture.field("DATA", Data([0x01, 0x00]))
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x11, data: fields
         )), localized: false)
 
@@ -33,7 +33,7 @@ struct CellRecordTests {
     @Test func skipsTruncatedAcousticSpaceField() throws {
         // XCAS with <4 bytes -> nil, not malformed-throw.
         let fields = ESMFixture.field("XCAS", Data([1, 2]))
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x12, data: fields
         )), localized: false)
 
@@ -46,7 +46,7 @@ struct CellRecordTests {
             + ESMFixture.field("DATA", Data([0x01, 0x00]))
             + ESMFixture.field("XCAS", formID(0xABC))
             + ESMFixture.field("XCMO", formID(0xDEF))
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x14, data: fields
         )), localized: false)
 
@@ -55,24 +55,24 @@ struct CellRecordTests {
     }
 
     @Test func musicTypeNilWhenAbsentNullOrTruncated() throws {
-        let bare = try Cell(record: record(ESMFixture.record(
+        let bare = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x15, data: ESMFixture.field("DATA", Data([0x01, 0x00]))
         )), localized: false)
         #expect(bare.musicType == nil)
 
-        let null = try Cell(record: record(ESMFixture.record(
+        let null = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x16, data: ESMFixture.field("XCMO", formID(0))
         )), localized: false)
         #expect(null.musicType == nil)
 
-        let short = try Cell(record: record(ESMFixture.record(
+        let short = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x17, data: ESMFixture.field("XCMO", Data([1, 2]))
         )), localized: false)
         #expect(short.musicType == nil)
     }
 
     @Test func decodesContainingLocationField() throws {
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x18, data: ESMFixture.field("XLCN", formID(0x1234))
         )), localized: false)
 
@@ -93,7 +93,7 @@ struct CellRecordTests {
             + ESMFixture.field("XCLC", xclc)
             + ESMFixture.field("XCLW", xclw)
             + ESMFixture.field("XCWT", formID(0x18))
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x2B, data: fields
         )), localized: false)
 
@@ -109,7 +109,7 @@ struct CellRecordTests {
         var xclc = Data()
         xclc.appendUInt32(UInt32(bitPattern: 5))
         xclc.appendUInt32(UInt32(bitPattern: -9))
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", data: ESMFixture.field("XCLC", xclc)
         )), localized: false)
 
@@ -121,12 +121,12 @@ struct CellRecordTests {
         full.appendUInt32(0x99)
         let oneByteFields = ESMFixture.field("DATA", Data([0xA1]))
             + ESMFixture.field("FULL", full)
-        let oneByte = try Cell(record: record(ESMFixture.record(
+        let oneByte = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", data: oneByteFields
         )), localized: true)
         var twoByteData = Data()
         twoByteData.appendUInt16(0x010C)
-        let twoByte = try Cell(record: record(ESMFixture.record(
+        let twoByte = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", data: ESMFixture.field("DATA", twoByteData)
         )), localized: false)
 
@@ -140,7 +140,7 @@ struct CellRecordTests {
 
     @Test func recognizesAllNoWaterSentinels() throws {
         for bits: UInt32 in [0x7F7F_FFFF, 0x4F7F_FFC9, 0xCF00_0000] {
-            let cell = try Cell(record: record(ESMFixture.record(
+            let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
                 "CELL", data: ESMFixture.field("XCLW", formID(bits))
             )), localized: false)
 
@@ -150,7 +150,7 @@ struct CellRecordTests {
 
     @Test func decodesRegionArray() throws {
         let regions = formID(0x101) + formID(0x102) + formID(0x103)
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", data: ESMFixture.field("XCLR", regions)
         )), localized: false)
 
@@ -159,7 +159,7 @@ struct CellRecordTests {
 
     @Test func rejectsMisalignedRegionArrayWithoutPartialResults() throws {
         let regions = formID(0x101) + Data([0x02])
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", data: ESMFixture.field("XCLR", regions)
         )), localized: false)
 
@@ -170,7 +170,7 @@ struct CellRecordTests {
         let fields = ESMFixture.field("DATA", Data([UInt8(Cell.Flags.interior.rawValue)]))
             + ESMFixture.field("XCLL", ESMFixture.cellLightingData(inherits: 0x0615))
             + ESMFixture.field("LTMP", formID(0x0006_175D))
-        let cell = try Cell(record: record(ESMFixture.record(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", formID: 0x16204, data: fields
         )), localized: false)
 
@@ -194,13 +194,13 @@ struct CellRecordTests {
     @Test func acceptsKnownTruncatedLightingTails() throws {
         let full = ESMFixture.cellLightingData(inherits: 0)
         for count in [40, 64, 68, 72, 76, 80, 84, 88, 92] {
-            let cell = try Cell(record: record(ESMFixture.record(
+            let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
                 "CELL", data: ESMFixture.field("XCLL", Data(full.prefix(count)))
             )), localized: false)
             #expect(cell.lighting != nil)
         }
 
-        let tooShort = try Cell(record: record(ESMFixture.record(
+        let tooShort = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
             "CELL", data: ESMFixture.field("XCLL", Data(full.prefix(39)))
         )), localized: false)
         #expect(tooShort.lighting == nil)
@@ -210,7 +210,7 @@ struct CellRecordTests {
         var data = Data()
         data.appendUInt16(Cell.Flags.interior.rawValue)
         let fields = ESMFixture.field("DATA", data)
-        let cell = try Cell(record: record(ESMFixture.compressedRecord(
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.compressedRecord(
             "CELL", formID: 0x7, fieldData: fields
         )), localized: false)
 
@@ -222,14 +222,6 @@ struct CellRecordTests {
         var data = Data()
         data.appendUInt32(value)
         return data
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 
     private func color(_ red: UInt8, _ green: UInt8, _ blue: UInt8) -> SIMD3<Float> {

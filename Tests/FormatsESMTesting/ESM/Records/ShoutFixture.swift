@@ -1,9 +1,5 @@
-// Byte builders for the M19 shout-family suites (issue #467). Synthetic and
-// assembled in code from the published record layouts — never extracted game
-// files (AGENTS.md "Legal & IP boundary").
-//
-// Lives in Tests/OpenSkyTests/ rather than Tests/TestSupport/ because only the
-// synthetic suites use it; the real-data sweep reads the user's install.
+// Byte builders for the shout-family suites, built in code from the published
+// record layouts.
 
 import FormatsCoreTesting
 import Foundation
@@ -64,17 +60,6 @@ public enum ShoutFixture: Sendable {
         fields: Data,
         formID: UInt32 = 0x123
     ) throws -> ESMRecord {
-        let plugin = ESMFixture.tes4()
-            + ESMFixture.topGroup(
-                type,
-                contents: ESMFixture.record(type, formID: formID, data: fields)
-            )
-        let file = try ESMFile(data: plugin)
-        let group = try #require(file.topGroups.first { $0.recordType?.description == type })
-        let child = try #require(try group.children().first)
-        guard case let .record(record) = child else {
-            throw ESMError.malformed("fixture child is not a record")
-        }
-        return record
+        try ESMFixture.parsedRecord(type: type, fields: fields, formID: formID)
     }
 }

@@ -44,25 +44,7 @@ struct M15AcceptancePanelTests {
     private static func buildPanel(
         providers: FakeWorldProviders
     ) throws -> CombatPhysicsPanelViewController {
-        let worldGroup = try #require(
-            AppSidebarModel.groups().first { $0.section == .world }
-        )
-        let descriptor = try #require(
-            worldGroup.destinations.first { $0.id == "combatPhysics" }
-        )
-        #expect(descriptor.sidebarIdentifier == "Destination-combatPhysics")
-        #expect(descriptor.title == "Combat & Physics")
-
-        guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("World > Combat & Physics is not a world inspector")
-            throw M15PanelAcceptanceError.notAWorldInspector
-        }
-        let panel = try #require(
-            makePanel(WorldPanelContext(providers: providers))
-                as? CombatPhysicsPanelViewController
-        )
-        panel.loadViewIfNeeded()
-        return panel
+        try buildWorldPanel("combatPhysics", title: "Combat & Physics", providers: providers)
     }
 
     /// Every readout the destination publishes, read back by accessibility id.
@@ -311,8 +293,5 @@ struct M15AcceptancePanelTests {
     )
 }
 
-/// Thrown only to end the run early when the registry hands back something
-/// other than a world inspector, which `Issue.record` has already reported.
-private enum M15PanelAcceptanceError: Error {
-    case notAWorldInspector
-}
+// Thrown only to end the run early when the registry hands back something
+// other than a world inspector, which `Issue.record` has already reported.

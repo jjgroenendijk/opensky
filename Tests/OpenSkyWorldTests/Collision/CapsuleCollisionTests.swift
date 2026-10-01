@@ -7,6 +7,7 @@
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import PhysicsTesting
 import simd
 import Testing
 
@@ -17,14 +18,14 @@ struct CapsuleCollisionTests {
     func diagonalMotionSlidesAlongWallWithoutPenetration() {
         let capsule = PlayerCapsule(radius: 1, height: 4, eyeHeight: 3)
         let collider = CapsuleWorldCollider(capsule: capsule)
-        let wall = Self.quad(
+        let wall = DynamicBodyScene.quad(
             SIMD3(2, -10, -5), SIMD3(2, 10, -5),
             SIMD3(2, 10, 10), SIMD3(2, -10, 10)
         )
         let result = collider.move(
             from: .zero,
             displacement: SIMD3(4, 3, 0),
-            query: Self.query([wall])
+            query: DynamicBodyScene.candidateQuery([wall])
         )
 
         #expect(result.position.x <= 1.01)
@@ -36,14 +37,14 @@ struct CapsuleCollisionTests {
     func ceilingStopsUpwardCapsuleMotion() {
         let capsule = PlayerCapsule(radius: 1, height: 4, eyeHeight: 3)
         let collider = CapsuleWorldCollider(capsule: capsule)
-        let ceiling = Self.quad(
+        let ceiling = DynamicBodyScene.quad(
             SIMD3(-10, -10, 5), SIMD3(-10, 10, 5),
             SIMD3(10, 10, 5), SIMD3(10, -10, 5)
         )
         let result = collider.move(
             from: .zero,
             displacement: SIMD3(0, 0, 4),
-            query: Self.query([ceiling])
+            query: DynamicBodyScene.candidateQuery([ceiling])
         )
 
         #expect(result.position.z <= 1.01)
@@ -112,7 +113,7 @@ struct CapsuleCollisionTests {
             controller: &controller,
             camera: &camera,
             frames: 100,
-            query: Self.query([ramp])
+            query: DynamicBodyScene.candidateQuery([ramp])
         )
 
         #expect(controller.feetPosition.x > 100)
@@ -123,28 +124,28 @@ struct CapsuleCollisionTests {
 
     @Test
     func groundedControllerClimbsLowStepButBlocksHighStep() {
-        let floor = Self.floor()
-        let lowStep = Self.box(center: SIMD3(70, 0, 8), half: SIMD3(30, 100, 8))
+        let floor = DynamicBodyScene.floor(extent: 200)
+        let lowStep = DynamicBodyScene.box(center: SIMD3(70, 0, 8), half: SIMD3(30, 100, 8))
         var lowCamera = Self.camera(feet: .zero)
         var low = WalkController(cameraPosition: lowCamera.position)
         Self.drive(
             controller: &low,
             camera: &lowCamera,
             frames: 60,
-            query: Self.query([floor, lowStep])
+            query: DynamicBodyScene.candidateQuery([floor, lowStep])
         )
         #expect(low.feetPosition.x > 80)
         #expect(abs(low.feetPosition.z - 16) < 0.1)
         #expect(low.isGrounded)
 
-        let highStep = Self.box(center: SIMD3(70, 0, 24), half: SIMD3(30, 100, 24))
+        let highStep = DynamicBodyScene.box(center: SIMD3(70, 0, 24), half: SIMD3(30, 100, 24))
         var highCamera = Self.camera(feet: .zero)
         var high = WalkController(cameraPosition: highCamera.position)
         Self.drive(
             controller: &high,
             camera: &highCamera,
             frames: 60,
-            query: Self.query([floor, highStep])
+            query: DynamicBodyScene.candidateQuery([floor, highStep])
         )
         #expect(high.feetPosition.x < 17)
         #expect(abs(high.feetPosition.z) < 0.1)
@@ -154,9 +155,9 @@ struct CapsuleCollisionTests {
     @Test
     func forwardStepProbeFindsWalkableTread() {
         let collider = CapsuleWorldCollider(capsule: .standard)
-        let query = Self.query([
-            Self.floor(),
-            Self.box(center: SIMD3(70, 0, 8), half: SIMD3(30, 100, 8))
+        let query = DynamicBodyScene.candidateQuery([
+            DynamicBodyScene.floor(extent: 200),
+            DynamicBodyScene.box(center: SIMD3(70, 0, 8), half: SIMD3(30, 100, 8))
         ])
         let start = SIMD3<Float>(17.37147, 0, 0.002)
         let support = collider.stepSupport(
@@ -170,8 +171,8 @@ struct CapsuleCollisionTests {
 
     @Test
     func crossesTerrainToMeshSeamAndFilteredWallIsAbsent() {
-        let platform = Self.box(center: SIMD3(70, 0, 8), half: SIMD3(30, 100, 8))
-        let filteredWall = Self.quad(
+        let platform = DynamicBodyScene.box(center: SIMD3(70, 0, 8), half: SIMD3(30, 100, 8))
+        let filteredWall = DynamicBodyScene.quad(
             SIMD3(20, -100, -10), SIMD3(20, 100, -10),
             SIMD3(20, 100, 200), SIMD3(20, -100, 200)
         )
@@ -182,7 +183,7 @@ struct CapsuleCollisionTests {
         }
         // filteredWall exists in source scene but broadphase omits it, matching
         // M4.3 player-solid filtering before controller consumption.
-        let query = Self.query([platform])
+        let query = DynamicBodyScene.candidateQuery([platform])
         #expect(filteredWall.bounds.min.x == 20)
         for _ in 0 ..< 60 {
             controller.update(
@@ -222,36 +223,6 @@ struct CapsuleCollisionTests {
         )
     }
 
-    private static func query(
-        _ shapes: [StaticCollisionShape]
-    ) -> WalkController.CollisionQuery {
-        let collision = StaticCollisionSet(
-            location: nil,
-            shapes: shapes,
-            stats: StaticCollisionStats()
-        )
-        return collision.candidates
-    }
-
-    private static func floor() -> StaticCollisionShape {
-        quad(
-            SIMD3(-200, -200, 0), SIMD3(200, -200, 0),
-            SIMD3(200, 200, 0), SIMD3(-200, 200, 0)
-        )
-    }
-
-    private static func quad(
-        _ first: SIMD3<Float>,
-        _ second: SIMD3<Float>,
-        _ third: SIMD3<Float>,
-        _ fourth: SIMD3<Float>
-    ) -> StaticCollisionShape {
-        mesh(
-            vertices: [first, second, third, fourth],
-            indices: [0, 1, 2, 0, 2, 3]
-        )
-    }
-
     private static func mesh(
         vertices: [SIMD3<Float>],
         indices: [UInt32]
@@ -261,18 +232,6 @@ struct CapsuleCollisionTests {
             transform: matrix_identity_float4x4,
             geometry: .triangleSoup(vertices: vertices, indices: indices),
             bounds: ModelBounds.containing(vertices) ?? ModelBounds(min: .zero, max: .zero)
-        )
-    }
-
-    private static func box(
-        center: SIMD3<Float>,
-        half: SIMD3<Float>
-    ) -> StaticCollisionShape {
-        StaticCollisionShape(
-            reference: FormID(2),
-            transform: MatrixMath.translation(center),
-            geometry: .box(halfExtents: half),
-            bounds: ModelBounds(min: center - half, max: center + half)
         )
     }
 }

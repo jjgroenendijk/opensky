@@ -36,7 +36,7 @@ struct RegionRecordTests {
             + ESMFixture.field("RDOT", Data(count: 52)) // objects payload, ignored
             + ESMFixture.field("RDAT", weatherHeader)
             + ESMFixture.field("RDWT", rdwt)
-        let region = try Region(record: record(ESMFixture.record(
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
             "REGN", formID: 0x3B, data: fields
         )))
 
@@ -62,7 +62,10 @@ struct RegionRecordTests {
         // 20 bytes: not a multiple of 12 -> RDWT rejected.
         let fields = ESMFixture.field("RDAT", weatherHeader)
             + ESMFixture.field("RDWT", Data(count: 20))
-        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REGN",
+            data: fields
+        )))
         #expect(region.weatherList.isEmpty)
         #expect(region.weatherPriority == 1)
     }
@@ -79,7 +82,10 @@ struct RegionRecordTests {
         rdwt.appendUInt32(0)
         let fields = ESMFixture.field("RDAT", soundHeader)
             + ESMFixture.field("RDWT", rdwt)
-        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REGN",
+            data: fields
+        )))
         #expect(region.weatherList.isEmpty)
         #expect(region.weatherPriority == nil)
     }
@@ -105,7 +111,7 @@ struct RegionRecordTests {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("SoundRegion"))
             + ESMFixture.field("RDAT", soundHeader)
             + ESMFixture.field("RDSA", entry1 + entry2)
-        let region = try Region(record: record(ESMFixture.record(
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
             "REGN", formID: 0x42, data: fields
         )))
 
@@ -140,7 +146,10 @@ struct RegionRecordTests {
         // 13 bytes: not a multiple of 12 -> RDSA rejected.
         let fields = ESMFixture.field("RDAT", soundHeader)
             + ESMFixture.field("RDSA", Data(count: 13))
-        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REGN",
+            data: fields
+        )))
         #expect(region.soundList.isEmpty)
         #expect(region.soundPriority == 1)
     }
@@ -153,7 +162,10 @@ struct RegionRecordTests {
         weatherHeader.appendUInt16(0)
         let fields = ESMFixture.field("RDAT", weatherHeader)
             + ESMFixture.field("RDSA", Data(count: 12))
-        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REGN",
+            data: fields
+        )))
         #expect(region.soundList.isEmpty)
         #expect(region.soundPriority == nil)
     }
@@ -167,7 +179,7 @@ struct RegionRecordTests {
         let fields = ESMFixture.field("RDAT", soundHeader)
             + ESMFixture.field("RDMO", formID(0x300))
             + ESMFixture.field("RDSA", Data(count: 12))
-        let region = try Region(record: record(ESMFixture.record(
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
             "REGN", formID: 0x50, data: fields
         )))
         #expect(region.musicType == FormID(0x300))
@@ -178,13 +190,16 @@ struct RegionRecordTests {
         // UESP REGN: RDMO "can appear ... on its own", so no area context.
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("MusicOnly"))
             + ESMFixture.field("RDMO", formID(0x301))
-        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REGN",
+            data: fields
+        )))
         #expect(region.musicType == FormID(0x301))
         #expect(region.soundList.isEmpty)
     }
 
     @Test func ignoresNullAndTruncatedRegionMusic() throws {
-        let null = try Region(record: record(ESMFixture.record(
+        let null = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
             "REGN", data: ESMFixture.field("RDMO", formID(0))
         )))
         #expect(null.musicType == nil)
@@ -192,13 +207,19 @@ struct RegionRecordTests {
         // A later wrong-width RDMO must not clear a valid earlier one.
         let fields = ESMFixture.field("RDMO", formID(0x302))
             + ESMFixture.field("RDMO", Data([1, 2]))
-        let short = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        let short = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REGN",
+            data: fields
+        )))
         #expect(short.musicType == FormID(0x302))
     }
 
     @Test func missingFieldsDecodeToEmptyAndNil() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Bare"))
-        let region = try Region(record: record(ESMFixture.record("REGN", data: fields)))
+        let region = try Region(record: ESMFixture.parseRecord(ESMFixture.record(
+            "REGN",
+            data: fields
+        )))
         #expect(region.editorID == "Bare")
         #expect(region.worldspace == nil)
         #expect(region.mapColor == nil)
@@ -213,7 +234,7 @@ struct RegionRecordTests {
 
     @Test func wrongRecordTypeThrows() throws {
         #expect(throws: ESMError.self) {
-            _ = try Region(record: record(ESMFixture.record("WTHR", data: Data())))
+            _ = try Region(record: ESMFixture.parseRecord(ESMFixture.record("WTHR", data: Data())))
         }
     }
 
@@ -221,13 +242,5 @@ struct RegionRecordTests {
         var data = Data()
         data.appendUInt32(value)
         return data
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 }

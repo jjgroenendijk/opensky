@@ -1,25 +1,16 @@
-// Metal-gated pixel evidence for the M8.3.3 interactive acceptance: a simulated
-// input event changes the rendered frame.
-//
-// The fixture is the vanilla interaction shape reduced to its smallest form —
-// content hidden behind an alpha-zero CXFORM, revealed by a handler the movie's
-// own ActionScript attaches to a display object. Pointer routing reaches it
-// through `onRollOver` on the object under the cursor, which is what CLIK's
-// `gfx.controls.Button` assigns; key routing reaches it through
-// `handleInput(details, pathToFocus)`, which is what every vanilla menu class
-// defines.
-//
-// Every movie is synthetic and built in code — never an extracted game file
-// (AGENTS.md "Legal & IP boundary").
+// Interactive SWF acceptance: a simulated input event changes the frame. A
+// handler the movie attaches reveals hidden content: `onRollOver` for the
+// pointer, as CLIK's `gfx.controls.Button` uses, and `handleInput` for keys, as
+// every vanilla menu class defines. Movies are built in code.
 
 import FormatsSWFTesting
 import Foundation
 import Metal
-import MetalKit
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldTesting
 import simd
 import Testing
 
@@ -111,30 +102,18 @@ private enum SWFInteractiveFixture {
 }
 
 struct RendererSWFInteractiveAcceptanceTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4) else { return nil }
-        return device
-    }()
-
-    private static var hasMetal4Device: Bool {
-        device != nil
-    }
-
-    private static let width = 480
-    private static let height = 320
-    private static let animationTime: Float = 1
+    private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
+    private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)
 
     /// The milestone gate's pixel evidence: moving the pointer onto the button
     /// changes the frame, and moving it away from the button does not.
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aPointerRolloverChangesTheRenderedFrame() throws {
-        let renderer = try Self.makeRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         let runtime = try #require(try renderer.startSWFRuntime())
-        let closed = try Self.render(renderer)
+        let closed = try Self.canvas.render(renderer)
 
         let missed = try renderer.sendSWFInput(
             .pointerMoved(
@@ -143,7 +122,8 @@ struct RendererSWFInteractiveAcceptanceTests {
             )
         )
         #expect(missed == false, "a pointer over nothing must not be consumed")
-        #expect(try Self.changedPixels(closed, Self.render(renderer)) == 0)
+        #expect(try OffscreenRendererFixture
+            .changedPixels(closed, Self.canvas.render(renderer)) == 0)
 
         let hit = try renderer.sendSWFInput(
             .pointerMoved(
@@ -152,8 +132,8 @@ struct RendererSWFInteractiveAcceptanceTests {
             )
         )
         #expect(hit, "the pointer landed on the button but nothing consumed it")
-        let opened = try Self.render(renderer)
-        let changed = Self.changedPixels(closed, opened)
+        let opened = try Self.canvas.render(renderer)
+        let changed = OffscreenRendererFixture.changedPixels(closed, opened)
         // Measured 59,840 changed pixels at 480x320; the threshold leaves room
         // for driver-level rasterization differences.
         #expect(changed > 50000, "the rollover changed only \(changed) pixels")
@@ -166,13 +146,16 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aKeyEventReachesTheMenuHandlerAndChangesTheFrame() throws {
-        let renderer = try Self.makeRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         try renderer.startSWFRuntime()
-        let closed = try Self.render(renderer)
+        let closed = try Self.canvas.render(renderer)
         let handled = try renderer.sendSWFInput(.keyDown(code: SWFKeyCode.down, ascii: 0))
         #expect(handled, "the key was not routed to the menu handler")
-        let changed = try Self.changedPixels(closed, Self.render(renderer))
+        let changed = try OffscreenRendererFixture.changedPixels(
+            closed,
+            Self.canvas.render(renderer)
+        )
         #expect(changed > 50000, "the key changed only \(changed) pixels")
     }
 
@@ -181,15 +164,18 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func systemMenuBridgeSynchronizesKeyMutationToRenderedFrame() throws {
-        let renderer = try Self.makeRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         try renderer.startSWFRuntime()
-        let closed = try Self.render(renderer)
+        let closed = try Self.canvas.render(renderer)
 
         let handled = try SystemMenuMovieBridge.send(.move(.down), renderer: renderer)
 
         #expect(handled, "the system-menu key was not consumed")
-        let changed = try Self.changedPixels(closed, Self.render(renderer))
+        let changed = try OffscreenRendererFixture.changedPixels(
+            closed,
+            Self.canvas.render(renderer)
+        )
         #expect(changed > 50000, "the system-menu key changed only \(changed) pixels")
     }
 
@@ -198,7 +184,7 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func framesAreByteIdenticalBetweenInjectedEvents() throws {
-        let renderer = try Self.makeRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         try renderer.startSWFRuntime()
         try renderer.sendSWFInput(
@@ -207,9 +193,9 @@ struct RendererSWFInteractiveAcceptanceTests {
                 y: SWFInteractiveFixture.buttonCentre.y
             )
         )
-        _ = try Self.render(renderer)
-        let first = try Self.render(renderer)
-        #expect(try Self.render(renderer) == first)
+        _ = try Self.canvas.render(renderer)
+        let first = try Self.canvas.render(renderer)
+        #expect(try Self.canvas.render(renderer) == first)
         // Re-injecting the same position changes nothing: the pointer is
         // already on the button, so no rollover is sent.
         try renderer.sendSWFInput(
@@ -218,7 +204,7 @@ struct RendererSWFInteractiveAcceptanceTests {
                 y: SWFInteractiveFixture.buttonCentre.y
             )
         )
-        #expect(try Self.render(renderer) == first)
+        #expect(try Self.canvas.render(renderer) == first)
     }
 
     /// The engine-to-movie half of the bridge, through the renderer seam the app
@@ -227,12 +213,12 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func anUnhandledBridgeCallLeavesTheFrameUntouched() throws {
-        let renderer = try Self.makeRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         let runtime = try #require(try renderer.startSWFRuntime())
-        let before = try Self.render(renderer)
+        let before = try Self.canvas.render(renderer)
         #expect(try renderer.callSWFMovie("NoSuchCallback") == .undefined)
-        #expect(try Self.render(renderer) == before)
+        #expect(try Self.canvas.render(renderer) == before)
         #expect(runtime.invokeLog.unhandled == 1)
         #expect(runtime.tally.missingNames["NoSuchCallback"] == 1)
     }
@@ -244,7 +230,7 @@ struct RendererSWFInteractiveAcceptanceTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aPathTargetedCallSynchronizesTheRenderedFrame() throws {
-        let renderer = try Self.makeRenderer()
+        let renderer = try Self.canvas.makeRenderer()
         try renderer.setSWFMovie(SWFInteractiveFixture.scene())
         let runtime = try #require(try renderer.startSWFRuntime())
         let highlight = try #require(runtime.root.child(named: "highlight"))
@@ -257,65 +243,21 @@ struct RendererSWFInteractiveAcceptanceTests {
             runtime.markDirty()
             return .boolean(true)
         }
-        let hidden = try Self.render(renderer)
+        let hidden = try Self.canvas.render(renderer)
 
         let result = try renderer.callSWFMovie(
             "RevealHUD",
             atPath: "/HUDMovieBaseInstance"
         )
         #expect(result == .boolean(true))
-        let visible = try Self.render(renderer)
-        #expect(Self.changedPixels(hidden, visible) > 50000)
+        let visible = try Self.canvas.render(renderer)
+        #expect(OffscreenRendererFixture.changedPixels(hidden, visible) > 50000)
 
         try renderer.updateSWFRuntime { liveRuntime in
             highlight.colorTransform = hiddenTransform
             liveRuntime.markDirty()
         }
-        #expect(try Self.render(renderer) == hidden)
-        #expect(try Self.render(renderer) == hidden)
-    }
-
-    // MARK: - Helpers
-
-    @MainActor
-    private static func makeRenderer() throws -> Renderer {
-        let device = try #require(self.device)
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: width, height: height), device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
-    }
-
-    @MainActor
-    private static func render(_ renderer: Renderer) throws -> [UInt8] {
-        let texture = try renderer.renderOffscreen(
-            width: width, height: height, animationTime: animationTime
-        )
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-        pixels.withUnsafeMutableBytes { bytes in
-            guard let base = bytes.baseAddress else { return } // non-empty
-            texture.getBytes(
-                base,
-                bytesPerRow: width * 4,
-                from: MTLRegionMake2D(0, 0, width, height),
-                mipmapLevel: 0
-            )
-        }
-        return pixels
-    }
-
-    /// Count of pixels differing beyond a small per-channel threshold.
-    private static func changedPixels(_ lhs: [UInt8], _ rhs: [UInt8]) -> Int {
-        var changed = 0
-        for pixel in stride(from: 0, to: lhs.count, by: 4) {
-            let delta = (0 ..< 3).map { abs(Int(lhs[pixel + $0]) - Int(rhs[pixel + $0])) }
-                .max() ?? 0
-            if delta > 8 {
-                changed += 1
-            }
-        }
-        return changed
+        #expect(try Self.canvas.render(renderer) == hidden)
+        #expect(try Self.canvas.render(renderer) == hidden)
     }
 }

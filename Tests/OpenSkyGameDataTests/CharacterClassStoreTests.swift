@@ -1,11 +1,6 @@
-// The CLAS store above `RecordIndex` (issue #496, roadmap item 20.3): the
-// cross-plugin override handling the old single-file `CharacterClassIndex` had
-// none of, and the resolution `ActorValueResolver` now derives an actor's
-// attribute spread through.
-//
-// Records are synthetic and built in code (ESMFixture) — never extracted game
-// files (AGENTS.md "Legal & IP boundary"). Layout: UESP "Skyrim Mod:Mod File
-// Format/CLAS"; see docs/formats/actors.md.
+// The CLAS store above `RecordIndex`: cross-plugin overrides, and the
+// resolution `ActorValueResolver` derives an actor's attribute spread through.
+// Layout: UESP "Skyrim Mod:Mod File Format/CLAS"; see docs/formats/actors.md.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -15,19 +10,10 @@ import Foundation
 import Testing
 
 struct CharacterClassStoreTests {
-    /// A patch plugin redefining a class wins, and the winning record is what
-    /// the derivation reads — which is the whole point of the move: the old
-    /// index keyed raw FormIDs inside one file, so this override was invisible.
+    /// A patch plugin redefining a class wins, and the derivation reads the
+    /// winning record.
     @Test func aLaterPluginsClassWinsAndTheEditorLookupIsCaseInsensitive() throws {
-        let base = try plugin(records: [characterClass(
-            formID: 0x42, editorID: "CombatWarrior", health: 2, stamina: 1
-        )])
-        let patch = try plugin(masters: ["Base.esm"], records: [characterClass(
-            formID: 0x42, editorID: "PatchedWarrior", health: 5, stamina: 5
-        )])
-        let store = CharacterClassStore(
-            plugins: [("Base.esm", base), ("Patch.esp", patch)]
-        )
+        let store = try overriddenStore()
 
         let resolved = try #require(
             store.characterClass(ResolvedFormID(plugin: "Base.esm", objectID: 0x42))
@@ -43,15 +29,7 @@ struct CharacterClassStoreTests {
     /// A link resolves relative to the plugin carrying it, so an NPC_ in the
     /// base plugin naming class `0x42` reaches the patched definition.
     @Test func aLinkResolvesRelativeToThePluginThatCarriesIt() throws {
-        let base = try plugin(records: [characterClass(
-            formID: 0x42, editorID: "CombatWarrior", health: 2, stamina: 1
-        )])
-        let patch = try plugin(masters: ["Base.esm"], records: [characterClass(
-            formID: 0x42, editorID: "PatchedWarrior", health: 5, stamina: 5
-        )])
-        let store = CharacterClassStore(
-            plugins: [("Base.esm", base), ("Patch.esp", patch)]
-        )
+        let store = try overriddenStore()
 
         let resolved = try #require(
             store.resolve(FormID(0x42), fromPlugin: "Base.esm")
@@ -75,6 +53,19 @@ struct CharacterClassStoreTests {
     }
 
     // MARK: - Fixtures
+
+    /// `Base.esm` defines class 0x42 and `Patch.esp` redefines it.
+    private func overriddenStore() throws -> CharacterClassStore {
+        let base = try plugin(records: [characterClass(
+            formID: 0x42, editorID: "CombatWarrior", health: 2, stamina: 1
+        )])
+        let patch = try plugin(masters: ["Base.esm"], records: [characterClass(
+            formID: 0x42, editorID: "PatchedWarrior", health: 5, stamina: 5
+        )])
+        return CharacterClassStore(
+            plugins: [("Base.esm", base), ("Patch.esp", patch)]
+        )
+    }
 
     private func plugin(masters: [String] = [], records: [Data]) throws -> ESMFile {
         var data = ESMFixture.tes4(masters: masters)

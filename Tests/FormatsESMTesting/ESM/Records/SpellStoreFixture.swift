@@ -77,22 +77,10 @@ public enum SpellStoreFixture: Sendable {
     }
 
     public static func plugin(masters: [String] = [], records: [Data]) throws -> ESMFile {
-        let grouped = Dictionary(grouping: records) { record in
-            String(bytes: record.prefix(4), encoding: .ascii) ?? "SPEL"
-        }
-        var data = ESMFixture.tes4(masters: masters)
-        for (type, groupedRecords) in grouped.sorted(by: { $0.key < $1.key }) {
-            data += ESMFixture.topGroup(type, contents: groupedRecords.reduce(Data(), +))
-        }
-        return try ESMFile(data: data)
+        try ESMFixture.plugin(masters: masters, records: records)
     }
 
     public static func firstRecord(type: String, in file: ESMFile) throws -> ESMRecord {
-        let group = try #require(file.topGroups.first { $0.recordType?.description == type })
-        let child = try #require(try group.children().first)
-        guard case let .record(record) = child else {
-            throw ESMError.malformed("fixture child is not a record")
-        }
-        return record
+        try ESMFixture.firstRecord(type: type, in: file)
     }
 }

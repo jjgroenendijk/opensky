@@ -1,11 +1,7 @@
-// QSTS chunk tests (issue #182): the additive quest-state chunk in the OpenSky
-// native save container.
-//
-// Beyond the round trip, two properties matter and mirror what `INVN` promises.
-// A save carrying quest state must still load in a build that knows nothing
-// about the chunk, which the "older build" case simulates by renaming the tag;
-// and `RDLT` must gain nothing, so a quest — which carries no other component —
-// leaves no entry there for an older build to restore as an empty reference.
+// QSTS chunk: quest state in the native save.
+// An older build must still load the save, which the renamed-tag case
+// simulates, and `RDLT` must gain no entry for a reference whose only
+// component is this one.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -42,26 +38,18 @@ struct QuestSaveTests {
                 key: sideQuest,
                 cell: nil,
                 components: [QuestRuntimeState(isRunning: true, stagesReached: [5]).erased]
-            ),
-            OpenSkySaveFixture.entry(
-                key: .plugin(name: "skyrim.esm", objectID: 1),
-                cell: OpenSkySaveFixture.whiterun,
-                components: [ReferenceDeletionState.deleted.erased]
             )
         ]
-        return WorldStateSnapshot(
-            entries: entries.sorted { $0.key < $1.key },
+        return OpenSkySaveFixture.snapshot(
+            entries,
+            bystanderCell: OpenSkySaveFixture.whiterun,
             nextGeneratedSequence: 3,
             sequence: 42
         )
     }
 
     private func encode(_ snapshot: WorldStateSnapshot) -> Data {
-        OpenSkySaveEncoder.encode(
-            snapshot: snapshot,
-            fingerprint: OpenSkySaveFixture.fingerprint,
-            metadata: OpenSkySaveFixture.metadata
-        )
+        OpenSkySaveFixture.encode(snapshot)
     }
 
     // MARK: - Round trip

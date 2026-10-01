@@ -9,7 +9,7 @@ import Testing
 struct FormListStoreTests {
     @Test
     func nestedListsFlattenInOrderAndMembershipUsesLeaves() throws {
-        let file = try plugin(formLists: [
+        let file = try KeywordFixture.plugin(formLists: [
             list(0x10, "Inner", [1, 2]),
             list(0x20, "Outer", [3, 0x10, 4])
         ])
@@ -32,7 +32,7 @@ struct FormListStoreTests {
 
     @Test
     func selfReferenceTerminatesWithoutDroppingOtherEntries() throws {
-        let file = try plugin(formLists: [list(0x10, "Self", [1, 0x10, 2])])
+        let file = try KeywordFixture.plugin(formLists: [list(0x10, "Self", [1, 0x10, 2])])
         let store = FormListStore(plugins: [("Base.esm", file)])
 
         #expect(
@@ -43,7 +43,7 @@ struct FormListStoreTests {
 
     @Test
     func twoListCycleTerminatesWithoutSuppressingRepeatedAcyclicExpansion() throws {
-        let file = try plugin(formLists: [
+        let file = try KeywordFixture.plugin(formLists: [
             list(0x10, "First", [1, 0x20]),
             list(0x20, "Second", [2, 0x10]),
             list(0x30, "Repeated", [0x10, 0x10])
@@ -62,8 +62,8 @@ struct FormListStoreTests {
 
     @Test
     func laterOverrideReplacesTheWholeList() throws {
-        let base = try plugin(formLists: [list(0x10, "BaseList", [1, 2])])
-        let patch = try plugin(
+        let base = try KeywordFixture.plugin(formLists: [list(0x10, "BaseList", [1, 2])])
+        let patch = try KeywordFixture.plugin(
             masters: ["Base.esm"],
             formLists: [list(0x10, "PatchedList", [3])]
         )
@@ -78,8 +78,8 @@ struct FormListStoreTests {
 
     @Test
     func nestedListResolvesLeavesRelativeToItsOwnPlugin() throws {
-        let base = try plugin(formLists: [list(0x10, "BaseInner", [1])])
-        let patch = try plugin(
+        let base = try KeywordFixture.plugin(formLists: [list(0x10, "BaseInner", [1])])
+        let patch = try KeywordFixture.plugin(
             masters: ["Base.esm"],
             formLists: [list(0x0100_0020, "PatchOuter", [0x10, 0x0100_0002])]
         )
@@ -93,7 +93,7 @@ struct FormListStoreTests {
 
     @Test
     func nullEntrySurvivesFlatteningAtItsOriginalPosition() throws {
-        let file = try plugin(formLists: [list(0x10, "WithNull", [1, 0, 2])])
+        let file = try KeywordFixture.plugin(formLists: [list(0x10, "WithNull", [1, 0, 2])])
         let store = FormListStore(plugins: [("Base.esm", file)])
 
         #expect(
@@ -111,28 +111,13 @@ struct FormListStoreTests {
                 : [UInt32(1)]
             return list(objectID, "Depth\(index)", entries)
         }
-        let file = try plugin(formLists: lists)
+        let file = try KeywordFixture.plugin(formLists: lists)
         let store = FormListStore(plugins: [("Base.esm", file)])
 
         let flattened = try #require(store.flattened(id("Base.esm", 0x100)))
         #expect(flattened.entries.isEmpty)
         #expect(flattened.maximumDepth == FormListStore.depthCap)
         #expect(flattened.hitDepthCap)
-    }
-
-    private func plugin(
-        masters: [String] = [],
-        formLists: [Data],
-        keywords: [Data] = []
-    ) throws -> ESMFile {
-        var data = ESMFixture.tes4(masters: masters)
-        if !formLists.isEmpty {
-            data += ESMFixture.topGroup("FLST", contents: formLists.reduce(Data(), +))
-        }
-        if !keywords.isEmpty {
-            data += ESMFixture.topGroup("KYWD", contents: keywords.reduce(Data(), +))
-        }
-        return try ESMFile(data: data)
     }
 
     private func list(_ formID: UInt32, _ editorID: String, _ entries: [UInt32]) -> Data {

@@ -24,7 +24,7 @@ struct LightingRecordDecoderTests {
             + ESMFixture.field("DATA", ESMFixture.cellLightingData(inherits: 0))
             + ESMFixture.field("DALC", dalc)
         let template = try LightingTemplate(
-            record: record(ESMFixture.record("LGTM", formID: 0x6175D, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("LGTM", formID: 0x6175D, data: fields))
         )
 
         #expect(template.editorID == "InteriorTemplate")
@@ -71,7 +71,7 @@ struct LightingRecordDecoderTests {
             + ESMFixture.field("DATA", data)
             + ESMFixture.field("FNAM", fnam)
         let light = try LightRecord(
-            record: record(ESMFixture.record("LIGH", formID: 0x1234, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("LIGH", formID: 0x1234, data: fields))
         )
 
         #expect(light.editorID == "WarmLight")
@@ -87,14 +87,17 @@ struct LightingRecordDecoderTests {
     @Test func lightRejectsWrongDATASizeAndUnsupportedShapes() throws {
         let bad = ESMFixture.field("DATA", Data(count: 47))
         #expect(throws: (any Error).self) {
-            _ = try LightRecord(record: record(ESMFixture.record("LIGH", data: bad)))
+            _ = try LightRecord(record: ESMFixture.parseRecord(ESMFixture.record(
+                "LIGH",
+                data: bad
+            )))
         }
 
         for flags: LightRecord.Flags in [.negative, .spotLight, .shadowSpotlight] {
             var data = Data(count: 48)
             data.replaceSubrange(12 ..< 16, with: uint32Bytes(flags.rawValue))
             let light = try LightRecord(
-                record: record(ESMFixture.record(
+                record: ESMFixture.parseRecord(ESMFixture.record(
                     "LIGH", data: ESMFixture.field("DATA", data)
                 ))
             )
@@ -114,7 +117,7 @@ struct LightingRecordDecoderTests {
             + ESMFixture.field("XRDS", radius)
             + ESMFixture.field("XEMI", emittance)
         let reference = try PlacedReference(
-            record: record(ESMFixture.record("REFR", data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("REFR", data: fields))
         )
 
         #expect(reference.lightRadius == 384)
@@ -135,14 +138,6 @@ struct LightingRecordDecoderTests {
 
         #expect(nearest.count == 8)
         #expect(nearest.map(\.position.x) == [0, 1, 2, 3, 4, 5, 6, 7])
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 
     private func appendColor(

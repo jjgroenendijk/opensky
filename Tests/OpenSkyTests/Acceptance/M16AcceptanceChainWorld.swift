@@ -1,17 +1,12 @@
-// The two world seams the M16 chain answers (issue #203), split out of
-// `M16AcceptanceChain.swift` for the strict-lint type-length cap — the same
-// split `M15AcceptanceChainWorld.swift` made one milestone earlier.
-//
-// Both conformances read the *same* stored state the mover writes, which is the
-// point: the perception pass and the combat loop see the guard where the path
-// follower actually put it, not where the route said it should be. A harness
-// that answered these from literals would be testing two runtimes over a
-// diorama rather than a chain.
+// The two world seams the M16 chain answers, split from `M16AcceptanceChain.swift`
+// for the type-length limit. Both read the state the mover writes, so perception
+// and combat see the guard where the path follower put it.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyCombatTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerception
@@ -54,26 +49,7 @@ extension M16AcceptanceChain: PerceptionWorld {
     }
 }
 
-extension M16AcceptanceChain: CombatLoopWorld {
-    /// Casting is item 19.10's, not this chain's: the acceptance fight is a
-    /// melee one and an opponent with nothing castable takes exactly the path
-    /// it took before 19.10 existed.
-    func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
-        .none
-    }
-
-    @discardableResult
-    func beginCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        false
-    }
-
-    @discardableResult
-    func releaseCombatCast(_ option: CombatSpellOption, by key: ReferenceKey) -> Bool {
-        false
-    }
-
-    func cancelCombatCast(by key: ReferenceKey) {}
-
+extension M16AcceptanceChain: NoCasterCombatWorld {
     var combatPlayer: MeleeAttacker {
         MeleeAttacker(key: .player, feet: playerFeet, facing: 0)
     }

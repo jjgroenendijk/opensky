@@ -1,7 +1,5 @@
-// Actor and equipment record builders for the cell-scene fixture. The world
-// suites and the M10 to M12 acceptance suites build the same actor chain.
-// Synthetic plugin bytes only, never extracted game files (AGENTS.md Legal & IP
-// boundary).
+// Actor and equipment records for the cell-scene fixture, shared by the world
+// suites and the acceptance chains.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -97,15 +95,18 @@ extension CellSceneBuilderFixture {
         return ESMFixture.field(type, data)
     }
 
-    /// Worldspace persistent CELL at grid (0,0) holding cross-cell ACHRs in
+    /// Worldspace persistent CELL at grid (0,0) holding cross-cell `refs` in
     /// its persistent children group (door-handling storage pattern).
-    public func persistentActorCell(refs: Data) -> Data {
-        let cellID: UInt32 = 0x41
+    public func persistentActorCell(
+        refs: Data,
+        cellID: UInt32 = 0x41,
+        editorID: String = "PersistentActors"
+    ) -> Data {
         let cell = ESMFixture.record(
             "CELL",
             formID: cellID,
             data: cellFields(
-                editorID: "PersistentActors",
+                editorID: editorID,
                 grid: (0, 0),
                 flags: 0,
                 waterHeightBits: nil,

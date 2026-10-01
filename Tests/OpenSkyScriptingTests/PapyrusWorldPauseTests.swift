@@ -15,7 +15,7 @@ struct PapyrusWorldPauseTests {
     @Test("a paused advance runs nothing and accumulates nothing")
     func pausedAdvanceIsInert() throws {
         let probe = PapyrusWorldProbeDispatch()
-        let world = try attachedWorld(probe: probe)
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: probe)
         world.enqueue(onLoad())
         world.isPaused = true
 
@@ -37,7 +37,7 @@ struct PapyrusWorldPauseTests {
     @Test("stepFixed still runs while the VM is paused")
     func stepFixedRunsWhilePaused() throws {
         let probe = PapyrusWorldProbeDispatch()
-        let world = try attachedWorld(probe: probe)
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: probe)
         world.isPaused = true
         world.enqueue(onLoad())
 
@@ -50,7 +50,7 @@ struct PapyrusWorldPauseTests {
 
     @Test("burst runs the requested ticks and clamps a stray count")
     func burstStepsAreBounded() throws {
-        let world = try attachedWorld(probe: PapyrusWorldProbeDispatch())
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         world.isPaused = true
         world.burst(ticks: 3)
         #expect(world.scheduler.tickCount == 3)
@@ -62,7 +62,7 @@ struct PapyrusWorldPauseTests {
 
     @Test("the recent-event ring keeps the newest eight and counts the rest")
     func recentEventRingIsBounded() throws {
-        let world = try attachedWorld(probe: PapyrusWorldProbeDispatch())
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         for _ in 0 ..< 11 {
             world.enqueue(onLoad())
         }
@@ -75,7 +75,7 @@ struct PapyrusWorldPauseTests {
 
     @Test("the ring records the event name of every dispatched event")
     func recentEventNamesFollowDispatch() throws {
-        let world = try attachedWorld(probe: PapyrusWorldProbeDispatch())
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         world.enqueue(onLoad())
         world.enqueue(PapyrusScriptEvent(
             target: bKey, functionName: "OnActivate", arguments: []
@@ -88,7 +88,7 @@ struct PapyrusWorldPauseTests {
 
     @Test("the last tick report survives frames that step nothing")
     func lastTickReportIsRetained() throws {
-        let world = try attachedWorld(probe: PapyrusWorldProbeDispatch())
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         #expect(world.lastTickReport == .zero)
         world.enqueue(onLoad())
 
@@ -107,7 +107,7 @@ struct PapyrusWorldPauseTests {
 
     @Test("the scripts snapshot mirrors the runtime's own counters")
     func scriptsSnapshotMirrorsRuntime() throws {
-        let world = try attachedWorld(probe: PapyrusWorldProbeDispatch())
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         world.isPaused = true
         world.enqueue(onLoad())
         world.stepFixed()
@@ -133,7 +133,7 @@ struct PapyrusWorldPauseTests {
 
     @Test("an untargeted snapshot names no reference and no scripts")
     func scriptsSnapshotWithoutTarget() throws {
-        let world = try attachedWorld(probe: PapyrusWorldProbeDispatch())
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         let snapshot = world.scriptsSnapshot()
         #expect(snapshot.targetDescription == nil)
         #expect(snapshot.targetScripts.isEmpty)
@@ -177,40 +177,5 @@ struct PapyrusWorldPauseTests {
 
     private func onLoad() -> PapyrusScriptEvent {
         PapyrusScriptEvent(target: aKey, functionName: "OnLoad", arguments: [])
-    }
-
-    /// World with two loaded instances (references 1 and 2) whose `OnLoad`
-    /// records "a.onload" / "b.onload", with the attach events drained and
-    /// the ring left clean.
-    private func attachedWorld(
-        probe: PapyrusWorldProbeDispatch
-    ) throws -> PapyrusWorldRuntime {
-        let aScript = PapyrusWorldFixture.eventScript("AScript", events: [
-            ("OnLoad", PapyrusWorldFixture.probeBody(note: "a.onload"))
-        ])
-        let bScript = PapyrusWorldFixture.eventScript("BScript", events: [
-            ("OnLoad", PapyrusWorldFixture.probeBody(note: "b.onload"))
-        ])
-        let world = PapyrusWorldFixture.worldRuntime(
-            objects: [aScript, bScript], nativeDispatch: probe
-        )
-        let references = try PapyrusWorldFixture.index([
-            PapyrusWorldFixture.referenceEntry(
-                objectID: 1, scripts: [.init("AScript", properties: [])]
-            ),
-            PapyrusWorldFixture.referenceEntry(
-                objectID: 2, scripts: [.init("BScript", properties: [])]
-            )
-        ])
-        world.attach(
-            cell: PapyrusWorldFixture.cell,
-            references: references,
-            formIDResolver: PapyrusWorldFixture.resolver,
-            firstIntegration: true
-        )
-        // Attach only enqueues, so discarding the queue leaves two live
-        // instances with nothing pending and nothing yet dispatched.
-        world.eventQueue.removeAll()
-        return world
     }
 }

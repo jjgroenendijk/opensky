@@ -11,13 +11,7 @@ enum MusicAudioFixture {
     static let sampleRate = 44100.0
 
     static func makeRunningEngine() throws -> WorldAudioEngine {
-        let format = try #require(
-            AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
-        )
-        let engine = WorldAudioEngine(manualRenderingFormat: format)
-        engine.isEnabled = true
-        try #require(engine.isRunning, "offline engine failed: \(engine.unavailableReason ?? "")")
-        return engine
+        try OfflineAudioFixture.makeRunningEngine()
     }
 
     /// Stereo tone, the shape music material has.
@@ -39,13 +33,8 @@ enum MusicAudioFixture {
         return buffer
     }
 
-    /// Root-mean-square of exactly 0.2 s of offline render across both channels.
-    ///
-    /// `scheduleBuffer` hands the buffer to the player node asynchronously, so
-    /// rendering can begin with silence or start partway through a chunk. The
-    /// measurement begins at the first frame carrying signal and covers a fixed
-    /// number of frames: how long the node took to start is machine load, not
-    /// signal level (issues #240 and #255).
+    /// RMS of 0.2 s of offline render, both channels. The player node starts
+    /// late under load, so the window opens at the first frame with signal.
     static func renderRMS(_ engine: WorldAudioEngine) throws -> Float {
         let format = engine.engine.manualRenderingFormat
         let chunk = try #require(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4096))

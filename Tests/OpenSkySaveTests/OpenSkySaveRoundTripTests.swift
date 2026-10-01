@@ -1,11 +1,6 @@
-// Round-trip and determinism tests for the OpenSky native save container
-// (issue #161).
-//
-// The determinism case drives a real `WorldStateStore` rather than building a
-// snapshot by hand, because the property that matters is "two sessions that
-// reached the same end state write the same bytes", and only the store can
-// reach an end state through a different route. The store is @MainActor, so
-// this suite is too.
+// Round trip and determinism of the native save. The determinism case drives a
+// real `WorldStateStore`, because only the store can reach the same end state
+// by two routes.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -29,11 +24,7 @@ struct OpenSkySaveRoundTripTests {
     }
 
     private func encode(_ snapshot: WorldStateSnapshot) -> Data {
-        OpenSkySaveEncoder.encode(
-            snapshot: snapshot,
-            fingerprint: OpenSkySaveFixture.fingerprint,
-            metadata: OpenSkySaveFixture.metadata
-        )
+        OpenSkySaveFixture.encode(snapshot)
     }
 
     /// Reaches one end state by writing the components of two references in

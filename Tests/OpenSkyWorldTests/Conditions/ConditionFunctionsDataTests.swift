@@ -1,5 +1,4 @@
-// Synthetic coverage for the fourteen M18 data condition functions (issue
-// #455). Every CTDA and record byte is built in code; no game data is used.
+// The fourteen data condition functions, over CTDA and records built in code.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -262,15 +261,12 @@ extension ConditionFunctionsDataTests {
     }
 
     private func keywordRecords() -> Data {
-        keyword(FixtureID.keyword, "LocTypeTest") + keyword(FixtureID.otherKeyword, "OtherKeyword")
-    }
-
-    private func keyword(_ formID: UInt32, _ editorID: String) -> Data {
-        ESMFixture.record(
-            "KYWD",
-            formID: formID,
-            data: ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-        )
+        KeywordFixture
+            .recordBytes(formID: FixtureID.keyword, editorID: "LocTypeTest") + KeywordFixture
+            .recordBytes(
+                formID: FixtureID.otherKeyword,
+                editorID: "OtherKeyword"
+            )
     }
 
     private func formListRecords() -> Data {
@@ -284,44 +280,35 @@ extension ConditionFunctionsDataTests {
     }
 
     private func locationRecords() -> Data {
-        location(FixtureID.parentLocation, "Parent", keywords: [FixtureID.keyword])
-            + location(FixtureID.childLocation, "Child", parent: FixtureID.parentLocation)
-            + location(FixtureID.siblingLocation, "Sibling", parent: FixtureID.parentLocation)
-            + location(FixtureID.otherLocation, "Other", keywords: [FixtureID.keyword])
-    }
-
-    private func location(
-        _ formID: UInt32,
-        _ editorID: String,
-        parent: UInt32? = nil,
-        keywords: [UInt32] = []
-    ) -> Data {
-        var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
-        if let parent {
-            fields += ESMFixture.field("PNAM", words([parent]))
-        }
-        if !keywords.isEmpty {
-            fields += ESMFixture.field("KSIZ", words([UInt32(keywords.count)]))
-                + ESMFixture.field("KWDA", words(keywords))
-        }
-        return ESMFixture.record("LCTN", formID: formID, data: fields)
+        LocationFixture.recordBytes(
+            FixtureID.parentLocation,
+            "Parent",
+            keywords: [FixtureID.keyword]
+        )
+            + LocationFixture.recordBytes(
+                FixtureID.childLocation,
+                "Child",
+                parent: FixtureID.parentLocation
+            )
+            + LocationFixture.recordBytes(
+                FixtureID.siblingLocation,
+                "Sibling",
+                parent: FixtureID.parentLocation
+            )
+            + LocationFixture.recordBytes(
+                FixtureID.otherLocation,
+                "Other",
+                keywords: [FixtureID.keyword]
+            )
     }
 
     private func baseRecords() -> Data {
         ESMFixture.record(
             "MISC",
             formID: FixtureID.subjectBase,
-            data: ESMFixture.field("KSIZ", words([1]))
-                + ESMFixture.field("KWDA", words([FixtureID.keyword]))
+            data: ESMFixture.field("KSIZ", ESMFixture.words([1]))
+                + ESMFixture.field("KWDA", ESMFixture.words([FixtureID.keyword]))
         ) + ESMFixture.record("MISC", formID: FixtureID.targetBase, data: Data())
-    }
-
-    private func words(_ values: [UInt32]) -> Data {
-        var data = Data()
-        for value in values {
-            data.appendUInt32(value)
-        }
-        return data
     }
 
     private func resolved(_ raw: UInt32) -> ResolvedFormID {

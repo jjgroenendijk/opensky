@@ -29,7 +29,7 @@ struct ClimateRecordTests {
             + ESMFixture.field("GNAM", ESMFixture.zstring("Sky\\Glare.dds"))
             + ESMFixture.field("MODL", ESMFixture.zstring("Sky\\Stars.nif"))
             + ESMFixture.field("TNAM", tnam)
-        let climate = try Climate(record: record(ESMFixture.record(
+        let climate = try Climate(record: ESMFixture.parseRecord(ESMFixture.record(
             "CLMT", formID: 0x30, data: fields
         )))
 
@@ -59,13 +59,19 @@ struct ClimateRecordTests {
     @Test func skipsWeatherListWithBadSize() throws {
         // 13 bytes: not a multiple of 12 -> whole WLST rejected.
         let fields = ESMFixture.field("WLST", Data(count: 13))
-        let climate = try Climate(record: record(ESMFixture.record("CLMT", data: fields)))
+        let climate = try Climate(record: ESMFixture.parseRecord(ESMFixture.record(
+            "CLMT",
+            data: fields
+        )))
         #expect(climate.weatherList.isEmpty)
     }
 
     @Test func missingFieldsDecodeToEmptyAndNil() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Bare"))
-        let climate = try Climate(record: record(ESMFixture.record("CLMT", data: fields)))
+        let climate = try Climate(record: ESMFixture.parseRecord(ESMFixture.record(
+            "CLMT",
+            data: fields
+        )))
         #expect(climate.editorID == "Bare")
         #expect(climate.weatherList.isEmpty)
         #expect(climate.timing == nil)
@@ -74,15 +80,7 @@ struct ClimateRecordTests {
 
     @Test func wrongRecordTypeThrows() throws {
         #expect(throws: ESMError.self) {
-            _ = try Climate(record: record(ESMFixture.record("WTHR", data: Data())))
+            _ = try Climate(record: ESMFixture.parseRecord(ESMFixture.record("WTHR", data: Data())))
         }
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 }

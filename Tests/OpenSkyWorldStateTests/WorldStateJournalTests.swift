@@ -1,8 +1,4 @@
-// WorldStateStore journal, snapshot and generated-key tests (issue #159),
-// split from WorldStateStoreTests to stay inside the type-body length limit.
-//
-// The store is @MainActor, so the suite is too. Fixtures are synthetic and
-// built in code.
+// WorldStateStore journal, snapshot and generated-key tests.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -26,14 +22,6 @@ struct WorldStateJournalTests {
         .plugin(name: plugin, objectID: objectID)
     }
 
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
-    }
-
     private func referenceEntry(objectID: UInt32 = 0x200) throws -> RuntimeReferenceEntry {
         var name = Data()
         name.appendUInt32(0x100)
@@ -51,7 +39,7 @@ struct WorldStateJournalTests {
             key: key(objectID),
             formID: FormID(objectID),
             isPersistent: false,
-            record: .reference(PlacedReference(record: record(bytes)))
+            record: .reference(PlacedReference(record: ESMFixture.parseRecord(bytes)))
         )
     }
 

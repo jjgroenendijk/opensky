@@ -1,14 +1,8 @@
-// M16 milestone panel acceptance (issue #203): one uninterrupted run through
-// the real sidebar model and the registry-built World > AI & Navigation panel on
-// a single provider set, in the M10-M15 acceptance-triad shape.
-//
-// The readouts are found by their accessibility identifiers, which is the
-// deterministic substitute while UI automation is TCC-blocked
-// (docs/tools/environment.md). What this adds over the section suites is that
-// the whole destination works as one surface, in the order a session would use
-// it — switch on the overlays, choose an actor, send it somewhere, read its
-// package, read what it perceives, make it hostile — without a single fake being
-// swapped halfway.
+// M16 panel acceptance: one run through World > AI & Navigation on one
+// provider set: overlays on, choose an actor, send it somewhere, read its
+// package and perception, and make it hostile.
+// Readouts are found by accessibility id, the deterministic substitute while
+// UI automation cannot run here (docs/tools/environment.md).
 
 import AppKit
 @testable import OpenSky
@@ -48,25 +42,7 @@ struct M16AcceptancePanelTests {
     private static func buildPanel(
         providers: FakeWorldProviders
     ) throws -> AINavigationPanelViewController {
-        let worldGroup = try #require(
-            AppSidebarModel.groups().first { $0.section == .world }
-        )
-        let descriptor = try #require(
-            worldGroup.destinations.first { $0.id == "aiNavigation" }
-        )
-        #expect(descriptor.sidebarIdentifier == "Destination-aiNavigation")
-        #expect(descriptor.title == "AI & Navigation")
-
-        guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("World > AI & Navigation is not a world inspector")
-            throw M16PanelAcceptanceError.notAWorldInspector
-        }
-        let panel = try #require(
-            makePanel(WorldPanelContext(providers: providers))
-                as? AINavigationPanelViewController
-        )
-        panel.loadViewIfNeeded()
-        return panel
+        try buildWorldPanel("aiNavigation", title: "AI & Navigation", providers: providers)
     }
 
     /// Every readout the destination publishes, read back by accessibility id.
@@ -265,8 +241,5 @@ struct M16AcceptancePanelTests {
     )
 }
 
-/// Thrown only to end the run early when the registry hands back something
-/// other than a world inspector, which `Issue.record` has already reported.
-private enum M16PanelAcceptanceError: Error {
-    case notAWorldInspector
-}
+// Thrown only to end the run early when the registry hands back something
+// other than a world inspector, which `Issue.record` has already reported.

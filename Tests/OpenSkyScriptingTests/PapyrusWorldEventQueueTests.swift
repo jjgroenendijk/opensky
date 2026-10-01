@@ -1,4 +1,4 @@
-// FIFO event queue semantics for `PapyrusWorldRuntime` (issue #171):
+// FIFO event queue semantics for `PapyrusWorldRuntime`:
 // budget-bounded drain with carry-over, global order, per-instance serial
 // delivery across a latent suspension, and the fixed-step latent wake.
 
@@ -14,7 +14,7 @@ struct PapyrusWorldEventQueueTests {
     @Test("events beyond the budget carry over, in global FIFO order")
     func budgetCarryOver() throws {
         let probe = PapyrusWorldProbeDispatch()
-        let world = try attachedWorld(probe: probe)
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: probe)
         world.budget = PapyrusTickBudget(events: 2, instructions: 100_000)
         for turn in 0 ..< 5 {
             let target = turn.isMultiple(of: 2) ? aKey : bKey
@@ -138,7 +138,7 @@ struct PapyrusWorldEventQueueTests {
     @Test("a zero delta advances nothing but is safe every frame")
     func zeroDeltaIsInert() throws {
         let probe = PapyrusWorldProbeDispatch()
-        let world = try attachedWorld(probe: probe)
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: probe)
         world.enqueue(PapyrusScriptEvent(
             target: aKey, functionName: "OnLoad", arguments: []
         ))
@@ -155,7 +155,7 @@ struct PapyrusWorldEventQueueTests {
 
     @Test("advance accumulates partial deltas and caps a hitch at four steps")
     func advanceAccumulatesAndCaps() throws {
-        let world = try attachedWorld(probe: PapyrusWorldProbeDispatch())
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         #expect(world.advance(delta: 1.0 / 60.0).steps == 0)
         #expect(world.advance(delta: 1.0 / 60.0).steps == 1)
         #expect(world.advance(delta: 10).steps == 4)
@@ -163,7 +163,7 @@ struct PapyrusWorldEventQueueTests {
 
     @Test("an event function the script does not define is a counted no-op")
     func undefinedFunctionIsANoOp() throws {
-        let world = try attachedWorld(probe: PapyrusWorldProbeDispatch())
+        let world = try PapyrusWorldFixture.twoInstanceWorld(probe: PapyrusWorldProbeDispatch())
         world.enqueue(PapyrusScriptEvent(
             target: aKey, functionName: "OnNothingDefined", arguments: []
         ))
@@ -179,39 +179,5 @@ struct PapyrusWorldEventQueueTests {
 
     private var bKey: PapyrusInstanceKey {
         PapyrusWorldFixture.key(objectID: 2, script: "BScript")
-    }
-
-    /// World with two loaded instances (references 1 and 2) whose `OnLoad`
-    /// records "a.onload" / "b.onload", with the attach events drained.
-    private func attachedWorld(
-        probe: PapyrusWorldProbeDispatch
-    ) throws -> PapyrusWorldRuntime {
-        let aScript = PapyrusWorldFixture.eventScript("AScript", events: [
-            ("OnLoad", PapyrusWorldFixture.probeBody(note: "a.onload"))
-        ])
-        let bScript = PapyrusWorldFixture.eventScript("BScript", events: [
-            ("OnLoad", PapyrusWorldFixture.probeBody(note: "b.onload"))
-        ])
-        let world = PapyrusWorldFixture.worldRuntime(
-            objects: [aScript, bScript], nativeDispatch: probe
-        )
-        let references = try PapyrusWorldFixture.index([
-            PapyrusWorldFixture.referenceEntry(
-                objectID: 1, scripts: [.init("AScript", properties: [])]
-            ),
-            PapyrusWorldFixture.referenceEntry(
-                objectID: 2, scripts: [.init("BScript", properties: [])]
-            )
-        ])
-        world.attach(
-            cell: PapyrusWorldFixture.cell,
-            references: references,
-            formIDResolver: PapyrusWorldFixture.resolver,
-            firstIntegration: true
-        )
-        // Attach only enqueues, so discarding the queue leaves two live
-        // instances with no pending events and no notes recorded.
-        world.eventQueue.removeAll()
-        return world
     }
 }

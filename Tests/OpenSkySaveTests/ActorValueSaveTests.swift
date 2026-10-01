@@ -1,12 +1,7 @@
-// AVAL chunk tests (issue #194): the additive actor-value chunk in the OpenSky
-// native save container.
-//
-// Beyond the round trip, the properties that matter mirror what `INVN` and
-// `QSTS` promise. A save carrying actor values must still load in a build that
-// knows nothing about the chunk, which the "older build" case simulates by
-// renaming the tag; and `RDLT` must gain nothing, so an actor whose only
-// component is its values leaves no entry there for an older build to restore
-// as an empty reference.
+// AVAL chunk: actor values in the native save.
+// An older build must still load the save, which the renamed-tag case
+// simulates, and `RDLT` must gain no entry for a reference whose only
+// component is this one.
 
 import Foundation
 @testable import OpenSkyActors
@@ -46,26 +41,13 @@ struct ActorValueSaveTests {
                         current: ActorValues(health: 100, magicka: 33, stamina: 100)
                     ).erased
                 ]
-            ),
-            OpenSkySaveFixture.entry(
-                key: .plugin(name: "skyrim.esm", objectID: 1),
-                cell: OpenSkySaveFixture.riverwood,
-                components: [ReferenceDeletionState.deleted.erased]
             )
         ]
-        return WorldStateSnapshot(
-            entries: entries.sorted { $0.key < $1.key },
-            nextGeneratedSequence: 5,
-            sequence: 11
-        )
+        return OpenSkySaveFixture.snapshot(entries, bystanderCell: OpenSkySaveFixture.riverwood)
     }
 
     private func encode(_ snapshot: WorldStateSnapshot) -> Data {
-        OpenSkySaveEncoder.encode(
-            snapshot: snapshot,
-            fingerprint: OpenSkySaveFixture.fingerprint,
-            metadata: OpenSkySaveFixture.metadata
-        )
+        OpenSkySaveFixture.encode(snapshot)
     }
 
     // MARK: - Round trip

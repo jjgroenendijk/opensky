@@ -11,7 +11,7 @@ import Testing
 
 struct DefaultObjectsTests {
     @Test func decodesKnownAndUnknownTagsAndWrongTypeThrows() throws {
-        let defaults = try DefaultObjects(record: record(
+        let defaults = try DefaultObjects(record: ESMFixture.parsedRecord(
             type: "DOBJ",
             fields: ESMFixture.field("DNAM", entries([
                 ("GOLD", 0x0F), ("ZZZZ", 0x20), (nil, 0)
@@ -25,13 +25,13 @@ struct DefaultObjectsTests {
         let unknown = try #require(DefaultObjectTag(name: "ZZZZ"))
         #expect(defaults.skipped.counts[.unknownDefaultObjectTag(unknown.code)] == 1)
 
-        let wrong = try record(type: "KYWD", fields: Data())
+        let wrong = try ESMFixture.parsedRecord(type: "KYWD", fields: Data())
         #expect(throws: ESMError.self) { try DefaultObjects(record: wrong) }
     }
 
     @Test func truncatedPackedArrayKeepsCompleteEntriesAndTalliesTail() throws {
         let payload = entries([("GOLD", 0x0F)]) + Data([1, 2, 3])
-        let defaults = try DefaultObjects(record: record(
+        let defaults = try DefaultObjects(record: ESMFixture.parsedRecord(
             type: "DOBJ", fields: ESMFixture.field("DNAM", payload)
         ))
         #expect(defaults.entries.count == 1)
@@ -82,18 +82,6 @@ struct DefaultObjectsTests {
             data.appendUInt32(value.1)
         }
         return data
-    }
-
-    private func record(type: String, fields: Data) throws -> ESMRecord {
-        let file = try plugin(type: type, records: [
-            ESMFixture.record(type, formID: 1, data: fields)
-        ])
-        let group = try #require(file.topGroups.first)
-        let children = try group.children()
-        guard case let .record(record) = try #require(children.first) else {
-            throw ESMError.malformed("fixture record missing")
-        }
-        return record
     }
 
     private func plugin(

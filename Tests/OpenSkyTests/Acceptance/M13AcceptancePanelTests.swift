@@ -1,13 +1,7 @@
-// M13 milestone panel acceptance (issue #185): one uninterrupted run through
-// the real sidebar model and the registry-built World > Quests & Journal panel
-// on a single provider set, in the M10/M11 acceptance-triad shape.
-//
-// The readouts are found by their accessibility identifiers, which is the
-// deterministic substitute while UI automation is TCC-blocked
-// (docs/tools/environment.md). `JournalPanelTests` covers each section on its
-// own; what this adds is that the whole destination works as one surface, in
-// the order a session would use it, without a single fake being swapped
-// halfway.
+// M13 panel acceptance: one run through World > Quests & Journal on one
+// provider set, in the order a session uses it.
+// Readouts are found by accessibility id, the deterministic substitute while
+// UI automation cannot run here (docs/tools/environment.md).
 
 import AppKit
 @testable import OpenSky
@@ -44,24 +38,7 @@ struct M13AcceptancePanelTests {
     private static func buildPanel(
         providers: FakeWorldProviders
     ) throws -> JournalPanelViewController {
-        let worldGroup = try #require(
-            AppSidebarModel.groups().first { $0.section == .world }
-        )
-        let descriptor = try #require(
-            worldGroup.destinations.first { $0.id == "journal" }
-        )
-        #expect(descriptor.sidebarIdentifier == "Destination-journal")
-        #expect(descriptor.title == "Quests & Journal")
-
-        guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("World > Quests & Journal is not a world inspector")
-            throw M13PanelAcceptanceError.notAWorldInspector
-        }
-        let panel = try #require(
-            makePanel(WorldPanelContext(providers: providers)) as? JournalPanelViewController
-        )
-        panel.loadViewIfNeeded()
-        return panel
+        try buildWorldPanel("journal", title: "Quests & Journal", providers: providers)
     }
 
     /// Every readout the destination publishes, read back by accessibility id.
@@ -197,8 +174,5 @@ struct M13AcceptancePanelTests {
     }
 }
 
-/// Thrown only to end the run early when the registry hands back something
-/// other than a world inspector, which `Issue.record` has already reported.
-private enum M13PanelAcceptanceError: Error {
-    case notAWorldInspector
-}
+// Thrown only to end the run early when the registry hands back something
+// other than a world inspector, which `Issue.record` has already reported.

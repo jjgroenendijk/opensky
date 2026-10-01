@@ -242,7 +242,11 @@ extension GrassPlacementTests {
             }
             fields += ESMFixture.field("VTXT", opacity)
         }
-        return try Land(record: record(ESMFixture.record("LAND", formID: 0x300, data: fields)))
+        return try Land(record: ESMFixture.parseRecord(ESMFixture.record(
+            "LAND",
+            formID: 0x300,
+            data: fields
+        )))
     }
 
     private func makeLandTexture(
@@ -255,7 +259,7 @@ extension GrassPlacementTests {
             gnam.appendUInt32(grass)
             fields += ESMFixture.field("GNAM", gnam)
         }
-        return try LandTexture(record: record(
+        return try LandTexture(record: ESMFixture.parseRecord(
             ESMFixture.record("LTEX", formID: formID, data: fields)
         ))
     }
@@ -288,7 +292,7 @@ extension GrassPlacementTests {
         data.append(contentsOf: [0, 0, 0])
         let fields = ESMFixture.field("MODL", ESMFixture.zstring("grass.nif"))
             + ESMFixture.field("DATA", data)
-        return try Grass(record: record(
+        return try Grass(record: ESMFixture.parseRecord(
             ESMFixture.record("GRAS", formID: formID, data: fields)
         ))
     }
@@ -300,13 +304,5 @@ extension GrassPlacementTests {
         data.append(0)
         data.appendUInt16(UInt16(bitPattern: layer))
         return data
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 }

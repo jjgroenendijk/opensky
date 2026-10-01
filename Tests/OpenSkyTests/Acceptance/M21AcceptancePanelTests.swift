@@ -1,16 +1,8 @@
-// M21 milestone panel acceptance (issue #507, roadmap item 21.8): one run
-// through the real sidebar model and the registry-built `World > Crime &
-// Factions` panel on a wired session, in the M10-M20 acceptance shape, plus the
-// Asset Browser families the milestone's three new record types browse from.
-//
-// The session is a real `GameViewController` with the faction runtime and the
-// crime reporter attached over `CrimeFixture`'s synthetic load order — no
-// renderer, no window, no game data. The panel reaches the controller's own
-// `CrimeFactionControlProviding` conformance, which reaches `CrimeRuntime`,
-// `FactionRuntime` and `resistArrest` exactly as a session does.
-//
-// Readouts are found by accessibility identifier, the deterministic substitute
-// while UI automation cannot run here (docs/tools/environment.md).
+// M21 panel acceptance: one run through `World > Crime & Factions` on a real
+// `GameViewController` with the faction runtime and crime reporter over
+// `CrimeFixture`'s synthetic load order, plus the new Asset Browser families.
+// Readouts are found by accessibility id, the deterministic substitute while
+// UI automation cannot run here (docs/tools/environment.md).
 
 import AppKit
 @testable import OpenSky
@@ -62,23 +54,7 @@ struct M21AcceptancePanelTests {
     private static func buildPanel(
         providers: GameViewController
     ) throws -> CrimeFactionPanelViewController {
-        let worldGroup = try #require(
-            AppSidebarModel.groups().first { $0.section == .world }
-        )
-        let descriptor = try #require(
-            worldGroup.destinations.first { $0.id == "crimeFactions" }
-        )
-        #expect(descriptor.sidebarIdentifier == "Destination-crimeFactions")
-        guard case let .worldInspector(makePanel) = descriptor.content else {
-            Issue.record("World > Crime & Factions is not a world inspector")
-            throw ProgressionPanelError.notAWorldInspector
-        }
-        let panel = try #require(
-            makePanel(WorldPanelContext(providers: providers))
-                as? CrimeFactionPanelViewController
-        )
-        panel.loadViewIfNeeded()
-        return panel
+        try buildWorldPanel("crimeFactions", providers: providers)
     }
 
     /// Scope points 2 and 3: an empty ledger, no target, no stolen goods, and

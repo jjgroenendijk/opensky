@@ -1,7 +1,5 @@
-// CellSceneComposition: resident-cell bookkeeping + recomposition into one
-// RenderScene. Pure value tests run device-free on empty scenes; the
-// compose-count test uploads tiny synthetic models (RenderSceneTests
-// pattern) and is device-gated.
+// CellSceneComposition: resident-cell bookkeeping and recomposition into one
+// RenderScene. Tests that upload a model need a Metal device.
 
 import Foundation
 import Metal
@@ -28,6 +26,26 @@ struct CellSceneCompositionTests {
         descriptor.pixelFormat = .rgba8Unorm
         descriptor.usage = .shaderRead
         return try #require(device.makeTexture(descriptor: descriptor))
+    }
+
+    /// One untextured triangle uploaded to the system device.
+    private static func triangleModel() throws -> RenderModel {
+        let device = try #require(Self.device)
+        let texture = try Self.texture(device: device)
+        let mesh = Mesh(
+            name: nil,
+            transform: matrix_identity_float4x4,
+            positions: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
+            normals: [],
+            tangents: [],
+            bitangents: [],
+            uvs: [],
+            colors: [],
+            indices: [0, 1, 2],
+            materialSlot: 0
+        )
+        let model = Model(meshes: [mesh], materials: [.fallback], skippedShapeCount: 0)
+        return try RenderModel(device: device, model: model) { _, _ in texture }
     }
 
     private static func emptyCellScene(
@@ -96,22 +114,7 @@ struct CellSceneCompositionTests {
     }
 
     @Test(.enabled(if: Self.hasDevice)) func recomposeReflectsAddAndRemove() throws {
-        let device = try #require(Self.device)
-        let texture = try Self.texture(device: device)
-        let mesh = Mesh(
-            name: nil,
-            transform: matrix_identity_float4x4,
-            positions: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
-            normals: [],
-            tangents: [],
-            bitangents: [],
-            uvs: [],
-            colors: [],
-            indices: [0, 1, 2],
-            materialSlot: 0
-        )
-        let model = Model(meshes: [mesh], materials: [.fallback], skippedShapeCount: 0)
-        let render = try RenderModel(device: device, model: model) { _, _ in texture }
+        let render = try Self.triangleModel()
 
         func cell(instances: Int) -> CellScene {
             let placements = (0 ..< instances).map { index in
@@ -150,22 +153,7 @@ struct CellSceneCompositionTests {
 
     @Test(.enabled(if: Self.hasDevice))
     func aRebinnedReferenceDrawOutlivesOnlyItsOccupiedCell() throws {
-        let device = try #require(Self.device)
-        let texture = try Self.texture(device: device)
-        let mesh = Mesh(
-            name: nil,
-            transform: matrix_identity_float4x4,
-            positions: [SIMD3(0, 0, 0), SIMD3(1, 0, 0), SIMD3(0, 1, 0)],
-            normals: [],
-            tangents: [],
-            bitangents: [],
-            uvs: [],
-            colors: [],
-            indices: [0, 1, 2],
-            materialSlot: 0
-        )
-        let model = Model(meshes: [mesh], materials: [.fallback], skippedShapeCount: 0)
-        let render = try RenderModel(device: device, model: model) { _, _ in texture }
+        let render = try Self.triangleModel()
         let reference = FormID(0x200)
         let volume = try #require(DynamicCollisionVolume.box(
             halfExtents: SIMD3(repeating: 10)

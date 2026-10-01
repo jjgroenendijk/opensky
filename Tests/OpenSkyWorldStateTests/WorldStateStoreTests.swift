@@ -1,10 +1,5 @@
-// WorldStateStore unit tests (issue #159): component round-trips, reset,
-// dirty tracking, the bounded change journal, snapshot determinism and
-// generated-key allocation.
-//
-// The store is @MainActor, so the suite is too. Every fixture is synthetic and
-// built in code — the baseline tests decode REFR/ACHR records straight from
-// ESMFixture bytes, the same shape RuntimeReferenceIndexTests uses.
+// WorldStateStore: component round-trips, reset, dirty tracking, the change
+// journal, snapshot determinism, and generated keys.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -26,14 +21,6 @@ struct WorldStateStoreTests {
 
     private func key(_ objectID: UInt32, plugin: String = "skyrim.esm") -> ReferenceKey {
         .plugin(name: plugin, objectID: objectID)
-    }
-
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
     }
 
     private func placementFields(position: SIMD3<Float>, scale: Float?) -> Data {
@@ -66,7 +53,7 @@ struct WorldStateStoreTests {
             key: key(objectID),
             formID: FormID(objectID),
             isPersistent: false,
-            record: .reference(PlacedReference(record: record(bytes)))
+            record: .reference(PlacedReference(record: ESMFixture.parseRecord(bytes)))
         )
     }
 
@@ -84,7 +71,7 @@ struct WorldStateStoreTests {
             key: key(objectID),
             formID: FormID(objectID),
             isPersistent: true,
-            record: .actor(PlacedActor(record: record(bytes)))
+            record: .actor(PlacedActor(record: ESMFixture.parseRecord(bytes)))
         )
     }
 

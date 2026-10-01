@@ -1,7 +1,5 @@
-// Appearance record decoder tests (RACE, ARMO, ARMA, OTFT, BodyTemplate) over
-// synthetic in-code records (ESMFixture) — never extracted game files (AGENTS.md
-// "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" per-record
-// pages; biped slot bits from NifTools nif.xml BSDismemberBodyPartType.
+// RACE, ARMO, ARMA, OTFT and BodyTemplate decoding. Layouts: UESP "Skyrim
+// Mod:Mod File Format"; biped slot bits: nif.xml BSDismemberBodyPartType.
 
 import FormatsCoreTesting
 import FormatsESMTesting
@@ -21,7 +19,7 @@ struct AppearanceRecordDecodeTests {
         fields += ESMFixture.field("NAM1", ESMFixture.zstring("malehead.tri"))
         fields += uint32Field("NAM0", 2)
         fields += ESMFixture.field("NAM1", ESMFixture.zstring("maleheadchargen.tri"))
-        let part = try HeadPart(record: record(
+        let part = try HeadPart(record: ESMFixture.parseRecord(
             ESMFixture.record("HDPT", formID: 0x5162F, data: fields)
         ))
 
@@ -34,7 +32,7 @@ struct AppearanceRecordDecodeTests {
         var fields = ESMFixture.field("NAM1", ESMFixture.zstring("orphan.tri"))
         fields += uint32Field("NAM0", 99)
         fields += ESMFixture.field("NAM1", ESMFixture.zstring("future.tri"))
-        let part = try HeadPart(record: record(
+        let part = try HeadPart(record: ESMFixture.parseRecord(
             ESMFixture.record("HDPT", formID: 1, data: fields)
         ))
         #expect(part.morphPaths.isEmpty)
@@ -112,7 +110,7 @@ struct AppearanceRecordDecodeTests {
         fields += ESMFixture.field("FNAM", Data())
         fields += ESMFixture.field("ANAM", ESMFixture.zstring("actors\\character\\female.nif"))
         let race = try Race(
-            record: record(ESMFixture.record("RACE", formID: 0x1234, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("RACE", formID: 0x1234, data: fields)),
             localized: false
         )
         #expect(race.formID == FormID(0x1234))
@@ -129,7 +127,7 @@ struct AppearanceRecordDecodeTests {
         // A DATA too short to reach the flags word decodes as no flags.
         let fields = ESMFixture.field("DATA", Data(count: 0x10))
         let race = try Race(
-            record: record(ESMFixture.record("RACE", formID: 1, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("RACE", formID: 1, data: fields)),
             localized: false
         )
         #expect(race.flags.isEmpty)
@@ -138,7 +136,7 @@ struct AppearanceRecordDecodeTests {
     @Test func raceSkeletonPathsNilWhenAbsent() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("AlduinRace"))
         let race = try Race(
-            record: record(ESMFixture.record("RACE", formID: 1, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("RACE", formID: 1, data: fields)),
             localized: false
         )
         #expect(race.maleSkeletonPath == nil)
@@ -157,7 +155,7 @@ struct AppearanceRecordDecodeTests {
         fields += ESMFixture.field("MNAM", Data()) // start of male body-model block
         fields += ESMFixture.field("MODL", ESMFixture.zstring("body.nif"))
         let race = try Race(
-            record: record(ESMFixture.record("RACE", formID: 1, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("RACE", formID: 1, data: fields)),
             localized: false
         )
         #expect(race.maleSkeletonPath == "skel_m.nif")
@@ -177,7 +175,7 @@ struct AppearanceRecordDecodeTests {
         fields += ESMFixture.field("FNAM", Data())
         fields += uint32Field("HEAD", 0x20)
         let race = try Race(
-            record: record(ESMFixture.record("RACE", formID: 1, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("RACE", formID: 1, data: fields)),
             localized: false
         )
 
@@ -190,7 +188,7 @@ struct AppearanceRecordDecodeTests {
     @Test func raceRejectsOtherRecordTypes() throws {
         let bytes = ESMFixture.record("ARMO", formID: 1, data: Data())
         #expect(throws: ESMError.self) {
-            _ = try Race(record: record(bytes), localized: false)
+            _ = try Race(record: ESMFixture.parseRecord(bytes), localized: false)
         }
     }
 
@@ -209,7 +207,7 @@ struct AppearanceRecordDecodeTests {
         fields += formIDField("MODL", 0x0001_A1A1)
         fields += formIDField("MODL", 0x0001_B2B2)
         let armor = try Armor(
-            record: record(ESMFixture.record("ARMO", formID: 0x5000, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("ARMO", formID: 0x5000, data: fields)),
             localized: false
         )
         #expect(armor.formID == FormID(0x5000))
@@ -226,7 +224,7 @@ struct AppearanceRecordDecodeTests {
         var fields = ESMFixture.field("MODL", ESMFixture.zstring("armor\\model.nif"))
         fields += formIDField("MODL", 0x0001_C3C3)
         let armor = try Armor(
-            record: record(ESMFixture.record("ARMO", formID: 1, data: fields)),
+            record: ESMFixture.parseRecord(ESMFixture.record("ARMO", formID: 1, data: fields)),
             localized: false
         )
         #expect(armor.armatures == [FormID(0x0001_C3C3)])
@@ -234,7 +232,7 @@ struct AppearanceRecordDecodeTests {
 
     @Test func armorEmptyWhenFieldsAbsent() throws {
         let armor = try Armor(
-            record: record(ESMFixture.record("ARMO", formID: 1, data: Data())),
+            record: ESMFixture.parseRecord(ESMFixture.record("ARMO", formID: 1, data: Data())),
             localized: false
         )
         #expect(armor.armatures.isEmpty)
@@ -245,7 +243,7 @@ struct AppearanceRecordDecodeTests {
     @Test func armorRejectsOtherRecordTypes() throws {
         let bytes = ESMFixture.record("ARMA", formID: 1, data: Data())
         #expect(throws: ESMError.self) {
-            _ = try Armor(record: record(bytes), localized: false)
+            _ = try Armor(record: ESMFixture.parseRecord(bytes), localized: false)
         }
     }
 
@@ -259,7 +257,7 @@ struct AppearanceRecordDecodeTests {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("FarmClothesOutfit"))
         fields += ESMFixture.field("INAM", inam)
         let outfit = try Outfit(
-            record: record(ESMFixture.record("OTFT", formID: 0x7000, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("OTFT", formID: 0x7000, data: fields))
         )
         #expect(outfit.formID == FormID(0x7000))
         #expect(outfit.editorID == "FarmClothesOutfit")
@@ -271,7 +269,7 @@ struct AppearanceRecordDecodeTests {
     @Test func outfitEmptyWhenInamAbsent() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("EmptyOutfit"))
         let outfit = try Outfit(
-            record: record(ESMFixture.record("OTFT", formID: 1, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("OTFT", formID: 1, data: fields))
         )
         #expect(outfit.items.isEmpty)
     }
@@ -279,28 +277,25 @@ struct AppearanceRecordDecodeTests {
     @Test func outfitRejectsMisalignedInam() throws {
         let fields = ESMFixture.field("INAM", Data(count: 6)) // not a multiple of 4
         #expect(throws: ESMError.self) {
-            _ = try Outfit(record: record(ESMFixture.record("OTFT", formID: 1, data: fields)))
+            _ = try Outfit(record: ESMFixture.parseRecord(ESMFixture.record(
+                "OTFT",
+                formID: 1,
+                data: fields
+            )))
         }
     }
 
     @Test func outfitRejectsOtherRecordTypes() throws {
         let bytes = ESMFixture.record("ARMO", formID: 1, data: Data())
         #expect(throws: ESMError.self) {
-            _ = try Outfit(record: record(bytes))
+            _ = try Outfit(record: ESMFixture.parseRecord(bytes))
         }
     }
 }
 
 // MARK: - Fixture helpers
 
-/// Parses one synthetic record through the container walk.
-private func record(_ bytes: Data) throws -> ESMRecord {
-    let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-    guard case let .record(record)? = children.first else {
-        throw ESMError.malformed("fixture did not produce a record")
-    }
-    return record
-}
+// Parses one synthetic record through the container walk.
 
 private func formIDField(_ type: String, _ value: UInt32) -> Data {
     uint32Field(type, value)

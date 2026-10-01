@@ -13,14 +13,6 @@ import Testing
 struct RuntimeReferenceIndexTests {
     // MARK: - Fixtures
 
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
-    }
-
     private func placedReference(
         formID: UInt32,
         base: UInt32 = 0x100,
@@ -34,7 +26,7 @@ struct RuntimeReferenceIndexTests {
         }
         let fields = ESMFixture.field("NAME", name) + ESMFixture.field("DATA", data)
         return try PlacedReference(
-            record: record(ESMFixture.record("REFR", formID: formID, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("REFR", formID: formID, data: fields))
         )
     }
 
@@ -44,7 +36,7 @@ struct RuntimeReferenceIndexTests {
         let fields = ESMFixture.field("NAME", name)
             + ESMFixture.field("DATA", Data(count: 24))
         return try PlacedActor(
-            record: record(ESMFixture.record("ACHR", formID: formID, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("ACHR", formID: formID, data: fields))
         )
     }
 

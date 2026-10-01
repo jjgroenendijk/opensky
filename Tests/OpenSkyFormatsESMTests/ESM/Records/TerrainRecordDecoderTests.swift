@@ -1,7 +1,4 @@
-// Terrain record decoder tests (LAND, LTEX, TXST) over synthetic in-code
-// records (ESMFixture) — never extracted game files (AGENTS.md "Legal & IP
-// boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" LAND/LTEX/TXST +
-// xEdit wbDefinitionsCommon.pas; see docs/formats/land.md.
+// LAND, LTEX and TXST decoding. Layout: docs/formats/land.md.
 
 import FormatsCoreTesting
 import FormatsESMTesting
@@ -11,14 +8,7 @@ import simd
 import Testing
 
 struct TerrainRecordDecoderTests {
-    /// Parses one synthetic record through the container walk.
-    private func record(_ bytes: Data) throws -> ESMRecord {
-        let children = try ESMGroup.parseChildren(in: bytes, range: 0 ..< bytes.count)
-        guard case let .record(record)? = children.first else {
-            throw ESMError.malformed("fixture did not produce a record")
-        }
-        return record
-    }
+    // Parses one synthetic record through the container walk.
 
     // MARK: - VHGT fixture
 
@@ -76,7 +66,7 @@ struct TerrainRecordDecoderTests {
             Delta(row: 1, col: 0, value: 5), Delta(row: 1, col: 1, value: -4),
             Delta(row: 2, col: 0, value: -6)
         ]))
-        let land = try Land(record: record(ESMFixture.record("LAND", data: field)))
+        let land = try Land(record: ESMFixture.parseRecord(ESMFixture.record("LAND", data: field)))
         let heights = try #require(land.heightField?.heights)
         #expect(land.heightField?.anchor == 10)
         #expect(heights.count == Land.vertexCount)
@@ -110,7 +100,7 @@ struct TerrainRecordDecoderTests {
         bytes[4] = UInt8(bitPattern: -2)
         bytes[5] = UInt8(bitPattern: -3)
         let field = ESMFixture.field("VNML", Data(bytes))
-        let land = try Land(record: record(ESMFixture.record("LAND", data: field)))
+        let land = try Land(record: ESMFixture.parseRecord(ESMFixture.record("LAND", data: field)))
         let normals = try #require(land.normals)
         #expect(normals.count == Land.vertexCount)
         #expect(normals[0] == SIMD3<Int8>(1, 2, 3))
@@ -124,7 +114,7 @@ struct TerrainRecordDecoderTests {
         bytes[1] = 128
         bytes[2] = 0
         let field = ESMFixture.field("VCLR", Data(bytes))
-        let land = try Land(record: record(ESMFixture.record("LAND", data: field)))
+        let land = try Land(record: ESMFixture.parseRecord(ESMFixture.record("LAND", data: field)))
         let colors = try #require(land.colors)
         #expect(colors.count == Land.vertexCount)
         #expect(colors[0] == SIMD3<UInt8>(255, 128, 0))
@@ -141,7 +131,7 @@ struct TerrainRecordDecoderTests {
             )
             + ESMFixture.field("ATXT", textureHeader(texture: 0x9ABC, quadrant: 3, layer: 2))
             + ESMFixture.field("VTXT", vtxt([(position: 144, opacity: 0.25)]))
-        let land = try Land(record: record(ESMFixture.record("LAND", data: fields)))
+        let land = try Land(record: ESMFixture.parseRecord(ESMFixture.record("LAND", data: fields)))
 
         #expect(land.baseTextures == [
             Land.QuadrantTexture(texture: FormID(0x1234), quadrant: 2, layer: 0)
@@ -178,7 +168,11 @@ struct TerrainRecordDecoderTests {
             + ESMFixture.field("VHGT", vhgt(anchor: 0, deltas: [Delta(row: 0, col: 0, value: 1)]))
             + ESMFixture.field("BTXT", textureHeader(texture: 0xABCD, quadrant: 0, layer: 0))
         let land = try Land(
-            record: record(ESMFixture.compressedRecord("LAND", formID: 0x77, fieldData: fields))
+            record: ESMFixture.parseRecord(ESMFixture.compressedRecord(
+                "LAND",
+                formID: 0x77,
+                fieldData: fields
+            ))
         )
         #expect(land.formID == FormID(0x77))
         #expect(land.flags == 0x2A)
@@ -191,18 +185,18 @@ struct TerrainRecordDecoderTests {
     @Test func landRejectsWrongRecordType() {
         let statBytes = ESMFixture.record("STAT", data: Data())
         #expect(throws: (any Error).self) {
-            _ = try Land(record: record(statBytes))
+            _ = try Land(record: ESMFixture.parseRecord(statBytes))
         }
     }
 
     @Test func landRejectsMalformedSizes() {
         let shortVHGT = ESMFixture.record("LAND", data: ESMFixture.field("VHGT", Data(count: 100)))
         #expect(throws: (any Error).self) {
-            _ = try Land(record: record(shortVHGT))
+            _ = try Land(record: ESMFixture.parseRecord(shortVHGT))
         }
         let shortVNML = ESMFixture.record("LAND", data: ESMFixture.field("VNML", Data(count: 10)))
         #expect(throws: (any Error).self) {
-            _ = try Land(record: record(shortVNML))
+            _ = try Land(record: ESMFixture.parseRecord(shortVNML))
         }
         // VTXT not a whole number of 8-byte entries.
         let badVTXT = ESMFixture.record(
@@ -212,7 +206,7 @@ struct TerrainRecordDecoderTests {
                 + ESMFixture.field("VTXT", Data(count: 12))
         )
         #expect(throws: (any Error).self) {
-            _ = try Land(record: record(badVTXT))
+            _ = try Land(record: ESMFixture.parseRecord(badVTXT))
         }
     }
 
@@ -227,7 +221,7 @@ struct TerrainRecordDecoderTests {
             + ESMFixture.field("TNAM", tnam)
             + ESMFixture.field("MNAM", mnam)
         let ltex = try LandTexture(
-            record: record(ESMFixture.record("LTEX", formID: 0x5A, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("LTEX", formID: 0x5A, data: fields))
         )
         #expect(ltex.formID == FormID(0x5A))
         #expect(ltex.editorID == "LandscapeDirt01")
@@ -240,14 +234,17 @@ struct TerrainRecordDecoderTests {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("LandscapeDirt01"))
             + ESMFixture.field("MNAM", Data(count: 4)) // null FormID
         let ltex = try LandTexture(
-            record: record(ESMFixture.record("LTEX", formID: 0x5A, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("LTEX", formID: 0x5A, data: fields))
         )
         #expect(ltex.materialType == nil)
     }
 
     @Test func landTextureRejectsWrongRecordType() {
         #expect(throws: (any Error).self) {
-            _ = try LandTexture(record: record(ESMFixture.record("STAT", data: Data())))
+            _ = try LandTexture(record: ESMFixture.parseRecord(ESMFixture.record(
+                "STAT",
+                data: Data()
+            )))
         }
     }
 
@@ -260,7 +257,7 @@ struct TerrainRecordDecoderTests {
             + ESMFixture.field("TX02", ESMFixture.zstring("skipped.dds"))
             + ESMFixture.field("DNAM", Data(count: 4)) // skipped
         let txst = try TextureSet(
-            record: record(ESMFixture.record("TXST", formID: 0x6B, data: fields))
+            record: ESMFixture.parseRecord(ESMFixture.record("TXST", formID: 0x6B, data: fields))
         )
         #expect(txst.formID == FormID(0x6B))
         #expect(txst.editorID == "LDirt01")
@@ -270,7 +267,10 @@ struct TerrainRecordDecoderTests {
 
     @Test func textureSetRejectsWrongRecordType() {
         #expect(throws: (any Error).self) {
-            _ = try TextureSet(record: record(ESMFixture.record("LTEX", data: Data())))
+            _ = try TextureSet(record: ESMFixture.parseRecord(ESMFixture.record(
+                "LTEX",
+                data: Data()
+            )))
         }
     }
 }

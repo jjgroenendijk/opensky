@@ -1,16 +1,6 @@
-// Synthetic SPEL, EQUP, MGEF and BOOK records for the caster-runtime suites
-// (issue #470, roadmap item 19.7). Every byte is authored here; nothing comes
-// from the game install (AGENTS.md "Legal & IP boundary").
-//
-// The spell shapes mirror what the vanilla records actually carry, confirmed
-// against the local install through `openskycli record` rather than from
-// memory: a self-delivery fire-and-forget heal with a charge time and a
-// zero-duration restore entry, a self-delivery concentration heal with no
-// charge time and one-second entries, a two-handed master spell, an aimed spell
-// (which 19.7 refuses), a greater power and an ability.
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format" subpages /SPEL, /EQUP, /MGEF and
-// /BOOK.
+// Synthetic SPEL, EQUP, MGEF and BOOK records for the caster suites. The
+// spell shapes match vanilla records read with `openskycli record`.
+// Layouts: UESP "Skyrim Mod:Mod File Format" /SPEL, /EQUP, /MGEF, /BOOK.
 
 import FormatsESMTesting
 import Foundation
@@ -81,15 +71,9 @@ public enum SpellbookFixture {
     // MARK: - Stores
 
     public static func plugin(extraRecords: [Data] = []) throws -> ESMFile {
-        let records = equipSlots + magicEffects + projectiles + spells + books + extraRecords
-        let grouped = Dictionary(grouping: records) { record in
-            String(bytes: record.prefix(4), encoding: .ascii) ?? "SPEL"
-        }
-        var data = ESMFixture.tes4()
-        for (type, groupedRecords) in grouped.sorted(by: { $0.key < $1.key }) {
-            data += ESMFixture.topGroup(type, contents: groupedRecords.reduce(Data(), +))
-        }
-        return try ESMFile(data: data)
+        try ESMFixture.plugin(
+            records: equipSlots + magicEffects + projectiles + spells + books + extraRecords
+        )
     }
 
     /// Every fixture record in one index, which is what each store below is

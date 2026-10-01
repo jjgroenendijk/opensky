@@ -82,19 +82,8 @@ struct WorldAudioSoundDirectorTests {
     }
 
     @Test func interactionMotionLoopsUntilCloseSound() throws {
-        let engine = try Fixture.makeRunningEngine()
-        let director = Fixture.makeDirector(
-            engine: engine,
-            soundStore: TransitionAudioFixture.makeSoundStore(descriptors: [
-                (0xAAA, "sound\\fx\\dor\\doorloop.xwm"),
-                (0xBBB, "sound\\fx\\dor\\doorclose.xwm")
-            ])
-        )
-        let interaction = Fixture.makeInteractionEvent(
-            sounds: ModelBase.Sounds(
-                activation: nil, close: FormID(0xBBB), loop: FormID(0xAAA)
-            )
-        ).target.interaction
+        let (engine, director) = try doorLoopSetup()
+        let interaction = Self.doorLoopInteraction
 
         director.handleInteractionAnimation(InteractionAnimationEvent(
             interaction: interaction, phase: .motionStarted
@@ -115,19 +104,8 @@ struct WorldAudioSoundDirectorTests {
     }
 
     @Test func cancelledInteractionMotionStopsLoopWithoutCloseSound() throws {
-        let engine = try Fixture.makeRunningEngine()
-        let director = Fixture.makeDirector(
-            engine: engine,
-            soundStore: TransitionAudioFixture.makeSoundStore(descriptors: [
-                (0xAAA, "sound\\fx\\dor\\doorloop.xwm"),
-                (0xBBB, "sound\\fx\\dor\\doorclose.xwm")
-            ])
-        )
-        let interaction = Fixture.makeInteractionEvent(
-            sounds: ModelBase.Sounds(
-                activation: nil, close: FormID(0xBBB), loop: FormID(0xAAA)
-            )
-        ).target.interaction
+        let (engine, director) = try doorLoopSetup()
+        let interaction = Self.doorLoopInteraction
         director.handleInteractionAnimation(InteractionAnimationEvent(
             interaction: interaction, phase: .motionStarted
         ))
@@ -187,4 +165,22 @@ struct WorldAudioSoundDirectorTests {
         #expect(engine.sources.isEmpty)
         #expect(director.lastSFXError != nil)
     }
+
+    /// A door whose motion loops `doorloop.xwm` and whose close plays
+    /// `doorclose.xwm`.
+    private func doorLoopSetup() throws -> (WorldAudioEngine, WorldAudioSoundDirector) {
+        let engine = try Fixture.makeRunningEngine()
+        let director = Fixture.makeDirector(
+            engine: engine,
+            soundStore: TransitionAudioFixture.makeSoundStore(descriptors: [
+                (0xAAA, "sound\\fx\\dor\\doorloop.xwm"),
+                (0xBBB, "sound\\fx\\dor\\doorclose.xwm")
+            ])
+        )
+        return (engine, director)
+    }
+
+    private static let doorLoopInteraction = Fixture.makeInteractionEvent(
+        sounds: ModelBase.Sounds(activation: nil, close: FormID(0xBBB), loop: FormID(0xAAA))
+    ).target.interaction
 }
