@@ -42,14 +42,14 @@ extension GameViewController {
         bridge.ragdollRuntime = { [weak self] in self?.ragdoll.runtime }
         // The combat loop, which `StartCombat`, `StopCombat` and `IsInCombat`
         // reach through.
-        bridge.combatRuntime = { [weak self] in self?.combat.runtime }
+        bridge.combatRuntime = { [weak self] in self?.combat.loop }
         wireSpellNatives(bridge: bridge, provider: provider)
         // Only the player carries a behavior graph that tracks a draw state, so
         // every other actor answers nil and `IsWeaponDrawn` fails with a reason
         // rather than claiming sheathed.
         bridge.weaponDrawState = { [weak self] key in
             guard key == .player else { return nil }
-            return self?.melee.runtime?.state.drawState
+            return self?.combat.melee?.state.drawState
         }
         let resolver = scriptSource.scriptFormIDResolver
         bridge.formIDResolver = resolver

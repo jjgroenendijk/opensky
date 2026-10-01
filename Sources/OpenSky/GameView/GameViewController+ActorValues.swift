@@ -7,6 +7,7 @@
 import AppKit
 import OpenSkyActors
 import OpenSkyActorsInterface
+import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -138,6 +139,44 @@ extension GameViewController {
             subject: .actor(base: actor.base),
             cell: streamer.cellLocation(of: entry.key)
         )
+    }
+
+    /// The player, or a resident ACHR. Nil when nothing resident answers to
+    /// `key`, such as an actor evicted mid-swing.
+    func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
+        if key == .player {
+            return .player
+        }
+        guard
+            let streamer,
+            let entry = streamer.referenceEntry(key: key),
+            let actor = entry.placedActor
+        else { return nil }
+        return ActorValueHolder(
+            key: key,
+            subject: .actor(base: actor.base),
+            cell: streamer.cellLocation(of: key)
+        )
+    }
+
+    /// Every resident actor with its current pose: the NPC movement transform
+    /// first, then a stored override, then the placement.
+    func combatActors() -> [CombatActorObservation] {
+        guard let streamer else { return [] }
+        return streamer.residentActorEntries().compactMap { entry in
+            guard let actor = entry.placedActor else { return nil }
+            let moved = streamer.npcTransform(for: entry.key)
+                ?? worldState.component(ReferenceTransformOverride.self, for: entry.key)
+            return CombatActorObservation(
+                key: entry.key,
+                feet: moved?.position ?? actor.placement.position,
+                facing: moved?.rotation.z ?? actor.placement.rotation.z,
+                scale: actor.scale,
+                isDead: worldState.component(ActorDeathState.self, for: entry.key)?.isDead
+                    ?? false,
+                name: "\(entry.key.description) (base \(actor.base))"
+            )
+        }
     }
 
     private static let actorValueLogger = Logger(

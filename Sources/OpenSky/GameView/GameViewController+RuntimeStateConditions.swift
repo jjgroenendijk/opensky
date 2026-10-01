@@ -104,7 +104,7 @@ extension GameViewController {
         return ActorStateResolution.fight(
             states: states,
             playerKey: .player,
-            playerTarget: combat.runtime?.state.target
+            playerTarget: combat.loop?.state.target
         )
     }
 
@@ -121,9 +121,9 @@ extension GameViewController {
             current: values.current(of: holder),
             maximums: values.maximums(of: holder),
             isDead: isDead,
-            combatActivity: combat.runtime?.activity(of: holder.key) ?? .notFighting,
+            combatActivity: combat.loop?.activity(of: holder.key) ?? .notFighting,
             weaponDrawState: holder.key == .player
-                ? melee.runtime?.state.drawState
+                ? combat.melee?.state.drawState
                 : nil,
             general: values.resolvedEntries(of: holder),
             generalBaseline: baseline.basesByIndex,

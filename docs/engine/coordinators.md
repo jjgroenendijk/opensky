@@ -38,6 +38,13 @@ coordinator in a package module is tested with `make test-fast` in seconds.
 | Wire function: builds the coordinator | The app | `wireVendors(provider:)` |
 | Effects: menus, camera, sound | The app | `openBarter(with:vendorFaction:)` |
 
+When a domain's last `GameViewController+X` file goes, the adapter and the wire functions move
+into a small app class that holds the view controller, such as `CombatWorldAdapter`. The view
+controller keeps only the stored coordinator and one-line panel forwards. The combat domain
+works this way: `CombatCore`, `CombatCoordinator`, and its port `CombatWorld` live in
+`Sources/OpenSkyCombat/`, and the coordinator is also the world of the melee, archery, and
+combat-loop runtimes it owns.
+
 A port is a protocol that names what the coordinator needs from outside, such as the streamed
 references or the game hour. A test passes a fake that returns plain values. The app passes
 itself or a small adapter. The coordinator holds the port `weak`, because the app owns the

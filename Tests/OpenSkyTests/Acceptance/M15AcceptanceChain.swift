@@ -1,27 +1,9 @@
-// The M15 gate's fight, driven step by step (issue #198).
-//
-// One player and one opponent, driven by key and mouse events, over the
-// synthetic arena in `M15AcceptanceFixture`. The whole path from a press to a
-// landed hit is the shipping one:
-//
-//   NSEvent -> GameMetalView.keyDown/mouseDown -> CameraInputState -> CameraInput
-//   -> LocomotionBridge.acceptFrame -> WalkController.update
-//   -> LocomotionBridge.plan -> BehaviorGraphInstance.update (fires annotations)
-//   -> LocomotionGraphEventQueue -> MeleeCombatRuntime / ArcheryRuntime /
-//      RagdollRuntime -> ActorValueRuntime -> RagdollWorld -> CombatLoopRuntime
-//
-// Nothing here is a shortcut around a layer. The route enters at the top, at
-// `GameMetalView`, which is the object the window hands an event to; what a
-// headless test cannot drive is the `MTKView` draw callback above it, so the
-// frame loop is spelled out here in the order `Renderer.advanceCamera` and the
-// four `GameViewController` satellites spell it — melee on the drawn frame,
-// then archery, ragdolls and the combat loop on the simulated delta, in the
-// order `wireArchery`, `wireRagdoll` and `wireCombat` chain them. That is the
-// same rule `M13AcceptanceChain` and `M14AcceptanceChain` followed.
-//
-// The clutter half runs against the real `CellStreamer` with the shared
-// `ManualCellBuildRunner`, so a shoved crate is reconciled, stepped and settled
-// by the engine's own registry rather than by a simulation of one.
+// The M15 gate's fight, driven step by step: one player and one opponent over
+// the synthetic arena in `M15AcceptanceFixture`, from `NSEvent` through
+// `GameMetalView`, the locomotion graph and its event queue, to the melee,
+// archery, ragdoll and combat-loop runtimes. The frame loop runs in the order
+// the app wires it. The clutter half uses the real `CellStreamer` with the
+// shared `ManualCellBuildRunner`.
 
 import AppKit
 import Foundation
@@ -307,15 +289,8 @@ final class M15AcceptanceChain {
     }
 
     /// Runs until the player's graph is back in its start state, then two
-    /// frames further.
-    ///
-    /// One update fires one transition — the rule `M14AcceptanceTests` already
-    /// records for locomotion — so an event raised on the very frame another
-    /// transition completes is dropped rather than queued. A combat route
-    /// presses far more often than a locomotion one, so every step lets the
-    /// previous clip hand back before it presses anything. This is the route
-    /// being deterministic about a known engine rule, not a workaround for a
-    /// defect.
+    /// frames more. One update fires one transition, so an event raised as
+    /// another transition completes is dropped; each step waits for the clip.
     @discardableResult
     func settleGraph(limit: Int = 120) -> Bool {
         let reached = run(frames: limit) {

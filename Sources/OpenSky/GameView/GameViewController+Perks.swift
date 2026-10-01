@@ -1,21 +1,8 @@
-// Session wiring for perks (issue #497, roadmap item 20.4): builds the perk
-// runtime over the provider's PERK index, seeds an actor from its authored
-// `PRKR` list, keeps the abilities its perks grant applied, and answers the
-// entry-point questions the combat and magic formulas ask.
-//
-// AppKit stays in this controller satellite; the runtime, the evaluator, the
-// component and the ability reconcile are all engine types that build into
-// `openskycli` and are testable without a window.
-//
-// ## Seeding is lazy, exactly as the spell grant is
-//
-// An NPC's `PRKR` list is granted the first time anything asks about that actor
-// — a swing at it, a perk query, a cast — rather than for every resident actor
-// at cell build, because a cell of forty townsfolk who never fight would
-// otherwise write forty perk components into the save to say what their base
-// records already say. The seed is idempotent, so an actor asked about twice is
-// seeded once. The player is seeded with nothing: there is no NPC_ record behind
-// the player in this engine, and the perks a player has are the ones they took.
+// Session wiring for perks: builds the perk runtime over the provider's PERK
+// index and answers the entry-point questions the combat and magic formulas ask.
+// An NPC's `PRKR` list is seeded the first time anything asks about it, not at
+// cell build, so townsfolk who never fight write no perks into the save. The
+// player is seeded with nothing: its perks are the ones it took.
 
 import AppKit
 import OpenSkyActors
@@ -199,14 +186,4 @@ extension GameViewController {
         seedActorPerks(to: holder)
         return Set((perks.runtime ?? runtime).state(of: holder).owned)
     }
-}
-
-extension GameViewController {
-    /// `Mod Attack Damage` (35), the entry point every vanilla weapon damage
-    /// perk hooks and the most-hooked one in the game (81 effects,
-    /// docs/formats/perks.md).
-    static let attackDamageEntryPoint = PerkEntryPoint(rawValue: 35)
-    /// `Mod Percent Blocked` (39), which is where Shield Wall and its ranks
-    /// live.
-    static let percentBlockedEntryPoint = PerkEntryPoint(rawValue: 39)
 }

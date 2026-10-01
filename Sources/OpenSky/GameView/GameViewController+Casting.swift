@@ -1,20 +1,8 @@
-// Session wiring for the caster runtime (issue #470, roadmap item 19.7): builds
-// the spellbook and the cast loop over the provider's SPEL and EQUP indexes,
-// feeds the loop this frame's cast intent, and answers the world questions a
-// cast asks.
-//
-// AppKit stays in this controller satellite; the spellbook, the cast loop, the
-// state machine and the readout are all engine types that build into
-// `openskycli` and are testable without a window.
-//
-// The frame hook shares `Renderer.onFrame` with melee, the HUD and the
-// actor-value meters, for the same reason melee's does: a cast is timed against
-// the rendered frame, not against the fixed simulation step, until the magic
-// behavior graph drives it (M25/M26).
-//
-// `applyCastEffects` routes into the same `ActiveEffectRuntime` the potion path
-// uses rather than a second copy, which is what keeps the Magic Effects panel's
-// tally counting a cast's effects too.
+// Session wiring for the caster runtime: builds the spellbook and the cast loop
+// over the provider's SPEL and EQUP indexes, and feeds the loop each frame's
+// cast intent. The hook shares `Renderer.onFrame` with melee, because a cast is
+// timed against the rendered frame until the magic behavior graph drives it.
+// Cast effects go through the same `ActiveEffectRuntime` as potions.
 
 import AppKit
 import OpenSkyCombatInterface
@@ -51,18 +39,12 @@ struct CastingBridgeState {
     /// Actors whose authored spell list has already been granted, so the grant
     /// happens once per actor per session rather than once per combat step.
     var grantedActors: Set<ReferenceKey> = []
-    /// Casts NPCs have completed this session, for the combat panel readout.
-    var actorCastCount = 0
 }
 
 extension GameViewController {
-    /// Builds the caster runtime over the provider's SPEL and EQUP indexes.
-    ///
-    /// Wired after `wireMagicEffects`, because a cast applies its effect list
-    /// through that runtime and reports itself unavailable without one. A
-    /// provider with no spell index — every synthetic scene — leaves the runtime
-    /// nil, and the panel then says so rather than showing an empty spellbook
-    /// that looks like a player who has learned nothing.
+    /// Wired after `wireMagicEffects`, because a cast applies its effects
+    /// through that runtime. Without a spell index the runtime stays nil, and
+    /// the panel says so rather than showing an empty spellbook.
     func wireCasting(provider: any WorldDataProviding, renderer: Renderer) {
         guard
             let values = actorValues.runtime,
@@ -115,6 +97,16 @@ extension GameViewController {
             on: .player
         )
         advanceActorCasts(delta: delta)
+    }
+
+    /// Every NPC cast in flight, charged on the player's clock. The player's
+    /// frame hook advances only the player.
+    func advanceActorCasts(delta: Float) {
+        guard let runtime = casting.runtime, delta > 0 else { return }
+        for key in runtime.castingActors where key != .player {
+            guard let holder = actorValueHolder(for: key) else { continue }
+            runtime.advance(delta: delta, on: holder)
+        }
     }
 
     /// Whether the hand `hand` holds a readied spell, which is what routes its

@@ -86,10 +86,10 @@ extension GameViewController {
         // After `wirePapyrus`, whose `onWorldUpdate` closure this chains onto
         // so both systems advance on the same simulated delta.
         wireActorSystems(provider: provider, renderer: renderer)
-        wireMelee(provider: provider, renderer: renderer)
+        combatWorld.wireMelee(provider: provider, renderer: renderer)
         // After melee, so the two runtimes register their graph-event cursors
         // in a fixed order and a trace read from either is reproducible.
-        wireArchery(provider: provider, renderer: renderer)
+        combatWorld.wireArchery(provider: provider, renderer: renderer)
         // After both, for the same reason: a fixed cursor-registration order
         // keeps every runtime's view of the graph event stream reproducible.
         wireRagdoll(renderer: renderer)
@@ -152,7 +152,7 @@ extension GameViewController {
         renderer: Renderer,
         streamer: CellStreamer
     ) {
-        wireCombat(provider: provider, renderer: renderer)
+        combatWorld.wireLoop(provider: provider, renderer: renderer)
         // Package conditions observe the live quest, actor and reference state,
         // so selection advances after those runtimes in the same world tick.
         wirePackages(provider: provider, renderer: renderer)
