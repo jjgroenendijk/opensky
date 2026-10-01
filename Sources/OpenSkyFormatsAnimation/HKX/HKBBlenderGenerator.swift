@@ -1,17 +1,7 @@
-// The blending generators (todo 14.2): `hkbBlenderGenerator`, the
-// `hkbBlenderGeneratorChild` records it weights, and `hkbPoseMatchingGenerator`,
-// which derives from the blender and adds pose-similarity switching.
-//
-// A blender runs several child generators at once and mixes their poses. Which
-// children are active, and at what weight, is what makes a walk turn into a
-// run: `m_blendParameter` is normally bound to a graph variable such as
+// The blending generators. A blender runs several children at once and mixes
+// their poses; `m_blendParameter` is usually bound to a variable such as
 // `Speed`, and each child's `m_weight` places it along that parameter.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbBlenderGenerator 0x22DF7147, hkbBlenderGeneratorChild
-// 0xE2B384B0, hkbPoseMatchingGenerator 0x29E271B4). No Havok SDK or Bethesda
-// code consulted (AGENTS.md Legal & IP). Byte map:
-// docs/formats/hkx-behavior-nodes.md.
+// Byte map: docs/formats/hkx-behavior-nodes.md.
 
 import Foundation
 

@@ -1,22 +1,6 @@
-// LVLN / LVLI / LVSP records decoded into engine types: leveled NPC, leveled
-// item and leveled spell lists. All three share the LVLD/LVLF/LVLO layout
-// (UESP documents the entry struct once for LVLN and LVLI; xEdit's LVSP
-// definition reuses the same `wbLeveledListEntry`, differing only in the
-// record types an entry may name — LVSP or SPEL instead of NPC_ or an item).
-// A TPLT chain may route through an LVLN; an OTFT outfit entry may route
-// through an LVLI. The bind-pose milestone picks one entry deterministically
-// (highest level, first among ties) instead of rolling against player level +
-// chance-none.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/LVLN" + ".../LVLI" (entry struct shared)
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LVLN
-//   UESP "Skyrim Mod:Mod File Format/LVSP"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LVSP
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-//     `wbRecord(LVSP, 'Leveled Spell', ...)` line 8058.
-// Layout documented in docs/formats/actors.md, and for LVSP in
-// docs/formats/shouts-equip-slots.md.
+// LVLN, LVLI, and LVSP leveled lists, which share one entry layout. Selection
+// is deterministic for now: highest level, first among ties.
+// Layout and sources: docs/formats/actors.md (LVSP: shouts-equip-slots.md).
 
 import Foundation
 import OpenSkyFormatsCore

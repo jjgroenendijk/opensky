@@ -1,12 +1,6 @@
-// DDS (DirectDraw Surface) texture container for Skyrim SE textures:
-// magic, DDS_HEADER, optional DDS_HEADER_DXT10, then a tightly packed mip
-// chain. Reads 2D BC1-BC5/BC7 plus legacy 32-bit xRGB8888/RGBA8888/BGRA8888;
-// cubemaps, volumes and arrays throw `unsupported`.
-//
-// Reference: Microsoft DDS programming guide
-//   https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide
-//   (DDS_HEADER, DDS_PIXELFORMAT, DDS_HEADER_DXT10 struct pages)
-// Layout documented in docs/formats/dds.md.
+// DDS texture container: magic, DDS_HEADER, optional DXT10 header, then the
+// mip chain. Reads 2D BC1-BC5/BC7 and 32-bit RGB formats; cubemaps, volumes,
+// and arrays throw `unsupported`. Layout and sources: docs/formats/dds.md.
 
 import Foundation
 import OpenSkyFormatsCore

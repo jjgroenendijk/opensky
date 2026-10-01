@@ -1,25 +1,7 @@
-// AS2 opcode/API inventory: tallies what
-// ActionScript bytecode the movies handed to `record(_:path:)` actually use —
-// opcode frequency, the host/GFx member and method names reached through
-// ActionGetMember/ActionSetMember/ActionCallMethod/ActionCallFunction/
-// ActionGetVariable/ActionSetVariable/ActionNewMethod/ActionDefineLocal,
-// clip-event handler usage, and function/structure statistics. This is the
-// evidence for `docs/decisions/swf-as2-census.md`; it
-// executes nothing, and never throws.
-//
-// Host/API name resolution is a structural heuristic, not stack simulation:
-// the record immediately before one of the tracked opcodes is checked for an
-// `ActionPush` whose last (topmost) pushed value is a literal string or a
-// constant-pool reference, resolved against the most recent
-// `ActionConstantPool` seen earlier in the same block. Compiler-emitted GFx
-// member/method lookups push the name directly before the opcode that
-// consumes it, so this recovers the great majority of names without modeling
-// the AS2 operand stack.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — ActionGetMember/ActionSetMember (p. 87), ActionCallMethod/
-// ActionNewMethod (p. 88), ActionCallFunction (p. 82), ActionGetVariable/
-// ActionSetVariable (pp. 76-77), ActionDefineLocal (p. 89).
+// AS2 opcode and API inventory: counts opcodes, host member names, clip events,
+// and function shapes; it runs nothing and never throws. Names come from the
+// `ActionPush` just before a tracked opcode, not from stack simulation.
+// Evidence for docs/decisions/swf-as2-census.md.
 
 import Foundation
 

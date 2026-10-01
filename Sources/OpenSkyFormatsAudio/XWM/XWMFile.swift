@@ -1,25 +1,7 @@
-// xWMA container framing for Skyrim SE `.xwm` audio: the RIFF/XWMA header,
-// the `fmt ` WAVEFORMATEX chunk, the `dpds` decoded-packet-cumulative-size
-// table, and the `data` payload. This type frames and validates only — it
-// never decodes WMA. The codec parameters and the raw payload are handed to
-// the decoder (milestone 9.1.1).
-//
-// References:
-//   Microsoft xWMA, MultimediaWiki
-//     https://wiki.multimedia.cx/index.php/Microsoft_xWMA
-//     (RIFF/XWMA form, 18-byte `fmt `, `dpds` as "the i-th integer equals the
-//     total number of bytes accumulated after the i-th packet ... has been
-//     decoded", `data` payload in nBlockAlign-sized packets)
-//   FFmpeg libavformat/xwma.c (read as documentation, not transcribed)
-//     https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/xwma.c
-//     (magic + form type checks, dpds element width and duplicate-chunk
-//     rejection, packets sized by nBlockAlign, duration from the last dpds
-//     entry divided by channels * bitsPerSample / 8)
-//   Microsoft WAVEFORMATEX (mmeapi.h) for the `fmt ` field order and widths
-//     https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/ns-mmeapi-waveformatex
-//   Microsoft "Multimedia Programming Interface and Data Specifications 1.0"
-//     for RIFF chunk framing (four-byte id, UInt32 size, pad to even length)
-// Layout documented in docs/formats/xwm.md.
+// xWMA container framing: the `fmt ` WAVEFORMATEX chunk, the `dpds` table of
+// cumulative decoded sizes, and the `data` payload. It never decodes WMA; the
+// decoder gets the codec parameters and the raw payload.
+// Layout and sources: docs/formats/xwm.md.
 
 import Foundation
 

@@ -1,12 +1,5 @@
-// ACHR record decoded into engine types: base actor FormID + placement.
-// An ACHR places one NPC_ base actor at a world position; the field shape
-// mirrors REFR (NAME base, DATA pos/rot, XSCL scale) and lives in the same
-// cell persistent/temporary children groups. Editor-placement and script
-// fields are skipped for the bind-pose milestone.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/ACHR"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ACHR
-// Layout documented in docs/formats/actors.md.
+// ACHR placed actor: one NPC_ base at a world position, shaped like REFR.
+// Layout and sources: docs/formats/actors.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -20,7 +13,7 @@ nonisolated public struct PlacedActor: Sendable {
     /// XSCL — uniform scale, defaulting to 1 when the field is absent.
     public let scale: Float
     /// Record-header flag 0x800 (UESP): the actor stays hidden until a quest
-    /// or script enables it. M5 has no script state -> explicit render skip.
+    /// or script enables it, so the renderer skips it.
     public let isInitiallyDisabled: Bool
     /// VMAD — Papyrus scripts attached directly to this placed actor.
     public let scriptData: ScriptData

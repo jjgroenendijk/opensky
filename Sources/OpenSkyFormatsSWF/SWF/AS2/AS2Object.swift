@@ -1,17 +1,7 @@
-// ActionScript 2 object model (milestone 8.3.2): a reference type with an
-// insertion-ordered property table, a `__proto__` link, per-property
-// attributes, and optional getter/setter pairs.
-//
-// Property attributes exist because vanilla menu code calls `ASSetPropFlags`
-// 894 times while registering classes; getters and setters exist because it
-// calls `addProperty` 1,535 times (measured by `openskycli swf action-sweep`,
-// see docs/formats/swf-actions.md). Both are undocumented Flash built-ins, so their
-// behavior here is recorded as observed rather than cited to the spec — see
-// docs/engine/as2-runtime.md.
-//
-// Reference: ECMA-262 3rd edition, section 8.6 "The Object Type" for the
-// property model, section 8.6.2.1 "[[Get]]" and 8.6.2.2 "[[Put]]" for the
-// prototype-chain walk, and section 4.3.5 "Prototype".
+// ActionScript 2 object: ordered properties, a `__proto__` link, attributes,
+// and getter/setter pairs. Vanilla menus need attributes for `ASSetPropFlags`
+// and accessors for `addProperty`; both are observed behavior.
+// Spec: ECMA-262 3rd ed. section 8.6. See docs/engine/as2-runtime.md.
 
 import Foundation
 
@@ -87,10 +77,9 @@ nonisolated public final class AS2Object {
     /// Set on a `super` binding: calls through this object bind `this` to the
     /// stored value instead of to the binding itself.
     public var superThis: AS2Value?
-    /// Set on a `super` binding: the prototype the superclass constructor this
-    /// binding calls belongs to. It becomes the called frame's
-    /// `AS2Frame.basePrototype`, so the next `super` up the chain resolves one
-    /// level higher instead of re-entering the same constructor (issue #136).
+    /// On a `super` binding: the prototype of the superclass constructor it
+    /// calls. It becomes the called frame's `AS2Frame.basePrototype`, so the
+    /// next `super` resolves one level higher.
     public var superBase: AS2Object?
     /// Non-nil for array-like objects; one past the highest assigned index.
     public private(set) var arrayLength: Int?

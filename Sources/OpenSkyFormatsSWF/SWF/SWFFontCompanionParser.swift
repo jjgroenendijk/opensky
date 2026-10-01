@@ -1,11 +1,6 @@
-// Minimal decoders for the font companion tags that accompany DefineFont2/3 in
-// vanilla movies: DefineFontAlignZones (73), CSMTextSettings (74), and
-// DefineFontName (88). OpenSky rasterizes glyphs through its own CoreGraphics
-// coverage path, so the FlashType hinting these tags carry is parsed-and-
-// retained rather than applied.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 10
-// (pp. 180-182). Documented in docs/formats/swf-text.md.
+// Minimal decoders for the font companion tags (73, 74, 88). OpenSky draws
+// glyphs with its own coverage path, so their hinting data is kept, not used.
+// Layout and sources: docs/formats/swf-text.md.
 
 import Foundation
 import OpenSkyFormatsCore

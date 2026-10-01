@@ -1,22 +1,6 @@
-// SCRL record: a spell wrapped in an inventory item. The casting half is the
-// same magic-item header, SPIT struct and EFID/EFIT/CTDA effect run SPEL uses;
-// the item half is the ground model, the pickup and drop sounds, and the
-// 8-byte value + weight DATA every other carryable family writes.
-//
-// The SPIT words that describe a spell's type and casting style are fixed on a
-// scroll: xEdit marks both as internal-edit-only with the single values 0
-// ("Scroll") and 3 ("Scroll"), and UESP records cast duration, range and the
-// half-cost perk as always zero. All of them decode anyway, so a mod that sets
-// them stays inspectable.
-//
-// Skipped for now: VMAD script attachments and DEST destruction data.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/SCRL"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SCRL
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(SCRL, 'Scroll', ...)`
-//     line 10025.
-// Layout documented in docs/formats/magic-records.md.
+// SCRL scroll: a spell wrapped in an inventory item. Its SPIT type and casting
+// words are fixed on a scroll, but they decode anyway so a mod stays visible.
+// Layout and sources: docs/formats/magic-records.md.
 
 import Foundation
 import OpenSkyFormatsCore

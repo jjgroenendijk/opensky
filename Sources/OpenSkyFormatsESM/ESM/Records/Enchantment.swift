@@ -1,23 +1,6 @@
-// ENCH record: how magic reaches an item. A weapon or a piece of armor names
-// one through its EITM link, and the record is identity, the ENIT header, and
-// the same EFID/EFIT/CTDA effect run SPEL, SCRL, ALCH and INGR carry.
-//
-// xEdit spells the whole record as `wbEDID, wbObjectBounds, wbFULL,
-// wbStruct(ENIT, ...), wbEffectsReq`, so the three identity fields are decoded
-// by name here rather than through `InventoryItemFields`: an ENCH carries none
-// of the other carryable-item subrecords, and a decoder that quietly consumed
-// them would hide a real surprise from the unread-field tally.
-//
-// Decode policy follows SPEL: a wrong record type throws, an individual
-// malformed field is tallied and the rest of the record still decodes, and a
-// truncated ENIT leaves `data == nil` rather than losing the effect list.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/ENCH"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ENCH
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(ENCH, 'Enchantment',
-//     ...)` line 5011.
-// Layout documented in docs/formats/enchantments.md.
+// ENCH record: identity, the ENIT header, and the shared effect run. Identity
+// fields are decoded by name, so any other carryable-item field shows up in
+// the unread-field tally. Layout and sources: docs/formats/enchantments.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,15 +1,6 @@
-// FrameLabel (43): names the frame it appears in, so `gotoAndStop("label")`
-// and `ActionGoToLabel` (0x8C) have a target table. Vanilla Interface movies
-// carry them in `inventorymenu.swf`, `loadingmenu.swf`, and
-// `racesex_menu.swf`.
-//
-// Reference: Adobe SWF File Format Specification, version 19 — the "FrameLabel"
-// control tag. Layout:
-//   Name          STRING   null-terminated, the label
-//   NamedAnchor   UI8      optional, present only when a byte remains; a value
-//                          of 1 marks the label as a named anchor (SWF 6+)
-// The named-anchor byte is optional in the sense that the tag length decides
-// whether it is there, which is how a SWF 5 movie and a SWF 6 movie both frame.
+// FrameLabel (43): names its frame, so `gotoAndStop("label")` and
+// `ActionGoToLabel` have targets. The NamedAnchor byte exists only when the tag
+// has a byte left. Layout: docs/formats/swf-display-list.md.
 
 import Foundation
 import OpenSkyFormatsCore

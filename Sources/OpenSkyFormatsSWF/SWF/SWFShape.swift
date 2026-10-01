@@ -1,12 +1,6 @@
-// DefineShape tag decoding: DefineShape (2), DefineShape2 (22),
-// DefineShape3 (32), DefineShape4 (83). The tag body is a character id, the
-// shape bounds RECT (plus edge bounds and hint flags for DefineShape4), and a
-// SHAPEWITHSTYLE. Style-change records that push new style arrays are
-// flattened here into single global fill/line style lists so a segment's
-// style index is stable for the whole shape.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 6
-// "Shapes" — "Shape tags" (pp. 131-133) and "Shape structures" (pp. 125-131).
+// DefineShape 1-4 decoding. Style arrays that change mid-shape are flattened
+// into one global fill and line style list, so a segment's style index is
+// stable. Layout and sources: docs/formats/swf-shapes.md.
 
 import Foundation
 
@@ -91,8 +85,8 @@ nonisolated public struct SWFShapeDefinition: Equatable, Sendable {
 
     /// Decodes a bare SHAPE structure (no style arrays) as used by DefineFont
     /// glyphs (spec chapter 6 "SHAPE", p. 125). Fill indices in the returned
-    /// segments are the glyph convention: 0 = off, 1 = on. Shared with
-    /// milestone 8.2.3 font decoding.
+    /// segments are the glyph convention: 0 = off, 1 = on. Used by font
+    /// decoding.
     public static func parseGlyphSegments(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
         try SWFShapeParser.parseGlyphShape(&bits)
     }

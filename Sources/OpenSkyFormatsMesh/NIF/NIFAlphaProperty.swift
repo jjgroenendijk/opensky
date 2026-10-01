@@ -1,13 +1,6 @@
-// NiAlphaProperty: transparency mode of a shape — one uint16 of packed
-// blend/test bits plus a byte threshold. Foliage and other cutouts need the
-// alpha-test bit + threshold; actual translucency uses the blend bit.
-//
-// Reference: NifTools nif.xml (NiAlphaProperty, AlphaFlags bitfield:
-// bit 0 blend enable, bits 1-4 source blend mode, bits 5-8 destination
-// blend mode, bit 9 test enable, bits 10-12 test function, bit 13 no
-// sorter).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-materials.md.
+// NiAlphaProperty: packed blend and test bits plus a byte threshold. Cutouts
+// such as foliage use the test bit; translucency uses the blend bit.
+// Bit layout and sources: docs/formats/nif-materials.md.
 
 import Foundation
 import OpenSkyFormatsCore

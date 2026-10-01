@@ -1,22 +1,7 @@
-// The host seam (milestone 8.3.2). Everything the AS2 interpreter cannot
-// answer from its own object model — timeline control, display properties,
-// target paths, and members of host-backed objects — leaves through this
-// protocol.
-//
-// This milestone implements the interpreter only. `MovieClip`, `TextField`,
-// `Stage`, and `Selection` arrive in a later one and will be an `AS2Host`
-// backed by a mutable display list; until then `AS2RecordingHost` answers
-// every request with "not mine", which the interpreter records in the tally.
-// Keeping the boundary here means the interpreter never learns what a display
-// object is.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionGotoFrame", "ActionGoToLabel", "ActionPlay",
-// "ActionStop", "ActionGetProperty", "ActionSetProperty", and
-// "ActionTargetPath". The specification defines the opcodes and that
-// get/set-property take a numeric index; the index-to-name table below is
-// recorded as observed from ActionScript's property list, not quoted from the
-// specification.
+// The host seam: timeline control, display properties, target paths, and
+// host-backed members leave the interpreter through this protocol, so the
+// interpreter never learns what a display object is. The property index table
+// is observed from ActionScript, not quoted from the SWF v19 spec.
 
 import Foundation
 

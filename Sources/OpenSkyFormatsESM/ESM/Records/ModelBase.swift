@@ -1,42 +1,15 @@
-// MSTT/TREE/FURN/ACTI/CONT/DOOR records decoded into engine types: same
-// EDID + FULL + MODL shape — a named model a placed reference resolves to.
-// One shared decoder rather than six near-identical structs; type-specific
-// fields stay unread until a milestone needs them.
-// DOOR joins for M3.6: its MODL renders through the same static-model path;
-// teleport data lives on placed REFR XTEL, not the base.
-// M9.2.2 adds sound links for DOOR/ACTI/CONT (issue #155).
-//
-// Reference: UESP "Skyrim Mod:Mod File Format" per-record pages document
-// the type layouts below. xEdit dev-4.1.6 wbDefinitionsTES5.pas is the
-// cross-type authority for FULL, RNAM, FNAM, MNAM, suppression flags, and
-// the SNDR-link sound fields:
-// https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-//   /MSTT  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MSTT
-//   /TREE  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TREE
-//   /FURN  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FURN
-//   /ACTI  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ACTI
-//   /CONT  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT
-//   /DOOR  https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOOR
-// Layout documented in docs/formats/world-records.md.
+// One decoder for the base records that are a named model (MSTT, TREE, FURN,
+// ACTI, CONT, DOOR, and the carryable items), plus their sound links. A DOOR's
+// teleport data lives on the placed REFR, not here.
+// Layout and sources: docs/formats/world-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct ModelBase: Sendable {
-    /// Record types this decoder accepts — all carry EDID + MODL where STAT
-    /// does. CellSceneBuilder indexes each of these top groups separately.
-    ///
-    /// The six carryable families joined for M12.1.3 (issue #177), which is
-    /// what makes a loose item reference resolve a model, a collision shape and
-    /// a `.take` interaction instead of counting as an unsupported base. Their
-    /// world model is a plain MODL exactly as MSTT's is, so nothing about the
-    /// decode changes; only the accepted set does.
-    ///
-    /// ARMO is deliberately absent even though it is a carryable family. Its
-    /// world model is MOD2/MOD3 and body pieces resolve through ARMA addons
-    /// rather than through a single MODL, so it needs the arbitration issue
-    /// #178 owns. A dropped cuirass is therefore not yet drawable, which the
-    /// take path reports rather than hides.
+    /// Record types this decoder accepts. ARMO is not one: its world model is
+    /// MOD2/MOD3 and its body pieces come from ARMA, so a dropped armor piece
+    /// is not drawn yet, and the take path reports that.
     public static let supportedTypes: Set<FourCC> = [
         "MSTT", "TREE", "FURN", "ACTI", "CONT", "DOOR",
         "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK"
@@ -50,18 +23,9 @@ nonisolated public struct ModelBase: Sendable {
         "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK"
     ]
 
-    /// Sound links carried by an activator/door/container base. Each FormID
-    /// targets a SNDR descriptor (a SOUN legacy marker resolves to one via
-    /// SOUN.SDSC; the runtime resolves that hop through SoundRecordStore).
-    /// Field-name -> meaning varies by record type; this struct groups by
-    /// runtime semantics so the sound director reads one field per concept.
-    ///
-    /// xEdit dev-4.1.6 wbDefinitionsTES5.pas authorities:
-    ///   DOOR SNAM/ANAM/BNAM at lines 4921-4923
-    ///   ACTI SNAM/VNAM     at lines 3323-3324
-    ///   CONT SNAM/QNAM     at lines 4519-4520  (QNAM, not ANAM — cross-record
-    ///                                            trap; ANAM on CONT is a
-    ///                                            different unused field)
+    /// Sound links of an activator, door, or container, grouped by meaning.
+    /// Each targets a SNDR. Field names differ per record: CONT closes with
+    /// QNAM, not ANAM. Table: docs/formats/world-records.md.
     public struct Sounds: Equatable, Sendable {
         /// One-shot on use-key activation. DOOR.SNAM, ACTI.VNAM, CONT.SNAM.
         public let activation: FormID?
@@ -123,9 +87,8 @@ nonisolated public struct ModelBase: Sendable {
         scriptData = fields.scriptData
     }
 
-    /// Mutable accumulator for the field loop; keeps the switch (and its
-    /// cyclomatic complexity) out of init so the file stays inside strict-lint
-    /// limits once the M9.2.2 sound fields landed.
+    /// Mutable accumulator for the field loop; keeps the switch out of init so
+    /// the file stays inside the lint complexity limit.
     private struct ModelBaseFields {
         var editorID: String?
         var name: LString?

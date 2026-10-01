@@ -1,15 +1,7 @@
-// Flatten a parsed NIF into engine Mesh/Model values: walk the scene graph
-// from the footer roots, accumulate NiAVObject local transforms down the
-// parent chain, decode rigid or bind-pose-skinned BSTriShape leaves.
-// Animation, collision, particles and other non-drawable blocks are
-// skipped. Defensive walk: out-of-range refs, ref
-// cycles, and absurd depth throw NIFError.malformed — the caller skips the
-// asset, the engine keeps running.
-//
-// Reference: NifTools nif.xml scene-graph semantics (NiNode children own
-// the subtree; transforms compose parent-to-child).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// docs/formats/nif.md "Scene graph -> engine mesh".
+// Flattens a parsed NIF into engine meshes: walks from the footer roots,
+// composes local transforms, and decodes rigid or skinned BSTriShape leaves.
+// Bad refs, cycles, or absurd depth throw `NIFError.malformed`, so the caller
+// skips the asset. See docs/formats/nif.md "Scene graph -> engine mesh".
 
 import Foundation
 import OpenSkyFormatsCore
@@ -103,9 +95,8 @@ nonisolated extension NIFFile {
                 return try NIFNode(data: block.data, header: file.header)
             }
             let multi = try NIFMultiBoundNode(data: block.data, header: file.header)
-            // Terrain LOD stores water in a sibling subtree. Water gets its own
-            // pipeline in milestone 3.5; drawing it as opaque geometry would
-            // cover land.
+            // Terrain LOD stores water in a sibling subtree. Water has its own
+            // pipeline; drawing it as opaque geometry would cover land.
             guard multi.object.name?.uppercased() != "WATER" else { return nil }
             return NIFNode(object: multi.object, children: multi.children)
         }
@@ -197,8 +188,8 @@ nonisolated extension NIFFile {
 nonisolated extension NIFFile.Flattener {
     /// Resolves a shape's property refs into an engine Material.
     /// A ref to a non-lighting shader (effect/water/sky) or no ref at
-    /// all falls back to `Material.fallback` — legitimate content, out
-    /// of M2 scope. Out-of-range refs are malformed, same as the walk.
+    /// all falls back to `Material.fallback`; that is legitimate
+    /// content drawn by other paths. Out-of-range refs are malformed, same as the walk.
     private func resolveMaterial(key: SlotKey) throws -> Material {
         var shader: NIFLightingShaderProperty?
         var textures: NIFShaderTextureSet?

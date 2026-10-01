@@ -1,10 +1,5 @@
-// Skyrim compiled Papyrus script container.
-//
-// Layout source: UESP "Skyrim Mod:Compiled Script File Format"
-// https://en.uesp.net/wiki/Skyrim_Mod:Compiled_Script_File_Format
-// The source documents big-endian PEX 3.x framing. A 2026-07-30 probe of the
-// user's base-game, DLC and Creation archives confirmed version 3.2 uses the
-// same layout, including the 0xFA57C0DE magic and game ID 1.
+// Compiled Papyrus script container (big-endian PEX 3.2).
+// Layout and sources: docs/formats/pex.md.
 
 import Foundation
 

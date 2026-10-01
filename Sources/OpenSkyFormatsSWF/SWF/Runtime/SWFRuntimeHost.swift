@@ -1,13 +1,6 @@
-// The real `AS2Host` (milestone 8.3.2 phase 2), replacing `AS2RecordingHost`.
-// Everything the interpreter cannot answer from its own object model —
-// timeline control, numbered display properties, target paths, `_root` /
-// `_parent` / `_level0`, and members of host-backed objects — lands here and is
-// answered from the runtime display tree.
-//
-// The back-reference to the runtime is weak: `AS2Runtime` holds its host
-// strongly and `SWFMovieRuntime` holds the `AS2Runtime`, so a strong pair would
-// never be freed. A host with no owner declines everything, which is exactly
-// the `AS2RecordingHost` behavior the interpreter already tolerates.
+// The real `AS2Host`: answers interpreter requests from the runtime display
+// tree. The runtime reference is weak to avoid a retain cycle; a host without
+// an owner declines everything.
 
 import Foundation
 

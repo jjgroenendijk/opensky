@@ -1,17 +1,6 @@
-// Variable resolution and the variable/member opcodes (milestone 8.3.2).
-//
-// A bare name resolves innermost-first through the scope chain, then through
-// `this`, then through `_global`. That is the order Flash uses and the reason
-// class-registration code can write `Object.registerClass(...)` with no
-// qualification: `Object` is a `_global` member and nothing shadows it.
-//
-// `_root`, `_parent`, and `_level0` are display-list concepts, so they leave
-// through `AS2Host` rather than being invented here.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionGetVariable" and "ActionSetVariable" (pp. 76-77),
-// "ActionGetMember" and "ActionSetMember" (p. 87), "ActionDefineLocal" and
-// "ActionDefineLocal2" (p. 89), "ActionDelete" and "ActionDelete2" (p. 88).
+// Variable resolution and the variable and member opcodes. A bare name looks
+// in the scope chain, then `this`, then `_global`, as Flash does. `_root`,
+// `_parent`, and `_level0` go to `AS2Host`. Spec: SWF v19 chapter 5.
 
 import Foundation
 
@@ -105,16 +94,9 @@ nonisolated extension AS2Interpreter {
         return nil
     }
 
-    /// A name carrying `.` or `/` separators. The dotted spelling is resolved by
-    /// walking members from the head component, which is what makes
-    /// `gfx.controls.Button` reach `_global.gfx.controls.Button`; only then does
-    /// it fall back to the display-tree path resolver, which owns the slash
-    /// spelling and `..`.
-    ///
-    /// Order matters and was measured: resolving the display path first made
-    /// every fully-qualified class reference in the vanilla CLIK library miss,
-    /// which put `Components.CrossPlatformButtons`, `gfx.controls.Button`, and
-    /// `Map.MapMarker` at the head of the missing-API tally.
+    /// A name with `.` or `/` separators. Dotted names walk members from the
+    /// head first, so `gfx.controls.Button` reaches `_global`; only then the
+    /// display path resolver runs. The other order breaks CLIK class lookups.
     private func qualifiedVariable(
         _ name: String,
         frame: AS2Frame,

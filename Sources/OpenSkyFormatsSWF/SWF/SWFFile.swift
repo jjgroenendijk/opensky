@@ -1,13 +1,6 @@
-// SWF container decoder: signature/compression, header fields, and the flat
-// tag stream. Shapes, fonts, and the display list are decoded in later
-// milestones (8.2.2-8.2.4); this stage only frames the container.
-//
-// Reference: Adobe SWF File Format Specification, version 19, "The SWF header"
-// and "The tag format". Layout documented in docs/formats/swf.md.
-//
-// Skyrim's UI files are authored for Scaleform GFx, which reuses the Adobe
-// container framing but adds extension tags (see SWFTagName). Those tags parse
-// as opaque bodies here and are reported as "unknown".
+// SWF container decoder: signature, compression, header, and the flat tag
+// stream. Scaleform GFx extension tags parse as opaque bodies and report as
+// "unknown". Layout and sources: docs/formats/swf.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,13 +1,7 @@
-// Name-map from hkaSkeleton bones (todo 6.2) onto the NIF skeleton NiNode
-// names bind-pose skinning already keys on (NIFSkeleton.boneTransforms). The
-// two skeletons describe the same rig but are not identical sets: the HKX rig
-// carries control + weapon-attach helper nodes with no mesh geometry, and the
-// NIF carries nodes the animation rig omits. The map is partial by design;
-// every unmatched bone is reported with a reason tag, never dropped silently
-// (AGENTS.md reverse-engineering discipline). Pure name logic — no file I/O,
-// unit-tested without real data. Observed vanilla human rig: 93 of 99 bones
-// exact-match, 6 HKX-only helper nodes, 6 NIF-only nodes
-// (docs/formats/hka-skeleton.md).
+// Maps hkaSkeleton bones onto the NIF skeleton node names that skinning keys
+// on. The two rigs differ (helper nodes on each side), so the map is partial,
+// and every unmatched bone is reported with a reason, never dropped.
+// Observed vanilla counts: docs/formats/hka-skeleton.md.
 
 import Foundation
 

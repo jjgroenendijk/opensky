@@ -1,14 +1,6 @@
-// Shared NiObjectNET + NiAVObject field prefix for scene-graph blocks
-// (NiNode lineage, BSTriShape). Skyrim streams only: flags are uint32
-// (BS stream > 26) and the NiAVObject property list is absent (> 34), so
-// name, extra data, controller, flags, transform, collision follow back to
-// back. Rotation is stored for row vectors (nif.xml Matrix33) and is
-// transposed on read so the decoded value applies to column vectors — the
-// same convention as MatrixMath.
-//
-// Reference: NifTools nif.xml (NiObjectNET, NiAVObject, Matrix33, Vector3).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif.md.
+// Shared NiObjectNET + NiAVObject prefix for scene-graph blocks, Skyrim streams
+// only. Rotation is transposed on read so it applies to column vectors, as in
+// MatrixMath. Layout: docs/formats/nif.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -61,8 +53,7 @@ nonisolated public struct NIFObjectPrefix: Sendable {
     /// (see `init`).
     public let rotation: simd_float3x3
     public let scale: Float
-    /// bhk collision object ref; -1 = none. Recorded, never followed (M2
-    /// skips collision).
+    /// bhk collision object ref; -1 = none.
     public let collisionRef: Int32
 
     /// Local transform `T * R * S` (column vectors, matches
@@ -88,20 +79,9 @@ nonisolated public struct NIFObjectPrefix: Sendable {
 
         flags = try reader.readUInt32()
         translation = try reader.readVector3()
-        // nif.xml Matrix33 file order is m11 m21 m31 | m12 m22 m32 | m13 m23
-        // m33, so each group of three is one column of the matrix as indexed.
-        // NIF is a row-vector format, though — it multiplies `v * M` — so the
-        // matrix that means the same rotation on the engine's column vectors
-        // is that one transposed, which is what reading the groups as rows
-        // produces.
-        //
-        // Nothing in a vanilla static catches the difference, because their
-        // NiNode rotations are overwhelmingly identity. A skeleton's are not:
-        // without the transpose, a bind pose composed from `skeleton.nif`
-        // disagrees with the same file's own `NiSkinData` inverse-bind
-        // transforms bone by bone, and with `skeleton.hkx`'s reference pose by
-        // up to 61.9 world units, so writing any composed pose over a skinned
-        // actor tears it apart (issue #354, docs/formats/nif.md).
+        // NIF multiplies row vectors (`v * M`), so reading the column groups
+        // as rows gives the transpose that works on column vectors. Skeletons
+        // tear without it (docs/formats/nif.md, "Matrix33 is transposed").
         rotation = try simd_float3x3(rows: [
             reader.readVector3(),
             reader.readVector3(),

@@ -1,15 +1,7 @@
-// Skyrim bhkCompressedMeshShapeData -> triangle soups. MOPP is an
-// acceleration structure only; geometry comes from big triangles plus
-// quantized chunks. Each chunk vertex is translation + ushort/1000, then an
-// optional chunk transform. Strip winding alternates; trailing indices are
-// independent triangles.
-//
-// References:
-// - NifTools nif.xml (bhkCompressedMeshShapeData, bhkCMSChunk,
-//   bhkCMSBigTri, bhkQsTransform).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// - nifly/PyNifly collision extraction (chunk dequantization + strips).
-//   https://github.com/BadDogSkyrim/PyNifly/blob/main/NiflyDLL/NiflyWrapper.cpp
+// bhkCompressedMeshShapeData to triangle soups. MOPP is only an acceleration
+// structure; geometry comes from big triangles and quantized chunks (vertex =
+// translation + ushort / 1000, then the chunk transform). Strip winding
+// alternates. Sources: docs/formats/nif-collision.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -19,10 +11,9 @@ nonisolated public enum NIFCompressedCollisionMesh: Sendable {
     public struct Soup: Sendable {
         public let vertices: [SIMD3<Float>]
         public let indices: [UInt32]
-        /// `SkyrimHavokMaterial` from the block's chunk-material table
-        /// (issue #358). Nil where the table is empty or the chunk indexes
-        /// past it, which is malformed data rather than a reason to drop the
-        /// geometry: a surface with no material still stops the player.
+        /// `SkyrimHavokMaterial` from the chunk-material table. Nil when the
+        /// table is empty or the index is past it; the geometry is kept,
+        /// because a surface without a material still stops the player.
         public let material: UInt32?
 
         public init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {

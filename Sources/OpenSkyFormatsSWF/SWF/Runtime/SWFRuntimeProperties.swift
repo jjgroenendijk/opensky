@@ -1,18 +1,7 @@
-// The MovieClip / TextField property surface (milestone 8.3.2 phase 2):
-// `_x`, `_y`, `_xscale`, `_yscale`, `_width`, `_height`, `_alpha`, `_visible`,
-// `_rotation`, `_name`, `_currentframe`, `_totalframes`, `_target`, and the
-// read-only remainder of the numbered property table.
-//
-// Units are the trap. ActionScript property units are pixels and degrees while
-// the display list is twips and matrix terms, so every conversion here goes
-// through `twipsPerPixel` (20) rather than being written inline. Getting it
-// wrong misplaces everything silently, which is why `SWFRuntimePropertyTests`
-// pins each conversion.
-//
-// `_xscale` and `_yscale` are the lengths of the matrix's basis vectors, not
-// its `ScaleX`/`ScaleY` terms: a rotated clip still reports 100% scale.
-// `_width` and `_height` are the axis-aligned extent of the transformed
-// bounding box, which is why they need `SWFBoundsBox`.
+// The MovieClip and TextField property surface. Properties use pixels and
+// degrees, the display list twips, so every conversion goes through
+// `twipsPerPixel`. `_xscale` is the basis vector length, so a rotated clip
+// still reads 100%.
 
 import Foundation
 

@@ -1,11 +1,5 @@
-// Alternate NIF collision triangle stores used by
-// bhkPackedNiTriStripsShape and bhkNiTriStripsShape. The second of those two
-// lives in NIFCollisionTriStrips.swift; the shared `Soup` and the bounds
-// helpers at the bottom of this file are what they have in common.
-//
-// Reference: NifTools nif.xml (hkPackedNiTriStripsData,
-// bhkPackedNiTriStripsShape, bhkNiTriStripsShape, NiTriStripsData).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
+// The bhkPackedNiTriStripsShape triangle store, plus the `Soup` and bounds
+// helpers it shares with NIFCollisionTriStrips.swift. Source: NifTools nif.xml.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -15,9 +9,8 @@ nonisolated public enum NIFCollisionTriangleCollections: Sendable {
     public struct Soup: Sendable {
         public let vertices: [SIMD3<Float>]
         public let indices: [UInt32]
-        /// `SkyrimHavokMaterial` for this soup's surface (issue #358), from the
-        /// sub-shape the triangles belong to. Nil when the block declares no
-        /// sub-shapes to take it from.
+        /// `SkyrimHavokMaterial` for this soup, from its sub-shape. Nil when
+        /// the block declares no sub-shapes.
         public let material: UInt32?
 
         public init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {

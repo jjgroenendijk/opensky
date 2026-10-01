@@ -1,4 +1,4 @@
-// Stack, register, and constant-pool opcodes (milestone 8.3.2).
+// Stack, register, and constant-pool opcodes.
 //
 // Reference: Adobe SWF File Format Specification, version 19, chapter 5
 // "Actions" — "ActionPush" (p. 69), "ActionPop" (p. 70), "ActionPushDuplicate"

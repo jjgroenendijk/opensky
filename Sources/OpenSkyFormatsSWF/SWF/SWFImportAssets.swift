@@ -1,17 +1,7 @@
-// ImportAssets (57) and ImportAssets2 (71): a movie borrows characters from
-// another movie by name, so a character id used by its own tags (an edit
-// text's FontID, for example) is defined nowhere inside the file. Vanilla
-// Skyrim Interface movies import their fonts this way from the fontlib
-// movies named in Interface\fontconfig.txt, which is why an edit text's
-// FontID frequently names a character the movie never defines.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 14
-// "Sharing fonts and other assets" — ImportAssets (p. 285) and ImportAssets2
-// (p. 286). Layout:
-//   ImportAssets:  URL STRING, Count UI16, Count x (CharacterId UI16, Name STRING)
-//   ImportAssets2: URL STRING, Reserved UI8 (1), Reserved UI8 (0),
-//                  Count UI16, Count x (CharacterId UI16, Name STRING)
-// The two reserved bytes are the only difference between the versions.
+// ImportAssets (57) and ImportAssets2 (71): characters borrowed from another
+// movie by name. Vanilla movies import their fonts from the fontlib movies, so
+// an edit text's FontID often names a character the movie never defines.
+// Layout and sources: docs/formats/swf-display-list.md.
 
 import Foundation
 import OpenSkyFormatsCore

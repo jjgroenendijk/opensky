@@ -1,12 +1,6 @@
-// DefineEditText (37): a dynamic/input text field definition — bounds, a large
-// flag word, an optional font + height, color, layout, a variable name, and
-// optional initial text. For static rendering the plain-text content is the
-// target; when the field is flagged HTML the markup is recorded and the tags
-// stripped for a plain-text fallback (full HTML text layout is 8.3.x work).
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 10
-// "Fonts and Text" — DefineEditText (pp. 175-177). Documented in
-// docs/formats/swf-text.md.
+// DefineEditText (37): a dynamic or input text field. For HTML fields the
+// markup is kept and a plain-text version is made by stripping tags.
+// Layout and sources: docs/formats/swf-text.md.
 
 import Foundation
 import OpenSkyFormatsCore

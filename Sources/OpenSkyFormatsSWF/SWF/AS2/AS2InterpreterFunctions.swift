@@ -1,17 +1,7 @@
-// Function definition and invocation (milestone 8.3.2): closing over the
-// defining scope, allocating the register file, running the preload flags, and
-// binding parameters.
-//
-// `ActionDefineFunction2` outnumbers `ActionDefineFunction` eight to one in the
-// vanilla movies (10,575 against 1,323), so the register path is the common
-// one. The preload flags fill registers from register 1 upward in the order the
-// specification lists them; getting that order wrong silently shifts every
-// parameter register, which is why it is written out one flag at a time.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionDefineFunction" (p. 92) and "ActionDefineFunction2"
-// (p. 111), including the `PreloadThis`, `PreloadArguments`, `PreloadSuper`,
-// `PreloadRoot`, `PreloadParent`, and `PreloadGlobal` field order.
+// Function definition and invocation: the closure scope, the register file,
+// the preload flags, and parameter binding. Preload flags fill registers from
+// register 1 in spec order; a wrong order shifts every parameter register.
+// Spec: SWF v19, ActionDefineFunction2. See docs/formats/swf-actions.md.
 
 import Foundation
 
@@ -97,13 +87,9 @@ nonisolated extension AS2Interpreter {
         return max(1, min(requested, limits.registerCount))
     }
 
-    /// Fills the preload registers, then binds each parameter to a register or
-    /// to a named local, then installs the `arguments` object.
-    ///
-    /// `suppressThis` and `suppressSuper` are deliberately not honored: `this`
-    /// and `super` stay reachable as names because `AS2InterpreterVariables`
-    /// answers them from the frame, and suppressing them would only save an
-    /// activation slot.
+    /// Fills the preload registers, binds each parameter, then installs
+    /// `arguments`. `suppressThis` and `suppressSuper` are ignored: the frame
+    /// still answers both names, and honoring them would only save a slot.
     private func bind(
         _ arguments: [AS2Value],
         body: AS2BytecodeBody,

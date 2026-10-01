@@ -1,25 +1,7 @@
-// Uniform character-id remapping for the cross-movie import merge (ImportAssets
-// 57 / ImportAssets2 71). Before a source movie's characters land in the
-// importing movie's dictionary their whole id space is shifted by one constant
-// offset, so the two spaces cannot collide and every consumer keeps seeing a
-// single flat dictionary.
-//
-// A missed id-bearing field is a silently wrong movie, so the list is explicit.
-// Everything a decoded movie retains that names a character is shifted here:
-// the dictionary keys; `SWFShapeDefinition.characterId` plus the bitmap ids its
-// FILLSTYLEs and LINESTYLE2 fills reference; `SWFBitmap.characterId`;
-// `SWFFontDefinition.fontID`; `SWFTextDefinition.characterId` and the `fontID`
-// of each of its TEXTRECORDs; `SWFEditText.characterId` and its `fontID`;
-// `SWFSprite.characterId`; `SWFPlacement.characterId` and
-// `SWFRemoval.characterId` in every frame of every timeline, main and sprite;
-// the resolved frame-1 `SWFPlacedObject.characterId` lists;
-// `SWFDoInitAction.spriteId`; and the ExportAssets / ImportAssets name tables.
-// DefineScalingGrid (78) also names a character, but the decoder retains no
-// scaling grids, so there is nothing to shift for it.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 14
-// "Sharing fonts and other assets" (pp. 285-286) for the import model, and the
-// per-tag chapters for the fields above.
+// Shifts every character ID of an imported movie by one offset, so its IDs
+// cannot collide with the importer's. A missed ID field gives a wrong movie,
+// so every ID-bearing field is listed in the code below.
+// See docs/formats/swf-display-list.md.
 
 import Foundation
 

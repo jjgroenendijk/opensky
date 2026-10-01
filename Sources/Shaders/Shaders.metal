@@ -60,10 +60,9 @@ static int sunShadowCascadeIndex(float3 worldPosition, constant FrameUniforms &f
     return cascade;
 }
 
-// Sun-shadow attenuation for one world-space receiver (M7.1.1). Returns 1.0
-// (fully lit) when shadows are off, the point is beyond the last cascade, or
-// it projects outside the cascade's map. PCF kernel radius comes from
-// FrameUniforms.shadowSampleRadius (M7.1.2 quality: 0 = 1 tap, 1 = 3x3).
+// Sun-shadow attenuation for one world-space receiver. Returns 1.0 (lit) when
+// shadows are off or the point is outside every cascade map. PCF radius comes
+// from FrameUniforms.shadowSampleRadius (0 = 1 tap, 1 = 3x3).
 static float sunShadowFactor(
     float3 worldPosition,
     constant FrameUniforms &frame,
@@ -114,17 +113,11 @@ static float3 applyFog(float3 color, float3 worldPosition, constant FrameUniform
     return mix(color, fogColor, saturate(amount));
 }
 
-// Render debug views (issue #144). The whole block is gated on one function
-// constant that every shipping pipeline defines as false, so the branches below
-// fold away there and the shipping fragment functions generate the same code
-// they did before the debug channels existed. The five debug pipelines define it
-// as true and then select a channel per frame from FrameUniforms.debugMode, so
-// switching channels rebuilds no pipeline.
-//
-// Every pipeline built from one of the four fragments that reads it must set it:
-// Metal requires a referenced function constant to be defined at specialization
-// and aborts pipeline validation when one is not, so "leave it undefined in
-// shipping pipelines" is not an option (Renderer.specializedFragment).
+// Render debug views. One function constant gates this block: shipping
+// pipelines set it false so the branches fold away, and the debug pipelines
+// set it true and pick a channel from FrameUniforms.debugMode. Every pipeline
+// must define it, because Metal fails validation on an undefined referenced
+// constant (Renderer.specializedFragment).
 
 constant bool debugViewActive [[function_constant(FunctionConstantDebugView)]];
 
@@ -209,9 +202,9 @@ static float4 debugViewColor(constant FrameUniforms &frame, DebugSurface surface
     }
 }
 
-// Exterior sky: fullscreen triangle. When weather is active (M7.2.2), the sky
-// uses the CPU-blended WTHR palette in FrameUniforms; otherwise it falls back
-// to the procedural time-of-day palette below (bit-identical to pre-weather).
+// Exterior sky: fullscreen triangle. With weather active the sky uses the
+// CPU-blended WTHR palette in FrameUniforms; otherwise the procedural
+// time-of-day palette below.
 
 typedef struct
 {
@@ -332,7 +325,7 @@ typedef struct
     float3 morphNormalDelta [[attribute(VertexAttributeMorphNormalDelta)]];
 } MorphedSkinnedVertexIn;
 
-// Instanced (todo 3.2): matrices come from the per-instance transform
+// Instanced: matrices come from the per-instance transform
 // array, bound at the draw group's base offset — instance_id starts at 0
 // per draw call, so it indexes straight into the group's visible instances.
 // Shared by the opaque and alpha-test pipeline variants (the function
@@ -526,7 +519,7 @@ fragment float4 grassFragment(
 // per-vertex VTXT opacities (UESP LAND: VTXT holds a 0.0-1.0 opacity per
 // painted vertex of the 17x17 quadrant grid). Weights arrive as a second
 // vertex stream (TerrainVertexLayout, Rendering/RenderMesh.swift). Lighting
-// matches staticMeshFragment so terrain shades like the M2 buildings.
+// matches staticMeshFragment so terrain shades like static meshes.
 
 typedef struct
 {
@@ -698,12 +691,10 @@ fragment float4 particleFragment(
     return float4(applyFog(sample.rgb, in.worldPosition, frame), sample.a);
 }
 
-// Sun-shadow depth pre-pass (M7.1.1): render each caster into one cascade
-// slice, storing only clip-space depth. lightViewProjection folds world ->
-// light clip; static/skinned casters get their model matrix from the
-// instance/bone path (identical to the scene pass), terrain from
-// ShadowDrawUniforms.modelMatrix. Only the alpha-test variant carries a
-// fragment (diffuse alpha discard); opaque casters run depth-only.
+// Sun-shadow depth pre-pass: each caster renders into one cascade slice,
+// depth only. Static and skinned casters take their model matrix from the
+// instance/bone path, terrain from ShadowDrawUniforms.modelMatrix. Only the
+// alpha-test variant has a fragment, for the diffuse alpha discard.
 
 typedef struct
 {
@@ -814,12 +805,10 @@ fragment float4 overlayFragment(OverlayVertexOut in [[stage_in]])
     return float4(in.color.rgb * alpha, alpha);
 }
 
-// Screen-space 2D UI overlay (M8.1.1): drawn last, depth off. Vertices arrive
-// in framebuffer pixels (origin top-left, y down) as a device pointer indexed
-// by vertex_id (no vertex descriptor, like the particle path). One pipeline
-// draws solid fills + text: solid quads sample the atlas white texel (r == 1),
-// glyph quads sample their coverage cell. Output is premultiplied so the
-// pipeline's premultiplied-over blend composites text edges correctly.
+// Screen-space 2D UI overlay, drawn last with depth off. Vertices are
+// framebuffer pixels (top-left origin, y down), read by vertex_id. One pipeline
+// draws fills and text: fills sample the atlas white texel, glyphs their
+// coverage cell. Output is premultiplied for the premultiplied-over blend.
 
 typedef struct
 {
@@ -854,14 +843,10 @@ fragment float4 uiFragment(
     return float4(in.color.rgb * alpha, alpha);
 }
 
-// SWF display-list layer (M8.2.4): frame-1 draws over the finished 3D frame,
-// after the scene but before the dev UI overlay. Each draw carries its full
-// vertex-space -> clip transform in SWFDrawUniforms, so no frame uniforms are
-// needed. Fills resolve in the straight-alpha domain (solid color, bitmap
-// sample, gradient ramp, or glyph coverage), apply the SWF CXFORM
-// (multiply-then-add, clamped), and premultiply for the pass's
-// source-one/one-minus-source-alpha blending. Clip layers render the same
-// vertex path through a stencil-only variant (swfMaskFragment).
+// SWF display-list layer, drawn after the 3D scene and before the dev UI.
+// Each draw carries its own transform in SWFDrawUniforms. Fills resolve in
+// straight alpha, apply the CXFORM, then premultiply for blending. Clip layers
+// use the stencil-only swfMaskFragment.
 
 typedef struct
 {

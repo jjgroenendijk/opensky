@@ -1,17 +1,7 @@
-// Path resolution and dynamic members for the runtime display tree (milestone
-// 8.3.2 phase 2).
-//
-// ActionScript addresses a clip three ways and all three arrive here: as a
-// dotted or slash-separated path (`_root.menu.list`, `../list`), as one of the
-// special targets, or as a plain member read on a clip object whose property
-// table does not hold the name. The last case is how `clip.someChild` and
-// `clip._x` both work, because `AS2Interpreter.getMember` consults the host
-// only after the prototype chain misses.
-//
-// Text lives here too: a `DefineEditText` field's runtime content is either an
-// explicit assignment (`field.text = "..."`, `field.SetText(...)`) or the
-// value of the field's `VariableName` binding, which milestone 8.2 decoded and
-// never read.
+// Path resolution and dynamic members for the runtime display tree: dotted or
+// slash paths, special targets, and member reads that miss the prototype chain
+// (`clip.child`, `clip._x`). Field text is an explicit assignment or the
+// field's `VariableName` binding.
 
 import Foundation
 

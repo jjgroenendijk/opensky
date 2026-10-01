@@ -77,9 +77,8 @@ nonisolated public struct Projectile: Equatable, Sendable {
     public let sound: FormID?
     /// DATA — SNDR played when the projectile is disabled; nil when unset.
     public let disableSound: FormID?
-    /// DATA — EXPL detonated on impact; nil on an ordinary arrow. Explosive
-    /// projectiles are out of item 15.5's scope, but the link is decoded so
-    /// nothing has to guess whether a projectile is one.
+    /// DATA — EXPL detonated on impact; nil on an ordinary arrow. The link is
+    /// decoded so nothing has to guess whether a projectile explodes.
     public let explosion: FormID?
     /// DATA +0x58 — COLL collision layer. The owning plugin is needed to
     /// resolve it; `CollisionLayerStore.collisionLayer(for:fromPlugin:)`

@@ -1,10 +1,6 @@
-// The QUST tail of a VMAD field, decoded on top of the primary-script decoder
-// in ScriptDataDecoder.swift. It lives in its own file so that decoder's type
-// body stays inside the strict-lint cap; the two halves are one type because
-// the alias sections reuse the primary script, property and object readers
-// unchanged, including the version and object-format handling.
-//
-// Layout and references: ScriptDataQuestFragments.swift.
+// The QUST tail of a VMAD field, an extension of the primary-script decoder in
+// ScriptDataDecoder.swift so the alias sections reuse its readers.
+// Layout and sources: ScriptDataQuestFragments.swift.
 
 import Foundation
 import OpenSkyFormatsCore

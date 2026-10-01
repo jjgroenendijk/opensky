@@ -1,25 +1,6 @@
-// INGR record decoded into engine types: alchemy ingredients. Same MagicItem
-// shape as ALCH — an effect list plus an ENIT header — but INGR keeps the
-// ordinary 8-byte value/weight DATA and its ENIT is only 8 bytes.
-//
-// ENIT is an 8-byte struct:
-//   00 int32   ingredient value used by auto-calc (every vanilla ingredient
-//              auto-calculates, so this is not the gold value; that is DATA)
-//   04 uint32  flags — 0x001 no auto-calc, 0x002 food, 0x100 references
-//              persist
-//
-// Effects (EFID/EFIT/CTDA runs) resolve through MagicEffectStore.
-// Vanilla ingredients carry exactly four, and which of them the player has
-// discovered is save state, not record data.
-//
-// Skipped: VMAD (used only by Briarhearts in the vanilla files), DEST, ETYP.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/INGR"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INGR
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(INGR, ...)` line 7909
-//     — int32 Value + float Weight DATA, then the 8-byte ENIT above.
-// Layout documented in docs/formats/item-records.md.
+// INGR ingredient. Same effect list as ALCH, but with the usual 8-byte
+// value/weight DATA and an 8-byte ENIT. Which effects are discovered is save
+// state. Layout and sources: docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsCore

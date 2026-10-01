@@ -1,20 +1,6 @@
-// GLOB record decoded into engine types: a named global variable with a
-// declared numeric type and a plugin-authored default value.
-//
-// The one surprise in the layout is that FLTV is a float32 whatever FNAM
-// declares, so a "short" or "long" global is a float on disk that happens to
-// hold an integral value. UESP spells this out and warns that a long global
-// silently loses precision past 2^24 for exactly that reason. OpenSky keeps the
-// same representation — one `Float` plus the declared type — and coerces on
-// write rather than inventing a wider integer the file cannot round-trip.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/GLOB"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/GLOB
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(GLOB, 'Global', ...)`
-//     https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-// Layout + runtime policy documented in docs/formats/records.md and
-// docs/engine/global-variables.md.
+// GLOB global variable. FLTV is a float32 whatever FNAM declares, so OpenSky
+// keeps one `Float` plus the declared type and coerces on write.
+// Layout: docs/formats/records.md. Policy: docs/engine/global-variables.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -54,17 +40,9 @@ nonisolated public struct Global: Equatable, Sendable {
             self != .float
         }
 
-        /// Coerces a raw float onto this type.
-        ///
-        /// Integer types round half away from zero — the everyday "round" that
-        /// sends 0.5 to 1 and -0.5 to -1 — because the alternative, truncation
-        /// toward zero, makes `set(x + 0.6)` repeated ten times land on 0
-        /// instead of 6. Nothing in an open spec states which rule the original
-        /// engine used, so this is OpenSky's documented choice
-        /// (docs/engine/global-variables.md). Non-finite input becomes 0 rather
-        /// than propagating a NaN through comparisons that must be total.
-        /// Nothing is clamped to 16 or 32 bits: the value lives in a float on
-        /// disk, and clamping would discard mod data the file can represent.
+        /// Coerces a raw float onto this type. Integers round half away from
+        /// zero, non-finite input becomes 0, and nothing is clamped to 16 or
+        /// 32 bits. See docs/engine/global-variables.md.
         public func coerce(_ raw: Float) -> Float {
             guard isInteger else { return raw }
             guard raw.isFinite else { return 0 }
@@ -132,13 +110,9 @@ nonisolated public struct Global: Equatable, Sendable {
     }
 }
 
-/// A global's current numeric value together with the type it was declared as.
-///
-/// The type travels with the value because every write has to be coerced, and
-/// the coercion rule belongs to the global rather than to whoever is writing:
-/// a script that stores 3.7 into a short global stores 4, and a condition that
-/// reads it back must see 4 whether the write came from Papyrus, the console or
-/// a save file.
+/// A global's current value with its declared type. The type travels with the
+/// value because every write is coerced by the global's own rule, whoever
+/// writes it.
 nonisolated public struct GlobalValue: Equatable, Sendable {
     public let type: Global.ValueType
     /// Value already coerced onto `type`; never a fraction for short or long.

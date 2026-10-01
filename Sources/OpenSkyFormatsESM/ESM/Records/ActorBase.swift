@@ -323,7 +323,7 @@ nonisolated public struct ActorBase: Sendable {
 
     /// DNAM, 52 bytes: 18 base skills, 18 skill mods, then the three baked
     /// uint16 attribute values at 0x24 / 0x26 / 0x28 (UESP NPC_ DNAM). Only the
-    /// three attributes are read; the skill bytes wait for M18.
+    /// three attributes are read.
     ///
     /// A short DNAM leaves the baked values absent: it is a cross-check, not an input.
     private static func decodeDNAM(_ field: ESMField, stats: inout Stats) throws {

@@ -1,23 +1,8 @@
-// Input injection for a running movie (milestone 8.3.2 phase 3). Pointer and
-// key events are handed to the runtime explicitly — nothing here reads a clock,
-// an `NSEvent`, or any global — so a test, the offscreen render path, and the
-// app all drive the same code and produce the same result.
-//
-// Coordinates arrive in *movie stage pixels*, the same space `Stage.width`,
-// `Stage.height`, and `_xmouse` are expressed in. `SWFInputMapping` converts a
-// viewport pixel into that space by inverting the letterbox transform
-// `SWFViewportMapping.twipsToPixels` builds, so the pointer lands on the object
-// the user is actually looking at. Internally everything is twips, because the
-// display list is.
-//
-// Where an event goes is decided by the 8.3.1 clip-event measurement: every
-// mouse and key CLIPACTIONS event is zero across all 53 vanilla movies, so
-// input cannot be delivered through clip events alone. A pointer event goes to
-// the hit-tested display object's handler members (`onPress`, `onRollOver`, and
-// the rest, which is what CLIK's `Button` assigns) and to the `Mouse`
-// broadcaster; a key event goes to the `Key` broadcaster, which is where CLIK's
-// `gfx.managers.InputDelegate` registers itself and from where the framework's
-// own focus and navigation path takes over.
+// Input injection for a running movie. Events are passed in, never read from a
+// clock or `NSEvent`, so tests and the app run the same code. Coordinates are
+// stage pixels and become twips inside. Pointer events go to the hit object's
+// handler members and `Mouse`; key events go to `Key`, where CLIK listens.
+// See docs/engine/as2-input.md.
 
 import Foundation
 import simd
@@ -248,15 +233,9 @@ nonisolated extension SWFMovieRuntime {
 
     // MARK: - Keys
 
-    /// A key down reaches the `Key` broadcaster first, because that is where
-    /// CLIK's `InputDelegate` listens, and then the menu's own `handleInput`.
-    ///
-    /// A broadcaster listener is an *observer*, not a consumer: only
-    /// `handleInput` answers whether it took the event, and vanilla movies
-    /// register unrelated `Key` listeners — `Shared.GlobalFunc.IsKeyPressed` in
-    /// `tweenmenu.swf` is one — that would otherwise swallow every keystroke
-    /// before the menu saw it. Delivery is therefore unconditional and only the
-    /// returned flag is an OR.
+    /// A key down goes to the `Key` broadcaster (CLIK's `InputDelegate`), then
+    /// to the menu's `handleInput`. Listeners only observe: vanilla registers
+    /// unrelated `Key` listeners, so only `handleInput` reports consumption.
     private func keyDown(code: Int, ascii: Int) -> Bool {
         input.lastKeyCode = code
         input.lastKeyAscii = ascii

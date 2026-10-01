@@ -1,11 +1,5 @@
-// GRAS record decoded into engine types: model path plus procedural placement
-// controls referenced by LTEX GNAM entries.
-//
-// Reference: xEdit dev-4.1.5 wbDefinitionsTES5.pas (wbRecord(GRAS)):
-//   https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.5/Core/wbDefinitionsTES5.pas
-// Field meanings cross-checked against Creation Kit "Grass":
-//   https://ck.uesp.net/wiki/Grass
-// Layout + placement policy: docs/formats/grass.md.
+// GRAS grass: model path plus placement controls, referenced by LTEX GNAM.
+// Layout, sources, and placement policy: docs/formats/grass.md.
 
 import Foundation
 import OpenSkyFormatsCore

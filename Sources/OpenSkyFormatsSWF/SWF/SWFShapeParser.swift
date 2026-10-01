@@ -1,14 +1,6 @@
-// Bit-level decoding of SWF shape structures: RECT, MATRIX, GRADIENT,
-// FILLSTYLEARRAY / LINESTYLEARRAY, and the SHAPE record stream
-// (style-change / straight-edge / curved-edge records).
-//
-// Reference: Adobe SWF File Format Specification, version 19 — chapter 1
-// "Rectangle record" / "MATRIX record" (pp. 22-23), chapter 6 "Shape
-// structures" (pp. 121-131), chapter 7 "Gradient structures" (pp. 135-136).
-// Alignment notes: RECT and MATRIX "must be byte aligned" per the spec. The
-// spec does not state alignment for GRADIENT or for the NumFillBits field
-// after the style arrays; observed encoders byte-align both (every vanilla
-// Interface movie parses under this rule — see docs/formats/swf-shapes.md).
+// Bit-level decoding of SWF shape structures: RECT, MATRIX, GRADIENT, style
+// arrays, and shape records. GRADIENT and the bits after the style arrays are
+// byte-aligned, as observed encoders do. See docs/formats/swf-shapes.md.
 
 import Foundation
 

@@ -1,11 +1,6 @@
-// Value types for SWF shape styles: colors, the 2x3 MATRIX record, gradients,
-// fill styles, and line styles. Decoupled from the on-disk bit packing, which
-// lives in SWFShapeParser.
-//
-// Reference: Adobe SWF File Format Specification, version 19 — "RGB color
-// record" / "RGBA color with alpha record" / "MATRIX record" (chapter 1,
-// pp. 21-23), "Fill styles" / "Line styles" (chapter 6, pp. 121-125), and
-// "Gradient structures" (chapter 7, pp. 135-136).
+// Shape style values: colors, MATRIX, gradients, fill styles, and line styles,
+// separate from the bit packing in SWFShapeParser. Spec: SWF v19 chapters 1,
+// 6, and 7.
 
 import Foundation
 

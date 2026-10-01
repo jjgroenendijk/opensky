@@ -1,33 +1,7 @@
-// CONT contents: the item list a container starts with, plus the container's
-// own DATA flags.
-//
-// `ModelBase` already decodes the CONT fields the cell builder and the
-// interaction path need (EDID, FULL, MODL, open/close sounds), and those
-// consumers must keep working unchanged, so `Container` *composes* ModelBase
-// rather than replacing or duplicating it: `base` is the same decode those
-// paths already use, and this type adds only the inventory half.
-//
-// The contents are a run of subrecords, not one array:
-//   COCT  uint32   count of the CNTO entries that follow
-//   CNTO  8 bytes  FormID item + int32 count, repeated
-//   COED 12 bytes  optional owner data for the CNTO immediately before it
-//
-// COCT is advisory. The engine counts the CNTO fields it actually decoded and
-// records the authored number separately, for the same reason KSIZ is not
-// trusted to size KWDA: a stale count in a modded plugin must not truncate a
-// container or run the reader past the record.
-//
-// COED's middle word is a union whose meaning depends on the owner: a GLOB
-// FormID when the owner is an NPC_, a required faction rank when it is a FACT.
-// Resolving that needs a cross-record type lookup the decoder does not have,
-// so the word is carried raw and the ownership consumer (#177) decides.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/CONT"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CONT
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: `wbCOED` line 2305, `wbCNTO`
-//     2315, `wbCOCT` 2329, `wbRecord(CONT, ...)` 4505.
-// Layout documented in docs/formats/item-records.md.
+// CONT contents and DATA flags. Composes `ModelBase` so existing consumers
+// keep their decode. COCT is advisory: entries are counted as decoded. The
+// COED middle word depends on the owner type, so it stays raw.
+// Layout and sources: docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -35,9 +9,8 @@ import OpenSkyFormatsCore
 nonisolated public struct Container: Sendable {
     /// One CNTO entry with the COED extra data that followed it, if any.
     public struct Entry: Equatable, Sendable {
-        /// The item placed in the container. xEdit constrains it to the
-        /// carryable families plus LVLI, so a leveled list is legal here and
-        /// the inventory runtime expands it (#176).
+        /// The item placed in the container: a carryable item or an LVLI, which
+        /// the inventory runtime expands.
         public let item: FormID
         /// Stack count. Signed on disk; vanilla never writes a negative.
         public let count: Int32

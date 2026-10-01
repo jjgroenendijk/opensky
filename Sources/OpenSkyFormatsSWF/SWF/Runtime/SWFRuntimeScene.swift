@@ -1,15 +1,7 @@
-// Draw-command generation from the mutable tree (milestone 8.3.2 phase 2).
-//
-// `SWFScene.build(movie:)` stays exactly as it was — a pure function of the
-// decoded frame-1 display list, which is what the static path and every
-// existing test use. This is its mutable twin: the same command vocabulary
-// (`SWFSceneCommand`, `SWFSceneItem`), the same clip semantics, and the same
-// paint order, produced from live display objects instead of from
-// `SWFPlacedObject`s. The renderer therefore consumes one stream type and does
-// not know whether ActionScript is running.
-//
-// The one addition is `SWFSceneItem.textOverride`, which carries a field's
-// runtime string so the renderer can re-plan that text run.
+// Draw commands from the mutable display tree: the live twin of
+// `SWFScene.build(movie:)`, with the same commands and paint order, so the
+// renderer does not know whether ActionScript runs. `textOverride` carries a
+// field's runtime string.
 
 import Foundation
 

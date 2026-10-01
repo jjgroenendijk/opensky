@@ -1,13 +1,7 @@
-// The `Number`, `Boolean`, and `Math` built-ins, plus the numeric parsing the
-// global `parseInt`/`parseFloat` use (milestone 8.3.2).
-//
-// `Math.random` draws from the runtime's seeded generator rather than the
-// system one, so a menu that animates on random values still renders the same
-// frame twice — the rendering layer's determinism contract (docs/rendering/swf-layer.md).
-//
-// Reference: ECMA-262 3rd edition, section 15.7 "Number Objects", section 15.6
-// "Boolean Objects", section 15.8 "The Math Object", and sections 15.1.2.2
-// `parseInt` and 15.1.2.3 `parseFloat`.
+// `Number`, `Boolean`, `Math`, `parseInt`, and `parseFloat`. `Math.random` uses
+// the runtime's seeded generator, so a frame renders the same twice
+// (docs/rendering/swf-layer.md). Spec: ECMA-262 3rd ed. sections 15.1.2, 15.6
+// to 15.8.
 
 import Foundation
 

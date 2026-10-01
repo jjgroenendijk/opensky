@@ -1,10 +1,5 @@
-// CELL XCLL + LGTM DATA/DALC lighting layouts. Values stay decoupled from
-// renderer policy; CellSceneBuilderLighting resolves XCLL inherit flags.
-//
-// References:
-// - UESP CELL/LGTM: https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL
-// - xEdit dev-4.1.6 wbDefinitionsTES5.pas, CELL XCLL + LGTM
-// - xEdit dev-4.1.6 wbDefinitionsCommon.pas, wbAmbientColors
+// CELL XCLL and LGTM lighting layouts. Inherit flags are resolved by
+// CellSceneBuilderLighting, not here. Layout: docs/formats/lighting.md.
 
 import Foundation
 import OpenSkyFormatsCore

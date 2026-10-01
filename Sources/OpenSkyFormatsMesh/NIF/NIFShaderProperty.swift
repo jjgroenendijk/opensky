@@ -1,16 +1,6 @@
-// BSLightingShaderProperty: the material of a Skyrim SE static — shader
-// type/flags, UV transform, texture set ref, alpha, glossiness, specular.
-// Skyrim layout only (BS stream 83/100): the shader type uint32 precedes the
-// NiObjectNET name for this one block type (nif.xml NiObjectNET "Shader
-// Type", onlyT=BSLightingShaderProperty); FO4+ moves fields around and is
-// rejected. Fields after specular strength (lighting effects + the
-// shader-type-conditional tail) are not needed by the M2 shader and stay
-// unread inside the size-sliced block payload.
-//
-// Reference: NifTools nif.xml (BSLightingShaderProperty,
-// SkyrimShaderPropertyFlags1/2, NiObjectNET).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-materials.md.
+// BSLightingShaderProperty: the material of a static. Skyrim streams only; for
+// this block a uint32 shader type comes before the name. Fields after specular
+// strength stay unread. Layout: docs/formats/nif-materials.md.
 
 import Foundation
 import OpenSkyFormatsCore

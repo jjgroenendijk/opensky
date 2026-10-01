@@ -1,11 +1,5 @@
-// Float 2x3 affine transform used by the display-list renderer: SWF MATRIX
-// records concatenate through it (place -> sprite -> movie), and the
-// movie-to-viewport and pixel-to-NDC mappings fold in so one transform maps a
-// character's local twips straight to clip space. Field names follow the
-// spec's MATRIX field names so the algebra stays checkable against it.
-//
-// Reference for the MATRIX semantics: Adobe SWF File Format Specification,
-// version 19, chapter 1 "MATRIX record" (p. 23):
+// Float 2x3 affine transform for the display-list renderer. Field names follow
+// the SWF MATRIX record (spec v19 chapter 1):
 // `x' = x * ScaleX + y * RotateSkew1 + TranslateX`,
 // `y' = x * RotateSkew0 + y * ScaleY + TranslateY`.
 

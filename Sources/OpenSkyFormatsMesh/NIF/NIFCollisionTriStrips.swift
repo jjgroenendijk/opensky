@@ -1,11 +1,6 @@
-// bhkNiTriStripsShape's NiTriStripsData half, split from the packed-strips
-// decoder so each stays inside the strict type-body limit. The two share
-// `Soup` and the bounds helpers on NIFCollisionTriangleCollections, which are
-// internal rather than private for exactly that reason.
-//
-// Reference: NifTools nif.xml (bhkNiTriStripsShape, NiTriStripsData,
-// NiGeometryData).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
+// bhkNiTriStripsShape's NiTriStripsData half. It shares `Soup` and the bounds
+// helpers with NIFCollisionTriangleCollections.swift, so those are internal.
+// Source: NifTools nif.xml.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -82,13 +77,8 @@ nonisolated extension NIFCollisionTriangleCollections {
             stride: 8,
             label: "UVs"
         )
-        // NiGeometryData's tail: Consistency Flags is a ConsistencyType, which
-        // nif.xml stores as a ushort rather than a uint, then the
-        // AbstractAdditionalGeometryData ref. Reading it as four bytes put
-        // every field after it two bytes late, which is what made the three
-        // vanilla `bhkNiTriStripsShape` meshes fail to decode (issue #376) —
-        // the only shape class in the install that reaches this code, so
-        // nothing else covered the mistake.
+        // Consistency Flags is a ushort in nif.xml, not a uint. Reading four
+        // bytes shifts every later field by two.
         reader.skip(2) // Consistency Flags
         reader.skip(4) // Additional Data ref
     }

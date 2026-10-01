@@ -1,15 +1,5 @@
-// MUSC music types group the MUST music tracks a playlist may choose from and
-// carry the selection/transition policy (priority, ducking, fade). MUST music
-// tracks name the audio file to stream plus its loop and finale data.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/MUSC"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MUSC
-//   UESP "Skyrim Mod:Mod File Format/MUST"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MUST
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas (MUSC lines 7074-7092,
-//     MUST lines 7203-7226)
-// Layout documented in docs/formats/music.md.
+// MUSC music types (playlist and transition policy) and MUST music tracks
+// (file, loop, and finale data). Layout and sources: docs/formats/music.md.
 
 import Foundation
 import OpenSkyFormatsCore

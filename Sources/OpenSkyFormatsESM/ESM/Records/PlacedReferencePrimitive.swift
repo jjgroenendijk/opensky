@@ -1,12 +1,5 @@
-// XPRM (primitive volume) decode for REFR, split out of PlacedReference.swift
-// to keep that type under the SwiftLint type-body limit.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/REFR" XPRM row
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR
-// Struct cross-check: xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas line 9701
-//   `wbStruct(XPRM, 'Primitive', [wbStruct('Bounds', ...), wbFloatRGBA,
-//   wbInteger('Type', itU32, wbEnum([...]))])`
-// Layout documented in docs/formats/placed-references.md.
+// XPRM primitive volume decode for REFR, in its own file for the type-body
+// limit. Layout and sources: docs/formats/placed-references.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -44,25 +37,9 @@ nonisolated extension PlacedReference {
         case line = 4
     }
 
-    /// Decodes the single XPRM payload on a reference.
-    ///
-    /// Size policy follows XTEL rather than XLKR: XPRM is one non-repeating
-    /// struct whose fields are all fixed-width, so a payload of the wrong
-    /// length can only be read by shifting every field. A shifted read gives
-    /// a trigger volume the wrong size and the wrong shape, which is worse
-    /// than the caller logging and skipping the reference, so any length
-    /// other than 32 throws.
-    ///
-    /// An unrecognised `type` throws for the same reason. xEdit's enumeration
-    /// is closed (0...4) and Skyrim.esm stays inside it — 10163 boxes, 137
-    /// spheres, 3135 portal boxes, 233 lines, no `none` — so a value outside
-    /// the range means the payload is not a primitive this decoder
-    /// understands; guessing `.box` for it would place a solid-looking volume
-    /// of unknown shape. The cost is bounded: only the reference carrying the
-    /// bad field is lost, and vanilla data contains none.
-    ///
-    /// Layout, UESP REFR + xEdit wbDefinitionsTES5.pas: exact 32-byte struct =
-    /// bounds xyz, color rgb, unknown float (xEdit "Alpha"), uint32 type.
+    /// Decodes the XPRM payload. A length other than 32 or a type outside 0...4
+    /// throws, because a guessed volume would have the wrong size or shape.
+    /// Only that one reference is lost. Layout: docs/formats/placed-references.md.
     nonisolated public static func decodePrimitive(
         _ field: ESMField,
         reference: FormID

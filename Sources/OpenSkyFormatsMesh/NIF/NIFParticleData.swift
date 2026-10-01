@@ -1,18 +1,7 @@
-// NiPSysData (+ BSStripPSysData superset) block parser. Inheritance
-// NiObject -> NiGeometryData -> NiParticlesData -> NiPSysData, all read with
-// the Bethesda-20.2 (#BS202#) field conditions. Under BS202 the geometry
-// arrays (vertices/normals/colors/UVs/radii/sizes/rotations) carry no length
-// for NiPSysData — the CPU sim allocates them at runtime — so only their
-// presence bytes and the fixed scalars are on disk. The layout does not differ
-// between BS stream 83 and 100 (BS202 = version 20.2.0.7 with any BS stream),
-// unlike NiParticleSystem. We keep capacity ("BS Max Vertices") + the presence
-// flags + the subtexture atlas offsets; the per-particle arrays are the
-// playback sim's job (milestone 7.3.2), not static decode.
-//
-// Reference: NifTools nif.xml (NiGeometryData, NiParticlesData, NiPSysData,
-// BSStripPSysData, NiBound, AspectFlags; vercond tokens BS202, BS_GT_FO3).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-particles.md.
+// NiPSysData and BSStripPSysData. Under BS202 the per-particle arrays have no
+// length on disk, because the simulation allocates them. So only capacity,
+// presence flags, and atlas offsets are kept.
+// Layout: docs/formats/nif-particles.md.
 
 import Foundation
 import OpenSkyFormatsCore

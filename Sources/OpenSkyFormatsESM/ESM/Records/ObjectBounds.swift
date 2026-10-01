@@ -1,20 +1,6 @@
-// OBND, the axis-aligned bounding box every placeable base record carries.
-// Twelve bytes, six little-endian int16 in the order X1 Y1 Z1 X2 Y2 Z2 — the
-// minimum corner then the maximum corner, in game units, relative to the
-// record's own origin. Vanilla writes the field even when every component is
-// zero, which is why so many records show "12 zeroes most of the time".
-//
-// Shared rather than repeated: MISC, BOOK, ALCH, INGR, WEAP, AMMO, CONT and
-// ARMO all carry the same field, and so does most of the rest of the object
-// tree. Mirrors the standalone `BodyTemplate` helper pattern.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format" per-record pages list OBND on every
-//   placeable base record, e.g.
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MISC
-//   xEdit dev-4.1.6 Core/wbDefinitionsCommon.pas `wbOBND` (line 8634) is the
-//   authority for the component order and int16 typing.
-// Layout documented in docs/formats/item-records.md.
+// OBND bounding box: six int16 in the order X1 Y1 Z1 X2 Y2 Z2, minimum corner
+// then maximum, relative to the record origin. Shared by most base records.
+// Layout and sources: docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsCore

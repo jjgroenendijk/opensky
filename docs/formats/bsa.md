@@ -76,11 +76,11 @@ At each record's offset there are `packedSize` bytes:
 2. An uncompressed file: the raw bytes.
 3. A compressed file: a uint32 decompressed size, then an LZ4 frame (magic `0x184D2204`).
 
-OpenSky reads the LZ4 frame itself, from the public LZ4 Block and Frame format
-specifications. Independent blocks (`FLG` bit 5 set) go to Apple's `COMPRESSION_LZ4_RAW`.
-Linked blocks use OpenSky's own Swift decoder, because a match may reach back into an
-earlier block. The xxHash checksums are skipped. The output size is checked against the
-decompressed size instead.
+OpenSky reads the LZ4 frame itself, from the public LZ4 [Block format][lz4-block] and
+[Frame format][lz4-frame] specifications. Independent blocks (`FLG` bit 5 set) go to
+Apple's `COMPRESSION_LZ4_RAW`. Linked blocks use OpenSky's own Swift decoder, because a
+match may reach back into an earlier block. The xxHash checksums are skipped. The output
+size is checked against the decompressed size instead.
 
 In the vanilla mesh and texture archives, every compressed file is an LZ4 frame. Most use
 independent blocks (`FLG 0x60`). About 1,000 use linked blocks (`FLG 0x40`).
@@ -89,3 +89,6 @@ independent blocks (`FLG 0x60`). About 1,000 use linked blocks (`FLG 0x40`).
 
 - Computing the TES4 name hash. OpenSky looks files up by name. The hash is needed only
   for archives without name tables, and vanilla has none.
+
+[lz4-block]: https://github.com/lz4/lz4/blob/dev/doc/lz4_Block_format.md
+[lz4-frame]: https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md

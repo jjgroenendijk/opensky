@@ -1,16 +1,7 @@
-// Parser for the Scaleform GFx font-configuration file the game ships at
-// Interface/fontconfig.txt. It maps logical font aliases (e.g. "$EverywhereFont")
-// to font names defined inside fontlib movies (e.g. fonts_en.swf), and lists
-// those fontlib movies.
-//
-// Grammar is OBSERVED behavior, not a published spec (open GFx documentation is
-// thin). The subset OpenSky implements, and its uncertainty, are documented in
-// docs/formats/swf-text.md. Recognized directives:
-//   fontlib "<movie.swf>"
-//   map "$Alias" = "FontName" [Style ...]
-//   # comment to end of line   (also blank lines)
-// Any other non-empty line is retained verbatim in `unrecognizedLines` and
-// reported, never silently dropped.
+// Parser for the GFx Interface/fontconfig.txt file: `fontlib` movies and `map`
+// aliases such as "$EverywhereFont". The grammar is observed, not specified.
+// Other lines are kept in `unrecognizedLines` and reported.
+// Grammar and uncertainty: docs/formats/swf-text.md.
 
 import Foundation
 

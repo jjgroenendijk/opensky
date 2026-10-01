@@ -1,19 +1,6 @@
-// Body Template shared by ARMO, ARMA, and RACE records. Both encodings open
-// with a uint32 "First Person Flags" biped-object bitfield naming the body
-// slots the item occupies:
-//   BOD2 (SSE, plugin format >= 1.6.91): uint32 biped flags + uint32 armor
-//        type. 8 bytes.
-//   BODT (legacy): uint32 biped flags [+ uint32 general flags] + uint32 armor
-//        type. RACE always writes the 12-byte form; ARMO/ARMA accept 8- or
-//        12-byte. The 8-byte form omits the general-flags word, so its trailing
-//        layout is ambiguous — decode the slots (always the first word) and
-//        leave armor type nil there.
-// Only the biped slot bits + armor type matter for skinning, so both shapes
-// decode to one struct; enchantment/keyword/value data lives elsewhere.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/ARMO" + ".../ARMA" + ".../RACE"
-// (BOD2/BODT field rows). Slot bit numbering from NifTools nif.xml enum
-// BSDismemberBodyPartType: bit N of the uint32 is biped slot (30 + N).
+// BOD2/BODT body template shared by ARMO, ARMA, and RACE. Both start with the
+// biped slot mask. The 8-byte BODT form is ambiguous after that word, so its
+// armor type stays nil. Layout and sources: docs/formats/armor.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -52,12 +39,9 @@ nonisolated public struct BodySlots: OptionSet, Equatable, Sendable {
         !isDisjoint(with: other)
     }
 
-    /// The named bits above, paired with their nif.xml names, so a readout can
-    /// spell a slot mask without a switch at the call site (issue #178). Slots
-    /// with no name here stay reachable through `rawValue`, and a caller that
-    /// prints this list is responsible for saying so — see
-    /// `InventoryCore.describe(_:)`, which appends the unnamed remainder
-    /// rather than dropping it.
+    /// The named bits above with their nif.xml names, for readouts. Unnamed
+    /// slots stay reachable through `rawValue`; a printer must show them, as
+    /// `InventoryCore.describe(_:)` does.
     public static let namedSlots: [(name: String, slots: BodySlots)] = [
         ("head", .head), ("hair", .hair), ("body", .body), ("hands", .hands),
         ("forearms", .forearms), ("amulet", .amulet), ("ring", .ring),

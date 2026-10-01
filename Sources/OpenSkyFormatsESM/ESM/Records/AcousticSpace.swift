@@ -1,20 +1,6 @@
-// ASPC acoustic-space record (M9.2.2). The bridge between an interior cell
-// and its ambient sound bed: CELL.XCAS -> ASPC.SNAM plays directly, and
-// ASPC.RDAT optionally borrows a REGN's type-7 sound area to drive this
-// interior's ambience (CK label: "Use Sound from Region (Interiors Only)").
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/ASPC"; xEdit dev-4.1.6
-// wbDefinitionsTES5.pas lines 5401-5407:
-//   wbRecord(ASPC, 'Acoustic Space', [
-//     wbEDID, wbOBND(True),
-//     wbFormIDCk(SNAM, 'Ambient Sound',            [SNDR]),
-//     wbFormIDCk(RDAT, 'Use Sound from Region (Interiors Only)', [REGN]),
-//     wbFormIDCk(BNAM, 'Environment Type (reverb)', [REVB])
-//   ]);
-//
-// Field-name collision: ASPC.RDAT here is a 4-byte REGN FormID, NOT the
-// 8-byte area header the REGN record itself uses (Region.swift). Same FourCC,
-// different layout and target. This decoder treats RDAT as a plain FormID.
+// ASPC acoustic space: links an interior cell to its ambient sound. Here RDAT
+// is a 4-byte REGN FormID, not the 8-byte area header the REGN record uses.
+// Layout and sources: docs/formats/acoustic-space.md.
 
 import Foundation
 import OpenSkyFormatsCore

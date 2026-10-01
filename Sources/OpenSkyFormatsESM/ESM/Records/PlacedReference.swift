@@ -1,22 +1,6 @@
-// REFR record decoded into engine types: base object FormID + placement.
-// A REFR places one base record (STAT, TREE, DOOR, ...) at a world position.
-// Per spec only NAME and DATA are required; everything else here is optional
-// and most of the activation fields are still skipped.
-//
-// M12.1.1 adds the reference-level ownership subrecords so a container or a
-// world item can say who it belongs to and how many of it there are:
-//   XOWN 4 bytes  owning NPC_ or FACT
-//   XRNK 4 bytes  int32 required rank, meaningful only for a faction owner
-//   XCNT 4 bytes  int32 stack count for a placed inventory item
-// xEdit models XOWN as a 12-byte struct for Fallout 4 and later only; in
-// Skyrim it is a plain FormID (`wbOwnership`, wbDefinitionsCommon.pas line
-// 8655), which is what this decodes.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/REFR"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR
-// XTEL and XLKR struct cross-check: xEdit dev-4.1.6 wbDefinitionsTES5.pas
-//   https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-// Layout documented in docs/formats/placed-references.md.
+// REFR placed reference: a base record at a world position, plus optional
+// teleport, links, primitive, and ownership (XOWN, XRNK, XCNT). In Skyrim XOWN
+// is a plain FormID. Layout and sources: docs/formats/placed-references.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -53,24 +37,9 @@ nonisolated public struct PlacedReference: Sendable {
         public let flags: Flags
     }
 
-    /// XLKR field: one entry of the reference's linked-reference list.
-    ///
-    /// UESP REFR and xEdit both describe an 8-byte struct of `Keyword/Ref`
-    /// followed by `Ref`; the keyword slot holds FormID 0 when the link is
-    /// untagged, which decodes here as `keyword == nil`. xEdit marks the
-    /// second member optional (`aOptionalFromElement: 1`), which is the
-    /// 4-byte form, and it too decodes as an untagged link.
-    ///
-    /// Confirmed on real data by `PlacedReferenceLinkedRefRealDataTests`:
-    /// Skyrim.esm's 12477 XLKR payloads are all exactly 8 bytes (12467) or
-    /// exactly 4 (10), every non-null first FormID is a KYWD record and no
-    /// second FormID ever is, so the order really is keyword then ref.
-    ///
-    /// Uncertainty: xEdit types slot 0 as `Keyword/Ref`, admitting a REFR
-    /// there as well as a KYWD, because in the 4-byte form slot 0 *is* the
-    /// ref. Skyrim.esm never puts a reference in slot 0 of an 8-byte payload,
-    /// so OpenSky reads an 8-byte slot 0 as a keyword unconditionally. A mod
-    /// that broke that would have its link read as tagged with a non-keyword.
+    /// One XLKR linked-reference entry. A null or absent keyword reads as
+    /// `keyword == nil`. An 8-byte slot 0 is always read as a keyword, as in
+    /// Skyrim.esm. Evidence: docs/formats/placed-references.md.
     public struct LinkedReference: Equatable, Sendable {
         /// KYWD tagging the link (`LinkCarryStart`, `LinkCarryEnd`, ...).
         /// `nil` when the link carries no keyword.
@@ -85,9 +54,7 @@ nonisolated public struct PlacedReference: Sendable {
     /// NAME — the base object this reference places.
     public let base: FormID
     /// DATA placement as decoded. `var` because a cell build lays a runtime
-    /// transform override over the record's value before it places anything
-    /// (issue #160, `CellSceneBuilder.applyRuntimeState`); decoding itself
-    /// never rewrites it.
+    /// transform over it first (`CellSceneBuilder.applyRuntimeState`).
     public var placement: Placement
     /// XSCL — uniform scale, defaulting to 1 when the field is absent. `var`
     /// for the same runtime-override reason as `placement`.
@@ -118,16 +85,9 @@ nonisolated public struct PlacedReference: Sendable {
     /// VMAD — Papyrus scripts attached directly to this placed reference.
     public let scriptData: ScriptData
 
-    /// The link `ObjectReference.GetLinkedRef(akKeyword)` resolves to: the
-    /// first entry tagged with `keyword`, or — passing `nil`, the Papyrus
-    /// default — the first entry that carries no keyword at all. Returns nil
-    /// when no entry matches, which is `GetLinkedRef` returning `None`.
-    ///
-    /// File order decides ties, but nothing in Skyrim.esm needs a tiebreak:
-    /// the sweep in `PlacedReferenceLinkedRefRealDataTests` finds no reference
-    /// that repeats a keyword and none that carries more than one untagged
-    /// link, so first-match and only-match agree on real data. The deepest
-    /// list observed is 19 links.
+    /// The link `GetLinkedRef(akKeyword)` resolves to: the first entry tagged
+    /// with `keyword`, or for `nil` the first untagged entry. Nil when none
+    /// matches. Skyrim.esm never needs a tiebreak.
     public func linkedReference(keyword: FormID? = nil) -> FormID? {
         linkedReferences.first { $0.keyword == keyword }?.ref
     }
@@ -176,15 +136,9 @@ nonisolated public struct PlacedReference: Sendable {
         self.scriptData = scriptData
     }
 
-    /// A reference the running game created rather than a plugin (issue #177).
-    ///
-    /// No record backs it, so everything a REFR reads from file is absent: no
-    /// teleport, no light override, no primitive, no links, no owner, no
-    /// scripts. Its `formID` is synthesized by `SpawnedReferenceIdentity` from
-    /// the object's generated `ReferenceKey`, which is what lets collision
-    /// raycasts and interaction metadata address it exactly like an authored
-    /// placement. `itemCount` carries the stack size, matching the XCNT a
-    /// placed inventory item would have used.
+    /// A reference the running game created. No record backs it, so all file
+    /// fields are absent. `SpawnedReferenceIdentity` makes its `formID`, so
+    /// raycasts and interaction treat it like an authored placement.
     public init(
         spawnedBase base: FormID,
         placement: Placement,
@@ -292,19 +246,9 @@ nonisolated public struct PlacedReference: Sendable {
         return try FormID(reader.readUInt32())
     }
 
-    /// Decodes one XLKR payload and appends it when it is readable.
-    ///
-    /// Unlike XTEL this never throws: XLKR is a repeating optional link, so a
-    /// payload of an unexpected length costs the engine one link, whereas a
-    /// wrong-size XTEL would silently teleport a door to the wrong place. A
-    /// short or unrecognised payload is therefore skipped, matching
-    /// `decodeFloat`/`decodeFormID` above.
-    ///
-    /// Layout: 8 bytes = keyword FormID then linked-reference FormID; 4 bytes
-    /// = the linked reference alone. Trailing bytes past the struct are
-    /// ignored rather than treated as a second entry, because the subrecord
-    /// repeats instead of packing an array. Skyrim.esm only ever uses 4 and 8;
-    /// every other length is a mod-quirk path.
+    /// Decodes one XLKR payload (8 bytes: keyword, then ref; 4 bytes: ref) and
+    /// appends it. Never throws: a bad payload costs one link, while a bad XTEL
+    /// would move a door. Other lengths are skipped; extra bytes are ignored.
     private static func appendLinkedReference(
         _ data: Data,
         to links: inout [LinkedReference]

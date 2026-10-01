@@ -1,19 +1,8 @@
-// The Gamebryo bone-palette composition, kept away from Metal so it can be
-// checked against hand-computed matrices without a device (issue #354).
-//
-// A skinned NIF authors its vertices in skin space and hands the engine two
-// halves of the bind pose: `rootParentToSkin`, which carries skin space back to
-// the skeleton root's parent, and one `skinToBone` per bone, which carries skin
-// space into that bone. A pose is written by putting the bone's *current*
-// transform between them:
-//
+// The Gamebryo bone-palette composition, kept away from Metal so tests can
+// check it without a device:
 //     palette[i] = rootParentToSkin * currentBone[i] * skinToBone[i]
-//
-// Feed it the bone's own bind transform and the three factors cancel, so the
-// palette comes out as the bind palette and the mesh does not move. That
-// cancellation is the property the unit test pins, because it is exactly what
-// fails when the current transform is composed in a convention the bind halves
-// were not authored in: the mesh tears rather than standing still.
+// With the bind transform as current bone the factors cancel. Details:
+// docs/formats/nif-skinning.md.
 
 import simd
 

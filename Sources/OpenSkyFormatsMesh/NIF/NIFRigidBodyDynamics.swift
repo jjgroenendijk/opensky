@@ -1,17 +1,10 @@
-// The inertial tail of a Skyrim rigid body: everything a dynamic simulation
-// needs that the collision query path ignores. Layers above this one decide
-// what to do with a motion system they do not support; the decoder reports
-// the raw byte alongside the named case so an unknown value survives.
-//
-// Reference: NifTools nif.xml (bhkRigidBodyCInfo2010, hkMotionType,
-// hkDeactivatorType, hkSolverDeactivation, hkQualityType, hkMatrix3).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-rigid-body.md.
+// The inertial tail of a Skyrim rigid body. Each enum keeps its raw byte, so
+// an unknown value survives. Layout: docs/formats/nif-rigid-body.md.
 
 import Foundation
 import simd
 
-/// nif.xml `hkMotionType`. Decides whether item 15.2 integrates a body at all.
+/// nif.xml `hkMotionType`. Decides whether physics integrates a body at all.
 nonisolated public enum NIFMotionSystem: UInt8, CaseIterable, Sendable {
     case invalid = 0
     case dynamic = 1
@@ -68,14 +61,9 @@ nonisolated public enum NIFSolverDeactivation: UInt8, CaseIterable, Sendable {
     case max = 5
 }
 
-/// The simulation-facing half of `bhkRigidBodyCInfo2010`.
-///
-/// Units are deliberately mixed and each field says which it is. Positions
-/// (`centerOfMass`) convert to engine units like every other Havok position in
-/// this format layer. Masses, inertia, damping, and the velocity ceilings stay
-/// in the Havok SI units the file stores, because the integrator in item 15.2
-/// picks its own working units and a half-converted body would be worse than
-/// an unconverted one.
+/// The simulation half of `bhkRigidBodyCInfo2010`. `centerOfMass` is in engine
+/// units; mass, inertia, damping, and velocity limits stay in Havok SI units,
+/// because the physics step picks its own units.
 nonisolated public struct NIFRigidBodyDynamics: Sendable {
     /// Kilograms. Zero means immovable even where the motion system is dynamic.
     public let mass: Float
@@ -126,7 +114,7 @@ nonisolated public struct NIFRigidBodyDynamics: Sendable {
         NIFCollisionQuality(rawValue: rawQualityType)
     }
 
-    /// A body item 15.2 should integrate: a known simulated motion system with
+    /// A body physics should integrate: a known simulated motion system with
     /// a positive finite mass. An unknown motion byte is not simulated, so a
     /// modded or future value degrades to static rather than to nonsense.
     public var isSimulated: Bool {

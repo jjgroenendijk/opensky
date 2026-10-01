@@ -1,19 +1,7 @@
-// `MovieClip` and the global objects the display layer owns (milestone 8.3.2
-// phase 2). Milestone 8.3.1's probe over the vanilla install ranked the missing
-// host APIs, and the head of that ranking is exactly this file's contents:
-// `Selection` (179 hits), `MovieClip` (168), `TextField` (25), `Stage` (7),
-// plus `addListener` (36).
-//
-// These are Flash and Scaleform GFx built-ins, not SWF file-format structures.
-// The SWF specification stops at the bytecode and defines none of them, so the
-// behavior here is reimplemented from public ActionScript 2 API documentation
-// and from what the vanilla bytecode does with them — a weaker source than a
-// spec, and recorded as such in docs/engine/as2-display-runtime.md.
-//
-// A method that needs the display tree reaches it through the runtime's host
-// (`AS2Runtime.host` is the `SWFRuntimeHost` that owns the movie runtime),
-// because the built-ins are installed while the movie runtime is still being
-// constructed.
+// `MovieClip` and the global objects the display layer owns. These are Flash
+// and Scaleform GFx built-ins that no spec defines, so they follow public API
+// docs and vanilla usage (docs/engine/as2-display-runtime.md). Methods reach
+// the tree through `AS2Runtime.host`, because the built-ins install first.
 
 import Foundation
 import simd

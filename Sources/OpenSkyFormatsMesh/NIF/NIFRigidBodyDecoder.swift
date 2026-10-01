@@ -1,32 +1,6 @@
-// bhkRigidBody / bhkRigidBodyT block layout for Skyrim SE streams, read whole
-// rather than skipped: the query path needs the filters and responses, and a
-// dynamic simulation needs the inertial tail behind them.
-//
-// Field order, in the order read below (nif.xml):
-//   bhkWorldObject   shape ref (4), HavokFilter (4), bhkWorldObjectCInfo (20)
-//   bhkEntity        bhkEntityCInfo: response (1), unused (1), delay (2)
-//   bhkRigidBodyCInfo2010
-//                    unused (4), HavokFilter (4), unused (4), unknown (4),
-//                    response (1), unused (1), delay (2),
-//                    translation (16), rotation (16),
-//                    linear velocity (16), angular velocity (16),
-//                    inertia tensor (48), center (16),
-//                    mass, linear damping, angular damping, time factor,
-//                    gravity factor, friction, rolling friction multiplier,
-//                    restitution, max linear velocity, max angular velocity,
-//                    penetration depth (4 each),
-//                    motion system, deactivator, solver deactivation,
-//                    quality, auto remove level, response modifier flags,
-//                    shape keys in contact point, force collided onto PPU
-//                    (1 each), unused (12)
-//   bhkRigidBody     constraint count (4), constraint refs (4 each),
-//                    body flags (2 for BS stream >= 76)
-//
-// Reference: NifTools nif.xml (bhkWorldObject, bhkEntity, bhkRigidBody,
-// bhkRigidBodyCInfo2010). The 550_660 and 2014 CInfo variants belong to
-// pre-Skyrim and Fallout 4 streams and are not read.
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-collision.md.
+// bhkRigidBody and bhkRigidBodyT for Skyrim SE streams, read whole: queries
+// need the filters and responses, simulation needs the inertial tail.
+// Field order: docs/formats/nif-collision.md and nif-rigid-body.md.
 
 import Foundation
 import OpenSkyFormatsCore

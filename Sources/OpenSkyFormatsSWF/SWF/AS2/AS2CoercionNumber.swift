@@ -1,11 +1,6 @@
-// Number formatting, string-literal validation, and the 32-bit integer
-// conversions the bitwise opcodes need (milestone 8.3.2). Split out of
-// `AS2Coercion.swift` so both stay inside the strict-lint size caps.
-//
-// Reference: ECMA-262 3rd edition, section 9.8.1 "ToString Applied to the
-// Number Type", section 9.3.1 "ToNumber Applied to the String Type", section
-// 9.5 "ToInt32: (Signed 32 Bit Integer)", and section 9.6 "ToUint32: (Unsigned
-// 32 Bit Integer)".
+// Number formatting, string-literal checks, and the 32-bit integer
+// conversions the bitwise opcodes need. Spec: ECMA-262 3rd ed. sections 9.3.1,
+// 9.5, 9.6, and 9.8.1.
 
 import Foundation
 

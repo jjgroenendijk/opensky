@@ -1,14 +1,7 @@
-// Flattens a movie's frame-1 display list into an ordered draw-command
-// stream: sprites expand recursively (their own frame 1), matrices and color
-// transforms concatenate down the chain, and clip layers (PlaceObject
-// clipDepth) become begin/end mask commands with a running active-clip count.
-//
-// Clip semantics (SWF spec v19, PlaceObject2 ClipDepth, p. 34): a placement
-// with a clip depth renders no color itself and masks every placement at
-// depths (depth, clipDepth]. Clip ranges may interleave, so the renderer uses
-// a counting stencil: each active mask increments the pixels it covers, and a
-// draw passes where the stencil equals the number of masks active at its
-// depth — exactly the intersection of every active clip.
+// Flattens frame 1 into ordered draw commands: sprites expand, transforms
+// concatenate, and clip layers become begin and end mask commands. Clip
+// ranges can interleave, so the renderer uses a counting stencil
+// (docs/rendering/swf-layer.md).
 
 import Foundation
 

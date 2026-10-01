@@ -1,12 +1,7 @@
-// NVNM payload decode. The byte layout, the citations and the skipped list
-// live in the header of Navmesh.swift; this file is the reader.
-//
-// Two rules shape the code. Every count is a uint32 read straight out of the
-// file, so it is checked against the bytes actually remaining before anything
-// is allocated — a corrupt count must throw, not ask for gigabytes. And every
-// index into the vertex or triangle array is range-checked here, because an
-// out-of-range index that survives decode becomes a crash in the pathing graph
-// (16.2) far from the record that caused it.
+// NVNM payload reader; layout and sources are in Navmesh.swift. Every count is
+// checked against the bytes left before allocating, and every local vertex or
+// triangle index is range-checked, so bad data throws here and not later in
+// the pathing graph.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -106,15 +101,9 @@ nonisolated public struct NavmeshGeometry: Sendable {
         public let rawType: UInt32
         /// The NAVM on the other side of the boundary.
         public let navmesh: FormID
-        /// Triangle index inside `navmesh` — the far side of the link, not a
-        /// triangle in this mesh. The census established that: validating it
-        /// against the local triangle array rejected more than half the
-        /// vanilla navmeshes in the Whiterun area, always on this field, with
-        /// values far past the local count. xEdit agrees by omission — it
-        /// gives the door link's triangle a `wbTriangleLinksTo` callback and
-        /// this one none. Nothing local can range-check it, so it is not
-        /// checked here; the pathing graph resolves it against the navmesh it
-        /// names (16.2, issue #200).
+        /// Triangle index inside `navmesh`, not in this mesh, so it cannot be
+        /// range-checked here; the pathing graph checks it.
+        /// Evidence: docs/formats/navmesh.md.
         public let triangle: Int16
     }
 

@@ -1,28 +1,7 @@
-// The effect list shared by every "magic item" record — ALCH and INGR here,
-// with ENCH/SPEL/SCRL using the same shape when a later milestone needs them.
-// An effect is a run of subrecords, not a struct: EFID names the MGEF, the
-// EFIT that follows carries its numbers, and any CTDA fields after that are
-// conditions on that one effect. The run repeats once per effect.
-//
-//   EFID  4 bytes   FormID -> MGEF (base effect)
-//   EFIT 12 bytes   float32 magnitude, uint32 area, uint32 duration
-//   CTDA 32 bytes   condition on the effect (see Condition.swift)
-//
-// `MagicEffectStore` resolves the EFID relative to the plugin carrying this
-// list. The auto-calc cost formula UESP documents alongside EFIT remains later
-// magic work.
-//
-// Decode policy: an EFIT without a preceding EFID has nothing to attach to and
-// is dropped; an EFID whose EFIT never arrives still yields an entry with zero
-// magnitude/area/duration, because the MGEF link is the part the inventory
-// runtime needs and vanilla always writes the pair. Neither case throws.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/ALCH" and ".../INGR" Effect tables
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ALCH
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: `wbEFID` (line 3832),
-//   `wbEFIT` (3834), `wbEffect` (4030).
-// Layout documented in docs/formats/item-records.md.
+// The effect list of magic item records: a repeated EFID, EFIT, CTDA run. An
+// EFIT without an EFID is dropped; an EFID without an EFIT gets zero values,
+// because the MGEF link is what matters. Neither case throws.
+// Layout and sources: docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -41,11 +20,8 @@ nonisolated public struct MagicItemEffect: Equatable, Sendable {
     /// overrides behave exactly as they do everywhere else.
     public let conditions: ConditionList
 
-    /// The same entry with its magnitude multiplied, which is what a
-    /// resistance-scaled application hands the effect runtime (issue #471).
-    ///
-    /// A copy rather than a mutation: the decoded record is what the load order
-    /// says, and a scaled entry is one application of it.
+    /// A copy of this entry with its magnitude multiplied, for one
+    /// resistance-scaled application. The decoded record stays unchanged.
     public func scalingMagnitude(by multiplier: Float) -> MagicItemEffect {
         guard multiplier.isFinite else { return self }
         return MagicItemEffect(

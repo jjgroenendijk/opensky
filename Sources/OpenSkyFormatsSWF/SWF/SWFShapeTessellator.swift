@@ -1,18 +1,7 @@
-// CPU-side tessellation of decoded SWF shapes into triangle lists, cached per
-// character id for the display-list renderer (milestone 8.2.4). GPU upload is
-// out of scope here — the mesh is plain twip-space positions grouped by fill.
-//
-// Method: quadratic Bezier edges are flattened deterministically, then each
-// fill style's boundary segments are swept in horizontal bands (a trapezoid
-// decomposition). FillStyle0 marks the fill left of an edge's travel
-// direction and FillStyle1 the right (spec v19, "FillStyle0 and FillStyle1",
-// p. 128), so fill0 edges enter the sweep reversed and every boundary is
-// consistently oriented. The default SWF fill rule is even-odd; DefineShape4
-// can request the winding (nonzero) rule via UsesFillWindingRule (spec
-// p. 133). An edge with the same fill on both sides contributes both
-// directions, which cancels under either rule — interior edges do not split
-// the fill. Line styles are decoded but not stroke-tessellated yet (deferral
-// documented in docs/formats/swf-shapes.md).
+// CPU tessellation of decoded shapes into twip-space triangles, cached per
+// character. Curves are flattened, then each fill's edges are swept in bands.
+// FillStyle0 edges enter reversed, so every boundary has one orientation.
+// Fill rules and line deferral: docs/formats/swf-shapes.md.
 
 import Foundation
 import simd

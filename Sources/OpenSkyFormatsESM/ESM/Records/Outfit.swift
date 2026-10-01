@@ -1,10 +1,5 @@
-// OTFT record decoded into engine types: an outfit — the set of items an actor
-// wears by default (DOFT on NPC_). INAM is a single subrecord holding a packed
-// array of uint32 FormIDs; each entry is an ARMO piece or an LVLI leveled item
-// list. Item count is the field size / 4.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/OTFT"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/OTFT
+// OTFT outfit: the items an actor wears by default (NPC_ DOFT). INAM is a
+// packed array of ARMO or LVLI FormIDs. Layout: docs/formats/actors.md.
 
 import Foundation
 import OpenSkyFormatsCore

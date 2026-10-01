@@ -1,17 +1,7 @@
-// `hkbClipGenerator` and its trigger array (todo 14.2): the leaf of the node
-// tree, and the only class that names an animation. The census counts 4,975 of
-// them across the 35 vanilla player behavior files, so almost every path down
-// the graph ends at one of these.
-//
-// `m_animationName` is the clip's name as the character file's
-// `m_animationNames` list spells it; `m_animationBindingIndex` is that list's
-// index. Item 14.5 turns either into a loaded `hkaAnimationBinding`; here they
-// are decoded and no more.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbClipGenerator 0x333B85B9, hkbClipTriggerArray 0x59C23A0F,
-// hkbClipTrigger 0x7EB45CEA). No Havok SDK or Bethesda code consulted
-// (AGENTS.md Legal & IP). Byte map: docs/formats/hkx-behavior-nodes.md.
+// `hkbClipGenerator` and its trigger array: the leaf of the node tree and the
+// only class that names an animation. `m_animationName` is spelled as in the
+// character file's `m_animationNames`; `m_animationBindingIndex` indexes it.
+// Byte map: docs/formats/hkx-behavior-nodes.md.
 
 import Foundation
 

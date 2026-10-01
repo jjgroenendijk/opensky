@@ -1,17 +1,7 @@
-// ActionScript 2 primitive coercions (milestone 8.3.2). Everything here works
-// on values that are already primitive; `ToPrimitive` needs to call `valueOf`
-// and `toString`, so it lives on the interpreter (`AS2InterpreterCoercion`)
-// and hands the result back down to these routines.
-//
-// Two rules depend on the movie's SWF version, which is why this is a value
-// with a `swfVersion` rather than a namespace of static functions:
-// string-to-boolean and the string form of `undefined` both changed in SWF 7.
-//
-// Reference: ECMA-262 3rd edition, section 9 "Type Conversion and Testing" —
-// 9.2 "ToBoolean", 9.3 "ToNumber" (9.3.1 for the string grammar), 9.5
-// "ToInt32", 9.6 "ToUint32", 9.8 "ToString" (9.8.1 for numbers), and section
-// 11.9.3 "The Abstract Equality Comparison Algorithm" plus 11.8.5 "The
-// Abstract Relational Comparison Algorithm".
+// ActionScript 2 coercions on primitive values. `ToPrimitive` calls methods,
+// so it lives in `AS2InterpreterCoercion`. Two rules changed in SWF 7, so this
+// type carries `swfVersion`. Spec: ECMA-262 3rd ed. sections 9, 11.8.5, and
+// 11.9.3. See docs/engine/as2-runtime.md.
 
 import Foundation
 

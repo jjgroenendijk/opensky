@@ -1,19 +1,6 @@
-// NiParticleSystem (+ BSStripParticleSystem, identical layout) block parser.
-// Inheritance NiAVObject -> NiGeometry -> NiParticles -> NiParticleSystem. For
-// Bethesda 20.2 NIFs NiParticles switched to a BSGeometry-style layout, so
-// nif.xml doubles up the NiGeometry rows by stream: BS stream 100 (SSE) carries
-// a bounding sphere + skin ref + inline BSVertexDesc and takes its NiPSysData
-// ref from NiParticleSystem.Data, while stream 83 (Skyrim LE) keeps the classic
-// NiGeometry Data/Skin-Instance/Material-Data run and has no vertex desc. Skin,
-// material data, and the LOD Far/Near cull shorts are read past but not kept —
-// static decode needs only the data ref, world-space flag, shader/alpha refs,
-// and the modifier ref list. Controllers are skipped like NiObjectNET does.
-//
-// Reference: NifTools nif.xml (NiGeometry, NiParticles, NiParticleSystem,
-// BSStripParticleSystem, NiBound, BSVertexDesc, MaterialData; vercond tokens
-// BS_GTE_SSE, NI_BS_LT_SSE, BS_GT_FO3, BS_GTE_SKY).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-particles.md.
+// NiParticleSystem and BSStripParticleSystem (same layout). SSE (stream 100)
+// and LE (stream 83) differ in the NiGeometry part: SSE has a bound, skin ref,
+// and vertex desc. Layout: docs/formats/nif-particles.md.
 
 import Foundation
 import OpenSkyFormatsCore

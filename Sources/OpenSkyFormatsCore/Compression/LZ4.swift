@@ -1,10 +1,6 @@
-// Clean-room LZ4 frame parser for BSA v105 payloads. Independent raw blocks
-// use Apple's Compression framework; linked blocks retain the local decoder
-// because their matches can reach into prior output.
-//
-// References:
-//   https://github.com/lz4/lz4/blob/dev/doc/lz4_Block_format.md
-//   https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md
+// LZ4 frame parser for BSA v105 payloads. Independent blocks use Apple's
+// Compression framework. Linked blocks use the local decoder, because their
+// matches can reach into earlier output. Sources: docs/formats/bsa.md.
 
 import Compression
 import Foundation

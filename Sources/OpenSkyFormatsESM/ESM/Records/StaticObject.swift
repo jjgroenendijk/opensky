@@ -1,11 +1,5 @@
-// STAT record decoded into engine types: the model path a placed reference
-// resolves to. MODL is a windows path relative to Data/ ("meshes\\..."),
-// looked up through the VFS. MODT (texture hashes), DNAM (max angle +
-// material) and LOD fields are skipped until rendering needs them.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/STAT"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/STAT
-// Layout documented in docs/formats/world-records.md.
+// STAT static: the model path a placed reference resolves to, relative to
+// Data/ and looked up through the VFS. Layout: docs/formats/world-records.md.
 
 import Foundation
 import OpenSkyFormatsCore

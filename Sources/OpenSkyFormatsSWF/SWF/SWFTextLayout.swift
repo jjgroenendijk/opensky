@@ -1,15 +1,7 @@
-// Twip-space glyph layout for the display-list renderer: DefineText records
-// place glyphs from their explicit pen offsets and advances; DefineEditText
-// initial content lays out line by line from the resolved font's metrics
-// (advance table, kerning, ascent/descent) with optional word wrap and
-// paragraph alignment. Output is viewport-independent — the renderer scales
-// placements by the concatenated transform — so wrap and alignment are
-// deterministic per movie.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 10 —
-// TEXTRECORD/GLYPHENTRY (pp. 174-175), DefineEditText layout fields (p. 177),
-// DefineFont2/3 layout metrics (pp. 178-180). Glyph advances and kerning are
-// in glyph units (EM = `unitsPerEM`), scaled by `textHeightTwips / unitsPerEM`.
+// Twip-space glyph layout. DefineText uses its explicit pen offsets; edit text
+// lays out from font metrics, with optional wrap and alignment. The output does
+// not depend on the viewport. Advances are in glyph units, scaled by
+// `textHeightTwips / unitsPerEM`. See docs/formats/swf-text.md.
 
 import Foundation
 
@@ -82,13 +74,9 @@ nonisolated public enum SWFTextLayout: Sendable {
         return SWFTextLayoutResult(runs: runs, missingGlyphs: 0)
     }
 
-    /// Lays out an edit text's content with the resolved font. `content`
-    /// overrides the character's `InitialText`, which is how a field written by
-    /// ActionScript (`field.text = "..."`) or bound to a variable re-lays out
-    /// without a second `SWFEditText` being fabricated; nil keeps the authored
-    /// text. Lines split on newlines; word wrap applies when the field is
-    /// flagged WordWrap; alignment comes from the layout block (0 left, 1
-    /// right, 2 center; justify falls back to left).
+    /// Lays out an edit text with the resolved font. A non-nil `content`
+    /// replaces `InitialText`, for text set by ActionScript. Alignment comes
+    /// from the layout block; justify falls back to left.
     public static func editText(
         _ text: SWFEditText,
         font: SWFFontDefinition,

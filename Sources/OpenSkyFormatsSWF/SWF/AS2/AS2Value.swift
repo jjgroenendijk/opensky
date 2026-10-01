@@ -1,15 +1,6 @@
-// ActionScript 2 value model (milestone 8.3.2): the six value types the AS2
-// interpreter manipulates. Objects are reference types (`AS2Object`); every
-// other case is a primitive carried by value, matching ECMAScript.
-//
-// The `AS2` prefix rather than `SWF` marks the boundary: everything named
-// `SWF*` in this directory tree parses bytes off disk, while `AS2*` executes
-// the bytecode those parsers framed. The two never share a type.
-//
-// Reference: ECMA-262 3rd edition, section 8 "Types" — Undefined (8.1), Null
-// (8.2), Boolean (8.3), Number (8.5), String (8.4), and Object (8.6).
-// ActionScript 2 adds no value type of its own: `MovieClip`, `TextField` and
-// the rest are ordinary objects.
+// ActionScript 2 value: the six ECMAScript types. Objects are `AS2Object`
+// references; the rest are primitives. `SWF*` types parse bytes and `AS2*`
+// types run bytecode; they share no type. Spec: ECMA-262 3rd ed. section 8.
 
 import Foundation
 

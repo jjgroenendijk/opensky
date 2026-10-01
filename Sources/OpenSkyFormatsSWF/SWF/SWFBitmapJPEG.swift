@@ -1,17 +1,6 @@
-// JPEG-family bitmap tags: DefineBits (6) + JPEGTables (8), DefineBitsJPEG2
-// (21), DefineBitsJPEG3 (35), DefineBitsJPEG4 (90). Payload decoding goes
-// through ImageIO/CoreGraphics (Apple frameworks — no third-party codec).
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 8
-// "Bitmaps", pp. 137-139 and 143. Spec quirks handled here:
-// - Before SWF 8, JPEG data could carry an erroneous 0xFF 0xD9 0xFF 0xD8
-//   header before the real SOI marker; it is stripped.
-// - DefineBits holds only the image scan; the movie-wide JPEGTables tag holds
-//   the encoding tables. Both begin with SOI and end with EOI, so the full
-//   stream is tables-without-EOI followed by image-without-SOI.
-// - From SWF 8 on, DefineBitsJPEG2/3/4 ImageData may actually be PNG
-//   (89 50 4E 47 0D 0A 1A 0A) or GIF89a (47 49 46 38 39 61), detected by
-//   signature; the JPEG3/4 alpha plane applies to JPEG payloads only.
+// JPEG-family bitmap tags (6 + 8, 21, 35, 90), decoded with ImageIO. The spec
+// quirks (old bad prefix, split JPEGTables, PNG or GIF payloads from SWF 8)
+// are in docs/formats/swf-shapes.md.
 
 import CoreGraphics
 import Foundation

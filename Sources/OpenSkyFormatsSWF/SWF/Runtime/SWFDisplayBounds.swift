@@ -1,11 +1,6 @@
-// Axis-aligned bounds in twips for the runtime display list. `_width`,
-// `_height`, and `hitTest` all need the box a node covers in its parent's
-// space, which the immutable scene path never had to compute.
-//
-// Flash reports `_width`/`_height` as the axis-aligned extent of the
-// transformed bounding box, not as the untransformed box scaled — a rotated
-// clip is wider than its own artwork. That is what `transformed(by:)` does
-// here, by mapping the four corners.
+// Axis-aligned bounds in twips for the runtime display list. Flash reports
+// `_width` and `_height` as the extent of the transformed box, so
+// `transformed(by:)` maps all four corners.
 
 import Foundation
 import simd

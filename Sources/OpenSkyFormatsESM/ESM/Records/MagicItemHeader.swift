@@ -1,18 +1,6 @@
-// The identity run SPEL and SCRL open with, decoded once.
-//
-// Both records start with the same subrecords the carryable families use —
-// EDID, OBND, FULL, KSIZ/KWDA, and on SCRL also MODL, YNAM and ZNAM — followed
-// by three links and texts that only the magic-item family carries: MDOB, ETYP
-// and DESC. `InventoryItemFields` already owns the first group, so this
-// accumulator composes it and adds the second.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/SPEL" and ".../SCRL" field tables
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: `wbRecord(SPEL, ...)` line
-//   9980 opens `wbEDID, wbObjectBounds, wbFULL, wbKeywords, wbMDOB, wbETYP,
-//   wbDESCReq`; `wbRecord(SCRL, ...)` line 10025 adds `wbGenericModel`,
-//   `wbYNAM` and `wbZNAM`.
-// Layout documented in docs/formats/magic-records.md.
+// The identity fields SPEL and SCRL start with, decoded once. Composes
+// `InventoryItemFields` and adds MDOB, ETYP, and DESC.
+// Layout and sources: docs/formats/magic-records.md.
 
 import Foundation
 import OpenSkyFormatsCore

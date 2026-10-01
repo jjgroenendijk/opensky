@@ -1,18 +1,7 @@
-// The stock Havok modifier classes the vanilla player graph uses (todo 14.2),
-// part one: the modifiers that wrap or list other modifiers, evaluate
-// expressions, raise events, and damp values. A modifier is a node that runs
-// after a generator and edits the pose, the graph variables, or the event
-// queue; every one of them derives `hkbModifier` -> `hkbNode`, so
-// `m_enable` at 0x48 is the last inherited member and each class's own start
-// at 0x50.
-//
-// Decode only. Which modifier does what to a pose is item 14.3 and 14.4.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbModifierList 0xA4180CA1, hkbEventDrivenModifier
-// 0x7ED3F44E, hkbEvaluateExpressionModifier 0xF900F6BE,
-// hkbEventsFromRangeModifier 0xBC561B6E, hkbTimerModifier 0x338B4879,
-// hkbDampingModifier 0x9A040F03). Byte map: docs/formats/hkx-behavior-modifiers.md.
+// Stock Havok modifiers that wrap other modifiers, evaluate expressions, raise
+// events, or damp values. All derive `hkbModifier` -> `hkbNode`, so `m_enable`
+// at 0x48 is the last inherited member and each class's own members start at
+// 0x50. Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

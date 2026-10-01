@@ -1,11 +1,6 @@
-// NIF container walk: slices every block's payload by the header's recorded
-// size and reads the footer roots. No block content is decoded here — that
-// keeps unknown/unneeded block types skippable by construction; typed
-// decoders (2.3 scene graph, 2.4 materials) consume `Block.data` later.
-//
-// Reference: NifTools nif.xml (struct Footer; header block-size array).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif.md.
+// NIF container walk: slices each block by the header's size array and reads
+// the footer roots. It decodes no block, so unknown block types can always be
+// skipped. Layout: docs/formats/nif.md.
 
 import Foundation
 import OpenSkyFormatsCore

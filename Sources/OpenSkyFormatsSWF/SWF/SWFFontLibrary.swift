@@ -1,11 +1,6 @@
-// Resolves a fontconfig alias to a decoded font. A fontlib movie (fonts_en.swf,
-// gfxfontlib.swf, ...) is registered by decoding its DefineFont2/3 tags and its
-// ExportAssets (56) name table; fonts are then found by name, and an alias is
-// resolved through the fontconfig `map` directive that names a font.
-//
-// GFx font naming is observed, not specified: a `map` font name matches either
-// an ExportAssets export name or a DefineFont2/3 internal font name, tried in
-// that order and then case-insensitively. Documented in docs/formats/swf-text.md.
+// Resolves a fontconfig alias to a decoded font from the fontlib movies. A
+// `map` font name matches an export name, then an internal font name, then
+// both without case. Observed GFx behavior: docs/formats/swf-text.md.
 
 import Foundation
 import OpenSkyFormatsCore

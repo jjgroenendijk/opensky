@@ -1,22 +1,6 @@
-// BSEffectShaderProperty: the material of a Skyrim SE effect shape — glow,
-// additive/particle, and other non-lit effects. Holds shader flags, a UV
-// transform, an inline source texture path, angular falloff, a base
-// (emissive) color + multiplier, and a greyscale palette texture.
-//
-// Skyrim layout only (BS stream 83/100). Unlike BSLightingShaderProperty
-// there is no shader-type uint32 before the NiObjectNET name (nif.xml
-// NiObjectNET "Shader Type" is onlyT=BSLightingShaderProperty), so the block
-// starts directly with the name. Fields gated on FO4+/F76/Starfield in
-// nif.xml (SF1/SF2 CRC arrays, refraction power, env/normal/mask textures,
-// luminance) do not appear at BS stream 83/100 and are absent here; FO4+ is
-// rejected via the stream guard. The three bytes after texture clamp mode
-// (lighting influence, env-map min LOD, unused) are read past but not kept —
-// no consumer yet.
-//
-// Reference: NifTools nif.xml (BSEffectShaderProperty, BSShaderProperty,
-// NiObjectNET, SkyrimShaderPropertyFlags1/2, SizedString, TexCoord, Color4).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-materials.md.
+// BSEffectShaderProperty: the material of glow, additive, and other unlit
+// effect shapes. Skyrim streams only; unlike BSLightingShaderProperty, no
+// shader type comes before the name. Layout: docs/formats/nif-materials.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,26 +1,7 @@
-// Event dispatch for the runtime display list (milestone 8.3.2 phase 3): the
-// three ways a running movie learns that something happened.
-//
-//   1. A handler *member* on a display object — `clip.onPress`, `clip.onRelease`,
-//      `clip.onEnterFrame`. This is the mechanism CLIK actually uses: a
-//      `gfx.controls.Button` assigns `onPress = handleMousePress` in `configUI`,
-//      so the engine only has to find the member and call it.
-//   2. A CLIPACTIONS handler attached to a placement. Parsed since milestone
-//      8.3.1 and dispatched here for the first time.
-//   3. A broadcaster listener list — the `addListener`/`removeListener`
-//      convention `Key`, `Mouse`, `Stage`, and `Selection` share.
-//
-// The clip-event measurement decides how much weight each carries. Across the
-// 53 vanilla movies only `construct` occurs meaningfully (122 handlers in 24
-// movies); `load` and `enterFrame` occur once each, and every mouse and key
-// clip event is zero. So interaction arrives through (1) and (3), never through
-// (2), and (2) exists for lifecycle completeness.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
-// display list" — the CLIPACTIONS and CLIPACTIONRECORD tables under
-// "PlaceObject2" and the "ClipEventFlags" table, which name the nineteen events
-// and state that `initialize` and `construct` fire when the clip is created,
-// before `load`.
+// Event dispatch: handler members (`clip.onPress`, used by CLIK), CLIPACTIONS
+// handlers, and broadcaster listeners (`Key`, `Mouse`, `Stage`, `Selection`).
+// Vanilla movies use CLIPACTIONS almost only for `construct`.
+// Spec: SWF v19 chapter 3, PlaceObject2. See docs/formats/swf-actions.md.
 
 import Foundation
 

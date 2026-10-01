@@ -1,33 +1,7 @@
-// SPIT, the 36-byte casting header SPEL and SCRL share, plus its flag and
-// spell-type vocabulary.
-//
-//   0x00 uint32  base cost — the authored magicka cost. Meaningful only when
-//                the manual-cost flag is set; otherwise the game derives the
-//                cost from the effects (see SpellCost.swift).
-//   0x04 uint32  flags
-//   0x08 uint32  spell type
-//   0x0C float32 charge time
-//   0x10 uint32  casting type
-//   0x14 uint32  delivery
-//   0x18 float32 cast duration — minimum duration of a concentration spell
-//   0x1C float32 range — used by the target-actor and target-location deliveries
-//   0x20 FormID  PERK that halves the cost
-//
-// Casting type and delivery reuse the MGEF vocabulary because xEdit types both
-// with the same `wbCastEnum` and `wbDeliveryEnum` definitions it uses for MGEF.
-// Scrolls are the one exception: xEdit gives SCRL its own casting enum whose
-// only member is 3, "Scroll", which is why `MagicEffectCastingType` carries a
-// `.scroll` case that no MGEF ever uses.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/SPEL"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SPEL
-//   UESP "Skyrim Mod:Mod File Format/SCRL"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SCRL
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(SPEL, 'Spell', ...)`
-//     line 9980 and `wbRecord(SCRL, 'Scroll', ...)` line 10025 — the same
-//     ordered SPIT struct in both.
-// Layout documented in docs/formats/magic-records.md.
+// SPIT, the 36-byte casting header of SPEL and SCRL, with its flag and type
+// vocabulary. Casting type and delivery reuse the MGEF enums; SCRL adds its
+// own casting value 3, which is why `MagicEffectCastingType` has `.scroll`.
+// Layout and sources: docs/formats/magic-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -116,7 +90,7 @@ nonisolated public struct SpellItemData: Equatable, Sendable {
     /// Minimum duration of a concentration spell.
     public let castDuration: Float
     public let range: Float
-    /// PERK that halves the cost. Decoded and left unresolved: perks are M20.
+    /// PERK that halves the cost. Decoded and left unresolved here.
     public let halfCostPerk: FormID?
 
     /// True when the cost has to be derived from the effect list.

@@ -1,13 +1,6 @@
-// Call and construction opcodes (milestone 8.3.2).
-//
-// All four call opcodes share the same operand shape: the callee (a name, or a
-// name plus an object), then the argument count, then that many arguments with
-// the first argument on top of the stack.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionCallFunction" (p. 82), "ActionCallMethod" and
-// "ActionNewMethod" (p. 88), "ActionNewObject" (p. 86), and "ActionReturn"
-// (p. 90).
+// Call and construction opcodes. All four call opcodes pop the callee, then
+// the argument count, then the arguments, first argument on top.
+// Spec: SWF v19 chapter 5. See docs/formats/swf-actions.md.
 
 import Foundation
 

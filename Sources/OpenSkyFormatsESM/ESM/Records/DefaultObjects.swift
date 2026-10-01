@@ -1,13 +1,6 @@
-// DOBJ is a packed array of 8-byte (four-character use tag, FormID) entries.
-// Empty array slots carry a zero tag and are not declarations. The semantic
-// tag table lives in DefaultObjectTagMeanings.swift.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/DOBJ"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOBJ
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbDOBJObjectsTES5` and
-//     `wbRecord(DOBJ, ...)`, lines 6560-6976.
-// Layout documented in docs/formats/records.md.
+// DOBJ: a packed array of 8-byte (use tag, FormID) entries. A zero tag is an
+// empty slot. Tag meanings: DefaultObjectTagMeanings.swift.
+// Layout and sources: docs/formats/records.md.
 
 import Foundation
 import OpenSkyFormatsCore

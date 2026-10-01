@@ -1,10 +1,6 @@
-// Renderer-facing movie package: a decoded movie plus the fonts resolved from
-// outside it. Vanilla movies define placeholder fonts named after fontconfig
-// aliases ("$EverywhereFont", ...) with zero glyphs; the real outlines live in
-// the fontlib movies (fonts_en.swf, ...), so an edit text renders through the
-// external font its placeholder name (or its FontClass) resolves to.
-// Resolution through fontconfig is observed GFx behavior — see
-// docs/formats/swf-text.md "fontconfig.txt".
+// A decoded movie plus the fonts resolved from outside it. Vanilla movies hold
+// empty placeholder fonts named after fontconfig aliases; the real outlines are
+// in the fontlib movies. See docs/formats/swf-text.md "fontconfig.txt".
 
 import Foundation
 

@@ -1,17 +1,6 @@
-// The condition and expression classes (todo 14.2). A state-machine transition
-// may name an `hkbCondition`; the vanilla player graph uses two,
-// `hkbExpressionCondition` and `hkbStringCondition`, both of which carry their
-// test as authored text rather than as compiled bytecode — the compiled form is
-// a `SERIALIZE_IGNORED` member Havok rebuilds at load.
-//
-// That text is the graph's little expression language ("Speed > 0.1",
-// "iState == 3"). Parsing and evaluating it is item 14.3; this decodes the
-// string and the variable and event indices it is assigned to.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbExpressionCondition 0x1C3C1045, hkbStringCondition
-// 0x5AB50487, hkbExpressionDataArray 0x4B9EE1A2, hkbEventRangeDataArray
-// 0x330A56EE). Byte map: docs/formats/hkx-behavior-modifiers.md.
+// Condition and expression classes. Conditions are stored as authored text
+// ("Speed > 0.1"); the compiled form is a `SERIALIZE_IGNORED` member that Havok
+// rebuilds at load. Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

@@ -1,23 +1,6 @@
-// `.fuz` container framing for Skyrim SE voice lines: the `FUZE` header, the
-// optional `.lip` lip-sync blob, and the xWMA audio payload that follows it.
-// This type frames and validates only — it never decodes audio and never looks
-// inside the lip blob. The audio payload is a complete RIFF/XWMA stream, so
-// callers hand `audioData` straight to `XWMFile`; `lipData` is handed on
-// untouched for the lip-sync work in item 17.7.
-//
-// References:
-//   xEdit dev-4.1.6 Core/wbDataFormatMisc.pas, `dfFUZ` (read as documentation,
-//   not transcribed):
-//     https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDataFormatMisc.pas
-//     dfStruct('FUZ', [ dfChars('Magic', 4, 'FUZE'), dfInteger('Version', dtU32,
-//     '1'), dfInteger('LIP Size', dtU32), dfBytes('LIP Data', <LIP Size>),
-//     dfBytes('XWM Data', 0) ])
-//   CreationKit wiki, "How to generate voice files by batch" — `.fuz` is the
-//   container the shipped tools build by stitching one `.xwm` and one `.lip`
-//   together:
-//     https://ck.uesp.net/wiki/How_to_generate_voice_files_by_batch
-// Confirmed against the install's own bytes; layout and the sweep evidence are
-// documented in docs/formats/fuz.md.
+// `.fuz` voice file framing: the `FUZE` header, the optional `.lip` blob, and
+// the xWMA payload. It only frames: `audioData` goes to `XWMFile`, and
+// `lipData` is passed on unread. Layout and sources: docs/formats/fuz.md.
 
 import Foundation
 import OpenSkyFormatsCore

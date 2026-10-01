@@ -1,17 +1,6 @@
-// ActionScript 1/2 opcode-code -> name table for the SWF 3-7 action model, the
-// action-stream counterpart of `SWFTagName`. Used to report a known/unknown
-// opcode tally when sweeping the game's Interface .swf files, and to name
-// records in diagnostics.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — the SWF 3 / SWF 4 / SWF 5 / SWF 6 / SWF 7 action-model sections
-// (pp. 63-118). Every code below is the `ActionCode` of an ACTIONRECORDHEADER
-// named there, plus code 0 (the `ActionEndFlag` that terminates a stream).
-//
-// Scaleform GFx, the runtime Skyrim's UI actually targets, executes this same
-// AS2 bytecode; its extensions are host objects and methods reached through
-// ActionGetMember/ActionCallMethod, not new opcodes. So an unknown opcode here
-// means a malformed or non-Adobe stream, not a GFx feature.
+// Action code to name table for the SWF 3-7 action model. GFx adds host
+// objects, not opcodes, so an unknown code means a malformed stream.
+// Spec: SWF v19 chapter 5.
 
 import Foundation
 
