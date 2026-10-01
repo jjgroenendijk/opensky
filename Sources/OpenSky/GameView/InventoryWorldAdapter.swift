@@ -87,7 +87,7 @@ extension InventoryWorldAdapter: InventoryWorld {
     }
 
     func theftBounty(of item: FormID, from reference: ReferenceKey) -> Int32 {
-        game.crime.reporter?.theftBounty(of: item, count: 1, from: reference) ?? 0
+        game.crime.theftBounty(of: item, from: reference)
     }
 
     func refreshWornEnchantments(on holder: InventoryHolder) {
@@ -105,10 +105,7 @@ extension InventoryWorldAdapter: InventoryWorld {
 
 extension InventoryWorldAdapter: VendorWorld {
     func factionMemberships(of actor: ReferenceKey) -> ActorFactionState? {
-        if let holder = game.actorValueHolder(for: actor) {
-            game.seedFactions(of: holder)
-        }
-        return game.factions.runtime?.state(of: actor)
+        game.factions.memberships(of: actor)
     }
 
     func residentOwner(of key: ReferenceKey) -> InventoryOwner? {

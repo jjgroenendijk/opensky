@@ -6,7 +6,9 @@
 import AppKit
 import OpenSkyActorsInterface
 import OpenSkyCombat
+import OpenSkyCrime
 import OpenSkyDiagnostics
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
@@ -40,10 +42,10 @@ extension GameViewController {
             self?.perception.runtime?.advance(by: delta)
             // After the pass, so a trespass noticed on arrival is judged
             // against detection state this frame produced (issue #504).
-            self?.advanceCrimeTrespass()
+            self?.crime.advanceTrespass()
             // After the trespass, so a bounty charged this frame is one the
             // guards see this frame (issue #505).
-            self?.advanceGuardResponse()
+            self?.crime.advanceGuardResponse()
         }
         renderer.worldOverlaySources
             .register(identifier: "detection") { [weak self] context, list in
@@ -63,7 +65,7 @@ extension GameViewController: PerceptionWorld {
         return combatActors().compactMap { actor in
             guard !actor.isDead else { return nil }
             guard
-                combatHostility(of: actor.key) == .hostile
+                factions.hostility(of: actor.key) == .hostile
                 || combat.loop?.phase(of: actor.key)?.isEngaged == true
                 || packaged.contains(actor.key)
             else { return nil }

@@ -4,6 +4,7 @@
 // renderer's world-simulation hook.
 
 import OpenSkyCombat
+import OpenSkyCrime
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyGameData
@@ -197,7 +198,7 @@ extension GameViewController {
         // reached through a getter rather than captured — the same reason every
         // closure above is one.
         bridge.crimeReporter = { [weak self] in self?.crime.reporter }
-        bridge.arrestSession = { [weak self] in self }
+        bridge.arrestSession = { [weak self] in self?.crime }
         bridge.showBarterMenu = { [weak self] actor in
             guard let self, inventory.vendors != nil else { return nil }
             let text = containerMenu.openBarter(with: actor)
@@ -205,6 +206,6 @@ extension GameViewController {
         }
         // `wireFactions` runs after this step too, for the same
         // reason, so its five collaborators are getters as well.
-        wireFactionNatives(bridge: bridge)
+        factionWorld.wireNatives(bridge: bridge)
     }
 }

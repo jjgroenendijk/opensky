@@ -504,7 +504,8 @@ targets += feature(
     tests: [
         "FormatsESMTesting", "OpenSkyActorsInterface", "OpenSkyCrimeFixtures",
         "OpenSkyCrimeInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsESM",
-        "OpenSkyGameData", "OpenSkyWorldState"
+        "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyWorldInterface",
+        "OpenSkyWorldState"
     ]
 )
 targets += feature(

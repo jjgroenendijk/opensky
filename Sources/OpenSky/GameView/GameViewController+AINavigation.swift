@@ -1,24 +1,12 @@
-// `AINavigationControlProviding` conformance for the M16 gate panel (issue
-// #203, roadmap item 16.8): the actor selection every section of
-// `World > AI & Navigation` shares, and the mover and package state that answer
-// for it.
-//
-// Nothing here invents an accounting. The actor list is the same
-// `combatActors()` observation the fight steps against, so a name and a distance
-// read the same in both panels; the mover state is 16.4's own readout; the
-// package state is 16.5's own readout; the crosshair point is the same static
-// raycast the HUD target uses.
-//
-// The one deliberate difference from the HUD target: this ray is not gated on a
-// player-controlled camera and reaches much further. Picking a point for an NPC
-// to walk to is an inspection, not a use key — a developer flying over Whiterun
-// to send a guard across the market is exactly the session this destination is
-// for, and 192 units is the arm's length a use key needs, not the distance a
-// person aims across a city.
+// The `World > AI & Navigation` panel: one actor selection for every section.
+// The actor list is the same `combatActors()` the fight uses, so both panels
+// agree. The move-to-point ray is longer than the HUD's use-key ray and works
+// in fly mode: sending an NPC across a city is an inspection, not a use key.
 
 import AppKit
 import OpenSkyActorsInterface
 import OpenSkyCombat
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyRendering
 import OpenSkyWorld
@@ -35,14 +23,8 @@ struct AINavigationBridgeState {
     /// when the chosen actor stops being resident.
     var selectedActor: ReferenceKey?
     var lastActionText = "Select an actor, then move it, or watch its schedule."
-    /// The last crosshair pick, keyed by the camera pose it was taken from.
-    ///
-    /// The pick is a raycast whose bounds span the whole 4,096-unit ray, which
-    /// is a far wider broad-phase query than the HUD's arm's-length one, and
-    /// six panel sections each read the snapshot twice a second. Keying it on
-    /// the pose means a session inspecting a stationary scene pays for one
-    /// raycast rather than a dozen a second, and a moving camera pays what it
-    /// would have anyway.
+    /// Keyed by camera pose: the 4,096-unit raycast is costly, and six sections
+    /// read the snapshot twice a second, so a still camera pays for one pick.
     var pick: AICrosshairPick?
 }
 
@@ -80,7 +62,7 @@ extension GameViewController: AINavigationControlProviding {
             },
             packagedActorCount: packages.registeredActors.count,
             crosshairPoint: aiCrosshairPoint(),
-            selectedActorIsHostile: selected.map { combatHostility(of: $0) == .hostile }
+            selectedActorIsHostile: selected.map { factions.hostility(of: $0) == .hostile }
                 ?? false,
             lastActionText: aiNavigation.lastActionText
         )
@@ -89,7 +71,7 @@ extension GameViewController: AINavigationControlProviding {
     var selectedAIActorIsHostile: Bool {
         get {
             guard let key = resolvedAIActor(in: aiActorOptions()) else { return false }
-            return combatHostility(of: key) == .hostile
+            return factions.hostility(of: key) == .hostile
         }
         set {
             let actors = aiActorOptions()
@@ -97,7 +79,7 @@ extension GameViewController: AINavigationControlProviding {
                 aiNavigation.lastActionText = "Cannot set hostility: no resident actor."
                 return
             }
-            setCombatHostility(newValue ? .hostile : .neutral, on: key)
+            factions.setHostility(newValue ? .hostile : .neutral, on: key)
             let regard = newValue ? "hostile" : "neutral"
             aiNavigation.lastActionText =
                 "\(aiActorName(key, in: actors)) is now \(regard)."

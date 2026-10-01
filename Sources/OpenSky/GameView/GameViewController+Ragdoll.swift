@@ -7,6 +7,7 @@
 import AppKit
 import OpenSkyActors
 import OpenSkyCombat
+import OpenSkyCrime
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -99,7 +100,7 @@ extension GameViewController {
             // reported once. The crime layer attributes the death from the
             // actors this player struck.
             guard runtime.noteZeroHealth(of: entry.key) else { continue }
-            reportPlayerMurder(of: entry.key)
+            crime.reportMurder(of: entry.key)
         }
     }
 

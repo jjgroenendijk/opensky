@@ -7,6 +7,8 @@ import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyCombatInterface
+import OpenSkyCrime
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -27,7 +29,7 @@ extension CombatWorldAdapter: CombatWorld {
     /// Every landed blow passes here, so assault is noticed in one place.
     @discardableResult
     func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        game.reportPlayerAssault(
+        game.crime.reportAssault(
             on: hit.target,
             wasHostile: hostility(of: hit.target) == .hostile,
             aggressor: hit.aggressor
@@ -86,12 +88,12 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     func hostility(of key: ReferenceKey) -> ActorHostility {
-        game.combatHostility(of: key)
+        game.factions.hostility(of: key)
     }
 
     @discardableResult
     func setHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
-        game.setCombatHostility(hostility, on: key)
+        game.factions.setHostility(hostility, on: key)
     }
 
     func awareness(of observer: ReferenceKey, toward target: ReferenceKey) -> CombatAwareness {

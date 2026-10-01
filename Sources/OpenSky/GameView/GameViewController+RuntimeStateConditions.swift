@@ -10,6 +10,8 @@ import OpenSkyActorsInterface
 import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyConditions
+import OpenSkyCrime
+import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -62,8 +64,8 @@ extension GameViewController {
             actors: runtimeStateActorResolution(),
             detection: perceptionResolution(),
             magic: magic.magicConditionResolution(),
-            crime: crimeConditionResolution(),
-            factions: factionConditionResolution(),
+            crime: crime.conditionResolution(),
+            factions: factions.conditionResolution(),
             clock: renderer?.gameClock,
             references: runtimeStateConditionReferences(crosshair: entry),
             subject: entry?.key,
