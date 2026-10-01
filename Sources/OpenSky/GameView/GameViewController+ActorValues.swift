@@ -79,7 +79,7 @@ extension GameViewController {
         // are casting a spell" (<https://en.uesp.net/wiki/Skyrim:Magicka>).
         // Casters are dropped from the set entirely, for NPCs too; the
         // deviation is recorded in docs/engine/spellcasting.md.
-        let casting = casting.runtime
+        let casting = magic.caster
         let holders = regeneratingHolders().filter { casting?.isCasting($0.key) != true }
         runtime.advance(
             delta: delta,

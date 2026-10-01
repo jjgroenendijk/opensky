@@ -11,6 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
@@ -41,12 +42,12 @@ extension CombatWorldAdapter: CombatWorld {
 
     @discardableResult
     func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        game.applySpellHit(hit)
+        game.magic.applySpellHit(hit)
     }
 
     @discardableResult
     func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        game.applyWeaponEnchantment(hit)
+        game.magic.applyWeaponEnchantment(hit)
     }
 
     var playerAttacker: MeleeAttacker? {
@@ -128,11 +129,11 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
-        game.enchantmentProfile(of: item)
+        game.magic.enchantmentProfile(of: item)
     }
 
     func hasReadiedSpell(in hand: SpellHand) -> Bool {
-        game.hasReadiedSpell(in: hand)
+        game.magic.hasReadiedSpell(in: hand)
     }
 
     func playerCarriedItems() -> [FormID] {

@@ -8,6 +8,8 @@ import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyScripting
@@ -160,17 +162,10 @@ final class GameViewController: NSViewController {
     /// panel's last outcome line.
     var actorValues = ActorValueBridgeState()
 
-    /// Active magic effects: the apply/tick/dispel runtime, its fixed-step accumulator and the
-    /// panel's last outcome line.
-    var magicEffects = MagicBridgeState()
-
-    /// Spellcasting: the spellbook, the cast loop, the panel's spell selection and its last
-    /// outcome line.
-    var casting = CastingBridgeState()
-
-    /// Item enchantments: the ENCH index equipped items resolve through, and the last hit and
-    /// worn-item outcomes the readouts show.
-    var enchantments = EnchantmentBridgeState()
+    /// Active effects, spellcasting and item enchantments. Its runtimes stay nil without game
+    /// data.
+    let magic = MagicCoordinator()
+    lazy var magicWorld = MagicWorldAdapter(game: self)
 
     /// Perks: the ownership runtime, the entry-point evaluator behind every wired combat and
     /// magic seam, and the authored `PRKR` baselines.
@@ -452,5 +447,52 @@ extension GameViewController: CombatLoopControlProviding {
 
     func clearCombatTrace() {
         combat.clearCombatTrace()
+    }
+}
+
+extension GameViewController: MagicEffectControlProviding {
+    var magicEffectControlSnapshot: MagicEffectControlSnapshot {
+        magic.magicEffectControlSnapshot
+    }
+
+    @discardableResult
+    func consumeFirstCarriedMagicItem() -> String {
+        magic.consumeFirstCarriedMagicItem()
+    }
+
+    @discardableResult
+    func dispelPlayerMagicEffects() -> String {
+        magic.dispelPlayerMagicEffects()
+    }
+}
+
+extension GameViewController: CastingControlProviding {
+    var castingControlSnapshot: CastingControlSnapshot {
+        magic.castingControlSnapshot
+    }
+
+    @discardableResult
+    func grantPlayerStartSpells() -> String {
+        magic.grantPlayerStartSpells()
+    }
+
+    @discardableResult
+    func readFirstCarriedSpellTome() -> String {
+        magic.readFirstCarriedSpellTome()
+    }
+
+    @discardableResult
+    func selectNextKnownSpell() -> String {
+        magic.selectNextKnownSpell()
+    }
+
+    @discardableResult
+    func readySelectedSpell(in hand: SpellHand) -> String {
+        magic.readySelectedSpell(in: hand)
+    }
+
+    @discardableResult
+    func castReadiedSpell(in hand: SpellHand) -> String {
+        magic.castReadiedSpell(in: hand)
     }
 }

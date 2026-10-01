@@ -15,6 +15,7 @@ import AppKit
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyRendering
 import OSLog
@@ -286,7 +287,7 @@ extension GameViewController: InventoryMenuControlProviding {
             inventoryMenu.lastActionText = "No row selected."
             return
         }
-        inventoryMenu.lastActionText = consumeMagicItem(entry.item)
+        inventoryMenu.lastActionText = magic.consumeMagicItem(entry.item)
         refreshInventoryMenuModel()
     }
 

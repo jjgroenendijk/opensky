@@ -38,9 +38,8 @@ struct PerkBridgeState {
 extension GameViewController {
     /// Builds the perk runtime over the provider's PERK index.
     ///
-    /// Wired after `wireCasting`, because the cast loop folds the spell-cost
-    /// entry point through this runtime and takes it by value: the caster has
-    /// to exist before it can be handed one.
+    /// Wired after the caster, which folds the spell-cost entry point
+    /// through a copy of this runtime.
     func wirePerks(provider: any WorldDataProviding) {
         guard let store = (provider as? ProgressionDataProviding)?.perkStore else { return }
         var runtime = PerkRuntime(store: worldState, perks: store, conditionRegistry: .standard)
@@ -55,7 +54,7 @@ extension GameViewController {
         }
         // The cast loop's copy. A struct over the same store, so the two share
         // every write and differ only in the tally each one grows.
-        casting.runtime?.perks = runtime
+        magic.caster?.perks = runtime
     }
 
     // MARK: - Ownership
@@ -68,7 +67,7 @@ extension GameViewController {
         guard var runtime = perks.runtime else { return false }
         let changed = runtime.add(perk, to: holder)
         perks.runtime = runtime
-        casting.runtime?.perks = runtime
+        magic.caster?.perks = runtime
         if changed {
             reconcilePerkAbilities(on: holder)
         }
@@ -83,7 +82,7 @@ extension GameViewController {
         guard var runtime = perks.runtime else { return false }
         let changed = runtime.remove(perk, from: holder)
         perks.runtime = runtime
-        casting.runtime?.perks = runtime
+        magic.caster?.perks = runtime
         if changed {
             reconcilePerkAbilities(on: holder)
         }
@@ -108,7 +107,7 @@ extension GameViewController {
             baselines.baseline(for: holder.subject), fromPlugin: plugin, to: holder
         )
         perks.runtime = runtime
-        casting.runtime?.perks = runtime
+        magic.caster?.perks = runtime
         guard !report.added.isEmpty else { return 0 }
         reconcilePerkAbilities(on: holder)
         return report.added.count
@@ -119,14 +118,13 @@ extension GameViewController {
     func reconcilePerkAbilities(on holder: ActorValueHolder) -> PerkAbilityReport {
         guard
             let runtime = perks.runtime,
-            var effects = magicEffects.runtime,
-            let spells = casting.runtime?.spellbook.spells
+            let spells = magic.caster?.spellbook.spells
         else { return .none }
-        let report = PerkAbilityApplication.reconcile(
-            on: holder, perks: runtime, spells: spells, using: &effects
-        )
-        magicEffects.runtime = effects
-        return report
+        return magic.withEffects { effects in
+            PerkAbilityApplication.reconcile(
+                on: holder, perks: runtime, spells: spells, using: &effects
+            )
+        } ?? .none
     }
 
     // MARK: - Evaluating
@@ -159,7 +157,7 @@ extension GameViewController {
             }
         )
         perks.runtime = runtime
-        casting.runtime?.perks = runtime
+        magic.caster?.perks = runtime
         return outcome.value
     }
 
