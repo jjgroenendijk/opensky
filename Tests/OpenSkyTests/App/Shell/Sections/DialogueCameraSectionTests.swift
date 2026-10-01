@@ -1,14 +1,7 @@
-// World > Dialogue & Voice > Dialogue Camera section coverage (issue #427; the
-// section moved to the milestone's own destination with issue #209).
-// Synthetic provider state only; the pixel half of the gate is
-// `DialogueCameraRenderRealDataTests` and the framing math is
+// World > Dialogue & Voice > Dialogue Camera with synthetic state. Pins the ids
+// and the readout wording that answers "did leaving the talk restore the
+// camera". Pixels: `DialogueCameraRenderRealDataTests`; math:
 // `DialogueCameraTests`.
-//
-// Two things are pinned here and nowhere else: the accessibility ids, which are
-// the UI-test API and must never change silently, and the readout wording,
-// which is how the milestone's acceptance question — "did leaving a
-// conversation give the previous camera back" — is answered from a readout
-// rather than by eye.
 
 import AppKit
 @testable import OpenSky

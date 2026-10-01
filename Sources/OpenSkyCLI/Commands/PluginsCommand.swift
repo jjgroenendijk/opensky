@@ -1,8 +1,5 @@
-// `plugins`: the resolved plugin load order and the plugins.txt it came from
-// (issue #73). The terminal half of the Library > Load Order panel, and the
-// only way to check a load order on a machine where the game has never been
-// launched: point OPENSKY_PLUGINS_TXT at a file and see what the engine makes
-// of it.
+// `plugins`: the resolved load order and its plugins.txt. Point
+// OPENSKY_PLUGINS_TXT at a file to check a load order without the game.
 
 import Foundation
 import OpenSkyGameData

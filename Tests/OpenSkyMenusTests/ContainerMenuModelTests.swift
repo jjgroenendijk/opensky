@@ -1,6 +1,5 @@
-// The two-pane container/barter list (issue #179): which side the item list is
-// showing, what activating a row would do, per-side pricing, and the selection
-// restore every transaction depends on. Synthetic fixtures only.
+// The two-pane container and barter list: which side shows, what a row does,
+// per-side pricing, and the selection restore after each transaction.
 
 import Foundation
 @testable import OpenSkyFormatsESM

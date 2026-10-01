@@ -1,7 +1,5 @@
-// The first consumer of the runtime globals layer (issue #165): a CLMT WLST
-// entry's global replaces its static weather chance, so mutating the global
-// shifts which weather the deterministic pick returns. Synthetic fixtures only.
-// Semantics + citation: docs/formats/weather.md.
+// A CLMT WLST entry's global replaces its weather chance, so changing the
+// global changes the deterministic pick. See docs/formats/weather.md.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

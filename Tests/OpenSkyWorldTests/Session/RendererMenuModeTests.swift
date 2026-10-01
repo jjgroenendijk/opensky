@@ -1,5 +1,5 @@
 // Metal-gated evidence that menu mode pauses world sim while the frame still
-// renders (todo 8.1.2). Drives the synchronous offscreen render path (the same
+// renders. Drives the synchronous offscreen render path (the same
 // sim-advance functions the live draw loop calls) and checks that the animation
 // clock advances across frames in gameplay but holds while paused, and that a
 // frame still renders in both states. Skips without a Metal 4 GPU (paravirtual

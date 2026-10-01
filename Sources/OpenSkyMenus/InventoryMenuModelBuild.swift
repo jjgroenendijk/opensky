@@ -1,11 +1,6 @@
-// Building an `InventoryMenuModel` from stored inventory (M12.2.2, issue #289).
-// Satellite of UI/InventoryMenuModel.swift, split out so the value type stays
-// readable beside the arithmetic that fills it.
-//
-// The builder takes the two inputs plainly — a `ReferenceInventoryState` and an
-// `ItemDefinitionStore` — rather than an `InventoryRuntime`, so it is
-// `nonisolated` and testable without a `WorldStateStore`. The `@MainActor`
-// convenience that pulls both out of a live runtime is at the bottom.
+// Builds an `InventoryMenuModel` from a `ReferenceInventoryState` and an
+// `ItemDefinitionStore`, so it is `nonisolated` and testable without a
+// `WorldStateStore`. The `@MainActor` convenience is at the bottom.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -13,15 +8,9 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 
 nonisolated extension InventoryMenuModel {
-    /// Builds the list one owner presents.
-    ///
-    /// Rows sort by display name, case-insensitively, then by FormID so two
-    /// items sharing a name still order deterministically — a menu whose row
-    /// order changes between two identical states is untestable.
-    ///
-    /// The gold stack is excluded from the rows: vanilla shows money as a
-    /// readout, not as a takeable row, and `InventoryRuntime` models it as an
-    /// ordinary `MISC` stack, so it would otherwise appear twice.
+    /// Builds one owner's list. Rows sort by name, then FormID, so the order is
+    /// deterministic. Gold is left out: vanilla shows it as a readout, but
+    /// `InventoryRuntime` stores it as a `MISC` stack.
     public static func build(
         inventory: ReferenceInventoryState,
         items: ItemDefinitionStore,
@@ -30,11 +19,8 @@ nonisolated extension InventoryMenuModel {
     ) -> InventoryMenuModel {
         var rows: [InventoryMenuEntry] = []
         var weight = 0.0
-        // One row per *item*, not per stack. Since issue #504 a stack is keyed
-        // by (form, stolen), so an owner holding honest and stolen copies of one
-        // form holds two of them — and two rows with the same name and FormID
-        // would be two identical-looking controls acting on the same items. The
-        // row carries the stolen count instead.
+        // One row per item, not per stack. Stacks are keyed by (form, stolen),
+        // and two rows with one name and FormID would look identical.
         var seen: Set<UInt32> = []
         for stack in inventory.stacks where seen.insert(stack.item.rawValue).inserted {
             let definition = items.definition(stack.item)

@@ -1,5 +1,4 @@
-// M7.4.1 precipitation math, roof occlusion, camera volume, shared Metal
-// particle-pass evidence. Synthetic engine values only; no game assets.
+// Precipitation math, roof occlusion, camera volume, and particle-pass proof.
 
 import Metal
 import MetalKit

@@ -1,15 +1,6 @@
-// One actor's combat mind, casting half (issue #473, roadmap item 19.10): when
-// a fighter chooses a spell over a swing, which spell it chooses, how long it
-// holds it, and what happens when it cannot afford one.
-//
-// A third file of cases against `CombatBehaviorMachine` rather than more cases
-// in the cadence or the retreat suite, for the reason those two are separate:
-// the machine is one type whose behaviour is larger than the strict lint type
-// cap, and the fixture both halves share already lives beside them.
-//
-// Every case is a sequence of fixed steps and an assertion on the phase and the
-// step flags that came out. The world half — a cast that becomes spent magicka
-// and a projectile — is `CombatLoopCastingTests`.
+// One actor's combat mind, casting half: when it casts, which spell, how long
+// it holds, and what happens when it cannot pay. The world half is in
+// `CombatLoopCastingTests`.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface

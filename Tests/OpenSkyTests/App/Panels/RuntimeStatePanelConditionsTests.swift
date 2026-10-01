@@ -1,11 +1,6 @@
-// World > Runtime State > Conditions verification surface (issue #166, roadmap
-// item 10.2.4): selecting a decoded condition list, evaluating it against the
-// live context, and reading back the verdict, the per-condition reasons, and
-// the session's `ConditionTally` counters.
-//
-// `make test-ui` is TCC-blocked on this machine (docs/tools/environment.md), so
-// both readouts are read back through `runtimeStateReadout` by accessibility id,
-// which is what pins the id contract.
+// World > Runtime State > Conditions: pick a condition list, evaluate it, and
+// read the verdict, per-condition reasons, and `ConditionTally`. Readouts go
+// through `runtimeStateReadout` by id, which pins the ids.
 
 import AppKit
 @testable import OpenSky

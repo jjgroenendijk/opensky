@@ -1,18 +1,6 @@
-// World > HUD & Interaction > Dialogue (issue #205, roadmap item 17.3, scope
-// point 7): the discoverable half of Talk activation.
-//
-// It sits under HUD & Interaction rather than in a destination of its own
-// because that is where the crosshair lives: the Target section above it
-// reports what the view ray picked up, and a conversation is what pressing the
-// use key on an actor does with it. The app-UI rule this satisfies is the hard
-// one — no behaviour reachable only by an unadvertised keystroke — so Open
-// dialogue is the same `openDialogue()` the F key reaches through
-// `CellStreamer.talk.activations`, and Up, Down, Choose and Leave go through
-// the same `MenuInputEvent` path as the live keys.
-//
-// Item 17.8 assembles the milestone's own destination. Sections are standalone
-// — each owns its sync, readout and ticker — so moving this one there is a
-// registry edit and no control id changes.
+// World > HUD & Interaction > Dialogue: the listed control for Talk. Open
+// dialogue calls the same `openDialogue()` as the F key, and Up, Down, Choose,
+// and Leave send the same `MenuInputEvent` as the live keys.
 
 import AppKit
 import OpenSkyMenus

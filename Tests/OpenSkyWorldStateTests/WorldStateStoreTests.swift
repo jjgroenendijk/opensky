@@ -223,7 +223,7 @@ struct WorldStateStoreTests {
         #expect(store.dirtyCount(in: inn) == 1)
     }
 
-    // MARK: - Mutation hook (issue #160)
+    // MARK: - Mutation hook
 
     @Test func mutationHookFiresWithTheCellAndTheSequenceForEveryChange() {
         let store = WorldStateStore()

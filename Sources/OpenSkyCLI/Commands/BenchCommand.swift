@@ -22,43 +22,22 @@ enum BenchCommand {
     private static let defaultFlyMaxFrames = 36000
     private static let defaultFootprintCapMB = 1024.0
     private static let defaultCollisionBuildBudgetMS = 750.0
-    /// Independent-block LZ4 acceleration restored the original 3000 ms
-    /// Debug budget while retaining cold rig, clip, body, and FaceGen loads.
-    /// Issue #56 verification p95: 2224 ms over the Whiterun fly path.
+    /// Debug budget for cold rig, clip, body, and FaceGen loads, with LZ4
+    /// independent-block decoding. Measured p95: 2224 ms on the Whiterun fly path.
     private static let defaultActorBuildBudgetMS = 3000.0
     /// CPU-only sample/compose/palette refresh; leaves wide Debug headroom.
     private static let defaultAnimationUpdateBudgetMS = 4.0
-    /// CPU cost of encodeShadowPass: cascade fit + per-cascade caster culling +
-    /// instance/uniform ring writes + depth encode (3 cascades on high; the
-    /// shadow map is fixed-resolution so cost is ~independent of --size).
-    /// M7.6 full-probe Debug baseline @ 640x360 reaches 13.20 ms p95 after
-    /// earlier GPU probes warm the process. 14 ms keeps measured headroom
-    /// while remaining below half the 30 fps total-frame budget.
+    /// CPU cost of `encodeShadowPass`: cascade fit, caster culling, ring writes,
+    /// and depth encode. Debug p95 at 640x360 is 13.20 ms; 14 ms keeps headroom
+    /// below half the 30 fps frame.
     private static let defaultShadowUpdateBudgetMS = 14.0
-    /// CPU cost of the per-frame audio update: listener pose into the
-    /// environment node, `WorldAudioEngine.tick` (fade advance, finished-source
-    /// retirement, Chebyshev cell purge) over at most
-    /// `WorldAudioEngine.maxConcurrentSources` (8) sources, and the music
-    /// director. The work is a handful of scalar updates per source with no
-    /// decode, no allocation and no I/O on the main thread, so it is bounded
-    /// well below the animation gate's 4 ms.
-    ///
-    /// Measured 2026-07-26, `bench --walk-path --size 640x360` (Debug, 814
-    /// active physics frames, engine attached and ticking, no live sources):
-    /// avg 0.005 ms, p95 0.014 ms, max 0.028 ms. That is the fixed floor — the
-    /// listener push plus an empty tick. The per-source part scales with at
-    /// most `maxConcurrentSources`, so 0.5 ms (about 1.5% of the 33.33 ms
-    /// frame at 30 fps) is a reasoned ceiling over that measured floor: wide
-    /// enough that only a real regression, per-frame work scaling with
-    /// something other than the source cap, can trip it.
+    /// CPU cost of the per-frame audio update: listener pose, `WorldAudioEngine`
+    /// tick, and music director. Measured floor p95 0.014 ms; 0.5 ms allows the
+    /// 8-source cap and trips only work that scales with something else.
     private static let defaultAudioUpdateBudgetMS = 0.5
-    /// CPU cost of the per-frame Papyrus world-runtime callback, including the
-    /// fixed-step accumulator and an empty standard-registry VM tick.
-    /// Measured 2026-08-01, `bench --fly-path --size 640x360` (Debug, 6,645
-    /// stream frames, engine attached and ticking): avg 0.024 ms, p95 0.035 ms,
-    /// max 1.266 ms. The 0.5 ms ceiling is over 14 times the measured p95 while
-    /// remaining about 1.5% of the 33.33 ms frame at 30 fps. It leaves room for
-    /// normal event bursts but trips work that scales without the VM's bounds.
+    /// CPU cost of the per-frame Papyrus callback with an empty VM tick.
+    /// Measured p95 0.035 ms; 0.5 ms leaves room for event bursts and is about
+    /// 1.5% of a 30 fps frame.
     private static let defaultScriptUpdateBudgetMS = 0.5
 
     private struct Options {

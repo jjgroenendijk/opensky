@@ -1,10 +1,5 @@
-// HUD meter binding tests (issue #194): the acceptance gate's headless half —
-// drive player damage and watch `HUDMeterValues` change through the meter
-// contract, with no window and no SWF runtime involved.
-//
-// The other half of the contract, that the movie actually accepts these three
-// numbers, is already covered by the M8 HUD tests over the real `hudmenu.swf`;
-// nothing about the movie side changed here.
+// HUD meter binding, headless: damage the player and watch `HUDMeterValues`
+// change. The movie side is covered by the HUD tests over `hudmenu.swf`.
 
 import Foundation
 @testable import OpenSkyActors

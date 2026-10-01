@@ -1,11 +1,6 @@
-// Recording double for the World > Scripts seam (issue #278), shared by the
-// panel suite and by the destination-registry satellite. The snapshot builder
-// is `makeScriptsSnapshot` in OpenSkyScriptingTesting.
-//
-// It lives in its own file for the same reason the Runtime State fixture does:
-// stored properties cannot live in an extension, so a fake shared across suites
-// has to be one type in one file, and both parent suites sit near the repo
-// file-length limit.
+// Recording fake for the World > Scripts seam, shared by the panel and
+// registry suites. The snapshot builder is `makeScriptsSnapshot` in
+// OpenSkyScriptingTesting.
 
 import AppKit
 @testable import OpenSkyScripting
@@ -60,7 +55,7 @@ final class FakeScriptProvider: ScriptControlProviding {
         stepCalls.append(ticks)
     }
 
-    /// Alias tables the fake serves, keyed by editor ID (issue #183).
+    /// Alias tables the fake serves, keyed by editor ID.
     var questAliasTables: [String: ScriptQuestAliasInspection] = [:]
 
     var questAliasQuestEditorIDs: [String] {

@@ -1,4 +1,4 @@
-// Pausable frame delta clock (todo 8.1.2): the first tick is zero, deltas clamp
+// Pausable frame delta clock: the first tick is zero, deltas clamp
 // to maxDelta, a paused tick returns zero while keeping its mark fresh, and
 // resuming after any pause length yields one frame of delta rather than the
 // whole paused span (the no-time-jump proof). Synthetic times, no wall clock.

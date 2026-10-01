@@ -1,12 +1,6 @@
-// CellStreamer wiring (todo 3.2 async build): request dedupe, void/failed
-// no-retry, one-recompose-per-frame integration budget, unload on recenter,
-// out-of-order completion tolerance, and first-cell-only camera reseed. Driven
-// through a manual build runner + synthetic CellScenes -- no Metal, no game
-// data (AGENTS.md testing rule).
-//
-// The fixture half -- the type itself, the synthetic built cell and the streamer
-// factory -- is `Tests/TestSupport/World/Streaming/CellStreamerFixture.swift`, shared with the
-// real-data streaming suites (issue #418).
+// CellStreamer: request dedupe, no retry on void or failed cells, one
+// recompose per frame, unload on recenter, out-of-order completion, and first-
+// cell camera reseed. Fixture: `Tests/TestSupport/World/Streaming/CellStreamerFixture.swift`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

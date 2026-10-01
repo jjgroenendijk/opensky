@@ -1,29 +1,7 @@
-// M16 acceptance, budget half (issue #203): the AI is held to the per-frame
-// budgets that already exist, and adds no set of numbers of its own.
-//
-// The constraint M13 put on M14, M14 put on M15 and M15's close-out restated for
-// M16: a mind adds path following, a perception pass and a combat machine to the
-// same frame, so it is measured against the shipping `animationUpdateBudgetMS`
-// the fly-path validator already enforces and against the same benchmark
-// configuration `openskycli bench --fly-path` uses — not against a second copy
-// of the numbers.
-//
-// The one number M16 owns is `NPCMovementRuntime.maximumCPUTimeMillisecondsAtCap`,
-// the 2 ms slice item 16.4 reserved for all mover work at the crowd cap. That is
-// not a second frame budget; it is the sub-slice inside the animation budget that
-// decided the kinematic gait-clip drive over a per-NPC behavior graph, and
-// `make realtest-npc-perf` is what measures it against the real install. What is
-// asserted here is that the slice fits inside the frame budget it is carved out
-// of, so the two numbers cannot drift apart unnoticed.
-//
-// The other half of the claim is that the AI is bounded by construction. Three
-// fixed-step clocks run inside one frame — the mover's, the perception pass's and
-// the combat loop's — and every one of them caps what a single stalled frame can
-// drive. A gate that only measured a healthy frame would say nothing about the
-// frame that stalls, and the stall is where a crowd actually falls over.
-//
-// The timings are synthetic, as they are throughout `CellStreamingFlyPathTests`:
-// these cases pin the gate's behaviour, not this machine's speed.
+// AI acceptance, budget half. Movers, perception, and combat ride the shipping
+// `animationUpdateBudgetMS`. `NPCMovementRuntime.maximumCPUTimeMillisecondsAtCap`
+// is a 2 ms slice of that budget, checked to fit inside it. Three fixed-step
+// clocks cap what a stalled frame can drive. Timings are synthetic.
 
 import Foundation
 @testable import OpenSkyCombat

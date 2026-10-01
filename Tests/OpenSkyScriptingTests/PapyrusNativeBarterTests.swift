@@ -1,8 +1,5 @@
-// `Actor.ShowBarterMenu` (issue #506): the native a merchant's dialogue
-// fragment calls, over a stand-in session closure.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// `Actor.ShowBarterMenu`, which a merchant's dialogue fragment calls, over a
+// stand-in session closure.
 
 import FormatsESMTesting
 import Foundation

@@ -1,17 +1,7 @@
-// Synthetic quest-with-scripts fixture for issue #322: a QUST record carrying
-// VMAD scripts and a stage-fragment tail, the store and runtime around it, and
-// a world session with the quest layer wired.
-//
-// Every byte is built in code from the UESP/xEdit layout through `QuestFixture`
-// and `VMADFixture`; nothing is extracted from a game install (AGENTS.md
-// "Legal & IP boundary").
-//
-// The `Quest` script object is synthetic too, and deliberately shaped like the
-// shipped `Quest.psc`: a parent class whose members are declared `native`. That
-// is what makes `someQuest.SetStage(10)` dispatch as the native `Quest.SetStage`
-// rather than under the calling script's own name, which is exactly how a real
-// install resolves it once `PapyrusWorldRuntime.resolveScript` has pulled the
-// parent chain in.
+// A synthetic QUST with VMAD scripts and a fragment tail, its store and
+// runtime, and a session with quests wired. The `Quest` script has only
+// `native` members, like `Quest.psc`, so `SetStage(10)` dispatches as the
+// native once `PapyrusWorldRuntime.resolveScript` loads the parent chain.
 
 import FormatsESMTesting
 import FormatsPEXTesting
@@ -39,8 +29,8 @@ public enum PapyrusQuestFixture {
     /// A stage flagged `shutDownStage`.
     public static let shutDownStage: UInt16 = 90
     public static let objectiveIndex: UInt16 = 10
-    /// Reference the quest's one alias is forced onto (issue #183), and the
-    /// `ReferenceAlias` script that rides on it.
+    /// The reference the quest's one alias is forced onto, and its
+    /// `ReferenceAlias` script.
     public static let aliasReferenceObjectID: UInt32 = 0x0000_0701
     public static let aliasScript = "OpenSkyProbeAliasScript"
     public static let aliasID: UInt32 = 0
@@ -67,13 +57,9 @@ public enum PapyrusQuestFixture {
 
     // MARK: - Record
 
-    /// The QUST record under test: two ordinary stages, a start-up stage, a
-    /// shut-down stage, one objective, one attached quest script and a
-    /// fragment table whose single entry runs `Fragment_0` for stage 10.
-    ///
-    /// - Parameter aliases: ALST groups appended after the ANAM separator; a
-    ///   quest with none behaves exactly as it did before issue #183.
-    /// - Parameter aliasScripts: alias-script sections in the VMAD tail.
+    /// The QUST under test: two stages, a start-up and a shut-down stage, one
+    /// objective, one quest script, and a stage-10 `Fragment_0`. `aliases` are
+    /// ALST groups after ANAM; `aliasScripts` are alias sections in the VMAD tail.
     public static func quest(
         startGameEnabled: Bool = true,
         scripts: [VMADFixture.Script]? = nil,

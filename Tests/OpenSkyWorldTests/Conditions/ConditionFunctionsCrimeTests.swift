@@ -1,12 +1,5 @@
-// `GetCrimeGold` (issue #504, roadmap item 21.5), driven through the real
-// evaluator against a synthetic ledger.
-//
-// The index here is the raw on-disk number 459 — the Creation Kit spells it
-// 4555 — from xEdit's condition-function table; see the
-// ConditionFunctionsCrime.swift header.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// `GetCrimeGold` through the real evaluator. Raw index 459 (Creation Kit 4555);
+// see the ConditionFunctionsCrime.swift header.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -76,7 +69,7 @@ struct ConditionFunctionsCrimeTests {
     }
 
     /// `GetCrimeGoldViolent` (375) and `GetCrimeGoldNonviolent` (376) each
-    /// read one half, and `GetCrimeGold` reads their sum (issue #563).
+    /// read one half, and `GetCrimeGold` reads their sum.
     @Test func theViolentAndNonviolentFunctionsReadOneHalfEach() throws {
         let context = try Self.crimeContext(gold: 25, violentGold: 40)
         let hold = CrimeFixture.Factions.hold

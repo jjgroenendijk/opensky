@@ -1,8 +1,5 @@
-// The Death & Ragdoll section of `World > Combat & Physics` (issue #197,
-// roadmap item 15.6, scope point 7). Same panel and same fake as the Melee and
-// Archery sections beside it, asked the same three questions: does the readout
-// describe the engine, does it say so when there is no engine, and does every
-// control reach the provider.
+// The Death & Ragdoll section of `World > Combat & Physics`, with the same
+// panel, fake, and three questions as the Melee section.
 
 import AppKit
 @testable import OpenSky

@@ -1,15 +1,6 @@
-// The M14 gate's world and graph, built in code (issue #191).
-//
-// Two pieces. `M14AcceptanceWorld` is the ground the capsule runs over: flat
-// exterior, a walkable slope, and a basin with water deep enough to swim in,
-// all as closed-form functions of x so a test can say where the player should
-// be rather than reading a height out of a file. `M14AcceptanceFixture` is the
-// synthetic behavior graph: eight states, one per locomotion state the gate
-// names, wired to the events and variables `LocomotionGraphNames` declares.
-//
-// Everything here is invented. No packfile bytes, no extracted heights, no
-// clip data from the install (AGENTS.md "Legal & IP boundary"). The vanilla
-// half of the gate is `M14AcceptanceRealDataTests`, which is env-gated.
+// The locomotion gate's world and graph. `M14AcceptanceWorld` is ground as
+// closed-form functions of x; `M14AcceptanceFixture` is an eight-state graph
+// wired to `LocomotionGraphNames`. Real-data half: `M14AcceptanceRealDataTests`.
 
 import BehaviorTesting
 import Foundation
@@ -19,22 +10,11 @@ import Foundation
 @testable import OpenSkyWorld
 import simd
 
-/// The synthetic terrain and water the route runs over.
-///
-/// Laid out west to east along +X, because the route is a straight line and a
-/// one-dimensional height function is one a failing assertion can quote back:
-///
-///     x < 1600     flat, z = 0            walk, run, sneak, jump and land
-///     1600 - 2000  20-degree rise to 144  the slope
-///     2000 - 2300  plateau at 144         the sprint stretch
-///     2300 - 2500  45-degree fall to -56  the bank into the water
-///     2500 - 2900  basin floor at -56     swimming, 156 units under water
-///     2900 - 3100  45-degree rise to 144  the far bank
-///     x > 3100     plateau at 144         the run to the cell boundary
-///
-/// Both slopes sit under `WalkController.maximumSlopeDegrees` (50), so the
-/// capsule walks them rather than sliding: a route that could not be walked
-/// would prove nothing about locomotion.
+/// The synthetic terrain and water, west to east along +X. Slopes stay under
+/// `WalkController.maximumSlopeDegrees` (50), so the capsule walks them.
+///     x < 1600 flat z 0 | 1600-2000 rise to 144 | 2000-2300 plateau 144
+///     2300-2500 fall to -56 | 2500-2900 basin -56, swim | 2900-3100 rise to 144
+///     x > 3100 plateau 144 to the cell boundary
 nonisolated enum M14AcceptanceWorld {
     static let flatHeight: Float = 0
     static let plateauHeight: Float = 144
@@ -97,22 +77,11 @@ nonisolated enum M14AcceptanceWorld {
     }
 }
 
-/// The eight-state synthetic graph the route drives.
-///
-/// One state per locomotion state the gate names, each running a static clip
-/// that holds bone 1 at its own translation, so the pose alone says which state
-/// is showing. Every transition into a state is a wildcard keyed on the event
-/// the bridge raises for it, which is what makes the route's own edges the
-/// thing that moves the graph — nothing here is driven by a test-only poke.
-///
-/// The one exception is `Run`, and deliberately: running is a gait rather than
-/// an edge, so the bridge raises no event for it. `moveStart` therefore carries
-/// two wildcard transitions — a plain one to `Walk`, and a higher-priority one
-/// to `Run` guarded by `Speed >= 270` — so the same edge lands in a different
-/// state depending on how fast the player set off. That is how a machine
-/// authored against real data tells the two apart, reduced to two states: the
-/// vanilla files rank a conditioned transition above its unconditioned sibling
-/// the same way.
+/// The eight-state synthetic graph. Each state's static clip holds bone 1 at
+/// its own translation, so the pose shows the state. Transitions are wildcards
+/// on the bridge's events. `Run` is a gait with no event, so `moveStart` has a
+/// plain transition to `Walk` and a higher-priority one to `Run` guarded by
+/// `Speed >= 270`, the way vanilla ranks a conditioned transition first.
 nonisolated enum M14AcceptanceFixture {
     /// State ids, which are also the order the states are declared in.
     enum State: Int, CaseIterable {

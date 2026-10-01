@@ -1,10 +1,6 @@
-// The Progression panel's tick discipline (issue #556): one snapshot per tick,
-// shared by all three sections, and not a stale value once the tick is over.
-//
-// Split from `ProgressionPanelTests` — the geometry, the identifiers and the
-// controls — because the two together are past the type-body cap. The panel
-// itself is built through that suite's registry factory, so what is under test
-// is the destination a user clicks.
+// The Progression panel's tick: one snapshot per tick shared by all sections,
+// never stale after the tick. Split from `ProgressionPanelTests` for the
+// type-body cap; the panel comes from that suite's registry factory.
 
 import AppKit
 @testable import OpenSky
@@ -13,8 +9,7 @@ import Testing
 @MainActor
 struct ProgressionPanelTickTests {
     /// One panel tick builds the snapshot once and hands the same value to all
-    /// three sections (issue #556). Left to their own tickers they built it
-    /// three times per tick for one identical reading.
+    /// three sections.
     @Test
     func onePanelTickBuildsTheSnapshotOnce() throws {
         let providers = FakeWorldProviders()

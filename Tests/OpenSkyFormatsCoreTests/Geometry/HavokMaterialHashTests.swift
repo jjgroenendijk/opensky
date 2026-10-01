@@ -1,10 +1,6 @@
-// The hash that links a NIF collision shape to a MATT record (issue #358).
-//
-// nif.xml documents `SkyrimHavokMaterial` as "CRC32 of the lowercase of the
-// Creation Kit Material Name" without naming the CRC parameters, so the table
-// below is the evidence for the ones `HavokMaterialHash` implements: each pair
-// is a Creation Kit material name and the value nif.xml lists for it. No game
-// bytes are involved — these are spec constants.
+// The hash that links a NIF collision shape to a MATT record. nif.xml calls it
+// "CRC32 of the lowercase of the Creation Kit Material Name" without the CRC
+// parameters, so the table below of names and nif.xml values is the evidence.
 
 @testable import OpenSkyFormatsCore
 import Testing

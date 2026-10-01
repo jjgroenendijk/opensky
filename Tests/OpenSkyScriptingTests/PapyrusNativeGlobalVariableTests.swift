@@ -1,9 +1,5 @@
-// `GlobalVariable` natives over a synthetic `GlobalStore` (issue #172): the
-// script write goes through the GLOB coercion seam, so a short or long global
-// never holds a fraction.
-//
-// Fixtures are built in code — never extracted game files (AGENTS.md "Legal &
-// IP boundary").
+// `GlobalVariable` natives over a synthetic `GlobalStore`. Writes go through
+// the GLOB coercion, so a short or long global never holds a fraction.
 
 import FormatsESMTesting
 import Foundation

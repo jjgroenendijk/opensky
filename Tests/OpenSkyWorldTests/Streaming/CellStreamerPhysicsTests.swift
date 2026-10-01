@@ -1,8 +1,6 @@
-// Dynamic bodies following cell residency (issue #193). The streamer does not
-// push placements at the physics world; it reconciles once per frame, so these
-// cover what that reconciliation has to get right: bodies appear with their
-// cell, leave with it, survive a rebuild, and only re-install when the scene
-// they came from actually changed.
+// Dynamic bodies follow cell residency through one reconcile per frame: they
+// appear and leave with their cell, survive a rebuild, and reinstall only when
+// their scene changed.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

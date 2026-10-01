@@ -1,10 +1,6 @@
-// Malformed-input tests for the OpenSky native save container (issue #161):
-// header, fingerprint, chunk framing and string fields.
-//
-// AGENTS.md requires that malformed input never crashes, so every case here
-// asserts the exact `OpenSkySaveError` a specific byte-level defect produces
-// rather than merely that something was thrown. Entry-level defects — keys,
-// cells and component values — live in OpenSkySaveEntryCorruptionTests.
+// Malformed save input: header, fingerprint, chunk framing, and strings. Each
+// case checks the exact `OpenSkySaveError`. Entry defects are in
+// OpenSkySaveEntryCorruptionTests.
 
 import Foundation
 @testable import OpenSkyFormatsCore

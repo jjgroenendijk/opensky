@@ -1,7 +1,5 @@
-// The `SPLB` chunk (issue #470, roadmap item 19.7): the spellbook round trip,
-// the readied-hand invariant a load has to restore, and the absent-chunk case
-// that keeps a save with no spellbook byte-identical to what this encoder
-// produced before the chunk existed.
+// The `SPLB` chunk: spellbook round trip, the readied-hand invariant after a
+// load, and an absent chunk keeping a save without spells byte-identical.
 
 import Foundation
 @testable import OpenSkyFormatsESM

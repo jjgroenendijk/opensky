@@ -1,7 +1,6 @@
-// Shared test double for the Developer > UI Lab SWF seam. Both hosted sections
-// (the M8.2.5 movie selector and the M8.3.3 runtime driver) talk to the engine
-// only through `SWFLabControlProviding`, so one recording fake covers the whole
-// control surface without a renderer, a Metal device, or a game install.
+// Recording fake for the UI Lab SWF seam. Both SWF sections use only
+// `SWFLabControlProviding`, so one fake covers them without Metal or an
+// install.
 
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyMenus

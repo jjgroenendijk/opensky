@@ -1,5 +1,4 @@
-// First-person camera parameters and the arms anchor (issue #190). Pure math —
-// no install, no device.
+// First-person camera parameters and the arms anchor. Pure math.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

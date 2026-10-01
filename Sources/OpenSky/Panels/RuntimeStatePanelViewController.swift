@@ -1,18 +1,7 @@
-// World > Runtime State destination panel: the sidebar verification surface for
-// the world-state store. Thin composition of self-contained sections on the
-// shared panel framework, the same shape as AudioPanelViewController. Exact
-// sidebar path and controls: docs/engine/runtime-state.md.
-//
-// M10.1.5 landed inspect, change, reset, and save and load. M10.2 (issue #166)
-// adds the three surfaces the rest of the milestone made verifiable: the game
-// clock and timescale, the runtime global variables, and CTDA condition
-// evaluation. They are sections under this existing destination rather than new
-// destinations because they all inspect and mutate the same runtime world
-// state — the thing this destination is named for.
-//
-// Section order follows the order a session reaches for them: read the store,
-// then time, then globals, then conditions (which read both), then the three
-// change-and-restore surfaces.
+// World > Runtime State: the world-state store (docs/engine/runtime-state.md).
+// Clock, globals, and conditions are sections here because they inspect the
+// same runtime state. Order: store, time, globals, conditions, then the
+// change-and-restore sections.
 
 import AppKit
 import OpenSkyWorld

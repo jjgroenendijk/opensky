@@ -1,11 +1,6 @@
-// Filesystem tests for the OpenSky native save container (issue #161).
-//
-// Every case works inside a unique directory under the system temporary
-// directory and removes it again, so nothing here touches the real Application
-// Support directory, the repo, or the game install. `defaultSavesDirectory` is
-// exercised through a FileManager subclass that redirects the Application
-// Support lookup into that same temporary directory, which keeps the test from
-// creating a folder in the user's home just to read its name.
+// Save file I/O in a unique temporary directory, removed afterwards.
+// `defaultSavesDirectory` runs through a FileManager subclass that redirects
+// Application Support there, so no folder appears in the user's home.
 
 import Foundation
 @testable import OpenSkySave

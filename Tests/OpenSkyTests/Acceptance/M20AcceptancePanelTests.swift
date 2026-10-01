@@ -142,9 +142,8 @@ struct M20AcceptancePanelTests {
         #expect(spent.perkPoints == points - 1)
         #expect(spent.ownedPerkCount == 1)
         #expect(spent.selectedNodeReadout?.isOwned == true)
-        // The skill line's perk count is cached per skill (issue #556), so the
-        // spend has to move it rather than leave the reading it was taken from
-        // standing.
+        // The skill line's perk count is cached per skill, so the spend must
+        // update it.
         #expect(spent.selectedSkillReadout?.ownedPerks == 1)
 
         panel.perkTreeSection.refreshReadout()

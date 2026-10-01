@@ -1,8 +1,6 @@
-// Base class for one control group inside an inspector panel (issue #98). A
-// section owns its controls + an optional live readout; it does not scroll
-// (the parent InspectorPanelViewController scrolls). Because a section is fully
-// self-contained — its own sync/readout/ticker — it can later be promoted to a
-// standalone sidebar destination without change (see docs/tools/app-ui.md).
+// Base class for one control group in an inspector panel. A section owns its
+// controls, readout, and ticker, so it can become its own sidebar destination
+// without change (docs/tools/app-ui.md). The parent panel scrolls.
 
 import AppKit
 
@@ -74,12 +72,9 @@ class PanelSectionViewController: NSViewController, InspectorPanel {
         beginInspecting(ticking: true)
     }
 
-    /// Starts inspecting, optionally without a ticker of this section's own.
-    ///
-    /// A panel whose sections all read one expensive provider value drives them
-    /// from its own ticker instead, so that value is built once per tick rather
-    /// than once per section — see `InspectorPanelViewController`'s
-    /// `sectionsTickIndependently` (issue #556).
+    /// Starts inspecting, optionally without a ticker of its own. A panel whose
+    /// sections share one expensive value drives them from its own ticker; see
+    /// `sectionsTickIndependently`.
     func beginInspecting(ticking: Bool) {
         syncControls()
         refreshReadout()

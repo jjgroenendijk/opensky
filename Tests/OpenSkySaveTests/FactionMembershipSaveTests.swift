@@ -1,7 +1,5 @@
-// The `FCTN` chunk (issue #503, roadmap item 21.3): the membership round trip,
-// the normalization a load has to survive, and the absent-chunk case that keeps
-// a save with no memberships byte-identical to what this encoder produced
-// before the chunk existed.
+// The `FCTN` chunk: membership round trip, load normalization, and an absent
+// chunk keeping a save without memberships byte-identical.
 
 import Foundation
 @testable import OpenSkyFactionsInterface

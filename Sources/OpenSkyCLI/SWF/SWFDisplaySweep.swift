@@ -1,10 +1,6 @@
-// Display-list portion of `swf sweep` (milestone 8.2.4 gate): assembles the
-// frame-1 display list of every vanilla Interface movie (PlaceObject/2/3,
-// RemoveObject/2, ShowFrame, SetBackgroundColor, DefineSprite), flattens it
-// into the renderer's draw-command stream, and lays out every edit text with
-// the font fontconfig resolves for it. Any movie that fails to decode fails
-// the sweep; recorded-but-unrendered features (filters, blend modes,
-// ClipActions) are tallied so the deferral stays measured.
+// Display-list part of `swf sweep`: build every movie's frame-1 display list,
+// flatten it to draw commands, and lay out edit text. Unrendered features
+// (filters, blend modes, ClipActions) are tallied.
 
 import Foundation
 import OpenSkyFormatsSWF

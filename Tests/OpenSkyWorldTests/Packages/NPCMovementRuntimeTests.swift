@@ -1,5 +1,5 @@
-// Deterministic NPC corridor following, door handoff, trigger occupancy,
-// bounded recovery, sparse persistence, and crowd cap (issue #423).
+// NPC corridor following, door handoff, trigger occupancy, bounded recovery,
+// sparse persistence, and the crowd cap.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -114,7 +114,7 @@ struct NPCMovementRuntimeTests {
     }
 
     /// A conversation's hold: the walk stops, the actor turns on the spot, and
-    /// the draw path is told about the rotation (issue #427).
+    /// the draw path is told about the rotation.
     @Test
     func facingStopsTheMoverTurnsInPlaceAndPublishesTheRotation() throws {
         var runtime = NPCMovementRuntime()

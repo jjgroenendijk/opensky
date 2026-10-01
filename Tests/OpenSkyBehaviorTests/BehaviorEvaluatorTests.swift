@@ -1,9 +1,6 @@
-// The behavior graph instance (issue #187): variables, bindings, and events.
-// Synthetic graphs built in code — no packfile bytes and no install
-// (AGENTS.md "Legal & IP boundary").
-//
-// Node lifecycle and determinism are in BehaviorLifecycleTests.swift; generator
-// semantics in BehaviorGeneratorTests.swift and BehaviorClipTests.swift.
+// The behavior graph instance: variables, bindings, and events, over synthetic
+// graphs. Lifecycle is in BehaviorLifecycleTests.swift; generators in
+// BehaviorGeneratorTests.swift and BehaviorClipTests.swift.
 
 import BehaviorTesting
 import Foundation

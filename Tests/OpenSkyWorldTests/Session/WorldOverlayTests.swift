@@ -1,5 +1,4 @@
-// Pure overlay-buffer coverage plus the offscreen GPU pixel-delta proof for
-// issue #422. All geometry is synthetic and built in code.
+// Overlay-buffer coverage and the offscreen pixel-delta proof.
 
 import Metal
 import MetalKit

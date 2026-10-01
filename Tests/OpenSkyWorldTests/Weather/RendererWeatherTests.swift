@@ -1,8 +1,5 @@
-// Weather renderer integration (M7.2.2): offscreen A/B renders proving the
-// weather sky path. No active weather reproduces the procedural baseline
-// bit-for-bit; a forced synthetic weather repaints the sky; two distinct
-// weathers differ. Synthetic fixtures only (AGENTS.md "Legal & IP boundary");
-// skips without a Metal 4 device (paravirtual CI), like ShadowSceneFixture.
+// Weather sky A/B renders: no weather matches the procedural baseline exactly,
+// a forced weather repaints the sky, and two weathers differ. Needs Metal 4.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

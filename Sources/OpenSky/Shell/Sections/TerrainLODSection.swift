@@ -1,6 +1,5 @@
-// World > Environment > Distant LOD section: editable per-level draw distances
-// applied live, with an INI-reset + status line (issue #98 decomposition of the
-// former Environment panel LOD controls).
+// World > Environment > Distant LOD: per-level draw distances applied live,
+// with an INI reset and a status line.
 
 import AppKit
 import OpenSkyGameData

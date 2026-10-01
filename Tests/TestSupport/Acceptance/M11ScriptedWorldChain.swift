@@ -169,17 +169,9 @@ struct M11ScriptedWorldChain {
         )
     }
 
-    /// `LeverScript extends ObjectReference`, whose whole body is:
-    ///
-    /// ```papyrus
-    /// Event OnActivate(ObjectReference akActionRef)
-    ///     Probe.Seen(akActionRef)
-    ///     ObjectReference linked = Self.GetLinkedRef()
-    ///     linked.Disable()
-    /// EndEvent
-    /// ```
-    ///
-    /// as three compiled instructions. `Probe.Seen` only observes the caller.
+    /// `LeverScript extends ObjectReference`: `OnActivate` calls
+    /// `Probe.Seen(akActionRef)`, then `Self.GetLinkedRef().Disable()`, as
+    /// three compiled instructions. `Probe.Seen` only observes.
     static func leverScript() -> PexObject {
         let body = PexFixture.runtimeFunction(
             parameters: [PexTypedName(name: "akActionRef", typeName: "ObjectReference")],

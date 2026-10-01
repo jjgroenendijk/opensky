@@ -107,7 +107,7 @@ struct ActorValueSaveTests {
         #expect(encode(snapshot()) == encode(snapshot()))
     }
 
-    // MARK: - AVOV, the override table (issues #468 and #496)
+    // MARK: - AVOV, the override table
 
     /// One actor holding two overrides, one of them damaged, and a base
     /// override on a primary.
@@ -136,9 +136,8 @@ struct ActorValueSaveTests {
         )
     }
 
-    /// The override table survives the round trip — except the temporary
-    /// modifier, which is deliberately not written because the magic effect
-    /// that established it is what re-establishes it (issue 19.6).
+    /// The override table survives the round trip, except the temporary
+    /// modifier: the magic effect that set it sets it again.
     @Test func actorValueOverridesSurviveAnEncodeAndDecodeWithoutTheTemporarySlot() throws {
         let file = try OpenSkySaveDecoder.decode(encode(resistantSnapshot()))
         let delta = try #require(file.snapshot[wounded])
@@ -148,7 +147,7 @@ struct ActorValueSaveTests {
             baseOffset: 40, permanent: 10, damage: -15
         ))
         #expect(state.overrides[15] == ActorValueOverride(baseOffset: 22))
-        // A primary's base override travels in the same table (issue #496).
+        // A primary's base override travels in the same table.
         #expect(
             state.overrides[ActorValueIdentity.index(of: .health)]
                 == ActorValueOverride(baseOffset: 25)

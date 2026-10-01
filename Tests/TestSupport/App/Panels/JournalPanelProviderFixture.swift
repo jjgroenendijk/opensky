@@ -1,10 +1,6 @@
-// Recording double and snapshot builder for the journal seam (issue #184),
-// shared by the panel suite and by the destination-registry satellite.
-//
-// It lives in its own file for the same reason the Scripts fixture does:
-// stored properties cannot live in an extension, so a fake shared across suites
-// has to be one type in one file, and both parent suites sit near the repo
-// file-length limit.
+// Recording fake and snapshot builder for the journal seam, shared by the
+// panel and registry suites. One file, because stored properties cannot live
+// in an extension.
 
 import AppKit
 @testable import OpenSkyMenus

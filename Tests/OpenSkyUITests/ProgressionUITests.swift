@@ -1,9 +1,5 @@
-// World > Progression UI surface (issue #500, roadmap item 20.7), in its own
-// case rather than in `OpenSkyUITests` for the strict-lint type-length cap.
-//
-// The id contract is pinned in `ProgressionPanelTests` too; only a UI test
-// proves the ids are reachable in the built view hierarchy, which is the gap
-// issue #380 recorded.
+// World > Progression UI test, its own case for the type-length cap. Unit
+// tests pin the ids; only a UI test proves they are reachable.
 
 import XCTest
 

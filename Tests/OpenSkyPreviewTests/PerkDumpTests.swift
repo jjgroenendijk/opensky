@@ -45,8 +45,7 @@ struct PerkDumpTests {
         #expect(dump.contains("half-cost perk Novice"))
     }
 
-    /// Every AVIF perk-tree box now names the perk it grants, which is the
-    /// link issue #494 left as a raw FormID.
+    /// Every AVIF perk-tree box names the perk it grants.
     @Test
     func actorValueDumpNamesThePerkEachTreeNodeGrants() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("AVOneHanded"))

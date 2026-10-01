@@ -1,6 +1,5 @@
-// Cell attach/detach lifecycle for `PapyrusWorldRuntime` (issue #171):
-// deterministic instantiation order, event order, rebuild reconciliation,
-// retirement, and persistent-instance survival.
+// Cell attach and detach for `PapyrusWorldRuntime`: instantiation order, event
+// order, rebuild reconciliation, retirement, and persistent instances.
 
 @testable import FormatsESMTesting
 import Foundation

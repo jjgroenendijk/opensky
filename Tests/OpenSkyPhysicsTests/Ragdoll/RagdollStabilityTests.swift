@@ -1,14 +1,6 @@
-// The stress half of item 15.6's acceptance (issue #197): a ragdoll collapsed
-// repeatedly onto collision for many simulated minutes without NaN or
-// divergence.
-//
-// "Repeatedly" is the point. A single collapse settles in a second or two and
-// exercises the solver's easy case; what breaks a constraint solver is the
-// hundredth collapse, where a joint has spent minutes accumulating whatever
-// drift the correction pass leaves behind. So the run below re-throws the same
-// ragdoll from a height every few seconds of simulated time and never rebuilds
-// it, which means every collapse starts from whatever state the previous one
-// left.
+// Ragdoll stress: one instance collapsed onto collision again and again for
+// many simulated minutes without NaN or divergence. It is never rebuilt, so
+// joint drift from each collapse carries into the next.
 
 @testable import OpenSkyPhysics
 import PhysicsTesting
@@ -85,13 +77,9 @@ struct RagdollStabilityTests {
         }
     }
 
-    /// Re-throws the ragdoll: every bone is lifted back to the throw height and
-    /// given a velocity, without rebuilding the instance, so the next collapse
-    /// inherits whatever state the last one left in the joints.
-    ///
-    /// The throw direction rotates with the collapse index so that successive
-    /// collapses land the chain differently rather than replaying one fall
-    /// sixty times.
+    /// Throws the ragdoll again without rebuilding it, so the next collapse
+    /// inherits the joint state. The direction rotates with the index so each
+    /// fall differs.
     private func throwUpward(_ instance: inout RagdollInstance, collapse: Int) {
         let angle = Float(collapse) * 0.7
         let push = SIMD3<Float>(cos(angle) * 260, sin(angle) * 260, 320)
@@ -101,18 +89,9 @@ struct RagdollStabilityTests {
 }
 
 extension RagdollInstance {
-    /// Test-only re-throw: moves the whole chain back over the origin with its
-    /// lowest bone at `height` and gives every bone the same velocity, keeping
-    /// their orientations and their relative positions.
-    ///
-    /// Recentred horizontally as well as lifted, because each throw carries the
-    /// chain a thousand engine units sideways and the fixture's floor is four
-    /// hundred to a side: without it the gate would be measuring one long jump
-    /// off the edge of the world rather than sixty collapses onto collision.
-    ///
-    /// Deliberately not on the shipping type. Nothing in the engine lifts a
-    /// ragdoll; the stress gate does it to run many collapses through one
-    /// instance, which is the whole point of the gate.
+    /// Test-only re-throw: recentres the chain over the origin with its lowest
+    /// bone at `height` and gives every bone one velocity. Recentred because
+    /// each throw moves it far past the fixture's floor.
     fileprivate mutating func lift(to height: Float, velocity: SIMD3<Float>) {
         let lowest = bodies.map(\.position.z).min() ?? 0
         let centre = bodies.reduce(SIMD3<Float>.zero) { $0 + $1.position }

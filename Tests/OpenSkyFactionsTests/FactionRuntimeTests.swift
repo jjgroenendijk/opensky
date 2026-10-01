@@ -1,7 +1,5 @@
-// Runtime faction membership (issue #503, roadmap item 21.3): seeding from the
-// authored SNAM run, joining and leaving, the refusals, and the derived
-// hostility the runtime answers through the world-state store. No game-derived
-// bytes.
+// Runtime faction membership: seeding from SNAM, joining, leaving, refusals,
+// and the derived hostility.
 
 import FormatsESMTesting
 import Foundation

@@ -1,7 +1,5 @@
-// World > Runtime State verification-surface coverage (M10.1.5): the panel the
-// registry factory builds, the literal accessibility-id contract, and the
-// provider round-trips for every button — which target selector each mutation
-// carries, which slot save and load pass, and how a failed save reads.
+// World > Runtime State: the registry-built panel, literal ids, and each
+// button's provider call: target selector, save and load slot, failed save.
 
 import AppKit
 @testable import OpenSky

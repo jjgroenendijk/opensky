@@ -1,13 +1,6 @@
-// Render debug views + layer isolation (issue #144).
-//
-// The CPU half pins the two things that would otherwise fail silently: the
-// Swift enums drifting away from the C enums the shaders read (a wrong colour
-// on screen is not a test failure), and the composition rule between the layer
-// mask and the subsystem enables.
-//
-// The device-gated half is the evidence that the mask reaches the GPU: draw-stat
-// deltas for the scene and shadow passes, and pixel proof that a debug channel
-// changes the frame while an offscreen render still renders the shipping one.
+// Render debug views and layer isolation. CPU cases check the Swift enums
+// against the shader C enums and the mask-and-enable rule. Device cases check
+// draw stats and that a debug channel changes the frame but not offscreen.
 
 import Foundation
 import Metal

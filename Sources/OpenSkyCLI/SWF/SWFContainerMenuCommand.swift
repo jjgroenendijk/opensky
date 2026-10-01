@@ -1,13 +1,6 @@
-// `swf container-menu`: drive `interface\containermenu.swf` or
-// `interface\bartermenu.swf` through `ContainerMenuMovieBridge` against a real
-// container and a real player inventory, and report what the movie built
-// (M12.2.3, issue #179).
-//
-// The bring-up gate for both menus' data contract, in the CLI rather than only
-// in a test because the real-data XCTest host is unreliable on this machine
-// (docs/tools/environment.md). It only parses args and prints: the bridge and the
-// two-pane list live in `Sources/OpenSkyMenus/`, the pricing in `Sources/OpenSkyGameData/`,
-// and both are unit tested there against synthetic fixtures.
+// `swf container-menu`: drive the container or barter movie through
+// `ContainerMenuMovieBridge` with real inventories. A CLI gate because the
+// real-data XCTest host is unreliable here (docs/tools/environment.md).
 
 import Foundation
 import OpenSkyFormatsSWF

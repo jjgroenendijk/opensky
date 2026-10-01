@@ -1,7 +1,4 @@
-// The ECHG save chunk (issue #472, roadmap item 19.9): round trip, additivity and
-// the tolerance rules the container promises.
-//
-// A save is OpenSky's own format, so nothing here touches game data at all.
+// The ECHG save chunk: round trip, additivity, and the tolerance rules.
 
 import Foundation
 @testable import OpenSkyFormatsESM

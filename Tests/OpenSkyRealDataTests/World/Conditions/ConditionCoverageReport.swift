@@ -1,9 +1,5 @@
-// The text the CTDA coverage sweep leaves behind in gitignored `logs/`
-// (issue #251), kept apart from the tally itself so neither file crowds the
-// length caps.
-//
-// Every number here is an aggregate over the user's own install; the report
-// names function indices and counts, never records.
+// The CTDA coverage sweep's report text for gitignored `logs/`. It names
+// function indices and counts, never records.
 
 import Foundation
 @testable import OpenSkyConditions

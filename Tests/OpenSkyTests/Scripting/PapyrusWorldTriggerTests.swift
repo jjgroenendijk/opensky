@@ -1,9 +1,6 @@
-// `OnTriggerEnter` / `OnTriggerLeave` dispatch (issue #173): queue shape, the
-// player as `akActionRef`, the missing-handler no-op, the bridge seam, and the
-// cell-unload containment ordering against `detach`.
-//
-// Synthetic PEX objects and synthetic REFR records only; the end-to-end walk
-// lives in M11TriggerVolumeWalkTests.
+// `OnTriggerEnter` and `OnTriggerLeave` dispatch: queue shape, the player as
+// `akActionRef`, missing handlers, the bridge, and unload order against
+// `detach`. The end-to-end walk is in M11TriggerVolumeWalkTests.
 
 import FormatsESMTesting
 import OpenSkyFormatsCore

@@ -59,8 +59,8 @@ struct QuestStoreTests {
         #expect(store.journalQuests().map(\.editorID) == ["Shown"])
     }
 
-    /// The Papyrus side arrives holding a `ReferenceKey` and has to name the
-    /// record behind it, so the key index reads both ways (issue #322).
+    /// Papyrus holds a `ReferenceKey` and must name the record behind it, so
+    /// the key index reads both ways.
     @Test("session-stable keys resolve back to their quest")
     func resolvesKeysBackToQuests() throws {
         let store = try QuestFixture.store(

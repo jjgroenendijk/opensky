@@ -58,7 +58,7 @@ struct AudioPanelTests {
             "AudioEffectsVolumeControl", "AudioFootstepsVolumeControl",
             "AudioMusicVolumeControl", "AudioVoiceVolumeControl"
         ])
-        // M9.2.4 per-category mute + solo pins.
+        // Per-category mute and solo pins.
         let muteIDs = panel.outputSection.muteControls.values
             .map { $0.accessibilityIdentifier() }.sorted()
         #expect(muteIDs == [
@@ -73,7 +73,7 @@ struct AudioPanelTests {
         ])
         #expect(panel.outputSection.sectionIdentifier == "audioOutput")
         #expect(panel.sourcesSection.sectionIdentifier == "audioSources")
-        // M9.2.2 SFX + ambience section pins.
+        // SFX and ambience section pins.
         #expect(panel.sfxSection.sectionIdentifier == "audioSfx")
         #expect(
             panel.sfxSection.sfxEnabledControl.accessibilityIdentifier()
@@ -87,7 +87,7 @@ struct AudioPanelTests {
             panel.sfxSection.stopAmbienceControl.accessibilityIdentifier()
                 == "AudioStopAmbienceControl"
         )
-        // M9.2.3 music playlist section pins.
+        // Music playlist section pins.
         #expect(panel.musicSection.sectionIdentifier == "audioMusic")
         #expect(
             panel.audioMusicEnabledControl.accessibilityIdentifier()
@@ -180,8 +180,8 @@ struct AudioPanelTests {
         #expect(fake.stopAmbienceCount == 1)
     }
 
-    /// M9.2.3: the picker offers the automatic entry plus the provider's MUSC
-    /// list, and forcing an entry reaches the director.
+    /// The picker offers the automatic entry plus the provider's MUSC list, and
+    /// forcing an entry reaches the director.
     @Test @MainActor
     func musicPickerForcesTheSelectedPlaylist() {
         let panel = AudioPanelViewController()

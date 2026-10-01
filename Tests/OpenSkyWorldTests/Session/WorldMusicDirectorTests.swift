@@ -200,7 +200,7 @@ struct WorldMusicDirectorTests {
         #expect(director.lastMusicError != nil)
     }
 
-    // MARK: - Shipped-file resolution (issue #246)
+    // MARK: - Shipped-file resolution
 
     /// An authored name the install really holds is used as authored; no
     /// fallback is attempted.

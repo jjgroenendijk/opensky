@@ -1,6 +1,5 @@
-// The registry around the solver (issue #193): residency lifecycle, the
-// resting transforms it hands to persistence, the player's shove, and the
-// panel's freeze and reset controls.
+// The registry around the solver: residency, resting transforms for
+// persistence, the player's shove, and the panel's freeze and reset.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

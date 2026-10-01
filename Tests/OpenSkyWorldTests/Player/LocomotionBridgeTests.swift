@@ -1,11 +1,6 @@
-// Locomotion bridge over synthetic graphs and synthetic terrain (issue #188):
-// gait speeds, the jump arc, the sneak toggle, swim enter and exit, blocked
-// motion, and the paused-frame no-op.
-//
-// The graph here is a synthetic one built in code, declaring the same variable
-// and event names the vanilla census reports. Nothing is extracted from the
-// install (AGENTS.md "Legal & IP boundary"); the real graph is driven by
-// `LocomotionBridgeRealDataTests`.
+// Locomotion bridge on synthetic graphs and terrain: gait speeds, jump arc,
+// sneak, swim, blocked motion, and paused frames. The graph uses the vanilla
+// census names; `LocomotionBridgeRealDataTests` drives the real one.
 
 @testable import OpenSkyBehavior
 @testable import OpenSkyPhysics
@@ -137,9 +132,8 @@ struct LocomotionBridgeTests {
     }
 
     /// An in-place clip never takes movement authority, however far its root
-    /// bone wanders. Authority follows `m_extractedMotion`, not the size of a
-    /// per-step difference — which a single jittery step could cross under the
-    /// speed threshold this replaced (issue #370).
+    /// bone wanders. Authority follows `m_extractedMotion`, not a per-step
+    /// distance that one jittery step could cross.
     @Test
     func anInPlaceClipNeverTakesMovementAuthority() throws {
         let bridge = try LocomotionBridge(

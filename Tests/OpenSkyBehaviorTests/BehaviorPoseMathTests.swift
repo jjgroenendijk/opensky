@@ -1,5 +1,4 @@
-// Behavior pose math (issue #187) against hand-computed values. Pure
-// arithmetic on invented poses; no packfile, no install.
+// Behavior pose math against hand-computed values on invented poses.
 
 import BehaviorTesting
 import Foundation

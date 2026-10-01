@@ -1,7 +1,5 @@
-// World > Audio > SFX & Ambience section (M9.2.2): the verification surface for
-// the world sound director. Independent enable toggles for one-shot SFX and
-// the per-cell ambient bed, plus a stop button and a readout showing the most
-// recent SFX and the current bed. Same shape as the other audio sections.
+// World > Audio > SFX & Ambience: toggles for one-shot SFX and the cell
+// ambient bed, a stop button, and a readout of the last SFX and the bed.
 
 import AppKit
 import OpenSkyWorld

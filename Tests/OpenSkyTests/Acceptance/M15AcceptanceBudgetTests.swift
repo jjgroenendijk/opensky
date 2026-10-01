@@ -1,22 +1,7 @@
-// M15 acceptance, budget half (issue #198): the fight is held to the per-frame
-// budgets that already exist, and adds no set of numbers of its own.
-//
-// The constraint M13 put on M14 and M14 put on M15: combat adds more graph work
-// and a physics step to the same frame, so it is measured against the shipping
-// `animationUpdateBudgetMS` the fly-path validator already enforces and against
-// the same benchmark configuration `openskycli bench --fly-path` uses — not
-// against a second copy of the numbers.
-//
-// The other half of the claim is that the fight is bounded by construction.
-// Four fixed-step clocks run inside one frame — the walk controller's, the
-// combat loop's, the ragdoll registry's and the dynamic body registry's — and
-// every one of them caps what a single stalled frame can drive. A gate that
-// only measured a healthy frame would say nothing about the frame that stalls,
-// and the stall is where a combat scene actually falls over.
-//
-// The timings are synthetic, as they are throughout `CellStreamingFlyPathTests`:
-// these cases pin the gate's behaviour, not this machine's speed. Measured
-// timings against the real install come from `openskycli bench --fly-path`.
+// Combat acceptance, budget half. Graph work and the physics step ride the
+// shipping `animationUpdateBudgetMS` with the bench's validator. Four
+// fixed-step clocks (walk, combat, ragdoll, dynamic bodies) each cap what a
+// stalled frame can drive; that is where a fight breaks. Timings are synthetic.
 
 import Foundation
 @testable import OpenSkyActorsInterface

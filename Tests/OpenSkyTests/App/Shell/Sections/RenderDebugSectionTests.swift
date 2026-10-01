@@ -1,9 +1,6 @@
-// World > Render Debug verification surface (issue #144): the section reached
-// through the real registry factory, its accessibility ids, and the round trip
-// from a control back into the provider and out again as a readout.
-//
-// The ids asserted here are the UI-test API; changing one is a deliberate act
-// that updates these literals in the same commit (docs/tools/app-ui.md).
+// World > Render Debug: the registry-built section, its ids, and the round
+// trip from control to provider to readout. Changing an id updates these
+// literals in the same commit (docs/tools/app-ui.md).
 
 import AppKit
 @testable import OpenSky

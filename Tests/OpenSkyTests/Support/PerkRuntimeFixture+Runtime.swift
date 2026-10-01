@@ -10,7 +10,7 @@ import OpenSkyProgressionTesting
 @testable import OpenSkyWorldState
 
 extension PerkRuntimeFixture {
-    /// Where each fixture perk sits in the fixture tree (issue #499).
+    /// Where each fixture perk sits in the fixture tree.
     public static func trees(index: RecordIndex) -> PerkTreeIndex {
         PerkTreeIndex(
             information: informationStore(index: index),

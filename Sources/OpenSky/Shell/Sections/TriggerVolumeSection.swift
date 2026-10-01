@@ -1,12 +1,6 @@
-// World > World > Triggers section (issue #173): how many trigger volumes the
-// resident cells authored, how they were authored, how many sources were
-// dropped on the way in, whether the player is standing in any of them, and the
-// tail of the enter/leave events that fired.
-//
-// It sits under World rather than under a destination of its own because
-// occupancy only updates in walk mode, and the fly/walk selector is one section
-// above it. Read-only apart from the log clear, which leaves no provider state
-// behind, so the section deliberately inherits the base no-override hooks.
+// World > World > Triggers: trigger-volume counts, dropped sources, player
+// occupancy, and recent enter/leave events. Under World because occupancy
+// needs walk mode, which the Camera section selects.
 
 import AppKit
 import OpenSkyPhysics

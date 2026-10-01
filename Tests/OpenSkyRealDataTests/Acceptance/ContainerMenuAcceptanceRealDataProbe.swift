@@ -1,6 +1,5 @@
-// The probe world and the movie-free half of the M12.2.3 acceptance gate
-// (issue #179). Satellite of ContainerMenuAcceptanceRealDataTests.swift, which
-// drives the two vanilla movies; split so both stay inside the strict-lint
+// The probe world and the movie-free half of the container menu acceptance.
+// ContainerMenuAcceptanceRealDataTests.swift drives the movies; split for the
 // type-length cap.
 
 import Foundation

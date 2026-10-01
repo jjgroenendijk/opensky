@@ -1,11 +1,6 @@
-// The fortify terms the damage formulas read (issue #472, roadmap item 19.9,
-// scope point 3): which actor values each surface sums, and that a fortify effect
-// measurably moves what `MeleeDamage.resolve` and `ArcheryDamage.resolve` return.
-//
-// Arithmetic over a value reader, with no store and no records, which is what
-// makes the whole scope point a plain assertion. The actor values named here are
-// the ones the vanilla records move — measured, and listed in
-// `CombatFortifyBonus`.
+// The fortify terms the damage formulas read: which actor values each surface
+// sums, and that a fortify effect moves `MeleeDamage.resolve` and
+// `ArcheryDamage.resolve`. The values are listed in `CombatFortifyBonus`.
 
 import Foundation
 @testable import OpenSkyActorsInterface

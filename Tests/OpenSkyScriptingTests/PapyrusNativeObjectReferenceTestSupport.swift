@@ -1,9 +1,5 @@
-// Shared fixture for the `ObjectReference` native suites (issue #172): one
-// scripted lever in a synthetic cell, the world-aware native registry over it,
-// and the receiver handle a method call needs.
-//
-// Fixtures are built in code — never extracted game files (AGENTS.md "Legal &
-// IP boundary").
+// Shared fixture for the `ObjectReference` native suites: one scripted lever in
+// a synthetic cell, the native registry, and the receiver handle.
 
 import FormatsESMTesting
 import Foundation

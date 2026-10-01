@@ -1,6 +1,5 @@
-// Shared synthetic values for the trigger-volume runtime tests (issue #173):
-// box volumes, cell scenes carrying them, and capsule poses. Every value is
-// built in code; no game content is involved.
+// Shared values for the trigger-volume tests: box volumes, cell scenes with
+// them, and capsule poses.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

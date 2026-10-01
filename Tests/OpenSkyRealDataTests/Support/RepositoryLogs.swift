@@ -1,14 +1,8 @@
 import Foundation
 
-/// The checkout's gitignored `logs/` directory, where real-data suites leave
-/// reports and captures.
-///
-/// `#filePath` cannot name it: `Config/Build/Debug.xcconfig` turns on the
-/// compilation cache's prefix mapping, which compiles every source path to
-/// `/^src/...`. The working directory cannot either, because the test host's is
-/// `/`. The test bundle itself is built into the checkout's derived data
-/// (`<checkout>/DerivedData/Build/Products/...`), so the checkout is the nearest
-/// ancestor of the bundle that holds `OpenSky.xcodeproj`.
+/// The checkout's gitignored `logs/` directory. `#filePath` reads `/^src/...`
+/// under the compilation cache, and the host's working directory is `/`, so
+/// this walks up from the test bundle to the folder with `OpenSky.xcodeproj`.
 enum RepositoryLogs {
     struct CheckoutNotFound: Error, CustomStringConvertible {
         let bundle: URL

@@ -1,6 +1,5 @@
-// The `World > Crime & Factions` readout wording (issue #507): the reaction
-// line names the term that answered and every term beneath it, and the vendor
-// line judges the window at the game hour.
+// The `World > Crime & Factions` readout wording: the reaction line names the
+// deciding term and every term below it; the vendor line uses the game hour.
 
 import Foundation
 @testable import OpenSkyActorsInterface

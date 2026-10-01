@@ -1,13 +1,6 @@
-// The character level curve (issue #499, roadmap item 20.6): what the next
-// level costs, what a running total is worth, and what banking experience does
-// to a level.
-//
-// Every number here is hand-computable from the two settings, and the ones UESP
-// prints outright — 100 to leave level 1, 1300 to leave level 49, and the
-// closed form of the running total — are asserted against rather than restated,
-// so a change to either formula fails here before it reaches a session.
-// `CharacterLevelingRealDataTests` is what checks the install still authors the
-// two settings this suite assumes.
+// The character level curve: next-level cost, running totals, and banked
+// experience. UESP's numbers (100 to leave level 1, 1300 to leave level 49) are
+// checked directly. `CharacterLevelingRealDataTests` checks the settings.
 
 import FormatsESMTesting
 import Foundation

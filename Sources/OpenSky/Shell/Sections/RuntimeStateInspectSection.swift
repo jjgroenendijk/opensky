@@ -1,9 +1,5 @@
-// World > Runtime State > Inspect section (M10.1.5): the read-only view of the
-// world-state store — how many references the resident cells hold, how many of
-// them deviate from plugin data, and the tail of the mutation journal.
-//
-// Purely a readout, so it is never overridden and its reset is a no-op: nothing
-// here is a setting the user can leave in a non-default position.
+// World > Runtime State > Inspect: reference counts, how many deviate from
+// plugin data, and the tail of the mutation journal. A readout only.
 
 import AppKit
 import OpenSkyWorld

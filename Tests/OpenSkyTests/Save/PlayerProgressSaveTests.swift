@@ -1,7 +1,5 @@
-// The `PLVL` chunk (issue #499, roadmap item 20.6): the character-level round
-// trip, the clamping a load has to survive, and the absent-chunk case that
-// keeps a save with no leveling byte-identical to what this encoder produced
-// before the chunk existed.
+// The `PLVL` chunk: level round trip, load clamping, and an absent chunk
+// keeping a save without leveling byte-identical.
 
 import Foundation
 @testable import OpenSkyActors

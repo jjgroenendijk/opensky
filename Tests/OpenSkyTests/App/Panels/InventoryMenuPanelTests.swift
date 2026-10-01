@@ -1,6 +1,5 @@
-// World > Inventory Menu acceptance-surface coverage (issue #289). Synthetic
-// provider state only; the real-install movie bring-up gate is the env-gated
-// acceptance test.
+// World > Inventory Menu with synthetic provider state. The real movie
+// bring-up is the env-gated acceptance test.
 
 import AppKit
 @testable import OpenSky

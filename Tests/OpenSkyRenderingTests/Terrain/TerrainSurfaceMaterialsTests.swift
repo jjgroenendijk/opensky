@@ -1,5 +1,5 @@
-// Exterior ground's material comes from the landscape texture painted heaviest
-// at each vertex (issue #358). Synthetic LAND records only.
+// Exterior ground takes the material of the landscape texture painted heaviest
+// at each vertex.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

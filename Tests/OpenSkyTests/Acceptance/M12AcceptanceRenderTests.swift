@@ -1,18 +1,6 @@
-// M12 acceptance, pixel half (issue #180): the three loop steps that are
-// supposed to change what is on screen actually do, measured as a changed-pixel
-// count rather than eyeballed.
-//
-// Each case renders the same cell twice through the real `CellSceneBuilder` and
-// the real `Renderer` — once at the state before the step and once at the state
-// after it — from one fixed camera, and compares the two frames. A fixed camera
-// rather than a framing one on purpose: a camera fitted to the scene's bounds
-// would move when the geometry changed, and every pixel would differ for a
-// reason that has nothing to do with the step.
-//
-// Synthetic ESM and NIF bytes throughout, so the frames embed no game content
-// and nothing is written to disk outside the fixture's temporary directory.
-// Gated on a Metal 4 device; the loop's own evidence is `M12AcceptanceTests`,
-// which needs no GPU.
+// Inventory acceptance, pixel half: each step that should change the screen
+// does, by changed-pixel count. A fixed camera renders before and after; a
+// fitted camera would move with the geometry. Needs Metal 4.
 
 import FormatsMeshTesting
 import Foundation
@@ -54,15 +42,9 @@ struct M12AcceptanceRenderTests {
 
     // MARK: - Take and drop
 
-    /// Taking the loose item removes its pixels, and dropping one puts pixels
-    /// back — the same pixels, because both cases place the same model at the
-    /// same spot, one from a plugin record and one from world state alone.
-    ///
-    /// Four frames rather than two pairs, so the two directions can be checked
-    /// against each other: the strongest statement available here is not "the
-    /// count changed" but "the taken cell is byte-identical to a cell that
-    /// never held the item, and the dropped one is byte-identical to a cell
-    /// whose plugin placed it".
+    /// Taking the item removes its pixels and dropping puts them back. The
+    /// taken frame must equal a cell that never held it, and the dropped frame
+    /// a cell whose plugin placed it.
     @Test(.enabled(if: CellSceneFixture.hasDevice))
     func takingRemovesTheItemsPixelsAndDroppingPutsThemBack() throws {
         let cells = try CellSceneFixture()
@@ -113,14 +95,9 @@ struct M12AcceptanceRenderTests {
 
     // MARK: - Equip
 
-    /// Equipping a different body piece on an actor changes its silhouette: the
-    /// two pieces claim the same slot and carry different geometry, so the
-    /// rebuilt actor is drawn from the runtime set rather than the outfit.
-    ///
-    /// Equipping the outfit's own piece explicitly is the control: the same
-    /// build path runs, the runtime set is honoured, and the frame comes back
-    /// byte-identical to the untouched actor's — so the delta above is the
-    /// piece that changed, not the rebuild itself.
+    /// Equipping another body piece changes the silhouette. Equipping the
+    /// outfit's own piece is the control: its frame matches the untouched
+    /// actor, so the change comes from the piece, not the rebuild.
     @Test(.enabled(if: CellSceneFixture.hasDevice))
     func theEquippedActorsSilhouetteChanges() throws {
         let cells = try CellSceneFixture()
@@ -220,13 +197,9 @@ struct M12AcceptanceRenderTests {
         )
     }
 
-    /// One upright triangle in the XZ plane, sized in game units.
-    ///
-    /// `CellSceneFixture.unitNIF` is one unit across, which sits inside
-    /// the renderer's ten-unit near plane from any camera close enough to see
-    /// it. Every model here is built at Skyrim scale instead, and the equip
-    /// case gives its two body pieces different sizes so swapping one for the
-    /// other is a change in shape rather than only in which asset loaded.
+    /// One upright triangle in the XZ plane, in game units. `unitNIF` is one
+    /// unit across, inside the ten-unit near plane. The two body pieces differ
+    /// in size so a swap changes the shape.
     private static func triangleNIF(
         _ cells: CellSceneFixture,
         halfWidth: Float = 120,

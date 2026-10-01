@@ -1,6 +1,5 @@
-// The acceptance behaviour of the dynamic solver (issue #193): a dropped box
-// settles and sleeps, an impulse wakes it, and a crowded scene stays finite,
-// stays above the floor, and produces the same resting state twice.
+// The dynamic solver: a dropped box settles and sleeps, an impulse wakes it,
+// and a crowded scene stays finite, above the floor, and repeatable.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

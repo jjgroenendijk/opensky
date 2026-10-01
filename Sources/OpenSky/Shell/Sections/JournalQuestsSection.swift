@@ -1,11 +1,6 @@
-// World > Quests & Journal > Quests section (issue #184): what the session's
-// quests are doing, and which one the rest of the destination acts on.
-//
-// The list half is a readout — running state, current stage and per-objective
-// display state — so nothing here is a setting and its reset is a no-op. The
-// quest picker is not a setting either: it selects what to inspect, exactly as
-// the Scripts panel's alias picker does, and the two share the same combo-box
-// component so a quest is named the same way on both surfaces.
+// World > Quests & Journal > Quests: quest state, and the quest the other
+// sections act on. The picker shares its combo-box with the Scripts panel, so
+// a quest has the same name on both.
 
 import AppKit
 import OpenSkyMenus

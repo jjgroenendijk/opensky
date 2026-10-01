@@ -1,13 +1,6 @@
-// The `Actor` perk natives (issue #497, roadmap item 20.4): `AddPerk`,
-// `RemovePerk` and `HasPerk` over a live perk runtime, plus the two refusals a
-// script has to be able to tell apart.
-//
-// The bridge closures are the session's — a mutation goes through `PerkRuntime`
-// and lands in the world-state store, so a scripted grant is saved exactly like
-// a seeded one.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// `AddPerk`, `RemovePerk`, and `HasPerk` over a live perk runtime, and the two
+// refusals. Grants go through `PerkRuntime` into the store, so a scripted perk
+// saves like a seeded one.
 
 import FormatsESMTesting
 import Foundation

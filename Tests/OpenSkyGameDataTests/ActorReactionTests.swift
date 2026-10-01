@@ -1,6 +1,5 @@
-// The reaction enum (issue #503): the two mappings the Creation Kit wiki
-// authors, the ordering the derivation relies on, and the aggression table that
-// turns a reaction into a drawn weapon. No game-derived bytes.
+// The reaction enum: the two Creation Kit wiki mappings, the order the
+// derivation relies on, and the aggression table that draws a weapon.
 
 import Foundation
 @testable import OpenSkyFormatsESM

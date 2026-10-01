@@ -1,10 +1,6 @@
-// Synthetic Havok packfile (HKX) byte builder shared by HKX container tests.
-// Fixtures are built in code — never extracted game files (AGENTS.md "Legal &
-// IP boundary"). Layout follows the SSE hk_2010.2.0-r1 64-bit packfile map in
-// docs/formats/hkx-container.md (header 64B, section headers 48B, class-name
-// table, fixup tables). Signatures + names below are invented, not copied.
-//
-// Reuses the `Data.appendUInt32`/`appendUInt64` helpers from BSAFixture.swift.
+// Synthetic HKX packfile builder for the container tests. Layout follows the
+// SSE 64-bit map in docs/formats/hkx-container.md. Signatures and names are
+// invented. Uses `Data.appendUInt32`/`appendUInt64` from BSAFixture.swift.
 
 import FormatsCoreTesting
 import Foundation

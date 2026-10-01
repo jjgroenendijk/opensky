@@ -1,8 +1,5 @@
-// The launch and navigation helpers every UI-test case shares (issue #198 split
-// them out of `OpenSkyUITests` for the strict-lint type-length cap).
-//
-// A base class rather than a free function pair, because both helpers need
-// `addTeardownBlock` and the `XCUIApplication` lifetime the case owns.
+// Launch and navigation helpers for every UI-test case. A base class because
+// both need `addTeardownBlock` and the case's `XCUIApplication`.
 
 import XCTest
 
@@ -39,14 +36,9 @@ class OpenSkyUITestCase: XCTestCase {
         return app
     }
 
-    /// Selects a sidebar destination by its registered accessibility id.
-    ///
-    /// The rows are `NSTableCellView`s, which AppKit publishes to the
-    /// accessibility hierarchy as groups rather than `AXCell`s, so
-    /// `outlines["AppSidebar"].cells[...]` never matches one however correct the
-    /// identifier is. Matching on the identifier alone is what actually reaches
-    /// the row, and is the assertion `DestinationRegistryTests` cannot make: it
-    /// pins the id string, not its reachability in the built hierarchy.
+    /// Selects a sidebar destination by accessibility id. AppKit publishes the
+    /// `NSTableCellView` rows as groups, not `AXCell`s, so
+    /// `outlines["AppSidebar"].cells[...]` never matches; the id alone does.
     @MainActor
     func selectDestination(_ identifier: String, in app: XCUIApplication) {
         let sidebar = app.outlines["AppSidebar"]

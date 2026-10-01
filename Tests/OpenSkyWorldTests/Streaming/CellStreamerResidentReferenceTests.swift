@@ -1,11 +1,6 @@
-// Resident runtime-reference accounting for the streamer (issue #162, roadmap
-// item 10.1.5): the number the sidebar readout shows for "references in
-// memory".
-//
-// Split from CellStreamerRuntimeStateTests so both stay inside the type-body
-// limit. Scenes are built here rather than through
-// `CellStreamerFixture.cellScene` because that fixture retains no references, and
-// `CellScene.references` is immutable once built.
+// The streamer's resident reference count, shown in the sidebar. Scenes are
+// built here because `CellStreamerFixture.cellScene` keeps no references and
+// `CellScene.references` is immutable.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

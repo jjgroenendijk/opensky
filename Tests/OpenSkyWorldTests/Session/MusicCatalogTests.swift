@@ -129,9 +129,8 @@ struct MusicCatalogTests {
         #expect(selection.state == .exploration)
     }
 
-    /// The vanilla authoring form (`\Data\Music\...\*.wav`) stays playable: the
-    /// leading separator is a root marker, and the extension mismatch is
-    /// resolved at load time, not by the playable filter (issue #246).
+    /// The vanilla form `\Data\Music\...\*.wav` stays playable: the leading
+    /// separator marks the root, and the extension is fixed at load time.
     @Test func separatorLedWavTracksSurviveThePlayableFilter() {
         let selection = MusicSelection.resolve(
             context: MusicFixture.context(cellMusicType: 0x20),

@@ -1,10 +1,6 @@
-// The combat loop from breaking off to going back to work (issue #424, roadmap
-// item 16.7): fleeing, losing the player, searching, giving up, dying, being
-// calmed, script control, crowds, music, caps, persistence and determinism.
-//
-// The second half of the acceptance sentence `CombatLoopRuntimeTests` opens.
-// Split for the strict lint type cap; the session both halves build lives in
-// `CombatLoopFixture`.
+// The combat loop from breaking off to going back to work: flee, lose the
+// player, search, give up, die, calm, crowds, music, caps, persistence, and
+// determinism. Shared setup is in `CombatLoopFixture`.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat

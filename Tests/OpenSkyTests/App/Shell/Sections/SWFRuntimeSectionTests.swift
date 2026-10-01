@@ -1,11 +1,6 @@
-// Developer > UI Lab > SWF runtime section coverage (M8.3.3): every control
-// drives the provider with the argument the acceptance sequence needs, the
-// controls gate on whether a runtime is up, the callback list mirrors the
-// movie's own registrations, and the three readouts render movie state, invoke
-// log, and op tally instead of crashing.
-//
-// The accessibility ids are pinned literally — they are the UI-test API while
-// make test-ui is blocked on this machine (docs/tools/app-ui.md).
+// Developer > UI Lab > SWF runtime: each control sends the right argument,
+// controls wait for a runtime, the callback list mirrors the movie, and the
+// readouts render. Ids are pinned (docs/tools/app-ui.md).
 
 import AppKit
 @testable import OpenSky

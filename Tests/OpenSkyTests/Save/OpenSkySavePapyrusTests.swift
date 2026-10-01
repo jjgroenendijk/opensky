@@ -1,10 +1,6 @@
-// PSCR chunk coverage for the OpenSky native save container (issue #171):
-// Papyrus script instance state round-trips, bytes stay deterministic, an
-// absent chunk means no saved script state, corrupt payloads throw rather than
-// crash, and an unknown chunk appended after PSCR is still skipped.
-//
-// Every fixture is built in code — a save is OpenSky's own format and a
-// synthetic PEX object is not game data. See docs/formats/opensky-save-world-chunks.md.
+// PSCR chunk: script state round trip, deterministic bytes, absent chunk means
+// no script state, corrupt payloads throw, and a later unknown chunk is
+// skipped. See docs/formats/opensky-save-world-chunks.md.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

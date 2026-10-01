@@ -1,11 +1,6 @@
-// The M15 gate's input half (issue #198), in a satellite of
-// `M15AcceptanceChain.swift` for the strict-lint type-length cap.
-//
-// Every press and click below goes into `GameMetalView`, which is the object
-// the window hands an event to. Nothing here reaches `CameraInputState`
-// directly: a route that set the latch itself would be testing the latch rather
-// than the binding, and the binding is exactly what a gate about "drivable
-// without knowing a key" has to prove.
+// The combat gate's input half, split for the type-length cap. Every event
+// goes into `GameMetalView`, never `CameraInputState`, so the key bindings
+// themselves are tested.
 
 import AppKit
 import Testing

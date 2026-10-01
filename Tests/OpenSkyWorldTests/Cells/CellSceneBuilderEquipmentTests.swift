@@ -1,14 +1,6 @@
-// Runtime equipment through a whole cell build (issue #178, roadmap item
-// 12.2.1): an actor whose inventory component carries an equipped set is
-// rebuilt wearing it, and an actor with no component still resolves from its
-// plugin default outfit.
-//
-// This is the integration half of the acceptance. The unit tests prove the
-// resolver honours an equipped set; this proves the set actually reaches it
-// from a `WorldStateSnapshot`, through the same build path the streamer runs
-// after `noteStateMutation`.
-//
-// Synthetic ESM + NIF bytes only, never extracted game files.
+// Runtime equipment through a cell build: an actor with an equipped set is
+// rebuilt wearing it from a `WorldStateSnapshot`; an actor without one uses
+// its plugin outfit.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

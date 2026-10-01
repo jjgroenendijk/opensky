@@ -1,6 +1,5 @@
-// The rolling trigger-transition log behind World > World > Triggers
-// (issue #173): line format, newest-last ordering, the bounded ring, and the
-// honest recorded total a truncated ring still reports.
+// The trigger log behind World > World > Triggers: line format, newest last,
+// the bounded ring, and the true total a truncated ring still reports.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics

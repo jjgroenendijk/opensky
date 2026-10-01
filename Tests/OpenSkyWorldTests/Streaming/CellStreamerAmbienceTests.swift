@@ -1,7 +1,5 @@
-// CellStreamer ambience-context emission (M9.2.2): the streamer pushes a fresh
-// `AmbienceContext` whenever the center cell changes (exterior recenter,
-// interior enter/exit). Extension of CellStreamerTests to reuse its synthetic
-// runner + CellScene helpers without growing that file past the length limit.
+// CellStreamer pushes a new `AmbienceContext` when the center cell changes.
+// Extends CellStreamerTests to reuse its helpers within the length limit.
 
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM

@@ -1,9 +1,5 @@
-// Developer > UI Lab AS2 runtime readout coverage (M8.3.3). The three readouts
-// the milestone gate names — movie state, invoke log, op tally — are pure
-// functions of a value snapshot, so their exact wording is asserted here
-// without AppKit, without a Metal device, and without a game install. The
-// truncation cases matter most: a clipped list must still say how much it
-// stopped showing.
+// UI Lab AS2 runtime readout wording: movie state, invoke log, and op tally.
+// The truncation cases matter most: a clipped list must say how much it hid.
 
 import FormatsSWFTesting
 @testable import OpenSkyFormatsSWF

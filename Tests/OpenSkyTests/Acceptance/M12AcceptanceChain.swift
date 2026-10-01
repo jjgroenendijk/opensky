@@ -1,14 +1,6 @@
-// The M12 gate's world, built once and shared by the loop and render halves
-// (issue #180).
-//
-// One synthetic plugin — `InventoryBaselineFixture`, which the rest of M12
-// already tests against — plus three placed references: a loose iron sword to
-// take, a chest to transfer through, and a second chest standing in as the
-// merchant. A guard actor is the owner an equip is visible on.
-//
-// No game content anywhere: every record is assembled in code from the
-// published layouts (AGENTS.md "Legal & IP boundary"), and nothing here needs a
-// Metal device or an install.
+// The inventory gate's world, shared by the loop and render halves:
+// `InventoryBaselineFixture` plus a loose iron sword, a chest, and a merchant
+// chest. A guard is the actor an equip is visible on. No Metal or install.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

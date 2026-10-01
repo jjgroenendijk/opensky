@@ -227,11 +227,8 @@ struct NIFModelTests {
     }
 
     @Test func chainAtDepthCapFlattensOnASmallStack() throws {
-        // The depth cap is a policy limit on scene graphs, not a stand-in for
-        // the caller's stack budget: a chain right at the cap has to flatten on
-        // a 64 KB thread stack, well under the 512 KB a secondary thread gets
-        // by default (issue #388). A recursive walk exhausts that stack and
-        // takes the whole process down on a guard-page hit.
+        // A chain at the depth cap must flatten on a 64 KB stack, well under
+        // the 512 KB of a secondary thread. A recursive walk would overflow it.
         let depthCap = 64
         let blocks = (0 ... depthCap).map { index in
             NIFFixture.Block("NiNode", NIFFixture.niNode(

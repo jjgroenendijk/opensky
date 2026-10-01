@@ -1,7 +1,5 @@
-// Trigger-volume collection into CellScene (issue #173): the XPRM primitive
-// source, the SkyrimLayer 12 NIF-body source, the primitive types that are
-// deliberately excluded, and the static-collision accounting that must not
-// move. Synthetic ESM + NIF bytes only; no game content.
+// Trigger-volume collection: XPRM primitives, SkyrimLayer 12 NIF bodies, the
+// excluded primitive types, and unchanged static-collision accounting.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -202,8 +200,8 @@ extension CellSceneBuilderTests {
     }
 }
 
-/// Fan-out of the trigger queries across resident cells (issue #173). No Metal
-/// device needed: the scenes are assembled directly from placed volumes.
+/// Trigger queries across resident cells. No Metal: scenes are built directly
+/// from placed volumes.
 struct TriggerVolumeCompositionTests {
     private func volume(_ objectID: UInt32, at center: SIMD3<Float>) throws -> TriggerVolume {
         try #require(TriggerVolume.placed(

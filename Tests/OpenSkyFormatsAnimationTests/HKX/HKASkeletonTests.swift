@@ -1,4 +1,4 @@
-// hkaSkeleton decode + name-map tests (todo 6.2) over synthetic in-code
+// hkaSkeleton decode + name-map tests over synthetic in-code
 // packfiles — never extracted game files (AGENTS.md "Legal & IP boundary").
 // Bone names are invented, not vanilla Skyrim bone names. Object byte map:
 // docs/formats/hka-skeleton.md.

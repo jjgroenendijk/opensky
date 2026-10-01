@@ -1,9 +1,5 @@
-// Container transfer session tests (issue #177, roadmap item 12.1.3): listing
-// a container's effective contents, moving items both ways, and the open-state
-// bookkeeping a menu will later sit on top of.
-//
-// Split from `WorldItemRuntimeTests`, whose fixtures it reuses, so both suites
-// stay inside the strict-lint type-length cap.
+// Container transfer sessions: effective contents, moves both ways, and
+// open-state bookkeeping. Reuses `WorldItemRuntimeTests` fixtures.
 
 import Foundation
 @testable import OpenSkyInventory

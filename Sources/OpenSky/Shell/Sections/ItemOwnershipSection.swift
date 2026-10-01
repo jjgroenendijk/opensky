@@ -1,11 +1,6 @@
-// World > Inventory & Equipment > Ownership: the `XOWN`/`XRNK` reading for
-// whatever the crosshair is on (issue #180, decoded in issue #175).
-//
-// Read-only by design, and it has no control at all. Ownership is not a setting
-// a developer forces; it is a fact about a placed reference, and the only
-// question worth answering is whether the take the panel above just did was
-// theft. Nothing enforces it — a crime system is not in this milestone — so the
-// readout says that too rather than letting silence imply enforcement.
+// World > Inventory & Equipment > Ownership: the `XOWN`/`XRNK` fields of the
+// crosshair target. Read-only, because ownership is a fact about a placed
+// reference.
 
 import AppKit
 import OpenSkyInventory

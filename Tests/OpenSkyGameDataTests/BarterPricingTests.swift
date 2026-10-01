@@ -1,9 +1,6 @@
-// Vanilla barter pricing (issue #179) against the published worked examples.
-//
-// Source for every expectation here: UESP "Skyrim:Speech", section "Prices"
-// (https://en.uesp.net/wiki/Skyrim:Speech#Prices). The three factor values and
-// the two trade price caps are quoted numbers from that page, not values this
-// implementation produced and then had a test written around.
+// Vanilla barter pricing against UESP "Skyrim:Speech", section "Prices"
+// (https://en.uesp.net/wiki/Skyrim:Speech#Prices). The factors and price caps
+// are quoted from that page.
 
 import FormatsESMTesting
 import Foundation

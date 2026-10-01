@@ -1,10 +1,6 @@
-// Spell projectiles through the arrow pipeline (issue #471, roadmap item 19.8,
-// scope points 1, 2 and 6): one shot model, PROJ-driven flight, and what a
-// landed spell reaches.
-//
-// The fake world is the archery suites' own `FakeProjectileWorld`, which is the
-// point: a spell projectile that needed a second fake would be a second flight
-// engine wearing the first one's name.
+// Spell projectiles through the arrow pipeline. They reuse
+// `FakeProjectileWorld` on purpose: a spell needing its own fake would mean a
+// second flight engine.
 
 import Foundation
 @testable import OpenSkyCombat

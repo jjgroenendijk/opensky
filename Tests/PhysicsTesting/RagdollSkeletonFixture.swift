@@ -1,11 +1,6 @@
-// A decoded skeleton assembled in code: the input the ragdoll build takes,
-// without any NIF bytes (issue #197, item 15.6; extended for issue #413).
-//
-// Shared by `RagdollDefinitionTests`, which is about the resolution step, and
-// `RagdollSelfCollisionTests`, which is about the biped filter bits the same
-// bodies carry. Both want the same two-or-more-bone skeleton and differ only in
-// what they put in the `HavokFilter`, so the filters are a parameter and
-// everything else is fixed.
+// A decoded skeleton built in code for the ragdoll build. Shared by
+// `RagdollDefinitionTests` and `RagdollSelfCollisionTests`, which differ only
+// in their `HavokFilter`s, so filters are a parameter.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
@@ -27,15 +22,9 @@ public enum RagdollSkeletonFixture {
         (0 ..< count).map { MatrixMath.translation(SIMD3(Float($0) * spacing, 0, 0)) }
     }
 
-    /// One collision body per named bone, plus a ragdoll cone joining each
-    /// consecutive pair at the midpoint between them.
-    ///
-    /// The pivots are authored in each body's own entity space, exactly as a NIF
-    /// authors them: the joint sits at `+spacing/2` from the first body and
-    /// `-spacing/2` from the second.
-    ///
-    /// `filters` are index-aligned with `boneNames`; a name past the end of the
-    /// list gets the inert static filter, which carries no biped part.
+    /// One body per bone and a cone joint at each midpoint. Pivots are in each
+    /// body's entity space, as a NIF writes them: `+spacing/2` and `-spacing/2`.
+    /// A name past the end of `filters` gets the inert static filter.
     public static func model(
         boneNames: [String],
         filters: [NIFCollisionFilter] = []

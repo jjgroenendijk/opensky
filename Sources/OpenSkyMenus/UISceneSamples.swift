@@ -1,7 +1,6 @@
-// Built-in UI sample scenes (M8.1.1). `labSample` is the milestone's
-// verification scene: heading + body text, a long wrapped paragraph, a filled
-// panel with border, and anchored corner markers exercising the four corners.
-// Tests render it offscreen; the later UI Lab sidebar panel displays it.
+// Built-in UI sample scenes. `labSample` has heading and body text, a wrapped
+// paragraph, a bordered panel, and corner markers. Tests render it offscreen;
+// UI Lab displays it.
 
 import OpenSkyRendering
 import simd

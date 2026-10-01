@@ -185,10 +185,8 @@ struct RendererSWFTests {
         #expect(changed > 100, "text changed only \(changed) pixels")
     }
 
-    /// Issue #127: the glyph atlas is shared and fixed-size, so swapping movies
-    /// has to hand the old movie's cells back. Without eviction each swap packs
-    /// the same glyphs under a fresh generation key until the atlas is full and
-    /// later text draws nothing.
+    /// The glyph atlas is shared and fixed-size, so a movie swap must return
+    /// the old cells, or the atlas fills and later text draws nothing.
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func swappingMoviesReleasesTheirGlyphCells() throws {

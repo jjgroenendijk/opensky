@@ -1,11 +1,6 @@
-// The detection formula as arithmetic (issue #202, roadmap item 16.6): the
-// distance attenuation, the three terms, the gait table, and the derived noise
-// radius.
-//
-// Every number here is checked against the formula written in
-// `DetectionFormula`'s header rather than against a previously recorded output,
-// so a change to a constant that also changes the shape fails here instead of
-// being blessed by a regenerated expectation.
+// The detection formula as arithmetic: distance falloff, the three terms, the
+// gait table, and noise radius. Values come from the formula in
+// `DetectionFormula`, not from recorded output.
 
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface

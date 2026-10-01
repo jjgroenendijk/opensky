@@ -1,6 +1,5 @@
-// Satellite of DestinationRegistryTests (issue #180): the
-// World > Inventory & Equipment destination's slice of the registry contract.
-// Split out because the parent file sits at the length limit.
+// The World > Inventory & Equipment slice of the registry contract, split
+// from DestinationRegistryTests for the length limit.
 
 import AppKit
 @testable import OpenSky

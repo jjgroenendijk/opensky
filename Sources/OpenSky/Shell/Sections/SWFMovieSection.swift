@@ -1,8 +1,5 @@
-// Developer > UI Lab > SWF movie section (M8.2.5): picks a vanilla movie from
-// the located install, toggles the SWF layer, and shows the movie's frame-1 tag
-// tally beside the last frame's draw stats. Self-contained
-// PanelSectionViewController hosted by the direct-content UI Lab panel; talks to
-// the engine only through SWFLabControlProviding.
+// Developer > UI Lab > SWF movie: pick a vanilla movie, toggle the SWF layer,
+// and compare the frame-1 tag tally with the last frame's draw stats.
 
 import AppKit
 import OpenSkyMenus

@@ -1,7 +1,6 @@
-// Toolbar screenshot flow (issue #98 PR 2), moved out of the old
-// MainViewController: save panel -> offscreen render of the live World camera
-// via GameViewController.writeScreenshot(to:) -> transient "Saved" button
-// state, or an action-scoped error sheet.
+// Toolbar screenshot flow: save panel, offscreen render of the World camera
+// through `GameViewController.writeScreenshot(to:)`, then a "Saved" state or
+// an error sheet.
 
 import AppKit
 import UniformTypeIdentifiers

@@ -1,10 +1,6 @@
-// Recording double and snapshot builder for the dialogue seam (issue #205),
-// shared by the panel suite and by the destination-registry satellite.
-//
-// It lives in its own file for the same reason the journal fixture does: stored
-// properties cannot live in an extension, so a fake shared across suites has to
-// be one type in one file, and `FakeWorldProviders` already sits near the repo
-// file-length limit.
+// Recording fake and snapshot builder for the dialogue seam, shared by the
+// panel and registry suites. One file, because stored properties cannot live
+// in an extension.
 
 import AppKit
 @testable import OpenSkyFormatsESM

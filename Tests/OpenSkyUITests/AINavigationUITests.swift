@@ -1,17 +1,11 @@
-// World > AI & Navigation UI surface (issue #203, roadmap item 16.8), in its own
-// case rather than in `OpenSkyUITests` for the strict-lint type-length cap.
-//
-// The id contract is pinned in `DestinationRegistryTests` and
-// `M16AcceptancePanelTests` as well; only a UI test proves the ids are reachable
-// in the built view hierarchy, which is the gap issue #380 recorded.
+// World > AI & Navigation UI test, its own case for the type-length cap. Unit
+// tests pin the ids; only a UI test proves they are reachable.
 
 import XCTest
 
 final class AINavigationUITests: OpenSkyUITestCase {
-    /// World > AI & Navigation acceptance surface (M16, issue #203): the sidebar
-    /// lists the destination the milestone gate names, and selecting it exposes
-    /// every control the gate drives together with the seven readouts they
-    /// change.
+    /// The sidebar lists World > AI & Navigation, and selecting it shows every
+    /// gate control and the seven readouts they change.
     @MainActor
     func testAINavigationControlsAndReadouts() throws {
         let app = try launchApp()

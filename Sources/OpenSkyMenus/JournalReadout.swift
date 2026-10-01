@@ -1,16 +1,8 @@
 import OpenSkyRendering
 
-// World > Quests & Journal readout text (issue #184): the device-free half of
-// the journal verification surface.
-//
-// Every line the panel shows is a pure function of one
-// `JournalControlSnapshot`, exactly as `ScriptsReadout` is of one
-// `ScriptsSnapshot`. Keeping the wording here rather than inside the section
-// view controllers is what lets the text be asserted without AppKit, without a
-// Metal device, and without a game install.
-//
-// No AppKit import on purpose: the file compiles into both the app and the CLI
-// target, so it needs no project-membership exception.
+// World > Quests & Journal readout text. Pure functions of
+// `JournalControlSnapshot`, so tests check the wording without AppKit, Metal,
+// or an install.
 
 nonisolated public enum JournalReadout: Sendable {
     /// What the session's quests are doing, plus the rows the panel lists.

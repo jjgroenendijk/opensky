@@ -1,10 +1,6 @@
-// An actor's authored spell list (issue #473, roadmap item 19.10, scope point
-// 1): which record in a template chain supplies it, the race list beside it,
-// and the leveled spell lists an entry may route through.
-//
-// Records are synthetic and built in code — never extracted game files
-// (AGENTS.md "Legal & IP boundary"). `ActorSpellBaselineRealDataTests` pins the
-// same resolution against a vanilla caster.
+// An actor's authored spell list: which record in a template chain supplies
+// it, the race list, and leveled spell lists. `ActorSpellBaselineRealDataTests`
+// checks the same against a vanilla caster.
 
 import Foundation
 @testable import OpenSkyFormatsESM

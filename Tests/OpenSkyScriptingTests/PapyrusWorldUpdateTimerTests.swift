@@ -1,12 +1,7 @@
-// Update-timer registry and the `Form` natives (issue #277): single-shot and
-// repeating cadence at the fixed step, slot replacement and coexistence,
-// interval clamping, same-step registration order, and bytecode dispatch
-// through a script chain that declares the natives on `Form`.
-//
-// Synthetic PEX objects and synthetic REFR records only. Real-time cadence is
-// asserted in the scheduler's own arithmetic — the first step `n` where
-// `Double(n) * fixedStepSeconds >= interval` — so the expectations share the
-// exact rounding the registry uses.
+// Update timers and the `Form` natives: single and repeating cadence, slot
+// replacement, interval clamping, registration order, and bytecode dispatch.
+// Cadence uses the registry's rule: the first `n` with
+// `Double(n) * fixedStepSeconds >= interval`.
 
 import FormatsESMTesting
 import FormatsPEXTesting

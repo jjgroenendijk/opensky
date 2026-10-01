@@ -1,6 +1,5 @@
-// GameClock advancement, calendar derivation and scrubbing (issue #164).
-// Calendar facts asserted here follow UESP Lore:Calendar and Skyrim:Time as
-// cited in Sources/OpenSkyWorldState/GameClock.swift. See docs/engine/game-clock.md.
+// GameClock advance, calendar, and scrubbing, following the UESP sources cited
+// in GameClock.swift. See docs/engine/game-clock.md.
 
 import Foundation
 @testable import OpenSkyRendering

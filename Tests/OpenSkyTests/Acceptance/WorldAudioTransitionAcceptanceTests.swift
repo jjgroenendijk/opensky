@@ -1,20 +1,7 @@
-// M9 acceptance, synthetic half of the "door SFX, ambience, and music
-// transitioning between interior and exterior" sentence (issue #157): one
-// exterior -> interior -> exterior sequence driven through the real
-// `CellStreamer`, with the real sound and music directors subscribed to its
-// callbacks and a real (offline-rendering) audio engine underneath. All three
-// subsystems must react to the same transition.
-//
-// This also closes the coverage gap `CellStreamerAmbienceTests` writes down: the
-// exterior-center path never flips to interior on its own, so interior ambience
-// only ever arrives through `apply(transition:)`, which is exactly what this
-// file exercises.
-//
-// Everything is synthetic and built in code (ESM plugins through `ESMFixture`,
-// audio payloads through `XWMFixture`); no game data and no output device are
-// involved. The interaction event is delivered through the streamer's own
-// `onInteraction` seam rather than a raycast, because a view-ray hit needs
-// collision geometry that says nothing about audio.
+// Door SFX, ambience, and music react together to one exterior -> interior ->
+// exterior sequence through the real `CellStreamer` and an offline audio
+// engine. Interior ambience arrives only through `apply(transition:)`. The
+// interaction comes through `onInteraction`, not a raycast.
 
 import FormatsAudioTesting
 @testable import FormatsCoreTesting

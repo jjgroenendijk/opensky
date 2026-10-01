@@ -226,7 +226,7 @@ struct TerrainRecordDecoderTests {
         #expect(ltex.formID == FormID(0x5A))
         #expect(ltex.editorID == "LandscapeDirt01")
         #expect(ltex.textureSet == FormID(0x0001_0A5C))
-        // MNAM is the terrain half of the footstep material chain (issue #358).
+        // MNAM is the terrain half of the footstep material chain.
         #expect(ltex.materialType == FormID(0x0002_0B01))
     }
 

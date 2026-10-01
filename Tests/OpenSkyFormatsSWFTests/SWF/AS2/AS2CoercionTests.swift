@@ -1,10 +1,6 @@
-// ECMAScript coercion rules as ActionScript 2 uses them (milestone 8.3.2).
-// These are the single most common source of subtle interpreter bugs, so the
-// edge cases are pinned individually: undefined against null, NaN, -0, the
-// empty string against zero, numeric strings, and the SWF 6 string rules.
-//
-// Reference: ECMA-262 3rd edition, sections 9.2, 9.3, 9.5, 9.6, 9.8, 11.8.5,
-// and 11.9.3.
+// ECMAScript coercion as ActionScript 2 uses it: undefined against null, NaN,
+// -0, empty string against zero, numeric strings, and SWF 6 string rules.
+// Reference: ECMA-262 3rd edition, sections 9.2-9.8, 11.8.5, and 11.9.3.
 
 import Foundation
 @testable import OpenSkyFormatsSWF

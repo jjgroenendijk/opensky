@@ -1,16 +1,7 @@
-// Developer > UI Lab destination panel: the sidebar verification surface for the
-// UI shell foundation (M8.1). Toggles the screen-space overlay, swaps the
-// built-in sample scenes (M8.1.1 lab sample, M8.1.4 localized-strings sample),
-// picks a scale preset, previews menu mode (push/pop/clear on the real
-// MenuModeController), and shows live 2 Hz readouts of the last-frame
-// UIDrawStats, the menu stack, and the translation-provider counts. M8.2.5
-// adds the hosted SWFMovieSection: pick a vanilla movie, toggle the SWF layer,
-// read its tag/draw stats. M8.3.3 adds the hosted SWFRuntimeSection beside it:
-// run that movie's ActionScript, drive it with keys and pointer events, and
-// read its movie state, invoke log, and op tally. Built as three normal
-// sections on the shared panel framework (Sources/OpenSky/Shell). Talks to the engine
-// only through the narrow UILabControlProviding and SWFLabControlProviding
-// seams.
+// Developer > UI Lab: the UI shell overlay, sample scenes, scale presets, menu
+// mode, and live draw stats, plus the hosted SWF movie and SWF runtime
+// sections. Talks to the engine only through `UILabControlProviding` and
+// `SWFLabControlProviding`.
 
 import AppKit
 import OpenSkyMenus

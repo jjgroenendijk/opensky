@@ -1,6 +1,5 @@
-// Every bhk shape kind keeps the Havok material it names (issue #358), and the
-// two block kinds that store several materials split into one shape per
-// material. Synthetic in-code payloads only; layouts from NifTools nif.xml.
+// Every bhk shape keeps its Havok material, and the two multi-material blocks
+// split into one shape per material. Layouts from NifTools nif.xml.
 
 import FormatsMeshTesting
 import Foundation

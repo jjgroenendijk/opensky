@@ -1,9 +1,5 @@
-// World > Render Debug UI surface (issue #144), in its own case rather than in
-// `OpenSkyUITests` for the strict-lint type-length cap.
-//
-// The id contract is pinned in `RenderDebugSectionTests` too; only a UI test
-// proves the ids are reachable in the built view hierarchy, which is the gap
-// issue #380 recorded.
+// World > Render Debug UI test, its own case for the type-length cap. Unit
+// tests pin the ids; only a UI test proves they are reachable.
 
 import XCTest
 

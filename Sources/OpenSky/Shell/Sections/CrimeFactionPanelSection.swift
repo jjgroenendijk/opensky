@@ -1,11 +1,6 @@
-// Shared base for the four `World > Crime & Factions` sections (issue #507):
-// the provider they are written against, the snapshot the panel builds once per
-// tick for all of them, and the faction popup they each fill.
-//
-// The snapshot is handed down for the reason `ProgressionPanelSection` hands its
-// own down: every section reads the same value, and building it resolves both
-// actors' memberships and runs the hostility derivation, so four independent
-// tickers would build it four times for one identical reading.
+// Shared base for the `World > Crime & Factions` sections: the provider, the
+// per-tick snapshot, and the faction popup. The panel builds the snapshot once
+// because it resolves memberships and hostility, which is costly.
 
 import AppKit
 import OpenSkyCrime

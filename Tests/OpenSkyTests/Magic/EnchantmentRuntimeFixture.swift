@@ -1,15 +1,6 @@
-// Synthetic ENCH, MGEF, FLST, WEAP and ARMO fixtures for the enchantment-runtime
-// suites (issue #472, roadmap item 19.9). Every byte is authored here; nothing
-// comes from the game install (AGENTS.md "Legal & IP boundary").
-//
-// The shapes mirror what the real records carry, which is measured rather than
-// guessed — see `ItemEnchantmentProfile` for the counts: an armour enchantment is
-// `constant effect / self` and a weapon's is `fire and forget / touch`.
-//
-// The numbers are chosen so every assertion is hand-computable. The blade's
-// enchantment carries a manual cost of 18 and the blade an EAMT of 90, so it has
-// exactly five uses — the same `floor(charge / cost)` the real-data suite pins
-// against UESP's published rows.
+// Synthetic ENCH, MGEF, FLST, WEAP, and ARMO for the enchantment suites. Armour
+// is constant effect on self, weapons fire and forget on touch, as measured
+// (see `ItemEnchantmentProfile`). Cost 18 and EAMT 90 give exactly five uses.
 
 import FormatsESMTesting
 import Foundation

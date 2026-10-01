@@ -1,10 +1,6 @@
-// MTKView subclass owning free-fly input capture (todo 2.8). Translates AppKit
-// key/pointer events into logical state on a shared `CameraInputState`; the
-// renderer drains that state each frame. Pointer capture: click to grab (hide
-// cursor, freeze it via CGAssociateMouseAndMouseCursorPosition so we read raw
-// deltas), Esc / focus loss releases. Kept thin — all camera math is in the
-// AppKit-free `FreeFlyCamera` / `CameraInputState`. See
-// docs/engine/free-fly-camera.md.
+// MTKView subclass that turns AppKit key and pointer events into
+// `CameraInputState`. Click captures the pointer; Esc or focus loss releases it.
+// Camera math lives in `FreeFlyCamera` (docs/engine/free-fly-camera.md).
 
 import AppKit
 import MetalKit
@@ -16,32 +12,20 @@ final class GameMetalView: MTKView {
     /// seeded pose).
     var input: CameraInputState?
 
-    /// Menu-mode source of truth (todo 8.1.2). When it reports menu mode, this
+    /// Menu-mode source of truth. When it reports menu mode, this
     /// view stops feeding world input and forwards the mapped menu events
     /// instead. nil (before wiring / tests) leaves every event on the world
     /// path, exactly as before menu mode existed.
     var menuMode: MenuModeController?
 
-    /// World-mode journal key (issue #184). Set by `GameViewController`; nil
-    /// leaves J unmapped, exactly as it was before the journal existed.
-    ///
-    /// This is the first key that opens a menu from gameplay. It is an
-    /// accelerator for `World > Quests & Journal > Page > Open journal` rather
-    /// than a behaviour of its own, which is what keeps it inside the app-ui
-    /// rule against unadvertised keystrokes.
+    /// World-mode journal key. Nil leaves J unmapped. It is an accelerator for
+    /// `World > Quests & Journal > Page > Open journal`, so the app-ui rule
+    /// against unadvertised keystrokes holds.
     var onJournalKey: (() -> Void)?
 
-    /// The cursor side effects of pointer capture, injectable so a headless
-    /// route can drive clicks (issue #198).
-    ///
-    /// Capture hides the system cursor and detaches it from the pointer, which
-    /// is right for a captured game window and wrong for a test process: an
-    /// acceptance route that clicks to attack would freeze the machine's own
-    /// cursor for the length of the run, and leave it frozen if the run failed
-    /// between the capture and the release. Swapping in `.none` lets a route
-    /// take the same code path through `mouseDown` without touching the
-    /// machine. The default is the real behaviour and every shipping caller
-    /// gets it.
+    /// The cursor side effects of pointer capture. A headless route swaps in
+    /// `.none` so its clicks take the `mouseDown` path without freezing the
+    /// machine's own cursor.
     struct PointerCapture {
         let engage: () -> Void
         let release: () -> Void
@@ -108,7 +92,7 @@ final class GameMetalView: MTKView {
             return
         }
         // Menu mode is the input-capture switch: world movement/look keys are
-        // suppressed and mapped to menu events for the menu layer (todo 8.1.2).
+        // suppressed and mapped to menu events for the menu layer.
         if menuMode?.isMenuMode == true {
             routeMenuKey(event)
             return
@@ -129,10 +113,8 @@ final class GameMetalView: MTKView {
             onJournalKey?()
             return
         }
-        // Locomotion keys (issue #188). Space is the vanilla jump binding; C
-        // stands in for the vanilla sneak toggle because macOS reserves
-        // Control-click as the secondary click. Both are walk-mode gameplay
-        // input rather than dev configuration, and both are listed on the
+        // Space is the vanilla jump key. C stands in for the vanilla sneak key
+        // because macOS reserves Control-click. Both are listed on the
         // `World > Player & Locomotion` panel.
         if event.keyCode == KeyCode.space {
             input?.requestJump()
@@ -142,10 +124,8 @@ final class GameMetalView: MTKView {
             input?.toggleSneak()
             return
         }
-        // Melee keys (issue #195). R is the vanilla draw/sheath binding and is
-        // free on macOS; the mouse buttons below carry attack and block, which
-        // is also where vanilla puts them. All three are listed on the
-        // `World > Player & Locomotion > Melee` section.
+        // R is the vanilla draw/sheath key. Mouse buttons carry attack and
+        // block, as in vanilla. Listed on `World > Player & Locomotion > Melee`.
         if event.keyCode == KeyCode.keyR {
             input?.requestWeaponToggle()
             return
@@ -215,13 +195,11 @@ final class GameMetalView: MTKView {
             menuMode?.routeMenuInput(.button(.accept))
             return
         }
-        // The first click captures the cursor; every click after that is the
-        // attack binding (issue #195), which is where vanilla puts it. Look is
-        // driven by pointer motion rather than by the button, so nothing is
-        // lost by giving the button to combat.
+        // The first click captures the cursor; every later click attacks, as
+        // in vanilla. Look follows pointer motion, so the button is free.
         if captured {
-            // Both signals from one press: melee latches on the edge, archery
-            // draws for as long as the level stays up (issue #196).
+            // One press gives both signals: melee latches on the edge, archery
+            // draws while the button stays down.
             input?.requestAttack()
             input?.setAttackHeld(true)
         } else {

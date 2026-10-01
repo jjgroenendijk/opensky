@@ -1,6 +1,5 @@
-// Enable, delete and position natives of the `ObjectReference` family (issue
-// #172): every write lands in `WorldStateStore` and every read comes back out
-// of it. Activation and linked references are in
+// Enable, delete, and position natives of `ObjectReference`: writes land in
+// `WorldStateStore` and reads come from it. Activation and links are in
 // `PapyrusNativeObjectReferenceLinkTests`.
 
 import Foundation

@@ -1,12 +1,6 @@
-// Use to experience to skill level (issue #498, roadmap item 20.5): the
-// runtime that takes a reported use, banks it in the skill's `Skill Advance`
-// actor value, and spends it on a level when it crosses the threshold.
-//
-// Baselines are synthetic and the AVIF parameters are stated in code rather
-// than read from a plugin, for the reason `ActorValueOverrideTests` uses a
-// synthetic baseline: what is under test is the *relationship* between a use,
-// a threshold and a stored value, not where the four numbers came from.
-// `SkillAdvancementRealDataTests` is what checks the install still says them.
+// From skill use to experience to level: a use is banked in `Skill Advance`
+// and spent on a level at the threshold. AVIF parameters are stated in code;
+// `SkillAdvancementRealDataTests` checks the install still matches.
 
 import Foundation
 @testable import OpenSkyActors

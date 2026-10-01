@@ -1,14 +1,6 @@
-// The fake `CasterWorld` the cast-loop suites drive (issue #470, roadmap item
-// 19.7; extended for aimed delivery in issue #471, item 19.8).
-//
-// Its own file rather than a member of one suite, because three now use it —
-// the cast loop, the delivery half, and the panel readout — and the seam it
-// stands in for is what makes all three testable with no renderer, no window
-// and no game data.
-//
-// Every answer is a plain stored value and every action is recorded rather than
-// performed: what these suites need to know is what a cast *handed* the world,
-// entry by entry, not what the world then did with it.
+// The fake `CasterWorld` for the cast-loop, delivery, and readout suites.
+// Answers are stored values and actions are recorded, because the suites check
+// what a cast handed the world, not what the world did with it.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -49,8 +41,7 @@ public final class FakeCasterWorld: CasterWorld {
     /// How many timed effects each landed spell reports storing, per target.
     public var storedPerHitTarget = 1
 
-    /// Skill uses the cast loop reported (issue #498), recorded rather than
-    /// converted.
+    /// Skill uses the cast loop reported, recorded rather than converted.
     public private(set) var skillUses: [SkillUseEvent] = []
 
     @discardableResult
@@ -63,7 +54,7 @@ public final class FakeCasterWorld: CasterWorld {
     public private(set) var firedProjectiles: [SpellPayload] = []
     public private(set) var spellHits: [SpellHit] = []
     public private(set) var aimRanges: [Float] = []
-    /// Who each aim query was made for (issue #473).
+    /// Who each aim query was made for.
     public private(set) var aimCasters: [ReferenceKey] = []
 
     public init() {}

@@ -1,11 +1,6 @@
-// The progression readout lines (issue #500, roadmap item 20.7), asserted in
-// the engine target without a window — which is why they are formatted there
-// rather than in the panel sections.
-//
-// What each case pins is the thing a reader of the panel has to be able to tell
-// apart: a level that has been paid for from one that has not, a skill's
-// trained base from its fortified value, and a box that is unavailable from one
-// that is unavailable *for a stated reason*.
+// The progression readout lines, checked without a window. Each case checks a
+// difference a reader must see: a paid level from an unpaid one, trained base
+// from fortified value, and an unavailable box with a stated reason.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -66,8 +61,8 @@ struct ProgressionReadoutTests {
         #expect(text.contains("perks 2/9"))
     }
 
-    /// The skills block closes with what the count cache behind those lines is
-    /// doing, which is how the reuse issue #556 added is read from the panel.
+    /// The skills block ends with what the count cache is doing, so cache reuse
+    /// is visible from the panel.
     @Test
     func theSkillsBlockClosesWithTheCacheLine() {
         let snapshot = makeProgressionSnapshot(

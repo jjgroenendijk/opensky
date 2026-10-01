@@ -1,14 +1,6 @@
-// The multi-consumer graph-event queue (issue #195, roadmap item 15.4, scope
-// point 1): the footstep director and the melee runtime both read the same
-// fired-event stream, and each sees every event exactly once.
-//
-// The acceptance the issue names is the first test here. The rest pin the
-// properties that make the fan-out safe to leave running for a session: the
-// bound is over undrained names so a stopped consumer costs the other nothing
-// but its own tail, a reset empties every cursor at once, and a consumer
-// registered later starts at the head rather than inheriting a backlog.
-//
-// Synthetic names throughout; nothing here needs a graph.
+// The multi-consumer graph-event queue: footsteps and melee each see every
+// event once. The bound counts undrained names, so a stopped consumer costs
+// only its own tail; reset empties all cursors; a late consumer starts at the head.
 
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
@@ -95,10 +87,8 @@ struct LocomotionGraphEventFanOutTests {
         #expect(queue.drain(consumer) == ["HitFrame"])
     }
 
-    /// Footsteps, melee, archery (issue #196) and ragdoll (issue #197) —
-    /// registered eagerly at construction, because the queue drops what no
-    /// registered cursor can ever read and a cursor created on first drain
-    /// would find it empty.
+    /// Footsteps, melee, archery, and ragdoll, registered at construction: the
+    /// queue drops what no cursor can read, so a lazy cursor would find nothing.
     @Test func theBridgeRegistersEveryCursorAtConstruction() {
         let bridge = LocomotionBridge(configuration: .synthetic)
         #expect(bridge.graphEvents.consumerCount == 4)

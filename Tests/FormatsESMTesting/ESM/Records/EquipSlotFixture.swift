@@ -1,7 +1,5 @@
-// EQUP byte builder (issue #467), shared by the synthetic equipment suites and
-// by `InventoryBaselineFixture`, whose weapons resolve their hands through an
-// EQUP graph. Assembled in code from the published record layout — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
+// EQUP builder for the equipment suites and `InventoryBaselineFixture`, whose
+// weapons resolve their hands through an EQUP graph.
 
 import FormatsCoreTesting
 import Foundation

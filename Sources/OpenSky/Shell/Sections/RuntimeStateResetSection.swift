@@ -1,12 +1,6 @@
-// World > Runtime State > Reset section (M10.1.5): drops runtime deltas, either
-// for the selected reference or for the whole store.
-//
-// This is the section that carries the destination's overridden-ness. A dirty
-// reference is exactly the "differs from the documented default" condition the
-// sidebar's override indicator describes — plugin data is the default — and
-// "Reset all" is the operation that restores it, so the destination-level reset
-// in `DestinationRegistry` maps straight onto `resetAllReferenceState()`. The
-// other three sections report false so a fresh session reads as not overridden.
+// World > Runtime State > Reset: drops runtime deltas for one reference or all.
+// Plugin data is the default, so a dirty reference is an override, and the
+// destination reset maps onto `resetAllReferenceState()`.
 
 import AppKit
 import OpenSkyWorld

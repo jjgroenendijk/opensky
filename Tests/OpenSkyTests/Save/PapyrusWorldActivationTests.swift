@@ -1,14 +1,7 @@
-// Use-key activation reaching Papyrus (issue #172): the multicast interaction
-// seam, the recorded `ReferenceActivationState`, the queued `OnActivate` with
-// `akActionRef`, the player's reference key, the save round trip, and the
-// activation recursion cap.
-//
-// Everything is synthetic — REFR bytes and PEX objects built in code — so the
-// whole file runs with no game data and no GPU.
-//
-// The fixtures live in `Tests/TestSupport/Papyrus/PapyrusWorldActivationFixture.swift`,
-// which declares the type: the M11 and M13 scripted-world chains reuse them and
-// are compiled into OpenSkyRealDataTests too (issue #418).
+// Use-key activation reaching Papyrus: the interaction seam,
+// `ReferenceActivationState`, queued `OnActivate` with `akActionRef`, save
+// round trip, and recursion cap. Fixtures are in
+// `Tests/TestSupport/Papyrus/PapyrusWorldActivationFixture.swift`.
 
 import Foundation
 @testable import OpenSkyFormatsESM

@@ -1,7 +1,6 @@
-// Pure UI-layer tests (M8.1.1): anchor/padding/stack math, pixel snapping at
-// several scales, text measurement + wrap, draw-list vertex generation,
-// budget drop accounting, and scene-resolve determinism. No Metal device
-// needed (CoreText/CoreGraphics run headless), so these always execute.
+// UI layout math: anchors, padding, stacks, pixel snapping, text wrap, vertex
+// generation, budget drops, and determinism. CoreText runs headless, so no
+// Metal device is needed.
 
 import CoreText
 @testable import OpenSkyMenus

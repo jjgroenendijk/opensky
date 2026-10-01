@@ -1,10 +1,6 @@
-// The display-property surface and the runtime text path (milestone 8.3.2
-// phase 2).
-//
-// The twips-versus-pixels conversion is the thing worth pinning: ActionScript
-// property units are pixels and degrees, the display list is twips and matrix
-// terms, and a wrong factor of 20 misplaces every menu without erroring. Each
-// conversion below asserts both directions.
+// Display properties and the runtime text path. ActionScript uses pixels and
+// degrees; the display list uses twips and matrix terms. A wrong factor of 20
+// misplaces every menu silently, so each conversion is checked both ways.
 
 import FormatsSWFTesting
 import Foundation

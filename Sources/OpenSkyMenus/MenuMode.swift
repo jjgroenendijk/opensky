@@ -1,9 +1,6 @@
-// Engine-owned menu mode (todo 8.1.2): owns the menu stack, decides whether
-// input drives the world or the menu layer, and exposes the world-sim pause the
-// renderer gates its per-frame time advance on. UI-toolkit-agnostic, so the
-// future Scaleform SWF menu layer (M8.2) conforms to `MenuInputConsumer` and
-// pushes/pops here without the engine knowing any concrete menu. See
-// docs/engine/menu-mode.md.
+// Engine-owned menu mode (docs/engine/menu-mode.md): owns the menu stack,
+// routes input to the world or the menus, and exposes the world-sim pause.
+// Menus conform to `MenuInputConsumer`, so the engine knows no concrete menu.
 
 /// Where an input event goes this frame.
 nonisolated public enum InputRoute: Equatable, Sendable {
@@ -31,23 +28,9 @@ public protocol MenuInputConsumer: AnyObject {
     func handleMenuInput(_ event: MenuInputEvent)
 }
 
-/// What one open menu does to the world simulation.
-///
-/// Menu mode used to imply a paused world, which is true of the inventory, the
-/// journal, the container and the system menu and false of exactly one menu
-/// OpenSky now has: dialogue leaves the world running, which is what lets a
-/// speaker keep breathing, walking and being heard while the player reads the
-/// topic list.
-///
-/// No spec is cited for that, and none is needed: it follows from what the rest
-/// of M17 has to do. Item 17.4's camera moves the view during a conversation,
-/// 17.5 plays a voice line on a clock, and 17.6 and 17.7 drive face morphs from
-/// that clock. Every one of them advances on the world sim, so stopping it here
-/// would stop them.
-///
-/// A policy per menu rather than a flag on the controller because the two can
-/// be open at once: the system menu over an open conversation still pauses,
-/// and closing it hands the running world back to the dialogue underneath.
+/// What one open menu does to the world simulation. Dialogue leaves it
+/// running, because its camera, voice clock, and face morphs advance on it.
+/// A per-menu policy, because a pausing menu can open over dialogue.
 nonisolated public enum MenuWorldPolicy: Equatable, Sendable {
     /// The world sim stops while this menu is open. Every menu before item
     /// 17.3, and the default, so a caller that does not think about it gets
@@ -77,14 +60,9 @@ public final class MenuModeController {
     /// did and what a caller that never mentions a policy still gets.
     private var policies: [MenuIdentifier: MenuWorldPolicy] = [:]
 
-    /// Called after every change to either the input route or the world-sim
-    /// pause gate, with both new values. The app wires this to set the renderer
-    /// pause gate and to drop held world input on entering menu mode.
-    ///
-    /// The two moved together until the dialogue menu, and no longer do: a
-    /// non-pausing menu flips the route without flipping the pause, and a
-    /// pausing menu opened over it flips the pause without flipping the route.
-    /// Pushes and pops that change neither do not fire it.
+    /// Called after a change to the input route or the world-sim pause, with
+    /// both values. The two can change apart: dialogue flips only the route.
+    /// The app sets the renderer pause and drops held world input.
     public var onModeChange: ((_ route: InputRoute, _ worldSimPaused: Bool) -> Void)?
 
     public var isMenuMode: Bool {

@@ -1,7 +1,5 @@
-// CellStreamer music-context emission (M9.2.3): the streamer pushes a fresh
-// `MusicContext` whenever the selection identity of the center cell changes.
-// Extension of CellStreamerTests to reuse its synthetic runner + CellScene
-// helpers without growing that file past the length limit.
+// CellStreamer pushes a new `MusicContext` when the center cell's selection
+// identity changes. Extends CellStreamerTests within the length limit.
 
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM

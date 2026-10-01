@@ -6,10 +6,9 @@ import AppKit
 @testable import OpenSkyPhysics
 import Testing
 
-/// Records what the Triggers section asks of the live streamer (issue #173).
-/// `FakeWorldProviders` forwards its `TriggerControlProviding` conformance
-/// here, so a registry-built panel and a directly built one observe the same
-/// fake.
+/// Records what the Triggers section asks of the streamer.
+/// `FakeWorldProviders` forwards `TriggerControlProviding` here, so every
+/// panel sees the same fake.
 @MainActor
 final class FakeTriggerProvider {
     var snapshot = TriggerStatsSnapshot.unavailable

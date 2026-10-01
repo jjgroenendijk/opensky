@@ -75,7 +75,7 @@ struct GlobalStoreTests {
         #expect(resolution.floatValue(editorID: "GameHour") == 12)
     }
 
-    /// The seam the #251 condition evaluator calls: a literal passes through, a
+    /// The seam the condition evaluator calls: a literal passes through, a
     /// `use global` comparison resolves, an unknown global is nil.
     @Test func resolvesCTDAComparisonValues() throws {
         let store = try GlobalFixture.store(Self.records)

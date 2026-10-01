@@ -1,11 +1,6 @@
-// `swf action-run`: bring one vanilla movie up through `SWFMovieRuntime`, tick
-// it, and print what came out — faults, unimplemented opcodes, the missing-API
-// tally, registered classes, `GameDelegate` callbacks and the display tree.
-//
-// This is the probe every menu bring-up needs (M8.5.1 ran it by hand for
-// `startmenu.swf`, M12.2.2 for `inventorymenu.swf`), promoted to a subcommand
-// so the next one does not rewrite it. It only parses args and prints; the
-// runtime it drives lives in `Sources/OpenSkyFormatsSWF/SWF/Runtime/`.
+// `swf action-run`: start one vanilla movie in `SWFMovieRuntime`, tick it, and
+// print faults, missing opcodes and API, classes, `GameDelegate` callbacks,
+// and the display tree. Every menu bring-up uses it.
 
 import Foundation
 import OpenSkyFormatsSWF

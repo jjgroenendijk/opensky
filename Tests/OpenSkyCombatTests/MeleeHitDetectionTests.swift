@@ -1,12 +1,6 @@
-// Hit volumes, reach and target filtering (issue #195, roadmap item 15.4,
-// scope points 4 and 5).
-//
-// Two of the issue's acceptance clauses live here: a swing through two
-// overlapping targets hits each once, and the reach a swing gets is
-// `fCombatDistance * scale * WEAP.reach`. The rest pin the filters — never the
-// attacker, at most one hit per swing per target — and the geometry the
-// closest-approach solver has to get right for a capsule sweep to mean
-// anything.
+// Hit volumes, reach, and target filtering. A swing through two targets hits
+// each once; reach is `fCombatDistance * scale * WEAP.reach`; the attacker is
+// never hit; and the capsule sweep geometry is checked.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface

@@ -1,4 +1,4 @@
-// SceneCamera framing math (todo 2.7 app wiring): deterministic checks that
+// SceneCamera framing math: deterministic checks that
 // the framing camera targets the bounds center, keeps the eye outside the
 // box (south-west, above), and scales its distance with the bounds diagonal.
 

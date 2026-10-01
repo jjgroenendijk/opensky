@@ -1,20 +1,7 @@
-// World > Crime & Factions destination panel (issue #507, roadmap item 21.8):
-// the sidebar verification surface for milestone M21, composed from the
-// sections over what items 21.1 through 21.7 built.
-//
-// A destination of its own rather than more sections under `World > Combat &
-// Physics`, where the hostility toggle lives, or `World > Inventory &
-// Equipment`, where the raw ownership fields are. Four sections and fifteen
-// controls are past the promotion threshold in docs/tools/app-ui.md, the
-// sections share an actor picked once, and the M21 acceptance names this path
-// top-level, which outranks the threshold anyway. Those two destinations keep
-// what they had: the combat toggle is the explicit override this panel's
-// reaction line names as its first term, and the raw `XOWN` readout is the
-// input the Theft verdict is reached from.
-//
-// Section order follows what a crime does: the bounty it raises, the theft that
-// raised it, the memberships that decide who cares, and the merchants who will
-// or will not buy the proceeds.
+// World > Crime & Factions: the sidebar surface for crime and factions. Its
+// sections share one picked actor. Order follows a crime: the bounty, the
+// theft that raised it, the memberships that decide who cares, and the
+// merchants who buy the proceeds.
 
 import AppKit
 import OpenSkyCrime

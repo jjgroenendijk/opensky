@@ -1,16 +1,6 @@
-// World > Runtime State > Change section (M10.1.5): the three mutations the
-// milestone gate names — disable, enable, and a fixed transform nudge — applied
-// either to whatever the interaction ray currently targets or to a FormID typed
-// into the field.
-//
-// This section owns the target field even though the Reset section acts on the
-// same reference: one field means the user cannot leave two target boxes
-// disagreeing about what "the target" is. The panel hands the Reset section a
-// closure reading `targetSelector` rather than duplicating the control.
-//
-// Not overridden. A disabled reference is world state, not a panel setting, so
-// undoing it belongs to the Reset section, which owns both the dirty count and
-// the reset that clears it.
+// World > Runtime State > Change: disable, enable, or nudge the ray target or
+// a typed FormID. This section owns the target field and the Reset section
+// reads `targetSelector`, so two boxes cannot disagree about the target.
 
 import AppKit
 import OpenSkyWorld

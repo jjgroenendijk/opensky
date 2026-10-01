@@ -1,12 +1,6 @@
-// The seams perks were wired into (issue #497, roadmap item 20.4): the melee
-// and archery attack multipliers, the block term, and the spell cost.
-//
-// Each test drives the number a formula produces rather than the evaluator that
-// feeds it, so a seam that stops folding perks in fails here even when the
-// evaluator is still right.
-//
-// Records are synthetic and built in code (`PerkRuntimeFixture`) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
+// The formula seams perks feed: melee and archery multipliers, block, and
+// spell cost. Each test checks the formula's output, so a seam that stops
+// folding perks in fails even when the evaluator is right.
 
 import Foundation
 @testable import OpenSkyActorsInterface

@@ -140,9 +140,8 @@ struct AS2FunctionTests {
         #expect(runtime.tally.callsPerformed == 9)
     }
 
-    /// The interpreter runs calls on its own frame stack, so nesting far past
-    /// the old Swift-recursive cap of 64 completes (issue #132). Two hundred
-    /// nested calls is deeper than any vanilla CLIK constructor chain.
+    /// Calls run on the interpreter's own frame stack, so deep nesting works.
+    /// Two hundred levels is deeper than any vanilla CLIK constructor chain.
     @Test func deepRecursionCompletesWithoutTouchingTheSwiftStack() {
         let runtime = AS2Runtime()
         let result = AS2Fixture.result(Self.countdown(from: 200), runtime: runtime)

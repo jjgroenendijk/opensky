@@ -1,8 +1,6 @@
-// World > Audio mute and solo verification surface (M9.2.4): the per-category
-// mute checkbox and solo control, their mutual exclusivity, the override/reset
-// contract, and the `AudioStatsLabel` line that makes the state readable.
-// Satellite of AudioPanelTests.swift, which owns `FakeAudioProvider` and the
-// id/geometry pins; split out to stay inside the type-body-length limit.
+// World > Audio mute and solo: the controls, their exclusivity, the override
+// and reset contract, and the `AudioStatsLabel` line. Split from
+// AudioPanelTests.swift, which owns `FakeAudioProvider`.
 
 import AppKit
 @testable import OpenSky
@@ -10,8 +8,7 @@ import AppKit
 import Testing
 
 struct AudioPanelMuteSoloTests {
-    /// M9.2.4: the mute checkbox drives the provider, and the state survives a
-    /// resync from provider state.
+    /// The mute checkbox drives the provider, and its state survives a resync.
     @Test @MainActor
     func muteCheckboxDrivesProviderState() throws {
         let panel = AudioPanelViewController()

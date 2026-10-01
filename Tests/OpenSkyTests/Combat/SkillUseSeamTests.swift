@@ -1,13 +1,6 @@
-// The seams skill use was wired into (issue #498, roadmap item 20.5): a swing,
-// a blow taken, an arrow and a cast.
-//
-// Each test drives the simulating runtime and asserts what reached the
-// `SkillUseReporting` seam, rather than what progression made of it: a runtime
-// that stops reporting fails here even when the conversion is still right, and
-// `SkillAdvancementRuntimeTests` is the other half.
-//
-// Records are synthetic and built in code — never extracted game files
-// (AGENTS.md "Legal & IP boundary").
+// The seams that report skill use: a swing, a blow taken, an arrow, and a
+// cast. Tests check what reached `SkillUseReporting`; the conversion is in
+// `SkillAdvancementRuntimeTests`.
 
 import Foundation
 @testable import OpenSkyActorsInterface

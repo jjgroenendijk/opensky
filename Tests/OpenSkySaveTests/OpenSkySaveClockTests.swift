@@ -1,6 +1,5 @@
-// CLOK chunk coverage for the OpenSky native save container (issue #164): the
-// game clock round-trips, bytes stay deterministic, an absent chunk means the
-// vanilla-start clock, and corrupt payloads throw rather than crash.
+// CLOK chunk: round trip, deterministic bytes, an absent chunk means the
+// vanilla start clock, and corrupt payloads throw.
 // See docs/formats/opensky-save-world-chunks.md.
 
 @testable import FormatsCoreTesting

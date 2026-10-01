@@ -1,11 +1,6 @@
-// Damage and the block formula (issue #195, roadmap item 15.4, scope point 6).
-//
-// The issue's acceptance says "damage matches WEAP data; blocking reduces it
-// per the pinned formula", so the formula is written out longhand in the
-// expectations rather than being recomputed from the same helper it is testing.
-// The constants are the ones the install carries — 0.300 base, 0.200 scaling,
-// 2.000 skill weight, 0.700 cap — which are not the ones UESP prints; see
-// `CombatSettings` for the reading that reconciles the two.
+// Damage and the block formula, written out by hand. The constants are the
+// install's (0.300 base, 0.200 scaling, 2.000 skill weight, 0.700 cap), not
+// UESP's; `CombatSettings` explains the difference.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface

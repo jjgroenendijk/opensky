@@ -1,11 +1,6 @@
-// Behavior graph topology dump for `openskycli hkx` (todo 14.2), split out of
-// HKXCommand.swift to stay under the file-size lint cap. Prints what the node
-// class decoders read: the decode coverage of the whole file, then the node
-// tree below the graph's root generator — state machines with their state names
-// and transition counts, clip generators with their animation paths, blender
-// children with their weights.
-//
-// Output is plain text and stable enough for tools/probe.sh to grep.
+// Behavior graph topology dump for `openskycli hkx`: decode coverage, then the
+// node tree below the root generator. Output is plain text that
+// tools/probe.sh greps.
 
 import Foundation
 import OpenSkyFormatsAnimation

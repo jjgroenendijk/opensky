@@ -1,8 +1,6 @@
-// Vendor rules on a live barter session (issue #506): hours and the buy/sell
-// list refuse a trade and write nothing, a vendor that is not a fence refuses
-// stolen copies, and a fence and a vendor purchase both launder the goods.
-// Reuses `WorldItemRuntimeTests`' reference harness, so the merchant is an
-// ordinary container reference.
+// Vendor rules on a live barter session: hours and the buy/sell list refuse a
+// trade and write nothing, a non-fence refuses stolen items, and a sale to a
+// fence or vendor clears the stolen flag.
 
 import Foundation
 @testable import OpenSkyFormatsESM

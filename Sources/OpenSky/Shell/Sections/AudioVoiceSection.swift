@@ -1,20 +1,7 @@
-// World > Dialogue & Voice > Voice section (item 17.5): the discoverable half
-// of voice playback. Type a substring, pick one of the matching `.fuz` lines,
-// play it at the speaker position in front of the camera, and watch the
-// playback clock advance on the voice submix.
-//
-// It was mounted under `World > Audio` until the M17 gate (issue #209) moved it
-// beside the conversation that produces the lines. The control identifiers kept
-// their `AudioVoice` prefix through the move, because they are the UI-test
-// contract and the submix they name did not change.
-//
-// The picker is a filter over 75,408 files rather than a list of them, so the
-// readout always states the true match count beside the number it is showing.
-// The third readout is the voice submix itself, read off the same
-// `WorldAudioEngine.statsSnapshot()` the Audio destination's Sources section
-// reads, narrowed to voice: a line that is playing has a source, a distance and
-// a clock, and a line that is silent has none.
-// Documented in docs/engine/audio-decoding.md.
+// World > Dialogue & Voice > Voice (docs/engine/audio-decoding.md): filter the
+// `.fuz` lines, play one in front of the camera, and watch the voice submix.
+// Control ids keep the `AudioVoice` prefix because UI tests use them. The
+// filter covers about 75,000 files, so the readout states the match count.
 
 import AppKit
 import OpenSkyAudio

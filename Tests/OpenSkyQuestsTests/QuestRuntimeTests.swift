@@ -1,8 +1,6 @@
-// Quest runtime state and its mutation API (issue #182): baselines, the typed
-// failures, `setStage` idempotence, journalling and snapshot determinism.
-//
-// Every quest is synthetic, built out of `QuestFixture` bytes, so nothing here
-// reads game data. The store is @MainActor, so the suite is too.
+// Quest runtime state and mutation: baselines, typed failures, `setStage`
+// idempotence, journalling, and snapshot determinism. Quests come from
+// `QuestFixture`. `@MainActor` like the store.
 
 import FormatsESMTesting
 import Foundation

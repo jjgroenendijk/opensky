@@ -1,11 +1,6 @@
-// The Papyrus VM inside the engine loop (issue #171): the renderer's
-// world-simulation hook drives whole fixed steps, a latent `Utility.Wait`
-// resumes after exactly the right number of them, and a paused frame advances
-// nothing.
-//
-// The offscreen path renders at a fixed 1/30 s step and never advances the
-// game clock, which is what makes these assertions exact. Skips when the
-// machine has no Metal 4 GPU.
+// The Papyrus VM in the engine loop: whole fixed steps, `Utility.Wait` resumes
+// after the right count, and a paused frame does nothing. Offscreen renders use
+// a fixed 1/30 s step without the game clock, so counts are exact. Needs Metal 4.
 
 import Foundation
 import Metal

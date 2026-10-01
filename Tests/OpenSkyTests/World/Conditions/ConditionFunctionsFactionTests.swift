@@ -1,12 +1,6 @@
-// The six faction and relationship condition functions (issue #508, roadmap
-// item 21.4), driven through the real evaluator against synthetic stores.
-//
-// Indices here are the raw on-disk numbers from xEdit's condition-function
-// table; the Creation Kit spells each 4096 higher. See the
-// ConditionFunctionsFaction.swift header for the table rows themselves.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The six faction and relationship condition functions through the real
+// evaluator. Indices are raw on-disk numbers (Creation Kit minus 4096); see
+// the ConditionFunctionsFaction.swift header.
 
 import Foundation
 @testable import OpenSkyConditions

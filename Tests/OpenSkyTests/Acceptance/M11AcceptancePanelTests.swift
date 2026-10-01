@@ -1,7 +1,6 @@
-// M11 milestone panel acceptance (issue #174): one uninterrupted run through
-// the real sidebar model and registry-built World > Scripts panel on a single
-// provider set. The readouts are found by their accessibility identifiers,
-// which is the deterministic substitute while UI automation is TCC-blocked.
+// Scripts panel acceptance: one run through the real sidebar and the World >
+// Scripts panel. Readouts are found by accessibility id while UI automation is
+// TCC-blocked.
 
 import AppKit
 @testable import OpenSky

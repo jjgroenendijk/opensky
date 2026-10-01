@@ -1,14 +1,6 @@
-// The records `SpellbookFixture` builds its stores over (issues #470 and #471).
-//
-// Split out of `SpellbookFixture.swift` because the enum reached the strict-lint
-// body-length cap once item 19.8 added the aimed, area, unresisted, beam,
-// target-actor and touch spells. The seam is the one the file already had: the
-// half above answers "what store does a suite get", this half answers "what is
-// in it".
-//
-// Every byte is authored here; nothing comes from the game install (AGENTS.md
-// "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" subpages
-// /SPEL, /EQUP, /MGEF, /PROJ and /BOOK.
+// The records `SpellbookFixture` builds its stores over, split out for the
+// body-length cap. The other file says which store a suite gets; this one
+// says what is in it.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -38,15 +30,13 @@ extension SpellbookFixture {
     /// Fortify Resist Fire: value modifier on a non-primary value with Recover
     /// set, which is the held-modifier behaviour an ability wants.
     public static let fortifyResistFire: UInt32 = 0x0011
-    /// Fire Damage: hostile and detrimental, resisted by `Resist Fire`, and
-    /// naming a projectile — everything an aimed delivery reads (issue #471).
+    /// Fire Damage: hostile, detrimental, resisted by `Resist Fire`, and naming
+    /// a projectile, which is all an aimed delivery reads.
     public static let fireDamage: UInt32 = 0x0012
     /// The PROJ `fireDamage` names.
     public static let fireBoltProjectile: UInt32 = 0x0020
-    /// A KYWD the restore-health effect carries, so
-    /// `HasMagicEffectKeyword` has something to find (issue #474). No KYWD
-    /// record is authored behind it: the condition compares runtime identities,
-    /// and a keyword that resolves is all either side needs.
+    /// A KYWD on the restore-health effect for `HasMagicEffectKeyword`. No KYWD
+    /// record is needed: the condition compares runtime identities.
     public static let restorationKeyword: UInt32 = 0x0030
 
     /// The two MGEF records every spell here points at. Both carry base cost 1,
@@ -74,9 +64,8 @@ extension SpellbookFixture {
                     primaryValue: 24,
                     resistanceValue: ActorValueIndex.resistFire,
                     projectile: fireBoltProjectile,
-                    // Destruction, at the "one skill use per point of magicka"
-                    // multiplier, so a cast of this reports a skill use the way
-                    // a vanilla Destruction effect does (issue #498).
+                    // Destruction at one skill use per point of magicka, so a
+                    // cast reports a skill use like a vanilla effect.
                     magicSkill: 20,
                     skillUsageMultiplier: 1
                 )
@@ -130,7 +119,7 @@ extension SpellbookFixture {
         words[0] = flags.rawValue
         words[1] = baseCost.bitPattern
         // 0x0C magic skill and 0x68 skill usage multiplier: the two fields
-        // casting reports a skill use with (issue #498).
+        // casting reports a skill use with.
         words[3] = UInt32(bitPattern: magicSkill)
         words[26] = skillUsageMultiplier.bitPattern
         words[4] = UInt32(bitPattern: resistanceValue)
@@ -145,11 +134,8 @@ extension SpellbookFixture {
         return data
     }
 
-    /// One MGEF, optionally carrying a keyword list.
-    ///
-    /// KSIZ/KWDA are written only when `keywords` is non-empty, because a
-    /// record with an empty keyword list and a record with none are different
-    /// bytes and the decoder tolerates both (issue #474).
+    /// One MGEF, with an optional keyword list. KSIZ/KWDA are written only when
+    /// `keywords` is non-empty: empty and absent lists are different bytes.
     public static func magicEffect(
         formID: UInt32,
         editorID: String,
@@ -292,7 +278,7 @@ extension SpellbookFixture {
         public let effect: UInt32
         public let magnitude: Float
         public let duration: UInt32
-        /// EFIT area, authored in feet (issue #471). Zero is a point effect.
+        /// EFIT area, in feet. Zero is a point effect.
         public let area: UInt32
 
         public init(_ effect: UInt32, _ magnitude: Float, _ duration: UInt32, area: UInt32 = 0) {

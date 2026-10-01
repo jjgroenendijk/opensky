@@ -1,9 +1,6 @@
-// The bounty ledger and what a crime costs (issue #504, roadmap item 21.5).
-//
-// Every amount asserted here comes from the fixture's `CRVA`, which carries the
-// numbers the local install authors on `CrimeFactionWhiterun` and UESP
-// publishes for the player: murder 1000, assault 40, trespass 5, and half the
-// stolen item's value rounded down (<https://en.uesp.net/wiki/Skyrim:Crime>).
+// The bounty ledger and crime costs. Amounts come from the fixture's `CRVA`:
+// murder 1000, assault 40, trespass 5, theft half the value rounded down
+// (<https://en.uesp.net/wiki/Skyrim:Crime>).
 
 import Foundation
 @testable import OpenSkyCrime
@@ -30,9 +27,8 @@ struct CrimeRuntimeTests {
         #expect(runtime.crimeGold(of: hold) == 1045)
     }
 
-    /// Assault and murder land in the violent half, theft and trespass in the
-    /// non-violent one — the Creation Kit Crime page's "Major" and "Minor"
-    /// crimes (issue #563). `crimeGold(of:)` keeps answering the sum.
+    /// Assault and murder are violent, theft and trespass are not: the Creation
+    /// Kit's "Major" and "Minor" crimes. `crimeGold(of:)` still returns the sum.
     @Test
     func eachKindLandsInItsHalf() throws {
         let runtime = try CrimeFixture.runtime()

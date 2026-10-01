@@ -1,7 +1,5 @@
-// Satellite of DestinationRegistryTests (M10.1.5): the World > Runtime State
-// destination's slice of the registry contract. Split out because the parent
-// file sits at the length limit, and because this is the one destination whose
-// overridden-ness is world state rather than a panel setting.
+// The World > Runtime State slice of the registry contract. Its override state
+// is world state, not a panel setting.
 
 import AppKit
 @testable import OpenSky
@@ -40,10 +38,9 @@ struct DestinationRegistryRuntimeStateTests {
         #expect(providers.runtimeStateSnapshot.residentReferenceCount == 120)
     }
 
-    /// The destination dot is the union of everything under Runtime State that
-    /// can sit away from plugin data (issue #166): dirty references, overridden
-    /// globals, and a timescale off the vanilla default. Each is asserted on its
-    /// own so a future change cannot quietly drop one from the union.
+    /// The destination dot is the union of dirty references, overridden
+    /// globals, and a non-default timescale. Each is checked alone so none can
+    /// drop out of the union.
     @Test @MainActor
     func destinationOverrideCoversGlobalsAndTimescaleAsWellAsReferences() throws {
         let providers = FakeWorldProviders()

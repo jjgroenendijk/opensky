@@ -16,7 +16,7 @@ nonisolated public final class ManualCellBuildRunner: CellBuildRunning {
     public private(set) var evictedTextureKeys: [Set<String>] = []
     public private(set) var enqueuedDoorTransitions: [FormID] = []
     /// World-state snapshots handed to each build, in enqueue order, so a test
-    /// can assert what state a build ran against (issue #160).
+    /// can check what state a build ran against.
     public private(set) var enqueuedStates: [WorldStateSnapshot] = []
     public private(set) var enqueuedDoorTransitionStates: [WorldStateSnapshot] = []
     /// Distant-LOD centers the streamer asked for, in request order.

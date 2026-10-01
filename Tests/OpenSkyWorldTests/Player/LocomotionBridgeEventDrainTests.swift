@@ -1,7 +1,6 @@
-// The graph-event drain the footstep director consumes (issue #352): events
-// fired by the third-person graph's clip triggers are handed over exactly
-// once, the queue is bounded, and a reset or a paused frame leaves nothing to
-// replay. Synthetic graph only. See docs/engine/walk-mode.md.
+// The graph-event drain for the footstep director: clip-trigger events are
+// handed over once, the queue is bounded, and reset or pause leaves nothing to
+// replay. See docs/engine/walk-mode.md.
 
 import BehaviorTesting
 @testable import OpenSkyBehavior

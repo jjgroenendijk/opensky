@@ -1,11 +1,6 @@
-// The three perception condition functions (issue #202, roadmap item 16.6),
-// driven through the real evaluator against a synthetic pair.
-//
-// Function indices here are the raw on-disk numbers (Creation Kit number minus
-// 4096) — see the ConditionFunctionsDetection.swift header for the sources.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The three perception condition functions through the real evaluator.
+// Indices are raw on-disk numbers (Creation Kit minus 4096); see the
+// ConditionFunctionsDetection.swift header.
 
 import Foundation
 @testable import OpenSkyConditions

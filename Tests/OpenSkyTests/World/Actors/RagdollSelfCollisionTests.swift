@@ -1,13 +1,7 @@
-// Which of a ragdoll's own bones may touch each other (issue #413).
-//
-// Two halves. The first pins the filter bits against nif.xml's
-// `CollisionFilterFlags` bitfield — biped part in bits 0-4, `No Collision` at
-// bit 6, and the part meaningful only on the biped layers. The second pins the
-// four admission rules and shows the solver acting on them: an admitted pair of
-// overlapping bones pushes apart, a rejected one is not even asked.
-//
-// Everything is built in code. The vanilla humanoid's own numbers are asserted
-// in `RagdollRealDataTests`, which is the half that needs the install.
+// Which ragdoll bones may touch each other. Filter bits follow nif.xml
+// `CollisionFilterFlags`: biped part in bits 0-4, `No Collision` at bit 6. The
+// solver pushes admitted pairs apart and never asks about rejected ones.
+// Vanilla numbers are in `RagdollRealDataTests`.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyFormatsMesh
@@ -138,13 +132,9 @@ struct RagdollSelfCollisionTests {
 
     // MARK: - The solver acting on them
 
-    /// Two overlapping bones the filter admits push each other apart; the same
-    /// two with the filter switched off stay interpenetrating, and the solver
-    /// never even generates the contact.
-    ///
-    /// The pair is bones 0 and 2 of a three-bone ragdoll: 0 and 1 are jointed
-    /// end to end, and 2 lies alongside 0 without being jointed to anything,
-    /// which is the shape of an arm fallen against a torso.
+    /// Two overlapping admitted bones push apart; with the filter off they stay
+    /// overlapped and no contact is made. Bone 2 lies along unjointed bone 0,
+    /// like an arm fallen on a torso.
     @Test
     func anAdmittedOverlapSeparatesAndARejectedOneIsNotAsked() {
         let overlapping = RagdollSelfCollisionFixture.armAcrossTorso()

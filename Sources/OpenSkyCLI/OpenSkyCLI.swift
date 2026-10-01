@@ -1,4 +1,4 @@
-// OpenSky CLI (todo 2.9): second product target sharing the engine sources —
+// OpenSky CLI: second product target sharing the engine sources —
 // repeatable dev checks from the terminal replacing throwaway probe scripts.
 // Reads the user's own install only (read-only external input, AGENTS.md
 // Legal & IP); the data root comes from --data-root or the GameDataLocator

@@ -1,6 +1,5 @@
-// Main-app HUD inspection seam (M8.4.3). The provider keeps the panel
-// independent of GameViewController while exposing engine-owned target state
-// and reversible presentation overrides.
+// HUD inspection seam: target state and reversible presentation overrides,
+// without exposing `GameViewController`.
 
 import OpenSkyFormatsESM
 import OpenSkyRendering

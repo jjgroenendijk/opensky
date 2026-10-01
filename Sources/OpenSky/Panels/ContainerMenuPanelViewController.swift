@@ -1,6 +1,5 @@
-// World > Container Menu: the M12.2.3 verification surface. Two sections — the
-// merchant nomination the barter mode needs before it has a merchant at all,
-// and the menu itself.
+// World > Container Menu. Two sections: the merchant nomination that barter
+// mode needs, and the menu itself.
 
 import AppKit
 import OpenSkyMenus

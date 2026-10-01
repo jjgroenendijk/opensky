@@ -1,10 +1,5 @@
-// The `World > Player & Locomotion` destination's registry contract (issue
-// #191), in its own file for the same reason the journal one is: the parent
-// suite sits near the file-length limit.
-//
-// What is pinned here is the part of the destination a panel test cannot see —
-// where the row sits, what it is called, and which of its controls the sidebar's
-// override dot and "Reset all" act on.
+// The `World > Player & Locomotion` registry contract: where the row sits, its
+// name, and which controls the override dot and "Reset all" act on.
 
 @testable import OpenSky
 @testable import OpenSkyPhysics

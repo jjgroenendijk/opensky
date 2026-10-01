@@ -1,5 +1,5 @@
-// World > Environment > Particles section: enable/freeze/emission controls +
-// live system readout (issue #98 decomposition of EnvironmentParticleControls).
+// World > Environment > Particles: enable, freeze, and emission controls with
+// a live system readout.
 
 import AppKit
 import OpenSkyWorld

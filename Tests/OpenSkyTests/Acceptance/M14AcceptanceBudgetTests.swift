@@ -1,18 +1,7 @@
-// M14 acceptance, budget half (issue #191): the locomotion route is held to the
-// per-frame budgets that already exist, and adds no set of numbers of its own.
-//
-// Two claims. The behavior graph and the skinning it feeds are animation work,
-// so they ride the shipping `animationUpdateBudgetMS` the fly-path validator
-// already enforces — asserted here against the same validator and the same
-// configuration `openskycli bench --fly-path` uses, rather than against a second
-// copy of the numbers (the M13 review constraint). And the fixed-step
-// simulation is bounded by construction: `WalkController` clamps a frame's
-// contribution to 100 ms, so however slow a frame is, the number of behavior
-// graph updates it can drive has a ceiling.
-//
-// The timings are synthetic, as they are throughout `CellStreamingFlyPathTests`:
-// these cases pin the gate's behaviour, not this machine's speed. Measured
-// timings against the real install come from `openskycli bench --fly-path`.
+// Locomotion acceptance, budget half. The behavior graph and skinning ride
+// the shipping `animationUpdateBudgetMS`, checked with the bench's validator.
+// `WalkController` clamps a frame to 100 ms, so graph updates per frame are
+// bounded. Timings are synthetic.
 
 import Foundation
 @testable import OpenSkyBehavior

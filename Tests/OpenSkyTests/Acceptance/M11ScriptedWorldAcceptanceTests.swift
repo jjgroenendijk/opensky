@@ -1,22 +1,7 @@
-// M11.2 acceptance (issue #172): the gate after which a script visibly changes
-// the world, chained end to end with no shortcut anywhere in the middle.
-//
-// One synthetic exterior cell holds a lever and a door. The lever carries a
-// VMAD-attached script whose compiled `OnActivate` body really executes
-// `Self.GetLinkedRef()` and then `Disable()` on what came back — the bytecode
-// runs on the interpreter and the two calls land on the registered
-// `ObjectReference` natives, so nothing here is a probe handler standing in for
-// a script.
-//
-// The chain is: a `CellStreamer` raycast plus use key -> `InteractionEvent` ->
-// the Papyrus subscriber -> `ReferenceActivationState` -> queued `OnActivate`
-// -> the lever's bytecode -> `ReferenceEnableState` on the door ->
-// `CellSceneBuilder` rebuild, where `runtimeDisabledSkipCount` is the
-// deterministic evidence that the door left the drawn set.
-//
-// Every byte is built in code: REFR records, the PEX objects, the plugin the
-// rebuild reads, and the NIF it draws. No game content (AGENTS.md "Legal & IP
-// boundary"), and everything except the final rebuild runs without a GPU.
+// A script visibly changes the world, end to end. A lever's real `OnActivate`
+// bytecode calls `GetLinkedRef()` and `Disable()` on a door. Chain: raycast and
+// use key -> Papyrus -> `OnActivate` -> `ReferenceEnableState` -> rebuild, where
+// `runtimeDisabledSkipCount` shows the door left. Only the rebuild needs a GPU.
 
 import Foundation
 @testable import OpenSkyFormatsESM

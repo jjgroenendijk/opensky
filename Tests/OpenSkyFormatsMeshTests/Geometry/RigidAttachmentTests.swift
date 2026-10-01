@@ -1,11 +1,6 @@
-// Rigid bone attachment maths (issue #178, roadmap item 12.2.1).
-//
-// The interesting property is not the palette's contents but what the GPU
-// computes from them, so the tests reproduce the shader's composition —
-// `world = modelMatrix * (bone * v)` with `modelMatrix = actor * meshLocal`
-// (Shaders.metal `skinnedMeshVertex`, RenderScene instance assembly) — and
-// assert on the world position a vertex lands at. That is what makes a sign or
-// ordering error visible instead of a matrix that merely looks plausible.
+// Rigid bone attachment math. The tests repeat the shader's composition,
+// `world = modelMatrix * (bone * v)` with `modelMatrix = actor * meshLocal`,
+// and check where a vertex lands, so a sign or order error shows.
 
 import Foundation
 @testable import OpenSkyFormatsCore

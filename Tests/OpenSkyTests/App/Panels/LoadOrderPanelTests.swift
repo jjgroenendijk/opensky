@@ -1,6 +1,5 @@
-// Library > Load Order verification-surface coverage: the literal
-// accessibility-id contract, the geometry of the controls, and the rows the
-// table shows for a synthetic install (issue #73).
+// Library > Load Order: literal ids, control geometry, and the table rows for
+// a synthetic install.
 
 import AppKit
 @testable import OpenSky

@@ -1,11 +1,6 @@
-// World > Dialogue & Voice > Voice verification surface (item 17.5): control
-// geometry, the literal accessibility-id contract, the filter/picker round-trip
-// and the readout wording — including the one thing a truncated picker must
-// never do, which is read as though it listed everything that matched.
-//
-// The section moved out of `World > Audio` with the M17 gate (issue #209), so
-// the panel these build is `DialoguePanelViewController`; every control id is
-// the one item 17.5 pinned.
+// World > Dialogue & Voice > Voice: geometry, ids, filter and picker, and
+// readout wording. A truncated picker must never read as a full list. The
+// panel is `DialoguePanelViewController`.
 
 import AppKit
 @testable import OpenSky
@@ -130,10 +125,8 @@ struct AudioVoicePanelTests {
         #expect(!text.contains("Play failed"))
     }
 
-    /// The voice-submix readout the M17 gate added (issue #209): what is on the
-    /// voice bus, how far away it is and how far into itself it has played.
-    /// Sources on other submixes are counted but not listed, because a music
-    /// bed playing is not what this section is for.
+    /// The voice-submix readout: what is on the voice bus, its distance, and
+    /// its play position. Other submixes are counted but not listed.
     @Test @MainActor
     func sourceReadoutListsOnlyVoiceSourcesAndTheirClocks() {
         let text = AudioVoiceSection.sourceReadout(AudioStatsSnapshot(

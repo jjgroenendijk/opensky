@@ -1,9 +1,6 @@
-// The pure entry-point evaluator (issue #497, roadmap item 20.4): one operand
-// per documented function, the ordering rule, and every counted no-op.
-//
-// Hand-computed expectations throughout — each `#expect` states the arithmetic
-// UESP's "Function Types" table gives rather than whatever the implementation
-// produces.
+// The pure entry-point evaluator: one operand per documented function, the
+// ordering rule, and every counted no-op. Each `#expect` states the arithmetic
+// from UESP's "Function Types" table.
 
 import Foundation
 @testable import OpenSkyFormatsESM

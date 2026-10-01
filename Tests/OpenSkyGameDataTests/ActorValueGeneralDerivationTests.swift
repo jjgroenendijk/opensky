@@ -1,13 +1,6 @@
-// Record-derived baselines for the non-primary actor values (issue #468,
-// roadmap item 19.5): the RACE and CLAS fields that author one, the skill
-// spread, and the decode of the record bytes they come out of.
-//
-// Every expected number is either quoted from the source that documents it or
-// hand-computed from the quoted formula, never taken from an implementation
-// run. The sources are cited in
-// `Sources/OpenSkyGameData/ActorValueDerivationGeneral.swift`. Records are
-// synthetic and built in code — never extracted game files (AGENTS.md "Legal &
-// IP boundary").
+// Record-derived baselines for the non-primary actor values: RACE and CLAS
+// fields, the skill spread, and their decode. Expected numbers are quoted or
+// hand-computed from the sources in `ActorValueDerivationGeneral.swift`.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

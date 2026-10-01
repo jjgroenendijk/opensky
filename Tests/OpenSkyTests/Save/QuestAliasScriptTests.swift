@@ -1,9 +1,5 @@
-// Alias scripts and the alias half of the save (issue #183): a `ReferenceAlias`
-// script instantiates on the reference filling its alias, retires when the
-// quest stops, and comes back bound to the restored fill after a load.
-//
-// Every quest, script and reference is synthetic (`PapyrusQuestFixture`), so
-// nothing here reads game data.
+// Alias scripts and their save: a `ReferenceAlias` script starts on the filling
+// reference, retires when the quest stops, and rebinds after a load.
 
 import FormatsESMTesting
 import Foundation

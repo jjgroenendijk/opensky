@@ -1,5 +1,4 @@
-// World > Environment > Precipitation section: A/B enable toggle + live runtime
-// readout (issue #98 decomposition of EnvironmentPrecipitationControls).
+// World > Environment > Precipitation: enable toggle and runtime readout.
 
 import AppKit
 import OpenSkyRendering

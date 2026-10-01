@@ -1,10 +1,6 @@
-// The four quest condition functions (issue #182): GetStage, GetStageDone,
-// GetQuestRunning and GetQuestCompleted, evaluated against synthetic quest
-// state through the `ConditionContext` quest seam.
-//
-// Indices are the raw on-disk numbers from xEdit's condition-function table;
-// the Creation Kit spells each 4096 higher. Conditions are built in code with
-// `ConditionFixture`, so nothing here reads game data.
+// GetStage, GetStageDone, GetQuestRunning, and GetQuestCompleted through the
+// `ConditionContext` quest seam. Indices are raw on-disk numbers (Creation Kit
+// minus 4096).
 
 import FormatsESMTesting
 import Foundation

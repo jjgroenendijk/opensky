@@ -1,7 +1,6 @@
-// Engine-owned state for vanilla `Interface\hudmenu.swf` (M8.4.2). The movie
-// exposes direct functions on `/HUDMovieBaseInstance`, so this bridge converts
-// typed engine values into that observed AS2 contract. It owns no renderer or
-// movie lifetime; the caller batches mutations through `Renderer.updateSWFRuntime`.
+// Engine state for vanilla `Interface\hudmenu.swf`. Converts typed values into
+// the movie's observed AS2 functions on `/HUDMovieBaseInstance`. The caller
+// batches calls through `Renderer.updateSWFRuntime`.
 
 import Foundation
 import OpenSkyFormatsSWF

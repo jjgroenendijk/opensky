@@ -1,9 +1,6 @@
-// Load-order fingerprint builder tests (issue #162, roadmap item 10.1.5).
-//
-// `OpenSkySaveFingerprintTests` covers verifying a fingerprint against an
-// installed load order; this file covers building one in the first place.
-// Plugins are synthetic TES4 bytes from ESMFixture written into a temporary
-// directory laid out like an install root, so no game data is involved.
+// Building a load-order fingerprint. Plugins are synthetic TES4 bytes in a
+// temporary install-shaped directory. Verification is in
+// `OpenSkySaveFingerprintTests`.
 
 import FormatsESMTesting
 import Foundation

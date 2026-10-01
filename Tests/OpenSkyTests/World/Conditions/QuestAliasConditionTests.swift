@@ -1,9 +1,6 @@
-// Conditions against the filled alias table (issue #183): the Quest Alias
-// run-on, and the CIS1/CIS2 name override that needed the table to exist.
-//
-// Every condition is a real 32-byte CTDA decoded through `Condition(ctda:)`,
-// and every quest is synthetic `QuestFixture` bytes, so nothing here reads game
-// data. The store is @MainActor, so the suite is too.
+// Conditions on the filled alias table: the Quest Alias run-on and the
+// CIS1/CIS2 name override. Each condition is a real 32-byte CTDA. `@MainActor`
+// like the store.
 
 import FormatsESMTesting
 import Foundation

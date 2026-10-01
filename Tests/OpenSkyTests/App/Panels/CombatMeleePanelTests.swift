@@ -1,9 +1,6 @@
-// The Melee section of `World > Combat & Physics` (issue #195, roadmap item
-// 15.4), split out of `PlayerLocomotionPanelTests.swift (issue #198 moved it here)` for the
-// strict-lint
-// type-body cap. Same panel, same fake, same three questions the other sections
-// are asked: does the readout describe the engine, does it say so when there is
-// no engine, and does every control reach the provider.
+// The Melee section of `World > Combat & Physics`, split for the type-body
+// cap. Does the readout describe the engine, say so when there is none, and
+// does every control reach the provider?
 
 import AppKit
 @testable import OpenSky
@@ -42,8 +39,8 @@ struct CombatMeleePanelTests {
         }
     }
 
-    /// The Melee readout names where the weapon is, what it is, how far it
-    /// reaches, and the last hit (issue #195).
+    /// The Melee readout names where the weapon is, what it is, its reach, and
+    /// the last hit.
     @Test @MainActor
     func meleeReadoutDescribesTheWeaponAndTheLastHit() throws {
         let providers = FakeWorldProviders()

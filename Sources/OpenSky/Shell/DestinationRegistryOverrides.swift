@@ -1,11 +1,6 @@
-// The three menu destinations' override actions (issue #179 split them out).
-// Satellite of Shell/DestinationRegistry.swift, which holds the descriptors:
-// the registry enum body is at the strict-lint type-length cap, and these three
-// constants are the part of it that is pure per-destination policy.
-//
-// `fileprivate` rather than `private` because they are consumed from the
-// descriptor list in the main file; the registry stays the only registration
-// point either way.
+// Per-destination override actions, split out of DestinationRegistry.swift to
+// stay under the type-length cap. `fileprivate` because the descriptor list in
+// the main file uses them.
 
 import AppKit
 
@@ -25,10 +20,8 @@ extension DestinationRegistry {
         }
     )
 
-    /// Only the HUD elements section carries overridden-ness now that the
-    /// conversation moved to its own destination (issue #209): what the
-    /// crosshair is pointing at and what a picked item did are world state, and
-    /// the presentation toggles above them are the settings a reset restores.
+    /// Only the HUD elements section is overridable. The crosshair target and
+    /// picked items are world state.
     static let hudInteractionOverrides = DestinationOverrideActions(
         isOverridden: { context in
             HUDElementsSection.isOverridden(provider: context.providers)
@@ -38,13 +31,9 @@ extension DestinationRegistry {
         }
     )
 
-    /// The M17 destination's four sections all carry overridden-ness, and each
-    /// for the same reason: every one of them can be left holding something the
-    /// world would not have produced on its own. An open conversation holds the
-    /// engine menu stack, a forced dialogue camera holds the view, a scrubbed
-    /// morph weight holds a face, and lip sync switched off is the A/B seam left
-    /// in its non-default half. Said-state and quest stages a conversation
-    /// produced are deliberately not undone: those are the milestone's point.
+    /// Every section here can hold something the world would not produce: an
+    /// open conversation, a forced camera, a scrubbed morph, lip sync off.
+    /// Said-state and quest stages from a conversation are not undone.
     static let dialogueVoiceOverrides = DestinationOverrideActions(
         isOverridden: { context in
             DialogueSection.isOverridden(provider: context.providers)
@@ -77,12 +66,8 @@ extension DestinationRegistry {
         }
     )
 
-    /// Only the Dev Controls section carries overridden-ness (issue #191): a
-    /// held gait is the one thing under `World > Player & Locomotion` that sits
-    /// away from its default, and the sidebar's reset releases it. Camera mode
-    /// is `World > World`'s override and is deliberately not claimed twice;
-    /// sneaking, jumping and raising an event are world actions rather than
-    /// settings, so none of them lights the dot.
+    /// Only a held gait is overridable. Camera mode belongs to `World > World`;
+    /// sneak, jump, and raised events are world actions, not settings.
     static let playerLocomotionOverrides = DestinationOverrideActions(
         isOverridden: { context in
             LocomotionDevSection.isOverridden(provider: context.providers)
@@ -112,13 +97,8 @@ extension DestinationRegistry {
         }
     )
 
-    /// Only the Equipment section carries overridden-ness, and only through its
-    /// owner selector (issue #180). Granting, and the ownership readout, change
-    /// no setting: a grant is a world change, which `World > Runtime State`
-    /// already owns resetting, and giving the same delta two owners is exactly
-    /// what the reset contract forbids. Inspecting the player instead of the
-    /// nearest NPC is the one thing here that sits away from a documented
-    /// default, and the sidebar's reset puts it back.
+    /// Only the Equipment owner selector is overridable. A grant is a world
+    /// change, and `World > Runtime State` already owns resetting it.
     static let inventoryEquipmentOverrides = DestinationOverrideActions(
         isOverridden: { context in
             EquipmentInspectionSection.isOverridden(provider: context.providers)
@@ -191,14 +171,9 @@ extension DestinationRegistry {
         }
     )
 
-    /// Only the Overlays section carries overridden-ness (issue #203): three
-    /// debug overlays that default off are the one thing under this destination
-    /// that sits away from a documented default, and the sidebar's reset
-    /// switches them back off. Which actor a session is following is a
-    /// nomination rather than a setting; where an actor has walked to, which
-    /// package its clock selected and whether it regards the player as an enemy
-    /// are all world state a user produced on purpose, and a "Reset all" that
-    /// undid any of them would be undoing the demonstration rather than a knob.
+    /// Only the debug overlays are overridable. The followed actor, its
+    /// position, its package, and its hostility are world state the user made
+    /// on purpose.
     static let aiNavigationOverrides = DestinationOverrideActions(
         isOverridden: { context in
             AIOverlaySection.isOverridden(provider: context.providers)

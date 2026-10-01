@@ -162,8 +162,8 @@ struct PluginsTextLocatorTests {
         #expect(defaults.string(forKey: PluginsTextLocator.defaultsKey) == nil)
     }
 
-    /// A unit test must not pick up the developer's own load order — the same
-    /// rule `GameDataLocator` follows for the data root (issue #362).
+    /// A unit test must not pick up the developer's own load order, the same
+    /// rule `GameDataLocator` follows for the data root.
     @Test func hostWithholdsThePersistentSources() {
         #expect(GameDataLocator.isRunningInTestHost)
         #expect(PluginsTextLocator.persistedDefaults == nil)

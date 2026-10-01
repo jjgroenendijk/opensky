@@ -1,6 +1,5 @@
-// World > HUD & Interaction > Face Morphs (issue #207): select one named TRI
-// target and scrub its actor-local 0...1 weight while inspecting association
-// paths and misses.
+// World > HUD & Interaction > Face Morphs: pick a TRI target, scrub its 0...1
+// weight, and inspect association paths and misses.
 
 import AppKit
 import OpenSkyWorld

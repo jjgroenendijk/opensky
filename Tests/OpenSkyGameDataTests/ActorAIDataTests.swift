@@ -1,6 +1,5 @@
-// AIDT decode coverage (issue #503): the named values, the defensive length
-// handling, and the `useAIData` template inheritance the hostility derivation
-// depends on. No game-derived bytes.
+// AIDT decode: the named values, defensive length handling, and the
+// `useAIData` template inheritance the hostility derivation needs.
 
 import FormatsESMTesting
 import Foundation

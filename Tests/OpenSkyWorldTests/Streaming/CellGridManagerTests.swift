@@ -1,4 +1,4 @@
-// Streaming grid manager math (todo 3.2 grid manager): floor-division cell
+// Streaming grid manager math: floor-division cell
 // mapping (incl. negative coords + exact boundaries), desired-grid contents,
 // one-move diffing, hysteresis no-thrash, radius parameter. Pure math,
 // synthetic positions (AGENTS.md testing rule).

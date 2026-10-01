@@ -1,14 +1,6 @@
-// Structural decode tests for the behavior node classes (todo 14.2) over one
-// hand-built synthetic packfile — never an extracted game file (AGENTS.md
-// "Legal & IP boundary"). Every name and number below is invented; only the
-// member offsets come from the class layouts in
-// docs/formats/hkx-behavior-nodes.md.
-//
-// HKBNodeClassTests proves each class survives a zeroed, a truncated, and a
-// dangling-pointer object. This file proves the offsets themselves: a state
-// machine whose state names, transitions, blend weights, and clip paths all
-// come back with the values the fixture wrote, and a walk that reaches every
-// object through the registry rather than through a hand-written switch.
+// Behavior node decode over one synthetic packfile. Proves the member offsets
+// in docs/formats/hkx-behavior-nodes.md: state names, transitions, weights,
+// and clip paths come back as written, reached through the registry.
 
 import FormatsAnimationTesting
 import Foundation

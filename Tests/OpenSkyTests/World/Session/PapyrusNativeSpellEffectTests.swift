@@ -1,13 +1,6 @@
-// The spell natives' effect, dispel and cast halves (issue #474, roadmap item
-// 19.11), split out of `PapyrusNativeSpellTests.swift` when that suite reached
-// the strict-lint type-body cap.
-//
-// The seam is the one the file already had: the half above answers "does the
-// spellbook see what a script did", this half answers "does the effect list and
-// the cast loop". Both drive the same fixture.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The spell natives' effect, dispel, and cast halves: does the effect list and
+// the cast loop see what a script did. Split from PapyrusNativeSpellTests.swift
+// for the type-body cap.
 
 import Foundation
 @testable import OpenSkyFormatsESM

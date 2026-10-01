@@ -1,6 +1,5 @@
-// Runtime global-variable layer in WorldStateStore (issue #165): typed
-// mutation and its rounding, reset to plugin default, the change journal, the
-// snapshot, and restore. See docs/engine/global-variables.md.
+// Runtime globals in WorldStateStore: typed writes and rounding, reset, the
+// journal, the snapshot, and restore. See docs/engine/global-variables.md.
 
 import FormatsESMTesting
 import Foundation

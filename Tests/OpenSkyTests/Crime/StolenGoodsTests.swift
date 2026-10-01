@@ -1,12 +1,6 @@
-// The stolen flag on inventory stacks (issue #504, roadmap item 21.5): how it
-// splits a stack, how it survives a move, and how a take out of an owned
-// container marks it.
-//
-// "Should you steal multiple items of the same type, each item considered
-// stolen is tracked separately when dropped" and "as long as this tag is
-// present, the item is considered stolen"
-// (<https://en.uesp.net/wiki/Skyrim:Crime>) — the two facts that make the flag
-// part of the stack key rather than a property of the item.
+// The stolen flag on inventory stacks: splitting, moving, and marking takes
+// from owned containers. UESP says stolen items are tracked separately and stay
+// stolen (<https://en.uesp.net/wiki/Skyrim:Crime>), so the flag is in the key.
 
 import Foundation
 @testable import OpenSky

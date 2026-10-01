@@ -1,4 +1,4 @@
-// Deterministic clean engine values for M4.5 route. No game payload.
+// Deterministic engine values for the walk-path route.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

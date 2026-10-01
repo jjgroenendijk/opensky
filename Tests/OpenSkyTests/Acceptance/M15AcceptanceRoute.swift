@@ -1,11 +1,6 @@
-// The M15 gate's route, step by step (issue #198), in a satellite of
-// `M15AcceptanceTests.swift` for the strict-lint type-length cap.
-//
-// One step per phase of the fight, each asserting what the engine holds before
-// the next one runs, so a failure names the step rather than leaving an end
-// state to reverse-engineer. The order is the order a session would fight in
-// and is not rearrangeable: every step depends on the state the previous one
-// left behind.
+// The combat gate's route, one step per phase of the fight, split for the
+// type-length cap. Each step checks engine state before the next, so a failure
+// names its step. The order is fixed: each step needs the one before.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -142,14 +137,9 @@ extension M15AcceptanceTests {
         #expect(!chain.melee.state.isBlocking)
     }
 
-    /// Step 6 — back out of the opponent's reach and put the melee weapon
-    /// away, which is what leaves the attack button to archery.
-    ///
-    /// Backing away first is the fight's own logic rather than a convenience:
-    /// a bow is the answer to an opponent that is no longer next to you, and it
-    /// is also what makes the arrow's flight a flight instead of a formality.
-    /// A click with the weapon sheathed resolves nothing, which is what stops
-    /// the same button swinging as well as drawing.
+    /// Step 6: back out of reach and sheathe the melee weapon, which gives the
+    /// attack button to archery. Distance makes the arrow's flight real. A
+    /// click while sheathed resolves nothing, so one button cannot do both.
     static func switchToTheBow(_ chain: Chain) throws {
         let start = chain.feetPosition.x
         chain.press(.keyS)

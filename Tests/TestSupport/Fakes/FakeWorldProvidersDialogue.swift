@@ -1,7 +1,6 @@
 // `FakeWorldProviders`' DialogueControlProviding and
-// DialogueCameraControlProviding forwarding (issues #205, #427). The fake is
-// shared by both test targets, so every conformance it carries has to be too.
-// See Tests/TestSupport/AGENTS.md.
+// DialogueCameraControlProviding forwarding. Both test targets share the fake,
+// so its conformances are shared too (Tests/TestSupport/AGENTS.md).
 
 import AppKit
 @testable import OpenSkyMenus
@@ -27,7 +26,7 @@ extension FakeWorldProviders {
     }
 }
 
-/// The same forwarding for the camera half of the conversation (issue #427).
+/// The same forwarding for the conversation camera.
 extension FakeWorldProviders {
     var dialogueCameraSnapshot: DialogueCameraSnapshot {
         dialogueCamera.dialogueCameraSnapshot

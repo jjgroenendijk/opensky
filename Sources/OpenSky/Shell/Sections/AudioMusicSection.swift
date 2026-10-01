@@ -1,8 +1,6 @@
-// World > Audio > Music section (M9.2.3): the verification surface for the MUSC
-// playlist director. An enable toggle, a picker that forces one MUSC playlist
-// past the cell/region/worldspace precedence chain, a stop button, and a readout
-// naming the derived state plus the playlist and track now sounding. Same shape
-// as the other audio sections. Sidebar path and controls: docs/engine/music.md.
+// World > Audio > Music (docs/engine/music.md): enable toggle, a picker that
+// forces one MUSC playlist, a stop button, and a readout of the state, the
+// playlist, and the track.
 
 import AppKit
 import OpenSkyWorld

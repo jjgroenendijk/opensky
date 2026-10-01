@@ -1,6 +1,5 @@
-// Coverage for the shared inspector-panel framework (issue #98): the readout
-// ticker's start/stop lifecycle, collapsible-section reveal + persistence, and
-// the scrolling panel document starting at the top.
+// The shared panel framework: ticker start and stop, collapsible sections and
+// their persistence, and the scroll view starting at the top.
 
 import AppKit
 @testable import OpenSky

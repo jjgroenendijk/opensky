@@ -1,9 +1,5 @@
-// The Magic Effects section (issue #469, roadmap item 19.6): its accessibility
-// ids, the two controls' routing, and the readout with and without a runtime.
-//
-// The panel and the fake provider are `CombatPhysicsPanelTests`', for the reason
-// `CombatActorValuesPanelTests` reuses them: what is under test is what the
-// section sends and shows, not how the panel is built.
+// The Magic Effects section: ids, control routing, and the readout with and
+// without a runtime. Uses `CombatPhysicsPanelTests`' panel and fake.
 
 import AppKit
 @testable import OpenSky
@@ -105,9 +101,8 @@ struct CombatMagicEffectsPanelTests {
         #expect(text.contains("Coverage: every effect entry applied"))
     }
 
-    /// The nearest resident actor's list (issue #475, roadmap item 19.12): the
-    /// actor the resistance values above are read about, so a hostile spell
-    /// that landed on an NPC is visible beside what scaled it.
+    /// The nearest resident actor's effect list, beside the resistances that
+    /// scaled a hostile spell on it.
     @Test func theNearestActorsEffectsAreListedUnderTheirOwnName() {
         let text = MagicEffectControlReadout.text(
             for: snapshot(

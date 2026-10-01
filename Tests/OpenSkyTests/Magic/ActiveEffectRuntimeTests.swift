@@ -144,7 +144,7 @@ struct ActiveEffectRuntimeTests {
         #expect(runtime.tally.secondsPaid == 0)
     }
 
-    // MARK: - Held modifiers on a primary (issue #511)
+    // MARK: - Held modifiers on a primary
 
     /// A Fortify Health potion raises the maximum and the current value
     /// together, and expiry puts both numbers back.

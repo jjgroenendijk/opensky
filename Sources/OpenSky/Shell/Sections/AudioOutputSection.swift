@@ -1,6 +1,5 @@
-// World > Audio > Output section: engine enable, master + vanilla SNCT category
-// volumes, per-category mute and solo (M9.2.4), and the device/format readout
-// (M9.1.3).
+// World > Audio > Output: engine enable, master and SNCT category volumes,
+// mute and solo, and the device readout.
 
 import AppKit
 import OpenSkyAudio

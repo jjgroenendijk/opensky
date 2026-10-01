@@ -1,30 +1,8 @@
-// The synthetic world the M17 gate holds a conversation in (issue #209): one
-// speaker, four topics, one quest and the generated result script that advances
-// it.
-//
-// Every byte is built in code by `DialogueFixture`, `PapyrusQuestFixture` and
-// `PexFixture` — never an extracted record, a real INFO or a voice file
-// (AGENTS.md "Legal & IP boundary"). The vanilla half of the gate is
-// `M17AcceptanceRealDataTests`, which is env-gated.
-//
-// The topic set is chosen so that one pass through the menu exercises every
-// selection rule the milestone claims, and so that the *list itself* proves the
-// result flow ran:
-//
-// * `questTopic` is say-once and carries the TIF_ result script. Choosing it
-//   sets stage 10 on the probe quest and spends the line.
-// * `stageTopic` is gated on `GetStageDone(quest, 10)`, so it is rejected
-//   before that response is chosen and offered after it. A quest stage the
-//   conversation set is therefore visible as a topic the conversation gained,
-//   which is the milestone's "advances or reflects quest state" bar read from
-//   the player's side rather than from a store.
-// * `goodbyeTopic` carries the goodbye flag, which is what ends the
-//   conversation from inside the menu rather than by leaving it.
-// * The greeting is a HELO topic, said before the list appears, and say-once so
-//   that a second conversation opens differently from the first.
-//
-// The plugin is keyed under `PapyrusWorldFixture.pluginName` so an INFO's
-// `ReferenceKey` matches the Papyrus instance key its result script runs under.
+// The dialogue gate's world: one speaker, four topics, one quest, and its
+// result script. `questTopic` is say-once and sets stage 10; `stageTopic` needs
+// `GetStageDone(quest, 10)`, so its appearance proves the result ran;
+// `goodbyeTopic` ends the talk; the HELO greeting is say-once. Keyed under
+// `PapyrusWorldFixture.pluginName` so INFO keys match Papyrus instance keys.
 
 import FormatsESMTesting
 import FormatsPEXTesting

@@ -1,9 +1,5 @@
-// The Spellcasting section (issue #470, roadmap item 19.7): its accessibility
-// ids, the seven controls' routing, and the readout with and without a runtime.
-//
-// The panel and the fake provider are `CombatPhysicsPanelTests`', for the reason
-// `CombatMagicEffectsPanelTests` reuses them: what is under test is what the
-// section sends and shows, not how the panel is built.
+// The Spellcasting section: ids, routing of its seven controls, and the
+// readout with and without a runtime. Uses `CombatPhysicsPanelTests`' panel.
 
 import AppKit
 @testable import OpenSky
@@ -148,9 +144,8 @@ struct CombatSpellcastingPanelTests {
         #expect(text.contains("2 ability entr(ies) carry no duration"))
     }
 
-    /// The resistance adjustment is the evidence item 19.8's acceptance rests
-    /// on: a health bar moving is not proof that the multiplier was the
-    /// documented one, and this line is (issue #471).
+    /// The resistance line proves the documented multiplier was used; a moving
+    /// health bar does not.
     @Test func theReadoutSpellsOutWhatALandedSpellsResistancesDidToIt() {
         let text = CastingControlReadout.deliveryText(
             for: snapshot(
@@ -192,9 +187,8 @@ struct CombatSpellcastingPanelTests {
         #expect(text.contains("Learn start spells"))
     }
 
-    /// The magic condition probe (issue #474): the eight registrations are
-    /// readable from the panel, and an unwired seam says so rather than
-    /// printing eight zeroes.
+    /// The magic condition probe: the eight registrations are readable, and an
+    /// unwired seam says so instead of printing eight zeroes.
     @Test func theConditionProbeLinesAreShownAndTheAbsenceIsNamed() {
         let text = CastingControlReadout.conditionsText(for: snapshot(conditionLines: [
             "HasSpell(Healing) -> 1",

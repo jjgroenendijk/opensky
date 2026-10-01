@@ -1,24 +1,7 @@
-// M17 acceptance, budget half (issue #209): a talking face is held to the
-// per-frame budgets that already exist, and adds no set of numbers of its own.
-//
-// The constraint M13 put on M14 and every milestone since has restated: what
-// M17 adds to a frame is a lip track sampled against the audio clock and a set
-// of morph deltas composed on the CPU, both of which land inside the shipping
-// `animationUpdateBudgetMS` the fly-path validator already enforces, while the
-// voice line itself lands inside `audioUpdateBudgetMS`. Neither gets a second
-// copy of the numbers.
-//
-// The other half of the claim is that the face work is bounded by construction,
-// which is the part a timing measurement cannot show. A lip track writes at
-// most one weight per mapped viseme however long the line is, a finished line
-// stops costing anything after one decay, a disabled A/B seam costs nothing at
-// all, and a composed morph writes one vertex range per active target. Those
-// are asserted against the shipping types rather than against a clock.
-//
-// The timings are synthetic, as they are throughout `CellStreamingFlyPathTests`:
-// these cases pin the gate's behaviour, not this machine's speed. The measured
-// numbers against the real install come from `openskycli bench --fly-path` and
-// from `make realtest-perf`.
+// Dialogue acceptance, budget half. Lip tracks and morphs ride
+// `animationUpdateBudgetMS`; voice rides `audioUpdateBudgetMS`. Bounds are
+// checked on the types: one weight per viseme, a finished line costs nothing,
+// a disabled seam costs nothing, one vertex range per active target.
 
 import FormatsAnimationTesting
 import Foundation

@@ -1,10 +1,5 @@
-// Intent to raised events to a loosed arrow (issue #196, roadmap item 15.5,
-// scope point 2).
-//
-// The counterpart of `ProjectileRuntimeTests`: that suite owns the flight, this
-// one owns the seam between the player's held button, the census-named events
-// the engine raises, the events the graph fires back, and the shot that comes
-// out the other end.
+// From the held button to raised events to a loosed arrow. Flight is in
+// `ProjectileRuntimeTests`.
 
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat

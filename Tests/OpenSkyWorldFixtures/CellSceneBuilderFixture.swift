@@ -1,10 +1,6 @@
-// The cell-scene fixture: a temp-dir VFS, the synthetic plugin and NIF builders
-// every cell-scene suite composes, and the two Metal gates. The M11 acceptance
-// suites build the same synthetic cell, so the builders live in this library.
-//
-// Fixtures are synthetic throughout — ESMFixture plugin bytes and NIFFixture
-// meshes in a temp directory, never extracted game files (AGENTS.md Legal & IP
-// boundary).
+// The cell-scene fixture: a temp-dir VFS, the plugin and NIF builders the
+// cell-scene suites share, and the two Metal gates. A library because the
+// acceptance suites build the same cell.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
