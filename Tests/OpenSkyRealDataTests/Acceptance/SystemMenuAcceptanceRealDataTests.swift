@@ -41,7 +41,7 @@ struct SystemMenuAcceptanceRealDataTests {
         try renderer.updateSWFRuntime { runtime in
             SystemMenuMovieBridge.activate(runtime: runtime) {}
         }
-        for _ in 0 ..< GameViewController.systemMenuActivationTicks {
+        for _ in 0 ..< SystemMenuMovieBridge.activationTicks {
             try renderer.advanceSWFRuntime()
         }
         let activated = try render(renderer)
@@ -144,7 +144,7 @@ struct SystemMenuAcceptanceRealDataTests {
         try renderer.updateSWFRuntime { runtime in
             openSettings(runtime: runtime)
         }
-        for _ in 0 ..< GameViewController.systemMenuActivationTicks {
+        for _ in 0 ..< SystemMenuMovieBridge.activationTicks {
             try renderer.advanceSWFRuntime()
         }
         let frame = try render(renderer)

@@ -1,6 +1,5 @@
-// Hosts the MTKView and wires it to the renderer. Fails soft with an on-screen
-// message when the GPU lacks Metal 4 — the engine requires it (AGENTS.md
-// "Environment & tech stack"); a missing GPU feature must not crash the app.
+// Hosts the MTKView and wires it to the renderer. Without Metal 4 it shows a
+// message instead of crashing.
 
 import AppKit
 import MetalKit
@@ -39,12 +38,8 @@ final class GameViewController: NSViewController {
     /// root can be corrected without relaunching or dismissing an alert loop.
     var startupErrorMessage: String?
 
-    /// Builds the cell streaming session on the view's Metal device. Set by
-    /// the AppDelegate before the window content loads; nil factory or nil
-    /// result (missing game data / setup throw) -> no streamer, renderer
-    /// falls back to the synthetic DemoScene. The factory runs here (not in
-    /// the AppDelegate) because the asset libraries bind GPU resources to the
-    /// device the view renders with.
+    /// Runs here, not in the AppDelegate, because the asset libraries bind GPU
+    /// resources to the view's device. A nil result falls back to `DemoScene`.
     var cellSessionFactory: ((MTLDevice) -> CellSession?)?
 
     /// Thread-safe effective INI/sidebar LOD values shared with the off-main
@@ -56,27 +51,17 @@ final class GameViewController: NSViewController {
         )
     )
 
-    /// Readable by the UI Lab bridge (GameViewController+UILab.swift); only this
-    /// file assigns it.
+    /// Only this file assigns it.
     private(set) var renderer: Renderer?
     var canWriteScreenshot: Bool {
         renderer != nil
     }
 
-    /// Retains the streaming controller (and, through it, the build runner +
-    /// provider) for the window's lifetime. Readable by the world-stats bridge
-    /// (GameViewController+WorldStats.swift); only this file assigns it.
+    /// Only this file assigns it.
     var streamer: CellStreamer?
-    /// Mutable runtime world state for this session. It is the
-    /// production owner of `WorldStateStore`: `wireStreaming` reads snapshots
-    /// off it at build dispatch and rebuilds resident cells when it changes.
-    /// Papyrus, inventory and quests mutate it later; the sidebar readout
-    /// reads it.
+    /// `wireStreaming` rebuilds resident cells when it changes.
     let worldState = WorldStateStore()
-    /// Papyrus VM for this session, built by `wirePapyrus` when
-    /// the provider can supply compiled scripts. Cell streaming attaches and
-    /// detaches script instances on it, and the renderer's world-simulation
-    /// hook ticks it once per drawn frame. nil without game data.
+    /// nil without game data. Ticked once per drawn frame.
     var papyrus: PapyrusWorldRuntime?
     /// Seam Papyrus natives reach the world through, built beside
     /// `papyrus`. Retained here because it is also the `onInteraction`
@@ -89,33 +74,13 @@ final class GameViewController: NSViewController {
     /// NSEvents, the renderer drains it each frame.
     let cameraInput = CameraInputState()
 
-    /// Menu-mode source of truth, shared with the input view and the renderer.
-    /// Entering menu mode pauses world sim and drops held world input; leaving
-    /// it resumes with no time jump.
+    /// Entering menu mode pauses the world sim and drops held world input.
     let menuMode = MenuModeController()
-
-    /// Which built-in overlay sample Developer > UI Lab shows. Stored here
-    /// because both samples share `Renderer.uiScene`; the UI Lab bridge maps it
-    /// onto the renderer and declares the enum beside itself.
-    var uiLabSampleSelection: UILabSampleSelection = .none
-
-    /// Builds the merged translation provider over the located install. Set by
-    /// the AppDelegate; nil when game data is missing. The UI Lab bridge
-    /// invokes it once, lazily, caching into `installLocalizedLabels`.
-    var localizedLabelsLoader: (() -> LocalizedLabels)?
-    /// Cache written only by the UI Lab bridge (`resolveInstallLabels`).
-    var installLocalizedLabels: LocalizedLabels?
-    var installLocalizedLabelsResolved = false
 
     /// Builds the plugin's string tables over the located install. Set by the
     /// AppDelegate; nil without game data, and the journal then shows editor IDs.
     /// Called once, lazily, because it walks the VFS.
     var localizedStringsLoader: (() -> LocalizedStrings)?
-
-    /// Builds the SWF movie loader over the located install. Set by
-    /// the AppDelegate; nil when game data is missing. The UI Lab SWF bridge
-    /// invokes it once, lazily, into `swfLab`.
-    var swfMovieLoaderFactory: (() -> SWFMovieLoader)?
 
     /// Resource lookup over the install. Set by the AppDelegate; nil without game data.
     var audioFileSystem: (any GameFileSource)?
@@ -130,13 +95,32 @@ final class GameViewController: NSViewController {
     }()
 
     lazy var audioWorld = AudioWorldAdapter(game: self)
-    /// Selector state owned by the UI Lab SWF bridge
-    /// (`GameViewController+SWFLab.swift`); nothing else writes it.
-    var swfLab = SWFLabState()
-    /// Vanilla gameplay HUD state.
-    var hud = HUDRuntimeState()
-    /// System menu selector + presentation state.
-    var systemMenu = SystemMenuRuntimeState()
+    /// The SWF movie loader; the AppDelegate sets its factory.
+    let swfMovies = SWFMovieSource()
+    lazy var hud: HUDCoordinator = {
+        let hud = HUDCoordinator(movies: swfMovies)
+        hud.attach(world: self)
+        return hud
+    }()
+
+    lazy var swfLab: SWFLabCoordinator = {
+        let swfLab = SWFLabCoordinator(movies: swfMovies, hud: hud)
+        swfLab.attach(world: self)
+        return swfLab
+    }()
+
+    lazy var uiLab: UILabCoordinator = {
+        let uiLab = UILabCoordinator(menuMode: menuMode)
+        uiLab.attach(world: self)
+        return uiLab
+    }()
+
+    lazy var systemMenu: SystemMenuCoordinator = {
+        let systemMenu = SystemMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
+        systemMenu.attach(world: self)
+        return systemMenu
+    }()
+
     /// Inventory menu row list + presentation state.
     lazy var inventoryMenu = InventoryMenuController(game: self)
     /// The quest the journal panel names and the quest changes it runs.
@@ -262,10 +246,8 @@ final class GameViewController: NSViewController {
         }
         mtkView.device = device
 
-        // Async launch: no scene is built here. A provider (game data) starts
-        // the renderer on an empty scene and streams cells in around the
-        // camera; no provider (missing data / setup throw) falls back to the
-        // synthetic DemoScene so the window is never blank forever.
+        // With game data the renderer starts empty and streams cells in;
+        // without it the renderer shows `DemoScene`.
         let session = cellSessionFactory?(device)
         let provider = session?.data
 
@@ -278,19 +260,14 @@ final class GameViewController: NSViewController {
                 movementConfiguration: (provider as? MovementConfigurationProviding)?
                     .movementConfiguration ?? .synthetic
             )
-            // Persisted World > Environment > Sun shadows choice; invalid stored
-            // value falls back to .high inside ShadowQualitySettings.load().
             newRenderer.shadowQuality = ShadowQualitySettings.load()
-            // Persisted World > Environment > Time of day; invalid stored value
-            // falls back to 13:00 inside TimeOfDaySettings.load().
             newRenderer.timeOfDay = TimeOfDaySettings.load()
-            // Exterior weather runtime; nil provider / no weather data
-            // leaves the renderer on its procedural sky, exactly as before.
+            // Without weather data the renderer keeps its procedural sky.
             newRenderer.weather = (provider as? WeatherProviding)?.weatherSystem
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer
-            startHUD(renderer: newRenderer)
+            hud.start()
             // Menu mode drives the renderer's world-sim pause and clears held
             // world input on entry so no key sticks while the menu owns input.
             menuMode.onModeChange = { [weak newRenderer, weak cameraInput] route, paused in
@@ -307,10 +284,10 @@ final class GameViewController: NSViewController {
                 worldData = session.data
                 wireStreaming(session: session, renderer: newRenderer)
             }
-            // Registered after streaming so the HUD still refreshes after the
-            // streamer's per-frame update, exactly as it did when streaming
-            // owned the only `onFrame` assignment.
-            wireHUDFrameUpdates(renderer: newRenderer)
+            // After streaming, so the HUD reads the streamer's update of this frame.
+            newRenderer.onFrame.add { [weak self] _ in
+                self?.hud.updateFrame()
+            }
         } catch {
             show(message: "Renderer setup failed: \(error)")
         }
@@ -369,6 +346,32 @@ final class GameViewController: NSViewController {
 /// persists the quality choice. A nil renderer (Metal 4 unavailable) degrades to
 /// the stored/default quality and empty stats so the panel never crashes.
 extension GameViewController: AudioControlForwarding {}
+
+extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
+    UILabControlForwarding, SystemMenuControlForwarding {}
+
+extension GameViewController: SystemMenuWorld {
+    func quitApplication() {
+        NSApplication.shared.terminate(nil)
+    }
+
+    /// The one menu input consumer routes by the top of the menu stack. Each
+    /// route checks that its own menu is open.
+    func handleMenuInput(_ event: MenuInputEvent) {
+        switch menuMode.topMenu {
+        case InventoryMenuController.identifier:
+            inventoryMenu.route(event)
+        case ContainerMenuController.containerIdentifier, ContainerMenuController.barterIdentifier:
+            containerMenu.route(event)
+        case JournalMenuController.identifier:
+            journalMenu.route(event)
+        case DialogueMenuController.identifier:
+            dialogueMenu.route(event)
+        default:
+            systemMenu.route(event)
+        }
+    }
+}
 
 extension GameViewController: ShadowControlProviding {
     /// Not persisted: an A/B flip is a transient dev comparison, unlike the

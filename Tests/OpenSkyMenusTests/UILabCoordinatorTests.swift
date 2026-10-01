@@ -1,44 +1,39 @@
-// Deterministic UI-state coverage for the UI Lab bridge on GameViewController
-// (M8.1.4). Exercises the real MenuModeController through the preview actions
-// (push/pop/clear naming, pause boundary) and the localized-strings snapshot
-// (lazy one-shot install load, degrade without game data) without loading the
-// view or touching Metal — the bridge state is renderer-independent.
+// The UI Lab menu-mode preview over the real MenuModeController, and the
+// localized-strings counts. No world is attached, so there is no renderer.
 
-import AppKit
-@testable import OpenSky
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 import Testing
 
-struct GameViewControllerUILabTests {
+struct UILabCoordinatorTests {
     @Test @MainActor
     func pushPopClearDriveTheRealMenuStack() {
-        let controller = GameViewController()
-        var snapshot = controller.menuModeSnapshot
+        let lab = UILabCoordinator(menuMode: MenuModeController())
+        var snapshot = lab.menuModeSnapshot
         #expect(snapshot == MenuModeControlSnapshot(
             isMenuMode: false, topMenuName: nil, stackDepth: 0, isWorldSimPaused: false
         ))
 
-        controller.pushPreviewMenu()
-        snapshot = controller.menuModeSnapshot
+        lab.pushPreviewMenu()
+        snapshot = lab.menuModeSnapshot
         #expect(snapshot == MenuModeControlSnapshot(
             isMenuMode: true, topMenuName: "UILabMenu1", stackDepth: 1, isWorldSimPaused: true
         ))
 
-        controller.pushPreviewMenu()
-        snapshot = controller.menuModeSnapshot
+        lab.pushPreviewMenu()
+        snapshot = lab.menuModeSnapshot
         #expect(snapshot.topMenuName == "UILabMenu2")
         #expect(snapshot.stackDepth == 2)
 
         // Popping an inner menu keeps menu mode (and the pause) active.
-        controller.popPreviewMenu()
-        snapshot = controller.menuModeSnapshot
+        lab.popPreviewMenu()
+        snapshot = lab.menuModeSnapshot
         #expect(snapshot.topMenuName == "UILabMenu1")
         #expect(snapshot.isWorldSimPaused)
 
-        controller.clearPreviewMenus()
-        snapshot = controller.menuModeSnapshot
+        lab.clearPreviewMenus()
+        snapshot = lab.menuModeSnapshot
         #expect(snapshot == MenuModeControlSnapshot(
             isMenuMode: false, topMenuName: nil, stackDepth: 0, isWorldSimPaused: false
         ))
@@ -46,21 +41,21 @@ struct GameViewControllerUILabTests {
 
     @Test @MainActor
     func popNamingStaysDeterministicAfterReuse() {
-        let controller = GameViewController()
-        controller.pushPreviewMenu()
-        controller.pushPreviewMenu()
-        controller.popPreviewMenu()
+        let lab = UILabCoordinator(menuMode: MenuModeController())
+        lab.pushPreviewMenu()
+        lab.pushPreviewMenu()
+        lab.popPreviewMenu()
         // Depth-derived names: the next push reuses the freed depth-2 slot.
-        controller.pushPreviewMenu()
-        #expect(controller.menuModeSnapshot.topMenuName == "UILabMenu2")
-        #expect(controller.menuModeSnapshot.stackDepth == 2)
-        controller.clearPreviewMenus()
+        lab.pushPreviewMenu()
+        #expect(lab.menuModeSnapshot.topMenuName == "UILabMenu2")
+        #expect(lab.menuModeSnapshot.stackDepth == 2)
+        lab.clearPreviewMenus()
     }
 
     @Test @MainActor
     func stringsSnapshotDegradesWithoutGameData() {
-        let controller = GameViewController()
-        let snapshot = controller.localizedLabelsSnapshot
+        let lab = UILabCoordinator(menuMode: MenuModeController())
+        let snapshot = lab.localizedLabelsSnapshot
         #expect(snapshot == LocalizedLabelsControlSnapshot(
             sampleShown: false,
             sampleKeyCount: 4,
@@ -73,9 +68,9 @@ struct GameViewControllerUILabTests {
 
     @Test @MainActor
     func stringsSnapshotLoadsInstallCountsOnce() {
-        let controller = GameViewController()
+        let lab = UILabCoordinator(menuMode: MenuModeController())
         var loads = 0
-        controller.localizedLabelsLoader = {
+        lab.localizedLabelsLoader = {
             loads += 1
             return LocalizedLabels(
                 language: "english",
@@ -85,11 +80,11 @@ struct GameViewControllerUILabTests {
                 ]
             )
         }
-        let snapshot = controller.localizedLabelsSnapshot
+        let snapshot = lab.localizedLabelsSnapshot
         #expect(snapshot.installLoaded)
         #expect(snapshot.installFileCount == 2)
         #expect(snapshot.installKeyCount == 3)
-        _ = controller.localizedLabelsSnapshot
+        _ = lab.localizedLabelsSnapshot
         #expect(loads == 1, "install labels loaded \(loads) times, expected once")
     }
 }

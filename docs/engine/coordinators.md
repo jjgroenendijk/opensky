@@ -83,6 +83,15 @@ every transaction it runs is a coordinator call. `DialogueMenuController` and
 `JournalMenuController` work the same way. `DialogueCameraController` holds the camera's
 panel state and asks the dialogue coordinator to hold the speaker.
 
+The HUD, the developer UI Lab, and the system menu have `HUDCoordinator`, `SWFLabCoordinator`,
+`UILabCoordinator`, and `SystemMenuCoordinator` in `Sources/OpenSkyMenus/`. They share one
+`SWFMovieSource`, and their port `SWFLayerWorld` gives them the renderer. The renderer has one
+SWF layer, so a menu that shows a movie calls `HUDCoordinator.suspend()` first and
+`HUDCoordinator.start()` when it closes. The HUD rules are in `HUDCore`. `SystemMenuWorld`
+adds the audio state and quitting. The view controller is the one `MenuInputConsumer`, and it
+routes each event by the top of the menu stack. It conforms to each panel protocol through a
+`...ControlForwarding` protocol, like the audio panel.
+
 The panel forwards live in `GameViewControllerPanels.swift`, so `GameViewController.swift`
 stays under the file length limit.
 

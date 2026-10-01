@@ -5,6 +5,7 @@
 import AppKit
 import Metal
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyWorld
 import OSLog
 
@@ -75,15 +76,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.activate()
     }
 
-    /// Session factory handed to GameViewController: sets up the off-main
-    /// cell builder (VFS -> ESMFile -> Texture/MeshLibrary -> CellSceneBuilder)
-    /// over the located install. No cell is built here -- that walk moves to
-    /// the streamer's background runner (todo 3.2), so launch never blocks on
-    /// a scene build. Only the cheap setup runs on the view's device (asset
-    /// libraries bind GPU resources there). Any failure past the located-data
-    /// gate (missing esm, ESM parse throw) logs [ERROR] and returns nil so the
-    /// controller falls back to DemoScene. Locator failures never reach this
-    /// closure: World shows the in-window configuration message instead.
+    /// Sets up the off-main cell builder over the located install. No cell is
+    /// built here, so launch never waits on a scene. A failure logs [ERROR] and
+    /// returns nil, and the controller falls back to `DemoScene`.
     private func makeCellSessionFactory() -> ((MTLDevice) -> CellSession?)? {
         guard let root = gameDataRoot, let vfs = virtualFileSystem else { return nil }
         let configurationStore = terrainLODConfigurationStore
@@ -116,14 +111,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.cellSessionFactory = makeCellSessionFactory()
         controller.startupErrorMessage = gameDataErrorMessage
         controller.terrainLODConfigurationStore = terrainLODConfigurationStore
-        // UI Lab localized-strings readout (M8.1.4): merged translation counts
-        // over the located install. Loaded lazily on first readout, not here.
+        // Both loaders run on first use, not here, because they walk the VFS.
         if let vfs = virtualFileSystem {
             let language = localizationLanguage.language
-            controller.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
-            // UI Lab SWF movie selector (M8.2.5): enumerates and decodes
-            // Interface movies. Built on first use, not here.
-            controller.swfMovieLoaderFactory = { SWFMovieLoader(fileSystem: vfs) }
+            controller.uiLab.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
+            controller.swfMovies.factory = { SWFMovieLoader(fileSystem: vfs) }
             // World > Audio picker + playback source (M9.1.3).
             controller.audioFileSystem = vfs
             // Journal quest, objective and log text (issue #184). Skyrim.esm is

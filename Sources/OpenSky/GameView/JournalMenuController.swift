@@ -173,14 +173,14 @@ final class JournalMenuController {
     /// A missing install or a failed movie degrades to a readout, never to a
     /// thrown error out of a control action.
     private func startMovie() {
-        guard let renderer = game.renderer, let loader = game.resolveSWFLoader() else {
+        guard let renderer = game.renderer, let loader = game.swfMovies.loader else {
             movieLoaded = false
             movieError = "No game data located."
             return
         }
         do {
             // The renderer owns one SWF layer; this takes it from the HUD.
-            game.hud.isLoaded = false
+            game.hud.suspend()
             let scene = try loader.load(path: QuestJournalMovieBridge.moviePath)
             try renderer.setSWFMovie(scene)
             renderer.swfEnabled = true
@@ -200,7 +200,7 @@ final class JournalMenuController {
                 QuestJournalMovieBridge.activate(runtime: runtime)
             }
             // The same fade the system menu measured.
-            for _ in 0 ..< GameViewController.systemMenuActivationTicks {
+            for _ in 0 ..< SystemMenuMovieBridge.activationTicks {
                 try renderer.advanceSWFRuntime()
             }
             movieLoaded = true
@@ -218,8 +218,7 @@ final class JournalMenuController {
     private func stopMovie() {
         movieLoaded = false
         movieError = nil
-        guard let renderer = game.renderer else { return }
-        game.startHUD(renderer: renderer)
+        game.hud.start()
     }
 
     private func publishModel() {

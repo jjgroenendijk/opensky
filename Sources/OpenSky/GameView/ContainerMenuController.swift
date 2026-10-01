@@ -168,13 +168,13 @@ final class ContainerMenuController {
     /// Brings the mode's vanilla movie up in place of the gameplay HUD. Any
     /// failure becomes a readout, never a thrown error out of a control action.
     private func startMovie() {
-        guard let renderer = game.renderer, let loader = game.resolveSWFLoader() else {
+        guard let renderer = game.renderer, let loader = game.swfMovies.loader else {
             movieLoaded = false
             movieError = "No game data located."
             return
         }
         do {
-            game.hud.isLoaded = false
+            game.hud.suspend()
             try renderer
                 .setSWFMovie(loader.load(path: ContainerMenuMovieBridge.moviePath(for: mode)))
             renderer.swfEnabled = true
@@ -212,8 +212,7 @@ final class ContainerMenuController {
     private func stopMovie() {
         movieLoaded = false
         movieError = nil
-        guard let renderer = game.renderer else { return }
-        game.startHUD(renderer: renderer)
+        game.hud.start()
     }
 
     // MARK: - Input
