@@ -184,6 +184,9 @@ script data is capped.
 The public references do not fully describe the VM. These are OpenSky's choices:
 
 - Names and string equality ignore case. The first spelling seen is kept.
+- A malformed object can declare one variable name twice, or twice with different case. The
+  references do not say what the game does then. The first declaration wins, because every lookup
+  by name finds the first match. `PapyrusTally.duplicateVariableTotal` counts each skipped one.
 - A failed cast faults the call. The wiki gives valid cast directions but no failure value. A handle
   with no instance is accepted as any object type, because this layer has no world type registry.
 - Float equality allows four ULPs of relative difference. The wiki says the game uses a small
