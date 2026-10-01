@@ -104,7 +104,7 @@ final class DialogueCameraController {
         }
         let hold = streamer.npcFacing(for: speaker)
         let readout = streamer.npcMovementReadouts().first { $0.actor == speaker }
-        let package = game.packageReadouts().first { $0.actor == speaker }
+        let package = game.packages.readout(for: speaker)
         return DialogueSpeakerFocusRow(
             movementState: readout?.state.rawValue ?? "none",
             yawDegrees: MatrixMath.degrees(fromRadians: hold?.yaw ?? readout?.yaw ?? 0),

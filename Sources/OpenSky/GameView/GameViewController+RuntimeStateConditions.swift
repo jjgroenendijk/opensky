@@ -15,6 +15,7 @@ import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyPerception
 import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyWorld
@@ -62,7 +63,7 @@ extension GameViewController {
             quests: papyrusBridge?.questRuntime?.resolution() ?? .empty,
             aliases: papyrusBridge?.questRuntime?.aliasResolution() ?? .empty,
             actors: runtimeStateActorResolution(),
-            detection: perceptionResolution(),
+            detection: perception.perceptionResolution(),
             magic: magic.magicConditionResolution(),
             crime: crime.conditionResolution(),
             factions: factions.conditionResolution(),

@@ -76,6 +76,12 @@ other adapter needs those reads. The perk and progression domain has `PerkCoordi
 `ProgressionCoordinator`, and the ports `PerkWorld` and `ProgressionWorld` in
 `Sources/OpenSkyProgression/`, answered by `ProgressionWorldAdapter`. `OpenSkyProgression` may
 not import `OpenSkyMagic`, so perk abilities are applied through `PerkWorld`.
+The AI domain has four coordinators, all answered by `AIWorldAdapter`. `PackageCoordinator`
+with `PackageCore` and `PackageWorld`, `AINavigationCoordinator` with `AINavigationCore` and
+`AINavigationWorld`, and `NPCAnimationCoordinator` with `NPCAnimationWorld` live in
+`Sources/OpenSkyWorld/`. `PerceptionCoordinator` with `PerceptionCore` and
+`PerceptionSessionWorld` lives in `Sources/OpenSkyPerception/`. The perception coordinator is
+the pass's `PerceptionWorld`: it filters the session's actors down to the observers.
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and
