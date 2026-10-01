@@ -7,6 +7,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
+import TagsTesting
 import Testing
 
 /// The shared sidebar session plus the Audio panel's own steps.
@@ -42,6 +43,7 @@ private func send(_ control: NSControl) {
     control.sendAction(control.action, to: control.target)
 }
 
+@Suite(.tags(.acceptance))
 struct WorldAudioAcceptanceTests {
     // MARK: Step 1 — select World > Audio and start the engine
 
@@ -62,7 +64,8 @@ struct WorldAudioAcceptanceTests {
         panel.audioEnabledControl.state = .on
         send(panel.audioEnabledControl)
         #expect(harness.providers.audioEnabled)
-        harness.providers.audioStatsSnapshot = WorldAudioAcceptanceHarness.runningSnapshot(sources: [])
+        harness.providers.audioStatsSnapshot = WorldAudioAcceptanceHarness
+            .runningSnapshot(sources: [])
         harness.refresh(panel)
         let running = try #require(harness.readout("AudioStatsLabel", in: panel))
         #expect(running.contains("Audio: running"))

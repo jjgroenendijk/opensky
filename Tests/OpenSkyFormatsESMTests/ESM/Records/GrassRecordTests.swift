@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct GrassRecordTests {
     @Test func decodesFullGRASData() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("TestGrass"))

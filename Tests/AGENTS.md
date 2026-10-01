@@ -48,7 +48,9 @@ have:
 Inside a target, test folders use the subfolder names of the source they test: tests for
 `Sources/OpenSkyWorld/Terrain/DistantLOD.swift` live in `Tests/OpenSkyWorldTests/Terrain/`,
 and tests for app code live under `Tests/OpenSkyTests/App/`. Only cross-cutting folders are
-test-only: `Acceptance/` (milestone gates), `Fakes/`, and `Support/`.
+test-only: `Acceptance/` (end-to-end gates), `Fakes/`, and `Support/`. An acceptance suite
+is named for the behavior it checks, such as `CombatAcceptanceTests`, never for a milestone
+number.
 
 A suite that builds a `Renderer` goes in a package test target too. It passes
 `shaderLibrary: ShaderLibraryFixture.library(device: device)` from `RenderingTesting`, because a
@@ -66,3 +68,32 @@ Never list the UI bundle in a plan beside an app-hosted unit bundle: the app blo
 test host while the UI runner waits for it, and the run deadlocks
 (`docs/tools/test-runs.md`). An env-gated suite outside `Tests/OpenSkyRealDataTests/` fails
 `make lint`, because no plan would ever run it.
+
+## Tags
+
+`Tests/TagsTesting/Tags.swift` holds the shared Swift Testing tags, and every test target
+links it. Put a tag on the suite, `@Suite(.tags(.gpu))`, or on one test when only that
+test needs it.
+
+| Tag | Put it on |
+| --- | --- |
+| `.acceptance` | A suite under an `Acceptance/` folder |
+| `.gpu` | A suite that reaches a Metal device |
+| `.parser` | A suite in an `OpenSkyFormats*Tests` target |
+| `.slow` | A test that takes seconds on a warm build |
+| `.perf` | A timing gate. The Perf plan runs it, built optimized (`make realtest-perf`) |
+
+`make test-tags` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, and
+`make test-tags FIX=1` adds them. A tag selects a run (`make test-fast TAG=parser`) but
+never a real-data test into a unit run: a plan picks bundles, a tag picks tests inside them.
+
+## Flaky tests
+
+A flaky test fails sometimes and passes sometimes on the same code. When you find one:
+
+1. Disable it with the issue that tracks it: `@Test(.disabled("flaky: #NNN"))`.
+2. Open a `bug` issue with the run directory of the failing run.
+3. Never add a retry. A retry hides the failure, and the bug stays.
+
+`make test-repeat T='Suite/test()'` reruns a test until it fails, to show it is flaky.
+`make test-tags` fails a `.disabled` trait that names no issue.

@@ -7,6 +7,7 @@
 import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
+import TagsTesting
 import Testing
 
 /// Hand-builds one behavior packfile: root container -> named variant ->
@@ -215,7 +216,7 @@ extension Data {
     }
 }
 
-@Suite("HKX behavior graph")
+@Suite("HKX behavior graph", .tags(.parser))
 struct HKBBehaviorGraphTests {
     @Test("Root container names its variant and its payload class")
     func rootContainerNamesVariant() throws {

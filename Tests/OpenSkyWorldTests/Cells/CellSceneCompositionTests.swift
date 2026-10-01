@@ -10,8 +10,10 @@ import Metal
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct CellSceneCompositionTests {
     private static let device = MTLCreateSystemDefaultDevice()
 

@@ -13,8 +13,10 @@ import AppKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPreview
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct CrimeFactionsAcceptancePanelTests {
     /// A controller with factions and crime wired over the fixture load order.

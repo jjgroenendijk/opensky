@@ -5,8 +5,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct AS2SuperChainTests {
     /// `Leaf extends Mid extends Base`, with both `Leaf` and `Mid` calling
     /// `super()`. Resolving `super` from the receiver pinned it to

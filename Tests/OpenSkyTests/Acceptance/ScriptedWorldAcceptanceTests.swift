@@ -15,8 +15,10 @@ import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct ScriptedWorldAcceptanceTests {
     // MARK: - The chain, minus the rebuild

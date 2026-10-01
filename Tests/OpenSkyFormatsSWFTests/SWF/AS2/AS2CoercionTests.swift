@@ -4,8 +4,10 @@
 
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct AS2CoercionTests {
     private let coercion = AS2Coercion.latest
 

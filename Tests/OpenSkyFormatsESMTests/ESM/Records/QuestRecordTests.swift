@@ -5,9 +5,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
-@Suite("QUST record")
+@Suite("QUST record", .tags(.parser))
 struct QuestRecordTests {
     // MARK: - Whole-record decode
 

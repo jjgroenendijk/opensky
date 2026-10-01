@@ -15,8 +15,10 @@ import OpenSkySaveFixtures
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct QuestAcceptanceTests {
     private typealias Chain = QuestAcceptanceChain

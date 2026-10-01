@@ -16,8 +16,10 @@ import Foundation
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct NPCAIAcceptanceRealDataTests {
     /// Ysolda, whose stack is the one `PackageRealDataTests` pins across a full

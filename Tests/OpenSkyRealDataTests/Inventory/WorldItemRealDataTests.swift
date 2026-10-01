@@ -8,8 +8,10 @@ import Metal
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct WorldItemRealDataTests {
     /// The exterior grid swept for loose items. Whiterun's surroundings are the
     /// same cells the render and streaming acceptance tests already build, so

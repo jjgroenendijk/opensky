@@ -14,8 +14,10 @@ import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
 @testable import OpenSkyWorld
 import OpenSkyWorldTesting
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct QuestAcceptanceBudgetTests {
     /// More fragments on one stage than a tick may dispatch, so the carry-over

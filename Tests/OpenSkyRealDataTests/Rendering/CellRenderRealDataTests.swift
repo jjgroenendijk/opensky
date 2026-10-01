@@ -12,6 +12,7 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
 @MainActor
@@ -35,6 +36,7 @@ private struct StreamStats {
     let series: [String]
 }
 
+@Suite(.tags(.gpu))
 struct CellRenderRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor

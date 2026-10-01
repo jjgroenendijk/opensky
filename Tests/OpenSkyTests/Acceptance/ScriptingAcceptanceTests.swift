@@ -6,8 +6,10 @@ import Foundation
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct ScriptingAcceptanceTests {
     private struct Evidence: Equatable {

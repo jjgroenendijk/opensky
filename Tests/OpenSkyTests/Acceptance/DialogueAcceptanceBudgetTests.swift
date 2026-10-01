@@ -12,8 +12,10 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import Synchronization
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct DialogueAcceptanceBudgetTests {
     // MARK: - Frame budgets

@@ -9,6 +9,7 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
 /// A provider whose builds report whatever summary the case needs, so the real
@@ -40,6 +41,7 @@ nonisolated private final class BudgetCellProvider: CellSceneProvider {
     func evict(droppingMeshKeys _: Set<String>, droppingTextureKeys _: Set<String>) {}
 }
 
+@Suite(.tags(.acceptance))
 struct InventoryAcceptanceBudgetTests {
     /// The shipping fly-path budgets, matching `openskycli bench --fly-path`'s
     /// own defaults. Written out rather than imported because they are private

@@ -17,8 +17,10 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct InventoryAcceptanceRenderTests {
     private static let width = 320

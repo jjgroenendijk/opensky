@@ -5,8 +5,10 @@ import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct LipSyncRenderRealDataTests {
     private static let sampleTimes: [Double] = [0.30, 11.0 / 30.0, 0.50]
 

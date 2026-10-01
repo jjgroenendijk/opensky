@@ -18,8 +18,10 @@ import MetalKit
 @testable import OpenSkyWorld
 import OpenSkyWorldTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct DialogueAcceptanceRenderTests {
     /// Three times inside the `HeimskrFace` lip track.
     private static let sampleTimes: [Double] = [0.30, 11.0 / 30.0, 0.50]

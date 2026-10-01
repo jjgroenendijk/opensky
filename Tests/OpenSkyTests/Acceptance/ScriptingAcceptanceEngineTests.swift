@@ -11,8 +11,10 @@ import OpenSkySaveFixtures
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct ScriptingAcceptanceEngineTests {
     private static let slot = "m11-acceptance-engine"

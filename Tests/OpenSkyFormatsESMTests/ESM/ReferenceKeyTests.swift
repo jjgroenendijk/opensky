@@ -4,8 +4,10 @@
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct ReferenceKeyTests {
     @Test func sameRecordThroughDifferentMasterListsYieldsOneKey() throws {
         // "Skyrim.esm" at index 0 in one plugin, index 1 in another; the raw

@@ -14,9 +14,11 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 import UniformTypeIdentifiers
 
+@Suite(.tags(.gpu))
 struct FirstPersonRenderRealDataTests {
     static let size = 640
 

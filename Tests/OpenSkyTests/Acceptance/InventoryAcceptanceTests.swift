@@ -13,8 +13,10 @@ import OpenSkyInventoryTesting
 import OpenSkySaveFixtures
 @testable import OpenSkyWorldState
 @testable import OpenSkyWorldTesting
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct InventoryAcceptanceTests {
     private typealias Chain = InventoryAcceptanceChain

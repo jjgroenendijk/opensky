@@ -4,8 +4,10 @@ import FormatsESMTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct FormListTests {
     @Test
     func decodesEditorIDAndPreservesEntryOrderIncludingNull() throws {

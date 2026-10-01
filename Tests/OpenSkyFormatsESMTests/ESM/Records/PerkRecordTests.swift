@@ -6,8 +6,10 @@ import FormatsESMTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct PerkRecordTests {
     @Test
     func decodesIdentityHeaderConditionsAndNextPerkLink() throws {

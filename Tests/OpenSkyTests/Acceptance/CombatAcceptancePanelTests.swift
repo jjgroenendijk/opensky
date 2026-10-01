@@ -12,8 +12,10 @@ import AppKit
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct CombatAcceptancePanelTests {
     @Test

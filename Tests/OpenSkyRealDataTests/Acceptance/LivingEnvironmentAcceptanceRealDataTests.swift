@@ -11,8 +11,10 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct LivingEnvironmentAcceptanceRealDataTests {
     private static let size = (width: 640, height: 360)
 

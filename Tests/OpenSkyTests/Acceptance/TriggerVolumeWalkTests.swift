@@ -14,8 +14,10 @@ import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct TriggerVolumeWalkTests {
     private static let volumeID = TriggerStreamFixture.volumeID

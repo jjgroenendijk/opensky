@@ -37,14 +37,16 @@ a test there would run in both bundles. It holds only fixtures that need the app
 | Command | What it does |
 | --- | --- |
 | `make test` | The unit plan through the build system |
-| `make test-fast [T='Suite/test()'] [B=1]` | The fast loop: build once, then run against the cached products. `B=1` forces a build |
+| `make test-fast [T='Suite/test()'] [TAG=parser] [B=1]` | The fast loop: build once, then run against the cached products. `TAG` runs one shared tag across every unit target. `B=1` forces a build |
+| `make test-repeat T='Suite/test()' [N=100]` | Reruns until the first failure, at most `N` times, to show a test is flaky |
+| `make test-locale [T='Suite/test()']` | The unit plan in Dutch language and region, where the decimal separator is a comma |
 | `make test-one T=Class[/test]` | One class or method through the build system. A bare name resolves under `OpenSkyTests/`. Name the target for a package suite, for example `OpenSkyGameDataTests/Class` |
 | `make compile [M='Module ...']` | `swift build` of the changed package modules, or the named ones, and every package target that depends on them. No Xcode, so it is the quick check while fixing compile errors |
 | `make verify-build` | Compiles the app, the CLI, and both unit bundles without running a test. The only routine command that compiles the real-data suites |
 | `make test-report` | Pass and fail counts, each failure's name and message, and code coverage, from the newest result bundle |
 | `make realtest T='Class/method()' [CAP=MB]` | One real-data test under the memory watchdog |
 | `make realtest-all [CAP=MB]` | The whole real-data set under the watchdog |
-| `make realtest-perf` | The real-data set built optimized, for perf budgets |
+| `make realtest-perf` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
 | `make test-sanitize [SAN=Thread\|Address] [CAP=MB]` | The unit bundle under runtime sanitizers |
 | `make test-ui` | The UI smoke tests. Needs the Accessibility grant |
 | `make test-perms` | Checks the one-time permission grants |
@@ -77,12 +79,14 @@ count after the run is the guard. On a zero-test run, near matches are printed f
 tests. `make realtest-all` has no selector to misspell, so it checks that at least one test ran and
 none failed. Skips are allowed, because some suites also need a Metal 4 device.
 
-`make realtest-perf` builds with optimization, because a physics step is a few hundred microseconds
-of tight `simd` math, which `-Onone` slows by more than an order of magnitude. It keeps the Debug
-configuration, because `@testable import` needs `ENABLE_TESTABILITY`, which Release turns off. It
-changes only the optimization level and sets the `OPENSKY_OPTIMIZED` condition, so a test knows which
-budget applies. Its products go in `DerivedData-optimized/`, so switching between it and `make test`
-does not rebuild the engine each time ([dynamic bodies](/engine/dynamic-bodies.md)).
+`make realtest-perf` runs the Perf plan, which selects the real-data tests tagged `.perf`, so a new
+perf gate joins by its tag alone. It builds with optimization, because a physics step is a few
+hundred microseconds of tight `simd` math, which `-Onone` slows by more than an order of magnitude.
+It keeps the Debug configuration, because `@testable import` needs `ENABLE_TESTABILITY`, which
+Release turns off. It changes only the optimization level and sets the `OPENSKY_OPTIMIZED`
+condition, so a test knows which budget applies. Its products go in `DerivedData-optimized/`, so
+switching between it and `make test` does not rebuild the engine each time ([dynamic
+bodies](/engine/dynamic-bodies.md)).
 
 A gated suite written outside `Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would
 ever run it: `make realtest-all` would not reach it, and `make test` would skip it.

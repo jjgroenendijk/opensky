@@ -8,6 +8,7 @@
 import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
+import TagsTesting
 import Testing
 
 /// One synthetic object exercising every cursor accessor at a known offset.
@@ -85,7 +86,7 @@ private enum HKXCursorFixture {
     }
 }
 
-@Suite("HKX object graph")
+@Suite("HKX object graph", .tags(.parser))
 struct HKXObjectGraphTests {
     private func cursor() throws -> (HKXObjectCursor, Int) {
         let (file, classNameOffset) = try HKXCursorFixture.file()

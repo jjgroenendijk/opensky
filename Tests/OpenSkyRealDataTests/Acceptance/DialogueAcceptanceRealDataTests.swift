@@ -20,8 +20,10 @@ import OpenSkySaveFixtures
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct DialogueAcceptanceRealDataTests {
     /// `Skyrim.esm`'s Delphine NPC_ record, and the synthetic placement key she
     /// is selected against. The placement is this suite's own: selection needs

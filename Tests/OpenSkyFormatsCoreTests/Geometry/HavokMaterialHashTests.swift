@@ -3,8 +3,10 @@
 // parameters, so the table below of names and nif.xml values is the evidence.
 
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct HavokMaterialHashTests {
     /// Creation Kit material name -> the `SkyrimHavokMaterial` value nif.xml
     /// lists. Names with a space and names without one both appear because

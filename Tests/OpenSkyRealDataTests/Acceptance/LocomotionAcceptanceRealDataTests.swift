@@ -12,8 +12,10 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct LocomotionAcceptanceRealDataTests {
     private static let step = LocomotionDriveHarness.step
     private static let secondOfSteps = LocomotionDriveHarness.secondOfSteps

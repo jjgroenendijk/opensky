@@ -10,8 +10,10 @@ import Foundation
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct RuntimeStateAcceptanceRealDataTests {
     /// A save written against the installed load order round-trips through a
     /// real slot file and verifies against the fingerprint of the very same

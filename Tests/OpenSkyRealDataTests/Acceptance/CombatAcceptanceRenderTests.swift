@@ -15,6 +15,7 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
 /// The three frames one player's sequence produces, named rather than tupled
@@ -36,6 +37,7 @@ private struct CombatRenderStage {
     let settings: CombatSettings
 }
 
+@Suite(.tags(.acceptance, .gpu))
 struct CombatAcceptanceRenderTests {
     /// How many pixels a state change has to move before it counts as visible.
     /// The same floor `LocomotionAcceptanceRenderTests` uses: well above the handful a

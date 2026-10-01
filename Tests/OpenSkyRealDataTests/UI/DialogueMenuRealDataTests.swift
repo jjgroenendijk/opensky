@@ -11,8 +11,10 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct DialogueMenuRealDataTests {
     private static let width = 1280
     private static let height = 720

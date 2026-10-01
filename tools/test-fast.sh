@@ -22,12 +22,17 @@
 # The result-bundle count assertion below is therefore the correctness gate,
 # with near-match suggestions from a cached flat enumeration on failure.
 #
-# Usage: tools/test-fast.sh [-p UnitTests|RealData] [-t SELECTOR] [-B]
-#                           [-c CAP_MB] [-s GUARD_SECONDS]
+# Usage: tools/test-fast.sh [-p UnitTests|RealData] [-t SELECTOR] [-g TAG] [-C CONFIG]
+#                           [-r COUNT] [-B] [-c CAP_MB] [-s GUARD_SECONDS]
 #   -p  test plan (default UnitTests). RealData runs under tools/memguard.sh
 #       with parallel testing off, like tools/realtest.sh.
 #   -t  -only-testing selector, fully qualified — OpenSkyTests/Suite/test()
 #       under the unit plan, OpenSkyRealDataTests/Suite/test() under RealData.
+#   -g  run only the tests with this Swift Testing tag, in every target. Written
+#       into a copy of the .xctestrun as OnlyTestingTags, the key a plan's
+#       selectedTags becomes; xcodebuild has no flag for it.
+#   -C  plan configuration to run (UnitTests: Unit by default, or Locale).
+#   -r  rerun until the first failure, at most COUNT times (`make test-repeat`).
 #   -B  force build-for-testing even when nothing looks stale.
 #   -c  watchdog kill threshold in MB (RealData only, default 4096).
 #   -s  watchdog lifetime in seconds (RealData only, default 900).
@@ -35,18 +40,24 @@ set -eu
 
 plan="UnitTests"
 selector=""
+tag=""
+configuration=""
+repeat_count=""
 force_build=""
 cap_mb=""
 guard_seconds=""
-while getopts "p:t:Bc:s:" opt; do
+while getopts "p:t:g:C:r:Bc:s:" opt; do
     case "$opt" in
         p) plan="$OPTARG" ;;
         t) selector="$OPTARG" ;;
+        g) tag="$OPTARG" ;;
+        C) configuration="$OPTARG" ;;
+        r) repeat_count="$OPTARG" ;;
         B) force_build="yes" ;;
         c) cap_mb="$OPTARG" ;;
         s) guard_seconds="$OPTARG" ;;
         *)
-            echo "[ERROR] usage: tools/test-fast.sh [-p PLAN] [-t SELECTOR] [-B] [-c MB] [-s SECONDS]" >&2
+            echo "[ERROR] usage: tools/test-fast.sh [-p PLAN] [-t SELECTOR] [-g TAG] [-C CONFIG] [-r COUNT] [-B] [-c MB] [-s SECONDS]" >&2
             exit 2
             ;;
     esac
@@ -58,7 +69,8 @@ if [ "$#" -ne 0 ]; then
 fi
 
 case "$plan" in
-    UnitTests | RealData) ;;
+    UnitTests) configuration="${configuration:-Unit}" ;;
+    RealData) ;;
     *)
         echo "[ERROR] -p must be UnitTests or RealData, got: $plan" >&2
         exit 2
@@ -106,6 +118,38 @@ set -- xcodebuild test-without-building -xctestrun "$xctestrun" \
     -destination 'platform=macOS' -resultBundlePath "$result_bundle"
 if [ -n "$selector" ]; then
     set -- "$@" -only-testing:"$selector"
+fi
+if [ -n "$configuration" ]; then
+    set -- "$@" -only-test-configuration "$configuration"
+fi
+if [ -n "$repeat_count" ]; then
+    set -- "$@" -run-tests-until-failure -test-iterations "$repeat_count"
+fi
+if [ -n "$tag" ]; then
+    if ! grep -q "@Tag public static var $tag:" "$root/Tests/TagsTesting/Tags.swift"; then
+        echo "[ERROR] unknown tag: $tag (see Tests/TagsTesting/Tags.swift)" >&2
+        exit 2
+    fi
+    tagged="$run_dir/tagged.xctestrun"
+    python3 - "$xctestrun" "$tagged" "$tag" <<'PY'
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as stream:
+    run = plistlib.load(stream)
+for configuration in run["TestConfigurations"]:
+    for target in configuration["TestTargets"]:
+        target["OnlyTestingTags"] = {"Tags": [sys.argv[3]]}
+with open(sys.argv[2], "wb") as stream:
+    plistlib.dump(run, stream)
+PY
+    # Swap the -xctestrun argument for the tagged copy, which sits in the run
+    # directory. Its __TESTROOT__ paths resolve against the copy's folder, so
+    # point them back at the products folder.
+    sed -i '' "s|__TESTROOT__|$(dirname "$xctestrun")|g" "$tagged"
+    shift 4
+    set -- xcodebuild test-without-building -xctestrun "$tagged" "$@"
+    printf '[INFO] tag filter: %s\n' "$tag"
 fi
 
 if [ "$plan" = "RealData" ]; then

@@ -3,9 +3,10 @@
 import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
+import TagsTesting
 import Testing
 
-@Suite("PEX container")
+@Suite("PEX container", .tags(.parser))
 struct PexFileTests {
     @Test("decodes header, strings, debug info, flags, objects and functions")
     func decodesContainer() throws {

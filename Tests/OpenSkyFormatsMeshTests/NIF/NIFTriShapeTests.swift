@@ -9,8 +9,10 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NIFTriShapeTests {
     private static let staticAttributes: UInt16 = 0x1B // vertex|uvs|normals|tangents
     private static let staticStrideDwords = 7 // 16 + 4 + 4 + 4 bytes

@@ -14,6 +14,7 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
 /// A menu-shaped movie whose whole frame-1 content sits under one alpha-zero
@@ -86,6 +87,7 @@ private enum SWFDynamicFixture {
     }
 }
 
+@Suite(.tags(.acceptance, .gpu))
 struct RendererSWFDynamicAcceptanceTests {
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)

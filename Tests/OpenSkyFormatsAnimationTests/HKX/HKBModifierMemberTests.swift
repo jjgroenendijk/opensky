@@ -5,6 +5,7 @@
 import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
+import TagsTesting
 import Testing
 
 /// Decodes one object of `className` at offset 0 after `writes` fill it.
@@ -20,6 +21,7 @@ func decodeHKBObject<Decoded>(
     return try #require(decoder(target, fixture.buildGraph()))
 }
 
+@Suite(.tags(.parser))
 struct HKBModifierMemberTests {
     @Test func directAtReadsEveryDocumentedMember() throws {
         let node = try decodeHKBObject(BSDirectAtModifier.className, BSDirectAtModifier.decode) {

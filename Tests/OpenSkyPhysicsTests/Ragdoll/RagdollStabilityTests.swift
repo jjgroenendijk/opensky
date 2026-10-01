@@ -5,6 +5,7 @@
 @testable import OpenSkyPhysics
 import PhysicsTesting
 import simd
+import TagsTesting
 import Testing
 
 struct RagdollStabilityTests {
@@ -16,7 +17,7 @@ struct RagdollStabilityTests {
 
     /// Four minutes of simulated time over sixty collapses. At the 1/120 fixed
     /// step that is about 29,000 solver steps.
-    @Test
+    @Test(.tags(.slow))
     func survivesRepeatedCollapse() {
         var instance = RagdollFixture.limb()
         let world = RagdollFixture.floorWorld()

@@ -11,6 +11,7 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
 /// The device and the install one render run is bound to, passed as one value
@@ -28,6 +29,7 @@ private struct LocomotionRenderStage {
     let feet: SIMD3<Float>
 }
 
+@Suite(.tags(.acceptance, .gpu))
 struct LocomotionAcceptanceRenderTests {
     /// How many pixels a state change has to move before it counts as visible.
     /// Well above the handful a rounding difference could touch and far below a

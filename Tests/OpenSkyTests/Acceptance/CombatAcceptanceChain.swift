@@ -106,7 +106,8 @@ final class CombatAcceptanceChain {
     /// Where the opponent is standing. Settable so the route can put it out of
     /// reach for the leg that shoots it.
     var opponentFeet = SIMD3<Float>(
-        CombatAcceptanceWorld.opponentX, CombatAcceptanceWorld.startY, CombatAcceptanceWorld.floorHeight
+        CombatAcceptanceWorld.opponentX, CombatAcceptanceWorld.startY,
+        CombatAcceptanceWorld.floorHeight
     )
     /// Death state the seam writes and reads back, mirrored into `store` so a
     /// save carries it.

@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct IngestibleRecordTests {
     /// ALCH is the family whose DATA is a bare weight, with the gold value in
     /// ENIT; both still land in the same engine-level `itemValue`.
@@ -80,6 +82,7 @@ struct IngestibleRecordTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct IngredientRecordTests {
     @Test func decodesIngredientWithConditionedEffect() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("MountainFlower"))

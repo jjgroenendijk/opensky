@@ -15,8 +15,10 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct CombatAcceptanceRealDataTests {
     /// The two `0_master.hkx` modifiers item 15.6 had to implement rather than
     /// count. Both were pass-throughs over the whole M14 route, 684 evaluations

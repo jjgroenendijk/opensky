@@ -12,8 +12,10 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct CombatAcceptanceBudgetTests {
     // MARK: - Frame budgets

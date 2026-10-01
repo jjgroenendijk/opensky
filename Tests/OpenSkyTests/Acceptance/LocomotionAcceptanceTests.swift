@@ -10,8 +10,10 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct LocomotionAcceptanceTests {
     private typealias Chain = LocomotionAcceptanceChain

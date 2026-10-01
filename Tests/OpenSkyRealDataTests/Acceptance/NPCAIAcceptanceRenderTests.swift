@@ -13,8 +13,10 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct NPCAIAcceptanceRenderTests {
     /// How many pixels a toggle has to move before it counts as visible. The
     /// same floor the M14 and M15 render gates use: well above the handful a

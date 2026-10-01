@@ -6,8 +6,10 @@
 import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct TranslationFileTests {
     @Test func parsesKeyValuePairsWithBOMandCRLF() throws {
         let data = TranslationFileFixture.file([

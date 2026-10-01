@@ -9,8 +9,10 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct WorldTimeAcceptanceRealDataTests {
     /// The gate's first sentence against the installed master: with the clock
     /// running at an elevated timescale written through the real `TimeScale`

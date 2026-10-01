@@ -5,8 +5,10 @@
 import AppKit
 @testable import OpenSky
 import OpenSkyScriptingFixtures
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct ScriptingAcceptancePanelTests {
     @Test

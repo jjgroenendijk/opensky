@@ -15,8 +15,10 @@ import OpenSkyInventoryTesting
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct InventoryMenuAcceptanceRealDataTests {
     private static let width = 1280
     private static let height = 720

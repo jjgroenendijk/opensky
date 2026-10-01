@@ -32,7 +32,7 @@ installs the tools and calls `make`.
 | Markdown | `md-lint` |
 | Shell and workflows | `sh-lint`, `workflow-lint` |
 | Module graph | `module-graph` |
-| Repository rules | `cli-boundary`, `realdata-plan`, `no-game-content`, `docs-links`, `docs-length`, `agent-files` |
+| Repository rules | `cli-boundary`, `realdata-plan`, `test-plans`, `test-tags`, `no-game-content`, `docs-links`, `docs-length`, `agent-files` |
 
 The jobs run in parallel, so the slowest one sets the total time. The checks in "Repository
 rules" each take under a second, so they share one job.

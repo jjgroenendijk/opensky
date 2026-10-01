@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import FormatsMeshTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NIFFileTests {
     @Test func walksBlocksBySizeAndSlicesPayloads() throws {
         let node = Data([0xAA, 0xBB, 0xCC])

@@ -91,8 +91,9 @@ ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 # runs, instead of -only-testing flags (issue #346). Each plan holds exactly one
 # bundle. The UI bundle must never share a plan with an app-hosted bundle
 # (OpenSkyTests, OpenSkyRealDataTests): both would drive OpenSky.app at once
-# and deadlock (issue #380).
-UNIT_PLAN        := -testPlan UnitTests
+# and deadlock (issue #380). The unit plan's Locale configuration runs only through
+# `make test-locale`, so every other run names the Unit configuration.
+UNIT_PLAN        := -testPlan UnitTests -only-test-configuration Unit
 UI_PLAN          := -testPlan UITests
 
 # Formatter and linter configuration.
@@ -132,8 +133,8 @@ link-shared: ## Point this worktree's ffmpeg and compile cache at the main check
 
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
-        cli-boundary module-graph realdata-plan no-game-content docs-links docs-length \
-        agent-files workflow-lint comment-length comment-blocks comment-apply
+        cli-boundary module-graph realdata-plan test-plans test-tags no-game-content \
+        docs-links docs-length agent-files workflow-lint comment-length comment-blocks comment-apply
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -150,7 +151,7 @@ metal-format-check: ## Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan no-game-content docs-length agent-files workflow-lint ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan test-plans test-tags no-game-content docs-length agent-files workflow-lint ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
@@ -193,6 +194,12 @@ module-graph: ## Check the package graph follows The Modular Architecture
 realdata-plan: ## Check every env-gated suite is in the RealData plan
 	@./tools/lint/realdata-plan.sh \
 		&& echo "[ OK ] real-data suites and the RealData plan line up"
+
+test-plans: ## Check every test plan sets timeouts and selects by target or tag
+	@./tools/lint/test-plans.sh && echo "[ OK ] test plans follow the rules"
+
+test-tags: ## Check suites carry the shared tags and .disabled names an issue [FIX=1]
+	@./tools/lint/test-tags.sh $(if $(FIX),--fix,) && echo "[ OK ] suites carry their tags"
 
 no-game-content: ## Check no game assets or rendered captures are tracked
 	@./tools/lint/no-game-content.sh && echo "[ OK ] no tracked game content"
@@ -287,7 +294,8 @@ icon: ## Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 
 ##@ Test
 
-.PHONY: test test-fast test-one test-ui test-report test-sanitize test-perms
+.PHONY: test test-fast test-one test-repeat test-locale test-ui test-report test-sanitize \
+        test-perms
 
 test: link-shared $(SHADER_LIBRARY) ## Build and run the unit tests through the build system
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
@@ -300,10 +308,11 @@ test: link-shared $(SHADER_LIBRARY) ## Build and run the unit tests through the 
 # its own when a source, Config/, or project file is newer; B=1 forces that. The
 # default for every unit run, filtered or whole plan. A selector that names a
 # package test target, T='OpenSkyFormatsCoreTests/...', runs that target alone through
-# `swift test`, without the app host (issue #582).
-test-fast: link-shared $(SHADER_LIBRARY) ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
+# `swift test`, without the app host (issue #582). TAG runs one shared tag across
+# every target of the unit plan.
+test-fast: link-shared $(SHADER_LIBRARY) ## Rerun tests without rebuilding [T='Suite/test()'] [TAG=parser] [B=1]
 	@case "$(T)" in \
-		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
+		"") ./tools/test-fast.sh $(if $(B),-B,) $(if $(TAG),-g $(TAG),) ;; \
 		OpenSkyTests/* | OpenSkyRealDataTests/* | OpenSkyUITests/*) \
 			./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
 		*) target="$$(printf '%s' "$(T)" | cut -d/ -f1)"; \
@@ -325,6 +334,18 @@ test-one: link-shared $(SHADER_LIBRARY) ## Build and run one test: T=Class[/meth
 	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath "$$bundle" \
 		$$plan -only-testing:"$$spec" test
+
+# Hunts a flaky test: reruns until the first failure, at most N times. Never a
+# default, because a retry would hide the failure it is looking for.
+test-repeat: link-shared $(SHADER_LIBRARY) ## Rerun tests until one fails [T='Suite/test()'] [N=100]
+	@case "$(T)" in "" | OpenSkyTests/* | OpenSky*Tests/*) spec="$(T)";; \
+		*) spec="OpenSkyTests/$(T)";; esac; \
+	./tools/test-fast.sh -r $(or $(N),100) $${spec:+-t "$$spec"}
+
+# The unit plan with Dutch language and region, where the decimal separator is a
+# comma, to catch text parsing that depends on the locale.
+test-locale: link-shared $(SHADER_LIBRARY) ## Run the unit tests in the nl_NL locale [T='Suite/test()']
+	@./tools/test-fast.sh -C Locale $(if $(T),-t "$(T)",)
 
 test-ui: link-shared ## Build and run the UI tests (launches and drives the app)
 	@./tools/test-ui.sh \
@@ -349,7 +370,7 @@ test-perms: ## Check the one-time macOS permission grants tests need
 # memory watchdog (CAP=MB sets its limit). realdata-build compiles them without
 # running, and verify-build includes that.
 
-.PHONY: realtest realtest-all realdata-build realtest-perf realtest-npc-perf profile
+.PHONY: realtest realtest-all realdata-build realtest-perf profile
 
 # One test through the fast path of test-fast (issue #417): a warm rerun pays
 # only for the test itself.
@@ -373,18 +394,12 @@ realtest-all: link-shared ## Run the whole real-data plan [CAP=MB]
 realdata-build: link-shared ## Compile the real-data suites without running them
 	@$(XCB_RUN) realdata-build $(XCB_TEST) -testPlan RealData build-for-testing
 
-# The perf gates build optimized, because -Onone makes tight simd code an order
-# of magnitude slower (issue #392). They use their own cache directory,
+# The perf gates are the real-data tests tagged `.perf`; the Perf plan selects
+# them. They build optimized, because -Onone makes tight simd code an order of
+# magnitude slower (issue #392). They use their own cache directory,
 # DerivedData-optimized/, so the Debug build survives.
-realtest-perf: link-shared ## Run the physics perf gate on an optimized build [CAP=MB]
-	@./tools/realtest.sh -O \
-		-t 'OpenSkyRealDataTests/DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()' \
-		$(if $(CAP),-c $(CAP),)
-
-realtest-npc-perf: link-shared ## Measure NPC behavior graphs at the mover cap, optimized [CAP=MB]
-	@./tools/realtest.sh -O \
-		-t 'OpenSkyRealDataTests/NPCMovementRealDataTests/measuresVanillaGraphsAtMoverCap()' \
-		$(if $(CAP),-c $(CAP),)
+realtest-perf: link-shared ## Run every perf gate on an optimized build [CAP=MB]
+	@./tools/realtest.sh -O -p Perf $(if $(CAP),-c $(CAP),)
 
 profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MODE=walk|fly] [ARGS=...]
 	@$(MAKE) --no-print-directory cli CONFIG=Release

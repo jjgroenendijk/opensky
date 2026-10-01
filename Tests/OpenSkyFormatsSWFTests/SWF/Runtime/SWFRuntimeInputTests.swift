@@ -6,8 +6,10 @@ import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFRuntimeInputTests {
     /// A movie with a 2000x1200 twip rectangle inside a sprite named `button`,
     /// placed at (400, 300) twips, plus a second sprite named `plate` behind it.

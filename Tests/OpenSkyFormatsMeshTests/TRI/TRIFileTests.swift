@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct TRIFileTests {
     @Test func decodesBaseTopologyAndNamedScaledMorphs() throws {
         let file = try TRIFile(data: TRIFixture.file())

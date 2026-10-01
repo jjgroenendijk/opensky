@@ -19,8 +19,10 @@ import OpenSkySaveFixtures
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct QuestAcceptanceRealDataTests {
     private static let targetEditorID = "MGRArniel01"
     private static let pluginName = "Skyrim.esm"

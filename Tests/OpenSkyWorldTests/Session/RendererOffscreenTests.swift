@@ -12,6 +12,7 @@ import MetalKit
 @testable import OpenSkyWorld
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
 private struct EnvironmentRender {
@@ -21,6 +22,7 @@ private struct EnvironmentRender {
     let stats: SceneDrawStats
 }
 
+@Suite(.tags(.gpu))
 struct RendererOffscreenTests {
     private static let device: MTLDevice? = {
         guard

@@ -10,8 +10,10 @@ import AppKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct DialogueAcceptancePanelTests {
     @Test

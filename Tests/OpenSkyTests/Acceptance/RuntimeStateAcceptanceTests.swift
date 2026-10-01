@@ -9,8 +9,10 @@ import Foundation
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct RuntimeStateAcceptanceTests {
     // MARK: Step 1 — select World > Runtime State
 

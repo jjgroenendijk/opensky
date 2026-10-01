@@ -9,8 +9,10 @@ import Foundation
 @testable import OpenSky
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct WorldTimeAcceptanceTests {
     // MARK: Step 1 — the destination carries the time, globals, and conditions sections
 

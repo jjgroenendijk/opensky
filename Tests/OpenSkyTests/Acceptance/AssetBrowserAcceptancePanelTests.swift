@@ -4,8 +4,10 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyPreview
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct AssetBrowserAcceptancePanelTests {
     @Test

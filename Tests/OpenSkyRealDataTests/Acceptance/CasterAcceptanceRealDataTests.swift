@@ -12,8 +12,10 @@ import Foundation
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct CasterAcceptanceRealDataTests {
     /// Forwards a cast's effect list into the real active-effect runtime, which
     /// is exactly what `GameViewController` does.

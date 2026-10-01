@@ -5,8 +5,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct DialogueTopicRecordTests {
     @Test func decodesTopicLinksCategoryAndSubtype() throws {
         let fields = DialogueFixture.editorID("MQ101Greeting")

@@ -91,7 +91,7 @@ for entry in entries:
 
 # Issue #380: an app-hosted unit bundle and the UI runner deadlock in one session.
 HOSTED = {"OpenSkyTests", TARGET}
-for path in sorted(pathlib.Path("Config").glob("*.xctestplan")):
+for path in sorted(pathlib.Path("Config/TestPlans").glob("*.xctestplan")):
     with path.open("rb") as stream:
         listed = {
             entry.get("target", {}).get("name")

@@ -12,8 +12,10 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct NPCAIAcceptanceTests {
     /// The gate itself. One session lives the whole day and every step is

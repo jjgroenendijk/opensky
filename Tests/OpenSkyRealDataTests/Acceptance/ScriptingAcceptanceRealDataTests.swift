@@ -21,8 +21,10 @@ import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct ScriptingAcceptanceRealDataTests {
     private static let candidateCoordinate = CellCoordinate(x: 5, y: 0)
     private static let candidateReference = FormID(0x000D_97F5)

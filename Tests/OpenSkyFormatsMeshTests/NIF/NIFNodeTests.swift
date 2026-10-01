@@ -7,8 +7,10 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NIFNodeTests {
     private func header(strings: [String] = []) throws -> NIFHeader {
         var reader = BinaryReader(NIFFixture.header(strings: strings))

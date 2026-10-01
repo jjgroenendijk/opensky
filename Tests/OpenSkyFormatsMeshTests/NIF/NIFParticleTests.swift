@@ -10,8 +10,10 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NIFParticleTests {
     private func header(bsVersion: UInt32 = 100) throws -> NIFHeader {
         var reader = BinaryReader(NIFFixture.header(bsVersion: bsVersion))

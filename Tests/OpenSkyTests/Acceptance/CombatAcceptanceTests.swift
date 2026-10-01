@@ -5,8 +5,10 @@
 
 import Foundation
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct CombatAcceptanceTests {
     // MARK: - The route

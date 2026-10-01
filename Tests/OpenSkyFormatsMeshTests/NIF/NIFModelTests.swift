@@ -8,8 +8,10 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NIFModelTests {
     private static let staticAttributes: UInt16 = 0x1B
     private static let staticStrideDwords = 7

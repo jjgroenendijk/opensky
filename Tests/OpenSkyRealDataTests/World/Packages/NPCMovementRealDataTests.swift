@@ -10,11 +10,12 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
 @MainActor
 struct NPCMovementRealDataTests {
-    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot), .tags(.perf, .slow))
     func measuresVanillaGraphsAtMoverCap() throws {
         let root = try #require(RealDataEnvironment.dataRoot)
         let fileSystem = VirtualFileSystem(root: root)

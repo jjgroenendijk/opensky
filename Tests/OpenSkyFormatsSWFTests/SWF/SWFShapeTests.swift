@@ -6,8 +6,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFShapeTests {
     private let red = SWFColor(red: 255, green: 0, blue: 0, alpha: 255)
     private let translucentBlue = SWFColor(red: 0, green: 0, blue: 255, alpha: 128)

@@ -13,8 +13,10 @@ import Metal
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct DynamicBodyRealDataTests {
     /// Wall-clock budget for one 1/120 s physics step, in milliseconds. An
     /// optimized build (`make realtest-perf`) is held to 2 ms; measured 0.37.
@@ -40,7 +42,7 @@ struct DynamicBodyRealDataTests {
     /// How many settled bodies the shove phase walks into, in key order.
     private static let shovedBodyCount = 8
 
-    @Test(.enabled(if: RealDataEnvironment.canRender))
+    @Test(.enabled(if: RealDataEnvironment.canRender), .tags(.perf, .slow))
     func settlesAndPushesVanillaClutter() throws {
         let builder = try RealDataInstall.load().sceneBuilder(readsLooseFiles: true)
         builder.simulatesDynamicBodies = true

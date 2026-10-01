@@ -116,7 +116,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - run: make cli-boundary realdata-plan no-game-content docs-links docs-length agent-files
+      - run: >-
+          make cli-boundary realdata-plan test-plans test-tags no-game-content docs-links
+          docs-length agent-files
 
   # The one required status check on main. A new lint job goes into `needs`, and
   # branch protection needs no change.

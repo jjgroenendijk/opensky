@@ -7,8 +7,10 @@ import AppKit
 @testable import OpenSky
 @testable import OpenSkyMenus
 import OpenSkyScriptingInterface
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct QuestAcceptancePanelTests {
     /// The quest the run drives, spelled the way the real gate's target quest

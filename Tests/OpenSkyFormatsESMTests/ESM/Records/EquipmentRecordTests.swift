@@ -5,8 +5,10 @@
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct WeaponRecordTests {
     @Test func decodesWeapon() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("IronSword"))
@@ -148,6 +150,7 @@ struct WeaponRecordTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct AmmunitionRecordTests {
     @Test func decodesSSELayout() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("IronArrow"))
@@ -223,6 +226,7 @@ struct AmmunitionRecordTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct ArmorInventoryFieldTests {
     @Test func decodesValueWeightKeywordsAndRating() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("ArmorIronCuirass"))
@@ -249,6 +253,7 @@ struct ArmorInventoryFieldTests {
 /// compares. Split out of `AppearanceRecordDecodeTests` when that
 /// suite outgrew the strict-lint type-body cap; the ARMA record is equipment
 /// data, so this is also where it belongs.
+@Suite(.tags(.parser))
 struct ArmorAddonRecordTests {
     @Test func decodesArmorAddon() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("IronCuirassAA"))

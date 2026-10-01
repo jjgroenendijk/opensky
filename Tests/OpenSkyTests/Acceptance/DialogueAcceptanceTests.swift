@@ -11,8 +11,10 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct DialogueAcceptanceTests {
     /// The gate itself. One conversation, checked at every step so a failure

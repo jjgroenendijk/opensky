@@ -5,8 +5,10 @@
 import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct StringTableTests {
     @Test func readsZStringEntries() throws {
         let data = StringTableFixture.table(

@@ -4,9 +4,10 @@
 import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
+import TagsTesting
 import Testing
 
-@Suite("LIP facial-animation track")
+@Suite("LIP facial-animation track", .tags(.parser))
 struct LIPFileTests {
     @Test("header and positional keys decode")
     func headerAndKeys() throws {

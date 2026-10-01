@@ -2,8 +2,10 @@
 
 @testable import OpenSkyFormatsCore
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct MatrixMathTests {
     @Test func radiansFromDegrees() {
         #expect(abs(MatrixMath.radians(fromDegrees: 180) - .pi) < 1e-6)

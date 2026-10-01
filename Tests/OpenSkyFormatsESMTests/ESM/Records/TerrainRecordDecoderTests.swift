@@ -5,8 +5,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct TerrainRecordDecoderTests {
     // Parses one synthetic record through the container walk.
 

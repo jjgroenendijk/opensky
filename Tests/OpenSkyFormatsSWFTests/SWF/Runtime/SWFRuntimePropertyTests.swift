@@ -5,8 +5,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFRuntimePropertyTests {
     private func startedPanel() throws -> (SWFMovieRuntime, SWFDisplayObject) {
         let runtime = try SWFRuntimeFixture.started(tags: SWFRuntimeFixture.classMovieTags())

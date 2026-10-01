@@ -13,8 +13,10 @@ import Foundation
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct CrimeRealDataTests {
     /// Belethor's shop: an owned Whiterun interior. Located by editor ID rather
     /// than by FormID so a patch that moves the record does not break the

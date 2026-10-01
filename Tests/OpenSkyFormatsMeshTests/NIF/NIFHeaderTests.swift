@@ -5,8 +5,10 @@ import FormatsMeshTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NIFHeaderTests {
     private func parse(_ data: Data) throws -> NIFHeader {
         var reader = BinaryReader(data)

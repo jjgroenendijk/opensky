@@ -5,8 +5,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFFontTests {
     /// A two-glyph DefineFont2 body: triangles at codes 'A' (65) and 'B' (66).
     private func twoGlyphBuilder() -> SWFFontBodyBuilder {

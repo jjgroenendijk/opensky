@@ -7,12 +7,15 @@
     }
   ],
   "defaultOptions" : {
+    "defaultTestExecutionTimeAllowance" : 600,
     "environmentVariableEntries" : [
       {
         "key" : "OPENSKY_DATA_ROOT",
         "value" : "/Volumes/data/steam/steamapps/common/Skyrim Special Edition"
       }
-    ]
+    ],
+    "maximumTestExecutionTimeAllowance" : 1800,
+    "testTimeoutsEnabled" : true
   },
   "testTargets" : [
     {

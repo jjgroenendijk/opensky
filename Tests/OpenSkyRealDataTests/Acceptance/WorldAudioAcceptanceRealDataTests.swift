@@ -12,8 +12,10 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct WorldAudioAcceptanceRealDataTests {
     /// Editor IDs of the two route cells. Resolved by name rather than by
     /// FormID, and the exterior one is then checked against the route grid, so

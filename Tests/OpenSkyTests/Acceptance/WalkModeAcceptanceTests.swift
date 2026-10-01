@@ -11,6 +11,7 @@ import AppKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
 @MainActor
@@ -18,6 +19,7 @@ private func send(_ control: NSControl) {
     control.sendAction(control.action, to: control.target)
 }
 
+@Suite(.tags(.acceptance))
 struct WalkModeAcceptanceTests {
     // MARK: Step 1 — select World
 

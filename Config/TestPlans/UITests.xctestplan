@@ -55,7 +55,10 @@
           "name" : "OpenSkyGameData"
         }
       ]
-    }
+    },
+    "defaultTestExecutionTimeAllowance" : 300,
+    "maximumTestExecutionTimeAllowance" : 600,
+    "testTimeoutsEnabled" : true
   },
   "testTargets" : [
     {

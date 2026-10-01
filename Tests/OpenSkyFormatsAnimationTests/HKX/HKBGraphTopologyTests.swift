@@ -5,6 +5,7 @@
 import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
+import TagsTesting
 import Testing
 
 /// One behavior graph: state machine -> state -> blender -> child -> clip, plus
@@ -168,6 +169,7 @@ enum HKBGraphFixture {
     }
 }
 
+@Suite(.tags(.parser))
 struct HKBGraphTopologyTests {
     private static func target(_ offset: Int) -> HKXPointerTarget {
         HKXPointerTarget(sectionIndex: HKBNodeFixture.dataSection, dataOffset: offset)

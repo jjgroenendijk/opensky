@@ -10,8 +10,10 @@ import AppKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct LocomotionAcceptancePanelTests {
     @Test

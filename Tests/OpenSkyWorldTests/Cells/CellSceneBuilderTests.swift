@@ -8,8 +8,10 @@ import Metal
 import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct CellSceneBuilderTests: CellSceneBuilderFixture {
     let dataURL: URL
 

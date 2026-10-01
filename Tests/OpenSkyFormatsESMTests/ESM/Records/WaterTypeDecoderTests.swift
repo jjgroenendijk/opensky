@@ -4,8 +4,10 @@
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct WaterTypeDecoderTests {
     @Test func decodesWaterColorsFromBothSSEVariants() throws {
         for size in [228, 232] {

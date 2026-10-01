@@ -12,8 +12,10 @@ import MetalKit
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct QuestAcceptanceRenderTests {
     private static let width = 1280
     private static let height = 720

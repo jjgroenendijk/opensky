@@ -6,8 +6,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFTextLayoutTests {
     /// A DefineFont2 with glyphs for "A" (advance 600), "B" (advance 500),
     /// and space (advance 300), layout ascent 800 / descent 200, and one
