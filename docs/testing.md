@@ -2,7 +2,7 @@
 type: Process
 title: Testing setup
 description: The test targets, the make entry points, the real-data suites and the data root, the
-  memory watchdog, the headless test host, perf gates, and fixture rules.
+  memory watchdog, the headless test host, perf gates, profiling, and fixture rules.
 tags: [testing, tooling, process]
 ---
 
@@ -111,6 +111,26 @@ Set a perf budget from a real-install measurement: take a baseline, add margin, 
 Guessing a threshold and raising it after each failed bench wasted many multi-minute runs. Keep
 correctness gates (always pass) apart from perf gates (wide margin during development). Other load
 changes timings: no other OpenSky should be running, and Spotlight may be indexing build output.
+
+## Profiling
+
+`make profile` records an Instruments Time Profiler trace of `openskycli bench --walk-path` on a
+Release build. `MODE=fly` profiles `--fly-path` instead. `ARGS` passes more bench options, such as
+`ARGS='--footprint-cap-mb 2048'` when a bench gate stops the run early. The run directory holds
+the trace and `samples.xml`, the exported sample table, for reading without Instruments.
+
+- Profile a Release build. A Debug build makes tight math code many times slower, so it points at
+  the wrong loops.
+- Start the process first, then run `xctrace record --attach <pid>`
+  ([why not `--launch`](/tools/environment.md#xctrace---launch-never-starts-the-process)). Attach
+  to the right PID: `$!` after a subshell is the shell, not the program.
+- The CLI benches run the renderer, animation, streaming, and physics. Combat, factions, actor
+  values, perception, and AI packages run only in the app. To profile those, launch the Release app
+  from `DerivedData/Build/Products/Release/` with `OPENSKY_DATA_ROOT` set, and attach. The app
+  opens a window, so tell the person at the machine first.
+- To see one loop, keep only the samples whose backtrace contains its frame function, such as
+  `Renderer.pumpOffscreen` or `Renderer.draw`. Cell builds on background threads otherwise
+  dominate the totals.
 
 ## The headless test host
 
