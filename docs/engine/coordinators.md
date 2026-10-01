@@ -43,7 +43,9 @@ into a small app class that holds the view controller, such as `CombatWorldAdapt
 controller keeps only the stored coordinator and one-line panel forwards. The combat domain
 works this way: `CombatCore`, `CombatCoordinator`, and its port `CombatWorld` live in
 `Sources/OpenSkyCombat/`, and the coordinator is also the world of the melee, archery, and
-combat-loop runtimes it owns.
+combat-loop runtimes it owns. The magic domain has the same shape: `MagicCore`,
+`MagicCoordinator`, and `MagicWorld` in `Sources/OpenSkyMagic/`, answered by
+`MagicWorldAdapter`. The coordinator is the cast loop's `CasterWorld`.
 
 A port is a protocol that names what the coordinator needs from outside, such as the streamed
 references or the game hour. A test passes a fake that returns plain values. The app passes

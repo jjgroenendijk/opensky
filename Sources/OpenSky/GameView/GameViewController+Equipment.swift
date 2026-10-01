@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
@@ -29,7 +30,7 @@ extension GameViewController {
             let change = try equipment.equip(chosen, on: holder)
             // After the write, so the reconcile reads this equip's result. See
             // `WornEnchantmentApplication` for why it reconciles every item.
-            refreshWornEnchantments(on: holder)
+            magic.refreshWornEnchantments(on: holder)
             let displaced = change.unequipped.isEmpty
                 ? ""
                 : ", unequipped " + change.unequipped.map { name(of: $0) }
@@ -56,7 +57,7 @@ extension GameViewController {
             return worldItems.lastActionText
         }
         let changed = equipment.unequip(chosen, on: holder)
-        refreshWornEnchantments(on: holder)
+        magic.refreshWornEnchantments(on: holder)
         worldItems.lastActionText = changed
             ? "Unequipped \(name(of: chosen)) on \(label(target))."
             : "\(name(of: chosen)) was not equipped on \(label(target))."
@@ -74,7 +75,7 @@ extension GameViewController {
             EquippedItemReadout(
                 name: name(of: item),
                 occupancy: Self.describe(equipment.occupancy(of: item)),
-                enchantment: enchantmentLine(of: item, on: values)
+                enchantment: magic.enchantmentLine(of: item, on: values)
             )
         }
     }

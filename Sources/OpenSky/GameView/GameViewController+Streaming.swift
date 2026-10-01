@@ -123,13 +123,13 @@ extension GameViewController {
     /// the surface has to exist first.
     private func wireActorSystems(provider: any WorldDataProviding, renderer: Renderer) {
         wireActorValues(provider: provider, renderer: renderer)
-        wireMagicEffects(provider: provider, renderer: renderer)
+        magicWorld.wireEffects(provider: provider, renderer: renderer)
         // A cast spends an actor value and applies effects through the effect
         // runtime, so both exist first.
-        wireCasting(provider: provider, renderer: renderer)
+        magicWorld.wireCasting(provider: provider, renderer: renderer)
         // The ENCH index only: an enchanted hit applies through the effect
         // runtime, and its charge lives in the world-state store.
-        wireEnchantments(provider: provider)
+        magicWorld.wireEnchantments(provider: provider)
         // After the cast loop, which takes the perk runtime by value so a spell
         // cost folds through the `Mod Spell Cost` entry point.
         wirePerks(provider: provider)

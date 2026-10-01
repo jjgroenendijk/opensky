@@ -202,7 +202,7 @@ extension GameViewController: RuntimeStateControlProviding {
             // `AEFF` effects re-establish them, such as a worn enchantment's
             // fortify. Player only: other actors have no holder until their
             // cells stream back in (docs/engine/magic.md).
-            magicEffects.runtime?.reestablishModifiers(on: .player)
+            magic.withEffects { $0.reestablishModifiers(on: .player) }
             runtimeState.lastSaveOutcome = .loaded(slot: slot)
         } catch {
             runtimeState.lastSaveOutcome = .failed(

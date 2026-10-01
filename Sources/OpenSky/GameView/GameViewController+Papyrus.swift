@@ -148,24 +148,19 @@ extension GameViewController {
 }
 
 extension GameViewController {
-    /// The spell natives' collaborators. Closures, because `wireCasting` and
-    /// `wireMagicEffects` run after this step. The dispel closure does the whole
-    /// read-modify-write, because `ActiveEffectRuntime` is a value this
-    /// controller owns; a copy would drop the write.
+    /// The spell natives' collaborators. Closures, because the magic runtimes
+    /// are wired after this step.
     func wireSpellNatives(
         bridge: PapyrusWorldStateBridge,
         provider: any WorldDataProviding
     ) {
-        bridge.casterRuntime = { [weak self] in self?.casting.runtime }
+        bridge.casterRuntime = { [weak self] in self?.magic.caster }
         bridge.magicEffectStore = (provider as? MagicDataProviding)?.magicEffectStore
         bridge.dispelEffects = { [weak self] holder, predicate in
-            guard let self, var runtime = magicEffects.runtime else { return 0 }
-            let removed = runtime.dispel(on: holder, where: predicate)
-            magicEffects.runtime = runtime
-            return removed
+            self?.magic.withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
         }
         bridge.applySpellHit = { [weak self] hit in
-            self?.applySpellHit(hit) ?? .none
+            self?.magic.applySpellHit(hit) ?? .none
         }
         wirePerkNatives(bridge: bridge)
     }
