@@ -91,6 +91,16 @@ There is no separate target and no `-enableCodeCoverage` flag. `ENABLE_CODE_COVE
 `YES` in Xcode, so coverage was already gathered on every run and thrown away. Scoping it cost
 nothing measurable: turning it on explicitly recompiled nothing and changed the time within noise.
 
+The plan's target list scopes only the report. A test build compiles every target with
+`-profile-coverage-mapping -profile-generate`, test bundles and fixtures included. A plain `build`
+compiles without them, and both write the same package intermediates under `DerivedData/Build`. So
+`make cli` after `make test` used to recompile the whole engine, and the next test build did it
+again. The `Makefile` therefore passes `CLANG_COVERAGE_MAPPING=YES` on every Debug command line
+(`COVERAGE_Debug`), and `tools/probe.sh` does the same. It has to be the command line: xcodebuild
+sets this setting per action above `Config/Build/Overrides.xcconfig`, so an xcconfig value does not
+reach the compiler. A Release build stays without coverage. An instrumented program writes
+`default.profraw` into its working directory when it exits; `.gitignore` covers it.
+
 There is no coverage threshold and no coverage number in CI. The value is finding defensive branches
 in the parsers that no test takes, the malformed-input paths behind "malformed input must not
 crash". A floor would need a baseline argument, like a perf budget.

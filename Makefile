@@ -53,7 +53,12 @@ PRUNE_DAYS       ?= 14
 # location, and XCODEBUILD_FLAGS cannot drift apart. tools/xcodebuild-lib.sh is
 # the shell twin of this.
 xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
-	$(XCODEBUILD_DD) $(XCODEBUILD_FLAGS)
+	$(XCODEBUILD_DD) $(COVERAGE_$(2)) $(XCODEBUILD_FLAGS)
+# A test build compiles every target with coverage and a plain build does not, and
+# both write the same package intermediates. So each Debug build turns coverage on,
+# or `make cli` and `make test` rebuild each other's engine (issue #714). Only the
+# command line wins over the setting each action picks; an xcconfig does not.
+COVERAGE_Debug   := CLANG_COVERAGE_MAPPING=YES
 XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
 XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
 XCB_RELEASE      := $(call xcb,$(SCHEME),Release)

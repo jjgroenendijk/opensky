@@ -26,8 +26,10 @@ log="$log_dir/probe.log"
 echo "[INFO] run directory: $log_dir"
 
 echo "[INFO] building openskycli (log: $log)"
+# Coverage on, like the Makefile's COVERAGE_Debug, so this build reuses the test
+# build's package intermediates instead of recompiling the engine.
 xcodebuild -workspace "$root/OpenSky.xcworkspace" -scheme OpenSkyCLI -configuration Debug \
-  -derivedDataPath "$derived_data" build >"$log" 2>&1
+  -derivedDataPath "$derived_data" CLANG_COVERAGE_MAPPING=YES build >"$log" 2>&1
 cli="$(xcodebuild_products_dir Debug)/openskycli"
 [ -x "$cli" ] || { echo "[ERROR] openskycli binary not found at $cli"; exit 1; }
 
