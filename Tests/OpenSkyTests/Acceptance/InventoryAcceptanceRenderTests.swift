@@ -20,7 +20,7 @@ import simd
 import TagsTesting
 import Testing
 
-@Suite(.tags(.acceptance))
+@Suite(.tags(.acceptance, .gpu))
 @MainActor
 struct InventoryAcceptanceRenderTests {
     private static let width = 320
@@ -47,7 +47,7 @@ struct InventoryAcceptanceRenderTests {
     /// Taking the item removes its pixels and dropping puts them back. The
     /// taken frame must equal a cell that never held it, and the dropped frame
     /// a cell whose plugin placed it.
-    @Test(.enabled(if: CellSceneFixture.hasDevice))
+    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func takingRemovesTheItemsPixelsAndDroppingPutsThemBack() throws {
         let cells = try CellSceneFixture()
         try cells.writeLooseFile("meshes/\(Self.itemModel)", Self.triangleNIF(cells))
@@ -100,7 +100,7 @@ struct InventoryAcceptanceRenderTests {
     /// Equipping another body piece changes the silhouette. Equipping the
     /// outfit's own piece is the control: its frame matches the untouched
     /// actor, so the change comes from the piece, not the rebuild.
-    @Test(.enabled(if: CellSceneFixture.hasDevice))
+    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func theEquippedActorsSilhouetteChanges() throws {
         let cells = try CellSceneFixture()
         try cells.writeLooseFile("meshes/cuirass_m.nif", Self.triangleNIF(cells))

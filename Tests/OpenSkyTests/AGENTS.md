@@ -9,9 +9,9 @@ check a hypothesis is a different job: load the `probe` skill for that.
   `@MainActor`. Omitting it is the historical top compile error here (`error: main
   actor`). Patterns to copy: `GameViewControllerScreenshotTests`, and
   `RendererOffscreenTests` in `OpenSkyWorldTests`.
-- A Metal test gates on `device.supportsFamily(.metal4)`, like
-  `CellSceneBuilderFixture.hasDevice`, so machines without a Metal 4 device skip instead of
-  failing.
+- A test that renders gates on `OffscreenRendererFixture.hasMetal4Device`, so a machine
+  without a Metal 4 GPU, such as a CI runner, skips instead of failing. A test that only builds
+  a cell scene gates on `CellSceneBuilderFixture.hasDevice`, which accepts any Metal device.
 - Everything parsing external data throws, so use `try` with `#require` rather than a
   force-unwrap, which is a hard lint error.
 
