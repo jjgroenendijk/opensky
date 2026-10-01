@@ -102,8 +102,7 @@ SWIFTLINT_CFG    := tools/lint/.swiftlint.yml
 CLANGFORMAT_CFG  := tools/format/.clang-format
 MD_CFG           := tools/markdown/.markdownlint-cli2.yaml
 MD_GLOB          := **/*.md
-# The tool commands. Linux CI overrides these two, because it has no xcrun and runs
-# SwiftLint from its container image (docs/tools/ci.md).
+# The tool commands. Override one to try another build of the tool.
 SWIFTLINT        ?= swiftlint
 CLANG_FORMAT     ?= xcrun clang-format
 METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)

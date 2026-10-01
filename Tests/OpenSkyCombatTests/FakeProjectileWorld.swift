@@ -4,6 +4,7 @@
 
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

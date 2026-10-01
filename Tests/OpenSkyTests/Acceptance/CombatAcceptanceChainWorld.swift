@@ -16,6 +16,7 @@ import OpenSkyCombatFixtures
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
+@testable import OpenSkyProgressionInterface
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState

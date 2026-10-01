@@ -4,6 +4,7 @@
 import OpenSkyRendering
 import QuartzCore
 
+@MainActor
 public final class ManualWallClock: WallClock {
     public var now: CFTimeInterval
 

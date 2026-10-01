@@ -22,14 +22,14 @@ baseline files, and updating the baselines after each refactor cost too much.
   only and takes about a second or less. A check that needs a build runs in its own
   `make` target. A check that needs GitHub runs there.
 - **`make check` and CI mirror each other.** Every lint check has the same step in
-  `ci.yml`, as AGENTS.md requires. The Linux jobs are required checks on `main`
+  `ci.yml`, as AGENTS.md requires. The `Lint` job is the required check on `main`
   ([continuous integration](/tools/ci.md)).
 - **No new suppression comments.** No `periphery:ignore` and no new `swiftlint:disable`.
   Fix the finding instead.
 
 ## The checks
 
-"Lint" means `make lint` and a Linux CI job (30.6). "Health" means `make health`. The
+"Lint" means `make lint` and a CI job (30.6). "Health" means `make health`. The
 last column names the issue that turns the check on as a gate.
 
 | Check | Tool | Where | Cost | Gate in |
@@ -41,7 +41,7 @@ last column names the issue that turns the check on as a gate.
 | No lint suppressions | `grep` in `make lint` | Lint | Instant | 30.39, after 30.11 |
 | New SwiftLint rules | SwiftLint | Lint | Part of the current lint | 30.39 |
 | No new `GameViewController` extensions | SwiftLint `custom_rules` | Lint | Part of the current lint | 30.39, after 30.34 |
-| Test coverage floor | `xccov`, `llvm-cov` | `make test-report`, Linux CI | Part of the test run | Report 30.38, floor 30.39 |
+| Test coverage floor | `xccov`, `llvm-cov` | `make test-report`, CI | Part of the test run | 30.39 |
 
 ## Duplicated code: jscpd
 
@@ -143,10 +143,10 @@ After 30.11, `grep -rn "swiftlint:disable" Sources Tests` prints nothing. From 3
 ## Test coverage
 
 `make test-report` already prints coverage from `xccov`. The test plans measure only the
-`OpenSky` app target, so the package modules are not measured. 30.38 runs the format
-module tests on Linux with `swift test --enable-code-coverage` and prints the coverage per
-module. 30.39 sets a floor for the `OpenSkyFormats*` modules: the value measured then,
-rounded down to a multiple of 5 percent.
+`OpenSky` app target, so the package modules are not measured yet. CI runs the unit plan,
+package test targets included, on every pull request (30.38.1). 30.39 sets a floor for
+the `OpenSkyFormats*` modules: the value measured then, rounded down to a multiple of 5
+percent.
 
 The floor is only for the parsers. They read untrusted files, and a gap there can crash
 the app. A floor for the whole codebase is not used. It pushes people to write tests that

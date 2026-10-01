@@ -223,3 +223,19 @@ before a build. The same flag in `OTHER_SWIFT_FLAGS` does nothing. A record dirt
 
 Retires when swift-build reports a replayed job to the driver: then `make cli` followed by
 `make test` compiles no Swift file.
+
+## The CI runner builds with an older Xcode than this machine
+
+Observed 2026-10-01. The `macos-26` runner image uses Xcode 26.6 with Swift 6.3.3, the floor
+that `make swift-baseline` checks. This machine uses Xcode 27.0 with Swift 6.4. So code that only
+Swift 6.4 or the macOS 27 SDK accepts builds here and fails in the CI `Build & test` job.
+Examples seen: the macOS 26 SDK does not mark `AVAudioPlayerNode` as `Sendable`, and Swift 6.3
+rejects some conformances that Swift 6.4 infers as main-actor. Fix the code so both accept it.
+
+The runner's GPU is "Apple Paravirtual device", and `supportsFamily(.metal4)` is false. So every
+test that needs Metal 4 skips in CI and runs only on a developer machine.
+
+An `xcode-27` image exists as a public preview
+([runner-images #14404](https://github.com/actions/runner-images/issues/14404)).
+
+Retires when CI moves to an image whose Xcode matches this machine.

@@ -3,7 +3,7 @@
 // Threading model: docs/engine/audio.md. No code in this file runs on the audio
 // render thread, so the locks here never block it.
 
-import AVFAudio
+@preconcurrency import AVFAudio
 import Foundation
 import OpenSkyFormatsAudio
 import Synchronization

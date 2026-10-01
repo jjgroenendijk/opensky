@@ -7,7 +7,7 @@ import Foundation
 import Testing
 
 @MainActor
-private final class FakeSystemMenuWorld: SystemMenuWorld {
+private final class FakeSystemMenuWorld: @MainActor SystemMenuWorld {
     var renderer: Renderer?
     var audioEnabled = true
     var audioMasterVolume: Float = 0.5
