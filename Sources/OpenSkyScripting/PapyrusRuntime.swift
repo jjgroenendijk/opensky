@@ -61,11 +61,7 @@ public final class PapyrusRuntime {
         let chain = try scriptChain(from: root.name)
         var storage: [String: [String: PapyrusValue]] = [:]
         for script in chain {
-            storage[Self.key(script.name)] = Dictionary(
-                uniqueKeysWithValues: script.variables.map {
-                    (Self.key($0.name), runtimeValue($0.initialValue, typeName: $0.typeName))
-                }
-            )
+            storage[Self.key(script.name)] = initialStorage(for: script)
         }
         let instance = PapyrusInstance(
             handle: handle,
@@ -209,6 +205,20 @@ public final class PapyrusRuntime {
         }
         defer { nextHandleValue &+= 1 }
         return PapyrusObjectHandle(nextHandleValue)
+    }
+
+    /// First declaration wins, matching every lookup by name; see `docs/engine/papyrus-vm.md`.
+    private func initialStorage(for script: PexObject) -> [String: PapyrusValue] {
+        var values: [String: PapyrusValue] = [:]
+        for variable in script.variables {
+            let key = Self.key(variable.name)
+            guard values[key] == nil else {
+                tally.noteDuplicateVariable()
+                continue
+            }
+            values[key] = runtimeValue(variable.initialValue, typeName: variable.typeName)
+        }
+        return values
     }
 
     private func variable(

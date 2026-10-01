@@ -83,6 +83,9 @@ nonisolated public final class PapyrusTally {
     /// Activations refused because the chain reached
     /// `PapyrusWorldRuntime.maximumActivationDepth`.
     public private(set) var activationRecursionCappedTotal = 0
+    /// Variables skipped because an earlier one in the same object has the
+    /// same case-folded name; the first declaration wins.
+    public private(set) var duplicateVariableTotal = 0
     public private(set) var suspensionTotal = 0
     public private(set) var faultTotal = 0
     public private(set) var faultKindCounts: [String: Int] = [:]
@@ -167,6 +170,10 @@ nonisolated public final class PapyrusTally {
     /// One `Activate` refused because the activation chain hit its depth cap.
     public func noteActivationRecursionCapped() {
         activationRecursionCappedTotal += 1
+    }
+
+    public func noteDuplicateVariable() {
+        duplicateVariableTotal += 1
     }
 
     public func noteSuspension() {
