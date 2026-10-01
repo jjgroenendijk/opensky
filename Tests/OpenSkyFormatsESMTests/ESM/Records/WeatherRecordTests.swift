@@ -7,8 +7,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct WeatherRecordTests {
     /// One NAM0 component = four RGB triples (sunrise/day/sunset/night), each
     /// written as an RGBX quad (trailing pad byte).

@@ -7,8 +7,10 @@ import Metal
 @testable import OpenSkyRendering
 import OpenSkyShaderTypes
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct RenderMeshTests {
     private static let device = MTLCreateSystemDefaultDevice()
 

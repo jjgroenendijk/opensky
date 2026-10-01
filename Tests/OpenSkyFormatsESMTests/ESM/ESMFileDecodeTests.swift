@@ -6,8 +6,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct ESMFileDecodeTests {
     private static let deletedFlag: UInt32 = 0x20
 

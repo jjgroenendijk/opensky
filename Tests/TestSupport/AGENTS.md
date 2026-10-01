@@ -33,7 +33,7 @@ calls `CellStreamerFixture` in `OpenSkyWorldFixtures`, and the acceptance chains
 same fixture.
 
 A type whose shared part is only constants does not need that treatment: give the constants
-their own namespace, as `M10AcceptanceClock` does, and leave the suite alone. Note that a
+their own namespace, as `WorldTimeAcceptanceClock` does, and leave the suite alone. Note that a
 `struct` holding nothing but static members is rewritten to an `enum` by `make fix`
 (SwiftFormat's `enumNamespaces`), which a Swift Testing suite type cannot be — the tests
 would have nothing to instantiate.

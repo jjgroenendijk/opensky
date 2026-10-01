@@ -3,8 +3,10 @@
 
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFShapeTessellatorTests {
     private let red = SWFColor(red: 255, green: 0, blue: 0, alpha: 255)
 

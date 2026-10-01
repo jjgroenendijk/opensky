@@ -8,8 +8,10 @@ import Metal
 @testable import OpenSkyRendering
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct RendererUITests {
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .packageFixture)

@@ -5,8 +5,10 @@
 import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct FaceMorphRenderRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor

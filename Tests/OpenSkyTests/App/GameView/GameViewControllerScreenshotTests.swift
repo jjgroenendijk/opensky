@@ -6,8 +6,10 @@ import AppKit
 import Foundation
 import Metal
 @testable import OpenSky
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct GameViewControllerScreenshotTests {
     private static var hasMetal4Device: Bool {
         MTLCreateSystemDefaultDevice()?.supportsFamily(.metal4) ?? false

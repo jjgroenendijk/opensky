@@ -11,8 +11,10 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import RenderingTesting
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct RendererMenuModeTests {
     private static let device: MTLDevice? = {
         guard

@@ -4,8 +4,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct AS2ObjectModelTests {
     /// `{ a: 1, b: 2 }`. The compiler pushes the pairs back to front, so `a`
     /// is the first pair popped.

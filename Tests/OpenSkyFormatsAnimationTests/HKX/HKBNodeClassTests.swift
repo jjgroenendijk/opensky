@@ -6,6 +6,7 @@
 import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
+import TagsTesting
 import Testing
 
 /// One registry class and the Havok size of its instances.
@@ -18,6 +19,7 @@ struct HKBClassCase: CustomStringConvertible, Sendable {
     }
 }
 
+@Suite(.tags(.parser))
 struct HKBNodeClassTests {
     /// Every class the registry decodes, with its declared Havok instance size.
     /// Order matches HKBClassRegistry's table.

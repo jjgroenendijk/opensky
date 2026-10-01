@@ -11,8 +11,10 @@ import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct DerivedHostilityRealDataTests {
     /// Vanilla's generic bandits are all named this way, so one is found
     /// without pinning a FormID a patch could move.

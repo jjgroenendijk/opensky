@@ -4,8 +4,10 @@
 import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct ZlibTests {
     @Test func roundTripsCompressibleData() throws {
         let payload = Data(String(repeating: "meshes\\test.nif;", count: 100).utf8)

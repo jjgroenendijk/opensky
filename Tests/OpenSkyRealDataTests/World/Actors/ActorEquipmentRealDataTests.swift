@@ -15,8 +15,10 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct ActorEquipmentRealDataTests {
     /// Heimskr, the Whiterun street preacher: the same ACHR the actor render
     /// acceptance uses, so the frames are comparable.

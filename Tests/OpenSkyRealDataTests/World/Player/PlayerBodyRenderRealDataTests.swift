@@ -14,8 +14,10 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct PlayerBodyRenderRealDataTests {
     /// What one assertion needs to re-pose the body and render it again: the
     /// live renderer, the loaded install, and where the body is standing.

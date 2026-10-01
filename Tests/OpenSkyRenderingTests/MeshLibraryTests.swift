@@ -10,8 +10,10 @@ import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct MeshLibraryTests {
     private static let device = MTLCreateSystemDefaultDevice()
     private static var hasDevice: Bool {

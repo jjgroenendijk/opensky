@@ -5,6 +5,7 @@
 @testable import OpenSkyRendering
 import OpenSkyWorldInterface
 import RenderingTesting
+import TagsTesting
 import Testing
 
 @MainActor
@@ -16,6 +17,7 @@ final class FakeSWFLayerWorld: SWFLayerWorld {
     }
 }
 
+@Suite(.tags(.gpu))
 struct HUDCoordinatorTests {
     private static let canvas = OffscreenCanvas(width: 64, height: 64, shaders: .packageFixture)
 

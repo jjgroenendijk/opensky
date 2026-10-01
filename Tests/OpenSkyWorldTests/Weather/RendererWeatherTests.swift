@@ -14,8 +14,10 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct RendererWeatherTests {
     static var hasMetal4Device: Bool {
         ShadowSceneFixture.hasMetal4Device

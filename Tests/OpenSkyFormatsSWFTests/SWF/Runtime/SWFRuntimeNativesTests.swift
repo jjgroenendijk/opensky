@@ -8,8 +8,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFRuntimeNativesTests {
     private func started() throws -> SWFMovieRuntime {
         try SWFRuntimeFixture.started(tags: SWFRuntimeFixture.classMovieTags())

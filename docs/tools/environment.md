@@ -80,6 +80,10 @@ with "timed out while preparing". Clicking Allow once let the run continue. The 
 targets run in that runner ([Swift modules](/tools/modules.md)), so a machine without the grant sees
 the same dialog on its first unit run.
 
+Observed 2026-10-01 in a linked worktree: `make test-ui` stops again at "Timed out while enabling
+automation mode", so the UI plan's slowest test could not be measured for its time allowance
+([test runs](/tools/test-runs.md#timeouts)).
+
 Observed 2026-10-01: `make test-ui` reaches its test cases, and every case passes except
 `testCapturesRenderedFrame`. That case fails with "Failed to create screenshot. Image creation
 failed." The likely cause is a missing Screen Recording grant for `OpenSkyUITests-Runner.app`.

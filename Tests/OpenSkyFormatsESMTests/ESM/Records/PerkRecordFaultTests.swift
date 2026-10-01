@@ -6,8 +6,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct PerkRecordFaultTests {
     /// An id the name table does not cover is kept as the byte it is: the perk
     /// runtime still indexes it, and only its name is missing.

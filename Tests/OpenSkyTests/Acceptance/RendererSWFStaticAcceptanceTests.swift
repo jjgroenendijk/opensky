@@ -13,6 +13,7 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
 /// Synthetic menu movie: plate + sprite + clip layer + edit text. `hidden`
@@ -115,6 +116,7 @@ private enum SWFMenuFixture {
     }
 }
 
+@Suite(.tags(.acceptance, .gpu))
 struct RendererSWFStaticAcceptanceTests {
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)

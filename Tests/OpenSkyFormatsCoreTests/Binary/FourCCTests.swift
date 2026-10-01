@@ -2,8 +2,10 @@
 
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct FourCCTests {
     @Test func literalMatchesLittleEndianBytes() throws {
         var reader = BinaryReader(Data("TES4".utf8))

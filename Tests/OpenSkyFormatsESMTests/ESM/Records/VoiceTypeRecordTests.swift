@@ -5,8 +5,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct VoiceTypeRecordTests {
     @Test func decodesDirectoryNameAndFlags() throws {
         let voice = try DialogueFixture.voice(

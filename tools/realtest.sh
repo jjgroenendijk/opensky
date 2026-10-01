@@ -29,7 +29,8 @@
 # once reached ~30 GB and locked the machine. See docs/engine/cell-streaming.md
 # (memory budget) and docs/testing.md (real-data suites).
 #
-# Usage: tools/realtest.sh [-t SELECTOR] [-c CAP_MB] [-s GUARD_SECONDS] [-O]
+# Usage: tools/realtest.sh [-p PLAN] [-t SELECTOR] [-c CAP_MB] [-s GUARD_SECONDS] [-O]
+#   -p  RealData (default), or Perf: the tests tagged `.perf`, selected by the plan.
 #   -t  -only-testing selector; must resolve to exactly one test. Omit to run
 #       the whole plan.
 #   -c  watchdog kill threshold in MB (default 4096 for one test, 6144 for the
@@ -45,18 +46,20 @@
 #       alternation between `make test` and this would rebuild the whole engine.
 set -eu
 
+plan_name="RealData"
 selector=""
 cap_mb=""
 guard_seconds=""
 optimized=""
-while getopts "t:c:s:O" opt; do
+while getopts "p:t:c:s:O" opt; do
     case "$opt" in
+        p) plan_name="$OPTARG" ;;
         t) selector="$OPTARG" ;;
         c) cap_mb="$OPTARG" ;;
         s) guard_seconds="$OPTARG" ;;
         O) optimized="yes" ;;
         *)
-            echo "[ERROR] usage: tools/realtest.sh [-t SELECTOR] [-c MB] [-s SECONDS] [-O]" >&2
+            echo "[ERROR] usage: tools/realtest.sh [-p PLAN] [-t SELECTOR] [-c MB] [-s SECONDS] [-O]" >&2
             exit 2
             ;;
     esac
@@ -66,6 +69,14 @@ if [ "$#" -ne 0 ]; then
     echo "[ERROR] unexpected argument: $1" >&2
     exit 2
 fi
+
+case "$plan_name" in
+    RealData | Perf) ;;
+    *)
+        echo "[ERROR] -p must be RealData or Perf, got: $plan_name" >&2
+        exit 2
+        ;;
+esac
 
 if [ -n "$selector" ]; then
     cap_mb="${cap_mb:-4096}"
@@ -78,7 +89,7 @@ fi
 root="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=/dev/null
 . "$root/tools/xcodebuild-lib.sh"
-plan="$root/Config/TestPlans/RealData.xctestplan"
+plan="$root/Config/TestPlans/$plan_name.xctestplan"
 
 guard_pid=""
 cleanup() {
@@ -110,13 +121,13 @@ if [ -n "${OPENSKY_DATA_ROOT:-}" ] && [ "$OPENSKY_DATA_ROOT" != "$data_root" ]; 
         echo "        The plan carries the root into the test host and xcodebuild"
         echo "        does not expand build settings in a plan environment value,"
         echo "        so the environment cannot override it. Point the suite at a"
-        echo "        different install by editing Config/TestPlans/RealData.xctestplan."
+        echo "        different install by editing Config/TestPlans/RealData.xctestplan and Perf.xctestplan."
     } >&2
     exit 2
 fi
 
 if [ ! -e "$data_root/Data/Skyrim.esm" ] && [ ! -e "$data_root/Skyrim.esm" ]; then
-    echo "[ERROR] no Skyrim install at $data_root (edit Config/TestPlans/RealData.xctestplan)" >&2
+    echo "[ERROR] no Skyrim install at $data_root (edit Config/TestPlans/$plan_name.xctestplan)" >&2
     exit 1
 fi
 
@@ -138,7 +149,7 @@ if [ -n "$optimized" ]; then
 fi
 set -- xcodebuild -workspace "$root/OpenSky.xcworkspace" -scheme OpenSky \
     -configuration Debug -derivedDataPath "$derived_data" \
-    -destination 'platform=macOS' -testPlan RealData \
+    -destination 'platform=macOS' -testPlan "$plan_name" \
     -parallel-testing-enabled NO -maximum-parallel-testing-workers 1
 if [ -n "$optimized" ]; then
     set -- "$@" SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=s \
@@ -155,9 +166,9 @@ sh "$root/tools/memguard.sh" "$cap_mb" "$guard_seconds" &
 guard_pid=$!
 
 if [ -n "$selector" ]; then
-    printf '[INFO] test -testPlan RealData: %s\n' "$selector"
+    printf '[INFO] test -testPlan %s: %s\n' "$plan_name" "$selector"
 else
-    echo "[INFO] test -testPlan RealData: the whole real-data set"
+    printf '[INFO] test -testPlan %s: every test the plan selects\n' "$plan_name"
 fi
 status=0
 # Through the shared runner (Makefile XCB_RUN): full transcript into the run
@@ -193,7 +204,7 @@ if [ -n "$selector" ]; then
         # pre-pass that used to cost a whole extra xcodebuild run per test).
         total="$(echo "$summary" | awk '{print $1}')"
         if [ "$total" = "0" ]; then
-            xctestrun="$(xcodebuild_xctestrun RealData)"
+            xctestrun="$(xcodebuild_xctestrun "$plan_name")"
             [ -z "$xctestrun" ] || \
                 "$root/tools/test-fast-suggest.sh" "$xctestrun" "$selector" >&2 || true
         fi
@@ -206,11 +217,11 @@ fi
 total="$(echo "$summary" | awk '{print $1}')"
 failed="$(echo "$summary" | awk '{print $4}')"
 if [ "$total" -lt 1 ]; then
-    echo "[ERROR] the RealData plan executed no tests" >&2
+    echo "[ERROR] the $plan_name plan executed no tests" >&2
     exit 1
 fi
 if [ "$failed" != "0" ]; then
     echo "[ERROR] $failed real-data test(s) failed; see make test-report" >&2
     exit 1
 fi
-echo "[ OK ] the real-data set is green"
+echo "[ OK ] the $plan_name plan is green"

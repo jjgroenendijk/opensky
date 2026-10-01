@@ -17,8 +17,10 @@ import Foundation
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct SpellDeliveryAcceptanceRealDataTests {
     /// The spell the picture uses: vanilla `Firebolt`, aimed, fire and forget,
     /// one hostile Fire Damage entry resisted through `Resist Fire`.

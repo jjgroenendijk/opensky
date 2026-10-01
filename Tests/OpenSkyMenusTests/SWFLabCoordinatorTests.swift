@@ -9,8 +9,10 @@ import Foundation
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import RenderingTesting
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct SWFLabCoordinatorTests {
     private let dataURL: URL
 

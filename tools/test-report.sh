@@ -106,6 +106,69 @@ else:
     print("\n[INFO] no failing tests in this bundle")
 PY
 
+# Pass, fail, and time per shared tag. The result bundle does not carry Swift
+# Testing tags, so each test is matched to the tags its suite and @Test declare
+# in the sources. Times from a parallel run include waits for the main actor.
+python3 - "$tests_json" "$(git rev-parse --show-toplevel)/Tests" <<'PY'
+import collections
+import json
+import pathlib
+import re
+import sys
+
+try:
+    with open(sys.argv[1], encoding="utf-8") as stream:
+        data = json.load(stream)
+except (OSError, json.JSONDecodeError, ValueError):
+    sys.exit(0)
+
+PARENS = r"((?:[^()]|\((?:[^()]|\([^()]*\))*\))*)"
+SUITE = re.compile(r"@Suite\(" + PARENS + r"\)\s*(?:@\w+\s*)*(?:\w+\s+)*(?:struct|class|enum|actor)\s+(\w+)")
+TEST = re.compile(r"@Test\(" + PARENS + r"\)\s*(?:@\w+\s*)*(?:\w+\s+)*func\s+(\w+)")
+TAGS = re.compile(r"\.tags\(([^)]*)\)")
+
+
+def tags_in(args):
+    return {tag.strip().lstrip(".") for group in TAGS.findall(args) for tag in group.split(",") if tag.strip()}
+
+
+suite_tags = collections.defaultdict(set)
+test_tags = collections.defaultdict(set)
+for target in pathlib.Path(sys.argv[2]).iterdir():
+    for path in target.rglob("*.swift") if target.is_dir() else []:
+        text = path.read_text(errors="ignore")
+        for args, name in SUITE.findall(text):
+            suite_tags[(target.name, name)] |= tags_in(args)
+        for args, name in TEST.findall(text):
+            test_tags[(target.name, name)] |= tags_in(args)
+
+rows = collections.defaultdict(lambda: [0, 0, 0.0])
+
+
+def walk(node, bundle):
+    if node.get("nodeType") == "Unit test bundle":
+        bundle = node.get("name")
+    if node.get("nodeType") == "Test Case" and node.get("nodeIdentifier"):
+        parts = node["nodeIdentifier"].split("/")
+        tags = set().union(*(suite_tags[(bundle, part)] for part in parts[:-1]))
+        tags |= test_tags[(bundle, parts[-1].split("(")[0])]
+        for tag in tags or {"(untagged)"}:
+            row = rows[tag]
+            row[0] += 1
+            row[1] += node.get("result") == "Failed"
+            row[2] += node.get("durationInSeconds", 0.0)
+    for child in node.get("children", []) + node.get("testNodes", []):
+        walk(child, bundle)
+
+
+walk(data, None)
+if rows:
+    print("\n[INFO] per tag:")
+    print(f"  {'tag':<12} {'tests':>6} {'failed':>7} {'seconds':>9}")
+    for tag, (count, failed, seconds) in sorted(rows.items()):
+        print(f"  {tag:<12} {count:>6} {failed:>7} {seconds:>9.1f}")
+PY
+
 # Coverage (issue #382). The UnitTests and AllTests plans gather it for the
 # `OpenSky` target, so every bundle from `make test` carries it and the
 # percentage arrives through the same command as the pass/fail counts rather

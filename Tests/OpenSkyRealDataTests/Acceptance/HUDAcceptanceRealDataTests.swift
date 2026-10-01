@@ -16,8 +16,10 @@ import MetalKit
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct HUDAcceptanceRealDataTests {
     private static let width = 1280
     private static let height = 720

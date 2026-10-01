@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct RegionRecordTests {
     @Test func decodesOnlyWeatherAreaAmongMixedRDAT() throws {
         // Objects area (type 2) first, with its RDOT payload field — must be

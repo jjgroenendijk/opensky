@@ -8,8 +8,10 @@ import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct DemoSceneTests {
     private static let device = MTLCreateSystemDefaultDevice()
 

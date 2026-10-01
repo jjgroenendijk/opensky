@@ -1,5 +1,5 @@
 // World > Inventory & Equipment with synthetic provider state. The loop proof
-// is `M12AcceptanceTests`; pixels are `M12AcceptanceRenderTests`.
+// is `InventoryAcceptanceTests`; pixels are `InventoryAcceptanceRenderTests`.
 
 import AppKit
 @testable import OpenSky

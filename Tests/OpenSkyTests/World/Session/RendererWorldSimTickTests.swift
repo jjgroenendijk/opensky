@@ -11,8 +11,10 @@ import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
 @testable import OpenSkyWorld
 import RenderingTesting
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct RendererWorldSimTickTests {
     private static let device: MTLDevice? = {
         guard

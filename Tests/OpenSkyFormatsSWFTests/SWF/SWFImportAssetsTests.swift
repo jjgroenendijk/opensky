@@ -6,8 +6,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFImportAssetsTests {
     /// ImportAssets2 body: URL STRING, two reserved bytes, Count UI16, then
     /// (CharacterId UI16, Name STRING) pairs (spec v19 p. 286).

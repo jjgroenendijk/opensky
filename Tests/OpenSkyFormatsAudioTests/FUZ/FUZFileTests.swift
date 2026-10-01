@@ -5,9 +5,10 @@
 import FormatsAudioTesting
 import Foundation
 @testable import OpenSkyFormatsAudio
+import TagsTesting
 import Testing
 
-@Suite("FUZ framing")
+@Suite("FUZ framing", .tags(.parser))
 struct FUZFileTests {
     @Test("well-formed file exposes the version, the lip blob and the audio payload")
     func happyPath() throws {

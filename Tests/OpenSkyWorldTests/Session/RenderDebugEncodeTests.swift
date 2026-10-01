@@ -10,8 +10,10 @@ import MetalKit
 @testable import OpenSkyWorld
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct RenderDebugEncodeTests {
     // MARK: - Encode-level isolation (device gated)
 

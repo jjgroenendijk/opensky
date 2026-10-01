@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct ContainerRecordTests {
     /// Container composes ModelBase rather than replacing it, so the fields
     /// the cell builder and interaction path already read must still decode.
@@ -104,6 +106,7 @@ struct ContainerRecordTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct PlacedReferenceOwnershipTests {
     @Test func decodesOwnershipAndCount() throws {
         var fields = InventoryFixture.formIDField("NAME", 0x0AA)

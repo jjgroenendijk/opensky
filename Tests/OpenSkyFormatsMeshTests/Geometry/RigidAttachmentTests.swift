@@ -6,8 +6,10 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct RigidAttachmentTests {
     /// A mesh with one vertex at `origin`, a local transform, and no skinning.
     private func mesh(
@@ -156,6 +158,7 @@ struct RigidAttachmentTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct NIFSkeletonBoneLookupTests {
     /// The Havok rig spells the drawn-weapon node `Weapon` and the NIF spells
     /// it `WEAPON`, so the bind-transform lookup folds case. Observed with

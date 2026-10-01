@@ -78,7 +78,7 @@ func checked(
 func testTarget(_ name: String, dependencies: [String]) -> Target {
     .testTarget(
         name: name,
-        dependencies: dependencies.map { .target(name: $0) },
+        dependencies: (["TagsTesting"] + dependencies).map { .target(name: $0) },
         swiftSettings: testSettings,
         linkerSettings: testLinkerSettings
     )
@@ -241,6 +241,9 @@ let cffmpeg = Target.target(
 declared += ["OpenSkyShaderTypes", "CFFmpeg"]
 
 var targets: [Target] = [shaderTypes, cffmpeg]
+
+// The Swift Testing tags every test target links through `testTarget`.
+targets += testing("TagsTesting", dependencies: [])
 
 // Foundation
 

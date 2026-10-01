@@ -5,8 +5,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFGameDelegateTests {
     typealias Action = AS2Fixture.Action
 

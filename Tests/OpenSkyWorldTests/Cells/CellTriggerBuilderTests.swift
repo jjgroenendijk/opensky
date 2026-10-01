@@ -16,6 +16,7 @@ import Metal
 import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import simd
+import TagsTesting
 import Testing
 
 extension CellSceneBuilderTests {
@@ -202,6 +203,7 @@ extension CellSceneBuilderTests {
 
 /// Trigger queries across resident cells. No Metal: scenes are built directly
 /// from placed volumes.
+@Suite(.tags(.gpu))
 struct TriggerVolumeCompositionTests {
     private func volume(_ objectID: UInt32, at center: SIMD3<Float>) throws -> TriggerVolume {
         try #require(TriggerVolume.placed(

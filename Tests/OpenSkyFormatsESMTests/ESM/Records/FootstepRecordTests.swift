@@ -6,8 +6,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct FootstepRecordTests {
     @Test func decodesFootstep() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("DefaultFootWalkLFootstep"))

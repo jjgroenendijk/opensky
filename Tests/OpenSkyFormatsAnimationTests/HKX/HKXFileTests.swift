@@ -6,8 +6,10 @@ import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct HKXFileTests {
     /// Runs the parser, returning a thrown HKXError (nil on success or a
     /// non-HKX error such as reader truncation).

@@ -3,9 +3,10 @@
 import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
+import TagsTesting
 import Testing
 
-@Suite("PEX inventory")
+@Suite("PEX inventory", .tags(.parser))
 struct PexInventoryTests {
     @Test("ranks opcodes and external call targets")
     func ranksSurface() throws {

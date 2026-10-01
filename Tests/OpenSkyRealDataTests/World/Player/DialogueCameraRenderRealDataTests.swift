@@ -13,8 +13,10 @@ import MetalKit
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct DialogueCameraRenderRealDataTests {
     /// How many pixels the override has to move before it counts as visible.
     /// The same floor the M14, M15 and M16 render gates use.

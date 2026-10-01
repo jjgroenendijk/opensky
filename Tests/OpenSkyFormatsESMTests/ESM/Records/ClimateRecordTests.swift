@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct ClimateRecordTests {
     @Test func decodesWeatherListTimingAndTextures() throws {
         var wlst = Data()

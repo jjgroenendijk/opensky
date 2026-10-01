@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct ProjectileRecordTests {
     /// The full 92-byte DATA every vanilla PROJ writes.
     private static func dataField(

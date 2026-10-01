@@ -5,8 +5,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct CellRecordTests {
     @Test func decodesAcousticSpaceField() throws {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Interior"))

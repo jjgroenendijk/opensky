@@ -8,6 +8,7 @@ import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import simd
+import TagsTesting
 import Testing
 
 /// Hand-builds one packfile carrying a single hkaSkeleton object at data
@@ -188,6 +189,7 @@ private struct HKASkeletonFixture {
     }
 }
 
+@Suite(.tags(.parser))
 struct HKASkeletonTests {
     private func firstSkeleton(_ fixture: HKASkeletonFixture) throws -> HKASkeleton {
         let file = try HKXFile(data: fixture.build())
@@ -301,6 +303,7 @@ struct HKASkeletonTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct SkeletonBoneMapTests {
     @Test func fullMatch() {
         let map = SkeletonBoneMap(

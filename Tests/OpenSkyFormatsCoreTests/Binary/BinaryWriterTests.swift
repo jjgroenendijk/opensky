@@ -4,8 +4,10 @@
 @testable import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct BinaryWriterTests {
     @Test func writesLittleEndianUInt8() {
         var writer = BinaryWriter()

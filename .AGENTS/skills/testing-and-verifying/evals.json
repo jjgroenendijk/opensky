@@ -64,5 +64,29 @@
       "Reads only the samples under the frame function, not the background cell builds",
       "Opens one GitHub issue per finding instead of fixing it inline"
     ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "I changed how the NIF parser reads block sizes. What should I run before pushing?",
+    "files": [],
+    "expected_behavior": [
+      "Runs the covering suite first with make test-fast T='...'",
+      "Then runs make test-fast TAG=parser to cover every parser suite across targets",
+      "Does not run make realtest-all, because no real-data path changed"
+    ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "CellStreamerTests failed once and passed when I reran it. Can I push?",
+    "files": [],
+    "expected_behavior": [
+      "Treats the test as flaky instead of trusting the second run",
+      "Disables it with .disabled(\"flaky: #NNN\") and opens a bug issue with the run directory",
+      "Does not add a retry"
+    ]
   }
 ]

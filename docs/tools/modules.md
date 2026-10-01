@@ -238,7 +238,10 @@ satisfies an old `import`, and the build fails with two types of the same name, 
 Shared test fixtures live in a testing library, `Tests/<Name>Testing/`. For a foundation
 module the name is the one the module declares, for example `BehaviorTesting`. For a feature it
 is the feature name plus `Testing`, for example `OpenSkyPerceptionTesting`. Its declarations are
-`public`, and it may `@testable import` the module it builds fixtures for.
+`public`, and it may `@testable import` the module it builds fixtures for. One library,
+`TagsTesting`, holds no fixtures: it declares the shared Swift Testing tags, and the
+`testTarget` helper in `Package.swift` links it into every package test target
+([test runs](/tools/test-runs.md#tags)).
 
 A testing library depends on interfaces, lower modules, and other testing libraries, never on
 a feature implementation. So any test target may link it without building another feature.

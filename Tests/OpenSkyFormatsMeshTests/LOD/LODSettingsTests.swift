@@ -2,8 +2,10 @@ import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct LODSettingsTests {
     private func bytes(
         originX: Int16 = -96,

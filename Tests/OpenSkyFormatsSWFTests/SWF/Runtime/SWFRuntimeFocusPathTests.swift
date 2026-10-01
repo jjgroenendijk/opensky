@@ -4,8 +4,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFRuntimeFocusPathTests {
     /// Three nested clips — `menuRoot` -> `holder` -> `child` — so a focus path
     /// between `menuRoot` and a focused `child` must cross the `holder`. This is

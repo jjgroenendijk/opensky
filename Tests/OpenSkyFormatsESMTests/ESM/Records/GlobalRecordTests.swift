@@ -6,8 +6,10 @@
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct GlobalRecordTests {
     @Test func decodesFloatGlobal() throws {
         let global = try Global(record: GlobalFixture.parse(GlobalFixture.record(

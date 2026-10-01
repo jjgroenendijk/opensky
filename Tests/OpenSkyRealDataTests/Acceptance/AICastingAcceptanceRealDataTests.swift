@@ -12,8 +12,10 @@ import Foundation
 @testable import OpenSkyMagic
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct AICastingAcceptanceRealDataTests {
     /// `LvlBanditWizard`, the caster `ActorSpellBaselineRealDataTests` pins.
     private static let banditWizard = FormID(0x0001_E79F)

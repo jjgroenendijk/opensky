@@ -10,8 +10,10 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NavmeshRecordTests {
     @Test func decodesTwoTriangleInteriorMesh() throws {
         let navmesh = try Navmesh(record: NavmeshFixture.record(NavmeshFixture.navmRecord(

@@ -5,8 +5,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct AS2FunctionTests {
     @Test func defineFunction2BindsParametersToRegisters() {
         let body: [AS2Fixture.Action] = [

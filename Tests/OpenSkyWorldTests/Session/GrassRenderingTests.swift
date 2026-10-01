@@ -9,8 +9,10 @@ import MetalKit
 @testable import OpenSkyWorld
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct GrassRenderingTests {
     private static let device: MTLDevice? = {
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)

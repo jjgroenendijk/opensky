@@ -6,8 +6,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFFileTests {
     @Test func parsesUncompressedHeaderFields() throws {
         var fixture = SWFFixture()
@@ -132,6 +134,7 @@ struct SWFFileTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct SWFBitReaderTests {
     @Test func readsUnsignedFields() throws {
         var reader = SWFBitReader(Data([0b1011_0010]))
